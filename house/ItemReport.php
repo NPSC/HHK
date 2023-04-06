@@ -286,21 +286,21 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $reqs = $_POST['selDiag'];
 
         if (is_array($reqs)) {
-            $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
     if (isset($_POST['selPayStatus'])) {
         $reqs = $_POST['selPayStatus'];
         if (is_array($reqs)) {
-            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
     if (isset($_POST['selItems'])) {
         $reqs = $_POST['selItems'];
         if (is_array($reqs)) {
-            $itemSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $itemSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 

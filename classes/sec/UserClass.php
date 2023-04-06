@@ -174,7 +174,7 @@ class UserClass
 
             $remoteIp = self::getRemoteIp();
 
-            if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
+            if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)) == $remoteIp . 'eric') {
                 $housePc = TRUE;
             }
         }

@@ -288,7 +288,7 @@ if (isset($_POST["btnSubmit"])) {
 
                     foreach ($_POST['selPrel'] as $k => $v) {
                         $k = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT),10);
-                        $v = filter_var($v, FILTER_SANITIZE_STRING);
+                        $v = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                         $psg->setNewMember($k, $v);
                     }
                 }
@@ -320,7 +320,7 @@ if (isset($_POST["btnSubmit"])) {
 
             // Last info confirmed date
             if (isset($_POST['cbLastConfirmed']) && isset($_POST['txtLastConfirmed'])) {
-                $lastConfirmed = filter_var($_POST['txtLastConfirmed'], FILTER_SANITIZE_STRING);
+                $lastConfirmed = filter_var($_POST['txtLastConfirmed'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $psg->setLastConfirmed($lastConfirmed);
             }
 
@@ -365,26 +365,26 @@ if (isset($_POST["btnSubmit"])) {
 
                 // FA Category
                 if (isset($_POST['hdnRateCat'])) {
-                    $faCategory = filter_var($_POST['hdnRateCat'], FILTER_SANITIZE_STRING);
+                    $faCategory = filter_var($_POST['hdnRateCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 if (isset($_POST['SelFaStatus']) && $_POST['SelFaStatus'] != '') {
-                    $faStat = filter_var($_POST['SelFaStatus'], FILTER_SANITIZE_STRING);
+                    $faStat = filter_var($_POST['SelFaStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 if (isset($_POST['txtFaStatusDate']) && $_POST['txtFaStatusDate'] != '') {
-                    $faDT = setTimeZone($uS, filter_var($_POST['txtFaStatusDate'], FILTER_SANITIZE_STRING));
+                    $faDT = setTimeZone($uS, filter_var($_POST['txtFaStatusDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     $faStatDate = $faDT->format('Y-m-d');
                 }
 
                 // Reason text
                 if (isset($_POST['txtFaReason'])) {
-                    $reason = filter_var($_POST['txtFaReason'], FILTER_SANITIZE_STRING);
+                    $reason = filter_var($_POST['txtFaReason'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 // Notes
                 if (isset($_POST['txtFaNotes'])) {
-                    $notes = filter_var($_POST['txtFaNotes'], FILTER_SANITIZE_STRING);
+                    $notes = filter_var($_POST['txtFaNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 // Save Fin App dialog.

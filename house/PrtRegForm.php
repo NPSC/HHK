@@ -30,11 +30,11 @@ $sty = '';
 $checkinDate = '';
 
 if (isset($_GET['d'])) {
-    $checkinDate = filter_var($_GET['d'], FILTER_SANITIZE_STRING);
+    $checkinDate = filter_var($_GET['d'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 if (isset($_POST['regckindate'])) {
-    $checkinDate = filter_var($_POST['regckindate'], FILTER_SANITIZE_STRING);
+    $checkinDate = filter_var($_POST['regckindate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 if ($checkinDate == '') {

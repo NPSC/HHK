@@ -31,7 +31,7 @@ $dbh = $wInit->dbh;
 $demographics = readGenLookupsPDO($dbh, 'Demographics');
 
 if(isset($_GET['cmd'])){
-    $cmd = filter_var($_GET['cmd'],FILTER_SANITIZE_STRING);
+    $cmd = filter_var($_GET['cmd'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     if($cmd == 'getDailyWaitlist'){
         $columns = array(
             array( 'db' => 'MRN',  'dt' => 'MRN' ),

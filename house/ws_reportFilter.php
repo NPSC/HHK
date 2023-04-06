@@ -31,7 +31,7 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $uS = Session::getInstance();
@@ -50,7 +50,7 @@ try {
         case 'listFieldSets':
 
             if (isset($_REQUEST["report"])) {
-                $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_STRING);
+                $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = ["status"=>"success", "report"=>$report, "fieldSets"=>ReportFieldSet::listFieldSets($dbh, $report)];
@@ -60,12 +60,12 @@ try {
         case 'getFieldSetOptMkup':
             $report = "";
             if (isset($_REQUEST["report"])) {
-                $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_STRING);
+                $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $selection = "";
             if (isset($_REQUEST["selection"])) {
-                $selection = filter_var(urldecode($_REQUEST["selection"]), FILTER_SANITIZE_STRING);
+                $selection = filter_var(urldecode($_REQUEST["selection"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if(isset(EmailReportJob::AVAILABLE_REPORTS[$report])){
@@ -103,16 +103,16 @@ try {
         case 'createFieldSet':
 
             if (isset($_REQUEST["report"])) {
-                $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_STRING);
+                $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             if (isset($_REQUEST["title"])) {
-                $title = filter_var(urldecode($_REQUEST["title"]), FILTER_SANITIZE_STRING);
+                $title = filter_var(urldecode($_REQUEST["title"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             if (isset($_REQUEST["global"])) {
                 $global = intval(filter_var($_REQUEST["global"], FILTER_VALIDATE_BOOLEAN));
             }
             if (isset($_REQUEST["fields"])) {
-                $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_STRING);
+                $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             try{
                 $events = ReportFieldSet::createFieldSet($dbh, $report, $title, $fields, $global);
@@ -128,10 +128,10 @@ try {
                 $idFieldSet = filter_var($_REQUEST['idFieldSet'], FILTER_SANITIZE_NUMBER_INT);
             }
             if (isset($_REQUEST["title"])) {
-                $title = filter_var(urldecode($_REQUEST["title"]), FILTER_SANITIZE_STRING);
+                $title = filter_var(urldecode($_REQUEST["title"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             if (isset($_REQUEST["fields"])) {
-                $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_STRING);
+                $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = ReportFieldSet::updateFieldSet($dbh, intval($idFieldSet), $title, $fields);

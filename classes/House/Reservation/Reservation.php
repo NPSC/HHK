@@ -419,11 +419,11 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $idResv = intval(filter_var($post['idResv'], FILTER_SANITIZE_NUMBER_INT), 10);
-            $postMems = filter_var_array($post['mems'], FILTER_SANITIZE_STRING);
+            $postMems = filter_var_array($post['mems'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             try {
-                $arrivalDT = new \DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
-                $departDT = new \DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
+                $arrivalDT = new \DateTime(filter_var($post['dt1'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                $departDT = new \DateTime(filter_var($post['dt2'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             } catch(\Exception $ex) {
                 return array('error'=>'Bad dates: ' . $ex->getMessage());
             }
@@ -1064,7 +1064,7 @@ WHERE
         // Get the rate category
         if (isset($post['selRateCategory']) && (SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN) || $uS->RateChangeAuth === FALSE)) {
 
-            $rateCat = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
+            $rateCat = filter_var($post['selRateCategory'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($rateChooser->validateCategory($rateCat) === TRUE) {
                 $rateCategory = $rateCat;
@@ -1128,7 +1128,7 @@ WHERE
 
         if (isset($post['selVisitFee']) && $uS->VisitFee) {
 
-            $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_STRING);
+            $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $vFees = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
 
@@ -1340,10 +1340,10 @@ WHERE
         $arrival = '';
 
         if (isset($post['gstDate'])) {
-            $arrival = filter_var($post['gstDate'], FILTER_SANITIZE_STRING);
+            $arrival = filter_var($post['gstDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
         if (isset($post['gstCoDate'])) {
-            $departure = filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING);
+            $departure = filter_var($post['gstCoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if ($arrival == '' || $departure == '') {

@@ -135,7 +135,7 @@ function saveMissingDemogs($dbh, $uS, $demos){
                         if (isset($_POST['cbUnkn'][$k])) {
                             $dbField->setNewVal('z');
                         } else {
-                            $dbField->setNewVal(filter_var($v, FILTER_SANITIZE_STRING));
+                            $dbField->setNewVal(filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                         }
 
                         $nameRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));

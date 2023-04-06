@@ -317,7 +317,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $colTitle = '';
         $blanksOnly = FALSE;
 
-        $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_STRING);
+        $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if (isset($_POST['cbBlanksOnly'])) {
             $blanksOnly = TRUE;

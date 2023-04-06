@@ -45,16 +45,16 @@ function testdb($ssn) {
     	$dbPw = $ssn->databasePWord;
     	$dbHost = $ssn->databaseURL;
     	$dbName = $ssn->databaseName;
-    	
+
     	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
-    	
+
     	$options = [
     			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     			PDO::ATTR_EMULATE_PREPARES   => false,
     	];
-    	
+
     	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);
-    	
+
     } catch (PDOException $e) {
         return 'Database Error:  ' . $e;
     }
@@ -121,7 +121,7 @@ if (isset($_POST['btnSave'])) {
 }
 
 if (isset($_GET['r'])) {
-    $result = filter_var($_GET['r'], FILTER_SANITIZE_STRING);
+    $result = filter_var($_GET['r'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $pageTitle = $ssn->siteName;

@@ -232,43 +232,43 @@ class fbUserClass {
     public function loadFromArray($getArray) {
 
         if (isset($getArray["fid"])) {
-            $this->set_fbid(filter_var($getArray["fid"], FILTER_SANITIZE_STRING));
+            $this->set_fbid(filter_var($getArray["fid"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["fn"])) {
-            $this->set_fn(filter_var($getArray["fn"], FILTER_SANITIZE_STRING));
+            $this->set_fn(filter_var($getArray["fn"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["a1"])) {
-            $this->set_a1(filter_var($getArray["a1"], FILTER_SANITIZE_STRING));
+            $this->set_a1(filter_var($getArray["a1"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["a2"])) {
-            $this->set_a2(filter_var($getArray["a2"], FILTER_SANITIZE_STRING));
+            $this->set_a2(filter_var($getArray["a2"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["ln"])) {
-            $this->set_ln(filter_var($getArray["ln"], FILTER_SANITIZE_STRING));
+            $this->set_ln(filter_var($getArray["ln"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["cy"])) {
-            $this->set_cy(filter_var($getArray["cy"], FILTER_SANITIZE_STRING));
+            $this->set_cy(filter_var($getArray["cy"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["st"])) {
-            $this->set_st(filter_var($getArray["st"], FILTER_SANITIZE_STRING));
+            $this->set_st(filter_var($getArray["st"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["zp"])) {
-            $this->set_zp(filter_var($getArray["zp"], FILTER_SANITIZE_STRING));
+            $this->set_zp(filter_var($getArray["zp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["ph"])) {
-            $this->set_ph(filter_var($getArray["ph"], FILTER_SANITIZE_STRING));
+            $this->set_ph(filter_var($getArray["ph"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["em"])) {
-            $this->set_em(filter_var($getArray["em"], FILTER_SANITIZE_STRING));
+            $this->set_em(filter_var($getArray["em"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["fun"])) {
-            $this->set_fun(filter_var($getArray["fun"], FILTER_SANITIZE_STRING));
+            $this->set_fun(filter_var($getArray["fun"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["pun"])) {
-            $this->set_pifhUsername(filter_var($getArray["pun"], FILTER_SANITIZE_STRING));
+            $this->set_pifhUsername(filter_var($getArray["pun"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["pw"])) {
-            $this->set_password(filter_var($getArray["pw"], FILTER_SANITIZE_STRING));
+            $this->set_password(filter_var($getArray["pw"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["nid"])) {
             $this->set_nid(filter_var($getArray["nid"], FILTER_SANITIZE_INT));

@@ -43,7 +43,7 @@ class GLParameters {
 
     public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
 
-        $this->tableName = filter_var($tableName, FILTER_SANITIZE_STRING);
+        $this->tableName = filter_var($tableName, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->loadParameters($dbh);
 
     }
@@ -75,7 +75,7 @@ class GLParameters {
 
             if (isset($post[$prefix . $g[0]])) {
 
-                $desc = filter_var($post[$prefix . $g[0]], FILTER_SANITIZE_STRING);
+                $desc = filter_var($post[$prefix . $g[0]], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
                 if (strtolower($g[0]) == 'password') {
                     // Process password
@@ -103,13 +103,13 @@ class GLParameters {
                 EditRS::loadRow($rows[0], $nameDemogRS);
 
                 if (isset($baAr['debit'])) {
-                    $gl = filter_var($baAr['debit'], FILTER_SANITIZE_STRING);
+                    $gl = filter_var($baAr['debit'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
                     $nameDemogRS->Gl_Code_Debit->setNewVal($gl);
                 }
 
                 if (isset($baAr['credit'])) {
-                    $gl = filter_var($baAr['credit'], FILTER_SANITIZE_STRING);
+                    $gl = filter_var($baAr['credit'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
                     $nameDemogRS->Gl_Code_Credit->setNewVal($gl);
                 }

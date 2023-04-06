@@ -31,6 +31,7 @@ class W_usersRS extends AbstractTableRS {
     public $Default_Page;  // varchar(100) NOT NULL DEFAULT '',
     public $PW_Change_Date;  // DATETIME NULL
     public $PW_Updated_By;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public $Chg_PW; // bool
     public $Status;  // varchar(4) NOT NULL DEFAULT '',
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) DEFAULT '',

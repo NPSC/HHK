@@ -32,7 +32,7 @@ $rb_cyChecked = "";
 
 
 if (isset($_POST["selYears"])) {
-    $yearSelected = filter_var($_POST["selYears"], FILTER_SANITIZE_STRING);
+    $yearSelected = filter_var($_POST["selYears"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 } else {
     $yearSelected = "all";
 }

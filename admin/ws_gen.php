@@ -40,7 +40,7 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
 
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 } else {
     $c = 'bad command';
 }
@@ -80,7 +80,7 @@ try {
 
             $parms = array();
             if (isset($_POST["parms"])) {
-                $parms = filter_var_array($_POST["parms"], FILTER_SANITIZE_STRING);
+                $parms = filter_var_array($_POST["parms"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = WebUser::saveUname($dbh, $uS->username, $parms, $maintFlag);
@@ -89,7 +89,7 @@ try {
 
         case "gpage":
 
-            $site = filter_var($_REQUEST["page"], FILTER_SANITIZE_STRING);
+            $site = filter_var($_REQUEST["page"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($maintFlag) {
                 $events = Pages::getPages($dbh, $site);
@@ -149,7 +149,7 @@ try {
             );
 
             if (isset($_REQUEST['logId'])) {
-                $logSel = filter_var($_REQUEST['logId'], FILTER_SANITIZE_STRING);
+                $logSel = filter_var($_REQUEST['logId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($logSel == 'liss') {
@@ -220,7 +220,7 @@ try {
 
             $jobType = '';
             if (isset($_REQUEST['jobType'])) {
-                $jobType = filter_var($_REQUEST['jobType'], FILTER_SANITIZE_STRING);
+                $jobType = filter_var($_REQUEST['jobType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $job = JobFactory::make($dbh, $idJob, false, $jobType);
@@ -261,49 +261,49 @@ try {
 
             $title = "";
             if (isset($_REQUEST['title'])) {
-                $title = substr(filter_var($_REQUEST['title'], FILTER_SANITIZE_STRING), 0, 45);
+                $title = substr(filter_var($_REQUEST['title'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
             }
 
             $jobType = "";
             if (isset($_REQUEST['jobType'])) {
-                $jobType = substr(filter_var($_REQUEST['jobType'], FILTER_SANITIZE_STRING), 0, 45);
+                $jobType = substr(filter_var($_REQUEST['jobType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
             }
 
             $params = array();
             if (isset($_REQUEST['params']) && is_array($_REQUEST['params'])) {
                 foreach($_REQUEST['params'] as $key=>$val){
-                    $params[$key] = filter_var($val, FILTER_SANITIZE_STRING);
+                    $params[$key] = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
             }
 
             $interval = '';
             if (isset($_REQUEST['interval'])) {
-                $interval = filter_var($_REQUEST['interval'], FILTER_SANITIZE_STRING);
+                $interval = filter_var($_REQUEST['interval'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $day = '';
             if (isset($_REQUEST['day'])) {
-                $day = filter_var($_REQUEST['day'], FILTER_SANITIZE_STRING);
+                $day = filter_var($_REQUEST['day'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $weekday = '';
             if (isset($_REQUEST['weekday'])) {
-                $weekday = filter_var($_REQUEST['weekday'], FILTER_SANITIZE_STRING);
+                $weekday = filter_var($_REQUEST['weekday'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $hour = '';
             if (isset($_REQUEST['hour'])) {
-                $hour = filter_var($_REQUEST['hour'], FILTER_SANITIZE_STRING);
+                $hour = filter_var($_REQUEST['hour'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $minute = '';
             if (isset($_REQUEST['minute'])) {
-                $minute = filter_var($_REQUEST['minute'], FILTER_SANITIZE_STRING);
+                $minute = filter_var($_REQUEST['minute'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $status = '';
             if (isset($_REQUEST['status'])) {
-                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = updateCronJob($dbh, $idJob, $title, $jobType, $params, $interval, $day, $weekday, $hour, $minute, $status);
@@ -322,7 +322,7 @@ try {
             }
 
             if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = deleteRelationLink($dbh, $id, $rId, $rc);
@@ -341,7 +341,7 @@ try {
             }
 
             if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = newRelationLink($dbh, $id, $rId, $rc);
@@ -360,7 +360,7 @@ try {
             }
 
             if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = changeCareOfFlag($dbh, $id, $rId, $rc, TRUE);
@@ -379,7 +379,7 @@ try {
             }
 
             if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = changeCareOfFlag($dbh, $id, $rId, $rc, FALSE);
@@ -390,7 +390,7 @@ try {
             $uid = 0;
 
             if (isset($_POST["adpw"])) {
-                $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_STRING);
+                $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if (isset($_POST['uid'])) {
@@ -398,7 +398,7 @@ try {
             }
 
             if (isset($_POST["uname"])) {
-                $uname = filter_var($_POST["uname"], FILTER_SANITIZE_STRING);
+                $uname = filter_var($_POST["uname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = adminChangePW($dbh, $adPw, $uid, $uname);
@@ -414,7 +414,7 @@ try {
 
             $enFile = '';
             if (isset($_POST["servFile"])) {
-                $enFile = filter_var($_POST["servFile"], FILTER_SANITIZE_STRING);
+                $enFile = filter_var($_POST["servFile"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $servFile = decryptMessage($enFile);
@@ -549,7 +549,7 @@ function changeLog(PDO $dbh, $id, $get) {
     $view = 'vaudit_log';
 
     if (isset($get['vw'])) {
-        $view = filter_var($get['vw'], FILTER_SANITIZE_STRING);
+        $view = filter_var($get['vw'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     $columns = array(
@@ -573,10 +573,10 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
         return array("success" => "Fill in Start Date");
     }
 
-    $dStart = date("Y-m-d", strtotime(filter_var($parms["sdate"], FILTER_SANITIZE_STRING)));
+    $dStart = date("Y-m-d", strtotime(filter_var($parms["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
     if (isset($parms["edate"]) && $parms["edate"] != '') {
-        $dEnd = date("Y-m-d 23:59:59", strtotime(filter_var($parms["edate"], FILTER_SANITIZE_STRING)));
+        $dEnd = date("Y-m-d 23:59:59", strtotime(filter_var($parms["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
     } else {
         $dEnd = date("Y-m-d 23:59:59");
     }

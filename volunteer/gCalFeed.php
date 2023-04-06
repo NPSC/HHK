@@ -41,7 +41,7 @@ addslashesextended($_GET);
 
 //Check GET
 if (isset($_GET['c'])) {
-    $c = filter_var($_GET['c'], FILTER_SANITIZE_STRING);
+    $c = filter_var($_GET['c'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 } else {
 
     echo array("error" => "Bad Command");
@@ -55,7 +55,7 @@ $cats->loadFromDb($dbh);
 
 $vcc = "";
 if (isset($_GET['vcc'])) {
-    $vcc = filter_var(urldecode($_GET['vcc']), FILTER_SANITIZE_STRING);
+    $vcc = filter_var(urldecode($_GET['vcc']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 
@@ -103,10 +103,10 @@ try {
             $startTime = '';
             $endTime = '';
             if (isset($_GET['start'])) {
-                $startTime = filter_var(urldecode($_GET["start"]), FILTER_SANITIZE_STRING);
+                $startTime = filter_var(urldecode($_GET["start"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             if (isset($_GET['end'])) {
-                $endTime = filter_var(urldecode($_GET["end"]), FILTER_SANITIZE_STRING);
+                $endTime = filter_var(urldecode($_GET["end"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = VolCal::GetListView($dbh, $startTime, $endTime, $vcc, $cats);
@@ -117,7 +117,7 @@ try {
         case "getevent":
             $eid = "";
             if (isset($_GET["eid"])) {
-                $eid = filter_var(urldecode($_GET["eid"]), FILTER_SANITIZE_STRING);
+                $eid = filter_var(urldecode($_GET["eid"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = VolCal::getEvent($dbh, $eid);
@@ -151,10 +151,10 @@ try {
                 $delall = filter_var($_GET["delall"], FILTER_SANITIZE_NUMBER_INT);
             }
             if (isset($_GET["justme"])) {
-                $justme = filter_var($_GET["justme"], FILTER_SANITIZE_STRING);
+                $justme = filter_var($_GET["justme"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             if (isset($_GET["sendemail"])) {
-                $sendemail = filter_var($_GET["sendemail"], FILTER_SANITIZE_STRING);
+                $sendemail = filter_var($_GET["sendemail"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = VolCal::DeleteCalEvent($dbh, $eid, $delall, $justme, $sendemail, $cats);
@@ -163,7 +163,7 @@ try {
 
         case "drp":
             if (isset($_GET["id"])) {
-                $gets["id"] = filter_var($_GET["id"], FILTER_SANITIZE_STRING);
+                $gets["id"] = filter_var($_GET["id"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             if (isset($_GET["dayDelta"])) {
                 $gets["dayDelta"] = filter_var($_GET["dayDelta"], FILTER_SANITIZE_NUMBER_INT);
@@ -181,7 +181,7 @@ try {
 
         case "rsz":
             if (isset($_GET["id"])) {
-                $gets["id"] = filter_var($_GET["id"], FILTER_SANITIZE_STRING);
+                $gets["id"] = filter_var($_GET["id"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             if (isset($_GET["dayDelta"])) {
                 $gets["dayDelta"] = filter_var($_GET["dayDelta"], FILTER_SANITIZE_NUMBER_INT);

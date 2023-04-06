@@ -114,19 +114,19 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         $minAmt = "";
     }
 
-    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_STRING);
+    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     if ($sDate != '') {
         $sDate = date("Y/m/d", strtotime($sDate));
     }
 
-    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_STRING);
+    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     if ($eDate != "") {
         $eDate .= "23:59:59";
         $eDate = date("Y/m/d", strtotime($eDate));
     }
 
-    //$ordr = filter_var($_POST["selOrder"], FILTER_SANITIZE_STRING);
-    $roll = filter_var($_POST["selrollup"], FILTER_SANITIZE_STRING);
+    //$ordr = filter_var($_POST["selOrder"], FILTER_SANITIZE_FULL_SPCIAL_CHARS);
+    $roll = filter_var($_POST["selrollup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 
     if (isset($_POST["btnDonDL"])) {

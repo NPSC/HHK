@@ -620,7 +620,7 @@ class RoomChooser {
         }
 
         if (isset($post['rcat'])) {
-            $cat = filter_var($post['rcat'],FILTER_SANITIZE_STRING);
+            $cat = filter_var($post['rcat'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($post['fxd'])) {

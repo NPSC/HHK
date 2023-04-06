@@ -171,7 +171,7 @@ class RateChooser {
         $min = $now->format('m');
 
         if (isset($post['rbReplaceRate'])) {
-            $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_STRING);
+            $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else {
             return 'Replacement Mode not set.  ';
         }
@@ -181,7 +181,7 @@ class RateChooser {
 
             if (isset($post['chgRateDate']) && $post['chgRateDate'] != '') {
 
-                $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_STRING));
+                $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $chRateDT = new \DateTime($chDT->format('Y-m-d'));
                 $chDT->setTime($hr, $min, 0);
 
@@ -238,7 +238,7 @@ class RateChooser {
 
         // Check rate change inputs
         if (isset($post['selRateCategory'])) {
-            $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
+            $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if ($rateCategory == '') {

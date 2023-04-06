@@ -97,7 +97,7 @@
 //         if (isset($_POST["cbEmp"])) {
 //             $bitSet = filter_var($_POST["cbEmp"], FILTER_VALIDATE_BOOLEAN);
 //             if ($bitSet) {
-//                 $coName = filter_var($_POST["txtCoName"], FILTER_SANITIZE_STRING);
+//                 $coName = filter_var($_POST["txtCoName"], FILTER_SANITIZE_FULL_SPCIAL_CHARS);
 //                 $arrParams = array("isi", $keepId, $coName, $dupId);
 //                 $query = "update name set Company_Id = ?, Company = ?  where Company_Id = ? and Record_Member=1";
 //                 if (($result = $dbo->iQuery($query, $arrParams)) !== false) {

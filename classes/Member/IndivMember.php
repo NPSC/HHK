@@ -694,7 +694,7 @@ ORDER BY `List_Order`");
         //  Name
         $last = trim($n->Name_Last->getStoredVal());
         if (isset($post[$idPrefix.'txtLastName'])) {
-            $last = ucfirst(trim(filter_var($post[$idPrefix.'txtLastName'], FILTER_SANITIZE_STRING)));
+            $last = ucfirst(trim(filter_var($post[$idPrefix.'txtLastName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
             $n->Name_Last->setNewVal($last);
         }
 
@@ -706,13 +706,13 @@ ORDER BY `List_Order`");
 
         $first = $n->Name_First->getStoredVal();
         if (isset($post[$idPrefix.'txtFirstName'])) {
-            $n->Name_First->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtFirstName'], FILTER_SANITIZE_STRING))));
+            $n->Name_First->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtFirstName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
             $first = $n->Name_First->getNewVal();
         }
 
         $middle = $n->Name_Middle->getStoredVal();
         if (isset($post[$idPrefix.'txtMiddleName'])) {
-            $n->Name_Middle->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtMiddleName'], FILTER_SANITIZE_STRING))));
+            $n->Name_Middle->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtMiddleName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
             $middle = $n->Name_Middle->getNewVal();
         }
 
@@ -725,7 +725,7 @@ ORDER BY `List_Order`");
         }
         if (isset($post[$idPrefix.'selPrefix'])) {
             // Check new value
-            $pre = filter_var($post[$idPrefix.'selPrefix'], FILTER_SANITIZE_STRING);
+            $pre = filter_var($post[$idPrefix.'selPrefix'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (isset($uS->nameLookups[GLTableNames::NamePrefix][$pre])) {
                 $prefix = $pre;
@@ -745,7 +745,7 @@ ORDER BY `List_Order`");
         }
         if (isset($post[$idPrefix.'selSuffix'])) {
             // Check new value
-            $suf = filter_var($post[$idPrefix.'selSuffix'], FILTER_SANITIZE_STRING);
+            $suf = filter_var($post[$idPrefix.'selSuffix'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (isset($uS->nameLookups[GLTableNames::NameSuffix][$suf])) {
                 $suffix = $suf;
@@ -786,17 +786,17 @@ ORDER BY `List_Order`");
 
         //  Title
         if (isset($post[$idPrefix.'txtTitle'])) {
-            $n->Title->setNewVal(filter_var($post[$idPrefix.'txtTitle'], FILTER_SANITIZE_STRING));
+            $n->Title->setNewVal(filter_var($post[$idPrefix.'txtTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         //  Previous Name
         if (isset($post[$idPrefix.'txtPreviousName'])) {
-            $n->Name_Previous->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtPreviousName'], FILTER_SANITIZE_STRING))));
+            $n->Name_Previous->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtPreviousName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
         }
 
         //  Nickname
         if (isset($post[$idPrefix.'txtNickname'])) {
-            $n->Name_Nickname->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtNickname'], FILTER_SANITIZE_STRING))));
+            $n->Name_Nickname->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtNickname'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
         }
 
 
@@ -807,7 +807,7 @@ ORDER BY `List_Order`");
 
         //  Birth Date
         if (isset($post[$idPrefix.'txtBirthDate'])) {
-            $bd = filter_var($post[$idPrefix.'txtBirthDate'], FILTER_SANITIZE_STRING);
+            $bd = filter_var($post[$idPrefix.'txtBirthDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             if ($bd != '') {
                 $n->BirthDate->setNewVal(date('Y-m-d H:i:s', strtotime($bd)));
                 $n->Birth_Month->setNewVal(date('m', strtotime($bd)));
@@ -826,7 +826,7 @@ ORDER BY `List_Order`");
                 $field = $this->getDemographicField($d[0]);
 
                 if (is_null($field) === FALSE) {
-                    $field->setNewVal(filter_var($post[$idPrefix.'sel_' . $d[0]], FILTER_SANITIZE_STRING));
+                    $field->setNewVal(filter_var($post[$idPrefix.'sel_' . $d[0]], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 }
             }
         }
@@ -835,7 +835,7 @@ ORDER BY `List_Order`");
         //  No Return
         if (isset($post[$idPrefix.'selnoReturn'])) {
 
-            $reason = filter_var($post[$idPrefix.'selnoReturn'], FILTER_SANITIZE_STRING);
+            $reason = filter_var($post[$idPrefix.'selnoReturn'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (isset($uS->nameLookups['NoReturnReason'][$reason])) {
                 $this->demogRS->No_Return->setNewVal($reason);
@@ -981,11 +981,11 @@ ORDER BY `List_Order`");
                 $insId = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['insuranceId'], FILTER_SANITIZE_NUMBER_INT);
                 $groupNum = '';
                 if(isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'])){
-                    $groupNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'], FILTER_SANITIZE_STRING);
+                    $groupNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
                 $memNum = '';
                 if(isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'])){
-                    $memNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'], FILTER_SANITIZE_STRING);
+                    $memNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
                 $ins = ["id"=>$insId, "groupNum"=>$groupNum, "memNum"=>$memNum];
                 $inss2[$insId] = $ins;

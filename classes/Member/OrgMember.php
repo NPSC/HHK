@@ -172,11 +172,11 @@ class OrgMember extends AbstractMember {
         $n = $this->nameRS;
 
         if (isset($post['txtCoName'])) {
-            $n->Company->setNewVal(trim(filter_var($post['txtCoName'], FILTER_SANITIZE_STRING)));
+            $n->Company->setNewVal(trim(filter_var($post['txtCoName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         }
 
         if (isset($post['txtWebSite'])) {
-            $n->Web_Site->setNewVal(trim(filter_var($post['txtWebSite'], FILTER_SANITIZE_STRING)));
+            $n->Web_Site->setNewVal(trim(filter_var($post['txtWebSite'], FILTER_SANITIZE_URL)));
         }
 
 

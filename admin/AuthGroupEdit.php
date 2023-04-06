@@ -37,7 +37,7 @@ if (isset($_POST['btnSave'])) {
 
         foreach ($_POST['Group_Code'] as $c) {
 
-            $gc = filter_var($c, FILTER_SANITIZE_STRING);
+            $gc = filter_var($c, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $wgRS = new W_groupsRS();
             $wgRS->Group_Code->setStoredVal($gc);
@@ -47,8 +47,8 @@ if (isset($_POST['btnSave'])) {
 
                 EditRS::loadRow($wgRows[0], $wgRS);
 
-                $wgRS->Title->setNewVal(filter_var($_POST[$wgRS->Title->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
-                $wgRS->Description->setNewVal(filter_var($_POST[$wgRS->Description->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
+                $wgRS->Title->setNewVal(filter_var($_POST[$wgRS->Title->getColUnticked()][$gc], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                $wgRS->Description->setNewVal(filter_var($_POST[$wgRS->Description->getColUnticked()][$gc], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
                 if (isset($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) && count($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) > 0) {
                     $wgRS->IP_Restricted->setNewVal(1);
@@ -88,7 +88,7 @@ if (isset($_POST['btnSave'])) {
             if (count($wauthipRows) == 1) {
                 EditRS::loadRow($wauthipRows[0], $wauthipRS);
 
-                $wauthipRS->Title->setNewVal(filter_var($_POST['ip_title'][$ip], FILTER_SANITIZE_STRING));
+                $wauthipRS->Title->setNewVal(filter_var($_POST['ip_title'][$ip], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $wauthipRS->cidr->setNewVal(filter_var($_POST['ip_cidr'][$ip], FILTER_SANITIZE_NUMBER_INT));
                 $wauthipRS->Updated_By->setNewVal($uS->username);
                 $wauthipRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));

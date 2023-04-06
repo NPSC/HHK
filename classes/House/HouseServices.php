@@ -243,7 +243,7 @@ class HouseServices {
         // Notes
         if (isset($post["taNewVNote"])) {
 
-            $notes = filter_var($post["taNewVNote"], FILTER_SANITIZE_STRING);
+            $notes = filter_var($post["taNewVNote"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($notes != '' && $idVisit > 0) {
                 LinkNote::save($dbh, $notes, $idVisit, Note::VisitLink, '', $uS->username, $uS->ConcatVisitNotes);
@@ -252,7 +252,7 @@ class HouseServices {
 
         // Ribbon Note
         if (isset($post["txtRibbonNote"])){
-            $ribbonNote = filter_var($post["txtRibbonNote"], FILTER_SANITIZE_STRING);
+            $ribbonNote = filter_var($post["txtRibbonNote"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $oldNote = $visit->getNotes();
             $visit->setNotes($ribbonNote, $uS->username);
             $visit->updateVisitRecord($dbh, $uS->username);
@@ -264,7 +264,7 @@ class HouseServices {
 
         // Notice to Check out
         if (isset($post["noticeToCheckout"])){
-            $noticeToCheckout = filter_var($post["noticeToCheckout"], FILTER_SANITIZE_STRING);
+            $noticeToCheckout = filter_var($post["noticeToCheckout"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             try{
                 $vacateDT = new \DateTime($noticeToCheckout);
                 $vacateDT->setTime(0, 0, 0);
@@ -298,7 +298,7 @@ class HouseServices {
         // Change Visit Fee
         if (isset($post['selVisitFee'])) {
 
-            $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_STRING);
+            $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $reply .= VisitViewer::changeVisitFee($dbh, $visitFeeOption, $visit);
         }
@@ -315,7 +315,7 @@ class HouseServices {
             // Get the new expected co date.
             if (isset($post['txtUndoDate'])) {
 
-                $newExpectedDT = new \DateTime(filter_var($post['txtUndoDate'], FILTER_SANITIZE_STRING));
+                $newExpectedDT = new \DateTime(filter_var($post['txtUndoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
             } else {
 
@@ -357,7 +357,7 @@ class HouseServices {
 
                         $extendStartDate = '';
                         if (isset($post['txtWStart']) && $post['txtWStart'] != '') {
-                            $extendStartDate = filter_var($post['txtWStart'], FILTER_SANITIZE_STRING);
+                            $extendStartDate = filter_var($post['txtWStart'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                         }
 
                         $extDays = 0;
@@ -391,7 +391,7 @@ class HouseServices {
 
                             if (isset($post['extendDate']) && $post['extendDate'] != '') {
 
-                                $extendDate = filter_var($post['extendDate'], FILTER_SANITIZE_STRING);
+                                $extendDate = filter_var($post['extendDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
                                 $reply .= $visit->extendLeave($dbh, $extendDate);
                                 $returnCkdIn = TRUE;
@@ -402,7 +402,7 @@ class HouseServices {
 
                             if (isset($post['txtWRetDate']) && $post['txtWRetDate'] != '') {
 
-                                $returnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
+                                $returnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
                                 $reply .= $visit->endLeave($dbh, $returnDate);
                                 $returnCkdIn = TRUE;
@@ -443,7 +443,7 @@ class HouseServices {
                         // Check out Date
                         $coDate = date('Y-m-d');
                         if (isset($post['stayCkOutDate'][$id]) && $post['stayCkOutDate'][$id] != '') {
-                            $coDate = filter_var($post['stayCkOutDate'][$id], FILTER_SANITIZE_STRING);
+                            $coDate = filter_var($post['stayCkOutDate'][$id], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                         }
 
                         $coHour = intval(date('H'), 10);
@@ -551,7 +551,7 @@ class HouseServices {
         $creditCheckOut = array();
 
         if (isset($post['pbp'])) {
-            $postbackPage = filter_var($post['pbp'], FILTER_SANITIZE_STRING);
+            $postbackPage = filter_var($post['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Instantiate a payment manager payment container.
@@ -1599,21 +1599,21 @@ class HouseServices {
             }
 
             if (isset($post['txtvdNewCardName'.$idx]) && $post['txtvdNewCardName'.$idx] != '') {
-            	$newCardHolderName = strtoupper(filter_var($post['txtvdNewCardName'.$idx], FILTER_SANITIZE_STRING));
+            	$newCardHolderName = strtoupper(filter_var($post['txtvdNewCardName'.$idx], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // For mulitple merchants
             if (isset($post['selccgw'.$idx])) {
-            	$selGw = strtolower(filter_var($post['selccgw'.$idx], FILTER_SANITIZE_STRING));
+            	$selGw = strtolower(filter_var($post['selccgw'.$idx], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post['selChargeType'.$idx])) {
-            	$cardType = filter_var($post['selChargeType'.$idx], FILTER_SANITIZE_STRING);
+            	$cardType = filter_var($post['selChargeType'.$idx], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if (isset($post['txtChargeAcct'.$idx])) {
 
-            	$chargeAcct = filter_var($post['txtChargeAcct'.$idx], FILTER_SANITIZE_STRING);
+            	$chargeAcct = filter_var($post['txtChargeAcct'.$idx], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             	if (strlen($chargeAcct) > 4) {
             		$chargeAcct = substr($chargeAcct, -4, 4);

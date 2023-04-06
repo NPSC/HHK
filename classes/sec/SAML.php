@@ -1004,13 +1004,13 @@ class SAML {
             $defaultSecurityGroups = array();
 
             if(isset($post['idpConfig'][$this->IdpId]['name']) && $post['idpConfig'][$this->IdpId]['name'] != ''){
-                $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_STRING);
+                $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }else{
                 $errorMsg .= "<br>Name is required";
             }
 
             if(isset($post['idpConfig'][$this->IdpId]['LogoPath'])){
-                $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_STRING);
+                $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if(!isset($post['idpConfig']['new'])){

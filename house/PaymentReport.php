@@ -75,7 +75,7 @@ $delCofListClass = 'hhk-delcoflist';
 if (isset($_POST['cmd'])) {
 
 	$dataArray = array();
-	$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_STRING);
+	$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 	if ($cmd == 'cof') {
 		$dataArray['coflist'] = CreditToken::getCardsOnFile($dbh, 'GuestEdit.php?id=');
@@ -173,7 +173,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if (isset($_POST['selPayStatus'])) {
         $reqs = $_POST['selPayStatus'];
         if (is_array($reqs)) {
-            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
@@ -182,7 +182,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     	$reqs = $_POST['selPayType'];
 
     	if (is_array($reqs)) {
-    		$payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+    		$payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     	}
     }
 
@@ -191,7 +191,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     	$reqs = $_POST['selGateway'];
 
     	if (is_array($reqs)) {
-    		$gwSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+    		$gwSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     	}
     }
 

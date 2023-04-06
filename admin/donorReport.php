@@ -63,10 +63,10 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
     $makeTable = 2;
 
     // collect the parameters
-    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_STRING);
-    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_STRING);
+    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_STRING);
+    $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $letterSalSelector->setReturnValues($_POST[$letterSalSelector->get_htmlNameBase()]);
     $envSalSelector->setReturnValues($_POST[$envSalSelector->get_htmlNameBase()]);
@@ -90,7 +90,7 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
 
 
     // Do the report
-    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_STRING), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_STRING), FALSE);
+    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), FALSE);
 
     if ($voldCat->get_andOr() == "or") {
         $anddChecked = "";

@@ -138,7 +138,7 @@ if (isset($_POST['btnkfSave'])) {
     if (isset($_POST['srrDesc'][0]) && $_POST['srrDesc'][0] != '') {
 
         // new entry
-        $dText = filter_var($_POST['srrDesc'][0], FILTER_SANITIZE_STRING);
+        $dText = filter_var($_POST['srrDesc'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $dAmt = filter_var($_POST['srrAmt'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
         // Check for an entry with the same description
@@ -185,7 +185,7 @@ if (isset($_POST['btnkfSave'])) {
                 ));
 
                 if (count($rows) == 1) {
-                    $itemRs->Description->setNewVal(filter_var($_POST['kdesc'][$k], FILTER_SANITIZE_STRING));
+                    $itemRs->Description->setNewVal(filter_var($_POST['kdesc'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     EditRS::update($dbh, $itemRs, array(
                         $itemRs->idItem
                     ));
@@ -200,7 +200,7 @@ if (isset($_POST['btnkfSave'])) {
         // new visit fee defined?
         if (isset($_POST['vfdesc'][0])) {
 
-            $newDesc = filter_var($_POST['vfdesc'][0], FILTER_SANITIZE_STRING);
+            $newDesc = filter_var($_POST['vfdesc'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $newRate = filter_var($_POST['vfrate'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
             if ($newDesc != '') {
@@ -240,7 +240,7 @@ if (isset($_POST['btnkfSave'])) {
         $vfDefault = '';
 
         if (isset($_POST['vfrbdefault'])) {
-            $vfDefault = filter_var($_POST['vfrbdefault'], FILTER_SANITIZE_STRING);
+            $vfDefault = filter_var($_POST['vfrbdefault'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Amount Changed?
@@ -268,7 +268,7 @@ if (isset($_POST['btnkfSave'])) {
     // Pay type default
     if (isset($_POST['ptrbdefault'])) {
 
-        $vfDefault = filter_var($_POST['ptrbdefault'], FILTER_SANITIZE_STRING);
+        $vfDefault = filter_var($_POST['ptrbdefault'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $vFees = readGenLookupsPDO($dbh, 'Pay_Type');
 
         foreach ($vFees as $v) {
@@ -291,7 +291,7 @@ if (isset($_POST['btnkfSave'])) {
     	foreach ($payMethods as $t) {
 
     		if (isset($_POST['ptGlCode'][$t[0]])) {
-    			$gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_STRING);
+    			$gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     			$dbh->exec("Update payment_method set Gl_Code = '$gl' where idPayment_method = ". $t[0]);
     		}
@@ -491,7 +491,7 @@ if (isset($_POST['btnhSave'])) {
     $tabIndex = 3;
     $postedHosp = array();
     if (isset($_POST['hTitle'])) {
-        $postedHosp = filter_var_array($_POST['hTitle'], FILTER_SANITIZE_STRING);
+        $postedHosp = filter_var_array($_POST['hTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     foreach ($postedHosp as $hid => $title) {
@@ -520,13 +520,13 @@ if (isset($_POST['btnhSave'])) {
 
         // Type
         if (isset($_POST['hType'][$idHosp])) {
-            $type = filter_var($_POST['hType'][$idHosp], FILTER_SANITIZE_STRING);
+            $type = filter_var($_POST['hType'][$idHosp], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else {
             continue;
         }
 
         if (isset($_POST['hDesc'][$idHosp])) {
-            $desc = filter_var($_POST['hDesc'][$idHosp], FILTER_SANITIZE_STRING);
+            $desc = filter_var($_POST['hDesc'][$idHosp], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else {
             $desc = '';
         }
@@ -534,13 +534,13 @@ if (isset($_POST['btnhSave'])) {
         // background Color
         $rCSS = '';
         if (isset($_POST['hColor'][$idHosp])) {
-            $rCSS = filter_var($_POST['hColor'][$idHosp], FILTER_SANITIZE_STRING);
+            $rCSS = filter_var($_POST['hColor'][$idHosp], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Text Color
         $vCSS = '';
         if (isset($_POST['hText'][$idHosp])) {
-            $vCSS = filter_var($_POST['hText'][$idHosp], FILTER_SANITIZE_STRING);
+            $vCSS = filter_var($_POST['hText'][$idHosp], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // hide?
@@ -606,7 +606,7 @@ if (isset($_POST['btnAttrSave'])) {
     $tabIndex = 9;
     $postedAttr = array();
     if (isset($_POST['atTitle'])) {
-        $postedAttr = filter_var_array($_POST['atTitle'], FILTER_SANITIZE_STRING);
+        $postedAttr = filter_var_array($_POST['atTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     foreach ($postedAttr as $hid => $title) {
@@ -638,7 +638,7 @@ if (isset($_POST['btnAttrSave'])) {
         }
 
         if (isset($_POST['atCat'][$idAttr])) {
-            $cat = filter_var($_POST['atCat'][$idAttr], FILTER_SANITIZE_STRING);
+            $cat = filter_var($_POST['atCat'][$idAttr], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else {
             $cat = '';
         }
@@ -701,14 +701,14 @@ if (isset($_POST['btnItemSave'])) {
 
         if (isset($_POST['txtItem'][$idItem])) {
 
-        	$desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
+        	$desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         	$dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $idItem);
         }
 
         if (isset($_POST['txtGlCode'][$idItem])) {
 
-        	$glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
+        	$glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         	$dbh->exec("update `item` set `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
         }
@@ -753,10 +753,10 @@ if (isset($_POST['btnTaxSave'])) {
 
         if (isset($_POST['txttItem'][$i['idItem']])) {
 
-            $desc = filter_var($_POST['txttItem'][$i['idItem']], FILTER_SANITIZE_STRING);
-            $glCode = filter_var($_POST['txttGlCode'][$i['idItem']], FILTER_SANITIZE_STRING);
-            $percentage = filter_var($_POST['txttPercentage'][$i['idItem']], FILTER_SANITIZE_STRING);
-            $maxDays = filter_var($_POST['txttMaxDays'][$i['idItem']], FILTER_SANITIZE_STRING);
+            $desc = filter_var($_POST['txttItem'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $glCode = filter_var($_POST['txttGlCode'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $percentage = filter_var($_POST['txttPercentage'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $maxDays = filter_var($_POST['txttMaxDays'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $last = $i['Last_Order_Id'];
             $first = $i['First_Order_Id'];
 
@@ -799,10 +799,10 @@ if (isset($_POST['btnTaxSave'])) {
     // New tax item?
     if (isset($_POST['txttItem'][0]) && $_POST['txttItem'][0] != '') {
 
-        $desc = filter_var($_POST['txttItem'][0], FILTER_SANITIZE_STRING);
-        $glCode = filter_var($_POST['txttGlCode'][0], FILTER_SANITIZE_STRING);
-        $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_STRING);
-        $maxDays = filter_var($_POST['txttMaxDays'][0], FILTER_SANITIZE_STRING);
+        $desc = filter_var($_POST['txttItem'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $glCode = filter_var($_POST['txttGlCode'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $maxDays = filter_var($_POST['txttMaxDays'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) Values ('$desc', '$glCode', '$percentage', '$maxDays', $nextVisitId)");
 
@@ -818,7 +818,7 @@ if (isset($_POST['ldfm'])) {
     $formDef = '';
     $formTitle = '';
 
-    $formType = filter_var($_POST['ldfm'], FILTER_SANITIZE_STRING);
+    $formType = filter_var($_POST['ldfm'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
 
@@ -957,18 +957,18 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
 
         $docCode = '';
         if(isset($_POST['docCode'])){
-            $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
+            $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $formType = "";
         if (isset($_POST['filefrmtype'])) {
-        	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
+        	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $subjectLine = "";
         $abstract = array();
         if(isset($_POST["emailSubjectLine"])){
-            $subjectLine = filter_var($_POST["emailSubjectLine"], FILTER_SANITIZE_STRING);
+            $subjectLine = filter_var($_POST["emailSubjectLine"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $abstract["subjectLine"] = $subjectLine;
         }
 
@@ -1033,8 +1033,8 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
 
 if (isset($_POST['docAction']) && $_POST['docAction'] == "docDelete" && isset($_POST['docCode']) && isset($_POST['formDef'])) {
     try{
-        $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
-        $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
+        $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $tabIndex = 8;
 
@@ -1042,7 +1042,7 @@ if (isset($_POST['docAction']) && $_POST['docAction'] == "docDelete" && isset($_
         $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
 
         if (isset($_POST['docfrmtype'])) {
-        	$formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_STRING);
+        	$formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         echo json_encode(array("success"=>"Form deleted successfully"));
@@ -1080,12 +1080,12 @@ if (stripos($content_type, 'application/json') !== false) {
 if (isset($_POST['txtformLang'])) {
 
     $tabIndex = 8;
-    $lang = trim(filter_var($_POST['txtformLang'], FILTER_SANITIZE_STRING));
+    $lang = trim(filter_var($_POST['txtformLang'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $formDef = '';
     $formTitle = '';
 
     if (isset($_POST['hdnFormType'])) {
-    	$formType = filter_var($_POST['hdnFormType'], FILTER_SANITIZE_STRING);
+    	$formType = filter_var($_POST['hdnFormType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     if ($lang != '') {

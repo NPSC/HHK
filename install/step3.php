@@ -101,21 +101,21 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
 
     }
 
-    $rateCode = filter_var($_POST['selModel'], FILTER_SANITIZE_STRING);
+    $rateCode = filter_var($_POST['selModel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     if ($rateCode != '' && isset($rPrices[$rateCode])) {
 
     	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'RoomPriceModel', $rateCode);
-        
+
         if (isset($_POST['cbFin'])) {
         	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'IncomeRated', 'true');
         } else {
         	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'IncomeRated', 'false');
         }
-        
+
         SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
         SysConfig::getCategory($dbh, $ssn, "'hf'", webInit::SYS_CONFIG);
-        
+
         $dbh->exec("delete from `room_rate`");
 
         AbstractPriceModel::installRates($dbh, $rateCode, $ssn->IncomeRated);

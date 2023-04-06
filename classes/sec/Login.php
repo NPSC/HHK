@@ -144,18 +144,18 @@ class Login {
 
         if (isset($post["txtUname"]) && isset($post["txtPass"])) {
 
-            $this->userName = strtolower(substr($post["txtUname"], 0, 100));
+            $this->userName = strtolower(substr(filter_var($post["txtUname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 100));
 
             $password = filter_var($post["txtPass"], FILTER_UNSAFE_RAW);
 
             $otp = '';
             if(isset($post["otp"])){
-                $otp = filter_var($post["otp"], FILTER_UNSAFE_RAW);
+                $otp = filter_var($post["otp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $otpMethod = false;
             if(isset($post["otpMethod"])){
-                $otpMethod = filter_var($post['otpMethod'], FILTER_UNSAFE_RAW);
+                $otpMethod = filter_var($post['otpMethod'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $showMethodMkup = false;

@@ -41,7 +41,7 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
     $query = "";
 
     if (isset($_POST["selIntDetail"])) {
-        $detail = filter_var($_POST["selIntDetail"], FILTER_SANITIZE_STRING);
+        $detail = filter_var($_POST["selIntDetail"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if ($detail == "ru") {
             $groupBy = " group by g.Description, vm.Id with rollup";
             $sumHours = TRUE;
@@ -87,7 +87,7 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
         if (isset($_POST["selHoursInterval"])) {
             $now = getDate();
             $intMonth = 0;
-            $interval = filter_var($_POST["selHoursInterval"], FILTER_SANITIZE_STRING);
+            $interval = filter_var($_POST["selHoursInterval"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             switch ($interval) {
                 case "m":
@@ -214,7 +214,7 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
             // Header row
             $hdr = array();
             $colWidths = array();
-            
+
             foreach ($rows[0] as $k => $v) {
                 if($k == "Hours"){
                     $hdr[$k] = "price";
@@ -227,7 +227,7 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
                     $colWidths[] = "20";
                 }
             }
-            
+
             $hdrStyle = $writer->getHdrStyle($colWidths);
             $writer->writeSheetHeader("Worksheet", $hdr, $hdrStyle);
 

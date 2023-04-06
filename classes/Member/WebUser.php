@@ -245,12 +245,12 @@ class WebUser {
 
         $status = '';
         if (isset($parms["status"])) {
-            $status = filter_var($parms["status"], FILTER_SANITIZE_STRING);
+            $status = filter_var($parms["status"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $defaultPage = '';
         if (isset($parms["defaultPage"])) {
-            $defaultPage = filter_var($parms["defaultPage"], FILTER_SANITIZE_STRING);
+            $defaultPage = filter_var($parms["defaultPage"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $wUserName = "";
@@ -260,7 +260,7 @@ class WebUser {
                 return array("error"=>"User name can only contain lowercase letters, uppercase letters, numbers, '@', or '.' and must be 6-35 characters");
             }
 
-            $wUserName = filter_var($parms["wuname"], FILTER_SANITIZE_STRING);
+            $wUserName = filter_var($parms["wuname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (strtolower($wUserName) == 'admin') {
                 return array("error"=>"'Admin' cannot be used as a user name.");

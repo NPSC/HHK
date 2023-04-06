@@ -40,9 +40,9 @@ class PaymentChooser {
 
         // Payment Type
         if (isset($post['PayTypeSel'])) {
-            $payType = filter_var($post['PayTypeSel'], FILTER_SANITIZE_STRING);
+            $payType = filter_var($post['PayTypeSel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else if (isset($post['rtnTypeSel'])) {
-            $payType = filter_var($post['rtnTypeSel'], FILTER_SANITIZE_STRING);
+            $payType = filter_var($post['rtnTypeSel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else {
             return NULL;
         }
@@ -52,12 +52,12 @@ class PaymentChooser {
 
         // Return-payment type
         if (isset($post['rtnTypeSel'])) {
-            $pmp->setRtnPayType(filter_var($post['rtnTypeSel'], FILTER_SANITIZE_STRING));
+            $pmp->setRtnPayType(filter_var($post['rtnTypeSel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Payment Date
         if (isset($post['paymentDate']) && $post['paymentDate'] != '') {
-            $pmp->setPayDate(filter_var($post['paymentDate'], FILTER_SANITIZE_STRING));
+            $pmp->setPayDate(filter_var($post['paymentDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         } else {
             $pmp->setPayDate(date('Y-m-d H:i:s'));
         }
@@ -73,7 +73,7 @@ class PaymentChooser {
 
         // Merchant
         if (isset($post['selccgw'])) {
-            $pmp->setMerchant(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
+            $pmp->setMerchant(filter_var($post['selccgw'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Manual Key check box
@@ -85,7 +85,7 @@ class PaymentChooser {
 
         // Manual cardholder name
         if (isset($post['txtvdNewCardName'])) {
-            $pmp->setCardHolderName(strtoupper(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_STRING)));
+            $pmp->setCardHolderName(strtoupper(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         }
 
         // Use new CC
@@ -102,41 +102,41 @@ class PaymentChooser {
 
         // Invoice notes
         if (isset($post['txtInvNotes'])) {
-            $pmp->setInvoiceNotes(filter_var($post['txtInvNotes'], FILTER_SANITIZE_STRING));
+            $pmp->setInvoiceNotes(filter_var($post['txtInvNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Check number
         if (isset($post['txtCheckNum'])) {
-            $pmp->setCheckNumber(filter_var($post['txtCheckNum'], FILTER_SANITIZE_STRING));
+            $pmp->setCheckNumber(filter_var($post['txtCheckNum'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Return Check number
         if (isset($post['txtRtnCheckNum'])) {
-            $pmp->setRtnCheckNumber(filter_var($post['txtRtnCheckNum'], FILTER_SANITIZE_STRING));
+            $pmp->setRtnCheckNumber(filter_var($post['txtRtnCheckNum'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Transfer Account
         if (isset($post['txtTransferAcct'])) {
-            $pmp->setTransferAcct(filter_var($post['txtTransferAcct'], FILTER_SANITIZE_STRING));
+            $pmp->setTransferAcct(filter_var($post['txtTransferAcct'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Return transfer acct
         if (isset($post['txtRtnTransferAcct'])) {
-            $pmp->setRtnTransferAcct(filter_var($post['txtRtnTransferAcct'], FILTER_SANITIZE_STRING));
+            $pmp->setRtnTransferAcct(filter_var($post['txtRtnTransferAcct'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Charge Card - External Swipe
         if (isset($post['selChargeType'])) {
-            $pmp->setChargeCard(filter_var($post['selChargeType'], FILTER_SANITIZE_STRING));
+            $pmp->setChargeCard(filter_var($post['selChargeType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['selRtnChargeType'])) {
-            $pmp->setRtnChargeCard(filter_var($post['selRtnChargeType'], FILTER_SANITIZE_STRING));
+            $pmp->setRtnChargeCard(filter_var($post['selRtnChargeType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Payment Notes.
         if (isset($post['txtPayNotes'])) {
 
-            $payNotes = filter_var($post['txtPayNotes'], FILTER_SANITIZE_STRING);
+            $payNotes = filter_var($post['txtPayNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($payNotes != '') {
 
@@ -146,17 +146,17 @@ class PaymentChooser {
 
                 // Return Payment Notes.
                 if (isset($post['txtRtnNotes'])) {
-                    $pmp->setPayNotes(filter_var($post['txtRtnNotes'], FILTER_SANITIZE_STRING));
+                    $pmp->setPayNotes(filter_var($post['txtRtnNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 }
             }
         }
 
         // Charge Acct - External Swipe
         if (isset($post['txtChargeAcct'])) {
-            $pmp->setChargeAcct(filter_var($post['txtChargeAcct'], FILTER_SANITIZE_STRING));
+            $pmp->setChargeAcct(filter_var($post['txtChargeAcct'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['txtRtnChargeAcct'])) {
-            $pmp->setRtnChargeAcct(filter_var($post['txtRtnChargeAcct'], FILTER_SANITIZE_STRING));
+            $pmp->setRtnChargeAcct(filter_var($post['txtRtnChargeAcct'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // cash tendered
@@ -246,7 +246,7 @@ class PaymentChooser {
         // unpaid invoices
         foreach ($post as $key => $p) {
             if (($num = strstr($key, 'unpaidCb', TRUE)) !== FALSE) {
-                $num = filter_var($num, FILTER_SANITIZE_STRING);
+                $num = filter_var($num, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $amt = floatval(filter_var($post[$num . 'invPayAmt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
                 $pmp->addInvoiceByNumber($dbh, $num, $amt);
             }
@@ -254,7 +254,7 @@ class PaymentChooser {
 
         // balance with
         if (isset($post['selexcpay'])) {
-            $pmp->setBalWith(filter_var($post['selexcpay'], FILTER_SANITIZE_STRING));
+            $pmp->setBalWith(filter_var($post['selexcpay'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Reimburse Taxes

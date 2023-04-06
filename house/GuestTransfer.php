@@ -607,11 +607,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
     }
 
     if (isset($_POST['stDate'])) {
-        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
+        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     if (isset($_POST['enDate'])) {
-        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
+        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
    if ($calSelection == 20) {

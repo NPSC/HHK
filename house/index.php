@@ -31,7 +31,7 @@ $uS = Session::getInstance();
 // Logout command?
 if (isset($_GET["log"])) {
 
-    $log = filter_var($_GET["log"], FILTER_SANITIZE_STRING);
+    $log = filter_var($_GET["log"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     if ($log == "lo") {
 

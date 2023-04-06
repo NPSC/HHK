@@ -58,7 +58,7 @@ try {
 
     } else if (isset($_REQUEST['receiptMarkup']) && ! empty($_REQUEST['receiptMarkup'])) {
         // Catch receipt
-        $receiptMarkup = filter_var($_REQUEST['receiptMarkup'], FILTER_SANITIZE_STRING);
+        $receiptMarkup = filter_var($_REQUEST['receiptMarkup'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
@@ -74,10 +74,10 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
 
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
     $docId = intval(filter_var($_POST['hdnCfmDocCode'], FILTER_SANITIZE_NUMBER_INT), 10);
-    $amt = filter_var($_POST['hdnCfmAmt'], FILTER_SANITIZE_STRING);
+    $amt = filter_var($_POST['hdnCfmAmt'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $amt = preg_replace('/\D/', '', $amt);
     $amt = floatval($amt/100);
-    $tabIndex = filter_var($_POST['hdnTabIndex'], FILTER_SANITIZE_STRING);
+    $tabIndex = filter_var($_POST['hdnTabIndex'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
 
@@ -87,7 +87,7 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
 
     $notes = '';
     if (isset($_POST['tbCfmNotes'.$tabIndex])) {
-        $notes = filter_var($_POST['tbCfmNotes'.$tabIndex], FILTER_SANITIZE_STRING);
+        $notes = filter_var($_POST['tbCfmNotes'.$tabIndex], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     try {

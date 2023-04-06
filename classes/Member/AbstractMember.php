@@ -632,7 +632,7 @@ abstract class AbstractMember {
         //  Basis
         if (isset($post[$idPrefix."selMbrType"])) {
 
-            $mt = filter_var($post[$idPrefix.'selMbrType'], FILTER_SANITIZE_STRING);
+            $mt = filter_var($post[$idPrefix.'selMbrType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (isset($uS->nameLookups['Member_Basis'][$mt])) {
 
@@ -650,7 +650,7 @@ abstract class AbstractMember {
         //  Status
         if (isset($post[$idPrefix.'selStatus'])) {
 
-            $mt = filter_var($post[$idPrefix.'selStatus'], FILTER_SANITIZE_STRING);
+            $mt = filter_var($post[$idPrefix.'selStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (isset($uS->nameLookups['mem_status'][$mt]) === TRUE) {
                 $n->Member_Status->setNewVal($mt);
@@ -673,7 +673,7 @@ abstract class AbstractMember {
                 $n->Member_Status->setNewVal(MemStatus::Deceased);
 
                 if (isset($post[$idPrefix.'txtDeathDate']) && $post[$idPrefix.'txtDeathDate'] != '') {
-                    $ddec = filter_var($post[$idPrefix.'txtDeathDate'], FILTER_SANITIZE_STRING);
+                    $ddec = filter_var($post[$idPrefix.'txtDeathDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                     $n->Date_Deceased->setNewVal($ddec);
                 }
 
@@ -701,7 +701,7 @@ abstract class AbstractMember {
             if (isset($post[$idPrefix.'cbbackgroundcheck'])) {
                 // Member background check completed
                 if (isset($post[$idPrefix.'txtBackgroundCheckDate']) && $post[$idPrefix.'txtBackgroundCheckDate'] != '' && $this->demogRS->Background_Check_Date->getStoredVal() != $post[$idPrefix.'txtBackgroundCheckDate']) {
-                    $dbc = filter_var($post[$idPrefix.'txtBackgroundCheckDate'], FILTER_SANITIZE_STRING);
+                    $dbc = filter_var($post[$idPrefix.'txtBackgroundCheckDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                     $this->demogRS->Background_Check_Date->setNewVal($dbc);
                 }
 
@@ -729,7 +729,7 @@ abstract class AbstractMember {
         if (isset($post[$idPrefix.'rbPrefMail'])) {
             foreach ($uS->nameLookups[GLTableNames::AddrPurpose] as $code) {
                 if ($code[AbstractMember::CODE] == $post[$idPrefix.'rbPrefMail']) {
-                    $n->Preferred_Mail_Address->setNewVal(filter_var($post[$idPrefix.'rbPrefMail'], FILTER_SANITIZE_STRING));
+                    $n->Preferred_Mail_Address->setNewVal(filter_var($post[$idPrefix.'rbPrefMail'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     break;
                 }
             }
@@ -739,7 +739,7 @@ abstract class AbstractMember {
         if (isset($post[$idPrefix.'rbEmPref'])) {
             foreach ($uS->nameLookups[GLTableNames::EmailPurpose] as $code) {
                 if ($code[AbstractMember::CODE] == $post[$idPrefix.'rbEmPref']) {
-                    $n->Preferred_Email->setNewVal(filter_var($post[$idPrefix.'rbEmPref'], FILTER_SANITIZE_STRING));
+                    $n->Preferred_Email->setNewVal(filter_var($post[$idPrefix.'rbEmPref'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     break;
                 }
             }
@@ -749,7 +749,7 @@ abstract class AbstractMember {
         if (isset($post[$idPrefix.'rbPhPref'])) {
             foreach ($uS->nameLookups[GLTableNames::PhonePurpose] as $code) {
                 if ($code[AbstractMember::CODE] == $post[$idPrefix.'rbPhPref']) {
-                    $n->Preferred_Phone->setNewVal(filter_var($post[$idPrefix.'rbPhPref'], FILTER_SANITIZE_STRING));
+                    $n->Preferred_Phone->setNewVal(filter_var($post[$idPrefix.'rbPhPref'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     break;
                 }
             }
@@ -757,17 +757,17 @@ abstract class AbstractMember {
 
         // Orientation Date
         if (isset($post[$idPrefix."txtOrienDate"])) {
-            $this->demogRS->Orientation_Date->setNewVal(filter_var($post[$idPrefix.'txtOrienDate'], FILTER_SANITIZE_STRING));
+            $this->demogRS->Orientation_Date->setNewVal(filter_var($post[$idPrefix.'txtOrienDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // General Notes gen_Notes
         if (isset($post[$idPrefix."gen_Notes"])) {
-            $this->demogRS->Gen_Notes->setNewVal(filter_var($post[$idPrefix.'gen_Notes'], FILTER_SANITIZE_STRING));
+            $this->demogRS->Gen_Notes->setNewVal(filter_var($post[$idPrefix.'gen_Notes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // General Contact Date
         if (isset($post[$idPrefix."genCkDate"])) {
-            $this->demogRS->Contact_Date->setNewVal(filter_var($post[$idPrefix.'genCkDate'], FILTER_SANITIZE_STRING));
+            $this->demogRS->Contact_Date->setNewVal(filter_var($post[$idPrefix.'genCkDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
 

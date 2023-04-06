@@ -96,7 +96,7 @@ if (isset($_GET['span'])) {
 }
 
 if (isset($_GET['vstatus'])) {
-    $visitStatus = filter_var($_GET['vstatus'], FILTER_SANITIZE_STRING);
+    $visitStatus = filter_var($_GET['vstatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 

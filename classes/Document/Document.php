@@ -60,7 +60,7 @@ class Document {
     protected $createdBy = '';
     protected $lastUpdated = null;
     protected $updatedBy = '';
-    protected $cretedOn = '';
+    protected $createdOn = '';
     private $documentRS;
 
     /**

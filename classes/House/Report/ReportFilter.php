@@ -194,11 +194,11 @@ $ckdate";
         }
 
         if (isset($_POST['stDate'])) {
-            $this->selectedStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
+            $this->selectedStart = filter_var($_POST['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_POST['enDate'])) {
-            $this->selectedEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
+            $this->selectedEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
 
@@ -331,14 +331,14 @@ $ckdate";
         if (isset($_POST['selAssoc'])) {
             $reqs = $_POST['selAssoc'];
             if (is_array($reqs)) {
-                $this->selectedAssocs = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+                $this->selectedAssocs = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
 
         if (isset($_POST['selHospital'])) {
             $reqs = $_POST['selHospital'];
             if (is_array($reqs)) {
-                $this->selectedHosptials = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+                $this->selectedHosptials = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
 
@@ -360,7 +360,7 @@ $ckdate";
     public function loadSelectedResourceGroups() {
 
         if (isset($_POST['selRoomGroup'])) {
-            $this->selectedResourceGroups = filter_var($_POST['selRoomGroup'], FILTER_SANITIZE_STRING);
+            $this->selectedResourceGroups = filter_var($_POST['selRoomGroup'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
         return $this;
     }

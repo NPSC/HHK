@@ -37,7 +37,7 @@ $uS = Session::getInstance();
 
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_UNSAFE_RAW);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $events = array();
@@ -67,7 +67,7 @@ switch ($c) {
         }
 
         if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = deleteRelationLink($dbh, $id, $rId, $rc);
@@ -86,7 +86,7 @@ switch ($c) {
         }
 
         if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = newRelationLink($dbh, $id, $rId, $rc);
@@ -105,7 +105,7 @@ switch ($c) {
         }
 
         if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, TRUE);
@@ -124,7 +124,7 @@ switch ($c) {
         }
 
         if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, FALSE);
@@ -133,11 +133,11 @@ switch ($c) {
     case 'srchName':
 
         if (isset($_POST['md'])) {
-            $md = filter_var($_POST['md'], FILTER_SANITIZE_STRING);
-            $nameLast = (isset($_POST['nl']) ? filter_var($_POST['nl'], FILTER_SANITIZE_STRING) : '');
-            $nameFirst = (isset($_POST['nf']) ? filter_var($_POST['nf'], FILTER_SANITIZE_STRING) : '');
-            $email = (isset($_POST['em']) ? filter_var($_POST['em'], FILTER_SANITIZE_STRING) : '');
-            $indx = (isset($_POST['indx']) ? filter_var($_POST['indx'], FILTER_SANITIZE_STRING) : '');
+            $md = filter_var($_POST['md'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $nameLast = (isset($_POST['nl']) ? filter_var($_POST['nl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $nameFirst = (isset($_POST['nf']) ? filter_var($_POST['nf'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $email = (isset($_POST['em']) ? filter_var($_POST['em'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $indx = (isset($_POST['indx']) ? filter_var($_POST['indx'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
 
             // Check for duplicate member records
             $dups = MemberSearch::searchName($dbh, $md, $nameLast, $nameFirst, $email);
@@ -166,7 +166,7 @@ switch ($c) {
     case 'getcounties':
 
         if(isset($_GET['state'])) {
-            $state = filter_var($_GET['state'], FILTER_SANITIZE_STRING);
+            $state = filter_var($_GET['state'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $events = getCounties($dbh, $state);
         }
         break;
@@ -179,7 +179,7 @@ switch ($c) {
             $oldPw = filter_var($_POST["old"], FILTER_UNSAFE_RAW);
         }
         if (isset($_POST["newer"])) {
-            $newPw = filter_var($_POST["newer"], FILTER_UNSAFE_RAW);
+            $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = changePW($dbh, $oldPw, $newPw, $uS->username, $uS->uid);
@@ -190,7 +190,7 @@ switch ($c) {
 
         $method = '';
         if(isset($_POST['method'])){
-            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = generateTwoFA($dbh, $uS->username, $method, $_POST);
@@ -204,17 +204,17 @@ switch ($c) {
 
         $method = '';
         if(isset($_POST['method'])){
-            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $secret = '';
         if (isset($_POST["secret"])) {
-            $secret = filter_var($_POST["secret"], FILTER_SANITIZE_STRING);
+            $secret = filter_var($_POST["secret"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $otp = '';
         if (isset($_POST["otp"])) {
-            $otp = filter_var($_POST["otp"], FILTER_SANITIZE_STRING);
+            $otp = filter_var($_POST["otp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = saveTwoFA($dbh, $secret, $otp, $method);
@@ -223,7 +223,7 @@ switch ($c) {
     case "disable2fa":
         $method = '';
         if(isset($_POST['method'])){
-            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $userAr = UserClass::getUserCredentials($dbh, $uS->username);

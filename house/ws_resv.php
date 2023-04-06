@@ -126,7 +126,7 @@ try {
 
         $idResc = '';
         if (isset($_POST['idResc'])) {
-            $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_STRING);
+            $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $resv = new ActiveReservation(new ReserveData($_POST), null, null);
@@ -204,15 +204,15 @@ try {
         $idLink = 0;
 
         if (isset($_POST['data'])) {
-            $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+            $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if(isset($_POST['noteCategory'])){
-            $noteCategory = filter_input(INPUT_POST, 'noteCategory', FILTER_SANITIZE_STRING);
+            $noteCategory = filter_input(INPUT_POST, 'noteCategory', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_POST['linkType'])) {
-            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
+            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_POST['linkId'])) {
@@ -232,11 +232,11 @@ try {
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-	       $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+	       $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if(isset($_POST['noteCategory'])){
-            $noteCategory = filter_input(INPUT_POST, 'noteCategory', FILTER_SANITIZE_STRING);
+            $noteCategory = filter_input(INPUT_POST, 'noteCategory', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_POST['idNote'])) {
@@ -324,7 +324,7 @@ try {
         }
 
         if (isset($_POST['linkType'])) {
-            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
+            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_POST['linkId'])) {

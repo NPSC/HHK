@@ -25,7 +25,7 @@ $dbh = $wInit->dbh;
 if (isset($_POST["qc"]) === FALSE) {
     exit();
 }
-$q = filter_var($_POST["qc"], FILTER_SANITIZE_STRING);
+$q = filter_var($_POST["qc"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $resp = array();
 

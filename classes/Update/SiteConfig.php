@@ -208,9 +208,9 @@ class SiteConfig {
 
             if (count($fields) > 20) {
 
-                $county = filter_var(trim($fields[7]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
-                $city = filter_var(trim($fields[3]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
-                $altCitys = filter_var(trim($fields[4]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
+                $county = filter_var(trim($fields[7]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $city = filter_var(trim($fields[3]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $altCitys = filter_var(trim($fields[4]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
                 // Use precision coordinates if available
                 $lat = filter_var(trim($fields[16]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
@@ -226,10 +226,10 @@ class SiteConfig {
                         . filter_var(trim($fields[0]), FILTER_SANITIZE_NUMBER_INT) . "','"    	// Zip_Code
                         . $city . "','"        													// City
                         . $county . "','"        												// County
-                        . filter_var(trim($fields[6]), FILTER_SANITIZE_STRING) . "','"        	// State
+                        . filter_var(trim($fields[6]), FILTER_SANITIZE_FULL_SPECIAL_CHARS) . "','"        	// State
                         . $lat . "','"   // Lat
                         . $long . "','"	// Long
-                        . filter_var(trim(substr($fields[1], 0, 2)), FILTER_SANITIZE_STRING) . "','"						//Type
+                        . filter_var(trim(substr($fields[1], 0, 2)), FILTER_SANITIZE_FULL_SPECIAL_CHARS) . "','"						//Type
                         . $altCitys
                         . "'),";
                 $indx++;
@@ -569,7 +569,7 @@ class SiteConfig {
 
 //                 foreach ($secArray as $itemName => $val) {
 
-//                     $val = filter_var($val, FILTER_SANITIZE_STRING);
+//                     $val = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 //                     if ($config->has($secName, $itemName)) {
 
@@ -599,8 +599,8 @@ class SiteConfig {
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
 
-            $value = filter_var($val, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
-            $key = filter_var($itemName, FILTER_SANITIZE_STRING);
+            $value = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $key = filter_var($itemName, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if($itemName == "PaymentDisclaimer"){
                 $value = str_replace("\r\n", "<br/>", $value);
@@ -628,8 +628,8 @@ class SiteConfig {
             }
             foreach ($post['labels'] as $category=> $vals) {
                 foreach ($vals as $key=>$val){
-                    $value = filter_var($val, FILTER_SANITIZE_STRING);
-                    $key = filter_var($key, FILTER_SANITIZE_STRING);
+                    $value = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    $key = filter_var($key, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
                     SysConfig::saveKeyValue($dbh, 'labels', $key, $value, $category);
                 }
@@ -694,7 +694,7 @@ class SiteConfig {
 
         // Batch settlement
         if (isset($post['payGtwybtch'])) {
-            $bhour = filter_var($post['payGtwybtch'], FILTER_SANITIZE_STRING);
+            $bhour = filter_var($post['payGtwybtch'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (SysConfig::getKeyValue($dbh, 'sys_config', 'BatchSettlementHour') != $bhour) {
                 SysConfig::saveKeyValue($dbh, 'sys_config', 'BatchSettlementHour', $bhour);
@@ -703,7 +703,7 @@ class SiteConfig {
             }
         }
 
-        $newGW = filter_var($post['payGtwyName'], FILTER_SANITIZE_STRING);
+        $newGW = filter_var($post['payGtwyName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if (isset($post['payGtwyName']) && SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway') != $newGW) {
 

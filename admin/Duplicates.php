@@ -26,7 +26,7 @@ $wInit->sessionLoadGuestLkUps();
 // AJAX
 if (isset($_POST['cmd'])) {
 
-    $cmd = filter_var($_POST['cmd'], FILTER_SANITIZE_STRING);
+    $cmd = filter_var($_POST['cmd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $markup = '';
     $events = array();
@@ -34,7 +34,7 @@ if (isset($_POST['cmd'])) {
     try {
     if ($cmd == 'exp' && isset($_POST['nf']) && $_POST['nf'] != '') {
 
-        $fullName = filter_var($_POST['nf'], FILTER_SANITIZE_STRING);
+        $fullName = filter_var($_POST['nf'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $markup = Duplicate::expand($dbh, $fullName, $_POST, $uS->guestLookups[GLTableNames::PatientRel]);
 
@@ -42,13 +42,13 @@ if (isset($_POST['cmd'])) {
 
     } else if ($cmd == 'list') {
 
-        $mType = filter_var($_POST['mType'], FILTER_SANITIZE_STRING);
+        $mType = filter_var($_POST['mType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $events = array('mk'=>Duplicate::listNames($dbh, $mType));
 
     } else if ($cmd == 'pik') {
         // Combine members.
-        $mType = filter_var($_POST['mType'], FILTER_SANITIZE_STRING);
+        $mType = filter_var($_POST['mType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
 
         $markup = Duplicate::combine($dbh, $mType, $id);

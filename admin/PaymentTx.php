@@ -64,19 +64,19 @@ if (isset($_POST['btnGo'])) {
 
     // gather input
     if (isset($_POST['selTx'])) {
-        $txSelection = filter_var($_POST['selTx'], FILTER_SANITIZE_STRING);
+        $txSelection = filter_var($_POST['selTx'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     $searchDate = date('Y-m-d');
     if (isset($_POST['txtDate'])) {
-        $dateSelected = filter_var($_POST['txtDate'], FILTER_SANITIZE_STRING);
+        $dateSelected = filter_var($_POST['txtDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if ($dateSelected != '') {
             $searchDate = date('Y-m-d', strtotime($dateSelected));
         }
     }
 
     if (isset($_POST['txtName'])) {
-        $nameSelected = filter_var($_POST['txtName'], FILTER_SANITIZE_STRING);
+        $nameSelected = filter_var($_POST['txtName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
 

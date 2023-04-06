@@ -42,7 +42,7 @@ if ($webServices != '') {
 
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $events = array();
@@ -82,11 +82,11 @@ try {
 
         $st = '';
         if (isset($_REQUEST["st"])) {
-            $st = filter_var($_REQUEST["st"], FILTER_SANITIZE_STRING);
+            $st = filter_var($_REQUEST["st"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
         $en = '';
         if (isset($_REQUEST["en"])) {
-            $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
+            $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $reply = $transfer->sendDonations($dbh, $uS->username, $st, $en);
@@ -210,7 +210,7 @@ try {
 
         $src = '';
         if (isset($_POST['src'])) {
-            $src = filter_var($_POST['src'], FILTER_SANITIZE_STRING);
+            $src = filter_var($_POST['src'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if ($src === 'hhk') {

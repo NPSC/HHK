@@ -32,7 +32,7 @@ $uname = $uS->username;
 addslashesextended($_REQUEST);
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $events = array();
@@ -42,7 +42,7 @@ switch ($c) {
 
         $codes = '';
         if (isset($_POST["code"])) {
-            $codes = filter_var($_POST["code"], FILTER_SANITIZE_STRING);
+            $codes = filter_var($_POST["code"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = listMembers($dbh, $codes);
@@ -53,12 +53,12 @@ switch ($c) {
 
         $codes = '';
         if (isset($_POST["code"])) {
-            $codes = filter_var($_POST["code"], FILTER_SANITIZE_STRING);
+            $codes = filter_var($_POST["code"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $desc = '';
         if (isset($_POST["desc"])) {
-            $desc = filter_var($_POST["desc"], FILTER_SANITIZE_STRING);
+            $desc = filter_var($_POST["desc"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = listChairs($dbh, $codes, $desc);
@@ -70,10 +70,10 @@ switch ($c) {
         $oldPw = ''; $newPw = '';
 
         if (isset($_POST["old"])) {
-            $oldPw = filter_var($_POST["old"], FILTER_SANITIZE_STRING);
+            $oldPw = filter_var($_POST["old"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
         if (isset($_POST["newer"])) {
-            $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_STRING);
+            $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = changePW($dbh, $oldPw, $newPw, $uname, $userId);
@@ -82,11 +82,11 @@ switch ($c) {
 
     case "sendEmail" :
 
-        $vcc = filter_var($_POST["vcc"], FILTER_SANITIZE_STRING);
+        $vcc = filter_var($_POST["vcc"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $subj = filter_var($_POST["subj"], FILTER_SANITIZE_STRING);
+        $subj = filter_var($_POST["subj"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $body = filter_var($_POST["body"], FILTER_SANITIZE_STRING);
+        $body = filter_var($_POST["body"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $events = volSendMail($dbh, $vcc, $subj, $body, $userId);
         break;
@@ -104,7 +104,7 @@ exit();
 function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
 
     $uS = Session::getInstance();
-    
+
     $events = array();
 
     if ($vcc != "" && $subj != "" && $body != "") {
@@ -122,7 +122,7 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
             $emailAddrs = array();
             $em = prepareEmail();
             $em->FromName = $uS->siteName;
-            
+
             // Collect members in one of two containers from above
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
@@ -168,11 +168,11 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
                 $em->isHTML(true);
 
                 $em->Subject = $uS->RegSubj;
-                
+
                 if(!isset($uS->Admin_Address) || $uS->Admin_Address == ''){
                     return array("error"=>"Admin_Address not set");
                 }
-                
+
                 $em->From = $uS->Admin_Address;
                 $em->addAddress($uS->Admin_Address);
                 $em->Subject = $cSubj;

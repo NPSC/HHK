@@ -193,7 +193,7 @@ $emtableMarkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMa
 
 if (isset($_REQUEST['cmd'])) {
 
-    $cmd = filter_var($_REQUEST['cmd'], FILTER_SANITIZE_STRING);
+    $cmd = filter_var($_REQUEST['cmd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     if ($cmd == 'email') {
 
@@ -204,7 +204,7 @@ if (isset($_REQUEST['cmd'])) {
         }
 
         if (isset($_POST['txtSubject'])) {
-            $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
+            $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if ($emAddr == '' || $emSubject == '') {

@@ -90,7 +90,7 @@ if (count($volGroups) == 0) {
 
 // get code if already selected.
 if (isset($_POST["selVolGroup"])) {
-    $volGroupCode = filter_var($_POST["selVolGroup"], FILTER_SANITIZE_STRING);
+    $volGroupCode = filter_var($_POST["selVolGroup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 
@@ -106,7 +106,7 @@ if (isset($_GET["id"]) || isset($_GET["vg"])) {
     }
 
     if (isset($_GET["vg"])) {
-        $volGroupCode = filter_var($_GET["vg"], FILTER_SANITIZE_STRING);
+        $volGroupCode = filter_var($_GET["vg"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 } else if (isset($_POST["hdnid"])) {
     /*

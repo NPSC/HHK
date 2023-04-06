@@ -301,33 +301,33 @@ WHERE
 
             $make = '';
             if (isset($pData["txtVehMake"][$k])) {
-                $make = filter_var($pData["txtVehMake"][$k], FILTER_SANITIZE_STRING);
+                $make = filter_var($pData["txtVehMake"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $carRS->Make->setNewVal($make);
             }
 
             $plate = '';
             if (isset($pData["txtVehLic"][$k])) {
-                $plate = filter_var($pData["txtVehLic"][$k], FILTER_SANITIZE_STRING);
+                $plate = filter_var($pData["txtVehLic"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $carRS->License_Number->setNewVal($plate);
             }
 
             if (isset($pData["txtVehModel"][$k])) {
-                $carRS->Model->setNewVal(filter_var($pData["txtVehModel"][$k], FILTER_SANITIZE_STRING));
+                $carRS->Model->setNewVal(filter_var($pData["txtVehModel"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
             if (isset($pData["txtVehColor"][$k])) {
-                $carRS->Color->setNewVal(filter_var($pData["txtVehColor"][$k], FILTER_SANITIZE_STRING));
+                $carRS->Color->setNewVal(filter_var($pData["txtVehColor"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
             if (isset($pData["selVehLicense"][$k])) {
-                $carRS->State_Reg->setNewVal(filter_var($pData["selVehLicense"][$k], FILTER_SANITIZE_STRING));
+                $carRS->State_Reg->setNewVal(filter_var($pData["selVehLicense"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             $note = '';
             if (isset($pData["txtVehNote"][$k])) {
-                $note = filter_var($pData["txtVehNote"][$k], FILTER_SANITIZE_STRING);
+                $note = filter_var($pData["txtVehNote"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $carRS->Note->setNewVal($note);
             }
             if (isset($pData["selVehGuest"][$k])) {
-                $idGuest = intVal(filter_var($pData["selVehGuest"][$k], FILTER_SANITIZE_STRING), 10);
+                $idGuest = intVal(filter_var($pData["selVehGuest"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
                 $carRS->idName->setNewVal($idGuest);
             }
 

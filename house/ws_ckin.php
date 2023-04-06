@@ -76,7 +76,7 @@ try {
 
             $x = 0;
             if (isset($_POST['x'])) {
-                $x = filter_var($_POST['x'], FILTER_SANITIZE_STRING);
+                $x = filter_var($_POST['x'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($idResv > 0) {
@@ -94,7 +94,7 @@ try {
 
             $changeDate = '';
             if (isset($_POST['chgDate'])) {
-                $changeDate = filter_var($_POST['chgDate'], FILTER_SANITIZE_STRING);
+                $changeDate = filter_var($_POST['chgDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $rescId = 0;
@@ -141,12 +141,12 @@ try {
 
             $changeDate = '';
             if (isset($_POST['changeDate'])) {
-                $changeDate = filter_var($_POST['changeDate'], FILTER_SANITIZE_STRING);
+                $changeDate = filter_var($_POST['changeDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $replaceRoom = '';
             if (isset($_POST['replaceRoom'])) {
-                $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_STRING);
+                $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = HouseServices::changeRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $useDefaultRate, $changeDate);
@@ -172,12 +172,12 @@ try {
 
             $expArr = '';
             if (isset($_POST['expArr'])) {
-                $expArr = filter_var($_POST['expArr'], FILTER_SANITIZE_STRING);
+                $expArr = filter_var($_POST['expArr'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $expDep = '';
             if (isset($_POST['expDep'])) {
-                $expDep = filter_var($_POST['expDep'], FILTER_SANITIZE_STRING);
+                $expDep = filter_var($_POST['expDep'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $cbs = '';
@@ -215,7 +215,7 @@ try {
 
             $notes = '';
             if (isset($_POST['notes'])) {
-                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
+                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
 
@@ -229,17 +229,17 @@ try {
 
             $eaddr = '';
             if (isset($_POST['eaddr'])) {
-                $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
+                $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $ccAddr = '';
             if (isset($_POST['ccAddr'])) {
-                $ccAddr = filter_var($_POST['ccAddr'], FILTER_SANITIZE_STRING);
+                $ccAddr = filter_var($_POST['ccAddr'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $tabIndex = false;
             if (isset($_POST['tabIndex'])) {
-                $tabIndex = filter_var($_POST['tabIndex'], FILTER_SANITIZE_STRING);
+                $tabIndex = filter_var($_POST['tabIndex'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex,$ccAddr);
@@ -277,7 +277,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::voidFees($dbh, $idPayment, $bid);
@@ -293,7 +293,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::reversalFees($dbh, $idPayment, $bid);
@@ -309,7 +309,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::returnPayment($dbh, $idPayment, $bid);
@@ -325,7 +325,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::undoReturnFees($dbh, $idPayment, $bid);
@@ -341,7 +341,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::voidReturnFees($dbh, $idPayment, $bid);
@@ -362,7 +362,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($idInvoice > 0 && $idLine > 0) {
@@ -381,7 +381,7 @@ try {
 
         $idRegistration = 0;
         if (isset($_REQUEST["reg"])) {
-            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_STRING), 10);
+            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         if ($idRegistration > 0) {
@@ -398,7 +398,7 @@ try {
 
         $idRegistration = 0;
         if (isset($_REQUEST["reg"])) {
-            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_STRING), 10);
+            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $params = array();
@@ -463,7 +463,7 @@ try {
         $cod = [];
         if (isset($_POST['ckoutdt'])) {
 
-        	$cod = filter_var_array($_POST['ckoutdt'], FILTER_UNSAFE_RAW);
+        	$cod = filter_var_array($_POST['ckoutdt'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $span = 0;
@@ -480,17 +480,17 @@ try {
 
         $id = 0;
         if (isset($_POST["id"])) {
-            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
+            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $idVisit = 0;
         if (isset($_POST["vid"])) {
-            $idVisit = intval(filter_var($_POST["vid"], FILTER_SANITIZE_STRING), 10);
+            $idVisit = intval(filter_var($_POST["vid"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $visitSpan = 0;
         if (isset($_POST["span"])) {
-            $visitSpan = intval(filter_var($_POST["span"], FILTER_SANITIZE_STRING), 10);
+            $visitSpan = intval(filter_var($_POST["span"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
@@ -513,7 +513,7 @@ try {
 
     case "savefap":
 
-        $post = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+        $post = filter_var_array($_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $events = ReservationSvcs::saveFinApp($dbh, $post);
 
         break;
@@ -540,7 +540,7 @@ try {
             $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $data = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+        $data = filter_var_array($_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $events = HouseServices::payInvoice($dbh, $id, $data);
 
         break;
@@ -554,7 +554,7 @@ try {
 
         $postbackPage = '';
         if (isset($_POST['pbp'])) {
-            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = HouseServices::saveFees($dbh, $idVisit, $span, $guestAdmin, $_REQUEST, $postbackPage);
@@ -593,7 +593,7 @@ try {
             }
 
             if (isset($_POST['arrDate'])) {
-                $arrDate = filter_var($_POST['arrDate'],FILTER_SANITIZE_STRING);
+                $arrDate = filter_var($_POST['arrDate'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $vat = new ValueAddedTax($dbh);
@@ -611,7 +611,7 @@ try {
 
         $ord = 0;
         if (isset($_POST["ord"])) {
-            $ord = intval(filter_var($_POST["ord"], FILTER_SANITIZE_STRING), 10);
+            $ord = intval(filter_var($_POST["ord"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $amt = 0;
@@ -626,22 +626,22 @@ try {
 
         $discount = '';
         if (isset($_POST['dsc'])) {
-            $discount = filter_var($_POST['dsc'], FILTER_SANITIZE_STRING);
+            $discount = filter_var($_POST['dsc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $addnlCharge = '';
         if (isset($_POST['chg'])) {
-            $addnlCharge = filter_var($_POST['chg'], FILTER_SANITIZE_STRING);
+            $addnlCharge = filter_var($_POST['chg'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $adjDate = '';
         if (isset($_POST['adjDate'])) {
-            $adjDate = filter_var($_POST['adjDate'], FILTER_SANITIZE_STRING);
+            $adjDate = filter_var($_POST['adjDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $notes = '';
         if (isset($_POST['notes'])) {
-            $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
+            $notes = filter_var($_POST['notes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes);
@@ -669,17 +669,17 @@ try {
 
         $postbackPage = '';
         if (isset($_POST['pbp'])) {
-            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $index = '';
         if (isset($_POST['index'])) {
-            $index = filter_var($_POST['index'], FILTER_SANITIZE_STRING);
+            $index = filter_var($_POST['index'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $idGroup = 0;
         if (isset($_POST['idGrp'])) {
-            $idGroup = intval(filter_var($_POST['idGrp'], FILTER_SANITIZE_STRING), 10);
+            $idGroup = intval(filter_var($_POST['idGrp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $events = HouseServices::cardOnFile($dbh, $idGuest, $idGroup, $_POST, $postbackPage, $index);
@@ -696,7 +696,7 @@ try {
 
         $pbp = '';
         if (isset($_POST['pbp'])) {
-            $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+            $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
@@ -712,7 +712,7 @@ try {
 
         $status = '';
         if (isset($_POST['stat'])) {
-            $status = filter_var($_POST['stat'], FILTER_SANITIZE_STRING);
+            $status = filter_var($_POST['stat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = ReservationSvcs::changeReservStatus($dbh, $idReservation, $status);
@@ -722,7 +722,7 @@ try {
 
         $nd = '';
         if (isset($_POST['nd'])) {
-            $nd = filter_var($_POST['nd'], FILTER_SANITIZE_STRING);
+            $nd = filter_var($_POST['nd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = HouseServices::changeExpectedDepartureDate($dbh, $idGuest, $idVisit, $nd);
@@ -732,7 +732,7 @@ try {
 
         $wlid = 0;
         if (isset($_REQUEST["idReg"])) {
-            $wlid = intval(filter_var($_REQUEST["idReg"], FILTER_SANITIZE_STRING), 10);
+            $wlid = intval(filter_var($_REQUEST["idReg"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $events = HouseServices::visitChangeLogMarkup($dbh, $wlid);
@@ -760,7 +760,7 @@ try {
 
         $newAmt = 0.00;
         if (isset($_POST['amt'])) {
-            $newAmt = floatval(filter_var($_POST['amt'], FILTER_SANITIZE_STRING));
+            $newAmt = floatval(filter_var($_POST['amt'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if ($guestAdmin) {

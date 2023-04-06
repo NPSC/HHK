@@ -60,7 +60,7 @@ $filter->createHospitals();
 $filter->createResoourceGroups(readGenLookupsPDO($dbh, 'Room_Group'), $uS->CalResourceGroupBy);
 
 if (isset($_POST['rbAllGuests'])) {
-    $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_STRING);
+    $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 $filterBtnMkup = GuestDemogReport::generateFilterBtnMarkup($whichGuests);
 

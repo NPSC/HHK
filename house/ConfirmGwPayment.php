@@ -16,7 +16,7 @@ $resultParms = array();
 $forwardPageParms = array();
 
 if (isset($_GET[InstamedGateway::TRANSFER_VAR])) {
-    $resultStr = filter_input(INPUT_GET, InstamedGateway::TRANSFER_VAR, FILTER_SANITIZE_STRING);
+    $resultStr = filter_input(INPUT_GET, InstamedGateway::TRANSFER_VAR, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 if ($resultStr == '') {

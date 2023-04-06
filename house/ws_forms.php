@@ -51,7 +51,7 @@ try {
 
 	//$csrfToken = '';
 	//if(isset($_REQUEST['csrfToken'])){
-		//$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_STRING);
+		//$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 	//}
 	//$login->verifyCSRF($csrfToken);
 
@@ -77,7 +77,7 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $uS = Session::getInstance();
@@ -140,7 +140,7 @@ try {
 
              $style = "";
              if(isset($_REQUEST['style'])){
-                 $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_STRING);
+                 $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
              }
              if(isset($_REQUEST['initialGuests'])){
                  $initialGuests = filter_var($_REQUEST['initialGuests'], FILTER_SANITIZE_NUMBER_INT);
@@ -165,7 +165,7 @@ try {
 
 			$recaptchaToken = '';
 			if(isset($_POST['recaptchaToken'])){
-				$recaptchaToken = filter_var($_POST['recaptchaToken'], FILTER_SANITIZE_STRING);
+				$recaptchaToken = filter_var($_POST['recaptchaToken'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 			}
 
 			$recaptcha = new Recaptcha();

@@ -89,20 +89,20 @@ class EmergencyContact implements EmergencyContactInterface {
     protected function extractMarkup($pData, $idPrefix = "") {
 
         if (isset($pData[$idPrefix.'txtEmrgFirst'])) {
-            $this->ecRS->Name_First->setNewVal(ucfirst(filter_var($pData[$idPrefix.'txtEmrgFirst'], FILTER_SANITIZE_STRING)));
+            $this->ecRS->Name_First->setNewVal(ucfirst(filter_var($pData[$idPrefix.'txtEmrgFirst'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         }
         if (isset($pData[$idPrefix.'txtEmrgLast'])) {
-            $this->ecRS->Name_Last->setNewVal(ucfirst(filter_var($pData[$idPrefix.'txtEmrgLast'], FILTER_SANITIZE_STRING)));
+            $this->ecRS->Name_Last->setNewVal(ucfirst(filter_var($pData[$idPrefix.'txtEmrgLast'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         }
         if (isset($pData[$idPrefix.'txtEmrgPhn'])) {
-            $this->ecRS->Phone_Home->setNewVal(filter_var($pData[$idPrefix.'txtEmrgPhn'], FILTER_SANITIZE_STRING));
+            $this->ecRS->Phone_Home->setNewVal(filter_var($pData[$idPrefix.'txtEmrgPhn'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($pData[$idPrefix.'txtEmrgAlt'])) {
-            $this->ecRS->Phone_Alternate->setNewVal(filter_var($pData[$idPrefix.'txtEmrgAlt'], FILTER_SANITIZE_STRING));
+            $this->ecRS->Phone_Alternate->setNewVal(filter_var($pData[$idPrefix.'txtEmrgAlt'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($pData[$idPrefix.'selEmrgRel'])) {
 
-            $val = filter_var($pData[$idPrefix.'selEmrgRel'], FILTER_SANITIZE_STRING);
+            $val = filter_var($pData[$idPrefix.'selEmrgRel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($val == RelLinkType::Self) {
                 $val = '';

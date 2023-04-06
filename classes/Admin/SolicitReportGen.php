@@ -124,7 +124,7 @@ left join vmember_listing_noex ve ON ve.Id = a.fm and a.mr = 0 "
 
         if (isset($codes)) {
 
-            $codes = filter_var_array($codes, FILTER_SANITIZE_STRING);
+            $codes = filter_var_array($codes, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             foreach ($codes as $cde) {
 

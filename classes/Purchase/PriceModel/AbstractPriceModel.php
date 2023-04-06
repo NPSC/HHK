@@ -451,7 +451,7 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
         if (isset($post['ratetitle'])) {
 
             $rr1s = filter_var_array($post['rr1'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
-            $titles = filter_var_array($post['ratetitle'], FILTER_SANITIZE_STRING);
+            $titles = filter_var_array($post['ratetitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $rr2s = array();
             $rr3s = array();
             $mins = array();
@@ -467,11 +467,11 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
             }
 
             if (isset($post['rrdefault'])) {
-                $defaultRate = filter_var($post['rrdefault'], FILTER_SANITIZE_STRING);
+                $defaultRate = filter_var($post['rrdefault'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if (isset($post['cbRetire'])) {
-                $retires = filter_var_array($post['cbRetire'], FILTER_SANITIZE_STRING);
+                $retires = filter_var_array($post['cbRetire'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             foreach ($this->roomRates as $oldRs) {

@@ -22,13 +22,13 @@ require 'homeIncludes.php';
 
 
 try {
-	
+
 	$login = new Login();
 	$login->initHhkSession(ciCFG_FILE);
-	
+
 } catch (InvalidArgumentException $pex) {
 	exit ("Database Access Error.");
-	
+
 } catch (Exception $ex) {
 	exit ($ex->getMessage());
 }
@@ -51,20 +51,20 @@ if(!$u->isCron()){
     // Authenticate user
     $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
     $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-    
+
     if (($user == '' && $pass == '') || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
-        
+
         header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
         header('HTTP/1.0 401 Unauthorized');
         exit("Not authorized");
-        
+
     }
 }
 
 
 $sendEmail = TRUE;
 
-if (isset($_GET['sendemail']) && strtolower(filter_input(INPUT_GET, 'sendemail', FILTER_SANITIZE_STRING)) == 'no') {
+if (isset($_GET['sendemail']) && strtolower(filter_input(INPUT_GET, 'sendemail', FILTER_SANITIZE_FULL_SPECIAL_CHARS)) == 'no') {
     // Don't send email when run as a web page.
     $sendEmail = FALSE;
 

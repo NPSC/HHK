@@ -26,7 +26,7 @@ $uS = Session::getInstance();
 
 // Logout command?
 if (isset($_GET["log"])) {
-    $log = filter_var($_GET["log"], FILTER_SANITIZE_STRING);
+    $log = filter_var($_GET["log"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     if ($log == "lo") {
 
         $uS->destroy(TRUE);
@@ -37,7 +37,7 @@ if (isset($_GET["log"])) {
 
 $uname = '';
 if (isset($_GET['u'])) {
-    $uname = filter_var($_GET['u'], FILTER_SANITIZE_STRING);
+    $uname = filter_var($_GET['u'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 
