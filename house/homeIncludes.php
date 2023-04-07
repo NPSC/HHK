@@ -33,6 +33,7 @@ define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/GuestTransfer.js' . JSV);
 define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
 define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js');
+define('REG_FORM_ESIGN_JS', 'js/regFormEsign.js' . JSV);
 define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js"></script>');
 define('FULLCALENDAR_JS', "../js/fullcalendar5.11.0.min.js");
 
