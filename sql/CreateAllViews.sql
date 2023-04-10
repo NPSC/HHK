@@ -2058,34 +2058,14 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         n.`Timestamp`
     FROM
         note n
-            JOIN
+    JOIN
         reservation_note rn ON n.idNote = rn.Note_Id
-			JOIN
-		reservation r ON rn.Reservation_Id = r.idReservation
-			JOIN
-		registration reg on r.idRegistration = reg.idRegistration
+    JOIN
+        reservation r ON rn.Reservation_Id = r.idReservation
+    JOIN
+	registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0'
-	UNION SELECT
-        n.idNote AS `Note_Id`,
-        n.idNote AS `Action`,
-        n.flag,
-        n.User_Name,
-        n.Title,
-        n.Note_Text,
-        "",
-        reg.idPsg,
-        n.`Timestamp`
-    FROM
-        note n
-            JOIN
-        reservation_note rn ON n.idNote = rn.Note_Id
-			join
-		reservation r ON rn.Reservation_Id = r.idReservation
-			join
-		registration reg on r.idRegistration = reg.idRegistration
-    WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1';
+        rn.Reservation_Id > 0 && n.`Status` = 'a';
 
 
 -- -----------------------------------------------------
