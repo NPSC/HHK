@@ -1181,7 +1181,7 @@ ORDER BY $orderBy;");
         ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) as `Departure_Date`,
         g.`Description` as `Visit_Status`,
         r.`Last_Cleaned`,
-        r.`Notes`
+        ifnull(r.`Notes`, '') as `Notes`
     from
         room r
             left join

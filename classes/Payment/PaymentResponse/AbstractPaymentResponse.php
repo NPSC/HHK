@@ -25,6 +25,7 @@ abstract class AbstractPaymentResponse {
     protected $refund = FALSE;
     protected $result = '';  // vendor specific
     protected $paymentStatusCode;
+    protected $paymentType;
 
     public $idPayor = 0;
     public $idVisit;
@@ -33,6 +34,7 @@ abstract class AbstractPaymentResponse {
     public $idTrans = 0;
     public $idGuestToken = 0;
     protected $idPayment;
+    public $paymentRs;
 
     public abstract function getStatus();
 

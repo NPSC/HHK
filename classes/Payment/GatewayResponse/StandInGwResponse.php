@@ -26,6 +26,8 @@ class StandInGwResponse implements GatewayResponseInterface {
     protected $processor;
     protected $merchant;
     protected $status;
+    protected $Approved;
+    
 
     public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount, $status = MpStatusValues::Approved) {
 

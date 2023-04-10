@@ -964,7 +964,7 @@ CREATE OR REPLACE VIEW `vguest_audit_log` AS
         `Log_Text` AS `LogText`
     FROM
         `name_log`
-    UNION SELECT
+    UNION ALL SELECT
         `Timestamp` AS `LogDate`,
         `Log_Type` AS `LogType`,
         `Sub_Type` AS `Subtype`,

@@ -43,8 +43,6 @@ $uS = Session::getInstance();
 $labels = Labels::getLabels();
 $menuMarkup = $wInit->generatePageMenu();
 
-$config = new Config_Lite(ciCFG_FILE);
-
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $hdrTbl = '';
 $dataTable = '';
@@ -135,7 +133,7 @@ if (count($gwList) > 1) {
 }
 
 // Show External Id (external payment record id)
-if ($config->getString('webServices', 'Service_Name', '') != '') {
+if (!empty($_ENV['Service_Name'])) {
     $cFields[] = array('External Id', 'Payment_External_Id', '', '', 'string', '15', array());
 }
 

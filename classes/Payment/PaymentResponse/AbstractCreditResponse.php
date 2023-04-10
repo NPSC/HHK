@@ -18,6 +18,8 @@ abstract class AbstractCreditResponse extends AbstractPaymentResponse {
 
     public $response;
     public $idPaymentAuth;
+    public $cardType;
+    public $expDate;
 
     public function recordPaymentAuth(\PDO $dbh, $paymentGatewayName, $username) {
 
