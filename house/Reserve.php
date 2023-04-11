@@ -155,6 +155,7 @@ $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 $resvAr['prePaymt'] = 0;
+$resvAr['guestSearchTerm'] = filter_input(INPUT_GET, 'guestSearchTerm', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($uS->AcceptResvPaymt && $idReserv > 0) {
     $resvAr['prePaymt'] = Reservation_1::getPrePayment($dbh, $idReserv);
 }
