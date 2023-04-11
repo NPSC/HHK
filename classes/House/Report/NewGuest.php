@@ -216,6 +216,7 @@ FROM
 WHERE
     n.Member_Status != 'TBD'
         AND n.Record_Member = 1
+        AND DATE(s.Span_Start_Date) != DATE(s.Span_End_Date)
         $whereStr
 GROUP BY s.idName
 HAVING DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')
