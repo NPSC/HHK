@@ -32,6 +32,7 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
+// Get labels
 $labels = Labels::getLabels();
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
@@ -39,9 +40,6 @@ $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' New ' . $la
         . HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
 $statsTable = '';
-
-// Get labels
-$labels = Labels::getLabels();
 $errorMessage = '';
 
 $filter = new ReportFilter();
@@ -58,7 +56,6 @@ $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20', array());
 $cFields[] = array("Suffix", 'Name_Suffix', 'checked', '', 'string', '15', array());
 $cFields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'Primary', 'checked', '', 'string', '20', array());
 
-    $pFields = array('Address', 'City');
     $pTitles = array('Address', 'City');
 
     if ($uS->county) {

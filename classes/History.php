@@ -216,7 +216,6 @@ class History {
                             . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
                             . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
                             . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
-                          . ($uS->ccgw != '' ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['idGuest'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest Name']))) : '')
                     )), array('class' => 'gmenu'));
             }
 

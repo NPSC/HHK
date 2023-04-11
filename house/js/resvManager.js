@@ -1948,20 +1948,20 @@ function resvManager(initData, options) {
                     dateFormat: 'M d, yy'
                 });
                 
-   				// Return pre-payment if cancelling reserv.
+   		// Return pre-payment if cancelling reserv.
                 $('#selResvStatus').change(function () {
-					if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
-						// Cancel 
-						isCheckedOut = true;
-						$('#cbHeld').prop('checked', true);
-						amtPaid();
-					} else {
-						isCheckedOut = false;
-						$('#cbHeld').prop('checked', false);
-						amtPaid();
-					}
-				});
-				$('#selResvStatus').change();
+                        if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
+                                // Cancel 
+                                isCheckedOut = true;
+                                $('#cbHeld').prop('checked', true);
+                                amtPaid();
+                        } else {
+                                isCheckedOut = false;
+                                $('#cbHeld').prop('checked', false);
+                                amtPaid();
+                        }
+                });
+                $('#selResvStatus').change();
             }
         }
 
@@ -2282,31 +2282,36 @@ function resvManager(initData, options) {
                 }
             } else {
 	
-				// Selected Merchant?
-				if ($('#selccgw').length > 0 && ($('input[name=rbUseCard]:checked').val() == 0 || $('input[name=rbUseCard]').prop('checked') === true)) {
-			
-					$('#selccgw').removeClass('ui-state-highlight');
-			
-					if ($('#selccgw option:selected').length === 0) {
-						$('#tdChargeMsg').text('Select a location.').show('fade');
-						$('#selccgw').addClass('ui-state-highlight');
-						return false;
-					}
-				}
+                // Return Pre-Payment?
+                if (prePaymtAmt > 0 && isCheckedOut && $('#selexcpay').val() == '') {
 
-	            // Return Pre-Payment?
-				if (prePaymtAmt > 0 && isCheckedOut && $('#selexcpay').val() == '') {
-					
-					$('#selexcpay').addClass('ui-state-error');
-					flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
-					$('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
-					
-					return false;
-					
-				} else {
-					$('#selexcpay').removeClass('ui-state-error');
-				}
-			}
+                        $('#selexcpay').addClass('ui-state-error');
+                        flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
+                        $('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
+
+                        return false;
+
+                } else {
+                        $('#selexcpay').removeClass('ui-state-error');
+                }
+
+                // Selected Merchant?
+                
+                if ($('#selccgw').length > 0 && $('#spnPayAmount').html() === '' && ($('input[name=rbUseCard]:checked').val() == 0 || $('input[name=rbUseCard]').prop('checked') === true)) {
+
+                        $('#selccgw').removeClass('ui-state-highlight');
+
+                        if ($('#selccgw option:selected').length === 0) {
+                                $('#tdChargeMsg').text('Select a location.').show('fade');
+                                $('#selccgw').addClass('ui-state-highlight');
+                                return false;
+                        }
+                } else {
+                    $('#selccgw').removeClass('ui-state-highlight');
+                    $('#tdChargeMsg').text('').hide('fade');
+                }
+
+            }
             
             return true;
         }
