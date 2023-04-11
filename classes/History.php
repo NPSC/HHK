@@ -432,7 +432,7 @@ class History {
                     )), array('class' => 'gmenu'));
             }
 
-            if($uS->ShowGuestPhoto){
+            if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos){
                 $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
             }
 

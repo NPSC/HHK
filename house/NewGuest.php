@@ -41,7 +41,6 @@ $dataTable = '';
 $statsTable = '';
 
 // Get labels
-$labels = Labels::getLabels();
 $errorMessage = '';
 
 $filter = new ReportFilter();
