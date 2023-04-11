@@ -559,6 +559,7 @@ class RateChooser {
         }
 
         $attrFixed = array('class'=>'hhk-fxFixed');
+        $attrFixedInput = array("name"=>"txtFixedRate", "size"=>"4");
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj = array('style'=>'display:none;');
         }else{
@@ -592,6 +593,8 @@ class RateChooser {
 
         if ($this->isAllowed === FALSE) {
             $rateSelectorAttrs['disabled'] = 'disabled';
+            $attrAdj['disabled'] = 'disabled';
+            $attrFixedInput['disabled'] = 'disabled';
         }
 
         // Get taxed items
@@ -612,7 +615,7 @@ class RateChooser {
 
         $rateSel = $this->makeRateSelControl(
                 HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
-                HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed));
+                HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, $attrFixedInput), $attrFixed));
 
         $adjSel = $this->makeRateAdjustSel($resv->getIdRateAdjust(), $resv->getRateAdjust());
 
