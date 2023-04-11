@@ -216,7 +216,7 @@ FROM
 WHERE
     n.Member_Status != 'TBD'
         AND n.Record_Member = 1
-        AND DATE(s.Span_Start_Date) != DATE(s.Span_End_Date)
+        AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
         $whereStr
 GROUP BY s.idName
 HAVING DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')
@@ -244,6 +244,7 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
+                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
                 AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
                 AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
 
@@ -276,6 +277,7 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
+                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
                 AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
                 AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
 
@@ -309,6 +311,7 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
+                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
             GROUP BY hs.idPsg
                 HAVING  DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "') AND DATE(`First Stay`) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
             ORDER BY `First Stay`;";
