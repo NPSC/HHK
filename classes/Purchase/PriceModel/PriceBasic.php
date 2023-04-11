@@ -50,7 +50,7 @@ class PriceBasic extends AbstractPriceModel {
                 . "(6,'Assigned','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
-    protected function newRateMarkup(&$fTbl) {
+    protected function newRateMarkup(&$fTbl, $financialAssistance = false) {
 
         // New rate
         // No new rates are possible

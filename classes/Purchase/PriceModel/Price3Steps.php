@@ -92,7 +92,7 @@ class Price3Steps extends AbstractPriceModel {
         return $amount;
     }
 
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
 
         $rp = readGenLookupsPDO($dbh, Price3Steps::TABLE_NAME);
 

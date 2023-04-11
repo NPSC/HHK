@@ -329,7 +329,7 @@ GROUP BY s.idVisit, s.Visit_Span");
 
     }
 
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
 
         $fTbl = new HTMLTable();
         $fTbl->addHeaderTr(
