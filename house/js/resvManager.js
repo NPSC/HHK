@@ -940,9 +940,11 @@ function resvManager(initData, options) {
 
 				// Diagnosis Search
 				let diagSelect = function(item){
-					$('#selDiagnosis').val(item.id);
-					$("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
-				}
+                                        if(item.id !== "n"){
+                                            $('#selDiagnosis').val(item.id);
+                                            $("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
+                                        }
+				};
 				createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
 				
 				//Diagnosis delete button

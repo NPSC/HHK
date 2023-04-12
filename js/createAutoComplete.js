@@ -87,8 +87,13 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
                 filtered.push({'id':0, 'value':'New Person'});
             }
 
+            let notFoundTxt = "No one found";
+            if(inputParms.cmd === 'diagnosis'){
+                notFoundTxt = "Nothing found";
+            }
+
              if (filtered.length === 0) {
-                filtered.push({'id':'n', 'value':'No one found'});
+                filtered.push({'id':'n', 'value':notFoundTxt});
                 cache = {};
             }
 

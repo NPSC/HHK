@@ -121,9 +121,11 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
             
             // Diagnosis Search
 			let diagSelect = function(item){
+                            if(item.id !== "n"){
 				$('#selDiagnosis').val(item.id);
 				$("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
-			}
+                            }
+			};
 			createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
 
 			//Diagnosis delete button
