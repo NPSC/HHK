@@ -200,7 +200,17 @@ if (count($locations) > 0) {
     $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', '', '', 'string', '20', array());
 }
 
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+// Diagnosis
+$diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+$diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+//prepare diag categories for doOptionsMkup
+foreach($diags as $key=>$diag){
+    if(!empty($diag['Substitute'])){
+        $diags[$key][2] = $diagCats[$diag['Substitute']][1];
+        $diags[$key][1] = $diagCats[$diag['Substitute']][1] . ": " . $diags[$key][1];
+    }
+}
+
 if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 'string', '20', array());
 }

@@ -801,6 +801,15 @@ $incidentStatuses = readGenLookupsPDO($dbh, 'Incident_Status', 'Order');
 
 // Diagnosis
 $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+$diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+//prepare diag categories for doOptionsMkup
+foreach($diags as $key=>$diag){
+    if(!empty($diag['Substitute'])){
+        $diags[$key][2] = $diagCats[$diag['Substitute']][1];
+        $diags[$key][1] = $diagCats[$diag['Substitute']][1] . ": " . $diags[$key][1];
+    }
+}
+                
 $locs = readGenLookupsPDO($dbh, 'Location', 'Description');
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
