@@ -734,9 +734,11 @@ class HouseServices {
 
         // Payments - setup
         if (is_null($visit) === FALSE && is_a($visit, 'HHK\House\Visit\Visit')) {
+            // It's a visit
             $paymentManager->pmp->priceModel->setCreditDays($visit->getRateGlideCredit());
             $paymentManager->pmp->setVisitCharges(new VisitCharges($visit->getIdVisit()));
         } else {
+            // Not a visit, maybe a reservation
             $paymentManager->pmp->priceModel->setCreditDays(0);
             $paymentManager->pmp->setVisitCharges(new VisitCharges(0));
         }

@@ -507,12 +507,12 @@ class InstamedGateway extends AbstractPaymentGateway {
         $amount = abs($invoice->getAmount());
         $idToken = intval($rtnToken, 10);
 
-        $stmt = $dbh->query("select pa.AcqRefData
+        $stmt = $dbh->query("select sum(CASE WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData
 from payment p join payment_auth pa on p.idPayment = pa.idPayment
-	join payment_invoice pi on p.idPayment = pi.Payment_Id
+    join payment_invoice pi on p.idPayment = pi.Payment_Id
     join invoice i on pi.Invoice_Id = i.idInvoice
-where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idGroup = $idGroup and pa.Approved_Amount > $amount"
-                . " order by pa.Approved_Amount");
+where p.idToken = $idToken and i.idGroup = $idGroup
+group by pa.Approved_Amount having `Total` >= $amount;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
