@@ -348,6 +348,6 @@
 
         $wrapper.show();
 
-    }
+    
 
 }(jQuery));
