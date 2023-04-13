@@ -10,16 +10,11 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 
+require ('../functions/commonDefines.php');
+
 define('MAX_IDLE_TIME', '1800');
 
-define('PUBLIC_CSS', "<link href='css/publicStyle.css' rel='stylesheet' type='text/css' />");
-
-define('ROOT_CSS', "<link href='../css/root.css' rel='stylesheet' type='text/css' />");
-
-define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
-
-define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css' rel='stylesheet' type='text/css' />");
-
-require ('../functions/commonDefines.php');
-require (FUNCTIONS . 'commonFunc.php');
-require (THIRD_PARTY . '/autoload.php');
+define('PUBLIC_CSS', "<link href='css/publicStyle.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('GRID_CSS', "<link href='css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
