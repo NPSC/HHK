@@ -163,7 +163,7 @@ if ($uS->ShowUncfrmdStatusTab) {
 //        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap my-3 my-md-0 ml-md-5"));
 
 
-$waitlist = HTMLContainer::generateMarkup('h3', '<span>Waitlist</span>' .
+$waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'waitlistTab', 'Wait List') . '</span>' .
         HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'font-size:.9em;', "class"=>"ml-5"))
         //.$wlButton
         , array('style' => 'background-color:#D3D3D3; align-items:baseline;','class'=>'hhk-flex hhk-flex-wrap p-2'))
@@ -398,7 +398,7 @@ if($uS->useOnlineReferral){
                         <?php if ($uS->ShowUncfrmdStatusTab) { ?>
                         <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
                         <?php } ?>
-                        <li><a href="#vwls">Wait List (<span id="spnNumWaitlist"></span>)</a></li>
+                        <li><a href="#vwls"><?php echo $labels->getString('register', 'waitlistTab', 'Wait List'); ?> (<span id="spnNumWaitlist"></span>)</a></li>
                         <?php if($uS->useOnlineReferral){ ?>
                         <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> (<span id="spnNumReferral"></span>)</a></li>
                         <?php } ?>

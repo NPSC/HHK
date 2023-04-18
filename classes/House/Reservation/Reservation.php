@@ -1070,13 +1070,7 @@ WHERE
                 $rateCategory = $rateCat;
             }
 
-        } else {
-            //leave category alone if it's already saved and not in the POST data
-            if(!isset($post['selRateCategory']) && !empty($resv->getRoomRateCategory())){
-
-                $rateCategory = $resv->getRoomRateCategory();
-            }
-
+        }else if(empty($resv->getRoomRateCategory())){
             // Look for an approved rate
             if ($reg->getIdRegistration() > 0 && $uS->IncomeRated) {
 
@@ -1086,6 +1080,8 @@ WHERE
                     $rateCategory = $fin->getFaCategory();
                 }
             }
+        }else{
+            $rateCategory = $resv->getRoomRateCategory();
         }
 
         // Only assign the rate id if the category changes

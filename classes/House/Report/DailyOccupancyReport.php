@@ -2,7 +2,7 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\HTMLContainer;
-use HHK\SysConst\VisitStatus;
+use HHK\SysConst\{VisitStatus,ReservationStatus};
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 
@@ -46,7 +46,11 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
 
         $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
-
+        $resvStatuses = readLookups($this->dbh, "reservStatus", "Code");
+        $resvStatusList = (isset($resvStatuses[ReservationStatus::Committed]['Title']) ? $resvStatuses[ReservationStatus::Committed]['Title'] . ", " : "") . 
+                (isset($resvStatuses[ReservationStatus::UnCommitted]['Title']) ? $resvStatuses[ReservationStatus::UnCommitted]['Title'] . ", " : "") . 
+                (isset($resvStatuses[ReservationStatus::Waitlist]['Title']) ? "and " . $resvStatuses[ReservationStatus::Waitlist]['Title'] : "");
+        
         $query = "select
                     (select count(*) from resource where Type = 'room') as 'Total Rooms',
                     (select count(*) from resource r
@@ -67,7 +71,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
                     (select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
                         where v.idVisit is not null) as 'Occupied Rooms',
-                    (select count(*) from reservation where date(Expected_Arrival) = date(now()) and Status = 'a') as 'Anticipated Arrivals',
+                    (select count(*) from reservation where date(Expected_Arrival) = date(now()) and Status in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "')) as 'Anticipated Arrivals',
                     (select count(*) from visit where date(Expected_Departure) = date(now()) and Status = 'a') as 'Anticipated Departures',
                     (concat(ROUND((select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
@@ -93,7 +97,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
         $helptexts["Total " . $rmtroomTitle . "s"] = "Total " . $rmtroomTitle . "s available";
         $helptexts["Vacant Rooms"] = "Number of vacant available rooms";
         $helptexts["Occupied Rooms"] = "Number of rooms with active visits";
-        $helptexts["Anticipated Arrivals"] = "Number of active reservations with an arrival date of today";
+        $helptexts["Anticipated Arrivals"] = "Number of " . $resvStatusList . " reservations with an arrival date of today";
         $helptexts["Anticipated Departures"] = "Number of checked in visits with an expected departure of today";
         $helptexts["Available Room Occupancy"] = "Total Occupied Rooms / (Total Regular Rooms - Out of service regular rooms)*100";
         $helptexts["Total Room Occupancy"] = "Total Occupied Rooms / Total Regular Rooms*100";

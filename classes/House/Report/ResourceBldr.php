@@ -147,7 +147,14 @@ Order by `t`.`List_Order`;");
             $diags = $stmt->fetchAll(\PDO::FETCH_NUM);
 
 
-        } else {
+        } else if($tableName == DIAGNOSIS_TABLE_NAME){
+            $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+            foreach($diags as $key=>$diag){
+                    if(!empty($diag['Substitute'])){
+                        $diags[$key][2] = $diagCats[$diag['Substitute']][1];
+                    }
+                }
+        }else {
             $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
         }
 
