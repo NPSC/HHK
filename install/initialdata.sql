@@ -805,6 +805,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('guestCreditLabel','Current Guest Credit','s','s','','Default: Current Guest Credit'),
 ('psgLabel','Patient Support Group','s','s','','Default: Patient Support Group'),
 ('psgAbrev','PSG','s','s','','Default: PSG'),
+('psgPlural','PSGs','s','s','','Default: PSGs'),
 ('houseSubsidy','House Discount','s','s','','Default: House Discount'),
 ('thirdParty','3rd Party','s','s','','Default: 3rd Party'),
 ('roomFund','Over-Payments','s','s','','Default: Over-Payments'),

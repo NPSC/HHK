@@ -1777,7 +1777,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
 CREATE OR REPLACE VIEW `vlist_first_visit` AS
 select v.* from visit v
 join registration reg on v.idRegistration = reg.idRegistration
-where v.Arrival_Date = (select min(vv.Arrival_Date) from visit vv join registration reg2 on vv.idRegistration = reg2.idRegistration where reg.idPsg = reg2.idPsg);
+where v.Status in ("a", "co") and v.Arrival_Date = (select min(vv.Arrival_Date) from visit vv join registration reg2 on vv.idRegistration = reg2.idRegistration where reg.idPsg = reg2.idPsg and not date(vv.Arrival_Date) <=> date(vv.Actual_Departure));
 
 
 -- -----------------------------------------------------

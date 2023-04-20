@@ -2689,7 +2689,12 @@ function resvManager(initData, options) {
 
                 $('.hhk-cbStay').change();
 
-                $('#' + data.addPerson.mem.pref + 'txtLastName').val(guestSearchTerm).focus();
+                $('#txtPersonSearch').val("");
+
+                if($('#' + data.addPerson.mem.pref + 'txtLastName').val() === ""){
+                    $('#' + data.addPerson.mem.pref + 'txtLastName').val(guestSearchTerm).focus();
+                }
+                
             }
         }
 		$('#submitButtons').show();

@@ -41,3 +41,4 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `
 
 -- add waitlist label
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('waitlistTab','Wait List','s','rg','','Default: Wait List');
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('psgPlural','PSGs','s','s','','Default: PSGs');

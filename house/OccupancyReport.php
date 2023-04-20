@@ -88,6 +88,13 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
 			google.charts.setOnLoadCallback(drawGuestsPerNight);
             google.charts.setOnLoadCallback(drawDiagnosisTotals);
 
+            let options = {
+                height:400,
+            	width:500,
+            	'chartArea': {'width': '90%', 'height': '80%'},
+            	legend: {position: 'right', alignment: 'center'}
+            };
+
             function drawGuestsPerNight() {
 
                 let data = <?php echo json_encode($occupancyReport->getGuestAvgPerNight()); ?>;
@@ -97,17 +104,23 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
                 var view = new google.visualization.DataView(dataTable);
 
                 var chart = new google.visualization.PieChart(document.getElementById('guestsPerNight'));
+                
                 let options = {
-                	height:300,
-                	width:300,
-                	'chartArea': {'width': '100%', 'height': '60%'},
-                	legend: {position: 'top', alignment: 'center'},
+                    height:350,
+                    width: 500,
+                    chartArea: {'width': '90%', 'height': '100%'},
+                    legend: {
+                        position: 'right',
+                        alignment: 'center',
+                        textStyle: {
+                            fontSize: 14
+                        }
+                    }
                 };
-
                 chart.draw(view, options);
-        	}
+            }
 
-        	function drawDiagnosisTotals() {
+            function drawDiagnosisTotals() {
 
                 let data = <?php echo json_encode($occupancyReport->getDiagnosisCategoryTotals()); ?>;
 
@@ -117,14 +130,20 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
 
                 var chart = new google.visualization.PieChart(document.getElementById('diagnosisCategoryTotals'));
                 let options = {
-                	height:300,
-                	width: 400,
-                	'chartArea': {'width': '100%', 'height': '80%'},
-                	legend: {position: 'right', alignment: 'center'},
+                    height:350,
+                    width: 500,
+                    chartArea: {'width': '90%', 'height': '100%'},
+                    legend: {
+                        position: 'right',
+                        alignment: 'center',
+                        textStyle: {
+                            fontSize: 14
+                        }
+                    }
                 };
 
                 chart.draw(view, options);
-        	}
+            }
 
         </script>
 
@@ -149,6 +168,7 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
                     		#hhk-reportWrapper {
                                 border: 0;
                                 font-size: 0.9em;
+                                background: none;
                             }
 
                             #hhk-reportWrapper #repSummary>.hhk-flex {
