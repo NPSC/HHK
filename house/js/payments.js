@@ -210,6 +210,7 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
  *
  * @param {object} item
  * @param {int} orderNum
+ * @param (integer) index
  * @returns {undefined}
  */
 function getInvoicee(item, orderNum, index) {
@@ -244,6 +245,7 @@ function setTaxExempt(taxExempt) {
  * @param {string} vorr
  * @param {int} idPayment
  * @param {float} amt
+ * @param (function) refresh
  * @returns {undefined}
  */
 function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
@@ -266,6 +268,7 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 		prms.cmd = 'delWaive';
 		prms.iid = amt;
 	}
+        
 	$.post('ws_ckin.php', prms, function(data) {
 		let revMessage = '';
 		if (data) {
