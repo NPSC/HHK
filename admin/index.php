@@ -56,7 +56,7 @@ try {
 }
 
 
-if (isset($_POST['txtUname'])) {
+if (filter_has_var(INPUT_POST, 'txtUname')) {
     $events = $login->checkPost($dbh, $_POST, $page->get_Default_Page());
     echo json_encode($events);
     exit();

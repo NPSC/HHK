@@ -30,12 +30,12 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $uname = $uS->username;
 
     $includeDeceased = FALSE;
-    if (isset($_POST["exDeceased"])) {
+    if (filter_has_var(INPUT_POST, "exDeceased")) {
         $includeDeceased = TRUE;
     }
 
 
-    if (isset($_POST["btnstreamlined"])) {
+    if (filter_has_var(INPUT_POST, "btnstreamlined")) {
         $slFlag = FALSE;
     } else {
         $slFlag = TRUE;

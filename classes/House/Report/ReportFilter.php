@@ -181,24 +181,24 @@ $ckdate";
     public function loadSelectedTimePeriod() {
 
         // gather input
-        if (isset($_POST['selCalendar'])) {
-            $this->selectedCalendar = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
+        if (filter_has_var(INPUT_POST, 'selCalendar')) {
+            $this->selectedCalendar = intval(filter_input(INPUT_POST, 'selCalendar', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        if (isset($_POST['selIntMonth'])) {
-            $this->selectedMonths = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
+        if (filter_has_var(INPUT_POST, 'selIntMonth')) {
+            $this->selectedMonths = filter_input_array(INPUT_POST, 'selIntMonth', FILTER_SANITIZE_NUMBER_INT);
         }
 
-        if (isset($_POST['selIntYear'])) {
-            $this->selectedYear = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
+        if (filter_has_var(INPUT_POST, 'selIntYear')) {
+            $this->selectedYear = intval(filter_input(INPUT_POST, 'selIntYear', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        if (isset($_POST['stDate'])) {
-            $this->selectedStart = filter_var($_POST['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (filter_has_var(INPUT_POST, 'stDate')) {
+            $this->selectedStart = filter_input(INPUT_POST, 'stDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        if (isset($_POST['enDate'])) {
-            $this->selectedEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (filter_has_var(INPUT_POST, 'enDate')) {
+            $this->selectedEnd = filter_input(INPUT_POST, 'enDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
 
@@ -328,14 +328,14 @@ $ckdate";
 
     public function loadSelectedHospitals() {
 
-        if (isset($_POST['selAssoc'])) {
+        if (filter_has_var(INPUT_POST, 'selAssoc')) {
             $reqs = $_POST['selAssoc'];
             if (is_array($reqs)) {
                 $this->selectedAssocs = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
 
-        if (isset($_POST['selHospital'])) {
+        if (filter_has_var(INPUT_POST, 'selHospital')) {
             $reqs = $_POST['selHospital'];
             if (is_array($reqs)) {
                 $this->selectedHosptials = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -359,8 +359,8 @@ $ckdate";
 
     public function loadSelectedResourceGroups() {
 
-        if (isset($_POST['selRoomGroup'])) {
-            $this->selectedResourceGroups = filter_var($_POST['selRoomGroup'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (filter_has_var(INPUT_POST, 'selRoomGroup')) {
+            $this->selectedResourceGroups = filter_input(INPUT_POST, 'selRoomGroup', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
         return $this;
     }

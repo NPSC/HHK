@@ -53,7 +53,7 @@ $now = getDate();
 $fy = 1;
 $returnedYear = "";
 
-if (isset($_POST["selIntFy"])) {
+if (filter_has_var(INPUT_POST, "selIntFy")) {
     $returnedYear = intval(filter_var($_POST["selIntFy"], FILTER_SANITIZE_NUMBER_INT));
 }
 
@@ -70,11 +70,9 @@ for ($y = $now["year"]; $y > ($now["year"] - 4); $y--) {
 
 
 // Postback logic
-if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"])) {
+if (filter_has_var(INPUT_POST, "btnCat") || filter_has_var(INPUT_POST, "btnCatDL")) {
 
     require("functions" . DS . "TimeReportMgr.php");
-
-    addslashesextended($_POST);
 
     $typeCtrl->setReturnValues($_POST[$typeCtrl->get_htmlNameBase()]);
 
@@ -145,7 +143,7 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
                 if (listTable) {
                     listTable.fnDestroy();
                 }
-                if (makeTable == 1) {
+                if (makeTable === 1) {
                     $('div#printArea').css('display', 'block');
                     try {
                         listTable = $('#tblCategory').dataTable({
@@ -164,7 +162,7 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
             });
         </script>
     </head>
-    <body <?php if ($testVersion) echo "class='testbody'"; ?> >
+    <body <?php if ($testVersion){ echo "class='testbody'";} ?> >
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         	<h2>Time Reports</h2>

@@ -236,10 +236,8 @@ $idPatient = $psg->getIdPatient();
  * This is the main SAVE submit button.  It checks for a change in any data field
  * and updates the database accordingly.
  */
-if (isset($_POST["btnSubmit"])) {
+if (filter_has_var(INPUT_POST, "btnSubmit")) {
     $msg = "";
-
-    addslashesextended($_POST);
 
     try {
         // Name
@@ -265,7 +263,7 @@ if (isset($_POST["btnSubmit"])) {
             $delMe = FALSE;
 
             // Delete member
-            if (isset($_POST['delpMem'])) {
+            if (filter_has_var(INPUT_POST, 'delpMem')) {
 
                 foreach ($_POST['delpMem'] as $k => $v) {
 
@@ -284,7 +282,7 @@ if (isset($_POST["btnSubmit"])) {
 
             } else {
 
-                if (isset($_POST['selPrel'])) {
+                if (filter_has_var(INPUT_POST, 'selPrel')) {
 
                     foreach ($_POST['selPrel'] as $k => $v) {
                         $k = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT),10);
@@ -293,7 +291,7 @@ if (isset($_POST["btnSubmit"])) {
                     }
                 }
 
-                if (isset($_POST['cbLegalCust'])) {
+                if (filter_has_var(INPUT_POST, 'cbLegalCust')) {
 
                     foreach ($psg->psgMembers as $g => $v) {
 
@@ -314,13 +312,13 @@ if (isset($_POST["btnSubmit"])) {
 
             // Notes
             $psgNotes = '';
-            if (isset($_POST['txtPSGNotes'])) {
-                $psgNotes = $_POST['txtPSGNotes'];
+            if (filter_has_var(INPUT_POST, 'txtPSGNotes')) {
+                $psgNotes = filter_input(INPUT_POST, 'txtPSGNotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             // Last info confirmed date
-            if (isset($_POST['cbLastConfirmed']) && isset($_POST['txtLastConfirmed'])) {
-                $lastConfirmed = filter_var($_POST['txtLastConfirmed'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            if (filter_has_var(INPUT_POST, 'cbLastConfirmed') && filter_has_var(INPUT_POST, 'txtLastConfirmed')) {
+                $lastConfirmed = filter_input(INPUT_POST, 'txtLastConfirmed', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $psg->setLastConfirmed($lastConfirmed);
             }
 
@@ -353,38 +351,38 @@ if (isset($_POST["btnSubmit"])) {
                 $notes = '';
                 $faStatDate = '';
 
-                if (isset($_POST['txtFaIncome'])) {
+                if (filter_has_var(INPUT_POST, 'txtFaIncome')) {
                     $income = filter_var(str_replace(',', '', $_POST['txtFaIncome']),FILTER_SANITIZE_NUMBER_INT);
                     $finApp->setMontylyIncome($income);
                 }
 
-                if (isset($_POST['txtFaSize'])) {
-                    $size = intval(filter_var($_POST['txtFaSize'],FILTER_SANITIZE_NUMBER_INT), 10);
+                if (filter_has_var(INPUT_POST, 'txtFaSize')) {
+                    $size = intval(filter_input(INPUT_POST, 'txtFaSize',FILTER_SANITIZE_NUMBER_INT), 10);
                     $finApp->setHhSize($size);
                 }
 
                 // FA Category
-                if (isset($_POST['hdnRateCat'])) {
-                    $faCategory = filter_var($_POST['hdnRateCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if (filter_has_var(INPUT_POST, 'hdnRateCat')) {
+                    $faCategory = filter_input(INPUT_POST, 'hdnRateCat', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
-                if (isset($_POST['SelFaStatus']) && $_POST['SelFaStatus'] != '') {
-                    $faStat = filter_var($_POST['SelFaStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if (filter_has_var(INPUT_POST, 'SelFaStatus')) {
+                    $faStat = filter_input(INPUT_POST, 'SelFaStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
-                if (isset($_POST['txtFaStatusDate']) && $_POST['txtFaStatusDate'] != '') {
-                    $faDT = setTimeZone($uS, filter_var($_POST['txtFaStatusDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                if (filter_has_var(INPUT_POST, 'txtFaStatusDate')) {
+                    $faDT = setTimeZone($uS, filter_input(INPUT_POST, 'txtFaStatusDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     $faStatDate = $faDT->format('Y-m-d');
                 }
 
                 // Reason text
-                if (isset($_POST['txtFaReason'])) {
-                    $reason = filter_var($_POST['txtFaReason'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if (filter_has_var(INPUT_POST, 'txtFaReason')) {
+                    $reason = filter_input(INPUT_POST, 'txtFaReason', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 // Notes
-                if (isset($_POST['txtFaNotes'])) {
-                    $notes = filter_var($_POST['txtFaNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if (filter_has_var(INPUT_POST, 'txtFaNotes')) {
+                    $notes = filter_input( INPUT_POST, 'txtFaNotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 // Save Fin App dialog.

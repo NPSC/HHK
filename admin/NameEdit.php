@@ -178,11 +178,8 @@ try {
  * This is the main SAVE submit button.  It checks for a change in any data field
  * and updates the database accordingly.
  */
-if (isset($_POST["btnSubmit"])) {
+if(filter_has_var(INPUT_POST, "btnSubmit")){
     $msg = "";
-
-    // Strip slashes
-    addslashesextended($_POST);
 
     try {
 

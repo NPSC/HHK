@@ -14,11 +14,9 @@ use HHK\sec\UserClass;
 
 require_once ("InstallIncludes.php");
 
-addslashesextended($_POST);
-
 //Check request
-if (isset($_POST['cmd'])) {
-    $c = filter_var($_POST['cmd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (filter_has_var(INPUT_POST, 'cmd')) {
+    $c = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $events = array();
@@ -63,9 +61,9 @@ if ($c == "testdb") {
         }
 
         // Update admin password
-        if (isset($_POST['new'])) {
+        if (filter_has_var(INPUT_POST, 'new')) {
 
-            $newPw = filter_var($_POST['new'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $newPw = filter_input(INPUT_POST, 'new', FILTER_UNSAFE_RAW);
 
             $uclass = new UserClass();
             if ($uclass->setPassword($dbh, -1, $newPw)) {

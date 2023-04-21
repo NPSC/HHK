@@ -29,11 +29,11 @@ $menuMarkup = $wInit->generatePageMenu();
 $ipReply = "";
 $revokeReply = "";
 
-if (isset($_POST['btnSave'])) {
+if (filter_has_var(INPUT_POST, 'btnSave')) {
 
     $uS = Session::getInstance();
 
-    if (isset($_POST['Group_Code']) && is_array($_POST['Group_Code'])) {
+    if (filter_has_var(INPUT_POST, 'Group_Code') && is_array($_POST['Group_Code'])) {
 
         foreach ($_POST['Group_Code'] as $c) {
 

@@ -80,12 +80,9 @@ try {
 
 
 // test and handle Name Edit save
-if (isset($_POST["btnSavePI"])) {
+if (filter_has_var(INPUT_POST, "btnSavePI")) {
 
     $msg = "";
-
-    // Strip slashes
-    addslashesextended($_POST);
 
 try {
 

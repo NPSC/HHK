@@ -23,8 +23,6 @@ $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
- addslashesextended($_POST);
-
 $makeTable = 0;
 $donmarkup = "<thead><tr><td></td></tr></thead><tbody><tr><td></td></tr></tbody>";
 

@@ -16,7 +16,7 @@ use HHK\Donation\Campaign;
 require ("AdminIncludes.php");
 
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;
@@ -24,10 +24,6 @@ $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
-
-
-// Check strings for slashes, etc.
-addslashesextended($_POST);
 
 $makeTable = "0";
 $donmarkup = "<thead><tr><td></td></tr></thead><tbody><tr><td></td></tr></tbody>";
@@ -54,7 +50,7 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 
 #--------------------------------------------------------------
 // form1 save button:
-if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
+if (filter_has_var(INPUT_POST, "btnDonors") || filter_has_var(INPUT_POST, "btnDonDL")) {
 #--------------------------------------------------------------
 
     require_once("functions" . DS . "donorReportManager.php");
@@ -71,7 +67,7 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
     $letterSalSelector->setReturnValues($_POST[$letterSalSelector->get_htmlNameBase()]);
     $envSalSelector->setReturnValues($_POST[$envSalSelector->get_htmlNameBase()]);
 
-    if (isset($_POST["overRideSal"])) {
+    if (filter_has_var(INPUT_POST, "overRideSal")) {
         $overRideSalChecked = "checked='checked'";
         $overrideSalutations = TRUE;
     } else {
@@ -80,7 +76,7 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
     }
 
 // check campaign codes
-    if (isset($_POST["selDonCamp"])) {
+    if (filter_has_var(INPUT_POST, "selDonCamp")) {
         $campcodes = $_POST["selDonCamp"];
         foreach ($campcodes as $item) {
             // remember picked values for this control
@@ -97,7 +93,7 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
         $ordChecked = "checked='checked'";
     }
 
-    if (isset($_POST["exDeceased"])) {
+    if (filter_has_var(INPUT_POST, "exDeceased")) {
         $exDeceasedChecked = " checked='checked' ";
     }
 
@@ -143,7 +139,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
             if (listTable)
                 listTable.fnDestroy();
 
-            if (makeTable == 2) {
+            if (makeTable === 2) {
                 $('div#printArea').css('display', 'block');
 
             listTable = $('#tblDonor').dataTable({

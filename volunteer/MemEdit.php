@@ -184,11 +184,9 @@ try {
  * This is the member Name Edit SAVE submit button.  It checks for a change in any data field
  * and updates the database accordingly.
  */
-if (isset($_POST["btnSubmit"]) && $id > 0) {
+if (filter_has_var(INPUT_POST, "btnSubmit") && $id > 0) {
 
     $msg = "";
-
-    addslashesextended($_POST);
 
     try {
 
@@ -408,7 +406,7 @@ function getVolGroupList($rows, $volGroup, $page = "MemEdit.php") {
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
     </head>
-    <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?> >
+    <body <?php if ($wInit->testVersion){ echo "class='testbody'";} ?> >
             <?php echo $menuMarkup; ?>
         <div id="page">
             <div id="contentDiv">

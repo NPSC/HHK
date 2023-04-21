@@ -45,7 +45,7 @@ $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("uh-oh");
 
 // Edit pages
-if (isset($_POST["btnSubmit"])) {
+if (filter_has_var(INPUT_POST, "btnSubmit")) {
 
     if (SecurityComponent::is_TheAdmin()) {
 

@@ -20,10 +20,6 @@ require ("AdminIncludes.php");
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 
-
-addslashesextended($_POST);
-
-
 // catch service call
 $tableName = filter_input(INPUT_POST, 'ql', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($tableName != '') {
@@ -143,7 +139,7 @@ $resMessage = "";
 
 
 
-if (isset($_POST["btnvType"])) {
+if (filter_has_var(INPUT_POST, "btnvType")) {
 
     $volAlert = new AlertMessage("volAlert");
     $volAlert->set_Context(AlertMessage::Alert);

@@ -43,8 +43,8 @@ $uS = Session::getInstance();
 $resp = array();
 
 // check security codes; exit if not secure
-if (isset($_POST["sq"])) {
-    $sq = filter_var($_POST["sq"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (filter_has_var(INPUT_POST, "sq")) {
+    $sq = filter_input(INPUT_POST, "sq", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $pw = decryptMessage($sq);
     $ts = strtotime($pw);
     $tnow = time();
@@ -62,8 +62,8 @@ $uname = $uS->username;
 
 // use cmd to determine actions
 $cmd = "";
-if (isset($_POST['cmd'])) {
-    $cmd = $_POST['cmd'];
+if (filter_has_var(INPUT_POST, 'cmd')) {
+    $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 try {
@@ -73,8 +73,8 @@ try {
             $maxDonationAmt = floatval($uS->MaxDonate);
 
             $id = 0;
-            if (isset($_POST["id"])) {
-                $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            if (filter_has_var(INPUT_POST, "id")) {
+                $id = intval(filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
             $resp = recordDonation($dbh, $maxDonationAmt, $id, $_POST);
@@ -83,8 +83,8 @@ try {
 
         case "delete":
             $donId = 0;
-            if (isset($_POST['did'])) {
-                $donId = intval(filter_var($_POST['did'], FILTER_SANITIZE_NUMBER_INT), 10);
+            if (filter_has_var(INPUT_POST, 'did')) {
+                $donId = intval(filter_input(INPUT_POST, 'did', FILTER_SANITIZE_NUMBER_INT), 10);
             }
             $resp = deleteDonation($dbh, $donId, $uname);
 
@@ -93,8 +93,8 @@ try {
         case "markup":
 
             $id = 0;
-            if (isset($_POST["id"])) {
-                $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            if (filter_has_var(INPUT_POST, "id")) {
+                $id = intval(filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
             $resp = genDonationMarkup($dbh, $id);

@@ -34,7 +34,7 @@ $wInit->sessionLoadGenLkUps();
 $uname = $uS->username;
 
 $resps = array();
-addslashesextended($_POST);
+
 $actionTakenTable = "";
 
 /*

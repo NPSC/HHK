@@ -42,7 +42,7 @@ $columns = array(
            );
 
 $whStayed = "";
-if(isset($_POST['btnHere'])){
+if(filter_has_var(INPUT_POST, 'btnHere')){
     $filter->loadSelectedTimePeriod();
     if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
         $start = $filter->getReportStart();
@@ -111,7 +111,7 @@ function saveMissingDemogs($dbh, $uS, $demos){
 
         foreach ($demos as $j => $d) {
 
-            if (isset($_POST['sel' . $j])) {
+            if (filter_has_var(INPUT_POST, 'sel' . $j)) {
 
                 foreach ($_POST['sel' . $j] as $k => $v) {
 

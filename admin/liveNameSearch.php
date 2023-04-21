@@ -95,11 +95,11 @@ switch ($c) {
 
     case 'srchName':
 
-        if (isset($_POST['md'])) {
-            $md = filter_var($_POST['md'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $nameLast = (isset($_POST['nl']) ? filter_var($_POST['nl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
-            $nameFirst = (isset($_POST['nf']) ? filter_var($_POST['nf'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
-            $email = (isset($_POST['em']) ? filter_var($_POST['em'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+        if (filter_has_var(INPUT_POST, 'md')) {
+            $md = filter_input(INPUT_POST, 'md', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $nameLast = (filter_has_var(INPUT_POST, 'nl') ? filter_input(INPUT_POST, 'nl', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $nameFirst = (filter_has_var(INPUT_POST, 'nf') ? filter_input(INPUT_POST, 'nf', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $email = (filter_has_var(INPUT_POST, 'em') ? filter_input(INPUT_POST, 'em', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
 
             // Check for duplicate member records
             $dups = MemberSearch::searchName($dbh, $md, $nameLast, $nameFirst, $email);

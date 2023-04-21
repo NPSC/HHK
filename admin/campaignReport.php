@@ -13,7 +13,7 @@ use HHK\Config_Lite\Config_Lite;
 
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
@@ -31,8 +31,8 @@ $rb_fyChecked = "checked='checked'";
 $rb_cyChecked = "";
 
 
-if (isset($_POST["selYears"])) {
-    $yearSelected = filter_var($_POST["selYears"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (filter_has_var(INPUT_POST, "selYears")) {
+    $yearSelected = filter_input(INPUT_POST, "selYears", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 } else {
     $yearSelected = "all";
 }
@@ -112,7 +112,7 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
 
             });
             function handleResponse(data, statusTxt, xhrObject) {
-                if (statusTxt != "success")
+                if (statusTxt !== "success")
                     alert('Server had a problem.  ' + xhrObject.status + ", "+ xhrObject.responseText);
 
                 if (data) {
@@ -142,7 +142,7 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
 
         </script>
     </head>
-    <body <?php if ($testVersion) echo "class='testbody'"; ?> >
+    <body <?php if ($testVersion){ echo "class='testbody'";} ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         <h2><?php echo $wInit->pageHeading; ?></h2>

@@ -164,8 +164,7 @@ $resultMessage = "";
 
 
 // form1 save button:
-if (isset($_POST["bttncamp"])) {
-     addslashesextended($_POST);
+if (filter_has_var(INPUT_POST, "bttncamp")) {
     // validate and if okay, save data
     // if not okay, redisplay form with errors marked.
     $campAlert = new AlertMessage("campAlert");
@@ -197,15 +196,15 @@ $stDate = "";
 $enDate = "";
 $lastDate = "";
 
-if ($campaign->get_startdate() != null)
+if ($campaign->get_startdate() != null){
     $stDate = date("m/d/Y", strtotime($campaign->get_startdate()));
-
-if ($campaign->get_enddate() != null)
+}
+if ($campaign->get_enddate() != null){
     $enDate = date("m/d/Y", strtotime($campaign->get_enddate()));
-
-if ($campaign->get_lastupdated() != null)
+}
+if ($campaign->get_lastupdated() != null){
     $lastDate = date("m/d/Y", strtotime($campaign->get_lastupdated()));
-
+}
 $selType->set_value(TRUE, $campaign->get_type());
 
 ?>

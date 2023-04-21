@@ -264,10 +264,10 @@ if ($uS->Doctor) {
     $rptSetting = 'r';
 }
 
-if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
+if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExcel')) {
 
     $local = TRUE;
-    if (isset($_POST['btnExcel'])) {
+    if (filter_has_var(INPUT_POST, 'btnExcel')) {
         $local = FALSE;
     }
 
@@ -308,7 +308,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $whHosp .= $whAssoc;
 
-    if (isset($_POST['rbReport'])) {
+    if (filter_has_var(INPUT_POST, 'rbReport')) {
 
 
         // Create settings markup
@@ -317,9 +317,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $colTitle = '';
         $blanksOnly = FALSE;
 
-        $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $rptSetting = filter_input(INPUT_POST, 'rbReport', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        if (isset($_POST['cbBlanksOnly'])) {
+        if (filter_has_var(INPUT_POST, 'cbBlanksOnly')) {
             $blanksOnly = TRUE;
             $cbBlank = "checked";
         }

@@ -62,7 +62,7 @@ if (count($rows) > 0) {
 }
 
 
-if (isset($_POST['btnPrep'])) {
+if (filter_has_var(INPUT_POST, 'btnPrep')) {
 
     // Load the table with fresh data
     $affectedRows = MailList::fillMailistTable($dbh, $uS->SolicitBuffer);
@@ -74,10 +74,9 @@ if (isset($_POST['btnPrep'])) {
 }
 
 // Postback logic
-if (isset($_POST["btnDlSol"])) {
+if (filter_has_var(INPUT_POST, "btnDlSol")) {
 
     ini_set('memory_limit', "128M");
-    addslashesextended($_POST);
 
     $catInclCtrl->setReturnValues($_POST[$catInclCtrl->get_htmlNameBase()]);
     $catExclCtrl->setReturnValues($_POST[$catExclCtrl->get_htmlNameBase()]);
@@ -117,7 +116,7 @@ $catSelExcl = "<td style='text-align: center;'>" . $catExclCtrl->createMarkup($c
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 
     </head>
-    <body <?php if ($testVersion) echo "class='testbody'"; ?> >
+    <body <?php if ($testVersion){ echo "class='testbody'";} ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>

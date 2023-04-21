@@ -431,11 +431,11 @@ abstract class AbstractReport {
             $subject = '';
 
             if (isset($this->request['txtEmail'])) {
-                $emailAddress = filter_var($_POST['txtEmail'], FILTER_SANITIZE_EMAIL);
+                $emailAddress = filter_input(INPUT_POST, 'txtEmail', FILTER_SANITIZE_EMAIL);
             }
 
             if (isset($this->request['txtSubject'])) {
-                $subject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $subject = filter_input(INPUT_POST, 'txtSubject', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $result = $this->sendEmail($emailAddress, $subject);
@@ -465,4 +465,3 @@ abstract class AbstractReport {
     }
 
 }
-?>
