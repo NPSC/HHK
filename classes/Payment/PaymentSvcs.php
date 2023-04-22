@@ -343,6 +343,11 @@ class PaymentSvcs {
             return array('warning' => 'This Payment is ineligable for return.  ', 'bid' => $bid);
         }
 
+        // is already a refund?
+        if ($payRs->Is_Refund->getStoredVal() > 0) {
+            return array('error' => 'This is already a return.  ', 'bid' => $bid);
+        }
+
 
         // Get the invoice record
         $invoice = new Invoice($dbh);
@@ -444,7 +449,15 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function voidReturnFees(\PDO $dbh, $idPayment, $bid, $paymentDate = '') {
+    /**
+     * Both return payment and return (random) amount come here
+     * 
+     * @param \PDO $dbh
+     * @param type $idPayment
+     * @param type $bid
+     * @return type
+     */
+    public static function voidReturnFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
         $dataArray = array('bid' => $bid);
@@ -454,19 +467,19 @@ class PaymentSvcs {
         $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
         if (count($pments) != 1) {
-            return array('warning' => 'Payment record not found.  Unable to Void this return.  ', 'bid' => $bid);
+            return array('warning' => 'Payment record not found. ', 'bid' => $bid);
         }
 
         EditRS::loadRow($pments[0], $payRs);
 
-        // Already voided, or otherwise ineligible
-        if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Retrn && $payRs->Is_Refund->getStoredVal() === 0) {
-            return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
-        }
-
         // only available to charge cards.
         if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
             return array('warning' => 'Void Return is Not Available.  ', 'bid' => $bid);
+        }
+
+        // Already voided, or otherwise ineligible
+        if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Retrn && $payRs->Is_Refund->getStoredVal() === 0) {
+            return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
         }
 
         // Find hte detail record.

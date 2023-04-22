@@ -240,12 +240,12 @@ function setTaxExempt(taxExempt) {
 }
 
 /**
- *
- * @param {string} btnid
- * @param {string} vorr
+ * 
+ * @param {str} btnid
+ * @param {str} vorr
  * @param {int} idPayment
- * @param {float} amt
- * @param (function) refresh
+ * @param {decimal} amt
+ * @param {object} refresh
  * @returns {undefined}
  */
 function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
@@ -1614,7 +1614,7 @@ function paymentsTable(tableID, containerID, refreshPayments) {
 		invoiceAction($(this).data('iid'), 'view', event.target.id);
 	});
 
-	// Void/Reverse button
+	// Void/Reverse Payment button
 	$('#' + containerID).on('click', '.hhk-voidPmt', function() {
 		var btn = $(this);
 		var amt = parseFloat(btn.data("amt"));
