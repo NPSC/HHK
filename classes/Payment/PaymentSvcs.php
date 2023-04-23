@@ -521,6 +521,7 @@ class PaymentSvcs {
 
         EditRS::loadRow($pments[0], $payRs);
 
+        // Filter out return amounts here
         if ($payRs->Is_Refund->getStoredVal() > 0) {
             return self::undoReturnAmount($dbh, $idPayment, $payRs->idPayment_Method->getStoredVal(),$payRs->Amount->getStoredVal(), $bid);
         }
