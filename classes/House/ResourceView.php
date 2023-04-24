@@ -368,6 +368,7 @@ FROM
 WHERE
 case WHEN r.`Status` = '" .ReservationStatus::Staying . "' THEN
 		DATE(r.Actual_Arrival) < DATE(:dtend)
+                AND DATE(datedefaultnow(r.Expected_Departure)) > DATE(:dtstart)
 	WHEN r.`Status` = '" .ReservationStatus::Checkedout . "' THEN
         DATE(r.Actual_Arrival) < DATE(:dtend)
         AND DATE(r.Actual_Departure) > DATE(:start)
@@ -387,6 +388,7 @@ WHERE
             $stmt->execute(array(
                 ':idRu'=>$idRescUse,
                 ':start'=>$stDT->format('Y-m-d'),
+                ':dtstart'=>$stDT->format('Y-m-d'),
                 ':dtend'=>$enDT->format('Y-m-d'),
                 ':rustart'=>$stDT->format('Y-m-d'),
                 ':ruend'=>$enDT->format('Y-m-d')));
