@@ -368,7 +368,7 @@
         		{
         			"type": "header",
         			"subtype": "h3",
-        			"label": "Guest ${guestNum}",
+        			"label": "Guest:",
         			"group": "guest",
         			"width": "col-md-2",
         			"className": "guestHeader"
