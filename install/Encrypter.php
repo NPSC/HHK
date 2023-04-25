@@ -15,20 +15,19 @@ $mudTxt = '';
 $errorMsg = '';
 $clearTxt = '';
 
-if (isset($_POST['btnSmt'])) {
+$input = filter_input_array(INPUT_POST,
+    array(
+        'clrtxt'=>FILTER_SANITIZE_SPECIAL_CHARS,
+        'enctxt'=>FILTER_SANITIZE_SPECIAL_CHARS
+    )
+);
 
-    if (isset($_POST['clrtxt'])) {
-        $clear = filter_var($_POST['clrtxt'], FILTER_SANITIZE_STRING);
-        $mudTxt = encryptMessage($clear);
-    }
+if (filter_has_var(INPUT_POST, 'btnSmt') && !empty($input['clrtxt'])) {
+    $mudTxt = encryptMessage($input['clrtxt']);
 }
 
-if (isset($_POST['btndec'])) {
-
-    if (isset($_POST['enctxt'])) {
-        $clear = filter_var($_POST['enctxt'], FILTER_SANITIZE_STRING);
-        $clearTxt = decryptMessage($clear);
-    }
+if (filter_has_var(INPUT_POST, 'btndec') && !empty($input['enctxt'])) {
+    $clearTxt = decryptMessage($input['enctxt']);
 }
 
 
@@ -53,12 +52,12 @@ if (isset($_POST['btndec'])) {
                 <p><?php echo $clearTxt; ?></p>
                 <input type="submit" name="btndec" value="Decrypt" />
             </div>
-            <div style="margin:10px;">
+            <!-- <div style="margin:10px;">
             	<input type="submit" name="btninfo" value="Php Info" />
-            </div>
+            </div> -->
         </div>
         </form>
-            <?php  if (isset($_POST['btninfo'])) phpinfo(); ?>
+        <?php  //if (isset($_POST['btninfo'])) phpinfo(); ?>
 
     </body>
 </html>

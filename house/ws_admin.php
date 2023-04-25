@@ -173,16 +173,9 @@ switch ($c) {
 
     case "chgpw":
 
-        $oldPw = ''; $newPw = '';
+        $input = filter_input_array(INPUT_POST, array("old"=>FILTER_UNSAFE_RAW, "newer"=>FILTER_UNSAFE_RAW));
 
-        if (isset($_POST["old"])) {
-            $oldPw = filter_var($_POST["old"], FILTER_UNSAFE_RAW);
-        }
-        if (isset($_POST["newer"])) {
-            $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
-
-        $events = changePW($dbh, $oldPw, $newPw, $uS->username, $uS->uid);
+        $events = changePW($dbh, $input['old'], $input['newer'], $uS->username, $uS->uid);
 
         break;
 

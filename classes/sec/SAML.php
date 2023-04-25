@@ -1034,19 +1034,19 @@ class SAML {
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpSigningCert'])){
-                        $idpConfig['idpSigningCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpSigningCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert'], FILTER_SANITIZE_SPECIAL_CHARS);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpSigningCert2'])){
-                        $idpConfig['idpSigningCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert2'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpSigningCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert2'], FILTER_SANITIZE_SPECIAL_CHARS);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert'])){
-                        $idpConfig['idpEncryptionCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpEncryptionCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert'], FILTER_SANITIZE_SPECIAL_CHARS);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'])){
-                        $idpConfig['idpEncryptionCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpEncryptionCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'], FILTER_SANITIZE_SPECIAL_CHARS);
                     }
                 }
 
