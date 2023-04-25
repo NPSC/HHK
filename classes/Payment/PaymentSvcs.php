@@ -493,7 +493,7 @@ class PaymentSvcs {
         $pAuthRs = new Payment_AuthRS();
         EditRS::loadRow(array_pop($arows), $pAuthRs);
 
-        if ($pAuthRs->Status_Code->getStoredVal() !== PaymentStatusCode::Retrn) {
+        if ($pAuthRs->Status_Code->getStoredVal() !== PaymentStatusCode::Retrn || ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() === 0)) {
             return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
         }
 

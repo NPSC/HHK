@@ -73,11 +73,11 @@ class VantivGateway extends AbstractPaymentGateway {
     }
     
     public function hasUndoReturnPmt() {
-    	return True;
+    	return False;
     }
 
     public function hasUndoReturnAmt() {
-    	return true;
+    	return False;
     }
 
 

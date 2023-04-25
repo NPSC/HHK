@@ -98,6 +98,10 @@ abstract class AbstractPaymentGateway {
         return array('warning' => '_voidSale is not implemented. ');
     }
 
+    public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
+        return $this->voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+    }
+
     public function returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
@@ -111,16 +115,12 @@ abstract class AbstractPaymentGateway {
         return array('warning' => '_returnPayment is not implemented. ');
     }
 
-    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-        return array('warning' => 'Void Return is not Available.  ');
-    }
-
     public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
         return array('warning' => 'Return Amount is not implemented. ');
     }
 
-    public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-        return $this->voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
+        return array('warning' => 'Void Return is not Available.  ');
     }
 
     public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
