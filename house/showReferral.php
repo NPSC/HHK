@@ -351,9 +351,10 @@ if(isset($_GET['template'])){
     								var newElement = JSON.parse(JSON.stringify(element)); //deep copy object (prevent reference/pointer issues)
     								if(newElement.name){
     									newElement.name = newElement.name.replace(/\.g([0-9]+)\./ig, ".g" + guestIndex + ".");
+                                                                        newElement.name = newElement.name.replace(/([a-z,-]+-[0-9]*-)([0-9]{1,2})$/ig, "$1" + guestIndex);
     								}
 
-    								if(newElement.className == "guestHeader"){
+    								if(newElement.className === "guestHeader"){
     									guestNum = guestIndex+1;
     									newElement.label = newElement.label.replace("${guestNum}", guestNum);
     								}

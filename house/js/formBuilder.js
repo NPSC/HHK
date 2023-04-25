@@ -1334,7 +1334,7 @@
 				layoutTemplates: settings.layoutTemplates,
 				onSave: onSave,
 				onAddField:onAddField,
-				//onCloseFieldEdit:onCloseFieldEdit,
+				onCloseFieldEdit:onCloseFieldEdit,
 				stickyControls: settings.stickyControls,
 				"i18n":{
 					"location":"../js/formBuilder"
@@ -1368,7 +1368,7 @@
 								layoutTemplates: settings.layoutTemplates,
 								onSave: onSave,
 								onAddField:onAddField,
-								//onCloseFieldEdit:onCloseFieldEdit,
+								onCloseFieldEdit:onCloseFieldEdit,
 								stickyControls: settings.stickyControls,
 								"i18n":{
 									"location":"../js/formBuilder"
@@ -1454,10 +1454,10 @@
 		
 		var onCloseFieldEdit = function(editPanel){
 			var group = $(editPanel).find('select[name=group]').val();
-			var fieldName = $(editPanel).find('input[name=name]').val();
+                        var fieldType = $(editPanel).parent('li').prop('type');
 			
-			if(group == 'guest' && !fieldName.startsWith("guests.g")){
-				flagAlertMessage('The "Guest" group can only be used with Guest fields', true);
+			if(group === 'guest' && (fieldType === 'checkbox-group' || fieldType === 'radio-group' )){
+				flagAlertMessage('The "Guest" group does not support checkbox or radio buttons, the field has been removed from the "Guest" group', true);
 				$(editPanel).find('select[name=group]').val("");
 			}
 		};
