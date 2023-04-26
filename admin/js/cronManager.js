@@ -85,60 +85,60 @@
         var settings = $.extend(true, {}, defaults, options);
 
         var $wrapper = $(this);
-        
+
         //set uid
         $wrapper.attr('id', '');
         $wrapper.uniqueId();
         uid = $wrapper.attr('id');
 
         createViewer($wrapper, settings);
-        
+
         return this;
     };
 
     function createActions(jobId, row) {
-        
+
         var $ul, $li;
-        
+
         $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons');
-        
+
         // Edit icon
         $li = $('<li title="Edit Job" data-jobid="' + jobId + '" data-title="' + row.Title + '" />').addClass('hhk-job-button job-edit ui-corner-all ui-state-default');
         $li.append($('<span class="ui-icon ui-icon-pencil" />'));
-        
+
         $ul.append($li);
-        
+
         // Save(Done) Edit Icon
         $li = $('<li title="Save Job" />').addClass('hhk-job-button job-done job-action ui-corner-all ui-state-default').hide();
         $li.append($('<span class="ui-icon ui-icon-check" />'));
-        
+
         $ul.append($li);
-        
+
         // Cancel Edit Icon
         $li = $('<li title="Cancel" data-titletext="' + row.Title + '" />').addClass('hhk-job-button job-cancel job-action ui-corner-all ui-state-default').hide();
         $li.append($('<span class="ui-icon ui-icon-cancel" />'));
-        
+
         $ul.append($li);
-        
+
         // Dry Run button
         $li = $('<li title="Dry Run" data-jobid="' + jobId + '" />').addClass('hhk-job-button job-dry-run ui-corner-all ui-state-default');
         $li.append($('Dry Run'));
-        
+
         $ul.append($li);
-        
+
         // Force Run button
         $li = $('<li title="Run Now" data-jobid="' + jobId + '" />').addClass('hhk-job-button job-force-run ui-corner-all ui-state-default');
         $li.append($('Run Now'));
-        
+
         $ul.append($li);
-        
+
         return $('<div />').append($ul).html();
 
         //return $ul.html();
     }
-    
+
     function actions($wrapper, settings, $table) {
-        
+
         //Show Edit mode
         $wrapper.on('click', '.note-edit', function(e){
             e.preventDefault();
@@ -148,7 +148,7 @@
             $(this).hide();
         });
         //End Show Edit mode
-        
+
         //Edit Note
         $wrapper.on('click', '.note-done', function(e){
             e.preventDefault();
@@ -185,7 +185,7 @@
             }
         });
         //End Edit Note
-        
+
         //Cancel Note
         $wrapper.on('click', '.note-cancel', function(e){
             e.preventDefault();
@@ -197,7 +197,7 @@
 
         });
         //End Cancel Note
-        
+
         //Delete Note
         $wrapper.on('click', '.note-delete', function(e){
             var idnote = $(this).data("noteid");
@@ -236,7 +236,7 @@
 
         });
         //End Delete Note
-        
+
         //Undo Delete Note
         $wrapper.on('click', '.note-undodelete', function(e){
             var idnote = $(this).data("noteid");
@@ -272,7 +272,7 @@
     function createViewer($wrapper, settings) {
     	var cronLogLoaded = false;
     	var cronLogTable;
-    	
+
     	//cron tabs
 		$("#cronTabs").tabs({
 			beforeActivate: function (event, ui) {
@@ -301,7 +301,7 @@
 		        }
 		    }
 		});
-        
+
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
             var dtTable = $table.DataTable({
@@ -324,7 +324,7 @@
 		        },
 		        "drawCallback": function(settings){
 			        $wrapper.find("input.flag").checkboxradio({icon:false});
-			        
+
 			        $wrapper.find('.hhk-note-button').button();
 		        },
 		        "createdRow": function( row, data, dataIndex){
@@ -335,19 +335,16 @@
             });
 
             //actions($wrapper, settings, dtTable);
-            
+
             //add ignrSave class to Dt controls
             $(".dataTables_filter").addClass('ignrSave');
             $(".dtBottom").addClass('ignrSave');
-            
+
         }
-        
+
         //$wrapper.append(createNewNote(settings, dtTable));
 
-		
 
-        $wrapper.show();
 
-    
 
 }(jQuery));

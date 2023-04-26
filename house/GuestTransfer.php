@@ -3,25 +3,22 @@ use HHK\SysConst\WebPageCode;
 use HHK\SysConst\MemStatus;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
-use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
-use HHK\sec\SecurityComponent;
+
 use HHK\HTMLControls\HTMLContainer;
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\HTMLTable;
-use HHK\Neon\TransferMembers;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLInput;
-use HHK\ExcelHelper;
 use HHK\sec\Labels;
-use HHK\Neon\RelationshipMapper;
+use HHK\CrmExport\RelationshipMapper;
+use HHK\CrmExport\AbstractExportManager;
 
 /**
  * GuestTransfer.php
- * List and transfer guests to NEON
+ * List and transfer guests to external CMS system
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2021 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -46,29 +43,23 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$config = new Config_Lite(ciCFG_FILE);
-$wsConfig = null;
 
-if ($uS->ContactManager == 'neon') {
+if ($uS->ContactManager !== '') {
 
-    $serviceName = $config->getString('webServices', 'Service_Name', '');
-    $webServices = $config->getString('webServices', 'ContactManager', '');
+    $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
 
-    if ($serviceName != '' && $webServices != '') {
-        $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
-    } else {
-        exit('<h4>HHK configuration error:  Copntact Manager configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h4>');
+    if (is_null($CmsManager)) {
+        exit('<h4>The Contact Manager is not properly configured. </h4>');
     }
 
 } else {
-    exit('<h4>The Contact Manager is not configured. </h4>');
+    exit('<h4>The Contact Manager is not defined.  Set "ContactManager" in the system configuration </h4>');
 }
 
 if (function_exists('curl_version') === FALSE) {
     exit('<h4>PHP configuration error: cURL functions are missing. </h4>');
 }
 
-$isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $labels = Labels::getLabels();
 
@@ -117,7 +108,7 @@ from
     gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
 where
 	s.idName is NULL
-    AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
+    AND n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
     AND n.Member_Status = '" . MemStatus::Active ."'
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
@@ -170,7 +161,7 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
 }
 
-function searchVisits(\PDO $dbh, $start, $end, $maxGuests, $wsConfig) {
+function searchVisits(\PDO $dbh, $start, $end, $maxGuests, AbstractExportManager $CmsManager) {
 
     $uS = Session::getInstance();
     $rows = array();
@@ -217,7 +208,7 @@ WHERE
     s.On_Leave = 0
     AND s.`Status` != 'a'
     AND s.`Recorded` = 0
-    AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
+    AND n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
     AND n.Member_Status = '" . MemStatus::Active ."'
     AND DATE(s.Span_End_Date) < DATE('$end')
     AND datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) > 0
@@ -316,7 +307,7 @@ LIMIT 500");
     // Get Neon relationship code list
     $nstmt = $dbh->query("Select * from neon_lists where `Method` = 'account/listRelationTypes';");
     $method = $nstmt->fetchAll(PDO::FETCH_ASSOC);
-    $neonRelList = getNeonTypes($wsConfig, $method[0]);
+    $neonRelList = getNeonTypes($CmsManager, $method[0]);
 
     foreach ($guestIds as $g) {
 
@@ -413,58 +404,14 @@ LIMIT 500");
     return $tbl->generateMarkup(array('name'=>'tblrpt'));
 }
 
-function getPeopleReport(\PDO $dbh, $start, $end, $extIdFlag = FALSE) {
+function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
-    $whExt = '';
-    if ($extIdFlag) {
-        $whExt = "ifnull(vg.External_Id, '') = '' and ";
-    }
 
-    $uS = Session::getInstance();
     $transferIds = [];
 
-    $query = "SELECT
-    vg.External_Id as `External Id`,
-    vg.Id,
-    CASE
-        WHEN vg.Relationship_Code = 'slf' THEN '&#x2714;'
-        ELSE ''
-    END AS `Patient`,
-    CASE
-		WHEN v.idPrimaryGuest = s.idName THEN 'Yes'
-        ELSE ''
-	END AS `Primary Guest`,
-    CONCAT(vg.Prefix,
-            ' ',
-            vg.First,
-            ' ',
-            vg.Last,
-            ' ',
-            vg.Suffix) AS `Name`,
-    IFNULL(vg.BirthDate, '') AS `Birth Date`,
-    CONCAT(vg.Address,
-            ', ',
-            vg.City,
-            ', ',
-            vg.County,
-            ' ',
-            vg.State,
-            ' ',
-            vg.Zip) AS `Address`,
-    vg.Phone,
-    vg.Email,
-    vg.idPsg,
-    MAX(IFNULL(s.Span_Start_Date, '')) AS `Arrival`,
-    IFNULL(s.Span_End_Date, '') AS `Departure`
-FROM
-    stays s
-        JOIN
-    vguest_listing vg ON vg.Id = s.idName
-        JOIN
-    visit v ON s.idVisit = v.idVisit
-        AND s.Visit_Span = v.Span
-where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) >= DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end')
-GROUP BY vg.Id ORDER BY vg.idPsg";
+    $query = "SELECT *
+    FROM `vguest_transfer`
+    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE('$start') and DATE(`Arrival`) < DATE('$end')";
 
     $stmt = $dbh->query($query);
 
@@ -473,12 +420,10 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
     }
 
     $rows = array();
-    $firstRow = TRUE;
-    $hdr = array();
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-        $transferIds[] = $r['Id'];
+        $transferIds[] = $r['HHK Id'];
 
 
         if ($r['Address'] == ', ,   ') {
@@ -489,13 +434,15 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
         if ($r['External Id'] == '') {
 
        		if ($r['Email'] !== '' || $r['Address'] !== '') {
-       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['Id'], 'type'=>'checkbox', 'checked'=>'checked'));
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox', 'checked'=>'checked'));
        		} else {
-       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['Id'], 'type'=>'checkbox'));
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox'));
         	}
+        } else if ($r['External Id'] == $excludeTerm) {
+            $r['External Id'] = 'Excluded';
         }
 
-        $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
+        $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
 
         $rows[] = $r;
 
@@ -506,19 +453,14 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
 
 }
 
-function getNeonTypes($wsConfig, $list) {
+function getNeonTypes($CmsManager, $list) {
 
     $neonList = [];
 
-    if ($wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
+    $rawList = $CmsManager->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
 
-        $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
-        $rawList = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
-
-        foreach ($rawList as $k => $v) {
-            $neonList[$k] = array(0=>$k, 1=>$v);
-        }
-
+    foreach ($rawList as $k => $v) {
+        $neonList[$k] = array(0=>$k, 1=>$v);
     }
 
     return $neonList;
@@ -575,6 +517,7 @@ $maxGuests = 15;  // maximum guests to process for each post.
 $btnVisits = '';
 $btnGetKey = '';
 $dboxMarkup = '';
+$btnPayments = '';
 
 
 $monthArray = array(
@@ -590,31 +533,27 @@ if ($uS->fy_diff_Months == 0) {
 
 
 // Process report.
-if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST['btnGetVisits'])) {
+if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetPayments') || filter_has_var(INPUT_POST, 'btnGetVisits')) {
 
     // gather input
+ // Input arguements
+    $rags = [
+        'selCalendar'   => array('filter'=>FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_REQUIRE_SCALAR),
+        'selIntMonth'   => array('filter'=>FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_FORCE_ARRAY),
+        'selIntYear'   => array('filter'=>FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_REQUIRE_SCALAR),
+        'stDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        'enDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+    ];
+   
+    $inputs = filter_input_array(INPUT_POST, $rags);
 
-    if (isset($_POST['selCalendar'])) {
-        $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    if (isset($_POST['selIntMonth'])) {
-        $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
-    }
-
-    if (isset($_POST['selIntYear'])) {
-        $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    if (isset($_POST['stDate'])) {
-        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
-    }
-
-    if (isset($_POST['enDate'])) {
-        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
-    }
-
-   if ($calSelection == 20) {
+    $months = $inputs['selIntMonth'];
+    $year = intval($inputs['selIntYear'], 10);
+    $txtStart = $inputs['stDate'];
+    $txtEnd = $inputs['enDate'];
+    $selCal = intval($inputs['selCalendar'], 10);
+    
+   if ($selCal == 20) {
         // fiscal year
         $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
         $startDT = new DateTime($year . '-01-01');
@@ -624,14 +563,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
         $endDT = new DateTime(($year + 1) . '-01-01');
         $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
 
-    } else if ($calSelection == 21) {
+    } else if ($selCal == 21) {
         // Calendar year
         $startDT = new DateTime($year . '-01-01');
         $start = $startDT->format('Y-m-d');
 
         $end = ($year + 1) . '-01-01';
 
-    } else if ($calSelection == 18) {
+    } else if ($selCal == 18) {
         // Dates
         if ($txtStart != '') {
             $startDT = new DateTime($txtStart);
@@ -643,7 +582,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
             $end = $endDT->format('Y-m-d');
         }
 
-    } else if ($calSelection == 22) {
+    } else if ($selCal == 22) {
         // Year to date
         $start = $year . '-01-01';
 
@@ -664,10 +603,10 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
     }
 
 
-    if (isset($_POST['btnHere'])) {
+    if (filter_has_var(INPUT_POST, 'btnHere')) {
 
         // Get HHK records result table.
-        $results = getPeopleReport($dbh, $start, $end, FALSE);
+        $results = getPeopleReport($dbh, $start, $end, $CmsManager::EXCLUDE_TERM, FALSE);
 
         if ($results === FALSE) {
 
@@ -685,7 +624,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
             $settingstable = $sTbl->generateMarkup(array('style'=>'float:left;'));
 
             // Create search criteria markup
-            $searchCriteria = TransferMembers::getSearchFields($dbh);
+            $searchCriteria = $CmsManager->getSearchFields($dbh, $CmsManager::SearchViewName);
 
             $tr = '';
             foreach ($searchCriteria as $s) {
@@ -693,14 +632,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
             }
 
             $scTbl = new HTMLTable();
-            $scTbl->addHeaderTr(HTMLTable::makeTh($serviceName . ' Search Criteria', array('colspan'=>count($searchCriteria))));
+            $scTbl->addHeaderTr(HTMLTable::makeTh($CmsManager->getServiceTitle() . ' Search Criteria', array('colspan'=>count($searchCriteria))));
             $scTbl->addBodyTr($tr);
             $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
 
             $mkTable = 1;
         }
 
-    } else if (isset($_POST['btnGetPayments'])) {
+    } else if (filter_has_var(INPUT_POST, 'btnGetPayments')) {
 
         $dataTable = getPaymentReport($dbh, $start, $end);
 
@@ -710,9 +649,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
             $mkTable = 2;
         }
 
-    } else if (isset($_POST['btnGetVisits'])) {
+    } else if (filter_has_var(INPUT_POST, 'btnGetVisits')) {
 
-        $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $wsConfig);
+        $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $CmsManager);
 
         if ($dataTable === FALSE) {
             $noRecordsMsg = "No visit records found.";
@@ -725,11 +664,19 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 }
 
 // Get Hospitals and Diagnosis button.
-if ($wsConfig->getString('custom_fields', 'First_Visit', '') != '') {
+$customFields = $CmsManager->getMyCustomFields($dbh);
 
+if (isset($customFields['Hospital'])) {
     $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', array('id'=>'btnGetKey', 'type'=>'button', 'style'=>'margin-left:3px; font-size:small;'));
-    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', array('name'=>'btnGetVisits', 'id'=>'btnGetVisits', 'type'=>'submit', 'style'=>'margin-left:20px;'));
     $dboxMarkup = createKeyMap($dbh);
+}
+
+if (isset($customFields['First_Visit'])) {
+    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', array('name'=>'btnGetVisits', 'id'=>'btnGetVisits', 'type'=>'submit', 'style'=>'margin-left:20px;'));
+}
+
+if (isset($customFields['Fund'])) {
+    $btnPayments = HTMLInput::generateMarkup('Get HHK Payments', array('type'=>'submit', 'name'=>"btnGetPayments", 'id'=>"btnGetPayments", 'style'=>"margin-left:20px;"));
 }
 
 if ($noRecordsMsg != '') {
@@ -776,7 +723,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h2><?php echo $wInit->pageHeading; ?>  <span style="font-size: .7em;"><a href="SetupNeonCRM.htm" target="_blank">(Instructions)</a></span></h2>
+            <h2><?php echo $wInit->pageHeading; ?></h2>
 
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
@@ -802,9 +749,9 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                                 <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
                         </tr>
                     </table>
-                    <table style="float:left;">
+                    <table style="float:left;margin-left:10px;">
                         <tr>
-                            <th><?php echo $serviceName; ?> <span style="font-weight: bold;">Last Name</span> Search</th>
+                            <th><?php echo $CmsManager->getServiceTitle(); ?> <span style="font-weight: bold;">Last Name</span> Search</th>
                             <td><input id="txtRSearch" type="text" /></td>
                         </tr>
                         <tr>
@@ -815,8 +762,8 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
-                            <input type="submit" name="btnGetPayments" id="btnGetPayments" value="Get HHK Payments" style="margin-left:20px;"/>
-							<?php echo $btnVisits . $btnGetKey; ?></td>
+				<?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
+                            </td>
                         </tr>
                     </table>
                 </form>
@@ -824,11 +771,13 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
             </div>
             <div style="clear:both;"></div>
 
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div style="margin-bottom:.8em; float:left;"><?php echo $settingstable . $searchTabel; ?></div>
+                <form autocomplete="off">
                 <div id="divTable">
                     <?php echo $dataTable; ?>
                 </div>
+                </form>
                 <div id="divMembers"></div>
             </div>
             <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;font-size:0.9em;">
@@ -844,7 +793,8 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
-		<input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
+	<input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
+        <input id="cmsTitle" type="hidden" value="<?php echo $CmsManager->getServiceTitle(); ?>"/>
 
     </body>
 </html>

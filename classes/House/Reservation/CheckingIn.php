@@ -21,7 +21,7 @@ use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\ReservationRS;
 use HHK\Exception\NotFoundException;
-use HHK\Neon\TransferMembers;
+use HHK\CrmExport\AbstractExportManager;
 use HHK\Tables\Name\NameRS;
 
 /**
@@ -365,7 +365,7 @@ FROM reservation r
         if ($uS->ContactManager != '') {
             // Remove Exclude status when an excluded member checks in.
             $stmt = $dbh->query("select DISTINCT n.idName from `name` n join name_guest ng on n.idName = ng.idName
-                where n.External_Id = '" . TransferMembers::EXCLUDE_TERM . "' AND ng.idPsg = " . $this->reserveData->getIdPsg() );
+                where n.External_Id = '" . AbstractExportManager::EXCLUDE_TERM . "' AND ng.idPsg = " . $this->reserveData->getIdPsg() );
 
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -377,7 +377,7 @@ FROM reservation r
                 $names = EditRS::select($dbh, $n, array($n->idName));
                 EditRS::loadRow($names[0], $n);
 
-                if ($n->External_Id->getStoredVal() == TransferMembers::EXCLUDE_TERM) {
+                if ($n->External_Id->getStoredVal() == AbstractExportManager::EXCLUDE_TERM) {
 
                     $n->External_Id->setNewVal('');
                     $numRows = EditRS::update($dbh, $n, array($n->idName));

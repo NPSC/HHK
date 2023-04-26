@@ -1,13 +1,13 @@
 <?php
+
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Session;
-use HHK\Neon\TransferMembers;
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Exception\RuntimeException;
-use HHK\HTMLControls\HTMLContainer;
+use HHK\CrmExport\AbstractExportManager;
+use HHK\Exception\UnexpectedValueException;
 
 /**
  * ws_tran.php
@@ -17,311 +17,247 @@ use HHK\HTMLControls\HTMLContainer;
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-
 require ("homeIncludes.php");
 $wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 
-
 // get session instance
 $uS = Session::getInstance();
-$config = new Config_Lite(ciCFG_FILE);
 
-
-$webServices = $config->getString('webServices', 'ContactManager', '');
-
-if ($webServices != '') {
-
-    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
-
-
-} else {
-    throw new RuntimeException('Web Services Configuration file is missing. ');
-}
-
-
-if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+if (is_null($transfer = AbstractExportManager::factory($dbh, $uS->ContactManager))) {
+    throw new UnexpectedValueException('A Contact Manager is not defined');
 }
 
 $events = array();
-try {
 
-    $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')), $wsConfig->getSection('custom_fields'));
+if (filter_has_var(INPUT_GET,"cmd")) {
+    $c = filter_input(INPUT_GET, "cmd", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+}
+if (filter_has_var(INPUT_POST,"cmd")) {
+    $c = filter_input(INPUT_POST, "cmd", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+}
+
+
+try {
 
     switch ($c) {
 
-      case 'xfer':
+        case 'members':
 
-        $ids = [];
+            $rags = array(
+                'ids' => array(
+                            'filter' => FILTER_SANITIZE_NUMBER_INT,
+                            'flags'  => FILTER_FORCE_ARRAY,
+                           )
+            );
+            $searchCriteria = filter_input_array(INPUT_POST, $rags);
 
-        if (isset($_REQUEST['ids'])) {
-            $ids = filter_var_array($_REQUEST['ids'], FILTER_SANITIZE_NUMBER_INT);
-        }
+            if (isset($searchCriteria['ids']) && count($searchCriteria['ids']) > 0) {
 
-        if (isset($_POST['id'])) {
-            $ids[] = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
+                try {
+                    
+                    $reply = $transfer->exportMembers($dbh, $searchCriteria['ids']);
+                    
+                    $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblrpt');
+                    
+                } catch (Exception $ex) {
+                    $events = array("error" => "Transfer Error: " . $ex->getMessage());
+                }
+            } else {
+                $events = array("error" => "There are no ids to pass.");
+            }
+            break;
 
-        if (count($ids) > 0) {
+        case 'payments':
+
+            $arguments = array(
+                'st' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'en' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            );
+
+            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
+
+            $reply = $transfer->exportPayments($dbh, $searchCriteria['st'], $searchCriteria['en']);
+
+            $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+
+            if (count($transfer->getMemberReplies()) > 0) {
+                $events['members'] = CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
+            }
+
+            break;
+
+        case 'visits':
+
+            $arguments = array(
+                'psgId' => FILTER_SANITIZE_NUMBER_INT,
+                'rels' => array(
+                            'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                            'flags'  => FILTER_FORCE_ARRAY,
+                           ),
+            );
+
+            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
+
+            $rels = [];
+            foreach ($searchCriteria['rels'] as $v) {
+                $rels[$v['id']] = $v['rel'];
+            }
+
+            // Visit results
+            $events['visits'] = $transfer->exportVisits($dbh, $uS->username, intVal($searchCriteria['psgId']), $rels);
+
+            // New members
+            if (count($transfer->getMemberReplies()) > 0) {
+                $events['members'] = $transfer->getMemberReplies();
+            }
+
+            // Households
+            if (count($transfer->getHhReplies()) > 0) {
+                $events['households'] = $transfer->getHhReplies();
+            }
+
+            break;
+
+        case 'excludes':
+
+            $arguments = array(
+                'psgIds' => array(
+                    'filter' => FILTER_SANITIZE_NUMBER_INT,
+                    'flags' => FILTER_FORCE_ARRAY
+                    )
+            );
+
+            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
+
+            // Exclude results
+            $events['excludes'] = $transfer->setExcludeMember($dbh, $searchCriteria['psgIds']);
+
+            break;
+
+        case 'sch':
+
+            $arguments = array(
+                'letters' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'mode' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            );
+
+            $searchCriteria = filter_input_array(INPUT_GET, $arguments);
 
             try {
-                $reply = $transfer->sendList($dbh, $ids, $uS->username);
-                $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblrpt');
-
+                $events = $transfer->searchMembers($searchCriteria);
             } catch (Exception $ex) {
+                $events = array("error" => "Search Error: " . $ex->getMessage());
+            }
+
+            break;
+
+        case 'listCustFields':
+
+            try {
+                $results = $transfer->getMyCustomFields($dbh);
+
+                $tbl = new HTMLTable();
+                $th = '';
+
+                foreach ($results as $v) {
+
+                    $tr = HTMLTable::makeTd($v['Code']);
+                    $th .= HTMLTable::makeTh($v['Description']);
+
+                    $tbl->addBodyTr($tr);
+                }
+
+                $tbl->addHeader($th);
+                $events = array('data' => $tbl->generateMarkup());
+            } catch (RuntimeException $ex) {
                 $events = array("error" => "Transfer Error: " . $ex->getMessage());
             }
 
-        }
+            break;
 
-        break;
+        case 'getAcct':
 
-      case 'payments':
+            $arguments = array(
+                'accountId' =>  FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'src' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'url' => FILTER_SANITIZE_URL
+            );
 
-        $st = '';
-        if (isset($_REQUEST["st"])) {
-            $st = filter_var($_REQUEST["st"], FILTER_SANITIZE_STRING);
-        }
-        $en = '';
-        if (isset($_REQUEST["en"])) {
-            $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
-        }
+            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
 
-        $reply = $transfer->sendDonations($dbh, $uS->username, $st, $en);
-        $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+            $events['data'] = $transfer->getMember($dbh, $searchCriteria);
+            $events['accountId'] = $transfer->getAccountId();
 
-        if (count($transfer->getMemberReplies()) > 0) {
-            $events['members'] = CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
-        }
+            break;
 
-        break;
+        case 'getReq':
 
-      case 'visits':
+            $arguments = array(
+                'q' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'url' => FILTER_SANITIZE_URL
+            );
 
-        $idPsg = 0;
+            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
 
-        if (isset($_REQUEST['psgId'])) {
-            $idPsg = intval(filter_var($_REQUEST['psgId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
+            $q = str_replace('Find', 'Select', $searchCriteria['q']);
 
-        $raw = [];
+            $events['data'] = $transfer->getExplicit($dbh, $searchCriteria['url'], $q);
 
-        if (isset($_REQUEST['rels'])) {
-            $raw = filter_var_array($_REQUEST['rels'], FILTER_SANITIZE_NUMBER_INT);
-        }
+            break;
 
-        $rels = [];
-        foreach ($raw as $v) {
-            $rels[$v['id']] = $v['rel'];
-        }
+        case 'update':
 
+            $arguments = array(
+                'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'id' => FILTER_SANITIZE_NUMBER_INT,
+            );
 
-        // Visit results
-        $events['visits'] = $transfer->sendVisits($dbh, $uS->username, $idPsg, $rels);
+            $filtered = filter_input_array(INPUT_POST, $arguments);
 
-        // New members
-        if (count($transfer->getMemberReplies()) > 0) {
-            $events['members'] = $transfer->getMemberReplies();
-        }
+            try {
 
-        // Households
-        if (count($transfer->getHhReplies()) > 0) {
-            $events['households'] = $transfer->getHhReplies();
-        }
+                if ($filtered['id'] > 0 && $filtered['accountId'] != '') {
 
-        break;
+                    $result = $transfer->retrieveRemoteAccount($filtered['accountId']);
 
-      case 'excludes':
-
-          $idPsgs = [];
-
-          if (isset($_REQUEST['psgIds'])) {
-              $idPsgs = filter_var_array($_REQUEST['psgIds'], FILTER_SANITIZE_NUMBER_INT);
-          }
-
-          // Neon Exclude results
-          $events['excludes'] = $transfer->sendExcludes($dbh, $idPsgs, $uS->username);
-
-
-          break;
-
-      case 'sch':
-
-        $arguments = array(
-            'letters' => FILTER_SANITIZE_SPECIAL_CHARS,
-            'mode'  => FILTER_SANITIZE_SPECIAL_CHARS,
-        );
-
-        $searchCriteria = filter_input_array( INPUT_GET, $arguments );
-
-        try {
-            $events = $transfer->searchAccount($searchCriteria);
-        } catch (Exception $ex) {
-            $events = array("error" => "Transfer Error: " . $ex->getMessage());
-        }
-
-        break;
-
-      case 'listCustFields':
-
-        try {
-            $results = $transfer->listCustomFields();
-
-            $tbl = new HTMLTable();
-            $th = '';
-
-            foreach ($results as $v) {
-
-                $tr = '';
-                $th = '';
-
-                if ($wsConfig->has('custom_fields', $v['fieldName'])) {
-
-                    foreach ($v as $k => $r) {
-
-                        if (is_array($r) === FALSE) {
-                            $tr .= HTMLTable::makeTd($r);
-                            $th .= HTMLTable::makeTh($k);
-                        }
+                    try {
+                        $updateResult = $transfer->updateCRM($dbh, $result, $filtered['id']);
+                    } catch (RuntimeException $e) {
+                        $updateResult = $e->getMessage();
                     }
 
-                    $tbl->addBodyTr( $tr );
-                }
-            }
-
-            $tbl->addHeader($th);
-            $events = array('data'=>$tbl->generateMarkup());
-
-        } catch (RuntimeException $ex) {
-            $events = array("error" => "Transfer Error: " . $ex->getMessage());
-        }
-
-        break;
-
-    case 'getAcct':
-
-        $str = '';
-        $accountId = '';
-        if (isset($_POST['accountId'])) {
-            $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $src = '';
-        if (isset($_POST['src'])) {
-            $src = filter_var($_POST['src'], FILTER_SANITIZE_STRING);
-        }
-
-        if ($src === 'hhk') {
-
-                $row = $transfer->loadSourceDB($dbh, $accountId);
-
-                if (is_null($row)) {
-                    $str = 'Error - HHK Id not found';
-
+                    $events = array('result' => $updateResult);
                 } else {
-
-                    foreach ($row as $k => $v) {
-                        $str .= $k . '=' . $v . '<br/>';
-                    }
-
-                    if (isset($row['accountId'])){
-                        $events['accountId'] = $row['accountId'];
-                    }
+                    $events = array('warning' => 'Both the account id and the HHK id must be present.  Remote Account Id=' . $filtered['accountId'] . ', HHK Id =' . $filtered['id']);
                 }
-
-        } else if ($src = 'remote') {
-
-            // Neon accounts
-            $result = $transfer->retrieveAccount($accountId);
-
-            $parms = array();
-            $transfer->unwindResponse($parms, $result);
-
-
-            foreach ($parms as $k => $v) {
-                $str .= $k . '=' . $v . '<br/>';
+            } catch (RuntimeException $hex) {
+                $events = array('warning' => $hex->getMessage());
             }
 
-            // Neon Househods
-            $result = $transfer->searchHouseholds($accountId);
+            break;
 
-            $parms = array();
-            $transfer->unwindResponse($parms, $result);
+        case 'rmvAcctId':
 
-            $str .= "*Households*<br/>";
+            $arguments = array(
+                'id' => FILTER_SANITIZE_NUMBER_INT,
+            );
 
-            foreach ($parms as $k => $v) {
-                $str .= $k . '=' . $v . '<br/>';
-            }
+            $filtered = filter_input_array(INPUT_POST, $arguments);
 
-        } else {
-            $str = "Source for search not found: " . $src;
-        }
+            $num = $transer->setExcludeMembers($dbh, $filtered['id']);
 
-        $events['data'] = $str;
+            $events = array('result' => $num . ' records updated.');
 
-        break;
+            break;
 
-    case 'update':
-
-        $accountId = '';
-        if (isset($_POST['accountId'])) {
-            $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $id = '';
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        try {
-
-        if ($id > 0 && $accountId > 0) {
-
-            $result = $transfer->retrieveAccount($accountId);
-
-            try{
-                $updateResult = $transfer->updateNeonAccount($dbh, $result, $id);
-            } catch (RuntimeException $e) {
-                $updateResult = $e->getMessage();
-            }
-
-            $events = array('result'=>$updateResult);
-
-        } else {
-            $events = array('warning'=>'Both the account id and the HHK id must be present.  Remote Account Id=' . $accountId . ', HHK Id =' . $id);
-        }
-
-        } catch (RuntimeException $hex) {
-            $events = array('warning'=>$hex->getMessage());
-        }
-
-        break;
-
-    case 'rmvAcctId':
-
-        $id = '';
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if ($id > 0) {
-            $num = $dbh->exec("update `name` set `External_Id` = '' where `idName` = $id;");
-            $events = array('result'=>$num . ' records updated.');
-        }
-
-        break;
-
-    default:
-        $events = array("error" => "Bad Command");
-}
-
+        default:
+            $events = array("error" => "Bad Command");
+    }
 } catch (PDOException $ex) {
 
     $events = array("error" => "Database Error: " . $ex->getMessage());
-
 } catch (Exception $ex) {
 
     $events = array("error" => "HouseKeeper Error: " . $ex->getMessage());

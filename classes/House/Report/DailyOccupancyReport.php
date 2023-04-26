@@ -46,6 +46,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
 
         $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
+
         $resvStatuses = readLookups($this->dbh, "reservStatus", "Code");
         $resvStatusList = (isset($resvStatuses[ReservationStatus::Committed]['Title']) ? $resvStatuses[ReservationStatus::Committed]['Title'] . ", " : "") . 
                 (isset($resvStatuses[ReservationStatus::UnCommitted]['Title']) ? $resvStatuses[ReservationStatus::UnCommitted]['Title'] . ", " : "") . 
@@ -72,7 +73,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
                         where v.idVisit is not null) as 'Occupied Rooms',
                     (select count(*) from reservation where date(Expected_Arrival) = date(now()) and Status in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "')) as 'Anticipated Arrivals',
-                    (select count(*) from visit where date(Expected_Departure) = date(now()) and Status = 'a') as 'Anticipated Departures',
+                   (select count(*) from visit where date(Expected_Departure) = date(now()) and Status = 'a') as 'Anticipated Departures',
                     (concat(ROUND((select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
                         where v.idVisit is not null)/(select count(*) from resource r

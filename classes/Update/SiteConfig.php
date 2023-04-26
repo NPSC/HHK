@@ -507,7 +507,8 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL, $category = NULL, array $hideCats = array()) {
+
+    public static function createMarkup(\PDO $dbh, Config_Lite $config = NULL, Config_Lite $titles = NULL, $category = NULL, array $hideCats = array()) {
 
         // sys config table
         $sctbl = new HTMLTable();

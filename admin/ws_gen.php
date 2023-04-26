@@ -18,6 +18,7 @@ use HHK\Tables\CronRS;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\EmptyJob;
 use HHK\Cron\EmailReportJob;
+use HHK\CrmExport\AbstractExportManager;
 
 /**
  * ws_gen.php
@@ -68,13 +69,13 @@ try {
 
             break;
 
-    case 'schzip':
+        case 'schzip':
 
-        if (isset($_GET['zip'])) {
-            $zip = filter_var($_GET['zip'], FILTER_SANITIZE_NUMBER_INT);
-            $events = searchZip($dbh, $zip);
-        }
-        break;
+            if (isset($_GET['zip'])) {
+                $zip = filter_var($_GET['zip'], FILTER_SANITIZE_NUMBER_INT);
+                $events = searchZip($dbh, $zip);
+            }
+            break;
 
         case "save":
 
@@ -410,19 +411,15 @@ try {
 
             break;
 
-        case 'shoConfNeon':
+        case 'shoCmConf':
 
-            $enFile = '';
-            if (isset($_POST["servFile"])) {
-                $enFile = filter_var($_POST["servFile"], FILTER_SANITIZE_STRING);
+            $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            if ($exportManager !== NULL) {
+
+                $events = $exportManager->showConfig($dbh);
             }
 
-            $servFile = decryptMessage($enFile);
-
-            if ($servFile !== '') {
-                $confNeon = new ConfigureNeon($servFile);
-                $events = $confNeon->showConfig($dbh);
-            }
             break;
 
         default:

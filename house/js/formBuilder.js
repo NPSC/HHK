@@ -1334,7 +1334,7 @@
 				layoutTemplates: settings.layoutTemplates,
 				onSave: onSave,
 				onAddField:onAddField,
-				onCloseFieldEdit:onCloseFieldEdit,
+				//onCloseFieldEdit:onCloseFieldEdit,
 				stickyControls: settings.stickyControls,
 				"i18n":{
 					"location":"../js/formBuilder"
@@ -1368,7 +1368,7 @@
 								layoutTemplates: settings.layoutTemplates,
 								onSave: onSave,
 								onAddField:onAddField,
-								onCloseFieldEdit:onCloseFieldEdit,
+								//onCloseFieldEdit:onCloseFieldEdit,
 								stickyControls: settings.stickyControls,
 								"i18n":{
 									"location":"../js/formBuilder"

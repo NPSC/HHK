@@ -193,6 +193,7 @@ class History {
                 , array('class'=>'ui-state-highlight ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Incomplete Address"))
             , array('class'=>'ui-widget hhk-ui-icons ml-2'));
 
+
         $patientStayingIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
@@ -434,6 +435,11 @@ class History {
             if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos){
                 $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
             }
+
+            if ($uS->ShowGuestPhoto) {
+                $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
+            }
+
 
             // Guest first name
             $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];

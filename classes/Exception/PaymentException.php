@@ -20,5 +20,6 @@ use HHK\sec\Session;
 
 class PaymentException extends \RuntimeException {
 
+
 }
 ?>

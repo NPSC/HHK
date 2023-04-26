@@ -115,7 +115,7 @@ class ActivityReport {
                         // Undo check out
                         $trow .= HTMLTable::makeTd('Undo Check Out') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($r['Timestamp'])));
                     }
-                } else if ($logData['Status']['new'] == VisitStatus::CheckedOut) {
+                } else if ($logData['Status']['new'] == VisitStatus::CheckedOut && isset($logData['Span_End_Date']['new'])) {
                     // Checking out
                     $trow .= HTMLTable::makeTd('Check Out') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($logData['Span_End_Date']['new'])));
                 }

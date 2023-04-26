@@ -995,7 +995,7 @@ ORDER BY `List_Order`");
 
                     if (!isset($inss2[$insRs->Insurance_Id->getStoredVal()])) {
 
-                        if ($insCos[$insRs->Insurance_Id->getStoredVal()]['idInsuranceType'] == $i['idInsurance_type']) {
+                        if (isset($insCos[$insRs->Insurance_Id->getStoredVal()]['idInsuranceType']) && $insCos[$insRs->Insurance_Id->getStoredVal()]['idInsuranceType'] == $i['idInsurance_type']) {
                             // remove recordset
                             $numRecords = EditRS::delete($dbh, $insRs, array($insRs->Insurance_Id, $insRs->idName));
 

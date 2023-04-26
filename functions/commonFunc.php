@@ -550,7 +550,7 @@ function removeOptionGroups($gArray)
     return $clean;
 }
 
-function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = array())
+function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $del, array $type = array())
 {
     if (isset($desc)) {
 

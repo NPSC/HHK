@@ -20,5 +20,14 @@ use HHK\sec\Session;
 
 class DuplicateException extends \Exception {
 
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "DuplicateException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+
+
+        parent::__construct ($message, $code, $previous);
+
+    }
 }
 ?>

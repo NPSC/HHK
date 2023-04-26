@@ -1,5 +1,4 @@
 <?php
-
 namespace HHK\Update;
 
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};

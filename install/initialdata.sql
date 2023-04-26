@@ -41,10 +41,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Campaign_Type','pct','Percent Cut Out','','',0),
 ('Campaign_Type','ink','In Kind','','',0),
 
-('Constraint_Type', 'hos', 'Hospital', '','',0),
-('Constraint_Type', 'rv', 'Reservation','','',0),
-('Constraint_Type', 'v', 'Visit', '','',0),
-
 ('Category_Types', '1', 'Items', '','',0),
 ('Category_Types', '2', 'Tax', '','',0),
 ('Category_Types', '3', 'Penalty', '','',0),
@@ -53,6 +49,15 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '2', 'M/C', 'M/C','',0),
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
+
+('Cm_Custom_Fields', 'HHK_ID', '','','',0),
+('Cm_Custom_Fields', 'Deceased_Date', '','','',0),
+('Cm_Custom_Fields', 'Diagnosis', '','','',0),
+('Cm_Custom_Fields', 'Hospital', '','','',0),
+ 
+('Constraint_Type', 'hos', 'Hospital', '','',0),
+('Constraint_Type', 'rv', 'Reservation','','',0),
+('Constraint_Type', 'v', 'Visit', '','',0),
 
 ('cronJobTypes', 'SendPostCheckoutEmailJob', 'Send Post Check In/Out Email', '','', 0),
 ('cronJobTypes', 'EmailReportJob', 'Send Report Email', '','', 0),
@@ -141,6 +146,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('ExternalCrm', '', '(none)','','',0),
 ('ExternalCrm', 'neon', 'Neon CRM','','',0),
+('ExternalCrm', 'sf', 'Salesforce CRM','','',0),
 
 ('FB_Status','a','Active','','',0),
 ('FB_Status','d','Disabled','','',0),
@@ -461,6 +467,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'p', 'Patient','','',25),
 ('Sys_Config_Category', 'hf', 'House Features','','', 28),
 ('Sys_Config_Category', 'ga', 'Google APIs', '', '', '80'),
+('Sys_Config_Category', 'cm', 'Contact Manager (CRM)', '', '', '35'),
 
 ('Time_Zone', 'America/Chicago', 'Central','','',0),
 ('Time_Zone', 'America/New_York', 'Eastern','','',0),
@@ -568,7 +575,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('CheckInTime','16','i','h','','Normal House Check in time of day in 24-hour format, hh','',1),
 ('CheckOutTime','10','i','h','','Normal House Checkout time of day in 24-hour format, hh','',1),
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true','',1),
-('ContactManager','','lu','h','','Integrate an External CRM/Fund Raiser App','ExternalCrm',1),
+('ContactManager','','lu','hf','','Integrate an External CRM/Fund Raiser App','ExternalCrm',1),
 ('CoTod','false','b','hf','','Edit the time of day of a checkout','',1),
 ('county','true','b','h','','Include the County for addresses','',1),
 ('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', '', 'CSS validator service', '',0),

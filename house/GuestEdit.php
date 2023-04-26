@@ -1,6 +1,5 @@
 <?php
 use HHK\sec\WebInit;
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Session;
 use HHK\sec\SecurityComponent;
 use HHK\Payment\PaymentSvcs;
@@ -18,9 +17,7 @@ use HHK\History;
 use HHK\HTMLControls\HTMLTable;
 use HHK\House\Registration;
 use HHK\Member\EmergencyContact\EmergencyContact;
-use HHK\House\Hospital\HospitalStay;
 use HHK\House\Vehicle;
-use HHK\House\Hospital\Hospital;
 use HHK\Purchase\FinAssistance;
 use HHK\Member\Address\Addresses;
 use HHK\SysConst\GLTableNames;
@@ -432,7 +429,7 @@ $nameMarkup = $tbl->generateMarkup();
 $demogTab = $name->createDemographicsPanel($dbh, FALSE, FALSE, [], $isPatient);
 
 // Excludes
-$ta = $name->createExcludesPanel();
+$ta = $name->createExcludesPanel($dbh);
 
 $ExcludeTab = $ta['markup'];
 

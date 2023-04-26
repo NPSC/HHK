@@ -1,18 +1,33 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
-use HHK\sec\{SecurityComponent, Session, WebInit};
-use HHK\SysConst\{WebRole, CodeVersion};
+use HHK\sec\{
+    SecurityComponent,
+    Session,
+    WebInit
+};
+use HHK\SysConst\{
+    WebRole,
+    CodeVersion
+};
 use HHK\Config_Lite\Config_Lite;
 use HHK\Config_Lite\Exception\Exception;
-use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
+use HHK\Update\{
+    SiteConfig,
+    UpdateSite,
+    SiteLog,
+    Patch
+};
 use HHK\CreateMarkupFromDB;
-use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
+use HHK\HTMLControls\{
+    HTMLContainer,
+    HTMLSelector,
+    HTMLTable
+};
 use HHK\Exception\UploadException;
-use HHK\Neon\TransferMembers;
 use HHK\sec\Labels;
 use HHK\sec\SAML;
-use HHK\Neon\ConfigureNeon;
+use HHK\CrmExport\AbstractExportManager;
 
 /**
  * Configure.php
@@ -49,8 +64,7 @@ $resultAccumulator = '';
 $ccResultMessage = '';
 $holResultMessage = '';
 
-$serviceName = '';
-$serviceFile = '';
+$CmsManager = NULL;
 $rteFileSelection = '';
 $rteMsg = '';
 $confError = '';
@@ -58,14 +72,9 @@ $confError = '';
 $config = new Config_Lite(ciCFG_FILE);
 $labl = Labels::getLabels();
 
+if ($uS->ContactManager !== '') {
 
-if ($uS->ContactManager == 'neon') {
-
-    if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
-
-        $serviceFile = encryptMessage(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
-        $serviceName = $config->getString('webServices', 'Service_Name', '');
-    }
+    $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
 }
 
 if (isset($_POST["btnSiteCnf"]) || isset($_POST["btnLocalAuth"])) {
@@ -76,7 +85,6 @@ if (isset($_POST["btnSiteCnf"]) || isset($_POST["btnLocalAuth"])) {
 
     if (isset($_POST["btnLocalAuth"])) {
         $tabIndex = 3;
-
     }
 }
 
@@ -87,18 +95,16 @@ if (isset($_POST["btnLabelCnf"])) {
     $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
-if (isset($_POST["btnExtCnf"]) && $serviceFile != '') {
+
+// Save web service configurtion
+if (isset($_POST["btnExtCnf"]) && $CmsManager !== NULL) {
 
     $tabIndex = 9;
 
-
     try {
-        $confNeon = new ConfigureNeon(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
-        SiteConfig::saveConfig($dbh, $confNeon->getConfigObj(), $_POST, $uS->username);
-        $confNeon->saveConfig($dbh);
-
+        $CmsManager->saveConfig($dbh, $_POST);
     } catch (UploadException $ex) {
-        $externalErrMsg = "Transfer Error: " . $ex->getMessage();
+        $externalErrMsg = "Save Configuration Error: " . $ex->getMessage();
     }
 }
 
@@ -129,7 +135,6 @@ if (isset($_FILES['zipfile'])) {
         $resultMsg .= SiteConfig::loadZipCodeFile($dbh, $_FILES['zipfile']['tmp_name']);
 
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
-
     } catch (\Exception $hex) {
         $resultMsg .= $hex->getMessage();
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
@@ -203,12 +208,11 @@ if (isset($_POST['btnLogs'])) {
 
 $logMarkup = '';
 $logSelRows = array(
-	1=>array(0=>'sl', 1=>'Combined Log'),
-    2=>array(0=>'ss', 1=>'Sys Config Log'),
-    3=>array(0=>'rr', 1=>'Rooms Log'),
-    4=>array(0=>'ll', 1=>'Lookups Log'),
+    1 => array(0 => 'sl', 1 => 'Combined Log'),
+    2 => array(0 => 'ss', 1 => 'Sys Config Log'),
+    3 => array(0 => 'rr', 1 => 'Rooms Log'),
+    4 => array(0 => 'll', 1 => 'Lookups Log'),
 );
-
 
 try {
     $payments = SiteConfig::createPaymentCredentialsMarkup($dbh, $ccResultMessage);
@@ -224,7 +228,7 @@ if (isset($_POST['btnHoliday'])) {
 try {
     $holidays = SiteConfig::createHolidaysMarkup($dbh, $holResultMessage);
 } catch (Exception $pex) {
-
+    
 }
 
 try {
@@ -241,14 +245,14 @@ if (count($rows) > 0 && $rows[0][0] != '') {
 }
 
 // save SSO
-if(isset($_POST['saveIdP']) && isset($_POST['idpConfig'])){
-    try{
+if (isset($_POST['saveIdP']) && isset($_POST['idpConfig'])) {
+    try {
         $idpId = array_key_first($_POST['idpConfig']);
         $saml = new SAML($dbh, $idpId);
         $saml = $saml->save($_POST, $_FILES);
-        $events = array("success"=>'Auth provider saved successfully', 'idpMkup'=>$saml->getEditMarkup(true), "idpName"=>$saml->getIdpName());
-    }catch(\Exception $e){
-        $events = array("error"=>"<strong>Error saving Identity Provider:</strong>" . $e->getMessage());
+        $events = array("success" => 'Auth provider saved successfully', 'idpMkup' => $saml->getEditMarkup(true), "idpName" => $saml->getIdpName());
+    } catch (\Exception $e) {
+        $events = array("error" => "<strong>Error saving Identity Provider:</strong>" . $e->getMessage());
     }
 
     echo (json_encode($events));
@@ -258,26 +262,24 @@ if(isset($_POST['saveIdP']) && isset($_POST['idpConfig'])){
 // Patch tab markup
 $patchMarkup = Patch::patchTabMu();
 
-
 $li = '';
 $tabContent = '';
 
 foreach ($logSelRows as $r) {
 
     $li .= HTMLContainer::generateMarkup('li',
-            HTMLContainer::generateMarkup('a', $r[1] , array('href'=>'#tc'.$r[0])), array('id'=>'li'.$r[0]));
+                    HTMLContainer::generateMarkup('a', $r[1], array('href' => '#tc' . $r[0])), array('id' => 'li' . $r[0]));
 
     $content = HTMLContainer::generateMarkup('h3', $r[1], array('style' => 'background-color:#D3D3D3; padding:10px;'))
-        . HTMLContainer::generateMarkup('div', "<table id='tableli$r[0]' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array());
+            . HTMLContainer::generateMarkup('div', "<table id='tableli$r[0]' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array());
 
     $tabContent .= HTMLContainer::generateMarkup('div',
-        $content
-        , array('id'=>'tc'.$r[0]));
-
+                    $content
+                    , array('id' => 'tc' . $r[0]));
 }
 
 $ul = HTMLContainer::generateMarkup('ul', $li, array());
-$tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'logsTabDiv'));
+$tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id' => 'logsTabDiv'));
 
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), NULL, array('pr'));
 
@@ -304,13 +306,13 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo FAVICON; ?>
-        <?php echo DEFAULT_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
-        <?php echo NOTY_CSS; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
+<?php echo JQ_UI_CSS; ?>
+<?php echo FAVICON; ?>
+<?php echo DEFAULT_CSS; ?>
+<?php echo JQ_DT_CSS; ?>
+<?php echo NOTY_CSS; ?>
+<?php echo GRID_CSS; ?>
+<?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -321,13 +323,15 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-		<script type="text/javascript" src="js/Configure.js"></script>
+        <script type="text/javascript" src="js/Configure.js"></script>
     </head>
-    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
-    <?php echo $wInit->generatePageMenu(); ?>
+    <body <?php if ($wInit->testVersion) {
+                echo "class='testbody'";
+            } ?>>
+<?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <?php echo $getWebReplyMessage; ?>
+<?php echo $getWebReplyMessage; ?>
             <div id="tabs" style="display:none;" class="hhk-widget-content">
                 <ul>
                     <li><a href="#config">Site Configuration</a></li>
@@ -339,12 +343,14 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels &#38; Prompts</a></li>
                     <li id="liLogs"><a href="#logs">Site Logs</a></li>
-                    <?php if ($uS->ContactManager != '') {echo '<li id="liService"><a href="#external">' . $serviceName . '</a></li>';} ?>
+<?php if ($uS->ContactManager != '') {
+    echo '<li id="liService"><a href="#external">' . $CmsManager->getServiceTitle() . '</a></li>';
+} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
                     <div style="color:#347201;font-size:1.3em;"><?php echo $confError; ?></div>
                     <form method="post" name="form4" action="">
-                        <?php echo $conf; ?>
+                            <?php echo $conf; ?>
                         <br>
                         <div class="divSubmitButtons ui-corner-all">
                             <input type="reset" name="btnreset" id="btnreset" value="Reset" style="margin-right:5px;"/>
@@ -353,88 +359,87 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     </form>
                 </div>
                 <div id="auth" class="ui-tabs-hide">
-                	<div id="authTabs" class="hhk-member-detail" style="display:none; width: 100%;">
-						<ul>
-							<li><a href="#localAuth">Local</a></li>
-							<?php foreach($authIdpList as $idp){ ?>
-								<li><a href="#<?php echo $idp['idIdp']; ?>Auth"><?php echo $idp["Name"]; ?></a></li>
-							<?php } ?>
-							<li><a href="#newAuth"><span class="ui-icon ui-icon-plusthick mr-2"></span>New Identity Provider</a></li>
-						</ul>
+                    <div id="authTabs" class="hhk-member-detail" style="display:none; width: 100%;">
+                        <ul>
+                            <li><a href="#localAuth">Local</a></li>
+<?php foreach ($authIdpList as $idp) { ?>
+                                <li><a href="#<?php echo $idp['idIdp']; ?>Auth"><?php echo $idp["Name"]; ?></a></li>
+                        <?php } ?>
+                            <li><a href="#newAuth"><span class="ui-icon ui-icon-plusthick mr-2"></span>New Identity Provider</a></li>
+                        </ul>
 
-						<div id="localAuth" class="ui-tabs-hide">
-							<form method="post" action="Configure.php">
-    							<?php echo $localAuthMkup; ?>
-    							<div style="text-align: right">
-    								<input type="submit" name="btnLocalAuth" id="btnLocalAuth" value="Save">
-    							</div>
-    						</form>
-						</div>
-						<?php
-						foreach($authIdpList as $idp){
-							$saml = new SAML($dbh, $idp['idIdp']);
-                            echo $saml->getEditMarkup();
-						}
-						$newsaml = new SAML($dbh);
-						echo $newsaml->getEditMarkup();
-						?>
+                        <div id="localAuth" class="ui-tabs-hide">
+                            <form method="post" action="Configure.php">
+                        <?php echo $localAuthMkup; ?>
+                                <div style="text-align: right">
+                                    <input type="submit" name="btnLocalAuth" id="btnLocalAuth" value="Save">
+                                </div>
+                            </form>
+                        </div>
+<?php
+foreach ($authIdpList as $idp) {
+    $saml = new SAML($dbh, $idp['idIdp']);
+    echo $saml->getEditMarkup();
+}
+$newsaml = new SAML($dbh);
+echo $newsaml->getEditMarkup();
+?>
 
-					</div>
+                    </div>
                 </div>
                 <div id="cron" class="ui-tabs-hide hhk-tdbox">
-                	<h2>Job Scheduler</h2>
-                	<div id="cronTabs">
-                		<ul>
-                    		<li id="liJobs"><a href="#jobs">Jobs</a></li>
-                    		<li id="liCronLog"><a href="#cronLog">Log</a></li>
-                    	</ul>
-						<div id="jobs" class="hhk-overflow-x">
-							<?php if(SecurityComponent::is_TheAdmin()){ ?>
-							<div id="newJob" class="ui-widget ui-widget-content ui-corner-all p-2 d-inline-block">
-								<label for="newJobType"><strong>Add New Job:</strong></label>
-								<select id="newJobType" class="mr-2">
-									<option value="" selected disabled>Select Job Type</option>
-									<?php echo HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, "cronJobTypes", "Description"), '', false); ?>
-								</select>
-								<button type="button" id="addJob">Add Job</button>
-							</div>
-							<?php } ?>
-							<table id="cronJobs" style="width: 100%"></table>
-						</div>
-						<div id="cronLog" class="ui-tabs-hide">
-							<table id="cronLog" style="width: 100%"></table>
-						</div>
-					</div>
+                    <h2>Job Scheduler</h2>
+                    <div id="cronTabs">
+                        <ul>
+                            <li id="liJobs"><a href="#jobs">Jobs</a></li>
+                            <li id="liCronLog"><a href="#cronLog">Log</a></li>
+                        </ul>
+                        <div id="jobs" class="hhk-overflow-x">
+<?php if (SecurityComponent::is_TheAdmin()) { ?>
+                                <div id="newJob" class="ui-widget ui-widget-content ui-corner-all p-2 d-inline-block">
+                                    <label for="newJobType"><strong>Add New Job:</strong></label>
+                                    <select id="newJobType" class="mr-2">
+                                        <option value="" selected disabled>Select Job Type</option>
+    <?php echo HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, "cronJobTypes", "Description"), '', false); ?>
+                                    </select>
+                                    <button type="button" id="addJob">Add Job</button>
+                                </div>
+<?php } ?>
+                            <table id="cronJobs" style="width: 100%"></table>
+                        </div>
+                        <div id="cronLog" class="ui-tabs-hide">
+                            <table id="cronLog" style="width: 100%"></table>
+                        </div>
+                    </div>
                 </div>
                 <div id="labels" class="ui-tabs-hide" >
                     <form method="post" name="form5" action="">
-                        <?php echo $labels; ?>
+<?php echo $labels; ?>
                         <div class="divSubmitButtons ui-corner-all">
                             <input type="reset" name="btnlblreset" id="btnlblreset" value="Reset" style="margin-right:5px;"/>
                             <input type="submit" name="btnLabelCnf" id="btnLabelCnf" value="Save Labels"/>
                         </div>
                     </form>
                 </div>
-                    <?php if ($uS->ContactManager != '') { ?>
-                        <div id="external" class="ui-tabs-hide" >
-                            <div style='margin: 5px;font-weight: bold;'><span ><a href="../house/SetupNeonCRM.htm" title='click me for instructions!' target="_blank">Instructions</a></span></div>
-                            <form method="post" id="formext" name="formext" action="">
-								<div id="serviceContent" class="hhk-tdbox"><span style="margin-left:300px;">Loading...</span></div>
-                                <div class="divSubmitButtons ui-corner-all">
-                                   <input type="submit" id="btnExtCnf" name="btnExtCnf" value="Save"/>
-                                </div>
-                            </form>
-                        </div>
-                    <?php } ?>
+                        <?php if ($uS->ContactManager != '') { ?>
+                    <div id="external" class="ui-tabs-hide" >
+                        <form method="post" id="formext" name="formext" action="">
+                            <div id="serviceContent" class="hhk-tdbox"><span style="margin-left:300px;">Loading...</span></div>
+                            <div class="divSubmitButtons ui-corner-all">
+                                <input type="submit" id="btnExtCnf" name="btnExtCnf" value="Save"/>
+                            </div>
+                        </form>
+                    </div>
+<?php } ?>
                 <div id="pay" class="ui-tabs-hide" >
                     <form method="post" name="form2" action="">
-                        <?php echo $payments; ?>
+<?php echo $payments; ?>
                         <div style="float:right;margin-right:40px;"><input type="submit" name="btnPay" id="btnPay" value="Save"/></div>
                     </form>
                 </div>
                 <div id="holidays" class="ui-tabs-hide hhk-tdbox" >
                     <form method="post" name="form3" action="">
-                        <?php echo $holidays; ?>
+<?php echo $holidays; ?>
                         <div style="float:right;margin-right:40px;"><input type="submit" name="btnHoliday" value="Save"/></div>
                     </form>
                 </div>
@@ -444,16 +449,16 @@ $getWebReplyMessage = $webAlert->createMarkup();
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">
                         <p style="color:red;"><?php echo $errorMsg; ?></p>
-                        <?php echo $patchMarkup; ?>
+<?php echo $patchMarkup; ?>
                         <div style="clear:both"></div>
                         <form method="post" action="" name="form1">
                             <input type="submit" name="btnLogs" id="btnLogs" value="View Patch Log" style="margin-left:100px;margin-top:20px;"/>
                             <input type="submit" name="btnSaveSQL" id="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
                             <input type="submit" name="btnUpdate" id="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
                         </form>
-                        <?php echo $resultAccumulator; ?>
+<?php echo $resultAccumulator; ?>
                         <div style="margin-top:20px;">
-                            <?php echo $logs; ?>
+<?php echo $logs; ?>
                         </div>
                     </div>
                 </div>
@@ -470,13 +475,12 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     </form>
                 </div>
             </div>
-			<input type="hidden" id="notyMsg" value='<?php echo json_encode((isset($notymsg) ? $notymsg:[])); ?>'>
-			<input type="hidden" id="wsServFile" value="<?php echo $serviceFile; ?>"/>
-			<input type="hidden" id="tabIndex" value="<?php echo $tabIndex; ?>"/>
-			<input type="hidden" id="notymsg" value='<?php echo (isset($notymsg) ? json_encode($notymsg) : '[]'); ?>' />
+            <input type="hidden" id="notyMsg" value='<?php echo json_encode((isset($notymsg) ? $notymsg : [])); ?>'>
+            <input type="hidden" id="tabIndex" value="<?php echo $tabIndex; ?>"/>
+            <input type="hidden" id="notymsg" value='<?php echo (isset($notymsg) ? json_encode($notymsg) : '[]'); ?>' />
             <input type="hidden" id="dateFormat" value='<?php echo $labl->getString("momentFormats", "dateTime", "MMM D, YYYY"); ?>' />
             <input type="hidden" id="canEditCron" value='<?php echo SecurityComponent::is_TheAdmin(); ?>' />
-            <input type="hidden" id="canForceRunCron" value='<?php echo ($uS->mode != "live" ? true: false); ?>' />
+            <input type="hidden" id="canForceRunCron" value='<?php echo ($uS->mode != "live" ? true : false); ?>' />
         </div>
     </body>
 </html>

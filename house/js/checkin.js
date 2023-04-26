@@ -42,6 +42,7 @@ $(document).ready(function() {
         $('#hhk-wListResv').toggle('blind');
     });
     createRoleAutoComplete($('#Search'), 3, {cmd: 'guest'}, function (item) {
+
         if(item.id == 0){
             let searchTerm = $('#Search').val();
             window.open('Reserve.php?id=' + item.id + '&title=c&guestSearchTerm=' + searchTerm, '_self');

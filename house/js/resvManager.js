@@ -940,10 +940,11 @@ function resvManager(initData, options) {
 
 				// Diagnosis Search
 				let diagSelect = function(item){
-                                        if(item.id !== "n"){
-                                            $('#selDiagnosis').val(item.id);
-                                            $("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
-                                        }
+
+					if(item.id !== "n"){
+						$('#selDiagnosis').val(item.id);
+						$("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
+					}
 				};
 				createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
 				
@@ -2695,6 +2696,7 @@ function resvManager(initData, options) {
                     $('#' + data.addPerson.mem.pref + 'txtLastName').val(guestSearchTerm).focus();
                 }
                 
+
             }
         }
 		$('#submitButtons').show();

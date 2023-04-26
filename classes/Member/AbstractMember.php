@@ -10,7 +10,7 @@ use HHK\Tables\Name\{NameDemogRS, NameRS};
 use HHK\sec\Session;
 use HHK\AuditLog\NameLog;
 use HHK\Exception\{RuntimeException, MemberException, UnexpectedValueException, InvalidArgumentException};
-use HHK\Neon\TransferMembers;
+use HHK\CrmExport\AbstractExportManager;
 
 /**
  * AbstractMember.php
@@ -322,7 +322,7 @@ abstract class AbstractMember {
         return $table->generateMarkup();
     }
 
-    public function createExcludesPanel() {
+    public function createExcludesPanel(\PDO $dbh) {
 
         $uS = Session::getInstance();
         $tabIcon = "";
@@ -398,15 +398,19 @@ abstract class AbstractMember {
                         )
                 );
 
-        // Exclude Neon
-        if ($uS->ContactManager == 'neon') {
-            $exNeonAttr = array('name'=>'exNeon', 'type'=>'checkbox', 'class'=>'hhk-ex', 'title'=>'Check to exclude Neon Transfers');
-            if ($this->get_ExternalId() == TransferMembers::EXCLUDE_TERM) {
+        // Exclude CMS
+        if ($uS->ContactManager != '') {
+
+            $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            $exNeonAttr = array('name'=>'exCms', 'type'=>'checkbox', 'class'=>'hhk-ex', 'title'=>'Check to exclude '. $CmsManager->getServiceTitle() .' Transfers');
+
+            if ($this->get_ExternalId() == AbstractExportManager::EXCLUDE_TERM) {
                 $exNeonAttr['checked'] = 'checked';
                 $insertTabIcon = TRUE;
             }
             $table->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Exclude Neon', array('for'=>'exNeon')), array('class'=>'tdlabel'))
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Exclude ' . $CmsManager->getServiceTitle(), array('for'=>'exCms')), array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(
                     HTMLInput::generateMarkup(
                         '',
@@ -722,7 +726,7 @@ abstract class AbstractMember {
             $n->Exclude_Email->setNewVal(isset($post[$idPrefix."exEmail"]) ? 1 : 0);
             $n->Exclude_Mail->setNewVal(isset($post[$idPrefix."exMail"]) ? 1 : 0);
             $n->Exclude_Phone->setNewVal(isset($post[$idPrefix."exPhone"]) ? 1 : 0);
-            $n->External_Id->setNewVal(isset($post[$idPrefix."exNeon"]) ? TransferMembers::EXCLUDE_TERM : '');
+            $n->External_Id->setNewVal(isset($post[$idPrefix."exCms"]) ? AbstractExportManager::EXCLUDE_TERM : '');
         }
 
         //  Prefered Mail Address
