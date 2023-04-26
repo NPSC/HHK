@@ -631,7 +631,7 @@ class SAML {
             $certData = $certStr;
         }
 
-        $certInfo = openssl_x509_parse($certData);
+        $certInfo = (!empty($certData) ? openssl_x509_parse($certData):false);
         if($certInfo){
             $validFromDate = date_create_from_format('ymdHise',$certInfo["validFrom"]);
             $validToDate = date_create_from_format('ymdHise', $certInfo["validTo"]);
@@ -1004,13 +1004,13 @@ class SAML {
             $defaultSecurityGroups = array();
 
             if(isset($post['idpConfig'][$this->IdpId]['name']) && $post['idpConfig'][$this->IdpId]['name'] != ''){
-                $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_STRING);
+                $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }else{
                 $errorMsg .= "<br>Name is required";
             }
 
             if(isset($post['idpConfig'][$this->IdpId]['LogoPath'])){
-                $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_STRING);
+                $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if(!isset($post['idpConfig']['new'])){
@@ -1034,19 +1034,19 @@ class SAML {
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpSigningCert'])){
-                        $idpConfig['idpSigningCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpSigningCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert'], FILTER_SANITIZE_ADD_SLASHES);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpSigningCert2'])){
-                        $idpConfig['idpSigningCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert2'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpSigningCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert2'], FILTER_SANITIZE_ADD_SLASHES);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert'])){
-                        $idpConfig['idpEncryptionCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpEncryptionCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert'], FILTER_SANITIZE_ADD_SLASHES);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'])){
-                        $idpConfig['idpEncryptionCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpEncryptionCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'], FILTER_SANITIZE_ADD_SLASHES);
                     }
                 }
 
@@ -1221,7 +1221,7 @@ class SAML {
         $rows = EditRS::select($this->dbh, $secRS, array($secRS->idIdp));
 
         foreach ($rows as $r) {
-            $sArray[$r['Group_Code']]["exist"] = "t";
+            $sArray[$r['idSecGroup']]["exist"] = "t";
         }
 
         $updtd = FALSE;

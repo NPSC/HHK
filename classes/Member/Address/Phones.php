@@ -297,13 +297,13 @@ class Phones extends AbstractContactPoint {
         $extn = '';
 
         if (isset($p[$idPrefix.'txtPhone'][$typeCode])) {
-            $ph = trim(filter_var($p[$idPrefix.'txtPhone'][$typeCode], FILTER_SANITIZE_STRING));
+            $ph = trim(filter_var($p[$idPrefix.'txtPhone'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         $a->Phone_Num->setNewVal($ph);
 
         if (isset($p[$idPrefix.'txtExtn'][$typeCode])) {
-            $extn = trim(filter_var($p[$idPrefix.'txtExtn'][$typeCode], FILTER_SANITIZE_STRING));
+            $extn = trim(filter_var($p[$idPrefix.'txtExtn'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         $a->Phone_Extension->setNewVal($extn);

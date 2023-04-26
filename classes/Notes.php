@@ -52,7 +52,7 @@ class Notes {
     public static function getNotesDiv($notesText, $class = 'hhk-currentNotes') {
 
         // reverse output
-        $lines = explode("\n", $notesText);
+        $lines = (!empty($notesText) ? explode("\n", $notesText): array());
         $reverse = "";
 
         for ($i = (count($lines) - 1); $i >= 0; $i--) {

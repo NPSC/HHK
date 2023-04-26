@@ -14,11 +14,9 @@ use HHK\sec\UserClass;
 
 require_once ("InstallIncludes.php");
 
-addslashesextended($_POST);
-
 //Check request
-if (isset($_POST['cmd'])) {
-    $c = filter_var($_POST['cmd'], FILTER_SANITIZE_STRING);
+if (filter_has_var(INPUT_POST, 'cmd')) {
+    $c = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $events = array();
@@ -63,9 +61,9 @@ if ($c == "testdb") {
         }
 
         // Update admin password
-        if (isset($_POST['new'])) {
+        if (filter_has_var(INPUT_POST, 'new')) {
 
-            $newPw = filter_var($_POST['new'], FILTER_UNSAFE_RAW);
+            $newPw = filter_input(INPUT_POST, 'new', FILTER_UNSAFE_RAW);
 
             $uclass = new UserClass();
             if ($uclass->setPassword($dbh, -1, $newPw)) {
@@ -98,19 +96,19 @@ function testdb($post) {
     $dbName = '';
 
     if (isset($post['dbms'])) {
-        $dbms = filter_var($post['dbms'], FILTER_SANITIZE_STRING);
+        $dbms = filter_var($post['dbms'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($post['dburl'])) {
-        $dbURL = filter_var($post['dburl'], FILTER_SANITIZE_STRING);
+        $dbURL = filter_var($post['dburl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($post['dbuser'])) {
-        $dbUser = filter_var($post['dbuser'], FILTER_SANITIZE_STRING);
+        $dbUser = filter_var($post['dbuser'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($post['dbPW'])) {
-        $pw = decryptMessage(filter_var($post['dbPW'], FILTER_SANITIZE_STRING));
+        $pw = decryptMessage(filter_var($post['dbPW'], FILTER_UNSAFE_RAW));
     }
     if (isset($post['dbSchema'])) {
-        $dbName = filter_var($post['dbSchema'], FILTER_SANITIZE_STRING);
+        $dbName = filter_var($post['dbSchema'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
 

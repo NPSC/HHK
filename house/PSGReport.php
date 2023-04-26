@@ -824,25 +824,25 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if (isset($_POST['selIrStat'])) {
     	$reqs = $_POST['selIrStat'];
     	if (is_array($reqs)) {
-    		$irSelection = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+    		$irSelection = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     	}
     }
 
 
     if (isset($_POST['selResvStatus'])) {
-        $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
+        $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     if (isset($_POST['adrcountry'])) {
-        $countrySelection = filter_Var($_POST['adrcountry'], FILTER_SANITIZE_STRING);
+        $countrySelection = filter_Var($_POST['adrcountry'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     if (isset($_POST['adrstate']) && $countrySelection) {
-        $stateSelection = filter_Var($_POST['adrstate'], FILTER_SANITIZE_STRING);
+        $stateSelection = filter_Var($_POST['adrstate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     if (isset($_POST['adrCounty']) && $stateSelection) {
-        $countySelection = filter_Var($_POST['adrCounty'], FILTER_SANITIZE_STRING);
+        $countySelection = filter_Var($_POST['adrCounty'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     if (isset($_POST['selDiag'])) {
@@ -850,7 +850,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $reqs = $_POST['selDiag'];
 
         if (is_array($reqs)) {
-            $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
@@ -859,7 +859,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $reqs = $_POST['selLoc'];
 
         if (is_array($reqs)) {
-            $locSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $locSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
@@ -1044,7 +1044,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         $whPeople = $whHosp . $whCountry . $whDiags . $whStatus;
 
-        $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_STRING);
+        $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $showAssoc = FALSE;
         if (count($filter->getAList()) > 0) {

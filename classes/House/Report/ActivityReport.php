@@ -1,7 +1,6 @@
 <?php
 namespace HHK\House\Report;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Payment\Statement;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -434,9 +433,9 @@ class ActivityReport {
         $showExternlId = FALSE;
 
         $labels = Labels::getLabels();
-        $config = new Config_Lite(ciCFG_FILE);
+        $config = $_ENV;
 
-        if($config->getString('webServices', 'Service_Name', '') != '') {
+        if(!empty($config['Service_Name'])) {
             $showExternlId = TRUE;
         }
 

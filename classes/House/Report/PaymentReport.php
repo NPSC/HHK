@@ -36,7 +36,7 @@ class PaymentReport {
         $payTypeSelections = array();
 
         if (isset($post['stDate'])) {
-            $txtStart = filter_var($post['stDate'], FILTER_SANITIZE_STRING);
+            $txtStart = filter_var($post['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($txtStart == '') {
                 $txtStart = date('Y-m-d');
@@ -44,7 +44,7 @@ class PaymentReport {
         }
 
         if (isset($post['enDate'])) {
-            $txtEnd = filter_var($post['enDate'], FILTER_SANITIZE_STRING);
+            $txtEnd = filter_var($post['enDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($txtEnd == '') {
                 $txtEnd = date('Y-m-d');
@@ -54,14 +54,14 @@ class PaymentReport {
         if (isset($post['selPayStatus'])) {
             $reqs = $post['selPayStatus'];
             if (is_array($reqs)) {
-                $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+                $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
 
         if (isset($post['selPayType'])) {
             $reqs = $post['selPayType'];
             if (is_array($reqs)) {
-                $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+                $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
 

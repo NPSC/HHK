@@ -60,23 +60,23 @@ $resultMessage = '';
 $dateSelected = '';
 $nameSelected = '';
 
-if (isset($_POST['btnGo'])) {
+if (filter_has_var(INPUT_POST, 'btnGo')) {
 
     // gather input
-    if (isset($_POST['selTx'])) {
-        $txSelection = filter_var($_POST['selTx'], FILTER_SANITIZE_STRING);
+    if (filter_has_var(INPUT_POST, 'selTx')) {
+        $txSelection = filter_input(INPUT_POST, 'selTx', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     $searchDate = date('Y-m-d');
-    if (isset($_POST['txtDate'])) {
-        $dateSelected = filter_var($_POST['txtDate'], FILTER_SANITIZE_STRING);
+    if (filter_has_var(INPUT_POST, 'txtDate')) {
+        $dateSelected = filter_input(INPUT_POST, 'txtDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if ($dateSelected != '') {
             $searchDate = date('Y-m-d', strtotime($dateSelected));
         }
     }
 
-    if (isset($_POST['txtName'])) {
-        $nameSelected = filter_var($_POST['txtName'], FILTER_SANITIZE_STRING);
+    if (filter_has_var(INPUT_POST, 'txtName')) {
+        $nameSelected = filter_input(INPUT_POST, 'txtName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
 
@@ -199,7 +199,7 @@ $txSelector = HTMLSelector::generateMarkup(
             });
         </script>
     </head>
-    <body <?php if ($testVersion) echo "class='testbody'"; ?> >
+    <body <?php if ($testVersion){ echo "class='testbody'";} ?> >
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>

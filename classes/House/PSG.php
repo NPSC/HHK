@@ -379,7 +379,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         $this->verifyUniquePatient($dbh, $idPatient);
 
-        $sanNotes = filter_var($notes, FILTER_SANITIZE_STRING);
+        $sanNotes = filter_var($notes, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($sanNotes != '') {
             $oldNotes = (is_null($this->psgRS->Notes->getStoredVal()) ? '' : $this->psgRS->Notes->getStoredVal());
@@ -455,7 +455,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         $this->psgRS->Primany_Language->setNewVal($languageId);
 
-        $sanNotes = filter_var($notes, FILTER_SANITIZE_STRING);
+        $sanNotes = filter_var($notes, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($uname != '') {
             $uname =  ', ' . $uname;

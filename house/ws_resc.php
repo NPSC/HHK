@@ -54,7 +54,7 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = htmlspecialchars($_REQUEST["cmd"]);
 }
 
 $uS = Session::getInstance();
@@ -131,8 +131,8 @@ try {
 
                 $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
                 $psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
-                $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_STRING);
-                $mimeType = filter_input(INPUT_POST, 'mimetype', FILTER_SANITIZE_STRING);
+                $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $mimeType = filter_input(INPUT_POST, 'mimetype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $doc = $_FILES['file'];
 
                 if (is_null($guestId) || $guestId === FALSE) {
@@ -183,7 +183,7 @@ try {
         case 'updatedoctitle':
 
             $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
-            $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_STRING);
+            $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (is_null($docId) || $docId === FALSE) {
                 throw new Exception('DocId missing');
@@ -237,7 +237,7 @@ try {
 
             if (isset($_REQUEST['letters'])) {
                 //require (HOUSE . 'Vehicle.php');
-                $tag = filter_var($_REQUEST['letters'], FILTER_SANITIZE_STRING);
+                $tag = filter_var($_REQUEST['letters'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $events = Vehicle::searchTag($dbh, $tag);
             }
 
@@ -246,14 +246,14 @@ try {
         case 'actrpt':
 
             if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {
-                $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_STRING);
+                $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $startDT = new DateTime($startDate);
             } else {
                 $startDT = new DateTime();
             }
 
             if (isset($_REQUEST["end"]) && $_REQUEST["end"] != '') {
-                $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_STRING);
+                $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $endDT = new DateTime($endDate);
             } else {
                 $endDT = new DateTime();
@@ -286,11 +286,11 @@ try {
 
                 $st = array();
                 if (isset($_REQUEST['st'])) {
-                    $st = filter_var_array($_REQUEST['st'], FILTER_SANITIZE_STRING);
+                    $st = filter_var_array($_REQUEST['st'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
                 $pt = array();
                 if (isset($_REQUEST['pt'])) {
-                    $pt = filter_var_array($_REQUEST['pt'], FILTER_SANITIZE_STRING);
+                    $pt = filter_var_array($_REQUEST['pt'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
                 $id = 0;
                 if (isset($_REQUEST["id"])) {
@@ -352,7 +352,7 @@ try {
             }
             $type = '';
             if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($type == 'resc') {
@@ -390,11 +390,11 @@ try {
             }
             $type = '';
             if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
             $title = '';
             if (isset($_REQUEST["title"])) {
-                $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_STRING);
+                $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
@@ -409,7 +409,7 @@ try {
             }
             $type = '';
             if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = ResourceView::saveStatusEvents($dbh, $id, $type, $_POST);
@@ -424,7 +424,7 @@ try {
             }
             $type = '';
             if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($type == 'rs') {
@@ -446,7 +446,7 @@ try {
             }
             $type = '';
             if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($type == 'rs') {
@@ -464,7 +464,7 @@ try {
 
             $tbl = '';
             if (isset($_REQUEST['tbl'])) {
-                $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
+                $tbl = htmlspecialchars($_REQUEST['tbl']);
             }
 
             $history = new History();
@@ -501,12 +501,12 @@ try {
             }
             $type = '';
             if (isset($_REQUEST["action"])) {
-                $type = filter_var($_REQUEST["action"], FILTER_SANITIZE_STRING);
+                $type = filter_var($_REQUEST["action"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $x = 0;
             if (isset($_POST['x'])) {
-                $x = filter_var($_POST['x'], FILTER_SANITIZE_STRING);
+                $x = filter_var($_POST['x'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $showBillTo = FALSE;
@@ -521,27 +521,27 @@ try {
 
             $invNum = '';
             if (isset($_POST['inb'])) {
-                $invNum = filter_var($_POST['inb'], FILTER_SANITIZE_STRING);
+                $invNum = filter_var($_POST['inb'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $element = '';
             if (isset($_POST['ele'])) {
-                $element = filter_var($_POST['ele'], FILTER_SANITIZE_STRING);
+                $element = filter_var($_POST['ele'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $notesElement = '';
             if (isset($_POST['ntele'])) {
-                $notesElement = filter_var($_POST['ntele'], FILTER_SANITIZE_STRING);
+                $notesElement = filter_var($_POST['ntele'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $invDateStr = '';
             if (isset($_POST["date"])) {
-                $invDateStr = filter_var($_POST["date"], FILTER_SANITIZE_STRING);
+                $invDateStr = filter_var($_POST["date"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $invNotes = '';
             if (isset($_POST["nts"])) {
-                $invNotes = filter_var($_POST["nts"], FILTER_SANITIZE_STRING);
+                $invNotes = filter_var($_POST["nts"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = invoiceSetBill($dbh, $invNum, $invDateStr, $uS->username, $element, $invNotes, $notesElement);
@@ -555,7 +555,7 @@ try {
             }
             $stat = '';
             if (isset($_REQUEST["stat"])) {
-                $stat = filter_var($_REQUEST["stat"], FILTER_SANITIZE_STRING);
+                $stat = filter_var($_REQUEST["stat"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $room = new Room($dbh, $id);
@@ -576,19 +576,19 @@ try {
 
             $tbl = '';
             if (isset($_REQUEST['tbl'])) {
-                $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
+                $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
 	//start Date
             $startDate = '';
             if (isset($_REQUEST['stdte'])) {
-                $startDate = filter_var($_REQUEST['stdte'], FILTER_SANITIZE_STRING);
+                $startDate = filter_var($_REQUEST['stdte'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
 		//end Date
             $endDate = '';
             if (isset($_REQUEST['enddte'])) {
-                $endDate = filter_var($_REQUEST['enddte'], FILTER_SANITIZE_STRING);
+                $endDate = filter_var($_REQUEST['enddte'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             switch ($tbl) {
@@ -652,7 +652,7 @@ try {
 
             $title = '';
             if(isset($_REQUEST['title'])) {
-                $title = filter_var($_REQUEST['title'], FILTER_SANITIZE_STRING);
+                $title = filter_var($_REQUEST['title'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $doc = '';
@@ -675,12 +675,12 @@ try {
 
             $successTitle = '';
             if(isset($_REQUEST['successTitle'])) {
-                $successTitle = filter_var($_REQUEST['successTitle'], FILTER_SANITIZE_STRING);
+                $successTitle = filter_var($_REQUEST['successTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $successContent = '';
             if(isset($_REQUEST['successContent'])) {
-                $successContent = filter_var($_REQUEST['successContent'], FILTER_SANITIZE_STRING);
+                $successContent = filter_var($_REQUEST['successContent'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $enableRecaptcha = '';
@@ -695,12 +695,12 @@ try {
 
             $notifySubject = '';
             if(isset($_REQUEST['notifySubject'])) {
-                $notifySubject = filter_var($_REQUEST['notifySubject'], FILTER_SANITIZE_STRING);
+                $notifySubject = filter_var($_REQUEST['notifySubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $notifyContent = '';
             if(isset($_REQUEST['notifyContent'])) {
-                $notifyContent = filter_var($_REQUEST['notifyContent'], FILTER_SANITIZE_STRING);
+                $notifyContent = filter_var($_REQUEST['notifyContent'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $initialGuests = '';
@@ -722,7 +722,7 @@ try {
             if(isset($_REQUEST['fontImport']) && is_array($_REQUEST['fontImport'])) {
                 $fontImport = array();
                 foreach($_REQUEST['fontImport'] as $font){
-                    $fontImport[] = filter_var($font, FILTER_SANITIZE_STRING);
+                    $fontImport[] = filter_var($font, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
             }
 
@@ -739,7 +739,7 @@ try {
         case "listforms" :
             $status = '';
             if(isset($_REQUEST['status'])){
-                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+                $status = htmlspecialchars($_REQUEST['status']);
             }
 
             $totalsOnly = false;
@@ -759,7 +759,7 @@ try {
 
             $status = '';
             if(isset($_REQUEST['status'])){
-                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+                $status = htmlspecialchars($_REQUEST['status']);
             }
 
             $formDocument = new FormDocument();

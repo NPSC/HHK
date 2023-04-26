@@ -92,7 +92,7 @@ class Insurance {
             if(isset($post["insurances"])){
                 foreach($post["insurances"] as $id=>$insurance){
                     $id = intval(filter_var($id, FILTER_SANITIZE_NUMBER_INT), 10);
-                    $insurance["Title"] = filter_var($insurance["Title"], FILTER_SANITIZE_STRING);
+                    $insurance["Title"] = filter_var($insurance["Title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                     $insurance["Order"] = intval(filter_var($insurance["Order"], FILTER_SANITIZE_NUMBER_INT), 10);
                     if(isset($insurance["replaceWith"])){
                         $insurance["replaceWith"] = intval(filter_var($insurance["replaceWith"], FILTER_SANITIZE_NUMBER_INT), 10);

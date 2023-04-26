@@ -65,11 +65,12 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Timestamp`) VALUES ('Diagnosis_Category', 'n', 'Neurology', 'h', current_timestamp());
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Timestamp`) VALUES ('Diagnosis_Category', 'c', 'Cardiac', 'h', current_timestamp());
 
-
 -- add waitlist label
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('waitlistTab','Wait List','s','rg','','Default: Wait List');
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('psgPlural','PSGs','s','s','','Default: PSGs');
 
 --  Delete volunteer sote
-DELETE FROM `demo`.`web_sites` WHERE (`Site_Code` = 'v');
-UPDATE `demo`.`sys_config` SET `Value` = 'false', `Show` = '0' WHERE (`Key` = 'Volunteers');
+DELETE FROM `web_sites` WHERE (`Site_Code` = 'v');
+UPDATE `sys_config` SET `Value` = 'false', `Show` = '0' WHERE (`Key` = 'Volunteers');
+
+CREATE INDEX IF NOT EXISTS `Index_idReferral_Doc` ON `reservation`(`idReferralDoc`);

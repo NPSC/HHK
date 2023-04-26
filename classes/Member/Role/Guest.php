@@ -88,22 +88,22 @@ class Guest extends AbstractRole {
         $idPrefix = $this->getRoleMember()->getIdPrefix();
 
         // Use House Phone?
-        if (isset($post[$idPrefix . 'rbPhPref']) && filter_var($post[$idPrefix . 'rbPhPref'], FILTER_SANITIZE_STRING) == 'yr') {
+        if (isset($post[$idPrefix . 'rbPhPref']) && filter_var($post[$idPrefix . 'rbPhPref'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) == 'yr') {
             $this->useHousePhone = TRUE;
         }
 
         // Guest Checkin Date
         if (isset($post[$idPrefix.'gstDate'])) {
-            $this->setCheckinDate(filter_var($post[$idPrefix.'gstDate'], FILTER_SANITIZE_STRING));
+            $this->setCheckinDate(filter_var($post[$idPrefix.'gstDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         } else if (isset($post['gstDate'])) {
-            $this->setCheckinDate(filter_var($post['gstDate'], FILTER_SANITIZE_STRING));
+            $this->setCheckinDate(filter_var($post['gstDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Guest Checkout Date
         if (isset($post[$idPrefix.'gstCoDate'])) {
-            $this->setExpectedCheckOut(filter_var($post[$idPrefix.'gstCoDate'], FILTER_SANITIZE_STRING));
+            $this->setExpectedCheckOut(filter_var($post[$idPrefix.'gstCoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         } else if (isset($post['gstCoDate'])) {
-            $this->setExpectedCheckOut(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
+            $this->setExpectedCheckOut(filter_var($post['gstCoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         return $message;

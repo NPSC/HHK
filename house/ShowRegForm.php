@@ -74,31 +74,31 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FA
 }
 
 if (isset($_REQUEST['regid'])) {
-    $idRegistration = intval(filter_var($_REQUEST['regid'], FILTER_SANITIZE_STRING), 10);
+    $idRegistration = intval(filter_var($_REQUEST['regid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
 }
 
 if (isset($_GET['vid'])) {
-    $idVisit = intval(filter_var($_REQUEST['vid'], FILTER_SANITIZE_STRING), 10);
+    $idVisit = intval(filter_var($_REQUEST['vid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
 }
 
 if (isset($_GET['payId'])) {
-    $idPayment = intval(filter_var($_REQUEST['payId'], FILTER_SANITIZE_STRING), 10);
+    $idPayment = intval(filter_var($_REQUEST['payId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
 }
 
 if (isset($_GET['invoiceNumber'])) {
-    $invoiceNumber = filter_var($_REQUEST['invoiceNumber'], FILTER_SANITIZE_STRING);
+    $invoiceNumber = filter_var($_REQUEST['invoiceNumber'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 if (isset($_GET['span'])) {
-    $span = intval(filter_var($_REQUEST['span'], FILTER_SANITIZE_STRING), 10);
+    $span = intval(filter_var($_REQUEST['span'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
 }
 
 if (isset($_GET['rid'])) {
-    $idResv = intval(filter_var($_REQUEST['rid'], FILTER_SANITIZE_STRING), 10);
+    $idResv = intval(filter_var($_REQUEST['rid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
 }
 
 if(isset($_GET["idDoc"])){
-    $idDoc = intval(filter_var($_REQUEST['idDoc'], FILTER_SANITIZE_STRING), 10);
+    $idDoc = intval(filter_var($_REQUEST['idDoc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
 }
 
 if ($idVisit == 0 && $idResv > 0) {

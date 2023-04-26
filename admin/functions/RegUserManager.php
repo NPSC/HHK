@@ -29,7 +29,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
     $uS = Session::getInstance();
 
     if (isset($_POST["txtfb$n"])) {
-        $fbId = strtolower(filter_var($_POST["txtfb$n"], FILTER_SANITIZE_STRING));
+        $fbId = strtolower(filter_var($_POST["txtfb$n"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     } else {
         return array("error" => "Bad fb Id.");
     }

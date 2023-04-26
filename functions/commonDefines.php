@@ -27,7 +27,8 @@ if (file_exists($dirxx) === FALSE) {
 define('THIRD_PARTY', $dirxx . DS);
 
 // Configuration filename and paths
-define('ciCFG_FILE', REL_BASE_DIR . 'conf' . DS . 'site.cfg' );
+define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
+define('ciCFG_FILE', 'site.cfg' );
 
 // Common Directory Names
 define('ADMIN_DIR', REL_BASE_DIR . 'admin' . DS);

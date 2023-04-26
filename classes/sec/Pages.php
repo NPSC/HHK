@@ -39,7 +39,7 @@ class Pages {
         $siteList = $uS->siteList;
 
         if (isset($post['hdnWebSite'])) {
-            $website = filter_var($post['hdnWebSite'], FILTER_SANITIZE_STRING);
+            $website = filter_var($post['hdnWebSite'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($siteList[$website]) === FALSE) {
@@ -58,7 +58,7 @@ class Pages {
 
         foreach ($post['txtIdPage'] as $k => $v) {
 
-            $pageId = intval(filter_var($k, FILTER_SANITIZE_STRING), 10);
+            $pageId = intval(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
             $newGroupCodes = array();
 
             if ($pageId < 0) {
@@ -84,7 +84,7 @@ class Pages {
 
                 // Page type
                 if (isset($post['selPageType'][$pageId])) {
-                    $pgType = filter_var($post['selPageType'][$pageId], FILTER_SANITIZE_STRING);
+                    $pgType = filter_var($post['selPageType'][$pageId], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 if (isset($pageTypes[$pgType])) {
@@ -103,7 +103,7 @@ class Pages {
                 // File Name
                 if (isset($post['txtFileName'][$pageId]) && $post['txtFileName'][$pageId] != '') {
                     // TODO Does the file exists?
-                    $pageRs->File_Name->setNewVal(filter_var($post['txtFileName'][$pageId], FILTER_SANITIZE_STRING));
+                    $pageRs->File_Name->setNewVal(filter_var($post['txtFileName'][$pageId], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 } else {
                     continue;
                 }
@@ -111,7 +111,7 @@ class Pages {
 
             // Title
             if (isset($post['txtPageTitle'][$pageId])) {
-                $pageRs->Title->setNewVal(filter_var($post['txtPageTitle'][$pageId], FILTER_SANITIZE_STRING));
+                $pageRs->Title->setNewVal(filter_var($post['txtPageTitle'][$pageId], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Hidden page
@@ -123,14 +123,14 @@ class Pages {
 
             // menu parent/ menu position
             if (isset($post['selParentId'][$pageId])) {
-                $pageRs->Menu_Parent->setNewVal(filter_var($post['selParentId'][$pageId], FILTER_SANITIZE_STRING));
+                $pageRs->Menu_Parent->setNewVal(filter_var($post['selParentId'][$pageId], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
             if (isset($post['txtParentPosition'][$pageId])) {
-                $pageRs->Menu_Position->setNewVal(filter_var($post['txtParentPosition'][$pageId], FILTER_SANITIZE_STRING));
+                $pageRs->Menu_Position->setNewVal(filter_var($post['txtParentPosition'][$pageId], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post["selSecCode"][$pageId])) {
-                $newGroupCodes = filter_var_array($post["selSecCode"][$pageId], FILTER_SANITIZE_STRING);
+                $newGroupCodes = filter_var_array($post["selSecCode"][$pageId], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
 
@@ -354,7 +354,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         $siteCode = '';
 
         if (isset($fields["inSiteCode"])) {
-            $siteCode = filter_var($fields["inSiteCode"], FILTER_SANITIZE_STRING);
+            $siteCode = filter_var($fields["inSiteCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else {
             return array("error" => "Bad Site Code. ");
         }
@@ -370,36 +370,36 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         EditRS::loadRow($siteRows[0], $siteRs);
 
         if (isset($fields["inDescription"])) {
-            $siteRs->Description->setNewVal(filter_var($fields["inDescription"], FILTER_SANITIZE_STRING));
+            $siteRs->Description->setNewVal(filter_var($fields["inDescription"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inHostAddr"])) {
-            $siteRs->HTTP_Host->setNewVal(filter_var($fields["inHostAddr"], FILTER_SANITIZE_STRING));
+            $siteRs->HTTP_Host->setNewVal(filter_var($fields["inHostAddr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inRelAddr"])) {
-            $siteRs->Relative_Address->setNewVal(filter_var($fields["inRelAddr"], FILTER_SANITIZE_STRING));
+            $siteRs->Relative_Address->setNewVal(filter_var($fields["inRelAddr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inCss"])) {
-            $siteRs->Path_To_CSS->setNewVal(filter_var($fields["inCss"], FILTER_SANITIZE_STRING));
+            $siteRs->Path_To_CSS->setNewVal(filter_var($fields["inCss"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inJs"])) {
-            $siteRs->Path_To_JS->setNewVal(filter_var($fields["inJs"], FILTER_SANITIZE_STRING));
+            $siteRs->Path_To_JS->setNewVal(filter_var($fields["inJs"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inDefault"])) {
-            $siteRs->Default_Page->setNewVal(filter_var($fields["inDefault"], FILTER_SANITIZE_STRING));
+            $siteRs->Default_Page->setNewVal(filter_var($fields["inDefault"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
 
         if (isset($fields["inIndex"])) {
-            $siteRs->Index_Page->setNewVal(filter_var($fields["inIndex"], FILTER_SANITIZE_STRING));
+            $siteRs->Index_Page->setNewVal(filter_var($fields["inIndex"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["siteSecCode"])) {
-            $codes = filter_var_array($fields["siteSecCode"], FILTER_SANITIZE_STRING);
+            $codes = filter_var_array($fields["siteSecCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $codeCDS = '';
             foreach ($codes as $c) {
                 if ($codeCDS == '') {

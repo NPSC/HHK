@@ -464,11 +464,11 @@ class Address extends AbstractContactPoint{
         // Clean the street address
         if (isset($p["address1"])) {
 
-            $addrs = $this->cleanAddress->cleanAddr(trim(filter_var($p["address1"], FILTER_SANITIZE_STRING)));
+            $addrs = $this->cleanAddress->cleanAddr(trim(filter_var($p["address1"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
             $street2 = '';
             if (isset($p['address2'])) {
-                $street2 = trim(filter_var($p['address2'], FILTER_SANITIZE_STRING));
+                $street2 = trim(filter_var($p['address2'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if ($street2 != "") {
@@ -488,7 +488,7 @@ class Address extends AbstractContactPoint{
         // Country
         $country = '';
         if (isset($p['country'])) {
-            $country = trim(filter_var($p['country'], FILTER_SANITIZE_STRING));
+            $country = trim(filter_var($p['country'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if ($country == '' || strtoupper($country) == 'USA') {
@@ -498,26 +498,26 @@ class Address extends AbstractContactPoint{
         $a->Country_Code->setNewVal($country);
 
         if (isset($p['county'])) {
-            $a->County->setNewVal(trim(filter_var($p['county'], FILTER_SANITIZE_STRING)));
+            $a->County->setNewVal(trim(filter_var($p['county'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         }
 
         // zip code, city and state
         if (isset($p['city'])) {
-            $a->City->setNewVal(trim(filter_var($p['city'], FILTER_SANITIZE_STRING)));
+            $a->City->setNewVal(trim(filter_var($p['city'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
             if ($p['city'] == '') {
                 $addrComplete = FALSE;
             }
         }
         if (isset($p['state'])) {
-            $a->State_Province->setNewVal(trim(filter_var($p['state'], FILTER_SANITIZE_STRING)));
+            $a->State_Province->setNewVal(trim(filter_var($p['state'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
             if ($p['state'] == '') {
                 $addrComplete = FALSE;
             }
         }
         if (isset($p['zip'])) {
-            $a->Postal_Code->setNewVal(strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_STRING))));
+            $a->Postal_Code->setNewVal(strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
 
             if ($p['zip'] == '') {
                 $addrComplete = FALSE;
@@ -538,9 +538,9 @@ class Address extends AbstractContactPoint{
 
     public function checkZip(\PDO $dbh, TableRSInterface $a, array $p) {
         // zip code, city and state
-        $zip = strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_STRING)));
-        $city = trim(filter_var($p['city'], FILTER_SANITIZE_STRING));
-        $state = trim(filter_var($p['state'], FILTER_SANITIZE_STRING));
+        $zip = strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $city = trim(filter_var($p['city'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        $state = trim(filter_var($p['state'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         $country = $a->Country_Code->getStoredVal();
 
         if (($country == 'US' || $country == '') && $a->Postal_Code->getStoredVal() != $zip) {

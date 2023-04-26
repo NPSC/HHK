@@ -315,14 +315,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
     if (isset($_POST['selInvStatus'])) {
         $reqs = $_POST['selInvStatus'];
         if (is_array($reqs)) {
-            $invStatus = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $invStatus = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
     if (isset($_POST['selbillagent'])) {
         $reqs = $_POST['selbillagent'];
         if (is_array($reqs)) {
-            $baSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $baSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 

@@ -23,7 +23,7 @@ require_once(FUNCTIONS . 'mySqlFunc.php');
 
 try {
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
+    $config = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 } catch (PDOException $pex) {
     echo ("Database Error.  " . $pex->getMessage());
 } catch (Exception $ex) {

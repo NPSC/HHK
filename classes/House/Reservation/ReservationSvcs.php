@@ -739,26 +739,26 @@ class ReservationSvcs
 
         // FA Category
         if (isset($post['hdnRateCat'])) {
-            $faCategory = filter_var($post['hdnRateCat'], FILTER_SANITIZE_STRING);
+            $faCategory = filter_var($post['hdnRateCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($post['SelFaStatus']) && $post['SelFaStatus'] != '') {
-            $faStat = filter_var($post['SelFaStatus'], FILTER_SANITIZE_STRING);
+            $faStat = filter_var($post['SelFaStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($post['txtFaStatusDate']) && $post['txtFaStatusDate'] != '') {
-            $faDT = setTimeZone($uS, filter_var($post['txtFaStatusDate'], FILTER_SANITIZE_STRING));
+            $faDT = setTimeZone($uS, filter_var($post['txtFaStatusDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $faStatDate = $faDT->format('Y-m-d');
         }
 
         // Reason text
         if (isset($post['txtFaReason'])) {
-            $reason = filter_var($post['txtFaReason'], FILTER_SANITIZE_STRING);
+            $reason = filter_var($post['txtFaReason'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Notes
         if (isset($post['txtFaNotes'])) {
-            $notes = filter_var($post['txtFaNotes'], FILTER_SANITIZE_STRING);
+            $notes = filter_var($post['txtFaNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Save Fin App dialog.

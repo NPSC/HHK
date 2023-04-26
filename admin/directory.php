@@ -25,10 +25,6 @@ $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 $uS = Session::getInstance();
 
-
-// Check strings for slashes, etc.
-addslashesextended($_POST);
-
 // Checkbox controls
 $cbBasisDir = new chkBoxCtrl($dbh, "Member_Basis", "Include", "cbDirBasis", true);
 $cbBasisDir->set_class("hhk-dirBasis");
@@ -55,7 +51,7 @@ if (count($rows) > 0) {
 }
 
 
-if (isset($_POST['btnPrep'])) {
+if (filter_has_var(INPUT_POST, 'btnPrep')) {
 
     // Load the table with fresh data
     $affectedRows = MailList::fillMailistTable($dbh, $uS->SolicitBuffer);
@@ -68,12 +64,12 @@ if (isset($_POST['btnPrep'])) {
 
 
 
-if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
+if (filter_has_var(INPUT_POST, "btnExcel") || filter_has_var(INPUT_POST, "btnHere")) {
 
     // Form returned to generate directory
     $dirmarkup = dirReport($dbh, $cbBasisDir, $cbRelationDir, $selDirType, $uS->SolicitBuffer);
 
-    if (isset($_POST["cbEmployee"])) {
+    if (filter_has_var(INPUT_POST, "cbEmployee")) {
         $cbEmpChecked = "checked='checked'";
     }
 }

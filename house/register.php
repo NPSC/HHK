@@ -118,7 +118,7 @@ if (isset($_POST['btnFeesDl'])) {
 
 if (isset($_GET['gamess'])) {
 
-    $contents = filter_var($_GET['gamess'], FILTER_SANITIZE_STRING);
+    $contents = filter_var($_GET['gamess'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $guestAddMessage = HTMLContainer::generateMarkup('div', $contents, array('style'=>'clear:left;float:left; margin-top:5px;margin-bottom:5px;', 'class'=>"hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"));
 
@@ -171,7 +171,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('r
 
 
 // Hospital Selector
-$stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)' and Hide = 0");
+$stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)' and Hide = 0 order by Title asc");
 
 if ($stmth->rowCount() > 1) {
     $shoHosptialName = TRUE;

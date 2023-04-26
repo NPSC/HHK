@@ -81,7 +81,7 @@ if (is_null($idRaw) === FALSE) {
  *
  */
 $setForOrg = false;
-$cmd = filter_input(INPUT_GET, 'cmd', FILTER_SANITIZE_STRING);
+$cmd = filter_input(INPUT_GET, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if (is_null($cmd) === FALSE) {
     $id = 0;
     if ($cmd == "neworg") {
@@ -111,7 +111,7 @@ if ($id < 0) {
 
 
 // If posting a new member, check the member basis
-$mbasis = filter_input(INPUT_POST, 'selMbrType', FILTER_SANITIZE_STRING);
+$mbasis = filter_input(INPUT_POST, 'selMbrType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if (is_null($mbasis) === FALSE) {
 
     if (isset($uS->nameLookups[GLTableNames::MemberBasis][$mbasis])) {
@@ -178,11 +178,8 @@ try {
  * This is the main SAVE submit button.  It checks for a change in any data field
  * and updates the database accordingly.
  */
-if (isset($_POST["btnSubmit"])) {
+if(filter_has_var(INPUT_POST, "btnSubmit")){
     $msg = "";
-
-    // Strip slashes
-    addslashesextended($_POST);
 
     try {
 

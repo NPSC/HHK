@@ -22,7 +22,7 @@ require ("AdminIncludes.php");
 try {
 
     $login = new Login();
-    $login->initHhkSession(ciCFG_FILE);
+    $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
 } catch (InvalidArgumentException $pex) {
     exit ("Database Access Error.");

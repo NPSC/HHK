@@ -28,7 +28,7 @@ $uS = Session::getInstance();
 $checkinDate = '';
 
 if (isset($_GET['d'])) {
-    $checkinDate = filter_var($_GET['d'], FILTER_SANITIZE_STRING);
+    $checkinDate = filter_var($_GET['d'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 

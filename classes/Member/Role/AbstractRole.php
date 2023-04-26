@@ -279,7 +279,7 @@ abstract class AbstractRole {
 
         // Update local Patient relationship
         if (isset($post[$idPrefix.'selPatRel'])) {
-            $this->patientRelationshipCode = filter_var($post[$idPrefix.'selPatRel'], FILTER_SANITIZE_STRING);
+            $this->patientRelationshipCode = filter_var($post[$idPrefix.'selPatRel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Also set patient member type if guest is the patient.

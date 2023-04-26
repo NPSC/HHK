@@ -903,11 +903,16 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
             . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
-            . " and (LOWER(n.Name_Last) like '" . $this->Name_Last . "' "
-            . " $operation (LOWER(n.Name_First) like '" . $this->Name_First . "' OR LOWER(n.Name_NickName) like '" . $this->Name_First . "')) "
+            . " and (LOWER(n.Name_Last) like :nameLast "
+            . " $operation (LOWER(n.Name_First) like :nameFirst OR LOWER(n.Name_NickName) like :nameFirst2)) "
             . " group by n.idName order by n.Name_Last, n.Name_First";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([
+            ":nameFirst"=>$this->Name_First,
+            ":nameFirst2"=>$this->Name_First,
+            ":nameLast"=>$this->Name_Last
+        ]);
 
         $events = array();
 

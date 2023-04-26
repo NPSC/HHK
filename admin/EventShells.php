@@ -40,7 +40,7 @@ function getDayControl($name, $data) {
 // Catch callback
 if (isset($_POST['txtTitle'])) {
 
-    $idShells = filter_var_array($_POST['txtTitle'], FILTER_SANITIZE_STRING);
+    $idShells = filter_var_array($_POST['txtTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     foreach ($idShells as $idS => $s) {
 
@@ -71,16 +71,16 @@ if (isset($_POST['txtTitle'])) {
         }
 
         $shellRs->Title->setNewVal($s);
-        $shellRs->Description->setNewVal(filter_var($_POST['txtDesc'][$idS], FILTER_SANITIZE_STRING));
-        $shellRs->Status->setNewVal(filter_var($_POST['selStatus'][$idS], FILTER_SANITIZE_STRING));
-        $shellRs->Vol_Cat->setNewVal(filter_var($_POST['selCat'][$idS], FILTER_SANITIZE_STRING));
-        $shellRs->Vol_Code->setNewVal(filter_var($_POST['txtCode'][$idS], FILTER_SANITIZE_STRING));
-        $shellRs->Shell_Color->setNewVal(filter_var($_POST['txtColor'][$idS], FILTER_SANITIZE_STRING));
-        $shellRs->Date_Start->setNewVal(filter_var($_POST['txtStartDate'][$idS], FILTER_SANITIZE_STRING));
+        $shellRs->Description->setNewVal(filter_var($_POST['txtDesc'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        $shellRs->Status->setNewVal(filter_var($_POST['selStatus'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        $shellRs->Vol_Cat->setNewVal(filter_var($_POST['selCat'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        $shellRs->Vol_Code->setNewVal(filter_var($_POST['txtCode'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        $shellRs->Shell_Color->setNewVal(filter_var($_POST['txtColor'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        $shellRs->Date_Start->setNewVal(filter_var($_POST['txtStartDate'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
-        $stTime = filter_var($_POST['selStartHour'][$idS], FILTER_SANITIZE_STRING) . ':' . filter_var($_POST['selStartMinutes'][$idS], FILTER_SANITIZE_STRING);
+        $stTime = filter_var($_POST['selStartHour'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS) . ':' . filter_var($_POST['selStartMinutes'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $shellRs->Time_Start->setNewVal($stTime);
-        $enTime = filter_var($_POST['selEndHour'][$idS], FILTER_SANITIZE_STRING) . ':' . filter_var($_POST['selEndMinutes'][$idS], FILTER_SANITIZE_STRING);
+        $enTime = filter_var($_POST['selEndHour'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS) . ':' . filter_var($_POST['selEndMinutes'][$idS], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $shellRs->Time_End->setNewVal($enTime);
 
         $shellRs->Sun->setNewVal(isset($_POST['rbSun'][$idS]) ? 1 : 0);

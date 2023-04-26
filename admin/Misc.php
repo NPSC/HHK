@@ -4,13 +4,14 @@ use HHK\Update\SiteLog;
 use HHK\AlertControl\AlertMessage;
 use HHK\AuditLog\NameLog;
 use HHK\sec\{Session, WebInit};
-use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\GLTableNames;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\Admin\SiteDbBackup;
 use HHK\Member\AbstractMember;
+use HHK\sec\SysConfig;
+use HHK\SysConst\CodeVersion;
 
 /**
  * Misc.php
@@ -39,7 +40,6 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$config = new Config_Lite(ciCFG_FILE);
 $uname = $uS->username;
 
 function getGenLookups(\PDO $dbh) {
@@ -136,7 +136,7 @@ left join gen_lookups g3 on g3.Table_Name = 'Vol_Rank' and g3.Code = a.Other_Cod
 // catch service calls
 if (isset($_POST["table"])) {
 
-    $tableName = substr(filter_var($_POST["table"], FILTER_SANITIZE_STRING), 0, 45);
+    $tableName = substr(filter_var($_POST["table"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
 
     $res = $dbh->query("Select Code, Description, Substitute from gen_lookups where Table_Name='" . $tableName . "'");
 
@@ -203,15 +203,15 @@ if (isset($_POST["btnGenLookups"])) {
         $lookUpAlert->set_Text("Don't mess with these settings.  ");
     } else {
 
-    $code = filter_var($_POST["txtCode"], FILTER_SANITIZE_STRING);
+    $code = filter_var($_POST["txtCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     //$code = substr($code, 0, $flen["Code"]);
-    $desc = filter_var($_POST["txtDesc"], FILTER_SANITIZE_STRING);
+    $desc = filter_var($_POST["txtDesc"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     //$desc = substr($desc, 0, $flen["Description"]);
-    $subt = filter_var($_POST["txtAddl"], FILTER_SANITIZE_STRING);
+    $subt = filter_var($_POST["txtAddl"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     //$subt = substr($subt, 0, $flen["Substitute"]);
-    $selTbl = filter_var($_POST["selLookup"], FILTER_SANITIZE_STRING);
+    $selTbl = filter_var($_POST["selLookup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     //$selTbl = substr($selTbl, 0, $flen["Table_Name"]);
-    $selCode = filter_var($_POST["selCode"], FILTER_SANITIZE_STRING);
+    $selCode = filter_var($_POST["selCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 
     if ($selTbl == "") {
@@ -261,11 +261,11 @@ if (isset($_POST["btnGenLookups"])) {
 $markup = "";
 if (isset($_POST["btnGenLog"])) {
     $accordIndex = 3;
-    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_STRING);
+    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     if ($sDate != '') {
         $sDate = date("Y-m-d", strtotime($sDate));
     }
-    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_STRING);
+    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     if ($eDate != '') {
         $eDate = date("Y-m-d 23:59:59", strtotime($eDate));
     }
@@ -395,19 +395,20 @@ if (isset($_POST["btnDoBackup"])) {
 
 
 
-    $dbBack = new SiteDbBackup('/tmp' . DS, ciCFG_FILE);
+    $dbBack = new SiteDbBackup(sys_get_temp_dir() . DS, ciCFG_FILE);
 
     if ($dbBack->backupSchema($igtables)) {
         // success
         $logText = "Database Download.";
-        SiteLog::logDbDownload($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+
+        SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
 
         $dbBack->downloadFile();  // exits here.
 
     } else {
 
         $logText = "Failed Database Download:  " . $dbBack->getErrors();
-        SiteLog::logDbDownload($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
     }
 
     $bkupMsg = $bkupAlert->createMarkup('Result: ' . $dbBack->getErrors());

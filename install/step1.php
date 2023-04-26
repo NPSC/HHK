@@ -33,8 +33,7 @@ $config = new Config_Lite(ciCFG_FILE);
 
 
 // Save button
-if (isset($_POST['btnSave'])) {
-    addslashesextended($_POST);
+if (filter_has_var(INPUT_POST, 'btnSave')) {
     try {
         SiteConfig::saveConfig(NULL, $config, $_POST, 'admin');
         $result = "Config file saved.  ";
@@ -44,7 +43,7 @@ if (isset($_POST['btnSave'])) {
 }
 
 // Next button
-if (isset($_POST['btnNext'])) {
+if (filter_has_var(INPUT_POST, 'btnNext')) {
     header('location:step2.php');
 }
 

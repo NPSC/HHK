@@ -43,8 +43,6 @@ $uS = Session::getInstance();
 $labels = Labels::getLabels();
 $menuMarkup = $wInit->generatePageMenu();
 
-$config = new Config_Lite(ciCFG_FILE);
-
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $hdrTbl = '';
 $dataTable = '';
@@ -75,7 +73,7 @@ $delCofListClass = 'hhk-delcoflist';
 if (isset($_POST['cmd'])) {
 
 	$dataArray = array();
-	$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_STRING);
+	$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 	if ($cmd == 'cof') {
 		$dataArray['coflist'] = CreditToken::getCardsOnFile($dbh, 'GuestEdit.php?id=');
@@ -135,7 +133,7 @@ if (count($gwList) > 1) {
 }
 
 // Show External Id (external payment record id)
-if ($config->getString('webServices', 'Service_Name', '') != '') {
+if (!empty($_ENV['Service_Name'])) {
     $cFields[] = array('External Id', 'Payment_External_Id', '', '', 'string', '15', array());
 }
 
@@ -173,7 +171,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if (isset($_POST['selPayStatus'])) {
         $reqs = $_POST['selPayStatus'];
         if (is_array($reqs)) {
-            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
@@ -182,7 +180,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     	$reqs = $_POST['selPayType'];
 
     	if (is_array($reqs)) {
-    		$payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+    		$payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     	}
     }
 
@@ -191,7 +189,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     	$reqs = $_POST['selGateway'];
 
     	if (is_array($reqs)) {
-    		$gwSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+    		$gwSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     	}
     }
 

@@ -55,7 +55,7 @@ function initPDO($override = FALSE)
     	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
     	$options = [
     			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    			PDO::ATTR_EMULATE_PREPARES   => TRUE,
+    			PDO::ATTR_EMULATE_PREPARES   => FALSE,
     	];
 
     	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);
@@ -556,7 +556,7 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $del, ar
 
         foreach ($desc as $k => $r) {
 
-            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+            $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
             if ($code == '') {
                 continue;
@@ -588,7 +588,7 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $del, ar
                 } else {
                     // update
                     if (isset($desc[$code]) && $desc[$code] != '') {
-                        $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_STRING));
+                        $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     }
                     if (isset($subt[$code])) {
                         $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
@@ -620,7 +620,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
 
         foreach ($desc as $k => $r) {
 
-            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+            $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
             if ($code == '') {
                 continue;
@@ -661,7 +661,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
                 } else {
                     // update
                     if (isset($desc[$code]) && $desc[$code] != '') {
-                        $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_STRING));
+                        $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     }
 
                     if (isset($subt[$code])) {
@@ -669,7 +669,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
                         if (is_numeric($subt[$code])) {
                             $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
                         } else {
-                            $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_STRING));
+                            $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                         }
                     }
 
@@ -706,7 +706,7 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 
         foreach ($title as $k => $r) {
 
-            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+            $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
             if ($code == '') {
                 continue;
@@ -738,7 +738,7 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 
                 // update
                 if (isset($title[$code]) && $title[$code] != '') {
-                    $lookRs->Title->setNewVal(filter_var($title[$code], FILTER_SANITIZE_STRING));
+                    $lookRs->Title->setNewVal(filter_var($title[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 }
 
                 $ctr = EditRS::update($dbh, $lookRs, array(

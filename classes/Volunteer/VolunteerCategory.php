@@ -273,12 +273,12 @@ class VolunteerCategory {
 
             // Check Date
             if (isset($volArray["ckdate"][$row2["Vol_Code"]])) {
-                $nvRS->Vol_Check_Date->setNewVal(trim(filter_var($volArray["ckdate"][$row2["Vol_Code"]], FILTER_SANITIZE_STRING)));
+                $nvRS->Vol_Check_Date->setNewVal(trim(filter_var($volArray["ckdate"][$row2["Vol_Code"]], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
             }
 
             // Training Date
             if (isset($volArray["tdid"][$row2["Vol_Code"]])) {
-                $nvRS->Vol_Training_Date->setNewVal(trim(filter_var($volArray["tdid"][$row2["Vol_Code"]], FILTER_SANITIZE_STRING)));
+                $nvRS->Vol_Training_Date->setNewVal(trim(filter_var($volArray["tdid"][$row2["Vol_Code"]], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
             }
 
             // Rank/Role

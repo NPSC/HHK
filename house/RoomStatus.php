@@ -127,7 +127,7 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
         foreach ($_POST[$prefix . 'deepCleanDate'] as $key => $p) {
 
             $idRoom = intval(filter_var($key, FILTER_SANITIZE_NUMBER_INT), 10);
-            $deepCleanDate = filter_var($p, FILTER_SANITIZE_STRING);
+            $deepCleanDate = filter_var($p, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             if ($idRoom == 0) {
                 continue;
             }
@@ -183,7 +183,7 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
                 $rooms[$idRoom] = $room;
             }
 
-            $notes = filter_var($p, FILTER_SANITIZE_STRING);
+            $notes = filter_var($p, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             if ($notes != '') {
                 $oldNotes = is_null($room->getNotes()) ? '' : $room->getNotes();
                 $room->setNotes($oldNotes . "\r\n" . date('m-d-Y') . ', ' . $uS->username . ' - ' . $notes);

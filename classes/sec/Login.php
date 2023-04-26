@@ -3,7 +3,7 @@ namespace HHK\sec;
 
 
 use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
+use Dotenv\Dotenv;
 use HHK\Exception\CsrfException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
@@ -31,25 +31,26 @@ class Login {
     protected $validateMsg = '';
 
 
-    public static function initHhkSession($configFileName) {
+    public static function initHhkSession(string $confPath = '', string $confFile = '') {
 
         // get session instance
-    	$ssn = Session::getInstance($configFileName);
+    	$ssn = Session::getInstance($confPath, $confFile);
         // Preset the timezone to suppress errors on hte subject.
         //date_default_timezone_set('America/Chicago');
 
         // Get the site configuration object
         try {
-            $config = new Config_Lite($configFileName);
+            $config = Dotenv::createImmutable($confPath, $confFile);
+            $config->load();
         } catch (\Exception $ex) {
             $ssn->destroy();
-            throw new RuntimeException("Configurtion file is missing, path=".$configFileName, 999, $ex);
+            throw new RuntimeException("Configurtion file is missing, path=".$confPath . $confFile, 999, $ex);
         }
 
-        $ssn->sitePepper = $config->getString('site', 'sitePepper', false);
+        $ssn->sitePepper = (isset($_ENV["sitePepper"]) ? $_ENV["sitePepper"]:'');
 
         try {
-        	self::dbParmsToSession($config);
+            self::dbParmsToSession($confPath, $confFile);
         	$dbh = initPDO(TRUE);
         } catch (RuntimeException $hex) {
         	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
@@ -95,24 +96,27 @@ class Login {
         return $dbh;
     }
 
-    public static function dbParmsToSession(Config_Lite $config) {
+    public static function dbParmsToSession(string $confPath, string $confFile) {
 
         // get session instance
         $ssn = Session::getInstance();
 
-        try {
-            $dbConfig = $config->getSection('db');
-        } catch (\Exception $e) {
-            $ssn->destroy();
-            throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
+        if(!isset($_ENV["URL"])){
+            try {
+                $config = Dotenv::createImmutable($confPath, $confFile);
+                $config->load();
+            } catch (\Exception $e) {
+                $ssn->destroy();
+                throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
+            }
         }
 
-        if (is_array($dbConfig)) {
-            $ssn->databaseURL = $dbConfig['URL'];
-            $ssn->databaseUName = $dbConfig['User'];
-            $ssn->databasePWord = decryptMessage($dbConfig['Password']);
-            $ssn->databaseName = $dbConfig['Schema'];
-            $ssn->dbms = $dbConfig['DBMS'];
+        if (isset($_ENV["URL"]) && isset($_ENV["User"]) && isset($_ENV["Password"]) && isset($_ENV["Schema"]) && isset($_ENV["DBMS"])) {
+            $ssn->databaseURL = $_ENV['URL'];
+            $ssn->databaseUName = $_ENV['User'];
+            $ssn->databasePWord = decryptMessage($_ENV['Password']);
+            $ssn->databaseName = $_ENV['Schema'];
+            $ssn->dbms = $_ENV['DBMS'];
         } else {
             $ssn->destroy();
             throw new RuntimeException("Bad Database Configuration");
@@ -132,7 +136,7 @@ class Login {
 
         // Get next page address
         if (isset($_POST["xf"]) && $_POST["xf"] != '') {
-            $pge = filter_var(urldecode($_POST["xf"]), FILTER_SANITIZE_STRING);
+            $pge = urldecode($_POST["xf"]);
         } else {
             $pge = $defaultPage;
         }
@@ -140,18 +144,18 @@ class Login {
 
         if (isset($post["txtUname"]) && isset($post["txtPass"])) {
 
-            $this->userName = strtolower(substr(filter_var($post["txtUname"], FILTER_SANITIZE_STRING), 0, 100));
+            $this->userName = strtolower(substr(filter_var($post["txtUname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 100));
 
             $password = filter_var($post["txtPass"], FILTER_UNSAFE_RAW);
 
             $otp = '';
             if(isset($post["otp"])){
-                $otp = filter_var($post["otp"], FILTER_SANITIZE_STRING);
+                $otp = filter_var($post["otp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $otpMethod = false;
             if(isset($post["otpMethod"])){
-                $otpMethod = filter_var($post['otpMethod'], FILTER_SANITIZE_STRING);
+                $otpMethod = filter_var($post['otpMethod'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $showMethodMkup = false;

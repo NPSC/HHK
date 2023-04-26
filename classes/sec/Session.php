@@ -1,7 +1,7 @@
 <?php
 namespace HHK\sec;
 
-use HHK\Config_Lite\Config_Lite;
+use Dotenv\Dotenv;
 
 /**
  * session.php
@@ -38,14 +38,14 @@ class Session
     *
     *    @return    object
     **/
-    public static function getInstance($configFileName = ciCFG_FILE)
+    public static function getInstance($confPath = CONF_PATH, $confFile = ciCFG_FILE)
     {
         if (!isset(self::$instance))
         {
             self::$instance = new self;
         }
 
-        self::$instance->startSession($configFileName);
+        self::$instance->startSession($confPath, $confFile);
 
         return self::$instance;
     }
@@ -57,12 +57,12 @@ class Session
     *    @return    bool    TRUE if the session has been initialized, else FALSE.
     **/
 
-    public function startSession($configFileName = '')
+    public function startSession(string $confPath = '', string $confFile = '')
     {
         if ( $this->sessionState == self::SESSION_NOT_STARTED || session_status() !== PHP_SESSION_ACTIVE)
         {
             ini_set( 'session.cookie_httponly', 1 );
-            session_name($this->getSessionName($configFileName));
+            session_name($this->getSessionName($confPath, $confFile));
             $this->sessionState = session_start();
         }
 
@@ -150,16 +150,17 @@ class Session
         }
     }
 
-    private function getSessionName($configFileName = '')
+    private function getSessionName(string $confPath, string $confFile)
     {
-        try{
-        	if ($configFileName != '') {
-        		$config = new Config_Lite($configFileName);
-            	return strtoupper($config->getString('db', 'Schema', '')) . 'HHKSESSION';
-        	} else {
-        		return 'HHKSESSION';
-        	}
-        }catch(\Exception $ex){
+        if(!empty($confPath) && !empty($confFile)){
+            try{
+                $config = Dotenv::createImmutable($confPath, $confFile);
+            	$config->safeLoad();
+                return strtoupper((isset($_ENV["Schema"])? $_ENV["Schema"]: '')) . 'HHKSESSION';
+            }catch(\Exception $ex){
+                return 'HHKSESSION';
+            }
+        }else{
             return 'HHKSESSION';
         }
     }

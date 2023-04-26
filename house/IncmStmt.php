@@ -86,7 +86,7 @@ function saveBa(\PDO $dbh, $post) {
 			if (isset($parts[1]) && $parts[1] > 0) {
 
 				$id = intval($parts[1]);
-				$gl = filter_var($v, FILTER_SANITIZE_STRING);
+				$gl = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 				$dbh->exec("Update name_demog set Gl_Code_Debit = '$gl' where idName = $id");
 			}
@@ -99,7 +99,7 @@ function saveBa(\PDO $dbh, $post) {
 // 			if (isset($parts[1]) && $parts[1] > 0) {
 
 // 				$id = intval($parts[1]);
-// 				$gl = filter_var($v, FILTER_SANITIZE_STRING);
+// 				$gl = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 // 				$dbh->exec("Update name_demog set Gl_Code_Credit = '$gl' where idName = $id");
 // 			}

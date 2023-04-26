@@ -385,7 +385,7 @@ class SearchNameData implements SearchNameDataInterface {
             $this->addressStreet1 = trim($addressStreet);
         } else {
 
-            $addrs = $cleanAddress->cleanAddr(trim(filter_var($addressStreet, FILTER_SANITIZE_STRING)));
+            $addrs = $cleanAddress->cleanAddr(trim(filter_var($addressStreet, FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
             $this->addressStreet1 = $addrs[0];
             $this->addressStreet2 =  $addrs[1];

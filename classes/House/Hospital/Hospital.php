@@ -580,22 +580,22 @@ $(document).ready(function () {
         $uS = Session::getInstance();
 
         if (isset($post['selAssoc'])) {
-            $hstay->setAssociationId(filter_var($post['selAssoc'], FILTER_SANITIZE_STRING));
+            $hstay->setAssociationId(filter_var($post['selAssoc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['selHospital'])) {
-            $hstay->setHospitalId(filter_var($post['selHospital'], FILTER_SANITIZE_STRING));
+            $hstay->setHospitalId(filter_var($post['selHospital'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['psgRoom'])) {
-        	$hstay->setRoom(filter_var($post['psgRoom'], FILTER_SANITIZE_STRING));
+        	$hstay->setRoom(filter_var($post['psgRoom'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['psgMrn'])) {
-            $MRN = filter_var($post['psgMrn'], FILTER_SANITIZE_STRING);
+            $MRN = filter_var($post['psgMrn'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $MRN = str_replace(["/", "-","_"], "", trim($MRN));
             $hstay->setMrn($MRN);
         }
         if (isset($post['txtEntryDate'])) {
-            $dateStr = filter_var($post['txtEntryDate'], FILTER_SANITIZE_STRING);
+            $dateStr = filter_var($post['txtEntryDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($dateStr != '') {
                 $enDT = new \DateTime($dateStr);
@@ -605,7 +605,7 @@ $(document).ready(function () {
         }
 
        if (isset($post['txtExitDate'])) {
-            $dateStr = filter_var($post['txtExitDate'], FILTER_SANITIZE_STRING);
+            $dateStr = filter_var($post['txtExitDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($dateStr != '') {
                 $enDT = new \DateTime($dateStr);
@@ -616,16 +616,16 @@ $(document).ready(function () {
 
         if (isset($post['selDiagnosis'])) {
 
-            $myDiagnosis = filter_var($post['selDiagnosis'], FILTER_SANITIZE_STRING);
+            $myDiagnosis = filter_var($post['selDiagnosis'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $hstay->setDiagnosisCode($myDiagnosis);
         }
 
         if (isset($post['txtDiagnosis'])) {
-            $hstay->setDiagnosis2(filter_var($post['txtDiagnosis'], FILTER_SANITIZE_STRING));
+            $hstay->setDiagnosis2(filter_var($post['txtDiagnosis'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['selLocation'])) {
-            $hstay->setLocationCode(filter_var($post['selLocation'], FILTER_SANITIZE_STRING));
+            $hstay->setLocationCode(filter_var($post['selLocation'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Doctor

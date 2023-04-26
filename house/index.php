@@ -31,7 +31,7 @@ $uS = Session::getInstance();
 // Logout command?
 if (isset($_GET["log"])) {
 
-    $log = filter_var($_GET["log"], FILTER_SANITIZE_STRING);
+    $log = filter_var($_GET["log"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     if ($log == "lo") {
 
@@ -45,7 +45,7 @@ if (isset($_GET["log"])) {
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");

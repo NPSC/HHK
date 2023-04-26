@@ -523,7 +523,7 @@ class VantivGateway extends AbstractPaymentGateway {
         }
 
         if (isset($post['ReturnMessage'])) {
-            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_STRING);
+            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // THis eventually selects the merchant id
@@ -534,7 +534,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         if (isset($post[VantivGateway::PAYMENT_ID])) {
 
-            $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
+            $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
 
@@ -992,7 +992,7 @@ class VantivGateway extends AbstractPaymentGateway {
         if (isset($post['txtnewMerchant'])) {
             // Add a new default row
 
-            $merchantName = strtolower(filter_var($post['txtnewMerchant'], FILTER_SANITIZE_STRING));
+            $merchantName = strtolower(filter_var($post['txtnewMerchant'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
             if ( ! empty($merchantName)) {
 
@@ -1050,43 +1050,43 @@ class VantivGateway extends AbstractPaymentGateway {
 
             // Merchant Id
             if (isset($post[$indx . '_txtuid'])) {
-                $ccRs->Merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_STRING));
+                $ccRs->Merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Credit URL
             if (isset($post[$indx . '_txtcrdurl'])) {
-                $ccRs->Credit_Url->setNewVal(filter_var($post[$indx . '_txtcrdurl'], FILTER_SANITIZE_STRING));
+                $ccRs->Credit_Url->setNewVal(filter_var($post[$indx . '_txtcrdurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Transaction URL
             if (isset($post[$indx . '_txttransurl'])) {
-                $ccRs->Trans_Url->setNewVal(filter_var($post[$indx . '_txttransurl'], FILTER_SANITIZE_STRING));
+                $ccRs->Trans_Url->setNewVal(filter_var($post[$indx . '_txttransurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Checkout URL
             if (isset($post[$indx . '_txtckouturl'])) {
-                $ccRs->Checkout_Url->setNewVal(filter_var($post[$indx . '_txtckouturl'], FILTER_SANITIZE_STRING));
+                $ccRs->Checkout_Url->setNewVal(filter_var($post[$indx . '_txtckouturl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Chekout POS URL
             if (isset($post[$indx . '_txtcoposurl'])) {
-            	$ccRs->CheckoutPOS_Url->setNewVal(filter_var($post[$indx . '_txtcoposurl'], FILTER_SANITIZE_STRING));
+            	$ccRs->CheckoutPOS_Url->setNewVal(filter_var($post[$indx . '_txtcoposurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Payment Page Logo URL
             if (isset($post[$indx . '_txtpageLogourl'])) {
-            	$ccRs->Page_Header_URL->setNewVal(filter_var($post[$indx . '_txtpageLogourl'], FILTER_SANITIZE_STRING));
+            	$ccRs->Page_Header_URL->setNewVal(filter_var($post[$indx . '_txtpageLogourl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Manual Merchant Id
             if (isset($post[$indx . '_txtManMerchId'])) {
-            	$ccRs->Manual_MerchantId->setNewVal(filter_var($post[$indx . '_txtManMerchId'], FILTER_SANITIZE_STRING));
+            	$ccRs->Manual_MerchantId->setNewVal(filter_var($post[$indx . '_txtManMerchId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Manual Merchant PW
             if (isset($post[$indx . '_txtManMerchPW'])) {
 
-            	$pw = filter_var($post[$indx . '_txtManMerchPW'], FILTER_SANITIZE_STRING);
+            	$pw = filter_var($post[$indx . '_txtManMerchPW'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             	if ($pw != '' && $ccRs->Manual_Password->getStoredVal() != $pw) {
             		$ccRs->Manual_Password->setNewVal(encryptMessage($pw));
@@ -1097,23 +1097,23 @@ class VantivGateway extends AbstractPaymentGateway {
 
             // Use AVS
             if (isset($post[$indx . '_txtuseAVS'])) {
-                $ccRs->Use_AVS_Flag->setNewVal(filter_var($post[$indx . '_txtuseAVS'], FILTER_SANITIZE_STRING));
+                $ccRs->Use_AVS_Flag->setNewVal(filter_var($post[$indx . '_txtuseAVS'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Use CCV
             if (isset($post[$indx . '_txtuseCVV'])) {
-            	$ccRs->Use_Ccv_Flag->setNewVal(filter_var($post[$indx . '_txtuseCVV'], FILTER_SANITIZE_STRING));
+            	$ccRs->Use_Ccv_Flag->setNewVal(filter_var($post[$indx . '_txtuseCVV'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Use Card swipe
             if (isset($post[$indx . '_txtuseSwipe'])) {
-            	$ccRs->Retry_Count->setNewVal(filter_var($post[$indx . '_txtuseSwipe'], FILTER_SANITIZE_STRING));
+            	$ccRs->Retry_Count->setNewVal(filter_var($post[$indx . '_txtuseSwipe'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Password
             if (isset($post[$indx . '_txtpwd'])) {
 
-                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_SANITIZE_STRING);
+                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $ccRs->Password->getStoredVal() != $pw) {
                     $ccRs->Password->setNewVal(encryptMessage($pw));

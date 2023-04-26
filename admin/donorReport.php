@@ -16,7 +16,7 @@ use HHK\Donation\Campaign;
 require ("AdminIncludes.php");
 
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;
@@ -24,10 +24,6 @@ $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
-
-
-// Check strings for slashes, etc.
-addslashesextended($_POST);
 
 $makeTable = "0";
 $donmarkup = "<thead><tr><td></td></tr></thead><tbody><tr><td></td></tr></tbody>";
@@ -54,7 +50,7 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 
 #--------------------------------------------------------------
 // form1 save button:
-if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
+if (filter_has_var(INPUT_POST, "btnDonors") || filter_has_var(INPUT_POST, "btnDonDL")) {
 #--------------------------------------------------------------
 
     require_once("functions" . DS . "donorReportManager.php");
@@ -63,15 +59,15 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
     $makeTable = 2;
 
     // collect the parameters
-    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_STRING);
-    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_STRING);
+    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_STRING);
+    $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $letterSalSelector->setReturnValues($_POST[$letterSalSelector->get_htmlNameBase()]);
     $envSalSelector->setReturnValues($_POST[$envSalSelector->get_htmlNameBase()]);
 
-    if (isset($_POST["overRideSal"])) {
+    if (filter_has_var(INPUT_POST, "overRideSal")) {
         $overRideSalChecked = "checked='checked'";
         $overrideSalutations = TRUE;
     } else {
@@ -80,7 +76,7 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
     }
 
 // check campaign codes
-    if (isset($_POST["selDonCamp"])) {
+    if (filter_has_var(INPUT_POST, "selDonCamp")) {
         $campcodes = $_POST["selDonCamp"];
         foreach ($campcodes as $item) {
             // remember picked values for this control
@@ -90,14 +86,14 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
 
 
     // Do the report
-    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_STRING), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_STRING), FALSE);
+    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), FALSE);
 
     if ($voldCat->get_andOr() == "or") {
         $anddChecked = "";
         $ordChecked = "checked='checked'";
     }
 
-    if (isset($_POST["exDeceased"])) {
+    if (filter_has_var(INPUT_POST, "exDeceased")) {
         $exDeceasedChecked = " checked='checked' ";
     }
 
@@ -143,7 +139,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
             if (listTable)
                 listTable.fnDestroy();
 
-            if (makeTable == 2) {
+            if (makeTable === 2) {
                 $('div#printArea').css('display', 'block');
 
             listTable = $('#tblDonor').dataTable({

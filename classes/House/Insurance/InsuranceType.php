@@ -81,7 +81,7 @@ class InsuranceType {
         if(isset($post["insuranceTypes"])){
             foreach($post["insuranceTypes"] as $id=>$type){
                 $id = intval(filter_var($id, FILTER_SANITIZE_NUMBER_INT), 10);
-                $type["Title"] = filter_var($type["Title"], FILTER_SANITIZE_STRING);
+                $type["Title"] = filter_var($type["Title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $type["List_Order"] = filter_var($type["List_Order"], FILTER_SANITIZE_NUMBER_INT);
                 $type["Use"] = boolval(isset($type["Use"]));
 

@@ -37,12 +37,12 @@ $guest = NULL;
 $invNum = '';
 
 if (isset($_GET["invnum"])) {
-    $invNum = filter_var($_GET["invnum"], FILTER_SANITIZE_STRING);
+    $invNum = filter_var($_GET["invnum"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 // Catch post-back
 if (isset($_POST['hdninvnum'])) {
-    $invNum = filter_var($_POST["hdninvnum"], FILTER_SANITIZE_STRING);
+    $invNum = filter_var($_POST["hdninvnum"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 try {
@@ -83,7 +83,7 @@ try {
         }
 
         if (isset($_POST['txtSubject'])) {
-            $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
+            $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             if ($emSubject == '') {
                 $msg .= "The Subject is required.  ";
             }

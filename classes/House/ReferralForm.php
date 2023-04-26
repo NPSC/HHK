@@ -569,7 +569,7 @@ class ReferralForm {
         $rgRs->idGuest->setNewVal($psg->getIdPatient());
         $rgRs->Primary_Guest->setNewVal('1');
         EditRS::insert($dbh, $rgRs);
-
+        
         foreach ($guests as $g) {
 
             $rgRs = new Reservation_GuestRS();
@@ -578,10 +578,21 @@ class ReferralForm {
             $rgRs->Primary_Guest->setNewVal('');
             EditRS::insert($dbh, $rgRs);
         }
+        
+        $this->copyNotes($dbh, $resv->getIdReservation(), $this->referralDocId);
 
         return $resv->getIdReservation();
 
 	}
+        
+        public function copyNotes(\PDO $dbh, $resvId, $idDoc){
+            $stmt = $dbh->prepare("select * from `doc_note` where `Doc_Id` = :docId");
+            $stmt->execute([":docId"=>$idDoc]);
+            $insertStmt = $dbh->prepare("INSERT INTO `reservation_note` (`Reservation_Id`, `Note_Id`) VALUES(:resvId, :noteId)");
+            foreach($stmt->fetchAll() as $row){
+                $insertStmt->execute([':resvId'=>$resvId, ':noteId'=>$row['Note_Id']]);
+            }
+        }
 
 	/**
 	 * Selected patient Markup.

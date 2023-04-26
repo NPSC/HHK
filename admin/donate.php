@@ -43,8 +43,8 @@ $uS = Session::getInstance();
 $resp = array();
 
 // check security codes; exit if not secure
-if (isset($_POST["sq"])) {
-    $sq = filter_var($_POST["sq"], FILTER_SANITIZE_STRING);
+if (filter_has_var(INPUT_POST, "sq")) {
+    $sq = filter_input(INPUT_POST, "sq", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $pw = decryptMessage($sq);
     $ts = strtotime($pw);
     $tnow = time();
@@ -62,8 +62,8 @@ $uname = $uS->username;
 
 // use cmd to determine actions
 $cmd = "";
-if (isset($_POST['cmd'])) {
-    $cmd = $_POST['cmd'];
+if (filter_has_var(INPUT_POST, 'cmd')) {
+    $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 try {
@@ -73,8 +73,8 @@ try {
             $maxDonationAmt = floatval($uS->MaxDonate);
 
             $id = 0;
-            if (isset($_POST["id"])) {
-                $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            if (filter_has_var(INPUT_POST, "id")) {
+                $id = intval(filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
             $resp = recordDonation($dbh, $maxDonationAmt, $id, $_POST);
@@ -83,8 +83,8 @@ try {
 
         case "delete":
             $donId = 0;
-            if (isset($_POST['did'])) {
-                $donId = intval(filter_var($_POST['did'], FILTER_SANITIZE_NUMBER_INT), 10);
+            if (filter_has_var(INPUT_POST, 'did')) {
+                $donId = intval(filter_input(INPUT_POST, 'did', FILTER_SANITIZE_NUMBER_INT), 10);
             }
             $resp = deleteDonation($dbh, $donId, $uname);
 
@@ -93,8 +93,8 @@ try {
         case "markup":
 
             $id = 0;
-            if (isset($_POST["id"])) {
-                $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            if (filter_has_var(INPUT_POST, "id")) {
+                $id = intval(filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
             $resp = genDonationMarkup($dbh, $id);
@@ -157,7 +157,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
     // Campaign code must me defined.
     $campaignCode = '';
     if (isset($data["dselCamp"])) {
-        $campaignCode = filter_var($data["dselCamp"], FILTER_SANITIZE_STRING);
+        $campaignCode = filter_var($data["dselCamp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if ($campaignCode == '') {
         return array(
@@ -168,7 +168,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
     // Pay type
     $payType = '';
     if (isset($data["dselPaytype"])) {
-        $payType = filter_var($data["dselPaytype"], FILTER_SANITIZE_STRING);
+        $payType = filter_var($data["dselPaytype"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($uS->nameLookups[GLTableNames::PayType][$payType]) === FALSE) {
         return array(
@@ -179,7 +179,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
     // Date
     $dte = date('Y-m-d H:i:s');
     if (isset($data["ddate"])) {
-        $dte = filter_var($data["ddate"], FILTER_SANITIZE_STRING);
+        $dte = filter_var($data["ddate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     } else {
         $dte = date('Y-m-d H:i:s');
     }
@@ -187,15 +187,15 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
     // These three have valid defaults
     $salut = SalutationCodes::FirstOnly;
     if (isset($data["dselSalutation"])) {
-        $salut = filter_var($data["dselSalutation"], FILTER_SANITIZE_STRING);
+        $salut = filter_var($data["dselSalutation"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     $envel = SalutationCodes::Formal;
     if (isset($data["dselEnvelope"])) {
-        $envel = filter_var($data["dselEnvelope"], FILTER_SANITIZE_STRING);
+        $envel = filter_var($data["dselEnvelope"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     $addr = AddressPurpose::Home;
     if (isset($data["dselAddress"])) {
-        $addr = intval(filter_var($data["dselAddress"]), FILTER_SANITIZE_STRING);
+        $addr = intval(filter_var($data["dselAddress"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     $includedId = 0;
     if (isset($data["selAssoc"])) {
@@ -204,7 +204,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
 
     $notes = '';
     if (isset($data['dnote'])) {
-        $notes = filter_var($data["dnote"], FILTER_SANITIZE_STRING);
+        $notes = filter_var($data["dnote"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     $campaign = new Campaign($dbh, $campaignCode);

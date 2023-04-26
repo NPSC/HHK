@@ -634,7 +634,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $payResult = NULL;
 
         if (isset($post[InstamedGateway::INSTAMED_TRANS_VAR])) {
-            $transType = filter_var($post[InstamedGateway::INSTAMED_TRANS_VAR], FILTER_SANITIZE_STRING);
+            $transType = filter_var($post[InstamedGateway::INSTAMED_TRANS_VAR], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Not a payment return so get out.
@@ -643,7 +643,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         }
 
         if (isset($post[InstamedGateway::INSTAMED_RESULT_VAR])) {
-            $transResult = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
+            $transResult = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
@@ -1211,44 +1211,44 @@ where r.idRegistration =" . $idReg);
 
 
             if (isset($post[$indx . '_txtmerch'])) {
-            	$ccRs->cc_name->setNewVal(filter_var($post[$indx . '_txtmerch'], FILTER_SANITIZE_STRING));
+            	$ccRs->cc_name->setNewVal(filter_var($post[$indx . '_txtmerch'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtaid'])) {
-            	$ccRs->account_Id->setNewVal(filter_var($post[$indx . '_txtaid'], FILTER_SANITIZE_STRING));
+            	$ccRs->account_Id->setNewVal(filter_var($post[$indx . '_txtaid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtsalias'])) {
-                $ccRs->sso_Alias->setNewVal(filter_var($post[$indx . '_txtsalias'], FILTER_SANITIZE_STRING));
+                $ccRs->sso_Alias->setNewVal(filter_var($post[$indx . '_txtsalias'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtuid'])) {
-                $ccRs->merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_STRING));
+                $ccRs->merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtuname'])) {
-                $ccRs->store_Id->setNewVal(filter_var($post[$indx . '_txtuname'], FILTER_SANITIZE_STRING));
+                $ccRs->store_Id->setNewVal(filter_var($post[$indx . '_txtuname'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txttremId'])) {
-                $ccRs->terminal_Id->setNewVal(filter_var($post[$indx . '_txttremId'], FILTER_SANITIZE_STRING));
+                $ccRs->terminal_Id->setNewVal(filter_var($post[$indx . '_txttremId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtwsId'])) {
-                $ccRs->WorkStation_Id->setNewVal(filter_var($post[$indx . '_txtwsId'], FILTER_SANITIZE_STRING));
+                $ccRs->WorkStation_Id->setNewVal(filter_var($post[$indx . '_txtwsId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtpurl'])) {
-                $ccRs->providersSso_Url->setNewVal(filter_var($post[$indx . '_txtpurl'], FILTER_SANITIZE_STRING));
+                $ccRs->providersSso_Url->setNewVal(filter_var($post[$indx . '_txtpurl'], FILTER_SANITIZE_URL));
             }
 
             if (isset($post[$indx . '_txtnvpurl'])) {
-                $ccRs->nvp_Url->setNewVal(filter_var($post[$indx . '_txtnvpurl'], FILTER_SANITIZE_STRING));
+                $ccRs->nvp_Url->setNewVal(filter_var($post[$indx . '_txtnvpurl'], FILTER_SANITIZE_URL));
             }
 
             if (isset($post[$indx . '_txtsk'])) {
 
-                $pw = filter_var($post[$indx . '_txtsk'], FILTER_SANITIZE_STRING);
+                $pw = filter_var($post[$indx . '_txtsk'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $ccRs->security_Key->getStoredVal() != $pw) {
                     $ccRs->security_Key->setNewVal(encryptMessage($pw));
@@ -1258,7 +1258,7 @@ where r.idRegistration =" . $idReg);
             }
             if (isset($post[$indx . '_txtpwd'])) {
 
-                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_SANITIZE_STRING);
+                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $ccRs->password->getStoredVal() != $pw) {
                     $ccRs->password->setNewVal(encryptMessage($pw));

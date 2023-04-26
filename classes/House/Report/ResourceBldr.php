@@ -29,7 +29,7 @@ class ResourceBldr
 
             foreach ($desc as $k => $r) {
 
-                $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+                $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
                 if ($code == '' || $tblName == '') {
                     continue;
@@ -52,7 +52,7 @@ class ResourceBldr
                 $newDesc = '';
 
                 if ($r != '') {
-                    $newDesc = filter_var($r, FILTER_SANITIZE_STRING);
+                    $newDesc = filter_var($r, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 } else {
                     continue;
                 }
@@ -250,7 +250,7 @@ Order by `t`.`List_Order`;");
     public static function checkLookups(\PDO $dbh, $post, $labels) {
 
         $uS = Session::getInstance();
-        $tableName = filter_var($post['table'], FILTER_SANITIZE_STRING);
+        $tableName = filter_var($post['table'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($tableName == '') {
             echo '';
@@ -269,11 +269,11 @@ Order by `t`.`List_Order`;");
         $type = '';
 
         if (isset($post['cmd'])) {
-            $cmd = filter_var($post['cmd'], FILTER_SANITIZE_STRING);
+            $cmd = filter_var($post['cmd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($post['tp'])) {
-            $type = filter_var($post['tp'], FILTER_SANITIZE_STRING);
+            $type = filter_var($post['tp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Save
@@ -283,11 +283,11 @@ Order by `t`.`List_Order`;");
             if (isset($_POST['txtDiag'][0]) && $_POST['txtDiag'][0] != '') {
 
                 // new entry
-                $dText = filter_var($post['txtDiag'][0], FILTER_SANITIZE_STRING);
+                $dText = filter_var($post['txtDiag'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $aText = '';
 
                 if(isset($post['selDiagCat'][0])){
-                    $aText = filter_var($post['selDiagCat'][0], FILTER_SANITIZE_STRING);
+                    $aText = filter_var($post['selDiagCat'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 if ($tableName == 'Patient_Rel_Type') {
@@ -295,7 +295,7 @@ Order by `t`.`List_Order`;");
                 }
 
                 if (isset($_POST['txtDiagAmt'][0])) {
-                    $aText = filter_var($post['txtDiagAmt'][0], FILTER_SANITIZE_STRING);
+                    $aText = filter_var($post['txtDiagAmt'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 $orderNumber = 0;
@@ -420,10 +420,10 @@ Order by `t`.`List_Order`;");
                     $amounts[$k] = $a;
                 }
             }elseif(isset($post['selDiagCat'])){
-                $amounts = filter_var_array($post['selDiagCat'], FILTER_SANITIZE_STRING);
+                $amounts = filter_var_array($post['selDiagCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $codeArray = filter_var_array($post['txtDiag'], FILTER_SANITIZE_STRING);
+            $codeArray = filter_var_array($post['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $orderNums = (isset($post['txtDOrder']) ? filter_var_array($post['txtDOrder'], FILTER_SANITIZE_NUMBER_INT) : array());
 
             if ($type === GlTypeCodes::m) {
@@ -446,7 +446,7 @@ Order by `t`.`List_Order`;");
 
                         $desc = '';
                         if (isset($post['txtDiag'][$c])) {
-                            $desc = filter_var($post['txtDiag'][$c], FILTER_SANITIZE_STRING);
+                            $desc = filter_var($post['txtDiag'][$c], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                         }
 
                         $orderNumber = 0;

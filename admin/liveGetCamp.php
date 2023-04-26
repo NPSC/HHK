@@ -22,10 +22,10 @@ $dbh = $wInit->dbh;
 
 
 //get the q parameter from URL
-if (isset($_POST["qc"]) === FALSE) {
+if (filter_has_var(INPUT_POST, "qc") === FALSE) {
     exit();
 }
-$q = filter_var($_POST["qc"], FILTER_SANITIZE_STRING);
+$q = filter_input(INPUT_POST, "qc", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $resp = array();
 

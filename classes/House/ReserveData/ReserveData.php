@@ -120,7 +120,7 @@ class ReserveData {
         }
 
         if (isset($post['vstatus'])) {
-            $this->setSpanStatus(filter_var($post['vstatus'], FILTER_SANITIZE_STRING));
+            $this->setSpanStatus(filter_var($post['vstatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['id'])) {
@@ -132,23 +132,23 @@ class ReserveData {
         }
 
         if (isset($post['fullName'])) {
-            $this->fullName = filter_var($post['fullName'], FILTER_SANITIZE_STRING);
+            $this->fullName = filter_var($post['fullName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($post['gstDate'])) {
-            $this->setArrivalDateStr(filter_var($post['gstDate'], FILTER_SANITIZE_STRING));
+            $this->setArrivalDateStr(filter_var($post['gstDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['gstCoDate'])) {
-        	$this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
+        	$this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['schTerm'])) {
-        	$this->setSearchTerm(filter_var($post['schTerm'], FILTER_SANITIZE_STRING));
+        	$this->setSearchTerm(filter_var($post['schTerm'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['mem'])) {
-            $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
+            $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['prePayment'])) {
@@ -177,7 +177,7 @@ class ReserveData {
         $this->expectedDatesSection = '';
         $this->hospitalSection = '';
         $this->reservationSection = '';
-        $this->checkingInSection = '';
+        $this->checkinSection = '';
         $this->paymentSection = '';
         $this->errors = '';
         $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');

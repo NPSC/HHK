@@ -60,7 +60,7 @@ class Document {
     protected $createdBy = '';
     protected $lastUpdated = null;
     protected $updatedBy = '';
-    protected $cretedOn = '';
+    protected $createdOn = '';
     private $documentRS;
 
     /**
@@ -232,7 +232,7 @@ class Document {
         if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
 
             if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
-                $title = utf8_decode($this->documentRS->Title->getStoredVal());
+                $title = $this->documentRS->Title->getStoredVal();
 
                 $doc = $this->documentRS->Doc->getStoredVal();
                 $doc = preg_replace('/\/Title \(.*\)/', '/Title (' . $title . ')', $doc);

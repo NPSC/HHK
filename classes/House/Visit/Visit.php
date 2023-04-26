@@ -1187,7 +1187,7 @@ class Visit {
                 continue;
             }
 
-            $newStayStart = filter_var($newStayStartDates[$stayRs->idStays->getStoredVal()], FILTER_SANITIZE_STRING);
+            $newStayStart = filter_var($newStayStartDates[$stayRs->idStays->getStoredVal()], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             // Cant do anything with a blank date
             if ($newStayStart == '') {
@@ -1436,7 +1436,7 @@ class Visit {
             }
 
             // Get the new date
-            $coDate = filter_var($guestDates[$guestId], FILTER_SANITIZE_STRING);
+            $coDate = filter_var($guestDates[$guestId], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             // no value set?
             if ($coDate == '') {

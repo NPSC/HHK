@@ -98,7 +98,7 @@ class ActiveReservation extends Reservation {
 
         // Set goto checkingin page?
         if (isset($post['resvCkinNow'])) {
-            $this->gotoCheckingIn = filter_var($post['resvCkinNow'], FILTER_SANITIZE_STRING);
+            $this->gotoCheckingIn = filter_var($post['resvCkinNow'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Open Reservation
@@ -116,7 +116,7 @@ class ActiveReservation extends Reservation {
 
         if (isset($post['selResvStatus']) && $post['selResvStatus'] != '') {
 
-            $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_STRING);
+            $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($rStat != ''  && isset($reservStatuses[$rStat])) {
                 $reservStatus = $rStat;
@@ -177,7 +177,7 @@ class ActiveReservation extends Reservation {
 
         // Reservation anticipated Payment Type
         if (isset($post['selPayType'])) {
-            $resv->setExpectedPayType(filter_var($post['selPayType'], FILTER_SANITIZE_STRING));
+            $resv->setExpectedPayType(filter_var($post['selPayType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Verbal Confirmation Flag
@@ -190,12 +190,12 @@ class ActiveReservation extends Reservation {
 
         // Check-in notes (to be put on the registration form. ALternatively, use as waitlist notes.
         if (isset($post['taCkinNotes'])) {
-            $resv->setCheckinNotes(filter_var($post['taCkinNotes'], FILTER_SANITIZE_STRING));
+            $resv->setCheckinNotes(filter_var($post['taCkinNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Ribbon Note
         if (isset($post['txtRibbonNote'])){
-            $resv->setNotes(filter_var($post['txtRibbonNote'], FILTER_SANITIZE_STRING));
+            $resv->setNotes(filter_var($post['txtRibbonNote'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // remove room if reservation is in waitlist
@@ -225,7 +225,7 @@ class ActiveReservation extends Reservation {
         // Notes
         if (isset($post['taNewNote'])) {
 
-            $noteText = filter_var($post['taNewNote'], FILTER_SANITIZE_STRING);
+            $noteText = filter_var($post['taNewNote'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($noteText != '') {
                 LinkNote::save($dbh, $noteText, $resv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);

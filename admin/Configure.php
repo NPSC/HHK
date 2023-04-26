@@ -10,8 +10,6 @@ use HHK\SysConst\{
     WebRole,
     CodeVersion
 };
-use HHK\Config_Lite\Config_Lite;
-use HHK\Config_Lite\Exception\Exception;
 use HHK\Update\{
     SiteConfig,
     UpdateSite,
@@ -69,35 +67,30 @@ $rteFileSelection = '';
 $rteMsg = '';
 $confError = '';
 
-$config = new Config_Lite(ciCFG_FILE);
 $labl = Labels::getLabels();
 
 if ($uS->ContactManager !== '') {
-
     $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
 }
 
-if (isset($_POST["btnSiteCnf"]) || isset($_POST["btnLocalAuth"])) {
-
-    addslashesextended($_POST);
+if (filter_has_var(INPUT_POST, "btnSiteCnf") || filter_has_var(INPUT_POST, "btnLocalAuth")) {
 
     $notymsg = SiteConfig::saveSysConfig($dbh, $_POST);
 
-    if (isset($_POST["btnLocalAuth"])) {
+    if (filter_has_var(INPUT_POST, "btnLocalAuth")) {
         $tabIndex = 3;
     }
 }
 
-if (isset($_POST["btnLabelCnf"])) {
+if (filter_has_var(INPUT_POST, "btnLabelCnf")) {
 
     $tabIndex = 7;
 
     $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
-
 // Save web service configurtion
-if (isset($_POST["btnExtCnf"]) && $CmsManager !== NULL) {
+if (filter_has_var(INPUT_POST, "btnExtCnf") && $CmsManager !== NULL) {
 
     $tabIndex = 9;
 
@@ -108,7 +101,7 @@ if (isset($_POST["btnExtCnf"]) && $CmsManager !== NULL) {
     }
 }
 
-if (isset($_POST['btnUpdate'])) {
+if (filter_has_var(INPUT_POST, 'btnUpdate')) {
 
     $tabIndex = 1;
 
@@ -142,7 +135,7 @@ if (isset($_FILES['zipfile'])) {
 }
 
 // Patch Tab
-if (isset($_POST['btnSaveSQL'])) {
+if (filter_has_var(INPUT_POST, 'btnSaveSQL')) {
 
     $tabIndex = 1;
 
@@ -177,7 +170,7 @@ if (isset($_POST['btnSaveSQL'])) {
 }
 
 // Payment credentials
-if (isset($_POST['btnPay'])) {
+if (filter_has_var(INPUT_POST, 'btnPay')) {
     $tabIndex = 2;
     $ccResultMessage = SiteConfig::savePaymentCredentials($dbh, $_POST);
 
@@ -187,7 +180,7 @@ if (isset($_POST['btnPay'])) {
 
 // Patch Log
 $logs = '';
-if (isset($_POST['btnLogs'])) {
+if (filter_has_var(INPUT_POST, 'btnLogs')) {
     $tabIndex = 1;
 
     $stmt = $dbh->query("Select * from syslog order by Timestamp DESC Limit 100;");
@@ -220,7 +213,7 @@ try {
     $payments = 'Error: ' . $pex->getMessage();
 }
 
-if (isset($_POST['btnHoliday'])) {
+if (filter_has_var(INPUT_POST, 'btnHoliday')) {
     $tabIndex = 5;
     $holResultMessage = SiteConfig::saveHolidays($dbh, $_POST, $uS->username);
 }
@@ -245,8 +238,8 @@ if (count($rows) > 0 && $rows[0][0] != '') {
 }
 
 // save SSO
-if (isset($_POST['saveIdP']) && isset($_POST['idpConfig'])) {
-    try {
+if(filter_has_var(INPUT_POST, 'saveIdP') && filter_has_var(INPUT_POST, 'idpConfig')){
+    try{
         $idpId = array_key_first($_POST['idpConfig']);
         $saml = new SAML($dbh, $idpId);
         $saml = $saml->save($_POST, $_FILES);
@@ -281,11 +274,11 @@ foreach ($logSelRows as $r) {
 $ul = HTMLContainer::generateMarkup('ul', $li, array());
 $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id' => 'logsTabDiv'));
 
-$conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), NULL, array('pr'));
+$conf = SiteConfig::createMarkup($dbh, NULL, array('pr'));
 
-$localAuthMkup = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), 'pr');
+$localAuthMkup = SiteConfig::createMarkup($dbh, 'pr');
 
-$labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
+$labels = SiteConfig::createLabelsMarkup($dbh)->generateMarkup();
 
 $authIdpList = SAML::getIdpList($dbh, false);
 

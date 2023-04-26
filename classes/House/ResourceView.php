@@ -325,11 +325,11 @@ order by r.Title;");
 
         foreach ($post['selStatus'] as $k => $v) {
 
-            $startDate = filter_var($post['txtstart'][$k], FILTER_SANITIZE_STRING);
-            $endDate = filter_var($post['txtend'][$k], FILTER_SANITIZE_STRING);
-            $stat = filter_var($v, FILTER_SANITIZE_STRING);
-            $oosCode = filter_var($post['selOos'][$k], FILTER_SANITIZE_STRING);
-            $notes = filter_var($post['txtNotes'][$k], FILTER_SANITIZE_STRING);
+            $startDate = filter_var($post['txtstart'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $endDate = filter_var($post['txtend'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $stat = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $oosCode = filter_var($post['selOos'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $notes = filter_var($post['txtNotes'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $idRescUse = intval($k, 10);
 
@@ -510,7 +510,7 @@ WHERE
         $roomRs = $room->getRoomRS();
 
         if (isset($post['txtReTitle'])) {
-            $rTitle = filter_var($post['txtReTitle'], FILTER_SANITIZE_STRING);
+            $rTitle = filter_var($post['txtReTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $roomRs->Title->setNewVal($rTitle);
         }
 
@@ -520,15 +520,15 @@ WHERE
         }
 
         if (isset($post['txtPhone'])) {
-            $roomRs->Phone->setNewVal(filter_var($post['txtPhone'], FILTER_SANITIZE_STRING));
+            $roomRs->Phone->setNewVal(filter_var($post['txtPhone'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['txtFloor'])) {
-            $roomRs->Floor->setNewVal(filter_var($post['txtFloor'], FILTER_SANITIZE_STRING));
+            $roomRs->Floor->setNewVal(filter_var($post['txtFloor'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['txtRePriority'])) {
-            $roomRs->Util_Priority->setNewVal(filter_var($post['txtRePriority'], FILTER_SANITIZE_STRING));
+            $roomRs->Util_Priority->setNewVal(filter_var($post['txtRePriority'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['txtKing'])) {
@@ -552,25 +552,25 @@ WHERE
         }
 
         if (isset($post['selReType'])) {
-            $roomRs->Type->setNewVal(filter_var($post['selReType'], FILTER_SANITIZE_STRING));
+            $roomRs->Type->setNewVal(filter_var($post['selReType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['selReCategory'])) {
-            $roomRs->Category->setNewVal(filter_var($post['selReCategory'], FILTER_SANITIZE_STRING));
+            $roomRs->Category->setNewVal(filter_var($post['selReCategory'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['selRptCategory'])) {
-            $roomRs->Report_Category->setNewVal(filter_var($post['selRptCategory'], FILTER_SANITIZE_STRING));
+            $roomRs->Report_Category->setNewVal(filter_var($post['selRptCategory'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['selRateCode'])) {
-            $code = filter_var($post['selRateCode'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selRateCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Rate_Code->setNewVal($code);
 
         }
 
         if (isset($post['selRateCat'])) {
-            $code = filter_var($post['selRateCat'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selRateCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Default_Rate_Category->setNewVal($code);
 
@@ -582,28 +582,28 @@ WHERE
         }
 
         if (isset($post['selKeyCode'])) {
-            $code = filter_var($post['selKeyCode'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selKeyCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Key_Deposit_Code->setNewVal($code);
 
         }
 
         if (isset($post['selCleanCode'])) {
-            $code = filter_var($post['selCleanCode'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selCleanCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Cleaning_Cycle_Code->setNewVal($code);
 
         }
 
         if (isset($post['selVisitCode'])) {
-            $code = filter_var($post['selVisitCode'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selVisitCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Visit_Fee_Code->setNewVal($code);
 
         }
 
         if (isset($post['selReClean'])) {
-            $room->setStatus(filter_var($post['selReClean'], FILTER_SANITIZE_STRING));
+            $room->setStatus(filter_var($post['selReClean'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         $room->saveRoom($dbh, $user);
@@ -634,7 +634,7 @@ WHERE
         $rTitle = '';
 
         if (isset($post["selReType"])) {
-            $rType = filter_var($post["selReType"], FILTER_SANITIZE_STRING);
+            $rType = filter_var($post["selReType"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         /* @var $resc AbstractResource */
@@ -645,7 +645,7 @@ WHERE
         }
 
         if (isset($post["txtReTitle"])) {
-            $rTitle = filter_var($post["txtReTitle"], FILTER_SANITIZE_STRING);
+            $rTitle = filter_var($post["txtReTitle"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $resc->resourceRS->Title->setNewVal($rTitle);
         }
 
@@ -654,19 +654,19 @@ WHERE
         }
 
         if (isset($post["selReType"])) {
-            $resc->resourceRS->Type->setNewVal(filter_var($post["selReType"], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Type->setNewVal(filter_var($post["selReType"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post["txtRePriority"])) {
-            $resc->resourceRS->Util_Priority->setNewVal(filter_var($post["txtRePriority"], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Util_Priority->setNewVal(filter_var($post["txtRePriority"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['txtReBgc'])) {
-            $resc->resourceRS->Background_Color->setNewVal(filter_var($post['txtReBgc'], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Background_Color->setNewVal(filter_var($post['txtReBgc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['txtReBc'])) {
-            $resc->resourceRS->Border_Color->setNewVal(filter_var($post['txtReBc'], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Border_Color->setNewVal(filter_var($post['txtReBc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['txtReTc'])) {
-            $resc->resourceRS->Text_Color->setNewVal(filter_var($post['txtReTc'], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Text_Color->setNewVal(filter_var($post['txtReTc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         $setUna = FALSE;
@@ -1183,7 +1183,7 @@ ORDER BY $orderBy;");
         ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) as `Departure_Date`,
         g.`Description` as `Visit_Status`,
         r.`Last_Cleaned`,
-        r.`Notes`
+        ifnull(r.`Notes`, '') as `Notes`
     from
         room r
             left join

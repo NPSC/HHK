@@ -61,7 +61,7 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
 
     // Room Grouping
     if (isset($_POST['selGroup'])) {
-        $groupingSelection = filter_var($_POST['selGroup'], FILTER_SANITIZE_STRING);
+        $groupingSelection = filter_var($_POST['selGroup'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
 

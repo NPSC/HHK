@@ -23,8 +23,6 @@ $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
- addslashesextended($_POST);
-
 $makeTable = 0;
 $donmarkup = "<thead><tr><td></td></tr></thead><tbody><tr><td></td></tr></tbody>";
 
@@ -62,10 +60,10 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"]) || isset($_POST["btn
     // collect the parameters
     $maxMkup = filter_var($_POST["txtmax"], FILTER_SANITIZE_NUMBER_INT);
     $minMkup = filter_var($_POST["txtmin"], FILTER_SANITIZE_NUMBER_INT);
-    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_STRING);
-    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_STRING);
+    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_STRING);
+    $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $letterSalSelector->setReturnValues($_POST[$letterSalSelector->get_htmlNameBase()]);
     $envSalSelector->setReturnValues($_POST[$envSalSelector->get_htmlNameBase()]);
@@ -89,7 +87,7 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"]) || isset($_POST["btn
 
 
     // Do the report
-    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_STRING), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_STRING), TRUE);
+    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), TRUE);
 
     if ($voldCat->get_andOr() == "or") {
         $anddChecked = "";

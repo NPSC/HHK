@@ -24,17 +24,17 @@ $uS = Session::getInstance();
 $wInit->sessionLoadGuestLkUps();
 
 // AJAX
-if (isset($_POST['cmd'])) {
+if (filter_has_var(INPUT_POST, 'cmd')) {
 
-    $cmd = filter_var($_POST['cmd'], FILTER_SANITIZE_STRING);
+    $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $markup = '';
     $events = array();
 
     try {
-    if ($cmd == 'exp' && isset($_POST['nf']) && $_POST['nf'] != '') {
+    if ($cmd == 'exp' && filter_has_var(INPUT_POST, 'nf') && $_POST['nf'] != '') {
 
-        $fullName = filter_var($_POST['nf'], FILTER_SANITIZE_STRING);
+        $fullName = filter_input(INPUT_POST, 'nf', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $markup = Duplicate::expand($dbh, $fullName, $_POST, $uS->guestLookups[GLTableNames::PatientRel]);
 
@@ -42,14 +42,14 @@ if (isset($_POST['cmd'])) {
 
     } else if ($cmd == 'list') {
 
-        $mType = filter_var($_POST['mType'], FILTER_SANITIZE_STRING);
+        $mType = filter_input(INPUT_POST, 'mType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $events = array('mk'=>Duplicate::listNames($dbh, $mType));
 
     } else if ($cmd == 'pik') {
         // Combine members.
-        $mType = filter_var($_POST['mType'], FILTER_SANITIZE_STRING);
-        $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
+        $mType = filter_input(INPUT_POST, 'mType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $id = intval(filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT), 10);
 
         $markup = Duplicate::combine($dbh, $mType, $id);
 
@@ -57,16 +57,16 @@ if (isset($_POST['cmd'])) {
 
     } else if ($cmd == 'cpsg') {
 
-        $idGood = intval(filter_var($_POST['idg'], FILTER_SANITIZE_NUMBER_INT), 10);
-        $idBad = intval(filter_var($_POST['idb'], FILTER_SANITIZE_NUMBER_INT), 10);
+        $idGood = intval(filter_input(INPUT_POST, 'idg', FILTER_SANITIZE_NUMBER_INT), 10);
+        $idBad = intval(filter_input(INPUT_POST, 'idb', FILTER_SANITIZE_NUMBER_INT), 10);
 
         $events = Duplicate::combinePsg($dbh, $idGood, $idBad);
 
 
     } else if ($cmd == 'cids') {
 
-        $idGood = intval(filter_var($_POST['idg'], FILTER_SANITIZE_NUMBER_INT), 10);
-        $idBad = intval(filter_var($_POST['idb'], FILTER_SANITIZE_NUMBER_INT), 10);
+        $idGood = intval(filter_input(INPUT_POST, 'idg', FILTER_SANITIZE_NUMBER_INT), 10);
+        $idBad = intval(filter_input(INPUT_POST, 'idb', FILTER_SANITIZE_NUMBER_INT), 10);
 
         $events = Duplicate::combineId($dbh, $idGood, $idBad);
     }

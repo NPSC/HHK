@@ -22,7 +22,7 @@ require ("../house/homeIncludes.php");
 try {
 
     $login = new Login();
-    $login->initHhkSession(ciCFG_FILE);
+    $login->initHhkSession(CONF_PATH, ciCFG_FILE);
     $uS = Session::getInstance();
     $dbh = initPDO(TRUE);
 
@@ -36,7 +36,7 @@ try {
 $c = "";
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $idpId = "";

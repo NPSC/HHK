@@ -43,8 +43,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
         $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
 
-        if (isset($_POST['selResvStatus'])) {
-            $this->selectedResvStatuses = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
+        if (filter_has_var(INPUT_POST, 'selResvStatus')) {
+            $this->selectedResvStatuses = filter_input_array('selResvStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }else{
             $this->selectedResvStatuses = [];
         }
@@ -354,10 +354,9 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         foreach($this->resultSet as $k=>$r) {
             $this->resultSet[$k]['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
             $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
-            if($uS->AcceptResvPaymt){ $this->resultSet[$k]['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0)); };
+            if($uS->AcceptResvPaymt){ $this->resultSet[$k]['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0)); }
         }
 
         return parent::generateMarkup($outputType);
     }
 }
-?>

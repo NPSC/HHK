@@ -204,14 +204,25 @@ class VisitViewer {
         $hospitalButton = '';
         if ($r['idHospital'] > 0) {
 
-        	$hospitalButton = HTMLInput::generateMarkup($hname
-        		, array(
-        				'type'=>'button',
-        				'class'=>'hhk-hospitalstay ui-corner-all hhk-hospTitleBtn ui-button ignrSave',
-        				'data-idhs'=>$r['idHospital_stay'],
-        		    'style'=>($uS->guestLookups['Hospitals'][$r['idHospital']][5] ? "color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; border: 1px solid black;": '') . ($uS->guestLookups['Hospitals'][$r['idHospital']][4] ? "background:".$uS->guestLookups['Hospitals'][$r['idHospital']][4] . ";" : '').";",
-        				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
-        		);
+            $hospitalButton = HTMLInput::generateMarkup($hname
+        	, array(
+                    'type'=>'button',
+                    'class'=>'hhk-hospitalstay ui-corner-all hhk-hospTitleBtn ui-button ignrSave',
+                    'data-idhs'=>$r['idHospital_stay'],
+                    'style'=>($uS->guestLookups['Hospitals'][$r['idHospital']][5] ? "color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; border: 1px solid black;": '') . ($uS->guestLookups['Hospitals'][$r['idHospital']][4] ? "background:".$uS->guestLookups['Hospitals'][$r['idHospital']][4] . ";" : '').";",
+                    'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details'
+                )
+            );
+        }else if($r['idHospital_stay'] > 0 && $r['idHospital'] == 0){
+            $hospitalButton = HTMLInput::generateMarkup("No Hospital Assigned"
+        	, array(
+                    'type'=>'button',
+                    'class'=>'hhk-hospitalstay ui-corner-all hhk-hospTitleBtn ui-button ignrSave',
+                    'data-idhs'=>$r['idHospital_stay'],
+                    'style'=>"color:#fff; border: 1px solid #2C3E50; background: #5c9ccc;",
+                    'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details'
+                )
+            );
         }
 
         $th .= HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'));
