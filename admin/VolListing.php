@@ -31,7 +31,7 @@ if ($stmt->rowCount() > 0) {
 }
 
 // Create volunteer report
-$query = "SELECT * FROM vweb_users where Id > 0 order by Id;";
+$query = "SELECT * FROM vweb_users order by Id;";
 $stmt = $dbh->query($query);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -90,10 +90,17 @@ if (count($rows) > 0) {
 
 
             if ($k == 'Id') {
+                
                 if($uS->rolecode == '10'){
                     $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
                 }
-                $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
+                
+                if ($r < 1) {
+                    $markup .= "<td>" . $r . "</td>";
+                } else {
+                    $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
+                }
+                
             } else if ($k == 'Last Login' || $k == 'Password Changed') {
                 $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
             } else {

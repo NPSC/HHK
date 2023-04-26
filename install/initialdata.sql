@@ -933,7 +933,7 @@ REPLACE INTO `insurance` (`idInsurance`, `idInsuranceType`, `Title`, `Opens_Type
 -- insert users
 --
 REPLACE into `name` (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member, Record_Company, Company) values
-(-1, 'admin', '', 'ai', 'a', 1, 0, ''),
+(-1, 'admin', 'the', 'ai', 'a', 1, 0, ''),
 (10, 'User', 'NPSC', 'ai', 'a', 1, 0, ''),
 (11, '', '', 'np', 'a', 0, 1, 'Hospitality House');
 -- ;

@@ -152,12 +152,14 @@ try {
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3"  style="background:#EFDBC2;">
                 <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
+                    <form autocomplete="off">
                     <span>Search: </span>
                     <span style="margin: 0 10px;">
                         <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" value="m" />
                         <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" value="e" />
                     </span><input type="hidden" id="txtBasis" value="m"/>
                     <input type="search" id="txtsearch" size="20" autocomplete="off" title="Enter at least 3 characters to invoke search" />
+                    </form>
                 </div>
             </div>
             <div id="historyTabs" class="hhk-widget-content mb-3" style="display:none;">
