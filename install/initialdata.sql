@@ -186,10 +186,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Hospital_Type', 'h', 'Hospital','','',0),
 ('Hospital_Type', 'a', 'Association','','',0),
 
-('HourReportType','d','Open & Logged','','',0),
-('HourReportType','l','Only Logged Hours','','',0),
-('HourReportType','ul','Only Open Hours','','',0),
-
 ('House_Discount', 'hd1', 'Service Issue','10', 'ca',0),
 ('House_Discount', 'hd2', 'Facilities Issue','15', 'ca',0),
 
@@ -495,21 +491,13 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Visit_Status', 'c', 'Cancelled','','',0),
 ('Visit_Status', 'p', 'Pending','','',0),
 
-('Vol_Activities','1','Greeter','green,white','',0),
-('Vol_Activities','5','Fundraising','black,white','',0),
-('Vol_Activities','6','Special Event Planning/Organizing','','',0),
-('Vol_Activities','ccom','Cookie Committee','yellow,darkgreen','',0),
 
-('Vol_Category','Vol_Activities','Volunteer Activities','Vol_Type.Vol','',0),
-('Vol_Category','Vol_Skills','Volunteer Skills','Vol_Type.Vol','',0),
 ('Vol_Category','Vol_Type','Member Type','','',0),
 
 ('Vol_Rank','c','Chair','','',0),
 ('Vol_Rank','cc','Co-Chair','','',0),
 ('Vol_Rank','m','Member','','',0),
 
-('Vol_Skills','D','Solicitation or Fundraising','green,white','',0),
-('Vol_Skills','E','Cooking/Catering','','',0),
 
 ('Vol_Status','a','Active','','',0),
 ('Vol_Status','i','Retired','','',0),
@@ -1103,7 +1091,7 @@ REPLACE INTO `web_sites`
  VALUES
 (1,'a','Admin','admin/','mm','ui-icon ui-icon-gear','',now(),'admin','NameSch.php','index.php',''),
 (2,'h','House','house/','g,ga','ui-icon ui-icon-person','',now(),'admin','register.php','index.php',''),
-(3,'v','Volunteer','volunteer/','v','ui-icon ui-icon-heart','',now(),'admin','VolAction.php','index.php',''),
+
 (4,'r','Root','/','pub','','',now(),'admin','','','');
 -- ;
 
