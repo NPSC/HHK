@@ -20,11 +20,10 @@ $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$config = new Config_Lite(ciCFG_FILE);
 $uS = Session::getInstance();
 
 $fyMonths = $uS->fy_diff_Months;
-$startYear = $config->getString('site', 'Start_Year', '2015');
+$startYear = '2013';
 
 
 $rb_fyChecked = "checked='checked'";

@@ -69,8 +69,11 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('waitlistTab','Wait List','s','rg','','Default: Wait List');
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('psgPlural','PSGs','s','s','','Default: PSGs');
 
---  Delete volunteer sote
+--  Delete volunteer site
 DELETE FROM `web_sites` WHERE (`Site_Code` = 'v');
 UPDATE `sys_config` SET `Value` = 'false', `Show` = '0' WHERE (`Key` = 'Volunteers');
+UPDATE `page` SET `Hide` = '1' WHERE (`idPage` = '4');
+
 
 CREATE INDEX IF NOT EXISTS `Index_idReferral_Doc` ON `reservation`(`idReferralDoc`);
+

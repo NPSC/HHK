@@ -3,6 +3,7 @@
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\chkBoxCtrl;
 use HHK\ExcelHelper;
+use HHK\AlertControl\AlertMessage;
 
 /**
  * anomalies.php
@@ -32,7 +33,7 @@ $cbMemStatus->set_cbValueArray(true, "a");
 $cbRptType = new chkBoxCtrl($dbh, "anomalyTypes", "Include", "cbRptType", true);
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $resultMessage = "";
 $divDisp = "none";
 $markup = "";
