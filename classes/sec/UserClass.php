@@ -64,7 +64,7 @@ class UserClass
             //TODO Update password logic for php8
             $match = false;
             //new method
-            if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
+            if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify(filter_var($password, FILTER_SANITIZE_ADD_SLASHES) . $ssn->sitePepper, $r['Enc_PW'])){
                 $match = true;
             }else if ($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 ) {
                 //old sanitizer )o:

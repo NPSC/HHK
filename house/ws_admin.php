@@ -173,7 +173,7 @@ switch ($c) {
 
     case "chgpw":
 
-        $input = filter_input_array(INPUT_POST, array("old"=>FILTER_UNSAFE_RAW, "newer"=>FILTER_UNSAFE_RAW));
+        $input = filter_input_array(INPUT_POST, array("old"=>FILTER_UNSAFE_RAW, "newer"=>FILTER_SANITIZE_ADD_SLASHES));
 
         $events = changePW($dbh, $input['old'], $input['newer'], $uS->username, $uS->uid);
 
