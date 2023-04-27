@@ -1,7 +1,3 @@
-REPLACE INTO `cronjobs` (`Title`, `Code`,`Params`, `Interval`, `Day`, `Hour`, `Minute`, `Status`) VALUES
-("Send Survey Email", "EmailCheckedoutJob", "{}", "daily", "", "08", "00", "d"),
-("Send Vehicle Report Email", "EmailReportJob", "{'report':'vehicles', 'emailAddress':''}", "daily", "", "08", "00", "d");
-
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
 ('Address_Purpose','1','Home','i','',10),
 ('Address_Purpose','2','Work','i','',20),
@@ -709,7 +705,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays',1),
 ('VisitFee','false','b','hf','','Enable the visit fee (cleaning fee) feature','',1),
 ('VisitFeeDelayDays','0','i','hf','','Number of days before cleaning fee is charged','',1),
-('Volunteers','true','b','a','','Enable the HHK Volunteer Manager site','',1),
+('Volunteers','false','b','a','','Enable the HHK Volunteer Manager site','',0),
 ('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','',1),
 ('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', '',0),
 ('recaptchaApiKey', 'bTVWSFUyRXBQU3RHRTlCV0M4WkhGcnh6RC9tbTk5eXp1c3B1NU9JYm1zMVRTcytsemRJSjhtS2w5dnNkZWZKVw==', 's', 'ga', '', 'Google API Key for Recaptcha', '',0),
