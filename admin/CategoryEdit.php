@@ -164,7 +164,7 @@ if (filter_has_var(INPUT_POST, "btnvType")) {
         $volAlert->set_Text("The Category is missing.");
     } else if (($fill != "" && $text == "") || ($fill == "" && $text != "")) {
         $volAlert->set_Text(" Need a color for both Fill and Text, or leave both blank.");
-    } else if ($desc != null && $desc != "" && strlen($desc) < 255) {
+    } else if (!empty($desc) && strlen($desc) < 255) {
 
         processAction($dbh, $tbl, $cde, $colr, $desc, $repl, $action, $volAlert);
     } else {

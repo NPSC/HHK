@@ -20,13 +20,6 @@ use HHK\sec\Session;
 
 class UnexpectedValueException extends \UnexpectedValueException {
 
-    public function __construct ($message = null, $code = null, $previous = null) {
-        $dbh = initPDO();
-        $uS = Session::getInstance();
-        HouseLog::logError($dbh, "UnexpectedValueException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
-
-        parent::__construct ($message, $code, $previous);
-    }
 }
 
 ?>

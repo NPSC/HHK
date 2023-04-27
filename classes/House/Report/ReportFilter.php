@@ -186,7 +186,7 @@ $ckdate";
         }
 
         if (filter_has_var(INPUT_POST, 'selIntMonth')) {
-            $this->selectedMonths = filter_input(INPUT_POST, 'selIntMonth', FILTER_SANITIZE_NUMBER_INT);
+            $this->selectedMonths = filter_input(INPUT_POST, 'selIntMonth', FILTER_SANITIZE_NUMBER_INT, FILTER_FORCE_ARRAY);
         }
 
         if (filter_has_var(INPUT_POST, 'selIntYear')) {

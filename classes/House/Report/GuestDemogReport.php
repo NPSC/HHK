@@ -6,6 +6,7 @@ use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\Exception\RuntimeException;
 use HHK\sec\Labels;
 use HHK\sec\Session;
+use HHK\Exception\InvalidArgumentException;
 
 /**
  * GuestReport.php
@@ -262,7 +263,7 @@ class GuestDemogReport {
                     }
                 }
 
-            } catch (RuntimeException $hex) {
+            } catch (\RuntimeException $hex) {
 
                 $badZipCodes[$r['Postal_Code']] = 'y';
                 if($whichGuests != 'allStayed'){
@@ -415,6 +416,10 @@ class GuestDemogReport {
 
     public static function calcZipDistance(\PDO $dbh, $sourceZip, $destZip) {
 
+        if(empty($destZip)){
+            throw new InvalidArgumentException("Destination ZIP code can't be empty");
+        }
+        
         if (strlen($destZip) > 5) {
             $destZip = substr($destZip, 0, 5);
         }
