@@ -3187,45 +3187,41 @@ from (`name_demog` `nd` join `vmember_listing` `vd` on(((`nd`.`idName` = `vd`.`I
 -- View `vweb_users`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vweb_users` AS
-select
-    v.Id AS Id,
-    concat_ws(' ', v.Name_First, v.Name_Last) AS Name,
-    u.User_Name AS Username,
-    ifnull(i.Name, "Local") as "Type",
-    gs.Description AS Status,
-    gr.Description AS Role,
-    u.Default_Page AS `Default Page`,
-    wg.Title as `Authorization Code`,
-    u.Last_Login AS `Last Login`,
-    IF(`u`.`idIdp` > 0, '', `u`.`PW_Change_Date`) AS `Password Changed`,
-    CASE
-		WHEN `u`.`idIdp` > 0 THEN CONCAT('Managed by ', `i`.`Name`)
-        WHEN `u`.`Chg_PW` THEN 'Next Login'
-        WHEN (`u`.`pass_rules` = 0 || `sc`.`Value` = 0) THEN 'Never'
-        WHEN `u`.`PW_Change_Date`
-            THEN DATE_FORMAT((`u`.`PW_Change_Date` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
-        WHEN `u`.`Timestamp`
-            THEN DATE_FORMAT((`u`.`Timestamp` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
-        ELSE ''
-    END AS `Password Expires`,
-    CASE
-		WHEN `u`.`idIdp` > 0 THEN 'N/A'
-        WHEN (`u`.`totpSecret` = '' AND `u`.`emailSecret` = '' AND `u`.`backupSecret` = '') THEN 'No'
-        ELSE 'Yes'
-	END AS `Two Factor Enabled`,
-    u.Updated_By AS `Updated By`,
-    DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
-from
-    ((((w_users u
-    left join vmember_listing v ON ((u.idName = v.Id)))
-    left join w_auth a ON ((u.idName = a.idName)))
-	left join id_securitygroup s on s.idName = u.idName
-	left join w_groups wg on s.Group_Code = wg.Group_Code
-    left join gen_lookups gr ON (((a.Role_Id = gr.Code) and (gr.Table_Name = 'Role_Codes'))))
-    left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status')))
-    left join sys_config sc ON (sc.Key = 'passResetDays')
-    left join w_idp i ON (u.idIdp = i.idIdp));
-
+    SELECT 
+        `u`.`idName` AS `Id`,
+        CASE
+            WHEN `n`.`Name_First` IS NULL THEN `f`.`fb_First_Name`
+            ELSE `n`.`Name_First`
+        END AS `First`,
+        CASE
+            WHEN `n`.`Name_Last` IS NULL THEN `f`.`fb_Last_Name`
+            ELSE `n`.`Name_Last`
+        END AS `Last`,
+        `f`.`PIFH_Username` AS `Username`,
+        `gf`.`Description` AS `Status`,
+        CASE
+            WHEN `f`.`Access_Code` = 'web' THEN 'Web'
+            ELSE 'Facebook'
+        END AS `Access`,
+        `gr`.`Description` AS `Role`,
+        `f`.`fb_Phone` AS `Phone`,
+        `f`.`fb_Email` AS `Email`,
+        `u`.`Last_Login` AS `Last Login`,
+        `u`.`Updated_By` AS `Updated By`,
+        `u`.`Last_Updated` AS `Last Updated`
+    FROM
+        ((((((`fbx` `f`
+        LEFT JOIN `w_users` `u` ON (`f`.`idName` = `u`.`idName`))
+        LEFT JOIN `name` `n` ON (`f`.`idName` = `n`.`idName`))
+        LEFT JOIN `w_auth` `a` ON (`f`.`idName` = `a`.`idName`))
+        LEFT JOIN `gen_lookups` `gr` ON (`a`.`Role_Id` = `gr`.`Code`
+            AND `gr`.`Table_Name` = 'Role_Codes'))
+        LEFT JOIN `gen_lookups` `gs` ON (`u`.`Status` = `gs`.`Code`
+            AND `gs`.`Table_Name` = 'Web_User_Status'))
+        LEFT JOIN `gen_lookups` `gf` ON (`f`.`Status` = `gf`.`Code`
+            AND `gf`.`Table_Name` = 'FB_Status'))
+    WHERE
+        `n`.`idName` > 0
 
 
 
