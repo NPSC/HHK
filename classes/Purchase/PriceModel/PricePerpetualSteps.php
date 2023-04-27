@@ -108,7 +108,7 @@ class PricePerpetualSteps extends AbstractPriceModel {
 
     }
 
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
 
         $fTbl = new HTMLTable();
         $fTbl->addHeaderTr(

@@ -2566,7 +2566,7 @@ ALTER TABLE `visit_log`
     ADD INDEX IF NOT EXISTS `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);
     
 ALTER TABLE `w_idp_secgroups` 
-    ADD UNIQUE INDEX `unq_idp_secgroup` (`idIdp` ASC, `idSecGroup` ASC);;
+    ADD UNIQUE INDEX IF NOT EXISTS `unq_idp_secgroup` (`idIdp` ASC, `idSecGroup` ASC);;
     
 -- -------Functions-------
     
