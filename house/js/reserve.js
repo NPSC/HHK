@@ -266,18 +266,18 @@ $(document).ready(function() {
                         $('#btnDone').val('Save').show();
                     }
 
-				    if (data.warning) {
-				        flagAlertMessage(data.warning, 'warning');
-				    }
+                    if (data.warning) {
+                        flagAlertMessage(data.warning, 'warning');
+                    }
 
-				    if (data.xfer || data.inctx) {
-				        paymentRedirect (data, $('#xform'));
-				        return;
-				    }
-				    
-				    if (data.redirTo) {
-				       location.replace(data.redirTo);
-				    }
+                    if (data.xfer || data.inctx) {
+                        paymentRedirect (data, $('#xform'));
+                        return;
+                    }
+
+                    if (data.redirTo) {
+                       location.replace(data.redirTo);
+                    }
 				    
                     pageManager.loadResv(data);
                     
@@ -339,7 +339,7 @@ $(document).ready(function() {
         createRoleAutoComplete($('#gstMRNSearch'), 3, {cmd: 'mrn'}, getGuest);
 
         // Phone number search
-		createRoleAutoComplete($('#gstphSearch'), 5, {cmd: 'phone'}, getGuest);
+	createRoleAutoComplete($('#gstphSearch'), 5, {cmd: 'phone'}, getGuest);
 
         $guestSearch.keypress(function() {
             $(this).removeClass('ui-state-highlight');

@@ -591,8 +591,10 @@ if ($psg->getIdPsg() > 0) {
         if ($uS->AcceptResvPaymt) {
             $prePayment = $reserv->getPrePayment($dbh, $reserv->getIdReservation());
         }
+        
+        $getResvArray = array('href'=>"Reserve.php?rid=" . $reserv->getIdReservation() );
 
-        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Reserve.php?rid=' . $reserv->getIdReservation())))
+        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), $getResvArray))
             . HTMLTable::makeTd($reserv->getStatusTitle($dbh, $reserv->getStatus()))
             . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
             . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))

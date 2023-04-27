@@ -20,8 +20,8 @@ function resvManager(initData, options) {
     var patAddrRequired = initData.patAddr;
     var gstAddrRequired = initData.gstAddr;
     var patAsGuest = initData.patAsGuest;
-    var fillEmergencyContact = (initData.emergencyContact === undefined ? false: initData.emergencyContact);
-    var isCheckin = (initData.isCheckin === undefined ? false: initData.isCheckin);
+    var fillEmergencyContact = (initData.emergencyContact === undefined ? false : initData.emergencyContact);
+    var isCheckin = (initData.isCheckin === undefined ? false : initData.isCheckin);
     var addrPurpose = initData.addrPurpose;
     var idPsg = initData.idPsg;
     var idResv = initData.rid;
@@ -43,9 +43,9 @@ function resvManager(initData, options) {
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
     var options = options;
-	var resvStatusCode = '';
-	var resvStatusType = '';
-	var guestSearchTerm = '';
+    var resvStatusCode = '';
+    var resvStatusType = '';
+    var guestSearchTerm = '';
 
     // Exports
     t.getReserve = getReserve;
@@ -65,10 +65,10 @@ function resvManager(initData, options) {
     t.options = options;
     //t.guestSearchTerm = guestSearchTerm;
 
-	function getPrePaymtAmt() {
-		return prePaymtAmt;
-	}
-	
+    function getPrePaymtAmt() {
+        return prePaymtAmt;
+    }
+
     function setRooms($r) {
         rooms = $r;
     }
@@ -94,7 +94,7 @@ function resvManager(initData, options) {
     }
 
     function getInsistCkinDemog() {
-    	return insistCkinDemog;
+        return insistCkinDemog;
     }
 
     function FamilySection($wrapper) {
@@ -156,7 +156,7 @@ function resvManager(initData, options) {
 
         function findPrimaryGuest() {
 
-            var pgPrefix = $( "input[type=radio][name=rbPriGuest]:checked" ).val();
+            var pgPrefix = $("input[type=radio][name=rbPriGuest]:checked").val();
 
             // Clear out primary guest
             for (var p in people.list()) {
@@ -197,7 +197,7 @@ function resvManager(initData, options) {
                 flagAlertMessage('This person is already listed here. ', 'alert');
                 return;
             }
-            
+
             guestSearchTerm = term;
 
             var resv = {
@@ -246,7 +246,7 @@ function resvManager(initData, options) {
             if ($('#' + prefix + 'incomplete').length > 0 && $('#' + prefix + 'incomplete').prop('checked') === false) {
 
                 // Look at each entry
-                $('.' + prefix + 'hhk-addr-val').not('.hhk-MissingOk').each(function() {
+                $('.' + prefix + 'hhk-addr-val').not('.hhk-MissingOk').each(function () {
 
                     if ($(this).val() === '' && !$(this).hasClass('bfh-states')) {
 
@@ -272,7 +272,7 @@ function resvManager(initData, options) {
             }
 
             // Validate Phone Number
-            $('.hhk-phoneInput[id^="' +prefix + 'txtPhone"]').each(function (){
+            $('.hhk-phoneInput[id^="' + prefix + 'txtPhone"]').each(function () {
 
                 if ($.trim($(this).val()) !== '' && testreg.test($(this).val()) === false) {
 
@@ -297,11 +297,11 @@ function resvManager(initData, options) {
             return '';
 
         }
-        
+
         function verifyCheckinDemog(prefix) {
-        	var msg = false;
-        	
-            $('.' + prefix + 'hhk-demog-input').each(function (){
+            var msg = false;
+
+            $('.' + prefix + 'hhk-demog-input').each(function () {
 
                 if ($(this).val() === '') {
 
@@ -313,21 +313,21 @@ function resvManager(initData, options) {
                     $(this).removeClass('ui-state-error');
                 }
             });
-            
+
             if (msg) {
-            	return 'Some or all Demographics are not set';
+                return 'Some or all Demographics are not set';
             }
-            
+
             return '';
         }
 
         function verifyEmergencyContacts(prefix) {
 
             var isMissing = false,
-                $eFirst = $('#' + prefix + 'txtEmrgFirst'),
-                $eLast = $('#' + prefix + 'txtEmrgLast'),
-                $ephone = $('#' + prefix + 'txtEmrgPhn'),
-                $eRel = $('#' + prefix + 'selEmrgRel');
+                    $eFirst = $('#' + prefix + 'txtEmrgFirst'),
+                    $eLast = $('#' + prefix + 'txtEmrgLast'),
+                    $ephone = $('#' + prefix + 'txtEmrgPhn'),
+                    $eRel = $('#' + prefix + 'selEmrgRel');
 
             // Clear error class
             $eFirst.removeClass('ui-state-error');
@@ -435,13 +435,13 @@ function resvManager(initData, options) {
                 if (addrs.list()[p].Address_1 != '' || addrs.list()[p].Postal_Code != '') {
 
                     var notFound = true,
-                        optText = addrs.list()[p].Address_1 + ', '
+                            optText = addrs.list()[p].Address_1 + ', '
                             + (addrs.list()[p].Address_2 == '' ? '' : addrs.list()[p].Address_2 + ', ')
-                            + addrs.list()[p].City  + ', '
-                            + addrs.list()[p].State_Province  + '  '
+                            + addrs.list()[p].City + ', '
+                            + addrs.list()[p].State_Province + '  '
                             + addrs.list()[p].Postal_Code;
 
-                    for (var i=0; i <= optTexts.length; i++) {
+                    for (var i = 0; i <= optTexts.length; i++) {
                         if (optTexts[i] == optText) {
                             notFound = false;
                             continue;
@@ -454,7 +454,7 @@ function resvManager(initData, options) {
                         opts++;
 
                         $('<option class="hhk-addrPickerPanel" value="' + p + '">' + optText + '</option>')
-                            .appendTo($sel);
+                                .appendTo($sel);
                     }
                 }
             }
@@ -468,9 +468,9 @@ function resvManager(initData, options) {
                 });
 
                 var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker hhk-addrPickerPanel"/>')
-                    .append($('<p class="hhk-addrPickerPanel">Choose an Address: </p>'))
-                    .append($sel)
-                    .appendTo($('body'));
+                        .append($('<p class="hhk-addrPickerPanel">Choose an Address: </p>'))
+                        .append($sel)
+                        .appendTo($('body'));
 
                 $selDiv.position({
                     my: 'left top',
@@ -572,23 +572,23 @@ function resvManager(initData, options) {
             fDiv = $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox hhk-overflow-x').prop('id', divFamDetailId).css('padding', '5px');
 
             $famTbl = $('<table/>')
-                        .prop('id', data.famSection.tblId)
-                        .addClass('hhk-table')
-                        .append($('<thead/>').append($(data.famSection.tblHead)))
-                        .append($('<tbody/>'));
+                    .prop('id', data.famSection.tblId)
+                    .addClass('hhk-table')
+                    .append($('<thead/>').append($(data.famSection.tblHead)))
+                    .append($('<tbody/>'));
 
             fDiv.append($famTbl).append($(data.famSection.adtnl));
 
             expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:2px;' class='ui-widget'/>")
-                .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-                .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+                    .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+                            .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
 
             fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
                     .append($(data.famSection.hdr))
                     .append(expanderButton).append('<div style="clear:both;"/>');
 
             fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-            fHdr.click(function() {
+            fHdr.click(function () {
                 if (fDiv.css('display') === 'none') {
                     fDiv.show('blind');
                     fHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -606,8 +606,8 @@ function resvManager(initData, options) {
 
         }
 
-        function initIncidentSection(){
-            if(idPsg){
+        function initIncidentSection() {
+            if (idPsg) {
                 var iSection, iHdr, iDiv;
 
                 iSection = $('<div style="font-size: 0.9em; max-width: 100%; margin-bottom: 0.5em; margin-top: 0.5em; display: none;"/>').addClass('ui-widget hhk-visitdialog hhk-row').prop('id', 'incidentsSection');
@@ -617,10 +617,10 @@ function resvManager(initData, options) {
 
                 //add header title, count span and open/close arrow
                 iHdr
-                .append('<div class="hhk-checkinHdr" style="display: inline-block">Incidents<span id="incidentCounts"/></div>')
-                .append('<ul style="list-style-type:none; float:right;margin-left:5px;padding-top:2px;" class="ui-widget"><li class="ui-widget-header ui-corner-all" title="Open - Close"><span id="f_drpDown" class="ui-icon ui-icon-circle-triangle-n"></span></li></ul>');
+                        .append('<div class="hhk-checkinHdr" style="display: inline-block">Incidents<span id="incidentCounts"/></div>')
+                        .append('<ul style="list-style-type:none; float:right;margin-left:5px;padding-top:2px;" class="ui-widget"><li class="ui-widget-header ui-corner-all" title="Open - Close"><span id="f_drpDown" class="ui-icon ui-icon-circle-triangle-n"></span></li></ul>');
 
-                //call incident report jQuery				
+                //call incident report jQuery
                 iDiv.incidentViewer({
                     psgId: idPsg,
                     guestLabel: $('#guestLabel').val(),
@@ -628,7 +628,7 @@ function resvManager(initData, options) {
                 });
 
                 //incident section toggler
-                iHdr.click(function() {
+                iHdr.click(function () {
                     if (iDiv.css('display') === 'none') {
                         iDiv.show('blind');
                         iHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -656,8 +656,8 @@ function resvManager(initData, options) {
 
             if (setupComplete === false) {
                 initFamilyTable(data);
-                if(options.UseIncidentReports){
-	            	initIncidentSection();
+                if (options.UseIncidentReports) {
+                    initIncidentSection();
                 }
             }
 
@@ -697,16 +697,16 @@ function resvManager(initData, options) {
                 // Patient is first
                 if (t === '0' || t === '1') {
                     continue;
-                 } else {
-	
+                } else {
+
                     let tr = $(data.famSection.tblBody[t]);
 
                     if (t == 2) {
-                            // Load search term
-                            let inp = tr.find('input.hhk-lastname');
-                            if (inp.val() === '') {
-                                    inp.val(guestSearchTerm).focus();
-                            }
+                        // Load search term
+                        let inp = tr.find('input.hhk-lastname');
+                        if (inp.val() === '') {
+                            inp.val(guestSearchTerm).focus();
+                        }
                     }
 
                     $famTbl.find('tbody:first').append(tr);
@@ -716,7 +716,7 @@ function resvManager(initData, options) {
 
             // Staying controls
             $('.hhk-cbStay').checkboxradio({
-                classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+                classes: {"ui-checkboxradio-label": "hhk-unselected-text"}
             });
 
             $('.hhk-lblStay').each(function () {
@@ -734,82 +734,82 @@ function resvManager(initData, options) {
                 maxDate: 0,
                 dateFormat: 'M d, yy',
                 showButtonPanel: false,
-                beforeShow: function( input ) {
-                    setTimeout(function() {
-                        var buttonPane = $( input )
-                            .datepicker( "widget" )
-                            .find( ".ui-datepicker-buttonpane" );
+                beforeShow: function (input) {
+                    setTimeout(function () {
+                        var buttonPane = $(input)
+                                .datepicker("widget")
+                                .find(".ui-datepicker-buttonpane");
 
-                        $( "<button>", {
+                        $("<button>", {
                             text: "Minor",
-                            click: function() {
-                                var target = $( input );
+                            click: function () {
+                                var target = $(input);
                                 var inst = $.datepicker._getInst(target[0]);
-                                inst.input.val( 'Minor' );
-                                var onSelect = $.datepicker._get( inst, "onSelect" );
-                                
-                                if ( onSelect ) {
-                                    onSelect.apply( ( inst.input ? inst.input[ 0 ] : null ), [ 'Minor', inst ] );  // trigger custom callback
-                                } else if ( inst.input ) {
-                                    inst.input.trigger( "change" ); // fire the change event
+                                inst.input.val('Minor');
+                                var onSelect = $.datepicker._get(inst, "onSelect");
+
+                                if (onSelect) {
+                                    onSelect.apply((inst.input ? inst.input[ 0 ] : null), ['Minor', inst]);  // trigger custom callback
+                                } else if (inst.input) {
+                                    inst.input.trigger("change"); // fire the change event
                                 }
 
-                                if ( inst.inline ) {
-                                    $.datepicker._updateDatepicker( inst );
+                                if (inst.inline) {
+                                    $.datepicker._updateDatepicker(inst);
                                 } else {
                                     $.datepicker._hideDatepicker();
                                     $.datepicker._lastInput = inst.input[ 0 ];
-                                    if ( typeof( inst.input[ 0 ] ) !== "object" ) {
-                                        inst.input.trigger( "focus" ); // restore focus
+                                    if (typeof (inst.input[ 0 ]) !== "object") {
+                                        inst.input.trigger("focus"); // restore focus
                                     }
                                     $.datepicker._lastInput = null;
                                 }
                             }
-                        }).appendTo( buttonPane ).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
-                    }, 1 );
+                        }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                    }, 1);
                 },
-                onChangeMonthYear: function( year, month, instance ) {
-                    setTimeout(function() {
-                        var buttonPane = $( instance )
-                            .datepicker( "widget" )
-                            .find( ".ui-datepicker-buttonpane" );
+                onChangeMonthYear: function (year, month, instance) {
+                    setTimeout(function () {
+                        var buttonPane = $(instance)
+                                .datepicker("widget")
+                                .find(".ui-datepicker-buttonpane");
 
-                        $( "<button>", {
+                        $("<button>", {
                             text: "Minor",
-                            click: function() {
-                                var target = $( instance.input );
+                            click: function () {
+                                var target = $(instance.input);
                                 var inst = $.datepicker._getInst(target[0]);
-                                inst.input.val( 'Minor' );
-                                var onSelect = $.datepicker._get( inst, "onSelect" );
-                                if ( onSelect ) {
-                                    onSelect.apply( ( inst.input ? inst.input[ 0 ] : null ), [ 'Minor', inst ] );  // trigger custom callback
-                                } else if ( inst.input ) {
-                                    inst.input.trigger( "change" ); // fire the change event
+                                inst.input.val('Minor');
+                                var onSelect = $.datepicker._get(inst, "onSelect");
+                                if (onSelect) {
+                                    onSelect.apply((inst.input ? inst.input[ 0 ] : null), ['Minor', inst]);  // trigger custom callback
+                                } else if (inst.input) {
+                                    inst.input.trigger("change"); // fire the change event
                                 }
 
-                                if ( inst.inline ) {
-                                    $.datepicker._updateDatepicker( inst );
+                                if (inst.inline) {
+                                    $.datepicker._updateDatepicker(inst);
                                 } else {
                                     $.datepicker._hideDatepicker();
                                     $.datepicker._lastInput = inst.input[ 0 ];
-                                    if ( typeof( inst.input[ 0 ] ) !== "object" ) {
-                                        inst.input.trigger( "focus" ); // restore focus
+                                    if (typeof (inst.input[ 0 ]) !== "object") {
+                                        inst.input.trigger("focus"); // restore focus
                                     }
                                     $.datepicker._lastInput = null;
                                 }
                             }
-                        }).appendTo( buttonPane ).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
-                    }, 1 );
+                        }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                    }, 1);
                 }
             });
 
             // set country and state selectors
-            $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
+            $('.hhk-addrPanel').find('select.bfh-countries').each(function () {
                 var $countries = $(this);
                 $countries.bfhcountries($countries.data());
                 $(this).data("dirrty-initial-value", $(this).data('country'));
             });
-            $('.hhk-addrPanel').find('select.bfh-states').each(function() {
+            $('.hhk-addrPanel').find('select.bfh-states').each(function () {
                 var $states = $(this);
                 $states.bfhstates($states.data());
                 $(this).data("dirrty-initial-value", $(this).data('state'));
@@ -820,7 +820,7 @@ function resvManager(initData, options) {
 
             verifyAddrs('#divfamDetail');
 
-            $('input.hhk-zipsearch').each(function() {
+            $('input.hhk-zipsearch').each(function () {
                 var lastXhr;
                 createZipAutoComplete($(this), 'ws_admin.php', lastXhr, loadAddress);
             });
@@ -878,22 +878,22 @@ function resvManager(initData, options) {
                 });
 
                 // Load the addresses into the addrs object if changed.
-                $('#' + divFamDetailId).on('change', '.hhk-copy-target', function() {
+                $('#' + divFamDetailId).on('change', '.hhk-copy-target', function () {
                     loadAddress($(this).data('pref'));
                 });
 
                 // Copy Address
-                $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
+                $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function () {
                     copyAddrSelector($(this), $(this).data('prefix'));
                 });
 
                 // Delete address
-                $('#' + divFamDetailId).on('click', '.hhk-addrErase', function() {
+                $('#' + divFamDetailId).on('click', '.hhk-addrErase', function () {
                     eraseAddress($(this).data('prefix'));
                 });
 
                 // Incomplete address bind to address flag.
-                $('#' + divFamDetailId).on('click', '.hhk-incompleteAddr', function() {
+                $('#' + divFamDetailId).on('click', '.hhk-incompleteAddr', function () {
                     setAddrFlag($('#' + $(this).data('prefix') + 'liaddrflag'));
                 });
 
@@ -930,7 +930,7 @@ function resvManager(initData, options) {
                 });
 
                 // Emergency Contact search icon hook to emergency contact dialog box
-                $('#' + divFamDetailId).on('click', '.hhk-emSearch', function() {
+                $('#' + divFamDetailId).on('click', '.hhk-emSearch', function () {
                     $('#hdnEcSchPrefix').val($(this).data('prefix'));
                     $("#ecSearch").dialog('open');
                 });
@@ -938,32 +938,32 @@ function resvManager(initData, options) {
                 // Emergency Contact dialog box search text box.
                 createAutoComplete($('#txtemSch'), 3, {cmd: 'filter', add: 'phone', basis: 'psg', psg: data.idPsg}, getECRel);
 
-				// Diagnosis Search
-				let diagSelect = function(item){
+                // Diagnosis Search
+                let diagSelect = function (item) {
 
-					if(item.id !== "n"){
-						$('#selDiagnosis').val(item.id);
-						$("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
-					}
-				};
-				createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
-				
-				//Diagnosis delete button
-				$(document).on('click', '#delDiagnosis', function(e){
-					e.preventDefault();
-					$("#selDiagnosis").val("");
-					$("#diagSearch").val("");
-					$(this).closest('tr').addClass('d-none');
-				});
+                    if (item.id !== "n") {
+                        $('#selDiagnosis').val(item.id);
+                        $("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
+                    }
+                };
+                createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
+
+                //Diagnosis delete button
+                $(document).on('click', '#delDiagnosis', function (e) {
+                    e.preventDefault();
+                    $("#selDiagnosis").val("");
+                    $("#diagSearch").val("");
+                    $(this).closest('tr').addClass('d-none');
+                });
 
                 // Hover icons
-                $( "ul.hhk-ui-icons li" ).hover(
-                    function() {
-                            $( this ).addClass( "ui-state-hover" );
-                    },
-                    function() {
-                            $( this ).removeClass( "ui-state-hover" );
-                    }
+                $("ul.hhk-ui-icons li").hover(
+                        function () {
+                            $(this).addClass("ui-state-hover");
+                        },
+                        function () {
+                            $(this).removeClass("ui-state-hover");
+                        }
                 );
 
             }
@@ -982,7 +982,8 @@ function resvManager(initData, options) {
             });
 
             setupComplete = true;
-        };
+        }
+        ;
 
         function newGuestMarkup(data, prefix) {
 
@@ -1006,7 +1007,7 @@ function resvManager(initData, options) {
 
             // prepare stay button
             $('#' + prefix + 'cbStay').checkboxradio({
-                classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+                classes: {"ui-checkboxradio-label": "hhk-unselected-text"}
             });
 
             if ($('#' + prefix + 'lblStay').data('stay') == '1') {
@@ -1032,9 +1033,9 @@ function resvManager(initData, options) {
             // Shut address line if filled in.
 //            if ($addrFlag.css('display') === 'none') {
 
-                $addrTog.parents('tr').next('tr').hide();
-                $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
-                $addrTog.attr('title', 'Show Address Section');
+            $addrTog.parents('tr').next('tr').hide();
+            $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+            $addrTog.attr('title', 'Show Address Section');
 //            } else {
 //                $addrTog.attr('title', 'Hide Address Section');
 //            }
@@ -1050,22 +1051,23 @@ function resvManager(initData, options) {
 
             $('#' + prefix + 'phEmlTabs').tabs();
 
-            $('input#' + prefix + 'adrzip1').each(function() {
+            $('input#' + prefix + 'adrzip1').each(function () {
                 var lastXhr;
                 createZipAutoComplete($(this), 'ws_admin.php', lastXhr, loadAddress);
             });
 
-        };
+        }
+        ;
 
         function verify() {
 
             var numFamily = 0,
-                numPat = 0,
-                numGuests = 0,
-                numPriGuests = 0,
-                nameErr = false,
-                ecIgnoreCount = 0,
-                pRelFlag = false;
+                    numPat = 0,
+                    numGuests = 0,
+                    numPriGuests = 0,
+                    nameErr = false,
+                    ecIgnoreCount = 0,
+                    pRelFlag = false;
 
             // Flag blank Relationships
             $('.patientRelch').removeClass('ui-state-error');
@@ -1140,13 +1142,13 @@ function resvManager(initData, options) {
             }
 
             // Primary guests
-             $("input.hhk-rbPri").parent().removeClass('ui-state-error');
+            $("input.hhk-rbPri").parent().removeClass('ui-state-error');
 
             if (numPriGuests === 0 && numFamily === 1) {
                 // Set the only guest as primary guest
-               for (var i in people.list()) {
-                   people.list()[i].pri = '1';
-               }
+                for (var i in people.list()) {
+                    people.list()[i].pri = '1';
+                }
 
             } else if (numPriGuests === 0) {
                 $pWarning.text('Set one ' + visitorLabel + ' as ' + primaryGuestLabel + '.').show();
@@ -1185,14 +1187,14 @@ function resvManager(initData, options) {
             // Optional Emergency Contact.
             if (fillEmergencyContact) {
                 // Count the skipped.
-                $wrapper.find('.hhk-EmergCb').each( function () {
+                $wrapper.find('.hhk-EmergCb').each(function () {
 
                     var msg = verifyEmergencyContacts($(this).data('prefix'));
 
                     if ($(this).prop('checked') === true || msg === '') {
                         ecIgnoreCount++;
                     }
-                 });
+                });
             }
 
 
@@ -1230,10 +1232,10 @@ function resvManager(initData, options) {
                         }
                     }
 
-                // Guests
+                    // Guests
                 } else {
 
-					// Check guest birthdate
+                    // Check guest birthdate
                     if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
                         flagAlertMessage(visitorLabel + ' is missing the Birth Date.', 'alert', $pWarning);
@@ -1248,7 +1250,7 @@ function resvManager(initData, options) {
 
                         var pMessage = verifyAddress(p);
 
-                         if (pMessage !== '') {
+                        if (pMessage !== '') {
 
                             flagAlertMessage(pMessage, 'alert', $pWarning);
                             openSection(true);
@@ -1335,7 +1337,7 @@ function resvManager(initData, options) {
         t.openControl = false;
 
 
-        t.setUp = function(data, doOnDatesChange, $dateSection) {
+        t.setUp = function (data, doOnDatesChange, $dateSection) {
 
             $dateSection.empty();
 
@@ -1344,11 +1346,11 @@ function resvManager(initData, options) {
                 $dateSection.append($(data.mu));
 
                 var gstDate = $('#gstDate'),
-                    gstCoDate = $('#gstCoDate'),
-                    nextDays = parseInt(data.defdays, 10),
-                    stDate = false,
-                    enDate = false,
-                    drp;
+                        gstCoDate = $('#gstCoDate'),
+                        nextDays = parseInt(data.defdays, 10),
+                        stDate = false,
+                        enDate = false,
+                        drp;
 
                 if (gstDate.val() === '' && arrival) {
                     gstDate.val(arrival);
@@ -1361,73 +1363,73 @@ function resvManager(initData, options) {
                     enDate = data.endDate;
                 }
 
-				if ($('#spnRangePicker').length > 0) {
-	                drp = $('#spnRangePicker').dateRangePicker({
-	                    format: 'MMM D, YYYY',
-	                    separator : ' to ',
-	                    minDays: 1,
-	                    autoClose: true,
-	                    showShortcuts: true,
-	                    shortcuts :
-	                    {
-	                            'next-days': [nextDays]
-	                    },
-	                    getValue: function()
-	                    {
-	                        if (gstDate.val() && gstCoDate.val() ) {
-	                            return gstDate.val() + ' to ' + gstCoDate.val();
-	                        } else {
-	                            return '';
-	                        }
-	                    },
-	                    setValue: function(s,s1,s2)
-	                    {
-	                        gstDate.val(s1);
-	                        gstCoDate.val(s2);
-	                    },
-	                    startDate: stDate,
-	                    endDate: enDate
-	                })
-	
-	                if (data.updateOnChange) {
-	
-	                    drp.bind('datepicker-change', function(event, dates) {
-	
-	                        // Update the number of days display text.
-	                        var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
-	
-	                        $('#' + data.daysEle).val(numDays);
-	
-	                        if ($('#spnNites').length > 0) {
-	                            $('#spnNites').text(numDays);
-	                        }
-	
-	                        $('#gstDate').removeClass('ui-state-error');
-	                        $('#gstCoDate').removeClass('ui-state-error');
-	
-	                        if ($.isFunction(doOnDatesChange)) {
-	                            doOnDatesChange(dates);
-	                        }
-	                    });
-	                }
+                if ($('#spnRangePicker').length > 0) {
+                    drp = $('#spnRangePicker').dateRangePicker({
+                        format: 'MMM D, YYYY',
+                        separator: ' to ',
+                        minDays: 1,
+                        autoClose: true,
+                        showShortcuts: true,
+                        shortcuts:
+                                {
+                                    'next-days': [nextDays]
+                                },
+                        getValue: function ()
+                        {
+                            if (gstDate.val() && gstCoDate.val()) {
+                                return gstDate.val() + ' to ' + gstCoDate.val();
+                            } else {
+                                return '';
+                            }
+                        },
+                        setValue: function (s, s1, s2)
+                        {
+                            gstDate.val(s1);
+                            gstCoDate.val(s2);
+                        },
+                        startDate: stDate,
+                        endDate: enDate
+                    })
+
+                    if (data.updateOnChange) {
+
+                        drp.bind('datepicker-change', function (event, dates) {
+
+                            // Update the number of days display text.
+                            var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
+
+                            $('#' + data.daysEle).val(numDays);
+
+                            if ($('#spnNites').length > 0) {
+                                $('#spnNites').text(numDays);
+                            }
+
+                            $('#gstDate').removeClass('ui-state-error');
+                            $('#gstCoDate').removeClass('ui-state-error');
+
+                            if ($.isFunction(doOnDatesChange)) {
+                                doOnDatesChange(dates);
+                            }
+                        });
+                    }
                 }
 
                 $dateSection.show();
 
                 // Open the dialog if the dates are not defined yet.
-                if (t.openControl && $('#spnRangePicker').length > 0) {
-                    drp.open();
-                }
+//                if (t.openControl && $('#spnRangePicker').length > 0) {
+//                    drp.click();
+//                }
 
             }
 
             setupComplete = true;
         };
 
-        t.verify = function() {
+        t.verify = function () {
 
             var $arrDate = $('#gstDate'),
-                $deptDate = $('#gstCoDate');
+                    $deptDate = $('#gstCoDate');
 
             $arrDate.removeClass('ui-state-error');
             $deptDate.removeClass('ui-state-error');
@@ -1507,16 +1509,16 @@ function resvManager(initData, options) {
             $('.hhk-stayIndicate').hide().parent('td').addClass('hhk-loading');
 
             var parms = {
-                cmd:'updateAgenda',
+                cmd: 'updateAgenda',
                 idPsg: idPsg,
                 idResv: idResv,
                 idVisit: idVisit,
                 span: span,
                 dt1: dates["date1"].getFullYear() + '-' + (dates["date1"].getMonth() + 1) + '-' + dates["date1"].getDate(),
-                dt2: dates["date2"].getFullYear() + '-' + (dates["date2"].getMonth() + 1) + '-'  + dates["date2"].getDate(),
-                mems:people.list()};
+                dt2: dates["date2"].getFullYear() + '-' + (dates["date2"].getMonth() + 1) + '-' + dates["date2"].getDate(),
+                mems: people.list()};
 
-            $.post('ws_resv.php', parms, function(data) {
+            $.post('ws_resv.php', parms, function (data) {
 
                 $('.hhk-stayIndicate').show().parent('td').removeClass('hhk-loading');
 
@@ -1543,7 +1545,7 @@ function resvManager(initData, options) {
                         $('#sb' + i).empty().html(data.stayCtrl[i]['ctrl']);
 
                         $('#' + i + 'cbStay').checkboxradio({
-                            classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+                            classes: {"ui-checkboxradio-label": "hhk-unselected-text"}
                         });
 
                         people.list()[i].stay = '0';
@@ -1580,7 +1582,7 @@ function resvManager(initData, options) {
         var start = moment(arrDate, 'MMM D, YYYY');
         var now = moment().endOf('date');
 
-        if (rid > 0 && start <= now && ! hide) {
+        if (rid > 0 && start <= now && !hide) {
             $('#btnCheckinNow').show();
         } else {
             $('#btnCheckinNow').hide();
@@ -1618,56 +1620,56 @@ function resvManager(initData, options) {
             });
 
             $.post('ws_ckin.php',
-                {  //parameters
-                    cmd: 'newConstraint',
-                    rid: t.idReservation,
-                    numguests: t.numberGuests,
-                    expArr: arrivalDate,
-                    expDep: departureDate,
-                    idr: idResc,
-                    cbRS:cbRS,
-                    omsf: t.omitSelf
-                },
-                function(data) {
-                    var newSel;
+                    {//parameters
+                        cmd: 'newConstraint',
+                        rid: t.idReservation,
+                        numguests: t.numberGuests,
+                        expArr: arrivalDate,
+                        expDep: departureDate,
+                        idr: idResc,
+                        cbRS: cbRS,
+                        omsf: t.omitSelf
+                    },
+                    function (data) {
+                        var newSel;
 
-                    $selResource.prop('disabled', false);
-                    $('#hhk-roomChsrtitle').removeClass('hhk-loading');
+                        $selResource.prop('disabled', false);
+                        $('#hhk-roomChsrtitle').removeClass('hhk-loading');
 
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert("Parser error - " + err.message);
-                        return;
-                    }
-
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.location.assign(data.gotopage);
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
                         }
-                        flagAlertMessage(data.error, 'error');
-                        return;
-                    }
 
-
-                    if (data.rooms) {
-                        setRooms(data.rooms);
-                    }
-
-                    if (data.selectr) {
-
-                        newSel = $(data.selectr);
-                        $selResource.children().remove();
-
-                        newSel.children().appendTo($selResource);
-                        $selResource.val(data.idResource).change();
-
-                        if (data.msg && data.msg !== '') {
-                            $('#hhkroomMsg').text(data.msg).show();
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.location.assign(data.gotopage);
+                            }
+                            flagAlertMessage(data.error, 'error');
+                            return;
                         }
-                    }
 
-            });
+
+                        if (data.rooms) {
+                            setRooms(data.rooms);
+                        }
+
+                        if (data.selectr) {
+
+                            newSel = $(data.selectr);
+                            $selResource.children().remove();
+
+                            newSel.children().appendTo($selResource);
+                            $selResource.val(data.idResource).change();
+
+                            if (data.msg && data.msg !== '') {
+                                $('#hhkroomMsg').text(data.msg).show();
+                            }
+                        }
+
+                    });
         }
     }
 
@@ -1675,19 +1677,19 @@ function resvManager(initData, options) {
         var t = this;
         t.setupComplete = false;
 
-        t.setUp = function(hosp) {
+        t.setUp = function (hosp) {
 
             var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail').hide();
             var expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:2px;' class='ui-widget'/>")
-                .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-                .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+                    .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+                            .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
             var hHdr = $('<div id="divhospHdr" style="padding:2px; cursor:pointer;"/>')
                     .append($(hosp.hdr))
                     .append(expanderButton).append('<div style="clear:both;"/>');
 
             hHdr.addClass('ui-widget-header ui-state-default ui-corner-all');
 
-            hHdr.click(function() {
+            hHdr.click(function () {
                 if (hDiv.css('display') === 'none') {
                     hDiv.show('blind');
                     hHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -1704,7 +1706,38 @@ function resvManager(initData, options) {
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
-                dateFormat: 'M d, yy'
+                dateFormat: 'M d, yy',
+                showButtonPanel: true,
+                beforeShow: function (input) {
+                    setTimeout(function () {
+                        var buttonPane = $(input)
+                                .datepicker("widget")
+                                .find(".ui-datepicker-buttonpane");
+
+                        $("<button>", {
+                            text: "Clear",
+                            click: function () {
+                                //Code to clear your date field (text box, read only field etc.) I had to remove the line below and add custom code here
+                                $.datepicker._clearDate(input);
+                            }
+                        }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                    }, 1);
+                },
+                onChangeMonthYear: function (year, month, instance) {
+                    setTimeout(function () {
+                        var buttonPane = $(instance)
+                                .datepicker("widget")
+                                .find(".ui-datepicker-buttonpane");
+
+                        $("<button>", {
+                            text: "Clear",
+                            click: function () {
+                                //Code to clear your date field (text box, read only field etc.) I had to remove the line below and add custom code here
+                                $.datepicker._clearDate(instance.input);
+                            }
+                        }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                    }, 1);
+                }
             });
 
             if ($('#txtAgentSch').length > 0) {
@@ -1712,19 +1745,19 @@ function resvManager(initData, options) {
                 if ($('#a_txtLastName').val() === '') {
                     $('.hhk-agentInfo').hide();
                 }
-                
-                $(document).on('click', '#a_delete', function(){
-	            	$('#a_idName').val('');
-	            	$('input.hhk-agentInfo').val('');
-	            	$('.hhk-agentInfo').hide();
-	            });
-	            
-	            
-	            if ($('#a_idName').val() !== '') {
-	            	$('input.hhk-agentInfo.name').attr('readonly', 'readonly');
-	            }else{
-	            	$('input.hhk-agentInfo.name').removeAttr('readonly');
-	            }
+
+                $(document).on('click', '#a_delete', function () {
+                    $('#a_idName').val('');
+                    $('input.hhk-agentInfo').val('');
+                    $('.hhk-agentInfo').hide();
+                });
+
+
+                if ($('#a_idName').val() !== '') {
+                    $('input.hhk-agentInfo.name').attr('readonly', 'readonly');
+                } else {
+                    $('input.hhk-agentInfo.name').removeAttr('readonly');
+                }
             }
 
             if ($('#txtDocSch').length > 0) {
@@ -1732,23 +1765,23 @@ function resvManager(initData, options) {
                 if ($('#d_txtLastName').val() === '') {
                     $('.hhk-docInfo').hide();
                 }
-                
+
                 if ($('#d_idName').val() !== '') {
-	            	$('input.hhk-docInfo.name').attr('readonly', 'readonly');
-	            }else{
-	            	$('input.hhk-docInfo.name').removeAttr('readonly');
-	            }
-	            
-	            $(document).on('click', '#d_delete', function(){
-	            	$('#d_idName').val('');
-	            	$('input.hhk-docInfo').val('');
-	            	$('.hhk-docInfo').hide();
-	            });
+                    $('input.hhk-docInfo.name').attr('readonly', 'readonly');
+                } else {
+                    $('input.hhk-docInfo.name').removeAttr('readonly');
+                }
+
+                $(document).on('click', '#d_delete', function () {
+                    $('#d_idName').val('');
+                    $('input.hhk-docInfo').val('');
+                    $('.hhk-docInfo').hide();
+                });
             }
 
             verifyAddrs('#divhospDetail');
 
-            $hospSection.on('change', '#selHospital, #selAssoc', function() {
+            $hospSection.on('change', '#selHospital, #selAssoc', function () {
                 var hosp = $('#selAssoc').find('option:selected').text();
                 if (hosp != '') {
                     hosp += '/ ';
@@ -1766,15 +1799,15 @@ function resvManager(initData, options) {
             t.setupComplete = true;
         };
 
-        t.verify = function() {
+        t.verify = function () {
 
-            $hospSection.find('.ui-state-error').each(function() {
+            $hospSection.find('.ui-state-error').each(function () {
                 $(this).removeClass('ui-state-error');
             });
 
             if ($('#selHospital').length > 0 && t.setupComplete === true) {
 
-                if ($('#selHospital').val() == "" ) {
+                if ($('#selHospital').val() == "") {
 
                     $('#selHospital').addClass('ui-state-error');
 
@@ -1809,7 +1842,7 @@ function resvManager(initData, options) {
             var $nextVeh = veh.find('#btnNextVeh');
             var $tblVeh = veh.find('#tblVehicle');
 
-            $cbVeh.change(function() {
+            $cbVeh.change(function () {
                 if (this.checked) {
                     $tblVeh.hide('scale, horizontal');
                 } else {
@@ -1843,11 +1876,15 @@ function resvManager(initData, options) {
                     width: getDialogWidth(680),
                     modal: true,
                     title: 'Income Chooser',
-                    close: function () {$('div#submitButtons').show();},
-                    open: function () {$('div#submitButtons').hide();},
+                    close: function () {
+                        $('div#submitButtons').show();
+                    },
+                    open: function () {
+                        $('div#submitButtons').hide();
+                    },
                     buttons: {
-                        Save: function() {
-                            $.post('ws_ckin.php', $('#formf').serialize() + '&cmd=savefap' + '&rid=' + data.rid, function(rdata) {
+                        Save: function () {
+                            $.post('ws_ckin.php', $('#formf').serialize() + '&cmd=savefap' + '&rid=' + data.rid, function (rdata) {
                                 try {
                                     rdata = $.parseJSON(rdata);
                                 } catch (err) {
@@ -1867,13 +1904,13 @@ function resvManager(initData, options) {
                             });
                             $(this).dialog("close");
                         },
-                        "Exit": function() {
+                        "Exit": function () {
                             $(this).dialog("close");
                         }
                     }
                 });
 
-                $finAppBtn.button().click(function() {
+                $finAppBtn.button().click(function () {
                     getIncomeDiag(data.rid);
                 });
             }
@@ -1890,19 +1927,19 @@ function resvManager(initData, options) {
 
                 $('#selResource').change(function () {
 
-					// Room Default Rate
-					var room = rooms[$('#selResource').val()];
+                    // Room Default Rate
+                    var room = rooms[$('#selResource').val()];
 
-					if (room.defaultRateCat && room.defaultRateCat != '' && resvStatusType == 'a') {
-						$('#selRateCategory').val(room.defaultRateCat);
-					}
+                    if (room.defaultRateCat && room.defaultRateCat != '' && resvStatusType == 'a') {
+                        $('#selRateCategory').val(room.defaultRateCat);
+                    }
 
                     $('#selRateCategory').change();
 
                     var selected = $("option:selected", this);
                     var selparent = selected.parent()[0].label;
 
-                    if (selparent === undefined || selparent === null ) {
+                    if (selparent === undefined || selparent === null) {
                         $('#hhkroomMsg').hide();
                     } else {
                         $('#hhkroomMsg').text(selparent).show();
@@ -1924,17 +1961,17 @@ function resvManager(initData, options) {
             var room = rooms[$('#selResource').val()];
             var notThere = true;
             // option available
-            $('#selccgw'+idx+' option').each(function() {
+            $('#selccgw' + idx + ' option').each(function () {
                 if (this.value === room.merchant) {
                     notThere = false;
                 }
             });
 
             if (notThere) {
-                $('#selccgw'+idx).append('<option value="'+room.merchant+'">'+room.merchant+'</option>');
+                $('#selccgw' + idx).append('<option value="' + room.merchant + '">' + room.merchant + '</option>');
             }
 
-            $('#selccgw'+idx).val(room.merchant);
+            $('#selccgw' + idx).val(room.merchant);
 
         }
 
@@ -1950,19 +1987,19 @@ function resvManager(initData, options) {
                     autoSize: true,
                     dateFormat: 'M d, yy'
                 });
-                
-   		// Return pre-payment if cancelling reserv.
+
+                // Return pre-payment if cancelling reserv.
                 $('#selResvStatus').change(function () {
-                        if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
-                                // Cancel 
-                                isCheckedOut = true;
-                                $('#cbHeld').prop('checked', true);
-                                amtPaid();
-                        } else {
-                                isCheckedOut = false;
-                                $('#cbHeld').prop('checked', false);
-                                amtPaid();
-                        }
+                    if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
+                        // Cancel
+                        isCheckedOut = true;
+                        $('#cbHeld').prop('checked', true);
+                        amtPaid();
+                    } else {
+                        isCheckedOut = false;
+                        $('#cbHeld').prop('checked', false);
+                        amtPaid();
+                    }
                 });
                 $('#selResvStatus').change();
             }
@@ -1973,52 +2010,52 @@ function resvManager(initData, options) {
             updateRescChooser.idReservation = rid;
 
             // Room selector update for constraints changes.
-            $('input.hhk-constraintsCB').change( function () {
+            $('input.hhk-constraintsCB').change(function () {
                 updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
             });
         }
 
         function setupNotes(rid, $container, psgId = null) {
 
-			if(rid > 0){
-	            $container.notesViewer({
-	                linkId: rid,
-	                linkType: 'reservation',
-	                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
-	                alertMessage: function(text, type) {
-	                    flagAlertMessage(text, type);
-	                }
-	            });
-	        }else if(psgId > 0){
-				$container.notesViewer({
-	                linkId: psgId,
-	                linkType: 'psg',
-	                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
-	                alertMessage: function(text, type) {
-	                    flagAlertMessage(text, type);
-	                }
-	            });
-			}
+            if (rid > 0) {
+                $container.notesViewer({
+                    linkId: rid,
+                    linkType: 'reservation',
+                    newNoteAttrs: {id: 'taNewNote', name: 'taNewNote'},
+                    alertMessage: function (text, type) {
+                        flagAlertMessage(text, type);
+                    }
+                });
+            } else if (psgId > 0) {
+                $container.notesViewer({
+                    linkId: psgId,
+                    linkType: 'psg',
+                    newNoteAttrs: {id: 'taNewNote', name: 'taNewNote'},
+                    alertMessage: function (text, type) {
+                        flagAlertMessage(text, type);
+                    }
+                });
+            }
 
             return $container;
         }
-        
+
         function setupDocs(psgid, $container) {
 
             $container.docUploader({
-	    		visitorLabel: visitorLabel,
-	        	psgId: psgid,
-	        	alertMessage: function(text, type) {
-	            	flagAlertMessage(text, type);
-	        	}
-			});
+                visitorLabel: visitorLabel,
+                psgId: psgid,
+                alertMessage: function (text, type) {
+                    flagAlertMessage(text, type);
+                }
+            });
 
             return $container;
         }
 
         function setUp(data) {
 
-            $rDiv = $('<div/>').addClass(' hhk-tdbox ui-corner-bottom hhk-tdbox ui-widget-content hhk-flex hhk-flex-wrap hhk-overflow-x').prop('id', 'divResvDetail').css({'padding':'5px'});
+            $rDiv = $('<div/>').addClass(' hhk-tdbox ui-corner-bottom hhk-tdbox ui-widget-content hhk-flex hhk-flex-wrap hhk-overflow-x').prop('id', 'divResvDetail').css({'padding': '5px'});
 
             // Room Chooser section
             if (data.resv.rdiv.rChooser !== undefined) {
@@ -2047,12 +2084,12 @@ function resvManager(initData, options) {
                 setupVehicle($veh);
             }
 
-			// Payment
+            // Payment
             if (data.resv.rdiv.pay !== undefined) {
                 $rDiv.append($(data.resv.rdiv.pay));
             }
 
-			// Reservation notes.
+            // Reservation notes.
             if (data.resv.rdiv.notes !== undefined) {
                 $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes), data.idPsg));
             }
@@ -2070,8 +2107,8 @@ function resvManager(initData, options) {
 
             // Header
             $expanderButton = $("<ul style='list-style-type:none; float:right; margin-left:5px; padding-top:2px;' class='ui-widget'/>")
-                .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-                .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+                    .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+                            .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
 
             $rHdr = $('<div id="divResvHdr" style="padding:2px; cursor:pointer;"/>')
                     .append($(data.resv.hdr))
@@ -2079,11 +2116,11 @@ function resvManager(initData, options) {
 
             $rHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
 
-            $rHdr.click(function(event) {
+            $rHdr.click(function (event) {
                 var target = $(event.target);
 
                 if (target[0].id !== 'divResvHdr' && target[0].id !== 'r_drpDown') {
-                   return;
+                    return;
                 }
 
                 if ($rDiv.css('display') === 'none') {
@@ -2106,24 +2143,24 @@ function resvManager(initData, options) {
             if ($('.hhk-viewResvActivity').length > 0) {
                 $('.hhk-viewResvActivity').click(function () {
 
-                  $.post('ws_ckin.php', {cmd:'viewActivity', rid: $(this).data('rid')}, function(data) {
-                    data = $.parseJSON(data);
+                    $.post('ws_ckin.php', {cmd: 'viewActivity', rid: $(this).data('rid')}, function (data) {
+                        data = $.parseJSON(data);
 
-                    if (data.error) {
+                        if (data.error) {
 
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, 'error');
+                            return;
                         }
-                        flagAlertMessage(data.error, 'error');
-                        return;
-                    }
-                     if (data.activity) {
+                        if (data.activity) {
 
-                        $('div#submitButtons').hide();
-                        $("#activityDialog").children().remove();
-                        $("#activityDialog").append($(data.activity));
-                        $("#activityDialog").dialog('open');
-                    }
+                            $('div#submitButtons').hide();
+                            $("#activityDialog").children().remove();
+                            $("#activityDialog").append($(data.activity));
+                            $("#activityDialog").dialog('open');
+                        }
                     });
 
                 });
@@ -2135,7 +2172,7 @@ function resvManager(initData, options) {
                 if (amount === '') {
                     amount = 0;
                 }
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(d) {
+                $.post('ws_ckin.php', {cmd: 'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function (d) {
 
                     data = $.parseJSON(d);
 
@@ -2147,19 +2184,20 @@ function resvManager(initData, options) {
                         return;
                     }
 
-                     if (data.confrv) {
+                    if (data.confrv) {
 
                         $('div#submitButtons').hide();
                         $("#frmConfirm").children().remove();
                         $("#frmConfirm").html(data.confrv);
-                        
-                        var emailMkup = '<div class="col-md-6 my-2 hhk-flex"><label for="confEmail" class="pr-2" style="min-width:fit-content;">To Address</label><input type="text" style="width:100%" id="confEmail" value="'+data.email+'"></div>';
-                        emailMkup += '<div class="col-md-6 my-2 hhk-flex"><label for="ccConfEmail" class="pr-2" style="min-width:fit-content;">CC Address</label><input type="text" style="width:100%" id="ccConfEmail" value="'+data.ccemail+'"></div>';;
-                        
+
+                        var emailMkup = '<div class="col-md-6 my-2 hhk-flex"><label for="confEmail" class="pr-2" style="min-width:fit-content;">To Address</label><input type="text" style="width:100%" id="confEmail" value="' + data.email + '"></div>';
+                        emailMkup += '<div class="col-md-6 my-2 hhk-flex"><label for="ccConfEmail" class="pr-2" style="min-width:fit-content;">CC Address</label><input type="text" style="width:100%" id="ccConfEmail" value="' + data.ccemail + '"></div>';
+                        ;
+
                         $("#frmConfirm").append($('<div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix hhk-flex hhk-flex-wrap">' + emailMkup + '</div>'));
 
                         $("#frmConfirm").find('#confirmTabDiv').tabs();
-                        
+
                         $("#confirmDialog").dialog('open');
                     }
                 });
@@ -2177,13 +2215,13 @@ function resvManager(initData, options) {
 
             if (data.resv.rdiv.cof !== undefined) {
                 var room = rooms[$('#selResource').val()];
-                
+
                 $('#btnUpdtCred').button().click(function () {
                     cardOnFile($(this).data('id'), $(this).data('idreg'), 'Reserve.php?rid=' + idResv, $(this).data('indx'));
                 });
 
                 setupCOF($('#trvdCHNameg'), $('#btnUpdtCred').data('indx'));
-                         
+
                 $('#selccgwg').val(room.merchant);
             }
 
@@ -2196,7 +2234,8 @@ function resvManager(initData, options) {
             }
 
             t.setupComplete = true;
-        };
+        }
+        ;
 
         function validateCar(cnum) {
             "use strict";
@@ -2243,7 +2282,7 @@ function resvManager(initData, options) {
                             $('#vehValidate').text(carVal2);
                             flagAlertMessage(carVal, 'alert', $pWarning);
                             return false;
-                        } 
+                        }
                     }
                 }
 
@@ -2284,43 +2323,43 @@ function resvManager(initData, options) {
                     }
                 }
             } else {
-	
+
                 // Return Pre-Payment?
                 if (prePaymtAmt > 0 && isCheckedOut && $('#selexcpay').val() == '') {
 
-                        $('#selexcpay').addClass('ui-state-error');
-                        flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
-                        $('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
+                    $('#selexcpay').addClass('ui-state-error');
+                    flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
+                    $('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
 
-                        return false;
+                    return false;
 
                 } else {
-                        $('#selexcpay').removeClass('ui-state-error');
+                    $('#selexcpay').removeClass('ui-state-error');
                 }
 
                 // Selected Merchant?
-                
+
                 if ($('#selccgw').length > 0 && $('#spnPayAmount').html() === '' && ($('input[name=rbUseCard]:checked').val() == 0 || $('input[name=rbUseCard]').prop('checked') === true)) {
 
-                        $('#selccgw').removeClass('ui-state-highlight');
+                    $('#selccgw').removeClass('ui-state-highlight');
 
-                        if ($('#selccgw option:selected').length === 0) {
-                                $('#tdChargeMsg').text('Select a location.').show('fade');
-                                $('#selccgw').addClass('ui-state-highlight');
-                                return false;
-                        }
+                    if ($('#selccgw option:selected').length === 0) {
+                        $('#tdChargeMsg').text('Select a location.').show('fade');
+                        $('#selccgw').addClass('ui-state-highlight');
+                        return false;
+                    }
                 } else {
                     $('#selccgw').removeClass('ui-state-highlight');
                     $('#tdChargeMsg').text('').hide('fade');
                 }
 
             }
-            
+
             return true;
         }
     }
 
-    function Items () {
+    function Items() {
 
         var _list = {};
         var _index;
@@ -2335,7 +2374,8 @@ function resvManager(initData, options) {
 
         function list() {
             return _list;
-        };
+        }
+        ;
 
         function makeList(theList, indexProperty) {
 
@@ -2345,7 +2385,8 @@ function resvManager(initData, options) {
             for (var i in theList) {
                 addItem(theList[i]);
             }
-        };
+        }
+        ;
 
         function addItem(item) {
 
@@ -2355,7 +2396,8 @@ function resvManager(initData, options) {
             }
 
             return false;
-        };
+        }
+        ;
 
         function removeIndex(index) {
             delete _list[index];
@@ -2368,7 +2410,8 @@ function resvManager(initData, options) {
             }
 
             return false;
-        };
+        }
+        ;
 
         function findItem(property, value) {
             for (var i in _list) {
@@ -2382,7 +2425,7 @@ function resvManager(initData, options) {
     }
 
     function transferToGw(data) {
-        paymentRedirect (data, $('#xform'));
+        paymentRedirect(data, $('#xform'));
     }
 
     function resvPicker(data, $resvDiag, $psgDiag) {
@@ -2394,8 +2437,8 @@ function resvManager(initData, options) {
 
         // reset then fill the reservation dialog
         $resvDiag.empty()
-            .append($(data.resvChooser))
-            .children().find('input:button').button();
+                .append($(data.resvChooser))
+                .children().find('input:button').button();
 
         // Set up 'Check-in Now' button
         $resvDiag.children().find('.hhk-checkinNow').click(function () {
@@ -2404,7 +2447,7 @@ function resvManager(initData, options) {
 
         // Set up go to PSG chooser button
         if (data.psgChooser && data.psgChooser !== '') {
-            buttons[data.patLabel + ' Chooser'] = function() {
+            buttons[data.patLabel + ' Chooser'] = function () {
                 $(this).dialog("close");
                 psgChooser(data, $psgDiag);
             };
@@ -2412,7 +2455,7 @@ function resvManager(initData, options) {
 
         // Set up New Reservation button.
         if (data.resvTitle) {
-            buttons['New ' + data.resvTitle] = function() {
+            buttons['New ' + data.resvTitle] = function () {
                 data.rid = -1;
                 data.cmd = 'getResv';
                 $(this).dialog("close");
@@ -2420,7 +2463,7 @@ function resvManager(initData, options) {
             };
         }
 
-        buttons['Exit'] = function() {
+        buttons['Exit'] = function () {
             $(this).dialog("close");
 
             $('input#gstSearch').val('').focus();
@@ -2443,41 +2486,41 @@ function resvManager(initData, options) {
         $('input#txtPersonSearch').val('');
 
         $dialog
-            .empty()
-            .append($(data.psgChooser))
-            .dialog('option', 'buttons', {
-                Open: function() {
-                    $(this).dialog('close');
-                    getReserve({idPsg: $dialog.find('input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getResv'});
-                },
-                Cancel: function () {
-                    $(this).dialog('close');
+                .empty()
+                .append($(data.psgChooser))
+                .dialog('option', 'buttons', {
+                    Open: function () {
+                        $(this).dialog('close');
+                        getReserve({idPsg: $dialog.find('input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getResv'});
+                    },
+                    Cancel: function () {
+                        $(this).dialog('close');
 
-                    $('input#gstSearch').val('').focus();
-                }
-            })
-            .dialog('option', 'title', data.patLabel + ' Chooser' + (data.fullName === undefined ? '' : ' For: ' + data.fullName))
-            .dialog('open');
+                        $('input#gstSearch').val('').focus();
+                    }
+                })
+                .dialog('option', 'title', data.patLabel + ' Chooser' + (data.fullName === undefined ? '' : ' For: ' + data.fullName))
+                .dialog('open');
     }
 
     function getReserve(sdata) {
-	
-		if (sdata.guestSearchTerm && sdata.guestSearchTerm != '') {
-			guestSearchTerm = sdata.guestSearchTerm;
-		}
+
+        if (sdata.guestSearchTerm && sdata.guestSearchTerm != '') {
+            guestSearchTerm = sdata.guestSearchTerm;
+        }
 
         var parms = {
-            id:sdata.id,
-            rid:sdata.rid,
-            idPsg:sdata.idPsg,
-            vid:sdata.vid,
-            span:sdata.span,
+            id: sdata.id,
+            rid: sdata.rid,
+            idPsg: sdata.idPsg,
+            vid: sdata.vid,
+            span: sdata.span,
             isCheckin: isCheckin,
             gstDate: sdata.gstDate,
             gstCoDate: sdata.gstCoDate,
-            cmd:sdata.cmd};
+            cmd: sdata.cmd};
 
-        $.post('ws_resv.php', parms, function(data) {
+        $.post('ws_resv.php', parms, function (data) {
 
             try {
                 data = $.parseJSON(data);
@@ -2502,24 +2545,24 @@ function resvManager(initData, options) {
 
     function deleteReserve() {
 
-		if (prePaymtAmt > 0 && $('#selexcpay').val() == '') {
+        if (prePaymtAmt > 0 && $('#selexcpay').val() == '') {
 
-			if (isCheckedOut) { 
+            if (isCheckedOut) {
 
-				$('#selexcpay').addClass('ui-state-error');
-				flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
-				$('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
-				return false;
+                $('#selexcpay').addClass('ui-state-error');
+                flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
+                $('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
+                return false;
 
-			} else {
+            } else {
 
-				$('#selexcpay').removeClass('ui-state-error');
-				isCheckedOut = true;
-				$('#cbHeld').prop('checked', true);
-				amtPaid();
-				return false;
-			}
-		}
+                $('#selexcpay').removeClass('ui-state-error');
+                isCheckedOut = true;
+                $('#cbHeld').prop('checked', true);
+                amtPaid();
+                return false;
+            }
+        }
 
         return true;
     }
@@ -2530,13 +2573,13 @@ function resvManager(initData, options) {
             transferToGw(data);
             return;
         }
-        
+
         if (data.deleted) {
-			$('#guestSearch').hide();
-			$('#contentDiv').append('<p>' + data.deleted + '</p>');
-			$('#spnStatus').text('Deleted');
-			return
-		}
+            $('#guestSearch').hide();
+            $('#contentDiv').append('<p>' + data.deleted + '</p>');
+            $('#spnStatus').text('Deleted');
+            return
+        }
 
         // Patient management.
         if (data.resvChooser && data.resvChooser !== '') {
@@ -2563,15 +2606,15 @@ function resvManager(initData, options) {
         if (data.span) {
             span = data.span;
         }
-		if (data.resvStatusCode) {
-			resvStatusCode = data.resvStatusCode
-		}
-		if (data.resvStatusType) {
-			resvStatusType = data.resvStatusType
-		}
-		if (data.prePayment) {
-			prePaymtAmt = data.prePayment;
-		}
+        if (data.resvStatusCode) {
+            resvStatusCode = data.resvStatusCode
+        }
+        if (data.resvStatusType) {
+            resvStatusType = data.resvStatusType
+        }
+        if (data.prePayment) {
+            prePaymtAmt = data.prePayment;
+        }
 
         // Hospital
         if (data.hosp !== undefined) {
@@ -2589,7 +2632,7 @@ function resvManager(initData, options) {
             $('#btnDone').val('Save Family').show();
 
             // Insurance chooser
-            $('select.hhk-multisel').each( function () {
+            $('select.hhk-multisel').each(function () {
                 $(this).multiselect({
                     selectedList: 3
                 });
@@ -2621,7 +2664,7 @@ function resvManager(initData, options) {
 
                 var tot = familySection.findStaysChecked() + familySection.findStays('r');
                 resvSection.$totalGuests.text(tot);
-				$('#selRateCategory').trigger('change');
+                $('#selRateCategory').trigger('change');
 
                 if ($('#selResource').length > 0 && $('#selResource').val() !== '0') {
                     var msg = 'Room may be too small';
@@ -2647,16 +2690,16 @@ function resvManager(initData, options) {
                 var vid = $(this).data('vid');
                 var span = $(this).data('span');
                 buttons = {
-                    "Show Statement": function() {
+                    "Show Statement": function () {
                         window.open('ShowStatement.php?vid=' + vid, '_blank');
                     },
-                    "Show Registration Form": function() {
+                    "Show Registration Form": function () {
                         window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
                     },
-                    "Save": function() {
+                    "Save": function () {
                         saveFees(0, vid, span, false, payFailPage);
                     },
-                    "Cancel": function() {
+                    "Cancel": function () {
                         $(this).dialog("close");
                     }
                 };
@@ -2676,7 +2719,7 @@ function resvManager(initData, options) {
 
             // Checking in now button
             manageCheckInNowButton($('#gstDate').val(), data.rid, data.resv.rdiv.hideCiNowBtn);
-            
+
             insistCkinDemog = data.insistCkinDemog;
 
         }
@@ -2692,14 +2735,14 @@ function resvManager(initData, options) {
 
                 $('#txtPersonSearch').val("");
 
-                if($('#' + data.addPerson.mem.pref + 'txtLastName').val() === ""){
+                if ($('#' + data.addPerson.mem.pref + 'txtLastName').val() === "") {
                     $('#' + data.addPerson.mem.pref + 'txtLastName').val(guestSearchTerm).focus();
                 }
-                
+
 
             }
         }
-		$('#submitButtons').show();
+        $('#submitButtons').show();
     }
 
     function verifyInput() {
