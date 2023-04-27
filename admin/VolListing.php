@@ -115,7 +115,7 @@ if (count($rows) > 0) {
 }
 $volReport = $markup;
 ?>
-<!DOCTYPE html >
+<!DOCTYPE html>
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -144,7 +144,7 @@ $volReport = $markup;
         $('#dataTbl').dataTable({
             "displayLength": 25,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf><"hhk-overflow-x"rt><"bottom"ip>'
+            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
         });
         $('div#vollisting').on('change', 'input.delCkBox', function() {
             if ($(this).prop('checked')) {
@@ -194,9 +194,11 @@ $volReport = $markup;
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="vollisting" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content">
                 <?php echo $noReport ?>
+                <form autocomplete="off">
                 <table id="dataTbl" class="display">
-					<?php echo $volReport ?>
+                    <?php echo $volReport ?>
                 </table>
+                </form>
             </div>
         </div>
 
