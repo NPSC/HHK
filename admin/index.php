@@ -1,10 +1,9 @@
 <?php
 
 use HHK\sec\{Session, Login, ScriptAuthClass, SecurityComponent};
-use HHK\Exception\{InvalidArgumentException, RuntimeException};
+use HHK\Exception\InvalidArgumentException;
 use HHK\SysConst\{Mode, CodeVersion};
 use HHK\HTMLControls\{HTMLContainer};
-use HHK\sec\SysConfig;
 use HHK\sec\SAML;
 
 /**
@@ -24,14 +23,11 @@ $uS = Session::getInstance();
 //$uS->destroy(TRUE);
 
 // Logout command?
-if (isset($_GET["log"])) {
-    $log = filter_var($_GET["log"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    if ($log == "lo") {
-
-        $uS->destroy(true);
-        header('location:index.php');
-        exit();
-    }
+$log = filter_input(INPUT_GET, 'log', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if ($log === "lo") {
+    $uS->destroy(true);
+    header('location:index.php');
+    exit();
 }
 
 try {
@@ -114,7 +110,6 @@ if (SecurityComponent::isHTTPS()) {
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="../js/rssWidget.js"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
     </head>
     <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >
