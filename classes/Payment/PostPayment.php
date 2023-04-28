@@ -65,11 +65,20 @@ class PostPayment {
                 break;
 
             case PaymentStatusCode::VoidReturn:
+                
+                if ($p['Is_Refund'] > 0) {
+                    // Refund payment is returned
+                    $stat = "Refund Voided";
+                    $p['Payment_Status'] = PaymentStatusCode::VoidReturn;
+                    $amt = 0 - $amt;
+                }                
+                break;
+
             case PaymentStatusCode::Paid:
 
                 if ($p['Is_Refund'] > 0) {
                     // Refund payment
-                    $stat = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-check', 'style' => 'float:left;', 'title' => 'Paid')) . '(Refund)';
+                    $stat = 'Refund';
                     $p['Payment_Status'] = PaymentStatusCode::Retrn;
                     $amt = 0 - $amt;
 

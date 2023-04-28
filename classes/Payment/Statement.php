@@ -665,10 +665,8 @@ class Statement {
                 }
                 $amtStyle = 'text-align:right;';
 
-                if ($p['Payment_Status'] != PaymentStatusCode::Paid && $p['Payment_Status'] != PaymentStatusCode::VoidReturn) {
-                    $amtMkup = HTMLContainer::generateMarkup('span', number_format(floatval($p['Payment_Amount']), 2), array('style'=>'color:red;'));
-                    $amtStyle = 'text-align:left;';
-                } else {
+                if ($p['Payment_Status'] == PaymentStatusCode::Paid) {
+                    
                     $amtMkup = number_format($amt, 2);
                     $totalPment += $amt;
 
@@ -677,7 +675,17 @@ class Statement {
                     } else {
                         $p['Payment_Status_Title'] = 'Paid';
                     }
+                    
+                } else if ($p['Payment_Status'] == PaymentStatusCode::VoidReturn) {
 
+                    $p['Payment_Status_Title'] = 'Void';
+                    
+                    $amtMkup = HTMLContainer::generateMarkup('span', number_format(floatval($p['Payment_Amount']), 2), array('style'=>'color:red;'));
+                    $amtStyle = 'text-align:left;';
+                } else {
+                    // Return or void
+                    $amtMkup = HTMLContainer::generateMarkup('span', number_format(floatval($p['Payment_Amount']), 2), array('style'=>'color:red;'));
+                    $amtStyle = 'text-align:left;';
                 }
 
                 $addnl = '';
@@ -734,7 +742,7 @@ class Statement {
                     .HTMLTable::makeTd($amtMkup, $amtAttrs);
             }
 
-            //
+            // Add the items
             if (count($payLines) > 0 || $r['i']['Invoice_Status'] == InvoiceStatus::Paid) {
 
                 $myLines = array();
@@ -900,7 +908,7 @@ class Statement {
                 .HTMLTable::makeTh('Status', $tdAttrs)
                 .HTMLTable::makeTh($labels->getString('statement', 'paymentHeader', 'Payment'), $tdAttrs));
 
-            $tbl->addBodyTr(HTMLTable::makeTd('Payment Total', array('colspan'=>'7', 'class'=>'tdlabel hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;'))
+            $tbl->addBodyTr(HTMLTable::makeTd('3rd Party Payment Total', array('colspan'=>'7', 'class'=>'tdlabel hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;'))
                 .HTMLTable::makeTd('$'. number_format($totalPment, 2), array('class'=>'hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;text-align:right;')));
 
         }
