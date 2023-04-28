@@ -3,13 +3,11 @@ use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\sec\Labels;
 use HHK\Exception\InvalidArgumentException;
-use HHK\Exception\RuntimeException;
 use HHK\sec\ScriptAuthClass;
 use HHK\SysConst\Mode;
 use HHK\SysConst\CodeVersion;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\SecurityComponent;
-use HHK\sec\SysConfig;
 use HHK\sec\SAML;
 
 /**
@@ -29,16 +27,11 @@ $uS = Session::getInstance();
 //$uS->destroy(TRUE);
 
 // Logout command?
-if (isset($_GET["log"])) {
-
-    $log = filter_var($_GET["log"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-    if ($log == "lo") {
-
-        $uS->destroy(TRUE);
-        header('location:index.php');
-        exit();
-    }
+$log = filter_input(INPUT_GET, 'log', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if ($log === "lo") {
+    $uS->destroy(true);
+    header('location:index.php');
+    exit();
 }
 
 // Access the login object, set session vars,
@@ -64,7 +57,7 @@ try {
 }
 
 // Login hook
-if (isset($_POST['txtUname'])) {
+if (filter_has_var(INPUT_POST, 'txtUname')) {
     // User loged in
     $events = $login->checkPost($dbh, $_POST, $page->get_Default_Page());
     echo json_encode($events);
@@ -127,7 +120,6 @@ if (SecurityComponent::isHTTPS()) {
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
 
     </head>
@@ -139,27 +131,27 @@ if (SecurityComponent::isHTTPS()) {
             <div class="build"><?php echo $build; ?></div>
             <div id="contentDiv" class="container mx-auto">
             	<div class="row justify-content-center mb-3">
-                	<div class="col-xl-4 col-md-6 my-auto">
+                    <div class="col-xl-4 col-md-6 my-auto">
                         <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
                     </div>
                     <div class="col-md-6 my-auto">
                     	<div>
-                        	<?php echo $siteName; ?>
+                            <?php echo $siteName; ?>
                         </div>
                     </div>
                 </div>
                	<?php echo $disclaimer; ?>
                 <?php echo $login->IEMsg() . Login::trainingMsg(); ?>
                 <div class="row justify-content-center">
-					<div class="col-xl-4 col-md-6">
+                    <div class="col-xl-4 col-md-6">
                         <?php echo $samlMkup . $loginMkup; ?>
                     </div>
                     <div class="d-none d-md-block col-md-6">
-						<?php echo $announcementWidget . $row2; ?>
-					</div>
+                        <?php echo $announcementWidget . $row2; ?>
+                    </div>
                 </div>
                 <?php echo $footerMkup; ?>
-        	</div>
+            </div>
         </div>
     </body>
 </html>
