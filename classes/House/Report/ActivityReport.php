@@ -2,7 +2,7 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
-use HHK\Payment\Statement;
+use HHK\Payment\{Statement, PostPayment};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{GLTableNames, InvoiceStatus, PaymentMethod, PaymentStatusCode, ReservationStatus, VisitStatus};
 use HHK\sec\Labels;
@@ -12,7 +12,7 @@ use HHK\sec\Session;
  * ActivityReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -595,9 +595,9 @@ where `lp`.`idPayment` > 0
                 . HTMLTable::makeTh("Status")
                 . HTMLTable::makeTh($labels->getString('statement', 'paymentHeader', 'Payment'))
                 . HTMLTable::makeTh("Action")
-        		. HTMLTable::makeTh("Date")
-        		. HTMLTable::makeTh("Updated")
-        		. HTMLTable::makeTh("By")
+                . HTMLTable::makeTh("Date")
+                . HTMLTable::makeTh("Updated")
+                . HTMLTable::makeTh("By")
                 . ($showExternlId ? HTMLTable::makeTh("Ext. Id") : '')
                 . HTMLTable::makeTh('Notes'));
 
@@ -629,7 +629,7 @@ where `lp`.`idPayment` > 0
 
             $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style" => 'white-space:nowrap'));
 
-			// Set up actions
+            // Set up actions
             foreach ($i['p'] as $p) {
 
                 $stat = '';
@@ -644,95 +644,10 @@ where `lp`.`idPayment` > 0
                 	$lastUpdatedDT = new \DateTime($p['Last_Updated']);
                 	$updatedDateString = $lastUpdatedDT->format('c');
                 }
+                
+                // Action column.
+                $actionContent = PostPayment::actionButton($gateway, $p, $r['Invoice_Status'], $payTypeTotals, $stat, $amt, $attr);
 
-                $voidContent = '';
-                $actionButtonArray = array('type' => 'button', 'style'=>'font-size:.8em', 'id' => 'btnvr' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'data-amt' => $amt);
-
-                switch ($p['Payment_Status']) {
-
-                    case PaymentStatusCode::VoidSale:
-                        $stat = 'Void Sale';
-                        $attr['style'] .= 'color:red;';
-
-
-                        break;
-
-                    case PaymentStatusCode::Reverse:
-                        $stat = 'Reversed';
-                        $attr['style'] .= 'color:red;';
-
-                        break;
-
-                    case PaymentStatusCode::Retrn:
-                        $stat = 'Returned';
-                        $attr['style'] .= 'color:red;';
-
-                        if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Last_Updated'])) == date('Y-m-d') && $gateway->hasVoidReturn()) {
-                        	// Void return
-                        	$actionButtonArray['class'] = 'hhk-voidRefundPmt';
-                            $voidContent .= HTMLInput::generateMarkup('Void-Return', $actionButtonArray);
-                        } else if ($p['idPayment_Method'] != PaymentMethod::Charge || $gateway->hasUndoReturnPmt()) {
-                        	// Clawback
-                        	// Check the invoice status
-                        	if ($r['Invoice_Status'] == InvoiceStatus::Unpaid) {
-                        		$actionButtonArray['class'] = 'hhk-undoReturnPmt';
-                            	$voidContent .= HTMLInput::generateMarkup('Undo Return', $actionButtonArray);
-                        	} else {
-                        		$voidContent .= HTMLContainer::generateMarkup('span', 'Can\'t Undo', array('style'=>'font-size:.8em;color:#333;'));
-                        	}
-                        }
-
-                        break;
-
-                    case PaymentStatusCode::VoidReturn:
-                    case PaymentStatusCode::Paid:
-
-                        if ($p['Is_Refund'] > 0) {
-                            // Refund payment
-                            $stat = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-check', 'style' => 'float:left;', 'title' => 'Paid')) . '(Refund)';
-                            $p['Payment_Status'] = PaymentStatusCode::Retrn;
-                            $amt = 0 - $amt;
-                            $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
-
-
-                            if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d') && $gateway->hasVoidReturn()) {
-                            	$actionButtonArray['class'] = 'hhk-voidRefundPmt';
-                            	$voidContent .= HTMLInput::generateMarkup('Void Refund', $actionButtonArray);  //array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
-                            } else if ($p['idPayment_Method'] != PaymentMethod::Charge || $gateway->hasUndoReturnAmt()) {
-                                $actionButtonArray['class'] = 'hhk-undoReturnPmt';
-                                $voidContent .= HTMLInput::generateMarkup('Undo Refund', $actionButtonArray);
-                            }
-
-                        } else {
-                            // Regular payment
-                            $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
-                            $stat = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-check', 'style' => 'float:left;', 'title' => 'Paid'));
-
-                            if ($amt != 0) {
-
-                                if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
-                                    $actionButtonArray['class'] = 'hhk-voidPmt';
-                                    $voidContent .= HTMLInput::generateMarkup('Void', $actionButtonArray);
-                                } else {
-                                    $actionButtonArray['class'] = 'hhk-returnPmt';
-                                    $voidContent .= HTMLInput::generateMarkup('Return', $actionButtonArray);
-                                }
-                            }
-                        }
-
-                        break;
-
-                    case PaymentStatusCode::Declined:
-
-                        $stat = 'Declined';
-                        $attr['style'] .= 'color:gray;';
-
-
-                        break;
-
-                    default:
-                        $stat = 'Undefined: ' . $p['Payment_Status'];
-                }
 
                 $payTypeTitle = $p['Payment_Method_Title'];
                 if ($p['idPayment_Method'] == PaymentMethod::Charge) {
@@ -740,7 +655,7 @@ where `lp`.`idPayment` > 0
                     $attr['readonly'] = 'readonly';
                 }
 
-                // Over rides the above
+                // Overwrites some of the above
                 if ($r['Sold_To_Id'] == $uS->subsidyId) {
                     // House Subsidy
                     $payTypeTitle = $labels->getString('statement', 'houseSubsidy', 'House Discount');
@@ -761,8 +676,7 @@ where `lp`.`idPayment` > 0
                     $nameTd = HTMLContainer::generateMarkup('a', $r['First'] . " " . $r['Last'], array('href' => 'GuestEdit.php?id=' . $r['Sold_To_Id'] . '&psg=' . $r['idPsg']));
                 }
 
-
-
+                // Set up the payment detail column.
                 $payDetail = '';
                 if ($p['idPayment_Method'] == PaymentMethod::Charge) {
 
@@ -788,9 +702,6 @@ where `lp`.`idPayment` > 0
                     $payDetail = $p['Check_Number'];
                 }
 
-                //add receipt icon to action column
-                $voidContent .= HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer; margin-left: auto', 'title' => 'View Payment Receipt'));
-                $actionContent = HTMLContainer::generateMarkup('div', $voidContent, ['style'=>'display:flex; justify-content:space-between; flex-wrap:nowrap;']);
 
                 $trow = HTMLTable::makeTd($r['Room']);
                 $trow .= HTMLTable::makeTd($nameTd);
@@ -816,9 +727,10 @@ where `lp`.`idPayment` > 0
                 $payTypeTotals[$p['idPayment_Method']]['count'] ++;
             }
 
+            // Add House payments
             foreach ($i['h'] as $h) {
 
-                $voidContent = HTMLInput::generateMarkup('Delete', array('type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive','style' => 'font-size: 0.8em', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']));
+                $houseAction = HTMLInput::generateMarkup('Delete', array('type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive','style' => 'font-size: 0.8em', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']));
 
                 $tbl->addBodyTr(
                     HTMLTable::makeTd($r['Room'])
@@ -828,10 +740,10 @@ where `lp`.`idPayment` > 0
                     .HTMLTable::makeTd('')
                     .HTMLTable::makeTd('')
                     .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), array('style'=>'text-align:right;color:gray;'))
+                    .HTMLTable::makeTd($houseAction)
+                    .HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
                     .HTMLTable::makeTd('')
-                		.HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
-                		.HTMLTable::makeTd('')
-                		.HTMLTable::makeTd($r['Invoice_Updated_By'])
+                    .HTMLTable::makeTd($r['Invoice_Updated_By'])
                     .($showExternlId ? HTMLTable::makeTd('') : '')
                     .HTMLTable::makeTd('')
                 );
@@ -859,14 +771,14 @@ where `lp`.`idPayment` > 0
             $pType = new HTMLTable();
             $pType->addBodyTr(HTMLTable::makeTh('Payment Type', array('colspan' => '3')));
 
-            foreach ($payTypeTotals as $k => $p) {
+            foreach ($payTypeTotals as $pt) {
 
-                if ($p['active'] != 'y') {
+                if ($pt['active'] != 'y') {
                     continue;
                 }
 
 
-                $pType->addBodyTr(HTMLTable::makeTd($p['title']) . HTMLTable::makeTd($p['count']) . HTMLTable::makeTd(number_format($p['amount'], 2), array('style' => 'text-align:right;')));
+                $pType->addBodyTr(HTMLTable::makeTd($pt['title']) . HTMLTable::makeTd($pt['count']) . HTMLTable::makeTd(number_format($pt['amount'], 2), array('style' => 'text-align:right;')));
             }
 
 

@@ -34,7 +34,7 @@ class ReturnReply extends AbstractCreditPayments {
             $pr->setRefund(TRUE);
             $pr->setPaymentStatusCode(PaymentStatusCode::Paid);
             $pr->recordPayment($dbh, $username);
-
+            
         } else if ($payRs->idPayment->getStoredVal() > 0) {
 
             // Update existing Payment record

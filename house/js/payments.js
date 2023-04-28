@@ -210,6 +210,7 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
  *
  * @param {object} item
  * @param {int} orderNum
+ * @param (integer) index
  * @returns {undefined}
  */
 function getInvoicee(item, orderNum, index) {
@@ -239,62 +240,64 @@ function setTaxExempt(taxExempt) {
 }
 
 /**
- *
- * @param {string} btnid
- * @param {string} vorr
+ * 
+ * @param {str} btnid
+ * @param {str} vorr
  * @param {int} idPayment
- * @param {float} amt
+ * @param {decimal} amt
+ * @param {object} refresh
  * @returns {undefined}
  */
 function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 
     var prms = {pid: idPayment, bid: btnid};
 
-    if (vorr && vorr === 'v') {
-        prms.cmd = 'void';
-    } else if (vorr && vorr === 'rv') {
-        prms.cmd = 'revpmt';
-    } else if (vorr && vorr === 'r') {
-        prms.cmd = 'rtn';
-        prms.amt = amt;
-    } else if (vorr && vorr === 'ur') {
-        prms.cmd = 'undoRtn';
-        prms.amt = amt;
-    } else if (vorr && vorr === 'vr') {
-        prms.cmd = 'voidret';
-    } else if (vorr && vorr === 'd') {
-        prms.cmd = 'delWaive';
-        prms.iid = amt;
-    }
-    $.post('ws_ckin.php', prms, function (data) {
-        let revMessage = '';
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, 'error');
-                return;
-            }
-            if (data.reversal && data.reversal !== '') {
-                revMessage = data.reversal;
-                refresh();
-            }
-            if (data.warning) {
-                flagAlertMessage(revMessage + data.warning, 'warning');
-                refresh();
-                return;
-            }
-            if (data.success) {
-                flagAlertMessage(revMessage + data.success, 'success');
-                refresh();
-            }
+	if (vorr && vorr === 'v') {
+		prms.cmd = 'void';
+	} else if (vorr && vorr === 'rv') {
+		prms.cmd = 'revpmt';
+	} else if (vorr && vorr === 'r') {
+		prms.cmd = 'rtn';
+		prms.amt = amt;
+	} else if (vorr && vorr === 'ur') {
+		prms.cmd = 'undoRtn';
+		prms.amt = amt;
+	} else if (vorr && vorr === 'vr') {
+		prms.cmd = 'voidret';
+	} else if (vorr && vorr === 'd') {
+		prms.cmd = 'delWaive';
+		prms.iid = amt;
+	}
+        
+	$.post('ws_ckin.php', prms, function(data) {
+		let revMessage = '';
+		if (data) {
+			try {
+				data = $.parseJSON(data);
+			} catch (err) {
+				alert("Parser error - " + err.message);
+				return;
+			}
+			if (data.error) {
+				if (data.gotopage) {
+					window.location.assign(data.gotopage);
+				}
+				flagAlertMessage(data.error, 'error');
+				return;
+			}
+			if (data.reversal && data.reversal !== '') {
+				revMessage = data.reversal;
+				refresh();
+			}
+			if (data.warning) {
+				flagAlertMessage(revMessage + data.warning, 'warning');
+				refresh();
+				return;
+			}
+			if (data.success) {
+				flagAlertMessage(revMessage + data.success, 'success');
+				refresh();
+			}
 
             if (data.receipt) {
                 showReceipt('#pmtRcpt', data.receipt, 'Receipt');
@@ -1316,6 +1319,7 @@ function verifyAmtTendrd() {
  * @returns {undefined}
  */
 function showReceipt(dialogId, markup, title, width) {
+
     var pRecpt = $(dialogId);
     var btn = $("<div id='print_button' style='margin-left:1em;'>Print</div>");
     var opt = {
@@ -1617,15 +1621,15 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         invoiceAction($(this).data('iid'), 'view', event.target.id);
     });
 
-    // Void/Reverse button
-    $('#' + containerID).on('click', '.hhk-voidPmt', function () {
-        var btn = $(this);
-        var amt = parseFloat(btn.data("amt"));
-        if (btn.val() !== "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
-            btn.val('Saving...');
-            sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'), null, refreshPayments);
-        }
-    });
+	// Void/Reverse Payment button
+	$('#' + containerID).on('click', '.hhk-voidPmt', function() {
+		var btn = $(this);
+		var amt = parseFloat(btn.data("amt"));
+		if (btn.val() !== "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
+			btn.val('Saving...');
+			sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'), null, refreshPayments);
+		}
+	});
 
     // Void-return button
     $('#' + containerID).on('click', '.hhk-voidRefundPmt', function () {

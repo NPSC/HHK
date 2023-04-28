@@ -71,6 +71,15 @@ class VantivGateway extends AbstractPaymentGateway {
     public function getGatewayName() {
         return AbstractPaymentGateway::VANTIV;
     }
+    
+    public function hasUndoReturnPmt() {
+    	return False;
+    }
+
+    public function hasUndoReturnAmt() {
+    	return False;
+    }
+
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 
