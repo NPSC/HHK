@@ -34,6 +34,7 @@ abstract class AbstractExportManager {
 
     protected $errorMessage;
     protected $accountId;
+    protected $apiVersion;
 
     const CMS_NEON = 'neon';
     const CMS_SF = 'sf';
@@ -96,6 +97,7 @@ abstract class AbstractExportManager {
         $this->gatewayId = $cmsRs->idcms_gateway->getStoredVal();
         $this->updatedBy = $cmsRs->Updated_By->getStoredVal();
         $this->lastUpdated = $cmsRs->Last_Updated->getStoredVal();
+        $this->apiVersion = $cmsRs->apiVersion->getStoredVal();
 
     }
 
@@ -158,7 +160,7 @@ abstract class AbstractExportManager {
     }
     
     public abstract function showConfig(\PDO $dbh);
-    public abstract function saveConfig(\PDO $dbh, $post);
+    public abstract function saveConfig(\PDO $dbh);
 
     public function unwindResponse(&$line, $results, $prefix = '') {
 
@@ -299,6 +301,10 @@ abstract class AbstractExportManager {
 
     public function getSecurityToken() {
         return $this->securityToken;
+    }
+
+    public function getApiVersion() {
+        return $this->apiVersion;
     }
 
     public function getLastUpdated() {

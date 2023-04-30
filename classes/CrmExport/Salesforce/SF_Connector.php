@@ -112,16 +112,22 @@ class SF_Connector {
      * @param array $params
      * @return mixed
      */
-    public function postUrl($endpoint, array $params) {
+    public function postUrl($endpoint, array $params, $isUpdate = FALSE) {
 
        try{
             if(!$this->oAuth instanceof OAuth){
                 $this->login();
             }
+            
+            $meth = 'POST';
+            
+            if ($isUpdate) {
+                $meth = 'PATCH';  // Use patch for updates
+            }
 
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
             
-            $response = $client->request('POST', $endpoint, [
+            $response = $client->request($meth, $endpoint, [
                 RequestOptions::HEADERS => [
                     'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                     'Content-Type' => 'application/json',

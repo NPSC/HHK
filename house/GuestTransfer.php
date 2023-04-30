@@ -434,7 +434,7 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
         if ($r['External Id'] == '') {
 
        		if ($r['Email'] !== '' || $r['Address'] !== '') {
-       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox', 'checked'=>'checked'));
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox hhk-tfmem', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox', 'checked'=>'checked'));
        		} else {
        			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox'));
         	}
@@ -443,6 +443,9 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
         }
 
         $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
+        
+        unset($r['Arrival']);
+        unset($r['Departure']);
 
         $rows[] = $r;
 
@@ -782,7 +785,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
             </div>
             <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;font-size:0.9em;">
                 <input id="printButton" value="Print" type="button" />
-                <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
+                <input id="TxButton" value="" type="button" style="margin-left:2em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
                 <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
         	</div>

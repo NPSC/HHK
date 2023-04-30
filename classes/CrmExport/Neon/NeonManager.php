@@ -363,6 +363,8 @@ class NeonManager extends AbstractExportManager {
             foreach ($parms as $k => $v) {
                 $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
             }
+            
+            $this->setAccountId((isset($parms['accountId']) ? $parms['accountId'] : ''));
 
             // Neon Househods
             $result = $this->searchHouseholds($id);
@@ -1841,7 +1843,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $markup;
     }
 
-    protected function saveCredentials(\PDO $dbh, $post, $username) {
+    protected function saveCredentials(\PDO $dbh, $username) {
 
         $result = '';
         $crmRs = new CmsGatewayRS();
@@ -1851,17 +1853,17 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             '_txtpwd'   => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtEPurl'   => FILTER_SANITIZE_URL,
         ];
-        $inputs = filter_input_array(INPUT_POST, $rags);
+        $post = filter_input_array(INPUT_POST, $rags);
 
         // User Id
         if (isset($post['_txtuserId'])) {
-            $crmRs->username->setNewVal(htmlspecialchars($inputs['_txtuserId']));
+            $crmRs->username->setNewVal(htmlspecialchars($post['_txtuserId']));
         }
 
         // Password
         if (isset($post['_txtpwd'])) {
 
-            $pw = htmlspecialchars($inputs['_txtpwd']);
+            $pw = htmlspecialchars($post['_txtpwd']);
 
             if ($pw != '' && $this->getPassword() != $pw) {
                 $pw = encryptMessage($pw);
@@ -1872,7 +1874,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         // Endpoint URL
         if (isset($post['_txtEPurl'])) {
-            $crmRs->endpointUrl->setNewVal($inputs['_txtEPurl']);
+            $crmRs->endpointUrl->setNewVal($post['_txtEPurl']);
         }
 
         $crmRs->Updated_By->setNewVal($username);
@@ -1908,14 +1910,14 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $result;
     }
 
-    public function saveConfig(\PDO $dbh, $post) {
+    public function saveConfig(\PDO $dbh) {
 
         $uS = Session::getInstance();
         $count = 0;
         $idTypeMap = 0;
 
         // credentials
-        $results = $this->saveCredentials($dbh, $post, $uS->username);
+        $this->saveCredentials($dbh, $uS->username);
 
 
         // Custom fields
@@ -1976,11 +1978,13 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             $nTbl = new HTMLTable();
             $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
 
+            $listNames = filter_input_array(INPUT_POST, array('sel' . $list['List_Name'] => array('filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_FORCE_ARRAY)));
+            
             foreach ($neonItems as $n => $k) {
 
-                if (isset($_POST['sel' . $list['List_Name']][$n])) {
+                if (isset($listNames[$n])) {
 
-                    $hhkTypeCode = filter_var($_POST['sel' . $list['List_Name']][$n], FILTER_SANITIZE_STRING);
+                    $hhkTypeCode = $listNames[$n];
 
                     if ($hhkTypeCode == '') {
                         // delete if previously set

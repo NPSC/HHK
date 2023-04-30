@@ -2,6 +2,7 @@
 //
 var stopTransfer,
         $visitButton,
+        $memberButton,
         $psgCBs,
         $excCBs,
         $relSels,
@@ -130,6 +131,8 @@ function transferRemote(transferIds) {
             $('#printArea').show();
             $('#divTable').empty().append($(incmg.data));
         }
+        
+        throttleMembers();
     });
 
 }
@@ -184,13 +187,47 @@ function throttleVisits() {
 
             transferVisits($(this).data('idpsg'), rels);
 
-            return false;  // leave each
+            return false;
         }
     });
 
     if (donut) {
         stopTransfer = true;
         $visitButton.val('Start Visit Transfers');
+    }
+}
+
+function throttleMembers() {
+
+    if (stopTransfer) {
+        $memberButton.val('Resume Member Transfers');
+        return;
+    }
+
+    let donut = true;
+
+    // Do one at a time.
+     $('input.hhk-tfmem').each(function () {
+
+        if ($(this).prop('checked')) {
+
+            donut = false;
+            const props = {'checked': false, 'disabled': true};
+
+            $(this).parents('tr').css('background-color', 'lightgray');
+
+            $(this).prop(props).end();
+
+
+            transferRemote($(this).data('txid'));
+
+            return false; 
+        }
+    });
+
+    if (donut) {
+        stopTransfer = true;
+        $memberButton.val('Start Member Transfers');
     }
 }
 
@@ -505,32 +542,32 @@ function getRemote(item, source) {
 
             } else {
 
-//                var updteRemote = $('<input type="button" id="btnUpdate" value="" style="margin-left:.3em;" />');
-//
-//                if (incmg.accountId === '') {
-//                    updteRemote.val('Transfer to Remote');
-//                    updteRemote.button().click(function () {
-//
-//                        if ($(this).val() === 'Working...') {
-//                            return;
-//                        }
-//                        $(this).val('Working...');
-//
-//                        transferRemote([item.id]);
-//                    });
-//                } else if (incmg.accountId) {
-//                    updteRemote.val('Update Remote');
-//                    updteRemote.button().click(function () {
-//
-//                        if ($(this).val() === 'Working...') {
-//                            return;
-//                        }
-//                        $(this).val('Working...');
-//                        updateRemote(item.id, incmg.accountId);
-//                    });
-//                } else {
-//                    updteRemote = '';
-//                }
+                var updteRemote = $('<input type="button" id="btnUpdate" value="" style="margin-left:.3em;" />');
+
+                if (incmg.accountId === '') {
+                    updteRemote.val('Transfer to Remote');
+                    updteRemote.button().click(function () {
+
+                        if ($(this).val() === 'Working...') {
+                            return;
+                        }
+                        $(this).val('Working...');
+
+                        transferRemote([item.id]);
+                    });
+                } else if (incmg.accountId) {
+                    updteRemote.val('Update Remote');
+                    updteRemote.button().click(function () {
+
+                        if ($(this).val() === 'Working...') {
+                            return;
+                        }
+                        $(this).val('Working...');
+                        updateRemote(item.id, incmg.accountId);
+                    });
+                } else {
+                    updteRemote = '';
+                }
 
                 $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote));
                 $('#txtSearch').val('');
@@ -603,10 +640,12 @@ $(document).ready(function () {
         $('#btnPay').hide();
         $('#btnVisits').hide();
         $('#divMembers').empty();
+        
+        stopTransfer = true;
 
         $('#tblrpt').dataTable({
             'columnDefs': [
-                {'targets': [7, 9, 10],
+                {'targets': [7],
                     'type': 'date',
                     'render': function (data, type, row) {
                         return dateRender(data, type, dateFormat);
@@ -618,20 +657,46 @@ $(document).ready(function () {
             "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
         });
 
-        $('#TxButton').button().show().click(function () {
-            if ($('#TxButton').val() === 'Working...') {
-                return;
-            }
-            $('#TxButton').val('Working...');
+        $('#TxButton')
+                .button()
+                .val('Start Member Transfers')
+                .show()
+                .click(function () {
 
-            let txIds = {};
-            $('.hhk-txCbox').each(function () {
-                if ($(this).prop('checked')) {
-                    txIds[$(this).data('txid')] = $(this).data('txid');
-                }
-            });
-            transferRemote(txIds);
-        });
+                    $('div#retrieve').empty();
+
+                    // Switch transfer control
+                    if (stopTransfer) {
+                        stopTransfer = false;
+                    } else {
+                        stopTransfer = true;
+                    }
+
+                    // UPdate controls
+                    if (stopTransfer) {
+                        // Stop
+                        $(this).val('Stopping ...');
+                    } else {
+                        // start
+                        $(this).val('Stop Transfers');
+                        throttleMembers();
+                    }
+                });
+
+//        $('#TxButton').button().show().click(function () {
+//            if ($('#TxButton').val() === 'Working...') {
+//                return;
+//            }
+//            $('#TxButton').val('Working...');
+//
+//            let txIds = {};
+//            $('.hhk-txCbox').each(function () {
+//                if ($(this).prop('checked')) {
+//                    txIds[$(this).data('txid')] = $(this).data('txid');
+//                }
+//            });
+//            transferRemote(txIds);
+//        });
 
         // Retrieve HHK Payments
     } else if (makeTable === '2') {

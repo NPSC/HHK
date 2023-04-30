@@ -17,14 +17,13 @@ use GuzzleHttp\Utils;
 class SalesforceManager extends AbstractExportManager {
 
 
-    const sfVersion = 'v45.0/';
 
     const oAuthEndpoint = 'services/oauth2/token';
-    const endPoint = 'services/data/' . self::sfVersion;
-    const queryEndpoint = self::endPoint . 'query';
-    const searchEndpoint = self::endPoint . 'search';
-
     const SearchViewName = 'vguest_search_sf';
+    
+    private $endPoint;
+    private $queryEndpoint;
+    private $searchEndpoint;
 
     /**
      * {@inheritDoc}
@@ -32,6 +31,12 @@ class SalesforceManager extends AbstractExportManager {
      */
     public function __construct(\PDO $dbh, $cmsName) {
         parent::__construct($dbh, $cmsName);
+        
+        // build the urls
+        $this->endPoint = 'services/data/v' . $this->getApiVersion() . "/";
+        $this->queryEndpoint = $this->endPoint . 'query';
+        $this->searchEndpoint = $this->endPoint . 'search';
+
 
         $credentials = new Credentials();
         $credentials->setBaseURI($this->endpointURL);
@@ -52,7 +57,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $query = "FIND {" . $searchCriteria['letters'] . "*} IN Name Fields RETURNING Contact(Id, Name, phone, email)";
 
-        $result = $this->webService->search($query, self::searchEndpoint);
+        $result = $this->webService->search($query, $this->searchEndpoint);
 
         if (isset($result['searchRecords'])) {
 
@@ -110,6 +115,7 @@ class SalesforceManager extends AbstractExportManager {
         $url = (isset($parameters['url']) ? $parameters['url'] : '');
         $reply = '';
         $resultStr = new HTMLTable();
+        $this->setAccountId('');
 
         if ($source === 'hhk') {
 
@@ -119,10 +125,16 @@ class SalesforceManager extends AbstractExportManager {
                 $reply = 'Error - HHK Id not found';
             } else {
                 foreach ($row as $k => $v) {
-                    $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
+                    
+                    if ($k == 'External_Id' && $v == SELF::EXCLUDE_TERM) {
+                        $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd('*Excluded*'));
+                    } else {
+                        $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
+                    }
                 }
 
                 $reply = $resultStr->generateMarkup();
+                $this->setAccountId($row['External_Id']);
             }
 
         } else if ($source == 'remote') {
@@ -201,10 +213,12 @@ class SalesforceManager extends AbstractExportManager {
 
                 // Make sure the external Id is defined locally
                 if (isset($result['records'][0]['Id']) && $result['records'][0]['Id'] != '') {
+                    // This is an Update
 
                     $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $result['records'][0]['Id']);
                     $f['Account ID'] = $result['records'][0]['Id'];
                     $f['Result'] = 'Previously Transferred.';
+                    $f['Update'] = 'q';
 
                 } else {
                     $f['Result'] = 'The search results Account Id is empty.';
@@ -216,7 +230,7 @@ class SalesforceManager extends AbstractExportManager {
             } else if ( isset($result['totalSize']) && $result['totalSize'] > 1 ) {
 
                 // We have more than one contact...
-                $f['Result'] = 'Multiple Accounts.';
+                $f['Result'] = 'There are ' . $result['totalSize'] .' Accounts. No action Taken';
                 $replys[$r['HHK_idName__c']] = $f;
 
 
@@ -232,6 +246,14 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
                 $filteredRow = [];
+                
+                // Check external Id
+                if (isset($row['External_Id']) && $row['External_Id'] == self::EXCLUDE_TERM) {
+                    // Skip excluded members.
+                    Continue;
+                } else if (isset($row['External_Id'])) {
+                    $row['External_Id'] = '';
+                }
 
                 foreach ($row as $k => $w) {
                     if ($w != '') {
@@ -239,7 +261,7 @@ class SalesforceManager extends AbstractExportManager {
                     }
                 }
                 // Create new account
-                $newAcctResult = $this->webService->postUrl(self::endPoint . 'sobjects/Contact/', $filteredRow);
+                $newAcctResult = $this->webService->postUrl($this->endPoint . 'sobjects/Contact/', $filteredRow);
 
                 if ($this->checkError($newAcctResult)) {
                     $f['Result'] = $this->errorMessage;
@@ -272,6 +294,77 @@ class SalesforceManager extends AbstractExportManager {
 
     }
 
+    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $extraSourceCols = [], $updateAddr = TRUE) {
+
+        if ($idName < 1) {
+            throw new RuntimeException('HHK Member Id not specified: ' . $idName);
+        }
+
+
+        // Get member data record
+        $r = $this->loadSourceDB($dbh, $idName, 'vguest_data_neon', $extraSourceCols);
+
+
+        if (is_null($r)) {
+            throw new RuntimeException('HHK Member Id not found: ' . $idName);
+        }
+
+        if (isset($accountData['accountId']) === FALSE) {
+            throw new RuntimeException("Remote account id not found for " . $r['firstName'] . " " . $r['lastName'] . ": HHK Id = " . $idName . ", Account Id = " . $r['accountId']);
+        }
+
+        if ($r['accountId'] != $accountData['accountId']) {
+            throw new RuntimeException("Account Id mismatch: local account Id = " . $r['accountId'] . ", remote account Id = " . $accountData['accountId'] . ", HHK Id = " . $idName);
+        }
+
+        $unwound = array();
+        $this->unwindResponse($unwound, $accountData);
+
+        $param['individualAccount.accountId'] = $unwound['accountId'];
+
+        // Name, phone, email
+        NeonHelper::fillPcName($r, $param, $unwound);
+
+        // Address
+        if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
+
+            if ($updateAddr) {
+                $r['isPrimaryAddress'] = 'true';
+                NeonHelper::fillPcAddr($r, $param, $unwound);
+            } else {
+                // dont update address from HHK.
+                NeonHelper::fillPcAddr(array(), $param, $unwound);
+            }
+
+        }
+
+        // Other crap
+        NeonHelper::fillOther($r, $param, $unwound);
+
+        // Custom Parameters
+        $paramStr = NeonHelper::fillIndividualAccount($r) . NeonHelper::fillCustomFields($r, $unwound);
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+
+        $request = array(
+            'method' => 'account/updateIndividualAccount',
+            'parameters' => $param,
+            'customParmeters' => $paramStr
+        );
+
+        $result = $this->webService->go($request);
+
+        if ($this->checkError($result)) {
+            $msg = $this->errorMessage;
+        } else {
+            $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
+        }
+
+        return $msg;
+
+    }
+    
     protected function checkError($result) {
 
         if (isset($result['errors']) && count($result['errors']) > 0) {
@@ -334,7 +427,7 @@ class SalesforceManager extends AbstractExportManager {
 
             $query = 'Select ' . $fields . ' FROM Contact WHERE ' . $where . ' LIMIT 10';
 
-            $result = $this->webService->search($query, self::queryEndpoint);
+            $result = $this->webService->search($query, $this->queryEndpoint);
 
         }
 
@@ -366,7 +459,6 @@ class SalesforceManager extends AbstractExportManager {
 
         $tbl = new HTMLTable();
 
-
         $tbl->addBodyTr(
             HTMLTable::makeTh('CRM Name', array('style' => 'border-top:2px solid black;'))
             . HTMLTable::makeTd($this->getServiceTitle(), array('style' => 'border-top:2px solid black;'))
@@ -382,44 +474,62 @@ class SalesforceManager extends AbstractExportManager {
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Password', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getPassword(), array('name' => '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getPassword(), array('name' => '_txtpwd', 'size' => '100')) . ' (Obfuscated)')
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Endpoint URL', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEndpointUrl(), array('name' => '_txtEPurl', 'size' => '90')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEndpointUrl(), array('name' => '_txtEPurl', 'size' => '100')))
             );
 
         $tbl->addBodyTr(
             HTMLTable::makeTh('Client Id', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getClientId(), array('name' => '_txtclientId', 'size' => '90')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getClientId(), array('name' => '_txtclientId', 'size' => '100')))
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Client Secret', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getClientSecret(), array('name' => '_txtclientsecret', 'size' => '90')) . ' (Obfuscated)')
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getClientSecret(), array('name' => '_txtclientsecret', 'size' => '100')) . ' (Obfuscated)')
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Security Token', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getSecurityToken(), array('name' => '_txtsectoken', 'size' => '90')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getSecurityToken(), array('name' => '_txtsectoken', 'size' => '100')))
+            );
+
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('API Version', array())
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getApiVersion(), array('name' => '_txtapiVersion', 'size' => '10')))
             );
 
         return $tbl->generateMarkup();
 
     }
 
-    protected function saveCredentials(\PDO $dbh, $post, $username) {
+    protected function saveCredentials(\PDO $dbh, $username) {
 
         $result = '';
         $crmRs = new CmsGatewayRS();
+        
+        $rags = [
+            '_txtuserId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            '_txtpwd' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            '_txtclientsecret' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            '_txtEPurl' => FILTER_SANITIZE_URL,
+            '_txtclientId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            '_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            '_txtapiVersion' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            
+        ];
 
+        $post = filter_input_array(INPUT_POST, $rags);
+        
         // User Id
         if (isset($post['_txtuserId'])) {
-            $crmRs->username->setNewVal(filter_var($post['_txtuserId'], FILTER_SANITIZE_STRING));
+            $crmRs->username->setNewVal($post['_txtuserId']);
         }
 
         // Password
         if (isset($post['_txtpwd'])) {
 
-            $pw = filter_var($post['_txtpwd'], FILTER_UNSAFE_RAW);
+            $pw = $post['_txtpwd'];
 
             if ($pw != '' && $this->getPassword() != $pw) {
                 $pw = encryptMessage($pw);
@@ -431,7 +541,7 @@ class SalesforceManager extends AbstractExportManager {
         // Client Secret
         if (isset($post['_txtclientsecret'])) {
 
-            $pw = filter_var($post['_txtclientsecret'], FILTER_UNSAFE_RAW);
+            $pw = $post['_txtclientsecret'];
 
             if ($pw != '' && $this->getClientSecret() != $pw) {
                 $pw = encryptMessage($pw);
@@ -442,17 +552,22 @@ class SalesforceManager extends AbstractExportManager {
 
         // Endpoint URL
         if (isset($post['_txtEPurl'])) {
-            $crmRs->endpointUrl->setNewVal(filter_var($post['_txtEPurl'], FILTER_SANITIZE_URL));
+            $crmRs->endpointUrl->setNewVal($post['_txtEPurl']);
         }
 
         // Client Id
         if (isset($post['_txtclientId'])) {
-            $crmRs->clientId->setNewVal(filter_var($post['_txtclientId'], FILTER_UNSAFE_RAW));
+            $crmRs->clientId->setNewVal($post['_txtclientId']);
         }
 
         // Security Token
         if (isset($post['_txtsectoken'])) {
-            $crmRs->securityToken->setNewVal(filter_var($post['_txtsectoken'], FILTER_SANITIZE_STRING));
+            $crmRs->securityToken->setNewVal($post['_txtsectoken']);
+        }
+
+        // API Version
+        if (isset($post['_txtapiVersion'])) {
+            $crmRs->apiVersion->setNewVal($post['_txtapiVersion']);
         }
 
         $crmRs->Updated_By->setNewVal($username);
@@ -488,12 +603,12 @@ class SalesforceManager extends AbstractExportManager {
         return $result;
     }
 
-    public function saveConfig(\PDO $dbh, $post) {
+    public function saveConfig(\PDO $dbh) {
 
         $uS = Session::getInstance();
 
         // credentials
-        return $this->saveCredentials($dbh, $post, $uS->username);
+        return $this->saveCredentials($dbh, $uS->username);
 
     }
 

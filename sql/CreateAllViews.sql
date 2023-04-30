@@ -1170,6 +1170,7 @@ CREATE OR REPLACE VIEW `vguest_search_sf` AS
 CREATE  OR REPLACE VIEW `vguest_data_sf` AS
      SELECT 
         `n`.`idName` AS `HHK_idName__c`,
+        `n`.`External_Id` AS `Id`,
         IFNULL(`g1`.`Description`, '') AS `Salutation`,
         `n`.`Name_First` AS `FirstName`,
         `n`.`Name_Last` AS `LastName`,
@@ -1494,7 +1495,7 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
     IFNULL(`ne`.`Email`, '') AS `Email`,
     IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
     `nd`.`No_Return` AS `No Return`,
-        MAX(IFNULL(s.Span_Start_Date, '')) AS `Arrival`,
+    MAX(IFNULL(s.Span_Start_Date, '')) AS `Arrival`,
     IFNULL(s.Span_End_Date, '') AS `Departure`
 FROM
     `stays` `s`

@@ -51,13 +51,13 @@ try {
                             'flags'  => FILTER_FORCE_ARRAY,
                            )
             );
-            $searchCriteria = filter_input_array(INPUT_POST, $rags);
+            $post = filter_input_array(INPUT_POST, $rags);
 
-            if (isset($searchCriteria['ids']) && count($searchCriteria['ids']) > 0) {
+            if (isset($post['ids']) && count($post['ids']) > 0) {
 
                 try {
                     
-                    $reply = $transfer->exportMembers($dbh, $searchCriteria['ids']);
+                    $reply = $transfer->exportMembers($dbh, $post['ids']);
                     
                     $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblrpt');
                     
@@ -76,9 +76,9 @@ try {
                 'en' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             );
 
-            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
+            $post = filter_input_array(INPUT_POST, $arguments);
 
-            $reply = $transfer->exportPayments($dbh, $searchCriteria['st'], $searchCriteria['en']);
+            $reply = $transfer->exportPayments($dbh, $post['st'], $post['en']);
 
             $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
 
@@ -98,15 +98,15 @@ try {
                            ),
             );
 
-            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
+            $post = filter_input_array(INPUT_POST, $arguments);
 
             $rels = [];
-            foreach ($searchCriteria['rels'] as $v) {
+            foreach ($post['rels'] as $v) {
                 $rels[$v['id']] = $v['rel'];
             }
 
             // Visit results
-            $events['visits'] = $transfer->exportVisits($dbh, $uS->username, intVal($searchCriteria['psgId']), $rels);
+            $events['visits'] = $transfer->exportVisits($dbh, $uS->username, intVal($post['psgId']), $rels);
 
             // New members
             if (count($transfer->getMemberReplies()) > 0) {
@@ -129,10 +129,10 @@ try {
                     )
             );
 
-            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
+            $post = filter_input_array(INPUT_POST, $arguments);
 
             // Exclude results
-            $events['excludes'] = $transfer->setExcludeMember($dbh, $searchCriteria['psgIds']);
+            $events['excludes'] = $transfer->setExcludeMember($dbh, $post['psgIds']);
 
             break;
 
@@ -143,10 +143,10 @@ try {
                 'mode' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             );
 
-            $searchCriteria = filter_input_array(INPUT_GET, $arguments);
+            $post = filter_input_array(INPUT_GET, $arguments);
 
             try {
-                $events = $transfer->searchMembers($searchCriteria);
+                $events = $transfer->searchMembers($post);
             } catch (Exception $ex) {
                 $events = array("error" => "Search Error: " . $ex->getMessage());
             }
@@ -185,9 +185,9 @@ try {
                 'url' => FILTER_SANITIZE_URL
             );
 
-            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
+            $post = filter_input_array(INPUT_POST, $arguments);
 
-            $events['data'] = $transfer->getMember($dbh, $searchCriteria);
+            $events['data'] = $transfer->getMember($dbh, $post);
             $events['accountId'] = $transfer->getAccountId();
 
             break;
@@ -199,11 +199,11 @@ try {
                 'url' => FILTER_SANITIZE_URL
             );
 
-            $searchCriteria = filter_input_array(INPUT_POST, $arguments);
+            $post = filter_input_array(INPUT_POST, $arguments);
 
-            $q = str_replace('Find', 'Select', $searchCriteria['q']);
+            $q = str_replace('Find', 'Select', $post['q']);
 
-            $events['data'] = $transfer->getExplicit($dbh, $searchCriteria['url'], $q);
+            $events['data'] = $transfer->getExplicit($dbh, $post['url'], $q);
 
             break;
 
@@ -223,7 +223,7 @@ try {
                     $result = $transfer->retrieveRemoteAccount($filtered['accountId']);
 
                     try {
-                        $updateResult = $transfer->updateCRM($dbh, $result, $filtered['id']);
+                        $updateResult = $transfer->updateRemoteMember($dbh, $result, $filtered['id']);
                     } catch (RuntimeException $e) {
                         $updateResult = $e->getMessage();
                     }
