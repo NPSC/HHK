@@ -1164,6 +1164,7 @@ CREATE OR REPLACE VIEW `vguest_search_sf` AS
             AND `n`.`Record_Member` = 1
             AND `n`.`Member_Status` IN ('a' , 'd', 'in');
 
+
 -- -----------------------------------------------------
 -- View `vguest_data_sf`
 -- -----------------------------------------------------

@@ -641,6 +641,8 @@ $(document).ready(function () {
         $('#btnVisits').hide();
         $('#divMembers').empty();
         
+        $memberButton = $('#TxButton');
+        
         stopTransfer = true;
 
         $('#tblrpt').dataTable({
@@ -657,7 +659,7 @@ $(document).ready(function () {
             "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
         });
 
-        $('#TxButton')
+        $memberButton
                 .button()
                 .val('Start Member Transfers')
                 .show()

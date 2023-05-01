@@ -20,7 +20,7 @@ class SalesforceManager extends AbstractExportManager {
 
     const oAuthEndpoint = 'services/oauth2/token';
     const SearchViewName = 'vguest_search_sf';
-    
+
     private $endPoint;
     private $queryEndpoint;
     private $searchEndpoint;
@@ -31,7 +31,7 @@ class SalesforceManager extends AbstractExportManager {
      */
     public function __construct(\PDO $dbh, $cmsName) {
         parent::__construct($dbh, $cmsName);
-        
+
         // build the urls
         $this->endPoint = 'services/data/v' . $this->getApiVersion() . "/";
         $this->queryEndpoint = $this->endPoint . 'query';
@@ -125,7 +125,7 @@ class SalesforceManager extends AbstractExportManager {
                 $reply = 'Error - HHK Id not found';
             } else {
                 foreach ($row as $k => $v) {
-                    
+
                     if ($k == 'External_Id' && $v == SELF::EXCLUDE_TERM) {
                         $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd('*Excluded*'));
                     } else {
@@ -174,6 +174,13 @@ class SalesforceManager extends AbstractExportManager {
     public function exportMembers(\PDO $dbh, array $sourceIds) {
 
         $replys = array();
+        $searchTerms = array(
+            'Id'=>'Id',
+            'FirstName'=>'FirstName',
+            'LastName'=>'LastName',
+            'Email'=>'Email',
+            'Phone'=>'Phone',
+        );
 
         if (count($sourceIds) == 0) {
             $replys[0] = array('error'=>"The list of HHK Id's to send is empty.");
@@ -193,6 +200,14 @@ class SalesforceManager extends AbstractExportManager {
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $f = array();   // output array
+            $targetSearchData = array();
+
+            // check for excluded
+            if ($r['Id'] == self::EXCLUDE_TERM) {
+                $f['Result'] = 'This member is Excluded';
+                $replys[$r['HHK_idName__c']] = $f;
+                continue;
+            }
 
             // Prefill output array
             foreach ($r as $k => $v) {
@@ -200,11 +215,32 @@ class SalesforceManager extends AbstractExportManager {
                 if ($k != '') {
                     $f[$k] = $v;
                 }
+
+                if (isset($searchTerms[$k])) {
+                    $targetSearchData[$k] = $v;
+                }
+
             }
 
-            // Search target system
-            $result = $this->searchTarget($r);
+            // Search target system.  Treat return as user input.
+            $rawResult = $this->searchTarget($targetSearchData);
 
+            $rags = array(
+                'totalSize' => array(
+                    'filter' => FILTER_VALIDATE_INT,
+                    'flags'  => FILTER_REQUIRE_SCALAR,
+                )
+            );
+
+            $result = filter_var_array($rawResult, $rags);
+
+            // Check for not finding the account Id
+            if ( isset($result['totalSize'] ) && $result['totalSize'] == 0 && $r['Id'] != '') {
+                // Account was deleted from the Neon side.
+                $f['Result'] = 'Account Deleted at Saleforce';
+                $replys[$r['HHK_idName__c']] = $f;
+                continue;
+            }
 
             // Test results
             if ( isset($result['totalSize']) && $result['totalSize'] == 1 ) {
@@ -212,13 +248,13 @@ class SalesforceManager extends AbstractExportManager {
                 // We have a similar contact.  Check for address change
 
                 // Make sure the external Id is defined locally
-                if (isset($result['records'][0]['Id']) && $result['records'][0]['Id'] != '') {
+                if (isset($rawResult['records'][0]['Id']) && $rawResult['records'][0]['Id'] != '') {
                     // This is an Update
 
-                    $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $result['records'][0]['Id']);
-                    $f['Account ID'] = $result['records'][0]['Id'];
+                    $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $rawResult['records'][0]['Id']);
+                    $f['Account ID'] = $rawResult['records'][0]['Id'];
                     $f['Result'] = 'Previously Transferred.';
-                    $f['Update'] = 'q';
+                    $f['Update'] = 'y';
 
                 } else {
                     $f['Result'] = 'The search results Account Id is empty.';
@@ -230,6 +266,10 @@ class SalesforceManager extends AbstractExportManager {
             } else if ( isset($result['totalSize']) && $result['totalSize'] > 1 ) {
 
                 // We have more than one contact...
+                foreach ($rawResult['records'] as $rec) {
+
+                }
+
                 $f['Result'] = 'There are ' . $result['totalSize'] .' Accounts. No action Taken';
                 $replys[$r['HHK_idName__c']] = $f;
 
@@ -246,7 +286,7 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
                 $filteredRow = [];
-                
+
                 // Check external Id
                 if (isset($row['External_Id']) && $row['External_Id'] == self::EXCLUDE_TERM) {
                     // Skip excluded members.
@@ -260,6 +300,7 @@ class SalesforceManager extends AbstractExportManager {
                         $filteredRow[$k] = $w;
                     }
                 }
+
                 // Create new account
                 $newAcctResult = $this->webService->postUrl($this->endPoint . 'sobjects/Contact/', $filteredRow);
 
@@ -364,7 +405,7 @@ class SalesforceManager extends AbstractExportManager {
         return $msg;
 
     }
-    
+
     protected function checkError($result) {
 
         if (isset($result['errors']) && count($result['errors']) > 0) {
@@ -507,7 +548,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $result = '';
         $crmRs = new CmsGatewayRS();
-        
+
         $rags = [
             '_txtuserId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtpwd' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
@@ -516,11 +557,11 @@ class SalesforceManager extends AbstractExportManager {
             '_txtclientId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtapiVersion' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            
+
         ];
 
         $post = filter_input_array(INPUT_POST, $rags);
-        
+
         // User Id
         if (isset($post['_txtuserId'])) {
             $crmRs->username->setNewVal($post['_txtuserId']);
@@ -636,9 +677,7 @@ class SalesforceManager extends AbstractExportManager {
             $rows[0]['LastName'] = $this->unencodeHTML($rows[0]['LastName']);
             $rows[0]['Nickname__c'] = $this->unencodeHTML($rows[0]['Nickname__c']);
 
-
             return $rows[0];
-
         }
 
         return NULL;
