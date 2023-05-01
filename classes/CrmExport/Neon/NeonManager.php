@@ -186,7 +186,7 @@ class NeonManager extends AbstractExportManager {
                         // Update the individual type
                         try{
                             $retrieveResult = $this->retrieveRemoteAccount($result['searchResults'][0]['Account ID']);
-                            $f['Result'] .= $this->updateCRM($dbh, $retrieveResult, $r['HHK_ID']);
+                            $f['Result'] .= $this->updateRemoteMember($dbh, $retrieveResult, $r['HHK_ID']);
                         } catch (RuntimeException $hex) {
                             $f['Result'] .= 'Update Individual Type Error: ' . $hex->getMessage();
                             continue;
@@ -345,7 +345,7 @@ class NeonManager extends AbstractExportManager {
                 foreach ($row as $k => $v) {
                      $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
                 }
-                
+
                 $reply = $resultStr->generateMarkup();
                 $this->setAccountId((isset($row['accountId']) ? $row['accountId'] : ''));
             }
@@ -363,7 +363,7 @@ class NeonManager extends AbstractExportManager {
             foreach ($parms as $k => $v) {
                 $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
             }
-            
+
             $this->setAccountId((isset($parms['accountId']) ? $parms['accountId'] : ''));
 
             // Neon Househods
@@ -377,7 +377,7 @@ class NeonManager extends AbstractExportManager {
             foreach ($parms as $k => $v) {
                 $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
             }
-            
+
             $reply = $resultStr->generateMarkup();
 
         } else {
@@ -409,7 +409,7 @@ class NeonManager extends AbstractExportManager {
         NeonHelper::fillOther($r, $param);
 
         // Custom Parameters
-        $paramStr .= NeonHelper::fillCustomFields($r);
+        $paramStr .= NeonHelper::fillCustomFields([], $r);
 
 
         $request = array(
@@ -476,8 +476,8 @@ class NeonManager extends AbstractExportManager {
         $idMap = array();
         $mappedItems = array();
         $whereClause = '';
-        
-        
+
+
         $endDT = new \DateTimeImmutable($endStr);
 
         try {
@@ -635,7 +635,7 @@ class NeonManager extends AbstractExportManager {
 
         if ($externalId != '' && $idPayment > 0) {
 
-            $extId = filter_var($externalId, FILTER_SANITIZE_STRING);
+            $extId = filter_var($externalId, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $stmt = $dbh->query("Select count(*) from payment where idPayment = $idPayment and External_Id = '$extId'");
             $extRows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -971,7 +971,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
 
         // Update Neon with these customdata.
-        $f['Update_Message'] = $this->updateCRM($dbh, $origValues, $r['hhkId'], $codes, FALSE);
+        $f['Update_Message'] = $this->updateRemoteMember($dbh, $origValues, $r['hhkId'], $codes, FALSE);
 
         return $f;
     }
@@ -1979,7 +1979,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
 
             $listNames = filter_input_array(INPUT_POST, array('sel' . $list['List_Name'] => array('filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_FORCE_ARRAY)));
-            
+
             foreach ($neonItems as $n => $k) {
 
                 if (isset($listNames[$n])) {

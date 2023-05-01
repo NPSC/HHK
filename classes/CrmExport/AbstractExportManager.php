@@ -158,7 +158,7 @@ abstract class AbstractExportManager {
         $replys[0] = array('error' => 'Updating Members is not implemented');
         return $replys;
     }
-    
+
     public abstract function showConfig(\PDO $dbh);
     public abstract function saveConfig(\PDO $dbh);
 
@@ -259,10 +259,15 @@ abstract class AbstractExportManager {
         return NULL;
     }
 
+    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper)
+    {
+        return array();
+    }
+
     public function getMyCustomFields(\PDO $dbh) {
         return [];
     }
-    
+
     public function getAccountId() {
         return $this->accountId;
     }

@@ -8,6 +8,8 @@ namespace HHK\CrmExport\Neon;
  */
 final class NeonHelper {
 
+    Const MAX_CUSTOM_PROPERTYS = 50;
+
     public static function fillDonation($r, &$param) {
 
         $codes = array(
@@ -235,13 +237,13 @@ final class NeonHelper {
         }
 
         // Search Neon custome fields that we don't control and copy them.
-        $customParamStr .= self::fillOtherCustomFields($origValues);
+        $customParamStr .= self::fillOtherCustomFields($customFields, $origValues);
 
         return $customParamStr;
 
     }
 
-    public static function fillOtherCustomFields($customFields, $origValues) {
+    protected static function fillOtherCustomFields($customFields, $origValues) {
 
         $condition = TRUE;
         $index = 0;

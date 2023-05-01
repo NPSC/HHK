@@ -50,7 +50,9 @@ class SalesforceManager extends AbstractExportManager {
         $this->webService = new SF_Connector($credentials);
     }
 
-
+    /**
+     *
+     */
     public function searchMembers ($searchCriteria) {
 
         $replys = [];
@@ -174,13 +176,6 @@ class SalesforceManager extends AbstractExportManager {
     public function exportMembers(\PDO $dbh, array $sourceIds) {
 
         $replys = array();
-        $searchTerms = array(
-            'Id'=>'Id',
-            'FirstName'=>'FirstName',
-            'LastName'=>'LastName',
-            'Email'=>'Email',
-            'Phone'=>'Phone',
-        );
 
         if (count($sourceIds) == 0) {
             $replys[0] = array('error'=>"The list of HHK Id's to send is empty.");
@@ -196,11 +191,12 @@ class SalesforceManager extends AbstractExportManager {
             return $replys;
         }
 
+        $searchTerms = $this->getSearchFields($dbh, '');
+
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            $f = array();   // output array
-            $targetSearchData = array();
+            $f = array();   // output fields array
 
             // check for excluded
             if ($r['Id'] == self::EXCLUDE_TERM) {
@@ -209,21 +205,22 @@ class SalesforceManager extends AbstractExportManager {
                 continue;
             }
 
+            // Clean up names fresh from the DB
+            $r['FirstName'] = $this->unencodeHTML($r['FirstName']);
+            $r['Middle_Name__c'] = $this->unencodeHTML($r['Middle_Name__c']);
+            $r['LastName'] = $this->unencodeHTML($r['LastName']);
+
+
             // Prefill output array
             foreach ($r as $k => $v) {
 
-                if ($k != '') {
+                if ($k != '' && $k != 'Addr_Updated' && $k != 'Addr_Verified') {
                     $f[$k] = $v;
                 }
-
-                if (isset($searchTerms[$k])) {
-                    $targetSearchData[$k] = $v;
-                }
-
             }
 
             // Search target system.  Treat return as user input.
-            $rawResult = $this->searchTarget($targetSearchData);
+            $rawResult = $this->searchTarget($f);
 
             $rags = array(
                 'totalSize' => array(
@@ -337,6 +334,8 @@ class SalesforceManager extends AbstractExportManager {
 
     public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $extraSourceCols = [], $updateAddr = TRUE) {
 
+        $msg = '';
+
         if ($idName < 1) {
             throw new RuntimeException('HHK Member Id not specified: ' . $idName);
         }
@@ -364,43 +363,43 @@ class SalesforceManager extends AbstractExportManager {
         $param['individualAccount.accountId'] = $unwound['accountId'];
 
         // Name, phone, email
-        NeonHelper::fillPcName($r, $param, $unwound);
+        //NeonHelper::fillPcName($r, $param, $unwound);
 
         // Address
         if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
 
             if ($updateAddr) {
                 $r['isPrimaryAddress'] = 'true';
-                NeonHelper::fillPcAddr($r, $param, $unwound);
+               // NeonHelper::fillPcAddr($r, $param, $unwound);
             } else {
                 // dont update address from HHK.
-                NeonHelper::fillPcAddr(array(), $param, $unwound);
+              //  NeonHelper::fillPcAddr(array(), $param, $unwound);
             }
 
         }
 
         // Other crap
-        NeonHelper::fillOther($r, $param, $unwound);
+        //NeonHelper::fillOther($r, $param, $unwound);
 
         // Custom Parameters
-        $paramStr = NeonHelper::fillIndividualAccount($r) . NeonHelper::fillCustomFields($r, $unwound);
+        //$paramStr = NeonHelper::fillIndividualAccount($r) . NeonHelper::fillCustomFields($r, $unwound);
 
         // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
+        //$this->openTarget($this->userId, $this->password);
 
-        $request = array(
-            'method' => 'account/updateIndividualAccount',
-            'parameters' => $param,
-            'customParmeters' => $paramStr
-        );
+        // $request = array(
+        //     'method' => 'account/updateIndividualAccount',
+        //     'parameters' => $param,
+        //     'customParmeters' => $paramStr
+        // );
 
-        $result = $this->webService->go($request);
+        // $result = $this->webService->go($request);
 
-        if ($this->checkError($result)) {
-            $msg = $this->errorMessage;
-        } else {
-            $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
-        }
+        // if ($this->checkError($result)) {
+        //     $msg = $this->errorMessage;
+        // } else {
+        //     $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
+        // }
 
         return $msg;
 
@@ -437,6 +436,36 @@ class SalesforceManager extends AbstractExportManager {
             $parm = " in (" . implode(',', $idList) . ") ";
             return $dbh->query("Select * from $view where `HHK_idName__c` $parm");
 
+        }
+
+        return NULL;
+    }
+
+    public function loadSourceDB(\PDO $dbh, $idName, $view, $extraSourceCols = []) {
+
+        $parm = intval($idName, 10);
+
+        if ($view == '') {
+            return NULL;
+        }
+
+        if ($parm > 0) {
+
+            $stmt = $dbh->query("Select * from $view where HHK_idName__c = $parm");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (count($extraSourceCols) > 0) {
+                foreach ($extraSourceCols as $k => $v) {
+                    $rows[0][$k] = $v;
+                }
+            }
+
+            $rows[0]['FirstName'] = $this->unencodeHTML($rows[0]['FirstName']);
+            $rows[0]['Middle_Name__c'] = $this->unencodeHTML($rows[0]['Middle_Name__c']);
+            $rows[0]['LastName'] = $this->unencodeHTML($rows[0]['LastName']);
+            $rows[0]['Nickname__c'] = $this->unencodeHTML($rows[0]['Nickname__c']);
+
+            return $rows[0];
         }
 
         return NULL;
@@ -652,37 +681,5 @@ class SalesforceManager extends AbstractExportManager {
         return $this->saveCredentials($dbh, $uS->username);
 
     }
-
-    public function loadSourceDB(\PDO $dbh, $idName, $view, $extraSourceCols = []) {
-
-        $parm = intval($idName, 10);
-
-        if ($view == '') {
-            return NULL;
-        }
-
-        if ($parm > 0) {
-
-            $stmt = $dbh->query("Select * from $view where HHK_idName__c = $parm");
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            if (count($extraSourceCols) > 0) {
-                foreach ($extraSourceCols as $k => $v) {
-                    $rows[0][$k] = $v;
-                }
-            }
-
-            $rows[0]['FirstName'] = $this->unencodeHTML($rows[0]['FirstName']);
-            $rows[0]['Middle_Name__c'] = $this->unencodeHTML($rows[0]['Middle_Name__c']);
-            $rows[0]['LastName'] = $this->unencodeHTML($rows[0]['LastName']);
-            $rows[0]['Nickname__c'] = $this->unencodeHTML($rows[0]['Nickname__c']);
-
-            return $rows[0];
-        }
-
-        return NULL;
-
-    }
-
 }
 

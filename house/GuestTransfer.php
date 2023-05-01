@@ -321,7 +321,7 @@ LIMIT 500");
         if (isset($visits[$g['PG Id']]) === FALSE) {
 
             // Load Primary guest.
-            $v = TransferMembers::findPrimaryGuest($dbh, $g['PG Id'], $g['idPsg'], $rMapper);
+            $v = $CmsManager::findPrimaryGuest($dbh, $g['PG Id'], $g['idPsg'], $rMapper);
 
             if (count($v) > 0) {
                 $visits[$g['PG Id']] = $v;
@@ -443,7 +443,7 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
         }
 
         $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
-        
+
         unset($r['Arrival']);
         unset($r['Departure']);
 
@@ -547,7 +547,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
         'stDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
         'enDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
     ];
-   
+
     $inputs = filter_input_array(INPUT_POST, $rags);
 
     $months = $inputs['selIntMonth'];
@@ -555,7 +555,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     $txtStart = $inputs['stDate'];
     $txtEnd = $inputs['enDate'];
     $selCal = intval($inputs['selCalendar'], 10);
-    
+
    if ($selCal == 20) {
         // fiscal year
         $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
