@@ -367,7 +367,7 @@ FROM
     reservation r
 WHERE
 case WHEN r.`Status` = '" .ReservationStatus::Staying . "' THEN
-		DATE(r.Actual_Arrival) < DATE(:dtend)
+		DATE(r.Actual_Arrival) < DATE(:rsend)
                 AND DATE(datedefaultnow(r.Expected_Departure)) > DATE(:dtstart)
 	WHEN r.`Status` = '" .ReservationStatus::Checkedout . "' THEN
         DATE(r.Actual_Arrival) < DATE(:dtend)
@@ -390,6 +390,7 @@ WHERE
                 ':start'=>$stDT->format('Y-m-d'),
                 ':dtstart'=>$stDT->format('Y-m-d'),
                 ':dtend'=>$enDT->format('Y-m-d'),
+                ':rsend'=>$enDT->format('Y-m-d'),
                 ':rustart'=>$stDT->format('Y-m-d'),
                 ':ruend'=>$enDT->format('Y-m-d')));
 
@@ -650,7 +651,7 @@ WHERE
         }
 
         if ($rTitle == '') {
-            return array("rescList"=>self::resourceTable($dbh, $showPartitions));
+            return array("rescList"=>self::resourceTable($dbh));
         }
 
         if (isset($post["selReType"])) {
@@ -724,7 +725,7 @@ WHERE
 
         }
 
-        return array("rescList"=>self::resourceTable($dbh, $showPartitions));
+        return array("rescList"=>self::resourceTable($dbh));
 
     }
 

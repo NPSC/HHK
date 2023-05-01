@@ -1,8 +1,6 @@
 <?php
 namespace HHK\sec;
 
-use Dotenv\Dotenv;
-
 /**
  * session.php
  *
@@ -83,8 +81,8 @@ class Session
     *    Stores datas in the session.
     *    Example: $instance->foo = 'bar';
     *
-    *    @param    name    Name of the data.
-    *    @param    value    Your data.
+    *    @param    $name    Name of the data.
+    *    @param    $value    Your data.
     *    @return    void
     **/
 
@@ -98,7 +96,7 @@ class Session
     *    Gets datas from the session.
     *    Example: echo $instance->foo;
     *
-    *    @param    name    Name of the data to get.
+    *    @param    $name    Name of the data to get.
     *    @return    mixed    Data stored in session.
     **/
 
@@ -154,9 +152,8 @@ class Session
     {
         if(!empty($confPath) && !empty($confFile)){
             try{
-                $config = Dotenv::createImmutable($confPath, $confFile);
-            	$config->safeLoad();
-                return strtoupper((isset($_ENV["Schema"])? $_ENV["Schema"]: '')) . 'HHKSESSION';
+                $config = parse_ini_file($confPath . $confFile, true);
+                return strtoupper((isset($config["db"]["Schema"])? $config["db"]["Schema"]: '')) . 'HHKSESSION';
             }catch(\Exception $ex){
                 return 'HHKSESSION';
             }

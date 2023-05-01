@@ -32,9 +32,9 @@ class SiteDbBackup {
     protected $config;
 
 
-    function __construct($filePath) {
+    function __construct($filePath, $configFileName) {
 
-        $this->config = $_ENV;
+        $this->config = parse_ini_file($configFileName, true);
 
         $this->filePath = $filePath;
         $this->clrFileSize = 0;
@@ -50,16 +50,16 @@ class SiteDbBackup {
         $this->bkupMessage = '';
         $zipPipe = '';
 
-        if (strtoupper($this->config['DBMS']) != 'MYSQL') {
+        if (strtoupper($this->config['db']['DBMS']) != 'MYSQL') {
             $this->bkupMessage = 'This backup only works for MySQL Databases.  ';
             return FALSE;
         }
 
-        $dbuser = $this->config["BackupUser"];
-        $dbpwd = $this->decrypt($this->config["BackupPassword"]);
+        $dbuser = $this->config['backup']["BackupUser"];
+        $dbpwd = $this->decrypt($this->config['backup']["BackupPassword"]);
 
-        $dbUrl = $this->config['URL'];
-        $dbname = $this->config['Schema'];
+        $dbUrl = $this->config['db']['URL'];
+        $dbname = $this->config['db']['Schema'];
 
         if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '' || $this->filePath == '') {
             $this->bkupMessage = 'Database Backup parameters are not set in site.cfg.  ';

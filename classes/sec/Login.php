@@ -3,7 +3,6 @@ namespace HHK\sec;
 
 
 use HHK\AlertControl\AlertMessage;
-use Dotenv\Dotenv;
 use HHK\Exception\CsrfException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
@@ -40,14 +39,13 @@ class Login {
 
         // Get the site configuration object
         try {
-            $config = Dotenv::createImmutable($confPath, $confFile);
-            $config->load();
+            $config = parse_ini_file($confPath . $confFile, true);
         } catch (\Exception $ex) {
             $ssn->destroy();
-            throw new RuntimeException("Configurtion file is missing, path=".$confPath . $confFile, 999, $ex);
+            throw new RuntimeException("Configurtion file is missing, path=".$confFile, 999, $ex);
         }
 
-        $ssn->sitePepper = (isset($_ENV["sitePepper"]) ? $_ENV["sitePepper"]:'');
+        $ssn->sitePepper = (isset($config["site"]["sitePepper"]) ? $config["site"]["sitePepper"]:'');
 
         try {
             self::dbParmsToSession($confPath, $confFile);
@@ -101,22 +99,21 @@ class Login {
         // get session instance
         $ssn = Session::getInstance();
 
-        if(!isset($_ENV["URL"])){
+        if(!isset($config["db"]["URL"])){
             try {
-                $config = Dotenv::createImmutable($confPath, $confFile);
-                $config->load();
+                $config = parse_ini_file($confPath . $confFile, true);
             } catch (\Exception $e) {
                 $ssn->destroy();
                 throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
             }
         }
 
-        if (isset($_ENV["URL"]) && isset($_ENV["User"]) && isset($_ENV["Password"]) && isset($_ENV["Schema"]) && isset($_ENV["DBMS"])) {
-            $ssn->databaseURL = $_ENV['URL'];
-            $ssn->databaseUName = $_ENV['User'];
-            $ssn->databasePWord = decryptMessage($_ENV['Password']);
-            $ssn->databaseName = $_ENV['Schema'];
-            $ssn->dbms = $_ENV['DBMS'];
+        if (isset($config["db"]["URL"]) && isset($config["db"]["User"]) && isset($config["db"]["Password"]) && isset($config["db"]["Schema"]) && isset($config["db"]["DBMS"])) {
+            $ssn->databaseURL = $config["db"]['URL'];
+            $ssn->databaseUName = $config["db"]['User'];
+            $ssn->databasePWord = decryptMessage($config["db"]['Password']);
+            $ssn->databaseName = $config["db"]['Schema'];
+            $ssn->dbms = $config["db"]['DBMS'];
         } else {
             $ssn->destroy();
             throw new RuntimeException("Bad Database Configuration");
