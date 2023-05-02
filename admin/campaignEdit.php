@@ -152,7 +152,6 @@ $campCode = "";
 
 //Check GET
 if (isset($_GET["cp"])) {
-     addslashesextended($_GET);
     $campCode = filter_var($_GET["cp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 }

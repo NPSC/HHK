@@ -56,8 +56,6 @@ $resultMessage = "";
 $id = 0;
 $uname = $uS->username;
 
-addslashesextended($_GET);
-
 // User data object
 $userData = array();
 $userData["userName"] = $uname;

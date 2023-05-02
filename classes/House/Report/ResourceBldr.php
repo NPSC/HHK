@@ -365,6 +365,15 @@ Order by `t`.`List_Order`;");
                         $verify = "select hs.Diagnosis from hospital_stay hs left join gen_lookups g on hs.Diagnosis = g.Code where g.Table_Name = 'Diagnosis' and g.Code is null;";
                         break;
 
+                        case 'Staff_Note_Category':
+
+                            $rep = function ($dbh, $newId, $oldId) {
+                                return $dbh->exec("update note n join staff_note sn on n.idNote = sn.Note_Id set n.Category = '$newId' where n.Category = '$oldId';");
+                            };
+    
+                            $verify = "select n.Category from note n left join gen_lookups g on n.Category = g.Code where g.Table_Name = 'Staff_Note_Category' and g.Code is null;";
+                            break;
+
                     case 'Location':
 
                         $rep = function ($dbh, $newId, $oldId) {

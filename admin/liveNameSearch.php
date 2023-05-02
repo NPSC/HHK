@@ -20,8 +20,6 @@ require ("AdminIncludes.php");
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
-addslashesextended($_GET);
-
 // get session instance
 $uS = Session::getInstance();
 

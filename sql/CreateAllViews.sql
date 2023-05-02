@@ -3019,13 +3019,15 @@ select
     v.idName AS Id,
     concat_ws(' ', v.Name_First, v.Name_Last) AS Name,
     u.User_Name AS Username,
+    ifnull(i.Name, "Local") as "Type",
     gs.Description AS Status,
     gr.Description AS Role,
     u.Default_Page AS `Default Page`,
     wg.Title as `Authorization Code`,
     u.Last_Login AS `Last Login`,
-    `u`.`PW_Change_Date` AS `Password Changed`,
+    IF(`u`.`idIdp` > 0, '', `u`.`PW_Change_Date`) AS `Password Changed`,
     CASE
+        WHEN `u`.`idIdp` > 0 THEN CONCAT('Managed by ', `i`.`Name`)
         WHEN `u`.`Chg_PW` THEN 'Next Login'
         WHEN (`u`.`pass_rules` = 0 || `sc`.`Value` = 0) THEN 'Never'
         WHEN `u`.`PW_Change_Date`
@@ -3034,6 +3036,11 @@ select
             THEN DATE_FORMAT((`u`.`Timestamp` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
         ELSE ''
     END AS `Password Expires`,
+    CASE
+		WHEN `u`.`idIdp` > 0 THEN 'N/A'
+        WHEN (`u`.`totpSecret` = '' AND `u`.`emailSecret` = '' AND `u`.`backupSecret` = '') THEN 'No'
+        ELSE 'Yes'
+	END AS `Two Factor Enabled`,
     u.Updated_By AS `Updated By`,
     DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
 from
@@ -3044,6 +3051,7 @@ from
 	left join w_groups wg on s.Group_Code = wg.Group_Code
     left join gen_lookups gr ON (((a.Role_Id = gr.Code) and (gr.Table_Name = 'Role_Codes'))))
     left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status')))
-    left join sys_config sc ON (sc.Key = 'passResetDays'));
+    left join sys_config sc ON (sc.Key = 'passResetDays')
+    left join w_idp i on (u.idIdp = i.idIdp));
 
 

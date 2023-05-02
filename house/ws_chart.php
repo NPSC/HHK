@@ -23,7 +23,6 @@ $wInit = new WebInit(WebPageCode::Service);
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
-addslashesextended($_REQUEST);
 $c = "";
 $overviewPw = '';
 
