@@ -140,6 +140,8 @@ if($idVisit || $idResv){
     $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
     $signedDocsArray = ReservationSvcs::getSignedCkinDocs($dbh, (isset($reservArray['idPsg']) ? $reservArray['idPsg']: 0), $idResv, $idVisit);
 
+    $isTopazRequired = false;
+
     $li = '';
     $tabContent = '';
 
@@ -157,6 +159,11 @@ if($idVisit || $idResv){
             array('id'=>$r['tabIndex']));
 
         $sty = $r['style'];
+
+        //is Topaz sigWeb required?
+        if(!empty($r['signType']) && $r['signType'] == 'topaz'){
+            $isTopazRequired = true;
+        }
     }
 
     $tabControl = "";
@@ -234,10 +241,12 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+	<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+	<script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
+	<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <?php echo ($isTopazRequired ? '<script type="text/javascript" src="' . TOPAZ_SIGWEB_JS . '"></script>': ''); ?>
+        <script type="text/javascript" src="<?php echo REG_FORM_ESIGN_JS; ?>"></script>
 
         <script type='text/javascript'>
 $(document).ready(function() {
@@ -339,42 +348,6 @@ $(document).ready(function() {
         window.open('ShowInvoice.php?invnum=' + invoiceNumber);
     }
 
-    $("#signDialog").dialog({
-    	autoOpen: false,
-    	width: getDialogWidth(800),
-    	height: 350,
-    	modal: true,
-    	buttons: {
-    		"Clear": function(){
-    			var idName = $(this).find("input#idName").val();
-    			var formCode = $(this).find("input#formCode").val();
-    			$(this).find(".signature").jSignature('clear');
-    			$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
-    			$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
-    		},
-            "Sign": function() {
-            	var idName = $(this).find("input#idName").val();
-            	var formCode = $(this).find("input#formCode").val();
-				var signature = $(this).find('.signature').jSignature("getData")
-            	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", signature).show();
-            	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").show();
-
-                $(this).dialog("close");
-            }
-        }
-    });
-
-    $("#signDialog .signature").jSignature({"width": "750px", "height": "141px"});
-
-    $(".btnSign").on("click", function(){
-    	var name = $(this).closest(".row").find(".printName").text();
-    	$("#signDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
-    	$("#signDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
-    	$("#signDialog").find(".signature").jSignature('clear')
-    	$("#signDialog").dialog("option", "title", "Signature: " + name).dialog("open");
-
-    });
-
     $('#mainTabs').show();
     $('#regTabDiv, #signedRegTabDiv').tabs();
 
@@ -410,11 +383,22 @@ $(document).ready(function() {
             </div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="regDialog"></div>
-            <div id="signDialog">
+            <div id="jSignDialog" style="display:none;">
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
             	<p style="text-align:center">Use your mouse, finger or touch pen to sign</p>
             	<div class="signature ui-widget-content ui-corner-all"></div>
+            </div>
+            <div id="topazDialog" style="display:none; text-align:center;">
+            	<input type="hidden" id="idName">
+            	<input type="hidden" id="formCode">
+            	<p style="text-align:center">Use your Topaz Signature Pad to sign</p>
+            	<canvas name="signature" id="sigImg" class="signature ui-widget-content ui-corner-all" width="500" height="100"></canvas>
+            	<div class="alertContainer" id="sigWebAlert" style="display:none;">
+                    <div id="alertMessage" style="margin-top:5px;margin-bottom:5px; " class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
+
+                    </div>
+                </div>
             </div>
         </div>
     </body>

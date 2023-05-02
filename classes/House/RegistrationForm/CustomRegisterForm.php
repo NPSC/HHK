@@ -255,7 +255,8 @@ class CustomRegisterForm {
                 "type"=>"select",
                 "values"=>[
                     ["","Paper"],
-                    ["jSign","Touch"]
+                    ["jSign","Touch"],
+                    ["topaz","Topaz Signature Pad"]
                 ],
                 "default"=>""
             ],
@@ -463,8 +464,8 @@ class CustomRegisterForm {
                     $sigMkup = '<div class="row mt-4 signWrapper" data-idname="' . $g->getIdName() . '">
                                     <div class="col-8 row" style="align-items:flex-end;">
                                         <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
-                                        <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && $this->settings["Signatures"]["eSign"] == 'jSign' ? '<img src="" style="display:none; width:100%"></div>
-                                        <button class="ui-button ui-corner-all mb-1 ml-2 btnSign">Sign</button>' : '</div>') . '
+                                        <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"></div>
+                                        <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
                                     </div>
                                     <div class="col-4 row" style="align-items:flex-end;">
                                         <div class="col pr-0" style="max-width: fit-content;">Date</div>

@@ -286,7 +286,8 @@ class ReservationSvcs
                         'tabIndex' => $d['Code'],
                         'tabTitle' => $d['Description'],
                         'pageTitle' => $regForm->getPageTitle(),
-                        'allowSave' => (!empty($regForm->settings["Signatures"]["eSign"]) && $regForm->settings["Signatures"]["eSign"] == 'jSign')
+                        'allowSave' => (!empty($regForm->settings["Signatures"]["eSign"]) && ($regForm->settings["Signatures"]["eSign"] == 'jSign' || $regForm->settings["Signatures"]["eSign"] == 'topaz')),
+                        'signType' => (!empty($regForm->settings["Signatures"]["eSign"]) ? $regForm->settings["Signatures"]["eSign"] : '')
                     );
                 }
             } else {
