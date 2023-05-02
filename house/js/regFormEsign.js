@@ -44,19 +44,21 @@ $(document).ready(function(){
             "Sign": function() {
             	var idName = $(this).find("input#idName").val();
             	var formCode = $(this).find("input#formCode").val();
-                if(onDone() !== false){
+                if(onDone() != false){
                     var signature = $(this).find("canvas#sigImg")[0].toDataURL("image/png");
                     $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", signature).show();
                     $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").show();
 
                     $(this).dialog("close");
                 }else{
-                    showAlert("Failed to capture signature", false, false);
+                    showAlert("Please sign before continuing", false, false);
+                    $(this).dialog("option", "height", 350);
                 }
             }
         },
         open: function(){
         	initTopaz();
+            $(this).dialog("option", "height", 300);
         }
     });
     
@@ -72,7 +74,6 @@ $(document).ready(function(){
         }else if(eSignMethod === 'topaz'){
             $("#topazDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
             $("#topazDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
-            ClearTablet();
             $("#topazDialog").dialog("option", "title", "Signature: " + name).dialog("open");
 	}
     });
@@ -121,6 +122,7 @@ $(document).ready(function(){
     		//if SigWeb 1.7.0.0 is installed, then enable corresponding functionality
     		if(SigWeb_1_7_0_0_IsInstalled){
     		    resetIsSupported = true;
+                    ClearTablet();
                     onSign();
     		} else {
     		    try{
@@ -197,6 +199,10 @@ $(document).ready(function(){
                 tmr = null;
                 tmr = SetTabletState(1, ctx, 50);
             }
+
+            if(GetTabletState() == 0){
+                showAlert("Unable to connect to Signature Pad, please check that it is connected to this computer", false, true);
+            }
         } else{
             showAlert("Unable to communicate with SigWeb, please make sure it is installed and running ", true);
         }
@@ -208,8 +214,7 @@ $(document).ready(function(){
     }
 
     function onDone(){
-        if(NumberOfTabletPoints() === 0){
-            showAlert("Please sign before continuing", false);
+        if(NumberOfTabletPoints() == 0){
             return false;
         }else{
             SetTabletState(0, tmr);
