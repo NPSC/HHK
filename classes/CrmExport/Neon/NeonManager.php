@@ -23,8 +23,6 @@ class NeonManager extends AbstractExportManager {
 
     protected $customFields;
 
-    protected $memberReplies;
-    protected $replies;
     protected $hhReplies;
 
     protected $pageNumber;
@@ -94,6 +92,9 @@ class NeonManager extends AbstractExportManager {
 
     }
 
+    /**
+     *
+     */
     public function exportMembers(\PDO $dbh, array $sourceIds) {
 
         $replys = array();
@@ -2095,10 +2096,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $this->webService->txParams;
     }
 
-    public function getReplies() {
-        return $this->replies;
-    }
-
     public function getHhReplies() {
         return $this->hhReplies;
     }
@@ -2152,10 +2149,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         $this->hhReplies[] = $hhReply;
 
-    }
-
-    public function getMemberReplies() {
-        return $this->memberReplies;
     }
 
 }

@@ -56,14 +56,11 @@ try {
             if (isset($post['ids']) && count($post['ids']) > 0) {
 
                 try {
-                    
-                    $reply = $transfer->exportMembers($dbh, $post['ids']);
-                    
-                    $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblrpt');
-                    
+                    $events['members'] = $transfer->exportMembers($dbh, $post['ids']);
                 } catch (Exception $ex) {
                     $events = array("error" => "Transfer Error: " . $ex->getMessage());
                 }
+
             } else {
                 $events = array("error" => "There are no ids to pass.");
             }
@@ -106,7 +103,7 @@ try {
             }
 
             // Visit results
-            $events['visits'] = $transfer->exportVisits($dbh, $uS->username, intVal($post['psgId']), $rels);
+            $events['visits'] = $transfer->exportVisits($dbh, intVal($post['psgId']), $rels);
 
             // New members
             if (count($transfer->getMemberReplies()) > 0) {
@@ -132,7 +129,7 @@ try {
             $post = filter_input_array(INPUT_POST, $arguments);
 
             // Exclude results
-            $events['excludes'] = $transfer->setExcludeMember($dbh, $post['psgIds']);
+            $events['excludes'] = $transfer->setExcludeMembers($dbh, $post['psgIds']);
 
             break;
 
@@ -223,7 +220,7 @@ try {
                     $result = $transfer->retrieveRemoteAccount($filtered['accountId']);
 
                     try {
-                        $updateResult = $transfer->updateRemoteMember($dbh, $result, $filtered['id']);
+                        $updateResult = $transfer->updateRemoteMember($dbh, $result, $filtered['id'], [], TRUE);
                     } catch (RuntimeException $e) {
                         $updateResult = $e->getMessage();
                     }

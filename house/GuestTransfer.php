@@ -777,7 +777,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
             <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div style="margin-bottom:.8em; float:left;"><?php echo $settingstable . $searchTabel; ?></div>
                 <form autocomplete="off">
-                <div id="divTable">
+                <div id="divTable" style="clear:left;">
                     <?php echo $dataTable; ?>
                 </div>
                 </form>
@@ -796,7 +796,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
-	<input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
+	    <input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
         <input id="cmsTitle" type="hidden" value="<?php echo $CmsManager->getServiceTitle(); ?>"/>
 
     </body>

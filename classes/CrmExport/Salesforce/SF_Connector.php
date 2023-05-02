@@ -55,7 +55,7 @@ class SF_Connector {
             if(!$this->oAuth instanceof OAuth){
                 $this->login();
             }
-            
+
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
 
             $response = $client->request('GET', $endpoint, [
@@ -85,7 +85,7 @@ class SF_Connector {
             if(!$this->oAuth instanceof OAuth){
                 $this->login();
             }
-            
+
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
 
             $response = $client->request('GET', $endpoint, [
@@ -118,16 +118,10 @@ class SF_Connector {
             if(!$this->oAuth instanceof OAuth){
                 $this->login();
             }
-            
-            $meth = 'POST';
-            
-            if ($isUpdate) {
-                $meth = 'PATCH';  // Use patch for updates
-            }
 
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-            
-            $response = $client->request($meth, $endpoint, [
+
+            $response = $client->request('POST', $endpoint, [
                 RequestOptions::HEADERS => [
                     'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                     'Content-Type' => 'application/json',
@@ -143,6 +137,41 @@ class SF_Connector {
 
         return $result;
     }
+
+    /**
+     * Send a PATCH to endpoint with attachment
+     *
+     * @param string $endpoint
+     * @param array $params
+     * @return mixed
+     */
+    public function patchUrl($endpoint, array $params)
+    {
+
+        try {
+            if (!$this->oAuth instanceof OAuth) {
+                $this->login();
+            }
+
+
+            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
+
+            $response = $client->request('PATCH', $endpoint, [
+                RequestOptions::HEADERS => [
+                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
+                    'Content-Type' => 'application/json',
+                ],
+                RequestOptions::JSON => $params
+            ]);
+
+            $result = json_decode($response->getBody(), true);
+        } catch (BadResponseException $exception) {
+            $this->checkErrors($exception);
+        }
+
+        return $result;
+    }
+
 
     protected function collectErrors($errorJson){
         $errors = '';

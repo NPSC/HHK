@@ -1074,7 +1074,7 @@ CREATE OR REPLACE VIEW `vguest_search_sf` AS
         n.Name_Nickname AS `Nickname__c`,
         IFNULL(n.Birthdate, '') as `Birthdate`,
         IFNULL(`ne`.`Email`, '') AS `Email`,
-        IFNULL(np.Phone_Num, '') AS `Phone`,
+        IFNULL(np.Phone_Num, '') AS `HomePhone`,
         TRIM(CONCAT_WS(" ", IFNULL(na.Address_1, ''), IFNULL(na.Address_2, ''))) as `MailingStreet`,
         IFNULL(`na`.`City`, '') AS `MailingCity`,
         IFNULL(`na`.`Postal_Code`, '') AS `MailingPostalCode`,
