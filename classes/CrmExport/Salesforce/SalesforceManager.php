@@ -175,8 +175,6 @@ class SalesforceManager extends AbstractExportManager {
 
     public function exportMembers(\PDO $dbh, array $sourceIds) {
 
-        $replys = array();
-
         if (count($sourceIds) == 0) {
             $replys[0] = array('error'=>"The list of HHK Id's to send is empty.");
             return $replys;
@@ -191,9 +189,7 @@ class SalesforceManager extends AbstractExportManager {
             return $replys;
         }
 
-        $searchTerms = $this->getSearchFields($dbh, '');
-
-
+        // Run through the ids.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $f = array();   // output fields array
@@ -233,7 +229,7 @@ class SalesforceManager extends AbstractExportManager {
 
             // Check for not finding the account Id
             if ( isset($result['totalSize'] ) && $result['totalSize'] == 0 && $r['Id'] != '') {
-                // Account was deleted from the Neon side.
+                // Account was deleted from the Salesforce side.
                 $f['Result'] = 'Account Deleted at Saleforce';
                 $replys[$r['HHK_idName__c']] = $f;
                 continue;
@@ -242,16 +238,25 @@ class SalesforceManager extends AbstractExportManager {
             // Test results
             if ( isset($result['totalSize']) && $result['totalSize'] == 1 ) {
 
-                // We have a similar contact.  Check for address change
+                // We have a similar contact
 
-                // Make sure the external Id is defined locally
+
                 if (isset($rawResult['records'][0]['Id']) && $rawResult['records'][0]['Id'] != '') {
                     // This is an Update
 
+                    $this->updateRemoteMember($dbh, $rawResult['records'][0], 0, $r, FALSE);
+
+                    if ($this->getProposedUpdates() > 0) {
+                        $f['Result'] = 'Updates Proposed.';
+                    } else {
+                        $f['Result'] = 'Previously Transferred.';
+                    }
+
+                    // Make sure the external Id is defined locally
                     $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $rawResult['records'][0]['Id']);
                     $f['Account ID'] = $rawResult['records'][0]['Id'];
-                    $f['Result'] = 'Previously Transferred.';
-                    $f['Update'] = 'y';
+
+
 
                 } else {
                     $f['Result'] = 'The search results Account Id is empty.';
@@ -262,13 +267,15 @@ class SalesforceManager extends AbstractExportManager {
 
             } else if ( isset($result['totalSize']) && $result['totalSize'] > 1 ) {
 
+                $f['Result'] = 'Found ' . $result['totalSize'] . ' similar accounts';
+                $replys[$r['HHK_idName__c']] = $f;
+
+
                 // We have more than one contact...
                 foreach ($rawResult['records'] as $rec) {
-
+                    $rec['Result'] = "Similar";
+                    $replys[$r['HHK_idName__c']] = $rec;
                 }
-
-                $f['Result'] = 'There are ' . $result['totalSize'] .' Accounts. No action Taken';
-                $replys[$r['HHK_idName__c']] = $f;
 
 
             } else if ( isset($result['totalSize']) && $result['totalSize'] == 0 ) {
@@ -329,80 +336,56 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         return $replys;
-
     }
 
-    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $extraSourceCols = [], $updateAddr = TRUE) {
-
-        $msg = '';
-
-        if ($idName < 1) {
-            throw new RuntimeException('HHK Member Id not specified: ' . $idName);
-        }
 
 
-        // Get member data record
-        $r = $this->loadSourceDB($dbh, $idName, 'vguest_data_neon', $extraSourceCols);
+    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $localData = [], $updateIt = FALSE) {
 
+        $msg = 'No action';
 
-        if (is_null($r)) {
-            throw new RuntimeException('HHK Member Id not found: ' . $idName);
-        }
+        $updateFields = [
+            'MailingStreet',
+            'MailingCity',
+            'MailingState',
+            'MailingPostalCode',
+            'HomePhone',
+            'Email'
+        ];
 
-        if (isset($accountData['accountId']) === FALSE) {
-            throw new RuntimeException("Remote account id not found for " . $r['firstName'] . " " . $r['lastName'] . ": HHK Id = " . $idName . ", Account Id = " . $r['accountId']);
-        }
+        $this->proposedUpdates = [];
 
-        if ($r['accountId'] != $accountData['accountId']) {
-            throw new RuntimeException("Account Id mismatch: local account Id = " . $r['accountId'] . ", remote account Id = " . $accountData['accountId'] . ", HHK Id = " . $idName);
-        }
+        // Load local data if not delivered in the $localData array
+        if ($idName > 0) {
+            $stmt = $this->loadSearchDB($dbh, 'vguest_search_sf', $idName);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $unwound = array();
-        $this->unwindResponse($unwound, $accountData);
-
-        $param['individualAccount.accountId'] = $unwound['accountId'];
-
-        // Name, phone, email
-        //NeonHelper::fillPcName($r, $param, $unwound);
-
-        // Address
-        if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
-
-            if ($updateAddr) {
-                $r['isPrimaryAddress'] = 'true';
-               // NeonHelper::fillPcAddr($r, $param, $unwound);
-            } else {
-                // dont update address from HHK.
-              //  NeonHelper::fillPcAddr(array(), $param, $unwound);
+            if (isset($rows[0])) {
+                $localData = $rows[0];
             }
-
         }
 
-        // Other crap
-        //NeonHelper::fillOther($r, $param, $unwound);
 
-        // Custom Parameters
-        //$paramStr = NeonHelper::fillIndividualAccount($r) . NeonHelper::fillCustomFields($r, $unwound);
+        foreach ($updateFields as $u) {
 
-        // Log in with the web service
-        //$this->openTarget($this->userId, $this->password);
+            if (isset($localData[$u]) && isset($accountData[$u]) && $localData[$u] != $accountData[$u]) {
+                $this->proposedUpdates[$u] = $localData[$u];
+            }
+        }
 
-        // $request = array(
-        //     'method' => 'account/updateIndividualAccount',
-        //     'parameters' => $param,
-        //     'customParmeters' => $paramStr
-        // );
+        if (count($this->proposedUpdates) > 0 && $updateIt) {
 
-        // $result = $this->webService->go($request);
+            // Update account
+            $acctResult = $this->webService->patchUrl($this->endPoint . 'sobjects/Contact/' . $accountData['Id'], $this->proposedUpdates);
 
-        // if ($this->checkError($result)) {
-        //     $msg = $this->errorMessage;
-        // } else {
-        //     $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
-        // }
+            if ($this->checkError($$acctResult)) {
+                $msg = $this->errorMessage;
+            } else {
+                $msg = 'Account is Updated. ';
+            }
+        }
 
         return $msg;
-
     }
 
     protected function checkError($result) {

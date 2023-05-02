@@ -36,6 +36,11 @@ abstract class AbstractExportManager {
     protected $accountId;
     protected $apiVersion;
 
+    protected $memberReplies;
+    protected $replies;
+    protected $proposedUpdates;
+
+
     const CMS_NEON = 'neon';
     const CMS_SF = 'sf';
     const EXCLUDE_TERM = 'excld';
@@ -154,7 +159,7 @@ abstract class AbstractExportManager {
         return $replys;
     }
 
-    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $extraSourceCols = [], $updateAddr = TRUE) {
+    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $extraSourceCols = [], $updateAddr = FALSE) {
         $replys[0] = array('error' => 'Updating Members is not implemented');
         return $replys;
     }
@@ -323,6 +328,21 @@ abstract class AbstractExportManager {
     public function getGatewayId() {
         return $this->gatewayId;
     }
+
+    public function getMemberReplies() {
+        return $this->memberReplies;
+    }
+
+    public function getReplies()
+    {
+        return $this->replies;
+    }
+
+    public function getProposedUpdates()
+    {
+        return $this->proposedUpdates;
+    }
+
 
 }
 

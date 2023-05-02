@@ -1,4 +1,4 @@
-// GuestTransfer.js
+// guestTransfer.js
 //
 var stopTransfer,
         $visitButton,
@@ -105,7 +105,7 @@ function transferRemote(transferIds) {
 
     var posting = $.post('ws_tran.php', parms);
     posting.done(function (incmg) {
-        $('#TxButton').val('Transfer').hide();
+
         if (!incmg) {
             alert('Bad Reply from HHK Web Server');
             return;
@@ -126,12 +126,50 @@ function transferRemote(transferIds) {
             return;
         }
 
-        if (incmg.data) {
-            $('div#retrieve').empty();
-            $('#printArea').show();
-            $('#divTable').empty().append($(incmg.data));
+        let tr = '';
+
+        let $mTbl = $('#mTbl');
+        let first = true;
+
+
+        if (incmg.members) {
+
+            if ($mTbl.length === 0) {
+
+                // Create header row
+                $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+
+                tr = '<thead><tr>';
+                for (let id in incmg.members) {
+                    for (let key in incmg.members[id]) {
+                        tr += '<th>' + key + '</th>';
+                    }
+                    tr += '</tr></thead><tbody></tbody>';
+                    break;
+                }
+
+                $mTbl.append(tr);
+                let title = $('<h3 style="margin-top:7px;">New ' + cmsTitle + ' Members</h3>');
+                $('#divMembers').append(title).append($mTbl).show();
+            }
+
+            tr = '';
+            first = 'style="border-top: 2px solid #2E99DD;"';
+            for (let id in incmg.members) {
+
+                tr = '<tr ' + first + '>';
+                first = '';
+
+                for (let key in incmg.members[id]) {
+                    tr += '<td>' + incmg.members[id][key] + '</td>';
+                }
+                tr += '</tr>';
+
+            }
+
+            $mTbl.find('tbody').append(tr);
         }
-        
+
         throttleMembers();
     });
 
@@ -221,7 +259,7 @@ function throttleMembers() {
 
             transferRemote($(this).data('txid'));
 
-            return false; 
+            return false;
         }
     });
 
@@ -640,9 +678,10 @@ $(document).ready(function () {
         $('#btnPay').hide();
         $('#btnVisits').hide();
         $('#divMembers').empty();
-        
+
+
         $memberButton = $('#TxButton');
-        
+
         stopTransfer = true;
 
         $('#tblrpt').dataTable({
@@ -654,7 +693,7 @@ $(document).ready(function () {
                     }
                 }
             ],
-            "displayLength": 50,
+            "displayLength": 25,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
         });
@@ -664,8 +703,6 @@ $(document).ready(function () {
                 .val('Start Member Transfers')
                 .show()
                 .click(function () {
-
-                    $('div#retrieve').empty();
 
                     // Switch transfer control
                     if (stopTransfer) {
@@ -684,21 +721,6 @@ $(document).ready(function () {
                         throttleMembers();
                     }
                 });
-
-//        $('#TxButton').button().show().click(function () {
-//            if ($('#TxButton').val() === 'Working...') {
-//                return;
-//            }
-//            $('#TxButton').val('Working...');
-//
-//            let txIds = {};
-//            $('.hhk-txCbox').each(function () {
-//                if ($(this).prop('checked')) {
-//                    txIds[$(this).data('txid')] = $(this).data('txid');
-//                }
-//            });
-//            transferRemote(txIds);
-//        });
 
         // Retrieve HHK Payments
     } else if (makeTable === '2') {
