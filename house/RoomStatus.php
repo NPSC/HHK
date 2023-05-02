@@ -512,6 +512,8 @@ foreach ($rescGroups as $g) {
                                     "columnDefs": dtColDefs,
                                     "deferRender": true,
                                     "order": [[7, 'desc']],
+                                    "pageLength": 50,
+                                    "lengthMenu": [25, 50, 100],
                                     "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                                 });
                             }

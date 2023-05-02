@@ -82,3 +82,5 @@ DELETE FROM `id_securitygroup` WHERE `Group_Code` = 'v';
 
 
 CREATE INDEX IF NOT EXISTS `Index_idReferral_Doc` ON `reservation`(`idReferralDoc`);
+
+UPDATE `sys_config` set `Value` = "https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa" where `Key` = "NewsletterURL";

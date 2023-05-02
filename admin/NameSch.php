@@ -80,70 +80,70 @@ try {
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 
         <script type="text/javascript">
-    function isNumber(n) {
-        "use strict";
-        return !isNaN(parseFloat(n)) && isFinite(n);
-    }
-    $(document).ready(function() {
-
-    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-        _resizeMenu: function() {
-            var ul = this.menu.element;
-            ul.outerWidth( Math.max(
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-            ) * 1.1 );
-        }
-    });
-
-        var d=new Date();
-        $('#historyTabs').tabs();
-
-    createAutoComplete(
-        $('#txtsearch'),
-        3,
-        {cmd: "srrel", id: 0},
-        function( item ) {
-            if (item.id === 'i') {
-                // New Individual
-                window.location = "NameEdit.php?cmd=newind";
-            } else if (item.id === 'o') {
-                window.location = "NameEdit.php?cmd=neworg";
+            function isNumber(n) {
+                "use strict";
+                return !isNaN(parseFloat(n)) && isFinite(n);
             }
+            $(document).ready(function() {
 
-            var cid = parseInt(item.id, 10);
-            if (isNumber(cid)) {
-                window.location = "NameEdit.php?id=" + cid;
-            }
-        },
-        false,
-        "liveNameSearch.php",
-        $('#txtBasis')
-    );
+                $.widget( "ui.autocomplete", $.ui.autocomplete, {
+                    _resizeMenu: function() {
+                        var ul = this.menu.element;
+                        ul.outerWidth( Math.max(
+                                ul.width( "" ).outerWidth() + 1,
+                                this.element.outerWidth()
+                        ) * 1.1 );
+                    }
+                });
 
-    $('input[name="msearch"]').click(function () {
-        if ($('#rbmemName').prop('checked')) {
-            $('#txtBasis').val('m');
-        } else {
-            $('#txtBasis').val('e');
-        }
-    });
+                var d=new Date();
+                $('#historyTabs').tabs();
 
-        $('#txtsearch').keypress(function (event) {
-            var mm = $(this).val();
-            if (event.keyCode == '13') {
-                if (mm == '' || !isNumber(parseInt(mm, 10))) {
-                    alert("Don't press the return key unless you enter an Id.");
-                    event.preventDefault();
-                } else {
-                    window.location = "NameEdit.php?id=" + mm;
-                }
-            }
-        });
-        $(".fc-icon-wrap").append("\u00A0"); //fix short icon buttons
-        $('#historyTabs').show();
-        
-    });
+                createAutoComplete(
+                    $('#txtsearch'),
+                    3,
+                    {cmd: "srrel", id: 0},
+                    function( item ) {
+                        if (item.id === 'i') {
+                            // New Individual
+                            window.location = "NameEdit.php?cmd=newind";
+                        } else if (item.id === 'o') {
+                            window.location = "NameEdit.php?cmd=neworg";
+                        }
+
+                        var cid = parseInt(item.id, 10);
+                        if (isNumber(cid)) {
+                            window.location = "NameEdit.php?id=" + cid;
+                        }
+                    },
+                    false,
+                    "liveNameSearch.php",
+                    $('#txtBasis')
+                );
+
+                $('input[name="msearch"]').click(function () {
+                    if ($('#rbmemName').prop('checked')) {
+                        $('#txtBasis').val('m');
+                    } else {
+                        $('#txtBasis').val('e');
+                    }
+                });
+
+                $('#txtsearch').keypress(function (event) {
+                    var mm = $(this).val();
+                    if (event.keyCode == '13') {
+                        event.preventDefault();
+                        if (mm == '' || !isNumber(parseInt(mm, 10))) {
+                            alert("Don't press the return key unless you enter an Id.");
+                        } else {
+                            window.location = "NameEdit.php?id=" + mm;
+                        }
+                    }
+                });
+                $(".fc-icon-wrap").append("\u00A0"); //fix short icon buttons
+                $('#historyTabs').show();
+                
+            });
         </script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >

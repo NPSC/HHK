@@ -72,7 +72,6 @@ try {
     exit('<h2>Page not in database.</h2>');
 }
 
-addslashesextended($_REQUEST);
 $c = "";
 
 // Get our command

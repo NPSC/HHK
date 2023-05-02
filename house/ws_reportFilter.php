@@ -26,7 +26,6 @@ $wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
-addslashesextended($_REQUEST);
 $c = "";
 
 // Get our command

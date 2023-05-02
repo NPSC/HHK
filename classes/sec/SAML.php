@@ -86,7 +86,7 @@ class SAML {
      *
      * Handles the SAML Response from the IdP
      *
-     * @return array;
+     * 
      */
     public function acs(){
         $uS = Session::getInstance();
@@ -121,13 +121,13 @@ class SAML {
             }
 
             if($u->doLogin($this->dbh, $userAr)){
-                $pge = $uS->webSite['Default_Page'];
+                $pge = (!empty($uS->webSite['Default_Page']) ? $uS->webSite['Default_Page'] : "");
                 if ($u->getDefaultPage() != '') {
                     $pge = $u->getDefaultPage();
                 }
 
                 if (SecurityComponent::is_Authorized($pge)) {
-                    header('location:../' . $uS->webSite['Relative_Address'].$pge);
+                    header('location:../' . (!empty($uS->webSite['Relative_Address']) ? $uS->webSite['Relative_Address'] : "").$pge);
                 } else {
                     $error = "Unauthorized for page: " . $pge;
                 }
@@ -136,7 +136,7 @@ class SAML {
 
         if($error){
             $uS->ssoLoginError = $error;
-            header('location:../' . $uS->webSite['Relative_Address']);
+            header('location:../' . (!empty($uS->webSite['Relative_Address']) ? $uS->webSite['Relative_Address'] : ''));
         }
 
     }

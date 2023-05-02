@@ -40,14 +40,14 @@ function initPDO($override = FALSE)
     if ($roleCode >= WebRole::Guest && $override === FALSE) {
         // Get the site configuration object
         try {
-            $config = new Config_Lite(ciCFG_FILE);
+            $config = parse_ini_file(ciCFG_FILE, true);
         } catch (Exception $ex) {
             $ssn->destroy();
             throw new RuntimeException("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
         }
 
-        $dbuName = $config->getString('db', 'ReadonlyUser', '');
-        $dbPw = decryptMessage($config->getString('db', 'ReadonlyPassword', ''));
+        $dbuName = (!empty($config['db'][ 'ReadonlyUser']) ? $config['db'][ 'ReadonlyUser'] : '');
+        $dbPw = decryptMessage((!empty($config['db']['ReadonlyPassword']) ? $config['db']['ReadonlyPassword'] : ''));
     }
 
     try {
@@ -118,11 +118,6 @@ function justDate($dateTime) {
     }
 
     return $dateTime;
-}
-
-function stripslashes_gpc(&$value)
-{
-    $value = stripslashes($value);
 }
 
 function doExcelDownLoad($rows, $fileName)
@@ -254,22 +249,6 @@ function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
 	}
 
 	return $tbl->generateMarkup();
-}
-
-
-// This is named backwards. I'll start the new name, but it may take a while for all the code to comply
-function addslashesextended(&$arr_r)
-{
-/*     if (get_magic_quotes_gpc()) {
-        array_walk_recursive($arr_r, 'stripslashes_gpc');
-    } */
-}
-
-function stripSlashesExtended(&$arr_r)
-{
-/*     if (get_magic_quotes_gpc()) {
-        array_walk_recursive($arr_r, 'stripslashes_gpc');
-    } */
 }
 
 function newDateWithTz($strDate, $strTz)
