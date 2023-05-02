@@ -16,10 +16,10 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Cm_Custom_Fields', 'Diagnosis', '');
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Cm_Custom_Fields', 'Hospital', '');
 
--- Add Reservation Status type codes 
+-- Add Reservation Status type codes
 UPDATE `lookups` SET `Type` = 'a' WHERE (`Category` = 'ReservStatus') and (`Code` in ('a','uc', 'w'));
 UPDATE `lookups` SET `Type` = 'c' WHERE (`Category` = 'ReservStatus') and (`Code` in ('c','c1','c2','c3','c4', 'ns','td'));
-UPDATE `lookups` SET `Show` = 'n' WHERE (`Category` = 'ReservStatus') and (`Code` in ('co','s')); 
+UPDATE `lookups` SET `Show` = 'n' WHERE (`Category` = 'ReservStatus') and (`Code` in ('co','s'));
 -- and two more cancel codes
 INSERT IGNORE into `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Type`, `Other`) VALUES ('ReservStatus', 'c5', 'Canceled 5', 'n', 'n', 'c','ui-icon-cancel');
 INSERT IGNORE into `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Type`, `Other`) VALUES ('ReservStatus', 'c6', 'Canceled 6', 'n', 'n', 'c','ui-icon-cancel');
@@ -45,7 +45,7 @@ INSERT IGNORE INTO 	`sys_config` (`Key`, `Value`, `Type`, `Category`, `Descripti
 
 
 -- Update field sizes to incorporate the Contact Manager
-ALTER TABLE `cc_hosted_gateway` 
+ALTER TABLE `cc_hosted_gateway`
 	CHANGE COLUMN `Merchant_Id` `Merchant_Id` VARCHAR(255) NOT NULL DEFAULT '' ,
 	CHANGE COLUMN `Credit_Url` `Credit_Url` VARCHAR(255) NOT NULL DEFAULT '' ,
 	CHANGE COLUMN `Trans_Url` `Trans_Url` VARCHAR(255) NOT NULL DEFAULT '' ,
@@ -72,8 +72,13 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Desc
 --  Delete volunteer site
 DELETE FROM `web_sites` WHERE (`Site_Code` = 'v');
 UPDATE `sys_config` SET `Value` = 'false', `Show` = '0' WHERE (`Key` = 'Volunteers');
-UPDATE `page` SET `Hide` = '1' WHERE (`idPage` = '4');
+UPDATE `sys_config` SET `Show` = 0 where `Category` = 'v';
+UPDATE `page` SET `Hide` = '1' WHERE (`File_Name` = 'EventShells.php');
+UPDATE `page` SET `Hide` = '1' WHERE (`File_Name` = 'RegisterUser.php');
+UPDATE `page` SET `Hide` = '1' WHERE `Web_Site` = 'v';
+DELETE FROM `w_groups` WHERE (`Group_Code` = 'v');
+DELETE FROM `page_securitygroup` WHERE `Group_Code` = 'v';
+DELETE FROM `id_securitygroup` WHERE `Group_Code` = 'v';
 
 
 CREATE INDEX IF NOT EXISTS `Index_idReferral_Doc` ON `reservation`(`idReferralDoc`);
-

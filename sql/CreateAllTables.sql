@@ -239,7 +239,7 @@ CREATE TABLE if not exists `cron_log` (
   `timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idLog`)
   ) ENGINE=InnoDB;
-  
+
   -- -----------------------------------------------------
 -- Table `cronjobs`
 -- -----------------------------------------------------
@@ -371,28 +371,6 @@ CREATE TABLE if not exists `donations` (
 
 
 
-
--- -----------------------------------------------------
--- Table `dormant_schedules`
--- -----------------------------------------------------
-CREATE TABLE if not exists `dormant_schedules` (
-  `iddormant_schedules` int(11) NOT NULL AUTO_INCREMENT,
-  `Begin_Active` date DEFAULT NULL,
-  `End_Active` date DEFAULT NULL,
-  `Begin_Dormant` date DEFAULT NULL,
-  `End_Dormant` date DEFAULT NULL,
-  `Title` varchar(45) NOT NULL DEFAULT '',
-  `Code` varchar(45) NOT NULL DEFAULT '',
-  `Status` varchar(5) NOT NULL DEFAULT '',
-  `Description` text,
-  `Updated_by` varchar(45) NOT NULL DEFAULT '',
-  `Last_Updated` datetime DEFAULT NULL,
-  `Timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`iddormant_schedules`)
-) ENGINE=InnoDB;
-
-
-
 -- -----------------------------------------------------
 -- Table `emergency_contact`
 -- -----------------------------------------------------
@@ -411,37 +389,6 @@ CREATE TABLE if not exists `emergency_contact` (
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idEmergency_contact`)
 ) ENGINE=InnoDB;
-
-
-
-
--- -----------------------------------------------------
--- Table `fbx`
--- -----------------------------------------------------
-CREATE TABLE if not exists `fbx` (
-  `fb_id` varchar(45) NOT NULL,
-  `idName` int(11) NOT NULL,
-  `Status` varchar(2) NOT NULL DEFAULT '',
-  `fb_username` varchar(145) NOT NULL DEFAULT '',
-  `Approved_By` varchar(45) NOT NULL DEFAULT '',
-  `Approved_Date` datetime DEFAULT NULL,
-  `Dropped_Date` datetime DEFAULT NULL,
-  `fb_Address_1` varchar(145) NOT NULL DEFAULT '',
-  `fb_Address_2` varchar(45) NOT NULL DEFAULT '',
-  `fb_City` varchar(45) NOT NULL DEFAULT '',
-  `fb_State` varchar(45) NOT NULL DEFAULT '',
-  `fb_Zip` varchar(15) NOT NULL DEFAULT '',
-  `fb_First_Name` varchar(45) NOT NULL DEFAULT '',
-  `fb_Last_Name` varchar(45) NOT NULL DEFAULT '',
-  `fb_Phone` varchar(25) NOT NULL DEFAULT '',
-  `fb_Email` varchar(145) NOT NULL DEFAULT '',
-  `PIFH_Username` varchar(45) NOT NULL DEFAULT '',
-  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `Enc_Password` varchar(100) NOT NULL DEFAULT '',
-  `Access_Code` varchar(45) NOT NULL DEFAULT '',
-  PRIMARY KEY (`fb_id`)
-) ENGINE=InnoDB;
-
 
 
 
@@ -908,42 +855,6 @@ CREATE TABLE if not exists `map_relations` (
   `Guest_PG` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`idmap_relations`)
 ) ENGINE=InnoDB;
-
-
--- -----------------------------------------------------
--- Table `mcalendar`
--- -----------------------------------------------------
-CREATE TABLE if not exists `mcalendar` (
-  `idmcalendar` int(11) NOT NULL AUTO_INCREMENT,
-  `E_Id` varchar(100) NOT NULL DEFAULT '',
-  `idName` int(11) NOT NULL DEFAULT '0',
-  `idName2` int(11) NOT NULL DEFAULT '0',
-  `E_Title` varchar(45) NOT NULL DEFAULT '',
-  `E_Start` datetime NOT NULL,
-  `E_End` datetime DEFAULT NULL,
-  `E_URL` varchar(145) NOT NULL DEFAULT '',
-  `E_ClassName` varchar(45) NOT NULL DEFAULT '',
-  `E_Editable` bit(1) NOT NULL DEFAULT b'0',
-  `E_Source` varchar(244) NOT NULL DEFAULT '',
-  `E_Description` text,
-  `E_AllDay` bit(1) NOT NULL DEFAULT b'0',
-  `E_Vol_Category` varchar(45) NOT NULL DEFAULT '',
-  `E_Vol_Code` varchar(45) NOT NULL DEFAULT '',
-  `Last_Updated` datetime DEFAULT NULL,
-  `Updated_By` varchar(100) NOT NULL DEFAULT '',
-  `E_Status` varchar(4) NOT NULL DEFAULT '',
-  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `E_Take_Overable` bit(1) NOT NULL DEFAULT b'0',
-  `E_Fixed_In_Time` bit(1) NOT NULL DEFAULT b'0',
-  `E_Shell` bit(1) NOT NULL DEFAULT b'0',
-  `E_Locked` bit(1) NOT NULL DEFAULT b'0',
-  `E_Shell_Id` int(11) NOT NULL DEFAULT '0',
-  `E_Rpt_Id` int(11) NOT NULL DEFAULT '0',
-  `E_Show_All` bit(1) NOT NULL DEFAULT b'0',
-  PRIMARY KEY (`idmcalendar`),
-  KEY `idName_INDEX` (`idName`)
-) ENGINE=InnoDB;
-
 
 
 
@@ -1549,7 +1460,7 @@ CREATE  TABLE if not exists `postal_codes` (
   `Lng` VARCHAR(15) NOT NULL DEFAULT '' ,
   `Type` VARCHAR(15) NOT NULL DEFAULT '' ,
   `Acceptable_Cities` VARCHAR(511) NOT NULL DEFAULT '' ,
-  PRIMARY KEY (`Zip_Code`) 
+  PRIMARY KEY (`Zip_Code`)
   ) ENGINE=InnoDB;
 
 
@@ -1676,7 +1587,7 @@ CREATE TABLE IF NOT EXISTS `report_field_sets` (
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idFieldSet`)
 ) ENGINE=InnoDB;
-  
+
 
 -- -----------------------------------------------------
 -- Table `reservation`
@@ -1920,40 +1831,6 @@ CREATE TABLE if not exists `secondary_unit_desig` (
   `TitleCaps` varchar(6) NOT NULL
 ) ENGINE=MyISAM;
 
-
-
-
--- -----------------------------------------------------
--- Table `shell_events`
--- -----------------------------------------------------
-CREATE TABLE if not exists `shell_events` (
-  `idShell` int(11) NOT NULL AUTO_INCREMENT,
-  `Title` varchar(45) NOT NULL DEFAULT '',
-  `Description` varchar(145) NOT NULL DEFAULT '',
-  `Vol_Cat` varchar(45) NOT NULL DEFAULT '',
-  `Vol_Code` varchar(45) NOT NULL DEFAULT '',
-  `Time_Start` time DEFAULT NULL,
-  `Time_End` time DEFAULT NULL,
-  `Date_Start` date DEFAULT NULL,
-  `Duration_Code` varchar(4) NOT NULL DEFAULT '',
-  `Sun` bit(1) NOT NULL DEFAULT b'0',
-  `Mon` bit(1) NOT NULL DEFAULT b'0',
-  `Tue` bit(1) NOT NULL DEFAULT b'0',
-  `Wed` bit(1) NOT NULL DEFAULT b'0',
-  `Thu` bit(1) NOT NULL DEFAULT b'0',
-  `Fri` bit(1) NOT NULL DEFAULT b'0',
-  `Sat` bit(1) NOT NULL DEFAULT b'0',
-  `Skip_Holidays` bit(1) NOT NULL DEFAULT b'0',
-  `AllDay` bit(1) NOT NULL DEFAULT b'0',
-  `Class_Name` varchar(45) NOT NULL DEFAULT '',
-  `URL` varchar(145) NOT NULL DEFAULT '',
-  `Status` varchar(4) NOT NULL DEFAULT '',
-  `Shell_Color` varchar(45) NOT NULL DEFAULT '',
-  `Fixed_In_Time` bit(1) NOT NULL DEFAULT b'0',
-  `Take_Overable` bit(1) NOT NULL DEFAULT b'0',
-  `Locked` bit(1) NOT NULL DEFAULT b'0',
-  PRIMARY KEY (`idShell`)
-) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -2203,37 +2080,6 @@ CREATE TABLE if not exists `visit_onleave` (
 ) ENGINE=InnoDB;
 
 
-
--- -----------------------------------------------------
--- Table `volunteer_hours`
--- -----------------------------------------------------
-CREATE TABLE if not exists `volunteer_hours` (
-  `idVolunteer_hours` int(11) NOT NULL AUTO_INCREMENT,
-  `idmcalendar` int(11) NOT NULL DEFAULT '0',
-  `idName` int(11) NOT NULL,
-  `idName2` int(11) NOT NULL DEFAULT '0',
-  `idCompany` int(11) NOT NULL DEFAULT '0',
-  `Org` varchar(45) NOT NULL DEFAULT '',
-  `Hours` decimal(10,3) NOT NULL DEFAULT '0.000',
-  `E_Start` datetime DEFAULT NULL,
-  `E_End` datetime DEFAULT NULL,
-  `Logged_By` varchar(45) NOT NULL DEFAULT '',
-  `Date_Logged` datetime DEFAULT NULL,
-  `Verified_By` varchar(45) NOT NULL DEFAULT '',
-  `Date_Verified` datetime DEFAULT NULL,
-  `E_Vol_Category` varchar(45) NOT NULL DEFAULT '',
-  `E_Vol_Code` varchar(45) NOT NULL DEFAULT '',
-  `E_Status` varchar(5) NOT NULL DEFAULT '',
-  `Type` varchar(45) NOT NULL DEFAULT '',
-  `idHouse` int(11) NOT NULL DEFAULT '0',
-  `Updated_By` varchar(45) NOT NULL DEFAULT '',
-  `Last_Updated` datetime DEFAULT NULL,
-  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idVolunteer_hours`)
-) ENGINE=InnoDB;
-
-
-
 -- -----------------------------------------------------
 -- Table `w_auth`
 -- -----------------------------------------------------
@@ -2389,7 +2235,7 @@ CREATE TABLE if not exists `w_user_tokens` (
     `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`idToken`)
 ) ENGINE=InnoDB;
-    
+
 
 -- -----------------------------------------------------
 -- Table `web_sites`
@@ -2419,7 +2265,7 @@ CREATE TABLE if not exists `web_sites` (
 
 ALTER TABLE `activity`
     ADD INDEX IF NOT EXISTS `Index_idName` (`idName` ASC);
-    
+
 ALTER TABLE `campaign`
 	ADD UNIQUE KEY IF NOT EXISTS `Campaign_Code_UNIQUE` (`Campaign_Code`);
 
@@ -2427,7 +2273,7 @@ ALTER TABLE `donations`
 	Add INDEX IF NOT EXISTS `Activity_Id_INDEX` (`Activity_Id`);
 ALTER TABLE `donations`
 	ADD INDEX IF NOT EXISTS `Donor_Id_INDEX` (`Donor_Id`);
-	
+
 
 ALTER TABLE `emergency_contact`
     ADD INDEX IF NOT EXISTS `Index_idName` (`idName` ASC);
@@ -2451,30 +2297,30 @@ ALTER TABLE `invoice`
     ADD INDEX IF NOT EXISTS `Index_idGroup` (`idGroup` ASC);
 ALTER TABLE `invoice`
     ADD INDEX IF NOT EXISTS `Index_Date` (`Invoice_Date` ASC);
-ALTER TABLE `invoice` 
+ALTER TABLE `invoice`
     ADD INDEX IF NOT EXISTS `Index_SoldToId` (`Sold_To_Id` ASC);
-ALTER TABLE `invoice` 
+ALTER TABLE `invoice`
     ADD INDEX IF NOT EXISTS `Index_Delagated` (`Delegated_Invoice_Id` ASC);
 
 ALTER TABLE `invoice_line`
     ADD INDEX IF NOT EXISTS `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);
 
-ALTER TABLE `labels` 
+ALTER TABLE `labels`
 	ADD UNIQUE INDEX IF NOT EXISTS `Unique_Key_Categeory` (`Key` ASC, `Category` ASC);
 
 ALTER TABLE `name`
     ADD INDEX IF NOT EXISTS `Index_Name` (`Name_Last` ASC, `Name_First` ASC);
 ALTER TABLE `name`
     ADD INDEX IF NOT EXISTS `iNameLastFirst` (`Name_Last_First`);
-      
+
 ALTER TABLE `name_address`
 	ADD INDEX IF NOT EXISTS `iNA_ID` (`idName`);
 
 ALTER TABLE `name_guest`
     ADD INDEX IF NOT EXISTS `INDEX_IdPsg` (`idPsg` ASC);
-    
+
 CREATE INDEX  IF NOT EXISTS `INDEX_PHONE_SEARCH` ON name_phone(`Phone_Search`);
-    
+
 CREATE INDEX IF NOT EXISTS `INDEX_USERNAME` ON `note`(`User_Name` ASC);
 
 ALTER TABLE `payment`
@@ -2501,7 +2347,7 @@ ALTER TABLE `report`
 
 ALTER TABLE `report_field_sets`
 	ADD UNIQUE KEY IF NOT EXISTS `U_INDEX_TRC` (`Title`,`Report`,`Created_by`);
-	
+
 ALTER TABLE `reservation`
     ADD INDEX IF NOT EXISTS `Index_idregistration` (`idRegistration` ASC);
 ALTER TABLE `reservation`
@@ -2551,12 +2397,8 @@ ALTER TABLE `visit`
     ADD INDEX IF NOT EXISTS `Index_Exp_Depart` (`Expected_Departure` ASC);
 ALTER TABLE `visit`
     ADD INDEX IF NOT EXISTS `Index_Arrival_Date` (`Arrival_Date` ASC);
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX IF NOT EXISTS `Index_idReservation` (`idReservation` ASC);
-
-
-ALTER TABLE `volunteer_hours`
-    ADD INDEX IF NOT EXISTS `Index_idName` (`idName` ASC);
 
 ALTER TABLE `name_log`
     ADD INDEX IF NOT EXISTS `INDEX_IDNAME` (`idName` ASC);
@@ -2564,12 +2406,12 @@ ALTER TABLE `name_log`
 ALTER TABLE `visit_log`
     ADD INDEX IF NOT EXISTS `INDX_IDNAME` (`idName` ASC),
     ADD INDEX IF NOT EXISTS `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);
-    
-ALTER TABLE `w_idp_secgroups` 
+
+ALTER TABLE `w_idp_secgroups`
     ADD UNIQUE INDEX IF NOT EXISTS `unq_idp_secgroup` (`idIdp` ASC, `idSecGroup` ASC);;
-    
+
 -- -------Functions-------
-    
+
 --
 -- function `dateDefaultNow`
 --

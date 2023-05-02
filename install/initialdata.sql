@@ -50,7 +50,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Cm_Custom_Fields', 'Deceased_Date', '','','',0),
 ('Cm_Custom_Fields', 'Diagnosis', '','','',0),
 ('Cm_Custom_Fields', 'Hospital', '','','',0),
- 
+
 ('Constraint_Type', 'hos', 'Hospital', '','',0),
 ('Constraint_Type', 'rv', 'Reservation','','',0),
 ('Constraint_Type', 'v', 'Visit', '','',0),
@@ -131,9 +131,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Ethnicity','m','Middle Eastern or North African','','d',70),
 ('Ethnicity','x','Other race or ethnicity not listed here','','d',80),
 ('Ethnicity','z','Unknown','','d',1000),
-
-('E_Shell_Status','a','Active','','',0),
-('E_Shell_Status','d','Disabled','','',0),
 
 ('ExcessPays', 'd', 'Donate','','u',0),
 ('ExcessPays', 'e', 'Hold (MOA)','','u',0),
@@ -449,7 +446,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'h', 'House','','',30),
 ('Sys_Config_Category', 'a', 'General','','',5),
 ('Sys_Config_Category', 'g', 'Guest','','',20),
-('Sys_Config_Category', 'v', 'Volunteer','','',40),
 ('Sys_Config_Category', 'es', 'Email Server','','',60),
 ('Sys_Config_Category', 'fg', 'Payment Gateway','','',0),
 ('Sys_Config_Category', 'pr', 'Password Rules','','',70),
@@ -544,9 +540,8 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) V
 --
 -- insert System configuration
 --
-REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`, `Show`) VALUES 
+REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`, `Show`) VALUES
 ('AcceptResvPaymt','false','b','h','', 'Accept payments at Reservation Comfirmation','', '1'),
-('Admin_Address','','ea','v','','Volunteer administrator email address','',1),
 ('Auto_Email_Address','','ea','ha','','Notified for each batch of automatic emails','',1),
 ('BatchSettlementHour','03:00','s','fg','','Batch settlement time of day for auto-settlements','',0),
 ('BccAddress','','ea','g','','Any email addresses listed here (comma delimited) will get a BCC of any receipts mailed to valid guest email accounts.','',1),
@@ -569,10 +564,8 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('DefaultRegisterTab','0','lu','h','','Default active tab on register page','Default_Reg_Tab',1),
 ('DefaultVisitFee','1','s','h','','Use the Resource Builder','',0),
 ('DefCalEventTextColor', 'black', 's', 'c', '', 'Default calendar event ribbon text color', '',1),
-('Disclaimer','Welcome! Please remember that unauthorized use of the data made available to you as a House volunteer, including collecting user names and/or email addresses of other users for the purpose of sending unsolicited email or other unauthorized purposes, is prohibited. Thank you for all you do!','t','v','','Volunteer Site Disclaimer','',1),
 ('DKIMdomain', '', 's', 'es', '', 'Domain name of sender (must match FromAddress and NoReplyAddr domains)', '',1),
 ('Doctor','true','b','hf','','Track doctors','',1),
-('EmailBlockSize','200','i','v','','Number of email addresses per block','',1),
 ('EmailType','','lu','es','','Email protocol','Email_Server',1),
 ('EmergContactFill','false','b','h','','Insist on Filling in the emergency contact','',1),
 ('EmergContactReserv', 'false', 'b', 'h', '', 'Collect Emergency Contact on Reservation','',1),
@@ -582,13 +575,10 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ExtendToday','0','i','h','','Extend the Check in day by this many hours into tomorrow','',1),
 ('ForceNamePrefix','false','b','h','','Force  name prefixes to be entered','',1),
 ('FromAddress','','ea','g','','House from address for guest emails','',1),
-('FutureLimit','1','i','v','','Max years in the future volunteers can reserve shifts','',1),
 ('fy_diff_Months','0','i','f','','Fiscal year difference months (12 - fiscal year start month)','',1),
 ('Guest_Register_Email','','ea','ha','','If present, a guest register is sent here once a day (also must edit the cron job)','',1),
 ('Guest_Track_Address','','ea','ha','','If present, these addresess receive all notices of check-in, out, room change, etc.','',1),
 ('GuestAddr','true','b','g','','Enable guest address','',1),
-('HHK_Secret_Key','T3VqSDRZc3FrNlRHMDkxQXBMNzg4THRCTm4vOXlUOGkyeG9ZbHpWT2Y0K0F5elQvZDYyUXFTNWFTRWZyL2pQUg==','op','v','','Recapcha Secret Key (obfruscated)','',0),
-('HHK_Site_Key','6Lfc-U4UAAAAAEiXQX1-KCyGz4JAYLglQsj5g4Dh','s','v','','Recapcha Site Key','',0),
 ('HouseKeepingEmail','','ea','ha','','This address receives all room turn-over notices','',1),
 ('HouseKeepingSteps','1','lu','hf','','Number of steps to cleaning/preparing rooms for new guests','HouseKpgSteps',1),
 ('HUF_URL', 'https://forum.hospitalityhousekeeper.net/', 's', 'a', '', 'HHK Users Form', '',0),
@@ -609,7 +599,6 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('MaxAutoEmail','100','i','h','','Maximum number of automatic email messages to send per batch','',1),
 ('MaxDonate','100000','i','d','','Maximum amount amount for a single donation','',1),
 ('MaxExpected','260','i','h','','Maximum Expected days out for a visit','',1),
-('MaxRepeatEvent','53','i','v','','Maximum number of times to repeat a calendar event','',1),
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size','',1),
 ('merchantReceipt', 'false', 'b', 'f', '', 'Print customer and merchant receipt on single page','',1),
 ('mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode',1),
@@ -637,12 +626,10 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1'),
 ('RegForm','3','i','h','',' Registration form style (1 or 2)','',0),
 ('RegFormNoRm','false','b','h','','Do not show the room number on the registration form before check-in','',0),
-('RegSubj','Volunteer Registration','s','v','','Volunteer Registration email subject line','',1),
 ('resourceURL','','url','a','','URL to HHK root','',0),
 ('rememberTwoFA','','lu','pr','','Number of days users can save a device and skip two factor authentication','dayIncrements',1),
 ('ReplyTo','','ea','g','','The reply to address for any email sent to guests.','',1),
 ('ResvEarlyArrDays','2','i','h','','Number of days before reservation to show check-in button on reservation chooser','',1),
-('ReturnAddress','','ea','v','','Return address for automatic emails to volunteers','',1),
 ('RibbonBottomColor', '', 'lu', 'c', '', 'Ribbon bottom-bar color source', 'RibbonColors', '1'),
 ('RibbonColor','hospital','lu','c','','Ribbon Background color source','RibbonColors',1),
 ('Room_Colors', '', 'lu', 'c','', 'Use Room Color or housekeeping status for Rooms column on calendar', 'RoomColors', '1'),
@@ -715,7 +702,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 --
 -- insert Labels
 --
-REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES 
+REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
 ('reservationTab','Confirmed Reservations','s','rg','','Default: Confirmed Reservations'),
 ('unconfirmedTab','UnConfirmed Reservations','s','rg','','Default: UnConfirmed Reservations'),
 ('waitlistTab','Wait List','s','rg','','Default: Wait List'),
@@ -962,8 +949,7 @@ VALUES
 ('gr','Guest Reports','Guest Reports','','','','\0',''),
 ('ga','Guest Admin','Guest Administration level access to guest tracking site','','','','\0',''),
 ('mm','Member Management','Member Management, basic access to admin site.','','','','\0',''),
-('pub','Public','Public','','','','\0',''),
-('v','Volunteer','Volunteer site.','','','','\0','');
+('pub','Public','Public','','','','\0','');
 -- ;
 
 REPLACE INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES
@@ -1014,7 +1000,7 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- ;
 
 
--- 
+--
 -- Dumping data for table map_relations
 --
 REPLACE INTO `map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patient`,`Patient_PG`,`Guest_PG`)VALUES
@@ -1087,7 +1073,6 @@ REPLACE INTO `web_sites`
  VALUES
 (1,'a','Admin','admin/','mm','ui-icon ui-icon-gear','',now(),'admin','NameSch.php','index.php',''),
 (2,'h','House','house/','g,ga','ui-icon ui-icon-person','',now(),'admin','register.php','index.php',''),
-
 (4,'r','Root','/','pub','','',now(),'admin','','','');
 -- ;
 
@@ -1098,13 +1083,13 @@ REPLACE INTO `web_sites`
 --
 LOCK TABLES `page` WRITE;
 REPLACE INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`,`Hide`,`Web_Site`,`Menu_Parent`,`Menu_Position`,`Type`) VALUES
-(1,'index.php',0,'Welcome','',0,'r','','','p'),(2,'index.php',0,'','',0,'a','','','p'),(3,'NameEdit.php',2,'Edit Members','',0,'a','','','p'),(4,'EventShells.php',2,'Repeat Events','',1,'a','35','f','p'),(5,'KeyStats.php',2,'Key Stats','',0,'a','67','g','p'),(6,'Misc.php',2,'Miscellaneous','',0,'a','34','a','p'),(7,'PageEdit.php',2,'Edit Pages','',0,'a','34','e','p'),(8,'RegisterUser.php',2,'Register Web Users','',0,'a','35','e','p'),(9,'CategoryEdit.php',2,'Edit Categories','',0,'a','34','d','p'),(10,'VolListing.php',2,'Web Users','',0,'a','35','c','p'),
+(1,'index.php',0,'Welcome','',0,'r','','','p'),(2,'index.php',0,'','',0,'a','','','p'),(3,'NameEdit.php',2,'Edit Members','',0,'a','','','p'),(5,'KeyStats.php',2,'Key Stats','',0,'a','67','g','p'),(6,'Misc.php',2,'Miscellaneous','',0,'a','34','a','p'),(7,'PageEdit.php',2,'Edit Pages','',0,'a','34','e','p'),(9,'CategoryEdit.php',2,'Edit Categories','',0,'a','34','d','p'),(10,'VolListing.php',2,'Web Users','',0,'a','35','c','p'),
 (11,'campaignEdit.php',2,'Edit Campaigns','',0,'a','34','c','p'),(12,'campaignReport.php',2,'Campaigns','',0,'a','32','d','p'),(14,'directory.php',2,'Directory','',0,'a','32','a','p'),(15,'donate.php',0,'','',0,'a','','','s'),(16,'donationReport.php',2,'Donations','',0,'a','32','b','p'),(18,'liveGetCamp.php',0,'','',0,'a','','','s'),(19,'liveNameSearch.php',0,'','',0,'a','','','s'),
-(20,'ws_Report.php',0,'','',0,'a','','','s'),(21,'ws_gen.php',0,'','',0,'a','','','s'),(22,'VolNameEdit.php',26,'My Volunteer Info','',0,'v','0','d','p'),(23,'forgotpw.php',26,'Forgot My Password','',0,'v','','','p'),(24,'gCalFeed.php',0,'','',0,'v','','','s'),(26,'index.php',0,'','',0,'v','','','p'),(27,'register_web.php',26,'Register','',0,'v','','','p'),(28,'WebRegister.php',0,'','',0,'v','','','s'),(29,'ws_vol.php',0,'','',0,'v','','','s'),
+(20,'ws_Report.php',0,'','',0,'a','','','s'),(21,'ws_gen.php',0,'','',0,'a','','','s'),
 (31,'index.php',0,'','',0,'h','','','p'),(32,'_directory.php',2,'Reports','',0,'a','0','e','p'),(33,'categoryReport.php',2,'Categories','',0,'a','32','f','p'),(34,'_Misc.php',2,'DB Maintenance','',0,'a','0','k','p'),(35,'_VolListing.php',2,'Web Users','',0,'a','0','j','p'),(36,'NameEdit_Donations',0,'','',0,'a','','','c'),(37,'NameEdit_Maint',0,'','',0,'a','','','c'),(39,'ws_gen_Maint',0,'','',0,'a','','','c'),
-(45,'VolNameSearch.php',0,'','',0,'v','','','s'),(46,'guestadmin',0,'','',0,'h','','','c'),(47,'guestaccess',0,'','',0,'v','','','c'),(49,'recent.php',2,'Recent Changes','',0,'a','67','r','p'),
+(46,'guestadmin',0,'','',0,'h','','','c'),(47,'guestaccess',0,'','',0,'v','','','c'),(49,'recent.php',2,'Recent Changes','',0,'a','67','r','p'),
 (50,'nonReportables.php',2,'Non-Reportables','',0,'a','67','v','p'),(51,'donorReport.php',2,'Donors','',0,'a','32','c','p'),(55,'MemEdit.php',0,'','',0,'v','','none','p'),(56,'Cat_Donor',0,'','',0,'a','','','c'),(57,'anomalies.php',2,'Anomaly report','',0,'a','67','k','p'),(59,'ws_admin.php',0,'','',0,'h','','','s'),
-(60,'guestaccess',0,'','',0,'a','','','c'),(62,'roleSearch.php',0,'','',0,'h','','','s'),(65,'timeReport.php',2,'Time Reports','',0,'a','32','u','p'),(66,'NameSch.php',2,'Members','',0,'a','0','d','p'),(67,'_KeyStats.php',2,'Key Stats','',0,'a','0','g','p'),(68,'VolAction.php',26,'Activities','',0,'v','0','b','p'),(69,'_index.php?log=lo',0,'Log Out','',0,'a','0','z','p'),
+(60,'guestaccess',0,'','',0,'a','','','c'),(62,'roleSearch.php',0,'','',0,'h','','','s'),(65,'timeReport.php',2,'Time Reports','',0,'a','32','u','p'),(66,'NameSch.php',2,'Members','',0,'a','0','d','p'),(67,'_KeyStats.php',2,'Key Stats','',0,'a','0','g','p'),(69,'_index.php?log=lo',0,'Log Out','',0,'a','0','z','p'),
 (70,'_index.php?log=lo',0,'Log Out','',0,'v','0','z','p'),(71,'_index.php?log=lo',0,'Log Out','',0,'h','0','z','p'),(72,'CheckIn.php',31,'Check In','',0,'h','0','f','p'),(74,'register.php',31,'House Register','',0,'h','79','b','p'),(75,'ws_resv.php',0,'','',0,'h','','','s'),(76,'ws_ckin.php',0,'','',0,'h','','','s'),(79,'_register.php',31,'House','',0,'h','0','d','p'),
 (81,'ResourceBuilder.php',31,'Resource Builder','',0,'h','79','l','p'),(82,'ws_resc.php',0,'','',0,'h','','','s'),(83,'RoomUtilization.php',31,'Room Report','',0,'h','102','e','p'),(84,'memberManagement',0,'','',0,'h','','','c'),(88,'AuthGroupEdit.php',2,'Edit Authorization','',0,'a','34','j','p'),(89,'Configure.php',2,'Site Configuration','',0,'a','34','g','p'),
 (92,'GuestDemog.php',31,'Missing Demographics','',0,'h','102','f','p'),(93,'GuestEdit.php',31,'Guest Edit','',0,'h','0','j','p'),(94,'ShowRegForm.php',31,'Registration Form','',0,'h','','','p'),(95,'Reserve.php',31,'Reservation','',0,'h','0','e','p'),(96,'CheckedIn.php',31,'','',0,'h','','','p'),(99,'PaymentResult.php',31,'Payment Result','',0,'h','','','p'),
@@ -1123,9 +1108,9 @@ UNLOCK TABLES;
 LOCK TABLES `page_securitygroup` WRITE;
 REPLACE INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
 (1,'pub'),(2,'pub'),(3,'mm'),(4,'mm'),(5,'mm'),(6,'db'),(7,'db'),(8,'mm'),(9,'db'),(10,'mm'),(11,'db'),(12,'dm'),(14,'mm'),(15,'dm'),(16,'dm'),
-(18,'mm'),(19,'mm'),(20,'dm'),(21,'g'),(21,'ga'),(21,'mm'),(22,'v'),(23,'pub'),(24,'v'),(26,'pub'),(27,'pub'),(28,'pub'),(29,'v'),(31,'pub'),(32,'mm'),(33,'mm'),
-(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(45,'v'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(55,'v'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),(59, 'mm'),(59, 'gr'), (59, 'v'),
-(60,'g'),(62,'g'),(62,'ga'),(65,'mm'),(66,'mm'),(67,'mm'),(68,'v'),(69,'pub'),(70,'pub'),(71,'pub'),(72,'g'),(72,'ga'),(74,'g'),(74,'ga'),(75,'g'),(75,'ga'),
+(18,'mm'),(19,'mm'),(20,'dm'),(21,'g'),(21,'ga'),(21,'mm'),(23,'pub'),(26,'pub'),(27,'pub'),(28,'pub'),(29,'v'),(31,'pub'),(32,'mm'),(33,'mm'),
+(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),(59, 'mm'),(59, 'gr'),
+(60,'g'),(62,'g'),(62,'ga'),(65,'mm'),(66,'mm'),(67,'mm'),(69,'pub'),(70,'pub'),(71,'pub'),(72,'g'),(72,'ga'),(74,'g'),(74,'ga'),(75,'g'),(75,'ga'),
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),
 (110,'ga'),(111,'g'),(111,'ga'),(113,'ga'),(114,'g'),(114,'ga'),(115,'ga'),(116,'g'),(116,'ga'),(117,'g'),(117,'ga'),(118,'ga'),(119,'ga'),(120,'mm'),(121,'ga'),
