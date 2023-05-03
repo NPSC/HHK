@@ -86,6 +86,7 @@ class Login {
         }
 
         SysConfig::getCategory($dbh, $ssn, "'a'", WebInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $ssn, "'f'", WebInit::SYS_CONFIG);
         SysConfig::getCategory($dbh, $ssn, "'es'", WebInit::SYS_CONFIG);
         SysConfig::getCategory($dbh, $ssn, "'ga'", WebInit::SYS_CONFIG);
         SysConfig::getCategory($dbh, $ssn, "'pr'", WebInit::SYS_CONFIG);

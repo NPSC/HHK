@@ -161,7 +161,6 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
         if ($numRecipients > $maxAutoEmail) {
             // to many recipients.
-            $stmt = NULL;
             throw new RuntimeException("The number of email recipients, " . $stmt->rowCount() . " is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
         }
 
@@ -190,7 +189,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
         foreach ($recipients as $r) {
 
-            $deparatureDT = new \DateTime($r['Actual_Departure']);
+            //$deparatureDT = new \DateTime($r['Actual_Departure']);
 
             if (isset($r['Email']) && $r['Email'] != '') {
                 // Verify Email Address
@@ -238,7 +237,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
             if($copyEmail && $copyEmail != ''){
                 $mail->clearAddresses();
                 $mail->addAddress($copyEmail);
-                $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'MemberType', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
+                $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
 
                 $messg = "<p><strong>Today's date:</strong> " . date('M j, Y');
                 $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
