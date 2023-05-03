@@ -16,7 +16,16 @@ use GuzzleHttp\Exception\BadResponseException;
  */
 class SF_Connector {
 
+    /**
+     * Summary of oAuth
+     * @var Oauth
+     */
     protected $oAuth;
+
+    /**
+     * Summary of credentials
+     * @var Credentials
+     */
     protected $credentials;
 
     public function __construct(Credentials $credentials) {
@@ -44,7 +53,7 @@ class SF_Connector {
      * Search the $endpoint using $query.  Uses HTTP::GET
      *
      * @param string $query
-     * @param str $endpoint
+     * @param string $endpoint
      * @return mixed
      */
     public function search($query, $endpoint) {
@@ -77,6 +86,11 @@ class SF_Connector {
         return $result;
     }
 
+    /**
+     * Summary of goUrl
+     * @param mixed $endpoint
+     * @return mixed
+     */
     public function goUrl($endpoint) {
 
         //$client = new Client(['base_uri' => $this->credentials->getBaseURI()]);
@@ -173,6 +187,11 @@ class SF_Connector {
     }
 
 
+    /**
+     * Summary of collectErrors
+     * @param mixed $errorJson
+     * @return string
+     */
     protected function collectErrors($errorJson){
         $errors = '';
         if(is_array($errorJson)){
@@ -183,6 +202,12 @@ class SF_Connector {
         return $errors;
     }
 
+    /**
+     * Summary of checkErrors
+     * @param BadResponseException $exception
+     * @throws RuntimeException
+     * @return never
+     */
     protected function checkErrors(BadResponseException $exception) {
 
         $errorResponse = $exception->getResponse();

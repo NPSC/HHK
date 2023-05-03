@@ -122,7 +122,7 @@ abstract class AbstractExportManager {
         return $replys;
     }
 
-    public static function getSearchFields(\PDO $dbh, $tableName) {
+    public static function getSearchFields($dbh, $tableName) {
 
         $stmt = $dbh->query("SHOW COLUMNS FROM `$tableName`;");
         $cols = array();

@@ -65,13 +65,14 @@ class PostPayment {
                 break;
 
             case PaymentStatusCode::VoidReturn:
-                
+
                 if ($p['Is_Refund'] > 0) {
                     // Refund payment is returned
                     $stat = "Refund Voided";
+                    $attr['style'] .= 'color:red;';
                     $p['Payment_Status'] = PaymentStatusCode::VoidReturn;
                     $amt = 0 - $amt;
-                }                
+                }
                 break;
 
             case PaymentStatusCode::Paid:

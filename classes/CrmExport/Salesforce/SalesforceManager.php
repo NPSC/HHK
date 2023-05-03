@@ -7,8 +7,8 @@ use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
 use HHK\sec\Session;
 use HHK\CrmExport\OAuth\Credentials;
-use HHK\Exception\{RuntimeException};
-use GuzzleHttp\Utils;
+
+
 /**
  *
  * @author Eric
@@ -17,13 +17,27 @@ use GuzzleHttp\Utils;
 class SalesforceManager extends AbstractExportManager {
 
 
-
     const oAuthEndpoint = 'services/oauth2/token';
     const SearchViewName = 'vguest_search_sf';
 
+    /**
+     * Summary of endPoint
+     * @var string
+     */
     private $endPoint;
+    /**
+     * Summary of queryEndpoint
+     * @var string
+     */
     private $queryEndpoint;
-    private $searchEndpoint;
+    /**
+     * Summary of searchEndpoint
+     * @var string
+     */
+
+     private $searchEndpoint;
+
+    private $getAcctEndpoint;
 
     /**
      * {@inheritDoc}
@@ -36,6 +50,7 @@ class SalesforceManager extends AbstractExportManager {
         $this->endPoint = 'services/data/v' . $this->getApiVersion() . "/";
         $this->queryEndpoint = $this->endPoint . 'query';
         $this->searchEndpoint = $this->endPoint . 'search';
+        $this->getAcctEndpoint = $this->endPoint . 'sobjects/Contact/';
 
 
         $credentials = new Credentials();
@@ -51,7 +66,9 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
-     *
+     * Summary of searchMembers Searches remote with letters from an autocomplete
+     * @param mixed $searchCriteria
+     * @return array
      */
     public function searchMembers ($searchCriteria) {
 
@@ -89,6 +106,13 @@ class SalesforceManager extends AbstractExportManager {
         return $replys;
     }
 
+    /**
+     * Summary of getExplicit
+     * @param \PDO $dbh
+     * @param mixed $url
+     * @param mixed $query
+     * @return string
+     */
     public function getExplicit(\PDO $dbh, $url, $query = '') {
 
         $resultStr = '';
@@ -110,6 +134,12 @@ class SalesforceManager extends AbstractExportManager {
         return $resultStr;
     }
 
+    /**
+     * Summary of getMember - local or remote retrieve member details.
+     * @param \PDO $dbh
+     * @param array $parameters
+     * @return string
+     */
     public function getMember(\PDO $dbh, $parameters) {
 
         $source = (isset($parameters['src']) ? $parameters['src'] : '');
@@ -142,7 +172,7 @@ class SalesforceManager extends AbstractExportManager {
         } else if ($source == 'remote') {
 
             //  accounts
-            $result = $this->retrieveRemoteAccount($url);
+            $result = $this->retrieveURL($url);
 
             $parms = array();
             $this->unwindResponse($parms, $result);
@@ -166,13 +196,24 @@ class SalesforceManager extends AbstractExportManager {
      * @param string $url
      * @return mixed
      */
-    public function retrieveRemoteAccount($url) {
+    protected function retrieveURL($url) {
 
         $results = $this->webService->goUrl($url);
 
         return $results;
     }
 
+    public function retrieveRemoteAccount($accountId) {
+
+        return $this->retrieveURL($this->getAcctEndpoint . $accountId);
+    }
+
+    /**
+     * Summary of exportMembers - Export (copy) HHK members to remote system
+     * @param \PDO $dbh
+     * @param array $sourceIds list of member Id's to export
+     * @return array
+     */
     public function exportMembers(\PDO $dbh, array $sourceIds) {
 
         if (count($sourceIds) == 0) {
@@ -189,7 +230,7 @@ class SalesforceManager extends AbstractExportManager {
             return $replys;
         }
 
-        // Run through the ids.
+        // Run through the local records.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $f = array();   // output fields array
@@ -234,6 +275,8 @@ class SalesforceManager extends AbstractExportManager {
                 $replys[$r['HHK_idName__c']] = $f;
                 continue;
             }
+
+
 
             // Test results
             if ( isset($result['totalSize']) && $result['totalSize'] == 1 ) {
@@ -340,6 +383,15 @@ class SalesforceManager extends AbstractExportManager {
 
 
 
+    /**
+     * Summary of updateRemoteMember
+     * @param \PDO $dbh
+     * @param array $accountData is data returned from remote
+     * @param int $idName person to update, 0 -> use localData, > 0 use as index for DB search
+     * @param mixed $localData local data for person
+     * @param bool $updateIt TRUE = push update to remote, FALSE = just return potential update fields as array.
+     * @return string
+     */
     public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $localData = [], $updateIt = FALSE) {
 
         $msg = 'No action';
@@ -388,6 +440,11 @@ class SalesforceManager extends AbstractExportManager {
         return $msg;
     }
 
+    /**
+     * Summary of checkError
+     * @param mixed $result
+     * @return bool
+     */
     protected function checkError($result) {
 
         if (isset($result['errors']) && count($result['errors']) > 0) {
@@ -401,17 +458,30 @@ class SalesforceManager extends AbstractExportManager {
         return FALSE;
     }
 
+    /**
+     * Summary of loadSearchDB - load search record for specified person(s)
+     * @param \PDO $dbh
+     * @param string $view DB view to use
+     * @param mixed $sourceIds
+     * @return \PDOStatement|bool|null
+     */
     public static function loadSearchDB(\PDO $dbh, $view, $sourceIds) {
 
         if ($view == '') {
             return NULL;
         }
 
-        // clean up the ids
-        foreach ($sourceIds as $s) {
-            if (intval($s, 10) > 0){
-                $idList[] = intval($s, 10);
+            // clean up the ids
+            if (is_array($sourceIds)) {
+
+            foreach ($sourceIds as $s) {
+                if (intval($s, 10) > 0){
+                    $idList[] = intval($s, 10);
+                }
             }
+
+        } else {
+            $idList[] = intval($sourceIds, 10);
         }
 
         if (count($idList) > 0) {
@@ -424,6 +494,14 @@ class SalesforceManager extends AbstractExportManager {
         return NULL;
     }
 
+    /**
+     * Summary of loadSourceDB - Load the "data" record for idName.
+     * @param \PDO $dbh
+     * @param int $idName Id of person to get
+     * @param string $view Database view to use
+     * @param array $extraSourceCols
+     * @return mixed
+     */
     public function loadSourceDB(\PDO $dbh, $idName, $view, $extraSourceCols = []) {
 
         $parm = intval($idName, 10);
@@ -454,6 +532,11 @@ class SalesforceManager extends AbstractExportManager {
         return NULL;
     }
 
+    /**
+     * Summary of searchTarget - Search the remote system for a specified local person.
+     * @param array $r array containing local values for a person
+     * @return array
+     */
     protected function searchTarget(array $r) {
 
         $result = [];
@@ -488,6 +571,12 @@ class SalesforceManager extends AbstractExportManager {
 
     }
 
+    /**
+     * Summary of getSearchFields
+     * @param $dbh
+     * @param string $tableName
+     * @return array<string>
+     */
     public static function getSearchFields($dbh, $tableName) {
 
         $cols = array();
@@ -501,6 +590,11 @@ class SalesforceManager extends AbstractExportManager {
         return $cols;
     }
 
+    /**
+     * Summary of showConfig
+     * @param \PDO $dbh
+     * @return string
+     */
     public function showConfig(\PDO $dbh) {
 
         $markup = $this->showGatewayCredentials();
@@ -508,6 +602,10 @@ class SalesforceManager extends AbstractExportManager {
         return $markup;
     }
 
+    /**
+     * Summary of showGatewayCredentials
+     * @return string
+     */
     protected function showGatewayCredentials() {
 
         $tbl = new HTMLTable();
@@ -556,6 +654,12 @@ class SalesforceManager extends AbstractExportManager {
 
     }
 
+    /**
+     * Summary of saveCredentials
+     * @param \PDO $dbh
+     * @param string $username
+     * @return string
+     */
     protected function saveCredentials(\PDO $dbh, $username) {
 
         $result = '';
@@ -656,6 +760,11 @@ class SalesforceManager extends AbstractExportManager {
         return $result;
     }
 
+    /**
+     * Summary of saveConfig
+     * @param \PDO $dbh
+     * @return string
+     */
     public function saveConfig(\PDO $dbh) {
 
         $uS = Session::getInstance();

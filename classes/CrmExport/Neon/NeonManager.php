@@ -36,7 +36,7 @@ class NeonManager extends AbstractExportManager {
         $replys = array();
 
         // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
+        $this->openTarget();
 
         $msearch = new MemberSearch($searchCriteria['letters']);
         $standardFields = array('Account ID', 'Account Type', 'Deceased', 'Prefix', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Preferred Name', 'Address Line 1', 'City', 'State', 'Zip Code');
@@ -105,7 +105,7 @@ class NeonManager extends AbstractExportManager {
         }
 
         // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
+        $this->openTarget();
 
         // Load Individual types
         $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
@@ -307,7 +307,7 @@ class NeonManager extends AbstractExportManager {
         $paramStr .= NeonHelper::fillCustomFields($r, $unwound);
 
         // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
+        $this->openTarget();
 
         $request = array(
             'method' => 'account/updateIndividualAccount',
@@ -326,6 +326,7 @@ class NeonManager extends AbstractExportManager {
         return $msg;
 
     }
+
 
     public function getMember(\PDO $dbh, $parameters) {
 
@@ -432,7 +433,7 @@ class NeonManager extends AbstractExportManager {
     public function retrieveRemoteAccount($accountId) {
 
         // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
+        $this->openTarget();
 
         $account = $this->webService->getIndividualAccount($accountId);
 
@@ -452,7 +453,7 @@ class NeonManager extends AbstractExportManager {
         );
 
         // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
+        $this->openTarget();
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
@@ -510,7 +511,7 @@ class NeonManager extends AbstractExportManager {
         }
 
         // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
+        $this->openTarget();
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1688,7 +1689,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         );
 
         // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
+        $this->openTarget();
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {

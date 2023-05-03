@@ -13,7 +13,7 @@ use HHK\Exception\UnexpectedValueException;
  * ws_tran.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -243,7 +243,7 @@ try {
 
             $filtered = filter_input_array(INPUT_POST, $arguments);
 
-            $num = $transer->setExcludeMembers($dbh, $filtered['id']);
+            $num = $transfer->setExcludeMembers($dbh, $filtered['id']);
 
             $events = array('result' => $num . ' records updated.');
 
