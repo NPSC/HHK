@@ -1267,8 +1267,10 @@ if ($uS->UseIncidentReports) {
         <?php echo $filter->getTimePeriodScript(); ?>;
 
         $('input[name="rbReport"]').change(function () {
+            console.log("report changed");
         	$('.hhk-IncdtRpt').hide();
             if ($('#rbpsg').prop('checked')) {
+                console.log('PSG selected');
                 $('.psgsel').hide();
                 $('.filters').show();
                 $('.checkboxesShow').hide();
@@ -1283,14 +1285,13 @@ if ($uS->UseIncidentReports) {
                 $('.checkboxesShow').hide();
                 $('.showStateCountry').hide();
             } else {
+                console.log("report changed: detected Else: ");
                 $('.filters').show();
                 $('.psgsel').show();
                 $('.checkboxesShow').show();
                 $('.showStateCountry').show();
         }
         });
-        $('input[name="rbReport"]').change();
-        $('#adrstate').change();
 
         $(document).on('change', '#cbUnique', function(){
         	if($('#cbUnique').prop('checked')){
@@ -1302,6 +1303,9 @@ if ($uS->UseIncidentReports) {
         });
 
         $('#cbUnique').change();
+        $('input[name="rbReport"]').change();
+        $('#adrstate').change();
+        
     });
  </script>
     </head>

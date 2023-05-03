@@ -5,6 +5,7 @@ namespace HHK\Member;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\Address\AbstractContactPoint;
 use HHK\SysConst\{GLTableNames, MemDesignation, MemStatus};
+use HHK\SysConst\MemBasis;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{NameDemogRS, NameRS};
 use HHK\sec\Session;
@@ -125,8 +126,9 @@ abstract class AbstractMember {
      * Returns a member object, either indiv or organization.  Use this to create member objects.
      * @param \PDO $dbh
      * @param int $nid
-     * @param MemDesignation $defaultMemberBasis
-     * @return IndivMember|OrgMember
+     * @param  string $defaultMemberBasis MemBasis
+     * 
+     * @return IndivMember|OrgMember|null
      * @throws UnexpectedValueException
      */
     public static function GetDesignatedMember(\PDO $dbh, $nid, $defaultMemberBasis) {
@@ -195,11 +197,11 @@ abstract class AbstractMember {
 
     protected abstract function getDefaultMemBasis();
 
-    public function getIdPrefix() {
+    public function getIdPrefix():string {
         return $this->idPrefix;
     }
 
-    public function setIdPrefix($idPrefix) {
+    public function setIdPrefix($idPrefix):AbstractMember {
         $this->idPrefix = $idPrefix;
         return $this;
     }
@@ -540,7 +542,6 @@ abstract class AbstractMember {
                     //  - Duplicate:  Disallow
                     case MemStatus::Duplicate:
                         throw new RuntimeException("Cannot directly change member status to Duplicate.");
-                        break;
 
                     //  - ToBeDeleted:  Check for donations or guest stays
                     case MemStatus::ToBeDeleted:

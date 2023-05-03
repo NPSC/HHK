@@ -56,6 +56,7 @@ $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20', array());
 $cFields[] = array("Suffix", 'Name_Suffix', 'checked', '', 'string', '15', array());
 $cFields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'Primary', 'checked', '', 'string', '20', array());
 
+    $pFields = array('Address', 'City');
     $pTitles = array('Address', 'City');
 
     if ($uS->county) {

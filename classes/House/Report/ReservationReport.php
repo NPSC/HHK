@@ -44,7 +44,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
 
         if (filter_has_var(INPUT_POST, 'selResvStatus')) {
-            $this->selectedResvStatuses = filter_input_array('selResvStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $this->selectedResvStatuses = filter_input(INPUT_POST, 'selResvStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
         }else{
             $this->selectedResvStatuses = [];
         }
