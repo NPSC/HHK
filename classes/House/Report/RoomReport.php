@@ -865,7 +865,7 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
 
             }
 
-            $tds .= HTMLTable::makeTd($rescs[$idRm]['Title'], array('style'=>'font-family: \"Times New Roman\", Times, serif;'));
+            $tds .= HTMLTable::makeTd($rescs[$idRm]['Title']);
 
             foreach ($daysOccupied as $d) {
                 $tds .= HTMLTable::makeTd($d, array('style'=>'text-align:right;'));

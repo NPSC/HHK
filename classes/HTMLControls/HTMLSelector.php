@@ -86,7 +86,7 @@ class HTMLSelector extends AbstractHTMLControl {
     /**
      *
      * @param array $gArray - 0 = index, 1 = description, 2 = option group name.
-     * @param string $sel - Selected value (if any)
+     * @param array|string  $sel - Selected value (if any)
      * @param bool $offerBlank - Offer a blank option
      * @return string
      */

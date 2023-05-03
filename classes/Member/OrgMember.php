@@ -112,7 +112,7 @@ class OrgMember extends AbstractMember {
                 $this->createAdminPanel(),
                 $attrs);
 
-        $excl = $this->createExcludesPanel();
+        $excl = $this->createExcludesPanel($dbh);
         $attrs['id'] = 'excludesTab';
         $panels .= HTMLContainer::generateMarkup(
                 'div',
