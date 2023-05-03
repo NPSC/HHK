@@ -158,7 +158,7 @@ class SalesforceManager extends AbstractExportManager {
             } else {
                 foreach ($row as $k => $v) {
 
-                    if ($k == 'External_Id' && $v == SELF::EXCLUDE_TERM) {
+                    if ($k == 'Id' && $v == SELF::EXCLUDE_TERM) {
                         $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd('*Excluded*'));
                     } else {
                         $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
@@ -166,7 +166,7 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
                 $reply = $resultStr->generateMarkup();
-                $this->setAccountId($row['External_Id']);
+                $this->setAccountId($row['Id']);
             }
 
         } else if ($source == 'remote') {
@@ -259,17 +259,11 @@ class SalesforceManager extends AbstractExportManager {
             // Search target system.  Treat return as user input.
             $rawResult = $this->searchTarget($f);
 
-            $rags = array(
-                'totalSize' => array(
-                    'filter' => FILTER_VALIDATE_INT,
-                    'flags'  => FILTER_REQUIRE_SCALAR,
-                )
-            );
-
-            $result = filter_var_array($rawResult, $rags);
+            // Writes error so class paramter
+            $this->checkError($rawResult);
 
             // Check for not finding the account Id
-            if ( isset($result['totalSize'] ) && $result['totalSize'] == 0 && $r['Id'] != '') {
+            if ( isset($rawResult['totalSize'] ) && $rawResult['totalSize'] == 0 && $r['Id'] != '') {
                 // Account was deleted from the Salesforce side.
                 $f['Result'] = 'Account Deleted at Saleforce';
                 $replys[$r['HHK_idName__c']] = $f;
@@ -279,7 +273,7 @@ class SalesforceManager extends AbstractExportManager {
 
 
             // Test results
-            if ( isset($result['totalSize']) && $result['totalSize'] == 1 ) {
+            if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] == 1 ) {
 
                 // We have a similar contact
 
@@ -289,15 +283,18 @@ class SalesforceManager extends AbstractExportManager {
 
                     $this->updateRemoteMember($dbh, $rawResult['records'][0], 0, $r, FALSE);
 
-                    if ($this->getProposedUpdates() > 0) {
-                        $f['Result'] = 'Updates Proposed.';
+                    if (count($this->getProposedUpdates()) > 0) {
+                        $f['Result'] = 'Updates Proposed: ';
+                        foreach ($this->getProposedUpdates() as $k => $v) {
+                            $f['Result'] .= $k . '=' . $v . ', ';
+                        }
                     } else {
                         $f['Result'] = 'Previously Transferred.';
                     }
 
                     // Make sure the external Id is defined locally
                     $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $rawResult['records'][0]['Id']);
-                    $f['Account ID'] = $rawResult['records'][0]['Id'];
+                    $f['Id'] = $rawResult['records'][0]['Id'];
 
 
 
@@ -308,9 +305,9 @@ class SalesforceManager extends AbstractExportManager {
                 $replys[$r['HHK_idName__c']] = $f;
 
 
-            } else if ( isset($result['totalSize']) && $result['totalSize'] > 1 ) {
+            } else if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] > 1 ) {
 
-                $f['Result'] = 'Found ' . $result['totalSize'] . ' similar accounts';
+                $f['Result'] = 'Found ' . $rawResult['totalSize'] . ' similar accounts';
                 $replys[$r['HHK_idName__c']] = $f;
 
 
@@ -321,7 +318,7 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
 
-            } else if ( isset($result['totalSize']) && $result['totalSize'] == 0 ) {
+            } else if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] == 0 ) {
 
                 // Nothing found - create a new account at remote
 
@@ -335,11 +332,11 @@ class SalesforceManager extends AbstractExportManager {
                 $filteredRow = [];
 
                 // Check external Id
-                if (isset($row['External_Id']) && $row['External_Id'] == self::EXCLUDE_TERM) {
+                if (isset($row['Id']) && $row['Id'] == self::EXCLUDE_TERM) {
                     // Skip excluded members.
                     Continue;
-                } else if (isset($row['External_Id'])) {
-                    $row['External_Id'] = '';
+                } else if (isset($row['Id'])) {
+                    $row['Id'] = '';
                 }
 
                 foreach ($row as $k => $w) {
@@ -366,13 +363,13 @@ class SalesforceManager extends AbstractExportManager {
                 } else {
                     $f['Result'] = 'Salesforce Account Missing';
                 }
-                $f['Account ID'] = $accountId;
+                $f['Id'] = $accountId;
                 $replys[$r['HHK_idName__c']] = $f;
 
             } else {
 
-                //huh?
-                $f['Result'] = 'API ERROR: The Number of returned records is not defined.';
+                $f['Result'] = 'API ERROR: '. $this->errorMessage;
+
                 $replys[$r['HHK_idName__c']] = $f;
             }
 
@@ -394,7 +391,7 @@ class SalesforceManager extends AbstractExportManager {
      */
     public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $localData = [], $updateIt = FALSE) {
 
-        $msg = 'No action';
+        $msg = 'Already up to date. ';
 
         $updateFields = [
             'MailingStreet',
@@ -430,10 +427,13 @@ class SalesforceManager extends AbstractExportManager {
             // Update account
             $acctResult = $this->webService->patchUrl($this->endPoint . 'sobjects/Contact/' . $accountData['Id'], $this->proposedUpdates);
 
-            if ($this->checkError($$acctResult)) {
+            if ($this->checkError($acctResult)) {
                 $msg = $this->errorMessage;
             } else {
                 $msg = 'Account is Updated. ';
+                foreach ($this->proposedUpdates as $k => $v) {
+                    $msg .= $k . ' = ' . $v;
+                }
             }
         }
 
@@ -450,7 +450,7 @@ class SalesforceManager extends AbstractExportManager {
         if (isset($result['errors']) && count($result['errors']) > 0) {
 
             foreach($result['errors'] as $e) {
-                $this->errorMessage .= $e;
+                $this->errorMessage .= $e . ', ';
             }
             return TRUE;
         }
@@ -471,8 +471,8 @@ class SalesforceManager extends AbstractExportManager {
             return NULL;
         }
 
-            // clean up the ids
-            if (is_array($sourceIds)) {
+        // clean up the ids
+        if (is_array($sourceIds)) {
 
             foreach ($sourceIds as $s) {
                 if (intval($s, 10) > 0){
@@ -543,6 +543,7 @@ class SalesforceManager extends AbstractExportManager {
         $fields = '';
         $where = '';
         $searchFields = $this->getSearchFields(NULL, '');
+        $returnFields = $this->getReturnFields();
 
         $type = 'Contact.';
 
@@ -551,7 +552,9 @@ class SalesforceManager extends AbstractExportManager {
 
             if ($k != '') {
 
-                $fields .= ($fields == '' ? $type.$k : ',' . $type.$k);
+                if (isset($returnFields[$k])) {
+                    $fields .= ($fields == '' ? $type.$k : ',' . $type.$k);
+                }
 
                 if ($v != '' && isset($searchFields[$k])) {
                     $where .= ($where == '' ? $type.$k . "='" . $v . "'" : " AND " . $type.$k . "='" . $v . "'");
@@ -588,6 +591,24 @@ class SalesforceManager extends AbstractExportManager {
         $cols['Email'] = 'Email';
 
         return $cols;
+    }
+
+    public static function getReturnFields() {
+
+        return [
+            'Id' => '0',
+            'FirstName' => '0',
+            'LastName' => '0',
+            'Birthdate' => '0',
+            'MailingStreet' => '0',
+            'MailingCity' => '0',
+            'MailingState' => '0',
+            'MailingPostalCode' => '0',
+            'HomePhone' => '0',
+            'Email' => '0'
+        ];
+
+
     }
 
     /**
