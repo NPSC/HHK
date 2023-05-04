@@ -214,7 +214,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $sourceIds list of member Id's to export
      * @return array
      */
-    public function exportMembers(\PDO $dbh, array $sourceIds) {
+    public function exportMembers(\PDO $dbh, array $sourceIds, array $updateIds = []) {
 
         if (count($sourceIds) == 0) {
             $replys[0] = array('error'=>"The list of HHK Id's to send is empty.");
@@ -234,13 +234,7 @@ class SalesforceManager extends AbstractExportManager {
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $f = array();   // output fields array
-
-            // check for excluded
-            if ($r['Id'] == self::EXCLUDE_TERM) {
-                $f['Result'] = 'This member is Excluded';
-                $replys[$r['HHK_idName__c']] = $f;
-                continue;
-            }
+            $searchData = [];
 
             // Clean up names fresh from the DB
             $r['FirstName'] = $this->unencodeHTML($r['FirstName']);
@@ -249,23 +243,23 @@ class SalesforceManager extends AbstractExportManager {
 
 
             // Prefill output array
+            $rf = $this->getReturnFields();
             foreach ($r as $k => $v) {
 
-                if ($k != '' && $k != 'Addr_Updated' && $k != 'Addr_Verified') {
-                    $f[$k] = $v;
+                if ($k != '') {
+                    $searchData[$k] = $v;
+
+                    if (isset($rf[$k])) {
+                        $f[$rf[$k]] = $v;
+                    }
                 }
             }
 
             // Search target system.  Treat return as user input.
-            $rawResult = $this->searchTarget($f);
+            $rawResult = $this->searchTarget($searchData);
 
-            // Writes error so class paramter
-            $this->checkError($rawResult);
-
-            // Check for not finding the account Id
-            if ( isset($rawResult['totalSize'] ) && $rawResult['totalSize'] == 0 && $r['Id'] != '') {
-                // Account was deleted from the Salesforce side.
-                $f['Result'] = 'Account Deleted at Saleforce';
+            if ($this->checkError($rawResult)) {
+                $f['Result'] = $this->errorMessage;
                 $replys[$r['HHK_idName__c']] = $f;
                 continue;
             }
@@ -276,7 +270,6 @@ class SalesforceManager extends AbstractExportManager {
             if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] == 1 ) {
 
                 // We have a similar contact
-
 
                 if (isset($rawResult['records'][0]['Id']) && $rawResult['records'][0]['Id'] != '') {
                     // This is an Update
@@ -320,6 +313,15 @@ class SalesforceManager extends AbstractExportManager {
 
             } else if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] == 0 ) {
 
+                // Check for not finding the account Id
+                if ($r['Id'] != '') {
+                    // Account was deleted from the Salesforce side.
+                    $f['Result'] = 'Account Deleted at Saleforce';
+                    $replys[$r['HHK_idName__c']] = $f;
+                    continue;
+                }
+
+
                 // Nothing found - create a new account at remote
 
                 // Get member data record
@@ -354,7 +356,7 @@ class SalesforceManager extends AbstractExportManager {
                     continue;
                 }
 
-                $accountId = filter_var($newAcctResult['Id'], FILTER_SANITIZE_SPECIAL_CHARS);
+                $accountId = filter_var($newAcctResult['id'], FILTER_SANITIZE_SPECIAL_CHARS);
 
                 $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $accountId);
 
@@ -417,7 +419,7 @@ class SalesforceManager extends AbstractExportManager {
 
         foreach ($updateFields as $u) {
 
-            if (isset($localData[$u]) && isset($accountData[$u]) && $localData[$u] != $accountData[$u]) {
+            if (isset($localData[$u]) && isset($accountData[$u]) && (is_null($accountData[$u]) || trim($localData[$u]) != trim($accountData[$u]))) {
                 $this->proposedUpdates[$u] = $localData[$u];
             }
         }
@@ -432,7 +434,7 @@ class SalesforceManager extends AbstractExportManager {
             } else {
                 $msg = 'Account is Updated. ';
                 foreach ($this->proposedUpdates as $k => $v) {
-                    $msg .= $k . ' = ' . $v;
+                    $msg .= $k . ' was ' . $accountData[$k] . ' now = '. $v . ', ';
                 }
             }
         }
@@ -562,12 +564,22 @@ class SalesforceManager extends AbstractExportManager {
             }
         }
 
+        // Id field set?
+        if ($r['Id'] !== '') {
+            // Blow away the other search terms.
+            $where = $type."Id='" . $r['Id'] . "'";
+        }
+
+
         if ($fields != '' && $where != '') {
 
             $query = 'Select ' . $fields . ' FROM Contact WHERE ' . $where . ' LIMIT 10';
 
             $result = $this->webService->search($query, $this->queryEndpoint);
 
+//            if ($r['HHK_idName__c'] == 87) {
+ //               var_dump($result);
+ //          }
         }
 
         return $result;
@@ -596,16 +608,24 @@ class SalesforceManager extends AbstractExportManager {
     public static function getReturnFields() {
 
         return [
-            'Id' => '0',
-            'FirstName' => '0',
-            'LastName' => '0',
-            'Birthdate' => '0',
-            'MailingStreet' => '0',
-            'MailingCity' => '0',
-            'MailingState' => '0',
-            'MailingPostalCode' => '0',
-            'HomePhone' => '0',
-            'Email' => '0'
+            'Id' => 'Id',
+            'HHK_idName__c' => 'HHK Id',
+            'Salutation' => 'Prefix',
+            'FirstName' => 'First Name',
+            'Middle_Name__c' => 'Middle',
+            'LastName' => 'Last Name',
+            'Suffix__c' => 'Suffix',
+            'Nickname__c' => 'Nickname',
+            'Gender__c' => 'Gender',
+            'Birthdate' => 'Birthdate',
+            'MailingStreet' => 'Street',
+            'MailingCity' => 'City',
+            'MailingState' => 'State',
+            'MailingPostalCode' => 'Zip',
+            'HomePhone' => 'Home Phone',
+            'Email' => 'Email',
+            'Contact_Type__c' => 'Type',
+            'Deceased__c' => 'Deceased',
         ];
 
 

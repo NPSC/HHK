@@ -2,7 +2,6 @@
 //
 var stopTransfer,
         $visitButton,
-        $memberButton,
         $psgCBs,
         $excCBs,
         $relSels,
@@ -97,7 +96,7 @@ function updateRemote(id, accountId) {
     });
 }
 
-function transferRemote(transferIds) {
+function transferRemote(transferIds, trafficButton) {
     var parms = {
         cmd: 'members',
         ids: transferIds
@@ -117,19 +116,22 @@ function transferRemote(transferIds) {
             return;
         }
 
-        if (incmg.error) {
+        let tr = '';
+        let $mTbl = $('#mTbl');
+
+    if (incmg.error) {
             if (incmg.gotopage) {
                 window.open(incmg.gotopage, '_self');
             }
             // Stop Processing and return.
             flagAlertMessage(incmg.error, true);
+
+            if (trafficButton !== null) {
+                trafficButton.val('Error');
+            }
+
             return;
         }
-
-        let tr = '';
-
-        let $mTbl = $('#mTbl');
-        let first = true;
 
 
         if (incmg.members) {
@@ -153,8 +155,8 @@ function transferRemote(transferIds) {
                 $('#divMembers').append(title).append($mTbl).show();
             }
 
-            tr = '';
-            first = 'style="border-top: 2px solid #2E99DD;"';
+
+            let first = 'style="border-top: 2px solid #2E99DD;"';
             for (let id in incmg.members) {
 
                 tr = '<tr ' + first + '>';
@@ -164,13 +166,17 @@ function transferRemote(transferIds) {
                     tr += '<td>' + incmg.members[id][key] + '</td>';
                 }
                 tr += '</tr>';
-
             }
 
             $mTbl.find('tbody').append(tr);
+            $('div#retrieve').empty().hide();
+
+            $('div#printArea').show();
         }
 
-        throttleMembers();
+        if (trafficButton !== null) {
+            throttleMembers(trafficButton);
+        }
     });
 
 }
@@ -235,10 +241,10 @@ function throttleVisits() {
     }
 }
 
-function throttleMembers() {
+function throttleMembers($trafficButton) {
 
     if (stopTransfer) {
-        $memberButton.val('Resume Member Transfers');
+        $trafficButton.val('Resume Member Transfers');
         return;
     }
 
@@ -257,7 +263,7 @@ function throttleMembers() {
             $(this).prop(props).end();
 
 
-            transferRemote($(this).data('txid'));
+            transferRemote($(this).data('txid'), $trafficButton);
 
             return false;
         }
@@ -265,7 +271,7 @@ function throttleMembers() {
 
     if (donut) {
         stopTransfer = true;
-        $memberButton.val('Start Member Transfers');
+        $trafficButton.val('Start Member Transfers');
     }
 }
 
@@ -575,7 +581,7 @@ function getRemote(item, source) {
             $('div#retrieve').html(incmg.data);
 
             if (source === 'remote') {
-                $('div#retrieve').prepend($('<h3>Remote Data</h3>'));
+                $('div#retrieve').prepend($('<h3>Remote Data</h3>')).show();
                 $('#txtRSearch').val('');
 
             } else {
@@ -591,7 +597,8 @@ function getRemote(item, source) {
                         }
                         $(this).val('Working...');
 
-                        transferRemote([item.id]);
+                        transferRemote([item.id], null);
+                        $('div#localrecords').hide();
                     });
                 } else if (incmg.accountId) {
                     updteRemote.val('Update Remote');
@@ -607,7 +614,7 @@ function getRemote(item, source) {
                     updteRemote = '';
                 }
 
-                $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote));
+                $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote)).show();
                 $('#txtSearch').val('');
             }
         }
@@ -701,24 +708,25 @@ $(document).ready(function () {
         $memberButton
                 .button()
                 .val('Start Member Transfers')
-                .show()
-                .click(function () {
+                .show();
 
-                    // Switch transfer control
+        $memberButton.click(function () {
+
+                    // Switch the transfer control
                     if (stopTransfer) {
                         stopTransfer = false;
                     } else {
                         stopTransfer = true;
                     }
 
-                    // UPdate controls
+                    // Update the controls
                     if (stopTransfer) {
                         // Stop
                         $(this).val('Stopping ...');
                     } else {
                         // start
                         $(this).val('Stop Transfers');
-                        throttleMembers();
+                        throttleMembers($memberButton);
                     }
                 });
 
