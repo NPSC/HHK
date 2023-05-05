@@ -74,27 +74,15 @@ function updateRemote(id, accountId) {
 
             flagAlertMessage(incmg.warning, true);
 
-            // Do nothing else if in auto mode.
-            if ($memberButton === null) {
-
-                var updteLocal = $('<input type="button" id="btnLocal" value="Remove Remote Account Id from Local Record" />');
-                $('#btnUpdate').hide();
-
-                updteLocal.button().click(function () {
-
-                    if ($(this).val() === 'Working...') {
-                        return;
-                    }
-                    $(this).val('Working...');
-
-                    updateLocal(id);
-                });
-
-                $('div#retrieve').prepend(updteLocal);
-            }
-
         } else if (incmg.result) {
-            flagAlertMessage(incmg.result, false);
+
+            if ($memberButton === null) {
+                flagAlertMessage(incmg.result, false);
+            } else {
+                tr = '<tr style="border-top: 2px solid #2E99DD;">';
+                tr += '<td colspan="10">' + incmg.result + '</td>';
+                $mTbl.find('tbody').append(tr);
+            }
         }
 
         if ($memberButton !== null) {
@@ -124,9 +112,6 @@ function transferRemote(transferIds) {
             return;
         }
 
-        let tr = '';
-        let $mTbl = $('#mTbl');
-
         if (incmg.error) {
             if (incmg.gotopage) {
                 window.open(incmg.gotopage, '_self');
@@ -136,6 +121,9 @@ function transferRemote(transferIds) {
 
             return;
         }
+
+        let tr = '';
+        let $mTbl = $('#mTbl');
 
 
         if (incmg.members) {

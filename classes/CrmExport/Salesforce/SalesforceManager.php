@@ -440,7 +440,7 @@ class SalesforceManager extends AbstractExportManager {
             if ($this->checkError($acctResult)) {
                 $msg = $this->errorMessage;
             } else {
-                $msg = 'Account is Updated. ';
+                $msg = $localData['FirstName'] . ' ' . $localData['LastName'] . ' is Updated: ';
                 foreach ($this->proposedUpdates as $k => $v) {
                     $msg .= $k . ' was ' . ($accountData[$k] == '' ? '-empty-' : $accountData[$k]) . ', now '. $v . '; ';
                 }
