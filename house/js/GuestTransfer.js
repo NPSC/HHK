@@ -2,6 +2,7 @@
 //
 var stopTransfer,
         $visitButton,
+        $memberButton,
         $psgCBs,
         $excCBs,
         $relSels,
@@ -71,32 +72,39 @@ function updateRemote(id, accountId) {
 
         if (incmg.warning) {
 
-            var updteLocal = $('<input type="button" id="btnLocal" value="" />');
-            $('#btnUpdate').hide();
-
             flagAlertMessage(incmg.warning, true);
 
-            updteLocal.val('Remove Remote Account Id from Local Record');
+            // Do nothing else if in auto mode.
+            if ($memberButton === null) {
 
-            updteLocal.button().click(function () {
+                var updteLocal = $('<input type="button" id="btnLocal" value="Remove Remote Account Id from Local Record" />');
+                $('#btnUpdate').hide();
 
-                if ($(this).val() === 'Working...') {
-                    return;
-                }
-                $(this).val('Working...');
+                updteLocal.button().click(function () {
 
-                updateLocal(id);
-            });
+                    if ($(this).val() === 'Working...') {
+                        return;
+                    }
+                    $(this).val('Working...');
 
-            $('div#retrieve').prepend(updteLocal);
+                    updateLocal(id);
+                });
+
+                $('div#retrieve').prepend(updteLocal);
+            }
 
         } else if (incmg.result) {
             flagAlertMessage(incmg.result, false);
         }
+
+        if ($memberButton !== null) {
+            throttleMembers();
+        }
+
     });
 }
 
-function transferRemote(transferIds, trafficButton) {
+function transferRemote(transferIds) {
     var parms = {
         cmd: 'members',
         ids: transferIds
@@ -106,29 +114,25 @@ function transferRemote(transferIds, trafficButton) {
     posting.done(function (incmg) {
 
         if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
+            alert('Error: Bad Reply from HHK Web Server');
             return;
         }
         try {
             incmg = $.parseJSON(incmg);
         } catch (err) {
-            alert('Bad JSON Encoding');
+            alert('Error: Bad JSON Encoding');
             return;
         }
 
         let tr = '';
         let $mTbl = $('#mTbl');
 
-    if (incmg.error) {
+        if (incmg.error) {
             if (incmg.gotopage) {
                 window.open(incmg.gotopage, '_self');
             }
             // Stop Processing and return.
             flagAlertMessage(incmg.error, true);
-
-            if (trafficButton !== null) {
-                trafficButton.val('Error');
-            }
 
             return;
         }
@@ -174,8 +178,8 @@ function transferRemote(transferIds, trafficButton) {
             $('div#printArea').show();
         }
 
-        if (trafficButton !== null) {
-            throttleMembers(trafficButton);
+        if ($memberButton !== null) {
+            throttleMembers();
         }
     });
 
@@ -241,10 +245,10 @@ function throttleVisits() {
     }
 }
 
-function throttleMembers($trafficButton) {
+function throttleMembers() {
 
     if (stopTransfer) {
-        $trafficButton.val('Resume Member Transfers');
+        $('#TxButton').val('Resume Member Transfers');
         return;
     }
 
@@ -262,16 +266,45 @@ function throttleMembers($trafficButton) {
 
             $(this).prop(props).end();
 
-
-            transferRemote($(this).data('txid'), $trafficButton);
+            transferRemote($(this).data('txid'));
 
             return false;
         }
     });
 
     if (donut) {
-        stopTransfer = true;
-        $trafficButton.val('Start Member Transfers');
+
+        let upnut = true;
+
+        if ($('input.hhk-updatemem').length == 0) {
+            stopTransfer = true;
+            $('#TxButton').val('Start Member Transfers');
+            return;
+        }
+
+        $('input.hhk-updatemem').each(function() {
+            if ($(this).prop('checked')) {
+
+                upnut = false;
+                const props = { 'checked': false, 'disabled': true };
+
+                $(this).parents('tr').css('background-color', 'lightgray');
+
+                $(this).prop(props).end();
+
+
+                updateRemote($(this).data('txid'), $(this).data('txacct'));
+
+                return false;
+
+            }
+        });
+
+        if (upnut) {
+            // Done
+            stopTransfer = true;
+            $('#TxButton').val('Start Updates');
+        }
     }
 }
 
@@ -691,19 +724,19 @@ $(document).ready(function () {
 
         stopTransfer = true;
 
-        $('#tblrpt').dataTable({
-            'columnDefs': [
-                {'targets': [7],
-                    'type': 'date',
-                    'render': function (data, type, row) {
-                        return dateRender(data, type, dateFormat);
-                    }
-                }
-            ],
-            "displayLength": 25,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        });
+        // $('#tblrpt').dataTable({
+        //     'columnDefs': [
+        //         {'targets': [7],
+        //             'type': 'date',
+        //             'render': function (data, type, row) {
+        //                 return dateRender(data, type, dateFormat);
+        //             }
+        //         }
+        //     ],
+        //     "displayLength": 25,
+        //     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+        //     "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+        // });
 
         $memberButton
                 .button()
@@ -726,7 +759,7 @@ $(document).ready(function () {
                     } else {
                         // start
                         $(this).val('Stop Transfers');
-                        throttleMembers($memberButton);
+                        throttleMembers();
                     }
                 });
 
@@ -739,19 +772,19 @@ $(document).ready(function () {
         $('#btnVisits').hide();
         $('#divMembers').empty();
 
-        $('#tblrpt').dataTable({
-            'columnDefs': [
-                {'targets': [4],
-                    'type': 'date',
-                    'render': function (data, type, row) {
-                        return dateRender(data, type, dateFormat);
-                    }
-                }
-            ],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        });
+        // $('#tblrpt').dataTable({
+        //     'columnDefs': [
+        //         {'targets': [4],
+        //             'type': 'date',
+        //             'render': function (data, type, row) {
+        //                 return dateRender(data, type, dateFormat);
+        //             }
+        //         }
+        //     ],
+        //     "displayLength": 50,
+        //     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+        //     "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+        // });
 
         $('#btnPay').button().show().click(function () {
 

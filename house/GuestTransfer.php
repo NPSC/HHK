@@ -433,7 +433,7 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
         // Transfer opt-out
         if ($r['External Id'] == '') {
 
-       		if ($r['Email'] !== '' || ($r['Address'] !== '' && $r['BadAddress'] === '')) {
+       		if ($r['Email'] !== '' || ($r['Address'] !== '' && $r['Bad Addr'] === '')) {
        			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox hhk-tfmem', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox', 'checked'=>'checked'));
        		} else {
        			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox hhk-tfmem', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox'));
@@ -448,6 +448,7 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
         unset($r['Arrival']);
         unset($r['Departure']);
+        unset($r['Bad Addr']);
 
         $rows[] = $r;
 
@@ -774,22 +775,21 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 </form>
                 <div style="margin-top: 15px; margin-left:50px;" id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
-            <div style="clear:both;"></div>
 
             <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div id="localrecords">
-                <div style="margin-bottom:.8em; float:left;"><?php echo $settingstable . $searchTabel; ?></div>
-                <form autocomplete="off">
-                <div id="divTable" style="clear:left;">
-                    <?php echo $dataTable; ?>
-                </div>
-                </form>
+                    <div style="margin-bottom:.8em; float:left;">
+                        <?php echo $settingstable . $searchTabel; ?>
+                    </div>
+                    <div id="divTable" style="clear:left;">
+                        <?php echo $dataTable; ?>
+                    </div>
                 </div>
                 <div id="divMembers"></div>
             </div>
-            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;font-size:0.9em;">
+            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-bottom:6px;margin-left:20px;font-size:0.9em;">
                 <input id="printButton" value="Print" type="button" />
-                <input id="TxButton" value="" type="button" style="margin-left:2em;"/>
+                <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
                 <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
         	</div>

@@ -4,7 +4,7 @@ namespace HHK\CrmExport\Salesforce;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
-use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
+use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput};
 use HHK\sec\Session;
 use HHK\CrmExport\OAuth\Credentials;
 
@@ -247,13 +247,22 @@ class SalesforceManager extends AbstractExportManager {
             foreach ($r as $k => $v) {
 
                 if ($k != '') {
+
                     $searchData[$k] = $v;
 
+                    // Replace SF column names with better
                     if (isset($rf[$k])) {
                         $f[$rf[$k]] = $v;
                     }
                 }
             }
+
+            // Collect address into a single column
+            $f['Address'] = $f['Street'] . ', ' . $f['City'] . ', ' . $f['State'] . ', ' . $f['Zip'];
+            unset($f['Street']);
+            unset($f['City']);
+            unset($f['State']);
+            unset($f['Zip']);
 
             // Search target system.  Treat return as user input.
             $rawResult = $this->searchTarget($searchData);
@@ -277,10 +286,14 @@ class SalesforceManager extends AbstractExportManager {
                     $this->updateRemoteMember($dbh, $rawResult['records'][0], 0, $r, FALSE);
 
                     if (count($this->getProposedUpdates()) > 0) {
-                        $f['Result'] = 'Updates Proposed: ';
+                        $f['Result'] = HTMLInput::generateMarkup('', array('id'=>'updt_'.$r['HHK_idName__c'], 'class'=>'hhk-txCbox hhk-updatemem', 'data-txid'=>$r['HHK_idName__c'], 'data-txacct'=>$rawResult['records'][0]['Id'], 'type'=>'checkbox'));
+                        $label =  'Updates Proposed: ';
                         foreach ($this->getProposedUpdates() as $k => $v) {
-                            $f['Result'] .= $k . '=' . $v . ', ';
+                            $label .= $k . '=' . $v . '; ';
                         }
+
+                        $f['Result'] .= HTMLContainer::generateMarkup('label', $label, array('for'=>'updt_'.$r['HHK_idName__c'], 'style'=>'margin-left:.3em;'));
+
                     } else {
                         $f['Result'] = 'Previously Transferred.';
                     }
@@ -395,14 +408,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $msg = 'Already up to date. ';
 
-        $updateFields = [
-            'MailingStreet',
-            'MailingCity',
-            'MailingState',
-            'MailingPostalCode',
-            'HomePhone',
-            'Email'
-        ];
+        $updateFields = $this->getUpdateFields();
 
         $this->proposedUpdates = [];
 
@@ -416,14 +422,16 @@ class SalesforceManager extends AbstractExportManager {
             }
         }
 
-
+        // Collect any updates, if any
         foreach ($updateFields as $u) {
 
-            if (isset($localData[$u]) && isset($accountData[$u]) && (is_null($accountData[$u]) || trim($localData[$u]) != trim($accountData[$u]))) {
+            if ((isset($localData[$u]) && $localData[$u] !== '' && isset($accountData[$u]) && trim($localData[$u]) !== trim($accountData[$u]))
+                    || (isset($localData[$u]) && $localData[$u] !== '' && isset($accountData[$u]) === FALSE)) {
                 $this->proposedUpdates[$u] = $localData[$u];
             }
         }
 
+        // Actually update the remote account
         if (count($this->proposedUpdates) > 0 && $updateIt) {
 
             // Update account
@@ -434,7 +442,7 @@ class SalesforceManager extends AbstractExportManager {
             } else {
                 $msg = 'Account is Updated. ';
                 foreach ($this->proposedUpdates as $k => $v) {
-                    $msg .= $k . ' was ' . $accountData[$k] . ' now = '. $v . ', ';
+                    $msg .= $k . ' was ' . ($accountData[$k] == '' ? '-empty-' : $accountData[$k]) . ', now '. $v . '; ';
                 }
             }
         }
@@ -628,8 +636,33 @@ class SalesforceManager extends AbstractExportManager {
             'Deceased__c' => 'Deceased',
         ];
 
+    }
+
+     public static function getUpdateFields() {
+
+        return [
+            'Id',
+            'HHK_idName__c',
+            'Salutation',
+            'FirstName',
+            'Middle_Name__c',
+            'LastName',
+            'Suffix__c',
+            'Nickname__c',
+            'Gender__c',
+            'Birthdate',
+            'MailingStreet',
+            'MailingCity',
+            'MailingState',
+            'MailingPostalCode',
+            'HomePhone',
+            'Email',
+            'Contact_Type__c',
+            'Deceased__c',
+        ];
 
     }
+
 
     /**
      * Summary of showConfig

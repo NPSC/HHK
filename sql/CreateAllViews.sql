@@ -1431,10 +1431,11 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
                 `np`.`Phone_Extension`)
     END) AS `Phone`,
     IFNULL(`ne`.`Email`, '') AS `Email`,
-    IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
+    IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%m-%d-%Y'), '') AS `Birthdate`,
     `nd`.`No_Return` AS `No Return`,
     MAX(IFNULL(s.Span_Start_Date, '')) AS `Arrival`,
-    IFNULL(s.Span_End_Date, '') AS `Departure`
+    IFNULL(s.Span_End_Date, '') AS `Departure`,
+    IFNULL(`na`.`Bad_Address`, '') AS `Bad Addr`
 FROM
     `stays` `s`
         JOIN
@@ -1469,6 +1470,7 @@ WHERE
         AND (`n`.`Record_Member` = 1)
         AND (`n`.`Member_Status` IN ('a' , 'd', 'in')))
 GROUP BY s.idName ORDER BY ng.idPsg;
+
 
 -- -----------------------------------------------------
 -- View `vguest_view`
