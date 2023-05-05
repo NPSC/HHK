@@ -42,7 +42,7 @@ $wInit->sessionLoadGuestLkUps();
 $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
 
 // Maintainence component - and role = admin is also required.
-if (SecurityComponent::is_Admin($uS->rolecode, $uS->username)) {
+if (SecurityComponent::is_Admin()) {
     $maintFlag = SecurityComponent::is_Authorized("NameEdit_Maint");
 
 } else {

@@ -12,14 +12,14 @@ use HHK\sec\{WebInit, UserClass};
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $menuMarkup = $wInit->generatePageMenu();
 $usernameList = array();
 $actions = array();
 
-$lookups = readGenLookups($dbh, "Web_User_Actions");
+$lookups = readGenLookupsPDO($dbh, "Web_User_Actions");
 foreach($lookups as $action){
     $actions[] = ['id'=>$action['Code'], 'title'=>$action['Description']];
 }

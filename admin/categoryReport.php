@@ -45,7 +45,7 @@ $catSelTitleMarkup = "";
 $catagoryHeadertable = "";
 
 // Selector Controls for Category section
-$gSel = readGenLookups($dbh, "Vol_Category");
+$gSel = readGenLookupsPDO($dbh, "Vol_Category");
 $catSelCtrls = array();
 
 foreach ($gSel as $selData) {

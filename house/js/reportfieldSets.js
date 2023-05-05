@@ -113,7 +113,7 @@
 	    				if(data.error){
 							flagAlertMessage("Error: " + data.error, true);
 	    				}else if(data.success){
-							flagAlertMessage("Error: " + data.success, false);
+							flagAlertMessage(data.success, false);
 	    				}
 	    			};
 			switch(id){
@@ -132,7 +132,7 @@
 	    					$wrapper.find("#divFieldsetError #alrMessage").html(data.error);
 	    					$wrapper.find("#divFieldsetError").css('margin-top', '1em').show();
 	    				}else if(data.success){
-							flagAlertMessage("Error: " + data.success, false);
+							flagAlertMessage(data.success, false);
 							
 							if(data.fieldSet){
 								if($wrapper.find("#fieldset optgroup[label='" + data.fieldSet.optGroup + "']").length == 0){
@@ -163,7 +163,7 @@
 	    					$wrapper.find("#divFieldsetError #alrMessage").html(data.error);
 	    					$wrapper.find("#divFieldsetError").css('margin-top', '1em').show();
 	    				}else if(data.success){
-							flagAlertMessage("Error: " + data.success, false);
+							flagAlertMessage(data.success, false);
 							
 							if(data.fieldSet){
 								if($wrapper.find("#fieldset optgroup[label='" + data.fieldSet.optGroup + "']").length == 0){
@@ -192,7 +192,7 @@
 	    				if(data.error){
 							flagAlertMessage("Error: " + data.error, true);
 	    				}else if(data.success){
-							flagAlertMessage("Error: " + data.success, false);
+							flagAlertMessage(data.success, false);
 							
 							$wrapper.find("#fieldset option[value=" + data.fieldSet.idFieldSet + "]").text(data.fieldSet.title);
 							$wrapper.find("#fieldset").trigger("change");
@@ -215,7 +215,7 @@
 		    				if(data.error){
 								flagAlertMessage("Error: " + data.error, true);
 		    				}else if(data.success){
-								flagAlertMessage("Error: " + data.success, false);
+								flagAlertMessage(data.success, false);
 								
 								$wrapper.find("#fieldset option[value=" + data.idFieldSet + "]").remove();
 								$wrapper.find("#fieldset").val("").trigger("change");

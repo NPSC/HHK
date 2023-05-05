@@ -196,6 +196,13 @@ Order by `t`.`List_Order`;");
                 )));
             }
 
+            //fix option group issue on additional charges
+            if($type == GLTypeCodes::CA){
+                foreach($diags as &$diag){
+                    unset($diag[2]);
+                }
+            }
+
             $tbl->addBodyTr(
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(

@@ -210,7 +210,7 @@ if (isset($_POST["btnGenLookups"])) {
 /*
  * Change Log Output
  */
-
+$chgLogMkup = "";
 if (isset($_POST["btnGenLog"])) {
     $accordIndex = 3;
     $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -222,7 +222,7 @@ if (isset($_POST["btnGenLog"])) {
         $eDate = date("Y-m-d 23:59:59", strtotime($eDate));
     }
 
-    $markup = getChangeLog($dbh, 0, $sDate, $eDate);
+    $chgLogMkup = getChangeLog($dbh, 0, $sDate, $eDate);
 }
 
 $cleanMsg = '';
@@ -568,7 +568,7 @@ if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !=
                             </tr>
                         </table>
                         <div id="divMkup" style="margin-top: 10px;">
-<?php echo $markup; ?>
+                            <?php echo $chgLogMkup; ?>
                         </div>
                     </div>
                     <div id="delid" class="ui-tabs-hide" >

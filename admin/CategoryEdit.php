@@ -28,7 +28,7 @@ if ($tableName != '') {
     $volArray = $wInit->reloadSessionVolLkUps();
 
     if (isset($volArray['Vol_Category'][$tableName])) {
-        $rows = readGenLookups($dbh, $tableName);
+        $rows = readGenLookupsPDO($dbh, $tableName);
     }
 
     echo json_encode($rows);

@@ -757,8 +757,9 @@ CREATE TABLE if not exists `item_type`
 CREATE TABLE if not exists `item_type_map`
 (
     `Item_Id` INTEGER,
-    `Type_Id` INTEGER
-) ENGINE=MyISAM;
+    `Type_Id` INTEGER,
+    PRIMARY KEY (`Item_Id`,`Type_Id`)
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `labels`

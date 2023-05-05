@@ -413,7 +413,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
         EditRS::update($dbh, $siteRs, array($siteRs->Site_Code));
 
-        $events = array("success" => "Updated Site Code = " . $siteCode);
+        $events = array("success" => "Updated Site: " . $siteRs->Description->getStoredVal());
 
 
         return $events;

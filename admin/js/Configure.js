@@ -154,7 +154,7 @@ if ($('.hhk-setMerchantRooms').length > 0) {
                     "sorting": [[7, 'desc']],
                     "displayLength": 25,
                     "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                    "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                     ajax: {
                         url: 'ws_gen.php',
                         data: {
@@ -176,7 +176,7 @@ if ($('.hhk-setMerchantRooms').length > 0) {
                         "sorting": [[0, 'asc']],
                         "displayLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                         ajax: {
                             url: 'ws_gen.php',
                             data: {
@@ -208,7 +208,7 @@ if ($('.hhk-setMerchantRooms').length > 0) {
                         "sorting": [[4, 'desc']],
                         "displayLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                         ajax: {
                             url: 'ws_gen.php',
                             data: {
@@ -767,7 +767,7 @@ if ($('.hhk-setMerchantRooms').length > 0) {
                     "sorting": [[7, 'desc']],
                     "displayLength": 25,
                     "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                    "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                     ajax: {
                         url: 'ws_gen.php',
                         data: {

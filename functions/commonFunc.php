@@ -4,7 +4,6 @@ use HHK\Exception\RuntimeException;
 use HHK\sec\Session;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{WebRole};
-use HHK\Config_Lite\Config_Lite;
 use PHPMailer\PHPMailer\PHPMailer;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\SysConst\PaymentMethod;
@@ -23,7 +22,16 @@ use HHK\SysConst\ReservationStatus;
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-function initPDO($override = FALSE)
+
+
+ /**
+  * Initialize DB connection
+  *
+  * @param bool $override
+  * @throws Exception
+  * @return PDO|void
+  */
+function initPDO(bool $override = FALSE)
 {
     $ssn = Session::getInstance();
     $roleCode = $ssn->rolecode;
@@ -100,9 +108,9 @@ function syncTimeZone(\PDO $dbh)
 /**
  * Return a date with time = 0
  *
- * @param unknown $dateTime
+ * @param DateTimeInterface|string $dateTime
  * @throws Exception
- * @return \DateTime|\DateTimeImmutable
+ * @return DateTimeInterface
  */
 function justDate($dateTime) {
 
@@ -120,7 +128,14 @@ function justDate($dateTime) {
     return $dateTime;
 }
 
-function doExcelDownLoad($rows, $fileName)
+/**
+ * Generate and download Excel file from multidimentional array
+ * 
+ * @param array $rows
+ * @param string $fileName
+ * @return void
+ */
+function doExcelDownLoad(array $rows, string $fileName):void
 {
     if (count($rows) === 0) {
         return;
@@ -154,7 +169,12 @@ function doExcelDownLoad($rows, $fileName)
     $writer->download();
 }
 
-function prepareEmail()
+/**
+ * Set up PHPMailer with proper settings
+ *
+ * @return PHPMailer
+ */
+function prepareEmail():PHPMailer
 {
 
     $uS = Session::getInstance();
@@ -510,7 +530,7 @@ function doOptionsMkup($gArray, $sel, $offerBlank = true, $placeholder = "")
 
 function DoLookups($con, $tbl, $sel, $offerBlank = true)
 {
-    $g = readGenLookups($con, $tbl);
+    $g = readGenLookupsPDO($con, $tbl);
 
     return doOptionsMkup($g, $sel, $offerBlank);
 }
@@ -529,7 +549,7 @@ function removeOptionGroups($gArray)
     return $clean;
 }
 
-function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $del, array $type = array())
+function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, ?array $del, array $type = array())
 {
     if (isset($desc)) {
 

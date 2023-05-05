@@ -180,6 +180,7 @@ $getSiteReplyMessage = '';
             modal: true,
             buttons: {
                 "Save Site": function() {
+                    var dialog = $(this);
                     var parms = new Object();
                     $('.spd').each(function(index) {
                         parms[$(this).attr("id")] = $(this).val();
@@ -187,16 +188,21 @@ $getSiteReplyMessage = '';
 
                     $.post("ws_gen.php", {cmd: 'edsite',parms: parms},
                         function (data) {
-
-                    });
+                            console.log(data);
+                            if(data.success){
+                                flagAlertMessage(data.success, false);
+                                dialog.dialog('close');
+                            } else if (data.error){
+                                flagAlertMessage(data.error, true);
+                            }
+                    }, "json");
                 },
                 "Exit": function() {
                     $('body').css('cursor', "auto");
                     $( "#siteContainer" ).hide();
                     $( this ).dialog( "close" );
                 }
-            },
-            close: function() {}
+            }
         });
 
         $('input.loadPages').click(function() {
@@ -217,10 +223,10 @@ $getSiteReplyMessage = '';
                     $('#inHostAddr').val(tds[4].innerHTML);
                     $('#inRelAddr').val(tds[5].innerHTML);
                     $('#inCss').val(tds[7].innerHTML);
-                    $('#inJs').val(tds[8].innerHTML);
-                    $('#inDefault').val(tds[9].innerHTML);
-                    $('#inIndex').val(tds[10].innerHTML);
-                    $('#inUpBy').val(tds[11].innerHTML);
+                    //$('#inJs').val(tds[8].innerHTML);
+                    $('#inDefault').val(tds[8].innerHTML);
+                    $('#inIndex').val(tds[9].innerHTML);
+                    $('#inUpBy').val(tds[10].innerHTML);
                     //$('#inLastUp').val(tds[12].innerHTML);
                     // Security codes
                     $('#siteSecCode option').each( function() {
@@ -240,6 +246,7 @@ $getSiteReplyMessage = '';
                 text-align:right;
                 margin-right:1em;
                 bottom: 10px;
+            }
         </style>
     </head>
     <body <?php if ($testVersion) {echo "class='testbody'";} ?>>
@@ -287,14 +294,6 @@ $getSiteReplyMessage = '';
                 <tr>
                     <th>Index Page</th>
                     <td><input type="text" id="inIndex" class="spd" value=""/></td>
-                </tr>
-                <tr>
-                    <th>Updated By</th>
-                    <td><input type="text" id="inUpBy" value="" readonly="readonly"/></td>
-                </tr>
-                <tr>
-                    <th>Last Updated</th>
-                    <td><input type="text" id="inLastUp" value="" readonly="readonly"/></td>
                 </tr>
                 <tr>
                     <th>Group Code</th>

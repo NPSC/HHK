@@ -657,7 +657,7 @@ abstract class AbstractMember {
 
             $mt = filter_var($post[$idPrefix.'selStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            if (isset($uS->nameLookups['mem_status'][$mt]) === TRUE) {
+            if (isset($uS->nameLookups['mem_status'][$mt]) == TRUE) {
                 $n->Member_Status->setNewVal($mt);
 
                 // Aditional Info if changed

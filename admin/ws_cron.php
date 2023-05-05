@@ -1,11 +1,9 @@
 <?php
-use HHK\sec\WebInit;
 use GO\Scheduler;
 use HHK\Cron\EmailCheckedoutJob;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\JobFactory;
 use HHK\Cron\JobInterface;
-use HHK\SysConst\WebPageCode;
 use HHK\sec\Login;
 use HHK\sec\UserClass;
 use HHK\sec\Session;

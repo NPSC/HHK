@@ -25,7 +25,7 @@ class selCtrl {
 
     function __Construct($dbcon, $genLkupTabelName, $defaultVal, $htmlNameBase, $emptyOption, $title = "", $orderBy = "Description" ) {
 
-        $genRcrds = readGenLookups($dbcon, $genLkupTabelName, $orderBy);
+        $genRcrds = readGenLookupsPDO($dbcon, $genLkupTabelName, $orderBy);
 
         if ($emptyOption) {
             $this->rows = count($genRcrds) + 1;

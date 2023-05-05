@@ -76,11 +76,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Demographics', 'Special_Needs', 'Special Needs', '','m',35),
 ('Demographics', 'Media_Source', 'Media Source', '','m',30),
 
-('Diagnosis','0','Other','','h',0),
-('Diagnosis','0','Cardiac','','h',0),
-('Diagnosis','0','Prostate Cancer','','h',0),
-('Diagnosis','0','NICU','','h',0),
-('Diagnosis','0','Glioma','','h',0),
+('Diagnosis','d1','Other','','h',0),
+('Diagnosis','d2','Cardiac','','h',0),
+('Diagnosis','d3','Prostate Cancer','','h',0),
+('Diagnosis','d4','NICU','','h',0),
+('Diagnosis','d5','Glioma','','h',0),
 
 ('Diagnosis_Category', 'o', 'Oncology', '', 'h', 0),
 ('Diagnosis_Category', 'n', 'Neurology', '', 'h', 0),
