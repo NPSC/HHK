@@ -43,12 +43,12 @@ function updateLocal(id) {
     });
 }
 
-function updateRemote(id, accountId) {
+function updateRemote(id, accountId, useFlagAlert) {
 
     var postUpdate = $.post('ws_tran.php', {cmd: 'update', accountId: accountId, id: id});
 
     postUpdate.done(function (incmg) {
-        $('#btnUpdate').val('Update Remote');
+        $('#btnUpdate').remove();
         if (!incmg) {
             alert('Bad Reply from Server');
             return;
@@ -76,16 +76,16 @@ function updateRemote(id, accountId) {
 
         } else if (incmg.result) {
 
-            if ($memberButton === null) {
+            if (useFlagAlert) {
                 flagAlertMessage(incmg.result, false);
             } else {
-                tr = '<tr style="border-top: 2px solid #2E99DD;">';
+                let tr = '<tr style="border-top: 2px solid #2E99DD;">';
                 tr += '<td colspan="10">' + incmg.result + '</td>';
                 $('#mTbl').find('tbody').append(tr);
             }
         }
 
-        if ($memberButton !== null) {
+        if (! useFlagAlert) {
             throttleMembers();
         }
 
@@ -100,6 +100,7 @@ function transferRemote(transferIds) {
 
     var posting = $.post('ws_tran.php', parms);
     posting.done(function (incmg) {
+        $('#btnUpdate').remove();
 
         if (!incmg) {
             alert('Error: Bad Reply from HHK Web Server');
@@ -143,7 +144,7 @@ function transferRemote(transferIds) {
                 }
 
                 $mTbl.append(tr);
-                let title = $('<h3 style="margin-top:7px;">New ' + cmsTitle + ' Members</h3>');
+                let title = $('<h3 style="margin-top:10px;">Processed ' + cmsTitle + ' Members</h3>');
                 $('#divMembers').append(title).append($mTbl).show();
             }
 
@@ -281,7 +282,7 @@ function throttleMembers() {
                 $(this).prop(props).end();
 
 
-                updateRemote($(this).data('txid'), $(this).data('txacct'));
+                updateRemote($(this).data('txid'), $(this).data('txacct'), false);
 
                 return false;
 
@@ -292,6 +293,10 @@ function throttleMembers() {
             // Done
             stopTransfer = true;
             $('#TxButton').val('Start Updates');
+            let tr = '<tr style="border-top: 2px solid #2E99DD;">';
+            tr += '<th colspan="10" class="hhk-visitdialog">Updates</th>';
+            $('#mTbl').find('tbody').append(tr);
+
         }
     }
 }
@@ -601,6 +606,10 @@ function getRemote(item, source) {
             $('div#retrieve').children().remove();
             $('div#retrieve').html(incmg.data);
 
+            if (incmg.accountId == 'error') {
+                return;
+            }
+
             if (source === 'remote') {
                 $('div#retrieve').prepend($('<h3>Remote Data</h3>')).show();
                 $('#txtRSearch').val('');
@@ -618,7 +627,7 @@ function getRemote(item, source) {
                         }
                         $(this).val('Working...');
 
-                        transferRemote([item.id], null);
+                        transferRemote([item.id]);
                         $('div#localrecords').hide();
                     });
                 } else if (incmg.accountId) {
@@ -629,10 +638,10 @@ function getRemote(item, source) {
                             return;
                         }
                         $(this).val('Working...');
-                        updateRemote(item.id, incmg.accountId);
+                        updateRemote(item.id, incmg.accountId, true);
                     });
                 } else {
-                    updteRemote = '';
+                    updteRemote.remove();
                 }
 
                 $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote)).show();

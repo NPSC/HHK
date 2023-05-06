@@ -731,6 +731,9 @@ abstract class AbstractMember {
             // Only set it if excluded.
             if (isset($post[$idPrefix."exCms"])) {
                 $n->External_Id->setNewVal(AbstractExportManager::EXCLUDE_TERM);
+            } else if ($n->External_Id->getStoredVal() == AbstractExportManager::EXCLUDE_TERM) {
+                // CLear exclude in this case
+                $n->External_Id->setNewVal('');
             }
         }
 

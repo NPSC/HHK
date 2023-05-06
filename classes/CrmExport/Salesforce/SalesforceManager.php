@@ -4,7 +4,7 @@ namespace HHK\CrmExport\Salesforce;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
-use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput};
+use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\Session;
 use HHK\CrmExport\OAuth\Credentials;
 
@@ -107,34 +107,6 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
-     * Summary of getExplicit
-     * @param \PDO $dbh
-     * @param mixed $url
-     * @param mixed $query
-     * @return string
-     */
-    public function getExplicit(\PDO $dbh, $url, $query = '') {
-
-        $resultStr = '';
-
-        if ($query != '') {
-            $results = $this->webService->search($query, $url);
-        } else {
-            $results = $this->webService->goUrl($url);
-        }
-
-
-        $parms = array();
-        $this->unwindResponse($parms, $results);
-
-        foreach ($parms as $k => $v) {
-            $resultStr .= $k . '=' . $v . '<br/>';
-        }
-
-        return $resultStr;
-    }
-
-    /**
      * Summary of getMember - local or remote retrieve member details.
      * @param \PDO $dbh
      * @param array $parameters
@@ -154,7 +126,8 @@ class SalesforceManager extends AbstractExportManager {
             $row = $this->loadSourceDB($dbh, $id, 'vguest_data_sf');
 
             if (is_null($row)) {
-                $reply = 'Error - HHK Id not found';
+                $reply = 'Error - HHK Id not found, or member is not a guest or patient. ';
+                $this->setAccountId('error');
             } else {
                 foreach ($row as $k => $v) {
 
@@ -170,6 +143,12 @@ class SalesforceManager extends AbstractExportManager {
             }
 
         } else if ($source == 'remote') {
+
+            if (filter_var($url, FILTER_VALIDATE_URL) === FALSE) {
+                $reply = "url is invalid: " . $url;
+                $this->setAccountId('error');
+                return $reply;
+            }
 
             //  accounts
             $result = $this->retrieveURL($url);
@@ -259,10 +238,13 @@ class SalesforceManager extends AbstractExportManager {
 
             // Collect address into a single column
             $f['Address'] = $f['Street'] . ', ' . $f['City'] . ', ' . $f['State'] . ', ' . $f['Zip'];
-            unset($f['Street']);
-            unset($f['City']);
-            unset($f['State']);
-            unset($f['Zip']);
+            unset($f['Street'], $f['City'], $f['State'], $f['Zip']);
+
+            // collect name in single column
+            $f['Name'] = $f['Name'] . ' ' . ($f['Middle'] == '' ? '' : $f['Middle'] . ' ') . $f['Last Name'] . ' ' . $f['Suffix'] . ($f['Nickname'] == '' ? '' : ', ' . $f['Nickname']);
+            unset($f['Middle'], $f['Last Name'], $f['Suffix'], $f['Nickname']);
+
+
 
             // Search target system.  Treat return as user input.
             $rawResult = $this->searchTarget($searchData);
@@ -292,10 +274,10 @@ class SalesforceManager extends AbstractExportManager {
                             $label .= $k . '=' . $v . '; ';
                         }
 
-                        $f['Result'] .= HTMLContainer::generateMarkup('label', $label, array('for'=>'updt_'.$r['HHK_idName__c'], 'style'=>'margin-left:.3em;'));
+                        $f['Result'] .= HTMLContainer::generateMarkup('label', $label, array('for'=>'updt_'.$r['HHK_idName__c'], 'style'=>'margin-left:.3em; background-color:#FBF6CD;'));
 
                     } else {
-                        $f['Result'] = 'Previously Transferred.';
+                        $f['Result'] = 'Up to date.';
                     }
 
                     // Make sure the external Id is defined locally
@@ -313,15 +295,51 @@ class SalesforceManager extends AbstractExportManager {
 
             } else if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] > 1 ) {
 
-                $f['Result'] = 'Found ' . $rawResult['totalSize'] . ' similar accounts';
+                // Multiple records.
+
+                $title = '';
+                $options = [];
+
+                // Look through the results
+                foreach ($rawResult['records'] as $m) {
+
+                    $name  = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
+                    $title = ($m['HHK_idName__c'] == '' ? '' : $m['HHK_idName__c'] . ', ') . $name . ($m['Email'] == '' ? '' : ', ' . $m['Email']) . $m['HomePhone'];
+                    $options[$m['Id']] = [$m['Id'], $title];
+
+                    // Did we find our HHK ID?
+                    if ($m['HHK_idName__c'] != '' && $m['HHK_idName__c'] == $r['HHK_idName__c']) {
+
+                        $this->updateRemoteMember($dbh, $m, 0, $r, FALSE);
+
+                        if (count($this->getProposedUpdates()) > 0) {
+                            $f['Result'] = HTMLInput::generateMarkup('', array('id'=>'updt_'.$r['HHK_idName__c'], 'class'=>'hhk-txCbox hhk-updatemem', 'data-txid'=>$r['HHK_idName__c'], 'data-txacct'=>$m['Id'], 'type'=>'checkbox'));
+                            $label =  'Updates Proposed: ';
+                            foreach ($this->getProposedUpdates() as $k => $v) {
+                                $label .= $k . '=' . $v . '; ';
+                            }
+
+                            $f['Result'] .= HTMLContainer::generateMarkup('label', $label, array('for'=>'updt_'.$r['HHK_idName__c'], 'style'=>'margin-left:.3em; background-color:#FBF6CD;'));
+
+                        } else {
+                            $f['Result'] = 'Up to date.';
+                        }
+
+                        $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $m['Id']);
+                        $f['Id'] = $m['Id'];
+
+                        $replys[$r['HHK_idName__c']] = $f;
+                        return $replys;
+                    }
+                }
+
+                $f['Result'] = ' Found ' . $rawResult['totalSize'] . ' similar accounts ';
+                // Create selector
+                $f['Result'] .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, '', TRUE), array('name'=>'selmultimem_' . $r['HHK_idName__c'], 'class'=>'multimemsels'));
+
+                $f['Result'] .= ' Found ' . $rawResult['totalSize'] . ' similar accounts';
                 $replys[$r['HHK_idName__c']] = $f;
 
-
-                // We have more than one contact...
-                foreach ($rawResult['records'] as $rec) {
-                    $rec['Result'] = "Similar";
-                    $replys[$r['HHK_idName__c']] = $rec;
-                }
 
 
             } else if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] == 0 ) {
@@ -440,7 +458,7 @@ class SalesforceManager extends AbstractExportManager {
             if ($this->checkError($acctResult)) {
                 $msg = $this->errorMessage;
             } else {
-                $msg = $localData['FirstName'] . ' ' . $localData['LastName'] . ' is Updated: ';
+                $msg = '(' . $localData['HHK_idName__c'] . ') ' . $localData['FirstName'] . ' ' . $localData['LastName'] . ' is Updated: ';
                 foreach ($this->proposedUpdates as $k => $v) {
                     $msg .= $k . ' was ' . ($accountData[$k] == '' ? '-empty-' : $accountData[$k]) . ', now '. $v . '; ';
                 }
@@ -524,6 +542,10 @@ class SalesforceManager extends AbstractExportManager {
 
             $stmt = $dbh->query("Select * from $view where HHK_idName__c = $parm");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (count($rows) == 0) {
+                return NULL;
+            }
 
             if (count($extraSourceCols) > 0) {
                 foreach ($extraSourceCols as $k => $v) {
@@ -619,7 +641,7 @@ class SalesforceManager extends AbstractExportManager {
             'Id' => 'Id',
             'HHK_idName__c' => 'HHK Id',
             'Salutation' => 'Prefix',
-            'FirstName' => 'First Name',
+            'FirstName' => 'Name',
             'Middle_Name__c' => 'Middle',
             'LastName' => 'Last Name',
             'Suffix__c' => 'Suffix',

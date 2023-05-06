@@ -39,7 +39,7 @@ class NeonManager extends AbstractExportManager {
         $this->openTarget();
 
         $msearch = new MemberSearch($searchCriteria['letters']);
-        $standardFields = array('Account ID', 'Account Type', 'Deceased', 'Prefix', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Preferred Name', 'Address Line 1', 'City', 'State', 'Zip Code');
+        $standardFields = array('Account ID', 'Account Type', 'Deceased', 'Prefix', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Preferred Name', 'Email 1');
 
         $search = array(
             'method' => 'account/listAccounts',
@@ -70,12 +70,10 @@ class NeonManager extends AbstractExportManager {
             foreach ($result['searchResults'] as $r) {
 
                 $namArray['id'] = $r["Account ID"];
-                $namArray['fullName'] = $r["First Name"] . ' ' . $r["Last Name"];
-                $namArray['value'] = ($r['Prefix'] != '' ? $r['Prefix'] . ' ' : '' )
-                . $r["Last Name"] . ", " . $r["First Name"]
-                . ($r['Suffix'] != '' ? ', ' . $r['Suffix'] : '' )
-                . ($r['Preferred Name'] != '' ? ' (' . $r['Preferred Name'] . ')' : '' )
-                . ($r['Deceased'] !== 'No' ? ' [Deceased] ' : '');
+                $namArray['fullName'] = $r['Prefix'] . ' ' . $r["First Name"] . ' ' . $r["Last Name"] . ' ' . $r["Suffix"];
+                $namArray['value'] = $r["Last Name"] . ", " . $r["First Name"] . (isset($r['Email 1']) ? ', ' . $r['Email 1'] : '');
+                //$namArray['Phone'] = isset($r['Phone']) ? $r['Phone'] : '';
+                $namArray['Email'] = isset($r['Email 1']) ? $r['Email 1'] : '';
 
                 $replys[] = $namArray;
 
@@ -149,7 +147,7 @@ class NeonManager extends AbstractExportManager {
             // Check for NEON not finding the account Id
             if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 0 && $r['Account Id'] != '') {
 
-                // Account was deleted from the Neon side.
+                // Account is missing from the Neon side.
                 $f['Result'] = 'Account Deleted at Neon';   // procedure sendVisits() depends upon the exact wording of the quoted text. circa line 638
                 $replys[$r['HHK_ID']] = $f;
                 continue;
@@ -167,7 +165,7 @@ class NeonManager extends AbstractExportManager {
 
                     $this->updateLocalExternalId($dbh, $r['HHK_ID'], $result['searchResults'][0]['Account ID']);
                     $f['Account ID'] = $result['searchResults'][0]['Account ID'];
-                    $f['Result'] = 'Previously Transferred.';
+                    $f['Result'] = 'Up to date.';
 
                     // Check individual type
                     $typeFound = FALSE;
