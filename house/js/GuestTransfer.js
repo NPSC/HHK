@@ -81,7 +81,7 @@ function updateRemote(id, accountId) {
             } else {
                 tr = '<tr style="border-top: 2px solid #2E99DD;">';
                 tr += '<td colspan="10">' + incmg.result + '</td>';
-                $mTbl.find('tbody').append(tr);
+                $('#mTbl').find('tbody').append(tr);
             }
         }
 

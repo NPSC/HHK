@@ -49,7 +49,7 @@ class IndivMember extends AbstractMember {
 
     /**
      *
-     * @return MemDesignation
+     * @return string
      */
     public function getMemberDesignation(){
         return MemDesignation::Individual;
@@ -73,6 +73,10 @@ class IndivMember extends AbstractMember {
         return $this->get_firstName() . " " . $this->get_lastName();
     }
 
+    /**
+     * Summary of getMemberFullName
+     * @return string
+     */
     public function getMemberFullName() {
         return $this->get_fullName();
     }

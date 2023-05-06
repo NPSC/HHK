@@ -32,6 +32,13 @@ abstract class AbstractRoleMember extends IndivMember {
     protected $showBirthDate;
     protected $patientRelCode;
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param string $defaultMemberBasis
+     * @param int $nid
+     * @param \HHK\Tables\Name\NameRS|null $nRS
+     */
     public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS $nRS = NULL) {
 
         parent::__construct($dbh, $defaultMemberBasis, $nid, $nRS);

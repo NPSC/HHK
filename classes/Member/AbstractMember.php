@@ -127,7 +127,7 @@ abstract class AbstractMember {
      * @param \PDO $dbh
      * @param int $nid
      * @param  string $defaultMemberBasis MemBasis
-     * 
+     *
      * @return IndivMember|OrgMember|null
      * @throws UnexpectedValueException
      */
@@ -727,7 +727,11 @@ abstract class AbstractMember {
             $n->Exclude_Email->setNewVal(isset($post[$idPrefix."exEmail"]) ? 1 : 0);
             $n->Exclude_Mail->setNewVal(isset($post[$idPrefix."exMail"]) ? 1 : 0);
             $n->Exclude_Phone->setNewVal(isset($post[$idPrefix."exPhone"]) ? 1 : 0);
-            $n->External_Id->setNewVal(isset($post[$idPrefix."exCms"]) ? AbstractExportManager::EXCLUDE_TERM : '');
+
+            // Only set it if excluded.
+            if (isset($post[$idPrefix."exCms"])) {
+                $n->External_Id->setNewVal(AbstractExportManager::EXCLUDE_TERM);
+            }
         }
 
         //  Prefered Mail Address
