@@ -144,12 +144,6 @@ class SalesforceManager extends AbstractExportManager {
 
         } else if ($source == 'remote') {
 
-            if (filter_var($url, FILTER_VALIDATE_URL) === FALSE) {
-                $reply = "url is invalid: " . $url;
-                $this->setAccountId('error');
-                return $reply;
-            }
-
             //  accounts
             $result = $this->retrieveURL($url);
 
