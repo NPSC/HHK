@@ -914,6 +914,9 @@ function resvManager(initData, options) {
                     $(this).parentsUntil('tbody', 'tr').remove();
                 });
 
+                // visit buttons
+                $('.hhk-getVDialog').button();
+
                 // Relationship chooser
                 $('#' + divFamDetailId).on('change', '.patientRelch', function () {
 

@@ -510,6 +510,18 @@ $(document).ready(function () {
             });
     }).button();
 
+    //sortable demo categories
+    $("#formdemo .sortable tbody")
+        .sortable({
+            items: "tr:not(.no-sort)",
+            handle: ".sort-handle",
+            update: function (e, ui) {
+                $(this).find("tr").each(function(i){
+                    $(this).find("td:first input").val(i);
+                });
+            }
+        });
+
     $('#btndemoSave').click(function () {
         var $frm = $(this).closest('form');
 

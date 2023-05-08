@@ -1718,7 +1718,7 @@ $constraintTable = $constraints->createConstraintTable($dbh);
 
 // Demographics Selection table
 $tbl = ResourceBldr::getSelections($dbh, 'Demographics', 'm', $labels);
-$demoSelections = $tbl->generateMarkup();
+$demoSelections = $tbl->generateMarkup(["class"=>"sortable"]);
 
 // Demographics category selectors
 $stmt = $dbh->query("SELECT DISTINCT

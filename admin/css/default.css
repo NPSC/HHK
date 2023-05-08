@@ -163,6 +163,10 @@ div.hhk-recent {
     border: 1px solid;
     padding-bottom: 3px;
     padding-left: 2px;
+    overflow-x: auto;
+}
+div.hhk-recent table {
+    margin-bottom: 5px;
 }
 li.menuspacer {
     background-color: #C8DFB5;
@@ -211,7 +215,7 @@ table
     border-style: none !important;
 }
 span.hhk-recent-tablenames {
-    font-size: small;
+    font-weight: bold;
 }
 span.costDeduct {
     color: red;

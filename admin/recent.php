@@ -63,9 +63,9 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
                     data = $.parseJSON(dataTxt);
                     if (data.error) {
                         // error message
-                        $('div#result').text(data.error);
+                        flagAlertMessage(data.error, true);
                     } else if (data.success) {
-                        $('div#result').html(data.success);
+                        $('div#result').html(data.success).show();
                     }
                 }
             }
@@ -81,23 +81,18 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
                     changeYear: true,
                     autoSize: true
                 });
-                $('#btngo').click( function () {
-                    // Collect the parameters
-                    var parms = new Object();
-                    $('.parm').each(function (index) {
-                        parms[$(this).attr("id")] = $(this).prop("checked");
-                    });
-                    $('.dtpicker').each(function (index) {
-                        parms[$(this).attr("id")] = $(this).val();
-                    });
 
-                    $.ajax(
-                    { type: "post",
+                $('#btngo').button();
+
+                $('form#vrecent').on('submit', function (e) {
+                    e.preventDefault();
+                    var data = $(this).serializeArray();
+                    data.push({name:'cmd',value:'recent'});
+
+                    $.ajax({
+                        type: "post",
                         url: "ws_gen.php",
-                        data: ({
-                            cmd: "recent",
-                            parms: parms
-                        }),
+                        data: data,
                         success: handleResponse,
                         error: handleError,
                         datatype: "json"
@@ -111,36 +106,42 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
                 <h1 style="margin: 10px 5px;">View Recent Changes to Member Information</h1>
-                <div id="vrecent" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" >
+                <form id="vrecent" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" >
                     <div style="margin-top: 15px;">
                         <table>
-                            <tr><td class="tdlabel">Start Date:</td><td><input type="text" id ="sdate" class="dtpicker"  VALUE='' size="10" title="Starting date - Inclusive"/></td></tr>
-                            <tr><td class="tdlabel">  End Date:</td><td><INPUT TYPE='text' id="edate" class="dtpicker"  VALUE='' size="10" title="Ending date - Inclusive" /></td></tr>
+                            <tr><td class="tdlabel">Start Date:</td><td><input type="text" name="sdate" class="dtpicker"  VALUE='' size="10" title="Starting date - Inclusive"/></td></tr>
+                            <tr><td class="tdlabel">  End Date:</td><td><INPUT TYPE='text' name="edate" class="dtpicker"  VALUE='' size="10" title="Ending date - Inclusive" /></td></tr>
                             <tr><td class="tdlabel" colspan="2">(Leave End Date blank for today)</td></tr>
+                            <tr>
+                                <td class="tdlabel">Include:</td>
+                                <td>
+                                    <select name="includeTbl[]" multiple="multiple" size="8">
+                                        <option value="name" selected>Name, Type & Statuses</option>
+                                        <option value="addr" selected>Addresses</option>
+                                        <option value="phone" selected>Phone</option>
+                                        <option value="email" selected>Email</option>
+                                        <option value="vol">Volunteer Categories</option>
+                                        <option value="web">Web User</option>
+                                        <option value="events">Calendar Events</option>
+                                        <?php if($donationsFlag){
+                                            echo '<option value="donations">Donations</option>';
+                                        } ?>
+                                    </select>
+                                </td>
+                            </tr>
                         </table>
                     </div>
                     <div style="margin-top: 15px;">
                         <table>
-                            <tr><td class="tdlabel">Include New Members</td><td><input type="checkbox" class="parm" id="incnew" checked="checked"/></td></tr>
-                            <tr><td class="tdlabel">Include Updates to Existing Members</td><td><input type="checkbox" class="parm" id="incupd" checked="checked"/></td></tr>
-
-                            <tr><td class="tdlabel">Name, Type &#38; Statuses</td><td><input type="checkbox" id="cbname" class="parm" checked="checked"/></td></tr>
-                            <tr><td class="tdlabel">Addresses</td><td><input type="checkbox" id="cbaddr" class="parm" checked="checked"/></td></tr>
-                            <tr><td class="tdlabel">Phone</td><td><input type="checkbox" id="cbphone" class="parm" checked="checked"/></td></tr>
-                            <tr><td class="tdlabel">Email</td><td><input type="checkbox" id="cbemail" class="parm" checked="checked"/></td></tr>
-                            <tr><td class="tdlabel">Volunteer Categories</td><td><input type="checkbox" id="cbvol" class="parm" /></td></tr>
-                            <tr><td class="tdlabel">Web User</td><td><input type="checkbox" id="cbweb" class="parm" /></td></tr>
-                            <tr><td class="tdlabel">Calendar Events</td><td><input type="checkbox" class="parm" id="cbevents" /></td></tr>
-                            <?php if ($donationsFlag) { ?>
-                                <tr><td class="tdlabel">Donations</td><td><input type="checkbox" class="parm" id="cbdonations" /></td></tr>
-                            <?php } ?>
+                            <tr><td class="tdlabel">Include New Members</td><td><input type="checkbox" class="parm" name="incnew" checked="checked"/></td></tr>
+                            <tr><td class="tdlabel">Include Updates to Existing Members</td><td><input type="checkbox" class="parm" name="incupd" checked="checked"/></td></tr>
                         </table>
                     </div>
                     <div >
-                        <input type="button" id="btngo" value="Go"/>
+                        <input type="submit" id="btngo" value="Go"/>
                     </div>
-                </div><div style="clear:both;"></div>
-                <div id="result" class="ui-widget ui-widget-content" style="float:left; margin-top:10px;"></div>
+                </form>
+                <div id="result" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="margin:10px 0; display: none;"></div>
             </div>
     </body>
 </html>

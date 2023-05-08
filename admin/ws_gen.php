@@ -117,7 +117,7 @@ try {
 
         case "recent":
 
-            $events = recentReport($dbh, $_POST["parms"], $donationsFlag);
+            $events = recentReport($dbh, $_POST, $donationsFlag);
             break;
 
         case "chglog" :
@@ -567,7 +567,7 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
 
     // exit on bad dates
     if (isset($parms["sdate"]) === FALSE || $parms["sdate"] == "") {
-        return array("success" => "Fill in Start Date");
+        return array("error" => "Fill in Start Date");
     }
 
     $dStart = date("Y-m-d", strtotime(filter_var($parms["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
@@ -582,17 +582,12 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
     $incUpd = false;
     $sParms = array();
 
-    if (isset($parms["incnew"])) {
-        $incNew = filter_var($parms["incnew"], FILTER_VALIDATE_BOOLEAN);
-    }
-
-    if (isset($parms["incupd"])) {
-        $incUpd = filter_var($parms["incupd"], FILTER_VALIDATE_BOOLEAN);
-    }
+    $incNew = filter_has_var(INPUT_POST, "incnew");
+    $incUpd = filter_has_var(INPUT_POST, "incupd");
 
     // exit if neither is checked
     if (!$incUpd && !$incNew) {
-        return array("success" => "Check 'Include Updates to Existing Members' or 'New'");
+        return array("error" => "Check 'Include Updates to Existing Members' or 'New'");
     }
 
 //    $members = array();
@@ -642,23 +637,32 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
 
 
     // Create an array to store data in order to orient data to names instead of tables.
-    $tableNames = array("[name]", "[address]", "[phone]", "[email]", "[volunteer]", "[web]", "[calendar]", "[donations]");
-    $controlNames = array("cbname", "cbaddr", "cbphone", "cbemail", "cbvol", "cbweb", "cbevents", "cbdonations");
-    $tables = array("vdump_name", "vdump_address", "vdump_phone", "vdump_email", "vdump_volunteer", "vdump_webuser", "vdump_events", "vdump_donations");
+    $tableNames = array(
+        'name'=>["title"=>'Name',"view"=>"vdump_name"],
+        'addr'=>["title"=>'Address', "view"=>"vdump_address"],
+        'phone'=>["title"=>"Phone", "view"=>"vdump_phone"],
+        'email'=>["title"=>"Email", "view"=>"vdump_email"],
+        'vol'=>["title"=>"Volunteer", "view"=>"vdump_volunteer"],
+        'web'=>["title"=>"Web", "view"=>"vdump_webuser"],
+        'events'=>["title"=>"Calendar", "view"=>"vdump_events"],
+        'donations'=>["title"=>"Donations", "view"=>"vdump_donations"]
+    );
     $names = array();
 
-    // run through checkboxes
-    for ($i = 0; $i < count($tableNames); $i++) {
+    $includeTbls = filter_input(INPUT_POST, "includeTbl", FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
 
-        if (isset($parms[$controlNames[$i]]) && filter_var($parms[$controlNames[$i]], FILTER_VALIDATE_BOOLEAN) === TRUE) {
-            if ($tableNames[$i] == "[donations]" && !$donationsFlag) {
+    // run through checkboxes
+    foreach($includeTbls as $tbl) {
+
+        if (isset($tableNames[$tbl])) {
+            if ($tbl == "donations" && !$donationsFlag) {
                 continue;
             }
-            $query = "select * from " . $tables[$i] . " where $whereClause;";
+            $query = "select * from " . $tableNames[$tbl]["view"] . " where $whereClause;";
             $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $stmt->execute($sParms);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $names = makeTable($rows, $tableNames[$i]);
+            $names = makeTable($names, $rows, $tableNames[$tbl]["title"]);
         }
     }
 
@@ -666,9 +670,7 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
     return array("success" => $markup);
 }
 
-function makeTable($rows, $tableName) {
-
-    $names = array();
+function makeTable(array $names, array $rows, string $tableName) {
 
     foreach ($rows as $rw) {
 
@@ -686,7 +688,7 @@ function createRecentReportMU(PDO $dbh, $names) {
     }
 
     // header
-    $markup .= "<p>" . count($names) . " Members Listed</p><br/>";
+    //$markup .= "<p>" . count($names) . " Members Listed</p><br/>";
 
     foreach ($names as $id => $data) {
         // get member name
@@ -702,7 +704,7 @@ function createRecentReportMU(PDO $dbh, $names) {
         }
 
         // member id and name
-        $markup .= "<a style='text-decoration:none;' href='NameEdit.php?id=$id'>$id: $nameStr</a><div class='hhk-recent'>";
+        $markup .= "<a style='display:block; background-color: #459e00; color: white; padding:5px;' class='ui-corner-top' href='NameEdit.php?id=$id'>$id: $nameStr</a><div class='hhk-recent ui-corner-bottom'>";
 
 
         foreach ($data as $tname => $rows) {
@@ -714,10 +716,10 @@ function createRecentReportMU(PDO $dbh, $names) {
             // make the column titles
             $markup .= "<tr>";
             foreach ($rows[0] as $title => $val) {
-                if ($val != "") {
-                    $markup .= "<th>" . $title . "</td>";
+                if ($title != "") {
+                    $markup .= "<th>" . $title . "</th>";
                 } else {
-                    $markup .= "<th></td>";
+                    //$markup .= "<th></td>";
                 }
             }
 
@@ -726,7 +728,9 @@ function createRecentReportMU(PDO $dbh, $names) {
 
                 $markup .= "<tr>";
                 foreach ($row as $title => $val) {
-                    $markup .= "<td>" . $val . "</td>";
+                    if($title != ""){
+                        $markup .= "<td>" . $val . "</td>";
+                    }
                 }
                 $markup .= "</tr>";
             }
