@@ -95,7 +95,7 @@ if (filter_has_var(INPUT_POST, "btnExtCnf") && $CmsManager !== NULL) {
     $tabIndex = 9;
 
     try {
-        $CmsManager->saveConfig($dbh, $_POST);
+        $CmsManager->saveConfig($dbh);
     } catch (UploadException $ex) {
         $externalErrMsg = "Save Configuration Error: " . $ex->getMessage();
     }
@@ -221,7 +221,7 @@ if (filter_has_var(INPUT_POST, 'btnHoliday')) {
 try {
     $holidays = SiteConfig::createHolidaysMarkup($dbh, $holResultMessage);
 } catch (Exception $pex) {
-    
+
 }
 
 try {

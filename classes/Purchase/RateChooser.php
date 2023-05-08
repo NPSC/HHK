@@ -529,6 +529,15 @@ class RateChooser {
 
     }
 
+    /**
+     * Summary of createBasicChooserMarkup
+     * @param \PDO $dbh
+     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param mixed $nites
+     * @param mixed $visitFeeTitle
+     * @param mixed $idRegistration
+     * @return string
+     */
     protected function createBasicChooserMarkup(\PDO $dbh, Reservation_1 $resv, $nites, $visitFeeTitle, $idRegistration) {
 
         $uS = Session::getInstance();

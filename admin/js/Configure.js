@@ -831,7 +831,7 @@ if ($('.hhk-setMerchantRooms').length > 0) {
 					$this.empty().html(data.idpMkup);
 					$("#authTabs ul li.ui-tabs-active a").text(data.idpName);
 				}
-				
+
 				$submitbtn.prop("disabled", false);
             },
             error: function (e) {

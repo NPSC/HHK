@@ -448,6 +448,14 @@ abstract class AbstractReport {
 
     }
 
+    public abstract function makeFilterMkup();
+
+    public abstract function makeSummaryMkup();
+
+    public abstract function makeCFields();
+
+    public abstract function makeQuery();
+
     public function getDefaultFields(){
         return $this->defaultFields;
     }

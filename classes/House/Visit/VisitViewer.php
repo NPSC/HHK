@@ -30,7 +30,7 @@ use HHK\SysConst\RoomRateCategories;
  * visitViewer.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -167,7 +167,7 @@ class VisitViewer {
         }
 
         //Room Rate
-        $rateTitle = RoomRate::getRateDescription($dbh, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate']);
+        $rateTitle = RoomRate::getRateDescription($dbh, $r['idRoom_Rate'], $r['Rate_Category']);
         if ($r['Rate_Category'] == RoomRateCategories::Fixed_Rate_Category) {
             $rateTitle .= ': $' . number_format($r['Pledged_Rate'], 2);
         }
@@ -356,13 +356,17 @@ class VisitViewer {
     }
 
     /**
-     *
+     * Summary of createStaysMarkup
      * @param \PDO $dbh
-     * @param integer $idVisit
-     * @param integer $span
-     * @param boolean $isAdmin
-     * @param integer $idGuest
+     * @param int $idResv
+     * @param int $idVisit
+     * @param int $span
+     * @param int $idPrimaryGuest
+     * @param bool $isAdmin
+     * @param int $idGuest
+     * @param Labels $labels
      * @param string $action
+     * @param array $coDates
      * @return string
      */
     public static function createStaysMarkup(\PDO $dbh, $idResv, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, $labels, $action = '', $coDates = []) {
@@ -736,7 +740,7 @@ class VisitViewer {
         }
 
         // Any taxes
-        $vat = new ValueAddedTax($dbh, $visitCharge->getIdVisit());
+        $vat = new ValueAddedTax($dbh);
 
         $currFees = '';
         $paymentMarkup = '';
@@ -1014,15 +1018,14 @@ class VisitViewer {
      * @param \PDO $dbh
      * @param int $idVisit
      * @param int $span
-     * @param array $pData
+     * @param int $idStay
      * @param string $uname
-     * @param string $idPrefix
      * @return string
      */
     public static function removeStay(\PDO $dbh, $idVisit, $span, $idStay, $uname) {
 
         if ($idStay == 0) {
-            return;
+            return '';
         }
 
         $reply = '';
@@ -1477,10 +1480,9 @@ class VisitViewer {
      * Move the stays in a visit by delta days.
      *
      * @param array $stays
-     * @param int $span
      * @param int $startDelta
      * @param int $endDelta
-     * @param \DateTime $spanEndDT
+     * @return string
      */
     protected static function moveStaysDates($stays, $startDelta, $endDelta, $visits) {
 
@@ -1496,7 +1498,14 @@ class VisitViewer {
         $today = new \DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
+        /**
+         * @var \DateTimeImmutable $spanStartDT
+         */
         $spanStartDT = \DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
+
+        /**
+         * @var \DateTimeImmutable $spanEndDT
+         */
         $spanEndDT = \DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
 
 
@@ -1607,7 +1616,7 @@ class VisitViewer {
 
                     // If ends on old span end date, expand the stay.
                     if ($oldSpanStartDT->diff($stayStartDT->setTime(10,0,0), TRUE)->days < 1) {
-                        $stayStartDT = $stayStartDT->sub($startDelta);
+                        $stayStartDT = $stayStartDT->sub(new \DateInterval('P' .$startDelta . 'D'));
                     }
                 }
             }

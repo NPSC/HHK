@@ -761,7 +761,7 @@ ORDER BY v.idVisit , v.Span;");
                         $payTypes,
                         $labels,
                         AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
-                        $id, 0, $prefTokenId, '');
+                        $id, 0, $prefTokenId);
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
 
@@ -770,7 +770,7 @@ ORDER BY v.idVisit , v.Span;");
             }
         }
 
-        return HTMLContainer('h3', "No unpaid invoices found.");
+        return HTMLContainer::generateMarkup('h3', "No unpaid invoices found.");
     }
 
     protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $visitCharge, $useVisitFee, $heldAmount, $payVFeeFirst,
@@ -1016,6 +1016,18 @@ ORDER BY v.idVisit , v.Span;");
         return $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
     }
 
+    /**
+     * Summary of showPaySelection
+     * @param \PDO $dbh
+     * @param mixed $defaultPayType
+     * @param array $payTypes
+     * @param Labels $labels
+     * @param \HHK\Payment\PaymentGateway\AbstractPaymentGateway $paymentGateway
+     * @param int $idPrimaryGuest
+     * @param int $idReg
+     * @param int $prefTokenId
+     * @return string
+     */
     protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $labels, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();

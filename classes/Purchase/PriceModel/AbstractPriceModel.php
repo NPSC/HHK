@@ -681,7 +681,7 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
         switch ($modelCode) {
 
             case ItemPriceCode::Basic:
-            	PriceBasic::InstallRate($dbh, $incomeRated);
+            	PriceBasic::InstallRate($dbh);
                 break;
 
             case ItemPriceCode::Dailey;

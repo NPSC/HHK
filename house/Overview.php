@@ -30,7 +30,7 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 $sites = '';
 
-function todTable(\PDO $dbh) {
+function todArrival(\PDO $dbh) {
 
     $tod[] = ['Arrival Time of Day', 'Check-ins'];
 
@@ -41,8 +41,29 @@ FROM
     visit v
 WHERE YEAR(v.Arrival_Date) > 2020
 GROUP BY HOUR(v.Arrival_Date)
-HAVING `Number` > 5
- ORDER BY TIME(v.Arrival_Date)");
+ORDER BY HOUR(v.Arrival_Date)");
+
+    while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+
+        $tod[] = [$r[0], intval($r[1])];
+
+    }
+
+    return $tod;
+}
+
+function todDeparture(\PDO $dbh) {
+
+    $tod[] = ['Departure Time of Day', 'Checkouts'];
+
+    $stmt = $dbh->query("SELECT
+    TIME_FORMAT(v.Actual_Departure, '%l %p') as `TOD`,
+    COUNT(HOUR(v.Actual_Departure)) as `Number`
+FROM
+    visit v
+WHERE YEAR(v.Actual_Departure) > 2020 and v.Actual_Departure is not null
+GROUP BY HOUR(v.Actual_Departure)
+ORDER BY HOUR(v.Actual_Departure)");
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
@@ -55,7 +76,8 @@ HAVING `Number` > 5
 
 $markup = '';
 
-$todData = json_encode(todTable($dbh));
+$todArrivalData = json_encode(todArrival($dbh));
+$todDepartureData = json_encode(todDeparture($dbh));
 
 ?>
 <!DOCTYPE html>
@@ -93,7 +115,7 @@ $todData = json_encode(todTable($dbh));
         let options = {
         	height:550,
         	width:1200,
-        	title:"HHK Check-in Time of Day Distribution",
+        	title:"HHK Check-in, Checkout Time of Day Distribution",
         	legend: {position: 'top'},
         	vAxis: {title: 'Number of Check-ins'}
         };
@@ -113,7 +135,7 @@ $todData = json_encode(todTable($dbh));
 			<?php echo $markup; ?>
 			</div>
         </div>
-        <input type='hidden' id='todData' value='<?php echo $todData;?>' />
+        <input type='hidden' id='todData' value='<?php echo $todArrivalData;?>' />
 
     </body>
 </html>

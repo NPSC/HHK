@@ -230,7 +230,7 @@ if (isset($_POST['btnkfSave'])) {
                     $glRs->Code->setNewVal($newCode);
 
                     EditRS::insert($dbh, $glRs);
-                    $logText = HouseLog::getInsertText($glRs, 'Visit_Fee_Code');
+                    $logText = HouseLog::getInsertText($glRs);
                     HouseLog::logGenLookups($dbh, 'Visit_Fee_Code', $newCode, $logText, 'insert', $uS->username);
                 }
             }
@@ -1030,6 +1030,7 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
     }
 }
 
+// Delete a form
 if (isset($_POST['docAction']) && $_POST['docAction'] == "docDelete" && isset($_POST['docCode']) && isset($_POST['formDef'])) {
     try{
         $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);

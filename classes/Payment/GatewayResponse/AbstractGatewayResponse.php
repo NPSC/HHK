@@ -36,6 +36,7 @@ abstract class AbstractGatewayResponse {
      * The child is expected to define $result.
      *
      * @param array $response
+     * @param string $tranType
      * @throws PaymentException
      */
     function __construct($response, $tranType = '') {

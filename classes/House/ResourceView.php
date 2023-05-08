@@ -888,6 +888,11 @@ WHERE
         return array('row'=>$tr);
     }
 
+    /**
+     * Summary of dirtyOccupiedRooms
+     * @param \PDO $dbh
+     * @return void
+     */
     public static function dirtyOccupiedRooms(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -905,9 +910,7 @@ from
         left join
     resource_room rr ON r.idRoom = rr.idRoom
         join
-    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-
-;");
+    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "';");
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -929,6 +932,8 @@ from
                 if ($r['Last_Cleaned'] != '') {
                     $lastCleanedDT = new \DateTime($r['Last_Cleaned']);
                     $lastCleanedDT->setTime(0, 0, 0);
+                } else {
+                    $lastCleanedDT = $arrDT;
                 }
 
                 // Start from the visit date if cleaned earlier...
@@ -936,9 +941,9 @@ from
                     $lastCleanedDT = $arrDT;
                 }
 
-                $days = intval($cleanDays[$rm->getCleaningCycleCode()][2], 10);
+                $cycleDays = intval($cleanDays[$rm->getCleaningCycleCode()][2], 10);
 
-                if ($days > 0 && $today->diff($lastCleanedDT, TRUE)->days >= $days) {
+                if ($cycleDays > 0 && $today->diff($lastCleanedDT, TRUE)->days >= $cycleDays) {
                     // Set room dirty
                     $rm->putDirty();
                     $rm->saveRoom($dbh, $uS->username, TRUE);

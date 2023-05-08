@@ -51,6 +51,8 @@ class Reservation_1 {
     protected $untestedResources = array();
     protected $resultMessage = '';
 
+    protected $reserveStatusType;
+
     protected $idResource;
     protected $idReferralDoc;
     protected $expectedArrival;
@@ -258,8 +260,6 @@ class Reservation_1 {
                 }
             }
         }
-
-        return FALSE;
     }
 
     public function checkOut(\PDO $dbh, $endDate, $uname) {
@@ -1421,6 +1421,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         $this->reservRs->Notes->setNewVal($val);
     }
 
+    /**
+     * Summary of getIdResource
+     * @return int
+     */
     public function getIdResource() {
         //return $this->reservRs->idResource->getStoredVal();
         return $this->idResource;
@@ -1504,10 +1508,18 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
         return $this->reservRs->Add_Room->getStoredVal();
     }
 
+    /**
+     * Summary of getExpectedArrival
+     * @return string
+     */
     public function getExpectedArrival() {
         return $this->expectedArrival;
     }
 
+    /**
+     * Summary of getExpectedDeparture
+     * @return string
+     */
     public function getExpectedDeparture() {
         return $this->expectedDeparture;
     }

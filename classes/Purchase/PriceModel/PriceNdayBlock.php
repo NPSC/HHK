@@ -24,6 +24,17 @@ class PriceNdayBlock extends AbstractPriceModel {
     protected $blockTitle = '';
     protected $blocks = 0;
 
+    protected $daysAccumulator;
+
+    /**
+     * Summary of amountCalculator
+     * @param int $nites
+     * @param int $idRoomRate
+     * @param string $rateCategory
+     * @param mixed $pledgedRate
+     * @param int $guestDays
+     * @return float
+     */
     public function amountCalculator($nites, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {
 
         if ($nites == 0) {

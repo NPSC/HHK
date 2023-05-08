@@ -76,7 +76,7 @@ class ResourceBldr
                     $newRs->Substitute->setNewVal($newSubt);
 
                     EditRS::insert($dbh, $newRs);
-                    $logText = HouseLog::getInsertText($newRs, $tblName);
+                    $logText = HouseLog::getInsertText($newRs);
                     HouseLog::logGenLookups($dbh, $tblName, $defaultCode, $logText, 'insert', $uS->username);
 
                     // Update Old
@@ -86,7 +86,7 @@ class ResourceBldr
                         $glRs->Table_Name,
                         $glRs->Code
                     ));
-                    $logTextu = HouseLog::getUpdateText($glRs, $tblName . $code);
+                    $logTextu = HouseLog::getUpdateText($glRs);
                     HouseLog::logGenLookups($dbh, $tblName, $code, $logTextu, 'update', $uS->username);
                 } else {
 
@@ -101,7 +101,7 @@ class ResourceBldr
                     ));
 
                     if ($ctr > 0) {
-                        $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
+                        $logText = HouseLog::getUpdateText($glRs);
                         HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
                     }
                 }
@@ -384,7 +384,7 @@ Order by `t`.`List_Order`;");
                         $rep = function ($dbh, $newId, $oldId) {
                            return $dbh->exec("update note n join staff_note sn on n.idNote = sn.Note_Id set n.Category = '$newId' where n.Category = '$oldId';");
                         };
-    
+
                         $verify = "select n.Category from note n left join gen_lookups g on n.Category = g.Code where g.Table_Name = 'Staff_Note_Category' and g.Code is null;";
                         break;
 
