@@ -89,5 +89,5 @@ UPDATE `sys_config` set `Value` = "https://nonprofitsoftwarecorp.us18.list-manag
 -- fix duplicates on resource builder Items
 ALTER TABLE `item_type_map` 
 ENGINE = InnoDB ,
-ADD PRIMARY KEY (`Item_Id`,`Type_Id`);
+ADD PRIMARY KEY IF NOT EXISTS (`Item_Id`,`Type_Id`);
 ;
