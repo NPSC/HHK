@@ -128,8 +128,8 @@ FROM
         LEFT JOIN
     gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
         AND gr.Code = nd.No_Return
-WHERE n.idName > 0 and n.Record_Member = 1 and n.Member_Status ='a' and n.Name_Last = '" . $searchFor->getNameLast() . "'
-    AND (n.Name_First = '" . $searchFor->getNameFirst() . "' OR n.Name_Nickname = '" . $searchFor->getNameFirst() . "') "
+WHERE n.idName > 0 and n.Record_Member = 1 and n.Member_Status ='a' and n.Name_Last LIKE '%" . $searchFor->getNameLast() . "%'
+    AND (n.Name_First like '%" . $searchFor->getNameFirst() . "%' OR n.Name_Nickname = '%" . $searchFor->getNameFirst() . "%') "
     .  $where;
 
 	}

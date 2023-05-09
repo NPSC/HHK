@@ -60,6 +60,10 @@ class Reservation_1 {
     protected $numGuests;
     protected $roomTitle;
 
+    /**
+     * Summary of __construct
+     * @param \HHK\Tables\Reservation\ReservationRS $reservRs
+     */
     public function __construct(ReservationRS $reservRs) {
 
         $this->reservRs = $reservRs;
@@ -113,6 +117,12 @@ class Reservation_1 {
         return new Reservation_1($resvRs);
     }
 
+    /**
+     * Summary of getPrePayment
+     * @param \PDO $dbh
+     * @param int $idResv
+     * @return float
+     */
     public static function getPrePayment(\PDO $dbh, $idResv) {
 
         $prePayment = 0.0;
@@ -143,6 +153,15 @@ class Reservation_1 {
         return $prePayment;
     }
 
+    /**
+     * Summary of move
+     * @param \PDO $dbh
+     * @param int $startDelta
+     * @param int $endDelta
+     * @param string $uname
+     * @param bool $forceNewResource
+     * @return bool
+     */
     public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE) {
 
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
@@ -262,6 +281,13 @@ class Reservation_1 {
         }
     }
 
+    /**
+     * Summary of checkOut
+     * @param \PDO $dbh
+     * @param string $endDate
+     * @param string $uname
+     * @return void
+     */
     public function checkOut(\PDO $dbh, $endDate, $uname) {
 
         $this->setStatus(ReservationStatus::Checkedout);
@@ -269,6 +295,12 @@ class Reservation_1 {
         $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
     }
 
+    /**
+     * Summary of saveConstraints
+     * @param \PDO $dbh
+     * @param array $pData
+     * @return void
+     */
     public function saveConstraints(\PDO $dbh, $pData) {
 
         if ($this->isNew()) {
@@ -295,6 +327,13 @@ class Reservation_1 {
 
     }
 
+    /**
+     * Summary of saveReservation
+     * @param \PDO $dbh
+     * @param int $idReg
+     * @param string $uname
+     * @return void
+     */
     public function saveReservation(\PDO $dbh, $idReg, $uname) {
 
         $this->reservRs->Updated_By->setNewVal($uname);
@@ -352,6 +391,13 @@ class Reservation_1 {
         }
     }
 
+    /**
+     * Summary of deleteMe
+     * @param \PDO $dbh
+     * @param string $uname
+     * @throws \HHK\Exception\RuntimeException
+     * @return bool
+     */
     public function deleteMe(\PDO $dbh, $uname) {
 
         if ($this->getStatus() == ReservationStatus::Staying || $this->getStatus() == ReservationStatus::Checkedout) {
@@ -387,6 +433,11 @@ class Reservation_1 {
 
     }
 
+    /**
+     * Summary of loadNonCleaningDays
+     * @param \PDO $dbh
+     * @return array<int>
+     */
     public static function loadNonCleaningDays(\PDO $dbh) {
 
         $stmt = $dbh->query("select Code from gen_lookups where Table_Name = 'Non_Cleaning_Day';");

@@ -26,7 +26,7 @@ use HHK\SysConst\{ItemPriceCode, RoomRateCategories, DefaultSettings};
  * ReferralForm.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT, NCSA
  * @link      https://github.com/NPSC/HHK
  */
@@ -294,7 +294,7 @@ class ReferralForm {
 	 *
 	 * @param \PDO $dbh
 	 * @param integer $idPatient
-	 * @return boolean|NULL|\HHK\Member\Role\Patient
+	 * @return boolean|null|\HHK\Member\Role\Patient
 	 */
 	public function setPatient(\PDO $dbh, $idPatient) {
 
@@ -569,7 +569,7 @@ class ReferralForm {
         $rgRs->idGuest->setNewVal($psg->getIdPatient());
         $rgRs->Primary_Guest->setNewVal('1');
         EditRS::insert($dbh, $rgRs);
-        
+
         foreach ($guests as $g) {
 
             $rgRs = new Reservation_GuestRS();
@@ -578,21 +578,21 @@ class ReferralForm {
             $rgRs->Primary_Guest->setNewVal('');
             EditRS::insert($dbh, $rgRs);
         }
-        
+
         $this->copyNotes($dbh, $resv->getIdReservation(), $this->referralDocId);
 
         return $resv->getIdReservation();
 
 	}
-        
-        public function copyNotes(\PDO $dbh, $resvId, $idDoc){
-            $stmt = $dbh->prepare("select * from `doc_note` where `Doc_Id` = :docId");
-            $stmt->execute([":docId"=>$idDoc]);
-            $insertStmt = $dbh->prepare("INSERT INTO `reservation_note` (`Reservation_Id`, `Note_Id`) VALUES(:resvId, :noteId)");
-            foreach($stmt->fetchAll() as $row){
-                $insertStmt->execute([':resvId'=>$resvId, ':noteId'=>$row['Note_Id']]);
-            }
-        }
+
+	public function copyNotes(\PDO $dbh, $resvId, $idDoc){
+		$stmt = $dbh->prepare("select * from `doc_note` where `Doc_Id` = :docId");
+		$stmt->execute([":docId"=>$idDoc]);
+		$insertStmt = $dbh->prepare("INSERT INTO `reservation_note` (`Reservation_Id`, `Note_Id`) VALUES(:resvId, :noteId)");
+		foreach($stmt->fetchAll() as $row){
+			$insertStmt->execute([':resvId'=>$resvId, ':noteId'=>$row['Note_Id']]);
+		}
+	}
 
 	/**
 	 * Selected patient Markup.
@@ -931,7 +931,7 @@ class ReferralForm {
 	 * Builds an array to simulate a member save from a page.
 	 *
 	 * @param SearchNameDataInterface $data
-	 * @return string[]|mixed[][]|NULL[]|string[][]|string[][][]|NULL[][][]
+	 * @return array
 	 */
 	protected function memberDataPost(SearchNameDataInterface $data) {
 
