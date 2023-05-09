@@ -13,7 +13,7 @@ use HHK\Tables\TableRSInterface;
  * Address.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017, 2018-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -59,14 +59,26 @@ class Address extends AbstractContactPoint{
     }
 
 
+    /**
+     * Summary of get_preferredCode
+     * @return mixed
+     */
     public function get_preferredCode() {
         return $this->name->get_preferredMailAddr();
     }
 
+    /**
+     * Summary of getTitle
+     * @return string
+     */
     public function getTitle() {
         return "Street Address";
     }
 
+    /**
+     * Summary of setPreferredCode
+     * @param mixed $code
+     */
     public function setPreferredCode($code) {
 
         if ($code == "" || isset($this->codes[$code])) {
@@ -74,6 +86,11 @@ class Address extends AbstractContactPoint{
         }
     }
 
+    /**
+     * Summary of getSet_Incomplete
+     * @param mixed $code
+     * @return bool
+     */
     public function getSet_Incomplete($code) {
 
         if ($this->rSs[$code]->Set_Incomplete->getStoredVal() == 1) {
@@ -366,17 +383,36 @@ class Address extends AbstractContactPoint{
     }
 
 
+    /**
+     * Summary of savePanel
+     * @param \PDO $dbh
+     * @param mixed $purpose
+     * @param mixed $post
+     * @param mixed $user
+     * @param mixed $idPrefix
+     * @param mixed $incomplete
+     * @return string
+     */
     public function savePanel(\PDO $dbh, $purpose, $post, $user, $idPrefix = '', $incomplete = FALSE) {
 
         $indx = $idPrefix.'adr';
         if (isset($post[$indx][$purpose[0]]) === FALSE) {
-            return;
+            return '';
         }
 
         return $this->saveAddress($dbh, $post[$idPrefix.'adr'][$purpose[0]], $purpose, $incomplete, $user);
     }
 
 
+    /**
+     * Summary of saveAddress
+     * @param \PDO $dbh
+     * @param mixed $p
+     * @param mixed $purpose
+     * @param mixed $incomplete
+     * @param mixed $user
+     * @return string
+     */
     public function saveAddress(\PDO $dbh, array $p, $purpose, $incomplete, $user) {
 
         $message = '';
@@ -449,11 +485,11 @@ class Address extends AbstractContactPoint{
 
     /**
      *
-     * @param TableRSInterface $a
+     * @param NameAddressRS $a
      * @param array $p
      * @throws RuntimeException
      */
-    protected function loadPostData(TableRSInterface $a, array $p) {
+    protected function loadPostData(NameAddressRS $a, array $p) {
 
         $addrComplete = TRUE;
 
@@ -536,7 +572,14 @@ class Address extends AbstractContactPoint{
 
     }
 
-    public function checkZip(\PDO $dbh, TableRSInterface $a, array $p) {
+    /**
+     * Summary of checkZip
+     * @param \PDO $dbh
+     * @param NameAddressRS $a
+     * @param mixed $p
+     * @return mixed
+     */
+    public function checkZip(\PDO $dbh, NameAddressRS $a, array $p) {
         // zip code, city and state
         $zip = strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         $city = trim(filter_var($p['city'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));

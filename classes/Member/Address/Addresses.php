@@ -21,7 +21,7 @@ use HHK\SysConst\PhonePurpose;
 class Addresses {
 
 
-    /** @var Email/ContactPoint */
+    /** @var Emails/ContactPoint */
     public $email;
 
     /** @var Phones/ContactPoint */
@@ -35,6 +35,9 @@ class Addresses {
      */
     public static function getPreferredPanel(Phones $phone, Emails $email, $useHousePhone = FALSE) {
 
+        /**
+         * @var HTMLTable
+         */
         $table = new HTMLTable();
 
         $table->addBodyTr(

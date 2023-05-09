@@ -48,10 +48,18 @@ class Partner extends AbstractRelation {
         return $stmt;
     }
 
+    /**
+     * Summary of getHtmlId
+     * @return string
+     */
     protected function getHtmlId() {
         return "Partner";
     }
 
+    /**
+     * Summary of createNewEntry
+     * @return string
+     */
     protected function createNewEntry() {
         if (count($this->relNames)  == 0) {
             return HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('New Partner', array('class'=>'hhk-newlink', 'title'=>'Link a new '.$this->relCode->getTitle(), 'colspan'=>'2', 'style'=>'text-align: center;')));
@@ -60,6 +68,13 @@ class Partner extends AbstractRelation {
     }
 
 
+    /**
+     * Summary of addRelationship
+     * @param \PDO $dbh
+     * @param int $myspId
+     * @param string $user
+     * @return string
+     */
     public function addRelationship(\PDO $dbh, $myspId, $user) {
         $resultMessage = "";
 
@@ -92,6 +107,12 @@ class Partner extends AbstractRelation {
 
     }
 
+    /**
+     * Summary of removeRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @return string
+     */
     public function removeRelationship(\PDO $dbh, $rId) {
 
         if (count($this->relNames) == 0) {

@@ -24,6 +24,11 @@ use HHK\Tables\Name\NamePhoneRS;
 class Phones extends AbstractContactPoint {
 
 
+    /**
+     * Summary of loadRecords
+     * @param \PDO $dbh
+     * @return array<NamePhoneRS>
+     */
     protected function loadRecords(\PDO $dbh) {
 
         $id = $this->name->get_idName();
@@ -54,14 +59,27 @@ class Phones extends AbstractContactPoint {
         return $rsArray;
     }
 
+    /**
+     * Summary of get_preferredCode
+     * @return mixed
+     */
     public function get_preferredCode() {
         return $this->name->get_preferredPhone();
     }
 
+    /**
+     * Summary of getTitle
+     * @return string
+     */
     public function getTitle() {
         return "Phone Number";
     }
 
+    /**
+     * Summary of setPreferredCode
+     * @param mixed $code
+     * @return void
+     */
     public function setPreferredCode($code) {
 
         if ($code == "" || isset($this->codes[$code])) {
@@ -69,6 +87,11 @@ class Phones extends AbstractContactPoint {
         }
     }
 
+    /**
+     * Summary of get_Data
+     * @param mixed $code
+     * @return array
+     */
     public function get_Data($code = "") {
 
         // Cheap way to get around not putting a var into the signature.
@@ -94,6 +117,11 @@ class Phones extends AbstractContactPoint {
         return $data;
     }
 
+    /**
+     * Summary of isRecordSetDefined
+     * @param mixed $code
+     * @return bool
+     */
     public function isRecordSetDefined($code) {
 
         $adrRS = $this->get_recordSet($code);
@@ -106,6 +134,14 @@ class Phones extends AbstractContactPoint {
 
     }
 
+    /**
+     * Summary of createMarkup
+     * @param mixed $inputClass
+     * @param mixed $idPrefix
+     * @param mixed $room
+     * @param mixed $roomPhoneCkd
+     * @return string
+     */
     public function createMarkup($inputClass = '', $idPrefix = "", $room = FALSE, $roomPhoneCkd = FALSE) {
 
         $table = new HTMLTable();
@@ -124,6 +160,14 @@ class Phones extends AbstractContactPoint {
         return $table->generateMarkup();
     }
 
+    /**
+     * Summary of createPhoneMarkup
+     * @param mixed $p
+     * @param mixed $inputClass
+     * @param mixed $idPrefix
+     * @param mixed $showPrefCheckbox
+     * @return string
+     */
     public function createPhoneMarkup($p, $inputClass = '', $idPrefix = "", $showPrefCheckbox = TRUE) {
 
         // Preferred Radio button
@@ -183,6 +227,13 @@ class Phones extends AbstractContactPoint {
         return $trContents;
     }
 
+    /**
+     * Summary of createHousePhoneMarkup
+     * @param mixed $prefCode
+     * @param mixed $idPrefix
+     * @param mixed $roomPhoneCkd
+     * @return string
+     */
     protected function createHousePhoneMarkup($prefCode, $idPrefix = "", $roomPhoneCkd = FALSE) {
 
         // Preferred Radio button
@@ -210,6 +261,14 @@ class Phones extends AbstractContactPoint {
         return $trContents;
     }
 
+    /**
+     * Summary of savePost
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $user
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function savePost(\PDO $dbh, array $post, $user, $idPrefix = '') {
 
         $message = '';
@@ -229,6 +288,15 @@ class Phones extends AbstractContactPoint {
         return $message;
     }
 
+    /**
+     * Summary of SavePhoneNumber
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $purpose
+     * @param mixed $user
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function SavePhoneNumber(\PDO $dbh, $post, $purpose, $user, $idPrefix = "") {
 
         $postedPhone = '';
@@ -291,6 +359,15 @@ class Phones extends AbstractContactPoint {
         return $message;
     }
 
+    /**
+     * Summary of loadPostData
+     * @param \HHK\Tables\Name\NamePhoneRS $a
+     * @param mixed $p
+     * @param mixed $typeCode
+     * @param mixed $uname
+     * @param mixed $idPrefix
+     * @return void
+     */
     private function loadPostData(NamePhoneRS $a, array $p, $typeCode, $uname, $idPrefix = '') {
 
         $ph = '';

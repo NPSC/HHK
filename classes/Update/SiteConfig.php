@@ -17,7 +17,8 @@ use HHK\sec\WebInit;
  * SiteConfig.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @author    William Ireland <wireland@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017, 2018-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -175,9 +176,17 @@ class SiteConfig {
 
     }
 
+    /**
+     * Summary of loadZipCodeFile
+     * @param \PDO $dbh
+     * @param mixed $file
+     * @return string
+     */
     public static function loadZipCodeFile(\PDO $dbh, $file) {
 
-        $lines = explode("\n", self::readZipFile($file));
+        $content = self::readZipFile($file);
+
+        $lines = explode("\n", $content);
 
         // Remove the first line - headings
         array_shift($lines);
@@ -185,6 +194,8 @@ class SiteConfig {
         // Delete old table contents
         if (count($lines) > 30000) {
             $dbh->exec("delete from postal_codes;");
+        } else {
+            return "File size is too small.";
         }
 
 
@@ -257,25 +268,25 @@ class SiteConfig {
 
     }
 
+    /**
+     * Summary of readZipFile
+     * @param mixed $file
+     * @throws \HHK\Exception\RuntimeException
+     * @return bool|string
+     */
     protected static function readZipFile($file) {
 
-    $zip = Zip_open($file);
+    //$zip = Zip_open($file);
+    $contents = '';
+    $zip = new \ZipArchive;
 
-    if (is_resource($zip)) {
+    if ($zip->open($file) === TRUE) {
 
-        $entry = zip_read($zip);
-        $na = zip_entry_name($entry);
+        $content = $zip->getFromIndex(0);
+        $zip->close();
 
-        $content = zip_entry_read($entry, zip_entry_filesize($entry));
-
-        zip_entry_close($entry);
-        zip_close($zip);
-
-        if ($content === FALSE) {
-            throw new RuntimeException("Problem reading zip file entry: $na.  ");
-        }
     } else {
-        throw new RuntimeException("Problem opening zip file.  Error code = $zip.  ");
+        throw new RuntimeException("Problem opening zip file.  Error code = " . $zip->getStatusString());
     }
 
     return $content;

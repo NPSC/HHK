@@ -130,7 +130,7 @@ function justDate($dateTime) {
 
 /**
  * Generate and download Excel file from multidimentional array
- * 
+ *
  * @param array $rows
  * @param string $fileName
  * @return void
@@ -602,7 +602,7 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, ?array $del, a
                     ));
 
                     if ($ctr > 0) {
-                        $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
+                        $logText = HouseLog::getUpdateText($glRs);
                         HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
                     }
                 }
@@ -683,7 +683,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
                     ));
 
                     if ($ctr > 0) {
-                        $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
+                        $logText = HouseLog::getUpdateText($glRs);
                         HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
                     }
                 }
@@ -746,7 +746,7 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
                 ));
 
                 if ($ctr > 0) {
-                    $logText = HouseLog::getUpdateText($lookRs, $category . $code);
+                    $logText = HouseLog::getUpdateText($lookRs);
                     HouseLog::logGenLookups($dbh, $category, $code, $logText, 'update', $uS->username);
                 }
             }
@@ -783,7 +783,7 @@ function showGuestPicture ($idGuest, $widthPx) {
  * @param $_FILES['photo'] $photo
  * @param int $newwidth
  * @param int $newheight
- * @return object photo data
+ * @return string|bool
  */
 function makeThumbnail($photo, $newwidth, $newheight)
 {
@@ -813,7 +813,7 @@ function makeThumbnail($photo, $newwidth, $newheight)
 
             default:
                 throw new Exception("File Type not supported");
-                break;
+                //break;
         }
 
         $thumbnailData = ob_get_contents(); // send object buffer/image data to variable

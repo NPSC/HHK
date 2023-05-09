@@ -152,7 +152,7 @@ $recipients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 if ($numRecipients > $maxAutoEmail) {
     // to many recipients.
     $stmt = NULL;
-    exit("The number of email recipients, " . $stmt->rowCount() . " is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
+    exit("The number of email recipients, $$numRecipients is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
 }
 
 $mail = prepareEmail();
@@ -225,7 +225,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 
     $mail->clearAddresses();
     $mail->addAddress($copyEmail);
-    $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'MemberType', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
+    $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
 
     $messg = "<p>Today's date: " . date('M j, Y');
     $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";

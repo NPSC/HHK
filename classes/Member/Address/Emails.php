@@ -21,6 +21,11 @@ use HHK\Tables\Name\NameEmailRS;
  */
 class Emails extends AbstractContactPoint {
 
+    /**
+     * Summary of loadRecords
+     * @param \PDO $dbh
+     * @return array<NameEmailRS>
+     */
     protected function loadRecords(\PDO $dbh) {
 
         $id = $this->name->get_idName();
@@ -51,14 +56,27 @@ class Emails extends AbstractContactPoint {
         return $rsArray;
     }
 
+    /**
+     * Summary of get_preferredCode
+     * @return mixed
+     */
     public function get_preferredCode() {
         return $this->name->get_preferredEmail();
     }
 
+    /**
+     * Summary of getTitle
+     * @return string
+     */
     public function getTitle() {
         return "Email Address";
     }
 
+    /**
+     * Summary of setPreferredCode
+     * @param mixed $code
+     * @return void
+     */
     public function setPreferredCode($code) {
 
         if ($code == "" || isset($this->codes[$code])) {
@@ -66,6 +84,11 @@ class Emails extends AbstractContactPoint {
         }
     }
 
+    /**
+     * Summary of get_Data
+     * @param mixed $code
+     * @return array
+     */
     public function get_Data($code = "") {
 
         // Cheap way to get around not putting a var into the signature.
@@ -89,6 +112,11 @@ class Emails extends AbstractContactPoint {
         return $data;
     }
 
+    /**
+     * Summary of isRecordSetDefined
+     * @param mixed $code
+     * @return bool
+     */
     public function isRecordSetDefined($code) {
 
         $adrRS = $this->get_recordSet($code);
@@ -101,6 +129,12 @@ class Emails extends AbstractContactPoint {
 
     }
 
+    /**
+     * Summary of createMarkup
+     * @param mixed $inputClass
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function createMarkup($inputClass = '', $idPrefix = "") {
 
         $table = new HTMLTable();
@@ -121,6 +155,14 @@ class Emails extends AbstractContactPoint {
         return $table->generateMarkup();
     }
 
+    /**
+     * Summary of createEmailMarkup
+     * @param mixed $p
+     * @param mixed $inputClass
+     * @param mixed $idPrefix
+     * @param mixed $showPrefCheckbox
+     * @return string
+     */
     public function createEmailMarkup($p, $inputClass = '', $idPrefix = "", $showPrefCheckbox = TRUE) {
 
         $table = new HTMLTable();
@@ -173,6 +215,14 @@ class Emails extends AbstractContactPoint {
     }
 
 
+    /**
+     * Summary of savePost
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $user
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function savePost(\PDO $dbh, array $post, $user, $idPrefix = '') {
 
         $message = '';
@@ -183,7 +233,7 @@ class Emails extends AbstractContactPoint {
         }
 
         if (isset($post[$idPrefix.'txtEmail']) === FALSE) {
-            return;
+            return '';
         }
 
         foreach ($this->codes as $purpose) {
@@ -247,6 +297,15 @@ class Emails extends AbstractContactPoint {
     }
 
 
+    /**
+     * Summary of loadPostData
+     * @param \HHK\Tables\Name\NameEmailRS $a
+     * @param mixed $p
+     * @param mixed $typeCode
+     * @param mixed $uname
+     * @param mixed $idPrefix
+     * @return void
+     */
     private function loadPostData(NameEmailRS $a, array $p, $typeCode, $uname, $idPrefix = "") {
 
         $a->Email->setNewVal(trim(filter_var($p[$idPrefix.'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL)));

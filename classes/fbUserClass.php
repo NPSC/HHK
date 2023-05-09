@@ -271,10 +271,10 @@ class fbUserClass {
             $this->set_password(filter_var($getArray["pw"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["nid"])) {
-            $this->set_nid(filter_var($getArray["nid"], FILTER_SANITIZE_INT));
+            $this->set_nid(filter_var($getArray["nid"], FILTER_SANITIZE_NUMBER_INT));
         }
         if (isset($getArray["inst"])) {
-            $this->set_inst(filter_var($getArray["inst"], FILTER_SANITIZE_INT));
+            $this->set_inst(filter_var($getArray["inst"], FILTER_SANITIZE_NUMBER_INT));
         }
     }
 
@@ -397,8 +397,6 @@ class fbUserClass {
 
         if (count($rows) == 1) {
             return $rows[0];
-        } else {
-            return null;
         }
 
         return null;

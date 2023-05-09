@@ -220,7 +220,7 @@ abstract class AbstractRoleMember extends IndivMember {
         return $tr;
     }
 
-    public function createThinMarkupRow() {
+    public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = FALSE, $lockRelChooser = FALSE) {
 
         $uS = Session::getInstance();
 

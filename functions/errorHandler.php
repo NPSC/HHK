@@ -175,7 +175,7 @@ function buildPage($error, $success = false) {
                         <div class="ui-widget-content ui-corner-bottom hhk-tdbox">
     <?php if ($success) { ?>
                                 <h4>Thanks for submitting!</h4>
-                                <a href="<?php echo $sec->getRootURL(); ?>" class="ui-button ui-corner-all ui-widget">Go Home</a>
+                                <!-- <a href="<?php //echo $sec->getRootURL(); ?>" class="ui-button ui-corner-all ui-widget">Go Home</a> -->
     <?php } else { ?>
                                 <form action="#" method="POST">
                                     <div class="form-input">

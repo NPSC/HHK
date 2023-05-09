@@ -69,6 +69,9 @@ class ReportFilter {
     protected $reportEnd;
     protected $queryEnd;
 
+    /**
+     * Summary of __construct
+     */
     public function __construct() {
         $this->selectedAssocs = array();
         $this->selectedHosptials = array();
@@ -77,6 +80,14 @@ class ReportFilter {
         $this->hospitals = array();
     }
 
+    /**
+     * Summary of createTimePeriod
+     * @param mixed $defaultYear
+     * @param mixed $defaultCalendarOption
+     * @param mixed $fiscalYearDiffMonths
+     * @param mixed $omits
+     * @return ReportFilter
+     */
     public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0, $omits = array()) {
         $this->months = array(
             0 => array(1, 'January'), 1 => array(2, 'February'),
@@ -108,6 +119,11 @@ class ReportFilter {
         return $this;
     }
 
+    /**
+     * Summary of timePeriodMarkup
+     * @param mixed $prefix
+     * @return HTMLTable
+     */
     public function timePeriodMarkup($prefix = '') {
 
         $uS = Session::getInstance();

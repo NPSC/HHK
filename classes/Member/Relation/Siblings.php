@@ -17,12 +17,21 @@ use HHK\SysConst\RelLinkType;
 class Siblings extends AbstractRelation {
 
 
+    /**
+     * Summary of loadRelCode
+     * @return RelationCode
+     */
     protected function loadRelCode() {
 
         return new RelationCode(array('Code'=>RelLinkType::Sibling, 'Description'=>'Sibling'));
 
     }
 
+    /**
+     * Summary of getPdoStmt
+     * @param \PDO $dbh
+     * @return \PDOStatement|bool
+     */
     protected function getPdoStmt(\PDO $dbh) {
 
         $query = "Select v.Id, concat(v.Name_First, ' ', v.Name_Last) as `Name`, v.MemberStatus as `MemStatus`, r . *
@@ -42,14 +51,29 @@ where
         return $stmt;
     }
 
+    /**
+     * Summary of getHtmlId
+     * @return string
+     */
     protected function getHtmlId() {
         return "Sibling";
     }
 
+    /**
+     * Summary of createNewEntry
+     * @return string
+     */
     protected function createNewEntry() {
         return HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('New Sibling', array('class'=>'hhk-newlink', 'title'=>'Link a new '.$this->relCode->getTitle(), 'colspan'=>'2', 'style'=>'text-align: center;')));
     }
 
+    /**
+     * Summary of addRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @param string $user
+     * @return string
+     */
     public function addRelationship(\PDO $dbh, $rId, $user) {
 
         // get my group code if any...
@@ -96,7 +120,7 @@ where
                 $relCtr = $row[0];
             }
             if ($relCtr == 0) {
-                return array("error" => "Event Relationship counter not set up.");
+                return "error : Event Relationship counter not set up.";
             }
 
             // Insert 2 new records.
@@ -117,6 +141,12 @@ where
         return $message;
     }
 
+    /**
+     * Summary of removeRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @return string
+     */
     public function removeRelationship(\PDO $dbh, $rId) {
         $qq = "Delete from relationship where Relation_Type='". $this->relCode->getCode() ."' and idName=:rId ";
         $stmt = $dbh->prepare($qq);

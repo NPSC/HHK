@@ -1185,6 +1185,11 @@ abstract class AbstractMember {
         return date('M j, Y', strtotime($this->nameRS->Member_Since->getStoredVal()));
     }
 
+    /**
+     * Summary of set_preferredMailAddr
+     * @param mixed $preferredMailAddr
+     * @return void
+     */
     public function set_preferredMailAddr($preferredMailAddr) {
         $this->nameRS->Preferred_Mail_Address->setNewVal($preferredMailAddr);
     }

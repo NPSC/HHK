@@ -28,14 +28,14 @@ class NewGuest
      */
     protected $endDT;
 
-    protected $numberNewGuests;
-    protected $numberReturnGuests;
+    protected int $numberNewGuests;
+    protected int $numberReturnGuests;
 
-    protected $numberNewPSGs;
-    protected $numberReturnPSGs;
+    protected int $numberNewPSGs;
+    protected int $numberReturnPSGs;
 
-    protected $newGuestIds;
-    protected $newPSGIds;
+    protected array $newGuestIds;
+    protected array $newPSGIds;
 
 
     /**

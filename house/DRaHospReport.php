@@ -229,10 +229,6 @@ where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '"
 
         $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
-        if (isset($hospitals[$r[$hospitalCol]])) {
-            $r[$hospitalCol] = $hospitals[$r[$hospitalCol]][1];
-        }
-
         unset($r['idPsg']);
 
         $rows[] = $r;

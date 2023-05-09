@@ -84,7 +84,7 @@ if ($notificationAddress != '') {
 	$mail->FromName = $siteName;
 
 	$mail->isHTML(true);
-	$mail->Subject = $siteName . ' GL Transfer Report' . (strtolower(stristr($glParm->getRemoteFilePath()), 'test') == TRUE ? ' THIS IS A TEST' : '');
+	$mail->Subject = $siteName . ' GL Transfer Report' . (strtolower(stristr($glParm->getRemoteFilePath(), 'test') == TRUE ? ' THIS IS A TEST' : ''));
 
 	$addrArry = $mail->parseAddresses($notificationAddress);
 
