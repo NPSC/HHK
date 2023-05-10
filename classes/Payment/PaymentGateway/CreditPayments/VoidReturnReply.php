@@ -47,7 +47,7 @@ class VoidReturnReply extends AbstractCreditPayments {
         if ($pr->getPaymentNotes() != '') {
 
             if ($payRs->Notes->getStoredVal() != '') {
-                $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . getPaymentNotes());
+                $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . $pr->getPaymentNotes());
             } else {
                 $payRs->Notes->setNewVal($pr->getPaymentNotes());
             }

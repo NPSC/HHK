@@ -113,10 +113,10 @@ try {
 
         $emSubject = $wInit->siteName . " Invoice";
 
-        if (is_null($guest) === FALSE && $emAddr == '') {
-            $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-            $emAddr = $email["Email"];
-        }
+        // if (is_null($guest) === FALSE && $emAddr == '') {
+        //     $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+        //     $emAddr = $email["Email"];
+        // }
 
 
 

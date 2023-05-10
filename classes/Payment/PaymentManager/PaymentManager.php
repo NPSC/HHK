@@ -55,6 +55,10 @@ class PaymentManager {
     protected $invoice;
 
 
+    /**
+     * Summary of __construct
+     * @param PaymentManagerPayment $pmp
+     */
     public function __construct($pmp) {
         $this->pmp = $pmp;
         $this->invoice = NULL;
@@ -133,7 +137,7 @@ class PaymentManager {
                 $invLine = new OneTimeInvoiceLine($uS->ShowLodgDates);
                 $invLine->createNewLine($visitFeeItem, 1, $notes);
 
-                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                $this->invoice = $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
 
             }
@@ -401,6 +405,18 @@ class PaymentManager {
         return $this->invoice;
     }
 
+    /**
+     * Summary of processOverpayments
+     * @param \PDO $dbh
+     * @param mixed $overPaymemntAmt
+     * @param mixed $idPayor
+     * @param mixed $idRegistration
+     * @param mixed $idVisit
+     * @param mixed $visitSpan
+     * @param mixed $notes
+     * @throws \HHK\Exception\PaymentException
+     * @return void
+     */
     protected function processOverpayments(\PDO $dbh, $overPaymemntAmt, $idPayor, $idRegistration, $idVisit, $visitSpan, $notes) {
 
         $uS = Session::getInstance();
@@ -456,6 +472,19 @@ class PaymentManager {
     }
 
 
+    /**
+     * Summary of getInvoice
+     * @param \PDO $dbh
+     * @param mixed $payor
+     * @param mixed $groupId
+     * @param mixed $orderNumber
+     * @param mixed $suborderNumber
+     * @param mixed $username
+     * @param mixed $desc
+     * @param mixed $notes
+     * @param mixed $payDate
+     * @return Invoice|mixed
+     */
     protected function getInvoice(\PDO $dbh, $payor, $groupId, $orderNumber, $suborderNumber, $username, $desc = '', $notes = '', $payDate = '') {
 
         if (is_null($this->invoice)) {
@@ -484,6 +513,12 @@ class PaymentManager {
         return $this->invoice;
     }
 
+    /**
+     * Summary of makeHousePayment
+     * @param \PDO $dbh
+     * @param mixed $postBackPage
+     * @return PaymentResult|null
+     */
     public function makeHousePayment(\PDO $dbh, $postBackPage) {
 
         if ($this->hasInvoice()) {
@@ -513,6 +548,12 @@ class PaymentManager {
 
     }
 
+    /**
+     * Summary of makeHouseReturn
+     * @param \PDO $dbh
+     * @param mixed $paymentDate
+     * @return ReturnResult
+     */
     public function makeHouseReturn(\PDO $dbh, $paymentDate) {
 
         if (! $this->hasInvoice()) {
@@ -540,18 +581,35 @@ class PaymentManager {
 
     }
 
+    /**
+     * Summary of setInvoice
+     * @param mixed $invoice
+     * @return void
+     */
     public function setInvoice($invoice) {
         $this->invoice = $invoice;
     }
 
+    /**
+     * Summary of hasInvoice
+     * @return bool
+     */
     public function hasInvoice() {
         return !is_null($this->invoice);
     }
 
+    /**
+     * Summary of getInvoiceObj
+     * @return Invoice|mixed
+     */
     public function getInvoiceObj() {
         return $this->invoice;
     }
 
+    /**
+     * Summary of getInvoiceStatus
+     * @return mixed
+     */
     public function getInvoiceStatus() {
         if ($this->hasInvoice()) {
             return $this->invoice->getStatus();

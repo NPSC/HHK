@@ -35,6 +35,12 @@ class CashResponse extends AbstractPaymentResponse {
         return AbstractCreditPayments::STATUS_APPROVED;
     }
 
+    /**
+     * Summary of receiptMarkup
+     * @param \PDO $dbh
+     * @param mixed $tbl
+     * @return void
+     */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         if ($this->getAmount() != 0) {

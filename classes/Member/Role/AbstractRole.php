@@ -109,6 +109,13 @@ abstract class AbstractRole {
         return  $rtn;
     }
 
+    /**
+     * Summary of createMailAddrMU
+     * @param mixed $class
+     * @param mixed $useCopyIcon
+     * @param mixed $includeCounty
+     * @return string
+     */
     protected function createMailAddrMU($class = "", $useCopyIcon = TRUE, $includeCounty = FALSE) {
 
         $idPrefix = $this->getRoleMember()->getIdPrefix();
@@ -158,6 +165,11 @@ abstract class AbstractRole {
 
     }
 
+    /**
+     * Summary of createPhoneEmailMU
+     * @param mixed $idPrefix
+     * @return string
+     */
     protected function createPhoneEmailMU($idPrefix = '') {
         // Phone & email
         $ul = HTMLContainer::generateMarkup('ul',
@@ -176,6 +188,12 @@ abstract class AbstractRole {
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>$idPrefix.'phEmlTabs', 'class'=>'hhk-phemtabs', 'style'=>'font-size:.9em;')), array('style'=>'float:left;margin-top:5px;margin-right:5px;', 'class'=>'hhk-tdbox'));
     }
 
+    /**
+     * Summary of createThinMarkup
+     * @param \HHK\House\ReserveData\PSGMember\PSGMember $mem
+     * @param mixed $lockRelChooser
+     * @return string
+     */
     public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         // Staying button
@@ -188,6 +206,11 @@ abstract class AbstractRole {
 
     }
 
+    /**
+     * Summary of createStayMarkup
+     * @param \HHK\House\ReserveData\PSGMember\PSGMember $stay
+     * @return string
+     */
     public function createStayMarkup(PSGMember $stay) {
 
         $td = '';
@@ -214,6 +237,10 @@ abstract class AbstractRole {
 
 
         // Address, email and Phone
+    /**
+     * Summary of createAddsBLock
+     * @return string
+     */
     public function createAddsBLock() {
 
         $mkup = '';
@@ -328,6 +355,14 @@ abstract class AbstractRole {
         return $idVisit;
     }
 
+    /**
+     * Summary of checkPsgStays
+     * @param \PDO $dbh
+     * @param mixed $idName
+     * @param mixed $PSG_Id
+     * @param mixed $ignoreZeroDayStays
+     * @return bool
+     */
     public static function checkPsgStays(\PDO $dbh, $idName, $PSG_Id, $ignoreZeroDayStays = FALSE) {
 
         $id = intval($idName, 10);
@@ -355,6 +390,10 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return FALSE;
     }
 
+    /**
+     * Summary of getNoReturn
+     * @return mixed
+     */
     public function getNoReturn() {
         $uS = Session::getInstance();
 
@@ -365,6 +404,11 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return '';
     }
 
+    /**
+     * Summary of setIncompleteAddr
+     * @param mixed $TorF
+     * @return void
+     */
     public function setIncompleteAddr($TorF) {
 
         if ($TorF === TRUE) {
@@ -374,6 +418,11 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         }
     }
 
+    /**
+     * Summary of isCurrentlyStaying
+     * @param \PDO $dbh
+     * @return bool
+     */
     public function isCurrentlyStaying(\PDO $dbh) {
 
         if (is_null($this->currentlyStaying)) {
@@ -383,6 +432,11 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->currentlyStaying;
     }
 
+    /**
+     * Summary of setCurrentIdVisit
+     * @param mixed $idVisit
+     * @return void
+     */
     protected function setCurrentIdVisit($idVisit) {
 
         $idv = intval($idVisit, 10);
@@ -396,6 +450,11 @@ where r.idPsg = $idPsg and s.idName = " . $id;
 
     }
 
+    /**
+     * Summary of getEmergContactObj
+     * @param \PDO $dbh
+     * @return EmergencyContact
+     */
     public function getEmergContactObj(\PDO $dbh) {
 
         if (is_null($this->emergContact)) {

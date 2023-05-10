@@ -41,9 +41,9 @@ class ReverseReply extends AbstractCreditPayments {
         if ($pr->getPaymentNotes() != '') {
 
             if ($payRs->Notes->getStoredVal() != '') {
-                $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . getPaymentNotes());
+                $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . $pr->getPaymentNotes());
             } else {
-                $payRs->Notes->setNewVal(getPaymentNotes());
+                $payRs->Notes->setNewVal($pr->getPaymentNotes());
             }
         }
 

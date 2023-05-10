@@ -122,11 +122,10 @@ class Session
 
 
     /**
-    *    Destroys the current session.
-    *
-    *    @return    bool    TRUE is session has been deleted, else FALSE.
-    **/
-
+     * Summary of destroy
+     * @param bool $delCookie
+     * @return void
+     */
     public function destroy($delCookie = FALSE)
     {
         if ( $this->sessionState == self::SESSION_STARTED ) {
@@ -148,6 +147,12 @@ class Session
         }
     }
 
+    /**
+     * Summary of getSessionName
+     * @param mixed $confPath
+     * @param mixed $confFile
+     * @return string
+     */
     private function getSessionName(string $confPath, string $confFile)
     {
         if(!empty($confPath) && !empty($confFile)){

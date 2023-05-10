@@ -47,26 +47,98 @@ class ReportFilter {
     const CAL_YEAR = 21;
     const YEAR_2_DATE = 22;
 
+    /**
+     * Summary of months
+     * @var array
+     */
     protected $months;
+    /**
+     * Summary of calendarOptions
+     * @var array
+     */
     protected $calendarOptions;
+    /**
+     * Summary of selectedCalendar
+     * @var
+     */
     protected $selectedCalendar;
+    /**
+     * Summary of selectedMonths
+     * @var
+     */
     protected $selectedMonths;
+    /**
+     * Summary of selectedYear
+     * @var
+     */
     protected $selectedYear;
+    /**
+     * Summary of selectedStart
+     * @var
+     */
     protected $selectedStart;
+    /**
+     * Summary of selectedEnd
+     * @var
+     */
     protected $selectedEnd;
+    /**
+     * Summary of fyDiffMonths
+     * @var
+     */
     protected $fyDiffMonths;
 
+    /**
+     * Summary of hospitals
+     * @var
+     */
     protected $hospitals;
+    /**
+     * Summary of hList
+     * @var
+     */
     protected $hList;
+    /**
+     * Summary of aList
+     * @var
+     */
     protected $aList;
+    /**
+     * Summary of selectedHosptials
+     * @var
+     */
     protected $selectedHosptials;
+    /**
+     * Summary of selectedAssocs
+     * @var
+     */
     protected $selectedAssocs;
 
+    /**
+     * Summary of selectedResourceGroups
+     * @var
+     */
     protected $selectedResourceGroups;
+    /**
+     * Summary of resourceGroups
+     * @var
+     */
     protected $resourceGroups;
 
+    /**
+     * Summary of reportStart
+     * @var
+     */
     protected $reportStart;
+    /**
+     * Summary of reportEnd
+     * @var
+     */
     protected $reportEnd;
+    /**
+     * Summary of queryEnd
+     * @var
+     */
     protected $queryEnd;
 
     /**
@@ -160,6 +232,10 @@ class ReportFilter {
         return $tbl;
     }
 
+    /**
+     * Summary of getTimePeriodScript
+     * @return string
+     */
     public function getTimePeriodScript() {
         $uS = Session::getInstance();
         $ckdate = '';
@@ -194,6 +270,10 @@ $ckdate";
 
     }
 
+    /**
+     * Summary of loadSelectedTimePeriod
+     * @return ReportFilter
+     */
     public function loadSelectedTimePeriod() {
 
         // gather input
@@ -292,6 +372,10 @@ $ckdate";
         return $this;
     }
 
+    /**
+     * Summary of createHospitals
+     * @return ReportFilter
+     */
     public function createHospitals() {
 
         $uS = Session::getInstance();
@@ -314,6 +398,10 @@ $ckdate";
         return $this;
     }
 
+    /**
+     * Summary of hospitalMarkup
+     * @return HTMLTable
+     */
     public function hospitalMarkup() {
 
         $assocs = '';
@@ -342,6 +430,10 @@ $ckdate";
         return $tbl;
     }
 
+    /**
+     * Summary of loadSelectedHospitals
+     * @return ReportFilter
+     */
     public function loadSelectedHospitals() {
 
         if (filter_has_var(INPUT_POST, 'selAssoc')) {
@@ -361,6 +453,12 @@ $ckdate";
         return $this;
     }
 
+    /**
+     * Summary of createResoourceGroups
+     * @param mixed $rescGroups
+     * @param mixed $defaultGroupBy
+     * @return ReportFilter
+     */
     public function createResoourceGroups($rescGroups, $defaultGroupBy) {
 
         if (isset($rescGroups[$defaultGroupBy])) {
@@ -373,6 +471,10 @@ $ckdate";
         return $this;
     }
 
+    /**
+     * Summary of loadSelectedResourceGroups
+     * @return ReportFilter
+     */
     public function loadSelectedResourceGroups() {
 
         if (filter_has_var(INPUT_POST, 'selRoomGroup')) {
@@ -381,6 +483,10 @@ $ckdate";
         return $this;
     }
 
+    /**
+     * Summary of resourceGroupsMarkup
+     * @return HTMLTable
+     */
     public function resourceGroupsMarkup() {
 
         $rooms = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->resourceGroups, $this->selectedResourceGroups, FALSE),
@@ -394,6 +500,10 @@ $ckdate";
         return $tbl;
     }
 
+    /**
+     * Summary of getSelectedHospitalsString
+     * @return string
+     */
     public function getSelectedHospitalsString(){
         $hospList = $this->getHospitals();
         $hospitalTitles = "";
@@ -410,6 +520,10 @@ $ckdate";
         }
     }
 
+    /**
+     * Summary of getSelectedAssocString
+     * @return string
+     */
     public function getSelectedAssocString(){
         $assocList = $this->getHospitals();
         $assocTitles = "";
@@ -426,70 +540,138 @@ $ckdate";
         }
     }
 
+    /**
+     * Summary of getSelectedResourceGroups
+     * @return array|mixed
+     */
     public function getSelectedResourceGroups() {
         return $this->selectedResourceGroups;
     }
 
+    /**
+     * Summary of getResourceGroups
+     * @return array<array>
+     */
     public function getResourceGroups() {
         return $this->resourceGroups;
     }
 
+    /**
+     * Summary of getMonths
+     * @return array
+     */
     public function getMonths() {
         return $this->months;
     }
 
+    /**
+     * Summary of getCalendarOptions
+     * @return array<array>
+     */
     public function getCalendarOptions() {
         return $this->calendarOptions;
     }
 
+    /**
+     * Summary of getSelectedCalendar
+     * @return int|mixed
+     */
     public function getSelectedCalendar() {
         return $this->selectedCalendar;
     }
 
+    /**
+     * Summary of getSelectedMonths
+     * @return array|mixed
+     */
     public function getSelectedMonths() {
         return $this->selectedMonths;
     }
 
+    /**
+     * Summary of getSelectedYear
+     * @return int|mixed
+     */
     public function getSelectedYear() {
         return $this->selectedYear;
     }
 
+    /**
+     * Summary of getSelectedStart
+     * @return mixed
+     */
     public function getSelectedStart() {
         return $this->selectedStart;
     }
 
+    /**
+     * Summary of getSelectedEnd
+     * @return mixed
+     */
     public function getSelectedEnd() {
         return $this->selectedEnd;
     }
 
+    /**
+     * Summary of getHospitals
+     * @return array|mixed
+     */
     public function getHospitals() {
         return $this->hospitals;
     }
 
+    /**
+     * Summary of getHList
+     * @return array<array>
+     */
     public function getHList() {
         return $this->hList;
     }
 
+    /**
+     * Summary of getAList
+     * @return array<array>
+     */
     public function getAList() {
         return $this->aList;
     }
 
+    /**
+     * Summary of getSelectedHosptials
+     * @return array|bool
+     */
     public function getSelectedHosptials() {
         return $this->selectedHosptials;
     }
 
+    /**
+     * Summary of getSelectedAssocs
+     * @return array|bool
+     */
     public function getSelectedAssocs() {
         return $this->selectedAssocs;
     }
 
+    /**
+     * Summary of getReportStart
+     * @return string
+     */
     public function getReportStart() {
         return $this->reportStart;
     }
 
+    /**
+     * Summary of getReportEnd
+     * @return string
+     */
     public function getReportEnd() {
         return $this->reportEnd;
     }
 
+    /**
+     * Summary of getQueryEnd
+     * @return string
+     */
     public function getQueryEnd() {
         return $this->queryEnd;
     }

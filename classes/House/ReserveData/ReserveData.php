@@ -418,6 +418,10 @@ class ReserveData {
         return $this->addrPurpose;
     }
 
+    /**
+     * Summary of getArrivalDT
+     * @return \DateTimeInterface
+     */
     public function getArrivalDT() {
         return $this->arrivalDT;
     }
@@ -431,6 +435,10 @@ class ReserveData {
         return '';
     }
 
+    /**
+     * Summary of getDepartureDT
+     * @return \DateTimeInterface
+     */
     public function getDepartureDT() {
         return $this->departureDT;
     }

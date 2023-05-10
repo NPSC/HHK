@@ -222,6 +222,11 @@ class EditRS {
         return $rowCount;
     }
 
+    /**
+     * Summary of isChanged
+     * @param \HHK\Tables\TableRSInterface $rs
+     * @return bool
+     */
     public static function isChanged(TableRSInterface $rs){
         $changesToUpdate = false;
         foreach ($rs as $dbF) {
@@ -299,6 +304,14 @@ class EditRS {
     }
 
 
+    /**
+     * Summary of delete
+     * @param \PDO $dbh
+     * @param \HHK\Tables\TableRSInterface $rs
+     * @param mixed $whereDbFieldArray
+     * @param mixed $combiner
+     * @return bool
+     */
     public static function delete(\PDO $dbh, TableRSInterface $rs, array $whereDbFieldArray, $combiner = "and") {
         $paramList = array();
         $query = "";

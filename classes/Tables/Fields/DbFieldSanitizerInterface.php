@@ -10,7 +10,16 @@ namespace HHK\Tables\Fields;
  */
 
 interface DbFieldSanitizerInterface {
+    /**
+     * Summary of sanitize
+     * @param mixed $v
+     * @return void
+     */
     public function sanitize($v);
+    /**
+     * Summary of getDbType
+     * @return void
+     */
     public function getDbType();
 }
 ?>

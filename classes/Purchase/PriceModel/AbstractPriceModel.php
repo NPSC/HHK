@@ -8,33 +8,72 @@ use HHK\Tables\EditRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\HTMLControls\{HTMLTable, HTMLInput};
 use HHK\Exception\RuntimeException;
+use HHK\sec\Labels;
 
 /**
  * AbstractPriceModel.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
-/**
- * Description of AbstractPriceModel
- *
- * @author Eric
- */
 abstract class AbstractPriceModel {
 
+    /**
+     * Summary of creditDays
+     * @var int
+     */
     protected $creditDays = 0;
+
+    /**
+     * Summary of glideApplied
+     * @var bool
+     */
     protected $glideApplied = FALSE;
+
+    /**
+     * Summary of roomRates
+     * @var array
+     */
     protected $roomRates;
+
+    /**
+     * Summary of activeRoomRates
+     * @var array
+     */
     protected $activeRoomRates;
+
+    /**
+     * Summary of remainderAmt
+     * @var int
+     */
     protected $remainderAmt = 0;
+
+    /**
+     * Summary of visitStatus
+     * @var string
+     */
     protected $visitStatus = '';
+
+    /**
+     * Summary of priceModelCode
+     * @var string
+     */
     protected $priceModelCode = '';
+
+    /**
+     * Summary of hasPerGuestCharge
+     * @var bool
+     */
     public $hasPerGuestCharge = FALSE;
 
 
+    /**
+     * Summary of __construct
+     * @param mixed $roomRates
+     */
     public function __construct(array $roomRates) {
 
         $this->roomRates = $roomRates;
@@ -49,6 +88,12 @@ abstract class AbstractPriceModel {
         }
     }
 
+    /**
+     * Summary of loadVisitNights
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @return array
+     */
     public function loadVisitNights(\PDO $dbh, $idVisit) {
 
         // Get current nights .
@@ -57,6 +102,12 @@ abstract class AbstractPriceModel {
         return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Summary of loadRegistrationNights
+     * @param \PDO $dbh
+     * @param int $idRegistration
+     * @return array
+     */
     public function loadRegistrationNights(\PDO $dbh, $idRegistration) {
 
         // Get current nights .
@@ -65,8 +116,27 @@ abstract class AbstractPriceModel {
         return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Summary of amountCalculator
+     * @param int $nites
+     * @param int $idRoomRate
+     * @param string $rateCatetgory
+     * @param float|int $pledgedRate
+     * @param int $guestDays
+     * @return float
+     */
     public abstract function amountCalculator($nites, $idRoomRate, $rateCatetgory = '', $pledgedRate = 0, $guestDays = 0);
 
+    /**
+     * Summary of daysPaidCalculator
+     * @param mixed $amount
+     * @param mixed $idRoomRate
+     * @param mixed $rateCategory
+     * @param mixed $pledgedRate
+     * @param mixed $rateAdjust
+     * @param mixed $aveGuestPerDay
+     * @return float|int
+     */
     public function daysPaidCalculator($amount, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $aveGuestPerDay = 1) {
 
         $this->remainderAmt = 0;
@@ -130,6 +200,13 @@ abstract class AbstractPriceModel {
         return $nights;
     }
 
+    /**
+     * Summary of getCategoryRateRs
+     * @param int $idRoomRate
+     * @param string $category
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     public function getCategoryRateRs($idRoomRate = 0, $category = '') {
 
     	if ($idRoomRate > 0 && isset($this->roomRates[$idRoomRate])) {
@@ -155,6 +232,16 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of tiersCalculation
+     * @param int $days
+     * @param int $idRoomRate
+     * @param string $rateCategory
+     * @param float|int $pledgedRate
+     * @param float|int $rateAdjust
+     * @param int $guestDays
+     * @return array<array>
+     */
     public function tiersCalculation($days, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $guestDays = 0) {
 
         $tiers = array();
@@ -175,6 +262,17 @@ abstract class AbstractPriceModel {
         return $tiers;
     }
 
+    /**
+     * Summary of tiersMarkup
+     * @param mixed $r
+     * @param float|int $totalAmt
+     * @param HTMLTable $tbl
+     * @param mixed $tiers
+     * @param \DateTime $startDT
+     * @param string $separator
+     * @param int $totalGuestNites
+     * @return float|int
+     */
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $roomCharge = 0;
@@ -201,6 +299,16 @@ abstract class AbstractPriceModel {
         return $roomCharge;
     }
 
+    /**
+     * Summary of tiersDetailMarkup
+     * @param mixed $r
+     * @param HTMLTable $tbl
+     * @param mixed $tiers
+     * @param \DateTimeInterface $startDT
+     * @param string $separator
+     * @param int $totalGuestNites
+     * @return void
+     */
     public function tiersDetailMarkup($r, &$tbl, $tiers, $startDT, $separator, $totalGuestNites) {
 
     	$sDate = new \DateTime($startDT->format('Y-m-d'));
@@ -227,6 +335,12 @@ abstract class AbstractPriceModel {
     	return;
     }
 
+    /**
+     * Summary of itemDetailMarkup
+     * @param mixed $r
+     * @param HTMLTable $tbl
+     * @return void
+     */
     public function itemDetailMarkup($r, &$tbl) {
 
     	$tbl->addBodyTr(
@@ -237,6 +351,12 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of itemMarkup
+     * @param mixed $r
+     * @param HTMLTable $tbl
+     * @return void
+     */
     public function itemMarkup($r, &$tbl) {
 
         $tbl->addBodyTr(
@@ -248,6 +368,12 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of rateHeaderMarkup
+     * @param HTMLTable $tbl
+     * @param Labels $labels
+     * @return void
+     */
     public function rateHeaderMarkup(&$tbl, $labels) {
     	$tbl->addHeaderTr(
     			HTMLTable::makeTh('Visit Id')
@@ -260,6 +386,12 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of rateDetailHeaderMarkup
+     * @param mixed $tbl
+     * @param mixed $labels
+     * @return void
+     */
     public function rateDetailHeaderMarkup(&$tbl, $labels) {
     	$tbl->addHeaderTr(
     			HTMLTable::makeTh('Visit Id')
@@ -269,6 +401,15 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of rateTotalMarkup
+     * @param mixed $tbl
+     * @param mixed $label
+     * @param mixed $numberNites
+     * @param mixed $totalAmt
+     * @param mixed $guestNites
+     * @return void
+     */
     public function rateTotalMarkup(&$tbl, $label, $numberNites, $totalAmt, $guestNites) {
 
         // Room Fee totals
@@ -278,6 +419,13 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of priceModelFactory
+     * @param \PDO $dbh
+     * @param mixed $modelCode
+     * @throws \HHK\Exception\RuntimeException
+     * @return Price3Steps|PriceBasic|PriceDaily|PriceGuestDay|PriceNdayBlock|PriceNone|PricePerpetualSteps
+     */
     public static function priceModelFactory(\PDO $dbh, $modelCode) {
 
         switch ($modelCode) {
@@ -345,6 +493,12 @@ abstract class AbstractPriceModel {
         }
     }
 
+    /**
+     * Summary of getModelRoomRates
+     * @param \PDO $dbh
+     * @param mixed $priceModelCode
+     * @return array<Room_RateRS>
+     */
     protected static function getModelRoomRates(\PDO $dbh, $priceModelCode) {
 
         // Room rates
@@ -365,10 +519,21 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
         return $rrates;
     }
 
+    /**
+     * Summary of getActiveModelRoomRates
+     * @return array
+     */
     public function getActiveModelRoomRates() {
         return $this->activeRoomRates;
     }
 
+    /**
+     * Summary of getEditMarkup
+     * @param \PDO $dbh
+     * @param mixed $defaultRoomRate
+     * @param mixed $financialAssistance
+     * @return HTMLTable
+     */
     public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = FALSE) {
 
 
@@ -431,6 +596,12 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
         return $fTbl;
     }
 
+    /**
+     * Summary of newRateMarkup
+     * @param HTMLTable $fTbl
+     * @param mixed $financialAssistance
+     * @return void
+     */
     protected function newRateMarkup(&$fTbl, $financialAssistance = FALSE) {
 
         // New rate
@@ -444,6 +615,13 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
 
     }
 
+    /**
+     * Summary of saveEditMarkup
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $username
+     * @return mixed
+     */
     public function saveEditMarkup(\PDO $dbh, $post, $username) {
 
         $defaultRate = RoomRateCategories::Fixed_Rate_Category;
@@ -627,6 +805,11 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
         return $defaultRate;
     }
 
+    /**
+     * Summary of getNewRateCategory
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     public function getNewRateCategory() {
 
         $newCats = array('ra','rb','rc','rd','re','rf','rg','rh','ri','rj','rk','rl','rm','rn','ro','rp','rq','rr','rs','rt','ru','rv','rw','rx','ry','rz');
@@ -647,35 +830,73 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
         }
     }
 
+    /**
+     * Summary of getPriceModelCode
+     * @return string
+     */
     public function getPriceModelCode() {
         return $this->priceModelCode;
     }
 
+    /**
+     * Summary of setCreditDays
+     * @param mixed $days
+     * @return void
+     */
     public function setCreditDays($days) {
         $this->creditDays = intval($days, 10);
     }
 
+    /**
+     * Summary of getGlideApplied
+     * @return bool
+     */
     public function getGlideApplied() {
         return $this->glideApplied;
     }
 
+    /**
+     * Summary of getRemainderAmt
+     * @return float|int
+     */
     public function getRemainderAmt() {
         return $this->remainderAmt;
     }
 
+    /**
+     * Summary of hasRateCalculator
+     * @return bool
+     */
     public function hasRateCalculator() {
         return TRUE;
     }
 
+    /**
+     * Summary of getVisitStatus
+     * @return mixed|string
+     */
     public function getVisitStatus() {
         return $this->visitStatus;
     }
 
+    /**
+     * Summary of setVisitStatus
+     * @param mixed $visitStatus
+     * @return AbstractPriceModel
+     */
     public function setVisitStatus($visitStatus) {
         $this->visitStatus = $visitStatus;
         return $this;
     }
 
+    /**
+     * Summary of installRates
+     * @param \PDO $dbh
+     * @param mixed $modelCode
+     * @param mixed $incomeRated
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
     public static function installRates(\PDO $dbh, $modelCode, $incomeRated) {
 
         switch ($modelCode) {

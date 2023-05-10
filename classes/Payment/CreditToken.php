@@ -80,7 +80,7 @@ class CreditToken {
         // Write
         if ($gtRs->idGuest_token->getStoredVal() > 0) {
             // Update
-        	$gtRs->Last_Updated->resetNewVal(date('Y-m-d'));
+        	$gtRs->Last_Updated->resetNewVal();
         	EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
             $idToken = $gtRs->idGuest_token->getStoredVal();
         } else {
@@ -123,33 +123,39 @@ class CreditToken {
     }
 
 
-    public static function updateToken(\PDO $dbh, AbstractPaymentResponse $vr) {
+    // public static function updateToken(\PDO $dbh, GatewayResponseInterface $vr) {
 
-        $gtRs = new Guest_TokenRS();
-        $gtRs->idGuest_token->setStoredVal($vr->idToken);
-        $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest_token));
+    //     $gtRs = new Guest_TokenRS();
+    //     $gtRs->idGuest_token->setStoredVal($vr->getIdToken());
+    //     $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest_token));
 
-        if (count($rows) == 1) {
+    //     if (count($rows) == 1) {
 
-            EditRS::loadRow($rows[0], $gtRs);
+    //         EditRS::loadRow($rows[0], $gtRs);
 
-            // Load new values
-            $gtRs->Token->setNewVal($vr->response->getToken());
-            $gtRs->Response_Code->setNewVal($vr->response->getResponseCode());
-            $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
-            $gtRs->Status->setNewVal($vr->response->getStatus());
-            $gtRs->StatusMessage->setNewVal($vr->response->getResponseMessage());
+    //         // Load new values
+    //         $gtRs->Token->setNewVal($vr->response->getToken());
+    //         $gtRs->Response_Code->setNewVal($vr->response->getResponseCode());
+    //         $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
+    //         $gtRs->Status->setNewVal($vr->response->getStatus());
+    //         $gtRs->StatusMessage->setNewVal($vr->response->getResponseMessage());
 
-            $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAmount(), $vr->response->getTranType());
-            $gtRs->Running_Total->setNewVal($runTot);
+    //         $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAmount(), $vr->response->getTranType());
+    //         $gtRs->Running_Total->setNewVal($runTot);
 
-            EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
-            EditRS::updateStoredVals($gtRs);
+    //         EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
+    //         EditRS::updateStoredVals($gtRs);
 
-        }
-        return $gtRs;
-    }
+    //     }
+    //     return $gtRs;
+    // }
 
+    /**
+     * Summary of getGuestTokenRSs
+     * @param \PDO $dbh
+     * @param mixed $idGuest
+     * @return array<Guest_TokenRS>
+     */
     public static function getGuestTokenRSs(\PDO $dbh, $idGuest) {
 
         $rsRows = array();

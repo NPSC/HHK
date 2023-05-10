@@ -189,21 +189,6 @@ try {
 
             break;
 
-        case 'getReq':
-
-            $arguments = array(
-                'q' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                'url' => FILTER_SANITIZE_URL
-            );
-
-            $post = filter_input_array(INPUT_POST, $arguments);
-
-            $q = str_replace('Find', 'Select', $post['q']);
-
-            $events['data'] = $transfer->getExplicit($dbh, $post['url'], $q);
-
-            break;
-
         case 'update':
 
             $arguments = array(

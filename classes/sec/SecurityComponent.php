@@ -15,18 +15,32 @@ use HHK\SysConst\WebPageCode;
 class SecurityComponent {
 
     private $fileName = '';
+
     private $path = '';
+
     private $hostName = '';
+
     private $siteURL = '';
+
     private $rootURL = '';
+
     private $hhkSiteDir = '';
+
     private $rootPath = '';
 
 
+    /**
+     * Summary of __construct
+     */
     public function __construct() {
         $this->defineThisURL();
     }
 
+    /**
+     * Summary of is_Authorized
+     * @param mixed $name
+     * @return bool
+     */
     public static function is_Authorized($name) {
 
         if (self::is_Admin()) {
@@ -52,6 +66,12 @@ class SecurityComponent {
 
     }
 
+    /**
+     * Summary of rerouteIfNotLoggedIn
+     * @param mixed $pageType
+     * @param mixed $loginPage
+     * @return void
+     */
     public function rerouteIfNotLoggedIn($pageType, $loginPage) {
 
         $ssn = Session::getInstance();
@@ -79,6 +99,12 @@ class SecurityComponent {
         }
     }
 
+    /**
+     * Summary of die_if_not_Logged_In
+     * @param string $pageType
+     * @param mixed $loginPage
+     * @return void
+     */
     public function die_if_not_Logged_In($pageType, $loginPage) {
         $ssn = Session::getInstance();
 
@@ -110,6 +136,11 @@ class SecurityComponent {
         }
     }
 
+    /**
+     * Summary of does_User_Code_Match
+     * @param array $pageCodes
+     * @return bool
+     */
     protected static function does_User_Code_Match(array $pageCodes) {
 
         $ssn = Session::getInstance();
@@ -136,6 +167,10 @@ class SecurityComponent {
         return FALSE;
     }
 
+    /**
+     * Summary of isHTTPS
+     * @return bool
+     */
     public static function isHTTPS() {
 
         $serverHTTPS = (isset($_SERVER["HTTPS"]) ? $_SERVER["HTTPS"] : '');
@@ -147,6 +182,11 @@ class SecurityComponent {
         return TRUE;
     }
 
+    /**
+     * Summary of defineThisURL
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
     private function defineThisURL() {
 
         $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -217,6 +257,11 @@ class SecurityComponent {
 
     }
 
+    /**
+     * Summary of setResourceURL
+     * @param \PDO $dbh
+     * @return mixed
+     */
     public function setResourceURL(\PDO $dbh){
         try{
             $resourceURL = SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL');
@@ -229,6 +274,10 @@ class SecurityComponent {
         }
     }
 
+    /**
+     * Summary of is_Admin
+     * @return bool
+     */
     public static function is_Admin() {
         $tokn = false;
         $ssn = Session::getInstance();
@@ -253,6 +302,10 @@ class SecurityComponent {
     }
 
     // Checks for THE admin account.
+    /**
+     * Summary of is_TheAdmin
+     * @return bool
+     */
     public static function is_TheAdmin() {
         $tokn = false;
         $ssn = Session::getInstance();

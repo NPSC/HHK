@@ -28,13 +28,37 @@ class NewGuest
      */
     protected $endDT;
 
+    /**
+     * Summary of numberNewGuests
+     * @var
+     */
     protected int $numberNewGuests;
+    /**
+     * Summary of numberReturnGuests
+     * @var
+     */
     protected int $numberReturnGuests;
 
+    /**
+     * Summary of numberNewPSGs
+     * @var
+     */
     protected int $numberNewPSGs;
+    /**
+     * Summary of numberReturnPSGs
+     * @var
+     */
     protected int $numberReturnPSGs;
 
+    /**
+     * Summary of newGuestIds
+     * @var
+     */
     protected array $newGuestIds;
+    /**
+     * Summary of newPSGIds
+     * @var
+     */
     protected array $newPSGIds;
 
 
@@ -52,6 +76,15 @@ class NewGuest
         $this->newPSGIds = [];
     }
 
+    /**
+     * Summary of doNewGuestReport
+     * @param \PDO $dbh
+     * @param \HHK\ColumnSelectors $colSelector
+     * @param mixed $whereStr
+     * @param mixed $local
+     * @param \HHK\sec\Labels $labels
+     * @return string|void
+     */
     public function doNewGuestReport(\PDO $dbh, ColumnSelectors $colSelector, $whereStr, $local, Labels $labels) {
 
         // get session instance
@@ -163,6 +196,12 @@ class NewGuest
         }
     }
 
+    /**
+     * Summary of queryNewGuests
+     * @param mixed $pgTitle
+     * @param mixed $whereStr
+     * @return string
+     */
     protected function queryNewGuests($pgTitle, $whereStr = '') {
 
         return "SELECT
@@ -225,6 +264,12 @@ ORDER BY `First Stay`";
 
     }
 
+    /**
+     * Summary of doReturningGuests
+     * @param \PDO $dbh
+     * @param mixed $whereStr
+     * @return void
+     */
     public function doReturningGuests(\PDO $dbh, $whereStr = '') {
 
         // Returning stays in period with first stay start date less tham start date.
@@ -259,6 +304,12 @@ ORDER BY `First Stay`";
 
     }
 
+    /**
+     * Summary of doReturningPSGs
+     * @param \PDO $dbh
+     * @param mixed $whereStr
+     * @return void
+     */
     public function doReturningPSGs(\PDO $dbh, $whereStr = '') {
 
         // Returning stays in period with first stay start date less tham start date.
@@ -293,6 +344,12 @@ ORDER BY `First Stay`";
 
     }
 
+    /**
+     * Summary of doNewPSGs
+     * @param \PDO $dbh
+     * @param mixed $whereStr
+     * @return void
+     */
     public function doNewPSGs(\PDO $dbh, $whereStr = '') {
 
         // Returning stays in period with first stay start date less tham start date.
@@ -327,7 +384,7 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @return number
+     * @return int
      */
     public function getNumberNewGuests()
     {
@@ -335,7 +392,7 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @return number
+     * @return int
      */
     public function getNumberReturnGuests()
     {
@@ -343,7 +400,7 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @return number
+     * @return int
      */
     public function getNumberNewPSGs()
     {
@@ -351,7 +408,7 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @return number
+     * @return int
      */
     public function getNumberReturnPSGs()
     {

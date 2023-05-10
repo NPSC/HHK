@@ -254,7 +254,7 @@ class HouseServices {
         if (isset($post["txtRibbonNote"])){
             $ribbonNote = filter_var($post["txtRibbonNote"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $oldNote = $visit->getNotes();
-            $visit->setNotes($ribbonNote, $uS->username);
+            $visit->setNotes($ribbonNote);
             $visit->updateVisitRecord($dbh, $uS->username);
 
             if($oldNote != $visit->getNotes()){
@@ -536,6 +536,13 @@ class HouseServices {
         return $dataArray;
     }
 
+    /**
+     * Summary of showPayInvoice
+     * @param \PDO $dbh
+     * @param int $id
+     * @param int $iid
+     * @return array<string>
+     */
     public static function showPayInvoice(\PDO $dbh, $id, $iid) {
 
         $mkup = HTMLContainer::generateMarkup('div', PaymentChooser::createPayInvMarkup($dbh, $id, $iid), array('style' => 'min-width:600px;clear:left;'));
@@ -543,6 +550,13 @@ class HouseServices {
         return array('mkup'=>$mkup);
     }
 
+    /**
+     * Summary of payInvoice
+     * @param \PDO $dbh
+     * @param int $idPayor
+     * @param mixed $post
+     * @return array
+     */
     public static function payInvoice(\PDO $dbh, $idPayor, array $post) {
 
         $reply = 'Uh-oh, Payment NOT made.';
@@ -599,6 +613,18 @@ class HouseServices {
         return $dataArray;
     }
 
+    /**
+     * Summary of saveHousePayment
+     * @param \PDO $dbh
+     * @param int $idItem
+     * @param mixed $ord
+     * @param mixed $amt
+     * @param string $discount
+     * @param mixed $addnlCharge
+     * @param mixed $adjDate
+     * @param mixed $notes
+     * @return array<string>
+     */
     public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes) {
 
         $uS = Session::getInstance();
@@ -813,7 +839,7 @@ class HouseServices {
                 $expDepDT = $now->add(new \DateInterval('P1D'));
             }
 
-            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation'], $idVisit);
+            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation']);
             $visit = new Visit($dbh, $reserv->getIdRegistration(), $idVisit);
 
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT->setTime($uS->CheckOutTime, 0));
@@ -884,7 +910,7 @@ class HouseServices {
                 $changeDT = $now;
             }
 
-            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $vRows[0]['idReservation'], $vid);
+            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $vRows[0]['idReservation']);
 
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $changeDT, $expDepDT);
 
@@ -1004,7 +1030,7 @@ class HouseServices {
     public static function undoRoomChange(\PDO $dbh, Visit $visit, $uname) {
 
         // Reservation
-        $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId(), $visit->getIdVisit());
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
 
         if ($resv->isNew() === TRUE) {
             return '';
@@ -1270,201 +1296,210 @@ class HouseServices {
         return $reply;
     }
 
-    public static function addVisitStay(\PDO $dbh, $idVisit, $visitSpan, $idGuest, $post) {
+    /**
+     * Summary of addVisitStay
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @param int $visitSpan
+     * @param int $idGuest
+     * @param mixed $post
+     * @return array
+     */
+    // public static function addVisitStay(\PDO $dbh, $idVisit, $visitSpan, $idGuest, $post) {
 
-        $uS = Session::getInstance();
-        $dataArray = array();
-        $prefix = 'q';
+    //     $uS = Session::getInstance();
+    //     $dataArray = array();
+    //     $prefix = 'q';
 
-        if ($idVisit < 1 || $visitSpan < 0) {
-            return array("error" => "Visit not selected.  ");
-        }
+    //     if ($idVisit < 1 || $visitSpan < 0) {
+    //         return array("error" => "Visit not selected.  ");
+    //     }
 
-        $visitRs = new VisitRs();
-        $visitRs->idVisit->setStoredVal($idVisit);
-        $visitRs->Span->setStoredVal($visitSpan);
+    //     $visitRs = new VisitRs();
+    //     $visitRs->idVisit->setStoredVal($idVisit);
+    //     $visitRs->Span->setStoredVal($visitSpan);
 
-        $visits = EditRS::select($dbh, $visitRs, array($visitRs->idVisit, $visitRs->Span));
+    //     $visits = EditRS::select($dbh, $visitRs, array($visitRs->idVisit, $visitRs->Span));
 
-        if (count($visits) != 1) {
-            return array("error" => "Visit not found.  ");
-        }
+    //     if (count($visits) != 1) {
+    //         return array("error" => "Visit not found.  ");
+    //     }
 
-        EditRS::loadRow($visits[0], $visitRs);
+    //     EditRS::loadRow($visits[0], $visitRs);
 
-        if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRs->Status->getStoredVal() == VisitStatus::Cancelled) {
-            return array("error" => "Cannot add guest here.  ");
-        }
+    //     if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRs->Status->getStoredVal() == VisitStatus::Cancelled) {
+    //         return array("error" => "Cannot add guest here.  ");
+    //     }
 
-        $guest = new Guest($dbh, $prefix, $idGuest);
-
-
-        // Arrival Date
-        $spanArrDate = new \DateTime($visitRs->Span_Start->getStoredVal());
-
-        // Departure Date
-        if ($visitRs->Span_End->getStoredVal() != '') {
-            $spanDepDate = new \DateTime($visitRs->Span_End->getStoredVal());
-        } else {
-            return array("error" => "End date missing.  ");
-        }
-
-        if ($spanArrDate >= $spanDepDate) {
-            return array("error" => "Visit Dates not suitable.  arrive: " . $spanArrDate->format('Y-m-d H:i:s') . ", depart: " . $spanDepDate->format('Y-m-d H:i:s'));
-        }
-
-        $reg = new Registration($dbh, 0, $visitRs->idRegistration->getStoredVal());
-        $psg = new PSG($dbh, $reg->getIdPsg());
-
-        //Decide what to send back
-        if (isset($post[$prefix.'txtLastName'])) {
-
-            // Get labels
-            $labels = Labels::getLabels();
-
-            // save the guest
-            $guest->save($dbh, $post, $uS->username);
-            $nameObj = $guest->getRoleMember();
-
-            // Attach to PSG if not
-            if (isset($psg->psgMembers[$guest->getIdName()]) === FALSE) {
-                $psg->setNewMember($guest->getIdName(), $guest->getPatientRelationshipCode());
-                $psg->savePSG($dbh, $psg->getIdPatient(), $uS->username);
-            }
-
-            // Get the resource
-            $resource = null;
-            if ($visitRs->idResource->getStoredVal() > 0) {
-                $resource = AbstractResource::getResourceObj($dbh, $visitRs->idResource->getStoredVal());
-            } else {
-                return array('error' => 'Room not found.  ');
-            }
-
-            // Verify dates
-            $ckinDT = $guest->getCheckinDT();
-            $ckinDate = $ckinDT->format('Y-m-d H:m:s');
-            $ckinDT->setTime(0,0,0);
-
-            $ckoutDT = $guest->getExpectedCheckOutDT();
-            $ckoutDT->setTime(0,0,0);
-
-            if ($ckinDT < $spanArrDate || $ckinDT > $spanDepDate) {
-                $ckinDT = $spanArrDate;
-            }
-
-            if ($ckoutDT <= $ckinDT || $ckoutDT > $spanDepDate) {
-                $ckoutDT = $spanDepDate;
-            }
+    //     $guest = new Guest($dbh, $prefix, $idGuest);
 
 
-            // get stays
-            $staysRs = new StaysRS();
+    //     // Arrival Date
+    //     $spanArrDate = new \DateTime($visitRs->Span_Start->getStoredVal());
 
-            $staysRs->idVisit->setStoredVal($idVisit);
-            $staysRs->Visit_Span->setStoredVal($visitSpan);
-            $existingStays = EditRS::select($dbh, $staysRs, array($staysRs->idVisit, $staysRs->Visit_Span));
+    //     // Departure Date
+    //     if ($visitRs->Span_End->getStoredVal() != '') {
+    //         $spanDepDate = new \DateTime($visitRs->Span_End->getStoredVal());
+    //     } else {
+    //         return array("error" => "End date missing.  ");
+    //     }
 
-            $rooms = $resource->getRooms();
-            $numGuests = 0;
+    //     if ($spanArrDate >= $spanDepDate) {
+    //         return array("error" => "Visit Dates not suitable.  arrive: " . $spanArrDate->format('Y-m-d H:i:s') . ", depart: " . $spanDepDate->format('Y-m-d H:i:s'));
+    //     }
 
-            foreach ($existingStays as $s) {
-                $sRs = new StaysRS();
-                EditRS::loadRow($s, $sRs);
+    //     $reg = new Registration($dbh, 0, $visitRs->idRegistration->getStoredVal());
+    //     $psg = new PSG($dbh, $reg->getIdPsg());
 
-                // Only count rooms assigned to the resoource of the visit.
-                if (array_key_exists($sRs->idRoom->getStoredVal(), $rooms)) {
+    //     //Decide what to send back
+    //     if (isset($post[$prefix.'txtLastName'])) {
 
-                    // Only during the dates of the new stay
-                    $stayStrt = new \DateTime($sRs->Span_Start_Date->getStoredVal());
-                    $stayStrt->setTime(0,0,0);
+    //         // Get labels
+    //         $labels = Labels::getLabels();
 
-                    if ($sRs->Span_End_Date->getStoredVal() != '') {
-                        $stayEnd = new \DateTime($sRs->Span_End_Date->getStoredVal());
-                    } else {
-                        $stayEnd = new \DateTime($sRs->Expected_Co_Date->getStoredVal());
-                        $today = new \DateTime();
-                        if ($stayEnd < $today) {
-                            $stayEnd = $today;
-                        }
-                    }
+    //         // save the guest
+    //         $guest->save($dbh, $post, $uS->username);
+    //         $nameObj = $guest->getRoleMember();
 
-                    $stayEnd->setTime(0, 0, 0);
+    //         // Attach to PSG if not
+    //         if (isset($psg->psgMembers[$guest->getIdName()]) === FALSE) {
+    //             $psg->setNewMember($guest->getIdName(), $guest->getPatientRelationshipCode());
+    //             $psg->savePSG($dbh, $psg->getIdPatient(), $uS->username);
+    //         }
 
-                    if ($ckinDT < $stayEnd && $ckoutDT > $stayStrt) {
-                        // This person is staying.
+    //         // Get the resource
+    //         $resource = null;
+    //         if ($visitRs->idResource->getStoredVal() > 0) {
+    //             $resource = AbstractResource::getResourceObj($dbh, $visitRs->idResource->getStoredVal());
+    //         } else {
+    //             return array('error' => 'Room not found.  ');
+    //         }
 
-                        if ($guest->getIdName() == $sRs->idName->getStoredVal()) {
-                            return array('error' => $nameObj->get_fullName() . ' is already staying during a part of the indicated check-in and check-out dates.  ');
-                        }
+    //         // Verify dates
+    //         $ckinDT = $guest->getCheckinDT();
+    //         $ckinDate = $ckinDT->format('Y-m-d H:m:s');
+    //         $ckinDT->setTime(0,0,0);
 
-                        $numGuests++;
-                    }
-                }
-            }
+    //         $ckoutDT = $guest->getExpectedCheckOutDT();
+    //         $ckoutDT->setTime(0,0,0);
 
-            if ($numGuests >= $resource->getMaxOccupants()) {
-                return array("error" => "Room is full during a part of the indicated check-in and check-out dates.  ");
-            }
+    //         if ($ckinDT < $spanArrDate || $ckinDT > $spanDepDate) {
+    //             $ckinDT = $spanArrDate;
+    //         }
+
+    //         if ($ckoutDT <= $ckinDT || $ckoutDT > $spanDepDate) {
+    //             $ckoutDT = $spanDepDate;
+    //         }
 
 
-            $ckoutDate = $ckoutDT->format('Y-m-d 10:00:00');
-            $room = reset($rooms);
+    //         // get stays
+    //         $staysRs = new StaysRS();
 
-            // is the guest somewhere else in the house?
-            $stmt = $dbh->query("Select count(idName) from stays "
-                    . "where idName = " . $guest->getIdName() . " and DATEDIFF(ifnull(Span_End_Date, Expected_Co_Date), Span_Start_Date) != 0 "
-                    . " and DATE('" . $ckinDT->format('Y-m-d H:m:s') . "') < ifnull(DATE(Span_End_Date), DATE(Expected_Co_Date)) and DATE('$ckoutDate') > DATE(Span_Start_Date)");
-            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+    //         $staysRs->idVisit->setStoredVal($idVisit);
+    //         $staysRs->Visit_Span->setStoredVal($visitSpan);
+    //         $existingStays = EditRS::select($dbh, $staysRs, array($staysRs->idVisit, $staysRs->Visit_Span));
 
-            if (isset($rows[0][0]) && $rows[0][0] > 0) {
-                return array('error' => $nameObj->get_fullName() . ' is already included in a different visit.  ');
-            }
+    //         $rooms = $resource->getRooms();
+    //         $numGuests = 0;
 
-            // Add the stay
-            $stayRS = new StaysRS();
+    //         foreach ($existingStays as $s) {
+    //             $sRs = new StaysRS();
+    //             EditRS::loadRow($s, $sRs);
 
-            $stayRS->idName->setNewVal($guest->getIdName());
-            $stayRS->idRoom->setNewVal($room->getIdRoom());
-            $stayRS->Checkin_Date->setNewVal($ckinDate);
-            $stayRS->Expected_Co_Date->setNewVal($ckoutDate);
-            $stayRS->Span_Start_Date->setNewVal($ckinDate);
+    //             // Only count rooms assigned to the resoource of the visit.
+    //             if (array_key_exists($sRs->idRoom->getStoredVal(), $rooms)) {
 
-            if ($visitRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
+    //                 // Only during the dates of the new stay
+    //                 $stayStrt = new \DateTime($sRs->Span_Start_Date->getStoredVal());
+    //                 $stayStrt->setTime(0,0,0);
 
-                $stayRS->Checkout_Date->setNewVal($ckoutDate);
-                $stayRS->Span_End_Date->setNewVal($ckoutDate);
-            }
+    //                 if ($sRs->Span_End_Date->getStoredVal() != '') {
+    //                     $stayEnd = new \DateTime($sRs->Span_End_Date->getStoredVal());
+    //                 } else {
+    //                     $stayEnd = new \DateTime($sRs->Expected_Co_Date->getStoredVal());
+    //                     $today = new \DateTime();
+    //                     if ($stayEnd < $today) {
+    //                         $stayEnd = $today;
+    //                     }
+    //                 }
 
-            $stayRS->Status->setNewVal($visitRs->Status->getStoredVal());
-            $stayRS->idVisit->setNewVal($idVisit);
-            $stayRS->Visit_Span->setNewVal($visitSpan);
-            $stayRS->Updated_By->setNewVal($uS->username);
-            $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+    //                 $stayEnd->setTime(0, 0, 0);
 
-            $idStays = EditRS::insert($dbh, $stayRS);
-            $stayRS->idStays->setNewVal($idStays);
+    //                 if ($ckinDT < $stayEnd && $ckoutDT > $stayStrt) {
+    //                     // This person is staying.
 
-            $logText = VisitLog::getInsertText($stayRS);
-            VisitLog::logStay($dbh, $idVisit, $visitSpan, $stayRS->idRoom->getNewVal(), $idStays, $guest->getIdName(), $visitRs->idRegistration->getStoredVal(), $logText, "insert", $uS->username);
+    //                     if ($guest->getIdName() == $sRs->idName->getStoredVal()) {
+    //                         return array('error' => $nameObj->get_fullName() . ' is already staying during a part of the indicated check-in and check-out dates.  ');
+    //                     }
 
-            $dataArray['stays'] = VisitViewer::createStaysMarkup($dbh, $idVisit, $visitSpan, $visitRs->idPrimaryGuest->getStoredVal(), FALSE, $guest->getIdName(), $labels);
+    //                     $numGuests++;
+    //                 }
+    //             }
+    //         }
 
-        } else {
-            // send back a guest dialog to collect name, address, etc.
+    //         if ($numGuests >= $resource->getMaxOccupants()) {
+    //             return array("error" => "Room is full during a part of the indicated check-in and check-out dates.  ");
+    //         }
 
-            $guest->setCheckinDate($spanArrDate->format('M j, Y'));
-            $guest->setExpectedCheckOut($spanDepDate->format('M j, Y'));
 
-            if (isset($psg->psgMembers[$guest->getIdName()])) {
-                $guest->setPatientRelationshipCode($psg->psgMembers[$guest->getIdName()]->Relationship_Code->getStoredVal());
-            }
+    //         $ckoutDate = $ckoutDT->format('Y-m-d 10:00:00');
+    //         $room = reset($rooms);
 
-            $dataArray['addtguest'] = $guest->createMarkup($dbh);
-            $dataArray['addr'] = self::createAddrObj($dbh, $visitRs->idPrimaryGuest->getStoredVal());
-        }
+    //         // is the guest somewhere else in the house?
+    //         $stmt = $dbh->query("Select count(idName) from stays "
+    //                 . "where idName = " . $guest->getIdName() . " and DATEDIFF(ifnull(Span_End_Date, Expected_Co_Date), Span_Start_Date) != 0 "
+    //                 . " and DATE('" . $ckinDT->format('Y-m-d H:m:s') . "') < ifnull(DATE(Span_End_Date), DATE(Expected_Co_Date)) and DATE('$ckoutDate') > DATE(Span_Start_Date)");
+    //         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-        return $dataArray;
-    }
+    //         if (isset($rows[0][0]) && $rows[0][0] > 0) {
+    //             return array('error' => $nameObj->get_fullName() . ' is already included in a different visit.  ');
+    //         }
+
+    //         // Add the stay
+    //         $stayRS = new StaysRS();
+
+    //         $stayRS->idName->setNewVal($guest->getIdName());
+    //         $stayRS->idRoom->setNewVal($room->getIdRoom());
+    //         $stayRS->Checkin_Date->setNewVal($ckinDate);
+    //         $stayRS->Expected_Co_Date->setNewVal($ckoutDate);
+    //         $stayRS->Span_Start_Date->setNewVal($ckinDate);
+
+    //         if ($visitRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
+
+    //             $stayRS->Checkout_Date->setNewVal($ckoutDate);
+    //             $stayRS->Span_End_Date->setNewVal($ckoutDate);
+    //         }
+
+    //         $stayRS->Status->setNewVal($visitRs->Status->getStoredVal());
+    //         $stayRS->idVisit->setNewVal($idVisit);
+    //         $stayRS->Visit_Span->setNewVal($visitSpan);
+    //         $stayRS->Updated_By->setNewVal($uS->username);
+    //         $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+
+    //         $idStays = EditRS::insert($dbh, $stayRS);
+    //         $stayRS->idStays->setNewVal($idStays);
+
+    //         $logText = VisitLog::getInsertText($stayRS);
+    //         VisitLog::logStay($dbh, $idVisit, $visitSpan, $stayRS->idRoom->getNewVal(), $idStays, $guest->getIdName(), $visitRs->idRegistration->getStoredVal(), $logText, "insert", $uS->username);
+
+    //         $dataArray['stays'] = VisitViewer::createStaysMarkup($dbh, $visitRs->idReservation->getStoredVal(), $idVisit, $visitSpan, $visitRs->idPrimaryGuest->getStoredVal(), FALSE, $guest->getIdName(), $labels);
+
+    //     } else {
+    //         // send back a guest dialog to collect name, address, etc.
+
+    //         $guest->setCheckinDate($spanArrDate->format('M j, Y'));
+    //         $guest->setExpectedCheckOut($spanDepDate->format('M j, Y'));
+
+    //         if (isset($psg->psgMembers[$guest->getIdName()])) {
+    //             $guest->setPatientRelationshipCode($psg->psgMembers[$guest->getIdName()]->Relationship_Code->getStoredVal());
+    //         }
+
+    //         $dataArray['addtguest'] = $guest->createMarkup();
+    //         $dataArray['addr'] = self::createAddrObj($dbh, $visitRs->idPrimaryGuest->getStoredVal());
+    //     }
+
+    //     return $dataArray;
+    // }
 
     public static function createAddrObj(\PDO $dbh, $idName) {
 
@@ -1533,7 +1568,7 @@ class HouseServices {
 	        $gateway->setCheckManualEntryCheckbox(TRUE);
 
 	        $gwTbl = new HTMLTable();
-	        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index, $defaultMerchant);
+	        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index);
 	        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(array('style'=>'width:100%;')), array('colspan'=>'4', 'style'=>'padding:0;')));
         }
 

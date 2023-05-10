@@ -18,14 +18,24 @@ use HHK\SysConst\{WebSiteCode, Mode};
 class ScriptAuthClass extends SecurityComponent {
 
     private $siteCode = "";
+
     private $indexPage = "";
+
     private $pageCodes = array();
+
     private $pageTitle = "";
+
     private $loginPage = "";
+
     private $defaultPage = "";
+
     private $pageType = "";
 
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     */
     function __construct(\PDO $dbh) {
 
         parent::__construct();
@@ -71,6 +81,12 @@ class ScriptAuthClass extends SecurityComponent {
         }
     }
 
+    /**
+     * Summary of loadWebSite
+     * @param \PDO $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     protected function loadWebSite(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -214,6 +230,10 @@ class ScriptAuthClass extends SecurityComponent {
     }
 
 
+    /**
+     * Summary of Authorize_Or_Die
+     * @return void
+     */
     public function Authorize_Or_Die() {
 
         $this->die_if_not_Logged_In($this->get_Page_Type(), $this->get_Login_Page());
@@ -243,6 +263,10 @@ class ScriptAuthClass extends SecurityComponent {
         }
     }
 
+    /**
+     * Summary of get_Login_Page
+     * @return mixed|string
+     */
     public function get_Login_Page() {
         if ($this->loginPage != '') {
             return $this->loginPage;
@@ -251,22 +275,44 @@ class ScriptAuthClass extends SecurityComponent {
         }
     }
 
+    /**
+     * Summary of get_Default_Page
+     * @return mixed|string
+     */
     public function get_Default_Page() {
         return $this->defaultPage;
     }
 
+    /**
+     * Summary of get_Site_Code
+     * @return mixed|string
+     */
     public function get_Site_Code() {
         return $this->siteCode;
     }
 
+    /**
+     * Summary of get_Page_Title
+     * @return mixed|string
+     */
     public function get_Page_Title() {
         return $this->pageTitle;
     }
 
+    /**
+     * Summary of get_Page_Type
+     * @return mixed|string
+     */
     public function get_Page_Type() {
         return $this->pageType;
     }
 
+    /**
+     * Summary of generateMenu
+     * @param string $pageHeader
+     * @param \PDO $dbh
+     * @return string
+     */
     public function generateMenu($pageHeader, $dbh = false) {
         // only generate menu for pages, not services or components
         if ($this->get_Page_Type() != WebPageCode::Page) {
@@ -364,6 +410,11 @@ class ScriptAuthClass extends SecurityComponent {
         return $markup;
     }
 
+    /**
+     * Summary of getSiteIcons
+     * @param array $siteList
+     * @return string
+     */
     protected function getSiteIcons($siteList) {
 
         $mu = "<ul id='ulIcons' class='ui-widget hhk-ui-icons'>";

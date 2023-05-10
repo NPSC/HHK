@@ -2,6 +2,7 @@
 
 namespace HHK\Payment;
 
+use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\Tables\Payment\TransRS;
 use HHK\Tables\EditRS;
@@ -25,6 +26,15 @@ use HHK\Payment\PaymentResponse\TransferResponse;
  */
 class Transaction {
 
+    /**
+     * Summary of recordTransaction
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractPaymentResponse $vr
+     * @param mixed $gwName
+     * @param mixed $transType
+     * @param mixed $transMethod
+     * @return TransRS
+     */
     public static function recordTransaction(\PDO $dbh, AbstractPaymentResponse $vr, $gwName, $transType, $transMethod) {
 
         // Record transaction
@@ -45,8 +55,8 @@ class Transaction {
         }
 
 
-        if (isset($vr->response)) {
-            $transRs->Card_Number->setNewVal($vr->response->getMaskedAccount());
+        if ($vr instanceof AbstractCreditResponse) {
+            $transRs->Card_Number->setNewVal($vr->cardNum);
             $transRs->Card_Expire->setNewVal($vr->response->getExpDate());
             $transRs->Card_Name->setNewVal($vr->response->getCardHolderName());
             $transRs->Payment_Status->setNewVal($vr->response->getResponseCode());

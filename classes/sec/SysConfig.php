@@ -52,6 +52,15 @@ class SysConfig {
 
     }
 
+    /**
+     * Summary of getKeyValue
+     * @param \PDO $dbh
+     * @param string $tableName
+     * @param string $key
+     * @param mixed $default
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     public static function getKeyValue(\PDO $dbh, $tableName, $key, $default = null) {
 
         if ($tableName == '' || $key == '') {
@@ -75,6 +84,14 @@ class SysConfig {
 
     }
 
+    /**
+     * Summary of getKeyRecord
+     * @param \PDO $dbh
+     * @param string $tableName
+     * @param string $key
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     public static function getKeyRecord(\PDO $dbh, $tableName, $key) {
 
         if ($tableName == '' || $key == '') {
@@ -102,6 +119,16 @@ class SysConfig {
 
 
 
+    /**
+     * Summary of saveKeyValue
+     * @param \PDO $dbh
+     * @param string $tableName
+     * @param string $key
+     * @param mixed $value
+     * @param string $category
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
     public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value, $category = null) {
 
         if ($tableName == '' || $key == '') {
@@ -155,6 +182,12 @@ class SysConfig {
         }
     }
 
+    /**
+     * Summary of getTypedVal
+     * @param string $type
+     * @param mixed $value
+     * @return mixed
+     */
     public static function getTypedVal($type, $value) {
 
         switch ($type) {
@@ -174,6 +207,12 @@ class SysConfig {
         return $val;
     }
 
+    /**
+     * Summary of setValueByType
+     * @param int $value
+     * @param string $type
+     * @return mixed
+     */
     public static function setValueByType($value, $type) {
 
         switch ($type) {

@@ -13,6 +13,7 @@ use HHK\Note\Note;
 use HHK\Incident\ListReports;
 use HHK\Incident\Report;
 use HHK\House\Hospital\{Hospital, HospitalStay};
+use HHK\Exception\NotFoundException;
 
 /**
  * ws_resv.php
@@ -94,7 +95,7 @@ try {
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
 
-        $events = $resv->delete($dbh, $_POST);
+        $events = $resv->delete($dbh);
 
         break;
 
@@ -161,7 +162,7 @@ try {
 
     	if ($idHs > 0 && $idVisit > 0) {
 
-    		$hstay = new HospitalStay($dbh, 0, $idHs, FALSE);
+    		$hstay = new HospitalStay($dbh, 0, $idHs);
 
     		$newHsId = Hospital::saveReferralMarkup($dbh, new PSG($dbh, 0, $hstay->getIdPatient()), $hstay, $_POST);
 

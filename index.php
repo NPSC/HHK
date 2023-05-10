@@ -60,7 +60,7 @@ $linkMkup = Login::getLinksMarkup($uS, $dbh);
 $newsletterMkup = Login::getNewsletterMarkup();
 $row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
 $footerMkup = Login::getFooterMarkup();
-$secureComp = new SecurityComponent(TRUE);
+$secureComp = new SecurityComponent();
 
 $cspURL = $page->getHostName() . " manage.hospitalityhousekeeper.net nonprofitsoftwarecorp.org";
 

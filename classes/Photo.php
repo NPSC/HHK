@@ -33,9 +33,28 @@ namespace HHK;
  */
 class Photo {
 
+    /**
+     * Summary of image
+     * @var string
+     */
     protected $image;
+
+    /**
+     * Summary of imageId
+     * @var int
+     */
     protected $imageId;
+
+    /**
+     * Summary of imageType
+     * @var string
+     */
     protected $imageType;
+
+    /**
+     * Summary of imageSizePx
+     * @var int
+     */
     protected $imageSizePx;
 
     public function __construct() {
@@ -44,6 +63,11 @@ class Photo {
 
     }
 
+    /**
+     * Summary of convertToSquareThumbnail
+     * @param mixed $imageFile
+     * @return void
+     */
     protected function convertToSquareThumbnail($imageFile) {
 
         if ($this->getImageSizePx() > 0) {
@@ -78,6 +102,16 @@ class Photo {
 
     }
 
+    /**
+     * Summary of saveGuestPhoto
+     * @param \PDO $dbh
+     * @param int $idGuest
+     * @param string $imageFile
+     * @param int $imageSizePx
+     * @param string $userName
+     * @param int $defaultSizePx
+     * @return void
+     */
     public function saveGuestPhoto(\PDO $dbh, $idGuest, $imageFile, $imageSizePx, $userName, $defaultSizePx = 100) {
 
         $id = intval($idGuest, 10);
@@ -87,11 +121,11 @@ class Photo {
 
         $this->setImageSizePx($imageSizePx, $defaultSizePx);
         if(isset($results[0]['Guest_Photo_Id'])){
-            $this->setImageId(intval($results[0]['Guest_Photo_Id']) , 10);
+            $this->setImageId(intval($results[0]['Guest_Photo_Id'] , 10));
         }else{
             $this->setImageId(0);
         }
-        
+
         $this->setImageType($imageFile['type']);
 
         $this->convertToSquareThumbnail($imageFile);

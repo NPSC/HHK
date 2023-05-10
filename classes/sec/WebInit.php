@@ -20,21 +20,62 @@ use HHK\SysConst\{WebPageCode, Mode};
  */
 class WebInit {
 
+    /**
+     * Summary of page
+     * @var ScriptAuthClass
+     */
+    public $page;
+
+    /**
+     * Summary of menuTitle
+     * @var string
+     */
+    public $menuTitle;
+
+    /**
+     * Summary of pageTitle
+     * @var string
+     */
+    public $pageTitle = "";
+
+    /**
+     * Summary of pageHeading
+     * @var string
+     */
+    public $pageHeading = '';
+
+    /**
+     * Summary of resourceURL
+     * @var string
+     */
+    public $resourceURL;
+
+    /**
+     * Summary of siteName
+     * @var string
+     */
+    public $siteName;
+
+    /**
+     * Summary of testVersion
+     * @var string
+     */
+    public $testVersion;
+
     const SYS_CONFIG = 'sys_config';
 
-    public $page;
-    public $menuTitle;
-    public $pageTitle = "";
-    public $pageHeading = '';
-    public $resourceURL;
-    public $siteName;
-    public $testVersion;
+
 
     /**
      * @var \PDO
      */
     public $dbh;
 
+    /**
+     * Summary of __construct
+     * @param string $page_Type
+     * @param bool $addCSP
+     */
     function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
         $secComp = new SecurityComponent();
@@ -141,6 +182,11 @@ class WebInit {
     }
 
 
+    /**
+     * Summary of logout
+     * @param string $page
+     * @return void
+     */
     public function logout($page = 'index.php') {
 
         $uS = Session::getInstance();
@@ -150,12 +196,20 @@ class WebInit {
     }
 
 
+    /**
+     * Summary of generatePageMenu
+     * @return string
+     */
     public function generatePageMenu() {
         // generate menu markup if page type = 'p'
         return $this->page->generateMenu($this->menuTitle, $this->dbh);
 
     }
 
+    /**
+     * Summary of sessionLoadGenLkUps
+     * @return mixed
+     */
     public function sessionLoadGenLkUps() {
 
         // get session instance
@@ -169,6 +223,12 @@ class WebInit {
 
     }
 
+    /**
+     * Summary of loadNameLookups
+     * @param \PDO $dbh
+     * @param Session $uS
+     * @return void
+     */
     public static function loadNameLookups(\PDO $dbh, $uS){
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes', 'Referral_Form_Status') order by `Table_Name`, `Code`;";
@@ -197,6 +257,11 @@ class WebInit {
 
     }
 
+    /**
+     * Summary of reloadGenLkUps
+     * @param Session $uS
+     * @return mixed
+     */
     public function reloadGenLkUps($uS) {
 
         $this->loadNameLookups($this->dbh, $uS);
@@ -214,6 +279,10 @@ class WebInit {
 
     }
 
+    /**
+     * Summary of sessionLoadGuestLkUps
+     * @return mixed
+     */
     public function sessionLoadGuestLkUps() {
 
         // get session instance
@@ -228,6 +297,10 @@ class WebInit {
 
     }
 
+    /**
+     * Summary of reloadSessionGuestLUs
+     * @return mixed
+     */
     public function reloadSessionGuestLUs() {
 
         // get session instance
@@ -269,6 +342,10 @@ class WebInit {
 
     }
 
+    /**
+     * Summary of sessionLoadVolLkUps
+     * @return mixed
+     */
     public function sessionLoadVolLkUps() {
 
         // get session instance
@@ -284,6 +361,10 @@ class WebInit {
 
     }
 
+    /**
+     * Summary of reloadSessionVolLkUps
+     * @return mixed
+     */
     public function reloadSessionVolLkUps() {
 
         // get session instance
@@ -305,6 +386,10 @@ class WebInit {
 
     }
 
+    /**
+     * Summary of resetSessionIdle
+     * @return void
+     */
     public static function resetSessionIdle():void
     {
         $uS = Session::getInstance();

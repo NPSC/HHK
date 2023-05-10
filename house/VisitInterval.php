@@ -9,7 +9,6 @@ use HHK\ColumnSelectors;
 use HHK\Purchase\RoomRate;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Purchase\ValueAddedTax;
-use HHK\Config_Lite\Config_Lite;
 use HHK\Payment\PaymentSvcs;
 use HHK\Exception\RuntimeException;
 use HHK\House\Report\ReportFilter;
@@ -287,11 +286,11 @@ order by r.idResource;";
  * @param \DateTime $departureDT
  * @param HTMLTable $tbl
  * @param boolean $local  Flag for Excel output
- * @param PHPExcel $sml
- * @param Object $reportRows  PHPExecl object
+ * @param ExcelHelper $sml
+ * @param object $reportRows  PHPExecl object
  * @param array $rateTitles  Room rates
  * @param Session $uS
- * @param Boolean $visitFee  Flag to show/hide visit fees
+ * @param bool $visitFee  Flag to show/hide visit fees
 
  */
 function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departureDT, HTMLTable &$tbl, $local, &$sml, $header, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
@@ -515,7 +514,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
  * @param array $aList
  * @param boolean $local
  * @param boolean $visitFee  Flag to show/hide visit fees
- * @return array
+ * @return array|void
  */
 function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee, $statsOnly, $rescGroup, $labels) {
 

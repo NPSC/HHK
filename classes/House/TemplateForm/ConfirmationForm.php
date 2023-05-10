@@ -37,7 +37,7 @@ class ConfirmationForm extends AbstractTemplateForm {
 		$visitFeeNotice = "";
 
 		//populate visitFeeNotice
-		if($reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()) > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0){
+		if($reserv->getExpectedDays() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0){
                     if ($reserv->getVisitFee() > 0) {
 			$visitFeeNotice = $labels->getString('referral', 'VisitFeeConfirmLabel', '') . " $" . number_format($reserv->getVisitFee(), 2) . ".";
                     }
@@ -82,7 +82,7 @@ class ConfirmationForm extends AbstractTemplateForm {
             'ExpectedArrival' => date('M j, Y', strtotime($reserv->getExpectedArrival())),
             'ExpectedDeparture' => date('M j, Y', strtotime($reserv->getExpectedDeparture())),
             'DateToday' => date('M j, Y'),
-            'Nites' => $reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()),
+            'Nites' => $reserv->getExpectedDays(),
             'RoomRateTitle' =>$roomRateTitle,
             'RoomRateAmount' =>$roomRateAmount,
             'RateAdjust' =>($rateAdjust < 0 ? number_format(abs($rateAdjust),0): '0'),

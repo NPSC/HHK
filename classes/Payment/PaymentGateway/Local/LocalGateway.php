@@ -172,7 +172,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$vr = new LocalResponse ( $gwResp, $idGuest, $idGroup, 0, PaymentStatusCode::Paid );
 
 		try {
-			$vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
+			$vr->idGuestToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
 		} catch(\Exception $ex) {
 			return array('error'=> $ex->getMessage());
 		}

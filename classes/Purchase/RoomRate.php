@@ -24,6 +24,12 @@ use HHK\sec\Session;
  */
 class RoomRate {
 
+    /**
+     * Summary of makeSelectorOptions
+     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param int $idRoomRate
+     * @return array<array>
+     */
     public static function makeSelectorOptions(AbstractPriceModel $priceModel, $idRoomRate = 0) {
         // Room Rate
         $rateCategories = array();
@@ -62,6 +68,11 @@ class RoomRate {
         return $rateCategories;
     }
 
+    /**
+     * Summary of makeDescriptions
+     * @param \PDO $dbh
+     * @return array
+     */
     public static function makeDescriptions(\PDO $dbh) {
 
         $rateRs = new Room_RateRS();
@@ -77,6 +88,13 @@ class RoomRate {
         return $titles;
     }
 
+    /**
+     * Summary of getRateDescription
+     * @param \PDO $dbh
+     * @param int $idRoomRate
+     * @param string $RateCategory
+     * @return mixed
+     */
     public static function getRateDescription(\PDO $dbh, $idRoomRate, $RateCategory) {
 
         //RoomRateDefault
@@ -102,6 +120,13 @@ class RoomRate {
 
     }
 
+    /**
+     * Summary of titleAddAmount
+     * @param string $title
+     * @param string $faCategory
+     * @param string $amt
+     * @return mixed
+     */
     protected static function titleAddAmount($title, $faCategory, $amt) {
 
         if ($faCategory != RoomRateCategories::Fixed_Rate_Category) {

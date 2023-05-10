@@ -54,7 +54,7 @@ class PriceBasic extends AbstractPriceModel {
 
         // New rate
         // No new rates are possible
-        return '';
+        return;
     }
 
     public function saveEditMarkup(\PDO $dbh, $post, $username) {

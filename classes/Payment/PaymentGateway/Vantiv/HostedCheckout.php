@@ -6,6 +6,7 @@ use HHK\Payment\{CreditToken, Transaction};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\SaleReply;
 use HHK\Payment\PaymentGateway\Vantiv\Request\{InitCkOutRequest, VerifyCkOutRequest};
+use HHK\Payment\PaymentGateway\Vantiv\Response\{InitCkOutResponse, VerifyCkOutResponse};
 use HHK\SysConst\{Mode, MpStatusValues, MpTranType, TransMethod, TransType};
 use HHK\sec\Session;
 use HHK\Exception\PaymentException;
@@ -22,6 +23,17 @@ use HHK\Exception\PaymentException;
 
 class HostedCheckout {
 
+    /**
+     * Summary of sendToPortal
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentGateway\Vantiv\VantivGateway $gway
+     * @param int $idPayor
+     * @param int $idGroup
+     * @param string $invoiceNumber
+     * @param \HHK\Payment\PaymentGateway\Vantiv\Request\InitCkOutRequest $initCoRequest
+     * @throws \HHK\Exception\PaymentException
+     * @return array
+     */
     public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
 
         $uS = Session::getInstance();
@@ -35,6 +47,9 @@ class HostedCheckout {
             $initCoRequest->setOperatorID($uS->username);
         }
 
+        /**
+         * @var InitCkOutResponse
+         */
         $ciResponse = $initCoRequest->submit($gway->getCredentials(), $trace);
         $ciResponse->setMerchant($gway->getGatewayType());
 
@@ -67,6 +82,15 @@ class HostedCheckout {
         return $dataArray;
     }
 
+    /**
+     * Summary of portalReply
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentGateway\Vantiv\VantivGateway $gway
+     * @param mixed $cidInfo
+     * @param string $payNotes
+     * @param string $payDate
+     * @return CheckOutResponse|\HHK\Payment\PaymentResponse\AbstractCreditResponse
+     */
     public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo, $payNotes, $payDate) {
 
         $uS = Session::getInstance();
@@ -82,6 +106,9 @@ class HostedCheckout {
         $verify->setPaymentId($cidInfo['CardID']);
 
         // Verify request
+        /**
+         * @var VerifyCkOutResponse
+         */
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
 
         $verifyResponse->setMerchant($gway->getGatewayType());
@@ -122,13 +149,13 @@ class HostedCheckout {
                 if ($vr->response->getToken() != '') {
 
                     try {
-                        $vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
+                        $vr->idGuestToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
                     } catch(\Exception $ex) {
-                        $vr->idToken = 0;
+                        $vr->idGuestToken = 0;
                     }
 
                 } else {
-                    $vr->idToken = 0;
+                    $vr->idGuestToken = 0;
                 }
             }
 

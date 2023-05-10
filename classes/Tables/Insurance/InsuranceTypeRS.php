@@ -23,10 +23,10 @@ class InsuranceTypeRS extends AbstractTableRS {
 
     function __construct($TableName = "insurance_type") {
 
-        $this->idInsurance_type = new DB_Field("idInsurance_type", 0, new DbIntSanitizer(3));
+        $this->idInsurance_type = new DB_Field("idInsurance_type", 0, new DbIntSanitizer());
         $this->Title = new DB_Field("Title", '', new DbStrSanitizer(45));
-        $this->Is_Primary = new DB_Field("Is_Primary", 0, new DbIntSanitizer(1));
-        $this->List_Order = new DB_Field("List_Order", 0, new DbIntSanitizer(3));
+        $this->Is_Primary = new DB_Field("Is_Primary", 0, new DbIntSanitizer());
+        $this->List_Order = new DB_Field("List_Order", 0, new DbIntSanitizer());
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(1));
 
         parent::__construct($TableName);

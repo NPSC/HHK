@@ -29,23 +29,87 @@ class VisitCharges {
     const THIRD_PARTY = '3p';
     const TAX_PAID = 'tax';
 
+    /**
+     * Summary of feesCharged
+     * @var int|float
+     */
     protected $feesCharged = 0; // Current fees charges up until today
+    /**
+     * Summary of feesToCharge
+     * @var int|float
+     */
     protected $feesToCharge = 0;    // fees to be charged thru the end of the visit
+    /**
+     * Summary of visitFeeCharged
+     * @var int|float
+     */
     protected $visitFeeCharged = 0;
+    /**
+     * Summary of DepositCharged
+     * @var int|float
+     */
     protected $DepositCharged = 0;
+    /**
+     * Summary of depositPayType
+     * @var string
+     */
     protected $depositPayType = '';
 
+    /**
+     * Summary of nightsStayed
+     * @var int
+     */
     protected $nightsStayed = 0;
+    /**
+     * Summary of guestNightsStayed
+     * @var int
+     */
     protected $guestNightsStayed = 0;
+    /**
+     * Summary of nightsToStay
+     * @var int
+     */
     protected $nightsToStay = 0;
+    /**
+     * Summary of nightsPaid
+     * @var int
+     */
     protected $nightsPaid = 0;
+    /**
+     * Summary of excessPaid
+     * @var int|float
+     */
     protected $excessPaid = 0;
+    /**
+     * Summary of nightsToPay
+     * @var int
+     */
     protected $nightsToPay = 0;
+    /**
+     * Summary of glideCredit
+     * @var int
+     */
     protected $glideCredit = 0;
+    /**
+     * Summary of idVisit
+     * @var int
+     */
     protected $idVisit;
+    /**
+     * Summary of span
+     * @var int
+     */
     protected $span;
+    /**
+     * Summary of finalVisitCoDate
+     * @var \DateTime
+     */
     protected $finalVisitCoDate;
 
+    /**
+     * Summary of priceModel
+     * @var mixed
+     */
     protected $priceModel;
 
     /**
@@ -54,19 +118,47 @@ class VisitCharges {
      */
     private $itemSums;
 
+    /**
+     * Summary of taxItemIds
+     * @var array
+     */
     private $taxItemIds;
 
+    /**
+     * Summary of __construct
+     * @param int $idVisit
+     * @param int $span
+     */
     public function __construct($idVisit, $span = 0) {
         $this->idVisit = $idVisit;
         $this->span = $span;
         $this->priceModel = NULL;
     }
 
+    /**
+     * Summary of sumCurrentRoomCharge
+     * @param \PDO $dbh
+     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param float|int $newPayment
+     * @param bool $calcDaysPaid
+     * @param mixed $givenPaid
+     * @return VisitCharges
+     */
     public function sumCurrentRoomCharge(\PDO $dbh, AbstractPriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
         $this->priceModel = $priceModel;
         return $this->getVisitData($priceModel->loadVisitNights($dbh, $this->idVisit), $priceModel, $newPayment, $calcDaysPaid, $givenPaid);
     }
 
+    /**
+     * Summary of sumDatedRoomCharge
+     * @param \PDO $dbh
+     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param string $coDate
+     * @param float|int $newPayment
+     * @param bool $calcDaysPaid
+     * @param mixed $givenPaid
+     * @return mixed
+     */
     public function sumDatedRoomCharge(\PDO $dbh, AbstractPriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         $this->priceModel = $priceModel;
@@ -118,6 +210,15 @@ class VisitCharges {
         return $this->getVisitData($spans, $priceModel, $newPayment, $calcDaysPaid, $givenPaid);
     }
 
+    /**
+     * Summary of getVisitData
+     * @param mixed $spans
+     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param float|int $newPayment
+     * @param bool $calcDaysPaid
+     * @param mixed $givenPaid
+     * @return VisitCharges
+     */
     protected function getVisitData($spans, AbstractPriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         $uS = Session::getInstance();
@@ -264,6 +365,11 @@ class VisitCharges {
     }
 
 
+    /**
+     * Summary of sumPayments
+     * @param \PDO $dbh
+     * @return VisitCharges
+     */
     public function sumPayments(\PDO $dbh) {
 
         $this->itemSums = array();
@@ -351,6 +457,13 @@ class VisitCharges {
         return $this;
     }
 
+    /**
+     * Summary of findLastDelegatedInvoiceStatus
+     * @param array $line
+     * @param array $invLines
+     * @param mixed $stat
+     * @return void
+     */
     private function findLastDelegatedInvoiceStatus($line, $invLines, &$stat) {
 
         foreach ($invLines as $l) {
@@ -371,6 +484,12 @@ class VisitCharges {
         return;
     }
 
+    /**
+     * Summary of loadInvoiceLines
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @return array
+     */
     public static function loadInvoiceLines(\PDO $dbh, $idVisit) {
 
         $_idVisit = intval($idVisit, 10);
@@ -414,39 +533,76 @@ where
 
     }
 
+    /**
+     * Summary of getPriceModel
+     * @return AbstractPriceModel
+     */
     public function getPriceModel() {
         return $this->priceModel;
     }
 
+    /**
+     * Summary of getRoomFeesPending
+     * @return float|int
+     */
     public function getRoomFeesPending() {
         return $this->getItemInvPending(ItemId::Lodging) + $this->getItemInvPending(ItemId::LodgingReversal);
     }
 
+    /**
+     * Summary of get3pRoomFeesPending
+     * @return float|int
+     */
     public function get3pRoomFeesPending() {
         return $this->get3rdPartyPending(ItemId::Lodging) + $this->get3rdPartyPending(ItemId::LodgingReversal);
     }
 
+    /**
+     * Summary of getTaxExemptRoomFees
+     * @return float|int
+     */
     public function getTaxExemptRoomFees() {
         return $this->getTaxExempt(ItemId::Lodging) + $this->getTaxExempt(ItemId::LodgingReversal);
     }
 
+    /**
+     * Summary of getVisitFeesPending
+     * @return float|int
+     */
     public function getVisitFeesPending() {
         return $this->getItemInvPending(ItemId::VisitFee);
     }
 
+    /**
+     * Summary of get3pVisitFeesPending
+     * @return mixed
+     */
     public function get3pVisitFeesPending() {
         return $this->get3rdPartyPending(ItemId::VisitFee);
     }
 
+    /**
+     * Summary of getDepositPending
+     * @return float|int
+     */
     public function getDepositPending() {
         return $this->getItemInvPending(ItemId::KeyDeposit)
                 + $this->getItemInvPending(ItemId::DepositRefund);
     }
 
+    /**
+     * Summary of getDepositPayType
+     * @return string
+     */
     public function getDepositPayType() {
         return $this->depositPayType;
     }
 
+    /**
+     * Summary of getItemInvCharges
+     * @param mixed $idItem
+     * @return float|int
+     */
     public function getItemInvCharges($idItem) {
         if (isset($this->itemSums[$idItem])) {
             return $this->itemSums[$idItem][InvoiceStatus::Unpaid] + $this->itemSums[$idItem][InvoiceStatus::Paid];
@@ -454,6 +610,11 @@ where
         return 0;
     }
 
+    /**
+     * Summary of getItemInvPayments
+     * @param mixed $idItem
+     * @return mixed
+     */
     public function getItemInvPayments($idItem) {
         if (isset($this->itemSums[$idItem])) {
             return $this->itemSums[$idItem][InvoiceStatus::Paid];
@@ -461,6 +622,11 @@ where
         return 0;
     }
 
+    /**
+     * Summary of getItemInvPending
+     * @param int $idItem
+     * @return mixed
+     */
     public function getItemInvPending($idItem) {
         if (isset($this->itemSums[$idItem])) {
             return $this->itemSums[$idItem][InvoiceStatus::Unpaid];
@@ -468,6 +634,11 @@ where
         return 0;
     }
 
+    /**
+     * Summary of get3rdPartyPending
+     * @param int $idItem
+     * @return mixed
+     */
     public function get3rdPartyPending($idItem) {
         if (isset($this->itemSums[$idItem])) {
             return $this->itemSums[$idItem][self::THIRD_PARTY];
@@ -475,6 +646,11 @@ where
         return 0;
     }
 
+    /**
+     * Summary of getTaxInvoices
+     * @param int $idItem
+     * @return mixed
+     */
     public function getTaxInvoices($idItem) {
         if (isset($this->itemSums[$idItem][self::TAX_PAID])) {
             return $this->itemSums[$idItem][self::TAX_PAID];
@@ -482,6 +658,11 @@ where
         return 0;
     }
 
+    /**
+     * Summary of getTaxExempt
+     * @param int $idItem
+     * @return mixed
+     */
     public function getTaxExempt($idItem) {
         if (isset($this->itemSums[$idItem]['tax_exempt'])) {
             return $this->itemSums[$idItem]['tax_exempt'];
@@ -489,6 +670,12 @@ where
         return 0;
     }
 
+    /**
+     * Summary of getItemTaxItemAmount
+     * @param int $idItem
+     * @param int $idTaxItem
+     * @return mixed
+     */
     public function getItemTaxItemAmount($idItem, $idTaxItem) {
 
         if (isset($this->itemSums[$idItem][$idTaxItem])) {
@@ -498,22 +685,42 @@ where
     }
 
 
+    /**
+     * Summary of getTaxItemIds
+     * @return mixed
+     */
     public function getTaxItemIds() {
         return $this->taxItemIds;
     }
 
+    /**
+     * Summary of getRoomFeesCharged
+     * @return float|int
+     */
     public function getRoomFeesCharged() {
         return $this->feesCharged;
     }
 
+    /**
+     * Summary of getDepositCharged
+     * @return float|int
+     */
     public function getDepositCharged() {
         return $this->DepositCharged;
     }
 
+    /**
+     * Summary of getVisitFeeCharged
+     * @return float|int
+     */
     public function getVisitFeeCharged() {
         return $this->visitFeeCharged;
     }
 
+    /**
+     * Summary of getNightsStayed
+     * @return int
+     */
     public function getNightsStayed() {
     	if ($this->nightsStayed < 0) {
     		return 0;
@@ -521,6 +728,10 @@ where
         return $this->nightsStayed;
     }
 
+    /**
+     * Summary of getGuestNightsStayed
+     * @return int
+     */
     public function getGuestNightsStayed() {
     	if ($this->guestNightsStayed < 0) {
     		return 0;
@@ -528,6 +739,10 @@ where
         return $this->guestNightsStayed;
     }
 
+    /**
+     * Summary of getNightsPaid
+     * @return int
+     */
     public function getNightsPaid() {
     	if ($this->nightsPaid < 0) {
     		return 0;
@@ -535,6 +750,10 @@ where
         return $this->nightsPaid;
     }
 
+    /**
+     * Summary of getNightsToPay
+     * @return int
+     */
     public function getNightsToPay() {
     	if ($this->nightsToPay < 0) {
     		return 0;
@@ -542,38 +761,74 @@ where
         return $this->nightsToPay;
     }
 
+    /**
+     * Summary of getExcessPaid
+     * @return float|int
+     */
     public function getExcessPaid() {
         return $this->excessPaid;
     }
 
+    /**
+     * Summary of getFeesToPay
+     * @return float|int
+     */
     public function getFeesToPay() {
         return $this->feesToCharge;
     }
 
+    /**
+     * Summary of getGlideCredit
+     * @return int
+     */
     public function getGlideCredit() {
         return $this->glideCredit;
     }
 
+    /**
+     * Summary of getRoomFeesPaid
+     * @return float|int
+     */
     public function getRoomFeesPaid() {
         return $this->getItemInvPayments(ItemId::Lodging)
                 + $this->getItemInvPayments(ItemId::LodgingReversal);
     }
 
+    /**
+     * Summary of getVisitFeesPaid
+     * @return float|int
+     */
     public function getVisitFeesPaid() {
         return $this->getItemInvPayments(ItemId::VisitFee);
     }
 
+    /**
+     * Summary of getKeyFeesPaid
+     * @return float|int
+     */
     public function getKeyFeesPaid() {
         return $this->getItemInvPayments(ItemId::KeyDeposit)
                     + $this->getItemInvPayments(ItemId::DepositRefund);
     }
 
+    /**
+     * Summary of getIdVisit
+     * @return int
+     */
     public function getIdVisit() {
         return $this->idVisit;
     }
+    /**
+     * Summary of getSpan
+     * @return int
+     */
     public function getSpan() {
         return $this->span;
     }
+    /**
+     * Summary of getFinalVisitCoDate
+     * @return \DateTime
+     */
     public function getFinalVisitCoDate() {
     	return $this->finalVisitCoDate;
     }

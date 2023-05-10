@@ -76,7 +76,7 @@ try {
             echo $photo->getImage();
             exit();
 
-            break;
+            //break;
 
         case 'putguestphoto':
 

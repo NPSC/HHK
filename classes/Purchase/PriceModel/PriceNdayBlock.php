@@ -21,9 +21,21 @@ use HHK\HTMLControls\{HTMLTable, HTMLInput};
  */
 class PriceNdayBlock extends AbstractPriceModel {
 
+    /**
+     * Summary of blockTitle
+     * @var string
+     */
     protected $blockTitle = '';
+    /**
+     * Summary of blocks
+     * @var int
+     */
     protected $blocks = 0;
 
+    /**
+     * Summary of daysAccumulator
+     * @var
+     */
     protected $daysAccumulator;
 
     /**
@@ -79,6 +91,13 @@ class PriceNdayBlock extends AbstractPriceModel {
         return $amount;
     }
 
+    /**
+     * Summary of getEditMarkup
+     * @param \PDO $dbh
+     * @param string $defaultRoomRate
+     * @param bool $financialAssistance
+     * @return HTMLTable
+     */
     public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
 
 
@@ -156,6 +175,16 @@ class PriceNdayBlock extends AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of tiersCalculation
+     * @param int $days
+     * @param int $idRoomRate
+     * @param string $rateCategory
+     * @param float|int $pledgedRate
+     * @param float|int $rateAdjust
+     * @param int $guestDays
+     * @return array
+     */
     public function tiersCalculation($days, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $guestDays = 0) {
 
         $tiers = array();
@@ -211,6 +240,17 @@ class PriceNdayBlock extends AbstractPriceModel {
         return $tiers;
     }
 
+    /**
+     * Summary of tiersMarkup
+     * @param mixed $r
+     * @param float|int $totalAmt
+     * @param HTMLTable $tbl
+     * @param mixed $tiers
+     * @param mixed $startDT
+     * @param string $separator
+     * @param int $totalGuestNites
+     * @return float|int
+     */
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $roomCharge = 0;
@@ -237,6 +277,12 @@ class PriceNdayBlock extends AbstractPriceModel {
         return $roomCharge;
     }
 
+    /**
+     * Summary of installRate
+     * @param \PDO $dbh
+     * @param bool $incomeRated
+     * @return void
+     */
     protected static function installRate(\PDO $dbh, $incomeRated) {
 
         $modelCode = ItemPriceCode::NdayBlock;

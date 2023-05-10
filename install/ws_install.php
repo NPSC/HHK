@@ -114,25 +114,7 @@ function testdb($post) {
 
     try {
 
-        switch ($dbms) {
-
-            case 'MS_SQL':
-                $dbh = initMS_SQL($dbURL, $dbName, $dbUser, $pw);
-                break;
-
-            case 'MYSQL':
-                $dbh = initMY_SQL($dbURL, $dbName, $dbUser, $pw);
-                break;
-
-            case 'ODBC':
-                $dbh = initODBC($dbURL, $dbName, $dbUser, $pw);
-                return array('success'=>'Good!');
-
-
-            default:
-                return array("error" => "Bad DBMS: " . $dbms . "<br/>");
-
-        }
+        $dbh = initPDO();
 
         $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $serverInfo = $dbh->getAttribute(\PDO::ATTR_SERVER_VERSION);

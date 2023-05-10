@@ -43,18 +43,38 @@ use HHK\Payment\PaymentGateway\Vantiv\Helper\MpReturnCodeValues;
 
 abstract class AbstractMercResponse {
 
+    /**
+     * Summary of response
+     * @var mixed
+     */
     protected $response;
 
+    /**
+     * Summary of result
+     * @var mixed
+     */
     protected $result;
 
+    /**
+     * Summary of tranType
+     * @var mixed
+     */
     protected $tranType;
+    /**
+     * Summary of merchant
+     * @var string
+     */
     protected $merchant;
+    /**
+     * Summary of processor
+     * @var string
+     */
     protected $processor = 'vantiv';
 
     /**
      * The child is expected to define $result.
      *
-     * @param array $response
+     * @param mixed $response
      * @throws PaymentException
      */
     function __construct($response) {
@@ -140,5 +160,12 @@ abstract class AbstractMercResponse {
         return '';
     }
 
+
+	/**
+	 * @return mixed
+	 */
+	public function getResponse() {
+		return $this->response;
+	}
 }
 ?>

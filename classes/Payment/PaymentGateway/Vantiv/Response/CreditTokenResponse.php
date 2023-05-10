@@ -9,7 +9,7 @@ use HHK\Exception\PaymentException;
  * CreditTokenResponse.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -19,7 +19,7 @@ use HHK\Exception\PaymentException;
 /**
 * Non Profit Software Corporation HostedCheckout PHP Client
 *
-* ©2013-2017 Non Profit Software Corporation - all rights reserved.
+* ©2013-2023 Non Profit Software Corporation - all rights reserved.
 *
 * Disclaimer:
 * This software and all specifications and documentation contained
@@ -41,6 +41,13 @@ use HHK\Exception\PaymentException;
 // Mercury Token transactions
 class CreditTokenResponse extends AbstractMercResponse implements GatewayResponseInterface {
 
+    /**
+     * Summary of __construct
+     * @param mixed $response
+     * @param mixed $resultName
+     * @param mixed $tranType
+     * @throws \HHK\Exception\PaymentException
+     */
     function __construct($response, $resultName, $tranType = '') {
         parent::__construct($response);
 

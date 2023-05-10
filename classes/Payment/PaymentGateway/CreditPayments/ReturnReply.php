@@ -13,13 +13,23 @@ use HHK\Exception\PaymentException;
  * CreditPayments.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2019 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 class ReturnReply extends AbstractCreditPayments {
 
+    /**
+     * Summary of caseApproved
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractCreditResponse $pr
+     * @param mixed $username
+     * @param mixed $payRs
+     * @param mixed $attempts
+     * @throws \HHK\Exception\PaymentException
+     * @return AbstractCreditResponse
+     */
     protected static function caseApproved(\PDO $dbh, AbstractCreditResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         $uS = Session::getInstance();
@@ -34,7 +44,7 @@ class ReturnReply extends AbstractCreditPayments {
             $pr->setRefund(TRUE);
             $pr->setPaymentStatusCode(PaymentStatusCode::Paid);
             $pr->recordPayment($dbh, $username);
-            
+
         } else if ($payRs->idPayment->getStoredVal() > 0) {
 
             // Update existing Payment record
@@ -46,9 +56,9 @@ class ReturnReply extends AbstractCreditPayments {
             if ($pr->getPaymentNotes() != '') {
 
                 if ($payRs->Notes->getStoredVal() != '') {
-                    $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . getPaymentNotes());
+                    $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . $pr->getPaymentNotes());
                 } else {
-                    $payRs->Notes->setNewVal(getPaymentNotes());
+                    $payRs->Notes->setNewVal($pr->getPaymentNotes());
                 }
             }
 
@@ -75,6 +85,15 @@ class ReturnReply extends AbstractCreditPayments {
 
     }
 
+    /**
+     * Summary of caseDeclined
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractCreditResponse $pr
+     * @param mixed $username
+     * @param mixed $pRs
+     * @param mixed $attempts
+     * @return AbstractCreditResponse
+     */
     protected static function caseDeclined(\PDO $dbh, AbstractCreditResponse $pr, $username, $pRs = NULL, $attempts = 1) {
 
         if (is_null($pRs)) {

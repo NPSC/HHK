@@ -153,7 +153,7 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
     if ($ssn->subsidyId == 0 && $siteId > 0) {
         $ssn->subsidyId = $siteId;
 
-        SysConfig::saveKeyValue($dbh, 'sys_config', $siteId);
+        SysConfig::saveKeyValue($dbh, 'sys_config', 'subsidyId', $siteId);
 
     }
 

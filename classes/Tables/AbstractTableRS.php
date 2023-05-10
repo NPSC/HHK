@@ -16,11 +16,19 @@ abstract class AbstractTableRS implements TableRSInterface {
      */
     protected $tableName;
 
+    /**
+     * Summary of __construct
+     * @param string $TableName
+     */
     public function __construct($TableName = '') {
         $this->tableName = $TableName;
     }
 
 
+    /**
+     * Summary of getTableName
+     * @return string
+     */
     public function getTableName() {
         return $this->tableName;
     }

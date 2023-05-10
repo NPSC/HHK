@@ -451,11 +451,11 @@ class PaymentSvcs {
 
     /**
      * Both return payment and return (random) amount come here
-     * 
+     *
      * @param \PDO $dbh
-     * @param type $idPayment
-     * @param type $bid
-     * @return type
+     * @param int $idPayment
+     * @param string $bid
+     * @return array
      */
     public static function voidReturnFees(\PDO $dbh, $idPayment, $bid) {
 
@@ -651,11 +651,11 @@ class PaymentSvcs {
 
             case PaymentMethod::Transfer:
 
-                $ckResp = new TransferResponse($paymentAmount, $invoice->getSoldToId(), $invoice->getInvoiceNumber());
+                $txResp = new TransferResponse($paymentAmount, $invoice->getSoldToId(), $invoice->getInvoiceNumber());
 
-                TransferTX::undoReturnAmount($dbh, $ckResp, $idPayment);
+                TransferTX::undoReturnAmount($dbh, $txResp, $idPayment);
 
-                $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, $txResp->getAmount(), $uS->username);
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 

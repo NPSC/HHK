@@ -42,10 +42,21 @@ use HHK\Payment\PaymentGateway\Vantiv\Response\VerifyCkOutResponse;
 
 class VerifyCkOutRequest extends AbstractMercRequest{
 
-    protected function execute(\SoapClient $txClient, array $data) {
+    /**
+     * Summary of execute
+     * @param \SoapClient $txClient
+     * @param mixed $data
+     * @return VerifyCkOutResponse
+     */
+    protected function execute(\SoapClient $txClient, array $data): VerifyCkOutResponse {
         return new VerifyCkOutResponse($txClient->VerifyPayment($data));
     }
 
+    /**
+     * Summary of setPaymentId
+     * @param mixed $paymentId
+     * @return VerifyCkOutRequest
+     */
     public function setPaymentId($paymentId) {
         $this->fields["PaymentID"] = $paymentId;
         return $this;

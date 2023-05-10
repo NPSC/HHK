@@ -29,6 +29,14 @@ class ResvPaymentManager extends PaymentManager
         parent::__construct($pmp);
     }
 
+    /**
+     * Summary of createInvoice
+     * @param \PDO $dbh
+     * @param mixed $resv
+     * @param mixed $idPayor
+     * @param mixed $notes
+     * @return \HHK\Payment\Invoice\Invoice|null
+     */
     public function createInvoice(\PDO $dbh, $resv, $idPayor, $notes = '') {
 
         $uS = Session::getInstance();

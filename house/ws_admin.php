@@ -46,14 +46,6 @@ try {
 
 switch ($c) {
 
-    case "visitlog" :
-
-        $id = filter_var(urldecode($_REQUEST["uid"]), FILTER_VALIDATE_INT);
-        $idPsg = filter_var(urldecode($_REQUEST["psg"]), FILTER_VALIDATE_INT);
-
-        $events = visitLog($dbh, $id, $idPsg, $_GET);
-        break;
-
     case "delRel":
 
         $id = 0;

@@ -24,6 +24,14 @@ use HHK\SysConst\PaymentMethod;
 class LocalResponse extends AbstractCreditResponse {
 
 
+    /**
+     * Summary of __construct
+     * @param mixed $gwResp
+     * @param mixed $idPayor
+     * @param mixed $idRegistration
+     * @param mixed $idToken
+     * @param mixed $paymentStatusCode
+     */
     function __construct( $gwResp, $idPayor, $idRegistration, $idToken, $paymentStatusCode = '') {
 
         $this->response = $gwResp;
@@ -36,10 +44,20 @@ class LocalResponse extends AbstractCreditResponse {
 
     }
 
+    /**
+     * Summary of getStatus
+     * @return string
+     */
     public function getStatus() {
         return AbstractCreditPayments::STATUS_APPROVED;
     }
 
+    /**
+     * Summary of receiptMarkup: adds receipt markup to $tbl
+     * @param \PDO $dbh
+     * @param mixed $tbl
+     * @return void
+     */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
@@ -51,6 +69,10 @@ class LocalResponse extends AbstractCreditResponse {
 
     }
 
+    /**
+     * Summary of getPaymentMethod
+     * @return int
+     */
     public function getPaymentMethod() {
         return PaymentMethod::Charge;
     }

@@ -21,6 +21,15 @@ use HHK\sec\Session;
  */
 class PriceDaily extends AbstractPriceModel {
 
+    /**
+     * Summary of amountCalculator
+     * @param mixed $nites
+     * @param mixed $idRoomRate
+     * @param mixed $rateCategory
+     * @param mixed $pledgedRate
+     * @param mixed $guestDays
+     * @return float
+     */
     public function amountCalculator($nites, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {
 
         $uS = Session::getInstance();
@@ -37,6 +46,16 @@ class PriceDaily extends AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of daysPaidCalculator
+     * @param float|int $amount
+     * @param int $idRoomRate
+     * @param string $rateCategory
+     * @param float|int $pledgedRate
+     * @param float|int $rateAdjust
+     * @param int $aveGuestPerDay
+     * @return float|int
+     */
     public function daysPaidCalculator($amount, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $aveGuestPerDay = 1) {
 
         $this->remainderAmt = 0;
@@ -71,6 +90,12 @@ class PriceDaily extends AbstractPriceModel {
         return 0;
     }
 
+    /**
+     * Summary of installRate
+     * @param \PDO $dbh
+     * @param bool $incomeRated
+     * @return void
+     */
     protected static function installRate(\PDO $dbh, $incomeRated) {
 
         $modelCode = ItemPriceCode::Dailey;

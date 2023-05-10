@@ -370,7 +370,7 @@ try {
                 $invoice = new Invoice($dbh);
                 $invoice->loadInvoice($dbh, $idInvoice);
 
-                if ($invoice->deleteLine($dbh, $idLine, $bid, $uS->username)) {
+                if ($invoice->deleteLine($dbh, $idLine, $uS->username)) {
                     $events = array('bid' => $bid, 'success' => 'House Payment Deleted.  ');
                 }
             }
@@ -493,7 +493,8 @@ try {
             $visitSpan = intval(filter_var($_POST["span"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
-        $events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
+        //$events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
+        $events = array('error'=>'HouseServices::addVisitStay is Deprecated');
         break;
 
     case "getincmdiag":
@@ -699,7 +700,7 @@ try {
             $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
+        //$events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
 
         break;
 
@@ -764,7 +765,8 @@ try {
         }
 
         if ($guestAdmin) {
-            $events = HouseServices::changePaymentAmount($dbh, $pid, $newAmt);
+            //$events = HouseServices::changePaymentAmount($dbh, $pid, $newAmt);
+            $events = array('error'=>'HouseServices::changePaymentAmount is Deprecated');
         }
 
         break;

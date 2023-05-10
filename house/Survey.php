@@ -30,7 +30,7 @@ $refreshDate = NULL;
 $dataTable = '';
 $showTable = 'display:none;';
 
-function outputIt(array $gName, $excel, ExcelHelper $writer, $hdr, $tbl) {
+function outputIt(array $gName, $excel, $reportRows, ExcelHelper $writer, $hdr, $tbl) {
     // write last patient out
     foreach ($gName as $g) {
 
@@ -62,7 +62,7 @@ function outputIt(array $gName, $excel, ExcelHelper $writer, $hdr, $tbl) {
         }
     }
 
-    return $reportRows;
+    return $reportRows++;
 
 }
 

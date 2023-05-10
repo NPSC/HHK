@@ -34,7 +34,7 @@ class PaymentChooser {
      * @param \PDO $dbh
      * @param array $post
      * @param string $rtnIndex
-     * @return PaymentManagerPayment
+     * @return PaymentManagerPayment|null
      */
     public static function readPostedPayment(\PDO $dbh, $post, $rtnIndex = ReturnIndex::ReturnIndex) {
 

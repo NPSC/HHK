@@ -19,7 +19,7 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
  * @author Eric
  */
 class Card_IdRS extends AbstractTableRS {
-    
+
     public $idName;   // int(11) NOT NULL,
     public $idGroup;   // int(11) NOT NULL,
     public $CardID;   // varchar(36) NOT NULL DEFAULT '',
@@ -32,8 +32,8 @@ class Card_IdRS extends AbstractTableRS {
     public $InvoiceNumber;   // varchar(36) NOT NULL DEFAULT '',
     public $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
     public $Merchant;   // varchar(45) NOT NULL DEFAULT '',
-    
-    
+
+
     function __construct($TableName = "card_id") {
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idGroup = new DB_Field("idGroup", 0, new DbIntSanitizer(), TRUE, TRUE);
@@ -46,8 +46,8 @@ class Card_IdRS extends AbstractTableRS {
         $this->Transaction = new DB_Field("Transaction", "", new DbStrSanitizer(14), TRUE, TRUE);
         $this->InvoiceNumber = new DB_Field("InvoiceNumber", "", new DbStrSanitizer(36), TRUE, TRUE);
         $this->Amount = new DB_Field("Amount", 0, new DbDecimalSanitizer(), TRUE, TRUE);
-        $this->Merchnt = new DB_Field("Merchant", "", new DbStrSanitizer(45), TRUE, TRUE);
-        
+        $this->Merchant = new DB_Field("Merchant", "", new DbStrSanitizer(45), TRUE, TRUE);
+
         parent::__construct($TableName);
     }
 }

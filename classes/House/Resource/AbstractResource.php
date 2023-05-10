@@ -30,14 +30,41 @@ abstract class AbstractResource {
      * @var ResourceRS
      */
     public $resourceRS;
+    /**
+     * Summary of optGroup
+     * @var
+     */
     public $optGroup;
+    /**
+     * Summary of rooms
+     * @var array
+     */
     protected $rooms = array();
+    /**
+     * Summary of currentOccupantsLoaded
+     * @var bool
+     */
     protected $currentOccupantsLoaded = FALSE;
+    /**
+     * Summary of merchant
+     * @var string
+     */
     protected $merchant = '';
+    /**
+     * Summary of defaultRateCategory
+     * @var string
+     */
     protected $defaultRateCategory = '';
 
     //protected $roomOcc = array();
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param int $idResource
+     * @param mixed $resourceRecord
+     * @param bool $loadCurrentOccupants
+     */
     public function __construct(\PDO $dbh, $idResource = 0, $resourceRecord = NULL, $loadCurrentOccupants = FALSE) {
 
         if (is_null($resourceRecord)) {
@@ -49,7 +76,7 @@ abstract class AbstractResource {
         if ($this->isNewResource() === FALSE) {
 
             $this->rooms = $this->loadRooms($dbh, $this->getIdResource());
-            
+
             foreach ($this->rooms as $r) {
                 $this->defaultRateCategory = $r->getDefaultRateCategory();
             }
@@ -61,6 +88,12 @@ abstract class AbstractResource {
         }
     }
 
+    /**
+     * Summary of loadRooms
+     * @param \PDO $dbh
+     * @param int $idResource
+     * @return array<Room>
+     */
     public function loadRooms(\PDO $dbh, $idResource) {
 
         $rooms = array();
@@ -88,6 +121,12 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
 
     }
 
+    /**
+     * Summary of saveRooms
+     * @param \PDO $dbh
+     * @param int $roomId
+     * @return void
+     */
     public function saveRooms(\PDO $dbh, $roomId) {
 
         $id = intval($roomId);
@@ -117,21 +156,28 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $this->rooms = $this->loadRooms($dbh, $this->getIdResource());
     }
 
+    /**
+     * Summary of getThisFromRS
+     * @param \PDO $dbh
+     * @param \HHK\Tables\House\ResourceRS $resRS
+     * @param mixed $loadCurrentOccupants
+     * @return PartitionResource|RemoteResource|RoomResource|null
+     */
     public static function getThisFromRS(\PDO $dbh, ResourceRS $resRS, $loadCurrentOccupants = FALSE) {
 
         $t = $resRS->Type->getStoredVal();
         switch ($t) {
             case ResourceTypes::Partition:
                 return new PartitionResource($dbh, 0, $resRS, $loadCurrentOccupants);
-                break;
+                //break;
 
             case ResourceTypes::Room:
                 return new RoomResource($dbh, 0, $resRS, $loadCurrentOccupants);
-                break;
+                //break;
 
             case ResourceTypes::RmtRoom:
                 return new RemoteResource($dbh, 0, $resRS, $loadCurrentOccupants);
-                break;
+               // break;
 
 //            case ResourceTypes::Block:
 //                return new BlockResource($dbh, 0, $resRS, $loadCurrentOccupants);
@@ -143,6 +189,14 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return NULL;
     }
 
+    /**
+     * Summary of getResourceObj
+     * @param \PDO $dbh
+     * @param int $idResource
+     * @param string $defaultResourceType
+     * @param bool $loadCurrentOccupants
+     * @return PartitionResource|RemoteResource|RoomResource|null
+     */
     public static function getResourceObj(\PDO $dbh, $idResource, $defaultResourceType = ResourceTypes::Room, $loadCurrentOccupants = FALSE) {
 
         $resRS = AbstractResource::loadResourceRS($dbh, $idResource);
@@ -155,6 +209,13 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
 
     }
 
+    /**
+     * Summary of loadResourceRS
+     * @param \PDO $dbh
+     * @param int $idResource
+     * @throws \HHK\Exception\RuntimeException
+     * @return ResourceRS
+     */
     protected static function loadResourceRS(\PDO $dbh, $idResource) {
         $nRS = new ResourceRS();
 
@@ -174,6 +235,10 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return $nRS;
     }
 
+    /**
+     * Summary of getBeds
+     * @return Beds
+     */
     public function getBeds() {
         $beds = new Beds();
         foreach ($this->rooms as $rm) {
@@ -186,6 +251,10 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return $beds;
     }
 
+    /**
+     * Summary of getMaxOccupants
+     * @return float|int
+     */
     public function getMaxOccupants() {
         // Look for other resources sharing my rooms
         $occp = 0;
@@ -195,6 +264,11 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return $occp;
     }
 
+    /**
+     * Summary of getVisitFee
+     * @param mixed $visitFeeCodes
+     * @return float|int
+     */
     public function getVisitFee($visitFeeCodes) {
         // Look for other resources sharing my rooms
         $rate = 0;
@@ -206,6 +280,10 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return $rate;
     }
 
+    /**
+     * Summary of isNewResource
+     * @return bool
+     */
     public function isNewResource() {
         if ($this->getIdResource() == 0) {
             return TRUE;
@@ -214,13 +292,19 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return FALSE;
     }
 
+    /**
+     * Summary of saveRecord
+     * @param \PDO $dbh
+     * @param string $username
+     * @return void
+     */
     public function saveRecord(\PDO $dbh, $username = "") {
         // Doesn't save any linked rooms
 
         $this->resourceRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $this->resourceRS->Updated_By->setNewVal($username);
 
-        if ($this->isNewResource($this->resourceRS)) {
+        if ($this->isNewResource()) {
 
             $idResc = EditRS::insert($dbh, $this->resourceRS);
 
@@ -245,6 +329,12 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return;
     }
 
+    /**
+     * Summary of deleteResource
+     * @param \PDO $dbh
+     * @param mixed $username
+     * @return bool
+     */
     public function deleteResource(\PDO $dbh, $username) {
 
         $query = "delete from resource_room where idResource = :id";
@@ -268,27 +358,53 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return $cnt;
     }
 
+    /**
+     * Summary of getTitle
+     * @return string
+     */
     public function getTitle() {
         return htmlspecialchars_decode($this->resourceRS->Title->getStoredVal(), ENT_QUOTES);
     }
 
+    /**
+     * Summary of getUtilizationCategory
+     * @return mixed
+     */
     public function getUtilizationCategory() {
         return $this->resourceRS->Utilization_Category->getStoredVal();
     }
 
+    /**
+     * Summary of setUtilizationCategory
+     * @param mixed $v
+     * @return AbstractResource
+     */
     public function setUtilizationCategory($v) {
         $this->resourceRS->Utilization_Category->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of getRateAdjCode
+     * @return mixed
+     */
     public function getRateAdjCode() {
         return $this->resourceRS->Rate_Adjust_Code->getStoredVal();
     }
 
+    /**
+     * Summary of getMerchant
+     * @return mixed
+     */
     public function getMerchant() {
         return $this->merchant;
     }
 
+    /**
+     * Summary of getRate
+     * @param mixed $rateCodes
+     * @return float|int
+     */
     public function getRate($rateCodes = array()) {
         // computed from room availablity and inService
         $rate = 0.0;
@@ -300,6 +416,11 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return $rate;
     }
 
+    /**
+     * Summary of getKeyDeposit
+     * @param mixed $rateCodes
+     * @return float|int
+     */
     public function getKeyDeposit($rateCodes = array()) {
         $rate = 0.0;
         foreach ($this->rooms as $rm) {
@@ -312,38 +433,83 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         return $rate;
     }
 
+    /**
+     * Summary of getType
+     * @return mixed
+     */
     public function getType() {
         return $this->resourceRS->Type->getStoredVal();
     }
 
+    /**
+     * Summary of getCategory
+     * @return mixed
+     */
     public function getCategory() {
         return $this->resourceRS->Category->getStoredVal();
     }
 
+    /**
+     * Summary of getUtilPriority
+     * @return mixed
+     */
     public function getUtilPriority() {
         return $this->resourceRS->Util_Priority->getStoredVal();
     }
 
+    /**
+     * Summary of getIdResource
+     * @return mixed
+     */
     public function getIdResource() {
         return $this->resourceRS->idResource->getStoredVal();
     }
 
+    /**
+     * Summary of getIdSponsor
+     * @return mixed
+     */
     public function getIdSponsor() {
         return $this->resourceRS->idSponsor->getStoredVal();
     }
 
+    /**
+     * Summary of setIdSponsor
+     * @param mixed $id
+     * @return void
+     */
     public function setIdSponsor($id) {
         $this->resourceRS->idSponsor->setNewVal($id);
     }
 
+    /**
+     * Summary of getDefaultRoomCategory
+     * @return mixed
+     */
     public function getDefaultRoomCategory() {
         return $this->defaultRateCategory;
     }
-    
+
+    /**
+     * Summary of allocateRoom
+     * @param mixed $numGuests
+     * @param mixed $overRideMax
+     * @return Room
+     */
     public abstract function allocateRoom($numGuests, $overRideMax = FALSE);
 
+    /**
+     * Summary of testAllocateRoom
+     * @param mixed $numGuests
+     * @return void
+     */
     public abstract function testAllocateRoom($numGuests);
 
+    /**
+     * Summary of loadCurrentOccupants
+     * @param \PDO $dbh
+     * @return void
+     */
     public function loadCurrentOccupants(\PDO $dbh) {
 
         // Reset occupants counters
@@ -371,6 +537,12 @@ where rr.idResource = :idr group by rr.idRoom;", array(\PDO::ATTR_CURSOR => \PDO
 
     }
 
+    /**
+     * Summary of getCurrantOccupants
+     * @param mixed $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return float|int
+     */
     public function getCurrantOccupants($dbh = null) {
 
         if ($this->isNewResource()) {
@@ -394,6 +566,10 @@ where rr.idResource = :idr group by rr.idRoom;", array(\PDO::ATTR_CURSOR => \PDO
         return $occp;
     }
 
+    /**
+     * Summary of getRooms
+     * @return mixed
+     */
     public function getRooms() {
         return $this->rooms;
     }

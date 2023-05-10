@@ -67,11 +67,17 @@ class UserCategories {
             $temp["status"] = "a";
             $this->myCats[] = $temp;
         } else {
-            $this->myCats[$cts]["rank"] = "c";
+            $cts['rank'] = "c";
+            $this->myCats[] = $cts;
         }
         return;
     }
 
+    /**
+     * Summary of getCats
+     * @param mixed $filter
+     * @return array|null
+     */
     public function getCats($filter) {
         if ($this->isLoaded) {
             $data = array();
@@ -132,7 +138,7 @@ class UserCategories {
 
     public function runAuthorization($cat, $tpe, $eventNameId) {
         if ($this->isLoaded()) {
-            if (SecurityComponent::is_Admin($this->myRole, $this->myUsername)) {
+            if (SecurityComponent::is_Admin()) {
                 $answer = true;
             }
             else {
