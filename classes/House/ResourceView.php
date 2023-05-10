@@ -889,13 +889,13 @@ WHERE
     }
 
     /**
-     * Summary of dirtyOccupiedRooms
+     * Summary of dirtyOccupiedRooms: Implements the automatic Cleaning Cycle for each occupied room
+     *
      * @param \PDO $dbh
      * @return void
      */
     public static function dirtyOccupiedRooms(\PDO $dbh) {
 
-        $uS = Session::getInstance();
         $cleanDays = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         $today = new \DateTime();
@@ -946,7 +946,7 @@ from
                 if ($cycleDays > 0 && $today->diff($lastCleanedDT, TRUE)->days >= $cycleDays) {
                     // Set room dirty
                     $rm->putDirty();
-                    $rm->saveRoom($dbh, $uS->username, TRUE);
+                    $rm->saveRoom($dbh, 'CleanCycle', TRUE);
                 }
             }
         }

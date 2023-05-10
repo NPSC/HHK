@@ -308,7 +308,7 @@ class Emails extends AbstractContactPoint {
      */
     private function loadPostData(NameEmailRS $a, array $p, $typeCode, $uname, $idPrefix = "") {
 
-        $a->Email->setNewVal(trim(filter_var($p[$idPrefix.'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL)));
+        $a->Email->setNewVal(strtolower(trim(filter_var($p[$idPrefix.'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL))));
         $a->Status->setNewVal("a");
         $a->Updated_By->setNewVal($uname);
         $a->Last_Updated->setNewVal(date("Y-m-d H:i:s"));

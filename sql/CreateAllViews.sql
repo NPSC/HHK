@@ -1397,79 +1397,74 @@ WHERE
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_transfer` AS
     SELECT
-    `n`.`External_Id` AS `External Id`,
-    `n`.`idName` AS `HHK Id`,
-    CASE
-        WHEN ng.Relationship_Code = 'slf' THEN 'Yes'
-        ELSE ''
-    END AS `Patient`,
-    TRIM(CONCAT_WS(' ',
-            IFNULL(`g1`.`Description`, ''),
-            `n`.`Name_First`,
-            `n`.`Name_Middle`,
-            `n`.`Name_Last`,
-            IFNULL(`g2`.`Description`, ''))) AS `Name`,
-    CASE
-        WHEN IFNULL(`na`.`Address_1`, '') = '' THEN ''
-        WHEN IFNULL(`na`.`Bad_Address`, '') != '' THEN 'Bad Address'
-        ELSE TRIM(CONCAT_WS(', ',
-                (CASE
-                    WHEN (IFNULL(`na`.`Address_2`, '') = '') THEN IFNULL(`na`.`Address_1`, '')
-                    ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),
-                            ', ',
-                            `na`.`Address_2`)
-                END),
-                IFNULL(`na`.`City`, ''),
-                IFNULL(`na`.`State_Province`, ''),
-                IFNULL(`na`.`Postal_Code`, ''),
-                IFNULL(`na`.`Country_Code`, '')))
-    END AS `Address`,
-    (CASE
-        WHEN (IFNULL(`np`.`Phone_Extension`, '') = '') THEN IFNULL(`np`.`Phone_Num`, '')
-        ELSE CONCAT_WS('x',
-                `np`.`Phone_Num`,
-                `np`.`Phone_Extension`)
-    END) AS `Phone`,
-    IFNULL(`ne`.`Email`, '') AS `Email`,
-    IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%m-%d-%Y'), '') AS `Birthdate`,
-    `nd`.`No_Return` AS `No Return`,
-    MAX(IFNULL(s.Span_Start_Date, '')) AS `Arrival`,
-    IFNULL(s.Span_End_Date, '') AS `Departure`,
-    IFNULL(`na`.`Bad_Address`, '') AS `Bad Addr`
-FROM
-    `stays` `s`
-        JOIN
-    visit v ON s.idVisit = v.idVisit
-        AND s.Visit_Span = v.Span
-        JOIN
-    `name_guest` `ng` ON `s`.`idName` = `ng`.`idName`
-        LEFT JOIN
-    `name` `n` ON ((`ng`.`idName` = `n`.`idName`))
-        LEFT JOIN
-    `name_address` `na` ON (((`ng`.`idName` = `na`.`idName`)
-        AND (`n`.`Preferred_Mail_Address` = `na`.`Purpose`)))
-        LEFT JOIN
-    `name_email` `ne` ON (((`ng`.`idName` = `ne`.`idName`)
-        AND (`n`.`Preferred_Email` = `ne`.`Purpose`)))
-        LEFT JOIN
-    `name_phone` `np` ON (((`ng`.`idName` = `np`.`idName`)
-        AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`)))
-        LEFT JOIN
-    `name_demog` `nd` ON ((`ng`.`idName` = `nd`.`idName`))
-        LEFT JOIN
-    `gen_lookups` `g1` ON (((`n`.`Name_Prefix` = `g1`.`Code`)
-        AND (`g1`.`Table_Name` = 'Name_Prefix')))
-        LEFT JOIN
-    `gen_lookups` `g2` ON (((`n`.`Name_Suffix` = `g2`.`Code`)
-        AND (`g2`.`Table_Name` = 'Name_Suffix')))
-        LEFT JOIN
-    `gen_lookups` `g3` ON (((`g3`.`Table_Name` = 'Patient_Rel_Type')
-        AND (`g3`.`Code` = `ng`.`Relationship_Code`)))
-WHERE
-    ((`ng`.`idName` > 0)
-        AND (`n`.`Record_Member` = 1)
-        AND (`n`.`Member_Status` IN ('a' , 'd', 'in')))
-GROUP BY s.idName ORDER BY ng.idPsg;
+        `n`.`External_Id` AS `External Id`,
+        `n`.`idName` AS `HHK Id`,
+        CASE
+            WHEN `ng`.`Relationship_Code` = 'slf' THEN 'Yes'
+            ELSE ''
+        END AS `Patient`,
+        TRIM(CONCAT_WS(' ',
+                    IFNULL(`g1`.`Description`, ''),
+                    `n`.`Name_First`,
+                    `n`.`Name_Middle`,
+                    `n`.`Name_Last`,
+                    IFNULL(`g2`.`Description`, ''))) AS `Name`,
+        CASE
+            WHEN IFNULL(`na`.`Address_1`, '') = '' THEN ''
+            WHEN IFNULL(`na`.`Bad_Address`, '') <> '' THEN 'Bad Address'
+            ELSE TRIM(CONCAT_WS(', ',
+                        CASE
+                            WHEN IFNULL(`na`.`Address_2`, '') = '' THEN IFNULL(`na`.`Address_1`, '')
+                            ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),
+                                    ', ',
+                                    `na`.`Address_2`)
+                        END,
+                        IFNULL(`na`.`City`, ''),
+                        IFNULL(`na`.`State_Province`, ''),
+                        IFNULL(`na`.`Postal_Code`, ''),
+                        IFNULL(`na`.`Country_Code`, '')))
+        END AS `Address`,
+        CASE
+            WHEN IFNULL(`np`.`Phone_Extension`, '') = '' THEN IFNULL(`np`.`Phone_Num`, '')
+            ELSE CONCAT_WS('x',
+                    `np`.`Phone_Num`,
+                    `np`.`Phone_Extension`)
+        END AS `Phone`,
+        IFNULL(`ne`.`Email`, '') AS `Email`,
+        IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%m-%d-%Y'),
+                '') AS `Birthdate`,
+        IFNULL(`gn`.`Description`, '') AS `No Return`,
+        MAX(IFNULL(`s`.`Span_Start_Date`, '')) AS `Arrival`,
+        IFNULL(`s`.`Span_End_Date`, '') AS `Departure`,
+        IFNULL(`na`.`Bad_Address`, '') AS `Bad Addr`
+    FROM
+        `stays` `s`
+        JOIN `visit` `v` ON (`s`.`idVisit` = `v`.`idVisit`
+            AND `s`.`Visit_Span` = `v`.`Span`)
+        JOIN `name_guest` `ng` ON (`s`.`idName` = `ng`.`idName`)
+        LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`)
+        LEFT JOIN `name_address` `na` ON (`ng`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`)
+        LEFT JOIN `name_email` `ne` ON (`ng`.`idName` = `ne`.`idName`
+            AND `n`.`Preferred_Email` = `ne`.`Purpose`)
+        LEFT JOIN `name_phone` `np` ON (`ng`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`)
+        LEFT JOIN `name_demog` `nd` ON (`ng`.`idName` = `nd`.`idName`)
+        LEFT JOIN `gen_lookups` `g1` ON (`n`.`Name_Prefix` = `g1`.`Code`
+            AND `g1`.`Table_Name` = 'Name_Prefix')
+        LEFT JOIN `gen_lookups` `g2` ON (`n`.`Name_Suffix` = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix')
+        LEFT JOIN `gen_lookups` `g3` ON (`g3`.`Table_Name` = 'Patient_Rel_Type'
+            AND `g3`.`Code` = `ng`.`Relationship_Code`)
+		LEFT JOIN `gen_lookups` `gn` ON `gn`.`Table_Name` = 'NoReturnReason'
+			AND `gn`.`Code` = `nd`.`No_Return`
+
+    WHERE
+        `ng`.`idName` > 0
+            AND `n`.`Record_Member` = 1
+            AND `n`.`Member_Status` IN ('a' , 'd', 'in')
+    GROUP BY `s`.`idName`
+    ORDER BY `ng`.`idPsg`;
 
 
 -- -----------------------------------------------------
