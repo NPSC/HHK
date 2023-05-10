@@ -2042,6 +2042,7 @@ $formBuilderOptions = [
 	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 	<script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
 	<script type="text/javascript" src="<?php echo FORMBUILDER_JS; ?>"></script>
+    <script type="text/javascript" src="<?php echo SERIALIZEJSON; ?>"></script>
 	<script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 </head>

@@ -1,6 +1,6 @@
 <?php
 
-use HHK\sec\{SecurityComponent, WebInit};
+use HHK\sec\{SecurityComponent, WebInit, Session};
 
 /**
  * recent.php
@@ -25,6 +25,8 @@ $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
 $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
+
+$uS = Session::getInstance();
 
 
 
@@ -120,9 +122,9 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
                                         <option value="addr" selected>Addresses</option>
                                         <option value="phone" selected>Phone</option>
                                         <option value="email" selected>Email</option>
-                                        <option value="vol">Volunteer Categories</option>
+                                        <?php echo ($uS->volunteer ? '<option value="vol">Volunteer Categories</option>':''); ?>
                                         <option value="web">Web User</option>
-                                        <option value="events">Calendar Events</option>
+                                        <?php echo ($uS->volunteer ? '<option value="events">Calendar Events</option>':''); ?>
                                         <?php if($donationsFlag){
                                             echo '<option value="donations">Donations</option>';
                                         } ?>

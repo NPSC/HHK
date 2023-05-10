@@ -284,17 +284,18 @@ Order by `t`.`List_Order`;");
         }
 
         // Save
-        if ($cmd == 'save' && isset($post['txtDiag'])) {
+        if ($cmd == 'save') {
+            $postLookups = json_decode(filter_input(INPUT_POST, "lookups", FILTER_UNSAFE_RAW), true);
 
             // Check for a new entry
-            if (isset($_POST['txtDiag'][0]) && $_POST['txtDiag'][0] != '') {
+            if (isset($postLookups['txtDiag'][0]) && $postLookups['txtDiag'][0] != '') {
 
                 // new entry
-                $dText = filter_var($post['txtDiag'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $dText = filter_var($postLookups['txtDiag'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $aText = '';
 
-                if(isset($post['selDiagCat'][0])){
-                    $aText = filter_var($post['selDiagCat'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if(isset($postLookups['selDiagCat'][0])){
+                    $aText = filter_var($postLookups['selDiagCat'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 if ($tableName == 'Patient_Rel_Type') {
@@ -302,12 +303,12 @@ Order by `t`.`List_Order`;");
                 }
 
                 if (isset($_POST['txtDiagAmt'][0])) {
-                    $aText = filter_var($post['txtDiagAmt'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    $aText = filter_var($postLookups['txtDiagAmt'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
                 $orderNumber = 0;
-                if (isset($_POST['txtDOrder'][0])) {
-                    $orderNumber = intval(filter_var($post['txtDOrder'][0], FILTER_SANITIZE_NUMBER_INT), 10);
+                if (isset($postLookups['txtDOrder'][0])) {
+                    $orderNumber = intval(filter_var($postLookups['txtDOrder'][0], FILTER_SANITIZE_NUMBER_INT), 10);
                 }
 
                 // Check for an entry with the same description
@@ -332,7 +333,7 @@ Order by `t`.`List_Order`;");
                     HouseLog::logGenLookups($dbh, $tableName, $newCode, $logText, "insert", $uS->username);
                 }
 
-                unset($post['txtDiag'][0]);
+                unset($postLookups['txtDiag'][0]);
             }
 
             $rep = NULL;
@@ -433,21 +434,21 @@ Order by `t`.`List_Order`;");
             }
 
             $amounts = array();
-            if (isset($post['txtDiagAmt'])) {
+            if (isset($postLookups['txtDiagAmt'])) {
 
-                foreach ($post['txtDiagAmt'] as $k => $a) {
+                foreach ($postLookups['txtDiagAmt'] as $k => $a) {
                     if (is_numeric($a)) {
                         $a = floatval($a);
                     }
 
                     $amounts[$k] = $a;
                 }
-            }elseif(isset($post['selDiagCat'])){
-                $amounts = filter_var_array($post['selDiagCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }elseif(isset($postLookups['selDiagCat'])){
+                $amounts = filter_var_array($postLookups['selDiagCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $codeArray = filter_var_array($post['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $orderNums = (isset($post['txtDOrder']) ? filter_var_array($post['txtDOrder'], FILTER_SANITIZE_NUMBER_INT) : array());
+            $codeArray = filter_var_array($postLookups['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $orderNums = (isset($postLookups['txtDOrder']) ? filter_var_array($postLookups['txtDOrder'], FILTER_SANITIZE_NUMBER_INT) : array());
 
             if ($type === GlTypeCodes::m) {
 
@@ -468,17 +469,17 @@ Order by `t`.`List_Order`;");
                         EditRS::loadRow($rw[0], $gluRs);
 
                         $desc = '';
-                        if (isset($post['txtDiag'][$c])) {
-                            $desc = filter_var($post['txtDiag'][$c], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                        if (isset($postLookups['txtDiag'][$c])) {
+                            $desc = filter_var($postLookups['txtDiag'][$c], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                         }
 
                         $orderNumber = 0;
-                        if (isset($post['txtDOrder'][$c])) {
-                            $orderNumber = intval(filter_var($post['txtDOrder'][$c], FILTER_SANITIZE_NUMBER_INT), 10);
+                        if (isset($postLookups['txtDOrder'][$c])) {
+                            $orderNumber = intval(filter_var($postLookups['txtDOrder'][$c], FILTER_SANITIZE_NUMBER_INT), 10);
                         }
 
                         $use = '';
-                        if (isset($post['cbDiagDel'][$c])) {
+                        if (isset($postLookups['cbDiagDel'][$c])) {
                             $use = 'y';
                             $on = $orderNumber + 100;
                             $dbh->exec("Insert Ignore into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) values ('RibbonColors', '$c', '$desc', '$on');");
@@ -504,10 +505,10 @@ Order by `t`.`List_Order`;");
 
                     }
                 }
-            } else if (isset($post['selmisc'])) {
-                replaceLookups($dbh, $post['selmisc'], $codeArray, (isset($post['cbDiagDel']) ? $post['cbDiagDel'] : array()));
+            } else if (isset($postLookups['selmisc'])) {
+                replaceLookups($dbh, $postLookups['selmisc'], $codeArray, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : array()));
             } else {
-                replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($post['cbDiagDel']) ? $post['cbDiagDel'] : NULL), $rep, (isset($post['cbDiagDel']) ? $post['selDiagDel'] : array()));
+                replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? $postLookups['selDiagDel'] : array()));
             }
         }
 
@@ -519,8 +520,8 @@ Order by `t`.`List_Order`;");
         }
 
         // Generate selectors.
-        if (isset($post['selmisc'])) {
-            $tbl = self::getSelections($dbh, RESERV_STATUS_TABLE_NAME, $post['selmisc'], $labels);
+        if (isset($postLookups['selmisc'])) {
+            $tbl = self::getSelections($dbh, RESERV_STATUS_TABLE_NAME, $postLookups['selmisc'], $labels);
         } else {
             $tbl = self::getSelections($dbh, $tableName, $type, $labels);
         }

@@ -31,6 +31,7 @@ define('FORMBUILDER_JS', "js/formBuilder.js" . JSV);
 define('RESERVE_JS', 'js/reserve.js' . JSV);
 define('CHECKIN_JS', 'js/checkin.js' . JSV);
 define('CHECKINGIN_JS', 'js/checkingIn.js' . JSV);
+define('SERIALIZEJSON', 'js/jquery.serializejson.js' . JSV);
 define('RESCBUILDER_JS', 'js/rescBuilder.js' . JSV);
 define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/guestTransfer.js' . JSV);

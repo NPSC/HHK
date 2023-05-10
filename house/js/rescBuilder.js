@@ -491,7 +491,9 @@ $(document).ready(function () {
 
         $btn.val('Saving...');
 
-        $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
+        var lookupData = $frm.serializeJSON();
+
+        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify(lookupData) + '&cmd=save' + '&table=' + table + '&tp=' + type,
             function(data) {
                 $btn.val('Save');
                 if (data) {

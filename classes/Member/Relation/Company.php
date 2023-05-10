@@ -34,7 +34,7 @@ class Company extends AbstractRelation {
      * @param \PDO $dbh
      * @return \PDOStatement|bool
      */
-    protected function getPdoStmt(\PDO $dbh):\PDOStatement|bool {
+    protected function getPdoStmt(\PDO $dbh){
 
         $query = "Select v.Company_Id as `Id`, v.Company as `Name`, v.MemberStatus as `MemStatus` from vmember_listing v where v.Id = :id and v.Company_Id > 0;";
 
