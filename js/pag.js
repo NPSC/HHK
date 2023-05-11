@@ -1,5 +1,5 @@
 /**
- * 
+ *
  * @param {string}
  *            mess
  * @param {boolean}
@@ -27,7 +27,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 			type : type,
 			text : mess
 		}).show();*/
-		
+
 		if(type == 'error'){
 			toastr.error(mess, title);
 		}else if(type == 'success'){
@@ -37,7 +37,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 		}else{
 			toastr.info(mess, title);
 		}
-		
+
 	} catch (err) {
 		// do nothing for now.
 	}
@@ -53,7 +53,7 @@ function dateRender(data, type, format) {
 	// If display or filter data is requested, format the date
 	if (type === 'display' || type === 'filter') {
 
-		if (data === null || data === '') {
+		if (data === undefined || data === null || data === '') {
 			return '';
 		}
 
@@ -120,7 +120,7 @@ function openiframe(src, width, height, title, buttons) {
 function logoutTimer(){
 	var timerID;
 	var intervalID;
-	
+
 	function resetTimer(){
 		$.ajax({
 			url: '../admin/ws_session.php',
@@ -140,15 +140,15 @@ function logoutTimer(){
 			}
 		});
 	}
-	
+
 	function countdown(){
 		var expiresIn = $("#expiresIn").text();
 		$("#expiresIn").text(expiresIn - 1);
 	}
-	
+
 	$dialog = $('<div id="logoutTimer" style="display:none; text-align: center;"><h3>You will be logged out in</h3><h2><span id="expiresIn"></span> Seconds</h2></div>');
 	$('#contentDiv').append($dialog);
-	
+
 	$dialog.dialog({
 		width : getDialogWidth(400),
 		height : 225,
@@ -173,7 +173,7 @@ function logoutTimer(){
 			}
 		}
 	});
-	
+
 	resetTimer();
 }
 
@@ -181,7 +181,7 @@ function logoutTimer(){
 function getDialogWidth(defaultWidth){
 	var winWidth = $(window).width();
 	var dialogWidth = defaultWidth;
-	
+
 	if(typeof defaultWidth == "number" && winWidth < defaultWidth - 30){
 		dialogWidth = winWidth - 30;
 	}
@@ -197,9 +197,9 @@ $(document).ready(
 		}, function() {
 			$(this).removeClass("ui-state-hover");
 		});
-		
+
 		//hover on bootstrap nav dropdowns
-		$('.navbar-nav .dropdown').hover(function(){ 
+		$('.navbar-nav .dropdown').hover(function(){
 			$(this).find(".dropdown-toggle").dropdown('show');
 		}, function(){
 			$(this).find(".dropdown-toggle").dropdown('hide');
@@ -293,14 +293,14 @@ $(document).ready(
 					}
 					//$("#dchgPw").dialog('close');
 				}
-			}		
+			}
 						//two factor Auth
 						$('div#dchgPw #mfaTabs').tabs();
 						$('div#dchgPw button, div#dchgPw input[type=submit]').button();
-						
-						
+
+
 						$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
-						
+
 						//delete saved evices
 						$('div#dchgPw').on('click', 'button#clearDevices', function(){
 							$.post("../house/ws_admin.php", {
@@ -323,7 +323,7 @@ $(document).ready(
 								}
 							});
 						});
-						
+
 						//generate new Authenticator secret and QR code
 						$('div#dchgPw').on('click', '#mfaAuthenticator button#genTOTPSecret', function(){
 							$.post("../house/ws_admin.php", {
@@ -350,7 +350,7 @@ $(document).ready(
 								}
 							});
 						});
-						
+
 						//show existing Authenticator QR code
 						$('div#dchgPw').on('click', '#mfaAuthenticator button#getTOTPSecret', function(){
 							$.post("../house/ws_admin.php", {
@@ -374,7 +374,7 @@ $(document).ready(
 								}
 							});
 						});
-						
+
 						$('div#dchgPw').on('click', 'button#genEmailSecret', function(){
 							var $target = $(this);
 							var method = 'email';
@@ -400,10 +400,10 @@ $(document).ready(
 								}
 							});
 						});
-						
+
 						$('div#dchgPw').on('click', 'button.disableMFA', function(){
 							var $target = $(this);
-							
+
 							$.post("../house/ws_admin.php", {
 								cmd : 'disable2fa',
 								method : $(this).data("method")
@@ -426,14 +426,14 @@ $(document).ready(
 								}
 							});
 						});
-						
-						
+
+
 						//submit + verify OTP
 						$('div#dchgPw').on('submit', '.otpForm', function(e){
 							e.preventDefault();
 							var $this = $(this);
-							
-							$.post("../house/ws_admin.php", $(this).serialize(), 
+
+							$.post("../house/ws_admin.php", $(this).serialize(),
 								function(data) {
 								if (data) {
 									try {
@@ -517,7 +517,7 @@ $(document).ready(
 				$('#pwChangeErrMsg').text('');
 			});
 
-			
+
 			$('#dchgPw').dialog({
 				autoOpen : autoOpen,
 				width : getDialogWidth(1000),
@@ -528,7 +528,7 @@ $(document).ready(
 				buttons : chPwButtons
 			});
 		}
-		
+
 		//Logout after inactivity
 		//logoutTimer();
 });

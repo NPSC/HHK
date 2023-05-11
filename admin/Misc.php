@@ -157,13 +157,13 @@ if (isset($_POST["btnGenLookups"])) {
     } else {
 
         $code = filter_var($_POST["txtCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        //$code = substr($code, 0, $flen["Code"]);
+
         $desc = filter_var($_POST["txtDesc"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        //$desc = substr($desc, 0, $flen["Description"]);
+
         $subt = filter_var($_POST["txtAddl"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        //$subt = substr($subt, 0, $flen["Substitute"]);
+
         $selTbl = filter_var($_POST["selLookup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        //$selTbl = substr($selTbl, 0, $flen["Table_Name"]);
+
         $selCode = filter_var($_POST["selCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($selTbl == "") {
@@ -259,7 +259,7 @@ if (isset($_POST['btnClnNames'])) {
             EditRS::loadRow($r, $n);
 
             $n->Name_First->setNewVal(ucfirst(strtolower($n->Name_First->getStoredVal())));
-            $n->Name_Last->setNewVal(ucfirst(strtolower($n->Name_Last->getStoredVal())));
+            //$n->Name_Last->setNewVal(ucfirst(strtolower($n->Name_Last->getStoredVal())));
             $n->Name_Middle->setNewVal(ucfirst(strtolower($n->Name_Middle->getStoredVal())));
             $n->Name_Nickname->setNewVal(ucfirst(strtolower($n->Name_Nickname->getStoredVal())));
             $n->Name_Previous->setNewVal(ucfirst(strtolower($n->Name_Previous->getStoredVal())));
@@ -414,7 +414,8 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
         // delete the name and associated records.
         $delStmt = $dbh->query("call delete_names_u_tbd;");
         $response = $delStmt->fetchAll(\PDO::FETCH_ASSOC);
-        $delStmt->closeCursor();
+        $delStmt->nextRowset();
+
 
         if (isset($response[0]['msg'])) {
             $delDupsAlert->set_Context(alertMessage::Success);
@@ -430,16 +431,6 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
     $delNamesMsg = $delDupsAlert->createMarkup();
 }
 
-
-$webAlert = new alertMessage("webContainer");
-$webAlert->set_DisplayAttr("none");
-$webAlert->set_Context(alertMessage::Success);
-$webAlert->set_iconId("webIcon");
-$webAlert->set_styleId("webResponse");
-$webAlert->set_txtSpanId("webMessage");
-$webAlert->set_Text("oh-oh");
-
-$getWebReplyMessage = $webAlert->createMarkup();
 
 $selLookups = "<option value=''>No records</option>";
 

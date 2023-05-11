@@ -198,8 +198,6 @@ if (filter_has_var(INPUT_POST, 'btnLogs')) {
     $logs = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
 }
 
-
-$logMarkup = '';
 $logSelRows = array(
     1 => array(0 => 'sl', 1 => 'Combined Log'),
     2 => array(0 => 'ss', 1 => 'Sys Config Log'),
@@ -282,16 +280,6 @@ $labels = SiteConfig::createLabelsMarkup($dbh)->generateMarkup();
 
 $authIdpList = SAML::getIdpList($dbh, false);
 
-// Alert Message
-$webAlert = new AlertMessage("webContainer");
-$webAlert->set_DisplayAttr("none");
-$webAlert->set_Context(AlertMessage::Success);
-$webAlert->set_iconId("webIcon");
-$webAlert->set_styleId("webResponse");
-$webAlert->set_txtSpanId("webMessage");
-$webAlert->set_Text("oh-oh");
-
-$getWebReplyMessage = $webAlert->createMarkup();
 ?>
 <!DOCTYPE html>
 <html>
@@ -324,7 +312,6 @@ $getWebReplyMessage = $webAlert->createMarkup();
 <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-<?php echo $getWebReplyMessage; ?>
             <div id="tabs" style="display:none;" class="hhk-widget-content">
                 <ul>
                     <li><a href="#config">Site Configuration</a></li>
@@ -414,7 +401,7 @@ echo $newsaml->getEditMarkup();
                         </div>
                     </form>
                 </div>
-                        <?php if ($uS->ContactManager != '') { ?>
+<?php if ($uS->ContactManager != '') { ?>
                     <div id="external" class="ui-tabs-hide" >
                         <form method="post" id="formext" name="formext" action="">
                             <div id="serviceContent" class="hhk-tdbox"><span style="margin-left:300px;">Loading...</span></div>
@@ -437,7 +424,9 @@ echo $newsaml->getEditMarkup();
                     </form>
                 </div>
                 <div id="logs" class="ui-tabs-hide hhk-tdbox" >
+                    <form autocomplete="off">
                         <?php echo $tabControl; ?>
+                    </form>
                 </div>
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">

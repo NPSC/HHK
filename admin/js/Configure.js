@@ -64,7 +64,7 @@ $(document).ready(function () {
         {
             "targets": [7],
             "title": "Date",
-            'data': 'Ts',
+            'data': 'Timestamp',
             render: function (data, type) {
                 return dateRender(data, type, dateFormat);
             }
@@ -134,6 +134,7 @@ if ($('.hhk-setMerchantRooms').length > 0) {
         beforeActivate: function (event, ui) {
             var pid = 'liss';
 
+            // CMS export
             if (ui.newTab.prop('id') === 'liService') {
 
                 $.post('ws_gen.php', {'cmd': 'shoCmConf'}, function (data) {
