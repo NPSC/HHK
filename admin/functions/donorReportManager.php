@@ -25,6 +25,11 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
     $voldCat = new VolCats();
     $sumaryRows = array();
+    $typeMarkup = "";
+    $ljClause = "";
+    $wclause = "";
+    $notNull = array();
+    $totalCategories = 0;
 
     $uS = Session::getInstance();
     $uname = $uS->username;
@@ -53,14 +58,10 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 //        $totalOrder = "order by numId desc ";
 //        $groupBy = " group by Id ";
     }
+
     $voldCat->set_andOr($andOr);
 
 
-    $typeMarkup = "";
-    $ljClause = "";
-    $wclause = "";
-    $notNull = array();
-    $totalCategories = 0;
 
     $donSelMemberType->setReturnValues($_POST[$donSelMemberType->get_htmlNameBase()]);
 
@@ -93,25 +94,22 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         $wclause .= ")";
     }
 
-    $minAmt = "";
-    $maxAmt = "";
+    $minAmt = 0;
+    $maxAmt = 0;
 
     // collect the parameters
     //
     if (isset($_POST["txtmax"])) {
         $maxAmt = filter_var($_POST["txtmax"], FILTER_SANITIZE_NUMBER_INT);
-    } else {
-        $maxAmt = "";
     }
+
     if (isset($_POST["txtmin"])) {
         $minAmt = filter_var($_POST["txtmin"], FILTER_SANITIZE_NUMBER_INT);
-    } else {
-        $minAmt = "";
     }
 
     if (!$showAmounts) {
-        $maxAmt = "";
-        $minAmt = "";
+        $maxAmt = 0;
+        $minAmt = 0;
     }
 
     $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -152,11 +150,11 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
         // Deal with the amount where clauses
         if ($maxAmt != 0 && $minAmt != 0) {
-            $totalClause .= "having  Total <= $maxAmt and Total >= $minAmt";
+            $totalClause .= "having  `Total` <= '$maxAmt' and `Total` >= '$minAmt'";
         } else if ($maxAmt != 0) {
-            $totalClause .= "having  Total <= $maxAmt";
+            $totalClause .= "having  `Total` <= '$maxAmt'";
         } else if ($minAmt != 0) {
-            $totalClause .= "having  Total >= " . $minAmt;
+            $totalClause .= "having  `Total` >= '$minAmt'" ;
         }
 
     }
@@ -404,9 +402,9 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     	    }
 
 
-	        $query = "from vindividual_donations vd $ljClause where 1=1 $wclause $dateClause $selClause $totalClause $oClause";
+	        $query = "select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree` from vindividual_donations vd $ljClause where 1=1 $wclause $dateClause $selClause $totalClause $oClause";
 
-	        $stmt = $dbh->query("select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree` " . $query);
+	        $stmt = $dbh->query($query);
 	        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 	        $reportTitle = "Individual Donation Report.   Date: " . date("m/d/Y");
