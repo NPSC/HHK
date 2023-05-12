@@ -29,6 +29,10 @@ abstract class AbstractTemplateForm {
     * @param integer $docId
     */
    function __construct(\PDO $dbh, $docId){
+
+        $this->template = "";
+        $this->subjectLine = "";
+
        if(intval($docId) > 0 && $dbh){
            $stmt = $dbh->query("Select `Doc`,`Abstract` from `document` where `idDocument` = $docId");
            $docRow = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -36,15 +40,13 @@ abstract class AbstractTemplateForm {
            $this->template = (isset($docRow['Doc']) ? $docRow['Doc']: '');
 
            try{
-                $abstract = json_decode($docRow['Abstract'], true);
-                $this->subjectLine = (isset($abstract["subjectLine"]) ? $abstract["subjectLine"] : "");
+                if (isset($docRow['Abstract'])) {
+                    $abstract = json_decode($docRow['Abstract'], true);
+                    $this->subjectLine = (isset($abstract["subjectLine"]) ? $abstract["subjectLine"] : "");
+                }
            }catch(\Exception $e){
                $this->subjectLine = "";
            }
-
-       }else{
-           $this->template = "";
-           $this->subjectLine = "";
        }
    }
 
