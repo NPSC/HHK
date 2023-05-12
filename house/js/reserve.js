@@ -34,13 +34,13 @@ $(document).ready(function() {
         title: 'Confirmation Form',
         close: function () {$('div#submitButtons').show(); $("#frmConfirm").children().remove();},
         buttons: {
-            'Download MS Word': function () {
+            'Download to MS Word': function () {
                 var $confForm = $("form#frmConfirm");
                 var $hdnCfmRid = $confForm.find('input[name="hdnCfmRid"]');
                 var $hdnCfmDocCode = $confForm.find('input[name="hdnCfmDocCode"]');
                 var $hdnCfmAmt = $confForm.find('input[name="hdnCfmAmt"]');
                 var $hdnTabIndex = $confForm.find('input[name="hdnTabIndex"]');
-                
+
                 if($hdnCfmRid.length > 0){
                 	$hdnCfmRid.val($('#btnShowCnfrm').data('rid'));
                 }else{
@@ -70,7 +70,7 @@ $(document).ready(function() {
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
-                    
+
                     if(data.status == 'success'){
                     	flagAlertMessage(data.mesg, false);
                     }else{
@@ -81,7 +81,7 @@ $(document).ready(function() {
             },
             "Cancel": function() {
                 $(this).dialog("close");
-                
+
             }
         }
     });
@@ -125,7 +125,7 @@ $(document).ready(function() {
         modal: true,
         title: 'Payment Receipt'
     });
-    
+
     $("#ecSearch").dialog({
         autoOpen: false,
         resizable: false,
@@ -142,7 +142,7 @@ $(document).ready(function() {
     if (paymentMarkup !== '') {
         $('#paymentMessage').show();
     }
-    
+
     if (receiptMarkup !== '') {
         showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt');
     }
@@ -165,7 +165,7 @@ $(document).ready(function() {
 // Buttons
     $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
 
-    $('#btnDelete').click(function () { 
+    $('#btnDelete').click(function () {
 
         if ($(this).val() === 'Deleting >>>>') {
             return;
@@ -180,9 +180,9 @@ $(document).ready(function() {
 				$('#btnShowReg').hide();
 				return;
 			}
-			
+
             $(this).val('Deleting >>>>');
-			
+
 			 $.post(
 				'ws_resv.php',
                 $('#form1').serialize() + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
@@ -208,17 +208,17 @@ $(document).ready(function() {
 				        paymentRedirect (data, $('#xform'));
 				        return;
 				    }
-				    
+
                     if (data.receiptMarkup && data.receiptMarkup != '') {
 						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
 					}
-					
+
 					if (data.deleted) {
 						$('#form1').remove();
 						$('#contentDiv').append('<p>' + data.deleted + '</p>');
 						$('#spnStatus').text('Deleted');
 					}
-					
+
                 }
         	);
         }
@@ -244,8 +244,8 @@ $(document).ready(function() {
         if (pageManager.verifyInput() === true) {
 
             $(this).val('Saving >>>>');
-            
-            
+
+
             $.post(
                 'ws_resv.php',
                 $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
@@ -278,9 +278,9 @@ $(document).ready(function() {
                     if (data.redirTo) {
                        location.replace(data.redirTo);
                     }
-				    
+
                     pageManager.loadResv(data);
-                    
+
                     if (data.receiptMarkup && data.receiptMarkup != '') {
 						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
 					}
@@ -316,7 +316,7 @@ $(document).ready(function() {
         resv.fullName = item.fullName;
         resv.cmd = 'getResv';
         resv.guestSearchTerm = $guestSearch.val();
-        
+
         pageManager.getReserve(resv);
 
     }

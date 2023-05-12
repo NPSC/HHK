@@ -879,15 +879,32 @@ WHERE
         $tbl = new HTMLTable();
         $lines = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        $deleted = '';
+        if ($lines[0]['Deleted'] == 1) {
+            $deleted = '(Deleted)';
+        }
 
-        foreach ($lines as $l) {
+        if (count($lines) > 0) {
+            // create lines markup
+            foreach ($lines as $l) {
 
-            if ($l['Item_Deleted'] == 0) {
+                if ($l['Item_Deleted'] == 0 && $lines[0]['Deleted'] == 0) {
 
-                $tbl->addBodyTr(
-                        HTMLTable::makeTd($l['Description'], array('class' => 'tdlabel'))
-                        . HTMLTable::makeTd(number_format($l['LineAmount'], 2), array('style' => 'text-align:right;')));
+                    $tbl->addBodyTr(
+                            HTMLTable::makeTd($l['Description'], array('class' => 'tdlabel'))
+                            . HTMLTable::makeTd(number_format($l['LineAmount'], 2), array('style' => 'text-align:right;')));
+                } else {
+                    // Show deleted Itmes
+                    $tbl->addBodyTr(
+                            HTMLTable::makeTd($l['Description'], array('class' => 'tdlabel'))
+                            . HTMLTable::makeTd(number_format($l['LineAmount'], 2), array('style' => 'text-align:right;')));
+                }
             }
+        } else {
+            // No invoice lines, show a blank
+            $tbl->addBodyTr(
+                            HTMLTable::makeTd('*No Items*', array('class' => 'tdlabel'))
+                            . HTMLTable::makeTd(' ', array('style' => 'text-align:right;')));
         }
 
 
@@ -895,11 +912,11 @@ WHERE
         $tblAttr = array('style' => 'background-color:lightyellow; width:100%;');
 
         if ($lines[0]['Deleted'] == 1) {
-            $tblAttr['style'] = 'background-color:red;';
+            $tblAttr['style'] = 'background-color:red; min-width:260px;';
         }
 
         $mkup = HTMLContainer::generateMarkup('div',
-            $tbl->generateMarkup($tblAttr, 'Items For Invoice #' . $lines[0]['Invoice_Number'] . HTMLContainer::generateMarkup('span', ' (' . $lines[0]['GuestName'] . ')', array('style' => 'font-size:.8em;')))
+            $tbl->generateMarkup($tblAttr, "Items For Invoice $deleted#" . $lines[0]['Invoice_Number'] . HTMLContainer::generateMarkup('span', ' (' . $lines[0]['GuestName'] . ')', array('style' => 'font-size:.8em;')))
                . ($showBillTo ? Invoice::getBillToAddress($dbh, $lines[0]['Sold_To_Id'])->generateMarkup(array(), 'Bill To') : '')
                , $divAttr);
 
