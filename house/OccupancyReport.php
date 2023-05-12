@@ -1,21 +1,10 @@
 <?php
 
-use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
-use HHK\sec\{Session, WebInit};
-use HHK\HTMLControls\HTMLContainer;
-use HHK\House\Report\ReportFilter;
-use HHK\ColumnSelectors;
-use HHK\HTMLControls\HTMLTable;
-use HHK\SysConst\RoomRateCategories;
-use HHK\SysConst\GLTableNames;
-use HHK\HTMLControls\HTMLSelector;
-use HHK\ExcelHelper;
-use HHK\sec\Labels;
-use HHK\House\Report\ReportFieldSet;
-use HHK\House\Report\ReservationReport;
-use HHK\House\Report\QuarterlyOccupancyReport;
+
 use HHK\House\Report\DailyOccupancyReport;
+use HHK\House\Report\QuarterlyOccupancyReport;
+use HHK\sec\{Session, WebInit};
+use HHK\sec\Labels;
 
 /**
  * ReservReport.php
@@ -45,6 +34,48 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $dataTableWrapper = '';
 $activeTab = 0;
+
+function todData(\PDO $dbh) {
+
+    $tod[] = ['Arrival Time of Day', 'Check-ins', 'Checkouts'];
+    $toa = [];
+
+    // Get arrivals
+    $stmt = $dbh->query("SELECT
+            TIME_FORMAT(v.Arrival_Date, '%l %p') as `TOD`,
+            COUNT(HOUR(v.Arrival_Date)) as `Number`
+        FROM
+            visit v
+        WHERE YEAR(v.Arrival_Date) > 2020
+        GROUP BY HOUR(v.Arrival_Date)
+        ORDER BY HOUR(v.Arrival_Date)");
+
+    while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+
+        $toa[$r[0]] = intval($r[1]);
+
+    }
+
+    // Get departures
+    $stmt = $dbh->query("SELECT
+            TIME_FORMAT(v.Actual_Departure, '%l %p') as `TOD`,
+            COUNT(HOUR(v.Actual_Departure)) as `Number`
+        FROM
+            visit v
+        WHERE YEAR(v.Actual_Departure) > 2020 and v.Actual_Departure is not null
+        GROUP BY HOUR(v.Actual_Departure)
+        ORDER BY HOUR(v.Actual_Departure)");
+
+    while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+
+
+        $tod[] = [$r[0], (isset($toa[$r[0]]) ? $toa[$r[0]] : 0), intval($r[1])];
+
+    }
+
+    return $tod;
+}
+
 
 $occupancyReport = new QuarterlyOccupancyReport($dbh, $_REQUEST);
 $dailyOccupancyReport = new DailyOccupancyReport($dbh, $_REQUEST);
@@ -84,16 +115,7 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
         <script src="https://www.gstatic.com/charts/loader.js"></script>
 
         <script type="text/javascript">
-            google.charts.load('current', {packages: ['corechart']});
-			google.charts.setOnLoadCallback(drawGuestsPerNight);
-            google.charts.setOnLoadCallback(drawDiagnosisTotals);
-
-            let options = {
-                height:400,
-            	width:500,
-            	'chartArea': {'width': '90%', 'height': '80%'},
-            	legend: {position: 'right', alignment: 'center'}
-            };
+            google.charts.load('current', {packages: ['corechart', 'bar']});
 
             function drawGuestsPerNight() {
 
@@ -104,7 +126,7 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
                 var view = new google.visualization.DataView(dataTable);
 
                 var chart = new google.visualization.PieChart(document.getElementById('guestsPerNight'));
-                
+
                 let options = {
                     height:350,
                     width: 500,
@@ -145,16 +167,40 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
                 chart.draw(view, options);
             }
 
+            function drawTODCheckin() {
+
+                let data = <?php echo json_encode(todData($dbh)); ?>;
+                let dataTable = google.visualization.arrayToDataTable(data);
+
+                let options = {
+                    height:600,
+                    width: 950,
+                    chart: {title:"HHK Check-in, Checkout Time of Day Distribution"}
+                };
+
+                var chart = new google.charts.Bar(document.getElementById('todChart'));
+                chart.draw(dataTable, google.charts.Bar.convertOptions(options));
+            }
         </script>
 
         <script type="text/javascript">
             $(document).ready(function() {
-            	$("#occupancyTabs").tabs({
-            		active: <?php echo $activeTab; ?>,
-            		activate: function(event, ui){
+                let activeTab = <?php echo $activeTab; ?>
 
-            		}
-            	});
+            	$("#occupancyTabs").tabs({
+            		active: activeTab,
+                    beforeActivate: function(event, ui) {
+
+                        if (ui.newTab.prop('id') == 'todTab') {
+                            google.charts.setOnLoadCallback(drawTODCheckin);
+                        }
+                    }
+                });
+
+                if (activeTab == 1) {
+                    google.charts.setOnLoadCallback(drawDiagnosisTotals);
+                    google.charts.setOnLoadCallback(drawGuestsPerNight);
+                }
 
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = $.parseJSON('<?php echo json_encode($occupancyReport->colSelector->getColumnDefs()); ?>');
@@ -217,6 +263,7 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
             	<ul>
             		<li><a href="#dailyOcc">Daily Occupancy</a></li>
             		<li><a href="#historicalOcc">Historical Occupancy</a></li>
+                    <li id='todTab'><a href="#todDoc">Check-in/Out Time of Day</a></li>
             	</ul>
 
             	<div id="dailyOcc">
@@ -224,6 +271,9 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
             	</div>
             	<div id="historicalOcc">
             		<?php echo $occupancyReport->generateFilterMarkup(false) . $dataTableWrapper; ?>
+            	</div>
+            	<div id="todDoc">
+                    <div id='todChart'></div>
             	</div>
             </div>
 
