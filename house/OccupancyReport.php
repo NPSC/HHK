@@ -43,7 +43,10 @@ $todayDT = new \DateTimeImmutable();
  */
 function todData(\PDO $dbh) {
 
-    $tod[] = ['Time of Day', 'Check-ins', 'Checkouts'];
+    $hours = ['12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
+                '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'];
+    $result[] = ['Time of Day', 'Check-ins', 'Checkouts'];
+    $tod = [];
     $toa = [];
     $sinceDT = new \DateTime();
     $sinceDT->sub(new \DateInterval('P1Y'));
@@ -74,10 +77,20 @@ function todData(\PDO $dbh) {
         ORDER BY HOUR(v.Actual_Departure)");
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
-        $tod[] = [$r[0], (isset($toa[$r[0]]) ? $toa[$r[0]] : 0), intval($r[1])];
+        $tod[$r[0]] = intval($r[1]);
     }
 
-    return $tod;
+    // Collect all toa's
+    foreach ($hours as $h) {
+
+        $result[] = [
+            $h,
+            (isset($toa[$h]) ? $toa[$h] : 0),
+            (isset($tod[$h]) ? $tod[$h] : 0)
+        ];
+    }
+
+    return $result;
 }
 
 /**
@@ -265,7 +278,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
                 let options = {
                     height:500,
-                    width: 990,
+                    width: 1100,
                     chart: {title:"HHK Check-in, Checkout Time-of-Day Distribution",
                             subtitle: 'Over the last 12 months'}
                 };
