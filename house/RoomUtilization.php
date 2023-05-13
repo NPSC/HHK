@@ -101,7 +101,8 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
     if (isset($_POST['btnByGuest'])) {
         $output = RoomReport::roomNOR($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $roomGroups[$groupingSelection]);
     } else {
-        $output = RoomReport::rescUtilization($dbh, $filter->getReportStart(), $filter->getQueryEnd());
+        $roomReport = new RoomReport();
+        $output = $roomReport->rescUtilization($dbh, $filter->getReportStart(), $filter->getQueryEnd());
     }
 }
 

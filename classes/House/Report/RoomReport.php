@@ -20,7 +20,7 @@ use HHK\sec\Session;
  * RoomReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -31,6 +31,19 @@ use HHK\sec\Session;
  */
 class RoomReport {
 
+    /**
+     * Summary of roomNightsbyMonth
+     * @var array
+     */
+    protected $roomNights = [];
+
+    /**
+     * Summary of getGlobalNightsCount
+     * @param \PDO $dbh
+     * @param mixed $year
+     * @param mixed $fyDiffMonths
+     * @return mixed
+     */
     protected static function getGlobalNightsCount(\PDO $dbh, $year = '', $fyDiffMonths = 0) {
 
         $niteCount = 0;
@@ -62,6 +75,13 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $niteCount;
     }
 
+    /**
+     * Summary of getGlobalStaysCount
+     * @param \PDO $dbh
+     * @param mixed $year
+     * @param mixed $fiscalYearMonths
+     * @return mixed
+     */
     protected static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths = 0) {
 
         $whClause = '';
@@ -79,6 +99,12 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         }
     }
 
+    /**
+     * Summary of getGlobalNightsCounter
+     * @param \PDO $dbh
+     * @param mixed $previousCount
+     * @return string
+     */
     public static function getGlobalNightsCounter(\PDO $dbh, $previousCount = 0) {
 
         $uS = Session::getInstance();
@@ -111,6 +137,12 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $span;
     }
 
+    /**
+     * Summary of getGlobalStaysCounter
+     * @param \PDO $dbh
+     * @param mixed $previousCount
+     * @return string
+     */
     public static function getGlobalStaysCounter(\PDO $dbh, $previousCount = 0) {
 
         $uS = Session::getInstance();
@@ -157,6 +189,11 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $span;
     }
 
+    /**
+     * Summary of getGlobalRoomOccupancy
+     * @param \PDO $dbh
+     * @return string
+     */
     public static function getGlobalRoomOccupancy(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -187,6 +224,11 @@ where ru.idResource is null" . $whereGroupSql . ";";
         return $span;
     }
 
+    /**
+     * Summary of dailyReport
+     * @param \PDO $dbh
+     * @return array
+     */
     public static function dailyReport(\PDO $dbh) {
 
         $roomsOOS = array();
@@ -330,6 +372,17 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
         return $tableRows;
     }
 
+    /**
+     * Summary of doDailyMarkup
+     * @param \PDO $dbh
+     * @param mixed $r
+     * @param mixed $guests
+     * @param mixed $roomsOOS
+     * @param mixed $notes
+     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param mixed $roomStatuses
+     * @return array
+     */
     protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, $notes, AbstractPriceModel $priceModel, $roomStatuses) {
 
         $fixed = array();
@@ -430,12 +483,21 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
     }
 
 
+    /**
+     * Summary of roomNOR
+     * @param \PDO $dbh
+     * @param mixed $startDate
+     * @param mixed $endDate
+     * @param mixed $whHosp
+     * @param mixed $roomGroup
+     * @return string
+     */
     public static function roomNOR(\PDO $dbh, $startDate, $endDate, $whHosp, $roomGroup) {
 
         $oneDay = new \DateInterval('P1D');
 
         if ($startDate == '') {
-            return;
+            return '';
         }
 
         if ($endDate == '') {
@@ -447,7 +509,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
 
 
         if ($stDT === FALSE || $endDT === FALSE) {
-            return;
+            return '';
         }
 
         $query = "SELECT
@@ -637,204 +699,39 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         return $mkup;
     }
 
-    public static function rescUtilization(\PDO $dbh, $startDate, $endDate) {
+    protected $summary;
+    private $th;
+    private $daysInMonths;
+    protected $rescs;
+    protected $totals;
+    protected $days;
 
-        if ($startDate == '') {
-            return;
-        }
+    /**
+     * Summary of rescUtilization
+     * @param \PDO $dbh
+     * @param string $startDate
+     * @param string $endDate
+     * @return string
+     */
+    public function rescUtilization(\PDO $dbh, $startDate, $endDate) {
 
-        if ($endDate == '') {
-            $endDate = date('Y-m-d');
-        }
-
-        $oneDay = new \DateInterval('P1D');
-        $dateFormat = 'Y-m-d';
-        $dateTitle = 'j';
-
-        $stDT = new \DateTime($startDate);
-        $stDT->setTime(0,0,0);
-        $endDT = new \DateTime($endDate);
-
-
-        if ($stDT === FALSE || $endDT === FALSE) {
-            return;
-        }
-
-        // Counting start date
-        $countgDT = new \DateTime($startDate);
-        $countgDT->setTime(0, 0, 0);
-
-
-        // Get all the rooms
-        $stResc = $dbh->query("select r.idResource, r.Title "
-                . " from resource r left join
-resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= '" . $stDT->format('Y-m-d') . "' and DATE(ru.End_Date) >= '" . $endDT->format('Y-m-d') . "'"
-                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
-                . " order by r.Title;");
-
-        $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);
-
-        $rescs = array();
-        $totals = array();
-
-        foreach ($stRows as $r) {
-
-            $rescs[$r['idResource']] = array(
-                'Title'=>$r['Title']);
-
-        }
-        unset($stRows);
-
-        $summary = array('nits'=>'Nights', 'oos'=>'OOS', 'to'=>'Delayed', 'un'=>'Unavailable');
-
-
-        $days = array();
-
-        $th = '';
-        $daysInMonths = array();
-
-
-
-        // Set up the days array
-        while ($countgDT < $endDT) {
-
-            $thisDay = $countgDT->format($dateFormat);
-            $th .= HTMLTable::makeTh($countgDT->format($dateTitle));
-
-            $thisMonth = $countgDT->format('M, Y');
-
-            if (isset($daysInMonths[$thisMonth])) {
-                $daysInMonths[$thisMonth]++;
-            } else {
-                $daysInMonths[$thisMonth] = 1;
-            }
-
-            foreach ($rescs as $idResc => $r) {
-
-                $days[$idResc][$thisDay]['n'] = 0;
-                $days[$idResc][$thisDay]['o'] = 0;
-                $days[$idResc][$thisDay]['t'] = 0;
-                $days[$idResc][$thisDay]['u'] = 0;
-
-            }
-
-            foreach ($summary as $s => $title) {
-
-                $totals[$s][$thisDay] = 0;
-
-            }
-
-
-            $countgDT->add($oneDay);
-
-        }
-
-        $th .= HTMLTable::makeTh('Room');
-        $th .= HTMLTable::makeTh('Nights');
-        $th .= HTMLTable::makeTh('OOS');
-        $th .= HTMLTable::makeTh('Delayed');
-        $th .= HTMLTable::makeTh('Unavailable');
-
-
-
-        // Collect visit records
-        $query = "select
-    v.idResource,
-    r.Category,
-    r.idSponsor,
-    v.Span_Start,
-    DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Nights`
-from visit v left join resource r on v.idResource = r.idResource
-where v.Status != '" . VisitStatus::Pending . "' and DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) > 0
-and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull(v.Span_End,  datedefaultnow(v.Expected_Departure) )) >= DATE('" . $stDT->format('Y-m-d') ."') order by r.Title;";
-
-        $stmt = $dbh->query($query);
-
-        // Count nights of use
-        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $rmStartDate = new \DateTime($r['Span_Start']);
-            $numNights = $r['Nights'];
-
-            for ($j = 0; $j < $numNights; $j++) {
-                $rmDate = $rmStartDate->format($dateFormat);
-
-                if (isset($days[$r['idResource']][$rmDate])) {
-
-                    $days[$r['idResource']][$rmDate]['n']++;
-                    $totals['nits'][$rmDate]++;
-
-
-                }
-
-                if ($rmStartDate > $endDT) {
-                    break;
-                }
-                $rmStartDate->add($oneDay);
-            }
-
-        }
-
-        // Collect resource use records
-        $rstmt = $dbh->query("Select idResource, `Status`, `Start_Date`, `End_Date`, DATEDIFF(ifnull(`End_Date`, now()), `Start_Date`) as `Nights`"
-                . " from resource_use where Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(End_Date, now()) >= '" . $stDT->format('Y-m-d 00:00:00') ."' order by idResource");
-
-        while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
-
-            $rmStartDate = new \DateTime($r['Start_Date']);
-            $numNights = $r['Nights'];
-
-            // Collect single day events
-            if ($numNights == 0) {
-                $numNights++;
-            }
-
-            for ($j = 0; $j < $numNights; $j++) {
-
-                $rmDate = $rmStartDate->format($dateFormat);
-
-                if (isset($days[$r['idResource']][$rmDate])) {
-
-                    if ($r['Status'] == ResourceStatus::Delayed) {
-
-                        $days[$r['idResource']][$rmDate]['t']++;
-                        $totals['to'][$rmDate]++;
-
-                    } else if ($r['Status'] == ResourceStatus::OutOfService) {
-
-                        $days[$r['idResource']][$rmDate]['o']++;
-                        $totals['oos'][$rmDate]++;
-
-
-                    } else if ($r['Status'] == ResourceStatus::Unavailable) {
-
-                        $days[$r['idResource']][$rmDate]['u']++;
-                        $totals['un'][$rmDate]++;
-
-                    }
-                }
-
-                if ($rmStartDate > $endDT) {
-                    break;
-                }
-                $rmStartDate->add($oneDay);
-            }
-        }
+        $this->collectUtilizationData($dbh, $startDate, $endDate);
 
         // Rooms report
         $tbl = new HTMLTable();
         $thMonth = '';
 
         // Month headers
-        foreach ($daysInMonths as $m => $c) {
+        foreach ($this->daysInMonths as $m => $c) {
             $thMonth .= HTMLTable::makeTh($m, array('colspan'=>$c));
         }
 
         $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'6')));
-        $tbl->addHeaderTr(HTMLTable::makeTh('Room ('.count($rescs).')') . $th);
+        $tbl->addHeaderTr(HTMLTable::makeTh('Room ('.count($this->rescs).')') . $this->th);
 
-        foreach ($days as $idRm => $rdateArray) {
+        foreach ($this->days as $idRm => $rdateArray) {
 
-            $tds = HTMLTable::makeTd($rescs[$idRm]['Title']);
+            $tds = HTMLTable::makeTd($this->rescs[$idRm]['Title']);
 
             $daysOccupied['n'] = 0;
             $daysOccupied['o'] = 0;
@@ -865,7 +762,7 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
 
             }
 
-            $tds .= HTMLTable::makeTd($rescs[$idRm]['Title']);
+            $tds .= HTMLTable::makeTd($this->rescs[$idRm]['Title']);
 
             foreach ($daysOccupied as $d) {
                 $tds .= HTMLTable::makeTd($d, array('style'=>'text-align:right;'));
@@ -876,9 +773,9 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
 
         $ctr = 1;
 
-        foreach ($totals as $idRm => $rdateArray) {
+        foreach ($this->totals as $idRm => $rdateArray) {
 
-            $tds = HTMLTable::makeTd($summary[$idRm]);
+            $tds = HTMLTable::makeTd($this->summary[$idRm]);
 
             $daysOccupied = 0;
 
@@ -888,13 +785,12 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
                 $daysOccupied += $numbers;
             }
 
-            $tds .= HTMLTable::makeTd($summary[$idRm]);
+            $tds .= HTMLTable::makeTd($this->summary[$idRm]);
 
             for ($i = 1; $i < $ctr; $i++) {
                 $tds .= HTMLTable::makeTd('');
             }
             $tds .= HTMLTable::makeTd($daysOccupied, array('style'=>'text-align:right;'));
-
 
             $tbl->addBodyTr($tds);
             $ctr++;
@@ -904,5 +800,204 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
         return $tbl->generateMarkup();
     }
 
+    public function collectUtilizationData(\PDO $dbh, $startDate, $endDate) {
+
+        if ($startDate == '') {
+            return '';
+        }
+
+        if ($endDate == '') {
+            $endDate = date('Y-m-d');
+        }
+
+        $oneDay = new \DateInterval('P1D');
+        $dateFormat = 'Y-m-d';
+        $dateTitle = 'j';
+
+        $stDT = new \DateTime($startDate);
+        $stDT->setTime(0,0,0);
+        $endDT = new \DateTime($endDate);
+
+
+        if ($stDT === FALSE || $endDT === FALSE) {
+            return '';
+        }
+
+        // Counting start date
+        $countgDT = new \DateTime($startDate);
+        $countgDT->setTime(0, 0, 0);
+
+
+        // Get all the rooms
+        $stResc = $dbh->query("select r.idResource, r.Title "
+                . " from resource r left join
+resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= '" . $stDT->format('Y-m-d') . "' and DATE(ru.End_Date) >= '" . $endDT->format('Y-m-d') . "'"
+                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
+                . " order by r.Title;");
+
+        $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);
+
+        $this->rescs = array();
+        $this->totals = array();
+
+        foreach ($stRows as $r) {
+
+            $this->rescs[$r['idResource']] = array(
+                'Title'=>$r['Title']);
+
+        }
+        unset($stRows);
+
+        $this->summary = array('nits'=>'Nights', 'oos'=>'OOS', 'to'=>'Delayed', 'un'=>'Unavailable');
+
+
+        $this->days = array();
+
+        $this->th = '';
+        $this->daysInMonths = array();
+
+
+
+        // Set up the days array
+        while ($countgDT < $endDT) {
+
+            $thisDay = $countgDT->format($dateFormat);
+            $this->th .= HTMLTable::makeTh($countgDT->format($dateTitle));
+
+            $thisMonth = $countgDT->format('M, Y');
+
+            if (isset($this->daysInMonths[$thisMonth])) {
+                $this->daysInMonths[$thisMonth]++;
+            } else {
+                $this->daysInMonths[$thisMonth] = 1;
+            }
+
+            foreach ($this->rescs as $idResc => $r) {
+
+                $this->days[$idResc][$thisDay]['n'] = 0;
+                $this->days[$idResc][$thisDay]['o'] = 0;
+                $this->days[$idResc][$thisDay]['t'] = 0;
+                $this->days[$idResc][$thisDay]['u'] = 0;
+
+            }
+
+            foreach ($this->summary as $s => $title) {
+
+                $this->totals[$s][$thisDay] = 0;
+
+            }
+
+
+            $countgDT->add($oneDay);
+
+        }
+
+        $this->th .= HTMLTable::makeTh('Room');
+        $this->th .= HTMLTable::makeTh('Nights');
+        $this->th .= HTMLTable::makeTh('OOS');
+        $this->th .= HTMLTable::makeTh('Delayed');
+        $this->th .= HTMLTable::makeTh('Unavailable');
+
+
+
+        // Collect visit records
+        $query = "select
+    v.idResource,
+    r.Category,
+    r.idSponsor,
+    v.Span_Start,
+    DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Nights`
+from visit v left join resource r on v.idResource = r.idResource
+where v.Status != '" . VisitStatus::Pending . "' and DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) > 0
+and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull(v.Span_End,  datedefaultnow(v.Expected_Departure) )) >= DATE('" . $stDT->format('Y-m-d') ."') order by r.Title;";
+
+        $stmt = $dbh->query($query);
+
+        // Count nights of use
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $rmStartDate = new \DateTime($r['Span_Start']);
+            $numNights = $r['Nights'];
+
+            for ($j = 0; $j < $numNights; $j++) {
+                $rmDate = $rmStartDate->format($dateFormat);
+
+                if (isset($this->days[$r['idResource']][$rmDate])) {
+
+                    $this->days[$r['idResource']][$rmDate]['n']++;
+                    $this->totals['nits'][$rmDate]++;
+
+
+                }
+
+                if ($rmStartDate > $endDT) {
+                    break;
+                }
+                $rmStartDate->add($oneDay);
+            }
+
+        }
+
+        // Collect resource use records
+        $rstmt = $dbh->query("Select idResource, `Status`, `Start_Date`, `End_Date`, DATEDIFF(ifnull(`End_Date`, now()), `Start_Date`) as `Nights`"
+                . " from resource_use where Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(End_Date, now()) >= '" . $stDT->format('Y-m-d 00:00:00') ."' order by idResource");
+
+        while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $rmStartDate = new \DateTime($r['Start_Date']);
+            $numNights = $r['Nights'];
+
+            // Collect single day events
+            if ($numNights == 0) {
+                $numNights++;
+            }
+
+            for ($j = 0; $j < $numNights; $j++) {
+
+                $rmDate = $rmStartDate->format($dateFormat);
+
+                if (isset($this->days[$r['idResource']][$rmDate])) {
+
+                    if ($r['Status'] == ResourceStatus::Delayed) {
+
+                        $this->days[$r['idResource']][$rmDate]['t']++;
+                        $this->totals['to'][$rmDate]++;
+
+                    } else if ($r['Status'] == ResourceStatus::OutOfService) {
+
+                        $this->days[$r['idResource']][$rmDate]['o']++;
+                        $this->totals['oos'][$rmDate]++;
+
+
+                    } else if ($r['Status'] == ResourceStatus::Unavailable) {
+
+                        $this->days[$r['idResource']][$rmDate]['u']++;
+                        $this->totals['un'][$rmDate]++;
+
+                    }
+                }
+
+                if ($rmStartDate > $endDT) {
+                    break;
+                }
+                $rmStartDate->add($oneDay);
+            }
+        }
+
+    }
+
+
+	/**
+	 * @return array
+	 */
+	public function getTotals() {
+		return $this->totals;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getRescs() {
+		return $this->rescs;
+	}
 }
 ?>
