@@ -67,6 +67,13 @@ class CurrentAccount {
     protected $amtPending = 0;
     protected $dueToday = 0;
 
+    /**
+     * Summary of __construct
+     * @param string $visitStatus
+     * @param bool $showVisitFee
+     * @param bool $showRoomFees
+     * @param bool $showGuestNights
+     */
     public function __construct($visitStatus, $showVisitFee = FALSE, $showRoomFees = FALSE, $showGuestNights = FALSE) {
 
 

@@ -35,6 +35,14 @@ use HHK\Exception\PaymentException;
 class PaymentSvcs {
 
 
+    /**
+     * Summary of payAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
+     * @param string $postbackUrl
+     * @return PaymentResult|null
+     */
     public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -234,6 +242,13 @@ class PaymentSvcs {
         return $rtnResult;
     }
 
+    /**
+     * Summary of voidFees
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @param string $bid  html id of the originating control
+     * @return array
+     */
     public static function voidFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
@@ -278,6 +293,13 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of reversalFees
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @param string $bid  html id of the originating control
+     * @return array
+     */
     public static function reversalFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
@@ -322,6 +344,14 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of returnPayment
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @param string $bid
+     * @throws \HHK\Exception\PaymentException
+     * @return array
+     */
     public static function returnPayment(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
@@ -474,7 +504,7 @@ class PaymentSvcs {
 
         // only available to charge cards.
         if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
-            return array('warning' => 'Void Return is Not Available.  ', 'bid' => $bid);
+            return array('warning' => 'Void-Return is Not Available.  ', 'bid' => $bid);
         }
 
         // Already voided, or otherwise ineligible
@@ -492,10 +522,6 @@ class PaymentSvcs {
 
         $pAuthRs = new Payment_AuthRS();
         EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() !== PaymentStatusCode::Retrn || ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() === 0)) {
-            return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
-        }
 
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);

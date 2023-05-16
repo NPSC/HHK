@@ -42,6 +42,20 @@ use HHK\SysConst\RoomRateCategories;
  */
 class VisitViewer {
 
+    /**
+     * Summary of createActiveMarkup
+     * @param \PDO $dbh
+     * @param mixed $r
+     * @param \HHK\Purchase\VisitCharges $visitCharge
+     * @param bool $keyDepFlag
+     * @param bool $visitFeeFlag
+     * @param bool $isAdmin
+     * @param int $extendVisitDays
+     * @param string $action
+     * @param string $coDate
+     * @param bool $showAdjust
+     * @return string
+     */
     public static function createActiveMarkup(\PDO $dbh, array $r, VisitCharges $visitCharge, $keyDepFlag, $visitFeeFlag, $isAdmin,
             $extendVisitDays, $action, $coDate, $showAdjust) {
 
@@ -510,6 +524,19 @@ class VisitViewer {
 
     }
 
+    /**
+     * Summary of createStayRowMarkup
+     * @param array $r
+     * @param int $numberRows
+     * @param string $action
+     * @param int $idGuest
+     * @param array $coDates
+     * @param int $idPrimaryGuest
+     * @param bool $useRemoveHdr
+     * @param bool $includeActionHdr
+     * @param string $hdrPgRb
+     * @return string
+     */
     protected static function createStayRowMarkup($r, $numberRows, $action, $idGuest, $coDates, &$idPrimaryGuest, &$useRemoveHdr, &$includeActionHdr, &$hdrPgRb) {
 
         $uS = Session::getInstance();
@@ -520,7 +547,7 @@ class VisitViewer {
         $name = $r['Name_First'] . ' ' . $r['Name_Last'];
 
         if (($action == 'so' || $action == 'ref') && $r['Status'] != VisitStatus::CheckedIn) {
-            return;
+            return '';
         }
 
         // Preselect checkout box
@@ -599,7 +626,7 @@ class VisitViewer {
 
                 // Don't show 0-day checked - out stays.
                 if ($days == 0 && !$uS->ShowZeroDayStays) {
-                    return;
+                    return '';
                 }
 
                 $ckOutDate = HTMLContainer::generateMarkup('span', $r['Span_End_Date'] != '' ? date('M j, Y H:i', strtotime($r['Span_End_Date'])) : '');
@@ -615,7 +642,7 @@ class VisitViewer {
 
             // Don't show 0-day checked - out stays.
             if ($days == 0 && !$uS->ShowZeroDayStays) {
-                return;
+                return '';
             }
 
             $ckOutDate = HTMLContainer::generateMarkup('span', $r['Span_End_Date'] != '' ? date('M j, Y H:i', strtotime($r['Span_End_Date'])) : '');
@@ -693,6 +720,15 @@ class VisitViewer {
 
     }
 
+    /**
+     * Summary of createPaymentMarkup
+     * @param \PDO $dbh
+     * @param array $r
+     * @param \HHK\Purchase\VisitCharges $visitCharge
+     * @param int $idGuest
+     * @param string $action
+     * @return string
+     */
     public static function createPaymentMarkup(\PDO $dbh, $r, VisitCharges $visitCharge, $idGuest = 0, $action = '') {
 
         // Notes action = return nothing.

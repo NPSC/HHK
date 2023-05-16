@@ -18,6 +18,7 @@ use HHK\Tables\House\{ResourceRS, RoomRS};
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
+use HHK\Exception\UnexpectedValueException;
 use HHK\US_Holidays;
 use HHK\SysConst\ReservationStatusType;
 
@@ -809,6 +810,13 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $roomIds;
     }
 
+    /**
+     * Summary of testResource
+     * @param \PDO $dbh
+     * @param \HHK\House\Resource\AbstractResource $resc
+     * @throws \HHK\Exception\UnexpectedValueException
+     * @return bool
+     */
     public function testResource(\PDO $dbh, AbstractResource $resc) {
 
         $pass = FALSE;
@@ -816,6 +824,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
         $rescRooms = $resc->getRooms();
         $rmIncludes = array();
+
+        if (count($rescRooms) < 1) {
+            throw new UnexpectedValueException('Resource Id=' . $resc->getIdResource() . ' has no rooms');
+        }
 
         // look for bad rooms
         foreach ($rescRooms as $roomObj) {
