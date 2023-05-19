@@ -619,7 +619,7 @@ class VisitViewer {
 
             } else {
 
-                $edDay = new \DateTime($r['Span_End_Date']);
+                $edDay = new \DateTime(is_null($r['Span_End_Date']) ? '' : $r['Span_End_Date']);
                 $edDay->setTime(0, 0, 0);
 
                 $days = $edDay->diff($stDayDT, TRUE)->days;
@@ -635,7 +635,7 @@ class VisitViewer {
 
         } else {
 
-            $edDay = new \DateTime($r['Span_End_Date']);
+            $edDay = new \DateTime(is_null($r['Span_End_Date']) ? '' : $r['Span_End_Date']);
             $edDay->setTime(0, 0, 0);
 
             $days = $edDay->diff($stDayDT, TRUE)->days;

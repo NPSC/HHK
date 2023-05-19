@@ -285,8 +285,12 @@ class RateChooser {
             return "The new rate category is not set.  ";
         }
 
-        if (isset($post['seladjAmount']) && isset($uS->guestLookups['Room_Rate_Adjustment'][$post['seladjAmount']])) {
-            $rateAdj = $uS->guestLookups['Room_Rate_Adjustment'][$post['seladjAmount']][2];
+        if (isset($post['seladjAmount'])) {
+            $adjAmtSelection = filter_var($post['seladjAmount'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+            if (isset($uS->guestLookups['Room_Rate_Adjustment'][$adjAmtSelection])) {
+                $rateAdj = $uS->guestLookups['Room_Rate_Adjustment'][$adjAmtSelection][2];
+            }
         }
 
         if ($rateCategory == RoomRateCategories::Fixed_Rate_Category) {
@@ -300,8 +304,10 @@ class RateChooser {
 
         // Rates Changed?
         if ($visitRs->Rate_Category->getStoredVal() === $rateCategory) {
+
             // return if either amounts are set
             if ($rateCategory == RoomRateCategories::Fixed_Rate_Category) {
+
                 if ($visitRs->Pledged_Rate->getStoredVal() == $assignedRate) {
                     return '';
                 }
@@ -320,7 +326,7 @@ class RateChooser {
         } else if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
             // Add a new rate span to the end this visit
-            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT);
+            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $chDT);
 
         } else {
 
@@ -397,7 +403,7 @@ class RateChooser {
         }
 
         // split the given span
-        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uname, $changeDT);
+        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $changeDT);
 
         return $reply;
     }

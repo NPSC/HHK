@@ -36,7 +36,7 @@ class Visit {
 
     /**
      * Summary of resource
-     * @var
+     * @var AbstractResource|null
      */
     protected $resource = NULL;
     /**
@@ -46,7 +46,7 @@ class Visit {
     public $visitRS;
     /**
      * Summary of visitRSs
-     * @var array
+     * @var array[VisitRS]
      */
     protected $visitRSs = array();
     /**
@@ -518,7 +518,7 @@ class Visit {
             }
 
             // Change rooms on date given.
-            $this->createNewSpan($dbh, $resc, VisitStatus::NewSpan, $rateCategory, $idRoomRate, $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $uname, $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
+            $this->cutInNewSpan($dbh, $resc, VisitStatus::NewSpan, $rateCategory, $idRoomRate, $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
             $rtnMessage .= 'Guests Changed Rooms.  ';
 
             // Change date today?
@@ -565,7 +565,7 @@ class Visit {
     }
 
     /**
-     * Summary of replaceRoomRate
+     * Summary of replaceRoomRate: change the rate for this span.
      * @param \PDO $dbh
      * @param \HHK\Tables\Visit\VisitRS $visitRs
      * @param string $newRateCategory
@@ -648,18 +648,18 @@ class Visit {
     }
 
     /**
-     * Summary of changePledgedRate
+     * Summary of changePledgedRate:  Split the span into a new span at $chgDT
      * @param \PDO $dbh
-     * @param mixed $newRateCategory
-     * @param mixed $pledgedRate
-     * @param mixed $rateAdjust
-     * @param mixed $uname
-     * @param mixed $chgDT
+     * @param string $newRateCategory
+     * @param float $pledgedRate
+     * @param float $rateAdjust
+     * @param string $uname
+     * @param \DateTime $chgDT
      * @param mixed $useRateGlide
      * @param mixed $stayOnLeave
      * @return string
      */
-    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $uname, $chgDT, $useRateGlide = FALSE, $stayOnLeave = 0) {
+    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $chgDT, $stayOnLeave = 0) {
 
         $uS = Session::getInstance();
         $this->getResource($dbh);
@@ -672,7 +672,17 @@ class Visit {
         $tempOverrideMaxOcc = $this->overrideMaxOccupants;
         $this->overrideMaxOccupants = true;
 
-        $this->createNewSpan($dbh, $this->resource, VisitStatus::ChangeRate, $newRateCategory, $rateRs->idRoom_rate->getStoredVal(), $pledgedRate, $rateAdjust, $uname, $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1), $useRateGlide, $stayOnLeave);
+        $this->cutInNewSpan(
+            $dbh, $this->resource,
+            VisitStatus::ChangeRate,
+            $newRateCategory,
+            $rateRs->idRoom_rate->getStoredVal(),
+            $pledgedRate,
+            $rateAdjust,
+            $chgDT->format('Y-m-d H:i:s'),
+            (intval($this->visitRS->Span->getStoredVal(), 10) + 1),
+            $stayOnLeave);
+
         $this->overrideMaxOccupants = $tempOverrideMaxOcc;
 
 
@@ -685,7 +695,7 @@ class Visit {
             $resv->setRoomRateCategory($newRateCategory);
             $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
 
-            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
+            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
         }
 
         return "Room Rate Changed.  ";
@@ -693,49 +703,41 @@ class Visit {
     }
 
     /**
-     * Cloaes the old span with $visitStatus, and starts a new one with the same status as the replaced span.
+     * Closes the old span with $visitStatus, and starts a new one with the same status as the replaced span.
      *
      * @param \PDO $dbh
      * @param AbstractResource $resc
-     * @param string $visitStatus
+     * @param string $visitStatus  use to close out old visit span
      * @param string $newRateCategory
      * @param integer $newRateId
      * @param float $pledgedRate
      * @param float $rateAdjust
      * @param string $uname
      * @param string $changeDate
-     * @param integer $newSpan
-     * @param boolean $useRateGlide
+     * @param integer $newSpan  span Id for new visit span.
      * @param integer $stayOnLeave
      * @throws RuntimeException
      */
-    protected function createNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $newSpan, $useRateGlide = FALSE, $stayOnLeave = 0) {
+    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $changeDate, $newSpan, $stayOnLeave = 0) {
 
+        $uS = Session::getInstance();
         $glideDays = 0;
         $this->stays = array();
 
         // Load all stays for this span
-        $stayRs = new StaysRS();
-        $stayRs->idVisit->setStoredVal($this->getIdVisit());
-        $stayRs->Visit_Span->setStoredVal($this->getSpan());
-        $stays = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
-
-        foreach ($stays as $s) {
-            $sRs = new StaysRS();
-            EditRS::loadRow($s, $sRs);
-            $this->stays[] = $sRs;
-        }
+        $this->loadStays($dbh, '');  // empty string triggers all stays of all statuses
 
         // End old span
         $newSpanStatus = $this->visitRS->Status->getStoredVal();
         $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
+
         $this->visitRS->Span_End->setNewVal($changeDate);
         $this->visitRS->Status->setNewVal($visitStatus);
 
-        $this->updateVisitRecord($dbh, $uname);
+        $this->updateVisitRecord($dbh, $uS->username);
 
 
-        // set all new values for visit rs
+        // copy old values for new visit rs
         foreach ($this->visitRS as $p) {
             if ($p instanceof DB_Field) {
                 $p->setNewVal($p->getStoredVal());
@@ -760,7 +762,7 @@ class Visit {
         $idVisit = EditRS::insert($dbh, $this->visitRS);
 
         if ($idVisit == 0) {
-            throw new RuntimeException('Visit insert failed.   ');
+            throw new RuntimeException('[cutinNewSpan()] Visit insert failed.   ');
         }
 
         $logTexti = VisitLog::getInsertText($this->visitRS);
@@ -768,28 +770,29 @@ class Visit {
 
         EditRS::updateStoredVals($this->visitRS);
 
-        $this->replaceStays($dbh, $visitStatus, $newSpanStatus, $uname, $stayOnLeave);
+        $this->replaceStays($dbh, $visitStatus, $uS->username, $stayOnLeave);
 
     }
 
     /**
-     * Summary of replaceStays
+     * Summary of replaceStays: copies appropriate stays into a new visit span
      * @param \PDO $dbh
-     * @param mixed $oldStayStatus
-     * @param mixed $newSpanStatus
+     * @param mixed $oldVisitStatus
      * @param mixed $uname
      * @param mixed $stayOnLeave
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
-    protected function replaceStays(\PDO $dbh, $oldStayStatus, $newSpanStatus, $uname, $stayOnLeave = 0) {
+    protected function replaceStays(\PDO $dbh, $oldVisitStatus, $uname, $stayOnLeave = 0) {
 
-        $oldStays = $this->stays;
+        $oldStays = $this->stays;  // contains all the stays.
         $this->stays = array();
 
         $this->getResource($dbh);
+
         $visitSpanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
         $visitSpanStartDT->setTime(0, 0, 0);
+
 
         foreach ($oldStays as $stayRS) {
 
@@ -802,14 +805,15 @@ class Visit {
                 $stayEndDT->setTime(0, 0, 0);
             }
 
-            if ($stayStartDT >= $visitSpanStartDT && $newSpanStatus = VisitStatus::Active) {
-                // Special case - just update the span id and status
+            $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
+            if (is_null($rm)) {
+                throw new RuntimeException('Room is full.  ');
+            }
 
-                $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
-                if (is_null($rm)) {
-                    throw new RuntimeException('Room is full.  ');
-                }
+            if ($stayStartDT >= $visitSpanStartDT) {
+                // Just update the span id and status
 
+                // leave checked out spans alone.
                 if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedOut) {
                     $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
                 }
@@ -826,8 +830,13 @@ class Visit {
             } else if ($stayStartDT < $visitSpanStartDT && (is_null($stayEndDT) || $stayEndDT > $visitSpanStartDT)) {
                 // Split the stay
 
+                // save critical data
+                $oldStayStatus = $stayRS->Status->getStoredVal();
+                $oldCkOutDate = $stayRS->Span_End_Date->getStoredVal();
+
+
                 // Close old stay
-                $stayRS->Status->setNewVal($oldStayStatus);
+                $stayRS->Status->setNewVal($oldVisitStatus);
                 $stayRS->Span_End_Date->setNewVal($this->visitRS->Span_Start->getStoredVal());
                 $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
                 $stayRS->Updated_By->setNewVal($uname);
@@ -838,57 +847,37 @@ class Visit {
 
                 EditRS::updateStoredVals($stayRS);
 
-                // Make second half of the stay
-                $this->addStay($stayRS, $stayOnLeave, $this->visitRS->Span_Start->getStoredVal());
 
-            } else if ($stayStartDT > $visitSpanStartDT && count($oldStayStatus) > 1) {
+                // Create a new stay record
+                $newStayRS = new StaysRS();
 
-                // Remove stay from this span
-                EditRS::delete($dbh, $stayRS, array($stayRS->idStays));
+                // special handling for checked out stays
+                if ($oldStayStatus == VisitStatus::CheckedOut) {
 
-                // add stay at stay start date
-                $this->addStay($stayRS, $stayOnLeave, $stayRS->Span_Start_Date->getStoredVal());
+                    $newStayRS->Checkout_Date->setNewVal($oldCkOutDate);
+                    $newStayRS->Status->setNewVal($oldStayStatus);
 
+                } else {
+
+                    $newStayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
+                }
+
+                $newStayRS->idName->setNewVal($stayRS->idName->getStoredVal());
+                $newStayRS->idRoom->setNewVal($rm->getIdRoom());
+                $newStayRS->Checkin_Date->setNewVal($stayRS->Checkin_Date->getStoredVal());
+                $newStayRS->Span_End_Date->setNewVal($oldCkOutDate);
+                $newStayRS->Span_Start_Date->setNewVal($this->visitRS->Span_Start->getStoredVal());
+                $newStayRS->Expected_Co_Date->setNewVal($stayRS->Expected_Co_Date->getStoredVal());
+                $newStayRS->On_Leave->setNewVal($stayOnLeave);
+                $newStayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+
+                $this->stays[] = $newStayRS;
             }
         }
 
         $this->saveNewStays($dbh, $uname);
-
     }
 
-    /**
-     * Summary of addStay
-     * @param \HHK\Tables\Visit\StaysRS $oldStay
-     * @param mixed $stayOnLeave
-     * @param mixed $spanStDate
-     * @throws \HHK\Exception\RuntimeException
-     * @return void
-     */
-    protected function addStay(StaysRS $oldStay, $stayOnLeave, $spanStDate) {
-
-        $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
-
-        // Check room size
-        if (is_null($rm)) {
-            throw new RuntimeException('The room is full.  ');
-        }
-
-        // Create a new stay record
-        $stayRS = new StaysRS();
-
-        $stayRS->idName->setNewVal($oldStay->idName->getStoredVal());
-        $stayRS->idRoom->setNewVal($rm->getIdRoom());
-        $stayRS->Checkin_Date->setNewVal($oldStay->Checkin_Date->getStoredVal());
-        $stayRS->Checkout_Date->setNewVal($this->visitRS->Actual_Departure->getStoredVal());
-        $stayRS->Span_Start_Date->setNewVal($spanStDate);
-        $stayRS->Span_End_Date->setNewVal($this->visitRS->Span_End->getStoredVal());
-        $stayRS->Expected_Co_Date->setNewVal($oldStay->Expected_Co_Date->getStoredVal());
-        $stayRS->On_Leave->setNewVal($stayOnLeave);
-        $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
-        $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-
-        $this->stays[] = $stayRS;
-    }
 
     /**
      * Summary of checkOutGuest
@@ -1827,7 +1816,7 @@ class Visit {
                     if (is_null($volRS) === FALSE) {
 
                         // Rate was changed
-                        $reply .= $this->changePledgedRate($dbh, $volRS->Rate_Category->getStoredVal(), $volRS->Pledged_Rate->getStoredVal(), $volRS->Rate_Adjust->getStoredVal(), $uS->username, $returnDT, FALSE, FALSE);
+                        $reply .= $this->changePledgedRate($dbh, $volRS->Rate_Category->getStoredVal(), $volRS->Pledged_Rate->getStoredVal(), $volRS->Rate_Adjust->getStoredVal(), $returnDT, FALSE);
                         $reply .= "Leave ended. ";
                     } else {
 
@@ -2006,7 +1995,7 @@ class Visit {
             }
 
             // Change rate and trigger OnLeave.
-            $reply .= $this->changePledgedRate($dbh, RoomRateCategories::Fixed_Rate_Category, 0, 0, $uS->username, $extndStartDT, FALSE, $extDays);
+            $reply .= $this->changePledgedRate($dbh, RoomRateCategories::Fixed_Rate_Category, 0, 0, $extndStartDT, $extDays);
             $reply .= 'Guests on Leave.  ';
 
         } else {

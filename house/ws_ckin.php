@@ -558,7 +558,7 @@ try {
             $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $events = HouseServices::saveFees($dbh, $idVisit, $span, $guestAdmin, $_REQUEST, $postbackPage);
+        $events = HouseServices::saveFees($dbh, $idVisit, $span, $_POST, $postbackPage);
 
         break;
 

@@ -87,7 +87,7 @@ CREATE INDEX IF NOT EXISTS `Index_idReferral_Doc` ON `reservation`(`idReferralDo
 UPDATE `sys_config` set `Value` = "https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa" where `Key` = "NewsletterURL";
 
 -- fix duplicates on resource builder Items
-ALTER TABLE `item_type_map` 
-ENGINE = InnoDB ,
-ADD PRIMARY KEY IF NOT EXISTS (`Item_Id`,`Type_Id`);
+-- ALTER TABLE `item_type_map`
+-- ENGINE = InnoDB ,
+-- ADD PRIMARY KEY IF NOT EXISTS (`Item_Id`,`Type_Id`);
 ;

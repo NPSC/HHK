@@ -71,7 +71,7 @@ class HouseServices {
      * @param int $span span = 'max' means load last visit span, otherwise load int value
      * @param boolean $isAdmin Administrator flag
      * @param string $action Processing code with various settings.
-     *
+     * @param array $coStayDates Dates for an early checkout. Adjusts the final payments
      * @return array
      */
     public static function getVisitFees(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin, $action = '', $coStayDates = []) {
@@ -211,10 +211,10 @@ class HouseServices {
      * @param bool $isGuestAdmin
      * @param array $post
      * @param string $postbackPage
-     * @param boolean $returnCkdIn
+
      * @return array
      */
-    public static function saveFees(\PDO $dbh, $idVisit, $span, $isGuestAdmin, array $post, $postbackPage, $returnCkdIn = FALSE) {
+    public static function saveFees(\PDO $dbh, $idVisit, $span, array $post, $postbackPage) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -222,6 +222,7 @@ class HouseServices {
         $reply = '';
         $warning = '';
         $returnReserv = FALSE;
+        $returnCkdIn = FALSE;
 
         if ($idVisit == 0) {
             return array("error" => "Neither Guest or Visit was selected.");
