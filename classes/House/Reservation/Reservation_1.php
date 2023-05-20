@@ -37,6 +37,10 @@ use HHK\SysConst\ReservationStatusType;
  */
 class Reservation_1 {
 
+    const ROOM_TOO_SMALL = 'Too Small';
+    const ROOM_UNAVAILABLE = '';
+    const ROOM_NOT_SUITABLE = 'Not Suitable';
+
     protected $reservRs;
     protected $reservConstraints;
     protected $visitConstraints;
@@ -580,7 +584,7 @@ class Reservation_1 {
                 $resc->optGroup = '';
 
                 if ($resc->getMaxOccupants() < $this->getNumberGuests()) {
-                    $resc->optGroup = 'Too Small';
+                    $resc->optGroup = self::ROOM_TOO_SMALL;
                 }
 
                 $this->availableResources[$r['idResource']] = $resc;
@@ -590,10 +594,10 @@ class Reservation_1 {
                 $resourceRS = new ResourceRS();
                 EditRS::loadRow($r, $resourceRS);
                 $resc = AbstractResource::getThisFromRS($dbh, $resourceRS);
-                $resc->optGroup = 'Not Suitable';
+                $resc->optGroup = self::ROOM_NOT_SUITABLE;
 
                 if ($resc->getMaxOccupants() < $this->getNumberGuests()) {
-                    $resc->optGroup = 'Too Small';
+                    $resc->optGroup = self::ROOM_TOO_SMALL;
                 }
 
                 $this->availableResources[$r['idResource']] = $resc;

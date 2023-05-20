@@ -91,3 +91,10 @@ UPDATE `sys_config` set `Value` = "https://nonprofitsoftwarecorp.us18.list-manag
 -- ENGINE = InnoDB ,
 -- ADD PRIMARY KEY IF NOT EXISTS (`Item_Id`,`Type_Id`);
 ;
+
+-- Add new demographic ADA
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Demographics', 'ADA', 'ADA', 'm');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('ADA', 'im', 'Immobility', 'd');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('ADA', 'b', 'Blindness', 'd');
+ALTER TABLE `name_demog`
+	ADD COLUMN `ADA` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Covid`;

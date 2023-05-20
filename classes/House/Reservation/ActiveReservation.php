@@ -25,8 +25,17 @@ use HHK\HTMLControls\HTMLContainer;
 
 class ActiveReservation extends Reservation {
 
+    /**
+     * Summary of gotoCheckingIn
+     * @var string
+     */
     protected $gotoCheckingIn = '';
 
+    /**
+     * Summary of createMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     public function createMarkup(\PDO $dbh) {
 
         // Checking In?
@@ -67,6 +76,12 @@ class ActiveReservation extends Reservation {
 
     }
 
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @param array $post
+     * @return ActiveReservation
+     */
     public function save(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
@@ -235,8 +250,15 @@ class ActiveReservation extends Reservation {
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted, $reservStatuses);
 
+        return $this;
     }
 
+    /**
+     * Summary of delete
+     * @param \PDO $dbh
+     * @param array $post
+     * @return array
+     */
     public function delete(\PDO $dbh, $post = []) {
 
         $uS = Session::getInstance();
@@ -273,6 +295,13 @@ class ActiveReservation extends Reservation {
     }
 
 
+    /**
+     * Summary of changeRoom
+     * @param \PDO $dbh
+     * @param int $idResv
+     * @param int $idResc
+     * @return array<string>
+     */
     public function changeRoom(\PDO $dbh, $idResv, $idResc) {
 
         $uS = Session::getInstance();
@@ -287,12 +316,12 @@ class ActiveReservation extends Reservation {
 
         if ($resv->isActive($reservStatuses)) {
 
-            $this->setRoomChoice($dbh, $resv, $idResc, $reservStatuses);
+            $result = $this->setRoomChoice($dbh, $resv, $idResc, $reservStatuses);
 
             if ($this->reserveData->hasError()) {
                 $dataArray[ReserveData::WARNING] = $this->reserveData->getErrors();
             } else {
-                $dataArray['msg'] = 'Reservation Changed Rooms.';
+                $dataArray['msg'] = 'Reservation Changed Rooms. ' . ($result == '' ? '' : ' WARNING: ' . $result);
             }
 
             // New resservation lists
@@ -308,6 +337,11 @@ class ActiveReservation extends Reservation {
         return $dataArray;
     }
 
+    /**
+     * Summary of checkedinMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     public function checkedinMarkup(\PDO $dbh) {
 
         // This runs after a save.  Not actually checked in.
@@ -350,6 +384,12 @@ class ActiveReservation extends Reservation {
         return $dataArray;
     }
 
+    /**
+     * Summary of savePrePayment
+     * @param \PDO $dbh
+     * @param array $post
+     * @return void
+     */
     public function savePrePayment(\PDO $dbh, $post) {
 
         $pmp = PaymentChooser::readPostedPayment($dbh, $post);  // Returns PaymentManagerPayment.

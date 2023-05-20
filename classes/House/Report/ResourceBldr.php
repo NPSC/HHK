@@ -20,6 +20,14 @@ use HHK\SysConst\GLTableNames;
 class ResourceBldr
 {
 
+    /**
+     * Summary of saveArchive
+     * @param \PDO $dbh
+     * @param mixed $desc
+     * @param mixed $subt
+     * @param mixed $tblName
+     * @return mixed
+     */
     public static function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
         $defaultCode = '';
 
@@ -111,6 +119,14 @@ class ResourceBldr
         return $defaultCode;
     }
 
+    /**
+     * Summary of getSelections
+     * @param \PDO $dbh
+     * @param mixed $tableName
+     * @param mixed $type
+     * @param mixed $labels
+     * @return HTMLTable
+     */
     public static function getSelections(\PDO $dbh, $tableName, $type, $labels) {
 
         $uS = Session::getInstance();
@@ -254,6 +270,13 @@ Order by `t`.`List_Order`;");
         return $tbl;
     }
 
+    /**
+     * Summary of checkLookups
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $labels
+     * @return never
+     */
     public static function checkLookups(\PDO $dbh, $post, $labels) {
 
         $uS = Session::getInstance();
@@ -285,7 +308,8 @@ Order by `t`.`List_Order`;");
 
         // Save
         if ($cmd == 'save') {
-            $postLookups = json_decode(filter_input(INPUT_POST, "lookups", FILTER_UNSAFE_RAW), true);
+
+            $postLookups = (filter_has_var(INPUT_POST, "lookups")) ? json_decode(filter_input(INPUT_POST, "lookups", FILTER_UNSAFE_RAW), true) : [];
 
             // Check for a new entry
             if (isset($postLookups['txtDiag'][0]) && $postLookups['txtDiag'][0] != '') {

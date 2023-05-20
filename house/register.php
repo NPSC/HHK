@@ -112,10 +112,11 @@ if (isset($_POST['btnDlWlist'])) {
     doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
-    //require (HOUSE . 'PaymentReport.php');
+    // Dailey report
     PaymentReport::generateDayReport($dbh, $_POST);
 }
 
+// Guest add message
 if (isset($_GET['gamess'])) {
 
     $contents = filter_var($_GET['gamess'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);

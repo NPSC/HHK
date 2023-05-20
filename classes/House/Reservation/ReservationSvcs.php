@@ -292,6 +292,7 @@ class ReservationSvcs
                 }
             } else {
 
+                $regForm = new RegisterForm();
                 $docs[] = array(
                     'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
                     'style' => CustomRegisterForm::getStyling(),
@@ -836,6 +837,15 @@ class ReservationSvcs
         return $dataArray;
     }
 
+    /**
+     * Summary of getRoomList
+     * @param \PDO $dbh
+     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param string $eid
+     * @param bool $isAuthorized
+     * @param int $numGuests
+     * @return array
+     */
     public static function getRoomList(\PDO $dbh, Reservation_1 $resv, $eid, $isAuthorized, $numGuests = 0)
     {
         if ($numGuests <= 0) {

@@ -101,6 +101,11 @@ class ReserveData {
     protected $hasMOA;
     protected $prePayment = 0;
 
+    /**
+     * Summary of __construct
+     * @param array $post
+     * @param string $reservationTitle
+     */
     function __construct($post, $reservationTitle = '') {
 
         $uS = Session::getInstance();
@@ -187,6 +192,11 @@ class ReserveData {
 
     }
 
+    /**
+     * Summary of setMembersFromPost
+     * @param array $postMems
+     * @return void
+     */
     protected function setMembersFromPost($postMems) {
 
         foreach ($postMems as $prefix => $memArray) {
@@ -229,6 +239,10 @@ class ReserveData {
         }
     }
 
+    /**
+     * Summary of getMembersArray
+     * @return array
+     */
     public function getMembersArray() {
 
         $memArray = array();
@@ -240,6 +254,10 @@ class ReserveData {
         return $memArray;
     }
 
+    /**
+     * Summary of toArray
+     * @return array
+     */
     public function toArray() {
 
         $rtnData =  array(
@@ -420,7 +438,7 @@ class ReserveData {
 
     /**
      * Summary of getArrivalDT
-     * @return \DateTimeInterface
+     * @return \DateTime
      */
     public function getArrivalDT() {
         return $this->arrivalDT;
@@ -437,7 +455,7 @@ class ReserveData {
 
     /**
      * Summary of getDepartureDT
-     * @return \DateTimeInterface
+     * @return \DateTime
      */
     public function getDepartureDT() {
         return $this->departureDT;

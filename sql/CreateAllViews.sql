@@ -466,18 +466,20 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
         `v`.`Amount_Per_Guest` AS `Amount_Per_Guest`,
         IFNULL(`hs`.`idPsg`, 0) AS `idPsg`,
         IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
-        IFNULL(`hs`.`idHospital`, 0) AS `idHospital`
+        IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+        IFNULL(`nd`.`ADA`, '') AS `ADA`
     FROM
         `stays` `s`
         LEFT JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit`
             AND `s`.`Visit_Span` = `v`.`Span`
         LEFT JOIN `name` `m` ON `s`.`idName` = `m`.`idName`
         LEFT JOIN `name_phone` `np` ON `np`.`idName` = `m`.`idName` and `np`.`Phone_Code` = `m`.`Preferred_Phone`
+        LEFT JOIN `name_demog` `nd` on `nd`.`idName` = `m`.`idName`
         LEFT JOIN `room` `r` ON `s`.`idRoom` = `r`.`idRoom`
         LEFT JOIN `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
         LEFT JOIN `name` `mp` ON `hs`.`idPatient` = `mp`.`idName`
         LEFT JOIN `resource` `re` ON `re`.`idResource` = `v`.`idResource`
-        LEFT JOIN gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = `m`.`Name_Suffix`
+        LEFT JOIN `gen_lookups` `g` on `g`.`Table_Name` = 'Name_Suffix' and `g`.`Code` = `m`.`Name_Suffix`
     WHERE
         (`s`.`Status` = 'a')
     ORDER BY `v`.`idVisit`;

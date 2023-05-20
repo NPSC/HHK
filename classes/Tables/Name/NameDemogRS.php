@@ -15,7 +15,7 @@ use HHK\Tables\Fields\DbBitSanitizer;
  */
 
 class NameDemogRS extends AbstractTableRS {
-    
+
     public $idName;  // int(11) NOT NULL,
     public $Gen_Notes;  // text,
     public $Contact_Date;  // date DEFAULT NULL,
@@ -32,6 +32,8 @@ class NameDemogRS extends AbstractTableRS {
     public $Media_Source;  // varchar(5) NOT NULL DEFAULT '',
     public $Special_Needs;  // varchar(5) NOT NULL DEFAULT '',
     public $Covid;  // varchar(5) NOT NULL DEFAULT '',
+
+    public $ADA; // `ADA` VARCHAR(5) NOT NULL DEFAULT ''
     public $Gl_Code_Debit;  // VARCHAR(25) NOT NULL DEFAULT ''
     public $Gl_Code_Credit;  // VARCHAR(25) NOT NULL DEFAULT ''
     public $Tax_Exempt; // TINYINT(1) NOT NULL DEFAULT 0
@@ -39,10 +41,10 @@ class NameDemogRS extends AbstractTableRS {
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
     public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    
+
+
     function __construct($TableName = "name_demog") {
-        
+
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer());
         $this->Newsletter = new DB_Field("Newsletter", '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Photo_Permission = new DB_Field("Photo_Permission", '', new DbStrSanitizer(5), TRUE, TRUE);
@@ -58,6 +60,7 @@ class NameDemogRS extends AbstractTableRS {
         $this->Ethnicity = new DB_Field('Ethnicity', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Media_Source = new DB_Field('Media_Source', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Covid = new DB_Field('Covid', '', new DbStrSanitizer(5), TRUE, TRUE);
+        $this->ADA = new DB_Field('ADA', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Special_Needs = new DB_Field('Special_Needs', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Gl_Code_Debit = new DB_Field('Gl_Code_Debit', '', new DbStrSanitizer(25), TRUE, TRUE);
         $this->Gl_Code_Credit = new DB_Field('Gl_Code_Credit', '', new DbStrSanitizer(25), TRUE, TRUE);
@@ -66,7 +69,7 @@ class NameDemogRS extends AbstractTableRS {
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
-        
+
         parent::__construct($TableName);
     }
 }

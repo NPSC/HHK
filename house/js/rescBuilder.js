@@ -237,7 +237,7 @@ function saveResource(idresc, type, clas) {
 
 $(document).ready(function () {
     "use strict";
-    
+
 	$('#formBuilder').hhkFormBuilder({
 		labels: $.parseJSON($("#labels").val()),
 		fieldOptions:$.parseJSON($("#frmOptions").val()),
@@ -328,16 +328,16 @@ $(document).ready(function () {
     	$('#divNewForm').dialog('open');
     });
     $('#selFormUpload').change(function (e, changeEventData) {
-		
+
         $('#hdnFormType').val('');
-        
+
         if ($(this).val() == '') {
         	$('#divUploadForm').empty();
         	$('#btnNewForm').hide()
         	return;
         }
         $('#spnFrmLoading').show();
-        
+
         $.post('ResourceBuilder.php', {'ldfm': $(this).val()},
             function (data) {
                 $('#spnFrmLoading').hide();
@@ -362,13 +362,13 @@ $(document).ready(function () {
                           $('#regTabDiv').tabs( "refresh" );
 
                           var order = $('#regTabDiv .ui-tabs-nav').sortable('toArray', {'attribute': 'data-code'});
-                          
+
 						  data = {
 								  'cmd':'reorderfm',
 								  'formDef':$(document).find('#regTabDiv').data('formdef'),
 								  'order':order
 								  };
-						  
+
                           $.ajax({
                        		url: 'ResourceBuilder.php',
                         	type: "POST",
@@ -398,7 +398,7 @@ $(document).ready(function () {
 	$(document).on("click", ".uploadFormDiv form #docDelFm", function(e){
 		$(".uploadFormDiv form input[name=docAction]").val("docDelete");
 	});
-	
+
 	$(document).on("click", ".uploadFormDiv form #docSaveFm", function(e){
 		$(".uploadFormDiv form input[name=docAction]").val("docUpload");
 	});
@@ -406,7 +406,7 @@ $(document).ready(function () {
 	$(document).on("submit", ".uploadFormDiv form, #formFormNew", function(e) {
 	    e.preventDefault();
 	    var formData = new FormData(this);
-	
+
 		$.ajax({
 	        url: $(this).attr("action"),
 	        type: 'POST',
@@ -436,7 +436,7 @@ $(document).ready(function () {
         "order": [[1, 'asc']],
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });
-    
+
     $('.hhk-selLookup').change(function () {
         let $sel = $(this),
             table = $(this).find("option:selected").text(),
@@ -507,7 +507,7 @@ $(document).ready(function () {
                         			});
                         		}
                         	});
-                    
+
                 }
             });
     }).button();
@@ -527,7 +527,7 @@ $(document).ready(function () {
     $('#btndemoSave').click(function () {
         var $frm = $(this).closest('form');
 
-        $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
+        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
             function(data) {
                 if (data) {
                     $frm.children('div').children().remove().end().append(data).find(".sortable tbody")
@@ -543,7 +543,7 @@ $(document).ready(function () {
                 }
             });
     }).button();
-    
+
     $(document).on("click", "#btnInsSave", function (e) {
         var $frm = $(this).closest('form');
 
@@ -590,6 +590,6 @@ $(document).ready(function () {
 			form.find('input[type=file]').val('');
         }
 		form.toggle();
-		
+
     });
 });

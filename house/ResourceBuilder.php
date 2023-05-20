@@ -14,7 +14,7 @@ use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Tables\Item\ItemRS;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\PayType;
-use HHK\Tables\House\Fa_CategoryRS;
+
 use HHK\Tables\Registration\HospitalRS;
 use HHK\SysConst\AttributeTypes;
 use HHK\House\Constraint\ConstraintsHospital;
@@ -38,7 +38,7 @@ use HHK\Tables\House\Rate_BreakpointRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
 use HHK\House\RegistrationForm\CustomRegisterForm;
-use HHK\Purchase\PriceModel\PriceDaily;
+
 use HHK\SysConst\ReservationStatusType;
 use HHK\House\Report\ResourceBldr;
 
@@ -602,7 +602,7 @@ if (isset($_POST['btnhSave'])) {
 
 if (isset($_POST['btnAttrSave'])) {
 
-    $tabIndex = 9;
+    $tabIndex = 10;
     $postedAttr = array();
     if (isset($_POST['atTitle'])) {
         $postedAttr = filter_var_array($_POST['atTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
