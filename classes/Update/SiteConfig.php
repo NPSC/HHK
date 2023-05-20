@@ -141,7 +141,7 @@ class SiteConfig {
 
         return HTMLContainer::generateMarkup('h3', 'Configuration Parameters') . $stbl->generateMarkup() . '<br/>'
         . HTMLContainer::generateMarkup('h3', 'Annual Holidays') . $tbl->generateMarkup()
-        . HTMLContainer::generateMarkup('h3', 'Weekly Non-Cleaning Days', array('style'=>'margin-top:12px;')) . $wdTbl->generateMarkup();
+        . HTMLContainer::generateMarkup('h3', 'House is Closed these Nights', array('style'=>'margin-top:12px;')) . $wdTbl->generateMarkup();
     }
 
     public static function checkUploadFile($upFile) {

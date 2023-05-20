@@ -809,7 +809,7 @@ foreach($diags as $key=>$diag){
         $diags[$key][1] = $diagCats[$diag['Substitute']][1] . ": " . $diags[$key][1];
     }
 }
-                
+
 $locs = readGenLookupsPDO($dbh, 'Location', 'Description');
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
@@ -1138,6 +1138,11 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
 
 // Visit status
 $statusList = removeOptionGroups($uS->guestLookups['Visit_Status']);
+
+// remove unused visit statuses
+unset($statusList['p']);
+unset($statusList['c']);
+
 $statusSelector = HTMLSelector::generateMarkup(
     HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selResvStatus[]', 'size'=>count($statusList) + 1, 'multiple'=>'multiple'));
 
@@ -1305,7 +1310,7 @@ if ($uS->UseIncidentReports) {
         $('#cbUnique').change();
         $('input[name="rbReport"]').change();
         $('#adrstate').change();
-        
+
     });
  </script>
     </head>
