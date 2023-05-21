@@ -38,32 +38,53 @@ use HHK\SysConst\ReservationStatusType;
 class Reservation_1 {
 
     const ROOM_TOO_SMALL = 'Too Small';
+
     const ROOM_UNAVAILABLE = '';
+
     const ROOM_NOT_SUITABLE = 'Not Suitable';
 
     protected $reservRs;
+
     protected $reservConstraints;
+
     protected $visitConstraints;
+
     protected $boDays;
+
     protected $startHolidays;
+
     protected $endHolidays;
+
     protected $idPsg;
+
     protected $idHospital;
+
     protected $idAssociation;
+
     protected $idVisit;
+
     protected $constrainedRooms;
+
     protected $availableResources = array();
+
     protected $untestedResources = array();
+
     protected $resultMessage = '';
 
     protected $reserveStatusType;
 
     protected $idResource;
+
     protected $idReferralDoc;
+
     protected $expectedArrival;
+
     protected $expectedDeparture;
+
     protected $numGuests;
+
     protected $roomTitle;
+
 
     /**
      * Summary of __construct
@@ -1615,6 +1636,10 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
         return $this->roomTitle;
     }
 
+    /**
+     * Summary of getExpectedDays
+     * @return int
+     */
     public function getExpectedDays() {
 
         if ($this->getExpectedArrival() != '' && $this->getExpectedDeparture() != '') {
@@ -1628,6 +1653,12 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
         return 0;
     }
 
+    /**
+     * Summary of getExpectedDaysDT
+     * @param \DateTime $startDT
+     * @param \DateTime $endDT
+     * @return int
+     */
     public static function getExpectedDaysDT($startDT, $endDT) {
 
         if ($startDT instanceof \DateTime && $endDT instanceof \DateTime){

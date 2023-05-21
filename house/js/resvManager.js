@@ -2087,6 +2087,11 @@ function resvManager(initData, options) {
                 setupVehicle($veh);
             }
 
+            // Multiple Reservations
+            if (data.resv.rdiv.multiResv !== undefined) {
+                $rDiv.append($(data.resv.rdiv.multiResv));
+            }
+
             // Payment
             if (data.resv.rdiv.pay !== undefined) {
                 $rDiv.append($(data.resv.rdiv.pay));

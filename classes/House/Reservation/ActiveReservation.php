@@ -3,6 +3,7 @@
 namespace HHK\House\Reservation;
 
 use HHK\House\Registration;
+use HHK\House\RepeatReservations;
 use HHK\House\Vehicle;
 use HHK\House\ReserveData\ReserveData;
 use HHK\Note\{LinkNote, Note};
@@ -90,6 +91,10 @@ class ActiveReservation extends Reservation {
 
         if ($uS->AcceptResvPaymt) {
             $this->savePrePayment($dbh, $post);
+        }
+
+        if ($uS->UseRepeatingReservations) {
+            RepeatReservations::saveRepeats($dbh, $this->reservRs);
         }
 
         return $this;
@@ -410,5 +415,6 @@ class ActiveReservation extends Reservation {
             $this->payResult = NULL;
         }
     }
+
 }
 ?>

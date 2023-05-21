@@ -98,3 +98,6 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES (
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('ADA', 'b', 'Blindness', 'd');
 ALTER TABLE `name_demog`
 	ADD COLUMN `ADA` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Covid`;
+
+-- Multiple reservations
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('UseRepeatingReservations', 'false', 'b', 'h', 'Enable making multiple Reservations', '1');

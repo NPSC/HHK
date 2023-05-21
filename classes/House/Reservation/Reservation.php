@@ -6,6 +6,7 @@ use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\Family\{Family, FamilyAddGuest, JoinNewFamily};
 use HHK\House\HouseServices;
 use HHK\House\Registration;
+use HHK\House\RepeatReservations;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay, PSGMemVisit, PSGMemResv};
 use HHK\House\Room\RoomChooser;
@@ -756,6 +757,10 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $showPayWith,
                 $moaBalance);
 
+            // Multiple reservations
+            if ($uS->UseRepeatingReservations) {
+                $dataArray['multiResv'] = RepeatReservations::createMultiResvMarkup($dbh, $resv);
+            }
 
         } else if ($resv->isNew()) {
 

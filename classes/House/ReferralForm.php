@@ -585,6 +585,13 @@ class ReferralForm {
 
 	}
 
+	/**
+	 * Summary of copyNotes
+	 * @param \PDO $dbh
+	 * @param int $resvId
+	 * @param int $idDoc
+	 * @return void
+	 */
 	public function copyNotes(\PDO $dbh, $resvId, $idDoc){
 		$stmt = $dbh->prepare("select * from `doc_note` where `Doc_Id` = :docId");
 		$stmt->execute([":docId"=>$idDoc]);

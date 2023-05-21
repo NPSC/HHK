@@ -1675,6 +1675,20 @@ CREATE TABLE if not exists `reservation_log` (
 
 
 -- -----------------------------------------------------
+-- Table `reservation_multiple`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `reservation_multiple` (
+  `idReservation_multiple` INT NOT NULL AUTO_INCREMENT,
+  `Host_Id` INT NOT NULL,
+  `Child_Id` INT NOT NULL,
+  `Status` VARCHAR(5) NOT NULL DEFAULT '',
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP(),
+  PRIMARY KEY (`idReservation_multiple`)
+  ) ENGINE=InnoDB AUTO_INCREMENT=10;
+
+
+
+-- -----------------------------------------------------
 -- Table `resource`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `resource` (
@@ -2363,6 +2377,11 @@ ALTER TABLE `reservation`
     ADD INDEX IF NOT EXISTS `Index_idHosptial_Stay` (`idHospital_Stay` ASC);
 ALTER TABLE `reservation`
     ADD INDEX IF NOT EXISTS `Index_idReferral_Doc` (`idReferralDoc` ASC);
+
+ALTER TABLE `reservation_multiple`
+  ADD INDEX IF NOT EXISTS `host_id_index` (`Host_Id` ASC);
+ALTER TABLE `reservation_multiple`
+  ADD UNIQUE INDEX IF NOT EXISTS `Child_Id_UNIQUE` (`Child_Id` ASC);
 
 ALTER TABLE `resource_room`
     ADD INDEX IF NOT EXISTS `Index_idResource` (`idResource` ASC);
