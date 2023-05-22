@@ -1,31 +1,34 @@
 <?php
 
 namespace HHK\House;
+use HHK\House\Constraint\ConstraintsVisit;
 use HHK\House\Hospital\HospitalStay;
 use HHK\House\Reservation\Reservation_1;
-use HHK\House\ReserveData\ReserveData;
+use HHK\House\Constraint\ConstraintsReservation;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Purchase\RateChooser;
 use HHK\sec\Session;
-use HHK\SysConst\DefaultSettings;
-use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\ReservationStatus;
-use HHK\SysConst\RoomRateCategories;
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Tables\Reservation\ReservationRS;
+use HHK\Exception\RuntimeException;
 
 
 class RepeatReservations {
 
-    const WK_INDEX = 'w';
-    const BI_WK_INDEX = 'bw';
+    const WK_INDEX = 'P7D';
+    const BI_WK_INDEX = 'P14D';
 
-    const DAY_30_INDEX = '30';
+    const DAY_30_INDEX = 'P30D';
 
-    const MONTH_INDEX = 'm';
+    const MONTH_INDEX = 'P1M';
+
+    const MAX_REPEATS = '10';
+
+    protected $errorArray;
 
         /**
      * Summary of createMultiResvMarkup
@@ -130,7 +133,11 @@ class RepeatReservations {
      * @param ReservationRS $reserveRS
      * @return void
      */
-    public static function saveRepeats(\PDO $dbh, $reserveRS) {
+    public function saveRepeats(\PDO $dbh, $reserveRS) {
+
+        $this->errorArray = [];
+        $recurrencies = 0;
+        $interval = '';
 
         $args = array(
             'mrInterval' => array(
@@ -142,56 +149,104 @@ class RepeatReservations {
 
         $inputs = filter_input_array(INPUT_POST, $args);
 
+        // Verify inputs
         if (isset($inputs['mrnumresv']) && isset($inputs['mrInterval'])) {
-            $quantity = intval($inputs['mrnumresv'], 10);
+
+            $recurrencies = intval($inputs['mrnumresv'], 10);
             $keys = array_keys($inputs['mrInterval']);
+            $interval = $keys[0];
+
         } else {
             return;
         }
 
-        $resv1 = new Reservation_1($reserveRS);
+        // Inputs unset?
+        if ($recurrencies < 1 || $interval == '') {
+            return;
+        }
 
+        if ($recurrencies > self::MAX_REPEATS) {
+            $this->errorArray[] = "The maximum number of repeating reservations (". self::MAX_REPEATS . ") is exceeded.";
+        }
+
+        $resv1 = new Reservation_1($reserveRS);
+        $days = $resv1->getExpectedDays();
+
+        $intervals = [self::WK_INDEX=>7, self::BI_WK_INDEX=>14, self::DAY_30_INDEX=>28, self::MONTH_INDEX=>27];
+
+        // Check reserv length in days with interval value
+        if (isset($intervals[$interval]) && $days < $intervals[$interval]) {
+
+            // Create the reservations
+
+            // guests
+            $guests = [];
+            $rgRs = new Reservation_GuestRS();
+            $rgRs->idReservation->setStoredVal($resv1->getIdReservation());
+            $rgRows = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
+
+            foreach ($rgRows as $g) {
+                $guests[$g['idGuest']] = $g['Primary_Guest'];
+            }
+
+            $startDT = new \DateTimeImmutable($resv1->getArrival());
+            $dateInterval = new \DateInterval($interval);
+            $period = new \DatePeriod($startDT, $dateInterval, $recurrencies, \DatePeriod::EXCLUDE_START_DATE);
+
+            $duration = new \DateInterval('P' . $days . 'D');
+
+            foreach ($period as $dateDT) {
+
+                $idResv = $this->makeNewReservation($dbh, $resv1, $dateDT, $dateDT->add($duration), $guests);
+
+                if ($idResv > 0) {
+                    // record new child
+                    $numRows = $dbh->exec("Insert into reservation_multiple (`Host_Id`, `Child_Id`, `Status`) VALUES(" . $resv1->getIdReservation() . ", $idResv, 'a')");
+                    if ($numRows != 1) {
+                        throw new RuntimeException('Insert faild: reservtion_multiple');
+                    }
+                }
+            }
+
+
+        } else if (isset($intervals[$interval]) && $days >= $intervals[$interval]) {
+            $this->errorArray[] = 'Reservation duration in days is greater than the requested Interval';
+            return;
+        }
 
     }
 
-    protected function makeNewReservation(\PDO $dbh, PSG $psg, $ckinDT, $ckoutDT, array $guests) {
+     /**
+      * Summary of makeNewReservation
+      * @param \PDO $dbh
+      * @param \HHK\House\Reservation\Reservation_1 $resv
+      * @param \DateTimeImmutable $ckinDT
+      * @param \DateTimeImmutable $ckoutDT
+      * @param array $guests
+      * @return mixed
+      */
+    protected function makeNewReservation(\PDO $dbh, Reservation_1 $protoResv, $ckinDT, $ckoutDT, $guests) {
 
 	    $uS = Session::getInstance();
-
-	    // Reservation Checkin set?
-	    if (is_null($ckinDT)) {
-	        return 0;
-	    }
-
-	    // Replace missing checkout date with check-in + default days.
-	    if (is_null($ckoutDT)) {
-
-	    }
 
 	    // Room Rate
 	    $rateChooser = new RateChooser($dbh);
 
-	    // Default Room Rate category
-	    if ($uS->RoomPriceModel == ItemPriceCode::Basic) {
-	        $rateCategory = RoomRateCategories::Fixed_Rate_Category;
-	    } else if ($uS->RoomRateDefault != '') {
-	        $rateCategory = $uS->RoomRateDefault;
-	    } else {
-	        $rateCategory = DefaultSettings::Rate_Category;
-	    }
+	    // Room Rate category
+        $rateCategory = $protoResv->getRoomRateCategory();
 
 	    $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
 
 
-	    $reg = new Registration($dbh, $psg->getIdPsg());
-	    $hospStay = new HospitalStay($dbh, $psg->getIdPatient());
+	    $reg = new Registration($dbh, $protoResv->getIdPsg($dbh));
+	    $hospStay = new HospitalStay($dbh, 0, $protoResv->getIdHospitalStay());
 
 	    // Define the reservation.
         $resv = Reservation_1::instantiateFromIdReserv($dbh, 0);
 
         $resv->setExpectedArrival($ckinDT->format('Y-m-d'))
             ->setExpectedDeparture($ckoutDT->format('Y-m-d'))
-            ->setIdGuest($psg->getIdPatient())
+            ->setIdGuest($hospStay->getIdPatient())
             ->setStatus(ReservationStatus::Waitlist)
             ->setIdHospitalStay($hospStay->getIdHospital_Stay())
             ->setNumberGuests(count($guests)+1)
@@ -200,26 +255,47 @@ class RepeatReservations {
             ->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
 
         $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
-        $resv->saveConstraints($dbh, array());
+
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $resv->getIdReservation());
+
+        // Reservation Constraints
+        $constraints = $protoResv->getConstraints($dbh);
+        $myConstraints = new ConstraintsReservation($dbh, $resv->getIdReservation());
+        $myConstraints->saveConstraints($dbh, $constraints->getActiveConstraintsArray());
+
+        // Visit Constraints
+        $constraints = $protoResv->getVisitConstraints($dbh);
+        $myConstraints = new ConstraintsVisit($dbh, $resv->getIdReservation());
+        $myConstraints->saveConstraints($dbh, $constraints->getActiveConstraintsArray());
+
 
         // Save Reservtaion guests - patient
         $rgRs = new Reservation_GuestRS();
         $rgRs->idReservation->setNewVal($resv->getIdReservation());
-        $rgRs->idGuest->setNewVal($psg->getIdPatient());
+        $rgRs->idGuest->setNewVal($hospStay->getIdPatient());
         $rgRs->Primary_Guest->setNewVal('1');
         EditRS::insert($dbh, $rgRs);
 
-        foreach ($guests as $g) {
+        foreach ($guests as $g => $priGuestFlag) {
 
-            $rgRs = new Reservation_GuestRS();
-            $rgRs->idReservation->setNewVal($resv->getIdReservation());
-            $rgRs->idGuest->setNewVal($g);
-            $rgRs->Primary_Guest->setNewVal('');
-            EditRS::insert($dbh, $rgRs);
+            if ($g != $hospStay->getIdPatient()) {
+                $rgRs = new Reservation_GuestRS();
+                $rgRs->idReservation->setNewVal($resv->getIdReservation());
+                $rgRs->idGuest->setNewVal($g);
+                $rgRs->Primary_Guest->setNewVal($priGuestFlag);
+                EditRS::insert($dbh, $rgRs);
+            }
         }
 
         return $resv->getIdReservation();
 
 	}
 
+
+	/**
+	 * @return mixed
+	 */
+	public function getErrorArray() {
+		return $this->errorArray;
+	}
 }

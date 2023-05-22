@@ -10,6 +10,7 @@ use HHK\House\Registration;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
+use HHK\House\Resource\AbstractResource;
 use HHK\House\HouseServices;
 use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
@@ -32,10 +33,31 @@ use HHK\Tables\Name\NameRS;
 
 class CheckingIn extends ActiveReservation {
 
+    /**
+     * Summary of visit
+     * @var Visit
+     */
     protected $visit;
+
+    /**
+     * Summary of resc
+     * @var AbstractResource
+     */
     protected $resc;
+
+    /**
+     * Summary of errors
+     * @var array
+     */
     protected $errors;
 
+    /**
+     * Summary of reservationFactoy
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @throws \HHK\Exception\RuntimeException
+     * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
+     */
     public static function reservationFactoy(\PDO $dbh, $post) {
 
         $rData = new ReserveData($post, 'Check-in');
@@ -49,6 +71,13 @@ class CheckingIn extends ActiveReservation {
 
     }
 
+    /**
+     * Summary of loadReservation
+     * @param \PDO $dbh
+     * @param \HHK\House\ReserveData\ReserveData $rData
+     * @throws \HHK\Exception\NotFoundException
+     * @return ActiveReservation|CheckedoutReservation|CheckingIn|DeletedReservation|StaticReservation|StayingReservation
+     */
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
         $uS = Session::getInstance();
@@ -83,10 +112,10 @@ FROM reservation r
 
         $rData->setIdPsg($rows[0]['idPsg']);
         $rData->setIdVisit($rows[0]['idVisit'])
-        ->setSpanStatus($rows[0]['SpanStatus'])
-        ->setSpanStartDT($rows[0]['SpanStart'])
-        ->setSpanEndDT($rows[0]['SpanEnd'])
-        ->setResvStatusCode($rows[0]['Status']);
+            ->setSpanStatus($rows[0]['SpanStatus'])
+            ->setSpanStartDT($rows[0]['SpanStart'])
+            ->setSpanEndDT($rows[0]['SpanEnd'])
+            ->setResvStatusCode($rows[0]['Status']);
 
         // Get Resv status codes
         $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
@@ -125,6 +154,11 @@ FROM reservation r
 
     }
 
+    /**
+     * Summary of createMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     public function createMarkup(\PDO $dbh) {
 
     	$lastVisitMU = $this->findLastVisit($dbh);
@@ -140,6 +174,12 @@ FROM reservation r
 
     }
 
+    /**
+     * Summary of createCheckinMarkup
+     * @param \PDO $dbh
+     * @param string $lastVisitMU
+     * @return array
+     */
     protected function createCheckinMarkup(\PDO $dbh, $lastVisitMU) {
 
         $uS = Session::getInstance();
@@ -251,6 +291,12 @@ FROM reservation r
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @return CheckingIn
+     */
     public function save(\PDO $dbh, $post) {
 
         // Save family, rate, hospital, room.
@@ -264,6 +310,13 @@ FROM reservation r
 
     }
 
+    /**
+     * Summary of saveCheckIn
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
     protected function saveCheckIn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
@@ -402,6 +455,11 @@ FROM reservation r
         return;
     }
 
+    /**
+     * Summary of checkedinMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     public function checkedinMarkup(\PDO $dbh) {
 
         $creditCheckOut = array();
@@ -497,6 +555,15 @@ FROM reservation r
 
     }
 
+    /**
+     * Summary of savePayment
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param \HHK\House\Visit\Visit $visit
+     * @param AbstractResource $resc
+     * @param mixed $idRegistration
+     * @return void
+     */
     protected function savePayment(\PDO $dbh, $post, Visit $visit, $resc, $idRegistration) {
 
         $uS = Session::getInstance();

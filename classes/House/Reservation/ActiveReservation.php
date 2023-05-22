@@ -33,6 +33,12 @@ class ActiveReservation extends Reservation {
     protected $gotoCheckingIn = '';
 
     /**
+     * Summary of repeatResvErrors
+     * @var array
+     */
+    protected $repeatResvErrors = [];
+
+    /**
      * Summary of createMarkup
      * @param \PDO $dbh
      * @return array
@@ -94,7 +100,9 @@ class ActiveReservation extends Reservation {
         }
 
         if ($uS->UseRepeatingReservations) {
-            RepeatReservations::saveRepeats($dbh, $this->reservRs);
+            $repeatResv = new RepeatReservations();
+            $repeatResv->saveRepeats($dbh, $this->reservRs);
+            $this->repeatResvErrors = $repeatResv->getErrorArray();
         }
 
         return $this;

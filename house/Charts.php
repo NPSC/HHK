@@ -214,7 +214,6 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         <script type="text/javascript">
             google.charts.load('current', {packages: ['corechart', 'bar']});
 
-
             function drawTODCheckin() {
 
                 let data = <?php echo json_encode(todData($dbh)); ?>;
@@ -233,9 +232,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
             function drawRoomMonth() {
 
-                //let data = <?php echo json_encode(rmNiteData($dbh, $todayDT->format('Y'))); ?>;
-
-                $.post('OccupancyReport.php', {cmd: 'getRoomNights'}, function(data) {
+                $.post('Charts.php', {cmd: 'getRoomNights'}, function(data) {
                     try {
                         data = $.parseJSON(data);
                     } catch (err) {
@@ -278,17 +275,14 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                         }
 
                         // room-month distribution
-                        if (ui.newTab.prop('id') == 'rmdTab') {
-                            google.charts.setOnLoadCallback(drawRoomMonth);
-                        }
+                        //if (ui.newTab.prop('id') == 'rmdTab') {
+
+                        //}
 
                     }
                 });
 
-
-                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-
-
+                google.charts.setOnLoadCallback(drawRoomMonth);
             });
          </script>
 
@@ -299,8 +293,8 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="occupancyTabs" style="font-size:0.9em;">
             	<ul>
-                    <li id='todTab'><a href="#todDoc">Check-in/Out Time of Day</a></li>
                     <li id='rmdTab'><a href="#rmDoc">Occupancy Distribution</a></li>
+                    <li id='todTab'><a href="#todDoc">Check-in/Out Time of Day</a></li>
             	</ul>
             	<div id="todDoc">
                     <div id='todChart'></div>

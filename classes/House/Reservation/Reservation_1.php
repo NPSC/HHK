@@ -38,51 +38,133 @@ use HHK\SysConst\ReservationStatusType;
 class Reservation_1 {
 
     const ROOM_TOO_SMALL = 'Too Small';
-
     const ROOM_UNAVAILABLE = '';
-
     const ROOM_NOT_SUITABLE = 'Not Suitable';
 
+    /**
+     * Summary of reservRs
+     * @var ReservationRS
+     */
     protected $reservRs;
 
+    /**
+     * Summary of reservConstraints
+     * @var ConstraintsReservation
+     */
     protected $reservConstraints;
 
+    /**
+     * Summary of visitConstraints
+     * @var ConstraintsVisit
+     */
     protected $visitConstraints;
 
+    /**
+     * Summary of boDays
+     * @var mixed
+     */
     protected $boDays;
 
+    /**
+     * Summary of startHolidays
+     * @var mixed
+     */
     protected $startHolidays;
 
+    /**
+     * Summary of endHolidays
+     * @var mixed
+     */
     protected $endHolidays;
 
+    /**
+     * Summary of idPsg
+     * @var int
+     */
     protected $idPsg;
 
+    /**
+     * Summary of idHospital
+     * @var int
+     */
     protected $idHospital;
 
+    /**
+     * Summary of idAssociation
+     * @var int
+     */
     protected $idAssociation;
 
+    /**
+     * Summary of idVisit
+     * @var int
+     */
     protected $idVisit;
 
+    /**
+     * Summary of constrainedRooms
+     * @var array
+     */
     protected $constrainedRooms;
 
+    /**
+     * Summary of availableResources
+     * @var array
+     */
     protected $availableResources = array();
 
+    /**
+     * Summary of untestedResources
+     * @var array
+     */
     protected $untestedResources = array();
 
+    /**
+     * Summary of resultMessage
+     * @var string
+     */
     protected $resultMessage = '';
 
+    /**
+     * Summary of reserveStatusType
+     * @var string
+     */
     protected $reserveStatusType;
 
+    /**
+     * Summary of idResource
+     * @var int
+     */
     protected $idResource;
 
+    /**
+     * Summary of idReferralDoc
+     * @var int
+     */
     protected $idReferralDoc;
 
+    /**
+     * Summary of expectedArrival
+     * @var mixed
+     */
     protected $expectedArrival;
 
+    /**
+     * Summary of expectedDeparture
+     * @var mixed
+     */
     protected $expectedDeparture;
 
+    /**
+     * Summary of numGuests
+     * @var int
+     */
     protected $numGuests;
 
+    /**
+     * Summary of roomTitle
+     * @var string
+     */
     protected $roomTitle;
 
 
@@ -103,14 +185,26 @@ class Reservation_1 {
 
     }
 
+    /**
+     * Summary of getAvailableResources
+     * @return array
+     */
     public function getAvailableResources() {
         return $this->availableResources;
     }
 
+    /**
+     * Summary of getUntestedResources
+     * @return array|mixed
+     */
     public function getUntestedResources() {
         return $this->untestedResources;
     }
 
+    /**
+     * Summary of getResultMessage
+     * @return string
+     */
     public function getResultMessage() {
         return $this->resultMessage;
     }
@@ -449,6 +543,8 @@ class Reservation_1 {
 
             $dbh->exec("Delete from reservation_guest where idReservation = " . $this->getIdReservation());
             $dbh->exec("Delete from constraint_entity where idEntity = " . $this->getIdReservation());
+            $dbh->exec("delete from reservation_multiple where Child_Id = " . $this->getIdReservation());
+            $dbh->exec("delete from reservation_multiple where Host_Id = " . $this->getIdReservation());
 
             $this->reservRs = NULL;
 
@@ -479,16 +575,34 @@ class Reservation_1 {
 
     }
 
+    /**
+     * Summary of setNonCleaningDays
+     * @param \PDO $dbh
+     * @return void
+     */
     public function setNonCleaningDays(\PDO $dbh) {
         if (is_null($this->boDays)) {
             $this->boDays = $this->loadNonCleaningDays($dbh);
         }
     }
 
+    /**
+     * Summary of adjustArrivalDate
+     * @param mixed $stringDate
+     * @return string
+     */
     protected function adjustArrivalDate($stringDate) {
         return $this->adjustStartDate($stringDate, $this->startHolidays, $this->endHolidays, $this->boDays);
     }
 
+    /**
+     * Summary of adjustStartDate
+     * @param mixed $stringDate
+     * @param mixed $startHolidays
+     * @param mixed $endHolidays
+     * @param mixed $boDays
+     * @return string
+     */
     protected static function adjustStartDate($stringDate, $startHolidays, $endHolidays, $boDays) {
 
         $arDate = new \DateTime($stringDate);
@@ -518,10 +632,23 @@ class Reservation_1 {
         return $arDate->format('Y-m-d H:i:s');
     }
 
+    /**
+     * Summary of adjustDepartureDate
+     * @param mixed $stringDate
+     * @return string
+     */
     protected function adjustDepartureDate($stringDate) {
         return $this->adjustEndDate($stringDate, $this->startHolidays, $this->endHolidays, $this->boDays);
     }
 
+    /**
+     * Summary of adjustEndDate
+     * @param mixed $stringDate
+     * @param mixed $startHolidays
+     * @param mixed $endHolidays
+     * @param mixed $boDays
+     * @return string
+     */
     protected static function adjustEndDate($stringDate, $startHolidays, $endHolidays, $boDays) {
 
         $arDate = new \DateTime($stringDate);
@@ -659,6 +786,16 @@ class Reservation_1 {
 
     }
 
+    /**
+     * Summary of loadAvailableResources
+     * @param \PDO $dbh
+     * @param mixed $expectedArrival
+     * @param mixed $expectedDeparture
+     * @param mixed $numOccupants
+     * @param mixed $resourceTypes
+     * @param mixed $omitSelf
+     * @return array
+     */
     protected function loadAvailableResources(\PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
 
         if ($expectedArrival == '' || $expectedDeparture == '') {
@@ -706,6 +843,14 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     }
 
+    /**
+     * Summary of findReservations
+     * @param \PDO $dbh
+     * @param mixed $expectedArrival
+     * @param mixed $expectedDeparture
+     * @param mixed $idResource
+     * @return array
+     */
     public static function findReservations(\PDO $dbh, $expectedArrival, $expectedDeparture, $idResource) {
 
         // Deal with non-cleaning days
@@ -729,6 +874,14 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     }
 
+    /**
+     * Summary of findRescsInUse
+     * @param \PDO $dbh
+     * @param mixed $expectedArrival
+     * @param mixed $expectedDeparture
+     * @param mixed $omitSelf
+     * @return array
+     */
     protected function findRescsInUse(\PDO $dbh, $expectedArrival, $expectedDeparture, $omitSelf = FALSE) {
 
         // Deal with non-cleaning days
@@ -775,6 +928,12 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Summary of testResources
+     * @param \PDO $dbh
+     * @param mixed $rescRows
+     * @return array
+     */
     protected function testResources(\PDO $dbh, $rescRows) {
 
         $resources = array();
@@ -811,6 +970,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     }
 
+    /**
+     * Summary of getConstrainedRoomsArray
+     * @param \PDO $dbh
+     * @return array<string>
+     */
     protected function getConstrainedRoomsArray(\PDO $dbh) {
 
         if (is_null($this->constrainedRooms)) {
@@ -820,6 +984,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this->constrainedRooms;
     }
 
+    /**
+     * Summary of loadConstrainedRooms
+     * @param \PDO $dbh
+     * @return array<string>
+     */
     protected function loadConstrainedRooms(\PDO $dbh) {
 
         $roomIds = array();
@@ -869,6 +1038,12 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $pass;
     }
 
+    /**
+     * Summary of getConstraints
+     * @param \PDO $dbh
+     * @param mixed $refresh
+     * @return ConstraintsReservation
+     */
     public function getConstraints(\PDO $dbh, $refresh = FALSE) {
 
     	if (is_null($this->reservConstraints) || $refresh) {
@@ -878,6 +1053,12 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     	return $this->reservConstraints;
     }
 
+    /**
+     * Summary of getVisitConstraints
+     * @param \PDO $dbh
+     * @param mixed $refresh
+     * @return ConstraintsVisit
+     */
     public function getVisitConstraints(\PDO $dbh, $refresh = FALSE) {
 
     	if (is_null($this->visitConstraints) || $refresh) {
@@ -887,6 +1068,18 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     	return $this->visitConstraints;
     }
 
+    /**
+     * Summary of showListByStatus
+     * @param \PDO $dbh
+     * @param mixed $editPage
+     * @param mixed $checkinPage
+     * @param mixed $reservStatus
+     * @param mixed $shoDirtyRooms
+     * @param mixed $idResc
+     * @param mixed $daysAhead
+     * @param mixed $showConstraints
+     * @return string
+     */
     public static function showListByStatus(\PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
 
         $dateAhead = new \DateTime();
@@ -913,6 +1106,17 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     }
 
+    /**
+     * Summary of showList
+     * @param \PDO $dbh
+     * @param mixed $rows
+     * @param mixed $editPage
+     * @param mixed $checkinPage
+     * @param mixed $reservStatus
+     * @param mixed $shoDirtyRooms
+     * @param mixed $showConstraints
+     * @return string
+     */
     public static function showList(\PDO $dbh, $rows, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $showConstraints = FALSE) {
 
         $uS = Session::getInstance();
@@ -1093,6 +1297,12 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     }
 
 
+    /**
+     * Summary of getStatusTitle
+     * @param \PDO $dbh
+     * @param mixed $status
+     * @return mixed
+     */
     public function getStatusTitle(\PDO $dbh, $status = '') {
 
         if ($status == '') {
@@ -1119,6 +1329,12 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return '';
     }
 
+    /**
+     * Summary of getStatusIcon
+     * @param \PDO $dbh
+     * @param mixed $status
+     * @return string
+     */
     public function getStatusIcon(\PDO $dbh, $status = '') {
 
         if ($status == '') {
@@ -1181,10 +1397,21 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $limResvStatuses;
     }
 
+    /**
+     * Summary of isActive
+     * @param mixed $reserveStatuses
+     * @return bool
+     */
     public function isActive($reserveStatuses) {
         return $this->isActiveStatus($this->getStatus(), $reserveStatuses);
     }
 
+    /**
+     * Summary of isActiveStatus
+     * @param mixed $status
+     * @param mixed $reserveStatuses
+     * @return bool
+     */
     public static function isActiveStatus($status, $reserveStatuses) {
 
         if (isset($reserveStatuses[$status])) {
@@ -1197,10 +1424,21 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return FALSE;
     }
 
+    /**
+     * Summary of isRemoved
+     * @param mixed $reserveStatuses
+     * @return bool
+     */
     public function isRemoved($reserveStatuses) {
         return $this->isRemovedStatus($this->getStatus(), $reserveStatuses);
     }
 
+    /**
+     * Summary of isRemovedStatus
+     * @param mixed $status
+     * @param mixed $reserveStatuses
+     * @return bool
+     */
     public static function isRemovedStatus($status, $reserveStatuses) {
 
         if (isset($reserveStatuses[$status])) {
@@ -1212,6 +1450,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return FALSE;
     }
 
+    /**
+     * Summary of isNew
+     * @return bool
+     */
     public function isNew() {
         if ($this->reservRs->idReservation->getStoredVal() > 0) {
             return FALSE;
@@ -1219,6 +1461,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return TRUE;
     }
 
+    /**
+     * Summary of getIdPsg
+     * @param \PDO $dbh
+     * @return int|mixed
+     */
     public function getIdPsg(\PDO $dbh) {
 
         if ($this->getIdRegistration() == 0) {
@@ -1243,6 +1490,12 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this->idPsg;
     }
 
+    /**
+     * Summary of getIdPsgStatic
+     * @param \PDO $dbh
+     * @param mixed $idResv
+     * @return mixed
+     */
     public static function getIdPsgStatic(\PDO $dbh, $idResv) {
 
         $idPsg = 0;
@@ -1259,6 +1512,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $idPsg;
     }
 
+    /**
+     * Summary of isFixedRate
+     * @return bool
+     */
     public function isFixedRate() {
         if ($this->reservRs->Room_Rate_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category) {
             return TRUE;
@@ -1267,33 +1524,65 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return FALSE;
     }
 
+    /**
+     * Summary of getExpectedPayType
+     * @return mixed
+     */
     public function getExpectedPayType() {
         return $this->reservRs->Expected_Pay_Type->getStoredVal();
     }
 
+    /**
+     * Summary of setExpectedPayType
+     * @param mixed $payTypeCode
+     * @return Reservation_1
+     */
     public function setExpectedPayType($payTypeCode) {
         $this->reservRs->Expected_Pay_Type->setNewVal($payTypeCode);
         return $this;
     }
 
+    /**
+     * Summary of getVisitFee
+     * @return mixed
+     */
     public function getVisitFee() {
         return $this->reservRs->Visit_Fee->getStoredVal();
     }
 
+    /**
+     * Summary of setVisitFee
+     * @param mixed $amount
+     * @return Reservation_1
+     */
     public function setVisitFee($amount) {
         $this->reservRs->Visit_Fee->setNewVal($amount);
         return $this;
     }
 
+    /**
+     * Summary of getVerbalConfirm
+     * @return mixed
+     */
     public function getVerbalConfirm() {
         return $this->reservRs->Confirmation->getStoredVal();
     }
 
+    /**
+     * Summary of setVerbalConfirm
+     * @param mixed $confirmCode
+     * @return Reservation_1
+     */
     public function setVerbalConfirm($confirmCode) {
         $this->reservRs->Confirmation->setNewVal($confirmCode);
         return $this;
     }
 
+    /**
+     * Summary of setExpectedArrival
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setExpectedArrival($v) {
         if ($v != '') {
             $arr = date('Y-m-d 16:00:00', strtotime($v));
@@ -1302,6 +1591,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
+    /**
+     * Summary of setExpectedDeparture
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setExpectedDeparture($v) {
         if ($v != '') {
             $arr = date('Y-m-d 10:00:00', strtotime($v));
@@ -1310,48 +1604,94 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
+    /**
+     * Summary of setActualArrival
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setActualArrival($v) {
         $this->reservRs->Actual_Arrival->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of setActualDeparture
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setActualDeparture($v) {
         $this->reservRs->Actual_Departure->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of getCheckinNotes
+     * @return mixed
+     */
     public function getCheckinNotes() {
         return $this->reservRs->Checkin_Notes->getStoredVal();
     }
 
+    /**
+     * Summary of setCheckinNotes
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setCheckinNotes($v) {
         $this->reservRs->Checkin_Notes->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of getIdHospital
+     * @return mixed
+     */
     public function getIdHospital() {
         return $this->idHospital;
     }
 
+    /**
+     * Summary of getIdAssociation
+     * @return mixed
+     */
     public function getIdAssociation() {
         return $this->idAssociation;
     }
 
+    /**
+     * Summary of setIdHospital
+     * @param mixed $idHospital
+     * @return Reservation_1
+     */
     public function setIdHospital($idHospital) {
         $this->idHospital = $idHospital;
         return $this;
     }
 
+    /**
+     * Summary of setIdAssociation
+     * @param mixed $idAssociation
+     * @return Reservation_1
+     */
     public function setIdAssociation($idAssociation) {
         $this->idAssociation = $idAssociation;
         return $this;
     }
 
+    /**
+     * Summary of setTitle
+     * @param mixed $title
+     * @return Reservation_1
+     */
     public function setTitle($title) {
         $this->reservRs->Title->setNewVal($title);
         return $this;
     }
 
+    /**
+     * Summary of getTitle
+     * @return mixed
+     */
     public function getTitle() {
         return $this->reservRs->Title->getStoredVal();
     }
@@ -1382,21 +1722,41 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
     }
 
+    /**
+     * Summary of setIdReferralDoc
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setIdReferralDoc($v) {
         $this->idReferralDoc = $v;
         return $this;
     }
 
+    /**
+     * Summary of setIdResource
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setIdResource($v) {
         $this->idResource = $v;
         return $this;
     }
 
+    /**
+     * Summary of setIdGuest
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setIdGuest($v) {
         $this->reservRs->idGuest->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of setHospitalStay
+     * @param \HHK\House\Hospital\HospitalStay $v
+     * @return Reservation_1
+     */
     public function setHospitalStay(HospitalStay $v) {
         $this->reservRs->idHospital_Stay->setNewVal($v->getIdHospital_Stay());
         $this->setIdHospital($v->getHospitalId())
@@ -1404,27 +1764,52 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
+    /**
+     * Summary of setIdHospitalStay
+     * @param mixed $idHospitalStay
+     * @return Reservation_1
+     */
     public function setIdHospitalStay($idHospitalStay) {
         $id = intval($idHospitalStay, 10);
         $this->reservRs->idHospital_Stay->setNewVal($id);
         return $this;
     }
 
+    /**
+     * Summary of setRoomRateCategory
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setRoomRateCategory($v) {
         $this->reservRs->Room_Rate_Category->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of setFixedRoomRate
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setFixedRoomRate($v) {
         $this->reservRs->Fixed_Room_Rate->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of setAmuntPerGuest
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setAmuntPerGuest($v) {
         $this->reservRs->Fixed_Room_Rate->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of setRateAdjust
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setRateAdjust($v) {
 
         if ($v >= -100 && $v <= 0) {
@@ -1434,25 +1819,49 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
+    /**
+     * Summary of setIdRateAdjust
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setIdRateAdjust($v){
         $this->reservRs->idRateAdjust->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of getIdRoomRate
+     * @return mixed
+     */
     public function getIdRoomRate() {
         return $this->reservRs->idRoom_rate->getStoredVal();
     }
 
+    /**
+     * Summary of setIdRoomRate
+     * @param mixed $idRoom_rate
+     * @return Reservation_1
+     */
     public function setIdRoomRate($idRoom_rate) {
         $this->reservRs->idRoom_rate->setNewVal($idRoom_rate);
         return $this;
     }
 
+    /**
+     * Summary of setNumberGuests
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setNumberGuests($v) {
         $this->numGuests = $v;
         return $this;
     }
 
+    /**
+     * Summary of setStatus
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setStatus($v) {
         $uS = Session::getInstance();
         if (isset($uS->guestLookups['ReservStatus'][$v])) {
@@ -1461,22 +1870,47 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
+    /**
+     * Summary of setStatusType
+     * @param mixed $t
+     * @return void
+     */
     public function setStatusType($t) {
         $this->reserveStatusType = $t;
     }
 
+    /**
+     * Summary of setAddRoom
+     * @param mixed $v
+     * @return Reservation_1
+     */
     public function setAddRoom($v) {
         $this->reservRs->Add_Room->setNewVal($v);
         return $this;
     }
 
+    /**
+     * Summary of saveNote
+     * @param \PDO $dbh
+     * @param mixed $noteText
+     * @param mixed $uname
+     * @param mixed $concatNotes
+     * @return array<string>|int|mixed
+     */
     public function saveNote(\PDO $dbh, $noteText, $uname, $concatNotes) {
 
         if ($noteText != '') {
             return LinkNote::save($dbh, $noteText, $this->getIdReservation(), Note::ResvLink, '', $uname, $concatNotes);
         }
+
+        return 0;
     }
 
+    /**
+     * Summary of getIdVisit
+     * @param \PDO $dbh
+     * @return int|mixed
+     */
     public function getIdVisit(\PDO $dbh) {
 
         if ($this->idVisit < 0 && $this->getIdReservation() > 0) {
@@ -1494,6 +1928,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this->idVisit;
     }
 
+    /**
+     * Summary of getReservationRS
+     * @return ReservationRS
+     */
     public function getReservationRS() {
         if (is_null($this->reservRs)) {
             return new ReservationRS();
@@ -1501,10 +1939,19 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this->reservRs;
     }
 
+    /**
+     * Summary of getNotes
+     * @return mixed
+     */
     public function getNotes() {
         return $this->reservRs->Notes->getStoredVal();  // == '' ? $this->reservRs->Notes->getNewVal() : $this->reservRs->Notes->getStoredVal();
     }
 
+    /**
+     * Summary of setNotes
+     * @param mixed $val
+     * @return void
+     */
     public function setNotes($val) {
         $this->reservRs->Notes->setNewVal($val);
     }
@@ -1518,53 +1965,103 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this->idResource;
     }
 
+    /**
+     * Summary of getIdReferralDoc
+     * @return mixed
+     */
     public function getIdReferralDoc() {
         return $this->idReferralDoc;
     }
 
+    /**
+     * Summary of getIdGuest
+     * @return mixed
+     */
     public function getIdGuest() {
         return $this->reservRs->idGuest->getStoredVal();
     }
 
+    /**
+     * Summary of getIdReservation
+     * @return mixed
+     */
     public function getIdReservation() {
         return $this->reservRs->idReservation->getStoredVal();
     }
 
+    /**
+     * Summary of getIdHospitalStay
+     * @return mixed
+     */
     public function getIdHospitalStay() {
         return $this->reservRs->idHospital_Stay->getStoredVal();
     }
 
+    /**
+     * Summary of getFixedRoomRate
+     * @return mixed
+     */
     public function getFixedRoomRate() {
         return $this->reservRs->Fixed_Room_Rate->getStoredVal();
     }
 
+    /**
+     * Summary of getRoomRateCategory
+     * @return mixed
+     */
     public function getRoomRateCategory() {
         return $this->reservRs->Room_Rate_Category->getStoredVal();
     }
 
+    /**
+     * Summary of getRateAdjust
+     * @return mixed
+     */
     public function getRateAdjust() {
         return $this->reservRs->Rate_Adjust->getStoredVal();
     }
 
+    /**
+     * Summary of getIdRateAdjust
+     * @return mixed
+     */
     public function getIdRateAdjust(){
         return $this->reservRs->idRateAdjust->getStoredVal();
     }
 
+    /**
+     * Summary of getAmouontPerGuest
+     * @return mixed
+     */
     public function getAmouontPerGuest() {
         return $this->reservRs->Fixed_Room_Rate->getStoredVal();
     }
 
 
+    /**
+     * Summary of getAdjustedTotal
+     * @param mixed $amount
+     * @return float
+     */
     public function getAdjustedTotal($amount) {
         $adjustedAmount = (1 + $this->getRateAdjust() / 100) * $amount;
 
         return $adjustedAmount;
     }
 
+    /**
+     * Summary of getIdRegistration
+     * @return mixed
+     */
     public function getIdRegistration() {
         return $this->reservRs->idRegistration->getStoredVal();
     }
 
+    /**
+     * Summary of getNumberGuests
+     * @param \PDO|null $dbh
+     * @return int|mixed
+     */
     public function getNumberGuests(\PDO $dbh = null) {
 
         if (!is_null($dbh) && $this->getStatus() == ReservationStatus::Staying) {
@@ -1584,14 +2081,26 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
         return $this->numGuests;
     }
 
+    /**
+     * Summary of getStatus
+     * @return mixed
+     */
     public function getStatus() {
         return $this->reservRs->Status->getStoredVal();
     }
 
+    /**
+     * Summary of getStatusType
+     * @return mixed
+     */
     public function getStatusType() {
         return $this->reserveStatusType;
     }
 
+    /**
+     * Summary of getAddRoom
+     * @return mixed
+     */
     public function getAddRoom() {
         return $this->reservRs->Add_Room->getStoredVal();
     }
@@ -1612,14 +2121,27 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
         return $this->expectedDeparture;
     }
 
+    /**
+     * Summary of getActualArrival
+     * @return mixed
+     */
     public function getActualArrival() {
         return $this->reservRs->Actual_Arrival->getStoredVal();
     }
 
+    /**
+     * Summary of getActualDeparture
+     * @return mixed
+     */
     public function getActualDeparture() {
         return $this->reservRs->Actual_Departure->getStoredVal();
     }
 
+    /**
+     * Summary of getRoomTitle
+     * @param \PDO $dbh
+     * @return string
+     */
     public function getRoomTitle(\PDO $dbh) {
 
         if ($this->getIdResource() > 0 && $this->roomTitle == '') {

@@ -757,6 +757,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $showPayWith,
                 $moaBalance);
 
+
             // Multiple reservations
             if ($uS->UseRepeatingReservations) {
                 $dataArray['multiResv'] = RepeatReservations::createMultiResvMarkup($dbh, $resv);
