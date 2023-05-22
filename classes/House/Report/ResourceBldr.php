@@ -285,7 +285,7 @@ Order by `t`.`List_Order`;");
 
         // Save
         if ($cmd == 'save') {
-            $postLookups = json_decode(filter_input(INPUT_POST, "lookups", FILTER_UNSAFE_RAW), true);
+            $postLookups = (filter_has_var(INPUT_POST, "lookups")) ? json_decode(filter_input(INPUT_POST, "lookups", FILTER_UNSAFE_RAW), true) : [];
 
             // Check for a new entry
             if (isset($postLookups['txtDiag'][0]) && $postLookups['txtDiag'][0] != '') {
@@ -447,7 +447,7 @@ Order by `t`.`List_Order`;");
                 $amounts = filter_var_array($postLookups['selDiagCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $codeArray = filter_var_array($postLookups['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $codeArray = (isset($postLookups['txtDiag']) ? filter_var_array($postLookups['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : array());
             $orderNums = (isset($postLookups['txtDOrder']) ? filter_var_array($postLookups['txtDOrder'], FILTER_SANITIZE_NUMBER_INT) : array());
 
             if ($type === GlTypeCodes::m) {

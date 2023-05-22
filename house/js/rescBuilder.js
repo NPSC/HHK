@@ -527,7 +527,7 @@ $(document).ready(function () {
     $('#btndemoSave').click(function () {
         var $frm = $(this).closest('form');
 
-        $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
+        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
             function(data) {
                 if (data) {
                     $frm.children('div').children().remove().end().append(data).find(".sortable tbody")
