@@ -4,13 +4,14 @@ namespace HHK\Purchase;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Registration;
 use HHK\Payment\CreditToken;
+use HHK\House\Reservation\Reservation_1;
 use HHK\Payment\Invoice\Invoice;
+use HHK\Purchase\ValueAddedTax;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\SysConst\{ExcessPay, GLTableNames, InvoiceStatus, ItemId, ItemPriceCode, PayType, ReturnIndex};
 use HHK\sec\Labels;
 use HHK\sec\Session;
-use HHK\House\Reservation\Reservation_1;
 
 /**
  * PaymentChooser.php
@@ -511,6 +512,11 @@ class PaymentChooser {
 
     }
 
+    /**
+     * Summary of createUnpaidInvoiceMarkup
+     * @param array $unpaidInvoices
+     * @return array<string>
+     */
     public static function createUnpaidInvoiceMarkup($unpaidInvoices) {
 
         $trs = array();
@@ -558,59 +564,16 @@ class PaymentChooser {
         return $trs;
     }
 
-    public static function createChangeRoomMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $prefTokenId = 0) {
 
-        $uS = Session::getInstance();
-
-        if ($uS->KeyDeposit === FALSE) {
-            return '';
-        }
-
-        // no invoices
-        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
-        unset($payTypes[PayType::Invoice]);
-
-        $labels = Labels::getLabels();
-
-        $mkup = HTMLContainer::generateMarkup(
-            'div',
-            self::createPaymentMarkup(
-                FALSE,
-                $uS->KeyDeposit,
-                $visitCharge,
-                FALSE,
-                0,
-                FALSE,
-                FALSE,
-                array(),
-                $labels,
-                new ValueAddedTax($dbh),
-                $visitCharge->getIdVisit(),
-                array(),
-                '',
-                FALSE
-            )
-            , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
-        );
-
-
-        // payment types panel
-        $panelMkup = self::showPaySelection(
-                $dbh,
-                $uS->DefaultPayType,
-                $payTypes,
-                $labels,
-                $paymentGateway,
-                $idGuest, $idRegistration, $prefTokenId);
-
-        $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
-
-
-        return HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Paying Today', array('style'=>'font-weight:bold;'))
-                . $mkup, array('class'=>'hhk-panel', 'style'=>'float:left;'));
-    }
-
+    /**
+     * Summary of createHousePaymentMarkup
+     * @param mixed $discounts
+     * @param mixed $addnls
+     * @param int $idVisit
+     * @param mixed $itemTaxSums
+     * @param mixed $arrivalDate
+     * @return string
+     */
     public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $itemTaxSums, $arrivalDate = '') {
 
         if (count($discounts) < 1 && count($addnls) < 1) {
@@ -690,6 +653,14 @@ dateFormat: "M d, yy" ';
 
     }
 
+    /**
+     * Summary of createPayInvMarkup
+     * @param \PDO $dbh
+     * @param int $id
+     * @param int $invoiceId
+     * @param int $prefTokenId
+     * @return string
+     */
     public static function createPayInvMarkup(\PDO $dbh, $id, $invoiceId, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
@@ -773,6 +744,25 @@ ORDER BY v.idVisit , v.Span;");
         return HTMLContainer::generateMarkup('h3', "No unpaid invoices found.");
     }
 
+    /**
+     * Summary of createPaymentMarkup
+     * @param bool $showRoomFees
+     * @param bool $useKeyDeposit
+     * @param VisitCharges $visitCharge
+     * @param bool $useVisitFee
+     * @param float|int $heldAmount
+     * @param bool $payVFeeFirst
+     * @param bool $showFinalPaymentCB
+     * @param array $unpaidInvoices
+     * @param Labels $labels
+     * @param ValueAddedTax $vat
+     * @param int $idVisit
+     * @param mixed $excessPays
+     * @param string $defaultExcessPays
+     * @param bool $useHouseWaive
+     * @param bool $chkingIn
+     * @return string
+     */
     protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $visitCharge, $useVisitFee, $heldAmount, $payVFeeFirst,
             $showFinalPaymentCB, array $unpaidInvoices, $labels, $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE, $chkingIn = FALSE) {
 
@@ -1084,6 +1074,17 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblPaySelect'));
     }
 
+    /**
+     * Summary of showReturnSelection
+     * @param \PDO $dbh
+     * @param string $defaultPayType
+     * @param array $payTypes
+     * @param \HHK\Payment\PaymentGateway\AbstractPaymentGateway $paymentGateway
+     * @param int $idPrimaryGuest
+     * @param int $idReg
+     * @param int $prefTokenId
+     * @return string
+     */
     protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId) {
 
         $payTbl = new HTMLTable();
@@ -1126,6 +1127,17 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblRtnSelect'));
     }
 
+    /**
+     * Summary of CreditBlock
+     * @param \PDO $dbh
+     * @param HTMLTable $tbl
+     * @param array $tkRsArray
+     * @param \HHK\Payment\PaymentGateway\AbstractPaymentGateway $paymentGateway
+     * @param int $prefTokenId
+     * @param string $index
+     * @param string $display
+     * @return void
+     */
     public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, AbstractPaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;') {
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
@@ -1195,6 +1207,11 @@ ORDER BY v.idVisit , v.Span;");
 
     }
 
+    /**
+     * Summary of invoiceBlock
+     * @param mixed $index
+     * @return string
+     */
     public static function invoiceBlock($index = '') {
 
         $tblInvoice = new HTMLTable();

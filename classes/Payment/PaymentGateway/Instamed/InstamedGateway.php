@@ -684,6 +684,14 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         return $payResult;
     }
 
+    /**
+     * Summary of processWebhook
+     * @param \PDO $dbh
+     * @param mixed $data
+     * @param mixed $payNotes
+     * @param mixed $userName
+     * @return bool
+     */
     public function processWebhook(\PDO $dbh, $data, $payNotes, $userName) {
 
         $webhookResp = new WebhookResponse($data);

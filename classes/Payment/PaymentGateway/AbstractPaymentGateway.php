@@ -127,6 +127,15 @@ abstract class AbstractPaymentGateway {
     	return array();
     }
 
+    /**
+     * Summary of processWebhook
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $payNotes
+     * @param mixed $userName
+     * @throws \HHK\Exception\PaymentException
+     * @return never
+     */
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         throw new PaymentException('Webhook not implemeneted');
     }

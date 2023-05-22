@@ -532,6 +532,14 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of undoReturnFees
+     * @param \PDO $dbh
+     * @param mixed $idPayment
+     * @param mixed $bid
+     * @throws \HHK\Exception\PaymentException
+     * @return array
+     */
     public static function undoReturnFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
@@ -649,6 +657,16 @@ class PaymentSvcs {
         return $dataArray;
     }
 
+    /**
+     * Summary of undoReturnAmount
+     * @param \PDO $dbh
+     * @param mixed $idPayment
+     * @param mixed $idPaymentMethod
+     * @param mixed $paymentAmount
+     * @param mixed $bid
+     * @throws \HHK\Exception\PaymentException
+     * @return array
+     */
     protected static function undoReturnAmount(\PDO $dbh, $idPayment, $idPaymentMethod, $paymentAmount, $bid) {
 
         $uS = Session::getInstance();
@@ -750,6 +768,12 @@ class PaymentSvcs {
         return $dataArray;
     }
 
+    /**
+     * Summary of processWebhook
+     * @param \PDO $dbh
+     * @param mixed $data
+     * @return bool
+     */
     public static function processWebhook(\PDO $dbh, $data) {
 
         $uS = Session::getInstance();
@@ -766,6 +790,8 @@ class PaymentSvcs {
 
 	        return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
         }
+
+        return FALSE;
 
     }
 
