@@ -985,11 +985,11 @@ class CustomRegisterForm {
 
         if (!empty($this->settings['Top']['room'])) {
 
-            $stmt2 = $dbh->query("select Title from resource where idResource = " . $idResc . ";");
+            $stmt2 = $dbh->query("select Title from resource where idResource = '" . $idResc . "';");
             $rows2 = $stmt2->fetchAll();
 
-            foreach ($rows2 as $rw) {
-                $roomTitle = $rw['Title'];
+            if(count($rows2) == 1 && !empty($rows2[0]['Title'])) {
+                $roomTitle = $rows2[0]['Title'];
             }
         }
 

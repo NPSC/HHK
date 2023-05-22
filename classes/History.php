@@ -521,7 +521,7 @@ class History {
         $blindIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whtcne.jpg');"))
-                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Vision Inpared"))
+                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Vision Impaired"))
             , array('class'=>'ui-widget hhk-ui-icons ml-2'));
 
 
