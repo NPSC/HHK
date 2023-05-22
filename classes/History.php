@@ -432,14 +432,9 @@ class History {
                     )), array('class' => 'gmenu'));
             }
 
-            if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos){
+            if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos && $includeAction && !$static){
                 $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
             }
-
-            if ($uS->ShowGuestPhoto) {
-                $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
-            }
-
 
             // Guest first name
             $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
