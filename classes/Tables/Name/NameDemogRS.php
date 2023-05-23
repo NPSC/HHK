@@ -38,6 +38,7 @@ class NameDemogRS extends AbstractTableRS {
     public $Gl_Code_Credit;  // VARCHAR(25) NOT NULL DEFAULT ''
     public $Tax_Exempt; // TINYINT(1) NOT NULL DEFAULT 0
     public $Background_Check_Date;
+    public $Is_Minor;  // TINYINT(4) NOT NULL DEFAULT 0
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
     public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -66,6 +67,7 @@ class NameDemogRS extends AbstractTableRS {
         $this->Gl_Code_Credit = new DB_Field('Gl_Code_Credit', '', new DbStrSanitizer(25), TRUE, TRUE);
         $this->Tax_Exempt = new DB_Field('tax_exempt', 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Background_Check_Date = new DB_Field('Background_Check_Date', NULL, new DbDateSanitizer("Y-m-d"), TRUE);
+        $this->Is_Minor = new DB_Field('Is_Minor', 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

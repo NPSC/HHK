@@ -217,8 +217,8 @@ class RegisterForm {
             $usedNames = array();
 
             foreach ($guests as $g) {
-
-                if (!isset($usedNames[$g->getIdName()])) {
+                    // #816, EKC, 5/23/2023
+                if (!isset($usedNames[$g->getIdName()]) && $g->get_demogRS()->Is_Minor->getStoredVal() == 0) {
 
                     $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'data-gid'=>$g->getIdName(), 'class'=>'hhk-sigCapure'));
 
@@ -735,7 +735,7 @@ p.label {
 
 
 
-        return RegisterForm::generateDocument(
+        return $this->generateDocument(
                 $dbh,
                 $title,
                 $patient,

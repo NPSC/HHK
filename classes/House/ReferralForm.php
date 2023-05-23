@@ -44,9 +44,19 @@ class ReferralForm {
 	 * @var array Form data
 	 */
 	protected $formUserData;
+
+ /**
+  * Summary of formDoc
+  * @var
+  */
 	protected $formDoc;
 
+	/**
+	 * Summary of patSearchFor
+	 * @var
+	 */
 	protected $patSearchFor;
+
 	protected $patResults;
 
 	protected $gstSearchFor = [];
@@ -250,10 +260,11 @@ class ReferralForm {
 	/**
 	 *
 	 * @param \PDO $dbh
+	 * @param Patient $patient
 	 * @param integer $maxGuests Defaults to const MAX_GUESTS.
 	 * @return array An array of SearchResults objects, one per guest searched.
 	 */
-	public function searchGuests(\PDO $dbh, $maxGuests = self::MAX_GUESTS) {
+	public function searchGuests(\PDO $dbh, $patient, $maxGuests = self::MAX_GUESTS) {
 
 	    $this->gstResults = [];
 
@@ -265,6 +276,12 @@ class ReferralForm {
 
     	        if (isset($this->formUserData['guests'][$gindx]['firstName']) && isset($this->formUserData['guests'][$gindx]['lastName'])
     	            && $this->formUserData['guests'][$gindx]['firstName'] != '' && $this->formUserData['guests'][$gindx]['lastName'] != '') {
+
+					// Is this a copy of the patient? #860, EKC, 5/23/2023
+					if ($this->formUserData['guests'][$gindx]['firstName'] == $patient->getRoleMember()->get_firstName()
+							&& $this->formUserData['guests'][$gindx]['lastName'] == $patient->getRoleMember()->get_lastName()) {
+						continue;
+					}
 
     	            $searchFor = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
     	            $searchFor->setPsgId($this->idPsg);

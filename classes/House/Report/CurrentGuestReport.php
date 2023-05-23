@@ -23,6 +23,17 @@ use HHK\sec\Labels;
 
 class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
+    /**
+     * Summary of uniqueGuests
+     * @var array
+     */
+    protected $uniqueGuests = [];
+
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param mixed $request
+     */
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
         $this->reportTitle = $uS->siteName . " Resident ".Labels::getString('MemberType', 'visitor', 'Guest'). "s for " . date('D M j, Y');
@@ -31,11 +42,19 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
+    /**
+     * Summary of makeFilterMkup
+     * @return void
+     */
     public function makeFilterMkup(): void
     {
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
+    /**
+     * Summary of makeSummaryMkup
+     * @return string
+     */
     public function makeSummaryMkup(): string
     {
 
@@ -43,9 +62,15 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
         $mkup .= HTMLContainer::generateMarkup('p', "Report Period: " . Labels::getString('MemberType', 'visitor', 'Guest'). "s staying " . date('M j, Y'));
 
+        $mkup .= HTMLContainer::generateMarkup('p', 'Number of unique guests: ' . count($this->uniqueGuests));
+
         return $mkup;
     }
 
+    /**
+     * Summary of makeCFields
+     * @return array
+     */
     public function makeCFields(): array
     {
         $uS = Session::getInstance();
@@ -84,21 +109,41 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         return $cFields;
     }
 
+    /**
+     * Summary of makeQuery
+     * @return void
+     */
     public function makeQuery(): void
     {
         $this->query = "select * from vguest_view";
     }
 
+    /**
+     * Summary of generateMarkup
+     * @param mixed $outputType
+     * @return string
+     */
     public function generateMarkup(string $outputType = ""){
         $this->getResultSet();
 
+        $uniqueGuests = [];
+
         foreach($this->resultSet as $k=>$r) {
             $this->resultSet[$k]['On_Leave'] = ($this->resultSet[$k]['On_Leave'] > 0 ? "Yes":"");
+            $this->uniqueGuests[$this->resultSet[$k]['idName']] = 'y';
+            unset($this->resultSet[$k]['idName']);
         }
 
         return parent::generateMarkup($outputType);
     }
 
+
+	/**
+	 * @return mixed
+	 */
+	public function getUniqueGuests() {
+		return $this->uniqueGuests;
+	}
 }
 
 ?>

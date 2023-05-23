@@ -1474,6 +1474,7 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_view` AS
     SELECT
+		 `s`.`idName`,
         IFNULL(CASE
                     WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
                     ELSE CONCAT(`n`.`Name_Last`, ' ', `g`.`Description`)
@@ -1481,7 +1482,10 @@ CREATE OR REPLACE VIEW `vguest_view` AS
                 '') AS `Last Name`,
         IFNULL(`n`.`Name_First`, '') AS `First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
-        CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' else IFNULL(`np`.`Phone_Num`, '') END AS `Phone`,
+        CASE
+            WHEN `np`.`Phone_Code` = 'no' THEN 'No Phone'
+            ELSE IFNULL(`np`.`Phone_Num`, '')
+        END AS `Phone`,
         `s`.`Checkin_Date` AS `Arrival`,
         CASE
             WHEN `s`.`Expected_Co_Date` < CURRENT_TIMESTAMP() THEN CURRENT_TIMESTAMP()
@@ -1490,9 +1494,11 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         `s`.`On_Leave` AS `On_Leave`,
         TO_DAYS(CURRENT_TIMESTAMP()) - TO_DAYS(`s`.`Checkin_Date`) AS `Nights`,
         `hosp`.`Title` AS `Hospital`,
-		`diag`.`Description` as `Diagnosis`,
-        `loc`.`Description` as `Location`,
-        CONCAT(IFNULL(`ec`.`Name_First`, ''), " ", IFNULL(`ec`.`Name_Last`, '')) AS `EC Name`,
+        `diag`.`Description` AS `Diagnosis`,
+        `loc`.`Description` AS `Location`,
+        CONCAT(IFNULL(`ec`.`Name_First`, ''),
+                ' ',
+                IFNULL(`ec`.`Name_Last`, '')) AS `EC Name`,
         IFNULL(`ec`.`Phone_Home`, '') AS `EC Phone Home`,
         IFNULL(`ec`.`Phone_Alternate`, '') AS `EC Phone Alternate`,
         IFNULL(`v`.`Make`, '') AS `Make`,
@@ -1502,7 +1508,7 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         IFNULL(`v`.`License_Number`, '') AS `License Plate`,
         IFNULL(`v`.`Note`, '') AS `Note`
     FROM
-        (((((((((`stays` `s`
+        (((((((((((`stays` `s`
         LEFT JOIN `name` `n` ON (`n`.`idName` = `s`.`idName`))
         LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
@@ -1510,8 +1516,10 @@ CREATE OR REPLACE VIEW `vguest_view` AS
             AND `s`.`Visit_Span` = `vs`.`Span`))
         LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`))
         LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))
-        LEFT JOIN `gen_lookups` `diag` on (`diag`.`Table_Name` = 'Diagnosis' AND `diag`.`Code` = `hs`.`Diagnosis`)
-        LEFT JOIN `gen_lookups` `loc` on (`loc`.`Table_Name` = 'Location' AND `loc`.`Code` = `hs`.`Location`)
+        LEFT JOIN `gen_lookups` `diag` ON (`diag`.`Table_Name` = 'Diagnosis'
+            AND `diag`.`Code` = `hs`.`Diagnosis`))
+        LEFT JOIN `gen_lookups` `loc` ON (`loc`.`Table_Name` = 'Location'
+            AND `loc`.`Code` = `hs`.`Location`))
         LEFT JOIN `vehicle` `v` ON (`vs`.`idRegistration` = `v`.`idRegistration`))
         LEFT JOIN `emergency_contact` `ec` ON (`n`.`idName` = `ec`.`idName`))
         LEFT JOIN `room` `rm` ON (`s`.`idRoom` = `rm`.`idRoom`))

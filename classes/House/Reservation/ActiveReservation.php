@@ -99,7 +99,7 @@ class ActiveReservation extends Reservation {
             $this->savePrePayment($dbh, $post);
         }
 
-        if ($uS->UseRepeatingReservations) {
+        if ($uS->UseRepeatResv) {
             $repeatResv = new RepeatReservations();
             $repeatResv->saveRepeats($dbh, $this->reservRs);
             $this->repeatResvErrors = $repeatResv->getErrorArray();

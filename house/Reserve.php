@@ -159,6 +159,7 @@ $resvAr['guestSearchTerm'] = filter_input(INPUT_GET, 'guestSearchTerm', FILTER_S
 if ($uS->AcceptResvPaymt && $idReserv > 0) {
     $resvAr['prePaymt'] = Reservation_1::getPrePayment($dbh, $idReserv);
 }
+$resvAr['datePickerButtons'] = $uS->RegNoMinorSigLines;
 
 $resvManagerOptions = [];
 if($uS->UseIncidentReports){

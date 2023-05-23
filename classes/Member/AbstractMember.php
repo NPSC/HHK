@@ -914,6 +914,10 @@ abstract class AbstractMember {
         return $this->nameRS;
     }
 
+    /**
+     * Summary of get_demogRS
+     * @return NameDemogRS
+     */
     public function get_demogRS() {
         return $this->demogRS;
     }

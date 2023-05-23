@@ -2,30 +2,30 @@
 
 namespace HHK\House\RegistrationForm;
 
+use HHK\House\Constraint\ConstraintsVisit;
+use HHK\House\PSG;
+use HHK\House\Registration;
+use HHK\House\Vehicle;
+use HHK\House\Visit\Visit;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\Member\Role\AbstractRole;
+use HHK\Member\Role\Agent;
+use HHK\Member\Role\Doctor;
+use HHK\Member\Role\Guest;
+use HHK\Member\Role\Patient;
+use HHK\Payment\CreditToken;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\sec\Labels;
+use HHK\sec\Session;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\PhonePurpose;
 use HHK\SysConst\VisitStatus;
-use HHK\Member\Role\AbstractRole;
-use HHK\Tables\Registration\VehicleRS;
 use HHK\Tables\EditRS;
-use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLSelector;
-use HHK\sec\Session;
-use HHK\House\Visit\Visit;
-use HHK\Member\Role\Guest;
-use HHK\House\Constraint\ConstraintsVisit;
-use HHK\Member\Role\Patient;
-use HHK\Payment\CreditToken;
-use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Tables\Name\NameRS;
-use HHK\sec\Labels;
-use HHK\House\Registration;
-use HHK\House\PSG;
-use HHK\House\Vehicle;
-use HHK\HTMLControls\HTMLInput;
-use HHK\Member\Role\Agent;
-use HHK\Member\Role\Doctor;
+use HHK\Tables\Registration\VehicleRS;
 
 /**
  * CustomRegisterForm.php
@@ -442,6 +442,8 @@ class CustomRegisterForm {
     }
 
     protected function AgreementBlock(array $guests, $primaryGuestId, $agreementLabel, $agreement) {
+        $uS = Session::getInstance();
+
         $style = (!empty($this->settings["Agreement"]["pagebreak"]) ? $this->settings["Agreement"]["pagebreak"] : "");
         $mkup = '<div class="agreementContainer" style="' . $style . '">';
 
@@ -482,7 +484,10 @@ class CustomRegisterForm {
                         $mkup .= $sigMkup;
                     }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'adults'){
                         //if excluding minors
-                        if($g->getRoleMember()->get_birthDate() != ''){
+                        if ($uS->RegNoMinorSigLines && $g->get_demogRS()->Is_Minor->getStoredVal() > 0) {
+                            // #816, EKC, 5/23/2023
+                            continue;
+                        } else if($g->getRoleMember()->get_birthDate() != ''){
                             $dob = new \DateTime($g->getRoleMember()->get_birthDate());
                             $now = new \DateTime();
                             $age = $dob->diff($now);

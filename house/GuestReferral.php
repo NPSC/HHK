@@ -117,7 +117,7 @@ if ($idDoc > 0) {
         	    $idPatient = $patient->getIdName();
 
         	    // Search guests and present results to UI
-        	    $guests = $refForm->searchGuests($dbh);
+        	    $guests = $refForm->searchGuests($dbh, $patient);
 
         	    // Any guests to search for?
         	    if (count($guests) > 0) {

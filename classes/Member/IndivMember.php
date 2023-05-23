@@ -217,6 +217,10 @@ class IndivMember extends AbstractMember {
 
     }
 
+    /**
+     * Summary of createAdminPanel
+     * @return string
+     */
     public function createAdminPanel() {
 
         $table = new HTMLTable();
@@ -395,6 +399,12 @@ class IndivMember extends AbstractMember {
 
     }
 
+    /**
+     * Summary of createInsurancePanel
+     * @param \PDO $dbh
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function createInsurancePanel(\PDO $dbh, $idPrefix) {
 
         $uS = Session::getInstance();
@@ -502,6 +512,11 @@ ORDER BY `List_Order`");
         return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs'));
     }
 
+    /**
+     * Summary of createInsuranceSummaryPanel
+     * @param \PDO $dbh
+     * @return string
+     */
     public function createInsuranceSummaryPanel(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -625,6 +640,11 @@ ORDER BY `List_Order`");
     }
 
 
+    /**
+     * Summary of loadRealtionships
+     * @param \PDO $dbh
+     * @return array
+     */
     public function loadRealtionships(\PDO $dbh) {
 
        return array(
@@ -635,24 +655,6 @@ ORDER BY `List_Order`");
             RelLinkType::Company => new Company($dbh, $this->get_idName()),
             RelLinkType::Relative => new Relatives($dbh, $this->get_idName())
             );
-    }
-
-
-    private function prepBirthMonthMarkup($month) {
-
-        $numMonth = intval($month, 10);
-
-        $markup = "<select name='selBirthMonth' id='selBirthMonth'>";
-        $monthList = array(0 => "", 1 => "(1) Jan", 2 => "(2) Feb", 3 => "(3) Mar", 4 => "(4) Apr", 5 => "(5) May", 6 => "(6) Jun", 7 => "(7) Jul", 8 => "(8) Aug", 9 => "(9) Spt", 10 => "(10) Oct", 11 => "(11) Nov", 12 => "(12) Dec");
-        for ($i = 0; $i < 13; $i++) {
-            if ($i === $numMonth) {
-                $markup .= "<option value='$i' selected='selected'>" . $monthList[$i] . "</option>";
-            } else {
-                $markup .= "<option value='$i'>" . $monthList[$i] . "</option>";
-            }
-        }
-        $markup .= "</select>";
-        return $markup;
     }
 
     public function getAssocDonorLabel() {
@@ -812,11 +814,18 @@ ORDER BY `List_Order`");
         //  Birth Date
         if (isset($post[$idPrefix.'txtBirthDate'])) {
             $bd = filter_var($post[$idPrefix.'txtBirthDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            if ($bd != '') {
+
+            if (strtolower($bd) == 'minor' && $uS->RegNoMinorSigLines) {
+                // set demographic  #816, EKC, 5/23/2023
+                $this->demogRS->Is_Minor->setNewVal(1);
+                $n->BirthDate->setNewVal('');
+            } else if ($bd != '') {
                 $n->BirthDate->setNewVal(date('Y-m-d H:i:s', strtotime($bd)));
                 $n->Birth_Month->setNewVal(date('m', strtotime($bd)));
+                $this->demogRS->Is_Minor->setNewVal(0);
             } else {
                 $n->BirthDate->setNewVal('');
+                $this->demogRS->Is_Minor->setNewVal(0);
             }
         }
 
@@ -851,6 +860,12 @@ ORDER BY `List_Order`");
 
     }
 
+    /**
+     * Summary of getLanguages
+     * @param \PDO $dbh
+     * @param mixed $nid
+     * @return void
+     */
     protected function getLanguages(\PDO $dbh, $nid) {
 
         $nlangRs = new Name_LanguageRS();
@@ -865,6 +880,12 @@ ORDER BY `List_Order`");
         }
     }
 
+    /**
+     * Summary of getInsurance
+     * @param \PDO $dbh
+     * @param mixed $nid
+     * @return void
+     */
     protected function getInsurance(\PDO $dbh, $nid) {
 
         $nInsRs = new Name_InsuranceRS();
@@ -879,6 +900,14 @@ ORDER BY `List_Order`");
         }
     }
 
+    /**
+     * Summary of saveLanguages
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $idPrefix
+     * @param string $username
+     * @return void
+     */
     protected function saveLanguages(\PDO $dbh, $post, $idPrefix, $username) {
 
         if ($this->get_idName() > 0) {
@@ -942,12 +971,20 @@ ORDER BY `List_Order`");
         }
     }
 
+    /**
+     * Summary of saveInsurance
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $idPrefix
+     * @param mixed $username
+     * @return void
+     */
     protected function saveInsurance(\PDO $dbh, $post, $idPrefix, $username) {
 
         $uS = Session::getInstance();
 
         if (!$uS->InsuranceChooser) {
-            return '';
+            return;
         }
 
         $myInss = array();
@@ -1066,6 +1103,10 @@ ORDER BY `List_Order`");
         }
     }
 
+    /**
+     * Summary of getNoReturnDemog
+     * @return mixed
+     */
     public function getNoReturnDemog() {
         return $this->demogRS->No_Return->getStoredVal();
     }

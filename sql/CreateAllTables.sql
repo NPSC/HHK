@@ -1024,6 +1024,7 @@ CREATE TABLE if not exists `name_demog` (
   `Gl_Code_Credit` VARCHAR(25) NOT NULL DEFAULT '',
   `tax_exempt` TINYINT NOT NULL DEFAULT 0,
   `Background_Check_Date` DATE DEFAULT NULL,
+  `Is_Minor` TINYINT(4) NOT NULL DEFAULT 0,
   `Last_Updated` datetime DEFAULT NULL,
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
