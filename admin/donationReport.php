@@ -50,7 +50,7 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 
 #--------------------------------------------------------------
 // form1 save button:
-if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"]) || isset($_POST["btnstreamlined"])) {
+if (filter_has_var(INPUT_POST, "btnDonors") || filter_has_var(INPUT_POST, "btnDonDL") || filter_has_var(INPUT_POST, "btnstreamlined")) {
 #--------------------------------------------------------------
     require_once("functions" . DS . "donorReportManager.php");
 

@@ -571,9 +571,9 @@ var pmtMkup,
                 	<table style="float:left;">
                 	<tr><th>Month</th><th>Year</th><th>3rd Party Payers</th>
                 	<tr>
-                	<td><?php echo $glMonthSelr; ?></td>
+                	<td style="vertical-align: top;"><?php echo $glMonthSelr; ?></td>
                     <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
-                    <td><?php echo $glBa; ?></td>
+                    <td style="vertical-align: top;"><?php echo $glBa; ?></td>
                 	</tr>
                     </table>
 
