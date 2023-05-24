@@ -88,13 +88,6 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
 			google.charts.setOnLoadCallback(drawGuestsPerNight);
             google.charts.setOnLoadCallback(drawDiagnosisTotals);
 
-            let options = {
-                height:400,
-            	width:500,
-            	'chartArea': {'width': '90%', 'height': '80%'},
-            	legend: {position: 'right', alignment: 'center'}
-            };
-
             function drawGuestsPerNight() {
 
                 let data = <?php echo json_encode($occupancyReport->getGuestAvgPerNight()); ?>;
@@ -108,7 +101,7 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
                 let options = {
                     height:350,
                     width: 500,
-                    chartArea: {'width': '90%', 'height': '100%'},
+                    chartArea: {'width': 400, 'height': 400},
                     legend: {
                         position: 'right',
                         alignment: 'center',
@@ -130,9 +123,9 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
 
                 var chart = new google.visualization.PieChart(document.getElementById('diagnosisCategoryTotals'));
                 let options = {
-                    height:350,
-                    width: 500,
-                    chartArea: {'width': '90%', 'height': '100%'},
+                    height:500,
+                    width: 800,
+                    chartArea: {'width': "80%", 'height': "100%"},
                     legend: {
                         position: 'right',
                         alignment: 'center',
@@ -156,6 +149,8 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
             		}
             	});
 
+                $("#historicalOcc #repSummary>img").remove();
+
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = $.parseJSON('<?php echo json_encode($occupancyReport->colSelector->getColumnDefs()); ?>');
 
@@ -176,12 +171,16 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
                             }
 
                             #hhk-reportWrapper .hhk-print-row{
-                            	flex-wrap: nowrap;
+                            	
                             	margin-bottom: 2em;
                             }
 
                             #hhk-reportWrapper .hhk-pieChart {
                             	page-break-inside:avoid;
+                            }
+
+                            #hhk-reportWrapper .hhk-pieChart div {
+                                margin: 0 auto;
                             }
 
                             #hhk-reportWrapper .ui-icon {
