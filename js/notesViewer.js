@@ -170,7 +170,7 @@
                         $('#note-newNote').attr("disabled", "disabled").text("Saving...");
 
                         $.ajax({
-                            url: 'ws_resv.php',
+                            url: settings.serviceURL,
                             dataType: 'JSON',
                             type: 'post',
                             data: {

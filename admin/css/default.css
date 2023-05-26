@@ -346,3 +346,13 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 #hhk-guest-photo {
 	background-size: cover;
 }
+
+
+.hhk-ui-icons li {
+    margin: 2px;
+    position: relative;
+    padding: 4px;
+    cursor: pointer;
+    float: left;
+    list-style: none;
+}

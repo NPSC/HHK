@@ -208,8 +208,12 @@ abstract class AbstractMember {
 
     public abstract function createMarkupTable();
 
-    public function genNotesMarkup(array $volNotesMkup = array(), $showSearchButton = TRUE) {
+    public function genNotesMarkup(array $volNotesMkup = array(), $showSearchButton = FALSE) {
 
+        if(empty($this->get_genNotes())){
+            return "";
+        }
+        
         $searchMarkup = "";
         $idPrefix = $this->getIdPrefix();
 

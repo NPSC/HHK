@@ -91,8 +91,10 @@ class ListNotes {
                 $columns[] = array('db'=> 'Category', 'dt'=>'Category');
                 break;
             case Note::MemberLink:
-
-                //break;
+                $dbView = 'vmem_notes';
+                $whereField = 'idName';
+                $whereClause = "$whereField = $linkId";
+                break;
 
             case Note::RoomLink:
 
