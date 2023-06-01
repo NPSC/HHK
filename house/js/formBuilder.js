@@ -1320,7 +1320,7 @@
 						<div class="my-3"><label for="changeHeight">Height: </label><input type="number" id="changeHeight" min="0" value="1000" class="mr-2" style="width: 75px;">px
 						<div style="font-size: 0.9em; color:#919191" class="mt-2">If you have a long form, you may need to increase this value to eliminate scrollbars on your website</div>
 						</div>
-						<pre id="embedCodeSnippet" class="ui-widget-content ui-corner-all p-3" style="white-space:pre-wrap;"></pre>
+						<pre id="embedCodeSnippet" class="ui-widget-content ui-corner-all p-3 hhk-overflow-x" style="white-space:pre-wrap;"></pre>
 					</div>
 				</div>
 				<div class="ui-widget hhk-visitdialog mb-3">
@@ -1328,7 +1328,7 @@
 					<div class="ui-widget-content ui-corner-bottom p-3">
 						<p class="pb-2">When embedding into a CMS, look for a function called "Embed", "Embed a Website", "Embed an iFrame", "Add External Content", or something similar.</p>
 						<p class="pb-2">When asked what website you want to embed, copy and paste the following URL</p>
-						<pre id="embedURL" class="ui-widget-content ui-corner-all p-3"></pre>
+						<pre id="embedURL" class="ui-widget-content ui-corner-all p-3 hhk-overflow-x" style="white-space:pre-wrap;"></pre>
 					</div>
 				</div>
 			</div>
