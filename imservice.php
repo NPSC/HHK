@@ -18,7 +18,8 @@ use HHK\Payment\PaymentSvcs;
  */
 
 // Configuration filename and paths
-define('ciCFG_FILE', 'conf/site.cfg' );
+define('ciCFG_FILE', 'site.cfg' );
+define('CONF_PATH', 'conf/');
 
 require ('functions/commonFunc.php');
 

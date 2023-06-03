@@ -66,6 +66,26 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
+     * Summary of getRelationship
+     * @param mixed $post
+     * @return string
+     */
+    public function getRelationship($post) {
+
+        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/a0B740000003pmmEAA');
+
+        $parms = array();
+        $this->unwindResponse($parms, $result);
+        $resultStr = new HTMLTable();
+
+        foreach ($parms as $k => $v) {
+            $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
+        }
+
+        return $resultStr->generateMarkup();
+    }
+
+    /**
      * Summary of searchMembers Searches remote with letters from an autocomplete
      * @param mixed $searchCriteria
      * @return array

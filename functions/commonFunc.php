@@ -611,7 +611,19 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, ?array $del, a
     }
 }
 
-function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $order, $del, $replace, array $replaceWith)
+/**
+ * Summary of replaceGenLk
+ * @param PDO $dbh
+ * @param string $tblName
+ * @param mixed $desc
+ * @param mixed $subt
+ * @param mixed $order
+ * @param mixed $del
+ * @param mixed $replace
+ * @param mixed $replaceWith
+ * @return float|int
+ */
+function replaceGenLk(\PDO $dbh, $tblName, $desc, $subt, $order, $del, $replace, $replaceWith)
 {
     $rowsAffected = 0;
 

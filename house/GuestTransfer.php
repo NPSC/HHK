@@ -121,6 +121,13 @@ where
     return $idNames;
 }
 
+/**
+ * Summary of getPaymentReport
+ * @param PDO $dbh
+ * @param mixed $start
+ * @param mixed $end
+ * @return bool|string
+ */
 function getPaymentReport(\PDO $dbh, $start, $end) {
 
     $uS = Session::getInstance();
@@ -161,6 +168,15 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
 }
 
+/**
+ * Summary of searchVisits
+ * @param PDO $dbh
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $maxGuests
+ * @param HHK\CrmExport\AbstractExportManager $CmsManager
+ * @return bool|string
+ */
 function searchVisits(\PDO $dbh, $start, $end, $maxGuests, AbstractExportManager $CmsManager) {
 
     $uS = Session::getInstance();
@@ -404,6 +420,14 @@ LIMIT 500");
     return $tbl->generateMarkup(array('name'=>'tblrpt'));
 }
 
+/**
+ * Summary of getPeopleReport
+ * @param PDO $dbh
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $excludeTerm
+ * @return array|bool
+ */
 function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
 
@@ -459,6 +483,12 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
 }
 
+/**
+ * Summary of getNeonTypes
+ * @param AbstractExportManager $CmsManager
+ * @param mixed $list
+ * @return array<array>
+ */
 function getNeonTypes($CmsManager, $list) {
 
     $neonList = [];
@@ -472,6 +502,11 @@ function getNeonTypes($CmsManager, $list) {
     return $neonList;
 }
 
+/**
+ * Summary of createKeyMap
+ * @param PDO $dbh
+ * @return string
+ */
 function createKeyMap(\PDO $dbh) {
 
     // get session instance
@@ -763,6 +798,10 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         <tr>
                             <th>Local (HHK) Name Search</th>
                             <td><input id="txtSearch" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <th>Relationship</th>
+                            <td><input id="btnRelat" type="button" value="click me" /></td>
                         </tr>
                     </table>
                     <table style="width:100%; margin-top: 15px;">

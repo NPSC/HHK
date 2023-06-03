@@ -656,9 +656,9 @@ function getRequest(url, q) {
     $('#divPrintButton').hide();
 
     // code certain words
-    q_ = q.replace('Select', 'Find');
+    //q_ = q.replace('Select', 'Find');
 
-    var posting = $.post('ws_tran.php', {cmd: 'getReq', 'url': url, 'q': q_});
+    var posting = $.post('ws_tran.php', { cmd: 'getRelat'});
 
     posting.done(function (incmg) {
         if (!incmg) {
@@ -890,7 +890,7 @@ $(document).ready(function () {
         dateFormat: 'M d, yy'
     });
 
-    $('#btnRequest').click(function () {
+    $('#btnRelat').click(function () {
         getRequest($('#txtRequest').val(), $('#txtQuery').val());
     });
 

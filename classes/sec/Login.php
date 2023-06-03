@@ -34,8 +34,6 @@ class Login {
 
         // get session instance
     	$ssn = Session::getInstance($confPath, $confFile);
-        // Preset the timezone to suppress errors on hte subject.
-        //date_default_timezone_set('America/Chicago');
 
         // Get the site configuration object
         try {

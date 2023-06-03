@@ -416,7 +416,7 @@ class WebUser {
 
         foreach ($sArray as $g) {
 
-            if (isset($parms["grpSec_" . $g["Code"]])) {
+            if (isset($g["Code"]) && isset($parms["grpSec_" . $g["Code"]])) {
 
                 if (!isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] == "checked") {
 

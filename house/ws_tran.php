@@ -177,7 +177,7 @@ try {
         case 'getAcct':
 
             $arguments = array(
-                'accountId' =>  FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'src' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'url' => FILTER_SANITIZE_URL
             );
@@ -186,6 +186,21 @@ try {
 
             $events['data'] = $transfer->getMember($dbh, $post);
             $events['accountId'] = $transfer->getAccountId();
+
+            break;
+
+        case 'getRelat':
+
+            $arguments = array(
+                'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'src' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'url' => FILTER_SANITIZE_URL
+            );
+
+            $post = filter_input_array(INPUT_POST, $arguments);
+
+            $events['data'] = $transfer->getRelationship($post);
+            //$events['accountId'] = $transfer->getAccountId();
 
             break;
 
