@@ -426,6 +426,21 @@ class SalesforceManager extends AbstractExportManager {
     }
 
 
+    public function upsertMembers(\PDO $dbh, array $sourceIds) {
+
+        if (count($sourceIds) == 0) {
+            $replys[0] = array('error' => "The list of HHK Id's to send is empty.");
+            return $replys;
+        }
+
+        // get the member records
+        $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ")");
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // create graphs
+
+    }
+
 
     /**
      * Summary of updateRemoteMember

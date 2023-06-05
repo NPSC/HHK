@@ -29,7 +29,6 @@ abstract class AbstractPaymentGateway {
 
     const VANTIV = 'vantiv';
     const INSTAMED = 'instamed';
-    const CONVERGE = 'converge';
     const LOCAL = '';
 
     protected $gwType;
