@@ -97,7 +97,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) V
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('ADA', 'im', 'Immobility', 'd');
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('ADA', 'b', 'Blindness', 'd');
 ALTER TABLE `name_demog`
-	ADD COLUMN `ADA` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Covid`;
+	ADD COLUMN IF NOT EXISTS `ADA` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Covid`;
 
 -- Multiple reservations
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('UseRepeatResv', 'false', 'b', 'h', 'Enable repeating Reservations', '1');
