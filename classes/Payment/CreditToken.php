@@ -251,7 +251,7 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
 
             EditRS::loadRow($rows[0], $gtRs);
 
-        } else if (count($rows) == 0) {
+        } else if (count($rows) == 0 || $merchant == '') {
 
             $gtRs = New Guest_TokenRS();
 
