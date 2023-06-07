@@ -28,7 +28,7 @@ $uS = Session::getInstance();
 
 // Logout command?
 $log = filter_input(INPUT_GET, 'log', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-if ($log === "lo") {
+if ($log == "lo") {
     $uS->destroy(true);
     header('location:index.php');
     exit();
