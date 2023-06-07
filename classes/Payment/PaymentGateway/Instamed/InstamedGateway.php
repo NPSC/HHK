@@ -565,7 +565,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
     /**
      *
      * @param \PDO $dbh
-     * @param PaymentRS $payRs
+     * @param PaymentRS|null $payRs
      * @param string $paymentTransId
      * @param Invoice $invoice
      * @param float $returnAmt
@@ -1098,6 +1098,7 @@ where r.idRegistration =" . $idReg);
 
             if (count($tokenRow) > 0 && $tokenRow[0]['State'] != WebHookStatus::Init) {
 
+                // Jump out
                 $slept = $delaySeconds + 2;
 
             } else {
