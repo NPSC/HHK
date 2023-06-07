@@ -145,7 +145,7 @@ try {
                 array( 'db' => 'Str1', 'dt' => 'Str1'),
                 array( 'db' => 'Str2', 'dt' => 'Str2'),
                 array( 'db' => 'Log_Text', 'dt' => 'Log_Text'),
-                array( 'db' => 'Timestamp', 'dt' => 'Ts'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
 
             );
 
