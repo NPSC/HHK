@@ -1,5 +1,6 @@
 <?php
 
+use HHK\SysConst\VisitStatus;
 use HHK\Update\SiteLog;
 use HHK\AlertControl\AlertMessage;
 use HHK\AuditLog\NameLog;
@@ -393,7 +394,7 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
     }
 
     // Check for existing stays
-    $staysStmt = $dbh->query("select n.idName, n.Name_Last_First from stays s left join name n on n.idName = s.idName where n.Member_Status in ('u','TBD') and DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0 group by s.idName");
+    $staysStmt = $dbh->query("select n.idName, n.Name_Last_First from stays s left join name n on n.idName = s.idName where n.Member_Status in ('u','TBD') and (s.Status = '" . VisitStatus::CheckedIn . "' or DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0) group by s.idName");
     while ($r = $staysStmt->fetch(\PDO::FETCH_ASSOC)) {
         $stayIds .= $r['idName'] . ', ';
         $numStays++;
