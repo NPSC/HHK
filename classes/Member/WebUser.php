@@ -331,8 +331,8 @@ class WebUser {
                 $pwHash = md5($wUserPw);
             }
 
-            // Register the user as a Volunteer (Group_Code = v)(Verify_address = y)
-            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$pwHash', 'pub', 1, 0);";
+            // Register the user 
+            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$pwHash', '', 1, 0);";
 
             try{
                 $dbh->exec($query);

@@ -211,7 +211,7 @@ class SAML {
 
             if(!isset($user['Role_Id']) || (isset($user['idIdp']) && $user['idIdp'] != $this->IdpId)){
                 //register Web User
-                $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', 'v', 0, " . $this->IdpId . ");";
+                $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', '', 0, " . $this->IdpId . ");";
                 if($this->dbh->exec($query) === false){
                     $err = $this->dbh->errorInfo();
                     return array("error"=>$err[0] . "; " . $err[2]);
@@ -261,12 +261,13 @@ class SAML {
                     $selSecurityGroups = $this->IdpConfig['defaultGroups'];
                 }
                 foreach($allSecurityGroups as $secGroup){
-                    if(in_array($secGroup["Title"], $selSecurityGroups)){
+                    if(in_array($secGroup["Title"], $selSecurityGroups) || in_array($secGroup["Code"], $selSecurityGroups)){
                         $parms["grpSec_" . $secGroup["Code"]] = "checked";
                     }else{
                         $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
                     }
                 }
+                
                 //update security groups
                 WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, $this->auditUser);
             }
@@ -293,13 +294,15 @@ class SAML {
         //Search by exact email address, if no results, search by first and last name, else return 0
         $firstName = (isset($this->auth->getAttribute("FirstName")[0]) ? $this->auth->getAttribute("FirstName")[0] : "");
         $lastName = (isset($this->auth->getAttribute("LastName")[0]) ? $this->auth->getAttribute("LastName")[0] : "");
-        $email = (isset($this->auth->getAttribute("Email")[0]) ? $this->auth->getAttribute("Email")[0] : "");
+        $email = (isset($this->auth->getAttribute("Email")[0]) ? $this->auth->getAttribute("Email")[0] : false);
 
-        $emailSearch = new MemberSearch($email);
-        $result = $emailSearch->searchLinks($this->dbh, "e", 0, true);
+        if($email){
+            $emailSearch = new MemberSearch($email);
+            $result = $emailSearch->searchLinks($this->dbh, "e", 0, true);
 
-        if(count($result) > 0 && $result[0]["id"] > 0){
-            return $result[0]["id"];
+            if(count($result) > 0 && $result[0]["id"] > 0){
+                return $result[0]["id"];
+            }
         }
 
         $nameSearch = new MemberSearch($firstName . " " . $lastName);
