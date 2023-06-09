@@ -88,7 +88,7 @@ class Visit {
      * @param bool $forceNew
      * @throws \HHK\Exception\RuntimeException
      */
-    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTime $arrivalDT = NULL, \DateTime $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
+    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
 
         $this->visitRSs = $this->loadVisits($dbh, $idReg, $idVisit, $span, $forceNew);
 
@@ -390,7 +390,7 @@ class Visit {
      * @throws \HHK\Exception\RuntimeException
      * @return string
      */
-    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTime $chgDT, $isAdmin, $newRateCategory = '') {
+    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '') {
 
         $uS = Session::getInstance();
 
@@ -1050,7 +1050,7 @@ class Visit {
      * @param bool $sendEmail
      * @return bool
      */
-    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, $sendEmail) {
+    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTimeInterface $dateDeparted, $sendEmail) {
 
         $uS = Session::getInstance();
 
@@ -1206,7 +1206,7 @@ class Visit {
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
-    protected function removeSpanStub(\PDO $dbh, \DateTime $dateDepartedDT){
+    protected function removeSpanStub(\PDO $dbh, \DateTimeInterface $dateDepartedDT){
 
         $uS = Session::getInstance();
 
@@ -2118,7 +2118,7 @@ class Visit {
      * @param \DateTime $returnDT
      * @return int
      */
-    protected function resetStays(\PDO $dbh, $prevStays, \DateTime $returnDT) {
+    protected function resetStays(\PDO $dbh, $prevStays, \DateTimeInterface $returnDT) {
 
         $uS = Session::getInstance();
 

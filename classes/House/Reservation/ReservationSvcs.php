@@ -52,7 +52,7 @@ class ReservationSvcs
         );
     }
 
-    public static function getCurrentReservations(\PDO $dbh, $idResv, $id, $idPsg, \DateTime $startDT, \DateTime $endDT)
+    public static function getCurrentReservations(\PDO $dbh, $idResv, $id, $idPsg, \DateTimeInterface $startDT, \DateTimeInterface $endDT)
     {
         $rows = array();
 
@@ -291,7 +291,7 @@ class ReservationSvcs
                     );
                 }
             } else {
-
+                $regForm = new CustomRegisterForm();
                 $docs[] = array(
                     'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
                     'style' => CustomRegisterForm::getStyling(),
@@ -585,7 +585,7 @@ class ReservationSvcs
         return $ids;
     }
 
-    public static function moveResvAway(\PDO $dbh, \DateTime $firstArrival, \DateTime $lastDepart, $idResource, $uname)
+    public static function moveResvAway(\PDO $dbh, \DateTimeInterface $firstArrival, \DateTimeInterface $lastDepart, $idResource, $uname)
     {
 
     	$uS = Session::getInstance();

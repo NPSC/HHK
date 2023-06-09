@@ -347,7 +347,7 @@ class RateChooser {
      * @param \DateTime $changeDT
      * @return string
      */
-    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $uname, \DateTime $changeDT) {
+    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $uname, \DateTimeInterface $changeDT) {
 
         $reply = '';
         $idVisit = $visit->getIdVisit();
