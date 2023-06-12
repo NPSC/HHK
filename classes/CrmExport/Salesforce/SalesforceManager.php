@@ -2,6 +2,8 @@
 namespace HHK\CrmExport\Salesforce;
 
 use HHK\CrmExport\AbstractExportManager;
+use HHK\Member\Relation\RelationCode;
+use HHK\SysConst\RelLinkType;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
@@ -439,6 +441,41 @@ class SalesforceManager extends AbstractExportManager {
 
         // create graphs
 
+        foreach ($rows as $row) {
+            $filteredRow = [];
+
+            // Check external Id
+            if (isset($row['Id']) && $row['Id'] == self::EXCLUDE_TERM) {
+                // Skip excluded members.
+                Continue;
+            } else if (isset($row['Id'])) {
+                $row['Id'] = '';
+            }
+
+            foreach ($row as $k => $w) {
+                if ($w != '' && $w != 'Relationship_Code' && $w != 'PatientId') {
+                    $filteredRow[$k] = $w;
+                }
+            }
+
+            $compositReq[] = [
+                "method" => "PATCH",
+                "url" => $this->getAcctEndpoint . 'HHK_idName__c/' . $row['HHK_idName__c'],
+                "referenceId" => "refContact",
+                "body" => $filteredRow
+            ];
+
+            if ($row['Relationship_Code'] != RelLinkType::Self) {
+                // Add relationship record
+                $compositReq[] = [
+                    "method" => "PATCH",
+                    "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
+                    "referenceId" => "refContact",
+                    "body" => $filteredRow
+                ];
+            }
+
+        }
     }
 
 
