@@ -819,6 +819,16 @@ class VisitViewer {
         return $currFees . $paymentMarkup;
     }
 
+    /**
+     * Summary of createCurrentFees
+     * @param string $visitStatus
+     * @param \HHK\Purchase\VisitCharges $visitCharge
+     * @param \HHK\Purchase\ValueAddedTax $vat
+     * @param mixed $showVisitFee
+     * @param mixed $showRoomFees
+     * @param mixed $showGuestNights
+     * @return string
+     */
     public static function createCurrentFees($visitStatus, VisitCharges $visitCharge, ValueAddedTax $vat, $showVisitFee = FALSE, $showRoomFees = TRUE, $showGuestNights = FALSE) {
 
         $roomAccount = new CurrentAccount($visitStatus, $showVisitFee, $showRoomFees, $showGuestNights);
@@ -829,6 +839,11 @@ class VisitViewer {
         return self::currentBalanceMarkup($roomAccount);
     }
 
+    /**
+     * Summary of currentBalanceMarkup
+     * @param \HHK\Purchase\CurrentAccount $curAccount
+     * @return string
+     */
     protected static function currentBalanceMarkup(CurrentAccount $curAccount) {
 
         $uS = Session::getInstance();
@@ -1029,10 +1044,9 @@ class VisitViewer {
         // Total Due at end of visit
         if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn && ! stristr(strtolower($uS->siteName), 'gorecki')) {
 
-            // Deal with taxes
-            $feesToCharge = $curAccount->getRoomFeesToCharge();
+            $feesToCharge = round($curAccount->getRoomFeesToCharge());
 
-            if ($curAccount->getRoomFeesToCharge() > 0) {
+            if ($feesToCharge > 0) {
                 $feesToCharge += $totalTaxAmt;
             }
 

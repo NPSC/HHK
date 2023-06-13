@@ -308,7 +308,7 @@ GROUP BY s.idVisit, s.Visit_Span");
 
         // Room Fee totals
         $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan'=>$cols, 'class'=>'tdlabel hhk-tdTotals', 'style'=>'font-weight:bold;'))
-            .HTMLTable::makeTd($numberNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
+            //.HTMLTable::makeTd($numberNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
             .($this->hasPerGuestCharge ? HTMLTable::makeTd($guestNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;')) : '')
             .HTMLTable::makeTd('$'. $totalAmt, array('class'=>'hhk-tdTotals', 'style'=>'text-align:right;font-weight:bold;')));
 

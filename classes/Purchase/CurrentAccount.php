@@ -85,6 +85,12 @@ class CurrentAccount {
         $this->reimburseTax = array();
     }
 
+    /**
+     * Summary of load
+     * @param \HHK\Purchase\VisitCharges $visitCharge
+     * @param \HHK\Purchase\ValueAddedTax $vat
+     * @return void
+     */
     public function load(VisitCharges $visitCharge, ValueAddedTax $vat) {
 
         $this->numberNitesStayed = $visitCharge->getNightsStayed();
