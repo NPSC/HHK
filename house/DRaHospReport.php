@@ -12,7 +12,6 @@ use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\AlertControl\AlertMessage;
 use HHK\sec\SecurityComponent;
-use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\VolMemberType;
 use HHK\SysConst\ReservationStatus;
 use HHK\HTMLControls\HTMLTable;
@@ -376,6 +375,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'disp
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

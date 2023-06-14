@@ -205,6 +205,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo UPPLOAD_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->

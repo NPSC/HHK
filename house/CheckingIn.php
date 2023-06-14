@@ -1,7 +1,6 @@
 <?php
 use HHK\sec\Session;
 use HHK\sec\WebInit;
-use HHK\Config_Lite\Config_Lite;
 use HHK\Payment\PaymentSvcs;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Exception\RuntimeException;
@@ -166,6 +165,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 		<?php echo INCIDENT_CSS; ?>
 		<?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo CSSVARS; ?>
 
 <!--        Fix the ugly checkboxes-->
         <style>

@@ -279,6 +279,8 @@ if ($msg != '') {
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo CSSVARS; ?>
+        
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             @page { margin: 1cm; }

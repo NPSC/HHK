@@ -131,6 +131,7 @@ $roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup();
         <?php echo HOUSE_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
         <style>
             .hhk-tdTitle {
                 background-color: #F2F2F2;

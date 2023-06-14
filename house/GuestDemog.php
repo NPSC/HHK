@@ -207,6 +207,7 @@ if ($cmd){
         <?php echo JQ_DT_CSS; ?>
 		<?php echo MULTISELECT_CSS; ?>
 		<?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
 		<style>
 		  .fixedHeader-floating, .fixedHeader-locked {

@@ -101,7 +101,7 @@ $siteMarkup = "<table><tr><th>View Pages</th><th>Site</th><th>Edit</th>
 
 $stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
 $grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
-$securityCodes = doOptionsMkup($grps, 'xz');
+$securityCodes = doOptionsMkup($grps, false, false);
 
 $resultMessage = $alertMsg->createMarkup();
 $getSiteReplyMessage = '';
@@ -229,9 +229,13 @@ $getSiteReplyMessage = '';
                     $('#inUpBy').val(tds[10].innerHTML);
                     //$('#inLastUp').val(tds[12].innerHTML);
                     // Security codes
+                    var selCodes = tds[6].innerHTML.split(",");
                     $('#siteSecCode option').each( function() {
-                        if ($(this).val() == tds[6].innerHTML)
+                        if (selCodes.includes($(this).val())){
                             $(this).attr('selected', 'selected');
+                        }else{
+                            $(this).removeAttr("selected");
+                        }
                     });
 
                     $('#siteDialog').dialog( "option", "title", "Edit Web Site: " +tds[1].innerHTML);

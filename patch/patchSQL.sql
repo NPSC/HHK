@@ -91,3 +91,5 @@ ALTER TABLE `item_type_map`
 ENGINE = InnoDB ,
 ADD PRIMARY KEY IF NOT EXISTS (`Item_Id`,`Type_Id`);
 ;
+
+DELETE FROM `sys_config` WHERE (`Key` = 'HUF_URL');
