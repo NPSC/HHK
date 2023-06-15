@@ -368,11 +368,11 @@ class CustomRegisterForm {
         $mkup .= '<div class="row mb-3 ui-widget-content ui-corner-all py-2">';
 
         $mkup .= '<div class="col" style="min-width:fit-content"><strong>Name: </strong>' . $patient->getRoleMember()->get_fullName() . $bd . $mrn . '</div>';
-        $mkup .= (!empty($this->settings["Patient"]["hospital"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . ': </strong>' . $hospital . '</div>': '');
-        $mkup .= (!empty($this->settings["Patient"]["hospRoom"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'roomNumber', 'Room') . ": </strong>" . $hospRoom . '</div>': '');
-        $mkup .= (!empty($this->settings["Patient"]["diagnosis"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'diagnosis', 'Diagnosis') . ": </strong>" . $diagnosis . '</div>': '');
-        $mkup .= (!empty($this->settings["Patient"]["location"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'location', 'Hospital Location') . ": </strong>" . $location . '</div>': '');
-        $mkup .= (!empty($this->settings["Patient"]["doctor"]) ? '<div class="col" style="min-width:fit-content"><strong>Doctor: </strong>' . $doctorName . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["hospital"]) && !empty($hospital) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . ': </strong>' . $hospital . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["hospRoom"]) && !empty($hospRoom) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'roomNumber', 'Room') . ": </strong>" . $hospRoom . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["diagnosis"]) && !empty($diagnosis) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'diagnosis', 'Diagnosis') . ": </strong>" . $diagnosis . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["location"]) && !empty($location) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'location', 'Hospital Location') . ": </strong>" . $location . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["doctor"]) && !empty($doctorName) ? '<div class="col" style="min-width:fit-content"><strong>Doctor: </strong>' . $doctorName . '</div>': '');
 
         $mkup .= '</div>';
 
@@ -392,9 +392,9 @@ class CustomRegisterForm {
             $email = $referralAgent->getEmailsObj()->get_Data()["Email"];
 
             $mkup .= '<div class="col" style="min-width:fit-content"><strong>Name: </strong>' . $referralAgent->getRoleMember()->get_fullName() . '</div>';
-            $mkup .= (!empty($this->settings["Referral Agent"]["workPhone"]) ? '<div class="col" style="min-width:fit-content"><strong>Work Phone: </strong>' . $workphone . '</div>': '');
-            $mkup .= (!empty($this->settings["Referral Agent"]["cellPhone"]) ? '<div class="col" style="min-width:fit-content"><strong>Cell Phone: </strong>' . $cellphone . '</div>': '');
-            $mkup .= (!empty($this->settings["Referral Agent"]["Email"]) ? '<div class="col" style="min-width:fit-content"><strong>Email: </strong>' . $email . '</div>': '');
+            $mkup .= (!empty($this->settings["Referral Agent"]["workPhone"]) && !empty($workphone) ? '<div class="col" style="min-width:fit-content"><strong>Work Phone: </strong>' . $workphone . '</div>': '');
+            $mkup .= (!empty($this->settings["Referral Agent"]["cellPhone"]) && !empty($cellphone) ? '<div class="col" style="min-width:fit-content"><strong>Cell Phone: </strong>' . $cellphone . '</div>': '');
+            $mkup .= (!empty($this->settings["Referral Agent"]["Email"]) && !empty($email) ? '<div class="col" style="min-width:fit-content"><strong>Email: </strong>' . $email . '</div>': '');
         }else{
             $mkup .= '<div class="col" style="min-width:fit-content">No ' . $this->labels->getString('Hospital', 'referralAgent', 'Referral Agent') . ' assigned</div>';
         }
@@ -421,15 +421,12 @@ class CustomRegisterForm {
 
                 $mkup .= '<div class="row mb-2 ui-widget-content ui-corner-all py-2">';
 
-                $mkup .= '<div class="col"><strong>Make: </strong>' . $veh->Make->getStoredVal() . '</div>';
-                $mkup .= '<div class="col"><strong>Model: </strong>' . $veh->Model->getStoredVal() . '</div>';
-                $mkup .= '<div class="col" style="max-width:fit-content"><strong>Color: </strong>' . $veh->Color->getStoredVal() . '</div>';
-                $mkup .= '<div class="col" style="max-width:fit-content"><strong>State: </strong>' . $veh->State_Reg->getStoredVal() . '</div>';
-                $mkup .= '<div class="col" style="min-width:fit-content"><strong>License: </strong>' . $veh->License_Number->getStoredVal() . '</div>';
-                if($veh->Note->getStoredVal() != ''){
-                    $mkup .= '<div class="col-12"><strong>Note: </strong>' . $veh->Note->getStoredVal() . '</div>';
-
-                }
+                $mkup .= (!empty($veh->Make->getStoredVal()) ? '<div class="col"><strong>Make: </strong>' . $veh->Make->getStoredVal() . '</div>':'');
+                $mkup .= (!empty($veh->Model->getStoredVal()) ? '<div class="col"><strong>Model: </strong>' . $veh->Model->getStoredVal() . '</div>':'');
+                $mkup .= (!empty($veh->Color->getStoredVal()) ? '<div class="col" style="max-width:fit-content"><strong>Color: </strong>' . $veh->Color->getStoredVal() . '</div>':'');
+                $mkup .= (!empty($veh->State_Reg->getStoredVal()) ? '<div class="col" style="max-width:fit-content"><strong>State: </strong>' . $veh->State_Reg->getStoredVal() . '</div>':'');
+                $mkup .= (!empty($veh->License_Number->getStoredVal()) ? '<div class="col" style="min-width:fit-content"><strong>License: </strong>' . $veh->License_Number->getStoredVal() . '</div>':'');
+                $mkup .= (!empty($veh->Note->getStoredVal()) ? '<div class="col-12"><strong>Note: </strong>' . $veh->Note->getStoredVal() . '</div>':'');
 
                 $mkup .= '</div>';
 
@@ -563,10 +560,11 @@ class CustomRegisterForm {
             $name = $guest->getRoleMember();
 
             $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+
             //$phoneHome = $guest->phones->get_data(Phone_Purpose::Home);
-            $phoneCell = $guest->getPhonesObj()->get_data(PhonePurpose::Cell);
-            if ($phoneCell["Phone_Num"] == '' || $guest->getHousePhone() == 1) {
-                $phoneCell["Phone_Num"] = 'House Phone';
+            $phone = $guest->getPhonesObj()->get_data($guest->getPhonesObj()->get_preferredCode());
+            if ($guest->getHousePhone() == 1) {
+                $phone["Phone_Num"] = 'House Phone';
             }
             $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
             $emrg = $guest->getEmergContactObj($dbh);
@@ -581,39 +579,37 @@ class CustomRegisterForm {
 
             $mkup .= '<div class="col-12">';
             $mkup .= '<div class="row">';
-            $mkup .= '<div class="col">';
+            $mkup .= '<div class="col">'; //start left guest col
             $mkup .= '<strong>' . ($guest->getIdName() == $primaryGuestId ? Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'): "Name") . ': </strong>' . $name->get_fullName() . $bd . '<br>';
-            $mkup .= '<div class="hhk-flex"><div class="mr-2"><strong>Address: </strong></div><div>' . $addr["Address_1"] . " " .  $addr["Address_2"] . '<br>' . $addr["City"] . ($addr["City"] == "" ? "" : ", ") . $addr["State_Province"] . "  ". $addr["Postal_Code"] . '</div></div>';
-            $mkup .= '<strong>Cell Phone: </strong>' . $phoneCell["Phone_Num"] . '<br>';
-            $mkup .='</div>';//end col
-            if(!empty($this->settings['Guests']["emerg"])){
-                $mkup .= '<div class="col ui-widget-content ui-corner-all py-2 mr-2 mb-2">';
-                $mkup .= '<strong>Emergency Contact: </strong>' . $emrg->getEcNameFirst() . ' ' . $emrg->getEcNameLast() . '<br>';
-                $mkup .= '<strong>Phone: </strong>' . $emrg->getEcPhone() . '<br>';
-                $mkup .= '<strong>Relationship to ' . Labels::getString('memberType', 'visitor', "Guest") . ': </strong>' . (isset($ecRels[$emrg->getEcRelationship()]) ? $ecRels[$emrg->getEcRelationship()][1] : '');
-                $mkup .= '</div>';//end .col emerg contact
-                $mkup .= '</div>';//end .row
-                $mkup .= '<div class="row">';
-                $mkup .= '<div class="col-6">';
-                $mkup .= '<strong>E-Mail: </strong>' . $email["Email"] . '<br>';
-                $mkup .= '</div>';//end col-6
-                $mkup .= '<div class="col-6">';
-                $mkup .= '<strong>Check In Date: </strong>' . $guest->getCheckinDT()->format('M j, Y');
-                $mkup .= '</div>';//end col-6
-                $mkup .= '<div class="col-6">';
+            $mkup .= (!empty($addr['Preferred_Address']) ? '<div class="hhk-flex"><div class="mr-2"><strong>Address: </strong></div><div>' . $addr["Address_1"] . " " .  $addr["Address_2"] . '<br>' . $addr["City"] . ($addr["City"] == "" ? "" : ", ") . $addr["State_Province"] . "  ". $addr["Postal_Code"] . '</div></div>':'');
+            $mkup .= (!empty($phone["Phone_Num"]) ? '<strong>Phone: </strong>' . $phone["Phone_Num"] . '<br>':'');
+
+            if(!empty($this->settings['Guests']["emerg"]) && !empty($emrg->getEcNameFirst() . $emrg->getEcNameLast() . $emrg->getEcPhone() . $emrg->getEcRelationship())){
+                $mkup .= (!empty($email["Email"]) ? '<strong>E-Mail: </strong>' . $email["Email"] . '<br>':'');
                 $mkup .= '<strong>Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . ': </strong>' . (isset($relationText[$guest->getPatientRelationshipCode()]) ? $relationText[$guest->getPatientRelationshipCode()][1] : '');
-                $mkup .= '</div>';//end col-6;
-                $mkup .= '<div class="col-6">';
+                $mkup .='</div>';//end left guest col
+                $mkup .='<div class="col">'; //start right guest col
+                $mkup .= '<div class="row">';
+                $mkup .= '<div class="col-12 ui-widget-content ui-corner-all py-2 mr-2 mb-2">';
+                $mkup .= '<strong>Emergency Contact: </strong>' . (!empty($emrg->getEcNameFirst()) ? $emrg->getEcNameFirst() . ' ':'') . (!empty($emrg->getEcNameLast()) ? $emrg->getEcNameLast():'') . '<br>';
+                $mkup .= (!empty($emrg->getEcPhone()) ? '<strong>Phone: </strong>' . $emrg->getEcPhone() . '<br>':'');
+                $mkup .= (!empty($emrg->getEcRelationship()) ? '<strong>Relationship to ' . Labels::getString('memberType', 'visitor', "Guest") . ': </strong>' . (isset($ecRels[$emrg->getEcRelationship()]) ? $ecRels[$emrg->getEcRelationship()][1] : ''):'');
+                $mkup .= '</div>';//end .col emerg contact
+                $mkup .= '<div class="col-12">';
+                $mkup .= '<strong>Check In Date: </strong>' . $guest->getCheckinDT()->format('M j, Y') . "<br>";
                 $mkup .= '<strong>Expected Check Out: </strong>' . $guest->getExpectedCheckOutDT()->format('M j, Y');
-                $mkup .= '</div>';//end col-6
+                $mkup .= '</div>';//end col-12
+                $mkup .= '</div>';//end .row
             }else{
-                $mkup .= '<div class="col">';
-                $mkup .= '<strong>E-Mail: </strong>' . $email["Email"] . '<br>';
+                $mkup .= '</div>'; //end left guest col
+                $mkup .= '<div class="col">'; //start right guest col
+                $mkup .= (!empty($email["Email"]) ? '<strong>E-Mail: </strong>' . $email["Email"] . '<br>':'');
                 $mkup .= '<strong>Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . ': </strong>' . (isset($relationText[$guest->getPatientRelationshipCode()]) ? $relationText[$guest->getPatientRelationshipCode()][1] : ''). "<br>";
                 $mkup .= '<strong>Check In Date: </strong>' . $guest->getCheckinDT()->format('M j, Y') . "<br>";
                 $mkup .= '<strong>Expected Check Out: </strong>' . $guest->getExpectedCheckOutDT()->format('M j, Y');
-                $mkup .= '</div>';//end col
             }
+            $mkup .= '</div>';//end right guest col
+
             $mkup .= '</div>';//end row
 
             $mkup .= '</div>';//end col-12
