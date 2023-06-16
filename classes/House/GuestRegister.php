@@ -93,6 +93,7 @@ resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . Resource
     left join gen_lookups stat on stat.Table_Name = 'Room_Status' and stat.Code = rm.Status
 	$genJoin
 where ru.idResource_use is null
+    and (r.Retired_At is null or r.Retired_At > '" . $beginDT->format('Y-m-d') . "')
  order by $orderBy;";
 
         $rstmt = $dbh->query($qu);
@@ -246,7 +247,7 @@ where ru.idResource_use is null
 
 
         $this->getRoomOosEvents($dbh, $beginDate, $endDate, $timezone, $events);
-
+        $this->getRetiredRoomEvents($dbh, $beginDate, $endDate, $timezone, $events);
         // Visits
         $query = "select * from vregister where Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(Span_Start) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
@@ -809,6 +810,50 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
             $events[] = $event->toArray();
 
         }
+    }
+
+    protected function getRetiredRoomEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events) {
+
+        $idCounter = 10;
+        
+        $query = "select `idResource`, `Retired_At` from `resource` where `Retired_At` is not null;";
+
+        $stmt = $dbh->query($query);
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            if ($r["idResource"] == 0) {
+                continue;
+            }
+
+            $RetiredDT = new \Datetime($r['Retired_At']);
+
+            if($RetiredDT >= $beginDate && $RetiredDT <= $endDate){
+                
+            }else{
+                continue;
+            }
+
+            // Set Start and end for fullCalendar control
+            $c = array(
+                'id' => 'RET' . $idCounter++,
+                'kind' => CalEventKind::OOS,
+                'resourceId' => "id-" . $r["idResource"],
+                'idResc' => $r["idResource"],
+                'reason' => '',
+            		'start' => $RetiredDT->format('Y-m-d\TH:i:00'),
+            		'end' => $endDate->format('Y-m-d\TH:i:00'),
+                'title' => "Retired",
+                'allDay' => 1,
+                'backgroundColor' => 'gray',
+                'textColor' => 'white',
+                'borderColor' => 'black',
+            );
+
+            $event = new Event($c, $timezone);
+            $events[] = $event->toArray();
+        }
+            
     }
 
     protected function getRibbonColors(\PDO $dbh, $hospitals) {

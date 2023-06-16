@@ -1708,6 +1708,7 @@ CREATE TABLE if not exists `resource` (
   `Status` varchar(5) NOT NULL DEFAULT '',
   `Rate_Adjust` decimal(15,2) NOT NULL DEFAULT '0.00',
   `Rate_Adjust_Code` varchar(15) NOT NULL DEFAULT '',
+  `Retired_At` datetime NULL DEFAULT NULL,
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

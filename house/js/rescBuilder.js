@@ -100,7 +100,7 @@ function getResource(idResc, type, trow) {
             }
             if (data.row) {
                 savedRow = trow.children();
-                trow.children().remove().end().append($(data.row));
+                trow.children().remove().end().append($(data.row)).find('.ckdate').datepicker({dateFormat: 'M d, yy'});
                 $('#savebtn').button().click(function () {
                     var btn = $(this);
                     saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));

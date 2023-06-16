@@ -29,6 +29,7 @@ class ResourceRS extends AbstractTableRS {
     public $Status;    // varchar(5) NOT NULL DEFAULT '',
     public $Rate_Adjust;    // decimal(15,2) NOT NULL DEFAULT '0.00',
     public $Rate_Adjust_Code;    // varchar(15) NOT NULL DEFAULT '',
+    public $Retired_At; // datetime DEFAULT NULL;
     public $Updated_By;    // varchar(45) NOT NULL DEFAULT '',
     public $Last_Updated;    // datetime DEFAULT NULL,
     public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
@@ -50,6 +51,7 @@ class ResourceRS extends AbstractTableRS {
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Rate_Adjust = new DB_Field("Rate_Adjust", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Rate_Adjust_Code = new DB_Field("Rate_Adjust_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->Retired_At = new DB_Field("Retired_At", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE, TRUE);
         $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE, TRUE);
         $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

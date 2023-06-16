@@ -65,7 +65,8 @@ class ResourceView {
     ifnull(rm.Title, '') as `Room`,
     r.Util_Priority as `Priority`,
     r.Background_Color as `Bkgrd Color`,
-    r.Text_Color as `Text Color`
+    r.Text_Color as `Text Color`,
+    r.Retired_At as `Retired At`
 from
     resource r
         left join
@@ -74,7 +75,7 @@ from
     resource_room rr on r.idResource = rr.idResource
         left join
     room rm on rr.idRoom = rm.idRoom
-order by r.Title;");
+order by r.Retired_At, r.Title;");
 
         $idResc = 0;
         $numResc = $stmt->rowCount();
@@ -82,6 +83,8 @@ order by r.Title;");
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($idResc != $r['Id']) {
+
+                $r["Retired At"] = (!empty($r["Retired At"]) ? (new \DateTime($r["Retired At"]))->format('M j, Y'): "");
 
                 $ra = array();
                 foreach ($roomAttrs as $ras) {
@@ -125,6 +128,7 @@ order by r.Title;");
             'Priority' => '',
             'Bkgrd Color' => '',
             'Text Color' => '',
+            'Retired_At' => '',
             'status' => ''
             );
 
@@ -669,6 +673,15 @@ WHERE
         if (isset($post['txtReTc'])) {
             $resc->resourceRS->Text_Color->setNewVal(filter_var($post['txtReTc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
+        if (isset($post['txtRetired'])) {
+            $retiredAt = filter_var($post['txtRetired'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            try{
+                $retiredDT = new \DateTime($retiredAt);
+                $resc->resourceRS->Retired_At->setNewVal($retiredDT->format("Y-m-d H:i:s"));
+            }catch(\Exception $e){
+
+            }
+        }
 
         $setUna = FALSE;
         if ($resc->isNewResource() && isset($post['cbSetUna'])) {
@@ -754,7 +767,7 @@ WHERE
 
         $cls = 'rmSave' . $room->getIdRoom();
 
-        $saveBtn = HTMLInput::generateMarkup('Save', array('id'=>'savebtn', 'data-id'=>$room->getIdRoom(), 'data-type'=>'room', 'data-cls'=>$cls, 'type'=>'button'));
+        $saveBtn = HTMLInput::generateMarkup('Save', array('id'=>'savebtn', 'class'=>'mr-2', 'data-id'=>$room->getIdRoom(), 'data-type'=>'room', 'data-cls'=>$cls, 'type'=>'button'));
         $saveBtn .= HTMLInput::generateMarkup('Cancel', array('id'=>'cancelbtn', 'style'=>'margin-top:.2em;', 'data-id'=>$room->getIdRoom(), 'data-type'=>'room', 'data-cls'=>$cls, 'type'=>'button'));
 
         $tr = HTMLTable::makeTd($saveBtn) . HTMLTable::makeTd($room->getIdRoom())
@@ -828,11 +841,11 @@ WHERE
 
         $cls = 'reDiag' . $resc->getIdResource();
 
-        $saveBtn = HTMLInput::generateMarkup('Save', array('id'=>'savebtn', 'data-id'=>$resc->getIdResource(), 'data-type'=>'resc', 'data-cls'=>$cls, 'type'=>'button'));
+        $saveBtn = HTMLInput::generateMarkup('Save', array('id'=>'savebtn', 'class'=>'mr-2', 'data-id'=>$resc->getIdResource(), 'data-type'=>'resc', 'data-cls'=>$cls, 'type'=>'button'));
         $saveBtn .= HTMLInput::generateMarkup('Cancel', array('id'=>'cancelbtn', 'style'=>'margin-top:.2em;', 'type'=>'button'));
 
         // New Resource?
-        $stat = '';
+        $stat = HTMLTable::makeTd();
         if ($resc->isNewResource()) {
             $stat = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'cbSetUna', 'type'=>'checkbox', 'class'=>$cls, 'title'=>'Check to set room as unavailable from the beginning of time. '))
                 . HTMLContainer::generateMarkup('label', 'Set Unavailable', array('for'=>'cbSetUna', 'style'=>'margin-left:.3em;')));
@@ -858,16 +871,18 @@ WHERE
             $useRooms[] = $k;
         }
 
+        $retiredAt = ($resc->getRetiredAtDT() instanceof \DateTimeInterface ? $resc->getRetiredAtDT()->format("M j, Y"):'');
 
         $tr = HTMLTable::makeTd($saveBtn) . HTMLTable::makeTd($resc->getIdResource())
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getTitle(), array('id'=>'txtReTitle', 'size'=>'10', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($resourceTypes), $resc->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $useRooms, TRUE), array('id'=>'selRooms', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')), array('style'=>'padding-right:0;padding-left:0;'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getTitle(), array('id'=>'txtReTitle', 'size'=>'10', 'class'=>$cls)))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($resourceTypes), $resc->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $useRooms, TRUE), array('id'=>'selRooms', 'class'=>$cls)))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')))
                 . ($uS->Room_Colors == "room" ?
-                    HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')))
                 : '')
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($retiredAt, array('id'=>'txtRetired', 'size'=>'15', 'class'=>"ckdate " . $cls)))
                 . $partition . $stat;
 
         $rescAttr = new ResourceAttribute($dbh, $resc->getIdResource());
@@ -882,7 +897,7 @@ WHERE
                 $parms['checked'] = 'checked';
             }
 
-            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $parms), array('style'=>'text-align:center;padding-right:0;padding-left:0;'));
+            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $parms), array('style'=>'text-align:center;'));
         }
 
         return array('row'=>$tr);

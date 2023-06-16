@@ -466,6 +466,18 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
     }
 
     /**
+     * getRetiredAtDT
+     * @return \DateTime|null
+     */
+    public function getRetiredAtDT() {
+        if(!empty($this->resourceRS->Retired_At->getStoredVal())){
+            return new \DateTime($this->resourceRS->Retired_At->getStoredVal());
+        }else{
+            return null;
+        }
+    }
+
+    /**
      * Summary of getIdSponsor
      * @return mixed
      */
