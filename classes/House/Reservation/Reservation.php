@@ -1367,7 +1367,7 @@ WHERE
 
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
-        return $resources[$idRescPosted]->optGroup;
+        return (isset($resources[$idRescPosted]) ? $resources[$idRescPosted]->optGroup : "");
 
     }
 

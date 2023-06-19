@@ -802,6 +802,7 @@ class Reservation_1 {
             return array();
         }
 
+        $uS = Session::getInstance();
 
         // Resource types
         $typeList = '';
@@ -817,11 +818,15 @@ class Reservation_1 {
             $typeList =  " rc.`Type` in (" . $typeList . ") ";
         }
 
+        $expectedDepartureDT = new \DateTime($expectedDeparture);
+        if($uS->IncludeLastDay){
+            $expectedDepartureDT->sub(new \DateInterval("P1D")); //allow checkout on first day of room retirement
+        }
 
         // Get the list of available resources
         $stmtr = $dbh->query("select rc.*, sum(r.Max_Occupants) as `Max_Occupants`
 from resource rc join resource_room rr on rc.idResource = rr.idResource left join `room` r on r.idRoom = rr.idRoom
-where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants order by rc.Util_Priority;");
+where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $expectedDepartureDT->format("Y-m-d") . "') group by rc.idResource having `Max_Occupants` >= $numOccupants order by rc.Util_Priority;");
 
         $rescRows = array();
 

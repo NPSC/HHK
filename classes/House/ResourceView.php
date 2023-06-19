@@ -66,7 +66,8 @@ class ResourceView {
     r.Util_Priority as `Priority`,
     r.Background_Color as `Bkgrd Color`,
     r.Text_Color as `Text Color`,
-    r.Retired_At as `Retired At`
+    r.Retired_At as `Retired At`,
+    if(date(now()) >= date(r.Retired_At), 'hhk-retired', '') as `isRetired`
 from
     resource r
         left join
@@ -140,7 +141,7 @@ order by r.Retired_At, r.Title;");
 
         $rooms[] = $newRow;
 
-        return HTMLContainer::generateMarkup('h3', 'Showing '.$numResc . ' Resources') . CreateMarkupFromDB::generateHTML_Table($rooms, 'tblresc');
+        return HTMLContainer::generateMarkup('h3', 'Showing '.$numResc . ' Resources') . CreateMarkupFromDB::generateHTML_Table($rooms, 'tblresc', 'isRetired');
 
     }
 
@@ -169,7 +170,7 @@ order by r.Retired_At, r.Title;");
 
 
         $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Report Category`, r.Max_Occupants as `Max`,
-r.Floor, r.Phone, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle` $depositCol
+r.Floor, r.Phone, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle`, if(count(rcr.idResource_room) = count(resc.idResource), 'hhk-retired', '') as `isRetired` $depositCol
 from room r
 left join gen_lookups g on g.`Table_Name`='Room_Type' and g.`Code` = r.`Type`
 left join gen_lookups g3 on g3.`Table_Name`='Room_Category' and g3.`Code`=r.Category
@@ -179,6 +180,9 @@ left join gen_lookups g6 on g6.`Table_Name` = 'Room_Cleaning_Days' and g6.`Code`
 left join gen_lookups g7 on g7.`Table_Name` = 'Room_Rpt_Cat' and g7.`Code` = r.Report_Category
 left join location l on r.idLocation = l.idLocation
 left join room_rate rr on r.Default_Rate_Category = rr.FA_Category and rr.`Status` = 'a'
+left join resource_room rcr on r.idRoom = rcr.idRoom
+left join resource resc on rcr.idResource = resc.idResource and date(now()) >= date(resc.Retired_At)
+group by r.idRoom
 order by r.Title;");
 
         $numResc = $stmt->rowCount();
@@ -235,7 +239,7 @@ order by r.Title;");
         $rooms[] = $newRow;  // array('Edit' => HTMLInput::generateMarkup('New', array('id'=>'0btnrmNew', 'name'=>'0', 'type'=>'button', 'data-enty'=>'room', 'class'=>'reNewBtn')));
 
 
-        return HTMLContainer::generateMarkup('h3', 'Showing '.$numResc . ' Rooms') . CreateMarkupFromDB::generateHTML_Table($rooms, 'tblroom');
+        return HTMLContainer::generateMarkup('h3', 'Showing '.$numResc . ' Rooms') . CreateMarkupFromDB::generateHTML_Table($rooms, 'tblroom', 'isRetired');
 
     }
 
@@ -675,11 +679,15 @@ WHERE
         }
         if (isset($post['txtRetired'])) {
             $retiredAt = filter_var($post['txtRetired'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            try{
-                $retiredDT = new \DateTime($retiredAt);
-                $resc->resourceRS->Retired_At->setNewVal($retiredDT->format("Y-m-d H:i:s"));
-            }catch(\Exception $e){
-
+            if($retiredAt == ''){
+                $dbh->exec("UPDATE resource set `Retired_At` = null where idResource = '" . $resc->getIdResource() . "';");
+            }else{
+                try{
+                    $retiredDT = new \DateTime($retiredAt);
+                    $resc->resourceRS->Retired_At->setNewVal($retiredDT->format("Y-m-d H:i:s"));
+                }catch(\Exception $e){
+                    
+                }
             }
         }
 

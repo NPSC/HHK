@@ -33,6 +33,7 @@ class ReserveData {
     const FULL_NAME = 'fullName';
     const ADD_PERSON = 'addPerson';
     const WARNING = 'warning';
+    const SUCCESS = 'success';
 
     const ROLE = 'role';
     const PREF = 'pref';

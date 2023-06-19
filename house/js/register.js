@@ -44,11 +44,14 @@ function setRoomTo(idResv, idResc) {
             return false;
         }
         if (data.warning && data.warning !== '') {
-            flagAlertMessage(data.warning, 'alert');
+            flagAlertMessage(data.warning, 'warning');
             return false;
         }
         if (data.msg && data.msg !== '') {
             flagAlertMessage(data.msg, 'info');
+        }
+        if (data.success && data.success !== '') {
+            flagAlertMessage(data.msg, 'success');
         }
         calendar.refetchEvents();
         refreshdTables(data);

@@ -873,3 +873,7 @@ table.dataTable tbody td {
 	margin-top: calc(0.5em + 5px);
 	background-size: cover;
 }
+
+.hhk-retired {
+	background-color: lightgray !important;
+}

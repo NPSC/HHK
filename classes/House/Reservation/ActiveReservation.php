@@ -333,6 +333,8 @@ class ActiveReservation extends Reservation {
 
             if ($this->reserveData->hasError()) {
                 $dataArray[ReserveData::WARNING] = $this->reserveData->getErrors();
+            } else if ($result == ''){
+                $dataArray[ReserveData::SUCCESS] = 'Reservation Changed Rooms.';
             } else {
                 $dataArray['msg'] = 'Reservation Changed Rooms. ' . ($result == '' ? '' : ' WARNING: ' . $result);
             }
