@@ -256,7 +256,7 @@ class CustomRegisterForm {
                 "values"=>[
                     ["","Paper"],
                     ["jSign","Touch"],
-                    //["topaz","Topaz Signature Pad"]
+                    ["topaz","Topaz Signature Pad"]
                 ],
                 "default"=>""
             ],
