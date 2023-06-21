@@ -385,6 +385,13 @@ case WHEN r.`Status` = '" .ReservationStatus::Staying . "' THEN
 END
 UNION
 SELECT
+    resc.idResource
+FROM resource resc
+WHERE
+    resc.Retired_At is not null
+    AND DATE(resc.Retired_At) <= DATE(:retend)
+UNION
+SELECT
     ru.idResource
 FROM resource_use ru
 WHERE
@@ -400,7 +407,8 @@ WHERE
                 ':dtend'=>$enDT->format('Y-m-d'),
                 ':rsend'=>$enDT->format('Y-m-d'),
                 ':rustart'=>$stDT->format('Y-m-d'),
-                ':ruend'=>$enDT->format('Y-m-d')));
+                ':ruend'=>$enDT->format('Y-m-d'),
+                ':retend'=>$enDT->format('Y-m-d')));
 
             $inUse = FALSE;
 

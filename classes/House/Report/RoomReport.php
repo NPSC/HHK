@@ -833,6 +833,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
                 . " from resource r left join
 resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= '" . $stDT->format('Y-m-d') . "' and DATE(ru.End_Date) >= '" . $endDT->format('Y-m-d') . "'"
                 . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
+                . " and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')"
                 . " order by r.Title;");
 
         $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);
@@ -974,6 +975,36 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
                         $this->totals['un'][$rmDate]++;
 
                     }
+                }
+
+                if ($rmStartDate > $endDT) {
+                    break;
+                }
+                $rmStartDate->add($oneDay);
+            }
+        }
+
+        // Collect retired rooms
+        $rstmt = $dbh->query("Select idResource, `Retired_At`"
+                . " from resource where date(`Retired_At`) < '" . $endDT->format('Y-m-d') . "' and date(`Retired_At`) >= '" . $stDT->format('Y-m-d') ."' order by idResource");
+
+        while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $rmStartDate = new \DateTime($r['Retired_At']);
+            $numNights = $rmStartDate->diff($endDT, true)->format('d');
+
+            // Collect single day events
+            if ($numNights == 0) {
+                $numNights++;
+            }
+
+            for ($j = 0; $j < $numNights; $j++) {
+
+                $rmDate = $rmStartDate->format($dateFormat);
+
+                if (isset($this->days[$r['idResource']][$rmDate])) {
+                    $this->days[$r['idResource']][$rmDate]['u']++;
+                    $this->totals['un'][$rmDate]++;
                 }
 
                 if ($rmStartDate > $endDT) {
