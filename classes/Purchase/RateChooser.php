@@ -797,7 +797,7 @@ class RateChooser {
             }
         }
 
-        return HTMLSelector::generateMarkup($options, array('id'=>'seladjAmount', 'name'=>'seladjAmount'));
+        return HTMLSelector::generateMarkup($options, array('id'=>'seladjAmount', 'name'=>'seladjAmount', 'class'=>'hhk-feeskeys'));
     }
 
 }

@@ -47,6 +47,7 @@ $invoiceNumber = '';
 $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
+$isTopazRequired = false;
 $sty = "";
 $blankFormTitle = "Registration Form";
 
@@ -139,8 +140,6 @@ if($idVisit || $idResv){
     // Generate Registration Form
     $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
     $signedDocsArray = ReservationSvcs::getSignedCkinDocs($dbh, (isset($reservArray['idPsg']) ? $reservArray['idPsg']: 0), $idResv, $idVisit);
-
-    $isTopazRequired = false;
 
     $li = '';
     $tabContent = '';

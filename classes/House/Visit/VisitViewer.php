@@ -181,7 +181,7 @@ class VisitViewer {
         }
 
         //Room Rate
-        $rateTitle = RoomRate::getRateDescription($dbh, $r['idRoom_Rate'], $r['Rate_Category']);
+        $rateTitle = RoomRate::getRateDescription($dbh, $r['idRoom_Rate'], $r['Rate_Category'], $r['Expected_Rate']);
         if ($r['Rate_Category'] == RoomRateCategories::Fixed_Rate_Category) {
             $rateTitle .= ': $' . number_format($r['Pledged_Rate'], 2);
         }

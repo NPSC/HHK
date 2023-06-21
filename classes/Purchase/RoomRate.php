@@ -95,7 +95,7 @@ class RoomRate {
      * @param string $RateCategory
      * @return mixed
      */
-    public static function getRateDescription(\PDO $dbh, $idRoomRate, $RateCategory) {
+    public static function getRateDescription(\PDO $dbh, $idRoomRate, $RateCategory, $rateAdjust = 0) {
 
         //RoomRateDefault
         $uS = Session::getInstance();
@@ -113,7 +113,7 @@ class RoomRate {
         if(isset($rows[0])) {
 
             $r = $rows[0];
-            return self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1']));
+            return self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1']), $rateAdjust);
         }
 
         return 'Undefined';
@@ -127,12 +127,18 @@ class RoomRate {
      * @param string $amt
      * @return mixed
      */
-    protected static function titleAddAmount($title, $faCategory, $amt) {
+    protected static function titleAddAmount($title, $faCategory, $amt, $rateAdjust = 0) {
 
         if ($faCategory != RoomRateCategories::Fixed_Rate_Category) {
-            return $title . ': $' .$amt;
-        } else {
-            return $title;
+            $title .= ': $' .$amt;
+
+            if($rateAdjust != 0){
+                $adjustedAmt = round($amt * (1 + $rateAdjust/100), 2);
+                $title .= " (Adjusted: $" . $adjustedAmt . ")";
+            }
+            
         }
+
+        return $title;
     }
 }
