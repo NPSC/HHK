@@ -13,7 +13,7 @@ namespace HHK;
  * @link      https://github.com/NPSC/HHK
  */
 
-class ExcelHelper extends mkj\XLSXWriter{
+class ExcelHelper extends \XLSXWriter{
 
     CONST hdrStyle = ['font-style'=>'bold', 'halign'=>'center', 'auto_filter'=>true, 'widths'=>[]];
     protected $filename = '';
