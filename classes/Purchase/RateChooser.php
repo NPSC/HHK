@@ -144,7 +144,7 @@ class RateChooser {
 
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $vRs->idRoom_rate->getStoredVal());
 
-        $adjSel = $this->makeRateAdjustSel();
+        $adjSel = $this->makeRateAdjustSel($vRs->idRateAdjust->getStoredVal());
 
         if ($this->isAllowed) {
             // add change rate selector
@@ -203,6 +203,7 @@ class RateChooser {
         $departDT = null;
         $rateCategory = '';
         $rateAdj = 0;
+        $adjAmtSelection = '0';
         $assignedRate = 0;
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
@@ -321,12 +322,12 @@ class RateChooser {
         if ($replaceMode == 'rpl' || $chRateDT == $SpanStartDT) {
 
             // Replace this span's rate - and any further spans not change rate themselves.
-            $reply .= Visit::replaceRoomRate($dbh, $visitRs, $rateCategory, $assignedRate, $rateAdj, $uS->username);
+            $reply .= Visit::replaceRoomRate($dbh, $visitRs, $rateCategory, $assignedRate, $rateAdj, $adjAmtSelection, $uS->username);
 
         } else if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
             // Add a new rate span to the end this visit
-            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $chDT);
+            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $adjAmtSelection, $chDT);
 
         } else {
 
@@ -334,7 +335,7 @@ class RateChooser {
                 return 'We cannot change the room rate on the last day of the visit span as there are no nights left for which to charge the new rate.';
             }
             // Split existing visit span into two
-            $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT);
+            $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $adjAmtSelection, $uS->username, $chDT);
 
         }
 
@@ -353,7 +354,7 @@ class RateChooser {
      * @param \DateTime $changeDT
      * @return string
      */
-    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $uname, \DateTime $changeDT) {
+    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $idRateAdjust, $uname, \DateTime $changeDT) {
 
         $reply = '';
         $idVisit = $visit->getIdVisit();
@@ -403,7 +404,7 @@ class RateChooser {
         }
 
         // split the given span
-        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $changeDT);
+        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $idRateAdjust, $changeDT);
 
         return $reply;
     }

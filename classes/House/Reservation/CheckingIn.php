@@ -383,6 +383,7 @@ FROM reservation r
         $visit->setRateCategory($resv->getRoomRateCategory());
         $visit->setIdRoomRate($resv->getIdRoomRate());
         $visit->setRateAdjust($resv->getRateAdjust());
+        $visit->setIdRateAdjust($resv->getIdRateAdjust());
         $visit->setPledgedRate($resv->getFixedRoomRate());
 
         // Rate Glide
@@ -398,7 +399,7 @@ FROM reservation r
         $visit->setIdHospital_stay($resv->getIdHospitalStay());
 
         // copy ribbon note
-        $visit->setNotes($resv->getNotes(), $uS->username);
+        $visit->setNotes($resv->getNotes());
 
         //
         // Checkin  Saves visit

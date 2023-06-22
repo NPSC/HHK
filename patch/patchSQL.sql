@@ -111,3 +111,9 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 -- retire a resource
 ALTER TABLE `resource` 
 ADD COLUMN IF NOT EXISTS `Retired_At` DATETIME NULL AFTER `Rate_Adjust_Code`;
+
+ALTER TABLE `visit`
+ADD COLUMN IF NOT EXISTS `idRateAdjust` VARCHAR(5) NULL DEFAULT '0' AFTER `Rate_Category`;
+
+ALTER TABLE `visit_onleave` 
+ADD COLUMN IF NOT EXISTS `idRateAdjust` VARCHAR(5) NULL DEFAULT '0' AFTER `Rate_Adjust`;

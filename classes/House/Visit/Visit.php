@@ -518,7 +518,7 @@ class Visit {
             }
 
             // Change rooms on date given.
-            $this->cutInNewSpan($dbh, $resc, VisitStatus::NewSpan, $rateCategory, $idRoomRate, $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
+            $this->cutInNewSpan($dbh, $resc, VisitStatus::NewSpan, $rateCategory, $idRoomRate, $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $this->visitRS->idRateAdjust->getStoredVal(), $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
             $rtnMessage .= 'Guests Changed Rooms.  ';
 
             // Change date today?
@@ -574,7 +574,7 @@ class Visit {
      * @param string $uname
      * @return string
      */
-    public static function replaceRoomRate(\PDO $dbh, VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $uname) {
+    public static function replaceRoomRate(\PDO $dbh, VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $idRateAdjust, $uname) {
 
         $uS = Session::getInstance();
         $reply = "";
@@ -587,6 +587,7 @@ class Visit {
         $visitRs->Pledged_Rate->setNewVal($pledgedRate);
         $visitRs->Rate_Category->setNewVal($newRateCategory);
         $visitRs->Expected_Rate->setNewVal($rateAdjust);
+        $visitRs->idRateAdjust->setNewVal($idRateAdjust);
         $visitRs->idRoom_rate->setNewVal($rateRs->idRoom_rate->getStoredVal());
 
         $upCtr = self::updateVisitRecordStatic($dbh, $visitRs, $uname);
@@ -654,12 +655,12 @@ class Visit {
      * @param float $pledgedRate
      * @param float $rateAdjust
      * @param string $uname
-     * @param \DateTime $chgDT
+     * @param \DateTimeInterface $chgDT
      * @param mixed $useRateGlide
      * @param mixed $stayOnLeave
      * @return string
      */
-    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $chgDT, $stayOnLeave = 0) {
+    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $idRateAdjust, $chgDT, $stayOnLeave = 0) {
 
         $uS = Session::getInstance();
         $this->getResource($dbh);
@@ -679,6 +680,7 @@ class Visit {
             $rateRs->idRoom_rate->getStoredVal(),
             $pledgedRate,
             $rateAdjust,
+            $idRateAdjust,
             $chgDT->format('Y-m-d H:i:s'),
             (intval($this->visitRS->Span->getStoredVal(), 10) + 1),
             $stayOnLeave);
@@ -718,7 +720,7 @@ class Visit {
      * @param integer $stayOnLeave
      * @throws RuntimeException
      */
-    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $changeDate, $newSpan, $stayOnLeave = 0) {
+    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, $changeDate, $newSpan, $stayOnLeave = 0) {
 
         $uS = Session::getInstance();
         $glideDays = 0;
@@ -756,6 +758,7 @@ class Visit {
         $this->visitRS->Rate_Category->setNewVal($newRateCategory);
         $this->visitRS->idRoom_rate->setNewVal($newRateId);
         $this->visitRS->Expected_Rate->setNewVal($rateAdjust);
+        $this->visitRS->idRateAdjust->setNewVal($idRateAdjust);
         $this->visitRS->Rate_Glide_Credit->setNewVal($glideDays);
         $this->visitRS->Timestamp->setNewVal(date('Y-m-d H:i:s'));
 
@@ -1816,7 +1819,7 @@ class Visit {
                     if (is_null($volRS) === FALSE) {
 
                         // Rate was changed
-                        $reply .= $this->changePledgedRate($dbh, $volRS->Rate_Category->getStoredVal(), $volRS->Pledged_Rate->getStoredVal(), $volRS->Rate_Adjust->getStoredVal(), $returnDT, FALSE);
+                        $reply .= $this->changePledgedRate($dbh, $volRS->Rate_Category->getStoredVal(), $volRS->Pledged_Rate->getStoredVal(), $volRS->Rate_Adjust->getStoredVal(), $volRS->idRateAdjust->getStoredVal(), $returnDT, FALSE);
                         $reply .= "Leave ended. ";
                     } else {
 
@@ -1995,7 +1998,7 @@ class Visit {
             }
 
             // Change rate and trigger OnLeave.
-            $reply .= $this->changePledgedRate($dbh, RoomRateCategories::Fixed_Rate_Category, 0, 0, $extndStartDT, $extDays);
+            $reply .= $this->changePledgedRate($dbh, RoomRateCategories::Fixed_Rate_Category, 0, 0, 0, $extndStartDT, $extDays);
             $reply .= 'Guests on Leave.  ';
 
         } else {
@@ -2498,6 +2501,23 @@ class Visit {
      */
     public function getRateAdjust() {
         return $this->visitRS->Expected_Rate->getStoredVal();
+    }
+
+    /**
+     * Summary of setIdRateAdjust
+     * @param mixed $v
+     * @return void
+     */
+    public function setIdRateAdjust($v) {
+        $this->visitRS->idRateAdjust->setNewVal($v);
+    }
+
+    /**
+     * Summary of getIdRateAdjust
+     * @return mixed
+     */
+    public function getIdRateAdjust() {
+        return $this->visitRS->idRateAdjust->getStoredVal();
     }
 
     /**

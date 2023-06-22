@@ -2046,6 +2046,7 @@ CREATE TABLE if not exists `visit` (
   `Amount_Per_Guest` decimal(10,2) NOT NULL DEFAULT '0.00',
   `idRoom_Rate` int(11) NOT NULL DEFAULT '0',
   `Rate_Category` varchar(5) NOT NULL DEFAULT '',
+  `idRateAdjust` VARCHAR(5) NULL DEFAULT '0',
   `Rate_Glide_Credit` int(11) not null default '0',
   `Ext_Phone_Installed` int(1) NOT NULL DEFAULT '0',
   `Medical_Cooler` int(1) NOT NULL DEFAULT '0',
@@ -2094,6 +2095,7 @@ CREATE TABLE if not exists `visit_onleave` (
   `idRoom_rate` int(11) not null default 0,
   `Rate_Glide_Credit` int(11) NOT NULL DEFAULT '0',
   `Rate_Adjust` decimal(10,4) NOT NULL DEFAULT '0.0000',
+  `idRateAdjust` VARCHAR(5) NULL DEFAULT '0',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idVisit`)
 ) ENGINE=InnoDB;

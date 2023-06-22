@@ -2807,6 +2807,7 @@ CREATE or replace VIEW `vspan_listing` AS
         `v`.`Pledged_Rate`,
         `v`.`Rate_Category`,
         v.idRoom_Rate,
+        v.idRateAdjust,
         v.Rate_Glide_Credit,
         case when ifnull(hs.MRN, '') = '' then ifnull(n.Name_Full, '') else concat( ifnull(n.Name_Full, '') ,' (' , ifnull(hs.MRN, '') , ')') end
          as `Patient_Name`,
