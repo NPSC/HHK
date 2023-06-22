@@ -222,7 +222,7 @@ $invoiceStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
 // Billing agent.
 $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .
         " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
-        " where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First");
+        " where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First, n.Company");
 
 $bagnts = array();
 
