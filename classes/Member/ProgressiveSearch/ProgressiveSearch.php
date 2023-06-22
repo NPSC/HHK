@@ -84,7 +84,7 @@ WHERE n.idName = $id ";
 
             $selRel = " IFNULL(ng.Relationship_Code, '') as Relationship, ";
             $joinRel = " LEFT JOIN name_guest ng on n.idName = ng.idName and ng.idPsg = " . $searchFor->getPsgId() . " ";
-            $where .= " and ng.Relationship_Code != 'slf'"; // exclude patient when searching for guests
+            $where .= " and not ng.Relationship_Code <=> 'slf'"; // exclude patient when searching for guests
         }else{
             $selRel = " '' as Relationship, ";
         }
