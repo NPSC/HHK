@@ -744,7 +744,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         } else if ($(this).hasClass('ckdate')) {
             var tdate = $(this).datepicker('getDate');
             if (tdate) {
-                parms[$(this).attr('id')] = tdate.toJSON();
+                parms[$(this).attr('id')] = $(this).val();
             } else {
                  parms[$(this).attr('id')] = '';
             }
