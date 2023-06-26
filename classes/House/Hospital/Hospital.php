@@ -456,7 +456,7 @@ class Hospital {
 
                 $diagtbl->addBodyTr(
                     HTMLTable::makeTd(HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-trash")), array("class"=>"ui-corner-all ui-state-default ui-button ui-widget", "style"=>"padding: 0.2em 0.4em;", "id"=>"delDiagnosis"))) .
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup("strong", "Diagnosis: ") . HTMLContainer::generateMarkup("span", $selectedDiag, array("id"=>"selectedDiag")))
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup("strong", $labels->getString('hospital', 'diagnosis', 'Diagnosis') . ": ") . HTMLContainer::generateMarkup("span", $selectedDiag, array("id"=>"selectedDiag")))
                     , array("class"=>$selectedClass));
 
             }else{

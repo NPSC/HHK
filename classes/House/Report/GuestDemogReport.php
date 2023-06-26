@@ -24,7 +24,7 @@ use HHK\Exception\InvalidArgumentException;
  */
 class GuestDemogReport {
 
-    public static function demogReport(\PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whichGuests, $sourceZip, $roomGroupBy) {
+    public static function demogReport(\PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whDiags, $whichGuests, $whPatient, $sourceZip, $roomGroupBy) {
 
         if ($startDate == '') {
             return;
@@ -193,13 +193,13 @@ class GuestDemogReport {
             LEFT JOIN
         visit v ON s.idVisit = v.idVisit and s.Visit_Span = v.Span
             LEFT JOIN
-        hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        hospital_stay hs on v.idHospital_stay = hs.idHospital_stay $whPatient
             LEFT JOIN
         resource_room rr on v.idResource = rr.idResource
             LEFT JOIN
         room r on rr.idRoom = r.idRoom
     WHERE
-        n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc
+        n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc $whDiags
         AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') ";
 
         if ($whichGuests == 'new') {
@@ -377,11 +377,13 @@ class GuestDemogReport {
         return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
     }
 
-    public static function generateFilterBtnMarkup(string $whichGuests = ""){
+    public static function generateFilterBtnMarkup(string $whichGuests = "", string $guestsvspatients = ""){
         $labels = Labels::getLabels();
         $newGuestsAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbnewG"];
         $allStartedAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbAllStartStay"];
         $allStayedAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbAllGStay"];
+        $guestsandPatientsAttrs = ["type"=>"radio", "name"=>"rbGuestsPatients", "id"=>"rbGandP"];
+        $justPatientsAttrs = ["type"=>"radio", "name"=>"rbGuestsPatients", "id"=>"rbP"];
 
         switch ($whichGuests){
             case "allStarted":
@@ -392,6 +394,12 @@ class GuestDemogReport {
                 break;
             default:
                 $newGuestsAttrs["checked"] = "checked";
+        }
+
+        if($guestsvspatients == "patients"){
+            $justPatientsAttrs["checked"] = "checked";
+        }else{
+            $guestsandPatientsAttrs["checked"] = "checked";
         }
 
         $filterOptsMkup = HTMLContainer::generateMarkup("div",
@@ -409,9 +417,21 @@ class GuestDemogReport {
             HTMLContainer::generateMarkup("label", "All " . $labels->getString('MemberType', 'visitor', 'Guest') . "s who stayed", ["for"=>"rbAllGStay"])
         );
 
+        $filterOptsMkup .= HTMLContainer::generateMarkup("div","", ["style"=>"background: #a6c9e2; width:1px; margin: 0 0.5em;"]);
+
+        $filterOptsMkup .= HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("guestsandpatients", $guestsandPatientsAttrs) .
+            HTMLContainer::generateMarkup("label", $labels->getString('MemberType', 'visitor', 'Guest') . "s & " . $labels->getString('MemberType', 'patient', 'Patient') . "s", ["for"=>"rbGandP"])
+        );
+
+        $filterOptsMkup .= HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("patients", $justPatientsAttrs) .
+            HTMLContainer::generateMarkup("label", $labels->getString('MemberType', 'patient', 'Patient') . "s", ["for"=>"rbP"])
+        );
+
         $btnSubmit = HTMLInput::generateMarkup("Run Report", ["type"=>"submit", "id"=>"btnSmt", "name"=>"btnSmt", "class"=>"ui-button ui-corner-all ui-widget"]);
 
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts")) . $btnSubmit, ["id"=>"filterBtns", "class"=>"mt-3"]);
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts", "style"=>"align-items: initial")) . $btnSubmit, ["id"=>"filterBtns", "class"=>"mt-3"]);
     }
 
     public static function calcZipDistance(\PDO $dbh, $sourceZip, $destZip) {

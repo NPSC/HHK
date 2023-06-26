@@ -125,6 +125,18 @@ class ReportFilter {
      */
     protected $resourceGroups;
 
+        /**
+     * Summary of selectedDiagnoses
+     * @var
+     */
+    protected $selectedDiagnoses;
+    /**
+     * Summary of diagnsoses
+     * @var
+     */
+    protected $diagnoses;
+    protected $diagnosisCategories;
+
     /**
      * Summary of reportStart
      * @var
@@ -148,6 +160,7 @@ class ReportFilter {
         $this->selectedAssocs = array();
         $this->selectedHosptials = array();
         $this->selectedResourceGroups = array();
+        $this->selectedDiagnoses = array();
         $this->selectedMonths = array();
         $this->hospitals = array();
     }
@@ -501,6 +514,62 @@ $ckdate";
     }
 
     /**
+     * Load diagnoses and categories
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createDiagnoses(\PDO $dbh){
+        $this->diagnoses = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $this->diagnosisCategories = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+
+        if (count($this->diagnoses) > 0) {
+
+            //prepare diag categories for doOptionsMkup
+            foreach($this->diagnoses as $key=>$diag){
+                if(!empty($diag['Substitute'])){
+                    $this->diagnoses[$key][2] = $this->diagnosisCategories[$diag['Substitute']][1];
+                }
+            }
+
+            array_unshift($this->diagnoses, array('','(All)'));
+        }
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedDiagnoses
+     * @return ReportFilter
+     */
+    public function loadSelectedDiagnoses() {
+
+        if (filter_has_var(INPUT_POST, 'selDiagnoses')) {
+            $reqs = $_POST['selDiagnoses'];
+            if (is_array($reqs)) {
+                $this->selectedDiagnoses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of diagnosisMarkup
+     * @return HTMLTable
+     */
+    public function diagnosisMarkup() {
+
+        $diags = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->diagnoses, $this->selectedDiagnoses, FALSE),
+        array('name'=>'selDiagnoses[]', 'size'=>(count($this->diagnoses)>12 ? '12' : count($this->diagnoses)), 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh(Labels::getString('hospital', 'diagnosis', 'Diagnosis')));
+        $tbl->addBodyTr(HTMLTable::makeTd($diags, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
      * Summary of getSelectedHospitalsString
      * @return string
      */
@@ -554,6 +623,22 @@ $ckdate";
      */
     public function getResourceGroups() {
         return $this->resourceGroups;
+    }
+
+    /**
+     * Summary of getSelectedDiagnoses
+     * @return array|mixed
+     */
+    public function getSelectedDiagnoses() {
+        return $this->selectedDiagnoses;
+    }
+
+    /**
+     * Summary of getDiagnoses
+     * @return array<array>
+     */
+    public function getDiagnoses() {
+        return $this->diagnoses;
     }
 
     /**

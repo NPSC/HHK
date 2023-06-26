@@ -42,6 +42,7 @@ $hospitalSelections = array('');
 $assocSelections = array('');
 $calSelection = '22';
 $whichGuests = 'new';
+$guestsvspatients = 'guestsandpatients';
 $title = '';
 
 $year = date('Y');
@@ -58,11 +59,15 @@ $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months, array(ReportFilter::DATES));
 $filter->createHospitals();
 $filter->createResoourceGroups(readGenLookupsPDO($dbh, 'Room_Group'), $uS->CalResourceGroupBy);
+$filter->createDiagnoses($dbh);
 
 if (isset($_POST['rbAllGuests'])) {
     $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
-$filterBtnMkup = GuestDemogReport::generateFilterBtnMarkup($whichGuests);
+if (isset($_POST['rbGuestsPatients'])) {
+    $guestsvspatients = filter_var($_POST['rbGuestsPatients'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+}
+$filterBtnMkup = GuestDemogReport::generateFilterBtnMarkup($whichGuests, $guestsvspatients);
 
 // Run Selected year Report?
 if (isset($_POST['btnSmt'])) {
@@ -70,6 +75,7 @@ if (isset($_POST['btnSmt'])) {
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
     $filter->loadSelectedResourceGroups();
+    $filter->loadSelectedDiagnoses();
 
     // Hospitals
     $whHosp = '';
@@ -107,8 +113,28 @@ if (isset($_POST['btnSmt'])) {
 
     $roomGroupBy = $filter->getSelectedResourceGroups();
 
+    $whDiags = '';
+    foreach($filter->getSelectedDiagnoses() as $d){
+        if ($d != '') {
+            if ($whDiags == '') {
+                $whDiags .= "'".$d."'";
+            } else {
+                $whDiags .= ",'". $d."'";
+            }
+        }
+    }
 
-    $report = GuestDemogReport::demogReport($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $whichGuests, $zip, $roomGroupBy);
+    if ($whDiags != '') {
+        $whDiags = " and hs.Diagnosis in (".$whDiags.") ";
+    }
+
+    $whPatient = "";
+    if($guestsvspatients == "patients"){
+        $whPatient = "and hs.idPatient = s.idName";
+    }
+
+
+    $report = GuestDemogReport::demogReport($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $whDiags, $whichGuests, $whPatient, $zip, $roomGroupBy);
 
     $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' ' . $labels->getString('MemberType', 'visitor', 'Guest'). ' Demographics compiled on ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
     $title .= HTMLContainer::generateMarkup('p', 'Report Interval: ' . date('M j, Y', strtotime($filter->getReportStart())) . ' Thru ' . date('M j, Y', strtotime($filter->getReportEnd())));
@@ -119,6 +145,7 @@ if (isset($_POST['btnSmt'])) {
 $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
 $roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup();
+$diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
 
 ?>
 <!DOCTYPE html>
@@ -192,6 +219,10 @@ $roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup();
 
                             if (count($filter->getHospitals()) > 1) {
                                 echo $hospitalMarkup;
+                            }
+
+                            if(count($filter->getDiagnoses()) > 1) {
+                                echo $diagnosisMarkup;
                             }
 
                             echo $roomGroupMarkup;
