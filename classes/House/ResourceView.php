@@ -1004,7 +1004,7 @@ from
     ifnull(v.Expected_Departure, '') as `Expected_Departure`,
     r.Last_Cleaned,
     r.Last_Deep_Clean,
-    r.Notes
+    ifnull(r.Notes, '') as `Notes`
 from
     room r
         left join
