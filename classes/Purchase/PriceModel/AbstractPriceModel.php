@@ -47,9 +47,9 @@ abstract class AbstractPriceModel {
 
     /**
      * Summary of remainderAmt
-     * @var int
+     * @var float|int
      */
-    protected $remainderAmt = 0;
+    protected $remainderAmt = 0.0;
 
     /**
      * Summary of visitStatus

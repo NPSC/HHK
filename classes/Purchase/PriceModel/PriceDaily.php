@@ -58,7 +58,7 @@ class PriceDaily extends AbstractPriceModel {
      */
     public function daysPaidCalculator($amount, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $aveGuestPerDay = 1) {
 
-        $this->remainderAmt = 0;
+        $this->remainderAmt = 0.0;
 
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
@@ -82,7 +82,7 @@ class PriceDaily extends AbstractPriceModel {
                 $this->remainderAmt = $amount % $rate;
                 return floor($amount / $rate);
             }else{
-                $this->remainderAmt = 0;
+                $this->remainderAmt = 0.0;
                 return 0;
             }
         }
