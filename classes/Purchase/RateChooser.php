@@ -583,7 +583,7 @@ class RateChooser {
         $selectedVfeeOption = $uS->DefaultVisitFee;
 
         foreach ($vFeesArray as $r) {
-            $vFeeOpts[$r[0]] = array(0=>$r[0], 1=>$r[1] . ($r[2] == 0 ? '' :  ': $' . number_format($r[2], 0)));
+            $vFeeOpts[$r[0]] = array(0=>$r[0], 1=>$r[1] . ($r[2] == 0 ? '' :  ': $' . ($r[2] == '' ? '0' : number_format($r[2], 0))));
             if ($visitFeeCharged == $r[2]) {
                 $selectedVfeeOption = $r[0];
             }

@@ -848,7 +848,7 @@ if (isset($_POST['ldfm'])) {
         $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
     }
 
-    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument, d.Abstract from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
+    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument, ifnull(d.Abstract, '') as `Abstract` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
     $docRows = $formstmt->fetchAll();
 
     $li = '';
