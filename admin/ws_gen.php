@@ -391,7 +391,7 @@ try {
             $uid = 0;
 
             if (isset($_POST["adpw"])) {
-                $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $adPw = filter_var($_POST["adpw"], FILTER_UNSAFE_RAW);
             }
 
             if (isset($_POST['uid'])) {

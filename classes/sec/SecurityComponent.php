@@ -50,6 +50,12 @@ class SecurityComponent {
         $uS = Session::getInstance();
         $pageCode = array();
 
+        //parse url before checking authorization
+        $parsedName = parse_url($name);
+        if(isset($parsedName["path"]) && $parsedName["path"] != ''){
+            $name = $parsedName["path"];
+        }
+
         // try reading the page table
         if ($name != "" && isset($uS->webPages[$name])) {
             $r = $uS->webPages[$name];
