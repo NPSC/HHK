@@ -111,7 +111,7 @@ class Report {
      * @param string $reportDescription
      * @param string $reportAuthor
      */
-    public static function createNew($reportTitle, $reportDate, $reportDescription, $reportAuthor = '', $reportStatus = Report::ActiveStatus, $reportResolution, $reportResolutionDate, $reportSignature, $signatureDate, $guestId, $psgId ) {
+    public static function createNew($reportTitle, $reportDate, $reportDescription, $reportAuthor = '', $reportStatus = Report::ActiveStatus, $reportResolution = '', $reportResolutionDate = '', $reportSignature = '', $signatureDate = '', $guestId = '', $psgId = '' ) {
 
         if ($reportTitle != '' && $reportAuthor != '') {
 

@@ -218,7 +218,7 @@
         }
 
         if (error == true) {
-            settings.alertMessage("Incident not saved. Check fields in red.", 'alert');
+            settings.alertMessage("Incident not saved. Check fields in red.", 'error');
         } else {
             var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
             var data = $wrapper.incidentdialog.find("form").serialize();
@@ -239,10 +239,11 @@
                     if (data.idReport > 0) {
                         if (print) {
                             Print($wrapper, settings, data.idReport);
+                        }else{
+                            $wrapper.incidentdialog.dialog("close");
+                            clearform($wrapper);
                         }
                         $table.ajax.reload();
-                        $wrapper.incidentdialog.dialog("close");
-                        clearform($wrapper);
                     } else {
                         if (data.error) {
                             settings.alertMessage(data.error, 'alert');
@@ -443,12 +444,6 @@
                             '</td>' +
                             '</tr>' +
                             '<tr>' +
-                            '<td class="tdlabel">Author</td>' +
-                            '<td>' +
-                            data.createdBy +
-                            '</td>' +
-                            '</tr>' +
-                            '<tr>' +
                             '<td class="tdlabel">Description</td>' +
                             '<td>' +
                             data.description +
@@ -492,7 +487,7 @@
                         body += '<tr>' +
                                 '<td class="tdlabel">Updated</td>' +
                                 '<td>' +
-                                data.updatedBy + ' - ' + data.updatedAt +
+                                data.updatedAt +
                                 '</td>' +
                                 '</tr>';
                     }
@@ -511,8 +506,7 @@
                     mywindow.document.close(); // necessary for IE >= 10
                     mywindow.focus(); // necessary for IE >= 10*/
 
-                    mywindow.print();
-                    //mywindow.close();
+                    mywindow.addEventListener('load', function(){mywindow.print(); mywindow.close();}, false);
 
                 } else {
 
@@ -593,6 +587,12 @@
                 autoOpen: false,
                 modal: true,
                 width: getDialogWidth(800),
+                open: function(event, ui){
+                    $(document).find(".ui-widget-overlay").addClass("hhk-private-dialog");
+                },
+                close: function(event, ui){
+                    $(document).find(".ui-widget-overlay").removeClass("hhk-private-dialog");
+                },
                 buttons: {
                     Cancel: function () {
                         $wrapper.incidentdialog.dialog("close");

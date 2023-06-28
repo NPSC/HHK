@@ -877,3 +877,8 @@ table.dataTable tbody td {
 .hhk-retired {
 	background-color: lightgray !important;
 }
+
+.hhk-private-dialog {
+	opacity: 1 !important;
+	background: #5c9ccc !important;
+}
