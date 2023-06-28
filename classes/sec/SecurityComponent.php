@@ -76,7 +76,7 @@ class SecurityComponent {
 
         $ssn = Session::getInstance();
 
-        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE) {
+        if ((isset($ssn->logged) == FALSE || $ssn->logged == FALSE) && isset($ssn->userAgent) == FALSE || $ssn->userAgent != filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS) ) {
 
             $ssn->destroy(TRUE);
 
@@ -115,7 +115,7 @@ class SecurityComponent {
             exit();
         }
 
-        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE) {
+        if ((isset($ssn->logged) == FALSE || $ssn->logged == FALSE) && isset($ssn->userAgent) == FALSE || $ssn->userAgent != filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS) ) {
 
             $ssn->destroy(TRUE);
 

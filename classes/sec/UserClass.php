@@ -1046,6 +1046,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         }
 
         $ssn->logged = true;
+        $ssn->userAgent = filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         unset($ssn->Challtries);
 
         if ($init) {
