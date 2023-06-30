@@ -249,6 +249,32 @@ foreach ($rescGroups as $g) {
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript">
+
+            function getDtBtns(title){
+                return [
+                    {
+                        extend: "print",
+                        className: "ui-corner-all",
+                        autoPrint: true,
+                        paperSize: "letter",
+                        exportOptions: {
+                            columns: ":not('.noPrint')",
+                        },
+                        title: function(){
+                            return title;
+                        },
+                        messageBottom: function(){
+                            var now = moment().format("MMM D, YYYY") + " at " + moment().format("h:mm a");
+                            return '<div style="padding-top: 10px; position: fixed; bottom: 0; right: 0">Printed on '+now+'</div>';
+                        },
+                        customize: function (win) {
+                            $(win.document.body).css("font-size", "0.9em");
+
+                            $(win.document.body).find("table").css("font-size", "inherit");
+                        }
+                    }
+                ];
+            }
             var dateFormat = '<?php echo "ddd MMM D, YYYY"; ?>';
             var groupingTitle = $('#groupingTitle').val();
             var cgCols = [
@@ -271,7 +297,8 @@ foreach ($rescGroups as $g) {
                     'data': 'Action',
                     'title': 'Action',
                     'searchable': false,
-                    'sortable': false
+                    'sortable': false,
+                    className: "noPrint"
                 },
                 {
                     'data': 'Occupant',
@@ -514,7 +541,8 @@ foreach ($rescGroups as $g) {
                                     "order": [[7, 'desc']],
                                     "pageLength": 50,
                                     "lengthMenu": [25, 50, 100],
-                                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
+                                    "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+                                    "buttons": getDtBtns("Housekeeping - Cleaning Log"),
                                 });
                             }
                         }
@@ -534,6 +562,8 @@ foreach ($rescGroups as $g) {
                         if (d != coDate) {
                             coDate = d;
                             $('#inTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate));
+                            var updatedBtn = getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In - " + $.datepicker.formatDate("M d, yy", coDate))[0];
+                            $('#inTable').DataTable().button(0).remove().add(0, updatedBtn);
                             $('#inTable').DataTable().ajax.reload();
                         }
                     }
@@ -550,6 +580,8 @@ foreach ($rescGroups as $g) {
                         endDate.setDate(startDate.getDate() + (btn.data("weeks") * 7));
 
                         $('#inTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", startDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", endDate));
+                        var updatedBtn = getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In - " + $.datepicker.formatDate("M d, yy", startDate) + " to " + $.datepicker.formatDate("M d, yy", endDate))[0];
+                        $('#inTable').DataTable().button(0).remove().add(0, updatedBtn);
                         $('#inTable').DataTable().ajax.reload();
                         btn.addClass("ui-state-active");
                     }
@@ -567,6 +599,8 @@ foreach ($rescGroups as $g) {
                         if (d != coDate) {
                             coDate = d;
                             $('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate));
+                            var updatedBtn = getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out - " + $.datepicker.formatDate("M d, yy", coDate))[0];
+                            $('#outTable').DataTable().button(0).remove().add(0, updatedBtn);
                             $('#outTable').DataTable().ajax.reload();
                         }
                     }
@@ -583,6 +617,8 @@ foreach ($rescGroups as $g) {
                         endDate.setDate(startDate.getDate() + (btn.data("weeks") * 7));
 
                         $('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", startDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", endDate));
+                        var updatedBtn = getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out - " + $.datepicker.formatDate("M d, yy", startDate) + " to " + $.datepicker.formatDate("M d, yy", endDate))[0];
+                        $('#outTable').DataTable().button(0).remove().add(0, updatedBtn);
                         $('#outTable').DataTable().ajax.reload();
                         btn.addClass("ui-state-active");
                     }
@@ -597,7 +633,8 @@ foreach ($rescGroups as $g) {
                     "deferRender": true,
                     "columns": cgCols,
                     rowGroup: {dataSrc: 'Group_Title'},
-                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
+                    "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+                    "buttons": getDtBtns("Housekeeping - All Rooms"),
                     "initComplete": function(settings, json){
                     	$('.ckdate').datepicker({
                             yearRange: '<?php echo $uS->StartYear; ?>:+01',
@@ -619,7 +656,8 @@ foreach ($rescGroups as $g) {
                     "deferRender": true,
                     "columns": cgCols,
                     rowGroup: {dataSrc: 'Group_Title'},
-                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
+                    "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+                    "buttons": getDtBtns("Housekeeping - Rooms Not Ready"),
                     "initComplete": function(settings, json){
                     	$('.ckdate').datepicker({
                             yearRange: '<?php echo $uS->StartYear; ?>:+01',
@@ -633,25 +671,30 @@ foreach ($rescGroups as $g) {
                     }
                 });
 
-                $('#outTable').dataTable({
+                var outTbl = $('#outTable').DataTable({
                     ajax: {
                         url: 'ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate),
                         dataSrc: 'outTable'
                     },
                     "deferRender": true,
                     "columns": outCols,
-                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
+                    "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+                    "buttons": getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out - " + $.datepicker.formatDate("M d, yy", coDate)),
                 });
+                outTbl.buttons().container().appendTo("#ckout .tbl-btns");
 
-                $('#inTable').dataTable({
+                var inTbl = $('#inTable').DataTable({
                     ajax: {
                         url: 'ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate),
                         dataSrc: 'inTable'
                     },
                     "deferRender": true,
                     "columns": inCols,
-                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
+                    "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+                    "buttons": getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In - " + $.datepicker.formatDate("M d, yy", coDate)),
                 });
+
+                inTbl.buttons().container().appendTo("#ckin .tbl-btns");
 
                 $('#atblgetter').dataTable({
                     'columnDefs': [
@@ -665,30 +708,6 @@ foreach ($rescGroups as $g) {
                     "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                 });
 
-                $('#btnPrintAll').click(function () {
-                    window.open('ShowHsKpg.php?tbl=all', '_blank');
-                });
-
-                var opt = {mode: 'popup',
-                    popClose: true,
-                    popHt: $('#ckout').height(),
-                    popWd: 1200,
-                    popX: 20,
-                    popY: 20,
-                    popTitle: '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out'};
-
-				$('#prtClnToday').click(function () {
-                    window.open('ShowHsKpg.php?tbl=notReady', '_blank');
-                });
-
-				$('#prtCkIn').click(function () {
-                    $('div#ckin').printArea(opt);
-                });
-
-                $('#prtCkOut').click(function () {
-                    $('div#ckout').printArea(opt);
-                });
-
                 $('#outButtonSet').controlgroup();
                 $('#inButtonSet').controlgroup();
 
@@ -699,10 +718,9 @@ foreach ($rescGroups as $g) {
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv" style="margin-bottom: 60px;">
-            <div style="float:left; margin-right: 100px; margin-top:10px;">
+            <div style="margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
             </div>
-            <div style="clear:both;"></div>
             <form action="RoomStatus.php" method="post"  id="form1" name="form1" >
                 <div id="mainTabs" style="font-size: .8em; display:none;" class="hhk-tdbox">
                     <ul>
@@ -712,43 +730,39 @@ foreach ($rescGroups as $g) {
                         <li><a href="#showAll">Show All Rooms</a></li>
                         <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
                     </ul>
-                    <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                    <div id="clnToday">
                         <table id='dirtyTable' class=' order-column display ' style='width:100%;'></table>
                         <div class="ui-corner-all submitButtons">
-                        	<input type="button" value="Print" id="prtClnToday">
                             <input type="reset" name="btnReset1" value="Reset" id="btnReset1" />
                             <input type="submit" name="btnSubmitClean" value="Save" id="btnSubmitClean" />
                         </div>
                     </div>
-                    <div id="ckin" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-<!--                         <?php //echo $checkingIn; ?> -->
-						<div class="row">
+                    <div id="ckin">
+						<div class="hhk-flex tbl-btns">
                             <div id="inButtonSet" class="week-button-group">
                                 <button type="button" data-weeks="1" class="ui-corner-left">1 Week</button>
                                 <button type="button" data-weeks="2" class="">2 Weeks</button>
                                 <button type="button" data-weeks="4" class="ui-corner-right">4 Weeks</button>
                             </div>
-                            <div style="display: inline-block; margin-left:5px;padding:5px;" class="ui-widget ui-widget-content ui-corner-all">
+                            <div class="ui-widget ui-widget-content ui-corner-all mx-3 p-1">
                                 <label>Or Choose Check-in Date: </label>
                                 <input id="ckInDate" class="ckdate"/>
                             </div>
-                            <input type="button" value="Print" id="prtCkIn" style="margin-left:23px;"/>
                         </div>
 
                         <table id='inTable' class=' order-column display ' style='width:100%;' ></table>
                     </div>
-                    <div id="ckout" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                        <div class="row">
+                    <div id="ckout">
+                        <div class="hhk-flex tbl-btns">
                             <div id="outButtonSet" class="week-button-group">
                                 <button type="button" data-weeks="1" class="ui-corner-left">1 Week</button>
                                 <button type="button" data-weeks="2" class="">2 Weeks</button>
                                 <button type="button" data-weeks="4" class="ui-corner-right">4 Weeks</button>
                             </div>
-                            <div style="display: inline-block; margin-left:5px;padding:5px;" class="ui-widget ui-widget-content ui-corner-all">
+                            <div class="ui-widget ui-widget-content ui-corner-all mx-3 p-1">
                                 <label>Or Choose Checkout Date: </label>
                                 <input id="ckoutDate" class="ckdate"/>
                             </div>
-                            <input type="button" value="Print" id="prtCkOut" style="margin-left:23px;"/>
                         </div>
 
                         <table id='outTable' class=' order-column display ' style='width:100%;' ></table>
@@ -756,7 +770,6 @@ foreach ($rescGroups as $g) {
                     <div id="showAll">
                         <table id='roomTable' class=' order-column display ' style='width:100%;'></table>
                         <div class="ui-corner-all submitButtons">
-                            <input type="button" value="Print" name="btnPrintAll" id="btnPrintAll" />
                             <input type="submit" value="Download to Excel" id="btnExcelAll" name="btnExcelAll" />
                             <input type="reset" name="btnReset2" value="Reset" id="btnReset2" />
                             <input type="submit" name="btnSubmitTable" value="Save" id="btnSubmitTable" />
