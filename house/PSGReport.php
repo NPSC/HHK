@@ -82,7 +82,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, " . ($showUnique ? "" : "v.idReservation as `Resv ID`, ")
             . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
-                . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Phone, vn.Email, "
+                . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Bad_Address, vn.Phone, vn.Email, "
                     . ($showUnique ? "" : $queryStatus  . "r.title as `Room`,")
                 . $spanDates
                 //. " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
@@ -93,7 +93,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     } else if ($showAddr && !$showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code,
-            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, `nd`.`No_Return`, "
+            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Bad_Address, `nd`.`No_Return`, "
             . ($showUnique ? "" : $queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . $hospAssocSql
@@ -322,6 +322,14 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
                 }
 
                 unset($r['No_Return']);
+            }
+
+            if(isset($r['Bad_Address']) && $r['Bad_Address'] == 'true' && isset($r['Address'])){
+                $r['Address'] = HTMLContainer::generateMarkup('div',
+                    HTMLContainer::generateMarkup("span", $r["Address"]) . HTMLContainer::generateMarkup("span", "", array("class"=>'ui-icon ui-icon-notice ml-2')),
+                array('class'=>'hhk-flex', 'style'=>'justify-content: space-between;')
+                );
+                unset($r['Bad_Address']);
             }
 
             $rows[] = $r;

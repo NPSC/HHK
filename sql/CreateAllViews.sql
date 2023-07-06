@@ -2084,6 +2084,7 @@ create or replace view `vname_list` as
         IFNULL(`na`.`State_Province`, '') AS `State`,
         IFNULL(`na`.`Postal_Code`, '') AS `Zip`,
         IFNULL(`na`.`Country_Code`, '') AS `Country`,
+        IFNULL(`na`.`Bad_Address`, '') AS `Bad_Address`,
         IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
         IFNULL(`n`.`External_Id`, '') AS `External_Id`
     FROM
