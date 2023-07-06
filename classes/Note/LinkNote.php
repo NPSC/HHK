@@ -128,8 +128,9 @@ WHERE
                     break;
 
                 case Note::MemberLink:
-
-                    //break;
+                    $table = 'member_note';
+                    $field = 'idName';
+                    break;
 
                 case Note::RoomLink:
 

@@ -471,7 +471,7 @@ Order by `t`.`List_Order`;");
                 $amounts = filter_var_array($postLookups['selDiagCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $codeArray = filter_var_array($postLookups['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $codeArray = (isset($postLookups['txtDiag']) ? filter_var_array($postLookups['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : array());
             $orderNums = (isset($postLookups['txtDOrder']) ? filter_var_array($postLookups['txtDOrder'], FILTER_SANITIZE_NUMBER_INT) : array());
 
             if ($type === GlTypeCodes::m) {

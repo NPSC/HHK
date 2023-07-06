@@ -177,6 +177,7 @@ if ($idDoc > 0) {
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>

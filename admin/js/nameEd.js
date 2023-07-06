@@ -66,6 +66,18 @@ $(document).ready(function () {
                     $('#vwebUser').dialog('open');
                     event.preventDefault();
                 }
+
+                if (ui.newTab.prop('id') === "notes"){
+                    $("#vmemnotes").notesViewer({
+                        linkId: memData.id,
+                        linkType: 'member',
+                        serviceURL: '../house/ws_resv.php',
+                        newNoteAttrs: {id:'memNewNote', name:'memNewNote'},
+                        alertMessage: function(text, type) {
+                            flagAlertMessage(text, type);
+                        }
+                    });
+                }
             }
         }
     });
@@ -440,6 +452,7 @@ $(document).ready(function () {
             }
         });
     });
+
 //    // Don't let user choose a blank address as preferred.'
     addrPrefs(memData);
     verifyAddrs('div#divaddrTabs');

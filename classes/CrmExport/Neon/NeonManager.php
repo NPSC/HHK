@@ -102,6 +102,8 @@ class NeonManager extends AbstractExportManager {
             return $replys;
         }
 
+        $this->customFields = $this->getMyCustomFields($dbh);
+
         // Log in with the web service
         $this->openTarget();
 
@@ -302,7 +304,7 @@ class NeonManager extends AbstractExportManager {
         $paramStr = NeonHelper::fillIndividualAccount($r);
 
         // Custom Parameters
-        $paramStr .= NeonHelper::fillCustomFields($r, $unwound);
+        $paramStr .= NeonHelper::fillCustomFields($this->customFields, $r, $unwound);
 
         // Log in with the web service
         $this->openTarget();
@@ -494,12 +496,6 @@ class NeonManager extends AbstractExportManager {
             return array(array('Donation Result'=>'Start or End date is malformed.  ' . $e->getMessage()));
         }
 
-        $stmt = $dbh->query("Select * from vguest_neon_payment where 1=1 $whereClause");
-
-        if ($stmt->rowCount() < 1) {
-            return array(array('Donation Result'=>'No new HHK payments found to transfer.  '));
-        }
-
         // Load the time codes for output
         $stmtList = $dbh->query("Select * from neon_type_map");
         $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
@@ -510,6 +506,12 @@ class NeonManager extends AbstractExportManager {
 
         // Log in with the web service
         $this->openTarget();
+
+        $stmt = $dbh->query("Select * from vguest_neon_payment where 1=1 $whereClause");
+
+        if ($stmt->rowCount() < 1) {
+            return array(array('Donation Result'=>'No new HHK payments found to transfer.  '));
+        }
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -692,6 +694,7 @@ class NeonManager extends AbstractExportManager {
 
         $this->memberReplies = [];
         $this->replies = [];
+        $this->customFields = $this->getMyCustomFields($dbh);
 
         // dont allow if neon config file doesnt have the custom fileds
         if (isset($this->customFields['First_Visit']) === FALSE) {
@@ -1701,8 +1704,22 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $customFields;
     }
 
+    /**
+     * Summary of getMyCustomFields
+     * @param \PDO $dbh
+     * @return array
+     */
     public function getMyCustomFields(\PDO $dbh) {
-        return readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
+
+        if (is_null($this->customFields)) {
+            $cf = readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
+
+            foreach($cf as $k => $v) {
+                $this->customFields[$k] = $v['Description'];
+            }
+        }
+
+        return $this->customFields;
     }
 
     protected function showGatewayCredentials() {

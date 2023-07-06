@@ -48,6 +48,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -76,7 +77,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         $('#btnHere').button();
 
         $('#daily').DataTable({
-            "dom": '<"top ui-toolbar ui-helper-clearfix"if>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+            "dom": '<"top"if><\"hhk-overflow-x hhk-tbl-wrap\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
             "displayLength": 50,
             "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
             "order": [[ 0, 'asc' ]],

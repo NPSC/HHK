@@ -1249,7 +1249,8 @@
     "prefer-lowest": false,
     "platform": {
         "php": "^7.4|^8.1",
-        "ext-xml": "*"
+        "ext-xml": "*",
+        "ext-gd": "*"
     },
     "platform-dev": [],
     "plugin-api-version": "2.3.0"

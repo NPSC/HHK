@@ -96,6 +96,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -112,7 +113,9 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         <script src="https://www.gstatic.com/charts/loader.js"></script>
 
         <script type="text/javascript">
-            google.charts.load('current', {packages: ['corechart', 'bar']});
+            google.charts.load('current', {packages: ['corechart']});
+			google.charts.setOnLoadCallback(drawGuestsPerNight);
+            google.charts.setOnLoadCallback(drawDiagnosisTotals);
 
             function drawGuestsPerNight() {
 
@@ -127,7 +130,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                 let options = {
                     height:350,
                     width: 500,
-                    chartArea: {'width': '90%', 'height': '100%'},
+                    chartArea: {'width': 400, 'height': 400},
                     legend: {
                         position: 'right',
                         alignment: 'center',
@@ -149,9 +152,9 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
                 var chart = new google.visualization.PieChart(document.getElementById('diagnosisCategoryTotals'));
                 let options = {
-                    height:350,
-                    width: 500,
-                    chartArea: {'width': '90%', 'height': '100%'},
+                    height:500,
+                    width: 800,
+                    chartArea: {'width': "80%", 'height': "100%"},
                     legend: {
                         position: 'right',
                         alignment: 'center',
@@ -179,6 +182,8 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                     google.charts.setOnLoadCallback(drawGuestsPerNight);
                 }
 
+                $("#historicalOcc #repSummary>img").remove();
+
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = $.parseJSON('<?php echo json_encode($occupancyReport->colSelector->getColumnDefs()); ?>');
 
@@ -199,12 +204,16 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                             }
 
                             #hhk-reportWrapper .hhk-print-row{
-                            	flex-wrap: nowrap;
+                            	
                             	margin-bottom: 2em;
                             }
 
                             #hhk-reportWrapper .hhk-pieChart {
                             	page-break-inside:avoid;
+                            }
+
+                            #hhk-reportWrapper .hhk-pieChart div {
+                                margin: 0 auto;
                             }
 
                             #hhk-reportWrapper .ui-icon {

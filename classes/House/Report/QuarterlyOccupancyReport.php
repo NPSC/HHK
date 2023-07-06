@@ -164,19 +164,36 @@ join hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
 left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
 left join gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = "Diagnosis_Category"
 where date(ifnull(v.Span_End, now())) >= date("' . $this->filter->getReportStart() . '") and date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '")
-group by `Category`;';
+group by `Category` order by `count` desc;';
 
         $stmt = $this->dbh->prepare($query);
         $stmt->execute();
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
 
+        $total = $this->sumTotal($data);
+
         foreach($data as $key=>$value){
             $value[1] = (float) $value[1];
+            $value[0] = $value[0] . " - " . number_format($value[1]/$total*100, 1) . "%";
             $data[$key] = $value;
         }
 
         array_unshift($data, ["Category", "Value"]);
         return $data;
+    }
+
+    /**
+     * Sum up results from getDiagnosisCategoryTotals()
+     * @param array $catTotals
+     * @return int
+     */
+    private function sumTotal(array $catTotals):int
+    {
+        $total = 0;
+        foreach($catTotals as $cat){
+            $total+= $cat[1];
+        }
+        return $total;
     }
 
 }

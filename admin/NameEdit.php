@@ -196,7 +196,9 @@ if(filter_has_var(INPUT_POST, "btnSubmit")){
 
         // Volunteers
         foreach ($vols as $v) {
-            $msg .= $v->saveVolCategory($dbh, $id, $_POST[$v->getCategoryCode()], $uname);
+            if(filter_has_var(INPUT_POST, $v->getCategoryCode())){
+                $msg .= $v->saveVolCategory($dbh, $id, $_POST[$v->getCategoryCode()], $uname);
+            }
         }
 
         // kludge for Billing agents
@@ -426,6 +428,7 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="js/genfunc.js"></script>
 
     </head>
@@ -482,20 +485,21 @@ $alertMessage = $alertMsg->createMarkup();
                 <div id="divFuncTabs" class="hhk-widget-content" style="display:none; margin-bottom: 50px;" >
                     <ul>
                         <li><a href="#vhistory">History</a></li>
-                        <?php echo $volTabNames; ?>
+                        <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? $volTabNames : '') ?>
                         <?php if ($donationsFlag) { echo "<li id='donblank'><a href='#vdonblank'>Donations...</a></li>\n"; } ?>
-                        <li><a href="#vnotes">Notes</a></li>
-                        <li id="wbuser"><a href="#vwuser">Web Account...</a></li>
+                        <li id="notes"><a href="#vnotes">Notes</a></li>
+                        <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? "<li id='wbuser'><a href='#vwuser'>Web Account...</a></li>": ''); ?>
                         <li id="changelog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="vhistory" style="background:#EFDBC2;">
                             <?php echo $recHistory; ?>
                     </div>
                     <div id="widget-docs">
-                        <?php echo $volPanelMkup; ?>
+                        <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? $volPanelMkup : ""); ?>
                     </div>
                     <div id="vnotes" >
                         <?php echo $notesMarkup; ?>
+                        <div id="vmemnotes"></div>
                     </div>
                     <div id="vchangelog" class="ignrSave">
                       <table style="width:100%;" class="display ignrSave" id="dataTbl"></table>

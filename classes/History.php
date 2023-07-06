@@ -543,14 +543,9 @@ class History {
                     )), array('class' => 'gmenu'));
             }
 
-            if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos){
+            if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos && $includeAction && !$static){
                 $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
             }
-
-            if ($uS->ShowGuestPhoto) {
-                $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
-            }
-
 
             // Guest first name
             if (isset($r['ADA']) && $r['ADA'] == 'im') {
@@ -701,7 +696,7 @@ class History {
      * @param \DateTime $startDate
      * @return array
      */
-    public static function getVolEventsMarkup(\PDO $dbh, \DateTime $startDate) {
+    public static function getVolEventsMarkup(\PDO $dbh, \DateTimeInterface $startDate) {
 
         $query = "select * from vrecent_calevents where `Last Updated` > '" .$startDate->format('Y-m-d'). "' order by Category, `Last Updated`;";
         $stmt = $dbh->query($query);

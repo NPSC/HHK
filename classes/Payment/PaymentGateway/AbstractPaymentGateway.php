@@ -189,7 +189,7 @@ abstract class AbstractPaymentGateway {
 
     public static function factory(\PDO $dbh, $gwName, $gwType, $tokenId = 0) {
 
-        switch (strtolower($gwName)) {
+        switch (strtolower(strval($gwName))) {
 
             case AbstractPaymentGateway::VANTIV:
 

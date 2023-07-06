@@ -31,7 +31,7 @@ class PriceBasic extends AbstractPriceModel {
         $this->remainderAmt = 0;
 
         if ($pledgedRate > 0) {
-            $this->remainderAmt = $amount % $pledgedRate;
+            $this->remainderAmt = $amount - floor($amount / $pledgedRate);
             return floor($amount / $pledgedRate);
         }
 

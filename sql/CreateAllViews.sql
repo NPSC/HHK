@@ -168,6 +168,28 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
     WHERE
         n.`Status` = 'a';
 
+
+-- -----------------------------------------------------
+-- View `vmem_notes`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vmem_notes` AS
+    SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        mn.idName,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        member_note mn ON n.idNote = mn.Note_Id
+    WHERE
+        n.`Status` = 'a';
+
+
 -- -----------------------------------------------------
 -- View `vadditional_guests`
 -- -----------------------------------------------------

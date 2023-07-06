@@ -46,13 +46,13 @@ try {
 }
 
 // Authenticate user
-$user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
-$pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+$user = filter_input(INPUT_SERVER, 'PHP_AUTH_USER', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+$pass = filter_input(INPUT_SERVER, 'PHP_AUTH_PW', FILTER_UNSAFE_RAW);
 
 $u = new UserClass();
 
 
-if ($user == '' || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE, FALSE) === FALSE) {
+if (is_null($user) || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE, FALSE) === FALSE) {
 
     header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
     header('HTTP/1.0 401 Unauthorized');

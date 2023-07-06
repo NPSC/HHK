@@ -34,33 +34,16 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $uS = Session::getInstance();
     $uname = $uS->username;
 
-    $includeDeceased = FALSE;
-    if (filter_has_var(INPUT_POST, "exDeceased")) {
-        $includeDeceased = TRUE;
-    }
+    $includeDeceased = filter_has_var(INPUT_POST, "exDeceased");
+    $slFlag = !filter_has_var(INPUT_POST, "btnstreamlined");
 
-
-    if (filter_has_var(INPUT_POST, "btnstreamlined")) {
-        $slFlag = FALSE;
-    } else {
-        $slFlag = TRUE;
-    }
-
-
-    if (isset($_POST["rb_dandOr"]) && $_POST["rb_dandOr"] == "or") {
+    if (filter_input(INPUT_POST, "rb_dandOr", FILTER_SANITIZE_FULL_SPECIAL_CHARS) == "or") {
         $andOr = "or";
-//        $totalId = "";
-//        $totalOrder = "";
-//        $groupBy = "";
     } else {
         $andOr = "and";
-//        $totalId = ", count(Id) as numId";
-//        $totalOrder = "order by numId desc ";
-//        $groupBy = " group by Id ";
     }
 
     $voldCat->set_andOr($andOr);
-
 
 
     $donSelMemberType->setReturnValues($_POST[$donSelMemberType->get_htmlNameBase()]);
@@ -98,15 +81,9 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $maxAmt = 0;
 
     // collect the parameters
-    //
-    if (isset($_POST["txtmax"])) {
-        $maxAmt = filter_var($_POST["txtmax"], FILTER_SANITIZE_NUMBER_INT);
-    }
-
-    if (isset($_POST["txtmin"])) {
-        $minAmt = filter_var($_POST["txtmin"], FILTER_SANITIZE_NUMBER_INT);
-    }
-
+    $maxAmt = intval(filter_input(INPUT_POST, "txtmax", FILTER_SANITIZE_NUMBER_INT));
+    $minAmt = intval(filter_input(INPUT_POST, "txtmin", FILTER_SANITIZE_NUMBER_INT));
+    
     if (!$showAmounts) {
         $maxAmt = 0;
         $minAmt = 0;
@@ -127,12 +104,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $roll = filter_var($_POST["selrollup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 
-    if (isset($_POST["btnDonDL"])) {
-        $dlFlag = true;
-    } else {
-        $dlFlag = false;
-    }
-
+    $dlFlag = filter_has_var(INPUT_POST, "btnDonDL");
 
     // Report type selectors
     if ($roll == "rd") {
@@ -184,7 +156,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
 
     // check campaign codes
-    if (isset($_POST["selDonCamp"])) {
+    if (filter_has_var(INPUT_POST, "selDonCamp")) {
         $campcodes = $_POST["selDonCamp"];
 
         // Get all the campaign codes
@@ -260,11 +232,11 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $sumaryRows["Date Range"] = $fromDate;
 
     // Fix up min and max amount descriptors
-    if ($maxAmt == "" && $minAmt == "") {
+    if ($maxAmt == 0 && $minAmt == 0) {
         $between = "Any donation amount";
-    } else if ($minAmt == "") {
+    } else if ($minAmt == 0) {
         $between = "Amounts less than $" . $maxAmt;
-    } else if ($maxAmt == "") {
+    } else if ($maxAmt == 0) {
         $between = "Amounts more than $" . $minAmt;
     } else {
         $between = "Amounts between $" . $minAmt . " and $" . $maxAmt;

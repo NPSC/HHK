@@ -208,8 +208,12 @@ abstract class AbstractMember {
 
     public abstract function createMarkupTable();
 
-    public function genNotesMarkup(array $volNotesMkup = array(), $showSearchButton = TRUE) {
+    public function genNotesMarkup(array $volNotesMkup = array(), $showSearchButton = FALSE) {
 
+        if(empty($this->get_genNotes())){
+            return "";
+        }
+        
         $searchMarkup = "";
         $idPrefix = $this->getIdPrefix();
 
@@ -457,7 +461,7 @@ abstract class AbstractMember {
      * @param string $style  CSS Style parameter and value
      * @return string  HTML Span element.
      */
-    public function getContactLastUpdatedMU(\DateTime $dt, $contactType = 'Address', $style = 'font-size:.8em; color:#656577') {
+    public function getContactLastUpdatedMU(\DateTimeInterface $dt, $contactType = 'Address', $style = 'font-size:.8em; color:#656577') {
 
         $arry = array();
 

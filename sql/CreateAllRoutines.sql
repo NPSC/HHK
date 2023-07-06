@@ -603,6 +603,7 @@ BEGIN
     declare n int;
     declare u int;
     declare m varchar(250);
+    declare codeFound int;
     set n= -1;
 
     select idName into n from fbx where fb_id = fbid;
@@ -655,8 +656,12 @@ BEGIN
     end if;
 
     -- group codes
+    set codeFound = 0;
+    select count(*) into codeFound from w_groups where Group_Code = groupcode;
+    if codeFound > 0 then
         replace into id_securitygroup (idName, Group_Code)
             values (id, groupcode);
+    end if;
 
 END -- ;
 

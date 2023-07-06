@@ -1098,8 +1098,23 @@
         		}
       		}
     	});
+
+		var embedInfoDialog = $wrapper.find("#embedInfoDialog").dialog({
+			autoOpen: false,
+			height: 700,
+			width: getDialogWidth(900),
+			modal: true,
+			buttons: {
+        		Close: function(){
+        			embedInfoDialog.dialog( "close" );
+        		}
+      		},
+			create: function (event, ui) {
+				//$(event.target).find("#embedAccordion").accordion();
+			}
+		});
 	
-		actions($wrapper, settings, settingsDialog, formPreviewDialog);
+		actions($wrapper, settings, settingsDialog, formPreviewDialog, embedInfoDialog);
 		
 		return this;
 	}
@@ -1169,7 +1184,7 @@
 					<label for="formTitle">Form Title: </label>
 					<input typle="text" id="formTitle" placeholder="Form Title" style="padding:0.4em 0.5em;">
 				</span>
-				<button id="formiframebtn" style="margin-left: 0.5em; display: none;" title="Embed Code Copied">Copy Form Embed Code</button>
+				<button id="formiframebtn" style="margin-left: 0.5em; display: none;">Embed Instructions</button>
 				</form>
 			</div>
 			<div id="formBuilderContent" style="margin-top: 1em;"></div>
@@ -1295,6 +1310,28 @@
 			<div id="formPreviewDialog" title="Preview">
 				<iframe id="formPreviewIframe" name="formPreviewIframe" width="1024" height="768" style="border: 0"></iframe>
 			</div>
+			<div id="embedInfoDialog" title="Embed Instructions">
+				<p class="pb-2">To add this form to your website, you'll need to either add a code snippet, or use the Embed function of your Content Management System (Wordpress, Wix, Squarespace, etc)</p>
+
+				<div class="ui-widget hhk-visitdialog mb-3">
+					<h3 class="ui-widget-header ui-corner-top">Use a Code Snippet</h3>
+					<div class="ui-widget-content ui-corner-bottom p-3">
+						<p class="pb-2">If you are able to add code directly to your website, copy and paste the following Code Snippet into your website.</p>
+						<div class="my-3"><label for="changeHeight">Height: </label><input type="number" id="changeHeight" min="0" value="1000" class="mr-2" style="width: 75px;">px
+						<div style="font-size: 0.9em; color:#919191" class="mt-2">If you have a long form, you may need to increase this value to eliminate scrollbars on your website</div>
+						</div>
+						<pre id="embedCodeSnippet" class="ui-widget-content ui-corner-all p-3 hhk-overflow-x" style="white-space:pre-wrap;"></pre>
+					</div>
+				</div>
+				<div class="ui-widget hhk-visitdialog mb-3">
+					<h3 class="ui-widget-header ui-corner-top">Embedding in a CMS</h3>
+					<div class="ui-widget-content ui-corner-bottom p-3">
+						<p class="pb-2">When embedding into a CMS, look for a function called "Embed", "Embed a Website", "Embed an iFrame", "Add External Content", or something similar.</p>
+						<p class="pb-2">When asked what website you want to embed, copy and paste the following URL</p>
+						<pre id="embedURL" class="ui-widget-content ui-corner-all p-3 hhk-overflow-x" style="white-space:pre-wrap;"></pre>
+					</div>
+				</div>
+			</div>
 		`
 		);
 		
@@ -1318,7 +1355,7 @@
 		
 	}
 	
-	function actions($wrapper, settings, settingsDialog, formPreviewDialog){
+	function actions($wrapper, settings, settingsDialog, formPreviewDialog, embedInfoDialog){
 	
 		$wrapper.on('click', '#newReferral', function(e){
 			e.preventDefault();
@@ -1375,7 +1412,7 @@
 								}
 							});
 							
-							$wrapper.find('#formiframebtn').data('code', '<iframe src="' + data.formURL + '" width="100%" height="1000"></iframe>').show();
+							$wrapper.find('#formiframebtn').data('url', data.formURL).show();
 							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
 							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
 	    					settingsDialog.find('textarea#formStyle').val(data.formSettings.formStyle).data('oldVal', data.formSettings.formStyle);
@@ -1403,12 +1440,22 @@
 		
 		$wrapper.on('click', '#formiframebtn', function(e){
 			e.preventDefault();
-			var code = $(this).data('code');
-			navigator.clipboard.writeText(code)
-				.then(() => { alert("Embed Code Copied.") })
-				.catch((error) => { $(this).attr('title',`Copy failed! ${error}`).tooltip() })
+			let url = $(this).data("url");
+			embedInfoDialog.find("#embedURL").text(url);
+			embedInfoDialog.find("#embedCodeSnippet").text('<iframe src="' + url + '" width="100%" height="1000"></iframe>');
+			embedInfoDialog.dialog("open");
 		});
 		
+		embedInfoDialog.on('change', 'input#changeHeight', function(e){
+			let val = $(this).val();
+			let embedCode = embedInfoDialog.find("#embedCodeSnippet").text();
+			console.log(val);
+			console.log(embedCode);
+			embedCode = embedCode.replace(/(height=")([0-9]*)(")/gm, '$1' + val + '$3');
+			console.log(embedCode);
+			embedInfoDialog.find("#embedCodeSnippet").text(embedCode);
+		});
+
 		$wrapper.on('blur', '[contenteditable]', function(){
 			var val = $(this).html().replaceAll('"', "'");
 			$(this).html(val);

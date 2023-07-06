@@ -151,6 +151,7 @@ if ($msg != '') {
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo CSSVARS; ?>
         <?php echo $sty; ?>
         <?php echo FAVICON; ?>
         <style type="text/css" media="print">

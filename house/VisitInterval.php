@@ -283,7 +283,7 @@ order by r.idResource;";
  * @param array $r  db record row
  * @param array $visit
  * @param float $unpaid
- * @param \DateTime $departureDT
+ * @param \DateTimeInterface $departureDT
  * @param HTMLTable $tbl
  * @param boolean $local  Flag for Excel output
  * @param ExcelHelper $sml
@@ -293,7 +293,7 @@ order by r.idResource;";
  * @param bool $visitFee  Flag to show/hide visit fees
 
  */
-function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departureDT, HTMLTable &$tbl, $local, &$sml, $header, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
+function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $departureDT, HTMLTable &$tbl, $local, &$sml, $header, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
 
     $arrivalDT = new DateTime($r['Arrival_Date']);
 
@@ -1666,6 +1666,7 @@ if ($uS->CoTod) {
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

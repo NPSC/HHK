@@ -145,7 +145,7 @@ try {
                 array( 'db' => 'Str1', 'dt' => 'Str1'),
                 array( 'db' => 'Str2', 'dt' => 'Str2'),
                 array( 'db' => 'Log_Text', 'dt' => 'Log_Text'),
-                array( 'db' => 'Timestamp', 'dt' => 'Ts'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
 
             );
 
@@ -391,7 +391,7 @@ try {
             $uid = 0;
 
             if (isset($_POST["adpw"])) {
-                $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $adPw = filter_var($_POST["adpw"], FILTER_UNSAFE_RAW);
             }
 
             if (isset($_POST['uid'])) {

@@ -1222,6 +1222,7 @@ if ($uS->UseIncidentReports) {
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
 
         <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>

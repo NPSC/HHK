@@ -13,7 +13,7 @@
  */
 require ('../functions/commonDefines.php');
 
-define('HOUSE_CSS', "<link href='ws_resc.php" . JSV . "&cmd=getCssVars' rel='stylesheet' type='text/css' /> <link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
@@ -45,3 +45,4 @@ define('FULLCALENDAR_CSS', '<link href="css/fullcalendar5.11.0.min.css' . JSV . 
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('BOOTSTRAP_CSS', "<link href='css/bootstrap.min.css" . JSV . "' rel='stylesheet' type='text/css' /><link href='css/bootstrap-print-fix.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('CSSVARS', "<link href='ws_resc.php?cmd=getCssVars' rel='stylesheet' type='text/css' />");

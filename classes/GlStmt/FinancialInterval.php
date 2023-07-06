@@ -21,7 +21,7 @@ class FinancialInterval {
 	protected $errorMsg;
 
 
-	public function __construct(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate) {
+	public function __construct(\DateTimeInterface $startDate, \DateTimeInterface $endDate) {
 		$this->startDate = $startDate;
 		$this->endDate = $endDate;
 	}

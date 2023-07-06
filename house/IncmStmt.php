@@ -418,6 +418,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+		<?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -571,9 +572,9 @@ var pmtMkup,
                 	<table style="float:left;">
                 	<tr><th>Month</th><th>Year</th><th>3rd Party Payers</th>
                 	<tr>
-                	<td><?php echo $glMonthSelr; ?></td>
+                	<td style="vertical-align: top;"><?php echo $glMonthSelr; ?></td>
                     <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
-                    <td><?php echo $glBa; ?></td>
+                    <td style="vertical-align: top;"><?php echo $glBa; ?></td>
                 	</tr>
                     </table>
 
