@@ -55,13 +55,16 @@ if ($checkinDate == '') {
         $regForm = '<h2 style="margin-top:20px;">No reservation found for ' . $ckinDT->format('M j, Y') . '</h2>';
     }
 
-    foreach ($rows as $r) {
+    foreach ($rows as $index=>$r) {
 
         $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, 0, $wInit->resourceURL . '../conf/registrationLogo.png');
 
         $sty = $reservArray['docs'][0]['style'];
-        $regForm .= $reservArray['docs'][0]['doc'] . HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));
-
+        $regForm .= $reservArray['docs'][0]['doc'];
+        
+        if($index < count($rows) - 1){ //add a page break to all reg forms except the last one.
+            $regForm .= HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));
+        }
     }
 }
 ?>

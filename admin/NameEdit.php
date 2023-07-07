@@ -153,13 +153,19 @@ try {
 
     $rel = $name->loadRealtionships($dbh);
 
-
     // Volunteers
     $vols = array();
-    foreach ($volLkups["Vol_Category"] as $purpose) {
+    if(isset($volLkups["Vol_Category"]["Vol_Type"]) && ($setForOrg || $name->getMemberDesignation() != MemDesignation::Individual)){ //orgs only need member type vol_category
+        $purpose = $volLkups["Vol_Category"]["Vol_Type"];
         $volunteer = new VolunteerCategory($purpose[0], $purpose[1], $purpose[2]);
         $volunteer->set_rankOptions($volLkups["Vol_Rank"]);
         $vols[$purpose[0]] = $volunteer;
+    }else{
+        foreach ($volLkups["Vol_Category"] as $purpose) {
+            $volunteer = new VolunteerCategory($purpose[0], $purpose[1], $purpose[2]);
+            $volunteer->set_rankOptions($volLkups["Vol_Rank"]);
+            $vols[$purpose[0]] = $volunteer;
+        }
     }
 
 
@@ -248,7 +254,7 @@ if ($name->isNew()) {
 
 //
 // Name Edit Row
-$nameMarkup = $name->createMarkupTable($dbh);
+$nameMarkup = $name->createMarkupTable();
 
 
 // Excludes, Demographics and admin tabs
@@ -485,7 +491,7 @@ $alertMessage = $alertMsg->createMarkup();
                 <div id="divFuncTabs" class="hhk-widget-content" style="display:none; margin-bottom: 50px;" >
                     <ul>
                         <li><a href="#vhistory">History</a></li>
-                        <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? $volTabNames : '') ?>
+                        <?php echo $volTabNames; ?>
                         <?php if ($donationsFlag) { echo "<li id='donblank'><a href='#vdonblank'>Donations...</a></li>\n"; } ?>
                         <li id="notes"><a href="#vnotes">Notes</a></li>
                         <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? "<li id='wbuser'><a href='#vwuser'>Web Account...</a></li>": ''); ?>
@@ -495,7 +501,7 @@ $alertMessage = $alertMsg->createMarkup();
                             <?php echo $recHistory; ?>
                     </div>
                     <div id="widget-docs">
-                        <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? $volPanelMkup : ""); ?>
+                        <?php echo $volPanelMkup; ?>
                     </div>
                     <div id="vnotes" >
                         <?php echo $notesMarkup; ?>
