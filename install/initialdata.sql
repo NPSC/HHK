@@ -660,7 +660,6 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Show_Holidays', 'false', 'b', 'c', '', 'Indicate holidays on the calendar','', '1'),
 ('sId','11','i','a','','House organization Id','',1),
 ('siteName','Hospitality HouseKeeper','s','a','','House or organization  name','',1),
-('Site_Maintenance', 'false', 'b', 'a', '', 'Flag to temporarily deny access to the site', '',1),
 ('SMTP_Auth_Required','true','b','es','','SMTP Authorization required','',1),
 ('SMTP_Debug','0','i','es','','0 = off; 1; 2; 3;  4 = low level','',1),
 ('SMTP_Host','','s','es','','SMTP Host','',1),

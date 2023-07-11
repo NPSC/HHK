@@ -16,11 +16,14 @@ ALTER TABLE `name_demog`
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('RegNoMinorSigLines', 'false', 'b', 'h', 'On Registrations, minors will not show up in the signature section', '1');
 
 -- retire a resource
-ALTER TABLE `resource` 
+ALTER TABLE `resource`
 ADD COLUMN IF NOT EXISTS `Retired_At` DATETIME NULL AFTER `Rate_Adjust_Code`;
 
 ALTER TABLE `visit`
 ADD COLUMN IF NOT EXISTS `idRateAdjust` VARCHAR(5) NULL DEFAULT '0' AFTER `Rate_Category`;
 
-ALTER TABLE `visit_onleave` 
+ALTER TABLE `visit_onleave`
 ADD COLUMN IF NOT EXISTS `idRateAdjust` VARCHAR(5) NULL DEFAULT '0' AFTER `Rate_Adjust`;
+
+-- Hide "Site Maintanance" flag; It is too easy to mistakenly use.
+UPDATE `sys_config` SET `Show` = '0' WHERE (`Key` = 'Site_Maintenance');

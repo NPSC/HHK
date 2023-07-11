@@ -74,7 +74,7 @@ class ScriptAuthClass extends SecurityComponent {
                 $this->pageType = $page["Type"];
 
             } else {
-                exit('Page file name not found in database. ');
+                exit('The webpage filename was not found in our database. ');
             }
         } else {
             exit('Web Site Code or page file name not defined. ');
@@ -249,7 +249,7 @@ class ScriptAuthClass extends SecurityComponent {
 
                 } else if ($this->get_Page_Type() == "s") {
 
-                    $rtn = array("error" => "Unauthorized-");
+                    $rtn = ["error" => "Unauthorized-"];
                     $uS = Session::getInstance();
                     $uS->destroy(TRUE);
                     echo json_encode($rtn);
@@ -319,9 +319,9 @@ class ScriptAuthClass extends SecurityComponent {
             return '';
         }
 
-        $menu = array();
+        $menu = [];
         $uS = Session::getInstance();
-        $pageAnchors = array();
+        $pageAnchors = [];
 
         foreach ($uS->webPages as $fn => $r) {
 

@@ -116,16 +116,17 @@ class WebInit {
         // Demo or training version?
         if ($uS->mode !== Mode::Live) {
             $this->menuTitle = $this->siteName . " " . ucfirst($uS->mode);
-            $this->pageTitle = ucfirst($uS->mode) . " - " . $this->siteName;
+            $this->pageTitle = strtoupper($uS->mode) . " - " . $this->siteName;
         }
 
+        // Deprecated 7/23
         /*
         * if test version, put a big TEST on the page
         */
-        if ($this->testVersion !== FALSE) {
+//        if ($this->testVersion !== FALSE) {
             //$this->menuTitle = "TEST VERSION";
            //$this->pageTitle = "TEST - " . $this->siteName;
-        }
+//        }
 
 
         $this->pageHeading = $this->page->get_Page_Title();
@@ -181,19 +182,6 @@ class WebInit {
         }
     }
 
-
-    /**
-     * Summary of logout
-     * @param string $page
-     * @return void
-     */
-    public function logout($page = 'index.php') {
-
-        $uS = Session::getInstance();
-        $uS->destroy(TRUE);
-
-        header( "Location: $page");
-    }
 
 
     /**

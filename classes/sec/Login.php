@@ -52,12 +52,13 @@ class Login {
         	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
         }
 
+        // Deprecated 7/23 EKC.
          // Check site maintenance
-        $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance', false);
-
-        if ($ssn->Site_Maintenance === TRUE) {
-             exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
-        }
+//        $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance', false);
+//
+//        if ($ssn->Site_Maintenance === TRUE) {
+//             exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
+//        }
 
 
 		// Check SsL

@@ -52,7 +52,7 @@ class SecurityComponent {
 
         //parse url before checking authorization
         $parsedName = parse_url($name);
-        if(isset($parsedName["path"]) && $parsedName["path"] != ''){
+        if($parsedName !== FALSE && isset($parsedName["path"]) && $parsedName["path"] != ''){
             $name = $parsedName["path"];
         }
 
@@ -88,7 +88,7 @@ class SecurityComponent {
 
             if ($pageType != WebPageCode::Page) {
 
-                echo json_encode(array("error" => "Unauthorized.", 'gotopage' => $loginPage));
+                echo json_encode(["error" => "Unauthorized.", 'gotopage' => $loginPage]);
 
             } else {
 
