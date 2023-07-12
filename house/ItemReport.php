@@ -112,6 +112,16 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         'Diagnosis' => (isset($diagnoses[$r['Diagnosis']]) ? $diagnoses[$r['Diagnosis']][1] : ''),
         'Location' => (isset($locations[$r['Location']]) ? $locations[$r['Location']][1] : ''),
         'Description' => $r['Description'],
+        'Invoice_Notes' => $r["Invoice_Notes"],
+        'Patient_Id' => $r['Patient_Id'],
+        'Patient_Name_Last' => $r['Patient_Name_Last'],
+        'Patient_Name_First' => $r['Patient_Name_First'],
+        'Patient_Address' =>$r['Patient_Address'],
+        'Patient_City'=>$r['Patient_City'],
+        'Patient_County'=>$r['Patient_County'],
+        'Patient_State_Province'=>$r['Patient_State_Province'],
+        'Patient_Postal_Code'=>$r['Patient_Postal_Code'],
+        'Patient_Country'=>$r['Patient_Country'],
         'Invoice_Number' => $r['Invoice_Number'],
         'Amount' => $amt,
         'Updated_By'=>$r["Updated_By"],
@@ -177,23 +187,34 @@ $statusList = readGenLookupsPDO($dbh, 'Invoice_Status');
 // array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms
 $cFields[] = array('Visit Id', 'vid', 'checked', '', 'string', '15', array());
 $cFields[] = array("Organization", 'Company', 'checked', '', 'string', '20', array());
-$cFields[] = array('Last', 'Last', 'checked', '', 'string', '20', array());
-$cFields[] = array("First", 'First', 'checked', '', 'string', '20', array());
+$cFields[] = array('Guest Last', 'Last', 'checked', '', 'string', '20', array());
+$cFields[] = array("Guest First", 'First', 'checked', '', 'string', '20', array());
 $pFields = array('Address', 'City');
-$pTitles = array('Address', 'City');
+$pTitles = array('Guest Address', 'City');
+$paFields = array('Patient_Address', 'Patient_City');
+$paTitles = array('Patient Address', 'Patient City');
 
 if ($uS->county) {
-    $pFields[] = 'County';
-    $pTitles[] = 'County';
+    $pFields[] = 'Guest_County';
+    $pTitles[] = 'Guest County';
+    $paFields[] = 'Patient_County';
+    $paTitles[] = 'Patient County';
 }
 
 $pFields = array_merge($pFields, array('State_Province', 'Postal_Code', 'Country'));
 $pTitles = array_merge($pTitles, array('State', 'Zip', 'Country'));
+$paFields = array_merge($paFields, array("Patient_State_Province", "Patient_Postal_Code", "Patient_Country"));
+$paTitles = array_merge($paTitles, array("Patient State", "Patient Zip", "Patient Country"));
 
 $cFields[] = array($pTitles, $pFields, '', '', 'string', '20', array());
 $cFields[] = array("Date", 'Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15', array());
 $cFields[] = array("Description", 'Description', 'checked', '', 'string', '20', array());
+$cFields[] = array("Notes", 'Invoice_Notes', '', '', 'string', '20', array());
+$cFields[]= array("Patient Id", 'Patient_Id', '', '', 'string', '20', array());
+$cFields[]= array("Patient Last", 'Patient_Name_Last', '', '', 'string', '20', array());
+$cFields[]= array("Patient First", 'Patient_Name_First', '', '', 'string', '20', array());
+$cFields[] = array($paTitles, $paFields, '', '', 'string', '20', array());
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
@@ -423,6 +444,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     i.`Balance`,
     i.`Deleted` as `Invoice_Deleted`,
     i.`Updated_By`,
+    i.`Notes` as `Invoice_Notes`,
     il.`Price`,
     il.`Amount`,
     il.`Quantity`,
@@ -431,8 +453,17 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     il.Period_Start,
     il.Period_End,
     il.`Deleted` as `Line_Deleted`,
+    ifnull(pn.Name_Last, '') as `Patient_Name_Last`,
+    ifnull(pn.Name_First, '') as `Patient_Name_First`,
+    ifnull(pn.idName, '') as `Patient_Id`,
     ifnull(hs.Diagnosis, '') as `Diagnosis`,
     ifnull(hs.Location, '') as `Location`,
+    CASE when IFNULL(pa.Address_2, '') = '' THEN IFNULL(pa.Address_1, '') ELSE CONCAT(IFNULL(pa.Address_1, ''), ' ', IFNULL(pa.Address_2, '')) END AS `Patient_Address`,
+    IFNULL(pa.City, '') AS `Patient_City`,
+    IFNULL(pa.County, '') AS `Patient_County`,
+    IFNULL(pa.State_Province, '') AS `Patient_State_Province`,
+    IFNULL(pa.Postal_Code, '') AS `Patient_Postal_Code`,
+    IFNULL(pa.Country_Code, '') AS `Patient_Country`,
     ifnull(n.Name_Last, '') as `Name_Last`,
     ifnull(n.Name_First, '') as `Name_First`,
     CASE when IFNULL(na.Address_2, '') = '' THEN IFNULL(na.Address_1, '') ELSE CONCAT(IFNULL(na.Address_1, ''), ' ', IFNULL(na.Address_2, '')) END AS `Address`,
@@ -449,6 +480,8 @@ from
     left join `name_address` na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
     left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
     left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
+    left join `name` pn on hs.idPatient = pn.idName
+    left join `name_address` pa on pn.idName = pa.idName
     left join name_volunteer2 nv on nv.idName = n.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
 where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags order by i.idInvoice, il.idInvoice_Line";
 
