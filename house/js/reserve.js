@@ -12,6 +12,7 @@ $(document).ready(function() {
     var resv = $.parseJSON($('#resv').val());
     var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
     var pageManager = t.pageManager;
+    let isRepeatReservHost = $('#isRepeatReservHost').val();
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
     dateFormat = $('#dateFormat').val();
@@ -167,8 +168,15 @@ $(document).ready(function() {
 
     $('#btnDelete').click(function () {
 
+        let deleteAll = false;
+
         if ($(this).val() === 'Deleting >>>>') {
             return;
+        }
+
+        // Do we host a repeating reservation list
+        if (isRepeatReservHost) {
+            deleteAll = confirm('Also delete all unused child reservations?');
         }
 
         if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
@@ -185,7 +193,7 @@ $(document).ready(function() {
 
 			 $.post(
 				'ws_resv.php',
-                $('#form1').serialize() + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                $('#form1').serialize() + '&deleteChilden=' + deleteAll + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
                  function(datas) {
                     let data;
                     try {
@@ -339,7 +347,7 @@ $(document).ready(function() {
         createRoleAutoComplete($('#gstMRNSearch'), 3, {cmd: 'mrn'}, getGuest);
 
         // Phone number search
-	createRoleAutoComplete($('#gstphSearch'), 5, {cmd: 'phone'}, getGuest);
+	    createRoleAutoComplete($('#gstphSearch'), 5, {cmd: 'phone'}, getGuest);
 
         $guestSearch.keypress(function() {
             $(this).removeClass('ui-state-highlight');
