@@ -102,7 +102,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$vr->setPaymentNotes ( $pmp->getPayNotes () );
 
 		// New Token?
-		if ($vr->getIdToken () != '') {
+		if ($vr->getIdToken () != 0) {
 
 			$guestTokenRs = CreditToken::getTokenRsFromId ( $dbh, $vr->getIdToken () );
 

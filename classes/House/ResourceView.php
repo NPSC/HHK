@@ -1056,6 +1056,7 @@ from
     resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
     $genJoin
 where g3.Substitute > 0 and ru.idResource_use is null
+    and (re.Retired_At is null or re.Retired_At > date(now()))
 group by rr.idResource
 ORDER BY $orderBy;");
 
