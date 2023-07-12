@@ -1,10 +1,11 @@
 <?php
 
-namespace HHK\House;
+namespace HHK\House\Reservation;
+use HHK\Exception\RuntimeException;
+use HHK\House\Constraint\ConstraintsReservation;
 use HHK\House\Constraint\ConstraintsVisit;
 use HHK\House\Hospital\HospitalStay;
-use HHK\House\Reservation\Reservation_1;
-use HHK\House\Constraint\ConstraintsReservation;
+use HHK\House\Registration;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
@@ -12,25 +13,22 @@ use HHK\Purchase\RateChooser;
 use HHK\sec\Session;
 use HHK\SysConst\ReservationStatus;
 use HHK\Tables\EditRS;
-use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Tables\Reservation\ReservationRS;
-use HHK\Exception\RuntimeException;
+use HHK\Tables\Reservation\Reservation_GuestRS;
+use HHK\Tables\Reservation\Reservation_MultipleRS;
 
 
 class RepeatReservations {
 
     const WK_INDEX = 'P7D';
     const BI_WK_INDEX = 'P14D';
-
-    const DAY_30_INDEX = 'P30D';
-
     const MONTH_INDEX = 'P1M';
 
     const MAX_REPEATS = '10';
 
     protected $errorArray;
 
-        /**
+    /**
      * Summary of createMultiResvMarkup
      * @param \PDO $dbh
      * @param \HHK\House\Reservation\Reservation_1 $resv
@@ -42,8 +40,10 @@ class RepeatReservations {
         $markup = '';
 
         // Child_Id is unique in the table
-        $mrStmt = $dbh->query("Select * from reservation_multiple where Host_Id = " . $resv->getIdReservation() . " OR Child_Id = " . $resv->getIdReservation());
-        $rows = $mrStmt->fetchAll(\PDO::FETCH_ASSOC);
+        $multipleRs = new Reservation_MultipleRS();
+        $multipleRs->Host_Id->setStoredVal($resv->getIdReservation());
+        $multipleRs->Child_Id->setStoredVal($resv->getIdReservation());
+        $rows = EditRS::select($dbh, $multipleRs, [$multipleRs->Host_Id, $multipleRs->Child_Id], 'OR');
 
         if (count($rows) > 0) {
 
@@ -53,14 +53,16 @@ class RepeatReservations {
 
             if (isset($child[$resv->getIdReservation()])) {
                 // I'm a child
+
                 $markup = HTMLContainer::generateMarkup('div',
                 'This is a Repeated Reservation.'
-                , array('id'=>'divMultiResv'));
+                , ['id'=>'divMultiResv']);
 
             } else {
+                // Host Reservation
                 $markup = HTMLContainer::generateMarkup('div',
                 'This Reservation repeats ' . count($child) . ' times.'
-                , array('id'=>'divMultiResv'));
+                , ['id'=>'divMultiResv']);
 
             }
 
@@ -70,22 +72,17 @@ class RepeatReservations {
             $days = $resv->getExpectedDays();
 
             // disable controls if this reservation is too long.
-            $wkAttr = array('id'=>'mrweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::WK_INDEX . ']');
+            $wkAttr = ['id'=>'mrweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::WK_INDEX . ']'];
             if ($days > 6) {
                 $wkAttr['disabled'] = 'disabled';
                 $wkAttr['title'] = 'Reservation lasts too long.';
             }
-            $biAttr = array('id'=>'mrbiweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::BI_WK_INDEX . ']');
+            $biAttr = ['id'=>'mrbiweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::BI_WK_INDEX . ']'];
             if ($days > 13) {
                 $biAttr['disabled'] = 'disabled';
                 $biAttr['title'] = 'Reservation lasts too long.';
             }
-            $d30Attr = array('id'=>'mr30days', 'type'=>'radio', 'name'=>'mrInterval[' .self::DAY_30_INDEX . ']');
-            if ($days > 28) {
-                $d30Attr['disabled'] = 'disabled';
-                $d30Attr['title'] = 'Reservation lasts too long.';
-            }
-            $mAttr = array('id'=>'mrmonth', 'type'=>'radio', 'name'=>'mrInterval[' .self::MONTH_INDEX . ']');
+            $mAttr = ['id'=>'mrmonth', 'type'=>'radio', 'name'=>'mrInterval[' .self::MONTH_INDEX . ']'];
             if ($days > 26) {
                 $mAttr['disabled'] = 'disabled';
                 $mAttr['title'] = 'Reservation lasts too long.';
@@ -94,37 +91,52 @@ class RepeatReservations {
             $tbl = new HTMLTable();
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Interval', array('rowspan'=>'2'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Weekly', array('for'=>'mrweek')))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Bi-Weekly', array('for'=>'mrbiweek')))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', '30 Days', array('for'=>'mr30days')))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Monthly', array('for'=>'mrmonth')))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Weekly', ['for'=>'mrweek']))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Bi-Weekly', ['for'=>'mrbiweek']))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Monthly', ['for'=>'mrmonth']))
             );
 
             // create radio button controls
-            $tds = HTMLTable::makeTd(HTMLInput::generateMarkup('', $wkAttr), array('style'=>'text-align:center;'));
-            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $biAttr), array('style'=>'text-align:center;'));
-            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $d30Attr), array('style'=>'text-align:center;'));
-            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $mAttr), array('style'=>'text-align:center;'));
+            $tds = HTMLTable::makeTd(HTMLInput::generateMarkup('', $wkAttr), ['style'=>'text-align:center;']);
+            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $biAttr), ['style'=>'text-align:center;']);
+            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $mAttr), ['style'=>'text-align:center;']);
             $tbl->addBodyTr($tds);
 
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Create')
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'mrnumresv', 'name'=>'mrnumresv', 'type'=>'number', 'min'=>'1', 'max'=>'10', 'size'=>'4', 'style'=>'margin-right:.5em;')) . 'Reservations', array('colspan'=>'5'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['id'=>'mrnumresv', 'name'=>'mrnumresv', 'type'=>'number', 'min'=>'1', 'max'=> self::MAX_REPEATS, 'size'=>'4', 'style'=>'margin-right:.5em;']) . 'Reservations', array('colspan'=>'5'))
             );
 
             $markup = HTMLContainer::generateMarkup('div',
                 $tbl->generateMarkup()
-                , array('id'=>'divMultiResv'));
+                , ['id'=>'divMultiResv']);
 
         }
 
         $mk1 = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-            HTMLContainer::generateMarkup('legend', 'Multiple Reservations', array('style'=>'font-weight:bold;'))
-            . HTMLContainer::generateMarkup('p', '', array('id'=>'multiResvValidate', 'style'=>'color:red;'))
-            . $markup, array('class'=>'hhk-panel')),
-            array('style'=>'display: inline-block', 'class'=>'mr-3'));
+            HTMLContainer::generateMarkup('legend', 'Multiple Reservations', ['style'=>'font-weight:bold;'])
+            . HTMLContainer::generateMarkup('p', '', ['id'=>'multiResvValidate', 'style'=>'color:red;'])
+            . $markup, ['class'=>'hhk-panel']),
+            ['style'=>'display: inline-block', 'class'=>'mr-3']);
 
         return $mk1;
+    }
+
+    public static function isRepeatHost(\PDO $dbh, $idResv) {
+
+        if ($idResv > 0) {
+
+            $multipleRs = new Reservation_MultipleRS();
+            $multipleRs->Host_Id->setStoredVal($idResv);
+
+            $rows = EditRS::select($dbh, $multipleRs, [$multipleRs->Host_Id]);
+
+            if (count($rows) > 0) {
+                return TRUE;
+            }
+        }
+
+        return FALSE;
     }
 
     /**
@@ -133,7 +145,7 @@ class RepeatReservations {
      * @param ReservationRS $reserveRS
      * @return void
      */
-    public function saveRepeats(\PDO $dbh, $reserveRS) {
+    protected function saveRepeats(\PDO $dbh, $reserveRS) {
 
         $this->errorArray = [];
         $recurrencies = 0;
@@ -172,7 +184,7 @@ class RepeatReservations {
         $resv1 = new Reservation_1($reserveRS);
         $days = $resv1->getExpectedDays();
 
-        $intervals = [self::WK_INDEX=>7, self::BI_WK_INDEX=>14, self::DAY_30_INDEX=>28, self::MONTH_INDEX=>27];
+        $intervals = [self::WK_INDEX=>7, self::BI_WK_INDEX=>14, self::MONTH_INDEX=>27];
 
         // Check reserv length in days with interval value
         if (isset($intervals[$interval]) && $days < $intervals[$interval]) {

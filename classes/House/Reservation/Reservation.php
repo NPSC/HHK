@@ -2,24 +2,23 @@
 
 namespace HHK\House\Reservation;
 
-use HHK\House\Hospital\{Hospital, HospitalStay};
+use HHK\Exception\{RuntimeException, NotFoundException};
 use HHK\House\Family\{Family, FamilyAddGuest, JoinNewFamily};
+use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\HouseServices;
 use HHK\House\Registration;
-use HHK\House\RepeatReservations;
-use HHK\House\ReserveData\ReserveData;
 use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay, PSGMemVisit, PSGMemResv};
+use HHK\House\ReserveData\ReserveData;
 use HHK\House\Room\RoomChooser;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
-use HHK\Purchase\{FinAssistance, CheckinCharges, PaymentChooser, RateChooser};
 use HHK\House\Vehicle;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
+use HHK\Purchase\{FinAssistance, CheckinCharges, PaymentChooser, RateChooser};
+use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus, DefaultSettings};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
-use HHK\sec\{Labels, SecurityComponent, Session};
-use HHK\Exception\{RuntimeException, NotFoundException};
-use HHK\Payment\PaymentResult\PaymentResult;
 
 
 
@@ -445,7 +444,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
      * @param \PDO $dbh
      * @return array<string>
      */
-    public function delete(\PDO $dbh) {
+    public function delete(\PDO $dbh, $post) {
         // Get labels
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
@@ -603,17 +602,17 @@ WHERE r.idReservation = " . $rData->getIdResv());
             }
         }
 
-        if ($uS->UseRepeatResv) {
+        // if ($uS->UseRepeatResv) {
 
-        	$contents = HTMLContainer::generateMarkup('option', 'Week', array('value'=>'w'))
-        			.HTMLContainer::generateMarkup('option', '2 Weeks', array('value'=>'2w'))
-        			.HTMLContainer::generateMarkup('option', 'Month', array('value'=>'m'));
+        // 	$contents = HTMLContainer::generateMarkup('option', 'Week', array('value'=>'w'))
+        // 			.HTMLContainer::generateMarkup('option', '2 Weeks', array('value'=>'2w'))
+        // 			.HTMLContainer::generateMarkup('option', 'Month', array('value'=>'m'));
 
-        	$repetr = HTMLContainer::generateMarkup('span', 'Repeat each '
-        			. HTMLSelector::generateMarkup($contents, array('id'=>$prefix.'resvRepeatIndex', 'style'=>'display:inline;')) . ' for '
-        			. HTMLInput::generateMarkup('', array('id'=>$prefix.'resvRepeatCycles', 'size'=>'4')) . ' cycles'
-        			, array('style'=>'margin-left:1em;font-size:.9em;', 'id'=>$prefix.'resvRepeater'));
-        }
+        // 	$repetr = HTMLContainer::generateMarkup('span', 'Repeat each '
+        // 			. HTMLSelector::generateMarkup($contents, array('id'=>$prefix.'resvRepeatIndex', 'style'=>'display:inline;')) . ' for '
+        // 			. HTMLInput::generateMarkup('', array('id'=>$prefix.'resvRepeatCycles', 'size'=>'4')) . ' cycles'
+        // 			, array('style'=>'margin-left:1em;font-size:.9em;', 'id'=>$prefix.'resvRepeater'));
+        // }
 
         $mkup = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', 'Arrival: '.

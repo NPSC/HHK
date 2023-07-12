@@ -1,17 +1,18 @@
 <?php
 
-use HHK\sec\{Session, WebInit};
-use HHK\HTMLControls\HTMLContainer;
-use HHK\Payment\PaymentSvcs;
 use HHK\Exception\RuntimeException;
 use HHK\House\Reservation\Reservation_1;
-use HHK\Member\Role\Guest;
-use HHK\House\TemplateForm\ConfirmationForm;
 use HHK\House\ReserveData\ReserveData;
+use HHK\House\Reservation\RepeatReservations;
+use HHK\House\TemplateForm\ConfirmationForm;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\Member\Role\AbstractRole;
+use HHK\Member\Role\Guest;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
-use HHK\SysConst\RoomRateCategories;
+use HHK\Payment\PaymentSvcs;
+use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
+use HHK\SysConst\RoomRateCategories;
 
 /**
  * Reserve.php
@@ -156,10 +157,14 @@ $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 $resvAr['prePaymt'] = 0;
 $resvAr['guestSearchTerm'] = filter_input(INPUT_GET, 'guestSearchTerm', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
 if ($uS->AcceptResvPaymt && $idReserv > 0) {
     $resvAr['prePaymt'] = Reservation_1::getPrePayment($dbh, $idReserv);
 }
 $resvAr['datePickerButtons'] = $uS->RegNoMinorSigLines;
+
+// repeating reservations
+$isRepeatHost = RepeatReservations::isRepeatHost($dbh, $idReserv);
 
 $resvManagerOptions = [];
 if($uS->UseIncidentReports){
@@ -318,6 +323,7 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
         <input type="hidden" value='<?php echo $receiptMarkup; ?>' id="receiptMarkup"/>
+        <input type="hidden" value='<?php echo $isRepeatHost; ?>' id="isRepeatReservHost"/>
         <script type="text/javascript" src="<?php echo RESERVE_JS; ?>"></script>
     </body>
 </html>
