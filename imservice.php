@@ -46,11 +46,10 @@ try {
 }
 
 // Authenticate user
-$user = filter_input(INPUT_SERVER, 'PHP_AUTH_USER', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-$pass = filter_input(INPUT_SERVER, 'PHP_AUTH_PW', FILTER_UNSAFE_RAW);
+$user = (isset($_SERVER["PHP_AUTH_USER"]) ? filter_var($_SERVER['PHP_AUTH_USER'], FILTER_SANITIZE_FULL_SPECIAL_CHARS): null);
+$pass = (isset($_SERVER['PHP_AUTH_PW']) ? filter_var($_SERVER["PHP_AUTH_PW"], FILTER_UNSAFE_RAW): null);
 
 $u = new UserClass();
-
 
 if (is_null($user) || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE, FALSE) === FALSE) {
 
