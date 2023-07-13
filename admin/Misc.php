@@ -19,7 +19,7 @@ use HHK\SysConst\CodeVersion;
  * Misc.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -59,16 +59,9 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
         $whDates .= " and a.Effective_Date <= '$endDate' ";
     }
 
-    if ($naIndex == 0) {
-        $whereName = "";
-    } else {
-        $whereName = " and idName = " . $naIndex;
-    }
+    $whereName = ($naIndex == 0) ? "" : " and idName = " . $naIndex;
 
-
-    $query = "SELECT * FROM name_log WHERE 1=1 " . $whereName . $logDates . " order by Date_Time desc limit 100;";
-
-    $result2 = $dbh->query($query);
+    $result2 = $dbh->query("SELECT * FROM name_log WHERE 1=1 " . $whereName . $logDates . " order by Date_Time desc limit 200;");
 
     $data = "<table id='dataTbl' class='display'><thead><tr>
             <th>Date</th>
@@ -329,11 +322,9 @@ $ignoreTableMarkup = '';
 foreach ($igtables as $t => $n) {
 
     // Don;t show generated tables.
-    if (stristr($t, 'Generated')) {
-        break;
+    if ( ! stristr($t, 'Generated') && ! stristr($t, 'Zip')) {
+        $ignoreTableMarkup .= "<tr><td>`$n`</td><td>$t</td></tr>";
     }
-
-    $ignoreTableMarkup .= "<tr><td>`$n`</td><td>$t</td></tr>";
 }
 
 if (isset($_POST["btnDoBackup"])) {
@@ -357,7 +348,7 @@ if (isset($_POST["btnDoBackup"])) {
         SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
     }
 
-    $bkupMsg = $bkupAlert->createMarkup('Result: ' . $dbBack->getErrors());
+    $bkupMsg = $bkupAlert->createMarkup($dbBack->getErrors());
 }
 
 /*
@@ -483,7 +474,7 @@ if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !=
                         <li><a href="#lookups">Lookups</a></li>
                         <li><a href="#clean">Clean Data</a></li>
                         <li><a href="#backup">Dump Database</a></li>
-                        <li><a href="#changlog">View Change Log</a></li>
+                        <li><a href="#changlog">Member Change Log</a></li>
                         <li><a href="#delid">Delete Member Records</a></li>
                     </ul>
                     <div id="lookups" class="ui-tabs-hide" >
@@ -545,7 +536,7 @@ if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !=
                     </div>
                     <div id="changlog" class="ui-tabs-hide" >
                         <table>
-                            <tr><td colspan="2" style="background-color: transparent;"><h3>Change Log</h3>
+                            <tr><td colspan="2" style="background-color: transparent;"><h3>View the All Member Change Log</h3>
                                 </td></tr>
                             <tr>
                                 <td>Starting:
@@ -554,9 +545,7 @@ if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !=
                                 <td>Ending:
                                     <INPUT TYPE='text' NAME='edate' id="edate" class="autoCal"  VALUE='' />
                                 </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" style="text-align:right;"><input type="submit" name="btnGenLog" value="Run Log Report"/></td>
+                                <td style="text-align:right;"><input type="submit" name="btnGenLog" value="Run"/></td>
                             </tr>
                         </table>
                         <div id="divMkup" style="margin-top: 10px;">

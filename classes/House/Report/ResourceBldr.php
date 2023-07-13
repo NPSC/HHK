@@ -222,25 +222,37 @@ Order by `t`.`List_Order`;");
             $tbl->addBodyTr(
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(
-                        HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-arrowthick-2-n-s")) .
-                        HTMLInput::generateMarkup($d[4], array("name"=>'txtDOrder[' . $d[0] . ']', "type"=>"hidden"))
-                        , array("class"=>"sort-handle", "title"=>"Drag to sort")) : '') .
+                        HTMLContainer::generateMarkup("span", "", ["class"=>"ui-icon ui-icon-arrowthick-2-n-s"]) .
+                        HTMLInput::generateMarkup($d[4], ["name"=>'txtDOrder[' . $d[0] . ']', "type"=>"hidden"])
+                        , ["class"=>"sort-handle", "title"=>"Drag to sort"]) : '') .
                 HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']'))
+                    HTMLInput::generateMarkup($d[1], ['name' => 'txtDiag[' . $d[0] . ']'])
                 ) .
                 ($tableName == DIAGNOSIS_TABLE_NAME ?
                     HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, $d['Substitute']), array('name' => 'selDiagCat[' . $d[0] . ']'))
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, $d['Substitute']), ['name' => 'selDiagCat[' . $d[0] . ']'])
                     ) : ''
                 ) .
 
-                ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName)) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array(
-                'size' => '10',
-                'style' => 'text-align:right;',
-                'name' => 'txtDiagAmt[' . $d[0] . ']'
-            ))) : '') . $cbDelMU . ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diags, ''), array(
-                'name' => 'selDiagDel[' . $d[0] . ']'
-            ))) : ''));
+                (($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName))
+                     ? HTMLTable::makeTd(
+                        HTMLInput::generateMarkup($d[2],
+                        [
+                            'size' => '10',
+                            'style' => 'text-align:right;',
+                            'name' => 'txtDiagAmt[' . $d[0] . ']'
+                        ])
+                       )
+                     : '')
+                ) .
+
+                $cbDelMU .
+
+                ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME ?
+                         HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diags, ''), ['name' => 'selDiagDel[' . $d[0] . ']']))
+                         : '')
+
+                );
         }
 
         // New Entry Markup?
@@ -251,20 +263,15 @@ Order by `t`.`List_Order`;");
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(
                         HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-arrowthick-2-n-s")) .
-                        HTMLInput::generateMarkup($d[4], array("name"=>'txtDOrder[0]', "type"=>"hidden"))
-                        , array("class"=>"sort-handle", "title"=>"Drag to sort")) : '') .
-
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
-                'name' => 'txtDiag[0]'
-            ))) . ($tableName == DIAGNOSIS_TABLE_NAME && count($diagCats) > 0 ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, ''), array(
-                'name' => 'selDiagCat[0]'
-            ))) : '') . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
-                'size' => '10',
-                'style' => 'text-align:right;',
-                'name' => 'txtDiagAmt[0]'
-            ))) : '') . HTMLTable::makeTd('New', array(
-                'colspan' => 2
-            )));
+                        HTMLInput::generateMarkup($d[4], ["name"=>'txtDOrder[0]', "type"=>"hidden"])
+                        , ["class"=>"sort-handle", "title"=>"Drag to sort"]) : '')
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'txtDiag[0]']))
+                . ($tableName == DIAGNOSIS_TABLE_NAME && count($diagCats) > 0 ?
+                    HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, ''), ['name' => 'selDiagCat[0]'])) : '')
+                . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ?
+                    HTMLTable::makeTd(HTMLInput::generateMarkup('', ['size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'])) : '')
+                . HTMLTable::makeTd('New', ['colspan' => 2])
+            );
         }
 
         return $tbl;

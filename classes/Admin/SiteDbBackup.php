@@ -9,7 +9,7 @@ use HHK\sec\Session;
  * SiteDbBackup.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -22,16 +22,53 @@ use HHK\sec\Session;
 
 class SiteDbBackup {
 
+    /**
+     * Summary of return_var
+     * @var
+     */
     public $return_var;
+    /**
+     * Summary of bkupMessage
+     * @var
+     */
     protected $bkupMessage;
+    /**
+     * Summary of fileName
+     * @var
+     */
     protected $fileName;
+    /**
+     * Summary of filePath
+     * @var
+     */
     protected $filePath;
+    /**
+     * Summary of dumpErrorFile
+     * @var
+     */
     protected $dumpErrorFile;
+    /**
+     * Summary of clrFileSize
+     * @var
+     */
     protected $clrFileSize;
+    /**
+     * Summary of dbBkUpFlag
+     * @var
+     */
     protected $dbBkUpFlag;
+    /**
+     * Summary of config
+     * @var
+     */
     protected $config;
 
 
+    /**
+     * Summary of __construct
+     * @param mixed $filePath
+     * @param mixed $configFileName
+     */
     function __construct($filePath, $configFileName) {
 
         $this->config = parse_ini_file($configFileName, true);
@@ -44,6 +81,12 @@ class SiteDbBackup {
         date_default_timezone_set($timezone);
     }
 
+    /**
+     * Summary of backupSchema
+     * @param array|null $ignoreTables
+     * @param bool|null $zipIt
+     * @return bool
+     */
     public function backupSchema($ignoreTables = array(), $zipIt = TRUE) {
 
         $this->dbBkUpFlag = FALSE;
@@ -51,7 +94,7 @@ class SiteDbBackup {
         $zipPipe = '';
 
         if (strtoupper($this->config['db']['DBMS']) != 'MYSQL') {
-            $this->bkupMessage = 'This backup only works for MySQL Databases.  ';
+            $this->bkupMessage = 'This backup only works for MySQL/Maria Databases.  ';
             return FALSE;
         }
 
@@ -122,10 +165,14 @@ class SiteDbBackup {
         return $this->dbBkUpFlag;
     }
 
-    public function downloadFile() {
+    /**
+     * Summary of downloadFile
+     * @return bool
+     */
+    protected function downloadFile() {
 
         if ($this->fileName == '' || file_exists($this->fileName) === FALSE) {
-            $this->emailError = 'File name is not set or doesnt exist:  ' . $this->fileName;
+            // $this->emailError = 'File name is not set or doesnt exist:  ' . $this->fileName;
             return FALSE;
         }
 
@@ -144,6 +191,10 @@ class SiteDbBackup {
         exit();
     }
 
+    /**
+     * Summary of getErrors
+     * @return string
+     */
     public function getErrors() {
 
         $errorMessage = 'Schema Backup (' . $this->return_var . ').  ' . $this->bkupMessage;
@@ -156,27 +207,36 @@ class SiteDbBackup {
 
     }
 
-    protected function createFileList() {
+    /**
+     * Summary of createFileList
+     * @return string
+     */
+    // protected function createFileList() {
 
-        // directory listing
-        $filelist = scandir($this->filePath);
-        $fileListMessage = "Files available on the web host server:\r\n";
+    //     // directory listing
+    //     $filelist = scandir($this->filePath);
+    //     $fileListMessage = "Files available on the web host server:\r\n";
 
-        // Check each file for freshness
-        foreach ($filelist as $f) {
+    //     // Check each file for freshness
+    //     foreach ($filelist as $f) {
 
-            $fullPath = $this->filePath . $f;
+    //         $fullPath = $this->filePath . $f;
 
-            if (is_file($fullPath)) {
+    //         if (is_file($fullPath)) {
 
-                $fileListMessage .= $f . "\r\n";
+    //             $fileListMessage .= $f . "\r\n";
 
-            }
-        }
+    //         }
+    //     }
 
-        return $fileListMessage;
-    }
+    //     return $fileListMessage;
+    // }
 
+    /**
+     * Summary of decrypt
+     * @param mixed $string
+     * @return bool|string
+     */
     protected function decrypt($string) {
 
         $encrypt_method = "AES-256-CBC";
@@ -191,22 +251,32 @@ class SiteDbBackup {
         return $output;
     }
 
-    public static function collectConfigSection($config, $section) {
+    /**
+     * Summary of collectConfigSection
+     * @param mixed $config
+     * @param mixed $section
+     * @return mixed
+     */
+    // public static function collectConfigSection($config, $section) {
 
-        // Collect tables names to ignore.
-        foreach ($config as $secName => $secArray) {
+    //     // Collect tables names to ignore.
+    //     foreach ($config as $secName => $secArray) {
 
-            if ($secName === $section) {
-                return $secArray;
-            }
-        }
+    //         if ($secName === $section) {
+    //             return $secArray;
+    //         }
+    //     }
 
-        return array();
-    }
+    //     return array();
+    // }
 
-    public function getMessageFileList() {
-        return $this->createFileList();
-    }
+    // /**
+    //  * Summary of getMessageFileList
+    //  * @return string
+    //  */
+    // public function getMessageFileList() {
+    //     return $this->createFileList();
+    // }
 
 }
 ?>
