@@ -377,7 +377,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Arrival and Departure dates
         try {
-            $this->setDates($post);
+            $this->setDates($dbh, $post);
         } catch (RuntimeException $hex) {
             $this->reserveData->addError($hex->getMessage());
             return;
@@ -444,7 +444,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
      * @param \PDO $dbh
      * @return array<string>
      */
-    public function delete(\PDO $dbh, $post) {
+    public function delete(\PDO $dbh) {
         // Get labels
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
@@ -759,7 +759,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Multiple reservations
             if ($uS->UseRepeatResv) {
-                $dataArray['multiResv'] = RepeatReservations::createMultiResvMarkup($dbh, $resv);
+                $rr = new RepeatReservations();
+                $dataArray['multiResv'] = $rr->createMultiResvMarkup($dbh, $resv);
             }
 
         } else if ($resv->isNew()) {
@@ -1538,7 +1539,7 @@ WHERE
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
-    public function setDates($post) {
+    public function setDates(\PDO $dbh, array $post) {
 
         // Arrival and Departure dates
         $departure = '';
@@ -1556,12 +1557,17 @@ WHERE
         }
 
         try {
-            $this->reserveData->setArrivalDT(new \DateTime($arrival));
-            $this->reserveData->setDepartureDT(new \DateTime($departure));
+            $arrivalDT = new \DateTime($arrival);
+            $departureDT = new \DateTime($departure);
+
+            $this->reserveData->setArrivalDT($arrivalDT);
+            $this->reserveData->setDepartureDT($departureDT);
         } catch (\Exception $ex) {
             throw new RuntimeException('Something is wrong with one of the dates: ' . $ex->getMessage() . '.  ');
         }
 
+        $this->reserveData->setArrivalDT($arrivalDT);
+        $this->reserveData->setDepartureDT($departureDT);
     }
 }
 ?>

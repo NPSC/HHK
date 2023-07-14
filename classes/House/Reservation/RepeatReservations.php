@@ -28,15 +28,17 @@ class RepeatReservations {
 
     protected $errorArray;
 
+    protected $children;
+
     /**
      * Summary of createMultiResvMarkup
      * @param \PDO $dbh
      * @param \HHK\House\Reservation\Reservation_1 $resv
      * @return string
      */
-    public static function createMultiResvMarkup(\PDO $dbh, Reservation_1 $resv) {
+    public function createMultiResvMarkup(\PDO $dbh, Reservation_1 $resv) {
 
-        $child = [];
+        $this->children = [];
         $markup = '';
 
         // Child_Id is unique in the table
@@ -48,10 +50,10 @@ class RepeatReservations {
         if (count($rows) > 0) {
 
             foreach ($rows as $r) {
-                $child[$r['Child_Id']] = $r['Host_Id'];
+                $this->children[$r['Child_Id']] = $r['Host_Id'];
             }
 
-            if (isset($child[$resv->getIdReservation()])) {
+            if (isset($this->children[$resv->getIdReservation()])) {
                 // I'm a child
 
                 $markup = HTMLContainer::generateMarkup('div',
@@ -61,7 +63,7 @@ class RepeatReservations {
             } else {
                 // Host Reservation
                 $markup = HTMLContainer::generateMarkup('div',
-                'This Reservation repeats ' . count($child) . ' times.'
+                'This Reservation repeats ' . count($this->children) . ' times.'
                 , ['id'=>'divMultiResv']);
 
             }
@@ -104,7 +106,8 @@ class RepeatReservations {
 
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Create')
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['id'=>'mrnumresv', 'name'=>'mrnumresv', 'type'=>'number', 'min'=>'1', 'max'=> self::MAX_REPEATS, 'size'=>'4', 'style'=>'margin-right:.5em;']) . 'Reservations', array('colspan'=>'5'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['id'=>'mrnumresv', 'name'=>'mrnumresv', 'type'=>'number', 'min'=>'1', 'max'=> self::MAX_REPEATS, 'size'=>'4', 'style'=>'margin-right:.5em;'])
+                . 'More Reservations', array('colspan'=>'5'))
             );
 
             $markup = HTMLContainer::generateMarkup('div',
@@ -122,21 +125,45 @@ class RepeatReservations {
         return $mk1;
     }
 
-    public static function isRepeatHost(\PDO $dbh, $idResv) {
+    /**
+     * Summary of getHostChildren
+     * @param \PDO $dbh
+     * @param mixed $idResvHost
+     * @return array
+     */
+    public static function getHostChildren(\PDO $dbh, $idResvHost) {
 
-        if ($idResv > 0) {
+        $children = [];
+
+        if ($idResvHost > 0) {
 
             $multipleRs = new Reservation_MultipleRS();
-            $multipleRs->Host_Id->setStoredVal($idResv);
+            $multipleRs->Host_Id->setStoredVal($idResvHost);
 
             $rows = EditRS::select($dbh, $multipleRs, [$multipleRs->Host_Id]);
 
-            if (count($rows) > 0) {
-                return TRUE;
+            foreach ($rows as $r) {
+                $children[$r['Child_Id']] = $r['Host_Id'];
             }
         }
 
-        return FALSE;
+        return $children;
+    }
+
+    /**
+     * Summary of isRepeatHost
+     * @param \PDO $dbh
+     * @param mixed $idResvHost
+     * @return bool
+     */
+    public static function isRepeatHost(\PDO $dbh, $idResvHost) {
+
+        $children = self::getHostChildren($dbh, $idResvHost);
+        if (count($children) > 0) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -145,7 +172,7 @@ class RepeatReservations {
      * @param ReservationRS $reserveRS
      * @return void
      */
-    protected function saveRepeats(\PDO $dbh, $reserveRS) {
+    public function saveRepeats(\PDO $dbh, $reserveRS) {
 
         $this->errorArray = [];
         $recurrencies = 0;
@@ -262,7 +289,7 @@ class RepeatReservations {
             ->setStatus(ReservationStatus::Waitlist)
             ->setIdHospitalStay($hospStay->getIdHospital_Stay())
             ->setNumberGuests(count($guests)+1)
-            ->setIdResource(0)
+            ->setIdResource($protoResv->getIdResource())
             ->setRoomRateCategory($rateCategory)
             ->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
 
@@ -310,4 +337,8 @@ class RepeatReservations {
 	public function getErrorArray() {
 		return $this->errorArray;
 	}
+
+    public function getChildren() {
+        return $this->children;
+    }
 }

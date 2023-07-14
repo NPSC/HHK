@@ -224,6 +224,10 @@ $(document).ready(function() {
 					if (data.deleted) {
 						$('#form1').remove();
 						$('#contentDiv').append('<p>' + data.deleted + '</p>');
+
+                        if (data.childDeleted && data.childDeleted > 0) {
+                            $('#contentDiv').append('<p>Also deleted ' + data.childDeleted + ' child reservations.</p>');
+                        }
 						$('#spnStatus').text('Deleted');
 					}
 

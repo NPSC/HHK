@@ -167,11 +167,7 @@ $resvAr['datePickerButtons'] = $uS->RegNoMinorSigLines;
 $isRepeatHost = RepeatReservations::isRepeatHost($dbh, $idReserv);
 
 $resvManagerOptions = [];
-if($uS->UseIncidentReports){
-    $resvManagerOptions["UseIncidentReports"] = true;
-}else{
-    $resvManagerOptions["UseIncidentReports"] = false;
-}
+$resvManagerOptions["UseIncidentReports"] = ($uS->UseIncidentReports) ? true : false;
 $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 
 // Page title

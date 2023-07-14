@@ -2075,16 +2075,16 @@ function resvManager(initData, options) {
                 $rDiv.append($(data.resv.rdiv.rstat));
             }
 
+            // Multiple Reservations
+            if (data.resv.rdiv.multiResv !== undefined) {
+                $rDiv.append($(data.resv.rdiv.multiResv));
+            }
+
             // Vehicle section
             if (data.resv.rdiv.vehicle !== undefined) {
                 $veh = $(data.resv.rdiv.vehicle);
                 $rDiv.append($veh);
                 setupVehicle($veh);
-            }
-
-            // Multiple Reservations
-            if (data.resv.rdiv.multiResv !== undefined) {
-                $rDiv.append($(data.resv.rdiv.multiResv));
             }
 
             // Payment
@@ -2580,6 +2580,11 @@ function resvManager(initData, options) {
         if (data.deleted) {
             $('#guestSearch').hide();
             $('#contentDiv').append('<p>' + data.deleted + '</p>');
+
+            if (data.childDeleted && data.childDeleted > 0) {
+                $('#contentDiv').append('<p>Also deleted ' + data.childDeleted + ' child reservations.</p>');
+            }
+
             $('#spnStatus').text('Deleted');
             return
         }

@@ -261,6 +261,7 @@ class ActiveReservation extends Reservation {
 
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted, $reservStatuses);
+        $this->reservRs = $resv->getReservationRS();
 
         return $this;
     }
@@ -274,14 +275,36 @@ class ActiveReservation extends Reservation {
     public function delete(\PDO $dbh, $post = []) {
 
         $uS = Session::getInstance();
+        $numberDeleted = 0;
 
         // Check for pre-payment return target.
         if ($uS->AcceptResvPaymt) {
             $this->savePrePayment($dbh, $post);
         }
 
+        // check for delete children
+        if ($this->reserveData->getDeleteChildReservations() === true) {
+
+            $children = RepeatReservations::getHostChildren($dbh, $this->reserveData->getIdResv());
+
+            // Delete each child reservation not yet checked-in.
+            foreach ($children as $c => $h) {
+
+                $resv = Reservation_1::instantiateFromIdReserv($dbh, $c);
+
+                if ($resv->getStatus() != ReservationStatus::Staying && $resv->getStatus() != ReservationStatus::Checkedout) {
+
+                    // Okay to delete
+                    if ($resv->deleteMe($dbh, $uS->username)) {
+                        $numberDeleted++;
+                    };
+                }
+            }
+        }
+
         // Delete it
         $dataArray = parent::delete($dbh);
+        $dataArray['childDeleted'] = $numberDeleted;
 
 
         if ($this->payResult !== NULL) {

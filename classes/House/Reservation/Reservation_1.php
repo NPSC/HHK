@@ -452,7 +452,7 @@ class Reservation_1 {
      * @param \PDO $dbh
      * @param int $idReg
      * @param string $uname
-     * @return void
+     * @return ReservationRS
      */
     public function saveReservation(\PDO $dbh, $idReg, $uname) {
 
@@ -509,11 +509,14 @@ class Reservation_1 {
                     $logText, "update", $uname);
             }
         }
+
+        return $this->reservRs;
     }
 
     /**
      * Summary of deleteMe
      * @param \PDO $dbh
+     * @param bool $deleteHost
      * @param string $uname
      * @throws \HHK\Exception\RuntimeException
      * @return bool

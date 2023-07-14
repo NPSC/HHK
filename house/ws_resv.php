@@ -93,9 +93,10 @@ try {
 
     case 'delResv':
 
+
         $resv = Reservation::reservationFactoy($dbh, $_POST);
 
-        $events = $resv->delete($dbh);
+        $events = $resv->delete($dbh, $_POST);
 
         break;
 

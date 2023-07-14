@@ -101,6 +101,7 @@ class ReserveData {
     protected $resvStatusType;
     protected $hasMOA;
     protected $prePayment = 0;
+    protected $deleteChildReservations = FALSE;
 
     /**
      * Summary of __construct
@@ -161,6 +162,10 @@ class ReserveData {
             $this->setPrePayment(filter_var($post['prePayment'], FILTER_SANITIZE_NUMBER_FLOAT));
         }
 
+        if (isset($post['deleteChilden'])) {
+            $this->setDeleteChildReservations(filter_var($post['deleteChilden'], FILTER_VALIDATE_BOOLEAN));
+        }
+
         $this->saveButtonLabel = 'Save ';
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
@@ -190,6 +195,7 @@ class ReserveData {
         $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
         $this->resvStatusCode = '';
         $this->hasMOA = FALSE;
+
 
     }
 
@@ -488,8 +494,14 @@ class ReserveData {
         return $this->fullName;
     }
 
-    public function getPrePayment() {
+    public function getPrePayment()
+    {
         return $this->prePayment;
+    }
+
+    public function getDeleteChildReservations()
+    {
+        return $this->deleteChildReservations;
     }
 
     public function getHasMOA() {
@@ -531,6 +543,13 @@ class ReserveData {
         // No one defined
         return NULL;
     }
+
+    public function setDeleteChildReservations($v) {
+        $this->deleteChildReservations = ($v === true) ? true : false;
+        return $this;
+    }
+
+
 
     public function setPrePayment($prepayment) {
         $this->prePayment = $prepayment;
