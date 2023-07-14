@@ -1273,6 +1273,22 @@ CREATE TABLE IF NOT EXISTS `member_note` (
 
 
 -- -----------------------------------------------------
+-- Table `operating_schedules`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `operating_schedules` (
+  `idDay` INT NOT NULL AUTO_INCREMENT,
+  `Day` INT NULL,
+  `Start_Date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `End_Date` DATETIME NULL,
+  `Open_At` TIME NULL,
+  `Closed_At` TIME NULL,
+  `Non_Cleaning` BOOL NOT NULL DEFAULT FALSE,
+  `Closed` BOOL NOT NULL DEFAULT FALSE,
+  `Timestamp` TIMESTAMP NULL,
+  PRIMARY KEY (`idDay`));
+
+
+-- -----------------------------------------------------
 -- Table `page`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `page` (

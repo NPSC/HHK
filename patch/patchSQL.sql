@@ -25,5 +25,8 @@ ADD COLUMN IF NOT EXISTS `idRateAdjust` VARCHAR(5) NULL DEFAULT '0' AFTER `Rate_
 ALTER TABLE `visit_onleave`
 ADD COLUMN IF NOT EXISTS `idRateAdjust` VARCHAR(5) NULL DEFAULT '0' AFTER `Rate_Adjust`;
 
--- Hide "Site Maintanance" flag; It is too easy to mistakenly use.
+-- Hide "Site Maintanance" flag. It is too easy to mistakenly use.
 UPDATE `sys_config` SET `Show` = '0' WHERE (`Key` = 'Site_Maintenance');
+
+-- Show closed days on the calendar
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('Show_Closed', 'false', 'b', 'c', 'Indicate closed days on the calendar', '1');

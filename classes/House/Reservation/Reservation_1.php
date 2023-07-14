@@ -2,6 +2,7 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\Constraint\{ConstraintsReservation, ConstraintsVisit};
 use HHK\House\Hospital\HospitalStay;
@@ -304,6 +305,7 @@ class Reservation_1 {
                     $this->resultMessage = "The End date precedes the Start date.  ";
                     return FALSE;
                 }
+
             }
 
 
@@ -322,6 +324,13 @@ class Reservation_1 {
                     return FALSE;
                 }
             }
+        }
+
+        // check if house closed
+        $operatingHours = new OperatingHours($dbh);
+        if($operatingHours->isHouseClosed($newStartDT)){
+            $this->resultMessage = "The house is closed on the new arrival date";
+            return FALSE;
         }
 
         // Check for pre-existing visits

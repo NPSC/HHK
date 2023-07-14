@@ -305,7 +305,7 @@ class CheckedoutReservation extends CheckingIn {
 
         // Arrival and Departure dates
         try {
-            $this->setDates($post);
+            $this->setDates($dbh, $post);
         } catch (RuntimeException $hex) {
             $this->reserveData->addError($hex->getMessage());
             return;

@@ -213,13 +213,16 @@ try {
 
 if (filter_has_var(INPUT_POST, 'btnHoliday')) {
     $tabIndex = 5;
-    $holResultMessage = SiteConfig::saveHolidays($dbh, $_POST, $uS->username);
+    try{
+        $holResultMessage = SiteConfig::saveHolidays($dbh, $_POST, $uS->username);
+    }catch(Exception $e){
+        $notymsg = ["type"=>"error", "text"=>$e->getMessage()];
+    }
 }
 
 try {
     $holidays = SiteConfig::createHolidaysMarkup($dbh, $holResultMessage);
 } catch (Exception $pex) {
-
 }
 
 try {
