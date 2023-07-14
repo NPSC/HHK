@@ -2,6 +2,7 @@
 
 namespace HHK\House\Visit;
 
+use HHK\House\OperatingHours;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
@@ -1235,18 +1236,18 @@ class VisitViewer {
      * @param int $startDelta
      * @param int $endDelta
      * @param string $uname
-     * @return string
+     * @return array
      */
     public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta, $uname) {
 
         $uS = Session::getInstance();
 
         if ($startDelta == 0 && $endDelta == 0) {
-            return '';
+            return [];
         }
 
         if (abs($endDelta) > ($uS->MaxExpected) || abs($startDelta) > ($uS->MaxExpected)) {
-            return 'Move refused, change too large: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta;
+            return ['error'=>'Move refused, change too large: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta];
         }
 
         // get visit recordsets, order by span
@@ -1256,7 +1257,7 @@ class VisitViewer {
 
         // Bad visit?.
         if (count($visitRcrds) < 1) {
-            return 'Visit not found';
+            return ['error'=>'Visit not found'];
         }
 
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
@@ -1314,7 +1315,7 @@ class VisitViewer {
 
         // Check the case that user moved the end of a ribbon inbetween spans.
         if (isset($spans[$span]) === FALSE) {
-            return 'Use only the begining span or the very last span to resize this visit.  ';
+            return ['error'=>'Use only the begining span or the very last span to resize this visit.'];
         }
 
 
@@ -1382,23 +1383,23 @@ class VisitViewer {
                 // Checked-Out spans cannot move their end date beyond todays date.
                 if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
                     if ($spanEndDt >= $tonight) {
-                        return 'Checked-Out visits cannot move their end date beyond todays date  Use Undo Checkout instead. ';
+                        return ['error'=>'Checked-Out visits cannot move their end date beyond todays date  Use Undo Checkout instead. '];
                     }
                 }
 
                 // Checked-in spans cannot move their start date beyond today's date.
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
                     if ($spanStartDT >= $tonight) {
-                        return 'Checked-in visits cannot move their start date beyond todays date. ';
+                        return ['error'=>'Checked-in visits cannot move their start date beyond todays date. '];
                     }
                 }
             }
 
             // Visit Still Good?
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && ($spanEndDt < $spanStartDT || $spanEndDt < $today)) {
-                return "The visit span End date cannot come before the Start date, or before today.  ";
+                return ['error'=>"The visit span End date cannot come before the Start date, or before today.  "];
             } else if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn && $spanEndDt <= $spanStartDT) {
-                return "The visit span End date cannot come before or on the Start date.  ";
+                return ['error'=>"The visit span End date cannot come before or on the Start date.  "];
             }
 
 
@@ -1424,17 +1425,17 @@ class VisitViewer {
 
             if (count($rows) > 0) {
                 // not available
-                return 'The Date range is not available';
+                return ['error'=>'The Date range is not available'];
             }
 
             $visits[$s]['rs'] = $vRs;
             $visits[$s]['start'] = $spanStartDT;
             $visits[$s]['end'] = $spanEndDt;
 
-            $stayMsg = self::moveStaysDates($stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta, $visits[$s]);
+            $stayMsg = self::moveStaysDates($dbh, $stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta, $visits[$s]);
 
             if ($stayMsg != '') {
-                return $stayMsg;
+                return ['error'=>$stayMsg];
             }
         }
 
@@ -1442,7 +1443,7 @@ class VisitViewer {
         $resvs = ReservationSvcs::getCurrentReservations($dbh, $visitRcrds[0]['idReservation'], $visitRcrds[0]['idPrimaryGuest'], 0, $firstArrival, $spanEndDt);
 
         if (count($resvs) > 0) {
-            return "The Move overlaps another reservation or visit.  ";
+            return ['error'=>"The Move overlaps another reservation or visit.  "];
         }
 
         $actualDepart = NULL;
@@ -1519,9 +1520,9 @@ class VisitViewer {
         $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uname);
 
         if ($startDelta == 0) {
-            $reply = 'Visit checkout date changed. ' . $reply;
+            $reply = ['success'=>'Visit checkout date changed. ' . $reply];
         } else {
-            $reply = 'Visit Moved. ' . $reply;
+            $reply = ['success'=>'Visit Moved. ' . $reply];
         }
         return $reply;
     }
@@ -1534,7 +1535,7 @@ class VisitViewer {
      * @param int $endDelta
      * @return string
      */
-    protected static function moveStaysDates($stays, $startDelta, $endDelta, $visits) {
+    protected static function moveStaysDates(\PDO $dbh, $stays, $startDelta, $endDelta, $visits) {
 
         $uS = Session::getInstance();
 
@@ -1677,6 +1678,12 @@ class VisitViewer {
             if ($endDATE < $startDATE) {
                 return "The stay End date comes before the Start date.  ";
             }
+
+            $operatingHours = new OperatingHours($dbh);
+            if($operatingHours->isHouseClosed($startDATE)){
+                return "The house is closed on that Start date. ";
+            }
+
 
             $tday = new \DateTime($today->format('Y-m-d 00:00:00'));
             if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedIn && $endDATE > $tday) {

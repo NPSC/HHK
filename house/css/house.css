@@ -882,3 +882,7 @@ table.dataTable tbody td {
 	opacity: 1 !important;
 	background: #5c9ccc !important;
 }
+
+.hhk-datepicker-closed{
+	background-color:lightgray;
+}

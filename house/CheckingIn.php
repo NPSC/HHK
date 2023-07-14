@@ -1,4 +1,5 @@
 <?php
+use HHK\House\OperatingHours;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\Payment\PaymentSvcs;
@@ -143,6 +144,9 @@ if($uS->UseIncidentReports){
 }else{
 	$resvManagerOptions["UseIncidentReports"] = false;
 }
+
+$resvManagerOptions["closedDays"] = [];
+
 $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 
 ?>

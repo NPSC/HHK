@@ -1,6 +1,7 @@
 <?php
 
 use HHK\Exception\RuntimeException;
+use HHK\House\OperatingHours;
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Reservation\RepeatReservations;
@@ -172,6 +173,14 @@ if($uS->UseIncidentReports){
 }else{
     $resvManagerOptions["UseIncidentReports"] = false;
 }
+
+$resvManagerOptions["closedDays"] = [];
+if($uS->Show_Closed){
+    $operatingHours = new OperatingHours($dbh);
+    $resvManagerOptions["closedDays"] = $operatingHours->getClosedDays();
+}
+
+
 $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 
 // Page title

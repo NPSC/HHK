@@ -32,6 +32,7 @@ function resvManager(initData, options) {
     var insistPayFilledIn = initData.insistPayFilledIn;
     var prePaymtAmt = initData.prePaymt;
     var datePickerButtons = initData.datePickerButtons;
+    var closedDays = options.closedDays;
 
     var insistCkinDemog = false;
     var rooms = [];
@@ -1386,7 +1387,13 @@ function resvManager(initData, options) {
                             gstCoDate.val(s2);
                         },
                         startDate: stDate,
-                        endDate: enDate
+                        endDate: enDate,
+                        beforeShowDay: function(t)
+                        {
+                            var closed = closedDays.includes(t.getDay())
+                            var _class = closed ? 'hhk-datepicker-closed' : '';
+                            return [true,_class];
+                        }
                     })
 
                     if (data.updateOnChange) {
