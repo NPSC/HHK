@@ -656,7 +656,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
         // active reservations
         if ($resv->isNew() === FALSE && $resv->isActive($reservStatuses)) {
 
-            // Allow reservations to have many guests.
             $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
             $rateChooser = new RateChooser($dbh);
 
@@ -763,7 +762,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         } else if ($resv->isNew()) {
 
-            // Allow reservations to have many guests.
+
             $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
             $roomChooser->setOldResvId($oldResv);
 

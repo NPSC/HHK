@@ -6,10 +6,13 @@ use HHK\House\Constraint\ConstraintsReservation;
 use HHK\House\Constraint\ConstraintsVisit;
 use HHK\House\Hospital\HospitalStay;
 use HHK\House\Registration;
+use HHK\House\ReserveData\ReserveData;
+use HHK\House\Room\RoomChooser;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Purchase\RateChooser;
+use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\SysConst\ReservationStatus;
 use HHK\Tables\EditRS;
@@ -38,35 +41,44 @@ class RepeatReservations {
      */
     public function createMultiResvMarkup(\PDO $dbh, Reservation_1 $resv) {
 
-        $this->children = [];
         $markup = '';
 
-        // Child_Id is unique in the table
-        $multipleRs = new Reservation_MultipleRS();
-        $multipleRs->Host_Id->setStoredVal($resv->getIdReservation());
-        $multipleRs->Child_Id->setStoredVal($resv->getIdReservation());
-        $rows = EditRS::select($dbh, $multipleRs, [$multipleRs->Host_Id, $multipleRs->Child_Id], 'OR');
+        $stmt = $dbh->query("call multiple_reservations(" . $resv->getIdReservation() . ");");
 
-        if (count($rows) > 0) {
+        if ($stmt->rowCount() > 0) {
 
-            foreach ($rows as $r) {
-                $this->children[$r['Child_Id']] = $r['Host_Id'];
+            $tbl = new HTMLTable();
+            $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Status') . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Arrival') . HTMLTable::makeTh('Departure'));
+
+
+            // set up table
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+                $attr = ['href' => 'Reserve.php?rid=' . $r['idReservation']];
+
+                if ($r['idReservation'] == $resv->getIdReservation()) {
+                    $attr['class'] = 'ui-state-highlight';
+                }
+
+                if ($r['family'] == 'h') {
+                    $mk = HTMLContainer::generateMarkup('a', 'Host', $attr);
+                } else {
+                    $mk = HTMLContainer::generateMarkup('a', 'Child', $attr);
+                }
+
+                $tbl->addBodyTr(
+                    HTMLTable::makeTd($mk)
+                    . HTMLTable::makeTd($r['Status'])
+                    .HTMLTable::makeTd($r['Title'])
+                    . HTMLTable::makeTd(date('M j, Y', strtotime($r['Arrival'])))
+                    . HTMLTable::makeTd(date('M j, Y', strtotime($r['Departure'])))
+                );
+
             }
+            $stmt->nextRowset();
 
-            if (isset($this->children[$resv->getIdReservation()])) {
-                // I'm a child
+            $markup = $tbl->generateMarkup();
 
-                $markup = HTMLContainer::generateMarkup('div',
-                'This is a Repeated Reservation.'
-                , ['id'=>'divMultiResv']);
-
-            } else {
-                // Host Reservation
-                $markup = HTMLContainer::generateMarkup('div',
-                'This Reservation repeats ' . count($this->children) . ' times.'
-                , ['id'=>'divMultiResv']);
-
-            }
 
         } else {
             // Set up empty host markup
@@ -174,6 +186,7 @@ class RepeatReservations {
      */
     public function saveRepeats(\PDO $dbh, $reserveRS) {
 
+        $uS = Session::getInstance();
         $this->errorArray = [];
         $recurrencies = 0;
         $interval = '';
@@ -228,6 +241,7 @@ class RepeatReservations {
                 $guests[$g['idGuest']] = $g['Primary_Guest'];
             }
 
+            // Dates
             $startDT = new \DateTimeImmutable($resv1->getArrival());
             $dateInterval = new \DateInterval($interval);
             $period = new \DatePeriod($startDT, $dateInterval, $recurrencies, \DatePeriod::EXCLUDE_START_DATE);
@@ -236,7 +250,27 @@ class RepeatReservations {
 
             foreach ($period as $dateDT) {
 
-                $idResv = $this->makeNewReservation($dbh, $resv1, $dateDT, $dateDT->add($duration), $guests);
+                $idResource = 0;
+                $status = ReservationStatus::Waitlist;
+
+                // Room available
+                if ($resv1->getIdResource() > 0) {
+
+                    $resv1->getConstraints($dbh, true);
+                    $roomChooser = new RoomChooser($dbh, $resv1, 1, new \DateTime($resv1->getExpectedArrival()), new \DateTime($resv1->getExpectedDeparture()));
+                    $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
+
+                    // Does the resource fit the requirements?
+                    if (isset($resources[$resv1->getIdResource()])) {
+
+                        // This room works.
+                        $idResource = $resv1->getIdResource();
+                        $status = $uS->InitResvStatus;
+
+                    }
+                }
+
+                $idResv = $this->makeNewReservation($dbh, $resv1, $dateDT, $dateDT->add($duration), $idResource, $status, $guests);
 
                 if ($idResv > 0) {
                     // record new child
@@ -247,10 +281,8 @@ class RepeatReservations {
                 }
             }
 
-
         } else if (isset($intervals[$interval]) && $days >= $intervals[$interval]) {
             $this->errorArray[] = 'Reservation duration in days is greater than the requested Interval';
-            return;
         }
 
     }
@@ -258,13 +290,15 @@ class RepeatReservations {
      /**
       * Summary of makeNewReservation
       * @param \PDO $dbh
-      * @param \HHK\House\Reservation\Reservation_1 $resv
-      * @param \DateTimeImmutable $ckinDT
-      * @param \DateTimeImmutable $ckoutDT
-      * @param array $guests
+      * @param \HHK\House\Reservation\Reservation_1 $protoResv
+      * @param mixed $ckinDT
+      * @param mixed $ckoutDT
+      * @param int $idResource
+      * @param string $status
+      * @param mixed $guests
       * @return mixed
       */
-    protected function makeNewReservation(\PDO $dbh, Reservation_1 $protoResv, $ckinDT, $ckoutDT, $guests) {
+    protected function makeNewReservation(\PDO $dbh, Reservation_1 $protoResv, $ckinDT, $ckoutDT, $idResource, $status, $guests) {
 
 	    $uS = Session::getInstance();
 
@@ -273,23 +307,21 @@ class RepeatReservations {
 
 	    // Room Rate category
         $rateCategory = $protoResv->getRoomRateCategory();
-
 	    $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
 
-
+        // Registration
 	    $reg = new Registration($dbh, $protoResv->getIdPsg($dbh));
-	    $hospStay = new HospitalStay($dbh, 0, $protoResv->getIdHospitalStay());
 
 	    // Define the reservation.
         $resv = Reservation_1::instantiateFromIdReserv($dbh, 0);
 
         $resv->setExpectedArrival($ckinDT->format('Y-m-d'))
             ->setExpectedDeparture($ckoutDT->format('Y-m-d'))
-            ->setIdGuest($hospStay->getIdPatient())
-            ->setStatus(ReservationStatus::Waitlist)
-            ->setIdHospitalStay($hospStay->getIdHospital_Stay())
-            ->setNumberGuests(count($guests)+1)
-            ->setIdResource($protoResv->getIdResource())
+            ->setIdGuest($protoResv->getIdGuest())
+            ->setStatus($status)
+            ->setIdHospitalStay($protoResv->getIdHospitalStay())
+            ->setNumberGuests(count($guests))
+            ->setIdResource($idResource)
             ->setRoomRateCategory($rateCategory)
             ->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
 
@@ -309,21 +341,15 @@ class RepeatReservations {
 
 
         // Save Reservtaion guests - patient
-        $rgRs = new Reservation_GuestRS();
-        $rgRs->idReservation->setNewVal($resv->getIdReservation());
-        $rgRs->idGuest->setNewVal($hospStay->getIdPatient());
-        $rgRs->Primary_Guest->setNewVal('1');
-        EditRS::insert($dbh, $rgRs);
-
         foreach ($guests as $g => $priGuestFlag) {
 
-            if ($g != $hospStay->getIdPatient()) {
-                $rgRs = new Reservation_GuestRS();
-                $rgRs->idReservation->setNewVal($resv->getIdReservation());
-                $rgRs->idGuest->setNewVal($g);
-                $rgRs->Primary_Guest->setNewVal($priGuestFlag);
-                EditRS::insert($dbh, $rgRs);
-            }
+            $rgRs = new Reservation_GuestRS();
+            $rgRs->idReservation->setNewVal($resv->getIdReservation());
+            $rgRs->idGuest->setNewVal($g);
+            $rgRs->Primary_Guest->setNewVal($priGuestFlag);
+
+            EditRS::insert($dbh, $rgRs);
+
         }
 
         return $resv->getIdReservation();
