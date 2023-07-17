@@ -377,12 +377,16 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Arrival and Departure dates
         try {
-            $this->setDates($dbh, $post);
+            $this->setDates($post);
         } catch (RuntimeException $hex) {
             $this->reserveData->addError($hex->getMessage());
             return;
         }
 
+        $operatingHours = new \HHK\House\OperatingHours($dbh);
+        if($operatingHours->isHouseClosed($this->reserveData->getArrivalDT())){
+            $this->reserveData->addMsg("The house will be closed on the Arrival date. ");
+        }
 
         // Is anyone already in a visit?
         $psgMems = $this->reserveData->getPsgMembers();
@@ -1538,7 +1542,7 @@ WHERE
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
-    public function setDates(\PDO $dbh, array $post) {
+    public function setDates(array $post) {
 
         // Arrival and Departure dates
         $departure = '';
@@ -1563,11 +1567,6 @@ WHERE
             $this->reserveData->setDepartureDT($departureDT);
         } catch (\Exception $ex) {
             throw new RuntimeException('Something is wrong with one of the dates: ' . $ex->getMessage() . '.  ');
-        }
-
-        $operatingHours = new \HHK\House\OperatingHours($dbh);
-        if($operatingHours->isHouseClosed($arrivalDT)){
-            throw new RuntimeException("House is closed on the selected Arrival Date");
         }
 
         $this->reserveData->setArrivalDT($arrivalDT);

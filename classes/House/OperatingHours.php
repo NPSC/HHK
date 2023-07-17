@@ -5,6 +5,7 @@ use HHK\Exception\ValidationException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
+use HHK\sec\Session;
 
 /**
  * OperatingHours.php
@@ -20,6 +21,7 @@ class OperatingHours {
     protected $dbh;
     protected $currentHours = [];
     protected $closedDays = [];
+    protected $nonCleaningDays = [];
 
     public function __construct(\PDO $dbh){
         $this->dbh = $dbh;
@@ -55,7 +57,36 @@ class OperatingHours {
 
     }
 
+    public function isNonCleaningDay(\DateTimeInterface $date){
+        $dow = $date->format('w');
+        $startDate = new \DateTime($this->currentHours[$dow]["Start_Date"]);
+
+        if($date >= $startDate){ //if date falls within current hours
+            return ($this->currentHours[$dow]["Non_Cleaning"] == 1);
+        }else{ //find active hours of $date
+            $stmt = $this->dbh->prepare("select * from operating_schedules where Day = :dow and DATE(Start_Date) <= DATE(:sdate) and DATE(End_Date) >= DATE(:edate) order by idDay desc limit 1");
+            $stmt->execute([
+                ":dow"=>$dow,
+                ":sdate"=> $date->format('Y-m-d'),
+                ":edate"=> $date->format('Y-m-d')
+            ]);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            if(count($rows) == 1 ){
+                return ($rows[0]["Non_Cleaning"] == 1);
+            }else{
+                return false;
+            }
+        }
+
+    }
+
     public function save(array $post){
+
+        $uS = Session::getInstance();
+        
+        //delete old non_cleaning_days
+        $stmt = $this->dbh->prepare("delete from gen_lookups where Table_Name = 'Non_Cleaning_Day'");
+        $stmt->execute();
 
         for ($d = 0; $d < 7; $d++) {
 
@@ -104,7 +135,7 @@ class OperatingHours {
             
             if($found == false || $changed == true){
                 //insert new hours
-                $stmt = $this->dbh->prepare("INSERT INTO `operating_schedules` (`Day`, `Start_Date`, `End_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`) VALUES(:day, :start, :end, :openAt, :closedAt, :nonCleaning, :closed)");
+                $stmt = $this->dbh->prepare("INSERT INTO `operating_schedules` (`Day`, `Start_Date`, `End_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Updated_At`) VALUES(:day, :start, :end, :openAt, :closedAt, :nonCleaning, :closed, :updatedby)");
                 $stmt->execute([
                     ":day"=>$d,
                     ":start"=>(new \DateTime())->format("Y-m-d H:i:s"),
@@ -112,7 +143,8 @@ class OperatingHours {
                     ":openAt"=>($postedDay["Open_At"] == '' ? null : $postedDay["Open_At"]),
                     ":closedAt"=>($postedDay["Closed_At"] == '' ? null : $postedDay["Closed_At"]),
                     ":nonCleaning"=>($postedDay["Non_Cleaning"] ? 1:0),
-                    ":closed"=>($postedDay["Closed"] ? 1:0)
+                    ":closed"=>($postedDay["Closed"] ? 1:0),
+                    ":updatedby"=>$uS->username
                 ]);
             }
         }
@@ -182,6 +214,9 @@ class OperatingHours {
             if($day["Closed"] == 1){
                 $this->closedDays[] = $day["Day"];
             }
+            if($day["Non_Cleaning"] == 1){
+                $this->nonCleaningDays[] = $day["Day"];
+            }
         }
         return $currentHours;
     }
@@ -192,6 +227,10 @@ class OperatingHours {
 
     public function getClosedDays(){
         return $this->closedDays;
+    }
+
+    public function getNonCleaningDays(){
+        return $this->nonCleaningDays;
     }
 
 }

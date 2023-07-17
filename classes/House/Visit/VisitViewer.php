@@ -1519,6 +1519,11 @@ class VisitViewer {
 
         $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uname);
 
+        $operatingHours = new OperatingHours($dbh);
+        if($operatingHours->isHouseClosed($firstArrival)){
+            $reply .= "-  Info: The house is closed on that Start date. ";
+        }
+
         if ($startDelta == 0) {
             $reply = ['success'=>'Visit checkout date changed. ' . $reply];
         } else {
@@ -1677,11 +1682,6 @@ class VisitViewer {
             $startDATE = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
             if ($endDATE < $startDATE) {
                 return "The stay End date comes before the Start date.  ";
-            }
-
-            $operatingHours = new OperatingHours($dbh);
-            if($operatingHours->isHouseClosed($startDATE)){
-                return "The house is closed on that Start date. ";
             }
 
 

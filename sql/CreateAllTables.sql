@@ -1284,6 +1284,7 @@ CREATE TABLE IF NOT EXISTS `operating_schedules` (
   `Closed_At` TIME NULL,
   `Non_Cleaning` BOOL NOT NULL DEFAULT FALSE,
   `Closed` BOOL NOT NULL DEFAULT FALSE,
+  `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` TIMESTAMP NULL,
   PRIMARY KEY (`idDay`));
 

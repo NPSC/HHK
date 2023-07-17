@@ -298,7 +298,11 @@ $(document).ready(function() {
                             flagAlertMessage(data.resvTitle + ' Saved. ' + (data.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + data.resv.rdiv.rStatTitle), 'success');
                         }
                     } else {
-                        flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved.', 'success');
+                        flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved. ', 'success');
+                    }
+
+                    if(data.info){
+                        flagAlertMessage(data.info, 'info');
                     }
                 }
             );

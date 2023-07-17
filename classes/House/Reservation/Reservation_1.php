@@ -326,13 +326,6 @@ class Reservation_1 {
             }
         }
 
-        // check if house closed
-        $operatingHours = new OperatingHours($dbh);
-        if($operatingHours->isHouseClosed($newStartDT)){
-            $this->resultMessage = "The house is closed on the new arrival date";
-            return FALSE;
-        }
-
         // Check for pre-existing visits
         $resvs = ReservationSvcs::getCurrentReservations($dbh, $this->getIdReservation(), $this->getIdGuest(), 0, $newStartDT, $newEndDt);
         if (count($resvs) > 0) {
@@ -342,6 +335,13 @@ class Reservation_1 {
 
         $rescs = array();
 
+        // check if house closed
+        $closedMsg = '';
+        $operatingHours = new OperatingHours($dbh);
+        if($operatingHours->isHouseClosed($newStartDT)){
+            $closedMsg = " - Info: The house is closed on the new arrival date";
+        }
+
         if ($this->getStatus() == ReservationStatus::Waitlist) {
 
             // move the reservation
@@ -349,7 +349,7 @@ class Reservation_1 {
             $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
 
             $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
-            $this->resultMessage = 'Reservation moved';
+            $this->resultMessage = 'Reservation moved.' . $closedMsg;
             return TRUE;
 
         } else {
@@ -382,7 +382,7 @@ class Reservation_1 {
 
                 $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
 
-                $this->resultMessage = 'Reservation changed ' . $roomChanged;
+                $this->resultMessage = 'Reservation changed ' . $roomChanged . $closedMsg;
                 return TRUE;
 
             } else {
@@ -571,14 +571,17 @@ class Reservation_1 {
      */
     public static function loadNonCleaningDays(\PDO $dbh) {
 
+        $operatingHours = new OperatingHours($dbh);
+        $boDays = $operatingHours->getNonCleaningDays();
+
+        //get old non cleaning days
         $stmt = $dbh->query("select Code from gen_lookups where Table_Name = 'Non_Cleaning_Day';");
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-
-        $boDays = array();
 
         foreach ($rows as $r) {
             $boDays[] = intval($r[0], 10);
         }
+        
 
         return $boDays;
 
