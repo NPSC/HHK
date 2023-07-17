@@ -267,6 +267,10 @@ WHERE r.Email_Receipt = 1 and
         return $this;
     }
 
+    /**
+     * Summary of getForwardHostedPayment
+     * @return array
+     */
     public function getForwardHostedPayment() {
         return $this->forwardHostedPayment;
     }

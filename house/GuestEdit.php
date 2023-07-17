@@ -319,17 +319,17 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
                 $psg->setLastConfirmed($lastConfirmed);
             }
 
-            $msg .= $psg->savePSG($dbh, $psg->getIdPatient(), $uname, $psgNotes);
+            $psg->savePSG($dbh, $psg->getIdPatient(), $uname, $psgNotes);
 
             if ($delMe) {
                 exit(
-                    HTMLContainer::generateMarkup('h2', 'Deleted from PSG.  ' . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'GuestEdit.php?id='.$id)))
+                    HTMLContainer::generateMarkup('h2', 'Deleted from PSG.  ' . HTMLContainer::generateMarkup('a', 'Continue', ['href'=>'GuestEdit.php?id='.$id]))
                 );
             }
 
             // Registration
-            $registration->extractRegistration($dbh, $_POST);
-            $registration->extractVehicleFlag($_POST);
+            $registration->extractRegistration();
+            $registration->extractVehicleFlag();
             $msg .= $registration->saveRegistrationRs($dbh, $psg->getIdPsg(), $uname);
 
 
@@ -591,7 +591,7 @@ if ($psg->getIdPsg() > 0) {
         if ($uS->AcceptResvPaymt) {
             $prePayment = $reserv->getPrePayment($dbh, $reserv->getIdReservation());
         }
-        
+
         $getResvArray = array('href'=>"Reserve.php?rid=" . $reserv->getIdReservation() );
 
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), $getResvArray))

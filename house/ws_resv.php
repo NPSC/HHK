@@ -53,7 +53,7 @@ try {
 
     case "getResv":
 
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
+        $resv = Reservation::reservationFactoy($dbh);
 
         $events = $resv->createMarkup($dbh);
 
@@ -62,9 +62,9 @@ try {
 
     case "saveResv":
 
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
+        $resv = Reservation::reservationFactoy($dbh);
 
-        $newResv = $resv->save($dbh, $_POST);
+        $newResv = $resv->save($dbh);
 
         $events = $newResv->checkedinMarkup($dbh);
 
@@ -73,7 +73,7 @@ try {
 
     case "getCkin":
 
-        $resv = CheckingIn::reservationFactoy($dbh, $_POST);
+        $resv = CheckingIn::reservationFactoy($dbh);
 
         $events = $resv->createMarkup($dbh);
 
@@ -82,7 +82,7 @@ try {
 
     case 'saveCheckin':
 
-        $resv = CheckingIn::reservationFactoy($dbh, $_POST);
+        $resv = CheckingIn::reservationFactoy($dbh);
 
         $newResv = $resv->save($dbh, $_POST);
 
@@ -94,7 +94,7 @@ try {
     case 'delResv':
 
 
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
+        $resv = Reservation::reservationFactoy($dbh);
 
         $events = $resv->delete($dbh, $_POST);
 
@@ -110,9 +110,9 @@ try {
         }
 
         if ($isCheckin) {
-            $resv = CheckingIn::reservationFactoy($dbh, $_POST);
+            $resv = CheckingIn::reservationFactoy($dbh);
         } else {
-            $resv = Reservation::reservationFactoy($dbh, $_POST);
+            $resv = Reservation::reservationFactoy($dbh);
         }
 
         $events = $resv->addPerson($dbh);
@@ -131,7 +131,7 @@ try {
             $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $resv = new ActiveReservation(new ReserveData($_POST), null, null);
+        $resv = new ActiveReservation(new ReserveData(), null, null);
 
         $events = $resv->changeRoom($dbh, $idResv, $idResc);
 

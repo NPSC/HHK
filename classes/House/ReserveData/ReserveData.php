@@ -102,68 +102,105 @@ class ReserveData {
     protected $hasMOA;
     protected $prePayment = 0;
     protected $deleteChildReservations = FALSE;
+    protected $intervalRepeatResv = 0;
+    protected $numberRepeatResv = 0;
 
     /**
      * Summary of __construct
-     * @param array $post
      * @param string $reservationTitle
      */
-    function __construct($post, $reservationTitle = '') {
+    function __construct($reservationTitle = '') {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
         $this->psgMembers = array();
 
-        if (isset($post['rid'])) {
-            $this->setIdResv(intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10));
+        $args = [
+            'rid' => FILTER_SANITIZE_NUMBER_INT,
+            'vid' => FILTER_SANITIZE_NUMBER_INT,
+            'span' => FILTER_SANITIZE_NUMBER_INT,
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'idPsg' => FILTER_SANITIZE_NUMBER_INT,
+            'vstatus' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'fullName' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'gstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'gstCoDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'schTerm' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'prePayment' => FILTER_SANITIZE_NUMBER_FLOAT,
+            'deleteChilden' => FILTER_VALIDATE_BOOLEAN,
+            'mem' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+
+            'mrInterval' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+            'mrnumresv' => FILTER_SANITIZE_NUMBER_INT,
+        ];
+
+        $inputs = filter_input_array(INPUT_POST, $args);
+
+
+        if (isset($inputs['rid'])) {
+            $this->setIdResv(intval($inputs['rid'], 10));
         }
 
-        if (isset($post['vid'])) {
-            $this->setIdVisit(intval(filter_var($post['vid'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['vid'])) {
+            $this->setIdVisit(intval($inputs['vid'], 10));
         }
 
-        if (isset($post['span'])) {
-            $this->setSpan(intval(filter_var($post['span'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['span'])) {
+            $this->setSpan(intval($inputs['span'], 10));
         }
 
-        if (isset($post['vstatus'])) {
-            $this->setSpanStatus(filter_var($post['vstatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['vstatus'])) {
+            $this->setSpanStatus($inputs['vstatus']);
         }
 
-        if (isset($post['id'])) {
-            $this->setId(intval(filter_var($post['id'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['id'])) {
+            $this->setId(intval($inputs['id'], 10));
         }
 
-        if (isset($post['idPsg'])) {
-            $this->setIdPsg(intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['idPsg'])) {
+            $this->setIdPsg(intval($inputs['idPsg'], 10));
         }
 
-        if (isset($post['fullName'])) {
-            $this->fullName = filter_var($post['fullName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (isset($inputs['fullName'])) {
+            $this->fullName = $inputs['fullName'];
         }
 
-        if (isset($post['gstDate'])) {
-            $this->setArrivalDateStr(filter_var($post['gstDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['gstDate'])) {
+            $this->setArrivalDateStr($inputs['gstDate']);
         }
 
-        if (isset($post['gstCoDate'])) {
-        	$this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['gstCoDate'])) {
+        	$this->setDepartureDateStr($inputs['gstCoDate']);
         }
 
-        if (isset($post['schTerm'])) {
-        	$this->setSearchTerm(filter_var($post['schTerm'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['schTerm'])) {
+        	$this->setSearchTerm($inputs['schTerm']);
         }
 
-        if (isset($post['mem'])) {
-            $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['mem'])) {
+            $this->setMembersFromPost($inputs['mem']);
         }
 
-        if (isset($post['prePayment'])) {
-            $this->setPrePayment(filter_var($post['prePayment'], FILTER_SANITIZE_NUMBER_FLOAT));
+        if (isset($inputs['prePayment'])) {
+            $this->setPrePayment($inputs['prePayment']);
         }
 
-        if (isset($post['deleteChilden'])) {
-            $this->setDeleteChildReservations(filter_var($post['deleteChilden'], FILTER_VALIDATE_BOOLEAN));
+        if (isset($inputs['deleteChilden'])) {
+            $this->setDeleteChildReservations($inputs['deleteChilden']);
+        }
+
+        if (isset($inputs['mrnumresv']) && isset($inputs['mrInterval'])) {
+
+            $this->numberRepeatResv = intval($inputs['mrnumresv'], 10);
+            $keys = array_keys($inputs['mrInterval']);
+            $this->intervalRepeatResv = $keys[0];
+
         }
 
         $this->saveButtonLabel = 'Save ';

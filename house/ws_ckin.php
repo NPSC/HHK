@@ -386,10 +386,10 @@ try {
 
         if ($idRegistration > 0) {
             $reg = new Registration($dbh, 0, $idRegistration);
-            $mkup = HTMLContainer::generateMarkup('div', $reg->createRegMarkup($dbh, FALSE), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"));
-            $events = array('success'=>$mkup);
+            $mkup = HTMLContainer::generateMarkup('div', $reg->createRegMarkup($dbh, FALSE), ['class'=>"ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"]);
+            $events = ['success'=>$mkup];
         } else {
-            $events = array('error'=>'Bad PSG Id.');
+            $events = ['error'=>'Bad PSG Id.'];
         }
 
         break;
@@ -401,20 +401,15 @@ try {
             $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
-        $params = array();
-        if (isset($_REQUEST['parm'])) {
-            $params = $_REQUEST['parm'];
-        }
-
         if ($idRegistration > 0) {
 
             $reg = new Registration($dbh, 0, $idRegistration);
 
-            $reg->extractRegistration($dbh, $params);
+            $reg->extractRegistration();
             $reg->saveRegistrationRs($dbh, 0, $uS->username);
-            $events = array('success'=>'Registration info saved.');
+            $events = ['success'=>'Registration info saved.'];
         } else {
-            $events = array('error'=>'Bad Registration Id.');
+            $events = ['error'=>'Bad Registration Id.'];
         }
 
 
@@ -494,7 +489,7 @@ try {
         }
 
         //$events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
-        $events = array('error'=>'HouseServices::addVisitStay is Deprecated');
+        $events = ['error'=>'HouseServices::addVisitStay is Deprecated'];
         break;
 
     case "getincmdiag":

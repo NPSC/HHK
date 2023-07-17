@@ -200,6 +200,13 @@ class RegisterForm {
 
     }
 
+    /**
+     * Summary of AgreementBlock
+     * @param array<Guest> $guests
+     * @param mixed $agreementLabel
+     * @param mixed $agreement
+     * @return string
+     */
     protected function AgreementBlock(array $guests, $agreementLabel, $agreement) {
 
         $uS = Session::getInstance();
@@ -218,7 +225,7 @@ class RegisterForm {
 
             foreach ($guests as $g) {
                     // #816, EKC, 5/23/2023
-                if (!isset($usedNames[$g->getIdName()]) && $g->get_demogRS()->Is_Minor->getStoredVal() == 0) {
+                if (!isset($usedNames[$g->getIdName()]) && $g->getRoleMember()->get_demogRS()->Is_Minor->getStoredVal() == 0) {
 
                     $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'data-gid'=>$g->getIdName(), 'class'=>'hhk-sigCapure'));
 
@@ -472,7 +479,7 @@ p.label {
 
         $uS = Session::getInstance();
         $this->labels = Labels::getLabels();
-        $guests = array();
+        $guests = [];
         $depDate = '';
         $reg = NULL;
         $primaryGuestId = 0;

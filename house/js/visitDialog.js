@@ -8,7 +8,7 @@
  */
 
 /**
- * 
+ *
  * @param {int} vid
  * @param {$} $container
  * @returns {$}
@@ -35,23 +35,23 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
             alert('Bad Reply from Server');
             return;
         }
-        
+
         try {
             data = $.parseJSON(data);
         } catch (err) {
             alert('Bad JSON Encoding');
             return;
         }
-        
+
         if (data.error) {
             if (data.gotopage) {
                 window.open(data.gotopage, '_self');
             }
             flagAlertMessage(data.error, 'error');
             return;
-            
+
         } else if (data.success) {
-        	
+
         	$hsDialog.empty();
         	$hsDialog.append($(data.success));
         	$hsDialog.dialog({
@@ -70,32 +70,32 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                     }
                 }
             });
-        	
+
         	// add closer to visit dialog box
         	if ($('#keysfees').length > 0) {
 	        	$('#keysfees').on( "dialogclose", function( event, ui ) {
-	        		
+
 	        	    // Close hospital stay dialog
 	        	    if ($hsDialog.dialog('isOpen')) {
 	        	    	$hsDialog.dialog('close');
 	        	    }
-	
+
 	        	} );
 	        }
-        	
+
         	//Autocompletes for agent and doctor
             createAutoComplete($('.hhk-hsdialog #txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
             if ($('.hhk-hsdialog #a_txtLastName').val() === '') {
                 $('.hhk-hsdialog .hhk-agentInfo').hide();
             }
-            
+
             $(document).on('click', '#a_delete', function(){
             	$('.hhk-hsdialog #a_idName').val('');
             	$('.hhk-hsdialog input.hhk-agentInfo').val('');
             	$('.hhk-hsdialog .hhk-agentInfo').hide();
             });
-            
-            
+
+
             if ($('.hhk-hsdialog #a_idName').val() !== '') {
             	$('.hhk-hsdialog input.hhk-agentInfo.name').attr('readonly', 'readonly');
             }else{
@@ -106,19 +106,19 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
             if ($('.hhk-hsdialog #d_txtLastName').val() === '') {
                 $('.hhk-hsdialog .hhk-docInfo').hide();
             }
-            
+
             if ($('.hhk-hsdialog #d_idName').val() !== '') {
             	$('.hhk-hsdialog input.hhk-docInfo.name').attr('readonly', 'readonly');
             }else{
             	$('.hhk-hsdialog input.hhk-docInfo.name').removeAttr('readonly');
             }
-            
+
             $(document).on('click', '#d_delete', function(){
             	$('.hhk-hsdialog #d_idName').val('');
             	$('.hhk-hsdialog input.hhk-docInfo').val('');
             	$('.hhk-hsdialog .hhk-docInfo').hide();
             });
-            
+
             // Diagnosis Search
 			let diagSelect = function(item){
                             if(item.id !== "n"){
@@ -151,7 +151,7 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
 function saveHospitalStay(idHs, idVisit) {
 	var parms = [{'name':'cmd', 'value': 'saveHS'},{'name': 'idhs', 'value': idHs}, {'name': 'idv', 'value': idVisit}];
 	var parms = parms.concat($('.hospital-stay').serializeArray());
-	
+
 	$.post('ws_resv.php', parms, function (data) {
         if (!data) {
             alert('Bad Reply from Server');
@@ -164,14 +164,14 @@ function saveHospitalStay(idHs, idVisit) {
             alert('Bad JSON Encoding');
             return;
         }
-        
+
         if (data.error) {
             if (data.gotopage) {
                 window.open(data.gotopage, '_self');
             }
             flagAlertMessage(data.error, 'error');
             return;
-            
+
         } else if (data.success) {
         	flagAlertMessage(data.success, 'success');
         }
@@ -259,19 +259,19 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 				$('#extendDays').change(function () {
 					$('#extendDays').removeClass('ui-state-error');
 				});
-				
+
 				// Setting extended date sets "Extend Until" radio button.
 				$('#extendDate').change(function () {
 					$('#rbOlpicker-ext').prop('checked', true);
 				});
-				
+
 				// Unchecking the extend-until rb clears the associated date field
 				$('input[name="rbOlpicker"]').change(function () {
 					if ($(this).val() !== 'ext') {
 						$('#extendDate').val('');
 					}
 				});
-				
+
 				// Enable checkbox, show or hide panel.
                 $('.hhk-extVisitSw').change(function () {
                     if (this.checked) {
@@ -328,7 +328,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
                 $('#rateChgCB').change();
             }
-            
+
             // Hospital stay dialog
             $('#tblActiveVisit').on('click', '.hhk-hospitalstay', function (event){
             	event.preventDefault();
@@ -421,7 +421,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 						$('#rateChgCB').prop('checked', false).trigger('change').prop('disabled', true);
 						$('.hhk-extVisitSw').prop('checked', false).trigger('change').prop('disabled', true);
 						$('#paymentAdjust').prop('disabled', true);
-						
+
                         // hide deposit payment
                         $('.hhk-kdrow').hide('fade');
 
@@ -440,7 +440,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                             $('#DepRefundAmount').val('');
                             $('.hhk-refundDeposit').hide('fade');
                         }
-                        
+
                         $('#cbDepRefundApply').trigger('change');
 
 
@@ -450,7 +450,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                             $('#feesCharges').val('');
                             $('.hhk-RoomCharge').hide();
                             $('.hhk-GuestCredit').show();
-                            
+
 
                         } else {
 
@@ -496,7 +496,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                     }
                 });
 
-                
+
                 $('#tblStays').on('change', 'input.hhk-ckoutDate', function() {
 
                     if ($(this).val() != '') {
@@ -553,7 +553,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
 
             setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'), '#keysfees');
-    
+
             // Financial Application
             let $btnFapp = $('#btnFapp');
             if ($btnFapp.length > 0) {
@@ -583,7 +583,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                 });
                 $('#selRateCategory').change();
             }
-            
+
             // Notes
             setupVisitNotes(idVisit, $diagbox.find('#visitNoteViewer'));
 
@@ -619,7 +619,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         rtntbl: (rtnTbl === true ? '1' : '0'),
         pbp: postbackPage
     };
-    
+
     // Expected Checkout date
     $('input.hhk-expckout').each(function() {
         let parts = $(this).attr('id').split('_');
@@ -653,7 +653,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     // Check number days for Visit extension
     if ($('.hhk-extVisitSw').length > 0) {
-	
+
 		if ($('#extendCb').prop('checked') && $('#extendDays').val() < 1) {
 			$('#extendDays').addClass('ui-state-error');
 			flagAlertMessage('Weekend Leave days must be filled in. ', 'error');
@@ -692,7 +692,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     });
 
-    // Remove stay 
+    // Remove stay
     $('input.hhk-removeCB').each(function () {
         if (this.checked) {
             let parts = $(this).attr('id').split('_');
@@ -729,7 +729,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     if ($('#taNewVNote').length > 0 && $('#taNewVNote').val() !== '') {
         parms['taNewVNote'] = $('#taNewVNote').val();
     }
-    
+
     // Notice to Checkout
     if ($('#noticeToCheckout').length > 0 && $('#noticeToCheckout').val() !== '') {
         parms['noticeToCheckout'] = $('#noticeToCheckout').val();
@@ -740,6 +740,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         if ($(this).attr('type') === 'checkbox') {
             if (this.checked !== false) {
                 parms[$(this).attr('id')] = 'on';
+                parms[$(this).attr('name')] = 'on';
             }
         } else if ($(this).hasClass('ckdate')) {
             var tdate = $(this).datepicker('getDate');
@@ -754,6 +755,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
         } else{
             parms[$(this).attr('id')] = $(this).val();
+            parms[$(this).attr('name')] = $(this).val();
         }
     });
 
@@ -782,7 +784,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
             $('#keysfees').dialog("close");
 
-			
+
             paymentRedirect(data, $('#xform'));
 
             if (typeof refreshdTables !== 'undefined') {

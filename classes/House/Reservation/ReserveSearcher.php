@@ -44,17 +44,17 @@ class ReserveSearcher extends ActiveReservation {
 
     }
 
-    public function save(\PDO $dbh, $post) {
+    public function save(\PDO $dbh) {
 
         $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
-        $newResv->save($dbh, $post);
+        $newResv->save($dbh);
         return $newResv;
 
     }
 
 
     protected function resvChooserMarkup(\PDO $dbh) {
-        $ngRss = array();
+        $ngRss = [];
 
         // Search for a PSG
         if ($this->reserveData->getIdPsg() == 0) {

@@ -88,14 +88,14 @@ class ActiveReservation extends Reservation {
      * @param array $post
      * @return ActiveReservation
      */
-    public function save(\PDO $dbh, $post) {
+    public function save(\PDO $dbh) {
 
         $uS = Session::getInstance();
 
-        $this->saveResv($dbh, $post);
+        $this->saveResv($dbh);
 
         if ($uS->AcceptResvPaymt) {
-            $this->savePrePayment($dbh, $post);
+            $this->savePrePayment($dbh);
         }
 
         if ($uS->UseRepeatResv) {
@@ -110,22 +110,33 @@ class ActiveReservation extends Reservation {
 
     /**
      * @param \PDO $dbh
-     * @param array $post
      * @return \HHK\House\Reservation\ActiveReservation|\HHK\House\Reservation\StaticReservation
      */
-    protected function saveResv(\PDO $dbh, $post) {
+    protected function saveResv(\PDO $dbh) {
 
         $uS = Session::getInstance();
 
-        $this->initialSave($dbh, $post);
+        $this->initialSave($dbh);
 
         if ($this->reserveData->hasError()) {
             return $this;
         }
 
+        $args = [
+            'resvCkinNow' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selResvStatus' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selPayType' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'taCkinNotes' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRibbonNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selResource' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'taNewNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ];
+
+        $post = filter_input_array(INPUT_POST, $args);
+
         // Set goto checkingin page?
         if (isset($post['resvCkinNow'])) {
-            $this->gotoCheckingIn = filter_var($post['resvCkinNow'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $this->gotoCheckingIn = $post['resvCkinNow'];
         }
 
         // Open Reservation
@@ -143,10 +154,8 @@ class ActiveReservation extends Reservation {
 
         if (isset($post['selResvStatus']) && $post['selResvStatus'] != '') {
 
-            $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-            if ($rStat != ''  && isset($reservStatuses[$rStat])) {
-                $reservStatus = $rStat;
+            if ($post['selResvStatus'] != ''  && isset($reservStatuses[$post['selResvStatus']])) {
+                $reservStatus = $post['selResvStatus'];
             }
 
         } else if ($resv->isNew() === FALSE && $resv->getStatus() != '') {
@@ -166,14 +175,14 @@ class ActiveReservation extends Reservation {
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
         if ($uS->TrackAuto) {
-            $reg->extractVehicleFlag($post);
+            $reg->extractVehicleFlag();
         }
 
         $reg->saveRegistrationRs($dbh, $this->reserveData->getIdPsg(), $uS->username);
 
         // Save any vehicles
         if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
-            Vehicle::saveVehicle($dbh, $post, $reg->getIdRegistration());
+            Vehicle::saveVehicle($dbh, $reg->getIdRegistration());
         }
 
         // Find any staying people.
@@ -200,7 +209,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Collect the room rates
-        $this->setRoomRate($dbh, $reg, $resv, $post);
+        $this->setRoomRate($dbh, $reg, $resv);
 
         // Reservation anticipated Payment Type
         if (isset($post['selPayType'])) {
@@ -208,7 +217,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Verbal Confirmation Flag
-        if (isset($post['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
+        if (isset($_POST['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
             $resv->setVerbalConfirm('v');
             LinkNote::save($dbh, 'Verbal Confirmation is Set.', $resv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
         } else {
@@ -269,17 +278,16 @@ class ActiveReservation extends Reservation {
     /**
      * Summary of delete
      * @param \PDO $dbh
-     * @param array $post
      * @return array
      */
-    public function delete(\PDO $dbh, $post = []) {
+    public function delete(\PDO $dbh) {
 
         $uS = Session::getInstance();
         $numberDeleted = 0;
 
         // Check for pre-payment return target.
         if ($uS->AcceptResvPaymt) {
-            $this->savePrePayment($dbh, $post);
+            $this->savePrePayment($dbh);
         }
 
         // check for delete children
@@ -424,12 +432,11 @@ class ActiveReservation extends Reservation {
     /**
      * Summary of savePrePayment
      * @param \PDO $dbh
-     * @param array $post
      * @return void
      */
-    public function savePrePayment(\PDO $dbh, $post) {
+    public function savePrePayment(\PDO $dbh) {
 
-        $pmp = PaymentChooser::readPostedPayment($dbh, $post);  // Returns PaymentManagerPayment.
+        $pmp = PaymentChooser::readPostedPayment($dbh);  // Returns PaymentManagerPayment.
 
         if (is_null($pmp) === FALSE && ($pmp->getTotalPayment() != 0 || $pmp->getOverPayment() != 0)) {
 

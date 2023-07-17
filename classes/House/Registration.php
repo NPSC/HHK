@@ -299,23 +299,28 @@ where
         return $this->regRS;
     }
 
-    public function extractVehicleFlag($pData) {
+    /**
+     * Summary of extractVehicleFlag
+     * @return void
+     */
+    public function extractVehicleFlag() {
 
-        if (isset($pData["cbNoVehicle"])) {
-            if (strtolower($pData["cbNoVehicle"]) == 'on' || $pData["cbNoVehicle"] == '1') {
-                $this->regRS->Vehicle->setNewVal('1');
-            } else {
-                $this->regRS->Vehicle->setNewVal('0');
-            }
+        if (isset($_POST["cbNoVehicle"])) {
+            $this->regRS->Vehicle->setNewVal('1');
         } else {
             $this->regRS->Vehicle->setNewVal('0');
         }
 
     }
 
-    public function extractRegistration(\PDO $dbh, $pData) {
+    /**
+     * Summary of extractRegistration
 
-        if (isset($pData['regGuest_Ident'])) {
+     * @return void
+     */
+    public function extractRegistration() {
+
+        if (filter_has_var(INPUT_POST, 'regGuest_Ident')) {
             $this->regRS->Guest_Ident->setNewVal('1');
             $this->rawRow['Guest_Ident'] = '1';
         } else {
@@ -323,7 +328,7 @@ where
             $this->rawRow['Guest_Ident'] = '0';
         }
 
-        if (isset($pData['regPamphlet'])) {
+        if (filter_has_var(INPUT_POST, 'regPamphlet')) {
             $this->regRS->Pamphlet->setNewVal('1');
             $this->rawRow['Pamphlet'] = '1';
         } else {
@@ -331,7 +336,7 @@ where
             $this->rawRow['Pamphlet'] = '0';
         }
 
-        if (isset($pData['regReferral'])) {
+        if (filter_has_var(INPUT_POST, 'regReferral')) {
             $this->regRS->Referral->setNewVal('1');
             $this->rawRow['Referral'] = '1';
         } else {
@@ -339,7 +344,7 @@ where
             $this->rawRow['Referral'] = '0';
         }
 
-        if (isset($pData['regSig_Card'])) {
+        if (filter_has_var(INPUT_POST, 'regSig_Card')) {
             $this->regRS->Sig_Card->setNewVal('1');
             $this->rawRow['Sig_Card'] = '1';
         } else {
@@ -347,13 +352,21 @@ where
             $this->rawRow['Sig_Card'] = '0';
         }
 
-        if (isset($pData["cbEml"])) {
+        if (filter_has_var(INPUT_POST, "cbEml")) {
             $this->regRS->Email_Receipt->setNewVal('1');
         } else {
             $this->regRS->Email_Receipt->setNewVal('');
         }
     }
 
+    /**
+     * Summary of saveRegistrationRs
+     * @param \PDO $dbh
+     * @param int $idPsg
+     * @param string $uname
+     * @throws \HHK\Exception\RuntimeException
+     * @return string
+     */
     public function saveRegistrationRs(\PDO $dbh, $idPsg, $uname) {
 
         $msg = "";

@@ -58,9 +58,9 @@ class CheckingIn extends ActiveReservation {
      * @throws \HHK\Exception\RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
      */
-    public static function reservationFactoy(\PDO $dbh, $post) {
+    public static function reservationFactoy(\PDO $dbh) {
 
-        $rData = new ReserveData($post, 'Check-in');
+        $rData = new ReserveData('Check-in');
 
         if ($rData->getIdResv() > 0) {
             $rData->setSaveButtonLabel('Check-in');
@@ -297,13 +297,13 @@ FROM reservation r
      * @param mixed $post
      * @return CheckingIn
      */
-    public function save(\PDO $dbh, $post) {
+    public function save(\PDO $dbh) {
 
         // Save family, rate, hospital, room.
-        parent::saveResv($dbh, $post);
+        parent::saveResv($dbh);
 
         if ($this->reserveData->hasError() === FALSE) {
-            $this->saveCheckIn($dbh, $post);
+            $this->saveCheckIn($dbh);
         }
 
         return $this;
@@ -317,7 +317,7 @@ FROM reservation r
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
-    protected function saveCheckIn(\PDO $dbh, $post) {
+    protected function saveCheckIn(\PDO $dbh) {
 
         $uS = Session::getInstance();
 
@@ -448,7 +448,7 @@ FROM reservation r
         //
         // Payment
         //
-        $this->savePayment($dbh, $post, $visit, $resc, $resv->getIdRegistration());
+        $this->savePayment($dbh, $visit, $resc, $resv->getIdRegistration());
 
         $this->resc = $resc;
         $this->visit = $visit;
@@ -463,8 +463,8 @@ FROM reservation r
      */
     public function checkedinMarkup(\PDO $dbh) {
 
-        $creditCheckOut = array();
-        $dataArray = array();
+        $creditCheckOut = [];
+        $dataArray = [];
 
         if ($this->reserveData->hasError()) {
             return $this->createMarkup($dbh);
@@ -472,7 +472,7 @@ FROM reservation r
 
         // Checking In?
         if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
-            return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
+            return ['gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv()];
         }
 
         $uS = Session::getInstance();
@@ -565,11 +565,11 @@ FROM reservation r
      * @param mixed $idRegistration
      * @return void
      */
-    protected function savePayment(\PDO $dbh, $post, Visit $visit, $resc, $idRegistration) {
+    protected function savePayment(\PDO $dbh, Visit $visit, $resc, $idRegistration) {
 
         $uS = Session::getInstance();
 
-        $pmp = PaymentChooser::readPostedPayment($dbh, $post);
+        $pmp = PaymentChooser::readPostedPayment($dbh);
 
         // Check for key deposit
         if ($uS->KeyDeposit && is_null($pmp) === FALSE) {

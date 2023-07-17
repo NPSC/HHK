@@ -33,17 +33,103 @@ class PaymentChooser {
     /**
      *
      * @param \PDO $dbh
-     * @param array $post
      * @param string $rtnIndex
      * @return PaymentManagerPayment|null
      */
-    public static function readPostedPayment(\PDO $dbh, $post, $rtnIndex = ReturnIndex::ReturnIndex) {
+    public static function readPostedPayment(\PDO $dbh, $rtnIndex = ReturnIndex::ReturnIndex) {
+
+        $args = [
+            'txtInvId' => FILTER_SANITIZE_NUMBER_INT,
+            'rbUseCard' . $rtnIndex => FILTER_SANITIZE_NUMBER_INT,
+            'rbUseCard' => FILTER_SANITIZE_NUMBER_INT,
+            'PayTypeSel' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'rtnTypeSel' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'paymentDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtvdNewCardName' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtInvNotes' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtCheckNum' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRtnCheckNum' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtTransferAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRtnTransferAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selChargeType' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selRtnChargeType' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtPayNotes' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRtnNotes' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtChargeAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRtnChargeAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selexcpay' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selccgw' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+
+            'txtCashTendered' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'visitFeeAmt' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'keyDepAmt' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'heldAmount' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'DepRefundAmount' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'feesPayment' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'feesTax' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'feesCharges' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'guestCredit' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'HsDiscAmount' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'totalCharges' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'txtOverPayAmt' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'txtRtnAmount' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'totalPayment' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'invPayAmt' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION | FILTER_REQUIRE_ARRAY
+            ],
+
+        ];
+
+        $inputs = filter_input_array(INPUT_POST, $args);
 
         // Payment Type
-        if (isset($post['PayTypeSel'])) {
-            $payType = filter_var($post['PayTypeSel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        } else if (isset($post['rtnTypeSel'])) {
-            $payType = filter_var($post['rtnTypeSel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (isset($inputs['PayTypeSel'])) {
+            $payType = $inputs['PayTypeSel'];
+        } else if (isset($inputs['rtnTypeSel'])) {
+            $payType = $inputs['rtnTypeSel'];
         } else {
             return NULL;
         }
@@ -52,214 +138,217 @@ class PaymentChooser {
         $pmp = new PaymentManagerPayment($payType);
 
         // Return-payment type
-        if (isset($post['rtnTypeSel'])) {
-            $pmp->setRtnPayType(filter_var($post['rtnTypeSel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['rtnTypeSel'])) {
+            $pmp->setRtnPayType($inputs['rtnTypeSel']);
         }
 
         // Payment Date
-        if (isset($post['paymentDate']) && $post['paymentDate'] != '') {
-            $pmp->setPayDate(filter_var($post['paymentDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['paymentDate']) && $inputs['paymentDate'] != '') {
+            $pmp->setPayDate($inputs['paymentDate']);
         } else {
             $pmp->setPayDate(date('Y-m-d H:i:s'));
         }
 
         // Credit token
-        if (isset($post['rbUseCard'])) {
-            $pmp->setIdToken(intval(filter_var($post['rbUseCard'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['rbUseCard'])) {
+            $pmp->setIdToken(intval($inputs['rbUseCard'], 10));
         }
 
-        if (isset($post['rbUseCard' . $rtnIndex])) {
-        	$pmp->setRtnIdToken(intval(filter_var($post['rbUseCard' . $rtnIndex], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['rbUseCard' . $rtnIndex])) {
+        	$pmp->setRtnIdToken(intval($inputs['rbUseCard' . $rtnIndex], 10));
         }
 
         // Merchant
-        if (isset($post['selccgw'])) {
-            $pmp->setMerchant(filter_var($post['selccgw'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['selccgw'])) {
+            $pmp->setMerchant($inputs['selccgw']);
         }
 
         // Manual Key check box
-        if (isset($post['btnvrKeyNumber'])) {
+        if (isset($_POST['btnvrKeyNumber'])) {
             $pmp->setManualKeyEntry(TRUE);
         } else {
             $pmp->setManualKeyEntry(FALSE);
         }
 
         // Manual cardholder name
-        if (isset($post['txtvdNewCardName'])) {
-            $pmp->setCardHolderName(strtoupper(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        if (isset($inputs['txtvdNewCardName'])) {
+            $pmp->setCardHolderName(strtoupper($inputs['txtvdNewCardName']));
         }
 
         // Use new CC
-        if (isset($post['cbNewCard'])) {
+        if (isset($_POST['cbNewCard'])) {
             $pmp->setNewCardOnFile(TRUE);
         } else {
             $pmp->setNewCardOnFile(FALSE);
         }
 
         // Invoice payor
-        if (isset($post['txtInvId'])) {
-            $pmp->setIdInvoicePayor(intval(filter_var($post['txtInvId'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['txtInvId'])) {
+            $pmp->setIdInvoicePayor(intval($inputs['txtInvId'], 10));
         }
 
         // Invoice notes
-        if (isset($post['txtInvNotes'])) {
-            $pmp->setInvoiceNotes(filter_var($post['txtInvNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['txtInvNotes'])) {
+            $pmp->setInvoiceNotes($inputs['txtInvNotes']);
         }
 
         // Check number
-        if (isset($post['txtCheckNum'])) {
-            $pmp->setCheckNumber(filter_var($post['txtCheckNum'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['txtCheckNum'])) {
+            $pmp->setCheckNumber($inputs['txtCheckNum']);
         }
 
         // Return Check number
-        if (isset($post['txtRtnCheckNum'])) {
-            $pmp->setRtnCheckNumber(filter_var($post['txtRtnCheckNum'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['txtRtnCheckNum'])) {
+            $pmp->setRtnCheckNumber($inputs['txtRtnCheckNum']);
         }
 
         // Transfer Account
-        if (isset($post['txtTransferAcct'])) {
-            $pmp->setTransferAcct(filter_var($post['txtTransferAcct'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['txtTransferAcct'])) {
+            $pmp->setTransferAcct($inputs['txtTransferAcct']);
         }
 
         // Return transfer acct
-        if (isset($post['txtRtnTransferAcct'])) {
-            $pmp->setRtnTransferAcct(filter_var($post['txtRtnTransferAcct'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['txtRtnTransferAcct'])) {
+            $pmp->setRtnTransferAcct($inputs['txtRtnTransferAcct']);
         }
 
         // Charge Card - External Swipe
-        if (isset($post['selChargeType'])) {
-            $pmp->setChargeCard(filter_var($post['selChargeType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['selChargeType'])) {
+            $pmp->setChargeCard($inputs['selChargeType']);
         }
-        if (isset($post['selRtnChargeType'])) {
-            $pmp->setRtnChargeCard(filter_var($post['selRtnChargeType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['selRtnChargeType'])) {
+            $pmp->setRtnChargeCard($inputs['selRtnChargeType']);
         }
 
         // Payment Notes.
-        if (isset($post['txtPayNotes'])) {
+        if (isset($inputs['txtPayNotes'])) {
 
-            $payNotes = filter_var($post['txtPayNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            if ($payNotes != '') {
+            if ($inputs['txtPayNotes'] != '') {
 
-                $pmp->setPayNotes($payNotes);
+                $pmp->setPayNotes($inputs['txtPayNotes']);
 
             } else {
 
                 // Return Payment Notes.
-                if (isset($post['txtRtnNotes'])) {
-                    $pmp->setPayNotes(filter_var($post['txtRtnNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                if (isset($inputs['txtRtnNotes'])) {
+                    $pmp->setPayNotes($inputs['txtRtnNotes']);
                 }
             }
         }
 
         // Charge Acct - External Swipe
-        if (isset($post['txtChargeAcct'])) {
-            $pmp->setChargeAcct(filter_var($post['txtChargeAcct'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['txtChargeAcct'])) {
+            $pmp->setChargeAcct($inputs['txtChargeAcct']);
         }
-        if (isset($post['txtRtnChargeAcct'])) {
-            $pmp->setRtnChargeAcct(filter_var($post['txtRtnChargeAcct'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['txtRtnChargeAcct'])) {
+            $pmp->setRtnChargeAcct($inputs['txtRtnChargeAcct']);
         }
 
         // cash tendered
-        if (isset($post['txtCashTendered'])) {
-            $pmp->setCashTendered(floatval(filter_var($post['txtCashTendered'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs['txtCashTendered'])) {
+            $pmp->setCashTendered(floatval($inputs['txtCashTendered']));
         }
 
         //  Visit fees
-        if (isset($post['visitFeeCb']) && isset($post['visitFeeAmt'])) {
-            $pmp->setVisitFeePayment(floatval(filter_var($post['visitFeeAmt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($_POST['visitFeeCb']) && isset($inputs['visitFeeAmt'])) {
+            $pmp->setVisitFeePayment(floatval($inputs['visitFeeAmt']));
         }
 
         // Room/Key deposit
-        if (isset($post["keyDepRx"]) && isset($post["keyDepAmt"])) {
-            $pmp->setKeyDepositPayment(floatval(filter_var($post["keyDepAmt"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($_POST["keyDepRx"]) && isset($inputs["keyDepAmt"])) {
+            $pmp->setKeyDepositPayment(floatval($inputs["keyDepAmt"]));
         }
 
         // Retained Amount payment
-        if (isset($post["cbHeld"]) && isset($post["heldAmount"])) {
-            $pmp->setRetainedAmtPayment(floatval(filter_var($post["heldAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($_POST["cbHeld"]) && isset($inputs["heldAmount"])) {
+            $pmp->setRetainedAmtPayment(floatval($inputs["heldAmount"]));
         }
 
         // Deposit Refund.
-        if (isset($post["DepRefundAmount"])) {
-            $pmp->setDepositRefundAmt(floatval(filter_var($post["DepRefundAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["DepRefundAmount"])) {
+            $pmp->setDepositRefundAmt(floatval($inputs["DepRefundAmount"]));
         }
 
         // Room fees.
-        if (isset($post["feesPayment"])) {
-            $pmp->setRatePayment(floatval(filter_var($post["feesPayment"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["feesPayment"])) {
+            $pmp->setRatePayment(floatval($inputs["feesPayment"]));
         }
 
         // Room fee taxes.
-        if (isset($post["feesTax"])) {
-            $pmp->setRateTax(floatval(filter_var($post["feesTax"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["feesTax"])) {
+            $pmp->setRateTax(floatval($inputs["feesTax"]));
         }
 
         // Total Room Charge.
-        if (isset($post["feesCharges"])) {
-            $pmp->setTotalRoomChg(floatval(filter_var($post["feesCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["feesCharges"])) {
+            $pmp->setTotalRoomChg(floatval($inputs["feesCharges"]));
         }
 
         // Guest Credit
-        if (isset($post['guestCredit'])) {
-            $pmp->setGuestCredit(floatval(filter_var($post["guestCredit"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs['guestCredit'])) {
+            $pmp->setGuestCredit(floatval($inputs['guestCredit']));
         }
 
         // Reimburse Taxes.
-        if (isset($post["cbReimburseVAT"])) {
+        if (isset($_POST["cbReimburseVAT"])) {
             $pmp->setReimburseTaxCb(TRUE);
         }   else {
             $pmp->setReimburseTaxCb(FALSE);
         }
 
         // Total Charges.
-        if (isset($post["totalCharges"])) {
-            $pmp->setTotalCharges(floatval(filter_var($post["totalCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["totalCharges"])) {
+            $pmp->setTotalCharges(floatval($inputs["totalCharges"]));
         }
 
         // House waive
-        if (isset($post['cbFinalPayment'])) {
+        if (isset($_POST['cbFinalPayment'])) {
             $pmp->setFinalPaymentFlag(TRUE);
         } else {
             $pmp->setFinalPaymentFlag(FALSE);
         }
 
         // House Discount amount
-        if (isset($post['cbFinalPayment']) && isset($post['HsDiscAmount'])) {
-            $pmp->setHouseDiscPayment(floatval(filter_var($post["HsDiscAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($_POST['cbFinalPayment']) && isset($inputs['HsDiscAmount'])) {
+            $pmp->setHouseDiscPayment(floatval($inputs['HsDiscAmount']));
         }
 
         // OverPay amount
-        if (isset($post['txtOverPayAmt'])) {
-            $pmp->setOverPayment(floatval(filter_var($post["txtOverPayAmt"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs['txtOverPayAmt'])) {
+            $pmp->setOverPayment(floatval($inputs['txtOverPayAmt']));
         }
 
         // Refund amount
-        if (isset($post['txtRtnAmount'])) {
-            $pmp->setRefundAmount(floatval(filter_var($post["txtRtnAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs['txtRtnAmount'])) {
+            $pmp->setRefundAmount(floatval($inputs['txtRtnAmount']));
         }
 
         // Total payment.
-        if (isset($post["totalPayment"])) {
-            $pmp->setTotalPayment(floatval(filter_var($post["totalPayment"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["totalPayment"])) {
+            $pmp->setTotalPayment(floatval($inputs["totalPayment"]));
         }
 
         // unpaid invoices
-        foreach ($post as $key => $p) {
-            if (($num = strstr($key, 'unpaidCb', TRUE)) !== FALSE) {
-                $num = filter_var($num, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $amt = floatval(filter_var($post[$num . 'invPayAmt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-                $pmp->addInvoiceByNumber($dbh, $num, $amt);
+        if (isset($inputs['invPayAmt'])) {
+
+            foreach ($inputs['invPayAmt'] as $key => $amt) {
+
+                $num = filter_var($key, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+                if (isset($_POST['unpaidCb'][$num])) {
+                    $pmp->addInvoiceByNumber($dbh, $num, $amt);
+                }
             }
         }
 
         // balance with
-        if (isset($post['selexcpay'])) {
-            $pmp->setBalWith(filter_var($post['selexcpay'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if (isset($inputs['selexcpay'])) {
+            $pmp->setBalWith($inputs['selexcpay']);
         }
 
         // Reimburse Taxes
-        if (isset($post['cbReimburseVAT'])) {
+        if (isset($_POST['cbReimburseVAT'])) {
             $pmp->setReimburseTaxCb(TRUE);
         } else {
             $pmp->setReimburseTaxCb(FALSE);
@@ -528,34 +617,37 @@ class PaymentChooser {
                 $trashIcon = '';
 
                 $invNumber = $i['Invoice_Number'];
-                $invAttr = array('href'=>'ShowInvoice.php?invnum='.$i['Invoice_Number'], 'target'=>'_blank', 'style'=>'float:left;');
+                $invAttr = ['href'=>'ShowInvoice.php?invnum='.$i['Invoice_Number'], 'target'=>'_blank', 'style'=>'float:left;'];
 
                 // Additional information
                 $addnl = '';
                 if (isset($i['Guest Name']) && $i['Guest Name'] != '') {
-                    $addnl = HTMLContainer::generateMarkup('span', $i['Guest Name'], array('style'=>'margin: 0 5px;'));
+                    $addnl = HTMLContainer::generateMarkup('span', $i['Guest Name'], ['style'=>'margin: 0 5px;']);
                 }
 
+                // Partially paid, or can we trash it.
                 if ($i['Amount'] - $i['Balance'] != 0) {
                     $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
                     $invAttr['title'] = 'Partially Paid';
                 } else {
-                    $trashIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'del', 'style'=>'float:right;cursor:pointer;', 'title'=>'Delete'));
+                    $trashIcon = HTMLContainer::generateMarkup('span','', ['class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'del', 'style'=>'float:right;cursor:pointer;', 'title'=>'Delete']);
                 }
 
                 $unpaid = HTMLTable::makeTd(HTMLContainer::generateMarkup('span',
                         HTMLContainer::generateMarkup('a', 'Invoice ' . $invNumber, $invAttr)
-                        . HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'view', 'style'=>'float:left;cursor:pointer;', 'title'=>'View Items'))
+                        . HTMLContainer::generateMarkup('span','', ['class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'view', 'style'=>'float:left;cursor:pointer;', 'title'=>'View Items'])
                         . $trashIcon
-                        , array("style"=>'white-space:nowrap'))
-                        .$addnl, array('class'=>'tdlabel'));
+                        , ["style"=>'white-space:nowrap'])
+                        .$addnl, ['class'=>'tdlabel']);
 
 
                 $unpaid .= HTMLTable::makeTd(
-                        HTMLContainer::generateMarkup('label', 'Pay', array('for'=>$i['Invoice_Number'].'unpaidCb', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>$i['Invoice_Number'].'unpaidCb', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'))
-                        .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', array('style'=>'font-style: italic;')))
-                    .HTMLTable::makeTd('$'. HTMLInput::generateMarkup('', array('name'=>$i['Invoice_Number'].'invPayAmt', 'size'=>'8', 'class'=>'hhk-feeskeys hhk-payInvAmt','style'=>'text-align:right;')), array('style'=>'text-align:right;'));
+                        HTMLContainer::generateMarkup('label', 'Pay', ['for'=>$i['Invoice_Number'].'unpaidCb', 'style'=>'margin-left:5px;margin-right:3px;'])
+                        .HTMLInput::generateMarkup('',
+                            ['id'=> $i['Invoice_Number']. 'unpaidCb', 'name'=>'unpaidCb['.$i['Invoice_Number'].']', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'])
+                        .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', ['style'=>'font-style: italic;']))
+                    .HTMLTable::makeTd('$'.
+                        HTMLInput::generateMarkup('', ['id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'size'=>'8', 'class'=>'hhk-feeskeys hhk-payInvAmt','style'=>'text-align:right;']), ['style'=>'text-align:right;']);
 
                 $trs[] = $unpaid;
             }
@@ -748,14 +840,14 @@ ORDER BY v.idVisit , v.Span;");
      * Summary of createPaymentMarkup
      * @param bool $showRoomFees
      * @param bool $useKeyDeposit
-     * @param VisitCharges $visitCharge
+     * @param VisitCharges|null $visitCharge
      * @param bool $useVisitFee
      * @param float|int $heldAmount
      * @param bool $payVFeeFirst
      * @param bool $showFinalPaymentCB
      * @param array $unpaidInvoices
      * @param Labels $labels
-     * @param ValueAddedTax $vat
+     * @param ValueAddedTax|null $vat
      * @param int $idVisit
      * @param mixed $excessPays
      * @param string $defaultExcessPays

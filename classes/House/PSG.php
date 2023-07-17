@@ -371,6 +371,14 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         return;
     }
 
+    /**
+     * Summary of savePSG
+     * @param \PDO $dbh
+     * @param mixed $idPatient
+     * @param mixed $uname
+     * @param mixed $notes
+     * @return void
+     */
     public function savePSG(\PDO $dbh, $idPatient, $uname, $notes = '') {
 
         if ($idPatient < 1) {
@@ -407,7 +415,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         } else {
 
-            EditRS::update($dbh, $this->psgRS, array($this->psgRS->idPsg));
+            EditRS::update($dbh, $this->psgRS, [$this->psgRS->idPsg]);
 
             $logText = VisitLog::getUpdateText($this->psgRS);
             VisitLog::logPsg($dbh, $this->psgRS->idPsg->getStoredVal(), $idPatient, $logText, "update", $uname);

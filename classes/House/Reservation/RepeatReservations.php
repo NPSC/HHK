@@ -178,13 +178,13 @@ class RepeatReservations {
         $recurrencies = 0;
         $interval = '';
 
-        $args = array(
-            'mrInterval' => array(
+        $args = [
+            'mrInterval' => [
                                 'filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                                 'flags' => FILTER_REQUIRE_ARRAY
-                            ),
+                            ],
             'mrnumresv'  => FILTER_SANITIZE_NUMBER_INT
-        );
+        ];
 
         $inputs = filter_input_array(INPUT_POST, $args);
 

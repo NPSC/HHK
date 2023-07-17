@@ -247,13 +247,25 @@ WHERE
         return FALSE;
     }
 
-    public static function saveVehicle(\PDO $dbh, $pData, $idReg) {
+    public static function saveVehicle(\PDO $dbh, $idReg) {
         $rtnMsg = "";
 
-        // Find any deletes
-        if (isset($pData['cbVehDel'])) {
+        $args = [
+            'txtVehMake' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
+            'txtVehLic' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
+            'txtVehModel' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
+            'txtVehColor' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
+            'selVehLicense' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
+            'txtVehNote' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
+            'selVehGuest' => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
+        ];
 
-            foreach ($pData['cbVehDel'] as $k => $v) {
+        $post = filter_input_array(INPUT_POST, $args);
+
+        // Find any deletes
+        if (isset($_POST['cbVehDel']) && filter_has_var(INPUT_POST, $_POST['cbVehDel'])) {
+
+            foreach ($_POST['cbVehDel'] as $k => $v) {
 
                 $idVehicle = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
 
@@ -265,12 +277,12 @@ WHERE
             }
         }
 
-        if (!isset($pData['txtVehMake'])) {
+        if (!isset($post['txtVehMake'])) {
             return $rtnMsg;
         }
 
         $rows = self::getRecords($dbh, $idReg);
-        $vehs = array();
+        $vehs = [];
 
         foreach ($rows as $r) {
 
@@ -282,11 +294,10 @@ WHERE
         }
 
 
-
-        foreach ($pData['txtVehMake'] as $k => $v) {
+        foreach ($post['txtVehMake'] as $k => $v) {
 
             // ignore deleted vehicles
-            if (isset($pData['cbVehDel'][$k])) {
+            if (isset($_POST['cbVehDel'][$k]) && filter_has_var(INPUT_POST, $_POST['cbVehDel'][$k])) {
                 continue;
             }
 
@@ -297,37 +308,35 @@ WHERE
                 $carRS = $vehs[$idVehicle];
             }
 
-
-
             $make = '';
-            if (isset($pData["txtVehMake"][$k])) {
-                $make = filter_var($pData["txtVehMake"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            if (isset($post["txtVehMake"][$k])) {
+                $make = $post["txtVehMake"][$k];
                 $carRS->Make->setNewVal($make);
             }
 
             $plate = '';
-            if (isset($pData["txtVehLic"][$k])) {
-                $plate = filter_var($pData["txtVehLic"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            if (isset($post["txtVehLic"][$k])) {
+                $plate = $post["txtVehLic"][$k];
                 $carRS->License_Number->setNewVal($plate);
             }
 
-            if (isset($pData["txtVehModel"][$k])) {
-                $carRS->Model->setNewVal(filter_var($pData["txtVehModel"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            if (isset($post["txtVehModel"][$k])) {
+                $carRS->Model->setNewVal($post["txtVehModel"][$k]);
             }
-            if (isset($pData["txtVehColor"][$k])) {
-                $carRS->Color->setNewVal(filter_var($pData["txtVehColor"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            if (isset($post["txtVehColor"][$k])) {
+                $carRS->Color->setNewVal($post["txtVehColor"][$k]);
             }
-            if (isset($pData["selVehLicense"][$k])) {
-                $carRS->State_Reg->setNewVal(filter_var($pData["selVehLicense"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            if (isset($post["selVehLicense"][$k])) {
+                $carRS->State_Reg->setNewVal($post["selVehLicense"][$k]);
             }
 
             $note = '';
-            if (isset($pData["txtVehNote"][$k])) {
-                $note = filter_var($pData["txtVehNote"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            if (isset($post["txtVehNote"][$k])) {
+                $note = $post["txtVehNote"][$k];
                 $carRS->Note->setNewVal($note);
             }
-            if (isset($pData["selVehGuest"][$k])) {
-                $idGuest = intVal(filter_var($pData["selVehGuest"][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
+            if (isset($post["selVehGuest"][$k])) {
+                $idGuest = intVal($post["selVehGuest"][$k], 10);
                 $carRS->idName->setNewVal($idGuest);
             }
 
@@ -343,7 +352,7 @@ WHERE
             } else if ($carRS->idVehicle->getStoredVal() > 0) {
 
                 // Update
-                $n = EditRS::update($dbh, $carRS, array($carRS->idVehicle, $carRS->idRegistration));
+                $n = EditRS::update($dbh, $carRS, [$carRS->idVehicle, $carRS->idRegistration]);
 
                 if ($n > 0) {
                     $rtnMsg = "Vehicle Updated.  ";
