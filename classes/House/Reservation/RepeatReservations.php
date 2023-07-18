@@ -60,74 +60,67 @@ class RepeatReservations {
                     $attr['class'] = 'ui-state-highlight';
                 }
 
-                if ($r['family'] == 'h') {
-                    $mk = HTMLContainer::generateMarkup('a', 'Host', $attr);
-                } else {
-                    $mk = HTMLContainer::generateMarkup('a', 'Child', $attr);
-                }
-
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($mk)
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup('a', 'Resv', $attr))
                     . HTMLTable::makeTd($r['Status'])
                     .HTMLTable::makeTd($r['Title'])
-                    . HTMLTable::makeTd(date('M j, Y', strtotime($r['Arrival'])))
-                    . HTMLTable::makeTd(date('M j, Y', strtotime($r['Departure'])))
+                    . HTMLTable::makeTd(date('D M j', strtotime($r['Arrival'])))
+                    . HTMLTable::makeTd(date('D M j', strtotime($r['Departure'])))
                 );
 
             }
             $stmt->nextRowset();
 
-            $markup = $tbl->generateMarkup();
-
+            $markup .= $tbl->generateMarkup();
 
         } else {
-            // Set up empty host markup
 
-            $days = $resv->getExpectedDays();
+        // Set up empty host markup
 
-            // disable controls if this reservation is too long.
-            $wkAttr = ['id'=>'mrweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::WK_INDEX . ']'];
-            if ($days > 6) {
-                $wkAttr['disabled'] = 'disabled';
-                $wkAttr['title'] = 'Reservation lasts too long.';
-            }
-            $biAttr = ['id'=>'mrbiweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::BI_WK_INDEX . ']'];
-            if ($days > 13) {
-                $biAttr['disabled'] = 'disabled';
-                $biAttr['title'] = 'Reservation lasts too long.';
-            }
-            $mAttr = ['id'=>'mrmonth', 'type'=>'radio', 'name'=>'mrInterval[' .self::MONTH_INDEX . ']'];
-            if ($days > 26) {
-                $mAttr['disabled'] = 'disabled';
-                $mAttr['title'] = 'Reservation lasts too long.';
-            }
+        $days = $resv->getExpectedDays();
 
-            $tbl = new HTMLTable();
-            $tbl->addBodyTr(
-                HTMLTable::makeTh('Interval', array('rowspan'=>'2'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Weekly', ['for'=>'mrweek']))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Bi-Weekly', ['for'=>'mrbiweek']))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Monthly', ['for'=>'mrmonth']))
-            );
-
-            // create radio button controls
-            $tds = HTMLTable::makeTd(HTMLInput::generateMarkup('', $wkAttr), ['style'=>'text-align:center;']);
-            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $biAttr), ['style'=>'text-align:center;']);
-            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $mAttr), ['style'=>'text-align:center;']);
-            $tbl->addBodyTr($tds);
-
-            $tbl->addBodyTr(
-                HTMLTable::makeTh('Create')
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['id'=>'mrnumresv', 'name'=>'mrnumresv', 'type'=>'number', 'min'=>'1', 'max'=> self::MAX_REPEATS, 'size'=>'4', 'style'=>'margin-right:.5em;'])
-                . 'More Reservations', array('colspan'=>'5'))
-            );
-
-            $markup = HTMLContainer::generateMarkup('div',
-                $tbl->generateMarkup()
-                , ['id'=>'divMultiResv']);
-
+        // disable controls if this reservation is too long.
+        $wkAttr = ['id'=>'mrweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::WK_INDEX . ']'];
+        if ($days > 6) {
+            $wkAttr['disabled'] = 'disabled';
+            $wkAttr['title'] = 'Reservation lasts too long.';
+        }
+        $biAttr = ['id'=>'mrbiweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::BI_WK_INDEX . ']'];
+        if ($days > 13) {
+            $biAttr['disabled'] = 'disabled';
+            $biAttr['title'] = 'Reservation lasts too long.';
+        }
+        $mAttr = ['id'=>'mrmonth', 'type'=>'radio', 'name'=>'mrInterval[' .self::MONTH_INDEX . ']'];
+        if ($days > 26) {
+            $mAttr['disabled'] = 'disabled';
+            $mAttr['title'] = 'Reservation lasts too long.';
         }
 
+        $tbl = new HTMLTable();
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Interval', array('rowspan'=>'2'))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Weekly', ['for'=>'mrweek']))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Bi-Weekly', ['for'=>'mrbiweek']))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Monthly', ['for'=>'mrmonth']))
+        );
+
+        // create radio button controls
+        $tds = HTMLTable::makeTd(HTMLInput::generateMarkup('', $wkAttr), ['style'=>'text-align:center;']);
+        $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $biAttr), ['style'=>'text-align:center;']);
+        $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $mAttr), ['style'=>'text-align:center;']);
+        $tbl->addBodyTr($tds);
+
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Create')
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['id'=>'mrnumresv', 'name'=>'mrnumresv', 'type'=>'number', 'min'=>'1', 'max'=> self::MAX_REPEATS, 'size'=>'4', 'style'=>'margin-right:.5em;'])
+            . 'More Reservations', array('colspan'=>'5'))
+        );
+
+        $markup .= HTMLContainer::generateMarkup('div',
+            $tbl->generateMarkup()
+            , ['id'=>'divMultiResv']);
+
+    }
         $mk1 = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', 'Multiple Reservations', ['style'=>'font-weight:bold;'])
             . HTMLContainer::generateMarkup('p', '', ['id'=>'multiResvValidate', 'style'=>'color:red;'])
@@ -227,63 +220,67 @@ class RepeatReservations {
         $intervals = [self::WK_INDEX=>7, self::BI_WK_INDEX=>14, self::MONTH_INDEX=>27];
 
         // Check reserv length in days with interval value
-        if (isset($intervals[$interval]) && $days < $intervals[$interval]) {
-
-            // Create the reservations
-
-            // guests
-            $guests = [];
-            $rgRs = new Reservation_GuestRS();
-            $rgRs->idReservation->setStoredVal($resv1->getIdReservation());
-            $rgRows = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
-
-            foreach ($rgRows as $g) {
-                $guests[$g['idGuest']] = $g['Primary_Guest'];
-            }
-
-            // Dates
-            $startDT = new \DateTimeImmutable($resv1->getArrival());
-            $dateInterval = new \DateInterval($interval);
-            $period = new \DatePeriod($startDT, $dateInterval, $recurrencies, \DatePeriod::EXCLUDE_START_DATE);
-
-            $duration = new \DateInterval('P' . $days . 'D');
-
-            foreach ($period as $dateDT) {
-
-                $idResource = 0;
-                $status = ReservationStatus::Waitlist;
-
-                // Room available
-                if ($resv1->getIdResource() > 0) {
-
-                    $resv1->getConstraints($dbh, true);
-                    $roomChooser = new RoomChooser($dbh, $resv1, 1, new \DateTime($resv1->getExpectedArrival()), new \DateTime($resv1->getExpectedDeparture()));
-                    $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
-
-                    // Does the resource fit the requirements?
-                    if (isset($resources[$resv1->getIdResource()])) {
-
-                        // This room works.
-                        $idResource = $resv1->getIdResource();
-                        $status = $uS->InitResvStatus;
-
-                    }
-                }
-
-                $idResv = $this->makeNewReservation($dbh, $resv1, $dateDT, $dateDT->add($duration), $idResource, $status, $guests);
-
-                if ($idResv > 0) {
-                    // record new child
-                    $numRows = $dbh->exec("Insert into reservation_multiple (`Host_Id`, `Child_Id`, `Status`) VALUES(" . $resv1->getIdReservation() . ", $idResv, 'a')");
-                    if ($numRows != 1) {
-                        throw new RuntimeException('Insert faild: reservtion_multiple');
-                    }
-                }
-            }
-
-        } else if (isset($intervals[$interval]) && $days >= $intervals[$interval]) {
+        if (isset($intervals[$interval]) === false || $days >= $intervals[$interval]) {
             $this->errorArray[] = 'Reservation duration in days is greater than the requested Interval';
+            return;
         }
+
+        // Check for extended repeat - reservation already a host or child?
+
+
+
+        // Create the reservations
+
+        // guests
+        $guests = [];
+        $rgRs = new Reservation_GuestRS();
+        $rgRs->idReservation->setStoredVal($resv1->getIdReservation());
+        $rgRows = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
+
+        foreach ($rgRows as $g) {
+            $guests[$g['idGuest']] = $g['Primary_Guest'];
+        }
+
+        // Dates
+        $startDT = new \DateTimeImmutable($resv1->getArrival());
+        $dateInterval = new \DateInterval($interval);
+        $period = new \DatePeriod($startDT, $dateInterval, $recurrencies, \DatePeriod::EXCLUDE_START_DATE);
+
+        $duration = new \DateInterval('P' . $days . 'D');
+
+        foreach ($period as $dateDT) {
+
+            $idResource = 0;
+            $status = ReservationStatus::Waitlist;
+
+            // Room available
+            if ($resv1->getIdResource() > 0) {
+
+                $resv1->getConstraints($dbh, true);
+                $roomChooser = new RoomChooser($dbh, $resv1, 1, new \DateTime($resv1->getExpectedArrival()), new \DateTime($resv1->getExpectedDeparture()));
+                $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
+
+                // Does the resource fit the requirements?
+                if (isset($resources[$resv1->getIdResource()])) {
+
+                    // This room works.
+                    $idResource = $resv1->getIdResource();
+                    $status = $uS->InitResvStatus;
+
+                }
+            }
+
+            $idResv = $this->makeNewReservation($dbh, $resv1, $dateDT, $dateDT->add($duration), $idResource, $status, $guests);
+
+            if ($idResv > 0) {
+                // record new child
+                $numRows = $dbh->exec("Insert into reservation_multiple (`Host_Id`, `Child_Id`, `Status`) VALUES(" . $resv1->getIdReservation() . ", $idResv, 'a')");
+                if ($numRows != 1) {
+                    throw new RuntimeException('Insert faild: reservtion_multiple');
+                }
+            }
+        }
+
 
     }
 
