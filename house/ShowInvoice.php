@@ -128,7 +128,7 @@ try {
                             'Email: '
                             . HTMLInput::generateMarkup($emAddr, array('name' => 'txtEmail', 'style' => 'width:100%; margin-left: 0.5em;'))
                 . HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')), array("class"=>"hhk-flex", "style"=>"align-items:center;")));
-            $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit'))));
+            $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit', 'style'=>'font-size:0.9em;'))));
 
             $emtableMarkup .= $emTbl->generateMarkup(array("style"=>"width:100%;"), 'Email Invoice');
         }
@@ -141,7 +141,7 @@ try {
 
 
 if ($msg != '') {
-    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight ui-widget ui-widget-content ui-corner-all', 'style' => 'font-size:14pt; padding: 0.5em;'));
+    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight ui-widget ui-widget-content ui-corner-all', 'style' => 'font-size:14pt; padding: 0.5em; margin-left:10px;'));
 }
 ?>
 <!DOCTYPE html>
@@ -189,8 +189,8 @@ $(document).ready(function () {
                 <div style='margin-bottom:10px; max-width:800px' class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'>
                     <form name="formEm" method="Post" action="ShowInvoice.php">
                     <?php echo $emtableMarkup; ?>
-                        <input type="button" value="Print" id='btnPrint' style="margin-right:.3em;margin-top:.5em;"/>
-                        <input type="submit" value="Download MS Word" name='btnWord' id='btnWord' style="margin-right:.3em;margin-top:.5em;"/>
+                        <input type="button" value="Print" id='btnPrint' style="margin-right:.3em;margin-top:.5em;font-size:0.9em;"/>
+                        <input type="submit" value="Download MS Word" name='btnWord' id='btnWord' style="margin-right:.3em;margin-top:.5em; font-size:0.9em;"/>
                     </form>
 
                 </div>

@@ -172,23 +172,22 @@ if (is_null($guest) === FALSE && $emAddr == '') {
 
 // create send email table
 $emTbl = new HTMLTable();
-$emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'size'=>'70', 'class'=>'ignrSave'))));
+$emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'class'=>'ignrSave', 'style'=>"width: 100%; margin-left: 0.5em;")), array("class"=>"hhk-flex", 'style'=>'align-items:center;')));
 $emTbl->addBodyTr(HTMLTable::makeTd(
         'Email: '
-        . HTMLInput::generateMarkup($emAddr, array('name'=>'txtEmail', 'size'=>'70', 'class'=>'ignrSave'))));
-$emTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'emMsg', 'style'=>'color:red;'))));
-$emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit))));
+        . HTMLInput::generateMarkup($emAddr, array('name'=>'txtEmail', 'class'=>'ignrSave', 'style'=>"width: 100%; margin-left: 0.5em;")), array("class"=>"hhk-flex", 'style'=>'align-items:center;')));
+$emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('style'=>'font-size:0.9em;', 'name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit))));
 
 $emtableMarkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('form',
-		$emTbl->generateMarkup(array(), 'Email '.$labels->getString('MemberType', 'visitor', 'Guest') . ' Statement'), array('id'=>'formEm'))
+		$emTbl->generateMarkup(array('style'=>'width: 100%'), 'Email '.$labels->getString('MemberType', 'visitor', 'Guest') . ' Statement'), array('id'=>'formEm'))
 
         .HTMLContainer::generateMarkup('form',
-                HTMLInput::generateMarkup('Print', array('id'=>'btnPrint', 'style'=>'margin-right:1em;'))
-                .HTMLInput::generateMarkup('Download to MS Word', array('name'=>'btnWord', 'type'=>'submit'))
+                HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'style'=>'margin-right:.3em;margin-top:.5em;font-size:0.9em;'))
+                .HTMLInput::generateMarkup('Download to MS Word', array('name'=>'btnWord', 'type'=>'submit', 'style'=>'margin-right:.3em;margin-top:.5em;font-size:0.9em;'))
                 .HTMLInput::generateMarkup($idRegistration, array('name'=>'hdnIdReg', 'type'=>'hidden'))
                 .HTMLInput::generateMarkup($idVisit, array('name'=>'hdnIdVisit', 'type'=>'hidden'))
                 , array('name'=>'frmwrod','action'=>'ShowStatement.php', 'method'=>'post'))
-        ,array('style'=>'margin-bottom:10px;', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'));
+        ,array('style'=>'margin-bottom:10px;margin-top:10px;', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'));
 
 
 if (isset($_REQUEST['cmd'])) {
@@ -280,6 +279,7 @@ if ($msg != '') {
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
+        <?php echo NOTY_CSS; ?>
         
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -288,6 +288,9 @@ if ($msg != '') {
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type='text/javascript'>
 $(document).ready(function() {
     "use strict";
@@ -296,13 +299,12 @@ $(document).ready(function() {
         if ($('#btnEmail').val() == 'Sending...') {
             return;
         }
-        $('#emMsg').text('');
         if ($('#txtEmail').val() === '') {
-            $('#emMsg').text('Enter an Email Address.  ').css('color', 'red');
+            flagAlertMessage('Enter an Email Address.', 'error');
             return;
         }
         if ($('#txtSubject').val() === '') {
-            $('#emMsg').text('Enter a Subject line.').css('color', 'red');
+            flagAlertMessage('Enter a Subject line', 'error');
             return;
         }
         $('#btnEmail').val('Sending...');
@@ -311,7 +313,7 @@ $(document).ready(function() {
             try {
                 data = $.parseJSON(data);
             } catch (err) {
-                alert('Bad JSON Encoding');
+                flagAlertMessage('Bad JSON Encoding', 'error');
                 return;
             }
             if (data.error) {
@@ -320,7 +322,7 @@ $(document).ready(function() {
                 }
             }
             if (data.msg) {
-                $('#emMsg').text(data.msg).css('color', 'red');
+                flagAlertMessage(data.msg, 'success');
             }
         });
     });
