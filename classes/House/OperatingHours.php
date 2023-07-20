@@ -57,6 +57,29 @@ class OperatingHours {
 
     }
 
+    /**
+     * Get an array of dates where the house is closed in the date range specified.
+     * 
+     * @param \DateTimeInterface $stDT
+     * @param \DateTimeInterface $enDT
+     * @return array<\DateTimeImmutable>
+     */
+    public function getClosedDatesInRange(\DateTimeInterface $stDT, \DateTimeInterface $enDT){
+
+        $dayInterval = new \DateInterval("P1D");
+        $curDT = new \DateTimeImmutable($stDT->format("Y-m-d H:i:s"));
+        $closedDates = [];
+
+        while ($curDT <= $enDT){
+            if($this->isHouseClosed($curDT)){
+                $closedDates[] = $curDT;
+            }
+            $curDT = $curDT->add($dayInterval);
+        }
+
+        return $closedDates;
+    }
+
     public function isNonCleaningDay(\DateTimeInterface $date){
         $dow = $date->format('w');
         $startDate = new \DateTime($this->currentHours[$dow]["Start_Date"]);

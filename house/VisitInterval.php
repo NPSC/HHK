@@ -1,5 +1,6 @@
 <?php
 
+use HHK\House\OperatingHours;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\House\Resource\ResourceTypes;
 use HHK\SysConst\{ResourceStatus, RoomRateCategories, GLTableNames, ItemPriceCode, InvoiceStatus, ItemType, ItemId, VolMemberType};
@@ -15,6 +16,7 @@ use HHK\House\Report\ReportFilter;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\ExcelHelper;
 use HHK\House\Report\ReportFieldSet;
+use HHK\SysConst\VisitStatus;
 
 
 /**
@@ -140,17 +142,20 @@ function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end
 
 
 
-    $qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
+    $qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, ifnull(r.Retired_At, '') as `Retired_At`, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
         from resource r left join
 resource_use ru on r.idResource = ru.idResource and DATE(ru.Start_Date) < DATE('" . $enDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $stDT->format('Y-m-d') . "')
 left join resource_room rr on r.idResource = rr.idResource
 left join room rm on rr.idRoom = rm.idRoom
-where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "')
+where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "') and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')
 order by r.idResource;";
 
     $rstmt = $dbh->query($qu);
 
     $rooms = array();
+
+    $operatingHours = new OperatingHours($dbh);
+    $closedDates = $operatingHours->getClosedDatesInRange($stDT, $enDT);
 
     // Get rooms and oos days
     while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
@@ -178,6 +183,35 @@ order by r.idResource;";
             } else {
                 $nites = $departDT->diff($arriveDT, TRUE)->days;
             }
+
+            //subtract nights the house is closed
+            foreach($closedDates as $date){
+                if($date >= $arriveDT && $date < $departDT){
+                    $nites--;
+                }
+            }
+
+            
+        }
+
+        //count retired room-nights
+        if($r['Retired_At'] != '' && isset($rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable]) === FALSE){
+            $retiredAt = new DateTime($r['Retired_At']);
+            if($retiredAt < $enDT){
+                $retiredNites = $enDT->diff($retiredAt, true)->days;
+            }else{
+                $retiredNites = 0;
+            }
+            
+            
+            //subtract nights the house is closed
+            foreach($closedDates as $date){
+                if($date >= $retiredAt && $date < $enDT){
+                    $retiredNites--;
+                }
+            }
+
+            $rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable] = $retiredNites;
         }
 
         if (isset($rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']]) === FALSE) {
@@ -186,6 +220,40 @@ order by r.idResource;";
             $rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']] += $nites;
         }
 
+    }
+
+    //get visits and check if house is closed during any visits
+    $query = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, DATE(r.`Span_Start`) as `Start`, DATE(ifnull(r.`Span_End`, now())) as `End` from vregister r 
+        left join resource_room rr on r.idResource = rr.idResource
+        left join room rm on rr.idRoom = rm.idRoom
+        where Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
+            DATE(Span_Start) < DATE('" . $enDT->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$stDT->format('Y-m-d') . "');";
+    $stmtv = $dbh->query($query);
+    $rows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
+            
+    foreach($rows as $r){
+        $startDT = new \DateTime($r['Start']);
+        $endDT = new \DateTIme($r['End']);
+        foreach($closedDates as $closedDate){
+            if($closedDate >= $startDT && $closedDate < $endDT){ //if house is closed but there's a visit, subtract night from Unavailble
+                if (isset($rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable]) === FALSE) {
+                    $rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable] = -1;
+                } else {
+                    $rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable]--;
+                }
+            }
+        }
+    }
+
+    //add closed nights
+    foreach($rooms as $idResc=>$r) {
+        foreach ($r as $cId => $c) {
+            if(isset($rooms[$idResc][$cId][ResourceStatus::Unavailable])){
+                $rooms[$idResc][$cId][ResourceStatus::Unavailable] += count($closedDates);
+            }else{
+                $rooms[$idResc][$cId][ResourceStatus::Unavailable] = count($closedDates);
+            }
+        }
     }
 
     // Filter out unavailalbe rooms and add up the nights
