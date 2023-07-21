@@ -790,9 +790,11 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $dataArray['hideCiNowBtn'] = $hideCheckinButton;
 
         // Reservation notes
-        $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
+        if($resv->getIdReservation() > 0 || $uS->ConcatVisitNotes == true){
+            $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
                 , array('id'=>'hhk-noteViewer', 'style'=>'width: 100%; font-size:0.9em;', 'class'=>'hhk-panel'));
+        }
 
         if ($uS->UseDocumentUpload) {
             // Reservation Docs
