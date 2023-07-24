@@ -91,13 +91,13 @@ class VisitViewer {
             if (($r['Status'] == VisitStatus::CheckedIn || $r['Status'] == VisitStatus::CheckedOut) && $keyDepAmount != 0) {
 
                 $kdRow .= HTMLTable::makeTd(($keyDepAmount == 0 ? "" : "$")
-                        .HTMLContainer::generateMarkup('span', $depAmtText, array('id' => 'kdPaid', 'style'=>'margin-right:7px;', 'data-amt'=>$keyDepAmount)));
+                        .HTMLContainer::generateMarkup('span', $depAmtText, ['id' => 'kdPaid', 'style'=>'margin-right:7px;', 'data-amt'=>$keyDepAmount]));
 
                 $kdHeader .= HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'));
 
             } else {
 
-                $kdRow = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $depAmtText, array('id' => 'kdPaid', 'data-amt'=>$keyDepAmount)), array('style' => 'text-align:center;'));
+                $kdRow = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $depAmtText, ['id' => 'kdPaid', 'data-amt'=>$keyDepAmount]), array('style' => 'text-align:center;'));
 
                 $kdHeader = HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'));
             }
@@ -786,14 +786,14 @@ class VisitViewer {
 
             // Current fees block
             $currFees = HTMLContainer::generateMarkup('fieldset',
-                    HTMLContainer::generateMarkup('legend', ($r['Status'] == VisitStatus::CheckedIn ? 'To-Date Fees & Balance Due' : 'Final Fees & Balance Due'), array('style'=>'font-weight:bold;'))
-                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $vat, $includeVisitFee, $showRoomFees, $showGuestNights), array('style'=>'float:left;', 'id'=>'divCurrFees'))
-                        , array('class'=>'hhk-panel', 'style'=>'float:left;margin-right:10px;'));
+                    HTMLContainer::generateMarkup('legend', ($r['Status'] == VisitStatus::CheckedIn ? 'To-Date Fees & Balance Due' : 'Final Fees & Balance Due'), ['style'=>'font-weight:bold;'])
+                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $vat, $includeVisitFee, $showRoomFees, $showGuestNights), ['style'=>'float:left;', 'id'=>'divCurrFees'])
+                        , ['class'=>'hhk-panel', 'style'=>'float:left;margin-right:10px;']);
 
-            // Show Final payment?
-            $showFinalPayment = FALSE;
+            // Enable Final payment?
+            $enableFinalPayment = FALSE;
             if ($action != 'pf' && ($r['Status'] == VisitStatus::CheckedIn || $r['Status'] == VisitStatus::CheckedOut)) {
-                $showFinalPayment = TRUE;
+                $enableFinalPayment = TRUE;
             }
 
             $paymentGateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan(), $r['idRegistration']));
@@ -807,9 +807,7 @@ class VisitViewer {
                     $visitCharge,
                     $paymentGateway,
                     $uS->DefaultPayType,
-                    $unpaidKeyDep,
-                    $showFinalPayment,
-                    FALSE,
+                    $enableFinalPayment,
                     $r['Pref_Token_Id']
                     );
 

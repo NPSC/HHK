@@ -240,7 +240,7 @@ FROM reservation r
                 $paymentGateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
 
                 $dataArray['pay'] = HTMLContainer::generateMarkup('div',
-                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $resv->getIdReservation(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->PayVFeeFirst, $reg->getPreferredTokenId())
+                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $resv->getIdReservation(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), FALSE, $reg->getPreferredTokenId())
                     , array('style'=>'flex-basis: 100%'));
 
             }

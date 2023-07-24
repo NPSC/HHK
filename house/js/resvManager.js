@@ -1977,7 +1977,7 @@ function resvManager(initData, options) {
 
             if ($('#selResource').length > 0 && $('#selRateCategory').length > 0) {
 
-                setupPayments($('#selRateCategory'));
+                setupPayments($('#selRateCategory').val());
 
                 $('#paymentDate').datepicker({
                     yearRange: '-1:+00',
