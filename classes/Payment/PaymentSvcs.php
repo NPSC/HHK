@@ -7,7 +7,7 @@ use HHK\Payment\GatewayResponse\StandInGwResponse;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\{CashResponse, CheckResponse, TransferResponse};
-use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult};
+use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult, CofResult};
 use HHK\SysConst\{InvoiceStatus, PayType, PaymentStatusCode, PaymentMethod};
 use HHK\sec\Session;
 use HHK\Tables\EditRS;
@@ -149,7 +149,6 @@ class PaymentSvcs {
 
     /**
      * Return an Amount directly from an invoice.  No payment record needed.
-     *
      * @param \PDO $dbh
      * @param Invoice $invoice
      * @param PaymentManagerPayment $pmp
@@ -795,6 +794,12 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of processSiteReturn
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @return PaymentResult|PaymentResult|CofResult|null
+     */
     public static function processSiteReturn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
@@ -840,6 +845,12 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of generateReceipt
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @return array<string>
+     */
     public static function generateReceipt(\PDO $dbh, $idPayment) {
 
         $uS = Session::getInstance();

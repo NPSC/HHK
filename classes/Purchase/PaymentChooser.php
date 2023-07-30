@@ -997,7 +997,7 @@ ORDER BY v.idVisit , v.Span;");
 
             $td = HTMLContainer::generateMarkup('label', "Pay", ['for' => 'roomChargesPayCB', 'style' => 'margin-left:5px;margin-right:3px;', 'class'=>'hhk-RoomCharge'])
                 . HTMLInput::generateMarkup('', ['name' => 'roomChargesPayCB', 'class' => 'hhk-feeskeys hhk-RoomCharge', 'checked' => 'checked', 'type' => 'checkbox', 'style' => 'margin-right:.4em;'])
-                . HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'size' => '8', 'class'=>'hhk-RoomCharge', 'style' => 'border:none;text-align:right;', 'readonly'=>'readonly'])
+                . HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'size' => '7', 'class'=>'hhk-RoomCharge', 'style' => 'border:none;text-align:right;', 'readonly'=>'readonly'])
                 .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']);
 
 
@@ -1026,6 +1026,7 @@ ORDER BY v.idVisit , v.Span;");
             HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', ['id'=>'spnPayTitle']), array('colspan'=>'2', 'class'=>'tdlabel'))
             .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', ['name'=>'totalPayment', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly'])
                 , ['style'=>'text-align:right;border:2px solid #2E99DD;'])
+            , ['class'=>'totalPaymentTr']
         );
 
 

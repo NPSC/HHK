@@ -645,7 +645,6 @@ var isGuestAdmin,
     reservationLabel,
     reservationTabLabel,
     unconfirmedResvTabLabel,
-    challVar,
     defaultView,
     defaultEventColor,
     defCalEventTextColor,
@@ -692,7 +691,6 @@ $(document).ready(function () {
     reservationLabel = $('#reservationLabel').val();
     reservationTabLabel = $('#reservationTabLabel').val();
     unconfirmedResvTabLabel = $('#unconfirmedResvTabLabel').val();
-    challVar = $('#challVar').val();
     defaultView = $('#defaultView').val();
     defaultEventColor = $('#defaultEventColor').val();
     defCalEventTextColor = $('#defCalEventTextColor').val();
@@ -1639,7 +1637,12 @@ $(document).ready(function () {
            dataSrc: 'curres'
        },
        drawCallback: function (settings) {
+           let ncur = this.api().rows().data().length;
            $('#spnNumCurrent').text(this.api().rows().data().length);
+           $('#spnCurrentS').text('s');
+           if (ncur == 1) {
+               $('#spnCurrentS').text('');
+           }
            $('#curres .gmenu').menu({
            		focus:function(e, ui){
            			$("#curres .gmenu").not(this).menu("collapseAll", null, true);

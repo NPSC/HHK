@@ -71,7 +71,7 @@ class VantivGateway extends AbstractPaymentGateway {
     public function getGatewayName() {
         return AbstractPaymentGateway::VANTIV;
     }
-    
+
     public function hasUndoReturnPmt() {
     	return False;
     }
@@ -330,8 +330,6 @@ class VantivGateway extends AbstractPaymentGateway {
 
                     return array('warning' => $csResp->response->getMessage(), 'bid' => $bid);
 
-                    break;
-
                 default:
 
                     return array('warning' => '** Return Invalid or Error. **  ', 'bid' => $bid);
@@ -520,19 +518,27 @@ class VantivGateway extends AbstractPaymentGateway {
 
     }
 
-    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate) {
+    public function processHostedReply(\PDO $dbh, $pagePost, $ssoToken, $idInv, $payNotes, $payDate) {
 
     	$uS = Session::getInstance();
     	$payResult = NULL;
         $rtnCode = '';
         $rtnMessage = '';
 
+        $args = [
+            'ReturnCode' => FILTER_SANITIZE_NUMBER_INT,
+            'ReturnMessage' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            VantivGateway::PAYMENT_ID => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+        ];
+
+        $post = filter_input_array(INPUT_POST, $args);
+
         if (isset($post['ReturnCode'])) {
-            $rtnCode = intval(filter_var($post['ReturnCode'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $rtnCode = intval($post['ReturnCode'], 10);
         }
 
         if (isset($post['ReturnMessage'])) {
-            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $rtnMessage = $post['ReturnMessage'];
         }
 
         // THis eventually selects the merchant id
@@ -543,7 +549,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         if (isset($post[VantivGateway::PAYMENT_ID])) {
 
-            $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $paymentId = $post[VantivGateway::PAYMENT_ID];
 
             $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
 

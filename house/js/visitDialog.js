@@ -2,7 +2,7 @@
  * visitDialog.js
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -589,7 +589,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
         $diagbox.dialog('option', 'buttons', buttons);
         $diagbox.dialog('option', 'title', title);
-        $diagbox.dialog('option', 'width', ($( window ).width() * .92));
+        $diagbox.dialog('option', 'width', ($( window ).width() * .95));
         $diagbox.dialog('option', 'height', $( window ).height());
         $diagbox.dialog('open');
 

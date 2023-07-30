@@ -1,6 +1,5 @@
 <?php
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Payment\PaymentSvcs;
@@ -14,14 +13,13 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\House\Report\RoomReport;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
-use HHK\sec\SysConfig;
 use HHK\US_Holidays;
 
 /**
  * Register.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -33,8 +31,6 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
-
-$totalRest = $uS->PreviousNights;
 
 // Get labels
 $labels = Labels::getLabels();
@@ -58,17 +54,6 @@ $rvCols = array();
 $wlCols = array();
 
 
-//set defaultRegisterTab - use tab url param else default
-if (isset($_GET["tab"])){
-    $tab = intval(filter_var($_GET["tab"], FILTER_SANITIZE_NUMBER_INT), 10);
-    if($tab < 5){
-        $defaultRegisterTab = $tab;
-    }
-}
-
-if ($defaultRegisterTab == 0 && $uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
-    $defaultRegisterTab = $uS->DefaultRegisterTab;
-}
 
 // Hosted payment return
 try {
@@ -115,6 +100,19 @@ if (isset($_POST['btnFeesDl'])) {
     // Dailey report
     PaymentReport::generateDayReport($dbh, $_POST);
 }
+
+//set defaultRegisterTab - use tab url param else default
+if (isset($_GET["tab"])) {
+    $tab = intval(filter_var($_GET["tab"], FILTER_SANITIZE_NUMBER_INT), 10);
+    if ($tab < 5) {
+        $defaultRegisterTab = $tab;
+    }
+}
+
+if ($defaultRegisterTab == 0 && $uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
+    $defaultRegisterTab = $uS->DefaultRegisterTab;
+}
+
 
 // Guest add message
 if (isset($_GET['gamess'])) {
@@ -377,7 +375,7 @@ if($uS->useOnlineReferral){
             <form autocomplete="off">
                 <h2 class="hhk-flex" id="page-title-row">
                 	<span class="mb-3 mb-md-0"><?php echo $wInit->pageHeading;?></span>
-                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest) . RoomReport::getGlobalStaysCounter($dbh) . RoomReport::getGlobalRoomOccupancy($dbh); ?>
+                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $uS->PreviousNights) . RoomReport::getGlobalStaysCounter($dbh) . RoomReport::getGlobalRoomOccupancy($dbh); ?>
                 	<span id="name-search" class="d-none d-md-inline">Name Search:
                     	<input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
                 	</span>
@@ -395,21 +393,19 @@ if($uS->useOnlineReferral){
             		<div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
                     <ul class="hhk-flex" style="border:none;">
                         <li id="liCal"><a href="#vcal">Calendar</a></li>
-                        <li id="liCurrGuests"><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
-                        <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>
+                        <li id="liCurrGuests"><a href="#vstays"><span id="spnNumCurrent"></span> Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?><span id="spnCurrentS"></span></a></li>
+                        <li><a href="#vresvs"><span id="spnNumConfirmed"></span> <?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?></a></li>
                         <?php if ($uS->ShowUncfrmdStatusTab) { ?>
-                        <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
+                            <li><a href="#vuncon"><span id="spnNumUnconfirmed"></span> <?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?></a></li>
                         <?php } ?>
-                        <li><a href="#vwls"><?php echo $labels->getString('register', 'waitlistTab', 'Wait List'); ?> (<span id="spnNumWaitlist"></span>)</a></li>
+                        <li><a href="#vwls"><span id="spnNumWaitlist"></span> <?php echo $labels->getString('register', 'waitlistTab', 'Wait Listed'); ?></a></li>
                         <?php if($uS->useOnlineReferral){ ?>
-                        <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> (<span id="spnNumReferral"></span>)</a></li>
-                        <?php } ?>
-                        <?php if ($isGuestAdmin) { ?>
-
-                            <?php if ($showCharges) { ?>
+                            <li><a href="#vreferrals"><span id="spnNumReferral"></span> <?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> </a></li>
+                        <?php }
+                         if ($isGuestAdmin && $showCharges) { ?>
                             <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
                             <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
-                        <?php } } ?>
+                        <?php } ?>
                         <li id="liDaylog"><a href="#vdaily">Daily Log</a></li>
                         <li id="liStaffNotes"><a href="#vStaffNotes">Staff Notes</a></li>
                     </ul>

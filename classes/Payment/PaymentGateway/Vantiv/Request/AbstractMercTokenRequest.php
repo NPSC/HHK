@@ -40,7 +40,15 @@ use HHK\Payment\PaymentGateway\Vantiv\Response\AbstractMercResponse;
 // Mercury Token transactions
 abstract class AbstractMercTokenRequest extends AbstractMercRequest {
 
+    /**
+     * Summary of tokenId
+     * @var int
+     */
     protected $tokenId;
+    /**
+     * Summary of transType
+     * @var
+     */
     protected $transType;
 
     /**
@@ -74,6 +82,11 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
         return $xaction;
     }
 
+    /**
+     * Summary of setCardHolderName
+     * @param mixed $v
+     * @return AbstractMercTokenRequest
+     */
     public function setCardHolderName($v) {
         if ($v != '') {
             $a = substr($v, 0, 30);
@@ -82,10 +95,19 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
         return $this;
     }
 
+    /**
+     * Summary of getCardHolderName
+     * @return mixed
+     */
     public function getCardHolderName() {
         return $this->fields["CardHolderName"];
     }
 
+    /**
+     * Summary of setFrequency
+     * @param mixed $frequency
+     * @return AbstractMercTokenRequest
+     */
     public function setFrequency($frequency) {
         if ($frequency == 'Recurring' || $frequency == 'OneTime') {
             $this->fields["Frequency"] = $frequency;
@@ -93,6 +115,11 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
         return $this;
     }
 
+    /**
+     * Summary of setInvoice
+     * @param mixed $v
+     * @return AbstractMercTokenRequest
+     */
     public function setInvoice($v) {
         if ($v != '') {
             $a = substr($v, 0, 16);
@@ -101,6 +128,11 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
         return $this;
     }
 
+    /**
+     * Summary of setToken
+     * @param mixed $v
+     * @return AbstractMercTokenRequest
+     */
     public function setToken($v) {
         if ($v != '') {
             $a = substr($v, 0, 100);
@@ -109,15 +141,29 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
         return $this;
     }
 
+    /**
+     * Summary of setTokenId
+     * @param int $idToken
+     * @return AbstractMercTokenRequest
+     */
     public function setTokenId($idToken) {
         $this->tokenId = $idToken;
         return $this;
     }
 
+    /**
+     * Summary of getTokenId
+     * @return mixed
+     */
     public function getTokenId() {
         return $this->tokenId;
     }
 
+    /**
+     * Summary of setMemo
+     * @param mixed $v
+     * @return AbstractMercTokenRequest
+     */
     public function setMemo($v) {
         if ($v != '') {
             $a = substr($v, 0, 40);
@@ -126,6 +172,11 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
         return $this;
     }
 
+    /**
+     * Summary of setOperatorID
+     * @param mixed $v
+     * @return AbstractMercTokenRequest
+     */
     public function setOperatorID($v) {
         if ($v != '') {
             $a = substr($v, 0, 10);
@@ -134,6 +185,10 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
         return $this;
     }
 
+    /**
+     * Summary of getOperatorID
+     * @return mixed
+     */
     public function getOperatorID() {
         if (isset($this->fields["OperatorID"])) {
             return $this->fields["OperatorID"];
@@ -141,6 +196,11 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
         return '';
     }
 
+    /**
+     * Summary of setTerminalName
+     * @param mixed $v
+     * @return AbstractMercTokenRequest
+     */
     public function setTerminalName($v) {
         if ($v != '') {
             $a = substr($v, 0, 20);

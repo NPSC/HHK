@@ -704,7 +704,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
 ('reservationTab','Confirmed Reservations','s','rg','','Default: Confirmed Reservations'),
 ('unconfirmedTab','UnConfirmed Reservations','s','rg','','Default: UnConfirmed Reservations'),
-('waitlistTab','Wait List','s','rg','','Default: Wait List'),
+('waitlistTab','Wait Listed','s','rg','','Default: Wait Listed'),
 ('recentPayTab','Recent Payments','s','rg','','Default: Recent Payments'),
 ('rateTitle','Room Rate','s','rg','','Default: Room Rate'),
 ('onlineReferralTab', 'Referrals', 's', 'rg','','Default: Referrals'),

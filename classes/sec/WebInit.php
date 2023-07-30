@@ -115,7 +115,7 @@ class WebInit {
 
         // Demo or training version?
         if ($uS->mode !== Mode::Live) {
-            $this->menuTitle = $this->siteName . " " . ucfirst($uS->mode);
+            $this->menuTitle = '*' . strtoupper($uS->mode) . "* " . $this->siteName;
             $this->pageTitle = strtoupper($uS->mode) . " - " . $this->siteName;
         }
 

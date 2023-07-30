@@ -666,7 +666,7 @@ class Statement {
                 $amtStyle = 'text-align:right;';
 
                 if ($p['Payment_Status'] == PaymentStatusCode::Paid) {
-                    
+
                     $amtMkup = number_format($amt, 2);
                     $totalPment += $amt;
 
@@ -675,11 +675,11 @@ class Statement {
                     } else {
                         $p['Payment_Status_Title'] = 'Paid';
                     }
-                    
+
                 } else if ($p['Payment_Status'] == PaymentStatusCode::VoidReturn) {
 
                     $p['Payment_Status_Title'] = 'Void';
-                    
+
                     $amtMkup = HTMLContainer::generateMarkup('span', number_format(floatval($p['Payment_Amount']), 2), array('style'=>'color:red;'));
                     $amtStyle = 'text-align:left;';
                 } else {
@@ -1022,7 +1022,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
 
 
-        $rec .= self::makeSummaryDiv('', $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
+        $rec .= self::makeSummaryDiv('', $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), Registration::loadDepositBalance($dbh, $idRegistration), $totalNights);
 
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'margin-top:25px;'));
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox'));
@@ -1148,7 +1148,18 @@ WHERE
 
         $rec .= HTMLContainer::generateMarkup('h2', 'Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
 
-        $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
+        $rec .= self::makeSummaryDiv(
+            $guestName,
+            $patientName,
+            $hospital,
+            $diags,
+            $labels,
+            $totalCharge,
+            $totalThirdPayments,
+            $totalGuestPayments,
+            Registration::loadLodgingBalance($dbh, $idRegistration),
+            Registration::loadDepositBalance($dbh, $idRegistration),
+            $totalNights);
 
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'clear:both;margin-top:25px;'));
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox'));
@@ -1169,7 +1180,22 @@ WHERE
 
     }
 
-    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $totalNights) {
+    /**
+     * Summary of makeSummaryDiv
+     * @param mixed $guestName
+     * @param mixed $patientName
+     * @param mixed $hospital
+     * @param array $diags
+     * @param Labels $labels
+     * @param mixed $totalCharge
+     * @param mixed $totalThirdPayments
+     * @param mixed $totalGuestPayments
+     * @param mixed $MOABalance
+     * @param mixed $depositBalance
+     * @param mixed $totalNights
+     * @return string
+     */
+    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $depositBalance, $totalNights) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -1231,6 +1257,13 @@ WHERE
             $sTbl->addBodyTr(
                 HTMLTable::makeTd('Money on Account:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd('($'. number_format($MOABalance, 2) . ')', array('style'=>'text-align:right;')));
+        }
+
+        if ($depositBalance > 0) {
+            $sTbl->addBodyTr(
+                HTMLTable::makeTd($labels->getString('statement', 'keyDepositLabel', 'Deposit'), array('class' => 'tdlabel'))
+                . HTMLTable::makeTd('($' . number_format($depositBalance, 2) . ')', array('style' => 'text-align:right;'))
+            );
         }
 
         $rec = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array(),
