@@ -660,6 +660,8 @@ function amtPaid() {
         $('.hhk-minPayment').show('fade');
         $('#daystoPay').hide();
         p.hsDiscAmt.val('');
+        originalFeePayAmt = a.feePay;
+
 
         // Show correct row for charges due
         if (totRmBalDue >= 0) {
@@ -680,7 +682,6 @@ function amtPaid() {
         if (a.totCharges < 0) {
             // case: totCharges is negative
             balance = a.totCharges - a.feePay;
-            originalFeePayAmt = a.feePay;
             a.totPay = a.feePay;
         } else {
             // case: totCharges is positive
@@ -698,7 +699,10 @@ function amtPaid() {
 
         } else if (balance < 0) {
             // show overpayment
-            doOverpayment(balance);
+
+            a.overPayAmt = Math.abs(balance);
+            doOverpayment();
+
         }
 
     // else still checked in
@@ -762,19 +766,15 @@ function amtPaid() {
 
     p.cashTendered.change();
 
-    function doOverpayment(balance) {
+    function doOverpayment() {
         // Turn off house waive
         p.houseWaiveCb.prop('checked', false);
         p.hsDiscAmt.val('');
         $('.hhk-HouseDiscount').hide();
 
-        a.overPayAmt = Math.abs(balance);
-
-        // Do we still have an overpayment
         if (a.overPayAmt != 0) {
 
             $('.hhk-Overpayment').show('fade');
-            $('.totalPaymentTr').hide();
 
             if (p.selBalTo.val() === 'r') {
                 // Refund
@@ -796,20 +796,27 @@ function amtPaid() {
                     if (a.overPayAmt > 0) {
                         $('#divReturnPay').show();
                         $('#txtRtnAmount').val(a.overPayAmt.toFixed(2).toString());
+                        $('.totalPaymentTr').hide();
                     } else {
                         // overpayment is 0
                         $('.hhk-Overpayment').hide();
                         $('#txtRtnAmount').val('');
                         $('#divReturnPay').hide();
                         p.selBalTo.val('');
+                        $('.totalPaymentTr').show();
                     }
                 }
 
                 a.feePay = a.feePayPreTax + updateFeeTaxes.calcTax(a.feePayPreTax);
-                a.totPay = a.feePay;
+                a.totPay = (a.totPay - originalFeePayAmt) + a.feePay;
 
                 if (originalFeePayAmt != 0) {
                     alert('Pay Room Fees amount is reduced to: $' + a.feePay.toFixed(2).toString());
+                }
+
+                if (a.totPay > 0) {
+                    // Enable house waive
+                    $('.hhk-HouseDiscount').show('fade');
                 }
 
             } else {
