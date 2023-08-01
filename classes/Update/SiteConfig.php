@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Update;
 
+use DateTime;
+use HHK\Exception\ValidationException;
+use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
 use HHK\Exception\RuntimeException;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -38,8 +41,6 @@ class SiteConfig {
             3 => array(3, 'Mar'), 4 => array(4, 'Apr'), 5 => array(5, 'May'), 6 => array(6, 'Jun'),
             7 => array(7, 'Jul'), 8 => array(8, 'Aug'), 9 => array(9, 'Sep'), 10 => array(10, 'Oct'), 11 => array(11, 'Nov'), 12 => array(12, 'Dec'));
 
-        $wdNames = array('Sun','Mon','Tue','Wed','Thr','Fri','Sat');
-
         $tbl = new HTMLTable();
         $trs = array();
         $opts = array(
@@ -59,6 +60,9 @@ class SiteConfig {
         $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
         $stbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
 
+        $r = SysConfig::getKeyRecord($dbh, WebInit::SYS_CONFIG, 'Show_Closed');
+        $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
+        $stbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
 
         $year = (int) date("Y");
         $year--;
@@ -116,32 +120,11 @@ class SiteConfig {
         $tbl->addHeader(HTMLTable::makeTh('Holiday') . HTMLTable::makeTh('Enable') .HTMLTable::makeTh($year++)
                 . HTMLTable::makeTh($year++) . HTMLTable::makeTh($year++) . HTMLTable::makeTh($year++));
 
-        // Week days
-        $stmt = $dbh->query("Select Code, Substitute from gen_lookups where Table_Name = 'Non_Cleaning_Day'");
-        $wds = $stmt->fetchall(\PDO::FETCH_ASSOC);
-
-        $wdTbl = new HTMLTable();
-        $wdTbl->addHeaderTr(HTMLTable::makeTh('Weekday').HTMLTable::makeTh('Non-Cleaning'));
-
-
-        foreach ($wdNames as $k => $d) {
-
-            $attr = array('name'=>'wd' . $k, 'type'=>'checkbox');
-            if (isset($wds)) {
-                foreach ($wds as $r) {
-                    if ($r['Code'] == $k) {
-                        $attr['checked'] = 'checked';
-                    }
-                }
-            }
-
-            $wdTbl->addBodyTr(HTMLTable::makeTd($d, array('style'=>'text-align:right;')) . HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')));
-        }
-
+        $operatingHours = new OperatingHours($dbh);
 
         return HTMLContainer::generateMarkup('h3', 'Configuration Parameters') . $stbl->generateMarkup() . '<br/>'
         . HTMLContainer::generateMarkup('h3', 'Annual Holidays') . $tbl->generateMarkup()
-        . HTMLContainer::generateMarkup('h3', 'House is Closed these Nights', array('style'=>'margin-top:12px;')) . $wdTbl->generateMarkup();
+        . $operatingHours->getEditMarkup();
     }
 
     public static function checkUploadFile($upFile) {
@@ -388,15 +371,8 @@ class SiteConfig {
 
         }
 
-        // Weekdays
-        for ($d = 0; $d < 7; $d++) {
-
-            if (isset($post['wd'.$d])) {
-                $dbh->exec("replace into gen_lookups (`Table_Name`, `Code`) values ('Non_Cleaning_Day', '$d')");
-            } else {
-                $dbh->exec("delete from gen_lookups where `Table_Name`='Non_Cleaning_Day' and `Code`='$d'");
-            }
-        }
+        $operatingHours = new OperatingHours($dbh);
+        $resultMsg.= $operatingHours->save($post);
 
         self::saveSysConfig($dbh, $post);
 

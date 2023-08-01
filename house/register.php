@@ -1,5 +1,6 @@
 <?php
 
+use HHK\House\OperatingHours;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Payment\PaymentSvcs;
@@ -246,7 +247,12 @@ if ($uS->Show_Holidays) {
     }
 }
 
-
+//show closed days
+$closedDays = [];
+if($uS->Show_Closed){
+    $operatingHours = new OperatingHours($dbh);
+    $closedDays = $operatingHours->getClosedDays();
+}
 //Resource grouping controls
 $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 
@@ -366,6 +372,11 @@ if($uS->useOnlineReferral){
                 background-color: #dbfcb5;
                 opacity: .4;
             }
+            .hhk-fcslot-closed {
+                background-color: #fcb5b5;
+                opacity: .4;
+            }
+
         </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?> >
@@ -547,6 +558,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
         <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
         <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
+        <input type="hidden" id="closedDays" value='<?php echo json_encode($closedDays); ?>' />
 		<input  type="hidden" id="showCurrentGuestPhotos" value='<?php echo ($uS->showCurrentGuestPhotos && $uS->ShowGuestPhoto); ?>' />
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>

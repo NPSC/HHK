@@ -3088,3 +3088,5 @@ from
     left join w_idp i on (u.idIdp = i.idIdp));
 
 
+CREATE OR REPLACE VIEW `vcurrent_operating_hours` AS
+select * from operating_schedules where End_Date is null group by Day having max(idDay);

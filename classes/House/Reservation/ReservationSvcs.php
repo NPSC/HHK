@@ -666,9 +666,12 @@ class ReservationSvcs
             } else if ($reserv->getStatus() == ReservationStatus::Waitlist) {
                 $dataArray['waitlist'] = 'y';
             }
+            $dataArray["success"] = $reply;
+        }else{
+            return ["error"=>$reply];
         }
 
-        $dataArray["success"] = $reply;
+        
         return $dataArray;
     }
 

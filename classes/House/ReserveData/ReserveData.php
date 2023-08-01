@@ -34,6 +34,7 @@ class ReserveData {
     const ADD_PERSON = 'addPerson';
     const WARNING = 'warning';
     const SUCCESS = 'success';
+    const INFO = 'info';
 
     const ROLE = 'role';
     const PREF = 'pref';
@@ -94,6 +95,7 @@ class ReserveData {
     protected $concurrentRooms = 0;
     protected $psgMembers;
     protected $errors;
+    protected $msgs;
     protected $resvPrompt;
     protected $insistCkinDemog;
     protected $searchTerm;
@@ -228,6 +230,7 @@ class ReserveData {
         $this->checkinSection = '';
         $this->paymentSection = '';
         $this->errors = '';
+        $this->msgs = '';
         $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
         $this->resvStatusCode = '';
@@ -361,6 +364,10 @@ class ReserveData {
 
         if ($this->errors != '') {
             $rtnData[ReserveData::WARNING] = $this->errors;
+        }
+
+        if ($this->msgs != '') {
+            $rtnData[ReserveData::INFO] = $this->msgs;
         }
 
         return $rtnData;
@@ -792,6 +799,23 @@ class ReserveData {
 
     public function getErrors() {
         return $this->errors;
+    }
+
+    public function addMsg($e) {
+        $this->msgs .= $e;
+    }
+
+    public function hasMsg() {
+
+        if ($this->msgs != '') {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+    public function getMsgs() {
+        return $this->msgs;
     }
 
 }

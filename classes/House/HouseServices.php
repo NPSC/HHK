@@ -1719,15 +1719,14 @@ class HouseServices {
 
         if ($reply === FALSE) {
 
-            $reply = 'Warning:  Visit not moved.';
+            $dataArray['warning'] = 'Warning:  Visit not moved.';
 
         } else {
 
             // Return checked in guests markup?
             $dataArray['curres'] = 'y';
+            $dataArray = array_merge($dataArray, $reply);
         }
-
-        $dataArray['success'] = $reply;
 
         return $dataArray;
     }

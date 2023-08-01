@@ -548,10 +548,10 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
 
             } else if (data.success) {
                 flagAlertMessage(data.success, 'success');
-                if (updateCal === undefined || updateCal === true) {
-                	calendar.refetchEvents();
-                	refreshdTables(data);
-                }
+            }
+            if (updateCal === undefined || updateCal === true) {
+                calendar.refetchEvents();
+                refreshdTables(data);
             }
         }
     });
@@ -672,6 +672,7 @@ var isGuestAdmin,
     calStartDate,
     acceptResvPay,
     holidays,
+    closedDays,
     showCurrentGuestPhotos;
 
 $(document).ready(function () {
@@ -712,6 +713,7 @@ $(document).ready(function () {
     showCharges = $('#showCharges').val();
 	acceptResvPay = $('#acceptResvPay').val();
 	holidays = $.parseJSON($('#holidays').val());
+    closedDays = $.parseJSON($('#closedDays').val());
 	showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val();
 
     // Current Guests
@@ -1104,9 +1106,13 @@ $(document).ready(function () {
 				return 'hhk-fcslot-today';
 			} else {
 				let strDay = info.date.getFullYear() + '-' + (info.date.getMonth() + 1) + '-' + info.date.getDate();
+
 				if (holidays.includes(strDay)) {
 					return 'hhk-fcslot-holiday';
 				}
+                if(closedDays.includes(info.date.getDay())){
+                    return 'fc-cell-shaded';
+                }
 			}
 		},
 

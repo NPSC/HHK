@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\House\OperatingHours;
 use HHK\Notes;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
@@ -660,7 +661,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
             $td .= HTMLTable::makeTd($totals[$idRm]);
 
             if ($rooms[$idRm]['Title'] != 'Total') {
-                $f = ($daysOccupied / count($rdateArray) * 100);
+                $f = ($daysOccupied / (count($rdateArray)) * 100);
                 $td .= HTMLTable::makeTd(number_format($f, 0) . "%");
             }
 
@@ -746,6 +747,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
             $daysOccupied['o'] = 0;
             $daysOccupied['t'] = 0;
             $daysOccupied['u'] = 0;
+            $daysOccupied['c'] = 0;
 
             foreach($rdateArray as $day => $numbers) {
 
@@ -765,6 +767,9 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
                     $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:brown;'));
                      $daysOccupied['t']++;
 
+                } else if ($numbers['c'] > 0) {
+                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:lightgray;'));
+                    $daysOccupied['c']++;
                 } else {
                     $tds .= HTMLTable::makeTd(' ');
                 }
@@ -819,6 +824,8 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
             $endDate = date('Y-m-d');
         }
 
+        $operatingHours = new OperatingHours($dbh);
+
         $oneDay = new \DateInterval('P1D');
         $dateFormat = 'Y-m-d';
         $dateTitle = 'j';
@@ -858,7 +865,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         }
         unset($stRows);
 
-        $this->summary = array('nits'=>'Nights', 'oos'=>'OOS', 'to'=>'Delayed', 'un'=>'Unavailable');
+        $this->summary = array('nits'=>'Nights', 'oos'=>'OOS', 'to'=>'Delayed', 'un'=>'Unavailable', 'c'=>'Closed');
 
 
         $this->days = array();
@@ -876,6 +883,8 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
 
             $thisMonth = $countgDT->format('M, Y');
 
+            $daysClosed = 0;
+
             if (isset($this->daysInMonths[$thisMonth])) {
                 $this->daysInMonths[$thisMonth]++;
             } else {
@@ -888,7 +897,13 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
                 $this->days[$idResc][$thisDay]['o'] = 0;
                 $this->days[$idResc][$thisDay]['t'] = 0;
                 $this->days[$idResc][$thisDay]['u'] = 0;
-
+                
+                if($operatingHours->isHouseClosed($countgDT)){
+                    $this->days[$idResc][$thisDay]['c'] = 1;
+                    $daysClosed++;
+                }else{
+                    $this->days[$idResc][$thisDay]['c'] = 0;
+                }
             }
 
             foreach ($this->summary as $s => $title) {
@@ -896,7 +911,6 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
                 $this->totals[$s][$thisDay] = 0;
 
             }
-
 
             $countgDT->add($oneDay);
 
@@ -907,7 +921,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         $this->th .= HTMLTable::makeTh('OOS');
         $this->th .= HTMLTable::makeTh('Delayed');
         $this->th .= HTMLTable::makeTh('Unavailable');
-
+        $this->th .= HTMLTable::makeTh('Closed');
 
 
         // Collect visit records
@@ -934,6 +948,7 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
                 if (isset($this->days[$r['idResource']][$rmDate])) {
 
                     $this->days[$r['idResource']][$rmDate]['n']++;
+                    $this->days[$r['idResource']][$rmDate]['c'] = 0; //room not closed if someone is staying
                     $this->totals['nits'][$rmDate]++;
 
 
@@ -984,6 +999,8 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
                         $this->totals['un'][$rmDate]++;
 
                     }
+
+                    $this->days[$r['idResource']][$rmDate]['c'] = 0; //room not closed if there's a resource use record
                 }
 
                 if ($rmStartDate > $endDT) {
@@ -1014,12 +1031,22 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
                 if (isset($this->days[$r['idResource']][$rmDate])) {
                     $this->days[$r['idResource']][$rmDate]['u']++;
                     $this->totals['un'][$rmDate]++;
+                    $this->days[$r['idResource']][$rmDate]['c'] = 0; //room not closed if it's retired
                 }
 
                 if ($rmStartDate > $endDT) {
                     break;
                 }
                 $rmStartDate->add($oneDay);
+            }
+        }
+
+        //count up closed days
+        foreach($this->days as $idResc=>$dates){
+            foreach($dates as $date=>$numbers){
+                if($numbers['c'] > 0){
+                    $this->totals['c'][$date]++;
+                }
             }
         }
 

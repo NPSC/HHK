@@ -381,6 +381,10 @@ WHERE r.idReservation = " . $rData->getIdResv());
             return;
         }
 
+        $operatingHours = new \HHK\House\OperatingHours($dbh);
+        if($operatingHours->isHouseClosed($this->reserveData->getArrivalDT())){
+            $this->reserveData->addMsg("The house will be closed on the Arrival date. ");
+        }
 
         // Is anyone already in a visit?
         $psgMems = $this->reserveData->getPsgMembers();
