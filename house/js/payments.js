@@ -658,7 +658,6 @@ function amtPaid() {
     if (a.isChdOut) {
         // Checked out
         $('.hhk-minPayment').show('fade');
-        $('#daystoPay').hide();
         p.hsDiscAmt.val('');
         originalFeePayAmt = a.feePay;
 
@@ -668,10 +667,12 @@ function amtPaid() {
             p.feesCharges.val(totRmBalDue.toFixed(2).toString());
             $('.hhk-GuestCredit').hide();
             $('.hhk-RoomCharge').show('fade');
+            $('#daystoPay').hide();
 
         } else {
             p.guestCredit.val(totRmBalDue.toFixed(2).toString());
             $('.hhk-RoomCharge').hide();
+            $('#daystoPay').show();
             $('.hhk-GuestCredit').show('fade');
             // Treat money owed the guest as return
             a.totReturns -= totRmBalDue;
