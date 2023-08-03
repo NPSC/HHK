@@ -45,7 +45,6 @@ function resvManager(initData, options) {
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
     var options = options;
-    var resvStatusCode = '';
     var resvStatusType = '';
     var guestSearchTerm = '';
 
@@ -65,7 +64,7 @@ function resvManager(initData, options) {
     t.getSpan = getSpan;
     t.setRooms = setRooms;
     t.options = options;
-    //t.guestSearchTerm = guestSearchTerm;
+
 
     function getPrePaymtAmt() {
         return prePaymtAmt;
@@ -97,6 +96,26 @@ function resvManager(initData, options) {
 
     function getInsistCkinDemog() {
         return insistCkinDemog;
+    }
+
+    /**
+     *
+     * @param {*} namePart two values: last or first
+     */
+    function getSearchTerms(namePart) {
+
+        if (guestSearchTerm != '') {
+            const names = guestSearchTerm.split(",");
+
+            if (namePart.toLowerCase() == 'last' && names.length > 0) {
+                return names[0].trim();
+            } else if (namePart.toLowerCase() == 'first' && names.length > 1) {
+                return names[1].trim();
+            }
+
+        }
+
+        return '';
     }
 
     function FamilySection($wrapper) {
@@ -780,10 +799,15 @@ function resvManager(initData, options) {
                     let tr = $(data.famSection.tblBody[t]);
 
                     if (t == 2) {
-                        // Load search term
+                        // Load search term last name
                         let inp = tr.find('input.hhk-lastname');
                         if (inp.val() === '') {
-                            inp.val(guestSearchTerm).focus();
+                            inp.val(getSearchTerms('last')).focus();
+                        }
+                        // Load search term first name
+                        inp = tr.find('input.hhk-firstname');
+                        if (inp.val() === '') {
+                            inp.val(getSearchTerms('first')).focus();
                         }
                     }
 
@@ -2622,7 +2646,6 @@ function resvManager(initData, options) {
             span = data.span;
         }
         if (data.resvStatusCode) {
-            resvStatusCode = data.resvStatusCode
         }
         if (data.resvStatusType) {
             resvStatusType = data.resvStatusType
@@ -2750,10 +2773,13 @@ function resvManager(initData, options) {
 
                 $('#txtPersonSearch').val("");
 
+                // load search terms
                 if ($('#' + data.addPerson.mem.pref + 'txtLastName').val() === "") {
-                    $('#' + data.addPerson.mem.pref + 'txtLastName').val(guestSearchTerm).focus();
+                    $('#' + data.addPerson.mem.pref + 'txtLastName').val(getSearchTerms('last')).focus();
                 }
-
+                if ($('#' + data.addPerson.mem.pref + 'txtFirstName').val() === "") {
+                    $('#' + data.addPerson.mem.pref + 'txtFirstName').val(getSearchTerms('first')).focus();
+                }
 
             }
         }
