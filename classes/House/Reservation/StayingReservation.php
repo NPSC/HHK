@@ -25,6 +25,12 @@ use HHK\House\ReserveData\PSGMember\PSGMemVisit;
 
 class StayingReservation extends CheckingIn {
 
+    /**
+     * Summary of createMarkup
+     * @param \PDO $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return array
+     */
     public function createMarkup(\PDO $dbh) {
 
         if ($this->reserveData->getIdVisit() < 1 || $this->reserveData->getSpan() < 0) {
@@ -39,6 +45,11 @@ class StayingReservation extends CheckingIn {
 
     }
 
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @return ActiveReservation|StayingReservation
+     */
     public function save(\PDO $dbh) {
 
         // Check for new room
@@ -215,6 +226,15 @@ class StayingReservation extends CheckingIn {
         return;
     }
 
+    /**
+     * Summary of findCheckedInStays
+     * @param \PDO $dbh
+     * @param array $psgMembers
+     * @param mixed $idPsg
+     * @param mixed $idVisit
+     * @param mixed $idSpan
+     * @return int
+     */
     protected function findCheckedInStays(\PDO $dbh, array &$psgMembers, $idPsg, $idVisit = 0, $idSpan = -1) {
 
         $whStays = '';

@@ -14,6 +14,11 @@ use HHK\SysConst\MemStatus;
 
 class ReserveSearcher extends ActiveReservation {
 
+    /**
+     * Summary of createMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     public function createMarkup(\PDO $dbh) {
 
         $data = $this->resvChooserMarkup($dbh);
@@ -26,6 +31,11 @@ class ReserveSearcher extends ActiveReservation {
 
     }
 
+    /**
+     * Summary of addPerson
+     * @param \PDO $dbh
+     * @return array
+     */
     public function addPerson(\PDO $dbh) {
 
         if ($this->reserveData->getIdPsg() < 1 && $this->reserveData->getId() > 0) {
@@ -44,6 +54,11 @@ class ReserveSearcher extends ActiveReservation {
 
     }
 
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @return ActiveReservation
+     */
     public function save(\PDO $dbh) {
 
         $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
@@ -53,6 +68,11 @@ class ReserveSearcher extends ActiveReservation {
     }
 
 
+    /**
+     * Summary of resvChooserMarkup
+     * @param \PDO $dbh
+     * @return array|null
+     */
     protected function resvChooserMarkup(\PDO $dbh) {
         $ngRss = [];
 
@@ -85,6 +105,13 @@ class ReserveSearcher extends ActiveReservation {
 
     }
 
+    /**
+     * Summary of psgChooserMkup
+     * @param \PDO $dbh
+     * @param array $ngRss
+     * @param mixed $offerNew
+     * @return string
+     */
     protected function psgChooserMkup(\PDO $dbh, array $ngRss, $offerNew = TRUE) {
 
         $tbl = new HTMLTable();

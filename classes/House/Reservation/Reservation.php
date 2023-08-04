@@ -430,7 +430,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of save
      * @param \PDO $dbh
-     * @param mixed $post
      * @return ActiveReservation
      */
     public function save(\PDO $dbh) {

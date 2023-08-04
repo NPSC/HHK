@@ -168,15 +168,8 @@ $(document).ready(function() {
 
     $('#btnDelete').click(function () {
 
-        let deleteAll = false;
-
         if ($(this).val() === 'Deleting >>>>') {
             return;
-        }
-
-        // Do we host a repeating reservation list
-        if (isRepeatReservHost) {
-            deleteAll = confirm('Also delete all unused child reservations?');
         }
 
         if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
@@ -193,7 +186,7 @@ $(document).ready(function() {
 
 			 $.post(
 				'ws_resv.php',
-                $('#form1').serialize() + '&deleteChilden=' + deleteAll + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                $('#form1').serialize() + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
                  function(datas) {
                     let data;
                     try {
@@ -225,9 +218,6 @@ $(document).ready(function() {
 						$('#form1').remove();
 						$('#contentDiv').append('<p>' + data.deleted + '</p>');
 
-                        if (data.childDeleted && data.childDeleted > 0) {
-                            $('#contentDiv').append('<p>Also deleted ' + data.childDeleted + ' child reservations.</p>');
-                        }
 						$('#spnStatus').text('Deleted');
 					}
 

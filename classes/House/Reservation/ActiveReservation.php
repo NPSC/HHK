@@ -85,7 +85,6 @@ class ActiveReservation extends Reservation {
     /**
      * Summary of save
      * @param \PDO $dbh
-     * @param array $post
      * @return ActiveReservation
      */
     public function save(\PDO $dbh) {
@@ -291,28 +290,28 @@ class ActiveReservation extends Reservation {
         }
 
         // check for delete children
-        if ($this->reserveData->getDeleteChildReservations() === true) {
+        // if ($this->reserveData->getDeleteChildReservations() === true) {
 
-            $children = RepeatReservations::getHostChildren($dbh, $this->reserveData->getIdResv());
+        //     $children = RepeatReservations::getHostChildren($dbh, $this->reserveData->getIdResv());
 
-            // Delete each child reservation not yet checked-in.
-            foreach ($children as $c => $h) {
+        //     // Delete each child reservation not yet checked-in.
+        //     foreach ($children as $c => $h) {
 
-                $resv = Reservation_1::instantiateFromIdReserv($dbh, $c);
+        //         $resv = Reservation_1::instantiateFromIdReserv($dbh, $c);
 
-                if ($resv->getStatus() != ReservationStatus::Staying && $resv->getStatus() != ReservationStatus::Checkedout) {
+        //         if ($resv->getStatus() != ReservationStatus::Staying && $resv->getStatus() != ReservationStatus::Checkedout) {
 
-                    // Okay to delete
-                    if ($resv->deleteMe($dbh, $uS->username)) {
-                        $numberDeleted++;
-                    };
-                }
-            }
-        }
+        //             // Okay to delete
+        //             if ($resv->deleteMe($dbh, $uS->username)) {
+        //                 $numberDeleted++;
+        //             };
+        //         }
+        //     }
+        // }
 
         // Delete it
         $dataArray = parent::delete($dbh);
-        $dataArray['childDeleted'] = $numberDeleted;
+    //    $dataArray['childDeleted'] = $numberDeleted;
 
 
         if ($this->payResult !== NULL) {

@@ -46,9 +46,10 @@ class RepeatReservations {
         $stmt = $dbh->query("call multiple_reservations(" . $resv->getIdReservation() . ");");
 
         if ($stmt->rowCount() > 0) {
+            // This is already a repeated reservation
 
             $tbl = new HTMLTable();
-            $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Status') . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Arrival') . HTMLTable::makeTh('Departure'));
+            $tbl->addHeaderTr(HTMLTable::makeTh('') . HTMLTable::makeTh('Status') . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Arrival') . HTMLTable::makeTh('Departure'));
 
 
             // set up table
@@ -61,7 +62,7 @@ class RepeatReservations {
                 }
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup('a', 'Resv', $attr))
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup('a', 'View', $attr))
                     . HTMLTable::makeTd($r['Status'])
                     .HTMLTable::makeTd($r['Title'])
                     . HTMLTable::makeTd(date('D M j', strtotime($r['Arrival'])))
@@ -75,52 +76,53 @@ class RepeatReservations {
 
         } else {
 
-        // Set up empty host markup
+            // Set up empty host markup
 
-        $days = $resv->getExpectedDays();
+            $days = $resv->getExpectedDays();
 
-        // disable controls if this reservation is too long.
-        $wkAttr = ['id'=>'mrweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::WK_INDEX . ']'];
-        if ($days > 6) {
-            $wkAttr['disabled'] = 'disabled';
-            $wkAttr['title'] = 'Reservation lasts too long.';
+            // disable controls if this reservation is too long.
+            $wkAttr = ['id'=>'mrweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::WK_INDEX . ']'];
+            if ($days > 6) {
+                $wkAttr['disabled'] = 'disabled';
+                $wkAttr['title'] = 'Reservation lasts too long.';
+            }
+            $biAttr = ['id'=>'mrbiweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::BI_WK_INDEX . ']'];
+            if ($days > 13) {
+                $biAttr['disabled'] = 'disabled';
+                $biAttr['title'] = 'Reservation lasts too long.';
+            }
+            $mAttr = ['id'=>'mrmonth', 'type'=>'radio', 'name'=>'mrInterval[' .self::MONTH_INDEX . ']'];
+            if ($days > 26) {
+                $mAttr['disabled'] = 'disabled';
+                $mAttr['title'] = 'Reservation lasts too long.';
+            }
+
+            $tbl = new HTMLTable();
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Interval', array('rowspan'=>'2'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Weekly', ['for'=>'mrweek']))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Bi-Weekly', ['for'=>'mrbiweek']))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Monthly', ['for'=>'mrmonth']))
+            );
+
+            // create radio button controls
+            $tds = HTMLTable::makeTd(HTMLInput::generateMarkup('', $wkAttr), ['style'=>'text-align:center;']);
+            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $biAttr), ['style'=>'text-align:center;']);
+            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $mAttr), ['style'=>'text-align:center;']);
+            $tbl->addBodyTr($tds);
+
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Create')
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['id'=>'mrnumresv', 'name'=>'mrnumresv', 'type'=>'number', 'min'=>'1', 'max'=> self::MAX_REPEATS, 'size'=>'4', 'style'=>'margin-right:.5em;'])
+                . 'More Reservations', array('colspan'=>'5'))
+            );
+
+            $markup .= HTMLContainer::generateMarkup('div',
+                $tbl->generateMarkup()
+                , ['id'=>'divMultiResv']);
+
         }
-        $biAttr = ['id'=>'mrbiweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::BI_WK_INDEX . ']'];
-        if ($days > 13) {
-            $biAttr['disabled'] = 'disabled';
-            $biAttr['title'] = 'Reservation lasts too long.';
-        }
-        $mAttr = ['id'=>'mrmonth', 'type'=>'radio', 'name'=>'mrInterval[' .self::MONTH_INDEX . ']'];
-        if ($days > 26) {
-            $mAttr['disabled'] = 'disabled';
-            $mAttr['title'] = 'Reservation lasts too long.';
-        }
 
-        $tbl = new HTMLTable();
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Interval', array('rowspan'=>'2'))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Weekly', ['for'=>'mrweek']))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Bi-Weekly', ['for'=>'mrbiweek']))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Monthly', ['for'=>'mrmonth']))
-        );
-
-        // create radio button controls
-        $tds = HTMLTable::makeTd(HTMLInput::generateMarkup('', $wkAttr), ['style'=>'text-align:center;']);
-        $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $biAttr), ['style'=>'text-align:center;']);
-        $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $mAttr), ['style'=>'text-align:center;']);
-        $tbl->addBodyTr($tds);
-
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Create')
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['id'=>'mrnumresv', 'name'=>'mrnumresv', 'type'=>'number', 'min'=>'1', 'max'=> self::MAX_REPEATS, 'size'=>'4', 'style'=>'margin-right:.5em;'])
-            . 'More Reservations', array('colspan'=>'5'))
-        );
-
-        $markup .= HTMLContainer::generateMarkup('div',
-            $tbl->generateMarkup()
-            , ['id'=>'divMultiResv']);
-
-    }
         $mk1 = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', 'Multiple Reservations', ['style'=>'font-weight:bold;'])
             . HTMLContainer::generateMarkup('p', '', ['id'=>'multiResvValidate', 'style'=>'color:red;'])

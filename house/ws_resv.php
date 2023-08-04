@@ -84,7 +84,7 @@ try {
 
         $resv = CheckingIn::reservationFactoy($dbh);
 
-        $newResv = $resv->save($dbh, $_POST);
+        $newResv = $resv->save($dbh);
 
         $events = $newResv->checkedinMarkup($dbh);
 
@@ -96,7 +96,7 @@ try {
 
         $resv = Reservation::reservationFactoy($dbh);
 
-        $events = $resv->delete($dbh, $_POST);
+        $events = $resv->delete($dbh);
 
         break;
 

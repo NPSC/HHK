@@ -197,7 +197,7 @@ END -- ;
 --
 DROP procedure IF EXISTS `multiple_reservations`;  -- ;
 
-CREATE PROCEDURE `vmultiple_reservations` (IN idResv int)
+CREATE PROCEDURE `multiple_reservations` (IN idResv int)
 BEGIN
 	DECLARE mycount int;
     DECLARE hostid int;

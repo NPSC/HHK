@@ -294,7 +294,6 @@ FROM reservation r
     /**
      * Summary of save
      * @param \PDO $dbh
-     * @param mixed $post
      * @return CheckingIn
      */
     public function save(\PDO $dbh) {
@@ -313,7 +312,6 @@ FROM reservation r
     /**
      * Summary of saveCheckIn
      * @param \PDO $dbh
-     * @param mixed $post
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
@@ -559,7 +557,6 @@ FROM reservation r
     /**
      * Summary of savePayment
      * @param \PDO $dbh
-     * @param mixed $post
      * @param \HHK\House\Visit\Visit $visit
      * @param AbstractResource $resc
      * @param mixed $idRegistration

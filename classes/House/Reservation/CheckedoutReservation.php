@@ -22,6 +22,12 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput};
 
 class CheckedoutReservation extends CheckingIn {
 
+    /**
+     * Summary of createMarkup
+     * @param \PDO $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return array
+     */
     public function createMarkup(\PDO $dbh) {
 
         if ($this->reserveData->getIdVisit() < 1 || $this->reserveData->getSpan() < 0) {
@@ -37,14 +43,25 @@ class CheckedoutReservation extends CheckingIn {
 
     }
 
-    public function save(\PDO $dbh, $post) {
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @return static
+     */
+    public function save(\PDO $dbh) {
 
         // Same room, just add the guests.
-        $this->addGuestStay($dbh, $post);
+        $this->addGuestStay($dbh);
 
         return $this;
     }
 
+    /**
+     * Summary of createFamilyMarkup
+     * @param \PDO $dbh
+     * @param mixed $formUserData
+     * @return void
+     */
     protected function createFamilyMarkup(\PDO $dbh, $formUserData = array()) {
 
         $psgMembers = $this->reserveData->getPsgMembers();
@@ -58,6 +75,11 @@ class CheckedoutReservation extends CheckingIn {
 
     }
 
+    /**
+     * Summary of createAddGuestMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     protected function createAddGuestMarkup(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -116,6 +138,14 @@ class CheckedoutReservation extends CheckingIn {
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
+    /**
+     * Summary of createExpDatesControl
+     * @param mixed $updateOnChange
+     * @param mixed $startDate
+     * @param mixed $endDate
+     * @param mixed $lastVisitMU
+     * @return array
+     */
     protected function createExpDatesControl($updateOnChange = TRUE, $startDate = FALSE, $endDate = FALSE, $lastVisitMU = '') {
 
         $uS = Session::getInstance();
@@ -150,12 +180,18 @@ class CheckedoutReservation extends CheckingIn {
     }
 
 
-    protected function addGuestStay(\PDO $dbh, $post) {
+    /**
+     * Summary of addGuestStay
+     * @param \PDO $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return CheckedoutReservation
+     */
+    protected function addGuestStay(\PDO $dbh) {
 
         $uS = Session::getInstance();
         $visitRs = new VisitRS();
 
-        $this->initialSave($dbh, $post);
+        $this->initialSave($dbh);
 
         if ($this->reserveData->hasError()) {
             return $this;
@@ -287,12 +323,17 @@ class CheckedoutReservation extends CheckingIn {
         return;
     }
 
-    protected function initialSave(\PDO $dbh, $post) {
+    /**
+     * Summary of initialSave
+     * @param \PDO $dbh
+     * @return void
+     */
+    protected function initialSave(\PDO $dbh) {
 
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
-        if ($this->family->save($dbh, $post, $this->reserveData, $uS->username) === FALSE) {
+        if ($this->family->save($dbh, $_POST, $this->reserveData, $uS->username) === FALSE) {
             return;
         }
 
