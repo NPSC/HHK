@@ -790,6 +790,16 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('lodgingMOA','Lodging MOA','s','s','','Default: Lodging MOA');
 -- ;
 
+REPLACE INTO `operating_schedules` (`idDay`, `Day`, `Start_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Timestamp`) VALUES 
+(1, '0', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
+(2, '1', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
+(3, '2', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
+(4, '3', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
+(5, '4', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
+(6, '5', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
+(7, '6', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp);
+
+
 REPLACE INTO `template_tag` VALUES
 (6,'c','Guest Name','${GuestName}',''),
 (7,'c','Expected Arrival','${ExpectedArrival}',''),

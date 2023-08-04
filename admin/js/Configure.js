@@ -121,6 +121,33 @@ if ($('.hhk-setMerchantRooms').length > 0) {
 }
 
 
+// save holidays
+
+$(document).on("submit", "form#formHolidays", function(e){
+    e.preventDefault();
+    var postData = $(this).serializeArray();
+    postData.push({name: "saveHolidays", value:true});
+
+    $.ajax({
+        url: 'Configure.php',
+        method: 'post',
+        data: postData,
+        dataType: 'json',
+        success: function (data) {
+            if (data.success) {
+                flagAlertMessage(data.success, false);
+            } else if (data.error) {
+                flagAlertMessage(data.error, true);
+            }
+        },
+        error: function (xhr, textStatus, errorThrown) {
+            flagAlertMessage("Error: " + errorThrown, true);
+        }
+    });
+
+});
+
+
 	//display noty
 
 	if(notyMsg.type){

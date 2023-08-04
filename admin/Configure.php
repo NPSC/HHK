@@ -211,13 +211,14 @@ try {
     $payments = 'Error: ' . $pex->getMessage();
 }
 
-if (filter_has_var(INPUT_POST, 'btnHoliday')) {
+if (filter_has_var(INPUT_POST, 'saveHolidays')) {
     $tabIndex = 5;
     try{
-        $holResultMessage = SiteConfig::saveHolidays($dbh, $_POST, $uS->username);
+        echo json_encode(["success"=>SiteConfig::saveHolidays($dbh, $_POST, $uS->username)]);
     }catch(Exception $e){
-        $notymsg = ["type"=>"error", "text"=>$e->getMessage()];
+        echo json_encode(["error"=>$e->getMessage()]);
     }
+    exit;
 }
 
 try {
@@ -421,7 +422,7 @@ echo $newsaml->getEditMarkup();
                     </form>
                 </div>
                 <div id="holidays" class="ui-tabs-hide hhk-tdbox" >
-                    <form method="post" name="form3" action="">
+                    <form method="post" name="form3" action="" id="formHolidays">
 <?php echo $holidays; ?>
                         <div style="float:right;margin-right:40px;"><input type="submit" name="btnHoliday" value="Save"/></div>
                     </form>

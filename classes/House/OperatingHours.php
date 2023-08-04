@@ -128,10 +128,10 @@ class OperatingHours {
                 $openAt = new \DateTime($postedDay['Open_At']);
                 $closeAt = new \DateTime($postedDay["Closed_At"]);
                 if($openAt >= $closeAt){
-                    throw new ValidationException("Open Time cannot be greater than Close Time");
+                    throw new ValidationException("Open Time cannot be greater than or equal to Close Time");
                 }
             }else{
-                throw new ValidationException("Open and Close times are required if Closed All Day is not checked.");
+                throw new ValidationException("Open and Close times are required when house is open (Closed All Day is unchecked).");
             }
 
             $found = false;
@@ -158,7 +158,7 @@ class OperatingHours {
             
             if($found == false || $changed == true){
                 //insert new hours
-                $stmt = $this->dbh->prepare("INSERT INTO `operating_schedules` (`Day`, `Start_Date`, `End_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Updated_At`) VALUES(:day, :start, :end, :openAt, :closedAt, :nonCleaning, :closed, :updatedby)");
+                $stmt = $this->dbh->prepare("INSERT INTO `operating_schedules` (`Day`, `Start_Date`, `End_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Updated_By`) VALUES(:day, :start, :end, :openAt, :closedAt, :nonCleaning, :closed, :updatedby)");
                 $stmt->execute([
                     ":day"=>$d,
                     ":start"=>(new \DateTime())->format("Y-m-d H:i:s"),
@@ -178,10 +178,6 @@ class OperatingHours {
     public function getEditMarkup(){
         $wdNames = array('Sun','Mon','Tue','Wed','Thr','Fri','Sat');
 
-        // Get old non_cleaning_days
-        $stmt = $this->dbh->query("Select Code, Substitute from gen_lookups where Table_Name = 'Non_Cleaning_Day'");
-        $wds = $stmt->fetchall(\PDO::FETCH_ASSOC);
-
         $wdTbl = new HTMLTable();
         $wdTbl->addHeaderTr(HTMLTable::makeTh('Weekday').HTMLTable::makeTh("Open Time").HTMLTable::makeTh("Close Time").HTMLTable::makeTh('Non-Cleaning').HTMLTable::makeTh("Closed All Day"));
 
@@ -194,12 +190,7 @@ class OperatingHours {
             $wdAttrs[$k]["Non_Cleaning"] = array('name'=>'wd[' . $k . '][Non_Cleaning]', 'type'=>'checkbox');
             $wdAttrs[$k]['Closed'] = array('name'=>'wd['.$k.'][Closed]', 'type'=>'checkbox');
 
-            if (isset($wds)) {
-                foreach ($wds as $r) {
-                    if ($r['Code'] == $k) {
-                        $wdAttrs[$k]['Non_Cleaning']['checked'] = 'checked';
-                    }
-                }
+
 
                 foreach($this->currentHours as $day){
                     if($k == $day["Day"]){
@@ -217,7 +208,6 @@ class OperatingHours {
                         }
                     }
                 }
-            }
 
             $wdTbl->addBodyTr(
                 HTMLTable::makeTd($d, array('style'=>'text-align:right;')) . 
@@ -233,6 +223,7 @@ class OperatingHours {
     private function loadCurrentHours(){
         $stmt = $this->dbh->query("select * from vcurrent_operating_hours");
         $currentHours = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
         foreach($currentHours as $day){
             if($day["Closed"] == 1){
                 $this->closedDays[] = $day["Day"];
