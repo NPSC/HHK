@@ -356,3 +356,17 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
     float: left;
     list-style: none;
 }
+
+#searchSel {
+    margin: 1em 0; 
+    font-size:.85em; 
+    align-items: center;
+}
+
+#searchSel div, #searchSel select, #searchSel span {
+    margin-right: 1em;
+}
+
+#searchSel div label {
+    margin-left: 0.25em;
+}

@@ -135,7 +135,6 @@ class ResourceBldr
 
         if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
             $tableName = DIAGNOSIS_TABLE_NAME;
-            $diagCats = readGenLookupsPDO($dbh, "Diagnosis_Category", "Description");
         } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
             $tableName = LOCATION_TABLE_NAME;
         }
@@ -165,6 +164,7 @@ Order by `t`.`List_Order`;");
 
         } else if($tableName == DIAGNOSIS_TABLE_NAME){
             $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+            $diagCats = readGenLookupsPDO($dbh, "Diagnosis_Category", "Description");
             foreach($diags as $key=>$diag){
                     if(!empty($diag['Substitute'])){
                         $diags[$key][2] = $diagCats[$diag['Substitute']][1];

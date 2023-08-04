@@ -1,7 +1,11 @@
 $(document).ready(function () {
-    $('#selmtype').change(function() {
+    $('#searchSel').submit(function(e) {
+        e.preventDefault();
         $('#divExpansion').hide().children().remove();
-        $.post('Duplicates.php', {cmd: 'list', mType: $(this).val()},
+        var formdata = $(this).serializeArray();
+        formdata.push({name: "cmd", value: "list"});
+        
+        $.post('Duplicates.php', formdata,
             function (data) {
                 "use strict";
                 if (!data) {
@@ -27,7 +31,7 @@ $(document).ready(function () {
                 	$(this).addClass('selected');
                     $('#dupNames td').css('background-color','')
                     $(this).parent('td').css('background-color','yellow')
-                    $.post('Duplicates.php', {cmd: 'exp', nf: $(this).data('fn'), mType: $(this).data('type')},
+                    $.post('Duplicates.php', {cmd: 'exp', nf: $(this).data('fn'), idnames: $(this).data('idnames'), mType: $(this).data('type')},
                         function (data) {
                             "use strict";
                             if (!data) {
