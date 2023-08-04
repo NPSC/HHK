@@ -195,7 +195,7 @@ END -- ;
 --
 -- Procedure `vmultiple_reservations`
 --
-DROP procedure IF EXISTS `multiple_reservations`;  -- ;
+DROP procedure IF EXISTS `vmultiple_reservations`;  -- ;
 
 CREATE PROCEDURE `vmultiple_reservations` (IN idResv int)
 BEGIN

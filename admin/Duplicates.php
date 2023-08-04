@@ -2,8 +2,10 @@
 
 use HHK\AlertControl\AlertMessage;
 use HHK\Duplicate;
+use HHK\HTMLControls\HTMLInput;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
+use HHK\sec\Labels;
 use HHK\SysConst\GLTableNames;
 
 /**
@@ -42,9 +44,11 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
     } else if ($cmd == 'list') {
 
-        $mType = filter_input(INPUT_POST, 'mType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $mType = filter_input(INPUT_POST, 'selmtype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $events = array('mk'=>Duplicate::listNames($dbh, $mType));
+        $filters = (filter_has_var(INPUT_POST, "filter") ? filter_input(INPUT_POST, "filter", FILTER_SANITIZE_SPECIAL_CHARS, FILTER_FORCE_ARRAY) : []);
+
+        $events = array('mk'=>Duplicate::listNames($dbh, $mType, $filters));
 
     } else if ($cmd == 'pik') {
         // Combine members.
@@ -81,13 +85,33 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
 
 $mtypes = array(
-    array(0 => 'g', 1 => 'Guest'),
-    array(0 => 'p', 1 => 'Patient'),
-    array(0 => 'ra', 1 => 'Referral Agent'),
-    array(0 => 'doc', 1 => 'Doctor')
+    array(0 => 'p', 1 => Labels::getString("MemberType", "patient", "Patient") . 's'),
+    array(0 => 'g', 1 => Labels::getString("MemberType", "guest", "Guest") . 's in the same ' . Labels::getString('Statement', 'psgAbrev', "PSG")),
+    array(0 => 'pg', 1 => Labels::getString("MemberType", "guest", "Guest") . 's or ' . Labels::getString("MemberType", "patient", "Patient") . 's in any ' . Labels::getString('Statement', 'psgAbrev', "PSG")),
+    array(0 => 'ra', 1 => 'Referral Agents'),
+    array(0 => 'doc', 1 => 'Doctors')
 );
 
-$mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, '', TRUE), array('name' => 'selmtype'));
+$mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, '', TRUE), array('name' => 'selmtype', 'required'=>'required'));
+
+$filterCBs = HTMLContainer::generateMarkup("div",
+    HTMLInput::generateMarkup("", array("type"=>"checkbox", "checked"=>"checked", "name"=>"filter[]", "value"=>"name", "id"=>"filterName", "disabled"=>"disabled")) . 
+    HTMLContainer::generateMarkup("label", "Full Name", array("for"=>"filterName"))
+) . HTMLContainer::generateMarkup("div",
+    HTMLInput::generateMarkup("", array("type"=>"checkbox", "name"=>"filter[]", "value"=>"birthdate", "id"=>"filterBirthdate")) .
+    HTMLContainer::generateMarkup("label", "Birth date", array("for"=>"filterBirthdate"))
+) . HTMLContainer::generateMarkup("div",
+    HTMLInput::generateMarkup("", array("type"=>"checkbox", "name"=>"filter[]", "value"=>"phone", "id"=>"filterPhone")) .
+    HTMLContainer::generateMarkup("label", "Phone", array("for"=>"filterPhone"))
+) . HTMLContainer::generateMarkup("div",
+    HTMLInput::generateMarkup("", array("type"=>"checkbox", "name"=>"filter[]", "value"=>"email", "id"=>"filterEmail")) .
+    HTMLContainer::generateMarkup("label", "Email", array("for"=>"filterEmail"))
+) . HTMLContainer::generateMarkup("div",
+    HTMLInput::generateMarkup("", array("type"=>"checkbox", "name"=>"filter[]", "value"=>"address", "id"=>"filterAddress")) .
+    HTMLContainer::generateMarkup("label", "Address", array("for"=>"filterAddress"))
+) . HTMLContainer::generateMarkup("div",
+    HTMLInput::generateMarkup("Search for duplicates", array("type"=>"submit", "class"=>"ui-button ui-corner-all"))
+);
 
 
 ?>
@@ -117,7 +141,7 @@ $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, ''
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div id="searchSel" style="margin: 1em 0"><?php echo 'Search for: ' . $mtypeSel; ?></div>
+            <form id="searchSel" class="ui-widget ui-widget-content ui-corner-all p-3 hhk-flex"><span>Search for: </span><?php echo $mtypeSel; ?> <span>with matching</span> <?php echo $filterCBs; ?></form>
 			<div class="hhk-flex mb-3">
             	<div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mr-3" style="display: none; font-size:.85em;"></div>
             	<div id="divExpansion" style="display:none;font-size:.85em;text-align:center;" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content"></div>
