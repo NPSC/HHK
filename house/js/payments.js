@@ -682,8 +682,12 @@ function amtPaid() {
         // These are several cases where we may need to redifine the balance
         if (a.totCharges < 0) {
             // case: totCharges is negative
-            balance = a.totCharges - a.feePay;
-            a.totPay = a.feePay;
+            if (a.totPay <= 0) {
+                balance = a.totPay;
+            } else {
+                balance = a.totCharges - a.feePay;
+                a.totPay = a.feePay;
+            }
         } else {
             // case: totCharges is positive
             if (a.totPay < 0) {
@@ -779,6 +783,12 @@ function amtPaid() {
 
             if (p.selBalTo.val() === 'r') {
                 // Refund
+
+                let minAmtDue = 0;
+                if (totRmBalDue > 0) {
+                    minAmtDue = totRmBalDue;
+                }
+
                 if (a.feePayPreTax > a.overPayAmt) {
 
                     a.feePayPreTax -= a.overPayAmt;
@@ -789,10 +799,10 @@ function amtPaid() {
                     $('#divReturnPay').hide();
                     p.selBalTo.val('');
 
-                } else if (a.overPayAmt >= a.feePayPreTax) {
+                } else if (a.overPayAmt >= minAmtDue) {
 
-                    a.overPayAmt -= a.feePayPreTax;
-                    a.feePayPreTax = 0;
+                    a.overPayAmt -= Math.max((a.feePayPreTax - totRmBalDue), 0);
+                    a.feePayPreTax = minAmtDue;
 
                     if (a.overPayAmt > 0) {
                         $('#divReturnPay').show();
@@ -811,7 +821,7 @@ function amtPaid() {
                 a.feePay = a.feePayPreTax + updateFeeTaxes.calcTax(a.feePayPreTax);
                 a.totPay = (a.totPay - originalFeePayAmt) + a.feePay;
 
-                if (originalFeePayAmt != 0) {
+                if (originalFeePayAmt != a.feePay) {
                     alert('Pay Room Fees amount is reduced to: $' + a.feePay.toFixed(2).toString());
                 }
 
