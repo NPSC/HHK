@@ -497,7 +497,7 @@ if($uS->useOnlineReferral){
         <div id="keysfees" style="font-size: .9em;"></div>
         <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size: .9em;">
             <span class="ui-helper-hidden-accessible"><input type="text"/></span>
-            <table><tr>
+            <table style="width: 100%"><tr>
                     <td class="tdlabel">Invoice Number:</td>
                     <td><span id="spnInvNumber"></span></td>
                 </tr><tr>
@@ -507,7 +507,7 @@ if($uS->useOnlineReferral){
                     <td class="tdlabel">Bill Date:</td>
                     <td><input id="txtBillDate" value="" readonly="readonly" /></td>
                 </tr><tr>
-                    <td colspan="2"><textarea rows="2" cols="50" id="taBillNotes" ></textarea></td>
+                    <td colspan="2"><textarea rows="2" style="width: 100%" id="taBillNotes" ></textarea></td>
                 </tr>
             </table>
         </div>

@@ -204,17 +204,8 @@ $rescGroupBy = '';
 
 if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $rescGroupBy = $uS->CalResourceGroupBy;
+    $groupingTitle = $rescGroups[$uS->CalResourceGroupBy]["Description"];
 }
-
-foreach ($rescGroups as $g) {
-
-    if ($rescGroupBy === $g[0]) {
-
-        $groupingTitle = $g[1];
-        break;
-    }
-}
-
 
 ?>
 <!DOCTYPE html>
@@ -260,6 +251,7 @@ foreach ($rescGroups as $g) {
                         paperSize: "letter",
                         exportOptions: {
                             columns: ":not('.noPrint')",
+                            orthogonal:"print",
                         },
                         title: function(){
                             return title;
@@ -276,243 +268,254 @@ foreach ($rescGroups as $g) {
                     }
                 ];
             }
-            var dateFormat = '<?php echo "ddd MMM D, YYYY"; ?>';
-            var groupingTitle = $('#groupingTitle').val();
-            var cgCols = [
-            	{	'data': 'Group_Title',
-            		'title': groupingTitle,
-            		"visible": false
-            	},
-                {
-                    'data': 'Room',
-                    'title': 'Room',
-                    'searchable': true
-                },
-                {
-                    'data': 'Status',
-                    'title': 'Status',
-                    'searchable': false,
-                    'sortable': true
-                },
-                {
-                    'data': 'Action',
-                    'title': 'Action',
-                    'searchable': false,
-                    'sortable': false,
-                    className: "noPrint"
-                },
-                {
-                    'data': 'Occupant',
-                    'title': 'Occupant',
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'numGuests',
-                    'title': 'Guests',
-                    'searchable': false,
-                    'sortable': true
-                },
-                {
-                    'data': 'Checked_In',
-                    'title': 'Checked In',
-                    'type': 'date',
-                    render: function (data, type, row) {
-                        return dateRender(data, type, dateFormat);
-                    },
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Expected_Checkout',
-                    'title': 'Expected Checkout',
-                    'type': 'date',
-                    render: function (data, type, row) {
-                        return dateRender(data, type, dateFormat);
-                    },
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Last_Cleaned',
-                    'title': 'Last Cleaned',
-                    'type': 'date',
-                    render: function (data, type, row) {
-                        return dateRender(data, type, dateFormat);
-                    },
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Last_Deep_Clean',
-                    'title': 'Last Deep Clean',
-                    'type': 'date',
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Notes',
-                    'title': 'Notes',
-                    'searchable': true,
-                    'sortable': false
-                }
-            ];
 
-	var inCols = [
-                {
-                    'data': 'Primary Guest',
-                    'title': '<?php echo $labels->getString('MemberType', 'primaryGuest', 'Primary Guest'); ?>',
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Guests',
-                    'title': '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s',
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Arrival Date',
-                    'title': 'Expected Arrival',
-                    'type': 'date',
-                    render: function (data, type) {
-                        return dateRender(data, type, dateFormat);
-                    },
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Expected Departure',
-                    'title': 'Expected Departure',
-                    'type': 'date',
-                    render: function (data, type) {
-                        return dateRender(data, type, dateFormat);
-                    },
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Room',
-                    'title': 'Room',
-                    'searchable': true,
-                    'sortable': false
-                },
-                {
-                    'data': 'Nights',
-                    'title': 'Nights',
-                    'searchable': true,
-                    'sortable': false
-                }
-            ];
-
-            var outCols = [
-                {
-                    'data': 'Room',
-                    'title': 'Room',
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Visit Status',
-                    'title': 'Status',
-                    'searchable': false,
-                    'sortable': true
-                },
-                {
-                    'data': 'Primary Guest',
-                    'title': 'Occupant',
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Arrival Date',
-                    'title': 'Checked In',
-                    'type': 'date',
-                    render: function (data, type) {
-                        return dateRender(data, type, dateFormat);
-                    },
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Expected Checkout',
-                    'title': 'Expected Checkout',
-                    'type': 'date',
-                    render: function (data, type) {
-                        return dateRender(data, type, dateFormat);
-                    },
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Notes',
-                    'title': 'Notes',
-                    'searchable': true,
-                    'sortable': false
-                }
-            ];
-
-            var dtColDefs = [
-                {
-                    'targets': [0],
-                    'data': 'Room',
-                    'title': 'Room',
-                    'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'targets': [1],
-                    'data': 'Type',
-                    'visible': false
-                },
-                {
-                    'targets': [2],
-                    'data': 'Status',
-                    'title': 'Status',
-                    'searchable': false,
-                    'sortable': true
-                },
-                {
-                    "targets": [3],
-                    'data': 'Last Cleaned',
-                    'title': 'Last Cleaned',
-                    render: function (data, type, row) {
-                        return dateRender(data, type, dateFormat);
-                    }
-                },
-                {
-                    "targets": [4],
-                    'data': 'Last Deep Clean',
-                    'title': 'Last Deep Clean',
-                    render: function (data, type, row) {
-                        return dateRender(data, type, dateFormat);
-                    }
-                },
-                {
-                    'targets': [5],
-                    'data': 'Notes',
-                    'title': 'Notes',
-                    'searchable': true,
-                    'sortable': false
-                },
-                {
-                    'targets': [6],
-                    'data': 'User',
-                    'title': 'User',
-                    'sortable': true,
-                    'searchable': true
-                },
-                {
-                    "targets": [7],
-                    'data': 'Timestamp',
-                    'title': 'Timestamp',
-                    render: function (data, type, row) {
-                        return dateRender(data, type, dateFormat);
-                    }
-                }
-            ];
             $(document).ready(function () {
                 "use strict";
+
+                var dateFormat = '<?php echo "ddd MMM D, YYYY"; ?>';
+                var groupingTitle = $('#groupingTitle').val();
+                
+                var cgCols = [
+                    {	'data': 'Group_Title',
+                        'title': groupingTitle,
+                        "visible": false
+                    },
+                    {
+                        'data': 'Room',
+                        'title': 'Room',
+                        'searchable': true
+                    },
+                    {
+                        'data': 'Status',
+                        'title': 'Status',
+                        'searchable': false,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Action',
+                        'title': 'Action',
+                        'searchable': false,
+                        'sortable': false,
+                        className: "noPrint"
+                    },
+                    {
+                        'data': 'Occupant',
+                        'title': 'Occupant',
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'numGuests',
+                        'title': 'Guests',
+                        'searchable': false,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Checked_In',
+                        'title': 'Checked In',
+                        'type': 'date',
+                        render: function (data, type, row) {
+                            return dateRender(data, type, dateFormat);
+                        },
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Expected_Checkout',
+                        'title': 'Expected Checkout',
+                        'type': 'date',
+                        render: function (data, type, row) {
+                            return dateRender(data, type, dateFormat);
+                        },
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Last_Cleaned',
+                        'title': 'Last Cleaned',
+                        'type': 'date',
+                        render: function (data, type, row) {
+                            return dateRender(data, type, dateFormat);
+                        },
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Last_Deep_Clean',
+                        'title': 'Last Deep Clean',
+                        'type': 'date',
+                        render: function (data, type, row) {
+                            if(type == 'print'){
+                                return $(data).val();
+                            }else{
+                                return data;
+                            }
+                        },
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Notes',
+                        'title': 'Notes',
+                        'searchable': true,
+                        'sortable': false
+                    }
+                ];
+
+        var inCols = [
+                    {
+                        'data': 'Primary Guest',
+                        'title': '<?php echo $labels->getString('MemberType', 'primaryGuest', 'Primary Guest'); ?>',
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Guests',
+                        'title': '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s',
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Arrival Date',
+                        'title': 'Expected Arrival',
+                        'type': 'date',
+                        render: function (data, type) {
+                            return dateRender(data, type, dateFormat);
+                        },
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Expected Departure',
+                        'title': 'Expected Departure',
+                        'type': 'date',
+                        render: function (data, type) {
+                            return dateRender(data, type, dateFormat);
+                        },
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Room',
+                        'title': 'Room',
+                        'searchable': true,
+                        'sortable': false
+                    },
+                    {
+                        'data': 'Nights',
+                        'title': 'Nights',
+                        'searchable': true,
+                        'sortable': false
+                    }
+                ];
+
+                var outCols = [
+                    {
+                        'data': 'Room',
+                        'title': 'Room',
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Visit Status',
+                        'title': 'Status',
+                        'searchable': false,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Primary Guest',
+                        'title': 'Occupant',
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Arrival Date',
+                        'title': 'Checked In',
+                        'type': 'date',
+                        render: function (data, type) {
+                            return dateRender(data, type, dateFormat);
+                        },
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Expected Checkout',
+                        'title': 'Expected Checkout',
+                        'type': 'date',
+                        render: function (data, type) {
+                            return dateRender(data, type, dateFormat);
+                        },
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'data': 'Notes',
+                        'title': 'Notes',
+                        'searchable': true,
+                        'sortable': false
+                    }
+                ];
+
+                var dtColDefs = [
+                    {
+                        'targets': [0],
+                        'data': 'Room',
+                        'title': 'Room',
+                        'searchable': true,
+                        'sortable': true
+                    },
+                    {
+                        'targets': [1],
+                        'data': 'Type',
+                        'visible': false
+                    },
+                    {
+                        'targets': [2],
+                        'data': 'Status',
+                        'title': 'Status',
+                        'searchable': false,
+                        'sortable': true
+                    },
+                    {
+                        "targets": [3],
+                        'data': 'Last Cleaned',
+                        'title': 'Last Cleaned',
+                        render: function (data, type, row) {
+                            return dateRender(data, type, dateFormat);
+                        }
+                    },
+                    {
+                        "targets": [4],
+                        'data': 'Last Deep Clean',
+                        'title': 'Last Deep Clean',
+                        render: function (data, type, row) {
+                            return dateRender(data, type, dateFormat);
+                        }
+                    },
+                    {
+                        'targets': [5],
+                        'data': 'Notes',
+                        'title': 'Notes',
+                        'searchable': true,
+                        'sortable': false
+                    },
+                    {
+                        'targets': [6],
+                        'data': 'User',
+                        'title': 'User',
+                        'sortable': true,
+                        'searchable': true
+                    },
+                    {
+                        "targets": [7],
+                        'data': 'Timestamp',
+                        'title': 'Timestamp',
+                        render: function (data, type, row) {
+                            return dateRender(data, type, dateFormat);
+                        }
+                    }
+                ];
+            
                 var cTab = parseInt('<?php echo $currentTab; ?>', 10);
                 var listEvtTable;
                 var coDate = new Date();
@@ -781,7 +784,7 @@ foreach ($rescGroups as $g) {
                     </div>
                 </div>
             </form>
-            <input type="hidden" value="<?php $groupingTitle;  ?>" id='groupingTitle' />
+            <input type="hidden" value="<?php echo $groupingTitle;  ?>" id='groupingTitle' />
         </div>  <!-- div id="contentDiv"-->
     </body>
 </html>

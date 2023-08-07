@@ -239,6 +239,7 @@
                     if (data.idReport > 0) {
                         if (print) {
                             Print($wrapper, settings, data.idReport);
+                            
                         }else{
                             $wrapper.incidentdialog.dialog("close");
                             clearform($wrapper);
@@ -506,7 +507,8 @@
                     mywindow.document.close(); // necessary for IE >= 10
                     mywindow.focus(); // necessary for IE >= 10*/
 
-                    mywindow.addEventListener('load', function(){mywindow.print(); mywindow.close();}, false);
+                    mywindow.addEventListener('load', function(){mywindow.print();}, true);
+                    mywindow.addEventListener('afterprint', function(){mywindow.close(); $wrapper.incidentdialog.dialog("close");}, true);
 
                 } else {
 

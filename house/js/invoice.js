@@ -127,8 +127,8 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
             var dt;
             var nt = dialg.find('#taBillNotes').val();
             
-            if (dialg.find('#txtBillDate').val() != '') {
-                dt = dialg.find('#txtBillDate').datepicker('getDate').toJSON();
+            if (dialg.find('#txtBillDate').val() != '' && dialg.find('#txtBillDate').datepicker('getDate')) {
+                dt = dialg.find('#txtBillDate').val();
             }
 
             $.post('ws_resc.php', {cmd: 'invSetBill', inb:inb, date:dt, ele: idElement, nts: nt, ntele: notesElement},

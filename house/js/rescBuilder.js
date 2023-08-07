@@ -224,7 +224,7 @@ function saveResource(idresc, type, clas) {
                 $('#tblresc').dataTable({
                     "dom": '<"top"if>rt<"bottom"lp><"clear">',
                     "displayLength": 50,
-                    "order": [[1, 'asc']],
+                    "order": [[6, 'asc'], [1, 'asc']],
                     "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
                 });
             } else if (data.constList) {
@@ -430,7 +430,14 @@ $(document).ready(function () {
 	    });
 	});
 
-    $('#tblroom, #tblresc').dataTable({
+    $('#tblresc').dataTable({
+        "dom": '<"top"if>rt<"bottom"lp><"clear">',
+        "displayLength": 50,
+        "order": [[6, 'asc'], [1, 'asc']],
+        "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
+    });
+
+    $('#tblroom').dataTable({
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
         "displayLength": 50,
         "order": [[1, 'asc']],

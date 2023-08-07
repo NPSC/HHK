@@ -187,38 +187,38 @@ $statusList = readGenLookupsPDO($dbh, 'Invoice_Status');
 // array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms
 $cFields[] = array('Visit Id', 'vid', 'checked', '', 'string', '15', array());
 $cFields[] = array("Organization", 'Company', 'checked', '', 'string', '20', array());
-$cFields[] = array('Guest Last', 'Last', 'checked', '', 'string', '20', array());
-$cFields[] = array("Guest First", 'First', 'checked', '', 'string', '20', array());
+$cFields[] = array($labels->getString('memberType', 'guest', 'Guest') . ' Last', 'Last', 'checked', '', 'string', '20', array());
+$cFields[] = array($labels->getString('memberType', 'guest', 'Guest') . " First", 'First', 'checked', '', 'string', '20', array());
 $pFields = array('Address', 'City');
-$pTitles = array('Guest Address', 'City');
+$pTitles = array($labels->getString('memberType', 'guest', 'Guest') . ' Address', 'City');
 $paFields = array('Patient_Address', 'Patient_City');
-$paTitles = array('Patient Address', 'Patient City');
+$paTitles = array($labels->getString('memberType', 'patient', 'Patient') . ' Address', $labels->getString('memberType', 'patient', 'Patient') . ' City');
 
 if ($uS->county) {
     $pFields[] = 'Guest_County';
-    $pTitles[] = 'Guest County';
+    $pTitles[] = $labels->getString('memberType', 'guest', 'Guest') . ' County';
     $paFields[] = 'Patient_County';
-    $paTitles[] = 'Patient County';
+    $paTitles[] = $labels->getString('memberType', 'patient', 'Patient') . ' County';
 }
 
 $pFields = array_merge($pFields, array('State_Province', 'Postal_Code', 'Country'));
 $pTitles = array_merge($pTitles, array('State', 'Zip', 'Country'));
 $paFields = array_merge($paFields, array("Patient_State_Province", "Patient_Postal_Code", "Patient_Country"));
-$paTitles = array_merge($paTitles, array("Patient State", "Patient Zip", "Patient Country"));
+$paTitles = array_merge($paTitles, array($labels->getString('memberType', 'patient', 'Patient') . " State", $labels->getString('memberType', 'patient', 'Patient') . " Zip", $labels->getString('memberType', 'patient', 'Patient') . " Country"));
 
 $cFields[] = array($pTitles, $pFields, '', '', 'string', '20', array());
 $cFields[] = array("Date", 'Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15', array());
 $cFields[] = array("Description", 'Description', 'checked', '', 'string', '20', array());
 $cFields[] = array("Notes", 'Invoice_Notes', '', '', 'string', '20', array());
-$cFields[]= array("Patient Id", 'Patient_Id', '', '', 'string', '20', array());
-$cFields[]= array("Patient Last", 'Patient_Name_Last', '', '', 'string', '20', array());
-$cFields[]= array("Patient First", 'Patient_Name_First', '', '', 'string', '20', array());
+$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Id", 'Patient_Id', '', '', 'string', '20', array());
+$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Last", 'Patient_Name_Last', '', '', 'string', '20', array());
+$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " First", 'Patient_Name_First', '', '', 'string', '20', array());
 $cFields[] = array($paTitles, $paFields, '', '', 'string', '20', array());
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
-    $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', '', '', 'string', '20', array());
+    $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', '', '', 'string', '20', array());
 }
 
 // Diagnosis

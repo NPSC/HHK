@@ -51,7 +51,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 }
 function dateRender(data, type, format) {
 	// If display or filter data is requested, format the date
-	if (type === 'display' || type === 'filter') {
+	if (type === 'display' || type === 'filter' || type === 'print') {
 
 		if (data === undefined || data === null || data === '') {
 			return '';

@@ -481,7 +481,7 @@ class CustomRegisterForm {
                         $mkup .= $sigMkup;
                     }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'adults'){
                         //if excluding minors
-                        if ($uS->RegNoMinorSigLines && $g->get_demogRS()->Is_Minor->getStoredVal() > 0) {
+                        if ($uS->RegNoMinorSigLines && $g->getRoleMember()->get_demogRS()->Is_Minor->getStoredVal() > 0) {
                             // #816, EKC, 5/23/2023
                             continue;
                         } else if($g->getRoleMember()->get_birthDate() != ''){

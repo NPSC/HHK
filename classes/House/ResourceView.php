@@ -787,31 +787,31 @@ WHERE
         $saveBtn .= HTMLInput::generateMarkup('Cancel', array('id'=>'cancelbtn', 'style'=>'margin-top:.2em;', 'data-id'=>$room->getIdRoom(), 'data-type'=>'room', 'data-cls'=>$cls, 'type'=>'button'));
 
         $tr = HTMLTable::makeTd($saveBtn) . HTMLTable::makeTd($room->getIdRoom())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getTitle(), array('id'=>'txtReTitle', 'size'=>'12', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getTitle(), array('id'=>'txtReTitle', 'size'=>'12', 'class'=>$cls)))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($roomTypes, $room->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLSelector::doOptionsMkup($roomTypes, $room->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($roomCategories, $room->getRoomCategory(), TRUE), array('id'=>'selReCategory', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLSelector::doOptionsMkup($roomCategories, $room->getRoomCategory(), TRUE), array('id'=>'selReCategory', 'class'=>$cls)))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($reportCategories, $room->getReportCategory(), TRUE), array('id'=>'selRptCategory', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLSelector::doOptionsMkup($reportCategories, $room->getReportCategory(), TRUE), array('id'=>'selRptCategory', 'class'=>$cls)))
             // max occ
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getMaxOccupants(), array('id'=>'txtMax', 'class'=>$cls, 'size'=>'3')), array('style'=>'padding-right:0;padding-left:0;'))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Floor->getStoredVal(), array('id'=>'txtFloor', 'class'=>$cls, 'size'=>'4')), array('style'=>'padding-right:0;padding-left:0;'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getMaxOccupants(), array('id'=>'txtMax', 'class'=>$cls, 'size'=>'3')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Floor->getStoredVal(), array('id'=>'txtFloor', 'class'=>$cls, 'size'=>'4')))
             // phone
-        . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id'=>'txtPhone', 'name'=>'txtPhone', 'type'=>'text', 'autocomplete'=>"off", 'class'=>$cls . ' hhk-phoneInput', 'size'=>'10')), array('style'=>'padding-right:0;padding-left:0;'))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id'=>'txtPhone', 'name'=>'txtPhone', 'type'=>'text', 'autocomplete'=>"off", 'class'=>$cls . ' hhk-phoneInput', 'size'=>'10')))
             // Static rate
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($rateCodes), $room->getRateCode(), FALSE), array('id'=>'selRateCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLSelector::doOptionsMkup(removeOptionGroups($rateCodes), $room->getRateCode(), FALSE), array('id'=>'selRateCode', 'class'=>$cls)))
             // Default rate category
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $room->getDefaultRateCategory(), TRUE), array('id'=>'selRateCat', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $room->getDefaultRateCategory(), TRUE), array('id'=>'selRateCat', 'class'=>$cls)))
             // Cleaning days
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($cleaningCodes), $room->getCleaningCycleCode(), FALSE), array('id'=>'selCleanCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
+                    HTMLSelector::doOptionsMkup(removeOptionGroups($cleaningCodes), $room->getCleaningCycleCode(), FALSE), array('id'=>'selCleanCode', 'class'=>$cls)));
 
         if ($keyDeposit) {
             $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($keyDepositCodes), $room->getKeyDepositCode(), FALSE), array('id'=>'selKeyCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
+                    HTMLSelector::doOptionsMkup(removeOptionGroups($keyDepositCodes), $room->getKeyDepositCode(), FALSE), array('id'=>'selKeyCode', 'class'=>$cls)));
         }
 
         if ($uS->PaymentGateway != '') {
@@ -827,7 +827,7 @@ WHERE
             }
 
             $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($opts, $room->getIdLocation(), FALSE), array('id'=>'selLocId', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
+                    HTMLSelector::doOptionsMkup($opts, $room->getIdLocation(), FALSE), array('id'=>'selLocId', 'class'=>$cls)));
 
         }
 
@@ -1125,6 +1125,7 @@ ORDER BY $orderBy;");
                 $expDeparture = $r['Expected_Departure'] == '' ? '' : date('M d, Y', strtotime($expDeparture));
                 $arrival = $r['Arrival'] == '' ? '' : date('M d, Y', strtotime($arrival));
                 $lastCleaned = $r['Last_Cleaned'] == '' ? '' : date('M d, Y', strtotime($r['Last_Cleaned']));
+                $lastDeepClean = $r['Last_Deep_Clean'] == '' ? '' : date('M d, Y', strtotime($r['Last_Deep_Clean']));
 
             } else {
                 $notes = Notes::markupShell($r['Notes'], $filter.'taNotes[' . $r['idRoom'] . ']');
