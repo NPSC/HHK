@@ -26,6 +26,7 @@ class RepeatReservations {
     const WK_INDEX = 'P7D';
     const BI_WK_INDEX = 'P14D';
     const MONTH_INDEX = 'P1M';
+    const FOUR_WK_INDEX = 'P28D';
 
     const MAX_REPEATS = '10';
 
@@ -36,14 +37,15 @@ class RepeatReservations {
     /**
      * Summary of createMultiResvMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param int $idResv
+     * @param int $days
      * @return string
      */
-    public function createMultiResvMarkup(\PDO $dbh, Reservation_1 $resv) {
+    public function createMultiResvMarkup(\PDO $dbh, $idResv, $days) {
 
         $markup = '';
 
-        $stmt = $dbh->query("call multiple_reservations(" . $resv->getIdReservation() . ");");
+        $stmt = $dbh->query("call multiple_reservations(" . $idResv . ");");
 
         if ($stmt->rowCount() > 0) {
             // This is already a repeated reservation
@@ -57,7 +59,7 @@ class RepeatReservations {
 
                 $attr = ['href' => 'Reserve.php?rid=' . $r['idReservation']];
 
-                if ($r['idReservation'] == $resv->getIdReservation()) {
+                if ($r['idReservation'] == $idResv) {
                     $attr['class'] = 'ui-state-highlight';
                 }
 
@@ -68,8 +70,8 @@ class RepeatReservations {
                     . HTMLTable::makeTd(date('D M j', strtotime($r['Arrival'])))
                     . HTMLTable::makeTd(date('D M j', strtotime($r['Departure'])))
                 );
-
             }
+
             $stmt->nextRowset();
 
             $markup .= $tbl->generateMarkup();
@@ -78,37 +80,40 @@ class RepeatReservations {
 
             // Set up empty host markup
 
-            $days = $resv->getExpectedDays();
+            // remove controls if this reservation is too long.
+            $wkInput = '';
+            if ($days < 7) {
+                $wkInput = HTMLInput::generateMarkup(self::WK_INDEX, ['id'=>'mrweek', 'type'=>'radio', 'name'=>'mrInterval']);
+            }
 
-            // disable controls if this reservation is too long.
-            $wkAttr = ['id'=>'mrweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::WK_INDEX . ']'];
-            if ($days > 6) {
-                $wkAttr['disabled'] = 'disabled';
-                $wkAttr['title'] = 'Reservation lasts too long.';
+            $biInput = '';
+            if ($days < 14) {
+                $biInput = HTMLInput::generateMarkup(self::BI_WK_INDEX, ['id'=>'mrbiweek', 'type'=>'radio', 'name'=>'mrInterval']);
             }
-            $biAttr = ['id'=>'mrbiweek', 'type'=>'radio', 'name'=>'mrInterval[' .self::BI_WK_INDEX . ']'];
-            if ($days > 13) {
-                $biAttr['disabled'] = 'disabled';
-                $biAttr['title'] = 'Reservation lasts too long.';
+
+            $w4Input = '';
+            if ($days < 28) {
+                $w4Input = HTMLInput::generateMarkup(self::FOUR_WK_INDEX, ['id'=>'mr4week', 'type'=>'radio', 'name'=>'mrInterval']);
             }
-            $mAttr = ['id'=>'mrmonth', 'type'=>'radio', 'name'=>'mrInterval[' .self::MONTH_INDEX . ']'];
-            if ($days > 26) {
-                $mAttr['disabled'] = 'disabled';
-                $mAttr['title'] = 'Reservation lasts too long.';
+
+            if (($wkInput . $biInput . $w4Input) == '') {
+                return '';
             }
 
             $tbl = new HTMLTable();
+
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Interval', array('rowspan'=>'2'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Weekly', ['for'=>'mrweek']))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Bi-Weekly', ['for'=>'mrbiweek']))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Monthly', ['for'=>'mrmonth']))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('label', '4 Weeks', ['for' => 'mr4week']))
             );
 
             // create radio button controls
-            $tds = HTMLTable::makeTd(HTMLInput::generateMarkup('', $wkAttr), ['style'=>'text-align:center;']);
-            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $biAttr), ['style'=>'text-align:center;']);
-            $tds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $mAttr), ['style'=>'text-align:center;']);
+            $tds = HTMLTable::makeTd($wkInput, ['style'=>'text-align:center;']);
+            $tds .= HTMLTable::makeTd($biInput, ['style'=>'text-align:center;']);
+            $tds .= HTMLTable::makeTd($w4Input, ['style'=>'text-align:center;']);
+
             $tbl->addBodyTr($tds);
 
             $tbl->addBodyTr(
@@ -117,9 +122,7 @@ class RepeatReservations {
                 . 'More Reservations', array('colspan'=>'5'))
             );
 
-            $markup .= HTMLContainer::generateMarkup('div',
-                $tbl->generateMarkup()
-                , ['id'=>'divMultiResv']);
+            $markup .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), ['id'=>'divMultiResv']);
 
         }
 
@@ -176,7 +179,7 @@ class RepeatReservations {
     /**
      * Summary of saveRepeats
      * @param \PDO $dbh
-     * @param ReservationRS $reserveRS
+     * @param ReservationRS $reserveRS Hosting reservation
      * @return void
      */
     public function saveRepeats(\PDO $dbh, $reserveRS) {
@@ -187,10 +190,7 @@ class RepeatReservations {
         $interval = '';
 
         $args = [
-            'mrInterval' => [
-                                'filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                                'flags' => FILTER_REQUIRE_ARRAY
-                            ],
+            'mrInterval' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'mrnumresv'  => FILTER_SANITIZE_NUMBER_INT
         ];
 
@@ -200,8 +200,7 @@ class RepeatReservations {
         if (isset($inputs['mrnumresv']) && isset($inputs['mrInterval'])) {
 
             $recurrencies = intval($inputs['mrnumresv'], 10);
-            $keys = array_keys($inputs['mrInterval']);
-            $interval = $keys[0];
+            $interval = $inputs['mrInterval'];
 
         } else {
             return;
@@ -219,16 +218,13 @@ class RepeatReservations {
         $resv1 = new Reservation_1($reserveRS);
         $days = $resv1->getExpectedDays();
 
-        $intervals = [self::WK_INDEX=>7, self::BI_WK_INDEX=>14, self::MONTH_INDEX=>27];
+        $intervals = [self::WK_INDEX=>7, self::BI_WK_INDEX=>14, self::FOUR_WK_INDEX => 28, self::MONTH_INDEX=>27];
 
         // Check reserv length in days with interval value
         if (isset($intervals[$interval]) === false || $days >= $intervals[$interval]) {
             $this->errorArray[] = 'Reservation duration in days is greater than the requested Interval';
             return;
         }
-
-        // Check for extended repeat - reservation already a host or child?
-
 
 
         // Create the reservations
@@ -250,8 +246,9 @@ class RepeatReservations {
 
         $duration = new \DateInterval('P' . $days . 'D');
 
-        foreach ($period as $dateDT) {
+        foreach ($period as $arrivalDateDT) {
 
+            $departDateDT = $arrivalDateDT->add($duration);
             $idResource = 0;
             $status = ReservationStatus::Waitlist;
 
@@ -259,7 +256,7 @@ class RepeatReservations {
             if ($resv1->getIdResource() > 0) {
 
                 $resv1->getConstraints($dbh, true);
-                $roomChooser = new RoomChooser($dbh, $resv1, 1, new \DateTime($resv1->getExpectedArrival()), new \DateTime($resv1->getExpectedDeparture()));
+                $roomChooser = new RoomChooser($dbh, $resv1, 1, $arrivalDateDT, $departDateDT);
                 $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 
                 // Does the resource fit the requirements?
@@ -272,7 +269,7 @@ class RepeatReservations {
                 }
             }
 
-            $idResv = $this->makeNewReservation($dbh, $resv1, $dateDT, $dateDT->add($duration), $idResource, $status, $guests);
+            $idResv = $this->makeNewReservation($dbh, $resv1, $arrivalDateDT, $departDateDT, $idResource, $status, $guests);
 
             if ($idResv > 0) {
                 // record new child
@@ -322,7 +319,10 @@ class RepeatReservations {
             ->setNumberGuests(count($guests))
             ->setIdResource($idResource)
             ->setRoomRateCategory($rateCategory)
-            ->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
+            ->setIdRoomRate($rateRs->idRoom_rate->getStoredVal())
+            ->setFixedRoomRate($protoResv->getFixedRoomRate())
+            ->setRateAdjust($protoResv->getRateAdjust())
+            ->setExpectedPayType($protoResv->getExpectedPayType());
 
         $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
 

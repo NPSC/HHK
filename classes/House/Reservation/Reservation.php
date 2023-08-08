@@ -760,7 +760,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             // Multiple reservations
             if ($uS->UseRepeatResv) {
                 $rr = new RepeatReservations();
-                $dataArray['multiResv'] = $rr->createMultiResvMarkup($dbh, $resv);
+                $dataArray['multiResv'] = $rr->createMultiResvMarkup($dbh, $resv->getIdReservation(), $resv->getExpectedDays());
             }
 
         } else if ($resv->isNew()) {

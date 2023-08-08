@@ -198,11 +198,8 @@ class ReserveData {
         }
 
         if (isset($inputs['mrnumresv']) && isset($inputs['mrInterval'])) {
-
             $this->numberRepeatResv = intval($inputs['mrnumresv'], 10);
-            $keys = array_keys($inputs['mrInterval']);
-            $this->intervalRepeatResv = $keys[0];
-
+            $this->intervalRepeatResv = $inputs['mrInterval'];
         }
 
         $this->saveButtonLabel = 'Save ';

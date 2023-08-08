@@ -104,7 +104,6 @@ class ActiveReservation extends Reservation {
         }
 
         return $this;
-
     }
 
     /**
