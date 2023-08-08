@@ -334,7 +334,7 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
 
 
             if ($uS->TrackAuto && $registration->getNoVehicle() == 0) {
-                Vehicle::saveVehicle($dbh, $_POST, $registration->getIdRegistration());
+                Vehicle::saveVehicle($dbh, $registration->getIdRegistration());
             }
 
 
@@ -976,7 +976,7 @@ $uS->guestId = $id;
             var pmtMkup = '<?php echo $paymentMarkup; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
-            var resultMessage = '<?php echo $resultMessage; ?>';
+            var resultMessage = "<?php echo $resultMessage; ?>";
             var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
             var useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
         </script>

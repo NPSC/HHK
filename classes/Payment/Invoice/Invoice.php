@@ -331,7 +331,7 @@ from
         left join
     name n on n.idName = hs.idPatient
 where
-    v.idVisit = " . $this->getOrderNumber () );
+    v.idVisit = " . $this->getOrderNumber () . " and v.Span = " . $this->getSuborderNumber());
 
 		$rows = $pstmt->fetchAll ( \PDO::FETCH_ASSOC );
 

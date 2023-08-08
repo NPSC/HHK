@@ -172,7 +172,7 @@
 			<div id="referralTabs">
 				<ul>
 				</ul>
-				<div id="referralTabContent" style="width: 100%">
+				<div id="referralTabContent" class="hhk-overflow-x">
 					<table style="width: 100%"></table>
 				</div>
 			</div>
@@ -203,7 +203,7 @@
 			"sorting": [[6,'desc'], [8,'desc']],
 			"displayLength": 10,
 			"lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
-			"dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+			"dom": '<"dtTop"if><"hhk-overflow-x"rt><"dtBottom"lp>',
 			ajax: {
 			    url: settings.serviceURL,
 			    data: function(d){

@@ -239,7 +239,7 @@ class FormTemplate {
 
         return [
             'formStyle'=>$this->getStyle(),
-            'successTitle'=>$abstract->successTitle,
+            'successTitle'=>(isset($abstract->successTitle) ? $abstract->successTitle : ""),
             'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),

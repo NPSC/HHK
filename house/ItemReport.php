@@ -113,6 +113,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         'Location' => (isset($locations[$r['Location']]) ? $locations[$r['Location']][1] : ''),
         'Description' => $r['Description'],
         'Invoice_Notes' => $r["Invoice_Notes"],
+        'Payment_Notes' => $r["Payment_Notes"],
         'Patient_Id' => $r['Patient_Id'],
         'Patient_Name_Last' => $r['Patient_Name_Last'],
         'Patient_Name_First' => $r['Patient_Name_First'],
@@ -195,7 +196,7 @@ $paFields = array('Patient_Address', 'Patient_City');
 $paTitles = array($labels->getString('memberType', 'patient', 'Patient') . ' Address', $labels->getString('memberType', 'patient', 'Patient') . ' City');
 
 if ($uS->county) {
-    $pFields[] = 'Guest_County';
+    $pFields[] = 'County';
     $pTitles[] = $labels->getString('memberType', 'guest', 'Guest') . ' County';
     $paFields[] = 'Patient_County';
     $paTitles[] = $labels->getString('memberType', 'patient', 'Patient') . ' County';
@@ -210,7 +211,8 @@ $cFields[] = array($pTitles, $pFields, '', '', 'string', '20', array());
 $cFields[] = array("Date", 'Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15', array());
 $cFields[] = array("Description", 'Description', 'checked', '', 'string', '20', array());
-$cFields[] = array("Notes", 'Invoice_Notes', '', '', 'string', '20', array());
+$cFields[] = array("Invoice Notes", 'Invoice_Notes', '', '', 'string', '20', array());
+$cFields[] = array("Payment Notes", 'Payment_Notes', '', '', 'string', '20', array());
 $cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Id", 'Patient_Id', '', '', 'string', '20', array());
 $cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Last", 'Patient_Name_Last', '', '', 'string', '20', array());
 $cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " First", 'Patient_Name_First', '', '', 'string', '20', array());
@@ -445,6 +447,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     i.`Deleted` as `Invoice_Deleted`,
     i.`Updated_By`,
     i.`Notes` as `Invoice_Notes`,
+    ifnull(p.`Notes`, '') as `Payment_Notes`,
     il.`Price`,
     il.`Amount`,
     il.`Quantity`,
@@ -476,6 +479,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(nv.Vol_Code, '') as `Billing_Agent`
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
+    left join `payment_invoice` pi on i.idInvoice = pi.Invoice_Id
+    left join `payment` p on pi.Payment_Id = p.idPayment
     left join `name` n on i.Sold_To_Id = n.idName
     left join `name_address` na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
     left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
@@ -483,7 +488,7 @@ from
     left join `name` pn on hs.idPatient = pn.idName
     left join `name_address` pa on pn.idName = pa.idName
     left join name_volunteer2 nv on nv.idName = n.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
-where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags order by i.idInvoice, il.idInvoice_Line";
+where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags group by il.idInvoice_Line order by i.idInvoice, il.idInvoice_Line";
 
 
     $tbl = null;

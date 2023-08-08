@@ -141,7 +141,40 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
-                dateFormat: 'M d, yy'
+                dateFormat: 'M d, yy',
+                showButtonPanel: true,
+                beforeShow: function (input) {
+                    setTimeout(function () {
+                        var buttonPane = $(input)
+                                .datepicker("widget")
+                                .find(".ui-datepicker-buttonpane");
+                        
+                        buttonPane.empty();
+                        
+                        $("<button>", {
+                            text: "Clear",
+                            click: function () {
+                                //Code to clear your date field (text box, read only field etc.) I had to remove the line below and add custom code here
+                                $.datepicker._clearDate(input);
+                            }
+                        }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                    }, 1);
+                },
+                onChangeMonthYear: function (year, month, instance) {
+                    setTimeout(function () {
+                        var buttonPane = $(instance)
+                                .datepicker("widget")
+                                .find(".ui-datepicker-buttonpane");
+                        buttonPane.empty();
+                        $("<button>", {
+                            text: "Clear",
+                            click: function () {
+                                //Code to clear your date field (text box, read only field etc.) I had to remove the line below and add custom code here
+                                $.datepicker._clearDate(instance.input);
+                            }
+                        }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                    }, 1);
+                }
             });
 
         }

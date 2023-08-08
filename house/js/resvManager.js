@@ -1742,7 +1742,7 @@ function resvManager(initData, options) {
                         var buttonPane = $(input)
                                 .datepicker("widget")
                                 .find(".ui-datepicker-buttonpane");
-
+                        buttonPane.empty();
                         $("<button>", {
                             text: "Clear",
                             click: function () {
@@ -1757,7 +1757,7 @@ function resvManager(initData, options) {
                         var buttonPane = $(instance)
                                 .datepicker("widget")
                                 .find(".ui-datepicker-buttonpane");
-
+                        buttonPane.empty();
                         $("<button>", {
                             text: "Clear",
                             click: function () {

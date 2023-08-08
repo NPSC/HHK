@@ -66,14 +66,14 @@ class Hospital {
         $mrn = $labels->getString('hospital', 'MRN', '');
 
         $table->addHeaderTr(
-                (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
+                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh('Association') : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
                 .($mrn == '' ? '' : HTMLTable::makeTh($mrn))
             );
 
         $table->addBodyTr(
-                (count($aList) > 0 ? HTMLTable::makeTd(
+                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup(removeOptionGroups($aList), ($hstay->getAssociationId() == 0 ? $assocNoneId : $hstay->getAssociationId()), FALSE),
                                 array('name'=>'selAssoc', 'class'=>'ignrSave hospital-stay')
@@ -601,6 +601,8 @@ $(document).ready(function () {
                 $enDT = new \DateTime($dateStr);
                 $enDT->setTimezone(new \DateTimeZone($uS->tz));
                 $hstay->setArrivalDate($enDT->format('Y-m-d H:i:s'));
+            }else{
+                $hstay->setArrivalDate("");
             }
         }
 
@@ -611,6 +613,8 @@ $(document).ready(function () {
                 $enDT = new \DateTime($dateStr);
                 $enDT->setTimezone(new \DateTimeZone($uS->tz));
                 $hstay->setExpectedDepartureDate($enDT->format('Y-m-d H:i:s'));
+            }else{
+                $hstay->setExpectedDepartureDate("");
             }
         }
 
