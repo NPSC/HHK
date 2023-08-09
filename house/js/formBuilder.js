@@ -78,7 +78,14 @@
     			"multiple": false,
     			"values": []
   			}]:[]),
-    		{
+			  {
+    			label: "Notes",
+    			type: "textarea",
+				className: "form-control",
+				width: "col-md-12",
+    			name: "resvNotes",
+    		},
+			{
     			label: "Submit",
     			type: "button",
     			subtype: "submit",
@@ -189,7 +196,7 @@
   				]
   			},
   			{
-        		label: 'Patient Emergency Contact',
+        		label: (options.labels.patient || 'Patient') + ' Emergency Contact',
         		name: 'emergency-contact',
         		showHeader: true,
         		fields: [

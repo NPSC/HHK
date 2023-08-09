@@ -269,7 +269,7 @@ group by g.Code order by g.Order';
                     if(!filter_var($field->userData[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS) || !preg_match('/^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/', $field->userData[0])){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be formatted as: (###) ###-####'];
                     }
-                }elseif($field->type == "text" && $field->userData[0] != ''){
+                }elseif(($field->type == "text" || $field->type == "textarea") && $field->userData[0] != ''){
                     $sanitized = filter_var($field->userData[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                     $field->userData[0] = $sanitized;
                 }

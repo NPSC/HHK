@@ -6,6 +6,7 @@ use HHK\Document\FormDocument;
 use HHK\HTMLControls\{HTMLContainer,HTMLTable};
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchFor};
+use HHK\Note\Note;
 use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, GLTableNames, RelLinkType, ReservationStatus};
 use HHK\Member\Address\CleanAddress;
 use HHK\HTMLControls\HTMLInput;
@@ -21,6 +22,7 @@ use HHK\SysConst\ReferralFormStatus;
 use HHK\Exception\RuntimeException;
 use HHK\Purchase\RateChooser;
 use HHK\SysConst\{ItemPriceCode, RoomRateCategories, DefaultSettings};
+use HHK\Note\LinkNote;
 
 /**
  * ReferralForm.php
@@ -595,6 +597,11 @@ class ReferralForm {
             $rgRs->Primary_Guest->setNewVal('');
             EditRS::insert($dbh, $rgRs);
         }
+
+		//add reservation notes
+		if(isset($this->formUserData['resvNotes']) && $this->formUserData['resvNotes'] != ''){
+			LinkNote::save($dbh, $this->formUserData['resvNotes'], $resv->getIdReservation(), Note::ResvLink, "", "Referral", $uS->ConcatVisitNotes);
+		}
 
         $this->copyNotes($dbh, $resv->getIdReservation(), $this->referralDocId);
 
