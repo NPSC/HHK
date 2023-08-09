@@ -324,13 +324,16 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
                 unset($r['No_Return']);
             }
 
-            if(isset($r['Bad_Address']) && $r['Bad_Address'] == 'true' && isset($r['Address'])){
-                $r['Address'] = HTMLContainer::generateMarkup('div',
-                    HTMLContainer::generateMarkup("span", $r["Address"]) . HTMLContainer::generateMarkup("span", "", array("class"=>'ui-icon ui-icon-notice ml-2')),
-                array('class'=>'hhk-flex', 'style'=>'justify-content: space-between;')
+            // Manage bad address.
+            if (isset($r['Bad_Address']) && $r['Bad_Address'] == 'true' && isset($r['Address'])) {
+                $r['Address'] = HTMLContainer::generateMarkup(
+                    'div',
+                    HTMLContainer::generateMarkup("span", $r["Address"], ['title'=>'Bad Address']) . HTMLContainer::generateMarkup("span", "", array("class" => 'ui-icon ui-icon-notice ml-2')),
+                    array('class' => 'hhk-flex', 'style' => 'justify-content: space-between;', 'title' => 'Bad Address')
                 );
-                unset($r['Bad_Address']);
             }
+
+            unset($r['Bad_Address']);
 
             $rows[] = $r;
 
@@ -1327,7 +1330,7 @@ if ($uS->UseIncidentReports) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         	<div class="title mb-3">
-            	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">Report shows people who stayed in the time frame selected below</span>
+            	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">This report shows people who stayed in the time frame selected below</span>
             </div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog p-2" style="font-size:0.9em; max-width:1280px;">
                 <form id="fcat" action="PSGReport.php" method="post">

@@ -128,6 +128,10 @@ class ActiveReservation extends Reservation {
             'txtRibbonNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selResource' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'taNewNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'cbRS'  =>  [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ]
         ];
 
         $post = filter_input_array(INPUT_POST, $args);

@@ -996,7 +996,7 @@ ORDER BY v.idVisit , v.Span;");
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
 
             $td = HTMLContainer::generateMarkup('label', "Pay", ['for' => 'roomChargesPayCB', 'style' => 'margin-left:5px;margin-right:3px;', 'class'=>'hhk-RoomCharge'])
-                . HTMLInput::generateMarkup('', ['name' => 'roomChargesPayCB', 'class' => 'hhk-feeskeys hhk-RoomCharge', 'checked' => 'checked', 'type' => 'checkbox', 'style' => 'margin-right:.4em;'])
+                . HTMLInput::generateMarkup('', ['name' => 'roomChargesPayCB', 'class' => 'hhk-feeskeys hhk-RoomCharge', 'type' => 'checkbox', 'style' => 'margin-right:.4em;'])
                 . HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'size' => '7', 'class'=>'hhk-RoomCharge', 'style' => 'border:none;text-align:right;', 'readonly'=>'readonly'])
                 .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']);
 

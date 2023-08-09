@@ -23,6 +23,12 @@ use HHK\sec\Labels;
  */
 class Vehicle {
 
+    /**
+     * Summary of getRecords
+     * @param \PDO $dbh
+     * @param int $idReg
+     * @return array
+     */
     public static function getRecords(\PDO $dbh, $idReg) {
 
         $rows = array();
@@ -38,6 +44,12 @@ class Vehicle {
 
     }
 
+    /**
+     * Summary of searchTag
+     * @param \PDO $dbh
+     * @param mixed $tag
+     * @return array
+     */
     public static function searchTag(\PDO $dbh, $tag) {
 
         $events = array();
@@ -86,6 +98,14 @@ WHERE
         return $events;
     }
 
+    /**
+     * Summary of createVehicleMarkup
+     * @param \PDO $dbh
+     * @param int $idReg
+     * @param mixed $noVehicle
+     * @param mixed $refVehicle
+     * @return string
+     */
     public static function createVehicleMarkup(\PDO $dbh, $idReg, $noVehicle, $refVehicle = []) {
 
         // work on the state
@@ -247,6 +267,12 @@ WHERE
         return FALSE;
     }
 
+    /**
+     * Summary of saveVehicle
+     * @param \PDO $dbh
+     * @param int $idReg
+     * @return string
+     */
     public static function saveVehicle(\PDO $dbh, $idReg) {
         $rtnMsg = "";
 
