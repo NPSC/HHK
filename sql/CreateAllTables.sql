@@ -940,6 +940,7 @@ CREATE TABLE if not exists `name_address` (
   `Country_Code` varchar(10) NOT NULL DEFAULT '',
   `Address_Format` bit(1) NOT NULL DEFAULT b'0',
   `County` varchar(45) NOT NULL DEFAULT '',
+  `Meters_From_House` INT(11) NULL,
   `Mail_Code` varchar(5) NOT NULL DEFAULT '',
   `Status` varchar(15) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,

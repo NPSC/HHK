@@ -19,6 +19,7 @@ use HHK\Cron\AbstractJob;
 use HHK\Cron\EmptyJob;
 use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\House\Distance\ZipDistance;
 
 /**
  * ws_gen.php
@@ -62,9 +63,10 @@ try {
             }
 
             try{
-                $events['success'] = number_format(GuestDemogReport::calcZipDistance($dbh, $zipf, $zipt), 0);
+                $distanceCalculator = new ZipDistance();
+                $events['success'] = number_format($distanceCalculator->getDistance($dbh, ['zip'=>$zipf], ['zip'=>$zipt], 'miles'), 0);
             } catch (RuntimeException $hex) {
-                $events['error'] = "Zip code not found.  ";
+                $events['error'] = "Zip code not found. " . $hex->getMessage();
             }
 
             break;

@@ -200,7 +200,7 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
                     $('#zipDistAnswer').text('Zip Code not found.').closest('tr').show();
                     return;
                 } else if (data.success) {
-                    $('#zipDistAnswer').text(data.success + ' miles').closest('tr').show();
+                    $('#zipDistAnswer').text(data.success + ' nautical miles').closest('tr').show();
                 }
             });
         });
@@ -230,7 +230,7 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
                         ?>
 
                         <div style="margin-left:130px;">
-                            <fieldset class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"><legend>Distance Calculator</legend>
+                            <fieldset class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"><legend>Nautical Distance Calculator</legend>
                             <table>
                             <tr><th>From</th><th>To</th></tr>
                             <tr><td><input type="text" id="txtZipFrom" value="<?php echo $zip ?>" size="5"/></td><td><input type="text" id="txtZipTo" value="" size="5"/></td></tr>
