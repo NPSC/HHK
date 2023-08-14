@@ -515,7 +515,7 @@ FROM reservation r
                 $mail = prepareEmail();
 
                 $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 
                 $tos = explode(',', $uS->Guest_Track_Address);
                 foreach ($tos as $t) {

@@ -217,7 +217,7 @@ if (isset($_REQUEST['cmd'])) {
                 $mail = prepareEmail();
 
                 $mail->From = $uS->FromAddress;
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                 $mail->addAddress($emAddr);     // Add a recipient
                 $mail->addReplyTo($uS->ReplyTo);
 
@@ -230,7 +230,7 @@ if (isset($_REQUEST['cmd'])) {
 
                 $mail->isHTML(true);
 
-                $mail->Subject = $emSubject;
+                $mail->Subject = htmlspecialchars_decode($emSubject, ENT_QUOTES);
                 $mail->msgHTML($stmtMarkup);
 
 

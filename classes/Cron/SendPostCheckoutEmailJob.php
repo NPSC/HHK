@@ -168,10 +168,10 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
         $mail->From = $from;
         $mail->addReplyTo($from);
-        $mail->FromName = $siteName;
+        $mail->FromName = htmlspecialchars_decode($siteName, ENT_QUOTES);
 
         $mail->isHTML(true);
-        $mail->Subject = $subjectLine;
+        $mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
 
         if($this->params["EmailTemplate"] > 0){
             $sForm = new SurveyForm($this->dbh, $this->params['EmailTemplate']);
@@ -211,7 +211,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
                 $mail->clearAddresses();
                 $mail->addAddress($emailAddr);
 
-                $mail->Subject = $subjectLine;
+                $mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
                 $mail->msgHTML($form);
 
                 if ($mail->send() === FALSE) {

@@ -47,7 +47,7 @@ class Email extends AbstractMultiFactorAuth
         if($this->emailAddr){
             $mail = prepareEmail();
             $mail->From = SysConfig::getKeyValue($dbh, 'sys_config', "FromAddress");
-            $mail->FromName = $uS->siteName;
+            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
             $mail->addAddress(filter_var($this->emailAddr, FILTER_SANITIZE_EMAIL));
 
             $mail->isHTML(true);
@@ -55,7 +55,7 @@ class Email extends AbstractMultiFactorAuth
             $mail->Subject = "Two Factor Verification Code";
             $mail->msgHTML('
 Hello,<br>
-Your one time 2 factor verification code for ' . $uS->siteName . ' is <strong>' . $this->getCode() . '</strong><br><br>
+Your one time 2 factor verification code for ' . htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' is <strong>' . $this->getCode() . '</strong><br><br>
 This code is good for 5 minutes. Don\'t share this code with anyone.<br><br>
 Thank You,<br>
 Hospitality Housekeeper

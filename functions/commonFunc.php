@@ -181,6 +181,9 @@ function prepareEmail():PHPMailer
 
     $mail = new PHPMailer(true);
 
+    $mail->CharSet = "utf-8";
+    $mail->Encoding = "base64";
+
     if($uS->DKIMdomain && @file_get_contents($uS->keyPath . '/dkim/dkimPrivateKey.pem')){
         $mail->DKIM_domain = $uS->DKIMdomain;
         $mail->DKIM_private = $uS->keyPath . '/dkim/dkimPrivateKey.pem';

@@ -165,7 +165,7 @@ class ReservationSvcs
                 try{
                     $mail = prepareEmail();
                     $mail->From = $uS->FromAddress;
-                    $mail->FromName = $uS->siteName;
+                    $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
 
                     $ccs = explode(',', $ccEmailAddr);
@@ -187,7 +187,7 @@ class ReservationSvcs
 
                     $mail->isHTML(true);
 
-                    $mail->Subject = $docs[$docCode]['subjectLine'];
+                    $mail->Subject = htmlspecialchars_decode($docs[$docCode]['subjectLine'], ENT_QUOTES);
                     $mail->msgHTML($docs[$docCode]['doc']);
 
                     $mail->send();
