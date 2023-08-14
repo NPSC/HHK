@@ -162,7 +162,7 @@ group by g.Code order by g.Order';
                 $mail = prepareEmail();
 
                 $mail->From = ($uS->NoReplyAddr ? $uS->NoReplyAddr : "no_reply@nonprofitsoftwarecorp.org");
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                 $mail->addAddress($to);
 
                 $mail->isHTML(true);
@@ -194,7 +194,7 @@ group by g.Code order by g.Order';
             $mail = prepareEmail();
 
             $mail->From = $uS->NoReplyAddr;
-            $mail->FromName = $uS->siteName;
+            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
             $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
             $to = filter_var(trim($patientEmailAddress), FILTER_SANITIZE_EMAIL);

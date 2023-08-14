@@ -175,7 +175,7 @@ WHERE r.Email_Receipt = 1 and
 
             $mail->From = $fromAddr;
             $mail->addReplyTo($uS->ReplyTo);
-            $mail->FromName = $uS->siteName;
+            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 
             $mail->addAddress($toAddrSan);     // Add a recipient
 
@@ -193,7 +193,7 @@ WHERE r.Email_Receipt = 1 and
 
             $mail->isHTML(true);
 
-            $mail->Subject = $uS->siteName . ' Payment Receipt';
+            $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Payment Receipt';
             $mail->msgHTML($this->receiptMarkup);
 
             $mail->send();

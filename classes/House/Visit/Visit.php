@@ -537,8 +537,8 @@ class Visit {
                 $mail = prepareEmail();
 
                 $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
-                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
+                $mail->addReplyTo($uS->NoReplyAddr, htmlspecialchars_decode($uS->siteName, ENT_QUOTES));
 
                 $tos = array_merge(explode(',', $uS->Guest_Track_Address), explode(',', $uS->HouseKeepingEmail));
 
@@ -1009,7 +1009,7 @@ class Visit {
 	                $mail = prepareEmail();
 
 	                $mail->From = $uS->NoReplyAddr;
-	                $mail->FromName = $uS->siteName;
+	                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 	                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
 	                $tos = explode(',', $uS->Guest_Track_Address);
@@ -1022,7 +1022,7 @@ class Visit {
 
 	                $mail->isHTML(true);
 
-	                $mail->Subject = $subj;
+	                $mail->Subject = htmlspecialchars_decode($subj, ENT_QUOTES);
 	                $mail->msgHTML($gMarkup);
 	                $mail->send();
 	            }
@@ -1163,7 +1163,7 @@ class Visit {
                 $mail = prepareEmail();
 
                 $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                 $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
                 $tos = array_merge(explode(',', $uS->Guest_Track_Address), explode(',', $uS->HouseKeepingEmail));
@@ -1177,7 +1177,7 @@ class Visit {
 
                 $mail->isHTML(true);
 
-                $mail->Subject = $subj;
+                $mail->Subject = htmlspecialchars_decode($subj, ENT_QUOTES);
 
                 $mail->msgHTML($gMarkup);
                 $mail->send();

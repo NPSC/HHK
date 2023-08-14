@@ -397,7 +397,7 @@ abstract class AbstractReport {
                 $mail = prepareEmail();
 
                 $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 
                 foreach ($addresses as $t) {
                     $mail->addAddress($t);

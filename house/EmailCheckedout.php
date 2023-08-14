@@ -159,10 +159,10 @@ $mail = prepareEmail();
 
 $mail->From = $from;
 $mail->addReplyTo($from);
-$mail->FromName = $siteName;
+$mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 
 $mail->isHTML(true);
-$mail->Subject = $subjectLine;
+$mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
 
 $stmt = $dbh->query("Select d.`idDocument`, g.`Code`, g.`Description` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 's' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
 $docRow = $stmt->fetch();
@@ -201,7 +201,7 @@ foreach ($recipients as $r) {
         $mail->clearAddresses();
         $mail->addAddress($emailAddr);
 
-        $mail->Subject = $subjectLine;
+        $mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
         $mail->msgHTML($form);
 
         if ($mail->send() === FALSE) {
