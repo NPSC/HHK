@@ -1,6 +1,8 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
+use HHK\House\Distance\DistanceFactory;
+use HHK\House\Distance\GoogleDistance;
 use HHK\sec\{
     SecurityComponent,
     Session,
@@ -226,6 +228,64 @@ try {
 } catch (Exception $pex) {
 }
 
+$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if(SecurityComponent::is_TheAdmin()){
+    if($cmd == 'calcDistArray'){
+        try{
+            $distanceCalculator = DistanceFactory::make();
+            if($distanceCalculator instanceof GoogleDistance){
+                $numCalls = filter_input(INPUT_POST, 'numCalls', FILTER_SANITIZE_NUMBER_INT);
+                $events = $distanceCalculator->calcDistanceArray($dbh, $distanceCalculator->getUncalculatedAddresses($dbh), $numCalls);
+            }else{
+                $events = ["error"=>"Google Distance Calculator is not enabled"];
+            }
+        }catch(\Exception $e){
+            $events = ["error"=>$e->getMessage()];
+        }
+    }
+
+    if($cmd == 'calcDistAPICost'){
+        try{
+            $distanceCalculator = DistanceFactory::make();
+            if($distanceCalculator instanceof GoogleDistance){
+                $numCalls = filter_input(INPUT_POST, 'numCalls', FILTER_SANITIZE_NUMBER_INT);
+                $events = ["cost"=>$distanceCalculator->calculateApiCost($numCalls)];
+            }else{
+                $events = ["error"=>"Google Distance Calculator is not enabled"];
+            }
+        }catch(\Exception $e){
+            $events = ["error"=>$e->getMessage()];
+        }
+    }
+
+    if($cmd == 'getUncalculatedAddressTbl'){
+        try{
+            $distanceCalculator = DistanceFactory::make();
+            if($distanceCalculator instanceof GoogleDistance){
+                $events = CreateMarkupFromDB::generateHTML_Table($distanceCalculator->getUncalculatedAddresses($dbh),'uncalcAddr');
+            }else{
+                $events = "Google Distance Calculator is not enabled";
+            }
+        }catch(\Exception $e){
+            $events = $e->getMessage();
+        }
+    }
+
+    if(isset($events)){
+        if(is_array($events)){
+            echo json_encode($events);
+        }else{
+            echo $events;
+        }
+        exit;
+    }
+
+    $googleDistanceMkup = "";
+    if($uS->distCalculator == "google"){
+        $distanceCalculator = new GoogleDistance();
+        $googleDistanceMkup = HTMLContainer::generateMarkup("h3", "Google Distance Calculator") . $distanceCalculator->getEditMarkup($dbh);
+    }
+}
 try {
     $stmt = $dbh->query("Select MAX(TimeStamp) from syslog where Log_Type = 'Zip';");
     $rows = $stmt->fetchAll(PDO::FETCH_NUM);
@@ -459,6 +519,7 @@ echo $newsaml->getEditMarkup();
 
                         <div style="float:right;margin-right:40px;"><input type="submit" name="btnZipGo" id="btnZipGo" value="Go" /></div>
                     </form>
+                    <?php echo $googleDistanceMkup; ?>
                 </div>
             </div>
             <input type="hidden" id="notyMsg" value='<?php echo json_encode((isset($notymsg) ? $notymsg : [])); ?>'>

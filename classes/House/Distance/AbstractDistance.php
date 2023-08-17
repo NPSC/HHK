@@ -43,8 +43,15 @@ abstract class AbstractDistance{
         return $miles*1609.344;
     }
 
+    /**
+     * Summary of calcDistance
+     * @param \PDO $dbh
+     * @param array $originAddr
+     * @param array $destinationAddr
+     * @return array
+     */
     protected function calcDistance(\PDO $dbh, array $originAddr, array $destinationAddr){
-
+        return array();
     }
 
 }

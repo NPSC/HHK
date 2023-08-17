@@ -20,10 +20,8 @@ class DistanceFactory{
         switch ($uS->distCalculator){
             case "zip":
                 return new ZipDistance();
-                break;
             case "google":
                 return new GoogleDistance();
-                break;
             default:
                 return new ZipDistance();
         }
