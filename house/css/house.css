@@ -886,3 +886,7 @@ table.dataTable tbody td {
 .hhk-datepicker-closed{
 	background-color:lightgray;
 }
+
+#filterSelectors{
+	font-size: 0.9em;
+}
