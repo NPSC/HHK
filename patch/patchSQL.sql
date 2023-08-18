@@ -50,3 +50,5 @@ SET os.Non_Cleaning = 1;
 delete from gen_lookups where Table_Name = "Non_Cleaning_Day";
 
 
+-- Add billing agent report
+CALL new_webpage("BillingAgentReport.php", 0, "Billing Agent Report", 1, "h", "", "z", "p", "", "",NOW(), "ga");
