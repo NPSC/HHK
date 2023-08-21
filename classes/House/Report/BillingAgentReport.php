@@ -290,6 +290,7 @@ where " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id ord
         $uS = Session::getInstance();
 
         foreach($this->resultSet as $k=>$r) {
+            $this->resultSet[$k]["Invoice_Amount"] = "$" . number_format($r["Invoice_Amount"],2);
             //$this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
         }
 
