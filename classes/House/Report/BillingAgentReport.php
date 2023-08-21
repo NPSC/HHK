@@ -3,11 +3,11 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Session;
 use HHK\sec\Labels;
+use HHK\SysConst\ItemId;
 use HHK\SysConst\VolMemberType;
 
 /**
@@ -149,12 +149,12 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
     ifnull(v.Arrival_Date, '') as `Arrival`,
     " . $departureCase . " as `Departure`,
     DATEDIFF(ifnull(v.Actual_Departure, v.Expected_Departure), v.Arrival_Date) as `Nights`,
-    (DATEDIFF(ifnull(v.Actual_Departure, v.Expected_Departure), v.Arrival_Date)+1) as `Days`,
+    SUM(DATEDIFF(il.Period_End, il.Period_Start)) as `PaidNights`,
     ifnull(pgn.Name_First, '') as `pgFirst`,
     ifnull(pgn.Name_Last, '') as `pgLast`,
     ifnull(vs.Description, '') as `Status_Title`,
     ifnull(i.Invoice_Number, '') as `Invoice_Number`,
-    ifnull(i.Amount, '') as `Invoice_Amount`,
+    sum(ifnull(i.Amount, '')) as `Invoice_Amount`,
     if(trim(ba.Name_Full) != '', ba.Name_Full, ba.Company) as `Billed To`,
     ifnull(invs.Description, '') as `Invoice_Status_Title`
 from
@@ -177,12 +177,14 @@ from
         left join
     gen_lookups vs on vs.Table_Name = 'Visit_Status' and vs.Code = v.Status
         join
-    invoice i on v.idVisit = i.Order_Number and v.Span = i.Suborder_Number
+    invoice i on v.idVisit = i.Order_Number and v.Span = i.Suborder_Number and i.Sold_To_Id in (".implode(",",$baIds).")
+        left join
+    invoice_line il on i.idInvoice = il.Invoice_Id and il.Deleted = 0 and il.Item_Id = ". ItemId::Lodging ."
         left join
     gen_lookups invs on invs.Table_Name = 'Invoice_Status' and invs.Code = i.Status
         join
     name ba on i.Sold_To_Id = ba.idName and ba.idName in (".implode(",",$baIds).")
-where " . $whDates . $whBilling . " order by v.idVisit";
+where " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id order by v.idVisit";
     }
 
     public function getStats(){
@@ -190,11 +192,13 @@ where " . $whDates . $whBilling . " order by v.idVisit";
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $patientIds = array();
         $totalBilled = 0.00;
+        $paidNights = 0;
         foreach ($rows as $row){
             $patientIds[] = $row["pId"];
             $totalBilled+= $row["Invoice_Amount"];
+            $paidNights+= $row["PaidNights"];
         }
-        return ["TotalPatientsServed" => count(array_unique($patientIds)), "TotalBilled"=>$totalBilled];
+        return ["TotalPatientsServed" => count(array_unique($patientIds)), "TotalBilled"=>$totalBilled, "PaidNights"=>$paidNights];
     }
 
     public function makeFilterMkup():void{
@@ -213,7 +217,7 @@ where " . $whDates . $whBilling . " order by v.idVisit";
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
         
-        $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
+        //$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
         $cFields[] = array("Visit ID", 'idVisit', 'checked', '', 'string', '20');
         $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " ID", 'pId', 'checked', '', 'string', '20');
         $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " First", 'Name_First', 'checked', '', 'string', '20');
@@ -242,14 +246,15 @@ where " . $whDates . $whBilling . " order by v.idVisit";
             }
         }
 
-        $cFields[] = array("Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Departure", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " First", 'pgFirst', '', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', '', '', 'string', '20');
+        $cFields[] = array("Visit Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array("Visit Departure", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " First", 'pgFirst', 'checked', '', 'string', '20');
+        $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
         $cFields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');
         $cFields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
+        $cFields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
         $cFields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
-        $cFields[] = array("Invoice Status", 'Invoice_Status_Title', 'checked', '', 'string', '15');
+        //$cFields[] = array("Invoice Status", 'Invoice_Status_Title', 'checked', '', 'string', '15');
 
 
         return $cFields;
@@ -270,6 +275,10 @@ where " . $whDates . $whBilling . " order by v.idVisit";
 
         if(isset($stats["TotalBilled"])){
             $mkup .= HTMLContainer::generateMarkup("p", "Total Amount Billed: $" . number_format($stats["TotalBilled"],2));
+        }
+
+        if(isset($stats["PaidNights"])){
+            $mkup .= HTMLContainer::generateMarkup("p", "Total Nights Billed: " . $stats["PaidNights"]);
         }
 
         return $mkup;
