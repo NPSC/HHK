@@ -49,4 +49,6 @@ SET os.Non_Cleaning = 1;
 -- delete old non cleaning days
 delete from gen_lookups where Table_Name = "Non_Cleaning_Day";
 
-
+-- fix operating_schedules
+ALTER TABLE `operating_schedules`
+CHANGE COLUMN `Timestamp` `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
