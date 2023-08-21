@@ -676,7 +676,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         }
 
         $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'3')));
-        $tbl->addHeaderTr(HTMLTable::makeTh('Room (' . (count($days)-1) . ')') . $th . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Total') . HTMLTable::makeTh('Occupied'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Room (' . (count($days) > 0 ? count($days)-1 : 0) . ')') . $th . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Total') . HTMLTable::makeTh('Occupied'));
 
         $mkup = $tbl->generateMarkup(array("class"=>"mt-2 mb-2"));
 
