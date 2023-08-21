@@ -655,7 +655,7 @@ $memberData['idReg'] = $registration->getIdRegistration();
 $memberData['psgOnly'] = $psgOnly;
 $memberData['guestLabel'] = $labels->getString('MemberType', 'guest', 'Guest');
 $memberData['visitorLabel'] = $labels->getString('MemberType', 'visitor', 'Guest');
-
+$memberData['datePickerButtons'] = $uS->RegNoMinorSigLines;
 $idReg = $registration->getIdRegistration();
 
 

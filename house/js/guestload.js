@@ -368,8 +368,76 @@ $(document).ready(function () {
         changeMonth: true,
         changeYear: true,
         autoSize: true,
-        maxDate:0,
-        dateFormat: 'M d, yy'
+        maxDate: 0,
+        dateFormat: 'M d, yy',
+        showButtonPanel: datePickerButtons,
+        beforeShow: function (input) {
+            setTimeout(function () {
+                var buttonPane = $(input)
+                    .datepicker("widget")
+                    .find(".ui-datepicker-buttonpane");
+                buttonPane.empty();
+                $("<button>", {
+                    text: "Minor",
+                    click: function () {
+                        var target = $(input);
+                        var inst = $.datepicker._getInst(target[0]);
+                        inst.input.val('Minor');
+                        var onSelect = $.datepicker._get(inst, "onSelect");
+
+                        if (onSelect) {
+                            onSelect.apply((inst.input ? inst.input[0] : null), ['Minor', inst]);  // trigger custom callback
+                        } else if (inst.input) {
+                            inst.input.trigger("change"); // fire the change event
+                        }
+
+                        if (inst.inline) {
+                            $.datepicker._updateDatepicker(inst);
+                        } else {
+                            $.datepicker._hideDatepicker();
+                            $.datepicker._lastInput = inst.input[0];
+                            if (typeof (inst.input[0]) !== "object") {
+                                inst.input.trigger("focus"); // restore focus
+                            }
+                            $.datepicker._lastInput = null;
+                        }
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+                var buttonPane = $(instance)
+                    .datepicker("widget")
+                    .find(".ui-datepicker-buttonpane");
+                buttonPane.empty();
+                $("<button>", {
+                    text: "Minor",
+                    click: function () {
+                        var target = $(instance.input);
+                        var inst = $.datepicker._getInst(target[0]);
+                        inst.input.val('Minor');
+                        var onSelect = $.datepicker._get(inst, "onSelect");
+                        if (onSelect) {
+                            onSelect.apply((inst.input ? inst.input[0] : null), ['Minor', inst]);  // trigger custom callback
+                        } else if (inst.input) {
+                            inst.input.trigger("change"); // fire the change event
+                        }
+
+                        if (inst.inline) {
+                            $.datepicker._updateDatepicker(inst);
+                        } else {
+                            $.datepicker._hideDatepicker();
+                            $.datepicker._lastInput = inst.input[0];
+                            if (typeof (inst.input[0]) !== "object") {
+                                inst.input.trigger("focus"); // restore focus
+                            }
+                            $.datepicker._lastInput = null;
+                        }
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+            }, 1);
+        }
     });
 
     $('#cbLastConfirmed').change(function () {
