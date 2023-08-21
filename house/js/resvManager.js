@@ -147,7 +147,7 @@ function resvManager(initData, options) {
                     var buttonPane = $(input)
                         .datepicker("widget")
                         .find(".ui-datepicker-buttonpane");
-
+                    buttonPane.empty();
                     $("<button>", {
                         text: "Minor",
                         click: function () {
@@ -181,7 +181,7 @@ function resvManager(initData, options) {
                     var buttonPane = $(instance)
                         .datepicker("widget")
                         .find(".ui-datepicker-buttonpane");
-
+                    buttonPane.empty();
                     $("<button>", {
                         text: "Minor",
                         click: function () {
@@ -1735,6 +1735,7 @@ function resvManager(initData, options) {
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
+                numberOfMonths: 1,
                 dateFormat: 'M d, yy',
                 showButtonPanel: true,
                 beforeShow: function (input) {

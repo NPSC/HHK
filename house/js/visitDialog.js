@@ -141,6 +141,7 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
+                numberOfMonths: 1,
                 dateFormat: 'M d, yy',
                 showButtonPanel: true,
                 beforeShow: function (input) {
