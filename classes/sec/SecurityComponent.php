@@ -121,7 +121,7 @@ class SecurityComponent {
             exit();
         }
 
-        if ((isset($ssn->logged) == FALSE || $ssn->logged == FALSE) && isset($ssn->userAgent) == FALSE || $ssn->userAgent != filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS) ) {
+        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE || (isset($ssn->userAgent) && $ssn->userAgent != filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS) )) {
 
             $ssn->destroy(TRUE);
 
@@ -261,23 +261,6 @@ class SecurityComponent {
             $this->rootURL = "http://" . $this->getHostName() . $this->getRootPath();
         }
 
-    }
-
-    /**
-     * Summary of setResourceURL
-     * @param \PDO $dbh
-     * @return mixed
-     */
-    public function setResourceURL(\PDO $dbh){
-        try{
-            $resourceURL = SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL');
-            if($resourceURL == '' || $resourceURL == "https://./" || $resourceURL != $this->getRootURL()){
-                SysConfig::saveKeyValue($dbh, "sys_config", "resourceURL", $this->getRootURL());
-            }
-            return SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL', '');
-        }catch(\Exception $e){
-            return $this->getRootURL();
-        }
     }
 
     /**

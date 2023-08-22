@@ -370,7 +370,7 @@ $(document).ready(function () {
         autoSize: true,
         maxDate: 0,
         dateFormat: 'M d, yy',
-        showButtonPanel: datePickerButtons,
+        showButtonPanel: memData.datePickerButtons,
         beforeShow: function (input) {
             setTimeout(function () {
                 var buttonPane = $(input)

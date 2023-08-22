@@ -263,7 +263,7 @@ Order by `t`.`List_Order`;");
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(
                         HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-arrowthick-2-n-s")) .
-                        HTMLInput::generateMarkup($d[4], ["name"=>'txtDOrder[0]', "type"=>"hidden"])
+                        HTMLInput::generateMarkup("", ["name"=>'txtDOrder[0]', "type"=>"hidden"])
                         , ["class"=>"sort-handle", "title"=>"Drag to sort"]) : '')
                 . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'txtDiag[0]']))
                 . ($tableName == DIAGNOSIS_TABLE_NAME && count($diagCats) > 0 ?
