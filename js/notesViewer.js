@@ -161,7 +161,7 @@
                     }
 
                     if (settings.linkId < 0) {
-                        settings.alertMessage.call('Link Id is not set.  ', 'alert');
+                        flagAlertMessage('Link Id is not set.  ', 'error');
                         return;
                     }
 
@@ -184,10 +184,16 @@
                                 if(data.idNote > 0){
                                     dtTable.ajax.reload();
                                     noteTextarea.val("");
-                                    $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
-                                }else{
-                                    settings.alertMessage.call(data.error, 'alert');
+                                }else if(data.error){
+                                    if (data.gotopage) {
+                                        window.open(data.gotopage);
+                                    }
+                                    flagAlertMessage(data.error, 'error');
                                 }
+                                $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
+                            },
+                            error: function(XHR, textStatus, errorText){
+                                flagAlertMessage(errorText, 'error');
                             }
                         });
                     }
@@ -306,11 +312,17 @@
 								$wrapper.find('.hhk-note-button').button();
                             }else{
                                 if(data.error){
-                                    settings.alertMessage.call(data.error, 'alert');
+                                    if (data.gotopage) {
+                                        window.open(data.gotopage);
+                                    }
+                                    flagAlertMessage(data.error, 'error');
                                 }else{
-                                    settings.alertMessage.call('An unknown error occurred.', 'alert');
+                                    flagAlertMessage('An unknown error occurred.', 'alert');
                                 }
                             }
+                    },
+                    error: function(XHR, textStatus, errorText){
+                        flagAlertMessage(errorText, 'error');
                     }
                 });
             }
@@ -361,9 +373,15 @@
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                             $wrapper.find('.hhk-note-button').button();
-                        }else{
-                            settings.alertMessage.call(data.error, 'error');
+                        }else if(data.error){
+                            if (data.gotopage) {
+                                window.open(data.gotopage);
+                            }
+                            flagAlertMessage(data.error, 'error');
                         }
+                    },
+                    error: function(XHR, textStatus, errorText){
+                        flagAlertMessage(errorText, 'error');
                     }
                 });
 
@@ -393,9 +411,15 @@
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                             $wrapper.find('.hhk-note-button').button();
-                        }else{
-                            settings.alertMessage.call(data.error, 'error');
+                        }else if(data.error){
+                            if (data.gotopage) {
+                                window.open(data.gotopage);
+                            }
+                            flagAlertMessage(data.error, 'error');
                         }
+                    },
+                    error: function(XHR, textStatus, errorText){
+                        flagAlertMessage(errorText, 'error');
                     }
                 });
 
@@ -437,9 +461,15 @@
                             row.data(rowdata);
                             rowtr.find("input.flag").checkboxradio({icon:false});
                             $wrapper.find('.hhk-note-button').button();
-                        }else{
-                            settings.alertMessage.call(data.error, 'error');
+                        }else if(data.error){
+                            if (data.gotopage) {
+                                window.open(data.gotopage);
+                            }
+                            flagAlertMessage(data.error, 'error');
                         }
+                    },
+                    error: function(XHR, textStatus, errorText){
+                        flagAlertMessage(errorText, 'error');
                     }
                 });
 

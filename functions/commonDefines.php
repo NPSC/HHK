@@ -63,6 +63,7 @@ define('JQ_JS', 'js/jquery-min.js' . JSV);
 define('JQ_DT_JS', '../js/datatables.min.js' . JSV);
 define('NOTY_JS', '../js/toastr.min.js' . JSV);
 define('NOTY_SETTINGS_JS', '../js/toastrSettings.js' . JSV);  //These are local
+define('JQ_DT_SETTINGS', '../js/datatablesSettings.js' . JSV);
 define('DIRRTY_JS', '../js/jquery.dirrty.js' . JSV);
 define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
 define('BOOTSTRAP_JS', '../js/bootstrap5.1.3.min.js' . JSV);

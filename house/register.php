@@ -335,6 +335,7 @@ if($uS->useOnlineReferral){
 
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_SETTINGS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
