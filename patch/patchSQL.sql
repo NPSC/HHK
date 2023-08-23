@@ -52,3 +52,7 @@ delete from gen_lookups where Table_Name = "Non_Cleaning_Day";
 -- fix operating_schedules
 ALTER TABLE `operating_schedules`
 CHANGE COLUMN `Timestamp` `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- add additional access_log actions
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
+('Web_User_Actions', 'LOI', 'Log out for inactivicy', '', '', '0');

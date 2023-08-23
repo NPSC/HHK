@@ -512,7 +512,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Web_User_Actions', 'PC', 'Password Change', '', '', '0'),
 ('Web_User_Actions', 'PL', 'Locked Out', '', '', '0'),
 ('Web_User_Actions', 'E', 'Password Expired', '', '', '0'),
-('Web_User_Actions', 'LF', 'Login Failure', '', '', '0');
+('Web_User_Actions', 'LF', 'Login Failure', '', '', '0'),
+('Web_User_Actions', 'LOI', 'Log out for inactivicy', '', '', '0');
 -- ;
 
 

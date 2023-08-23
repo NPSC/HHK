@@ -147,6 +147,9 @@ class WebInit {
         } else {
             if ($uS->timeout_idle < time()) {
                 $uS->logged = FALSE;
+                $dbh = initPDO(true);
+                UserClass::insertUserLog($dbh, UserClass::LogoutInactivity, ($uS->username != "" ? $uS->username : "<empty>"));
+
                 $this->page->die_if_not_Logged_In($page_Type, "index.php");
             } else {
                 $uS->timeout_idle = time() + ($uS->SessionTimeout * 60);

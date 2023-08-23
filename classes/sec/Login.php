@@ -186,7 +186,7 @@ class Login {
 
                 WebInit::resetSessionIdle(); //extend idle session to prevent double login
 
-                if ($u->getDefaultPage() != '') {
+                if ($pge == $defaultPage && $u->getDefaultPage() != '') {
                     $pge = $u->getDefaultPage();
                 }
 

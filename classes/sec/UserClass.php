@@ -47,6 +47,7 @@ class UserClass
     const Expired = 'E';
 
     const Login_Fail = 'LF';
+    const LogoutInactivity = "LOI";
 
     /**
      * Summary of _checkLogin

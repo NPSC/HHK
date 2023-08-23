@@ -243,6 +243,10 @@ class ScriptAuthClass extends SecurityComponent {
 
             if (self::does_User_Code_Match($this->pageCodes) === FALSE) {
 
+                $dbh = initPDO(true);
+                $uS = Session::getInstance();
+                UserClass::insertUserLog($dbh, "Unauthorized for page: " . $this->get_Page_Title(), ($uS->username != "" ? $uS->username : "<empty>"));
+
                 if ($this->get_Page_Type() == "p") {
 
                     echo("Unauthorized");

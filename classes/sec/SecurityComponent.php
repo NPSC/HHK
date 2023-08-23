@@ -68,7 +68,15 @@ class SecurityComponent {
         }
 
         // check authorization codes.
-        return self::does_User_Code_Match($pageCode);
+        $isAuthorized = self::does_User_Code_Match($pageCode);
+
+        if($isAuthorized){
+            return true;
+        }else{
+            $dbh = initPDO(true);
+            UserClass::insertUserLog($dbh, "Unauthorized for page: " . $name, ($uS->username != "" ? $uS->username : "<empty>"));
+            return false;
+        }
 
     }
 
@@ -82,7 +90,7 @@ class SecurityComponent {
 
         $ssn = Session::getInstance();
 
-        if ((isset($ssn->logged) == FALSE || $ssn->logged == FALSE) && isset($ssn->userAgent) == FALSE || $ssn->userAgent != filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS) ) {
+        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE || (isset($ssn->userAgent) && $ssn->userAgent != filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS) )) {
 
             $ssn->destroy(TRUE);
 
@@ -132,7 +140,12 @@ class SecurityComponent {
             } else {
 
                 if ($this->fileName != '') {
-                    header("Location: " . $loginPage . "?xf=" . $this->fileName);
+                    //build redirect path
+                    $xf = $this->fileName;
+                    if(count($_GET) > 0){
+                        $xf .= "?" . http_build_query($_GET);
+                    }
+                    header("Location: " . $loginPage . "?xf=" . urlencode($xf));
                 } else {
                     header("Location: " . $loginPage);
                 }
@@ -169,7 +182,6 @@ class SecurityComponent {
                 }
             }
         }
-
         return FALSE;
     }
 
