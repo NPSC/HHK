@@ -135,7 +135,10 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
 
         $this->query = "select
     CONCAT(v.idVisit, '-', v.Span) as idVisit,
+    v.idVisit as `visitId`,
+    v.Span as `Span`,
     ifnull(p.idName, '') as `pId`,
+    ifnull(hs.idPsg, '') as `idPsg`,
     ifnull(p.Name_Last, '') as Name_Last,
     ifnull(p.Name_First, '') as Name_First,
     concat(ifnull(pa.Address_1, ''), '', ifnull(pa.Address_2, ''))  as pAddr,
@@ -192,13 +195,11 @@ where " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id ord
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $patientIds = array();
         $totalBilled = 0.00;
-        $paidNights = 0;
         foreach ($rows as $row){
             $patientIds[] = $row["pId"];
             $totalBilled+= $row["Invoice_Amount"];
-            $paidNights+= $row["PaidNights"];
         }
-        return ["TotalPatientsServed" => count(array_unique($patientIds)), "TotalBilled"=>$totalBilled, "PaidNights"=>$paidNights];
+        return ["TotalPatientsServed" => count(array_unique($patientIds)), "TotalBilled"=>$totalBilled];
     }
 
     public function makeFilterMkup():void{
@@ -252,7 +253,7 @@ where " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id ord
         $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
         $cFields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');
         $cFields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
-        $cFields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
+        //$cFields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
         $cFields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
         //$cFields[] = array("Invoice Status", 'Invoice_Status_Title', 'checked', '', 'string', '15');
 
@@ -277,10 +278,6 @@ where " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id ord
             $mkup .= HTMLContainer::generateMarkup("p", "Total Amount Billed: $" . number_format($stats["TotalBilled"],2));
         }
 
-        if(isset($stats["PaidNights"])){
-            $mkup .= HTMLContainer::generateMarkup("p", "Total Nights Billed: " . $stats["PaidNights"]);
-        }
-
         return $mkup;
 
     }
@@ -291,7 +288,8 @@ where " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id ord
 
         foreach($this->resultSet as $k=>$r) {
             $this->resultSet[$k]["Invoice_Amount"] = "$" . number_format($r["Invoice_Amount"],2);
-            //$this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+            $this->resultSet[$k]["idVisit"] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit', 'data-gid'=>"", 'data-vid'=>$r['visitId'], 'data-span'=>$r['Span'], 'style'=>'display:inline-table;'));
+            $this->resultSet[$k]['pId'] = HTMLContainer::generateMarkup('a', $r['pId'], array('href'=>'GuestEdit.php?id=' . $r['pId'] . '&psg=' . $r['idPsg']));
         }
 
         return parent::generateMarkup($outputType);

@@ -264,23 +264,6 @@ class SecurityComponent {
     }
 
     /**
-     * Summary of setResourceURL
-     * @param \PDO $dbh
-     * @return mixed
-     */
-    public function setResourceURL(\PDO $dbh){
-        try{
-            $resourceURL = SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL');
-            if($resourceURL == '' || $resourceURL == "https://./" || $resourceURL != $this->getRootURL()){
-                SysConfig::saveKeyValue($dbh, "sys_config", "resourceURL", $this->getRootURL());
-            }
-            return SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL', '');
-        }catch(\Exception $e){
-            return $this->getRootURL();
-        }
-    }
-
-    /**
      * Summary of is_Admin
      * @return bool
      */
