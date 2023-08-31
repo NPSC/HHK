@@ -15,5 +15,6 @@ class ResourceStatus {
     const Available = 'a';
     const OutOfService = 'oos';
     const Delayed = 'dld';
+    const Closed = 'c';
 }
 ?>

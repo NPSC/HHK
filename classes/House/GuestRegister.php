@@ -362,7 +362,7 @@ where ru.idResource_use is null
             $s['guests'] = $r['Guest_Count'];
             $s['extended'] = $visitExtended;
             $s['allDay'] = 1;
-            $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
+            $s['fullName'] = htmlspecialchars_decode((!is_null($r['Name_Full']) ? $r['Name_Full']: ''), ENT_QUOTES);
             $s['visitStatus'] = $statusText;
             $s['vStatusCode'] = $r['Visit_Status'];
             $s['resourceEditable'] = 0;

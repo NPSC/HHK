@@ -1,6 +1,7 @@
 <?php
 
 use HHK\House\OperatingHours;
+use HHK\House\Report\RoomReport;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\House\Resource\ResourceTypes;
 use HHK\SysConst\{ResourceStatus, RoomRateCategories, GLTableNames, ItemPriceCode, InvoiceStatus, ItemType, ItemId, VolMemberType};
@@ -109,6 +110,154 @@ GROUP BY s.idVisit, s.Visit_Span");
         $actual[$r['idVisit']][$r['Visit_Span']] = $r['Actual_Guest_Nights'] < 0 ? 0 : $r['Actual_Guest_Nights'];
         $preInterval[$r['idVisit']][$r['Visit_Span']] = $r['PI_Guest_Nights'] < 0 ? 0 : $r['PI_Guest_Nights'];
     }
+
+}
+function newStatsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
+
+    // Stats panel
+    if (count($visitNites) < 1) {
+        return '';
+    }
+
+    $uS = Session::getInstance();
+
+    $totalVisitNites = 0;
+    $numCategoryRooms = array();
+
+    $oosNights = array();
+    $totalOOSNites = 0;
+
+    $stDT = new DateTime($start . ' 00:00:00');
+    $enDT = new DateTime($end . ' 00:00:00');
+    $numNights = $enDT->diff($stDT, TRUE)->days;
+
+    foreach ($visitNites as $v) {
+        $totalVisitNites += $v;
+    }
+
+    foreach ($categories as $cat) {
+        $numCategoryRooms[$cat[0]] = 0;
+        $oosNights[$cat[0]] = 0;
+    }
+
+
+
+    $qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, ifnull(r.Retired_At, '') as `Retired_At`
+        from resource r 
+left join resource_room rr on r.idResource = rr.idResource
+left join room rm on rr.idRoom = rm.idRoom
+where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "') and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')
+order by r.idResource;";
+
+    $rstmt = $dbh->query($qu);
+
+    $rooms = array();
+
+    $roomReport = new RoomReport();
+    $roomReport->collectUtilizationData($dbh, $start, $end);
+    $daysAr = $roomReport->getDays();
+
+    // transform room report data for visit report
+    while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
+        if(isset($daysAr[$r['idResource']])){
+            $totals = array(ResourceStatus::Available=>0, ResourceStatus::OutOfService=>0, ResourceStatus::Delayed=>0, ResourceStatus::Unavailable=>0, ResourceStatus::Closed=>0);
+            foreach($daysAr[$r['idResource']] as $day){
+                $totals[ResourceStatus::Available]+= ($day['n']+$day['o']+$day['t']+$day['u']+$day['c'] == 0 ? 1:0);
+                $totals[ResourceStatus::OutOfService]+= $day['o'];
+                $totals[ResourceStatus::Delayed]+= $day['t'];
+                $totals[ResourceStatus::Unavailable]+= $day['u'];
+                $totals[ResourceStatus::Closed]+= $day['c'];
+            }
+            $rooms[$r['idResource']][$r[$rescGroup]] = $totals;
+        }
+    }
+
+    // Filter out unavailalbe rooms and add up the nights
+    $availableRooms = 0;
+    $unavailableRooms = 0;
+
+    foreach($rooms as $r) {
+
+        foreach ($r as $cId => $c) {
+
+            if (isset($c[ResourceStatus::Unavailable]) && $c[ResourceStatus::Unavailable] >= $numNights) {
+                $unavailableRooms++;
+                continue;
+            }
+
+            $numCategoryRooms[$cId]++;
+            $availableRooms++;
+
+            foreach ($c as $k => $v) {
+
+                if ($k != ResourceStatus::Available) {
+                    $oosNights[$cId] += $v;
+                    $totalOOSNites += $v;
+                }
+            }
+        }
+    }
+
+
+    $numRoomNights = $availableRooms * $numNights;
+    $numUsefulNights = $numRoomNights - $totalOOSNites;
+    $avStay = $totalVisitNites / count($visitNites);
+
+    // Median visit nights
+    array_multisort($visitNites);
+    $entries = count($visitNites);
+    $emod = $entries % 2;
+
+    if ($emod > 0) {
+        // odd number of entries
+        $median = $visitNites[(ceil($entries / 2) - 1)];
+    } else {
+        $median = ($visitNites[($entries / 2) - 1] + $visitNites[($entries / 2)]) / 2;
+    }
+
+
+    $trs[4] = HTMLTable::makeTd('Useful Nights (Room-Nights &ndash; Room-Nights OOS):', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($numRoomNights . ' &ndash; ' . $totalOOSNites . ' = '  . HTMLContainer::generateMarkup('span', $numUsefulNights, array('style'=>'font-weight:bold;')));
+
+    $trs[5] = HTMLTable::makeTd('Room Utilization (Nights &divide; Useful Nights):', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($totalVisitNites . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalVisitNites * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
+
+    $hdTr = HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All Rooms (' . $availableRooms . ')');
+
+    foreach ($categories as $c) {
+
+        if (!isset($numCategoryRooms[$c[0]]) || $numCategoryRooms[$c[0]] == 0){
+            continue;
+        }
+
+        $hdTr .= HTMLTable::makeTh($c[1] . ' (' . $numCategoryRooms[$c[0]] . ')');
+        $numRoomNights = $numCategoryRooms[$c[0]] * $numNights;
+        $numUsefulNights = $numRoomNights - $oosNights[$c[0]];
+
+        $trs[4] .= HTMLTable::makeTd($numRoomNights . ' &ndash; ' . $oosNights[$c[0]] . ' = '  . HTMLContainer::generateMarkup('span', $numUsefulNights, array('style'=>'font-weight:bold;')));
+        $trs[5] .= HTMLTable::makeTd($totalCatNites[$c[0]] . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalCatNites[$c[0]] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
+    }
+
+    $sTbl = new HTMLTable();
+
+    $sTbl->addHeaderTr($hdTr);
+
+    $sTbl->addBodyTr(HTMLTable::makeTd('Mean visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($avStay, 2)));
+    $sTbl->addBodyTr(HTMLTable::makeTd('Median visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($median,2)));
+
+    $sTbl->addBodyTr(HTMLTable::makeTd('Mean Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($avDailyFee,2)));
+
+    if($uS->RoomPriceModel == ItemPriceCode::Dailey){
+        $sTbl->addBodyTr(HTMLTable::makeTd('Median Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($medDailyFee,2)));
+    }
+
+    $sTbl->addBodyTr($trs[4]);
+
+    $sTbl->addBodyTr($trs[5]);
+
+    return HTMLContainer::generateMarkup('h3', $siteName . ' Visit Report Statistics')
+            . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
+            . $sTbl->generateMarkup();
 
 }
 
@@ -1409,7 +1558,8 @@ where
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact', 'style'=>'width:100%'));
 
         // Stats panel
-        $statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
+        $statsTable = newStatsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
+        //$statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
 
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 

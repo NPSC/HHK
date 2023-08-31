@@ -1060,6 +1060,13 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
 		return $this->totals;
 	}
 
+    /**
+	 * @return array
+	 */
+    public function getDays() {
+		return $this->days;
+	}
+
 	/**
 	 * @return array
 	 */
