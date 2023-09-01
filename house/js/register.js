@@ -1016,6 +1016,7 @@ $(document).ready(function () {
         nextDayThreshold: '13:00',
         eventColor: defaultEventColor,
         eventTextColor: defCalEventTextColor,
+        eventOrder: "start, id, title",
 		eventResizableFromStart: false,
         initialView: defaultView,
         editable: true,
