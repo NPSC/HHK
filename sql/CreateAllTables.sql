@@ -298,7 +298,7 @@ CREATE TABLE if not exists `document` (
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idDocument`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
 -- Table `staff_note`
@@ -327,7 +327,7 @@ CREATE TABLE if not exists `link_doc` (
   `idGuest` int(11) DEFAULT NULL,
   `idPSG` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
 -- Table `donations`
@@ -388,7 +388,7 @@ CREATE TABLE if not exists `emergency_contact` (
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idEmergency_contact`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -432,7 +432,7 @@ CREATE TABLE if not exists `gateway_transaction` (
   `Created_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idgateway_transaction`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -492,7 +492,7 @@ CREATE TABLE if not exists `guest_token` (
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idGuest_token`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -514,7 +514,7 @@ CREATE TABLE if not exists `hospital` (
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idHospital`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -546,7 +546,7 @@ CREATE TABLE if not exists `hospital_stay` (
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idHospital_stay`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 -- -----------------------------------------------------
@@ -559,7 +559,7 @@ CREATE  TABLE if not exists `house` (
   `idLocation` INT NOT NULL DEFAULT 0 ,
   `Timestamp` TIMESTAMP NOT NULL DEFAULT  CURRENT_TIMESTAMP ,
   PRIMARY KEY (`idHouse`)
-  ) ENGINE = InnoDB;
+  ) ENGINE = InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -596,15 +596,15 @@ CREATE TABLE if not exists `id_securitygroup` (
 -- Table `insurance`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `insurance` (
-  `idInsurance` INT NOT NULL AUTO_INCREMENT COMMENT '',
-  `idInsuranceType` INT(3) NOT NULL COMMENT '',
-  `Title` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
-  `Order` INT(3) NOT NULL DEFAULT 0 COMMENT '',
-  `Opens_Type` VARCHAR(15) NOT NULL DEFAULT '' COMMENT '',
-  `Status` VARCHAR(1) NOT NULL DEFAULT 'a' COMMENT '',
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT now() COMMENT '',
+  `idInsurance` INT NOT NULL AUTO_INCREMENT,
+  `idInsuranceType` INT(3) NOT NULL ,
+  `Title` VARCHAR(45) NOT NULL DEFAULT '',
+  `Order` INT(3) NOT NULL DEFAULT 0,
+  `Opens_Type` VARCHAR(15) NOT NULL DEFAULT '',
+  `Status` VARCHAR(1) NOT NULL DEFAULT 'a',
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
   PRIMARY KEY (`idInsurance`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -612,10 +612,10 @@ CREATE TABLE if not exists `insurance` (
 -- Table `insurance_type`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `insurance_type` (
-  `idInsurance_type` INT(3) NOT NULL COMMENT '',
-  `Title` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
-  `Is_Primary` INT(1) NOT NULL DEFAULT 0 COMMENT '',
-  `List_Order` INT(3) NOT NULL DEFAULT 0 COMMENT '',
+  `idInsurance_type` INT(3) NOT NULL,
+  `Title` VARCHAR(45) NOT NULL DEFAULT '',
+  `Is_Primary` INT(1) NOT NULL DEFAULT '0',
+  `List_Order` INT(3) NOT NULL DEFAULT '0',
   `Status` VARCHAR(1) NOT NULL DEFAULT 'a',
   PRIMARY KEY (`idInsurance_type`)
   ) ENGINE=InnoDB;
@@ -654,7 +654,7 @@ CREATE TABLE if not exists `invoice` (
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idInvoice`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 -- -----------------------------------------------------
@@ -989,7 +989,7 @@ CREATE TABLE if not exists `name_customer` (
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idName_customer`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -1074,14 +1074,14 @@ CREATE TABLE if not exists `name_guest` (
 -- Table `name_insurance`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `name_insurance` (
-  `idName` INT NOT NULL COMMENT '',
-  `Insurance_Id` INT NOT NULL COMMENT '',
+  `idName` INT NOT NULL,
+  `Insurance_Id` INT NOT NULL,
   `Member_Num` VARCHAR(100) NOT NULL DEFAULT '',
   `Group_Num` VARCHAR(100) NOT NULL DEFAULT '',
   `Primary` INT(1) NOT NULL DEFAULT 0,
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '',
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idName`, `Insurance_Id`)
 ) ENGINE=InnoDB;
 
@@ -1218,7 +1218,7 @@ CREATE TABLE IF NOT EXISTS `note` (
   `Status` VARCHAR(5) NOT NULL DEFAULT 'a',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idNote`)
- ) ENGINE = InnoDB;
+ ) ENGINE = InnoDB AUTO_INCREMENT=10;
 
 
 -- -----------------------------------------------------
@@ -1278,15 +1278,16 @@ CREATE TABLE IF NOT EXISTS `member_note` (
 CREATE TABLE IF NOT EXISTS `operating_schedules` (
   `idDay` INT NOT NULL AUTO_INCREMENT,
   `Day` INT NULL,
-  `Start_Date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Start_Date` DATETIME NULL,
   `End_Date` DATETIME NULL,
   `Open_At` TIME NULL,
   `Closed_At` TIME NULL,
   `Non_Cleaning` BOOL NOT NULL DEFAULT FALSE,
   `Closed` BOOL NOT NULL DEFAULT FALSE,
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idDay`));
+  `Timestamp` TIMESTAMP NOT NULL  DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idDay`)
+  ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 -- -----------------------------------------------------
@@ -1420,7 +1421,7 @@ CREATE TABLE if not exists `payment_info_check` (
   `Check_Date` date DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idpayment_info_Check`)
-) ENGINE=InnoDB  AUTO_INCREMENT=7;
+) ENGINE=InnoDB AUTO_INCREMENT=7;
 
 
 
@@ -1436,7 +1437,7 @@ CREATE TABLE if not exists `payment_invoice`
     `Create_Datetime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(`idPayment_Invoice`),
     INDEX ix_uq_payment_inv_map_pa_in (Payment_Id, Invoice_Id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=7;
 
 
 
@@ -1465,7 +1466,7 @@ CREATE TABLE if not exists `photo` (
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idPhoto`)
-  ) ENGINE=InnoDB;
+  ) ENGINE=InnoDB AUTO_INCREMENT=7;
 
 
 
@@ -1494,8 +1495,8 @@ CREATE TABLE if not exists `psg` (
   `idPatient` INT NOT NULL DEFAULT 0 ,
   `Title` VARCHAR(45) NOT NULL DEFAULT '' ,
   `Status` VARCHAR(5) NOT NULL DEFAULT '' ,
-  `Primary_Language` INT NOT NULL DEFAULT 0 COMMENT '',
-  `Language_Notes` TEXT NULL DEFAULT NULL COMMENT '' ,
+  `Primary_Language` INT NOT NULL DEFAULT 0,
+  `Language_Notes` TEXT NULL DEFAULT NULL ,
   `Info_Last_Confirmed` DATETIME NULL DEFAULT NULL,
   `Notes` TEXT NULL DEFAULT NULL ,
   `Last_Updated` DATETIME NULL DEFAULT NULL ,
@@ -1590,7 +1591,7 @@ CREATE TABLE IF NOT EXISTS `report` (
   `Status` varchar(5) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idReport`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 -- -----------------------------------------------------
@@ -1765,7 +1766,7 @@ CREATE TABLE if not exists `resource_use` (
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idResource_use`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -1969,7 +1970,7 @@ CREATE TABLE if not exists `template_tag` (
   `Replacement_Wrapper` varchar(45) NOT NULL DEFAULT '',
   PRIMARY KEY (`idTemplate_tag`),
   UNIQUE INDEX `Unq_Doc_Tag` (`Doc_Name` ASC, `Tag_Name` ASC)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 -- -----------------------------------------------------
@@ -2000,7 +2001,7 @@ CREATE TABLE if not exists `trans` (
   `Entered_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idTrans`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -2013,7 +2014,7 @@ CREATE TABLE if not exists `transaction_type` (
   `Effect` varchar(45) NOT NULL DEFAULT '',
   `Code` varchar(5) NOT NULL DEFAULT '',
   PRIMARY KEY (`idtransaction_type`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -2023,14 +2024,14 @@ CREATE TABLE if not exists `transaction_type` (
 CREATE TABLE if not exists `vehicle` (
   `idVehicle` int(11) NOT NULL AUTO_INCREMENT,
   `idRegistration` int(11) NOT NULL,
-  `idName` INT(11) NOT NULL DEFAULT 0 COMMENT '',
+  `idName` INT(11) NOT NULL DEFAULT 0,
   `Make` varchar(45) NOT NULL DEFAULT '',
   `Model` varchar(45) NOT NULL DEFAULT '',
   `Color` varchar(45) NOT NULL DEFAULT '',
   `State_Reg` varchar(2) NOT NULL DEFAULT '',
   `License_Number` varchar(15) NOT NULL DEFAULT '',
   `No_Vehicle` varchar(4) NOT NULL DEFAULT '',
-  `Note` VARCHAR(445) NOT NULL DEFAULT '' COMMENT '',
+  `Note` VARCHAR(445) NOT NULL DEFAULT '',
   PRIMARY KEY (`idVehicle`,`idRegistration`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
@@ -2152,7 +2153,7 @@ CREATE TABLE if not exists `w_auth_ip` (
 -- Table `w_groups`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `w_groups` (
-  `Group_Code` varchar(5) NOT NULL DEFAULT '',
+  `Group_Code` varchar(5) NOT NULL,
   `Title` varchar(45) NOT NULL DEFAULT '',
   `Description` varchar(255) NOT NULL DEFAULT '',
   `Default_Access_Level` varchar(5) NOT NULL DEFAULT '',
@@ -2174,7 +2175,7 @@ CREATE TABLE if not exists `w_group_ip` (
   `Group_Code` varchar(5) NOT NULL DEFAULT '',
   `IP_addr` varchar(45) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 -- -----------------------------------------------------
@@ -2196,7 +2197,7 @@ CREATE TABLE IF NOT EXISTS `w_idp` (
     `IdP_ManageRoles` BOOL DEFAULT 1,
     `Status` VARCHAR(2) NOT NULL DEFAULT 'a',
     PRIMARY KEY (`idIdp`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
 -- Table `w_idp_secgroups`
@@ -2206,17 +2207,17 @@ CREATE TABLE IF NOT EXISTS `w_idp_secgroups` (
     `idIdp` INT(11) NOT NULL DEFAULT 0,
     `idSecGroup` VARCHAR(5) NOT NULL DEFAULT '',
     PRIMARY KEY (`idIdpSecGroup`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
 -- Table `w_user_log`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `w_user_log` (
-  `Username` VARCHAR(100) NOT NULL COMMENT '',
-  `Access_Date` DATETIME NOT NULL COMMENT '',
-  `IP` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
-  `Session_Id` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
-  `Page` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
+  `Username` VARCHAR(100) NOT NULL,
+  `Access_Date` DATETIME NOT NULL,
+  `IP` VARCHAR(45) NOT NULL DEFAULT '',
+  `Session_Id` VARCHAR(45) NOT NULL DEFAULT '',
+  `Page` VARCHAR(45) NOT NULL DEFAULT '',
   `Action` VARCHAR(45) NOT NULL DEFAULT '',
   `Browser` VARCHAR(45) NOT NULL DEFAULT '',
   `OS` VARCHAR(45) NOT NULL DEFAULT ''
@@ -2231,7 +2232,7 @@ CREATE TABLE if not exists`w_user_passwords` (
   `Enc_PW` varchar(100) NOT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idPassword`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
 -- Table `w_users`
@@ -2272,7 +2273,7 @@ CREATE TABLE if not exists `w_user_tokens` (
     `IP_Address` VARCHAR(45) NOT NULL DEFAULT '',
     `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`idToken`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 -- -----------------------------------------------------

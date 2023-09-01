@@ -546,7 +546,11 @@ class HouseServices {
      */
     public static function showPayInvoice(\PDO $dbh, $id, $iid) {
 
-        $mkup = HTMLContainer::generateMarkup('div', PaymentChooser::createPayInvMarkup($dbh, $id, $iid), array('style' => 'min-width:600px;clear:left;'));
+        $mkup = HTMLContainer::generateMarkup(
+            'div',
+            PaymentChooser::createPayInvMarkup($dbh, $id, $iid),
+            array('class'=>'hhk-payInvoice', 'style' => 'min-width:600px;clear:left;')
+        );
 
         return array('mkup'=>$mkup);
     }

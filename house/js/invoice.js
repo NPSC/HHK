@@ -3,8 +3,9 @@ function invPay(id, pbp, dialg) {
     if (verifyAmtTendrd() === false) {
         return;
     }
+
     var parms = {cmd: 'payInv', pbp: pbp, id: id};
-    
+
     // Fees and Keys
     $('.hhk-feeskeys').each(function() {
         if ($(this).attr('type') === 'checkbox') {
@@ -27,7 +28,7 @@ function invPay(id, pbp, dialg) {
         }
     });
     dialg.dialog("close");
-    
+
     $.post('ws_ckin.php', parms,
         function(data) {
             try {
@@ -36,15 +37,15 @@ function invPay(id, pbp, dialg) {
                 alert("Parser error - " + err.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-                
+
             }
-            
+
             paymentRedirect(data, $('#xform'));
 
             if (data.success && data.success !== '') {
@@ -54,13 +55,13 @@ function invPay(id, pbp, dialg) {
             if (data.receipt && data.receipt !== '') {
                 showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
             }
-            
+
             $('#btnInvGo').click();
     });
 }
 
 function invLoadPc(nme, id, iid) {
-"use strict";    
+"use strict";
     var buttons = {
         "Pay Fees": function() {
             invPay(id, 'register.php', $('div#keysfees'));
@@ -69,14 +70,14 @@ function invLoadPc(nme, id, iid) {
             $(this).dialog("close");
         }
     };
-    
+
     $.post('ws_ckin.php',
         {
             cmd: 'showPayInv',
             id: id,
             iid: iid
         },
-        
+
         function(data) {
         "use strict";
         if (data) {
@@ -86,15 +87,15 @@ function invLoadPc(nme, id, iid) {
                 alert("Parser error - " + err.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-                
+
             } else if (data.mkup) {
-                
+
                 $('div#keysfees').children().remove();
                 $('div#keysfees').append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.mkup)));
                 $('div#keysfees .ckdate').datepicker({
@@ -105,10 +106,10 @@ function invLoadPc(nme, id, iid) {
                     numberOfMonths: 1,
                     dateFormat: 'M d, yy'
                 });
-                
+
                 isCheckedOut = false;
                 setupPayments(data.resc, '', '', 0, $('#pmtRcpt'));
-                
+
                 $('#keysfees').dialog('option', 'buttons', buttons);
                 $('#keysfees').dialog('option', 'title', 'Pay Invoice');
                 $('#keysfees').dialog('option', 'width', 800);
@@ -126,7 +127,7 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
 
             var dt;
             var nt = dialg.find('#taBillNotes').val();
-            
+
             if (dialg.find('#txtBillDate').val() != '' && dialg.find('#txtBillDate').datepicker('getDate')) {
                 dt = dialg.find('#txtBillDate').val();
             }
@@ -146,21 +147,21 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
                         if (data.gotopage) {
                             window.location.assign(data.gotopage);
                         }
-                        
+
                         flagAlertMessage(data.error, 'error');
-                        
+
                     } else if (data.success) {
 
                         if (data.elemt && data.strDate) {
                             $(data.elemt).text(data.strDate);
-                            
+
                         }
 
                         if (data.notesElemt && data.notes) {
                             $(data.notesElemt).text(data.notes);
-                            
+
                         }
-                        
+
                         flagAlertMessage(data.success, 'info');
                     }
                 }
@@ -207,11 +208,23 @@ function invoiceAction(idInvoice, action, eid, container, show) {
             if (data.delete) {
 
                 if (data.eid == '0') {
+                    // Register page, unpaid invoices tab delete action
                     flagAlertMessage(data.delete, 'success');
-                    $('#btnInvGo').click();
+                    $('#btnInvGo').click();  // repaint unpaid invoices tab
                 } else {
-                    $('#' + data.eid).parents('tr').first().remove();
-                    amtPaid();
+                    // Paying today section, unpaid invoices listing delete icon.
+                    // Called in two places
+                    if ($('#' + data.eid).parentsUntil('.keysfees', '.hhk-payInvoice').length > 0) {
+                        // called from pay invoices
+                        $('#' + data.eid).parents('tr').first().remove();
+                        amtPaid();
+                        $('#btnInvGo').click();  // repaint unpaid invoices tab
+                    } else {
+                        // called from visit viewer.
+                        $('#keysfees').dialog("close");
+
+                    }
+
                 }
 
             }

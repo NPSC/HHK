@@ -149,9 +149,9 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                         var buttonPane = $(input)
                                 .datepicker("widget")
                                 .find(".ui-datepicker-buttonpane");
-                        
+
                         buttonPane.empty();
-                        
+
                         $("<button>", {
                             text: "Clear",
                             click: function () {
@@ -518,6 +518,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
                     $('#feesCharges').val('');
                     $('#guestCredit').val('');
+                    $('#feesPayment').val('');
                     $('.hhk-refundDeposit').hide('fade');
                     $('#DepRefundAmount').val('');
                     $('#visitFeeCb').prop('checked', false).prop('disabled', false);

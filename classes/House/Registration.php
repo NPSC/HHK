@@ -22,14 +22,49 @@ use HHK\House\Reservation\Reservation_1;
  */
 class Registration {
 
+    /**
+     * Summary of regRS
+     * @var
+     */
     protected $regRS;
+
+    /**
+     * Summary of isNew
+     * @var
+     */
     public $isNew;
+    /**
+     * Summary of depositBalance
+     * @var
+     */
     protected $depositBalance;
+    /**
+     * Summary of lodgingMOA
+     * @var
+     */
     protected $lodgingMOA;
+    /**
+     * Summary of prepaymentMOA
+     * @var
+     */
     protected $prepaymentMOA;
+    /**
+     * Summary of donations
+     * @var
+     */
     protected $donations;
+    /**
+     * Summary of rawRow
+     * @var
+     */
     protected $rawRow;
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param mixed $idPsg
+     * @param mixed $idRegistration
+     */
     public function __construct(\PDO $dbh, $idPsg, $idRegistration = 0) {
 
         $this->regRS = new RegistrationRs();
@@ -57,6 +92,12 @@ class Registration {
         }
     }
 
+    /**
+     * Summary of loadDepositBalance
+     * @param \PDO $dbh
+     * @param mixed $idGroup
+     * @return float
+     */
     public static function loadDepositBalance(\PDO $dbh, $idGroup) {
 
         $depositBalance = 0.0;
@@ -89,6 +130,12 @@ where
         return $depositBalance;
     }
 
+    /**
+     * Summary of loadLodgingBalance
+     * @param \PDO $dbh
+     * @param mixed $idGroup
+     * @return float
+     */
     public static function loadLodgingBalance(\PDO $dbh, $idGroup) {
 
         $lodgingBalance = 0.0;
@@ -121,6 +168,12 @@ where
         return $lodgingBalance;
     }
 
+    /**
+     * Summary of loadDonationBalance
+     * @param \PDO $dbh
+     * @param mixed $idGroup
+     * @return float
+     */
     public static function loadDonationBalance(\PDO $dbh, $idGroup) {
 
         $DonBalance = 0.0;
@@ -153,6 +206,12 @@ where
         return $DonBalance;
     }
 
+    /**
+     * Summary of loadPrepayments
+     * @param \PDO $dbh
+     * @param mixed $idGroup
+     * @return float|int
+     */
     public static function loadPrepayments(\PDO $dbh, $idGroup) {
 
         $prePayment = 0;
@@ -186,6 +245,13 @@ where
         return $prePayment;
     }
 
+    /**
+     * Summary of updatePrefTokenId
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @param mixed $idToken
+     * @return bool|int
+     */
     public static function updatePrefTokenId(\PDO $dbh, $idRegistration, $idToken) {
 
         $tokenId = intval($idToken);
@@ -198,6 +264,12 @@ where
         return $dbh->exec("update registration set Pref_Token_Id = $tokenId where idregistration = $regId and Pref_Token_Id != $tokenId");
     }
 
+    /**
+     * Summary of readPrefTokenId
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @return mixed
+     */
     public static function readPrefTokenId(\PDO $dbh, $idRegistration) {
 
         $tokenId = 0;
@@ -228,6 +300,11 @@ where
 
     }
 
+    /**
+     * Summary of getLodgingMOA
+     * @param \PDO $dbh
+     * @return float
+     */
     public function getLodgingMOA(\PDO $dbh) {
 
         if (is_null($this->lodgingMOA)) {
@@ -237,6 +314,11 @@ where
         return $this->lodgingMOA;
     }
 
+    /**
+     * Summary of getPrePayments
+     * @param \PDO $dbh
+     * @return float|int
+     */
     public function getPrePayments(\PDO $dbh) {
 
         if (is_null($this->prepaymentMOA)) {
@@ -246,6 +328,11 @@ where
         return $this->prepaymentMOA;
     }
 
+    /**
+     * Summary of getDonations
+     * @param \PDO $dbh
+     * @return float
+     */
     public function getDonations(\PDO $dbh) {
 
         if (is_null($this->donations)) {
@@ -255,14 +342,26 @@ where
         return $this->donations;
     }
 
+    /**
+     * Summary of getIdRegistration
+     * @return mixed
+     */
     public function getIdRegistration() {
         return $this->regRS->idRegistration->getStoredVal();
     }
 
+    /**
+     * Summary of getIdPsg
+     * @return mixed
+     */
     public function getIdPsg() {
         return $this->regRS->idPsg->getStoredVal();
     }
 
+    /**
+     * Summary of getEmailReceipt
+     * @return bool
+     */
     public function getEmailReceipt() {
         if ($this->regRS->Email_Receipt->getStoredVal() == 1) {
             return TRUE;
@@ -270,15 +369,28 @@ where
         return FALSE;
     }
 
+    /**
+     * Summary of getPreferredTokenId
+     * @return mixed
+     */
     public function getPreferredTokenId() {
         return $this->regRS->Pref_Token_Id->getStoredVal();
     }
 
 
+    /**
+     * Summary of getNoVehicle
+     * @return mixed
+     */
     public function getNoVehicle() {
         return $this->regRS->Vehicle->getStoredVal();
     }
 
+    /**
+     * Summary of setNoVehicle
+     * @param mixed $b
+     * @return void
+     */
     public function setNoVehicle($b) {
         if ($b) {
             $this->regRS->Vehicle->setNewVal('1');
@@ -287,6 +399,10 @@ where
         }
     }
 
+    /**
+     * Summary of isNew
+     * @return bool
+     */
     public function isNew() {
         if ($this->regRS->idRegistration->getStoredVal() == 0) {
             return TRUE;
@@ -295,6 +411,10 @@ where
         }
     }
 
+    /**
+     * Summary of getRegRS
+     * @return RegistrationRS
+     */
     public function getRegRS() {
         return $this->regRS;
     }
@@ -414,6 +534,12 @@ where
         return $msg;
     }
 
+    /**
+     * Summary of createRegMarkup
+     * @param \PDO $dbh
+     * @param mixed $adminKey
+     * @return string
+     */
     public function createRegMarkup(\PDO $dbh, $adminKey) {
 
         // get session instance

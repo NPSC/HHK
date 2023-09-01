@@ -372,16 +372,30 @@ class PaymentChooser {
      * @param boolean $useVisitFee
      * @return string
      */
-    public static function createMarkup(\PDO $dbh, $idGuest, $idResv, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $showFinalPayment = FALSE, $prefTokenId = 0) {
+    public static function createMarkup(
+        \PDO $dbh
+        , $idGuest
+        , $idResv
+        , $idRegistration
+        , VisitCharges $visitCharge
+        , AbstractPaymentGateway $paymentGateway
+        , $defaultPayType
+        , $showFinalPayment = FALSE
+        , $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
+        /**
+         * if $us->DefaultPayType is empty, the pay controls for selecting
+         * payment type will be blank, forcing the user to set it every payment time.
+         */
         if ($defaultPayType == '') {
             $defaultPayType = $uS->DefaultPayType;
         }
 
-        $unpaidInvoices = Invoice::load1stPartyUnpaidInvoices($dbh, $visitCharge->getIdVisit(), $uS->returnId);
-
+        /**
+         * ItemPriceCode::None short-circuits all amount calculations to 0 and may not show Price & Pay UI on Edit Visit dialog box
+         */
         $showRoomFees = TRUE;
         if ($uS->RoomPriceModel == ItemPriceCode::None) {
             $showRoomFees = FALSE;
@@ -412,25 +426,25 @@ class PaymentChooser {
         }
 
         $mkup = HTMLContainer::generateMarkup('div',
-                self::createPaymentMarkup(
-                    $showRoomFees,
-                    $uS->KeyDeposit,
-                    $visitCharge,
-                    $useVisitFee,
-                    $heldAmount,
-                    $uS->PayVFeeFirst,
-                    $showFinalPayment,
-                    $unpaidInvoices,
-                    $labels,
-                    $vat,
-                    $visitCharge->getIdVisit(),
-                    readGenLookupsPDO($dbh, 'ExcessPays'),
-                    $uS->VisitExcessPaid,
-                    $uS->UseHouseWaive,
-                    $chkingIn
-                )
-                , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
-                );
+            self::createPaymentMarkup(
+                $showRoomFees,
+                $uS->KeyDeposit,
+                $visitCharge,
+                $useVisitFee,
+                $heldAmount,
+                $uS->PayVFeeFirst,
+                $showFinalPayment,
+                Invoice::load1stPartyUnpaidInvoices($dbh, $visitCharge->getIdVisit(), $uS->returnId),
+                $labels,
+                $vat,
+                $visitCharge->getIdVisit(),
+                readGenLookupsPDO($dbh, 'ExcessPays'),
+                $uS->VisitExcessPaid,
+                $uS->UseHouseWaive,
+                $chkingIn
+            )
+            , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
+        );
 
         $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
 
@@ -606,7 +620,7 @@ class PaymentChooser {
      * @param array $unpaidInvoices
      * @return array<string>
      */
-    public static function createUnpaidInvoiceMarkup($unpaidInvoices) {
+    protected static function createUnpaidInvoiceMarkup($unpaidInvoices) {
 
         $trs = array();
 
@@ -744,6 +758,7 @@ dateFormat: "M d, yy" ';
 
     /**
      * Summary of createPayInvMarkup
+     * Called from register page Unpaid invoices tab.
      * @param \PDO $dbh
      * @param int $id
      * @param int $invoiceId

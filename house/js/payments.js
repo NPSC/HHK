@@ -376,6 +376,7 @@ class AmountVariables {
         t.totReturnPreTax = 0;
         t.isChdOut = isCheckedOut;
         t.roomBalDue = 0;
+        t.totRmBalDue = 0;
     }
 }
 
@@ -396,6 +397,7 @@ class PayCtrls {
         t.totalPayment = $('#totalPayment');
         //t.totalCharges = $('#totalCharges');
         t.cashTendered = $('#txtCashTendered');
+
         t.invoiceCb = $('.hhk-payInvCb');
         t.adjustBtn = $('#paymentAdjust');
         t.msg = $('#payChooserMsg');
@@ -557,7 +559,7 @@ function getPaymentData(p, a) {
 
 }
 
-function getPaymentAmount(p, a, updateFeeTaxes) {
+function getPaymentAmount(p, a) {
 
     if (p.feePayAmt.length > 0) {
 
@@ -593,7 +595,8 @@ function getPaymentAmount(p, a, updateFeeTaxes) {
             a.feePayPreTax = 0;
         }
 
-        a.feePayTaxAmt = updateFeeTaxes.calcTax(a.feePayPreTax);
+        let updateTaxes = new UpdateTaxes(p.taxingItems);
+        a.feePayTaxAmt = updateTaxes.calcTax(a.feePayPreTax);
 
         // Only tax up to the room balance due.
         if (a.feePayTaxAmt > (a.roomBalTaxDue - a.totReturnTax) && a.isChdOut) {
@@ -605,16 +608,104 @@ function getPaymentAmount(p, a, updateFeeTaxes) {
 
 }
 
+function doOverpayment(p, a) {
+    let originalFeePayAmt = a.feePay,
+        minAmtDue = 0;
+
+    const updateFeeTaxes = new UpdateTaxes(p.taxingItems);
+
+    if (p.selBalTo.val() === 'r' && a.overPayAmt > 0) {
+        // Refund
+
+        if (a.totRmBalDue > 0) {
+            minAmtDue = a.totRmBalDue;
+        }
+
+        if (a.feePayPreTax > a.overPayAmt) {
+
+            a.feePayPreTax -= a.overPayAmt;
+            a.overPayAmt = 0;
+
+            // Not a fefund
+            $('#txtRtnAmount').val('');
+            $('#divReturnPay').hide();
+            p.selBalTo.val('');
+
+        } else if (a.overPayAmt.toFixed(2) >= minAmtDue) {
+
+            a.overPayAmt -= Math.max((a.feePayPreTax - a.totRmBalDue), 0);
+            a.feePayPreTax = minAmtDue;
+
+            if (a.overPayAmt.toFixed(2) > 0) {
+                $('#divReturnPay').show('fade');
+                $('#txtRtnAmount').val(a.overPayAmt.toFixed(2).toString());
+
+            } else {
+                // a.overPayAmt is 0
+                $('#txtRtnAmount').val('');
+                $('#divReturnPay').hide();
+                p.selBalTo.val('');
+            }
+        }
+
+        a.feePay = a.feePayPreTax + updateFeeTaxes.calcTax(a.feePayPreTax);
+        a.totPay = (a.totPay - originalFeePayAmt) + a.feePay;
+
+        if (originalFeePayAmt != a.feePay) {
+            alert('Pay Room Fees amount is reduced to: $' + a.feePay.toFixed(2).toString());
+        }
+
+    } else {
+        // Not asking for a fefund
+        $('#txtRtnAmount').val('');
+        $('#divReturnPay').hide();
+    }
+
+    // Manage page entities
+    if (a.overPayAmt.toFixed(2) <= 0) {
+        p.overPay.val('');
+        $('.hhk-Overpayment').hide();
+        p.selBalTo.val('');
+    } else {
+        p.overPay.val(a.overPayAmt.toFixed(2).toString());
+        $('.hhk-Overpayment').show('fade');
+    }
+
+    return;
+}
+
+function doHouseWaive(p, a,) {
+
+    if (a.totPay > 0 && a.overPayAmt <= 0) {
+        // Show house wave entities.
+        $('.hhk-HouseDiscount').show('fade');
+        $('.totalPaymentTr').show('fade');
+
+        if (p.houseWaiveCb.prop('checked')) {
+            // Manage House Waive of underpaid amount
+
+            p.hsDiscAmt.val((a.totPay).toFixed(2).toString());
+            a.totPay = 0;
+
+        } else {
+            // No House Waive
+            p.hsDiscAmt.val('');
+        }
+    } else {
+        // hide and clear house waive entities
+        $('.hhk-HouseDiscount').hide();
+        $('.totalPaymentTr').hide();
+        p.hsDiscAmt.val('');
+        p.houseWaiveCb.prop('checked', false);
+    }
+}
+
 
 function amtPaid() {
     "use strict";
 
     var p = new PayCtrls(),
-        a = new AmountVariables(isCheckedOut),
-        updateFeeTaxes = new UpdateTaxes(p.taxingItems);
-    let totRmBalDue = 0,
-        balance = 0,
-        originalFeePayAmt = 0;
+        a = new AmountVariables(isCheckedOut);
 
     // Hide error messages
     p.msg.text('').hide();
@@ -642,73 +733,68 @@ function amtPaid() {
     getPaymentData(p, a);
 
     // Fees Payments - feePay
-    getPaymentAmount(p, a, updateFeeTaxes);
+    getPaymentAmount(p, a);
 
     // Credits
     a.totReturns = + a.reimburseAmt + a.heldAmt + a.depRfPay;
 
-    // Charges
-    totRmBalDue = roundTo(a.roomBalDue + a.roomBalTaxDue, 2);
-    a.totCharges = a.invCharge + a.visitfeeCharge + a.kdepCharge + totRmBalDue - a.totReturns;
-
     // Payments
-    a.totPay = a.invAmt + a.vfee + a.kdep + a.feePay - a.totReturns;
+    a.totPay = a.invAmt + a.vfee + a.kdep + a.feePay;
 
 
     if (a.isChdOut) {
         // Checked out
         $('.hhk-minPayment').show('fade');
         p.hsDiscAmt.val('');
-        originalFeePayAmt = a.feePay;
+        a.overPayAmt = 0;
 
+        a.totRmBalDue = roundTo(a.roomBalDue + a.roomBalTaxDue, 2);
+        a.totCharges = a.invCharge + a.visitfeeCharge + a.kdepCharge;
 
         // Show correct row for charges due
-        if (totRmBalDue >= 0) {
-            p.feesCharges.val(totRmBalDue.toFixed(2).toString());
+        if (a.totRmBalDue >= 0) {
+            // Room fees are still owed.
+            p.feesCharges.val(a.totRmBalDue.toFixed(2).toString());
             $('.hhk-GuestCredit').hide();
             $('.hhk-RoomCharge').show('fade');
             $('#daystoPay').hide();
 
+            if (p.RoomChargesPayCb.prop('checked') === true) {
+                a.totCharges += a.totRmBalDue;
+            } else {
+                a.totRmBalDue = 0;
+            }
+
         } else {
-            p.guestCredit.val(totRmBalDue.toFixed(2).toString());
+            // room fees are overpaid.
+            p.guestCredit.val(a.totRmBalDue.toFixed(2).toString());
             $('.hhk-RoomCharge').hide();
             $('#daystoPay').show();
             $('.hhk-GuestCredit').show('fade');
-            // Treat money owed the guest as return
-            a.totReturns -= totRmBalDue;
-            a.totCharges = a.invCharge + a.visitfeeCharge + a.kdepCharge - a.totReturns;
+
+            a.totReturns -= a.totRmBalDue;  // add to total returns
+            a.totRmBalDue = 0;
         }
 
-        // These are several cases where we may need to redifine the balance
-        if (a.totCharges < 0) {
-            // case: totCharges is negative
-            if (a.totPay <= 0) {
-                balance = a.totPay;
-            } else {
-                balance = a.totCharges - a.feePay;
-                a.totPay = a.feePay;
-            }
+        // use up any returns by reducing the total payment
+        if (a.totReturns >= a.totPay) {
+            a.totReturns -= a.totPay;  // reduce overpayment by any fee payments
+            a.overPayAmt = a.totReturns
+            a.totPay = 0;     // reduce total payment by any fee payments.
         } else {
-            // case: totCharges is positive
-            if (a.totPay < 0) {
-                // actually, this is an overpayment.
-                balance = a.totPay;
-            } else {
-                balance = a.totCharges - a.totPay;
-            }
+            // feePay > totReturns
+
+            a.overPayAmt = a.totPay - a.totCharges;
+            a.totPay -= a.totReturns;
         }
 
-        if (balance >= 0) {
-            // Show house discount
-            doHouseWaive();
 
-        } else if (balance < 0) {
-            // show overpayment
+        doOverpayment(p, a);
 
-            a.overPayAmt = Math.abs(balance);
-            doOverpayment();
+        doHouseWaive(p, a);
 
-        }
+
+
 
     // else still checked in
     } else {
@@ -719,16 +805,18 @@ function amtPaid() {
         $('.hhk-HouseDiscount').hide();
         $('.hhk-RoomCharge').hide();
         $('.hhk-GuestCredit').hide();
-        p.hsDiscAmt.val('');
-        a.overPayAmt = 0;
+        $('#divReturnPay').hide();
+        $('#txtRtnAmount').val('');
 
+        p.hsDiscAmt.val('');
+        a.totPay -= a.totReturns;
     }
 
 
     // Show payment today box?
     if (a.totPay > 0) {
         // Bring up the payment selector
-        $('.paySelectTbl').show();
+        $('.paySelectTbl').show('fade');
         $('.hhk-minPayment').show();
     } else {
         a.totPay = 0;
@@ -747,12 +835,6 @@ function amtPaid() {
 
     }
 
-    if (a.overPayAmt.toFixed(2) <= 0) {
-        p.overPay.val('');
-        $('.hhk-Overpayment').hide();
-    } else {
-        p.overPay.val(a.overPayAmt.toFixed(2).toString());
-    }
 
     if (a.heldAmt.toFixed(2) > 0) {
         p.heldAmtTb.val((0 - a.heldAmt).toFixed(2).toString());
@@ -771,106 +853,6 @@ function amtPaid() {
 
     p.cashTendered.change();
 
-    function doOverpayment() {
-        // Turn off house waive
-        p.houseWaiveCb.prop('checked', false);
-        p.hsDiscAmt.val('');
-        $('.hhk-HouseDiscount').hide();
-
-        if (a.overPayAmt != 0) {
-
-            $('.hhk-Overpayment').show('fade');
-
-            if (p.selBalTo.val() === 'r') {
-                // Refund
-
-                let minAmtDue = 0;
-                if (totRmBalDue > 0) {
-                    minAmtDue = totRmBalDue;
-                }
-
-                if (a.feePayPreTax > a.overPayAmt) {
-
-                    a.feePayPreTax -= a.overPayAmt;
-                    a.overPayAmt = 0;
-
-                    // Not a fefund
-                    $('#txtRtnAmount').val('');
-                    $('#divReturnPay').hide();
-                    p.selBalTo.val('');
-
-                } else if (a.overPayAmt >= minAmtDue) {
-
-                    a.overPayAmt -= Math.max((a.feePayPreTax - totRmBalDue), 0);
-                    a.feePayPreTax = minAmtDue;
-
-                    if (a.overPayAmt > 0) {
-                        $('#divReturnPay').show();
-                        $('#txtRtnAmount').val(a.overPayAmt.toFixed(2).toString());
-                        $('.totalPaymentTr').hide();
-                    } else {
-                        // overpayment is 0
-                        $('.hhk-Overpayment').hide();
-                        $('#txtRtnAmount').val('');
-                        $('#divReturnPay').hide();
-                        p.selBalTo.val('');
-                        $('.totalPaymentTr').show();
-                    }
-                }
-
-                a.feePay = a.feePayPreTax + updateFeeTaxes.calcTax(a.feePayPreTax);
-                a.totPay = (a.totPay - originalFeePayAmt) + a.feePay;
-
-                if (originalFeePayAmt != a.feePay) {
-                    alert('Pay Room Fees amount is reduced to: $' + a.feePay.toFixed(2).toString());
-                }
-
-                if (a.totPay > 0) {
-                    // Enable house waive
-                    $('.hhk-HouseDiscount').show('fade');
-                }
-
-            } else {
-                // Not a fefund
-                $('#txtRtnAmount').val('');
-                $('#divReturnPay').hide();
-            }
-
-        } else {
-            // overpayment is 0
-            $('.hhk-Overpayment').hide();
-            $('.totalPaymentTr').show('fade');
-            $('#txtRtnAmount').val('');
-            $('#divReturnPay').hide();
-            p.selBalTo.val('');
-        }
-    }
-
-    function doHouseWaive() {
-
-        $('.hhk-Overpayment').hide();
-        p.selBalTo.val('');
-        $('#txtRtnAmount').val('');
-        $('#divReturnPay').hide();
-        $('.totalPaymentTr').show('fade');
-
-        if (a.totPay > 0) {
-            $('.hhk-HouseDiscount').show('fade');
-
-            if (p.houseWaiveCb.prop('checked')) {
-                // Manage House Waive of underpaid amount
-
-                p.hsDiscAmt.val((a.totPay).toFixed(2).toString());
-                a.totPay = 0;
-
-            } else {
-                // No House Waive
-                p.hsDiscAmt.val('');
-            }
-        } else {
-            $('.hhk-HouseDiscount').hide();
-        }
-    }
 }
 
 
