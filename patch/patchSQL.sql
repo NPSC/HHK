@@ -56,3 +56,6 @@ CHANGE COLUMN `Timestamp` `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTA
 -- add additional access_log actions
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
 ('Web_User_Actions', 'LOI', 'Log out for inactivicy', '', '', '0');
+
+-- change SessionTimeout description
+UPDATE `Sys_Config` set `Description` = "Number of minutes until an idle session get automatically logged out, default 30" where `Key` = "SessionTimeout";

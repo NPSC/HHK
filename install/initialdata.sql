@@ -641,7 +641,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Run_As_Test', 'false', 'b', 'a', '', 'Run As Test flag', '',0),
 ('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0'),
 ('searchMRN', 'true', 'b', 'hf', '', 'Allow search by MRN', '',1),
-('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, 0 = never log out','',1),
+('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, default 30','',1),
 ('ShoStaysCtr','true','b','c','','Show the stays counter on the House Calendar page','',1),
 ('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1'),
 ('ShowBirthDate','true','b','h','','Show birthdate for patients and guests','',1),

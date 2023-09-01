@@ -384,7 +384,7 @@ class WebInit {
     public static function resetSessionIdle():void
     {
         $uS = Session::getInstance();
-        if(isset($uS->SessionTimeout)){
+        if(isset($uS->SessionTimeout) && $uS->SessionTimeout > 0){
             $uS->timeout_idle = time() + ($uS->SessionTimeout * 60);
         }else{
             $uS->timeout_idle = time() + (30 * 60);
