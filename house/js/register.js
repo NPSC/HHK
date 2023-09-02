@@ -632,92 +632,48 @@ function getDtBtns(title){
     	];
     }
 
-var isGuestAdmin,
-    pmtMkup,
-    rctMkup,
-    defaultTab,
-    resourceGroupBy,
-    resourceColumnWidth,
-    patientLabel,
-    guestLabel,
-    visitorLabel,
-    referralFormTitleLabel,
-    reservationLabel,
-    reservationTabLabel,
-    unconfirmedResvTabLabel,
-    defaultView,
-    defaultEventColor,
-    defCalEventTextColor,
-    calDateIncrement,
-    dateFormat,
-    fixedRate,
-    resvPageName,
-    showCreatedDate,
-    expandResources,
-    shoHospitalName,
-    showRateCol,
-    hospTitle,
-    showDiags,
-    showLocs,
-    locationTitle,
-    diagnosisTitle,
-    showWlNotes,
-    showCharges,
-    wlTitle,
-    cgCols,
-    rvCols,
-    wlCols,
-    dailyCols,
-    calendar,
-    calStartDate,
-    acceptResvPay,
-    holidays,
-    closedDays,
-    showCurrentGuestPhotos;
 
 $(document).ready(function () {
     "use strict";
-    var hindx = 0;
-    calStartDate = new moment();
-    isGuestAdmin = $('#isGuestAdmin').val();
-    pmtMkup = $('#pmtMkup').val();
-    rctMkup = $('#rctMkup').val();
-    defaultTab = $('#defaultTab').val();
-    resourceGroupBy = $('#resourceGroupBy').val();
-    resourceColumnWidth = $('#resourceColumnWidth').val();
-    patientLabel = $('#patientLabel').val();
-    visitorLabel = $('#visitorLabel').val();
-    guestLabel = $('#guestLabel').val();
-    referralFormTitleLabel = $('#referralFormTitleLabel').val();
-    reservationLabel = $('#reservationLabel').val();
-    reservationTabLabel = $('#reservationTabLabel').val();
-    unconfirmedResvTabLabel = $('#unconfirmedResvTabLabel').val();
-    defaultView = $('#defaultView').val();
-    defaultEventColor = $('#defaultEventColor').val();
-    defCalEventTextColor = $('#defCalEventTextColor').val();
-    calDateIncrement = $('#calDateIncrement').val();
-    dateFormat = $('#dateFormat').val();
-    fixedRate = $('#fixedRate').val();
-    resvPageName = $('#resvPageName').val();
-    showCreatedDate = $('#showCreatedDate').val();
-    expandResources = $('#expandResources').val();
-    shoHospitalName = $('#shoHospitalName').val();
-    showRateCol = $('#showRateCol').val();
-    hospTitle = $('#hospTitle').val();
-    showDiags = $('#showDiags').val();
-    showLocs = $('#showLocs').val();
-    locationTitle = $('#locationTitle').val();
-    diagnosisTitle = $('#diagnosisTitle').val();
-    showWlNotes = $('#showWlNotes').val();
-    wlTitle = $('#wlTitle').val();
-    showCharges = $('#showCharges').val();
-	acceptResvPay = $('#acceptResvPay').val();
-	holidays = $.parseJSON($('#holidays').val());
-    closedDays = $.parseJSON($('#closedDays').val());
-	showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val();
+    let hindx = 0,
+    pmtMkup = $('#pmtMkup').val(),
+    rctMkup = $('#rctMkup').val(),
+    defaultTab = $('#defaultTab').val(),
+    resourceGroupBy = $('#resourceGroupBy').val(),
+    resourceColumnWidth = $('#resourceColumnWidth').val(),
+    patientLabel = $('#patientLabel').val(),
+    visitorLabel = $('#visitorLabel').val(),
+    referralFormTitleLabel = $('#referralFormTitleLabel').val(),
+    reservationLabel = $('#reservationLabel').val(),
+    reservationTabLabel = $('#reservationTabLabel').val(),
+    unconfirmedResvTabLabel = $('#unconfirmedResvTabLabel').val(),
+    defaultView = $('#defaultView').val(),
+    defaultEventColor = $('#defaultEventColor').val(),
+    defCalEventTextColor = $('#defCalEventTextColor').val(),
+    calDateIncrement = $('#calDateIncrement').val(),
+    dateFormat = $('#dateFormat').val(),
+    fixedRate = $('#fixedRate').val(),
+    resvPageName = $('#resvPageName').val(),
+    showCreatedDate = $('#showCreatedDate').val(),
+    expandResources = $('#expandResources').val(),
+    shoHospitalName = $('#shoHospitalName').val(),
+    showRateCol = $('#showRateCol').val(),
+    hospTitle = $('#hospTitle').val(),
+    showDiags = $('#showDiags').val(),
+    showLocs = $('#showLocs').val(),
+    locationTitle = $('#locationTitle').val(),
+    diagnosisTitle = $('#diagnosisTitle').val(),
+    showWlNotes = $('#showWlNotes').val(),
+    wlTitle = $('#wlTitle').val(),
+    showCharges = $('#showCharges').val(),
+	acceptResvPay = $('#acceptResvPay').val(),
+	holidays = $.parseJSON($('#holidays').val()),
+    closedDays = $.parseJSON($('#closedDays').val()),
+	showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val(),
+    useOnlineReferral = $('#useOnlineReferral').val();
 
     // Current Guests
-    cgCols = [
+    let cgCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
             {data: visitorLabel+' First', title: visitorLabel+' First'},
             {data: visitorLabel+' Last', title: visitorLabel+' Last'},
@@ -743,7 +699,7 @@ $(document).ready(function () {
 		}
 
     // Reservations
-    rvCols = [
+    let rvCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'},
@@ -776,7 +732,7 @@ $(document).ready(function () {
             rvCols.push({data: 'Patient', title: patientLabel});
 
     //Waitlist
-    wlCols = [
+    let wlCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false, "className": "noPrint"},
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'}];
@@ -813,7 +769,7 @@ $(document).ready(function () {
             }
 
     // Dailey Report
-    dailyCols = [
+    let dailyCols = [
             {data: 'titleSort', 'visible': false },
             {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
             {data: 'Status', title: 'Status', searchable:false},
@@ -1621,7 +1577,8 @@ $(document).ready(function () {
 	$('#mainTabs').show();
 
 	//referralViewer
-	$.ajax({
+    if (useOnlineReferral) {
+	    $.ajax({
             url: 'ws_resc.php',
             dataType: 'JSON',
             type: 'get',
@@ -1637,6 +1594,7 @@ $(document).ready(function () {
                 }
             }
         });
+    }
 
     $('#curres').DataTable({
        ajax: {

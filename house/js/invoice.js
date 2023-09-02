@@ -222,9 +222,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                     } else {
                         // called from visit viewer.
                         $('#keysfees').dialog("close");
-
                     }
-
                 }
 
             }

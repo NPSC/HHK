@@ -201,13 +201,14 @@ if($idVisit || $idResv){
 
 }else if($idDoc > 0){
     $tabControl = HTMLContainer::generateMarkup('div',
-        HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>'', 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')) .
+        HTMLInput::generateMarkup(
+            'Print', ['type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>'', 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form']) .
         $regContents
     );
 }
-
+//"<span class='ui-icon ui-icon-extlink' style='float: right; margin-left: .3em;'></span>"
+$shoStmtBtn = HTMLInput::generateMarkup("Show Statement <span class='ui-icon ui-icon-extlink' style='float: right; margin-left: .3em;'></span>", array('type'=>'button', 'id'=>'btnStmt', 'style'=>$regButtonStyle));
 $shoRegBtn = HTMLInput::generateMarkup('Check In Followup', array('type'=>'button', 'id'=>'btnReg', 'style'=>$regButtonStyle));
-$shoStmtBtn = HTMLInput::generateMarkup('Show Statement', array('type'=>'button', 'id'=>'btnStmt', 'style'=>$regButtonStyle));
 
 $regMessage = HTMLContainer::generateMarkup('div', '', array('id'=>'mesgReg', 'style'=>'color: darkgreen; clear:left; font-size:1.5em;display:none;'));
 

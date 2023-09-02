@@ -29,13 +29,51 @@ use HHK\sec\Labels;
  * @author Eric
  */
 class Invoice {
+
+	/**
+	 * Summary of invRs
+	 * @var
+	 */
 	protected $invRs;
+
+	/**
+	 * Summary of invoiceNum
+	 * @var
+	 */
 	protected $invoiceNum;
+	/**
+	 * Summary of idInvoice
+	 * @var
+	 */
 	protected $idInvoice;
+	/**
+	 * Summary of amountToPay
+	 * @var
+	 */
 	protected $amountToPay;
+	/**
+	 * Summary of delegatedInvoiceNumber
+	 * @var
+	 */
 	protected $delegatedInvoiceNumber;
+	/**
+	 * Summary of delegatedStatus
+	 * @var
+	 */
 	protected $delegatedStatus;
+	/**
+	 * Summary of tax_exempt
+	 * @var
+	 */
 	protected $tax_exempt;
+	/**
+	 * Summary of __construct
+	 * @param \PDO $dbh
+	 * @param mixed $invoiceNumber
+	 * @throws \RuntimeException
+	 */
+
+
 	function __construct(\PDO $dbh, $invoiceNumber = '') {
 		$this->invRs = new InvoiceRS ();
 		$this->idInvoice = 0;
@@ -61,6 +99,13 @@ class Invoice {
 			}
 		}
 	}
+	/**
+	 * Summary of load1stPartyUnpaidInvoices
+	 * @param \PDO $dbh
+	 * @param mixed $orderNumber
+	 * @param mixed $returnId
+	 * @return array
+	 */
 	public static function load1stPartyUnpaidInvoices(\PDO $dbh, $orderNumber, $returnId = 0) {
 		$orderNum = str_replace ( "'", '', $orderNumber );
 
@@ -83,6 +128,14 @@ WHERE
 
 		return $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 	}
+
+ /**
+  * Summary of loadPrePayUnpaidInvoices
+  * @param \PDO $dbh
+  * @param mixed $idReservation
+  * @param mixed $returnId
+  * @return array
+  */
 	public static function loadPrePayUnpaidInvoices(\PDO $dbh, $idReservation, $returnId = 0) {
 
 	    if ($idReservation < 1) {
@@ -103,6 +156,12 @@ WHERE
 	    return $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 	}
 
+	/**
+	 * Summary of loadUnpaidInvoices
+	 * @param \PDO $dbh
+	 * @param mixed $orderNumber
+	 * @return array
+	 */
 	public static function loadUnpaidInvoices(\PDO $dbh, $orderNumber) {
 		$invRs = new InvoiceRs ();
 		$invRs->Order_Number->setStoredVal ( $orderNumber );
@@ -119,6 +178,12 @@ WHERE
 
 		return $rows;
 	}
+	/**
+	 * Summary of getIdFromInvNum
+	 * @param \PDO $dbh
+	 * @param mixed $invNum
+	 * @return mixed
+	 */
 	public static function getIdFromInvNum(\PDO $dbh, $invNum) {
 		$idInvoice = 0;
 
@@ -139,6 +204,14 @@ WHERE
 
 		return $idInvoice;
 	}
+	/**
+	 * Summary of loadInvoice
+	 * @param \PDO $dbh
+	 * @param mixed $idInvoice
+	 * @param mixed $idPayment
+	 * @throws \HHK\Exception\RuntimeException
+	 * @return void
+	 */
 	public function loadInvoice(\PDO $dbh, $idInvoice = 0, $idPayment = 0) {
 		$this->invoiceNum = '';
 		$rows = array ();
@@ -162,6 +235,11 @@ WHERE
 			throw new RuntimeException( 'Invoice Id not found: ' . $idInvoice );
 		}
 	}
+	/**
+	 * Summary of loadFromRow
+	 * @param mixed $row
+	 * @return void
+	 */
 	protected function loadFromRow($row) {
 		$this->invRs = new InvoiceRs ();
 
@@ -172,6 +250,12 @@ WHERE
 		$this->delegatedInvoiceNumber = $row ['Delegated_Invoice_Number'];
 		$this->tax_exempt = $this->invRs->tax_exempt->getStoredVal();
 	}
+	/**
+	 * Summary of getLineCount
+	 * @param \PDO $dbh
+	 * @param mixed $idInvoice
+	 * @return mixed
+	 */
 	public static function getLineCount(\PDO $dbh, $idInvoice) {
 		$count = 0;
 		$id = intval ( $idInvoice, 10 );
@@ -187,6 +271,11 @@ WHERE
 
 		return $count;
 	}
+	/**
+	 * Summary of getLines
+	 * @param \PDO $dbh
+	 * @return array
+	 */
 	public function getLines(\PDO $dbh) {
 		$lines = array ();
 
@@ -209,6 +298,14 @@ where il.Invoice_Id = " . $this->idInvoice . " order by ilt.Order_Position" );
 
 		return $lines;
 	}
+	/**
+	 * Summary of addLine
+	 * @param \PDO $dbh
+	 * @param \HHK\Payment\Invoice\InvoiceLine\AbstractInvoiceLine $invLine
+	 * @param mixed $user
+	 * @throws \HHK\Exception\RuntimeException
+	 * @return void
+	 */
 	public function addLine(\PDO $dbh, AbstractInvoiceLine $invLine, $user) {
 		if ($this->isDeleted ()) {
 			throw new RuntimeException( 'Cannot add a line to a deleted Invoice.  ' );
@@ -218,6 +315,13 @@ where il.Invoice_Id = " . $this->idInvoice . " order by ilt.Order_Position" );
 		$invLine->save ( $dbh );
 		$this->updateInvoiceAmount ( $dbh, $user );
 	}
+	/**
+	 * Summary of deleteLine
+	 * @param \PDO $dbh
+	 * @param mixed $idInvoiceLine
+	 * @param mixed $username
+	 * @return bool
+	 */
 	public function deleteLine(\PDO $dbh, $idInvoiceLine, $username) {
 		$lines = $this->getLines ( $dbh );
 		$result = FALSE;
@@ -257,6 +361,13 @@ where pi.Invoice_Id = " . $this->getIdInvoice () );
 
 		return $result;
 	}
+	/**
+	 * Summary of updateInvoiceLineDates
+	 * @param \PDO $dbh
+	 * @param mixed $idVisit
+	 * @param mixed $startDeltaDays
+	 * @return void
+	 */
 	public static function updateInvoiceLineDates(\PDO $dbh, $idVisit, $startDeltaDays) {
 		$uS = Session::getInstance ();
 
@@ -308,6 +419,11 @@ where pi.Invoice_Id = " . $this->getIdInvoice () );
 		}
 	}
 
+	/**
+	 * Summary of createMarkup
+	 * @param \PDO $dbh
+	 * @return string
+	 */
 	public function createMarkup(\PDO $dbh) {
 		$uS = Session::getInstance ();
 
@@ -497,6 +613,12 @@ where
 
 		return $rec;
 	}
+	/**
+	 * Summary of getGuestAddress
+	 * @param \PDO $dbh
+	 * @param mixed $idName
+	 * @return string
+	 */
 	public static function getGuestAddress(\PDO $dbh, $idName) {
 		$mkup = '';
 
@@ -556,6 +678,12 @@ where
 
 		return $mkup;
 	}
+	/**
+	 * Summary of getBillToAddress
+	 * @param \PDO $dbh
+	 * @param mixed $idName
+	 * @return HTMLTable
+	 */
 	public static function getBillToAddress(\PDO $dbh, $idName) {
 		$adrTbl = new HTMLTable ();
 
@@ -666,6 +794,13 @@ where
 
 		return $adrTbl;
 	}
+ /**
+  * Summary of delegateTo
+  * @param \PDO $dbh
+  * @param \HHK\Payment\Invoice\Invoice $delegatedInvoice
+  * @param mixed $user
+  * @return bool
+  */
 	public function delegateTo(\PDO $dbh, Invoice $delegatedInvoice, $user) {
 
 		// only delegate to invoices with the same order number
@@ -734,6 +869,12 @@ where
 			EditRS::updateStoredVals ( $this->invRs );
 		}
 	}
+	/**
+	 * Summary of updateInvoiceStatus
+	 * @param \PDO $dbh
+	 * @param mixed $username
+	 * @return void
+	 */
 	public function updateInvoiceStatus(\PDO $dbh, $username) {
 		if ($this->invRs->Amount->getStoredVal () != 0 && $this->invRs->Balance->getStoredVal () == 0) {
 			$this->invRs->Status->setNewVal ( InvoiceStatus::Paid );
@@ -750,6 +891,21 @@ where
 
 		EditRS::updateStoredVals ( $this->invRs );
 	}
+	/**
+	 * Summary of newInvoice
+	 * @param \PDO $dbh
+	 * @param mixed $amount
+	 * @param mixed $soldToId
+	 * @param mixed $idGroup
+	 * @param mixed $orderNumber
+	 * @param mixed $suborderNumber
+	 * @param mixed $notes
+	 * @param mixed $invoiceDate
+	 * @param mixed $username
+	 * @param mixed $description
+	 * @param mixed $tax_exempt
+	 * @return int|mixed
+	 */
 	public function newInvoice(\PDO $dbh, $amount, $soldToId, $idGroup, $orderNumber, $suborderNumber, $notes, $invoiceDate, $username, $description = '', $tax_exempt = 0) {
 		$invRs = new InvoiceRs ();
 		$invRs->Amount->setNewVal ( $amount );
@@ -780,6 +936,14 @@ where
 
 		return $this->idInvoice;
 	}
+	/**
+	 * Summary of setBillDate
+	 * @param \PDO $dbh
+	 * @param mixed $billDT
+	 * @param mixed $user
+	 * @param mixed $notes
+	 * @return bool
+	 */
 	public function setBillDate(\PDO $dbh, $billDT, $user, $notes) {
 		if (is_null ( $billDT ) === FALSE) {
 			$this->invRs->BillDate->setNewVal ( $billDT->format ( 'Y-m-d' ) );
@@ -806,15 +970,32 @@ where
 
 		return FALSE;
 	}
+	/**
+	 * Summary of setAmountToPay
+	 * @param mixed $amt
+	 * @return static
+	 */
 	public function setAmountToPay($amt) {
 		$this->amountToPay = $amt;
 		return $this;
 	}
+	/**
+	 * Summary of getAmountToPay
+	 * @return int|mixed
+	 */
 	public function getAmountToPay() {
 		return $this->amountToPay;
 	}
 
 	// Call on payment only.
+	/**
+	 * Summary of updateInvoiceBalance
+	 * @param \PDO $dbh
+	 * @param mixed $paymentAmount
+	 * @param mixed $user
+	 * @throws \HHK\Exception\PaymentException
+	 * @return void
+	 */
 	public function updateInvoiceBalance(\PDO $dbh, $paymentAmount, $user) {
 		// positive payment amounts reduce a balance.
 		// Neg payments increase a bal.
@@ -845,6 +1026,13 @@ where
 			throw new PaymentException( 'Cannot make payments on a blank invoice record.  ' );
 		}
 	}
+	/**
+	 * Summary of unwindCarriedInv
+	 * @param \PDO $dbh
+	 * @param mixed $id
+	 * @param mixed $invIds
+	 * @return void
+	 */
 	protected function unwindCarriedInv(\PDO $dbh, $id, &$invIds) {
 		$stmt = $dbh->query ( "select idInvoice from invoice where Delegated_Invoice_Id = " . $id );
 		$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
@@ -855,6 +1043,13 @@ where
 			$this->unwindCarriedInv ( $dbh, $r [0], $invIds );
 		}
 	}
+	/**
+	 * Summary of deleteCarriedInvoice
+	 * @param \PDO $dbh
+	 * @param mixed $user
+	 * @throws \HHK\Exception\PaymentException
+	 * @return bool
+	 */
 	protected function deleteCarriedInvoice(\PDO $dbh, $user) {
 		if ($this->invRs->Carried_Amount->getStoredVal () == 0) {
 			throw new PaymentException( 'This invoice has no carried amount. ' );
@@ -903,6 +1098,13 @@ where pi.Invoice_Id in ($whAssoc)";
 
 		return FALSE;
 	}
+ /**
+  * Summary of deleteInvoice
+  * @param \PDO $dbh
+  * @param mixed $user
+  * @throws \HHK\Exception\PaymentException
+  * @return mixed
+  */
 	public function deleteInvoice(\PDO $dbh, $user) {
 
 		//
@@ -950,6 +1152,12 @@ where pi.Invoice_Id in ($whAssoc)";
 
 		throw new PaymentException( 'Only unpaid invoices can be deleted. ' );
 	}
+	/**
+	 * Summary of deleteMe
+	 * @param \PDO $dbh
+	 * @param mixed $user
+	 * @return bool
+	 */
 	protected function deleteMe(\PDO $dbh, $user) {
 		$result = $this->_deleteInvoice ( $dbh, $this->idInvoice, $user );
 
@@ -959,6 +1167,13 @@ where pi.Invoice_Id in ($whAssoc)";
 
 		return $result;
 	}
+	/**
+	 * Summary of _deleteInvoice
+	 * @param \PDO $dbh
+	 * @param mixed $id
+	 * @param mixed $user
+	 * @return bool
+	 */
 	private function _deleteInvoice(\PDO $dbh, $id, $user) {
 		if ($id > 0) {
 
@@ -970,6 +1185,12 @@ where pi.Invoice_Id in ($whAssoc)";
 
 		return FALSE;
 	}
+	/**
+	 * Summary of is3rdParty
+	 * @param \PDO $dbh
+	 * @param mixed $idName
+	 * @return bool
+	 */
 	protected function is3rdParty(\PDO $dbh, $idName) {
 		$stmt = $dbh->query ( "Select count(*) from name_volunteer2 where idName = $idName and Vol_Category = 'Vol_Type' and Vol_Code = '" . VolMemberType::ReferralAgent . "' and Vol_Status = '" . VolStatus::Active . "'" );
 		$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
@@ -980,6 +1201,11 @@ where pi.Invoice_Id in ($whAssoc)";
 
 		return FALSE;
 	}
+	/**
+	 * Summary of countPayments
+	 * @param \PDO $dbh
+	 * @return mixed
+	 */
 	protected function countPayments(\PDO $dbh) {
 		$cnt = 0;
 		$stmt = $dbh->query ( "select count(*) from payment_invoice pi where pi.Invoice_Id = " . $this->idInvoice );
@@ -991,79 +1217,180 @@ where pi.Invoice_Id in ($whAssoc)";
 
 		return $cnt;
 	}
+	/**
+	 * Summary of createNewInvoiceNumber
+	 * @param \PDO $dbh
+	 * @return mixed
+	 */
 	private function createNewInvoiceNumber(\PDO $dbh) {
 		return incCounter ( $dbh, 'invoice' );
 	}
+	/**
+	 * Summary of getIdInvoice
+	 * @return mixed
+	 */
 	public function getIdInvoice() {
 		return $this->invRs->idInvoice->getStoredVal ();
 	}
+	/**
+	 * Summary of getInvoiceNumber
+	 * @return mixed
+	 */
 	public function getInvoiceNumber() {
 		return $this->invRs->Invoice_Number->getStoredVal ();
 	}
+	/**
+	 * Summary of getAmount
+	 * @return mixed
+	 */
 	public function getAmount() {
 		return $this->invRs->Amount->getStoredVal ();
 	}
+	/**
+	 * Summary of getBalance
+	 * @return mixed
+	 */
 	public function getBalance() {
 		return $this->invRs->Balance->getStoredVal ();
 	}
+	/**
+	 * Summary of getDate
+	 * @return mixed
+	 */
 	public function getDate() {
 		return $this->invRs->Invoice_Date->getStoredVal ();
 	}
+	/**
+	 * Summary of getNotes
+	 * @return mixed
+	 */
 	public function getNotes() {
 		return $this->invRs->Notes->getStoredVal ();
 	}
+	/**
+	 * Summary of getStatus
+	 * @return mixed
+	 */
 	public function getStatus() {
 		return $this->invRs->Status->getStoredVal ();
 	}
+	/**
+	 * Summary of getPayAttemtps
+	 * @return mixed
+	 */
 	public function getPayAttemtps() {
 		return $this->invRs->Payment_Attempts->getStoredVal ();
 	}
+	/**
+	 * Summary of getSoldToId
+	 * @return mixed
+	 */
 	public function getSoldToId() {
 		return $this->invRs->Sold_To_Id->getStoredVal ();
 	}
+	/**
+	 * Summary of setSoldToId
+	 * @param mixed $id
+	 * @return static
+	 */
 	public function setSoldToId($id) {
 		$this->invRs->Sold_To_Id->setNewVal ( $id );
 		return $this;
 	}
+	/**
+	 * Summary of getIdGroup
+	 * @return mixed
+	 */
 	public function getIdGroup() {
 		return $this->invRs->idGroup->getStoredVal ();
 	}
+	/**
+	 * Summary of getOrderNumber
+	 * @return mixed
+	 */
 	public function getOrderNumber() {
 		return $this->invRs->Order_Number->getStoredVal ();
 	}
+	/**
+	 * Summary of getSuborderNumber
+	 * @return mixed
+	 */
 	public function getSuborderNumber() {
 		return $this->invRs->Suborder_Number->getStoredVal ();
 	}
+	/**
+	 * Summary of getDelegatedInvoiceNumber
+	 * @return mixed|string
+	 */
 	public function getDelegatedInvoiceNumber() {
 		return $this->delegatedInvoiceNumber;
 	}
+	/**
+	 * Summary of getDelegatedStatus
+	 * @return mixed|string
+	 */
 	public function getDelegatedStatus() {
 		return $this->delegatedStatus;
 	}
+	/**
+	 * Summary of getInvoiceNotes
+	 * @return mixed
+	 */
 	public function getInvoiceNotes() {
 		return $this->invRs->Notes->getStoredVal ();
 	}
+	/**
+	 * Summary of getBillDate
+	 * @return mixed
+	 */
 	public function getBillDate() {
 		return $this->invRs->BillDate->getStoredVal ();
 	}
+	/**
+	 * Summary of getDescription
+	 * @return mixed
+	 */
 	public function getDescription() {
 		return $this->invRs->Description->getStoredVal ();
 	}
+	/**
+	 * Summary of setDescription
+	 * @param mixed $desc
+	 * @return static
+	 */
 	public function setDescription($desc) {
 		$this->invRs->Description->setNewVal ( $desc );
 		return $this;
 	}
+	/**
+	 * Summary of setDelegatedInvoiceNumber
+	 * @param mixed $delegatedInvoiceNumber
+	 * @return static
+	 */
 	public function setDelegatedInvoiceNumber($delegatedInvoiceNumber) {
 		$this->delegatedInvoiceNumber = $delegatedInvoiceNumber;
 		return $this;
 	}
+	/**
+	 * Summary of setDelegatedStatus
+	 * @param mixed $delegatedStatus
+	 * @return static
+	 */
 	public function setDelegatedStatus($delegatedStatus) {
 		$this->delegatedStatus = $delegatedStatus;
 		return $this;
 	}
+	/**
+	 * Summary of getInvRecordSet
+	 * @return InvoiceRS
+	 */
 	public function getInvRecordSet() {
 		return $this->invRs;
 	}
+	/**
+	 * Summary of isDeleted
+	 * @return bool
+	 */
 	public function isDeleted() {
 		if ($this->invRs->Deleted->getStoredVal () == 0) {
 			return FALSE;

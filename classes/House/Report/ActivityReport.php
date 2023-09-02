@@ -139,6 +139,15 @@ class ActivityReport {
         return $tbl->generateMarkup(array(), '<h3>Visit Activity</h3>');
     }
 
+    /**
+     * Summary of reservLog
+     * @param \PDO $dbh
+     * @param string $startDate
+     * @param string $endDate
+     * @param mixed $resvId
+     * @param int $idPsg
+     * @return string
+     */
     public static function reservLog(\PDO $dbh, $startDate, $endDate, $resvId = 0, $idPsg = 0) {
 
         $uS = Session::getInstance();
@@ -234,6 +243,14 @@ class ActivityReport {
         return $tbl->generateMarkup(array(), '<h3>Reservation Activity</h3>');
     }
 
+    /**
+     * Summary of HospStayLog
+     * @param \PDO $dbh
+     * @param string $startDate
+     * @param string $endDate
+     * @param int $idPsg
+     * @return string
+     */
     public static function HospStayLog(\PDO $dbh, $startDate, $endDate, $idPsg = 0) {
 
         $uS = Session::getInstance();
@@ -243,11 +260,13 @@ class ActivityReport {
         if ($idP > 0) {
 
             $stmt = $dbh->query("select * from vhospitalstay_log where idPsg = $idP;");
+
         } else if ($startDate != '' && $endDate != '') {
 
             $query = "select * from vhospitalstay_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end) order by idPsg, Timestamp;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
+
         } else {
             return 'Error- Missing dates and idPsg.  ';
         }
@@ -413,11 +432,16 @@ class ActivityReport {
     }
 
     /**
-     *
+     * Summary of feesLog
      * @param \PDO $dbh
-     * @param string $startDate
-     * @param string $endDate
-     * @return string HTML table markup
+     * @param \DateTime|null $startDT
+     * @param \DateTime|null $endDT
+     * @param array $feeStatuses
+     * @param array $selectedPayTypes
+     * @param int $idReg
+     * @param string $title
+     * @param bool $showDeletedInv
+     * @return string
      */
     public static function feesLog(\PDO $dbh, $startDT, $endDT, $feeStatuses, $selectedPayTypes, $idReg, $title = 'Recent Payments Report', $showDeletedInv = TRUE) {
 
@@ -644,7 +668,7 @@ where `lp`.`idPayment` > 0
                 	$lastUpdatedDT = new \DateTime($p['Last_Updated']);
                 	$updatedDateString = $lastUpdatedDT->format('c');
                 }
-                
+
                 // Action column.
                 $actionContent = PostPayment::actionButton($gateway, $p, $r['Invoice_Status'], $payTypeTotals, $stat, $amt, $attr);
 
@@ -791,6 +815,12 @@ where `lp`.`idPayment` > 0
         return HTMLContainer::generateMarkup('div', $header . $summary . $refresh . $listing, array('style' => 'min-width:900px;'));
     }
 
+    /**
+     * Summary of unpaidInvoiceLog
+     * @param \PDO $dbh
+     * @param bool $includeAction
+     * @return string
+     */
     public static function unpaidInvoiceLog(\PDO $dbh, $includeAction = TRUE) {
 
         // Get labels
@@ -831,27 +861,26 @@ FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
     left join resource re on v.idResource = re.idResource
 where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
-
-        $stmt = $dbh->query($query);
-
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(
-                HTMLTable::makeTh('Action')
-                . HTMLTable::makeTh('Invoice')
-                . HTMLTable::makeTh('Date')
-                . HTMLTable::makeTh('Status')
-                . HTMLTable::makeTh('Bill Date')
-                . HTMLTable::makeTh('Payor')
-                . HTMLTable::makeTh('Room')
-                . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
-                . HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'))
-                . HTMLTable::makeTh('Amount')
-                . HTMLTable::makeTh('Payments')
-                . HTMLTable::makeTh('Balance')
-                . HTMLTable::makeTh('Notes'));
+            HTMLTable::makeTh('Action')
+            . HTMLTable::makeTh('Invoice')
+            . HTMLTable::makeTh('Date')
+            . HTMLTable::makeTh('Status')
+            . HTMLTable::makeTh('Bill Date')
+            . HTMLTable::makeTh('Payor')
+            . HTMLTable::makeTh('Room')
+            . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
+            . HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'))
+            . HTMLTable::makeTh('Amount')
+            . HTMLTable::makeTh('Payments')
+            . HTMLTable::makeTh('Balance')
+            . HTMLTable::makeTh('Notes')
+        );
 
         $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
 
+        $stmt = $dbh->query($query);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -924,36 +953,38 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
                 $actionTd = HTMLTable::makeTd(HTMLContainer::generateMarkup(
                         'ul', HTMLContainer::generateMarkup('li', 'Action' .
-                                HTMLContainer::generateMarkup('ul', HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Pay', array('class' => 'invLoadPc', 'data-name' => $payor, 'data-id' => $r['Sold_To_Id'], 'data-iid' => $r['idInvoice'])))
-                                        . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Set Billed', array('id' => 'aidSetNotes' . $r['Invoice_Number'], 'class' => 'invSetBill', 'data-name' => $payor, 'data-inb' => $r['Invoice_Number'])))
-                                        . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Email Invoice', array('id' => 'ainvem' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'vem', 'data-inb' => $r['Invoice_Number'])))
-                                        . ($r['Payment_Attempts'] > 0 ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Show Payments', array('id' => 'ainvsp' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'vpmt', 'data-iid' => $r['idInvoice']))) : '')
-                                        . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Delete', array('id' => 'ainv' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'del', 'data-iid' => $r['idInvoice'])))
-                        )), array('class' => 'gmenu')));
+                                HTMLContainer::generateMarkup('ul'
+                                    , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Pay', ['class' => 'invLoadPc', 'data-name' => $payor, 'data-id' => $r['Sold_To_Id'], 'data-iid' => $r['idInvoice']]))
+                                    . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Set Billed', ['id' => 'aidSetNotes' . $r['Invoice_Number'], 'class' => 'invSetBill', 'data-name' => $payor, 'data-inb' => $r['Invoice_Number']]))
+                                    . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Email Invoice', ['id' => 'ainvem' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'vem', 'data-inb' => $r['Invoice_Number']]))
+                                    . ($r['Payment_Attempts'] > 0 ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Show Payments', ['id' => 'ainvsp' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'vpmt', 'data-iid' => $r['idInvoice']])) : '')
+                                    . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Delete', ['id' => 'ainv' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'del', 'data-iid' => $r['idInvoice']]))
+                        )), ['class' => 'gmenu']));
             }
 
 
-            $tbl->addBodyTr($actionTd
-                    . HTMLTable::makeTd($invoiceMkup, array('style' => 'text-align:center;'))
+            $tbl->addBodyTr(
+                    $actionTd
+                    . HTMLTable::makeTd($invoiceMkup, ['style' => 'text-align:center;'])
                     . HTMLTable::makeTd($dateDT->format('c'))
                     . HTMLTable::makeTd($statusTxt)
                     . HTMLTable::makeTd($billDate, array('id' => 'trBillDate' . $r['Invoice_Number']))
                     . HTMLTable::makeTd($payor)
-                    . HTMLTable::makeTd($r['Title'], array('style' => 'text-align:center;'))
+                    . HTMLTable::makeTd($r['Title'], ['style' => 'text-align:center;'])
                     . HTMLTable::makeTd($hospital)
                     . HTMLTable::makeTd($patient)
-                    . HTMLTable::makeTd(number_format($r['Amount'], 2), array('style' => 'text-align:right;'))
-                    . HTMLTable::makeTd($payments, array('style' => 'text-align:right;'))
-                    . HTMLTable::makeTd(number_format($r['Balance'], 2), array('style' => 'text-align:right;'))
-                    . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $r['Notes'], array('id' => 'divInvNotes' . $r['Invoice_Number'])))
+                    . HTMLTable::makeTd(number_format($r['Amount'], 2), ['style' => 'text-align:right;'])
+                    . HTMLTable::makeTd($payments, ['style' => 'text-align:right;'])
+                    . HTMLTable::makeTd(number_format($r['Balance'], 2), ['style' => 'text-align:right;'])
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $r['Notes'], ['id' => 'divInvNotes' . $r['Invoice_Number']]))
             );
         }
 
         if ($stmt->rowCount() == 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd('-No Data-', array('colspan' => '13', 'style' => 'text-align:center;')));
+            $tbl->addBodyTr(HTMLTable::makeTd('-No Data-', ['colspan' => '13', 'style' => 'text-align:center;']));
         }
 
-        return $tbl->generateMarkup(array('id' => 'InvTable', 'width' => '100%'), '<h3>Invoices</h3>');
+        return $tbl->generateMarkup(['id' => 'InvTable', 'width' => '100%'], '<h3>Invoices</h3>');
     }
 
 }

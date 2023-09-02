@@ -532,6 +532,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="guestLabel" value='<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' />
         <input  type="hidden" id="visitorLabel" value='<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>' />
         <input  type="hidden" id="referralFormTitleLabel" value='<?php echo $labels->getString('Register', 'onlineReferralTitle'); ?>' />
+        <input  type="hidden" id="useOnlineReferral" value='<?php echo $uS->useOnlineReferral; ?>' />
         <input  type="hidden" id="reservationLabel" value='<?php echo $labels->getString('GuestEdit', 'reservationTitle'); ?>' />
         <input  type="hidden" id="reservationTabLabel" value='<?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?>' />
         <input  type="hidden" id="unconfirmedResvTabLabel" value='<?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?>' />
