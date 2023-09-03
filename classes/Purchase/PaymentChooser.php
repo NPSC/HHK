@@ -642,7 +642,7 @@ class PaymentChooser {
                 $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
                 $invAttr['title'] = 'Partially Paid';
             } else {
-                $trashIcon = HTMLContainer::generateMarkup('span','', ['class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'del', 'style'=>'float:right;cursor:pointer;', 'title'=>'Delete']);
+                $trashIcon = HTMLContainer::generateMarkup('span','', ['class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-inb' => $i['Invoice_Number'], 'data-payor' => (isset($i['Payor']) ? $i['Payor'] : ''), 'data-stat'=>'del', 'style'=>'float:right;cursor:pointer;', 'title'=>'Delete']);
             }
 
             $unpaid = HTMLTable::makeTd(HTMLContainer::generateMarkup('span',
@@ -780,6 +780,7 @@ dateFormat: "M d, yy" ';
     i.`Balance`,
     i.`Amount`,
     n.Name_Full,
+    IFNULL(n.Name_Full, '') as `Payor`,
     n.Company,
     ng.Name_Last AS `Guest Name`,
     v.idVisit,

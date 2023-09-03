@@ -11,6 +11,7 @@ function invPay(id, pbp, dialg) {
         if ($(this).attr('type') === 'checkbox') {
             if (this.checked !== false) {
                 parms[$(this).attr('id')] = 'on';
+                parms[$(this).attr('name')] = 'on';
             }
         } else if ($(this).hasClass('ckdate')) {
             var tdate = $(this).datepicker('getDate');
@@ -25,6 +26,7 @@ function invPay(id, pbp, dialg) {
             }
         } else{
             parms[$(this).attr('id')] = this.value;
+            parms[$(this).attr('name')] = $(this).val();
         }
     });
     dialg.dialog("close");
@@ -60,6 +62,7 @@ function invPay(id, pbp, dialg) {
     });
 }
 
+// Load the Invoice Payment dialog
 function invLoadPc(nme, id, iid) {
 "use strict";
     var buttons = {
@@ -207,15 +210,15 @@ function invoiceAction(idInvoice, action, eid, container, show) {
 
             if (data.delete) {
 
-                if (data.eid == '0') {
-                    // Register page, unpaid invoices tab delete action
+                if (!data.eid || data.eid == '0') {
+                    // Register page -> unpaid invoices tab delete action
                     flagAlertMessage(data.delete, 'success');
                     $('#btnInvGo').click();  // repaint unpaid invoices tab
                 } else {
                     // Paying today section, unpaid invoices listing delete icon.
-                    // Called in two places
+                    //
                     if ($('#' + data.eid).parentsUntil('.keysfees', '.hhk-payInvoice').length > 0) {
-                        // called from pay invoices
+                        // called from pay invoices dialog
                         $('#' + data.eid).parents('tr').first().remove();
                         amtPaid();
                         $('#btnInvGo').click();  // repaint unpaid invoices tab

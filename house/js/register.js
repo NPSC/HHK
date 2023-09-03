@@ -155,9 +155,6 @@ function chgRoomCleanStatus(idRoom, statusCode) {
 
 function editPSG(psg) {
     var buttons = {
-//        "Save PSG": function() {
-//            saveFees(id, idVisit, span, false, 'register.php');
-//        },
         "Close": function() {
             $(this).dialog("close");
         }
@@ -782,7 +779,7 @@ $(document).ready(function () {
             dailyCols.push({data: 'Visit_Notes', title: 'Last Visit Note', sortable: false});
             dailyCols.push({data: 'Notes', title: 'Room Notes', sortable: false});
 
-
+    // Show payment message
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
@@ -861,7 +858,7 @@ $(document).ready(function () {
         resizable: true,
         modal: true,
         close: function (event, ui) {
-            $('div#submitButtons').show();
+            $('div#submitButtons').show();  // Page submit buttons, hide when dialog is open, show when closed.
         },
         open: function (event, ui) {
             $('div#submitButtons').hide();
@@ -1458,7 +1455,7 @@ $(document).ready(function () {
                             $(".hhk-alert").hide();
 
                             if ($(this).data('stat') == 'del') {
-                                if (!confirm('Delete this Invoice?')) {
+                                if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
                                     return;
                                 }
                             }
@@ -1469,7 +1466,7 @@ $(document).ready(function () {
                                     return;
                             }
 
-                            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id);
+                            invoiceAction($(this).data('iid'), $(this).data('stat'));
                             $('#rptInvdiv .gmenu').menu("collapse");
                         });
 

@@ -1042,7 +1042,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     $('#divPmtMkup, #div-hhk-payments').on('click', '.invAction', function (event) {
         event.preventDefault();
         if ($(this).data('stat') == 'del') {
-            if (!confirm('Delete this Invoice?')) {
+            if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
                 return;
             }
         }

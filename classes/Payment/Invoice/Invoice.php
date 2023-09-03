@@ -107,6 +107,7 @@ class Invoice {
 	 * @return array
 	 */
 	public static function load1stPartyUnpaidInvoices(\PDO $dbh, $orderNumber, $returnId = 0) {
+
 		$orderNum = str_replace ( "'", '', $orderNumber );
 
 		if ($orderNum == '' || $orderNum == '0') {
@@ -114,13 +115,15 @@ class Invoice {
 		}
 
 		$stmt = $dbh->query ( "SELECT
-    i.idInvoice, i.`Invoice_Number`, i.`Balance`, i.`Amount`
+    i.idInvoice, i.`Invoice_Number`, i.`Balance`, i.`Amount`, IFNULL(n.Name_Full, '') as `Payor`
 FROM
     `invoice` i
         LEFT JOIN
     name_volunteer2 nv ON i.Sold_To_Id = nv.idName
         AND nv.Vol_Category = 'Vol_Type'
         AND nv.Vol_Code = 'ba'
+		LEFT JOIN
+	`name` n ON i.Sold_To_Id = n.idName
 WHERE
     i.Order_Number = '$orderNum' AND i.Status = '" . InvoiceStatus::Unpaid . "'
         AND i.Deleted = 0

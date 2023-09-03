@@ -954,11 +954,11 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
                 $actionTd = HTMLTable::makeTd(HTMLContainer::generateMarkup(
                         'ul', HTMLContainer::generateMarkup('li', 'Action' .
                                 HTMLContainer::generateMarkup('ul'
-                                    , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Pay', ['class' => 'invLoadPc', 'data-name' => $payor, 'data-id' => $r['Sold_To_Id'], 'data-iid' => $r['idInvoice']]))
-                                    . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Set Billed', ['id' => 'aidSetNotes' . $r['Invoice_Number'], 'class' => 'invSetBill', 'data-name' => $payor, 'data-inb' => $r['Invoice_Number']]))
+                                    , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Pay', ['class' => 'invLoadPc', 'data-payor' => $payor, 'data-id' => $r['Sold_To_Id'], 'data-iid' => $r['idInvoice']])) // seperate return JS than the following.
+                                    . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Set Billed', ['id' => 'aidSetNotes' . $r['Invoice_Number'], 'class' => 'invSetBill', 'data-payor' => $payor, 'data-inb' => $r['Invoice_Number']]))
                                     . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Email Invoice', ['id' => 'ainvem' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'vem', 'data-inb' => $r['Invoice_Number']]))
                                     . ($r['Payment_Attempts'] > 0 ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Show Payments', ['id' => 'ainvsp' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'vpmt', 'data-iid' => $r['idInvoice']])) : '')
-                                    . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Delete', ['id' => 'ainv' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'del', 'data-iid' => $r['idInvoice']]))
+                                    . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Delete', ['id' => 'ainv' . $r['idInvoice'], 'class' => 'invAction', 'data-stat' => 'del', 'data-iid' => $r['idInvoice'], 'data-payor' => $payor, 'data-inb' => $r['Invoice_Number']]))
                         )), ['class' => 'gmenu']));
             }
 
