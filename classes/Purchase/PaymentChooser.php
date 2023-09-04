@@ -303,14 +303,14 @@ class PaymentChooser {
         }
 
         // House waive
-        if (isset($_POST['cbFinalPayment'])) {
+        if (isset($_POST['houseWaiveCb'])) {
             $pmp->setFinalPaymentFlag(TRUE);
         } else {
             $pmp->setFinalPaymentFlag(FALSE);
         }
 
         // House Discount amount
-        if (isset($_POST['cbFinalPayment']) && isset($inputs['HsDiscAmount'])) {
+        if (isset($_POST['houseWaiveCb']) && isset($inputs['HsDiscAmount'])) {
             $pmp->setHouseDiscPayment(floatval($inputs['HsDiscAmount']));
         }
 
