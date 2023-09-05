@@ -7,7 +7,7 @@
             linkType: 0,
             uid: 0,
             serviceURL: 'ws_resv.php',
-            newLabel: 'New Note',
+            newLabel: 'Save New Note',
             tableAttrs: {
                 class: 'display compact',
                 width: '100%'
@@ -47,7 +47,6 @@
                         sortable: false,
                         searchable: false,
                         className:'actionBtns',
-                        width: "50px",
                         render: function (data, type, row) {
                             return createActions(data, row);  
                         }
@@ -227,7 +226,7 @@
         
         var $ul, $li;
         
-        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons');
+        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons hhk-flex');
         
         // Edit icon
         $li = $('<li title="Edit Note" data-noteid="' + noteId + '" data-notetext="' + row.Note + '" />').addClass('hhk-note-button note-edit ui-corner-all ui-state-default');
