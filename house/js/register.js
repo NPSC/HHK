@@ -629,6 +629,7 @@ function getDtBtns(title){
     	];
     }
 
+    var calendar;
 
 $(document).ready(function () {
     "use strict";
