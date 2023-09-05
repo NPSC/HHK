@@ -1,8 +1,6 @@
 <?php
 
 use HHK\sec\{Session, WebInit};
-use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\GLTableNames;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\CreateMarkupFromDB;
@@ -12,6 +10,7 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
+use HHK\House\Distance\DistanceFactory;
 
 /**
  * PSG_Report.php
@@ -59,6 +58,8 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $guestFirst = $labels->getString('MemberType', 'visitor', 'Guest') . ' First';
     $guestLast = $labels->getString('MemberType', 'visitor', 'Guest') . ' Last';
 
+    $totalDistance = 0;
+
     if($showUnique){
         $spanDates = ""; //" MIN(s.Span_Start_Date) as `First Arrival`, CASE WHEN count(s.Span_End_Date)=sum(1) then max(s.Span_End_Date) else null end as `Last Departure`, ";
         $docSql = " group_concat(DISTINCT n.Name_Full SEPARATOR ', ') as `Doctor`, ";
@@ -82,7 +83,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, " . ($showUnique ? "" : "v.idReservation as `Resv ID`, ")
             . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
-                . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Bad_Address, vn.Phone, vn.Email, "
+                . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, vn.Phone, vn.Email, "
                     . ($showUnique ? "" : $queryStatus  . "r.title as `Room`,")
                 . $spanDates
                 //. " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
@@ -93,7 +94,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     } else if ($showAddr && !$showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code,
-            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Bad_Address, `nd`.`No_Return`, "
+            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, `nd`.`No_Return`, "
             . ($showUnique ? "" : $queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . $hospAssocSql
@@ -174,11 +175,19 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
     $rows = array();
     $firstRow = TRUE;
 
+    $distanceCalculator = DistanceFactory::make();
+
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
 
         if ($uS->county === FALSE) {
             unset($r['County']);
+        }
+
+        //convert Meters_From_House to Miles
+        if(isset($r["Distance (miles)"]) && $r["Distance (miles)"] > 0){
+            $r["Distance (miles)"] = $distanceCalculator->meters2miles($r["Distance (miles)"]);
+            $totalDistance += $r["Distance (miles)"];
         }
 
         if (!$uS->ShowBirthDate) {
@@ -371,7 +380,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
     if ($local) {
 
         $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-        return $dataTable;
+        return array("table"=>$dataTable, "TotalDistance"=>$totalDistance);
 
 
     } else {
@@ -1088,7 +1097,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 
             case 'p':
-                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
+                $rptArry = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just '.$patTitle, array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdAssoc) : ''));
@@ -1102,12 +1112,16 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 if($uS->county){
                     $sTbl->addBodyTr(HTMLTable::makeTd('County', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdCounty, array('colspan'=>'3')));
                 }
+                if($showAddr){
+                    $sTbl->addBodyTr(HTMLTable::makeTd('Distance Traveled', array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry["TotalDistance"] . " miles", array('colspan'=>'3')));
+                }
                 $sTbl->addBodyTr(HTMLTable::makeTd('Visit Status', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdStatus, array('colspan'=>'3')));
                 $settingstable = $sTbl->generateMarkup();
                 break;
 
             case 'g':
-                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
+                $rptArry = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $patTitle.' & '.$labels->getString('MemberType', 'guest', 'Guest').'s', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdAssoc) : ''));
@@ -1118,6 +1132,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'location', 'Locations'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdLocs, array('colspan'=>'3')));
                 }
                 $sTbl->addBodyTr(HTMLTable::makeTd('State/Province', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdState) . HTMLTable::makeTd('Country', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdCountry));
+                if($showAddr){
+                    $sTbl->addBodyTr(HTMLTable::makeTd('Distance Traveled', array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry["TotalDistance"] . " miles", array('colspan'=>'3')));
+                }
                 $sTbl->addBodyTr(HTMLTable::makeTd('Visit Status', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdStatus, array('colspan'=>'3')));
                 $settingstable = $sTbl->generateMarkup();
                 break;
@@ -1284,10 +1301,8 @@ if ($uS->UseIncidentReports) {
         <?php echo $filter->getTimePeriodScript(); ?>;
 
         $('input[name="rbReport"]').change(function () {
-            console.log("report changed");
         	$('.hhk-IncdtRpt').hide();
             if ($('#rbpsg').prop('checked')) {
-                console.log('PSG selected');
                 $('.psgsel').hide();
                 $('.filters').show();
                 $('.checkboxesShow').hide();
@@ -1302,7 +1317,6 @@ if ($uS->UseIncidentReports) {
                 $('.checkboxesShow').hide();
                 $('.showStateCountry').hide();
             } else {
-                console.log("report changed: detected Else: ");
                 $('.filters').show();
                 $('.psgsel').show();
                 $('.checkboxesShow').show();

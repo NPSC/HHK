@@ -8,6 +8,8 @@ use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\InvalidArgumentException;
 use HHK\SysConst\VisitStatus;
+use HHK\House\Distance\DistanceFactory;	
+use HHK\House\Distance\ZipDistance;
 
 /**
  * GuestReport.php
@@ -172,10 +174,18 @@ class GuestDemogReport {
             $query = "SELECT DISTINCT s.idName,";
         }
 
-        $query .= "na.Postal_Code,
+        $query .= "na.idName_Address,	
+        na.Purpose as `address_purpose`,	
+        na.Address_1 as `address1`,	
+        na.Address_2 as `address2`,	
+        na.City as `city`,	
+        na.State_Province as `state`,	
+        na.State_Province,	
+        na.Postal_Code as `zip`,	
+        na.Postal_Code,
         $fields
         na.County,
-        na.State_Province,
+        na.Meters_From_House,
         hs.idPsg,
         hs.idHospital,
         hs.idAssociation,
@@ -251,7 +261,14 @@ class GuestDemogReport {
 
 
             try {
-                $miles = self::calcZipDistance($dbh, $sourceZip, $r['Postal_Code']);
+                $distanceCalculator = DistanceFactory::make();	
+                if($r['Meters_From_House'] > 0){	
+                    $miles = $distanceCalculator->meters2miles($r['Meters_From_House']);	
+                }elseif ($uS->distCalculator == 'zip'){	
+                    $miles = $distanceCalculator->getDistance($dbh, ['zip'=>$r["zip"]], $uS->houseAddr, "miles");	
+                }else{    
+                    throw new \RuntimeException("Distance not calculated");
+                }
 
                 foreach ($accum[$startPeriod]['Distance'] as $d => $val) {
 

@@ -86,6 +86,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Diagnosis_Category', 'n', 'Neurology', '', 'h', 0),
 ('Diagnosis_Category', 'c', 'Cardiac', '', 'h', 0),
 
+('DistCalculator', 'zip', 'Nautical (Approx)','', '', 10),
+('DistCalculator', 'google', 'Driving', 20),
+
 ('Dir_Type_Selector_Code','d','Directory','','',0),
 ('Dir_Type_Selector_Code','e','Email Addresses','','',0),
 ('Dir_Type_Selector_Code','m','Mailing List','','',0),
@@ -565,6 +568,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('DefaultRegisterTab','0','lu','h','','Default active tab on register page','Default_Reg_Tab',1),
 ('DefaultVisitFee','1','s','h','','Use the Resource Builder','',0),
 ('DefCalEventTextColor', 'black', 's', 'c', '', 'Default calendar event ribbon text color', '',1),
+('distCalculator', '', 'lu', 'hf', 'Distance calculator method', 'DistCalculator', '1')
 ('DKIMdomain', '', 's', 'es', '', 'Domain name of sender (must match FromAddress and NoReplyAddr domains)', '',1),
 ('Doctor','true','b','hf','','Track doctors','',1),
 ('EmailType','','lu','es','','Email protocol','Email_Server',1),
@@ -722,6 +726,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('Survey_Subject','Checkout Survey','s','rf','','Default: Checkout Survey'),
 ('VisitFeeConfirmLabel','Cleaning Fee:','s','rf','','Default: Cleaning Fee:'),
 ('specialNoteConfEmail', 'Special Note', 's', 'rf', '', 'Default: Special Note'),
+('drivingdistancePrompt', 'Distance', 's', 'rf', '', 'Default: Distance'),
 
 ('noticeToCheckout', 'Notice to Checkout', 's', 'vi', '', 'Default: Notice to Checkout'),
 

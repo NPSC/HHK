@@ -53,6 +53,7 @@ delete from gen_lookups where Table_Name = "Non_Cleaning_Day" ;
 ALTER TABLE `operating_schedules`
 CHANGE COLUMN `Timestamp` `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
+
 -- add additional access_log actions
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
 ('Web_User_Actions', 'LOI', 'Log out for inactivicy', '', '', '0');
@@ -62,3 +63,14 @@ UPDATE `Sys_Config` set `Description` = "Number of minutes until an idle session
 
 -- Add billing agent report
 CALL new_webpage("BillingAgentReport.php", 0, "Billing Agent Report", 1, "h", "", "z", "p", "", "",NOW(), "ga");
+
+-- distance calculator
+ALTER TABLE `name_address` 
+ADD COLUMN IF NOT EXISTS `Meters_From_House` INT(11) NULL AFTER `County`;
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('distCalculator', '', 'lu', 'c', 'Distance calculator method', 'DistCalculator', '1');
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('DistCalculator', 'zip', 'Nautical (Approx)', 10);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('DistCalculator', 'google', 'Driving', 20);
+
+-- distance label
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('drivingdistancePrompt', 'Distance', 's', 'rf', 'Default: Distance');

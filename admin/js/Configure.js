@@ -147,6 +147,58 @@ $(document).on("submit", "form#formHolidays", function(e){
 
 });
 
+$(document).on('click', "#btnCalcAddresses", function(){
+    var numCalls = $("#numAddrCalc").val();
+    if(numCalls > 0){
+        $.ajax({
+            url: 'Configure.php',
+            method: 'post',
+            data: {
+                'cmd': 'calcDistArray',
+                'numCalls': numCalls
+            },
+            dataType: 'json',
+            success: function (data) {
+                if (data.success) {
+                    flagAlertMessage(data.success, false);
+                } else if (data.error) {
+                    flagAlertMessage(data.error, true);
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                flagAlertMessage("Error: " + errorThrown, true);
+            }
+        });
+    }
+});
+
+$(document).on('click', "#btnLoadUncalcAddrTbl", function(){
+        $.ajax({
+            url: 'Configure.php',
+            method: 'post',
+            data: {
+                'cmd': 'getUncalculatedAddressTbl'
+            },
+            dataType: 'text',
+            success: function (data) {
+                $("#uncalcAddrTbl").html(data);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                flagAlertMessage("Error: " + errorThrown, true);
+            }
+        });
+});
+
+$(document).on('change', "#numAddrCalc", function(){
+    var ApiCost = $("#googleApiCostPerCall").val();
+    var numCalls = $("#numAddrCalc").val();
+    console.log(ApiCost);
+    console.log(numCalls);
+    if(ApiCost > 0 && numCalls > 0){
+        $("#googleApiCost").text("$" + ApiCost*numCalls);
+    }
+});
+
 
 	//display noty
 

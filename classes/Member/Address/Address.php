@@ -3,11 +3,14 @@
 namespace HHK\Member\Address;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\sec\Labels;
+use HHK\sec\Session;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
 use HHK\AuditLog\NameLog;
 use HHK\Exception\{InvalidArgumentException, RuntimeException};
 use HHK\Tables\TableRSInterface;
+use HHK\House\Distance\DistanceFactory;
 
 /**
  * Address.php
@@ -292,13 +295,20 @@ class Address extends AbstractContactPoint{
             . $badAddrMarkup
             ));
 
+        $distanceCalculator = DistanceFactory::make();
+        $distance = $adrRow->Meters_From_House->getStoredVal();
+    
+        if($distance > 0){
+            $table->addBodyTr(HTMLTable::makeTd(Labels::getString("Referral", "drivingdistancePrompt", "Distance"), array('class'=>'tdlabel', 'title'=>Labels::getString("Referral", "drivingdistancePrompt", "Distance")))
+                . HTMLTable::makeTd("<b>" . $distanceCalculator->meters2miles($distance) . "</b> miles from The House"));
+        }
 
         return $table->generateMarkup(array('class'=>$badAddrClass)) . $lastUpdated;
     }
 
 
     /**
-      Builds the tab control containing each address type.
+     * Builds the tab control containing each address type.
      *
      * @param string $inputClass
      * @param bool $showBadAddrCkBox
@@ -416,6 +426,7 @@ class Address extends AbstractContactPoint{
     public function saveAddress(\PDO $dbh, array $p, $purpose, $incomplete, $user) {
 
         $message = '';
+        $uS = Session::getInstance();
         // Set some convenience vars.
         $a = $this->rSs[$purpose[0]];
         $id = $this->name->get_idName();
@@ -448,6 +459,15 @@ class Address extends AbstractContactPoint{
 
                 if ($adrComplete === TRUE) {
                     $a->Set_Incomplete->setNewVal(0);
+
+                    if(EditRS::isChanged($a) || !$a->Meters_From_House->getStoredVal() > 0){ //if address has changed and is complete, or distance hasn't been calculated
+                        //calculate distance
+                        $distanceCalculator = DistanceFactory::make();
+                        $distance = $distanceCalculator->getDistance($dbh, $p, $uS->houseAddr, 'meters');
+                        $a->Meters_From_House->setNewVal($distance);
+                    }
+                }else{
+                    $a->Meters_From_House->setNewVal(null);
                 }
 
                 $numRows = EditRS::update($dbh, $a, array($a->idName_Address));
@@ -461,6 +481,13 @@ class Address extends AbstractContactPoint{
             // Address does not exist inthe DB.
             // Did the user fill in this address panel?
             $adrComplete = $this->loadPostData($a, $p);
+
+            if($adrComplete){
+                //calculate distance
+                $distanceCalculator = DistanceFactory::make();
+                $distance = $distanceCalculator->getDistance($dbh, ['address1'=>$a->Address_1->getNewVal(), 'city'=>$a->City->getNewVal(), 'state'=>$a->State_Province->getNewVal(), 'zip'=>$a->Postal_Code->getNewVal()], $uS->houseAddr, 'meters');
+                $a->Meters_From_House->setNewVal($distance);
+            }
 
             if ($incomplete || $adrComplete) {
 
