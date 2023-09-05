@@ -609,10 +609,12 @@ function getPaymentAmount(p, a) {
 }
 
 function doOverpayment(p, a) {
+
     let originalFeePayAmt = a.feePay,
         minAmtDue = 0;
 
     const updateFeeTaxes = new UpdateTaxes(p.taxingItems);
+
 
     if (p.selBalTo.val() === 'r' && a.overPayAmt > 0) {
         // Refund
@@ -621,22 +623,24 @@ function doOverpayment(p, a) {
             minAmtDue = a.totRmBalDue;
         }
 
-        if (a.feePayPreTax > a.overPayAmt) {
+        let deltaFeePay = a.feePayPreTax - minAmtDue;
 
-            a.feePayPreTax -= a.overPayAmt;
-            a.overPayAmt = 0;
+        if (deltaFeePay > a.overPayAmt) {
+
+            a.feePayPreTax -= deltaFeePay;
+            a.overPayAmt -= deltaFeePay;
 
             // Not a fefund
             $('#txtRtnAmount').val('');
             $('#divReturnPay').hide();
             p.selBalTo.val('');
 
-        } else if (a.overPayAmt.toFixed(2) >= minAmtDue) {
+        } else if (a.overPayAmt >= deltaFeePay) {
 
-            a.overPayAmt -= Math.max((a.feePayPreTax - a.totRmBalDue), 0);
+            a.overPayAmt -= Math.max(deltaFeePay, 0);
             a.feePayPreTax = minAmtDue;
 
-            if (a.overPayAmt.toFixed(2) > 0) {
+            if (a.overPayAmt > 0) {
                 $('#divReturnPay').show('fade');
                 $('#txtRtnAmount').val(a.overPayAmt.toFixed(2).toString());
 

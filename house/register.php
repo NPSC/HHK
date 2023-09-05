@@ -50,7 +50,7 @@ $waitlist = '';
 $guestAddMessage = '';
 $shoHosptialName = FALSE;
 $colorKey = '';
-
+$countUnpaidInvoices = '';
 $rvCols = array();
 $wlCols = array();
 
@@ -214,7 +214,7 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
 }
 
 
-// View density
+// Calendar View density
 $weeks = intval($uS->CalViewWeeks);
 if ($weeks < 1) {
     $weeks = 1;
@@ -276,7 +276,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
     // Prepare controls
     $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
     $statusSelector = HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($statusList, ''), array('name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple'));
+            HTMLSelector::doOptionsMkup($statusList, ''), array('name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple'));
 
     $payTypes = array();
 
@@ -287,7 +287,9 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
     }
 
     $payTypeSelector = HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($payTypes, ''), array('name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple'));
+            HTMLSelector::doOptionsMkup($payTypes, ''), array('name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple'));
+
+    // Count unpaid invoices
 
 }
 
@@ -459,7 +461,6 @@ if($uS->useOnlineReferral){
                 </div>
                 <?php if($uS->useOnlineReferral){ ?>
                 <div id="vreferrals" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
-
                 </div>
                 <?php } ?>
                 <?php if ($isGuestAdmin) { ?>

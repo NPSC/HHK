@@ -254,27 +254,6 @@ WHERE
 		$this->tax_exempt = $this->invRs->tax_exempt->getStoredVal();
 	}
 	/**
-	 * Summary of getLineCount
-	 * @param \PDO $dbh
-	 * @param mixed $idInvoice
-	 * @return mixed
-	 */
-	public static function getLineCount(\PDO $dbh, $idInvoice) {
-		$count = 0;
-		$id = intval ( $idInvoice, 10 );
-
-		if ($id > 0) {
-			$stmt = $dbh->query ( "select count(*) from invoice_line where Deleted = 0 and Invoice_Id = $id" );
-			$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
-
-			if (count ( $rows ) > 0) {
-				$count = $rows [0] [0];
-			}
-		}
-
-		return $count;
-	}
-	/**
 	 * Summary of getLines
 	 * @param \PDO $dbh
 	 * @return array

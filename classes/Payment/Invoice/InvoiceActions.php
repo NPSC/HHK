@@ -182,6 +182,17 @@ class InvoiceActions {
         return array('error' => 'Bad Invoice Action.  ');
     }
 
+    /**
+     * Summary of invoiceSetBill
+     * @param \PDO $dbh
+     * @param mixed $invNum
+     * @param mixed $invDateStr
+     * @param mixed $user
+     * @param mixed $element
+     * @param mixed $notes
+     * @param mixed $notesElement
+     * @return array
+     */
     public static function invoiceSetBill(\PDO $dbh, $invNum, $invDateStr, $user, $element, $notes, $notesElement)
     {
 
