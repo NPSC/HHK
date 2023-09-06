@@ -3,8 +3,11 @@
 namespace HHK\Member\Address;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\Member\AbstractMember;
 use HHK\sec\Labels;
 use HHK\sec\Session;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\MemBasis;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
 use HHK\AuditLog\NameLog;
@@ -300,7 +303,7 @@ class Address extends AbstractContactPoint{
     
         if($distance > 0){
             $table->addBodyTr(HTMLTable::makeTd(Labels::getString("Referral", "drivingdistancePrompt", "Distance"), array('class'=>'tdlabel', 'title'=>Labels::getString("Referral", "drivingdistancePrompt", "Distance")))
-                . HTMLTable::makeTd("<b>" . $distanceCalculator->meters2miles($distance) . "</b> miles from The House"));
+                . HTMLTable::makeTd("<b>" . $distanceCalculator->meters2miles($distance) . "</b> miles away"));
         }
 
         return $table->generateMarkup(array('class'=>$badAddrClass)) . $lastUpdated;
@@ -463,7 +466,7 @@ class Address extends AbstractContactPoint{
                     if(EditRS::isChanged($a) || !$a->Meters_From_House->getStoredVal() > 0){ //if address has changed and is complete, or distance hasn't been calculated
                         //calculate distance
                         $distanceCalculator = DistanceFactory::make();
-                        $distance = $distanceCalculator->getDistance($dbh, $p, $uS->houseAddr, 'meters');
+                        $distance = $distanceCalculator->getDistance($dbh, $p, self::getHouseAddress($dbh), 'meters');
                         $a->Meters_From_House->setNewVal($distance);
                     }
                 }else{
@@ -485,7 +488,7 @@ class Address extends AbstractContactPoint{
             if($adrComplete){
                 //calculate distance
                 $distanceCalculator = DistanceFactory::make();
-                $distance = $distanceCalculator->getDistance($dbh, ['address1'=>$a->Address_1->getNewVal(), 'city'=>$a->City->getNewVal(), 'state'=>$a->State_Province->getNewVal(), 'zip'=>$a->Postal_Code->getNewVal()], $uS->houseAddr, 'meters');
+                $distance = $distanceCalculator->getDistance($dbh, ['address1'=>$a->Address_1->getNewVal(), 'city'=>$a->City->getNewVal(), 'state'=>$a->State_Province->getNewVal(), 'zip'=>$a->Postal_Code->getNewVal()], self::getHouseAddress($dbh), 'meters');
                 $a->Meters_From_House->setNewVal($distance);
             }
 
@@ -656,6 +659,29 @@ class Address extends AbstractContactPoint{
 
         }
 
+    }
+
+    public static function getHouseAddress(\PDO $dbh){
+        try{
+            //get house address
+            $uS = Session::getInstance();
+            $house = AbstractMember::GetDesignatedMember($dbh, $uS->sId, MemBasis::NonProfit);
+            $address = new Address($dbh, $house, $uS->nameLookups[GLTableNames::AddrPurpose]);
+            if($address->isRecordSetDefined($address->get_preferredCode())){
+                $addressData = $address->get_Data($address->get_preferredCode());
+                return [
+                    'address1'=>$addressData['Address_1'],
+                    'address2'=>$addressData['Address_2'],
+                    'city'=>$addressData['City'],
+                    'state'=>$addressData['State_Province'],
+                    'zip'=>$addressData['Postal_Code']
+                ];
+            }else{
+                return null;
+            }
+        }catch(\Exception $e){
+            return null;
+        }
     }
 
 }

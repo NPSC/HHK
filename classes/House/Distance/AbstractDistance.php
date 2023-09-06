@@ -15,17 +15,19 @@ abstract class AbstractDistance{
      * @param string $returnType - "miles"|"meters"
      * @return number distance
      */
-    public function getDistance(\PDO $dbh, array $originAddr, array $destinationAddr, string $returnType){
-
-        $distanceArray = $this->calcDistance($dbh, $originAddr, $destinationAddr);
+    public function getDistance(\PDO $dbh, array|null $originAddr, array|null $destinationAddr, string $returnType){
         $distance = 0;
 
-        if($returnType == "miles" && isset($distanceArray['units']) && $distanceArray['units'] == 'meters'){
-            $distance = self::meters2miles($distanceArray['value']);
-        }elseif ($returnType == "meters" && isset($distanceArray['units']) && $distanceArray['units'] == 'miles'){
-            $distance = self::miles2meters($distanceArray['value']);
-        }elseif(isset($distanceArray['units']) && $distanceArray['units'] == $returnType){
-            $distance = $distanceArray['value'];
+        if(is_array($originAddr) && is_array($destinationAddr) && count(array_diff_assoc($originAddr, $destinationAddr)) > 0){
+            $distanceArray = $this->calcDistance($dbh, $originAddr, $destinationAddr);
+            
+            if($returnType == "miles" && isset($distanceArray['units']) && $distanceArray['units'] == 'meters'){
+                $distance = self::meters2miles($distanceArray['value']);
+            }elseif ($returnType == "meters" && isset($distanceArray['units']) && $distanceArray['units'] == 'miles'){
+                $distance = self::miles2meters($distanceArray['value']);
+            }elseif(isset($distanceArray['units']) && $distanceArray['units'] == $returnType){
+                $distance = $distanceArray['value'];
+            }
         }
 
         return $distance;
@@ -35,11 +37,11 @@ abstract class AbstractDistance{
         return ($addr['address1'] ?? "") . ' ' . ' ' . ($addr['city'] ?? "") . ' ' . ($addr['state'] ?? "") . ' ' . ($addr['zip'] ?? "");
     }
 
-    public function meters2miles(int $meters){
+    public function meters2miles(float $meters){
         return round($meters/1609.344, 2);
     }
 
-    public function miles2meters(int $miles){
+    public function miles2meters(float $miles){
         return $miles*1609.344;
     }
 

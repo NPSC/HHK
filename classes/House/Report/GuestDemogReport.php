@@ -4,6 +4,7 @@ namespace HHK\House\Report;
 
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\Exception\RuntimeException;
+use HHK\Member\Address\Address;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\InvalidArgumentException;
@@ -265,7 +266,7 @@ class GuestDemogReport {
                 if($r['Meters_From_House'] > 0){	
                     $miles = $distanceCalculator->meters2miles($r['Meters_From_House']);	
                 }elseif ($uS->distCalculator == 'zip'){	
-                    $miles = $distanceCalculator->getDistance($dbh, ['zip'=>$r["zip"]], $uS->houseAddr, "miles");	
+                    $miles = $distanceCalculator->getDistance($dbh, ['zip'=>$r["zip"]], Address::getHouseAddress($dbh), "miles");	
                 }else{    
                     throw new \RuntimeException("Distance not calculated");
                 }
