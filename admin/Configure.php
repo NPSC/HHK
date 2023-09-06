@@ -32,10 +32,10 @@ use HHK\CrmExport\AbstractExportManager;
 /**
  * Configure.php
  *
-  -- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
-  -- @copyright 2010-2022 <nonprofitsoftwarecorp.org>
-  -- @license   MIT
-  -- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 require (FUNCTIONS . 'mySqlFunc.php');
@@ -228,6 +228,7 @@ try {
 } catch (Exception $pex) {
 }
 
+$googleDistanceMkup = "";
 $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(SecurityComponent::is_TheAdmin()){
     if($cmd == 'calcDistArray'){
@@ -280,7 +281,6 @@ if(SecurityComponent::is_TheAdmin()){
         exit;
     }
 
-    $googleDistanceMkup = "";
     if($uS->distCalculator == "google"){
         $distanceCalculator = new GoogleDistance();
         $googleDistanceMkup = HTMLContainer::generateMarkup("h3", "Google Distance Calculator") . $distanceCalculator->getEditMarkup($dbh);
