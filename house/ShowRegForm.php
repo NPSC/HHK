@@ -207,12 +207,13 @@ if($idVisit || $idResv){
     );
 }
 //"<span class='ui-icon ui-icon-extlink' style='float: right; margin-left: .3em;'></span>"
+
 $shoStmtBtn = HTMLInput::generateMarkup("Show Statement", array('type'=>'button', 'id'=>'btnStmt', 'style'=>$regButtonStyle));
 $shoRegBtn = HTMLInput::generateMarkup('Check In Followup', array('type'=>'button', 'id'=>'btnReg', 'style'=>$regButtonStyle));
 
 $regMessage = HTMLContainer::generateMarkup('div', '', array('id'=>'mesgReg', 'style'=>'color: darkgreen; clear:left; font-size:1.5em;display:none;'));
 
-$contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regMessage, array());
+$contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regMessage, array('class'=>'my-2'));
 
 //unset($reservArray);
 

@@ -59,7 +59,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 ('Web_User_Actions', 'LOI', 'Log out for inactivicy', '', '', '0');
 
 -- change SessionTimeout description
-UPDATE `Sys_Config` set `Description` = "Number of minutes until an idle session get automatically logged out, default 30" where `Key` = "SessionTimeout";
+UPDATE `sys_config` set `Description` = "Number of minutes until an idle session get automatically logged out, default 30" where `Key` = "SessionTimeout";
 
 -- Add billing agent report
 CALL new_webpage("BillingAgentReport.php", 0, "Billing Agent Report", 1, "h", "", "z", "p", "", "",NOW(), "ga");
