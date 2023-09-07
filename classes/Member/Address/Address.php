@@ -10,6 +10,7 @@ use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\MemBasis;
+use HHK\SysConst\MemDesignation;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
 use HHK\AuditLog\NameLog;
@@ -466,17 +467,18 @@ class Address extends AbstractContactPoint{
                 if ($adrComplete === TRUE ) {
                     $a->Set_Incomplete->setNewVal(0);
                     
-                    if($this->name instanceof GuestMember || $this->name instanceof PatientMember){
-                        $distanceCalculator = DistanceFactory::make();
-                        if(EditRS::isChanged($a) || !$a->Meters_From_House->getStoredVal() > 0 || ($a->Meters_From_House->getStoredVal() > 0 && $a->DistCalcType->getStoredVal() !== $distanceCalculator->getType())){ //if address has changed and is complete, or distance hasn't been calculated, or the calculation type is different than the current one
+                    
+                    $distanceCalculator = DistanceFactory::make();
+                    if(EditRS::isChanged($a) || !$a->Meters_From_House->getStoredVal() > 0 || ($a->Meters_From_House->getStoredVal() > 0 && $a->DistCalcType->getStoredVal() !== $distanceCalculator->getType())){ //if address has changed and is complete, or distance hasn't been calculated, or the calculation type is different than the current one
+                        if($this->name instanceof GuestMember || $this->name instanceof PatientMember){
                             //calculate distance
                             $distance = $distanceCalculator->getDistance($dbh, $p, self::getHouseAddress($dbh), 'meters');
                             $a->Meters_From_House->setNewVal($distance);
                             $a->DistCalcType->setNewVal($distanceCalculator->getType());
+                        }else{
+                            $a->Meters_From_House->setNewVal(null);
+                            $a->DistCalcType->setNewVal(null);
                         }
-                    }else{
-                        $a->Meters_From_House->setNewVal(null);
-                        $a->DistCalcType->setNewVal(null);
                     }
                 }else{
                     $a->Meters_From_House->setNewVal(null);
