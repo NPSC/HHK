@@ -4,6 +4,8 @@ namespace HHK\Member\Address;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Member\AbstractMember;
+use HHK\Member\RoleMember\GuestMember;
+use HHK\Member\RoleMember\PatientMember;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\GLTableNames;
@@ -300,10 +302,11 @@ class Address extends AbstractContactPoint{
 
         $distanceCalculator = DistanceFactory::make();
         $distance = $adrRow->Meters_From_House->getStoredVal();
+        $distCalcTypeStr = (!empty($adrRow->DistCalcType->getStoredVal()) ? " (" . $adrRow->DistCalcType->getStoredVal() . ")" : "");
     
         if($distance > 0){
             $table->addBodyTr(HTMLTable::makeTd(Labels::getString("Referral", "drivingdistancePrompt", "Distance"), array('class'=>'tdlabel', 'title'=>Labels::getString("Referral", "drivingdistancePrompt", "Distance")))
-                . HTMLTable::makeTd("<b>" . $distanceCalculator->meters2miles($distance) . "</b> miles away"));
+                . HTMLTable::makeTd("<b>" . $distanceCalculator->meters2miles($distance) . "</b> miles away" . $distCalcTypeStr));
         }
 
         return $table->generateMarkup(array('class'=>$badAddrClass)) . $lastUpdated;
@@ -460,17 +463,24 @@ class Address extends AbstractContactPoint{
                 // Update the address
                 $adrComplete = $this->loadPostData($a, $p);
 
-                if ($adrComplete === TRUE) {
+                if ($adrComplete === TRUE ) {
                     $a->Set_Incomplete->setNewVal(0);
-
-                    if(EditRS::isChanged($a) || !$a->Meters_From_House->getStoredVal() > 0){ //if address has changed and is complete, or distance hasn't been calculated
-                        //calculate distance
+                    
+                    if($this->name instanceof GuestMember || $this->name instanceof PatientMember){
                         $distanceCalculator = DistanceFactory::make();
-                        $distance = $distanceCalculator->getDistance($dbh, $p, self::getHouseAddress($dbh), 'meters');
-                        $a->Meters_From_House->setNewVal($distance);
+                        if(EditRS::isChanged($a) || !$a->Meters_From_House->getStoredVal() > 0 || ($a->Meters_From_House->getStoredVal() > 0 && $a->DistCalcType->getStoredVal() !== $distanceCalculator->getType())){ //if address has changed and is complete, or distance hasn't been calculated, or the calculation type is different than the current one
+                            //calculate distance
+                            $distance = $distanceCalculator->getDistance($dbh, $p, self::getHouseAddress($dbh), 'meters');
+                            $a->Meters_From_House->setNewVal($distance);
+                            $a->DistCalcType->setNewVal($distanceCalculator->getType());
+                        }
+                    }else{
+                        $a->Meters_From_House->setNewVal(null);
+                        $a->DistCalcType->setNewVal(null);
                     }
                 }else{
                     $a->Meters_From_House->setNewVal(null);
+                    $a->DistCalcType->setNewVal(null);
                 }
 
                 $numRows = EditRS::update($dbh, $a, array($a->idName_Address));
@@ -485,11 +495,12 @@ class Address extends AbstractContactPoint{
             // Did the user fill in this address panel?
             $adrComplete = $this->loadPostData($a, $p);
 
-            if($adrComplete){
+            if($adrComplete && ($this->name instanceof GuestMember || $this->name instanceof PatientMember)){
                 //calculate distance
                 $distanceCalculator = DistanceFactory::make();
                 $distance = $distanceCalculator->getDistance($dbh, ['address1'=>$a->Address_1->getNewVal(), 'city'=>$a->City->getNewVal(), 'state'=>$a->State_Province->getNewVal(), 'zip'=>$a->Postal_Code->getNewVal()], self::getHouseAddress($dbh), 'meters');
                 $a->Meters_From_House->setNewVal($distance);
+                $a->DistCalcType->setNewVal($distanceCalculator->getType());
             }
 
             if ($incomplete || $adrComplete) {

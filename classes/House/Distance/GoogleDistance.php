@@ -17,6 +17,8 @@ class GoogleDistance extends AbstractDistance {
     private CONST APICOST = 0.005;
     private array $UncalculatedAddresses;
 
+    protected const TYPE = "driving";
+
     /**
      * @param \PDO $dbh
      * @param array $originAddr

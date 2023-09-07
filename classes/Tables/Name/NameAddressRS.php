@@ -27,6 +27,7 @@ class NameAddressRS extends AbstractTableRS {
     public $Country_Code;  // varchar(10) NOT NULL DEFAULT '',
     public $County;  // varchar(45) NOT NULL DEFAULT '',
     public $Meters_From_House; //int(11) NULL,
+    public $DistCalcType; //VARCHAR(10) NULL DEFAULT NULL,
     public $Set_Incomplete;  // bit(1) NOT NULL DEFAULT b'0',
     public $Mail_Code;  // varchar(5) NOT NULL DEFAULT '',
     public $Last_Verified;  // datetime DEFAULT NULL,
@@ -49,6 +50,7 @@ class NameAddressRS extends AbstractTableRS {
         $this->Country_Code = new DB_Field("Country_Code", "", new DbStrSanitizer(10));
         $this->County = new DB_Field("County", "", new DbStrSanitizer(45));
         $this->Meters_From_House = new DB_Field("Meters_From_House", null, new DbIntSanitizer(), TRUE, TRUE);
+        $this->DistCalcType = new DB_Field("DistCalcType", null, new DbStrSanitizer(10), TRUE, TRUE);
         $this->Mail_Code = new DB_Field("Mail_Code", "", new DbStrSanitizer(5));
         $this->Last_Verified = new DB_Field("Last_Verified", NULL, new DbDateSanitizer("Y-m-d H:i:s"));
         $this->Bad_Address = new DB_Field("Bad_Address", "", new DbStrSanitizer(15), TRUE, TRUE);

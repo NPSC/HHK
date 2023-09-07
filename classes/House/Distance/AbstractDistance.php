@@ -3,6 +3,8 @@ namespace HHK\House\Distance;
 
 abstract class AbstractDistance{
 
+    protected const TYPE = "";
+
     /**
      *
      * Gets distance between two address arrays (full or partial, zip required)
@@ -54,6 +56,10 @@ abstract class AbstractDistance{
      */
     protected function calcDistance(\PDO $dbh, array $originAddr, array $destinationAddr){
         return array();
+    }
+
+    public function getType(){
+        return static::TYPE;
     }
 
 }

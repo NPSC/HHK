@@ -5,6 +5,8 @@ use HHK\Exception\RuntimeException;
 
 class ZipDistance extends AbstractDistance{
 
+    protected const TYPE = "nautical";
+
     /**
      * @param \PDO $dbh
      * @param array $originAddr
@@ -22,7 +24,7 @@ class ZipDistance extends AbstractDistance{
         }
 
         if ($destZip == $sourceZip) {
-            return 0;
+            return array("type"=>"zip", "units"=>"miles", "value"=>0);
         }
 
         $miles = 0;

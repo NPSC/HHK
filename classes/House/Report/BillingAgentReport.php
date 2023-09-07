@@ -115,11 +115,11 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
          WHEN v.Status = 'a' THEN ''
          ELSE '' END";
 
-        $whDepartureCase = "CASE WHEN v.Actual_Departure IS NOT NULL THEN v.Actual_Departure
+        $whDepartureCase = "CASE WHEN v.Span_End IS NOT NULL THEN v.Span_End
         WHEN v.Expected_Departure IS NOT NULL AND v.Expected_Departure > NOW() THEN v.Expected_Departure
         ELSE NOW() END";
 
-        $whDates =  "v.Arrival_Date <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
+        $whDates =  "v.Span_Start <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
 
         $whBilling = "";
         if(count($this->selectedBillingAgents) > 0){
@@ -289,7 +289,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
 
         foreach($this->resultSet as $k=>$r) {
             $this->resultSet[$k]["Invoice_Amount"] = "$" . number_format($r["Invoice_Amount"],2);
-            $this->resultSet[$k]["Invoice_Number"] = HTMLContainer::generateMarkup('a', $r['Invoice_Number'], array('href'=>'ShowInvoice.php?invnum='.$r['Invoice_Number']));
+            $this->resultSet[$k]["Invoice_Number"] = HTMLContainer::generateMarkup('a', $r['Invoice_Number'], array('href'=>'ShowInvoice.php?invnum='.$r['Invoice_Number'], 'target'=>'_blank'));
             $this->resultSet[$k]["idVisit"] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit', 'data-gid'=>"", 'data-vid'=>$r['visitId'], 'data-span'=>$r['Span'], 'style'=>'display:inline-table;'));
             $this->resultSet[$k]['pId'] = HTMLContainer::generateMarkup('a', $r['pId'], array('href'=>'GuestEdit.php?id=' . $r['pId'] . '&psg=' . $r['idPsg']));
         }

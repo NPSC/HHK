@@ -74,3 +74,8 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 
 -- distance label
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('drivingdistancePrompt', 'Distance', 's', 'rf', 'Default: Distance');
+
+
+-- add distCalcType to name_address
+ALTER TABLE `name_address` 
+ADD COLUMN IF NOT EXISTS `DistCalcType` VARCHAR(10) NULL DEFAULT NULL AFTER `Meters_From_House`;

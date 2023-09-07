@@ -2,6 +2,7 @@
 
 use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Member\Address\Address;
 use HHK\sec\{Session, WebInit};
 use HHK\House\Report\ReportFilter;
 use HHK\House\Report\GuestDemogReport;
@@ -27,7 +28,8 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
-$zip = $uS->Zip_Code;
+$houseAddr = Address::getHouseAddress($dbh);
+$zip = (!empty($houseAddr['zip']) ? $houseAddr['zip'] : $uS->Zip_Code);
 
 
 $report = "";
