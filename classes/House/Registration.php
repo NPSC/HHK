@@ -95,16 +95,23 @@ class Registration {
     /**
      * Summary of loadDepositBalance
      * @param \PDO $dbh
-     * @param mixed $idGroup
+     * @param mixed $idRegistration
+     * @param int $idVisit
      * @return float
      */
-    public static function loadDepositBalance(\PDO $dbh, $idGroup) {
+    public static function loadDepositBalance(\PDO $dbh, $idRegistration, $idVisit = 0) {
 
         $depositBalance = 0.0;
-        $idg = intval($idGroup, 10);
+        $where = '';
 
-        if ($idg < 1) {
-            return $depositBalance;
+        if ($idVisit == 0) {
+            $idg = intval($idRegistration, 10);
+            $where = "and i.idGroup = " . $idg;
+            if ($idg < 1) {
+                return $depositBalance;
+            }
+        } else {
+            $where = " and i.Order_Number = " . $idVisit;
         }
 
         $query = "select
@@ -117,8 +124,7 @@ where
     il.Item_Id in (" . ItemId::DepositRefund . "  , " . ItemId::KeyDeposit . ")
         and i.Deleted = 0
         and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid . "'
-        and i.idGroup = " . $idg;
+        and i.Status = '" . InvoiceStatus::Paid ."' " . $where;
         $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -133,17 +139,25 @@ where
     /**
      * Summary of loadLodgingBalance
      * @param \PDO $dbh
-     * @param mixed $idGroup
+     * @param mixed $idRegistration
+     * @param int $idVisit
      * @return float
      */
-    public static function loadLodgingBalance(\PDO $dbh, $idGroup) {
-
+    public static function loadLodgingBalance(\PDO $dbh, $idRegistration, $idVisit = 0)
+    {
         $lodgingBalance = 0.0;
-        $idg = intval($idGroup, 10);
+        $where = '';
 
-        if ($idg < 1) {
-            return $lodgingBalance;
+        if ($idVisit == 0) {
+            $idg = intval($idRegistration, 10);
+            if ($idg < 1) {
+                return $lodgingBalance;
+            }
+            $where = " and i.idGroup = " . $idg;
+        } else {
+            $where = " and i.Order_Number = " . $idVisit;
         }
+
 
         $query = "select
     sum(il.Amount)
@@ -155,8 +169,7 @@ where
     il.Item_Id = ". ItemId::LodgingMOA . "
         and i.Deleted = 0
         and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid . "'
-        and i.idGroup = " . $idg;
+        and i.Status = '" . InvoiceStatus::Paid . "' " . $where;
         $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);

@@ -1022,7 +1022,19 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
 
 
-        $rec .= self::makeSummaryDiv('', $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), Registration::loadDepositBalance($dbh, $idRegistration), $totalNights);
+        $rec .= self::makeSummaryDiv(
+            '',
+            $patientName,
+            $hospital,
+            $diags,
+            $labels,
+            $totalCharge,
+            $totalThirdPayments,
+            $totalGuestPayments,
+            Registration::loadLodgingBalance($dbh, $idRegistration),
+            Registration::loadDepositBalance($dbh, $idRegistration),
+            $totalNights
+        );
 
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'margin-top:25px;'));
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox'));
@@ -1157,8 +1169,8 @@ WHERE
             $totalCharge,
             $totalThirdPayments,
             $totalGuestPayments,
-            Registration::loadLodgingBalance($dbh, $idRegistration),
-            Registration::loadDepositBalance($dbh, $idRegistration),
+            Registration::loadLodgingBalance($dbh, 0, $idVisit),
+            Registration::loadDepositBalance($dbh, 0, $idVisit),
             $totalNights);
 
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'clear:both;margin-top:25px;'));
