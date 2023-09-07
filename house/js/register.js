@@ -629,11 +629,7 @@ function getDtBtns(title){
     	];
     }
 
-    var calendar;
-
-$(document).ready(function () {
-    "use strict";
-    let hindx = 0,
+    var hindx = 0,
     pmtMkup = $('#pmtMkup').val(),
     rctMkup = $('#rctMkup').val(),
     defaultTab = $('#defaultTab').val(),
@@ -668,7 +664,11 @@ $(document).ready(function () {
 	holidays = $.parseJSON($('#holidays').val()),
     closedDays = $.parseJSON($('#closedDays').val()),
 	showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val(),
-    useOnlineReferral = $('#useOnlineReferral').val();
+    useOnlineReferral = $('#useOnlineReferral').val(),
+    calendar;
+
+$(document).ready(function () {
+    "use strict";
 
     // Current Guests
     let cgCols = [
