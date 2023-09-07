@@ -165,21 +165,24 @@ class PaymentManager {
             }
 
             // MOA refunds
-            if ($this->pmp->getRetainedAmtPayment() > 0) {
+            if ($this->pmp->getRetainedAmtPayment() < 0) {
 
                 // Do we still have any MOA?
                 $amtMOA = Registration::loadLodgingBalance($dbh, $visit->getIdRegistration());
+                $this->moaRefundAmt = abs($this->pmp->getRetainedAmtPayment());
 
-                if ($amtMOA >= abs($this->pmp->getRetainedAmtPayment())) {
+                if ($amtMOA >= $this->moaRefundAmt) {
 
                     // Refund the MOA amount
-                    $this->moaRefundAmt = abs($this->pmp->getRetainedAmtPayment());
                     $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
                     $invLine->appendDescription($notes);
                     $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, (0 - $this->moaRefundAmt)), 1, 'Payout');
 
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                     $this->invoice->addLine($dbh, $invLine, $uS->username);
+
+                } else {
+                    $this->moaRefundAmt = 0;
                 }
             }
 
@@ -220,15 +223,16 @@ class PaymentManager {
 
                     } else {
 
-                        $depPreTax = round($this->depositRefundAmt / (1 + $taxRate), 2);
-                        $moaPreTax = round($this->moaRefundAmt / (1 + $taxRate), 2);
-                        $vatPreTax = round($this->vatReimburseAmt / (1 + $taxRate), 2);
+                        // $depPreTax = round($this->depositRefundAmt / (1 + $taxRate), 2);
+                        // $moaPreTax = round($this->moaRefundAmt / (1 + $taxRate), 2);
+                        // $vatPreTax = round($this->vatReimburseAmt / (1 + $taxRate), 2);
 
                         // is there too much paid
-                        if ($this->pmp->getRatePayment() + $depPreTax + $moaPreTax + $vatPreTax > $roomAccount->getRoomFeeBalance()) {
+                        //if ($this->pmp->getRatePayment() + $depPreTax + $moaPreTax + $vatPreTax > $roomAccount->getRoomFeeBalance()) {
+                        if ($this->pmp->getRatePayment() > $roomAccount->getRoomFeeBalance()) {
                             $roomChargesPreTax = $roomAccount->getRoomFeeBalance();
                         } else {
-                            $roomChargesPreTax = $this->pmp->getRatePayment() + $depPreTax + $moaPreTax + $vatPreTax;
+                            $roomChargesPreTax = $this->pmp->getRatePayment();  // + $depPreTax + $moaPreTax + $vatPreTax;
                         }
                     }
 

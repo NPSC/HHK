@@ -470,7 +470,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                     $('#keyDepAmt').val('');
 
                     // show deposit refund
-                    let kdamt = parseFloat($('#kdPaid').data('amt'));
+                    let kdamt = parseFloat($('#DepRefundAmount').data('amt'));
                     if (isNaN(kdamt)) {
                         kdamt = 0;
                     }

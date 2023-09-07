@@ -680,9 +680,15 @@ function doOverpayment(p, a) {
 
 function doHouseWaive(p, a,) {
 
-    if (a.totPay > 0 && a.overPayAmt <= 0) {
+    if (a.totPay >= 0 && a.overPayAmt <= 0) {
         // Show house wave entities.
-        $('.hhk-HouseDiscount').show('fade');
+
+        if (a.totPay == 0) {
+            $('.hhk-HouseDiscount').hide();
+        } else {
+            $('.hhk-HouseDiscount').show('fade');
+        }
+
         $('.totalPaymentTr').show('fade');
 
         if (p.houseWaiveCb.prop('checked')) {

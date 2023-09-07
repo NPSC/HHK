@@ -32,6 +32,13 @@ Define('NEWLINE', "\n");
  */
 class Receipt {
 
+    /**
+     * Summary of makeInvoiceLineMarkup
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $tbl
+     * @return void
+     */
 	protected static function makeInvoiceLineMarkup(\PDO $dbh, Invoice $invoice, &$tbl) {
 		$uS = Session::getInstance();
 
@@ -68,6 +75,15 @@ class Receipt {
 		}
 	}
 
+    /**
+     * Summary of createSaleMarkup
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $siteName
+     * @param mixed $siteId
+     * @param \HHK\Payment\PaymentResponse\AbstractPaymentResponse $payResp
+     * @return string
+     */
     public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, AbstractPaymentResponse $payResp) {
 
         $uS = Session::getInstance();
@@ -132,6 +148,15 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
     }
 
+    /**
+     * Summary of createVoidMarkup
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractPaymentResponse $payResp
+     * @param mixed $siteName
+     * @param mixed $siteId
+     * @param mixed $type
+     * @return string
+     */
     public static function createVoidMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId, $type = 'Void Sale') {
 
         $uS = Session::getInstance();
@@ -183,6 +208,14 @@ class Receipt {
     }
 
     // Return a Payment
+    /**
+     * Summary of createReturnMarkup
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractPaymentResponse $payResp
+     * @param mixed $siteName
+     * @param mixed $siteId
+     * @return string
+     */
     public static function createReturnMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId) {
 
         $uS = Session::getInstance();
@@ -236,6 +269,14 @@ class Receipt {
     }
 
     // Refund arbitrary Amount
+    /**
+     * Summary of createRefundAmtMarkup
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractPaymentResponse $payResp
+     * @param mixed $siteName
+     * @param mixed $siteId
+     * @return string
+     */
     public static function createRefundAmtMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId) {
 
         $uS = Session::getInstance();
@@ -288,6 +329,15 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
+    /**
+     * Summary of createDeclinedMarkup
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $siteName
+     * @param int $siteId
+     * @param \HHK\Payment\PaymentResponse\AbstractPaymentResponse $payResp
+     * @return string
+     */
     public static function createDeclinedMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, AbstractPaymentResponse $payResp) {
 
         // Assemble the statement
@@ -346,6 +396,10 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
     }
 
+    /**
+     * Summary of getHouseIconMarkup
+     * @return string
+     */
     public static function getHouseIconMarkup() {
 
         $uS = Session::getInstance();
@@ -365,6 +419,12 @@ class Receipt {
 
     }
 
+    /**
+     * Summary of getVisitInfo
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @return mixed
+     */
     public static function getVisitInfo(\PDO $dbh, Invoice $invoice) {
 
         $data = array();
@@ -415,6 +475,12 @@ where
         return $data;
     }
 
+    /**
+     * Summary of getHospitalNames
+     * @param \PDO $dbh
+     * @param mixed $orderNumber
+     * @return mixed
+     */
     public static function getHospitalNames(\PDO $dbh, $orderNumber) {
 
         // Find the hospital
@@ -454,6 +520,13 @@ where
         return $hsNames;
     }
 
+    /**
+     * Summary of getAddressTable
+     * @param \PDO $dbh
+     * @param int $idName
+     * @param bool $includeContact
+     * @return string
+     */
     public static function getAddressTable(\PDO $dbh, $idName, $includeContact = true) {
 
         $mkup = '';

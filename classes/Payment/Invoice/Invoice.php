@@ -253,12 +253,14 @@ WHERE
 		$this->delegatedInvoiceNumber = $row ['Delegated_Invoice_Number'];
 		$this->tax_exempt = $this->invRs->tax_exempt->getStoredVal();
 	}
+
 	/**
 	 * Summary of getLines
 	 * @param \PDO $dbh
+	 * @param bool $includeDeletedLines
 	 * @return array
 	 */
-	public function getLines(\PDO $dbh) {
+	public function getLines(\PDO $dbh, $includeDeletedLines = false) {
 		$lines = array ();
 
 		$stmt = $dbh->query ( "select il.*
@@ -271,7 +273,7 @@ where il.Invoice_Id = " . $this->idInvoice . " order by ilt.Order_Position" );
 			EditRS::loadRow ( $r, $ilRs );
 
 			// Falls through if line is marked as deleted.
-			if ($ilRs->Deleted->getStoredVal () != 1) {
+			if ($ilRs->Deleted->getStoredVal () != 1 || $includeDeletedLines === false) {
 				$iLine = AbstractInvoiceLine::invoiceLineFactory ( $ilRs->Type_Id->getStoredVal () );
 				$iLine->loadRecord ( $ilRs );
 				$lines [] = $iLine;
