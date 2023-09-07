@@ -165,7 +165,7 @@ class PaymentManager {
             }
 
             // MOA refunds
-            if ($this->pmp->getRetainedAmtPayment() < 0) {
+            if ($this->pmp->getRetainedAmtPayment() > 0) {
 
                 // Do we still have any MOA?
                 $amtMOA = Registration::loadLodgingBalance($dbh, $visit->getIdRegistration());
@@ -229,6 +229,7 @@ class PaymentManager {
 
                         // is there too much paid
                         //if ($this->pmp->getRatePayment() + $depPreTax + $moaPreTax + $vatPreTax > $roomAccount->getRoomFeeBalance()) {
+
                         if ($this->pmp->getRatePayment() > $roomAccount->getRoomFeeBalance()) {
                             $roomChargesPreTax = $roomAccount->getRoomFeeBalance();
                         } else {
@@ -413,11 +414,11 @@ class PaymentManager {
      * Summary of processOverpayments
      * @param \PDO $dbh
      * @param mixed $overPaymemntAmt
-     * @param mixed $idPayor
-     * @param mixed $idRegistration
-     * @param mixed $idVisit
-     * @param mixed $visitSpan
-     * @param mixed $notes
+     * @param int $idPayor
+     * @param int $idRegistration
+     * @param int $idVisit
+     * @param int $visitSpan
+     * @param string $notes
      * @throws \HHK\Exception\PaymentException
      * @return void
      */
