@@ -62,9 +62,11 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                 title: (data.title ? data.title : 'Hospital Details'),
                 buttons: {
                     "Cancel": function() {
+                        $('.ckhsdate').datepicker("hide");
                         $(this).dialog("close");
                     },
                     "Save": function() {
+                        $('.ckhsdate').datepicker("hide");
                     	saveHospitalStay(idHs, idVisit);
                     	$(this).dialog("close");
                     }
@@ -78,6 +80,7 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
 	        	    // Close hospital stay dialog
 	        	    if ($hsDialog.dialog('isOpen')) {
 	        	    	$hsDialog.dialog('close');
+                        $('.ckhsdate').datepicker( "hide");
 	        	    }
 
 	        	} );
@@ -208,6 +211,11 @@ function saveHospitalStay(idHs, idVisit) {
 
         } else if (data.success) {
         	flagAlertMessage(data.success, 'success');
+            if (data.newHsId && data.newHsId > 0) {
+                $('.hhk-hospitalstay').each(function () {
+                    $(this).data('idhs', data.newHsId);
+                });
+            }
         }
 	});
 }

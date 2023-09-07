@@ -215,7 +215,9 @@ abstract class AbstractRoleMember extends IndivMember {
 
             $bd = '';
 
-            if ($this->nameRS->BirthDate->getStoredVal() != '') {
+            if ($uS->RegNoMinorSigLines && $this->get_demogRS()->Is_Minor->getStoredVal() > 0) {
+                $bd = 'Minor';
+            } else if ($this->nameRS->BirthDate->getStoredVal() != '') {
                 $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
             }
 

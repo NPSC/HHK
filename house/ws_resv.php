@@ -172,7 +172,7 @@ try {
     			$dbh->exec("call updt_visit_hospstay($idVisit, $newHsId);");
     		}
 
-    		$events = array('success'=>'Hospital Saved');
+    		$events = array('success'=>'Hospital Saved', 'newHsId' => $newHsId);
 
     	} else {
     		$events = array('error'=>'Missing ids. ');
