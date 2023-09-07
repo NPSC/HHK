@@ -57,10 +57,18 @@ class LocalGateway extends AbstractPaymentGateway {
 	protected function setCredentials($credentials) {
 		$this->credentials = $credentials;
 	}
+	/**
+	 * Summary of creditSale
+	 * @param \PDO $dbh
+	 * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
+	 * @param \HHK\Payment\Invoice\Invoice $invoice
+	 * @param mixed $postbackUrl
+	 * @return PaymentResult
+	 */
 	public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 		$uS = Session::getInstance ();
 
-		// Lookup the charge card
+		// Lookup the charge card types
 		$chgTypes = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 		if (isset ( $chgTypes [$pmp->getChargeCard ()] )) {
 			$pmp->setChargeCard ( $chgTypes [$pmp->getChargeCard ()] [1] );
@@ -263,11 +271,19 @@ class LocalGateway extends AbstractPaymentGateway {
 		return $dataArray;
 	}
 
-	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
+ /**
+  * Summary of returnAmount
+  * @param \PDO $dbh
+  * @param \HHK\Payment\Invoice\Invoice $invoice
+  * @param mixed $rtnTokenId
+  * @param string $paymentNotes
+  * @return ReturnResult
+  */
+	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnTokenId, $paymentNotes) {
 
 		$uS = Session::getInstance ();
 
-		$tokenRS = CreditToken::getTokenRsFromId ( $dbh, $rtnToken );
+		$tokenRS = CreditToken::getTokenRsFromId ( $dbh, $rtnTokenId );
 		$amount = abs ( $invoice->getAmount () );
 		$cardHolderName = $tokenRS->CardHolderName->getStoredVal();
 
@@ -288,10 +304,10 @@ class LocalGateway extends AbstractPaymentGateway {
 				$tokenRS->CardType->getStoredVal (),
 				$tokenRS->MaskedAccount->getStoredVal (),
 				$cardHolderName,
-				MpTranType::Sale,
+				MpTranType::ReturnAmt,
 				$uS->username );
 
-		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $rtnToken, PaymentStatusCode::Paid );
+		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $rtnTokenId, PaymentStatusCode::Paid );
 		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
 		$vr->setPaymentNotes ( $paymentNotes );
 		$vr->setRefund(TRUE);
