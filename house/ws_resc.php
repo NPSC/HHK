@@ -505,12 +505,17 @@ try {
                 $x = filter_var($_POST['x'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
+            $container = '';
+            if (isset($_POST['container'])) {
+                $container = filter_var($_POST['container'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
             $showBillTo = FALSE;
             if (isset($_REQUEST["sbt"])) {
                 $showBillTo = filter_var($_REQUEST["sbt"], FILTER_VALIDATE_BOOLEAN);
             }
 
-            $events = InvoiceActions::invoiceAction($dbh, $iid, $type, $x, $showBillTo);
+            $events = InvoiceActions::invoiceAction($dbh, $iid, $type, $x, $container, $showBillTo);
             break;
 
         case 'invSetBill':

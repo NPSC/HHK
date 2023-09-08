@@ -980,9 +980,9 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
             );
         }
 
-        if ($stmt->rowCount() == 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd('-No Data-', ['colspan' => '13', 'style' => 'text-align:center;']));
-        }
+        // if ($stmt->rowCount() == 0) {
+        //     $tbl->addBodyTr(HTMLTable::makeTd('-No Data-', ['colspan' => '13', 'style' => 'text-align:center;']));
+        // }
 
         return $tbl->generateMarkup(['id' => 'InvTable', 'width' => '100%'], '<h3>Invoices</h3>');
     }

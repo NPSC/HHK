@@ -191,7 +191,7 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
 
 function invoiceAction(idInvoice, action, eid, container, show) {
     "use strict";
-    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},
+    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, 'container':container, action: action, 'sbt':show},
       function(data) {
         if (data) {
             try {

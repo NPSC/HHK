@@ -248,6 +248,8 @@ where ru.idResource_use is null
 
         $this->getRoomOosEvents($dbh, $beginDate, $endDate, $timezone, $events);
         $this->getRetiredRoomEvents($dbh, $beginDate, $endDate, $timezone, $events);
+
+
         // Visits
         $query = "select * from vregister where Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(Span_Start) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
@@ -355,6 +357,7 @@ where ru.idResource_use is null
             $s['idAssoc'] = htmlspecialchars_decode($r['idAssociation'], ENT_QUOTES);
             $s['hospName'] = $hospitals[$r['idHospital']]['Title'];
             $s['resourceId'] = "id-" . $r["idResource"];
+            $s['idResv'] = $r['idReservation'];
             $s['idResc'] = $r["idResource"];
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
@@ -815,7 +818,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
     protected function getRetiredRoomEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events) {
 
         $idCounter = 10;
-        
+
         $query = "select `idResource`, `Retired_At` from `resource` where `Retired_At` is not null;";
 
         $stmt = $dbh->query($query);
@@ -829,7 +832,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
             $RetiredDT = new \Datetime($r['Retired_At']);
 
             if($RetiredDT >= $beginDate && $RetiredDT <= $endDate){
-                
+
             }else{
                 continue;
             }
@@ -853,7 +856,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
             $event = new Event($c, $timezone);
             $events[] = $event->toArray();
         }
-            
+
     }
 
     protected function getRibbonColors(\PDO $dbh, $hospitals) {

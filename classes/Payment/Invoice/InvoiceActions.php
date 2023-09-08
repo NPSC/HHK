@@ -30,10 +30,11 @@ class InvoiceActions {
      * @param mixed $iid
      * @param mixed $action
      * @param mixed $eid
+     * @param string $container
      * @param mixed $showBillTo
      * @return array
      */
-    public static function invoiceAction(\PDO $dbh, $iid, $action, $eid, $showBillTo = FALSE) {
+    public static function invoiceAction(\PDO $dbh, $iid, $action, $eid, $container, $showBillTo = FALSE) {
 
         if ($iid < 1) {
             return array('error' => 'Bad Invoice Id');
@@ -151,7 +152,7 @@ class InvoiceActions {
                 $mkup = HTMLContainer::generateMarkup('div', $tbl->generateMarkup($tblAttr, 'Payments For Invoice #: ' . $r['i']['Invoice_Number']), $divAttr);
             }
 
-            return array('markup' => $mkup, 'eid' => $eid);
+            return array('markup' => $mkup, 'eid' => $eid, 'container' => $container);
 
         } else if ($action == 'del') {
 
@@ -160,7 +161,7 @@ class InvoiceActions {
 
             try {
                 $invoice->deleteInvoice($dbh, $uS->username);
-                return array('delete' => 'Invoice Number ' . $invoice->getInvoiceNumber() . ' is deleted.', 'eid' => $eid);
+                return array('delete' => 'Invoice Number ' . $invoice->getInvoiceNumber() . ' is deleted.', 'eid' => $eid, 'container'=>$container);
             } catch (PaymentException $ex) {
                 return array('error' => $ex->getMessage());
             }

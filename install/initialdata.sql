@@ -628,7 +628,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('receiptLogoWidth','150','i','f','','in px','',1),
 ('ReferralAgent','true','b','hf','','Track referral agents/social workers','',1),
 ('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1'),
-('RegForm','3','i','h','',' Registration form style (1 or 2)','',0),
+('RegForm','3','i','h','',' Registration form style (1 or 2) Use 3 for signing regforms','',0),
 ('RegFormNoRm','false','b','h','','Do not show the room number on the registration form before check-in','',0),
 ('RegNoMinorSigLines', 'false', 'b', 'h', '', 'On Registrations, minors will not show up in the signature section', '', '1'),
 ('resourceURL','','url','a','','URL to HHK root','',0),
@@ -796,7 +796,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('lodgingMOA','Lodging MOA','s','s','','Default: Lodging MOA');
 -- ;
 
-REPLACE INTO `operating_schedules` (`idDay`, `Day`, `Start_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Timestamp`) VALUES 
+REPLACE INTO `operating_schedules` (`idDay`, `Day`, `Start_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Timestamp`) VALUES
 (1, '0', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
 (2, '1', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
 (3, '2', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),

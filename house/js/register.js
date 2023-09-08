@@ -189,13 +189,13 @@ function editPSG(psg) {
         }
     });
 }
-function ckOut(gname, id, idVisit, span) {
+function ckOut(gname, id, idReserv, idVisit, span) {
     var buttons = {
         "Show Statement": function() {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + span, '_blank');
+            window.open('ShowRegForm.php?rid=' + idReserv, '_blank');
         },
         "Check Out": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -206,13 +206,13 @@ function ckOut(gname, id, idVisit, span) {
     };
     viewVisit(id, idVisit, buttons, 'Check Out ' + gname, 'co', span);
 }
-function editVisit(gname, id, idVisit, span) {
+function editVisit(gname, id, idReserv, idVisit, span) {
     var buttons = {
         "Show Statement": function() {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + span, '_blank');
+            window.open('ShowRegForm.php?rid=' + idReserv, '_blank');
         },
         "Save": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -812,12 +812,12 @@ $(document).ready(function () {
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
-        ckOut($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
+        ckOut($(this).data('name'), $(this).data('id'), $(this).data('rid'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.stvisit', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
-        editVisit($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
+        editVisit($(this).data('name'), $(this).data('id'), $(this).data('rid'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.hhk-getPSGDialog', function (event) {
         event.preventDefault();
@@ -1225,7 +1225,7 @@ $(document).ready(function () {
                         window.open('ShowStatement.php?vid=' + info.event.extendedProps.idVisit, '_blank');
                     },
                     "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?vid=' + info.event.extendedProps.idVisit + '&span=' + info.event.extendedProps.Span, '_blank');
+                        window.open('ShowRegForm.php?rid=' + info.event.extendedProps.idResv , '_blank');
                     },
                     "Save": function () {
                         saveFees(0, info.event.extendedProps.idVisit, info.event.extendedProps.Span, true, 'register.php');
@@ -1236,6 +1236,7 @@ $(document).ready(function () {
                 };
                 viewVisit(0, info.event.extendedProps.idVisit, buttons, 'Edit Visit #' + info.event.extendedProps.idVisit + '-' + info.event.extendedProps.Span, '', info.event.extendedProps.Span);
             }
+
         },
 
         eventContent: function (info) {
@@ -1439,22 +1440,26 @@ $(document).ready(function () {
            					}
            				});
 
+                        // Bring up payment box
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
                             event.preventDefault();
                             $("#divAlert1, #paymentMessage").hide();
                             invLoadPc($(this).data('name'), $(this).data('id'), $(this).data('iid'));
                         });
 
+                        // Set the billing date
                         $('#rptInvdiv').on('click', '.invSetBill', function (event) {
                             event.preventDefault();
                             $(".hhk-alert").hide();
                             invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
                         });
 
+                        // Handles several actions
                         $('#rptInvdiv').on('click', '.invAction', function (event) {
                             event.preventDefault();
                             $(".hhk-alert").hide();
 
+                            // Delete invoice
                             if ($(this).data('stat') == 'del') {
                                 if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
                                     return;
@@ -1467,7 +1472,7 @@ $(document).ready(function () {
                                     return;
                             }
 
-                            invoiceAction($(this).data('iid'), $(this).data('stat'));
+                            invoiceAction($(this).data('iid'), $(this).data('stat'), 0, '#InvTable_wrapper', true);
                             $('#rptInvdiv .gmenu').menu("collapse");
                         });
 

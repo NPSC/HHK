@@ -2300,49 +2300,52 @@ from
 -- View `vregister`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vregister` AS
-select
-        concat(`v`.`idVisit`, v.Span) AS `id`,
-        v.idVisit as idVisit,
-        v.Span as `Span`,
-        `v`.`idRegistration`,
-        `v`.`idResource`,
+   SELECT
+        CONCAT(`v`.`idVisit`, `v`.`Span`) AS `id`,
+        `v`.`idVisit` AS `idVisit`,
+        `v`.`Span` AS `Span`,
+        `v`.`idRegistration` AS `idRegistration`,
+        `v`.`idResource` AS `idResource`,
+        `v`.`idReservation` AS `idReservation`,
         `v`.`Status` AS `Visit_Status`,
-        `v`.`Span_Start`,
-        `v`.`Expected_Departure`,
-        `v`.`Span_End`,
+        `v`.`Span_Start` AS `Span_Start`,
+        `v`.`Expected_Departure` AS `Expected_Departure`,
+        `v`.`Span_End` AS `Span_End`,
         `v`.`Notes` AS `Ribbon_Note`,
-        gv.Description as `Status_Text`,
-        ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
-        ifnull(hs.idAssociation, 0) as `idAssociation`,
-        ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') as `Guest Last`,
-        n.Name_Full,
-        n.Gender,
-        nd.Newsletter,
-        nd.Photo_Permission,
-        nd.Media_Source,
-        nd.Ethnicity,
-        nd.Income_Bracket,
-        nd.Age_Bracket,
-        nd.Education_Level,
-        nd.Special_Needs,
-        s.On_Leave,
-        count(s.idName) as `Guest_Count`
-    from
-        `visit` `v`
-            left join
-        hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-            left join
-        `name` n on v.idPrimaryGuest = n.idName
-            left join
-	`name_demog` nd on v.idPrimaryGuest = nd.idName
-            left join
-	stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and v.`Status` = s.`Status`
-            left join
-        gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix
-            left join
-        gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status
-    group by v.idVisit, v.Span
-    order by v.idVisit, v.Span;
+        `gv`.`Description` AS `Status_Text`,
+        IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+        IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
+        IFNULL(CASE
+                    WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
+                    ELSE CONCAT(`n`.`Name_Last`, ' ', `gs`.`Description`)
+                END,
+                '') AS `Guest Last`,
+        `n`.`Name_Full` AS `Name_Full`,
+        `n`.`Gender` AS `Gender`,
+        `nd`.`Newsletter` AS `Newsletter`,
+        `nd`.`Photo_Permission` AS `Photo_Permission`,
+        `nd`.`Media_Source` AS `Media_Source`,
+        `nd`.`Ethnicity` AS `Ethnicity`,
+        `nd`.`Income_Bracket` AS `Income_Bracket`,
+        `nd`.`Age_Bracket` AS `Age_Bracket`,
+        `nd`.`Education_Level` AS `Education_Level`,
+        `nd`.`Special_Needs` AS `Special_Needs`,
+        `s`.`On_Leave` AS `On_Leave`,
+        COUNT(`s`.`idName`) AS `Guest_Count`
+    FROM
+        ((((((`visit` `v`
+        LEFT JOIN `hospital_stay` `hs` ON (`v`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `name` `n` ON (`v`.`idPrimaryGuest` = `n`.`idName`))
+        LEFT JOIN `name_demog` `nd` ON (`v`.`idPrimaryGuest` = `nd`.`idName`))
+        LEFT JOIN `stays` `s` ON (`v`.`idVisit` = `s`.`idVisit`
+            AND `v`.`Span` = `s`.`Visit_Span`
+            AND `v`.`Status` = `s`.`Status`))
+        LEFT JOIN `gen_lookups` `gs` ON (`gs`.`Table_Name` = 'Name_Suffix'
+            AND `gs`.`Code` = `n`.`Name_Suffix`))
+        LEFT JOIN `gen_lookups` `gv` ON (`gv`.`Table_Name` = 'Visit_Status'
+            AND `gv`.`Code` = `v`.`Status`))
+    GROUP BY `v`.`idVisit` , `v`.`Span`
+    ORDER BY `v`.`idVisit` , `v`.`Span`;
 
 
 
