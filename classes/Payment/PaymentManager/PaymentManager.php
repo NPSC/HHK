@@ -35,21 +35,45 @@ use HHK\Exception\PaymentException;
  */
 class PaymentManager {
 
+    /**
+     * Summary of result
+     * @var string
+     */
     public $result = '';
-    public $refundAmt = 0;
-    public $depositRefundAmt = 0;
-    public $guestCreditAmt = 0;
-    public $moaRefundAmt = 0;
-    public $vatReimburseAmt = 0;
+    /**
+     * Amount refunded to guest
+     * @var float
+     */
+    public $refundAmt = 0.0;
+    /**
+     * deposit Refund Amount
+     * @var float
+     */
+    public $depositRefundAmt = 0.0;
+    /**
+     * guest Credit Amount
+     * @var float
+     */
+    public $guestCreditAmt = 0.0;
+    /**
+     * MOA Refund Amount
+     * @var float
+     */
+    public $moaRefundAmt = 0.0;
+    /**
+     * Tax Reimbursement Amount
+     * @var float
+     */
+    public $vatReimburseAmt = 0.0;
 
     /**
-     *
+     * Data from paying today
      * @var PaymentManagerPayment
      */
     public $pmp;
 
     /**
-     *
+     * My invoice
      * @var Invoice
      */
     protected $invoice;
@@ -85,11 +109,11 @@ class PaymentManager {
             return $this->invoice;
         }
 
+        // Define the invoice payor
         if ($idPayor <= 0) {
             $this->result = 'Undefined Payor.  ';
             return $this->invoice;
         }
-
         $this->pmp->setIdInvoicePayor($idPayor);
 
         //set Tax Exempt
@@ -102,6 +126,8 @@ class PaymentManager {
 
         if(isset($payor['tax_exempt']) && $payor['tax_exempt'] == 1){
             $this->pmp->setInvoicePayorTaxExempt(true);
+        } else {
+            $this->pmp->setInvoicePayorTaxExempt(false);
         }
 
         // Process a visit payment
@@ -124,8 +150,6 @@ class PaymentManager {
                     TRUE,
                     ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? TRUE : FALSE)
             );
-
-
             $roomAccount->load($this->pmp->visitCharges, $vat);
             $roomAccount->setDueToday();
 
@@ -137,7 +161,7 @@ class PaymentManager {
                 $invLine = new OneTimeInvoiceLine($uS->ShowLodgDates);
                 $invLine->createNewLine($visitFeeItem, 1, $notes);
 
-                $this->invoice = $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
 
             }
@@ -154,7 +178,7 @@ class PaymentManager {
             }
 
             // Deposit Refunds - only if checked out...
-            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0) {  // && $this->pmp->getBalWith() != ExcessPay::Ignore) {
+            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0) {
                 // Return the deposit
                 $this->depositRefundAmt = abs($this->pmp->getDepositRefundAmt());
 
@@ -164,12 +188,12 @@ class PaymentManager {
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
             }
 
-            // MOA refunds
+            // MOA refunds.
             if ($this->pmp->getRetainedAmtPayment() > 0) {
 
                 // Do we still have any MOA?
                 $amtMOA = Registration::loadLodgingBalance($dbh, $visit->getIdRegistration());
-                $this->moaRefundAmt = abs($this->pmp->getRetainedAmtPayment());
+                $this->moaRefundAmt = $this->pmp->getRetainedAmtPayment();
 
                 if ($amtMOA >= $this->moaRefundAmt) {
 
@@ -195,20 +219,21 @@ class PaymentManager {
 
                         $this->vatReimburseAmt += abs($sum);
 
-                            $invLine = new TaxInvoiceLine($uS->ShowLodgDates);
-                            $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $sum)), 1, 'Reimburse');
-                            $invLine->setSourceItemId(ItemId::Lodging);
-                            $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                            $this->invoice->addLine($dbh, $invLine, $uS->username);
+                        $invLine = new TaxInvoiceLine($uS->ShowLodgDates);
+                        $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $sum)), 1, 'Reimburse');
+                        $invLine->setSourceItemId(ItemId::Lodging);
+                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                        $this->invoice->addLine($dbh, $invLine, $uS->username);
 
                     }
                 }
             }
 
 
-            // Just use what they are willing to pay as the charge.
+            // Start with what they are willing to pay as the room charge.
             $roomChargesPreTax = $this->pmp->getRatePayment();
             $housePaymentAmt = 0;
+            $roomTax = 0;
 
             // Room Charges are different for checked out
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
@@ -248,7 +273,7 @@ class PaymentManager {
                 }
             }
 
-            // Any charges?
+            // Invoice any room charges?
             if ($roomChargesPreTax > 0) {
                 // lodging
 
@@ -279,11 +304,10 @@ class PaymentManager {
                 $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
 
-                // Taxes
+                // Taxes on room charges
                 if ($this->pmp->getFinalPaymentFlag() && $housePaymentAmt > 0) {
-                    $roomChargesTaxable = $roomChargesPreTax - $housePaymentAmt - $this->pmp->getPayInvoicesAmt();
+                    $roomChargesTaxable = $roomChargesPreTax - $housePaymentAmt; // - $this->pmp->getPayInvoicesAmt();
                 } else {
-                    // Add the tax reimbursement, if any, in order to tax it.
                     $roomChargesTaxable = $roomChargesPreTax;
                 }
 
@@ -296,14 +320,16 @@ class PaymentManager {
                             $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $roomChargesTaxable), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . ')');
                             $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                             $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
+
+                            $roomTax += $t->getDecimalTax();
                         }
                     }
                 }
             }
 
-            // Processing for checked out visits.
+            // Final preperation
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
-
+                // Processing for checked out visits.
 
                 // Check for house payment
                 if ($housePaymentAmt > 0 && $this->pmp->getFinalPaymentFlag()) {
@@ -317,12 +343,11 @@ class PaymentManager {
                 }
 
 
-                // Overpayments
+                // Guest credit amount - if any
                 $this->guestCreditAmt = abs($this->pmp->getGuestCredit());
 
 
                 // Credit some room fees?
-                //if ($this->guestCreditAmt > 0 && ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
                 if ($this->guestCreditAmt > 0) {
 
                     $reversalAmt = $this->guestCreditAmt / (1 + $taxRate);
@@ -353,11 +378,30 @@ class PaymentManager {
 
                 }
 
-
                 // Process overpayments
                 $this->processOverpayments($dbh, abs($this->pmp->getOverPayment()), $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $notes);
+
+            } else {
+                // visit still checked in
+
+                // Do we have any MOA overpayments?
+                $payAmt = max($this->pmp->getPayInvoicesAmt(), 0) + $roomChargesPreTax + $roomTax + $this->pmp->getVisitFeePayment() + $this->pmp->getKeyDepositPayment();
+
+                if ($this->moaRefundAmt > $payAmt) {
+
+                    // invoice the remaining MOA as a new MOA payment
+                    $remainingMOA = $this->moaRefundAmt - $payAmt;
+
+                    $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
+                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $remainingMOA), 1, $notes);
+
+                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                    $this->invoice->addLine($dbh, $invLine, $uS->username);
+                }
+
             }
-        }
+
+        }  // end of visit
 
         // Include other invoices?
         $unpaidInvoices = $this->pmp->getInvoicesToPay();
