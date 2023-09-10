@@ -231,6 +231,8 @@ function invoiceAction(idInvoice, action, eid, container, show) {
             }
             if (data.markup) {
                 let contr = $(data.markup);
+                let myOf = $("#" + data.eid);
+
                 if (container != undefined && container != '') {
                     $(container).append(contr);
                 } else {
@@ -239,10 +241,12 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 contr.position({
                     my: 'left top',
                     at: 'left bottom',
-                    of: "#" + data.eid
+                    of: myOf
                 });
             }
         }
     });
 }
 
+// ,
+// of: $("#" + data.eid)

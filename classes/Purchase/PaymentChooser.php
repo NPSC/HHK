@@ -647,7 +647,7 @@ class PaymentChooser {
 
             $unpaid = HTMLTable::makeTd(HTMLContainer::generateMarkup('span',
                     HTMLContainer::generateMarkup('a', 'Invoice ' . $invNumber, $invAttr)
-                    . HTMLContainer::generateMarkup('span','', ['class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'view', 'style'=>'float:left;cursor:pointer;', 'title'=>'View Items'])
+                    . (isset($i['doNotView']) ? '' : HTMLContainer::generateMarkup('span','', ['class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'view', 'style'=>'float:left;cursor:pointer;', 'title'=>'View Items']))
                     . $trashIcon
                     , ["style"=>'white-space:nowrap'])
                     .$addnl, ['class'=>'tdlabel']);
@@ -810,6 +810,9 @@ ORDER BY v.idVisit , v.Span;");
                 } else {
                     $name = $unpaidInvoices[0]['Name_Full'];
                 }
+
+                // Turn off view icon.
+                $unpaidInvoices[0]['doNotView'] = 1;
 
                 $labels = Labels::getLabels();
 

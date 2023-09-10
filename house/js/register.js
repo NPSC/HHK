@@ -1472,7 +1472,7 @@ $(document).ready(function () {
                                     return;
                             }
 
-                            invoiceAction($(this).data('iid'), $(this).data('stat'), 0, '#InvTable_wrapper', true);
+                            invoiceAction($(this).data('iid'), $(this).data('stat'), $(this).prop('id'), '#rptInvdiv', true);
                             $('#rptInvdiv .gmenu').menu("collapse");
                         });
 
