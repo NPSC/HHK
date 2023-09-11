@@ -543,11 +543,28 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             $('#tblStays').on('change', 'input.hhk-ckoutDate', function() {
 
                 if ($(this).val() != '') {
-                    var cb = $(this).prev();
-                    cb.prop('checked', true);
+                    const myckin = new Date($(this).data('ckin'));
+                    const myCheckout = new Date($(this).val());
+
+                    myckin.setHours(0);
+                    myckin.setMinutes(0);
+                    myckin.setSeconds(0);
+                    myCheckout.setHours(0);
+                    myCheckout.setMinutes(0);
+                    myCheckout.setSeconds(0);
+
+                    if (myckin.getTime() > myCheckout.getTime()) {
+                        $(this).val('');
+                        $(this).prev().prop('checked', false);
+                        flagAlertMessage('Checkout cannot be earlier than check-in. ', 'error');
+                    } else {
+                        $(this).prev().prop('checked', true);
+                    }
+
                 } else {
                     $(this).prev().prop('checked',false);
                 }
+
                 $('input.hhk-ckoutCB').change();
             });
 

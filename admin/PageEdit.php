@@ -1,6 +1,7 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Exception\DuplicateException;
 use HHK\sec\Pages;
 use HHK\sec\{SecurityComponent, WebInit};
 use HHK\Exception\RuntimeException;
@@ -23,17 +24,14 @@ require ("AdminIncludes.php");
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
-
-$page = $wInit->page;
-
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
-
 $menuMarkup = $wInit->generatePageMenu();
-
 
 $siteMarkup = "";
 $webSite = '';
+$getSiteReplyMessage = '';
+
 
 // Instantiate the alert message control
 $alertMsg = new AlertMessage("divAlert1");
@@ -51,14 +49,20 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
 
         try {
 
-            $webSite = Pages::editPages($dbh, $_POST);
+            $pages = new Pages();
+            $webSite = $pages->editPages($dbh);
+
+            if ($pages->getPageErrors() != '') {
+                $alertMsg->set_Text("Error: " . $pages->getPageErrors());
+                $alertMsg->set_Context(AlertMessage::Alert);
+                $alertMsg->set_DisplayAttr("block");
+
+            }
 
         } catch (Exception $ex) {
-
             $alertMsg->set_Text("Error: " . $ex->getMessage());
             $alertMsg->set_Context(AlertMessage::Alert);
             $alertMsg->set_DisplayAttr("block");
-
         }
     } else {
 
@@ -73,6 +77,7 @@ $stmt = $dbh->query("Select * from web_sites");
 
 
 if ($stmt->rowCount() > 0) {
+
     foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
         $siteMarkup .= "<tr><td><input type='button' id='loadpages" . $r["Site_Code"] . "' name='" . $r["Site_Code"] . "' value='View Pages' class='loadPages'/></td>
             <td>" . $r["Description"] . "</td>
@@ -90,21 +95,24 @@ if ($stmt->rowCount() > 0) {
             </tr>";
     }
 
- } else {
-     throw new RuntimeException("web_sites records not found.");
- }
-
-
-$siteMarkup = "<table><tr><th>View Pages</th><th>Site</th><th>Edit</th>
+    $siteMarkup = "<table><tr><th>View Pages</th><th>Site</th><th>Edit</th>
     <th>Code</th><th>Host Address</th><th>Rel. Address</th><th>Authorization</th><th>CSS</th>
     <th>Default Page</th><th>Index Page</th><th>Updated By</th><th>Last Updated</th></tr>" . $siteMarkup . "</table>";
 
-$stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
-$grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
-$securityCodes = doOptionsMkup($grps, false, false);
+    $stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
+    $grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
+    $securityCodes = doOptionsMkup($grps, false, false);
+
+
+} else {
+    $alertMsg->set_Text("Error: web_sites records not found.");
+    $alertMsg->set_Context(AlertMessage::Alert);
+    $alertMsg->set_DisplayAttr("block");
+
+ }
 
 $resultMessage = $alertMsg->createMarkup();
-$getSiteReplyMessage = '';
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -132,6 +140,7 @@ $getSiteReplyMessage = '';
 
 
         <script type="text/javascript">
+
     function getPages(site) {
         "use strict";
 
@@ -151,17 +160,28 @@ $getSiteReplyMessage = '';
                 $('#sitepages').children().remove().end().append($(data.success));
                 $('#frmPages').show();
 
-                $('#tblPages').dataTable({
-                    "displayLength": 50,
-                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
-                    , "Dom": '<"top"ilf>rt<"bottom"ip>'
-                });
-
                 $('select.hhk-multisel').each( function () {
                     $(this).multiselect({
                         selectedList: 3
                     });
                 });
+
+                $('#tblPages').dataTable({
+                    columns: [
+                        { orderable: false },
+                        { orderable: true },
+                        { orderable: true },
+                        { orderable: false },
+                        { orderable: true },
+                        { orderable: false },
+                        { orderable: false },
+                        { orderable: false }
+                    ],
+                    "displayLength": 100,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
+                    , "Dom": '<"top"ilf>rt<"bottom"ip>'
+                });
+
             })
             .fail();
 
@@ -169,7 +189,7 @@ $getSiteReplyMessage = '';
     // Init j-query and the page blocker.
     $(document).ready(function() {
 
-        var website = '<?php echo $webSite; ?>';
+        let website = '<?php echo $webSite; ?>';
 
         $('.editSite, .loadPages, #btnReset, #btnSubmit').button();
 

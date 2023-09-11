@@ -2733,12 +2733,13 @@ CREATE or replace VIEW `vresv_patient` AS
 			from
 			    invoice_line il
 			        join
-			    invoice i ON il.Invoice_Id = i.idInvoice
+			    invoice i ON il.Invoice_Id = i.idInvoice  and i.Deleted = 0 and i.Status = 'p'
+					join
+				reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
 			where
 			    il.Item_Id = 10
-			        and i.Deleted = 0
+					AND i.Order_Number = 0
 			        and il.Deleted = 0
-			        and i.Status = 'p'
 			        and i.idGroup = r.idRegistration), 0)
 		  ELSE 0 END as `PrePaymt`
 

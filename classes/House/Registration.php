@@ -239,7 +239,7 @@ where
     from
         invoice_line il
             join
-        invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = ". ItemId::LodgingMOA . " AND il.Deleted = 0
+        invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = " . ItemId::LodgingMOA . " AND il.Deleted = 0
             join
     	reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
     where
@@ -271,7 +271,7 @@ where
         $regId = intval($idRegistration);
 
         if ($tokenId < 1 || $regId < 1) {
-            return;
+            return false;
         }
 
         return $dbh->exec("update registration set Pref_Token_Id = $tokenId where idregistration = $regId and Pref_Token_Id != $tokenId");

@@ -1169,7 +1169,7 @@ WHERE
             $totalCharge,
             $totalThirdPayments,
             $totalGuestPayments,
-            Registration::loadLodgingBalance($dbh, 0, $idVisit),
+            Registration::loadLodgingBalance($dbh, $idRegistration, 0),
             Registration::loadDepositBalance($dbh, 0, $idVisit),
             $totalNights);
 

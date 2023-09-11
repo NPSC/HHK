@@ -95,7 +95,8 @@ try {
             $site = filter_var($_REQUEST["page"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($maintFlag) {
-                $events = Pages::getPages($dbh, $site);
+                $pages = new Pages();
+                $events = $pages->getPages($dbh, $site);
             } else {
                 $events = array("error" => "Unauthorized");
             }
@@ -109,7 +110,8 @@ try {
             if (($parms = filter_var_array($parms)) === false) {
                 $events = array("error" => "Bad input");
             } else if (SecurityComponent::is_TheAdmin()) {
-                $events = Pages::editSite($dbh, $parms);
+                $pages = new Pages();
+                $events = $pages->editSite($dbh, $parms);
             } else {
                 $events = array("error" => "Sites Access denied");
             }
@@ -211,7 +213,7 @@ try {
 
             $job = JobFactory::make($dbh, $idJob, $dryRun);
             $job->run();
-            $events = ["idJob"=>$idJob, 'status'=>$job->status, 'logMsg'=>($dryRun ? "<strong>Dry Run: </strong>": "") . $job->logMsg];
+            $events = ["idJob"=>$idJob, 'status'=>$job->getStatus(), 'logMsg'=>($dryRun ? "<strong>Dry Run: </strong>": "") . $job->getLogMsg()];
 
             break;
 
@@ -744,7 +746,7 @@ function createRecentReportMU(PDO $dbh, $names) {
     return $markup;
 }
 
-function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $parms, $maintFlag) {
+/* function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $parms, $maintFlag) {
 
     $reply = array();
 
@@ -865,7 +867,7 @@ function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $pa
     }
     return $reply;
 }
-
+ */
 function AccessLog(\PDO $dbh, $get) {
 
     $columns = array(
@@ -899,7 +901,7 @@ function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interva
     if(count($params) > 0){
         try{
             $job = JobFactory::make($dbh, $idJob, true, $type);
-            $paramTemplate = $job->paramTemplate;
+            $paramTemplate = $job->getParamTemplate();
 
             foreach($params as $k=>$v){
                 if(isset($paramTemplate[$k])){

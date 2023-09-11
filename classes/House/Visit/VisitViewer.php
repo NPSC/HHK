@@ -604,7 +604,16 @@ class VisitViewer {
                 $edDay->setTime(0, 0, 0);
                 $days = $edDay->diff($stDayDT, TRUE)->days;
 
-                $getCkOutDate = HTMLInput::generateMarkup($edDay->format('M j, Y'), array('id' => 'stayCkOutDate_' . $r['idName'], 'name' =>'[stayCkOutDate][' . $r['idName'] . ']', 'class' => 'ckdate hhk-ckoutDate', 'readonly'=>'readonly', 'data-gid'=>$r['idName']));
+                $getCkOutDate = HTMLInput::generateMarkup(
+                    $edDay->format('M j, Y')
+                    , ['id' => 'stayCkOutDate_' . $r['idName'],
+                        'name' =>'[stayCkOutDate][' . $r['idName'] . ']',
+                        'class' => 'ckdate hhk-ckoutDate',
+                        'readonly'=>'readonly',
+                        'data-ckin' => date('M j, Y', strtotime($r['Span_Start_Date'])),
+                        'data-gid'=>$r['idName']
+                    ]
+                );
 
                 if ($uS->CoTod) {
                     $getCkOutDate .= HTMLInput::generateMarkup(date('H'), array('id' => 'stayCkOutHour_' . $r['idName'], 'name' =>'[stayCkOutHour][' . $r['idName'] . ']', 'size'=>'3'));
