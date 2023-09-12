@@ -82,12 +82,10 @@ if ($stmt->rowCount() > 0) {
         $siteMarkup .= "<tr><td><input type='button' id='loadpages" . $r["Site_Code"] . "' name='" . $r["Site_Code"] . "' value='View Pages' class='loadPages'/></td>
             <td>" . $r["Description"] . "</td>
             <td><input type='button' id='editsite" . $r["Site_Code"] . "' name='" . $r["Site_Code"] . "' value='Edit' class='editSite'/></td>
-            <td>" . $r["Site_Code"] . "</td>
-            <td>" . $r["HTTP_Host"] . "</td>
+            <td style='text-align:center'>" . $r["Site_Code"] . "</td>
             <td>" . $r["Relative_Address"] . "</td>
             <td>" . $r["Required_Group_Code"] . "</td>
             <td>" . $r["Path_To_CSS"] . "</td>
-
             <td>" . $r["Default_Page"] . "</td>
             <td>" . $r["Index_Page"] . "</td>
             <td>" . $r["Updated_By"] . "</td>
@@ -96,7 +94,7 @@ if ($stmt->rowCount() > 0) {
     }
 
     $siteMarkup = "<table><tr><th>View Pages</th><th>Site</th><th>Edit</th>
-    <th>Code</th><th>Host Address</th><th>Rel. Address</th><th>Authorization</th><th>CSS</th>
+    <th>Code</th><th>Rel. Address</th><th>Authorization</th><th>CSS</th>
     <th>Default Page</th><th>Index Page</th><th>Updated By</th><th>Last Updated</th></tr>" . $siteMarkup . "</table>";
 
     $stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
@@ -240,16 +238,16 @@ $resultMessage = $alertMsg->createMarkup();
 
                     $('#inDescription').val(tds[1].innerHTML);
                     $('#inSiteCode').val(tds[3].innerHTML);
-                    $('#inHostAddr').val(tds[4].innerHTML);
-                    $('#inRelAddr').val(tds[5].innerHTML);
-                    $('#inCss').val(tds[7].innerHTML);
+//                    $('#inHostAddr').val(tds[4].innerHTML);
+                    $('#inRelAddr').val(tds[4].innerHTML);
+                    $('#inCss').val(tds[6].innerHTML);
                     //$('#inJs').val(tds[8].innerHTML);
-                    $('#inDefault').val(tds[8].innerHTML);
-                    $('#inIndex').val(tds[9].innerHTML);
-                    $('#inUpBy').val(tds[10].innerHTML);
-                    //$('#inLastUp').val(tds[12].innerHTML);
+                    $('#inDefault').val(tds[7].innerHTML);
+                    $('#inIndex').val(tds[8].innerHTML);
+                    $('#inUpBy').val(tds[9].innerHTML);
+
                     // Security codes
-                    var selCodes = tds[6].innerHTML.split(",");
+                    var selCodes = tds[5].innerHTML.split(",");
                     $('#siteSecCode option').each( function() {
                         if (selCodes.includes($(this).val())){
                             $(this).attr('selected', 'selected');
@@ -298,10 +296,6 @@ $resultMessage = $alertMsg->createMarkup();
                 <tr>
                     <th>Site Code</th>
                     <td><input type="text" id="inSiteCode" class="spd" value="" readonly="readonly"/></td>
-                </tr>
-                <tr>
-                    <th>Host Address</th>
-                    <td><input type="text" id="inHostAddr" class="spd" value=""/></td>
                 </tr>
                 <tr>
                     <th>Relative Address</th>
