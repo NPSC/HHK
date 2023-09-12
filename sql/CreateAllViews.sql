@@ -2740,9 +2740,8 @@ CREATE or replace VIEW `vresv_patient` AS
 			    il.Item_Id = 10
 					AND i.Order_Number = 0
 			        and il.Deleted = 0
-			        and i.idGroup = r.idRegistration), 0)
+                    AND `ri`.`Reservation_Id` = `r`.`idReservation`), 0)
 		  ELSE 0 END as `PrePaymt`
-
     from
         `reservation` `r`
         left join visit v on r.idReservation = v.idReservation and v.Status = 'a'
