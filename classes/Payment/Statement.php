@@ -639,7 +639,7 @@ class Statement {
             $tdAttrs['class'] = $tdClass;
         }
 
-
+        // Run the invoices collecting the payments and items.
         foreach ($invoices as $r) {
 
             // House discounts
@@ -669,8 +669,8 @@ class Statement {
 
                     $amtMkup = number_format($amt, 2);
                     $totalPment += $amt;
-
-                    if ($r['i']['Invoice_Balance'] != 0 && $r['i']['Invoice_Balance'] != $r['i']['Invoice_Amount']) {
+                                                            // EKC 9/14/2023 - some payments have 0 amounts, so the balance does not change.
+                    if ($r['i']['Invoice_Balance'] != 0) {  // && $r['i']['Invoice_Balance'] != $r['i']['Invoice_Amount']) {
                         $p['Payment_Status_Title'] = 'Paying';
                     } else {
                         $p['Payment_Status_Title'] = 'Paid';
