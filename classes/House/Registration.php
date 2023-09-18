@@ -493,6 +493,59 @@ where
     }
 
     /**
+     * Summary of extractDialog
+     * @return void
+     */
+    public function extractDialog() {
+
+        $parms = [];
+
+        if (filter_has_var(INPUT_POST, 'parm')) {
+            $args = ['parm'=>['filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_REQUIRE_ARRAY]];
+            $parm = filter_input_array(INPUT_POST, $args);
+            $parms = $parm['parm'];
+        }
+
+        if (isset($parms['regGuest_Ident'])) {
+            $this->regRS->Guest_Ident->setNewVal('1');
+            $this->rawRow['Guest_Ident'] = '1';
+        } else {
+            $this->regRS->Guest_Ident->setNewVal('0');
+            $this->rawRow['Guest_Ident'] = '0';
+        }
+
+        if (isset($parms['regPamphlet'])) {
+            $this->regRS->Pamphlet->setNewVal('1');
+            $this->rawRow['Pamphlet'] = '1';
+        } else {
+            $this->regRS->Pamphlet->setNewVal('0');
+            $this->rawRow['Pamphlet'] = '0';
+        }
+
+        if (isset($parms['regReferral'])) {
+            $this->regRS->Referral->setNewVal('1');
+            $this->rawRow['Referral'] = '1';
+        } else {
+            $this->regRS->Referral->setNewVal('0');
+            $this->rawRow['Referral'] = '0';
+        }
+
+        if (isset($parms['regSig_Card'])) {
+            $this->regRS->Sig_Card->setNewVal('1');
+            $this->rawRow['Sig_Card'] = '1';
+        } else {
+            $this->regRS->Sig_Card->setNewVal('0');
+            $this->rawRow['Sig_Card'] = '0';
+        }
+
+        if (isset($parms['cbEml'])) {
+            $this->regRS->Email_Receipt->setNewVal('1');
+        } else {
+            $this->regRS->Email_Receipt->setNewVal('');
+        }
+    }
+
+    /**
      * Summary of saveRegistrationRs
      * @param \PDO $dbh
      * @param int $idPsg

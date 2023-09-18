@@ -1,6 +1,6 @@
 
 $(document).ready(function(){
-    
+
     $("#jSignDialog").dialog({
     	autoOpen: false,
     	width: getDialogWidth(800),
@@ -61,7 +61,7 @@ $(document).ready(function(){
             $(this).dialog("option", "height", 300);
         }
     });
-    
+
     $(".btnSign").on("click", function(){
     	let eSignMethod = $(this).data('esign');
     	let name = $(this).closest(".row").find(".printName").text();
@@ -89,14 +89,14 @@ $(document).ready(function(){
         let alertContainer = $("#sigWebAlert");
         let alertMsg = alertContainer.find("#alertMessage");
         let installSigWebBtn = $("<a></a>").prop("href", "https://www.topazsystems.com/software/sigweb.exe").text("Install SigWeb").button();
-          
+
         if(msg){
             alertMsg.html("<p>" + msg + "</p>");
         }
         if(showInstallBtn){
             alertMsg.append(installSigWebBtn);
         }
-          
+
         if(hideSigBox){
             $("#sigImg").hide();
         }
@@ -209,8 +209,9 @@ $(document).ready(function(){
     }
 
     function onClear(){
-        ClearTablet();
-
+        if (typeof clearTablet !== 'undefined') {
+            ClearTablet();
+        }
     }
 
     function onDone(){
@@ -226,8 +227,10 @@ $(document).ready(function(){
         if(resetIsSupported){
             Reset();
         } else{
-            ClearTablet();
-            SetTabletState(0, tmr);
+            if (typeof clearTablet !== 'undefined') {
+                ClearTablet();
+                SetTabletState(0, tmr);
+            }
         }
     }
 

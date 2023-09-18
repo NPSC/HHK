@@ -860,6 +860,45 @@ CREATE or replace VIEW `vemail_directory` AS
             and (`n`.`Exclude_Email` = 0)
             and (`ne`.`Email` <> ''));
 
+
+-- -----------------------------------------------------
+-- View `vfind_guests`
+-- -----------------------------------------------------
+CREATE  OR REPLACE VIEW `vfind_guests` AS
+    SELECT
+        `hs`.`idPsg` AS `idPsg`,
+        `rg`.`idGuest` AS `idGuest`,
+        `rg`.`idReservation` AS `idReservation`,
+        IFNULL(`r`.`Actual_Arrival`, `r`.`Expected_Arrival`) AS `Arrival_Date`,
+        IFNULL(`r`.`Actual_Departure`, `r`.`Expected_Departure`) AS `Departure_Date`,
+        `r`.`Status` AS `Status`,
+        `r`.`idResource` AS `idResource`,
+        'r' AS `Source`
+    FROM
+        ((`reservation_guest` `rg`
+        LEFT JOIN `reservation` `r` ON (`rg`.`idReservation` = `r`.`idReservation`))
+        LEFT JOIN `hospital_stay` `hs` ON (`r`.`idHospital_Stay` = `hs`.`idHospital_stay`))
+    WHERE
+        `r`.`Status` IN ('a' , 'uc', 'w', 's', 'co')
+    UNION SELECT
+        `hs`.`idPsg` AS `idPsg`,
+        `s`.`idName` AS `idGuest`,
+        `v`.`idReservation` AS `idReservation`,
+        `s`.`Span_Start_Date` AS `Arrival_Date`,
+        IFNULL(`s`.`Span_End_Date`, DATEDEFAULTNOW(`s`.`Expected_Co_Date`)) AS `Departure_Date`,
+        's' AS `Status`,
+        `v`.`idResource` AS `idResource`,
+        'v' AS `Source`
+    FROM
+        ((`stays` `s`
+        LEFT JOIN `visit` `v` ON (`s`.`idVisit` = `v`.`idVisit`
+            AND `s`.`Visit_Span` = `v`.`Span`))
+        LEFT JOIN `hospital_stay` `hs` ON (`v`.`idHospital_stay` = `hs`.`idHospital_stay`))
+    WHERE
+        `s`.`Status` IN ('a' , 'co', 'n', 'cp', '1');
+
+
+
 -- -----------------------------------------------------
 -- View `vform_listing`
 -- -----------------------------------------------------

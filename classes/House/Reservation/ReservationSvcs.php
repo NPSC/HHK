@@ -58,17 +58,19 @@ class ReservationSvcs
 
         if ($idPsg > 0 && $id > 0) {
             // look for both
-            $stmt = $dbh->query("select * from vresv_guest " . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests " . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } else if ($idPsg > 0) {
 
-            $stmt = $dbh->query("select * from vresv_guest where idPsg = $idPsg and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests where idPsg = $idPsg and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } else if ($id > 0) {
 
-            $stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            // EKC 9/15/2023; changed all three to vfind_guests from vresv_guests.
+            //$stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
@@ -293,7 +295,7 @@ class ReservationSvcs
             } else {
 
                 $regForm = new CustomRegisterForm();
-				
+
                 $docs[] = array(
                     'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
                     'style' => CustomRegisterForm::getStyling(),
@@ -671,7 +673,7 @@ class ReservationSvcs
             return ["error"=>$reply];
         }
 
-        
+
         return $dataArray;
     }
 

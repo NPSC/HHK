@@ -404,14 +404,13 @@ try {
         if ($idRegistration > 0) {
 
             $reg = new Registration($dbh, 0, $idRegistration);
+            $reg->extractDialog();
 
-            $reg->extractRegistration();
             $reg->saveRegistrationRs($dbh, 0, $uS->username);
             $events = ['success'=>'Registration info saved.'];
         } else {
             $events = ['error'=>'Bad Registration Id.'];
         }
-
 
         break;
 

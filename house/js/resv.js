@@ -82,7 +82,7 @@ function gotIncomeDiag(idResv, idReg, data) {
     	// add closer to visit dialog box
     	if ($('#keysfees').length > 0) {
         	$('#keysfees').on( "dialogclose", function( event, ui ) {
-        		
+
         	    // Close hospital stay dialog
         	    if ($("#faDialog").dialog('isOpen')) {
         	    	$("#faDialog").dialog('close');
@@ -148,6 +148,7 @@ function setupRates(ckIn) {
     var $selResource = $('#selResource');
     var $selVisitFee = $('#selVisitFee');
 
+    // Cleaning fee amount selector
     if ($selVisitFee.length > 0) {
 
         $selVisitFee.change(function() {
