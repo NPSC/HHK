@@ -30,12 +30,18 @@ class OperatingHours {
 
     /**
      * Check if the house was or is scheduled to be closed on the date specified
-     * 
+     *
      * @param \DateTimeInterface $date
      * @return bool
      */
     public function isHouseClosed(\DateTimeInterface $date){
         $dow = $date->format('w');
+
+        // EKC 9/18/2023 Check for null.
+        if ( ! is_string($this->currentHours[$dow]["Start_Date"]) || $this->currentHours[$dow]["Start_Date"] = '') {
+            return true;  // bypass operating hours.
+        }
+
         $startDate = new \DateTime($this->currentHours[$dow]["Start_Date"]);
 
         if($date >= $startDate){ //if date falls within current hours
@@ -59,7 +65,7 @@ class OperatingHours {
 
     /**
      * Get an array of dates where the house is closed in the date range specified.
-     * 
+     *
      * @param \DateTimeInterface $stDT
      * @param \DateTimeInterface $enDT
      * @return array<\DateTimeImmutable>
@@ -106,14 +112,14 @@ class OperatingHours {
     public function save(array $post){
 
         $uS = Session::getInstance();
-        
+
         //delete old non_cleaning_days
         $stmt = $this->dbh->prepare("delete from gen_lookups where Table_Name = 'Non_Cleaning_Day'");
         $stmt->execute();
 
         for ($d = 0; $d < 7; $d++) {
 
-            $postedDay = filter_var_array($post['wd'][$d], 
+            $postedDay = filter_var_array($post['wd'][$d],
             array(
                 'Open_At' => array('filter'=>FILTER_VALIDATE_REGEXP, 'options'=>array('regexp'=>"/^((2[0-3]|[01]?[0-9]):([0-5]?[0-9])(:([0-5]?[0-9]))?)?$/")),
                 'Closed_At' => array('filter'=>FILTER_VALIDATE_REGEXP, 'options'=>array('regexp'=>"/^((2[0-3]|[01]?[0-9]):([0-5]?[0-9])(:([0-5]?[0-9]))?)?$/")),
@@ -155,7 +161,7 @@ class OperatingHours {
 
                 }
             }
-            
+
             if($found == false || $changed == true){
                 //insert new hours
                 $stmt = $this->dbh->prepare("INSERT INTO `operating_schedules` (`Day`, `Start_Date`, `End_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Updated_By`) VALUES(:day, :start, :end, :openAt, :closedAt, :nonCleaning, :closed, :updatedby)");
@@ -210,10 +216,10 @@ class OperatingHours {
                 }
 
             $wdTbl->addBodyTr(
-                HTMLTable::makeTd($d, array('style'=>'text-align:right;')) . 
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', $wdAttrs[$k]['Open_At'])) . 
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', $wdAttrs[$k]['Closed_At'])) . 
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', $wdAttrs[$k]['Non_Cleaning']), array('style'=>'text-align:center;')) . 
+                HTMLTable::makeTd($d, array('style'=>'text-align:right;')) .
+                HTMLTable::makeTd(HTMLInput::generateMarkup('', $wdAttrs[$k]['Open_At'])) .
+                HTMLTable::makeTd(HTMLInput::generateMarkup('', $wdAttrs[$k]['Closed_At'])) .
+                HTMLTable::makeTd(HTMLInput::generateMarkup('', $wdAttrs[$k]['Non_Cleaning']), array('style'=>'text-align:center;')) .
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', $wdAttrs[$k]['Closed']), array('style'=>'text-align: center;'))
             );
         }

@@ -8,6 +8,8 @@ ALTER TABLE `name_demog`
 
 -- Multiple reservations
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('UseRepeatResv', 'false', 'b', 'h', 'Enable repeating Reservations', '1');
+-- Some sites may have this key already defined and broken, so update it.
+Update `sys_config` SET `Value` = 'false', `Description` = 'Enable repeating Reservations', `Show` = '1' WHERE (`Key` = 'UseRepeatResv' AND `value` = '0');
 
 -- Keeping minors off the Registration forms
 ALTER TABLE `name_demog`
@@ -65,7 +67,7 @@ UPDATE `sys_config` set `Description` = "Number of minutes until an idle session
 CALL new_webpage("BillingAgentReport.php", 0, "Billing Agent Report", 1, "h", "", "z", "p", "", "",NOW(), "ga");
 
 -- distance calculator
-ALTER TABLE `name_address` 
+ALTER TABLE `name_address`
 ADD COLUMN IF NOT EXISTS `Meters_From_House` INT(11) NULL AFTER `County`;
 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('distCalculator', '', 'lu', 'c', 'Distance calculator method', 'DistCalculator', '1');
@@ -77,5 +79,5 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) 
 
 
 -- add distCalcType to name_address
-ALTER TABLE `name_address` 
+ALTER TABLE `name_address`
 ADD COLUMN IF NOT EXISTS `DistCalcType` VARCHAR(10) NULL DEFAULT NULL AFTER `Meters_From_House`;
