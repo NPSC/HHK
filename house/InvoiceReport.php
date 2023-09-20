@@ -3,7 +3,7 @@ use HHK\SysConst\WebPageCode;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
+
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\InvoiceStatus;
 use HHK\SysConst\ItemId;
@@ -994,7 +994,7 @@ $(document).ready(function() {
                     } else if (data.success) {
 
                         $('#rptInvdiv').remove();
-                        $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success))));
+                        $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" class="hhk-visitdialog" style="min-height:500px;"/>').append($(data.success))));
                         $('#rptInvdiv .gmenu').menu();
 
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
@@ -1025,7 +1025,7 @@ $(document).ready(function() {
                                     return;
                             }
 
-                            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id);
+                            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id, '', true);
                             $('#rptInvdiv .gmenu').menu("collapse");
                         });
 

@@ -4,67 +4,142 @@ namespace HHK\Purchase;
 
 use HHK\SysConst\ItemId;
 
-/*
- * The MIT License
- *
- * Copyright 2019 Eric.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+
+/**
+ * Summary of CurrentAccount
  */
-
-
 class CurrentAccount {
 
+    /**
+     * Summary of numberNitesStayed
+     * @var int
+     */
     protected $numberNitesStayed = 0;
+    /**
+     * Summary of addnlGuestNites
+     * @var int
+     */
     protected $addnlGuestNites = 0;
+    /**
+     * Summary of visitGlideCredit
+     * @var int
+     */
     protected $visitGlideCredit = 0;
+    /**
+     * Summary of visitStatus
+     * @var string
+     */
     protected $visitStatus;
+    /**
+     * Summary of showRoomFees
+     * @var bool
+     */
     protected $showRoomFees;
+    /**
+     * Summary of showGuestNites
+     * @var bool
+     */
     protected $showGuestNites;
+    /**
+     * Summary of showVisitFee
+     * @var bool
+     */
     protected $showVisitFee;
 
     // Charges.
+    /**
+     * Summary of lodgingTaxPd
+     * @var array
+     */
     protected $lodgingTaxPd = array();
-    protected $additionalChargeTax = 0;
+    /**
+     * Summary of additionalChargeTax
+     * @var float
+     */
+    protected $additionalChargeTax = 0.0;
+    /**
+     * Summary of reimburseTax
+     * @var array
+     */
     protected $reimburseTax;
 
+    /**
+     * Summary of roomCharge
+     * @var float
+     */
     protected $roomCharge = 0;
+    /**
+     * Summary of totalDiscounts
+     * @var float
+     */
     protected $totalDiscounts = 0;
+    /**
+     * Summary of visitFeeCharged
+     * @var float
+     */
     protected $visitFeeCharged = 0;
+    /**
+     * Summary of additionalCharge
+     * @var float
+     */
     protected $additionalCharge = 0;
+    /**
+     * Summary of unpaidMOA
+     * @var float
+     */
     protected $unpaidMOA = 0;
+    /**
+     * Summary of curentTaxItems
+     * @var array
+     */
     protected $curentTaxItems = array();
+    /**
+     * Summary of taxExemptRoomFees
+     * @var float
+     */
     protected $taxExemptRoomFees = 0;
+    /**
+     * Summary of roomFeesToCharge
+     * @var float
+     */
     protected $roomFeesToCharge = 0;
 
     // Visit Fee Balance
+    /**
+     * Summary of vfeeBal
+     * @var float
+     */
     protected $vfeeBal = 0;
 
     // Room fee balance
+    /**
+     * Summary of roomFeeBalance
+     * @var float
+     */
     protected $roomFeeBalance = 0;
+    /**
+     * Summary of taxedroomFeeBalance
+     * @var float
+     */
     protected $taxedroomFeeBalance = 0;
 
     // Payments
+    /**
+     * Summary of totalPaid
+     * @var float
+     */
     protected $totalPaid = 0;
 
     // Pending amounts
+    /**
+     * Summary of amtPending
+     * @var float
+     */
     protected $amtPending = 0;
+    /**
+     * Summary of dueToday
+     * @var float
+     */
     protected $dueToday = 0;
 
     /**
@@ -171,44 +246,84 @@ class CurrentAccount {
 
     }
 
+    /**
+     * Summary of getAddnlGuestNites
+     * @return int|mixed
+     */
     public function getAddnlGuestNites() {
         return $this->addnlGuestNites;
     }
 
+    /**
+     * Summary of getVisitGlideCredit
+     * @return int|mixed
+     */
     public function getVisitGlideCredit() {
         return $this->visitGlideCredit;
     }
 
+    /**
+     * Summary of getAdditionalChargeTax
+     * @return float
+     */
     public function getAdditionalChargeTax() {
         return round($this->additionalChargeTax, 2);
     }
 
+    /**
+     * Summary of getRoomCharge
+     * @return int|mixed
+     */
     public function getRoomCharge() {
         return $this->roomCharge;
     }
 
+    /**
+     * Summary of getTotalDiscounts
+     * @return int|mixed
+     */
     public function getTotalDiscounts() {
         return $this->totalDiscounts;
     }
 
+    /**
+     * Summary of getVisitFeeCharged
+     * @return int|mixed
+     */
     public function getVisitFeeCharged() {
         return $this->visitFeeCharged;
     }
 
+    /**
+     * Summary of getAdditionalCharge
+     * @return int|mixed
+     */
     public function getAdditionalCharge() {
         return $this->additionalCharge;
     }
 
+    /**
+     * Summary of getUnpaidMOA
+     * @return int|mixed
+     */
     public function getUnpaidMOA() {
         return $this->unpaidMOA;
     }
 
+    /**
+     * Summary of getRoomFeesToCharge
+     * @return int|mixed
+     */
     public function getRoomFeesToCharge() {
         return $this->roomFeesToCharge;
     }
 
 
 
+    /**
+     * Summary of getTotalCharged
+     * @return float
+     */
     public function getTotalCharged() {
 
         return $this->getRoomCharge() + $this->getItemTaxAmt(ItemId::Lodging, $this->getRoomFeeBalance())
@@ -218,58 +333,115 @@ class CurrentAccount {
                 + $this->getVisitFeeCharged();
     }
 
+    /**
+     * Summary of getVfeeBal
+     * @return int|mixed
+     */
     public function getVfeeBal() {
         return $this->vfeeBal;
     }
 
+    /**
+     * Summary of getTotalPaid
+     * @return int|mixed
+     */
     public function getTotalPaid() {
         return $this->totalPaid;
     }
 
+    /**
+     * Summary of getAmtPending
+     * @return int|mixed
+     */
     public function getAmtPending() {
         return $this->amtPending;
     }
 
+    /**
+     * Summary of getNumberNitesStayed
+     * @return int
+     */
     public function getNumberNitesStayed() {
         return $this->numberNitesStayed;
     }
 
+    /**
+     * Summary of getVisitStatus
+     * @return string
+     */
     public function getVisitStatus() {
         return $this->visitStatus;
     }
 
+    /**
+     * Summary of getShowRoomFees
+     * @return bool
+     */
     public function getShowRoomFees() {
         return $this->showRoomFees;
     }
 
+    /**
+     * Summary of getTaxExemptRoomFees
+     * @return int
+     */
     public function getTaxExemptRoomFees() {
         return $this->taxExemptRoomFees;
     }
 
+    /**
+     * Summary of getShowVisitFee
+     * @return bool
+     */
     public function getShowVisitFee() {
         return $this->showVisitFee;
     }
 
+    /**
+     * Summary of getShowGuestNites
+     * @return bool
+     */
     public function getShowGuestNites() {
         return $this->showGuestNites;
     }
 
+    /**
+     * Summary of getRoomFeeBalance
+     * @return int|mixed
+     */
     public function getRoomFeeBalance() {
         return $this->roomFeeBalance;
     }
 
+    /**
+     * Summary of getTaxedRoomFeeBalance
+     * @return int
+     */
     public function getTaxedRoomFeeBalance(){
         return $this->taxedroomFeeBalance;
     }
 
+    /**
+     * Summary of getDueToday
+     * @return float|int
+     */
     public function getDueToday() {
         return $this->dueToday;
     }
 
+    /**
+     * Summary of getReimburseTax
+     * @return array
+     */
     public function getReimburseTax() {
         return $this->reimburseTax;
     }
 
+    /**
+     * Summary of getLodgingTaxPd
+     * @param mixed $tid
+     * @return mixed
+     */
     public function getLodgingTaxPd($tid) {
         if (isset($this->lodgingTaxPd[$tid])) {
             return $this->lodgingTaxPd[$tid];
@@ -296,6 +468,12 @@ class CurrentAccount {
 
     }
 
+    /**
+     * Summary of getItemTaxAmt
+     * @param mixed $idTaxedItem
+     * @param mixed $balanceAmt
+     * @return float|int
+     */
     public function getItemTaxAmt($idTaxedItem, $balanceAmt) {
 
         $amt = 0;
@@ -313,11 +491,23 @@ class CurrentAccount {
         return $amt;
     }
 
+    /**
+     * Summary of setReimburseTax
+     * @param mixed $taxingId
+     * @param mixed $reimburseTax
+     * @return static
+     */
     public function setReimburseTax($taxingId, $reimburseTax) {
         $this->reimburseTax[$taxingId] = $reimburseTax;
         return $this;
     }
 
+    /**
+     * Summary of sumReimburseTax
+     * @param mixed $taxingId
+     * @param mixed $reimburseTax
+     * @return static
+     */
     public function sumReimburseTax($taxingId, $reimburseTax) {
         if (isset($this->reimburseTax[$taxingId])) {
             $this->reimburseTax[$taxingId] += $reimburseTax;
@@ -327,6 +517,12 @@ class CurrentAccount {
         return $this;
     }
 
+    /**
+     * Summary of setLodgingTaxPd
+     * @param mixed $tid
+     * @param mixed $amt
+     * @return void
+     */
     public function setLodgingTaxPd($tid, $amt) {
         if (isset($this->lodgingTaxPd[$tid])) {
             $this->lodgingTaxPd[$tid] += $amt;
@@ -335,73 +531,142 @@ class CurrentAccount {
         }
     }
 
+    /**
+     * Summary of setDueToday
+     * @return void
+     */
     public function setDueToday() {
 
         $this->dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending(), 2);
 
     }
 
+    /**
+     * Summary of setRoomFeeBalance
+     * @param mixed $roomFeeBalance
+     * @return static
+     */
     public function setRoomFeeBalance($roomFeeBalance) {
         $this->roomFeeBalance = $roomFeeBalance;
         return $this;
     }
 
+    /**
+     * Summary of setAddnlGuestNites
+     * @param mixed $addnlGuestNites
+     * @return static
+     */
     public function setAddnlGuestNites($addnlGuestNites) {
         $this->addnlGuestNites = $addnlGuestNites;
         return $this;
     }
 
+    /**
+     * Summary of setRoomFeesToCharge
+     * @param mixed $toCharge
+     * @return static
+     */
     public function setRoomFeesToCharge($toCharge) {
         $this->roomFeesToCharge = $toCharge;
         return $this;
     }
 
+    /**
+     * Summary of setVisitGlideCredit
+     * @param mixed $visitGlideCredit
+     * @return static
+     */
     public function setVisitGlideCredit($visitGlideCredit) {
         $this->visitGlideCredit = $visitGlideCredit;
         return $this;
     }
 
+    /**
+     * Summary of setAdditionalChargeTax
+     * @param mixed $additionalChargeTax
+     * @return static
+     */
     public function setAdditionalChargeTax($additionalChargeTax) {
         $this->additionalChargeTax = $additionalChargeTax;
         return $this;
     }
 
+    /**
+     * Summary of setRoomCharge
+     * @param mixed $roomCharge
+     * @return static
+     */
     public function setRoomCharge($roomCharge) {
         $this->roomCharge = $roomCharge;
         return $this;
     }
 
+    /**
+     * Summary of setTotalDiscounts
+     * @param mixed $totalDiscounts
+     * @return static
+     */
     public function setTotalDiscounts($totalDiscounts) {
         $this->totalDiscounts = $totalDiscounts;
         return $this;
     }
 
+    /**
+     * Summary of setVisitFeeCharged
+     * @param mixed $visitFeeCharged
+     * @return static
+     */
     public function setVisitFeeCharged($visitFeeCharged) {
         $this->visitFeeCharged = $visitFeeCharged;
         return $this;
     }
 
+    /**
+     * Summary of setAdditionalCharge
+     * @param mixed $additionalCharge
+     * @return static
+     */
     public function setAdditionalCharge($additionalCharge) {
         $this->additionalCharge = $additionalCharge;
         return $this;
     }
 
+    /**
+     * Summary of setUnpaidMOA
+     * @param mixed $unpaidMOA
+     * @return static
+     */
     public function setUnpaidMOA($unpaidMOA) {
         $this->unpaidMOA = $unpaidMOA;
         return $this;
     }
 
 
+    /**
+     * Summary of setVfeeBal
+     * @param mixed $vfeeBal
+     * @return static
+     */
     public function setVfeeBal($vfeeBal) {
         $this->vfeeBal = $vfeeBal;
         return $this;
     }
 
+    /**
+     * Summary of setTotalPaid
+     * @param mixed $totalPaid
+     * @return static
+     */
     public function setTotalPaid($totalPaid) {
         $this->totalPaid = $totalPaid;
         return $this;
     }
 
+    /**
+     * Summary of setAmtPending
+     * @param mixed $amtPending
+     * @return static
+     */
     public function setAmtPending($amtPending) {
         $this->amtPending = $amtPending;
         return $this;

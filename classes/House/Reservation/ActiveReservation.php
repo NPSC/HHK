@@ -25,11 +25,6 @@ use HHK\HTMLControls\HTMLContainer;
 
 class ActiveReservation extends Reservation {
 
-    /**
-     * Summary of gotoCheckingIn
-     * @var string
-     */
-    protected $gotoCheckingIn = '';
 
     /**
      * Summary of repeatResvErrors
@@ -45,7 +40,7 @@ class ActiveReservation extends Reservation {
     public function createMarkup(\PDO $dbh) {
 
         // Checking In?
-        if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
+        if ($this->getGotoCheckingIn() === 'yes' && $this->reserveData->getIdResv() > 0) {
             return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
         }
 

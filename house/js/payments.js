@@ -377,6 +377,7 @@ class AmountVariables {
         t.isChdOut = isCheckedOut;
         t.roomBalDue = 0;
         t.totRmBalDue = 0;
+//        t.donPayment = 0;
     }
 }
 
@@ -397,6 +398,7 @@ class PayCtrls {
         t.totalPayment = $('#totalPayment');
         //t.totalCharges = $('#totalCharges');
         t.cashTendered = $('#txtCashTendered');
+        //t.donationPay = $('#donationPay');
 
         t.invoiceCb = $('.hhk-payInvCb');
         t.adjustBtn = $('#paymentAdjust');
@@ -565,7 +567,7 @@ function getPaymentAmount(p, a) {
 
         if (a.isChdOut && p.RoomChargesPayCb.prop('checked') === true && p.feePayAmt.val() == '') {
             p.feePayAmt.val(p.feesCharges.val());
-        } else if (a.isChdOut && p.RoomChargesPayCb.prop('checked') === false) {
+        } else if (a.isChdOut && p.RoomChargesPayCb.filter(':visible').length == 1 && p.RoomChargesPayCb.prop('checked') === false) {
             p.feePayAmt.val('');
         }
 
@@ -788,9 +790,9 @@ function amtPaid() {
 
         // use up any returns by reducing the total payment
         if (a.totReturns >= a.totPay) {
-            a.totReturns -= a.totPay;  // reduce overpayment by any fee payments
+            a.totReturns -= a.totPay;  // reduce total payment by any fee payments.
             a.overPayAmt = a.totReturns
-            a.totPay = 0;     // reduce total payment by any fee payments.
+            a.totPay = 0;
         } else {
             // feePay > totReturns
 
@@ -1015,6 +1017,13 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
             amtPaid();
         });
     }
+
+    // if (p.donationPay.length > 0) {
+    //     p.donationPay.change(function () {
+    //         $(this).removeClass('ui-state-error');
+    //         amtPaid();
+    //     });
+    // }
 
     if (p.cashTendered.length > 0) {
         p.cashTendered.change(function () {

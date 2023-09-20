@@ -29,6 +29,11 @@ use HHK\Member\MemberSearch;
  */
 class Hospital {
 
+    /**
+     * Summary of loadHospitals
+     * @param \PDO $dbh
+     * @return array
+     */
     public static function loadHospitals(\PDO $dbh) {
 
         $hospRs = new HospitalRS();
@@ -36,6 +41,13 @@ class Hospital {
 
     }
 
+    /**
+     * Summary of justHospitalMarkup
+     * @param \HHK\House\Hospital\HospitalStay $hstay
+     * @param mixed $offerBlank
+     * @param array $referralHospitalData
+     * @return string
+     */
     protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE, array $referralHospitalData = []) {
 
         $uS = Session::getInstance();
@@ -149,6 +161,14 @@ class Hospital {
 
     }
 
+    /**
+     * Summary of createReferralMarkup
+     * @param \PDO $dbh
+     * @param \HHK\House\Hospital\HospitalStay $hstay
+     * @param mixed $offerBlankHosp
+     * @param array $referralHospitalData
+     * @return array
+     */
     public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, array $referralHospitalData = []) {
 
         $uS = Session::getInstance();

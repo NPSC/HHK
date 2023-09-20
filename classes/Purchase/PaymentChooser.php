@@ -1037,7 +1037,20 @@ ORDER BY v.idVisit , v.Span;");
                 }
             }
 
+            // Donations - only if checking out and room overpaid.
+            // $feesTbl->addBodyTr(
+            //     HTMLTable::makeTd($labels->getString('PaymentChooser', 'Donation', 'Donation') . ':', ['class' => 'tdlabel', 'colspan'=>'2'])
+            //     . HTMLTable::makeTd(
+            //         HTMLInput::generateMarkup('', ['name' => 'donationPay', 'size' => '8', 'class' => 'hhk-feeskeys', 'style' => 'text-align:right;'])
+            //         , ['style' => 'text-align:right;']
+            //     )
+            //     ,
+            //     ['style' => 'display:none;', 'class' => 'hhk-donationTr']
+            // );
+
         }
+
+
 
 
         // Amount to pay

@@ -57,6 +57,11 @@ class Reservation {
      * @var
      */
     protected $cofResult;
+    /**
+     * Summary of gotoCheckingIn
+     * @var string
+     */
+    protected $gotoCheckingIn = '';
 
 
     /**
@@ -1581,5 +1586,23 @@ WHERE
         $this->reserveData->setArrivalDT($arrivalDT);
         $this->reserveData->setDepartureDT($departureDT);
     }
+
+	/**
+	 * Summary of getGotoCheckingIn
+	 * @return string
+	 */
+	public function getGotoCheckingIn() {
+		return $this->gotoCheckingIn;
+	}
+
+	/**
+	 * Summary of setGotoCheckingIn
+	 * @param string $gotoCheckingIn
+	 * @return self
+	 */
+	public function setGotoCheckingIn($gotoCheckingIn): self {
+		$this->gotoCheckingIn = $gotoCheckingIn;
+		return $this;
+	}
 }
 ?>

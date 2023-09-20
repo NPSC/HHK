@@ -2701,13 +2701,18 @@ function resvManager(initData, options) {
             // Manage Total Guests indicator.
             $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
 
-                var tot = familySection.findStaysChecked() + familySection.findStays('r');
+                // New guests
+                let tot = familySection.findStaysChecked();
                 resvSection.$totalGuests.text(tot);
+
+                // Add any existing guests.
+                tot += familySection.findStays('r');
+
                 $('#selRateCategory').trigger('change');
 
                 if ($('#selResource').length > 0 && $('#selResource').val() !== '0') {
-                    var msg = 'Room may be too small';
-                    var room = rooms[$('#selResource').val()];
+                    let msg = 'Room may be too small';
+                    let room = rooms[$('#selResource').val()];
 
                     if (tot > room.maxOcc) {
                         $('#hhkroomMsg').text(msg).show();

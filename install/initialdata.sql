@@ -754,6 +754,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('PayRmFees', 'Pay room fees', 's', 'pc', '', ''),
 ('RoomCharges',	'Room Charges',	's', 'pc', '', ''),
 ('Credit',	'Credit',	's', 'pc', '', ''),
+('Donation', 'Donation', 's', 'pc', '', '');
 
 
 ('patient','Patient','s','mt','','Default: Patient'),

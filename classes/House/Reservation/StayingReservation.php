@@ -62,10 +62,10 @@ class StayingReservation extends CheckingIn {
             $_POST['vid'] = 0;
             $_POST['span'] = 0;
             $_POST['rbPriGuest'] = 0;
-            $_POST['resvCkinNow'] = 'yes';
 
             $checkingIn = new ActiveReservation($this->reserveData, new ReservationRS(), new Family($dbh, $this->reserveData, TRUE));
             $checkingIn->save($dbh);
+            $checkingIn->setGotoCheckingIn('yes');
             return $checkingIn;
 
         } else {
