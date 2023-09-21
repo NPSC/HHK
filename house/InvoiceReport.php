@@ -1014,7 +1014,8 @@ $(document).ready(function() {
                             $(".hhk-alert").hide();
 
                             if ($(this).data('stat') == 'del') {
-                                if (!confirm('Delete this Invoice?')) {
+                                if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
+                                //if (!confirm('Delete this Invoice?')) {
                                     return;
                                 }
                             }
@@ -1159,7 +1160,7 @@ $(document).ready(function() {
                     </form>
                 </div>
             </div>
-            <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
+            <div id="vInv" style="display:none; font-size:0.8em;">
                 <input type="button" id="btnInvGo" value="Refresh"/>
 
                   <div id="rptInvdiv" class="hhk-visitdialog"></div>

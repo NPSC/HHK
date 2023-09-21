@@ -43,6 +43,7 @@ class InvoiceActions {
         $uS = Session::getInstance();
         $mkup = '';
 
+
         if ($action == 'view') {
 
             // Return listing of lines

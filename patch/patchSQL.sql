@@ -55,6 +55,8 @@ delete from gen_lookups where Table_Name = "Non_Cleaning_Day" ;
 ALTER TABLE `operating_schedules`
 CHANGE COLUMN `Timestamp` `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
+-- set start date for operating hours
+UPDATE `operating_schedules` SET `Start_Date` = now();
 
 -- add additional access_log actions
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES

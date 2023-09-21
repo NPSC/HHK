@@ -1457,6 +1457,8 @@ $(document).ready(function () {
                         // Handles several actions
                         $('#rptInvdiv').on('click', '.invAction', function (event) {
                             event.preventDefault();
+                            let invContainer = '#rptInvdiv';
+
                             $(".hhk-alert").hide();
 
                             // Delete invoice
@@ -1464,6 +1466,7 @@ $(document).ready(function () {
                                 if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
                                     return;
                                 }
+                                invContainer = '';
                             }
 
                             // Check for email
@@ -1472,7 +1475,7 @@ $(document).ready(function () {
                                     return;
                             }
 
-                            invoiceAction($(this).data('iid'), $(this).data('stat'), $(this).prop('id'), '#rptInvdiv', true);
+                            invoiceAction($(this).data('iid'), $(this).data('stat'), $(this).prop('id'), invContainer, true);
                             $('#rptInvdiv .gmenu').menu("collapse");
                         });
 

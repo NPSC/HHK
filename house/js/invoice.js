@@ -200,6 +200,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 alert("Parser error - " + err.message);
                 return;
             }
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
@@ -210,8 +211,8 @@ function invoiceAction(idInvoice, action, eid, container, show) {
 
             if (data.delete) {
 
-                if (!data.eid || data.eid == '0') {
-                    // Register page -> unpaid invoices tab delete action
+                if (!data.eid || data.eid == '0' || !container || container == '') {
+                    // Register page or InvoiceReport -> unpaid invoices tab delete action
                     flagAlertMessage(data.delete, 'success');
                     $('#btnInvGo').click();  // repaint unpaid invoices tab
                 } else {
