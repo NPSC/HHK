@@ -744,7 +744,7 @@ function amtPaid() {
     // sucks the payment data from the paying fields and fills in the amount variables
     getPaymentData(p, a);
 
-    // Fees Payments - feePay
+    // Fees Payments: feePay
     getPaymentAmount(p, a);
 
     // Credits
@@ -766,7 +766,7 @@ function amtPaid() {
         // Show correct row for charges due
         if (a.totRmBalDue >= 0) {
             // Room fees are still owed.
-            p.feesCharges.val(a.totRmBalDue.toFixed(2).toString());
+            p.feesCharges.val(a.roomBalDue.toFixed(2).toString());
             $('.hhk-GuestCredit').hide();
             $('.hhk-RoomCharge').show('fade');
             $('#daystoPay').hide();
@@ -779,7 +779,7 @@ function amtPaid() {
 
         } else {
             // room fees are overpaid.
-            p.guestCredit.val(a.totRmBalDue.toFixed(2).toString());
+            p.guestCredit.val(a.roomBalDue.toFixed(2).toString());
             $('.hhk-RoomCharge').hide();
             $('#daystoPay').show();
             $('.hhk-GuestCredit').show('fade');
