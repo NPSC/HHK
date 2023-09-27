@@ -134,6 +134,7 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
 
         <script type='text/javascript'>
@@ -413,7 +414,7 @@ if(isset($_GET['template'])){
 
 								userData = userData.filter(element=>!(element.group == 'guest' && element.guestIndex == guestIndex));
 
-    							console.log(userData);
+    							//console.log(userData);
 
                 				$renderedForm.formRender('render', userData);
 
@@ -506,6 +507,11 @@ if(isset($_GET['template'])){
     										$('.errmsg .alert-heading').text('Server Error');
                         	    	    	$('.errmsg #errorcontent').text("We are unable to process your submission at this time due to a server error. We're hard at work fixing the issue. Please try again in a few minutes.");
                         	    	    	$('.errmsg').show();
+    									},
+										403: function() {
+    										$('.errmsg .alert-heading').text('Server Error');
+                        	    	    	$('.errmsg #errorcontent').text("We are unable to process your submission at this time due to a server error. We're hard at work fixing the issue. Please try again in a few minutes.");
+                        	    	    	$('.errmsg').show();
     									}
   									}
                         	    });
@@ -514,7 +520,20 @@ if(isset($_GET['template'])){
     					}else if(ajaxData.error){
     						$("#formError").text(ajaxData.error);
     					}
-                	}
+                	},
+					error: function(XHR, textStatus, errorText){
+                        $("#formError").text("Error " + XHR.status + ": " + errorText);
+                        if(typeof hhkReportError == "function"){
+                            var errorInfo = {
+                                responseCode: XHR.status,
+                                source:"<?php echo $cmd; ?>",
+                                docId: "<?php echo $id; ?>",
+                                formData: previewFormData
+                            }
+                            errorInfo = btoa(JSON.stringify(errorInfo));
+                            hhkReportError(errorText, errorInfo);
+                        }
+                    }
 				});
 
             });

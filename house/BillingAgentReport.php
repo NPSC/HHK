@@ -89,6 +89,32 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
             var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
             var rctMkup, pmtMkup;
             $(document).ready(function() {
+
+                var drawCallback = function (settings) {
+                    $('.hhk-viewVisit').button();
+                    $('.hhk-viewVisit').click(function () {
+                        var vid = $(this).data('vid');
+                        var gid = $(this).data('gid');
+                        var span = $(this).data('span');
+
+                        var buttons = {
+                            "Show Statement": function() {
+                                window.open('ShowStatement.php?vid=' + vid, '_blank');
+                            },
+                            "Show Registration Form": function() {
+                                window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
+                            },
+                            "Save": function() {
+                                saveFees(gid, vid, span, false, 'VisitInterval.php');
+                            },
+                            "Cancel": function() {
+                                $(this).dialog("close");
+                            }
+                        };
+                        viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+                    });
+                };
+
                 <?php echo $report->filter->getTimePeriodScript(); ?>;
                 <?php echo $report->generateReportScript(); ?>
                 
@@ -115,29 +141,6 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
                     width: getDialogWidth(650),
                     modal: true,
                     title: 'Income Chooser'
-                });
-
-                $('.hhk-viewVisit').button();
-                $('.hhk-viewVisit').click(function () {
-                    var vid = $(this).data('vid');
-                    var gid = $(this).data('gid');
-                    var span = $(this).data('span');
-
-                    var buttons = {
-                        "Show Statement": function() {
-                            window.open('ShowStatement.php?vid=' + vid, '_blank');
-                        },
-                        "Show Registration Form": function() {
-                            window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
-                        },
-                        "Save": function() {
-                            saveFees(gid, vid, span, false, 'VisitInterval.php');
-                        },
-                        "Cancel": function() {
-                            $(this).dialog("close");
-                        }
-                    };
-                    viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
                 });
 
                 if (rctMkup !== '') {

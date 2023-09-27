@@ -192,7 +192,8 @@ abstract class AbstractReport {
         return '
         $("#' . $this->inputSetReportName . '-includeFields").fieldSets({"reportName": "' . $this->inputSetReportName .  '", "defaultFields": ' . json_encode($this->getDefaultFields()) . '});' .
 
-        ($this->rendered ? '$("#tbl' . $this->inputSetReportName . 'rpt").dataTable({
+        ($this->rendered ? '
+        var dtOptions = {
             "columnDefs": [
             {"targets": ' . $jsonColumnDefs . ',
             "type": "date",
@@ -236,7 +237,13 @@ abstract class AbstractReport {
                 }
             },
             ],
-        });
+        }
+
+        if(typeof drawCallback === "function"){
+            dtOptions["drawCallback"] = drawCallback;
+        }
+
+        $("#tbl' . $this->inputSetReportName . 'rpt").dataTable(dtOptions);
 
         $("#em' . $this->inputSetReportName . 'RptDialog").dialog({
             autoOpen:false,

@@ -47,6 +47,7 @@
                         sortable: false,
                         searchable: false,
                         className:'actionBtns',
+                        width: "50px",
                         render: function (data, type, row) {
                             return createActions(data, row);  
                         }
@@ -114,6 +115,7 @@
                         title: "Category",
                         className: "noteCategory",
                         name: "Category",
+                        width: "120px",
                         render: function (data, type, row) {
                             
                             if (settings.staffNoteCats[data]) {
@@ -183,6 +185,7 @@
                                 if(data.idNote > 0){
                                     dtTable.ajax.reload();
                                     noteTextarea.val("");
+                                    $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
                                 }else if(data.error){
                                     if (data.gotopage) {
                                         window.open(data.gotopage);
@@ -192,7 +195,20 @@
                                 $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
                             },
                             error: function(XHR, textStatus, errorText){
-                                flagAlertMessage(errorText, 'error');
+                                flagAlertMessage("Error " + XHR.status + ": " + errorText, 'error');
+                                $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
+                                if(typeof hhkReportError == "function"){
+                                    var errorInfo = {
+                                        responseCode: XHR.status,
+                                        source:"notesViewer::saveNote",
+                                        linkType: settings.linkType,
+                                        linkId: settings.linkId,
+                                        noteText: noteData
+                                    }
+                                    errorInfo = btoa(JSON.stringify(errorInfo));
+                                    hhkReportError(errorText, errorInfo);
+                                }
+                                $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
                             }
                         });
                     }
@@ -300,28 +316,39 @@
                             noteCategory: noteCategory,
                     },
                     success: function( data ){
-                            if(data.idNote > 0){
-                                //$table.ajax.reload();
-                                var rowdata = $table.row(row).data();
-                                rowdata["Note"] = noteText;
-                                rowdata["Category"] = noteCategory;
-								$table.row(row).data(rowdata);
-								row.find('.noteText').removeClass('hhk-flex');
-								row.find("input.flag").checkboxradio({icon:false});
-								$wrapper.find('.hhk-note-button').button();
-                            }else{
-                                if(data.error){
-                                    if (data.gotopage) {
-                                        window.open(data.gotopage);
-                                    }
-                                    flagAlertMessage(data.error, 'error');
-                                }else{
-                                    flagAlertMessage('An unknown error occurred.', 'alert');
-                                }
+                        if(data.idNote > 0){
+                            //$table.ajax.reload();
+                            var rowdata = $table.row(row).data();
+                            rowdata["Note"] = noteText;
+                            rowdata["Category"] = noteCategory;
+							$table.row(row).data(rowdata);
+							row.find('.noteText').removeClass('hhk-flex');
+							row.find("input.flag").checkboxradio({icon:false});
+							$wrapper.find('.hhk-note-button').button();
+                        }else if(data.error){
+                            if (data.gotopage) {
+                                window.open(data.gotopage);
                             }
+                            flagAlertMessage(data.error, 'error');
+                        }else{
+                            flagAlertMessage('An unknown error occurred.', 'alert');
+                        }
                     },
                     error: function(XHR, textStatus, errorText){
                         flagAlertMessage(errorText, 'error');
+                        $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        if(typeof hhkReportError == "function"){
+                            var errorInfo = {
+                                responseCode: XHR.status,
+                                source:"notesViewer::updateNoteContent",
+                                linkType: settings.linkType,
+                                linkId: settings.linkId,
+                                idNote: noteId,
+                                noteText: noteText
+                            }
+                            errorInfo = btoa(JSON.stringify(errorInfo));
+                            hhkReportError(errorText, errorInfo);
+                        }
                     }
                 });
             }
@@ -377,10 +404,22 @@
                                 window.open(data.gotopage);
                             }
                             flagAlertMessage(data.error, 'error');
-                        }
+						}
                     },
                     error: function(XHR, textStatus, errorText){
                         flagAlertMessage(errorText, 'error');
+                        $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        if(typeof hhkReportError == "function"){
+                            var errorInfo = {
+                                responseCode: XHR.status,
+                                source:"notesViewer::deleteNote",
+                                linkType: settings.linkType,
+                                linkId: settings.linkId,
+                                idNote: idnote
+                            }
+                            errorInfo = btoa(JSON.stringify(errorInfo));
+                            hhkReportError(errorText, errorInfo);
+                        }
                     }
                 });
 
@@ -415,10 +454,23 @@
                                 window.open(data.gotopage);
                             }
                             flagAlertMessage(data.error, 'error');
+                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                         }
                     },
                     error: function(XHR, textStatus, errorText){
                         flagAlertMessage(errorText, 'error');
+                        $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        if(typeof hhkReportError == "function"){
+                            var errorInfo = {
+                                responseCode: XHR.status,
+                                source:"notesViewer::undoDeleteNote",
+                                linkType: settings.linkType,
+                                linkId: settings.linkId,
+                                idNote: idnote
+                            }
+                            errorInfo = btoa(JSON.stringify(errorInfo));
+                            hhkReportError(errorText, errorInfo);
+                        }
                     }
                 });
 
@@ -465,10 +517,23 @@
                                 window.open(data.gotopage);
                             }
                             flagAlertMessage(data.error, 'error');
+                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                         }
                     },
                     error: function(XHR, textStatus, errorText){
                         flagAlertMessage(errorText, 'error');
+                        $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        if(typeof hhkReportError == "function"){
+                            var errorInfo = {
+                                responseCode: XHR.status,
+                                source:"notesViewer::flagNote",
+                                linkType: settings.linkType,
+                                linkId: settings.linkId,
+                                idNote: idnote
+                            }
+                            errorInfo = btoa(JSON.stringify(errorInfo));
+                            hhkReportError(errorText, errorInfo);
+                        }
                     }
                 });
 
@@ -540,6 +605,19 @@
 	                    'linkType': settings.linkType,
 	                    'linkId': settings.linkId
 	                },
+                    error: function(XHR, textStatus, errorText){
+                        flagAlertMessage(errorText, "error");
+                        if(typeof hhkReportError == "function"){
+                            var errorInfo = {
+                                responseCode: XHR.status,
+                                source:"notesViewer::createViewer",
+                                linkType: settings.linkType,
+                                linkId: settings.linkId
+                            }
+                            errorInfo = btoa(JSON.stringify(errorInfo));
+                            hhkReportError(errorText, errorInfo);
+                        }
+                    }
 		        },
 		        "drawCallback": function(settings){
 			        $wrapper.find("input.flag").checkboxradio({icon:false});

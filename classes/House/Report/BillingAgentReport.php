@@ -110,7 +110,7 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
             }
         }
 
-        $departureCase = "CASE WHEN v.Actual_Departure IS NOT NULL THEN v.Actual_Departure
+        $departureCase = "CASE WHEN v.Span_End IS NOT NULL THEN v.Span_End
          WHEN v.Expected_Departure IS NOT NULL AND v.Expected_Departure > NOW() THEN v.Expected_Departure
          WHEN v.Status = 'a' THEN ''
          ELSE '' END";
@@ -149,9 +149,9 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
     ifnull(pa.Postal_Code, '') as `pZip`,
     concat(if(dc.Description is not null, concat(dc.Description, ': '), ''), ifnull(d.Description, '')) as `Diagnosis`,
     " . $listDemos . "
-    ifnull(v.Arrival_Date, '') as `Arrival`,
+    ifnull(v.Span_Start, '') as `Arrival`,
     " . $departureCase . " as `Departure`,
-    DATEDIFF(ifnull(v.Actual_Departure, v.Expected_Departure), v.Arrival_Date) as `Nights`,
+    DATEDIFF(ifnull(v.Span_End, date(now())), v.Span_Start) as `Nights`,
     SUM(DATEDIFF(il.Period_End, il.Period_Start)) as `PaidNights`,
     ifnull(pgn.Name_First, '') as `pgFirst`,
     ifnull(pgn.Name_Last, '') as `pgLast`,
@@ -247,8 +247,8 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
             }
         }
 
-        $cFields[] = array("Visit Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Visit Departure", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array("Visit Span Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array("Visit Span Departure", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " First", 'pgFirst', 'checked', '', 'string', '20');
         $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
         $cFields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');

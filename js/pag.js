@@ -188,6 +188,22 @@ function getDialogWidth(defaultWidth){
 	return dialogWidth;
 }
 
+function hhkReportError(message, infoArray){
+	$.ajax({
+		url: "../house/ws_admin.php",
+		dataType: 'JSON',
+		type: 'post',
+		data: {
+			cmd: 'reportError',
+			message: message,
+			info: infoArray
+		},
+		success: function( data ){
+			
+		}
+	});
+}
+
 $(document).ready(
 	function() {
 		"use strict";

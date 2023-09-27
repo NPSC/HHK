@@ -236,6 +236,12 @@ switch ($c) {
         $remember = new Remember($userAr);
         $events = array("success"=>$remember->deleteTokens($dbh, TRUE));
         break;
+    case "reportError" :
+        $message = filter_input(INPUT_POST, "message", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $info = json_decode(base64_decode($_POST['info']), true);
+        $info = filter_var_array($info, FILTER_SANITIZE_ADD_SLASHES);
+        reportError($message, $info);
+        break;
     default:
         $events = array("error" => "Bad Command");
 }
@@ -468,4 +474,19 @@ function getTwoFA(\PDO $dbh, $username){
         $event = array('error'=>'Two Factor authentication not configured');
     }
     return $event;
+}
+
+function reportError(string $message, array $info){
+    $uS = Session::getInstance();
+
+    $body = "New bug report received from " . getSiteName() . "\r\n\r\n";
+    $body .= "Request Type: AJAX\r\n\r\n";
+    $body .= "Details: \r\n\r\n";
+    $body .= "Message: " . $message . "\r\n\r\n";
+    $body .= "User: " . (isset($uS->username) ? $uS->username : "unknown") . "\r\n\r\n";
+    foreach($info as $k=>$v){
+        $body .= $k . ": " . $v . "\r\n\r\n";
+    }
+
+    sendMail($body);
 }
