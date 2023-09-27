@@ -60,6 +60,12 @@ class PaymentManagerPayment {
      * @var float|int
      */
     protected $houseDiscPayment;
+
+    /**
+     * Summary of extraPayment
+     * @var float|int
+     */
+    protected $extraPayment;
     /**
      * Summary of totalPayment
      * @var float|int
@@ -259,7 +265,7 @@ class PaymentManagerPayment {
         $this->depositRefundAmt = 0;
         $this->totalRoomChg = 0;
         $this->refundAmount = 0;
-
+        $this->extraPayment = 0;
 
         $this->payInvoices = array();
         $this->payInvoicesAmt = 0;
@@ -1110,5 +1116,23 @@ class PaymentManagerPayment {
         return $this;
     }
 
+
+	/**
+	 * Summary of extraPayment
+	 * @return float|int
+	 */
+	public function getExtraPayment() {
+		return $this->extraPayment;
+	}
+
+	/**
+	 * Summary of extraPayment
+	 * @param float|int $extraPayment Summary of extraPayment
+	 * @return self
+	 */
+	public function setExtraPayment($extraPayment): self {
+		$this->extraPayment = $extraPayment;
+		return $this;
+	}
 }
 ?>

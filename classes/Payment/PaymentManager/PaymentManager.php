@@ -248,13 +248,6 @@ class PaymentManager {
 
                     } else {
 
-                        // $depPreTax = round($this->depositRefundAmt / (1 + $taxRate), 2);
-                        // $moaPreTax = round($this->moaRefundAmt / (1 + $taxRate), 2);
-                        // $vatPreTax = round($this->vatReimburseAmt / (1 + $taxRate), 2);
-
-                        // is there too much paid
-                        //if ($this->pmp->getRatePayment() + $depPreTax + $moaPreTax + $vatPreTax > $roomAccount->getRoomFeeBalance()) {
-
                         if ($this->pmp->getRatePayment() > $roomAccount->getRoomFeeBalance()) {
                             $roomChargesPreTax = $roomAccount->getRoomFeeBalance();
                         } else {

@@ -1014,16 +1014,23 @@ ORDER BY v.idVisit , v.Span;");
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
 
-            $td = HTMLContainer::generateMarkup('label', "Pay", ['for' => 'roomChargesPayCB', 'style' => 'margin-left:5px;margin-right:3px;', 'class'=>'hhk-RoomCharge'])
-                . HTMLInput::generateMarkup('', ['name' => 'roomChargesPayCB', 'class' => 'hhk-feeskeys hhk-RoomCharge', 'type' => 'checkbox', 'style' => 'margin-right:.4em;'])
-                . HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'size' => '7', 'class'=>'hhk-RoomCharge', 'style' => 'border:none;text-align:right;', 'readonly'=>'readonly'])
-                .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']);
+            // Make middle column td.
+            $td = HTMLContainer::generateMarkup('button',
+                    HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'readonly'=>'readonly', 'size' => '7', 'style'=>'padding:0; border:none; margin:0;'])
+                    . HTMLContainer::generateMarkup('label',  HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-arrowthick-1-e']), ['for'=>'feesCharges'])
+                    , ['id'=>'feesChargesContr', 'class'=>'ui-button ui-widget ui-corner-all hhk-RoomCharge', 'style'=>'min-width:fit-content; padding:0;'])
+                .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']
+            );
 
 
         	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', ['class'=>'tdlabel'])
-                .HTMLTable::makeTd($td, ['style'=>'text-align:center;'])
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;']), ['style'=>'text-align:right;', 'class'=>'hhk-feesPay'])
-                , ['class'=>'hhk-RoomFees']);
+                .HTMLTable::makeTd('$'. $td, ['style'=>'text-align:center;'])
+                .HTMLTable::makeTd(
+                    HTMLInput::generateMarkup('', ['name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;'])
+                    , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay']
+                )
+                , ['class'=>'hhk-RoomFees']
+            );
 
             $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
             if (count($taxedItems) > 0) {
@@ -1037,29 +1044,20 @@ ORDER BY v.idVisit , v.Span;");
                 }
             }
 
-            // Donations - only if checking out and room overpaid.
-            // $feesTbl->addBodyTr(
-            //     HTMLTable::makeTd($labels->getString('PaymentChooser', 'Donation', 'Donation') . ':', ['class' => 'tdlabel', 'colspan'=>'2'])
-            //     . HTMLTable::makeTd(
-            //         HTMLInput::generateMarkup('', ['name' => 'donationPay', 'size' => '8', 'class' => 'hhk-feeskeys', 'style' => 'text-align:right;'])
-            //         , ['style' => 'text-align:right;']
-            //     )
-            //     ,
-            //     ['style' => 'display:none;', 'class' => 'hhk-donationTr']
-            // );
+            // Extra payments - only if checking out and room overpaid.
+            $feesTbl->addBodyTr(
+                HTMLTable::makeTd($labels->getString('PaymentChooser', 'ExtraPayment', 'Extra Payment') . ':', ['class' => 'tdlabel', 'colspan'=>'2'])
+                . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup('', ['name' => 'extraPay', 'size' => '8', 'class' => 'hhk-feeskeys', 'style' => 'text-align:right;'])
+                    , ['style' => 'text-align:right;']
+                )
+                ,
+                ['style' => 'display:none;', 'class' => 'hhk-extraPayTr']
+            );
 
         }
 
 
-
-
-        // Amount to pay
-        $feesTbl->addBodyTr(
-            HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', ['id'=>'spnPayTitle']), array('colspan'=>'2', 'class'=>'tdlabel'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', ['name'=>'totalPayment', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly'])
-                , ['style'=>'text-align:right;border:2px solid #2E99DD;'])
-            , ['class'=>'totalPaymentTr']
-        );
 
 
         // House Discount Amount
@@ -1082,7 +1080,20 @@ ORDER BY v.idVisit , v.Span;");
         }
 
 
-         // Extra payment & distribution Selector
+        // Amount to pay
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', ['id' => 'spnPayTitle']), array('colspan' => '2', 'class' => 'tdlabel'))
+            . HTMLTable::makeTd(
+                '$' . HTMLInput::generateMarkup('', ['name' => 'totalPayment', 'size' => '8', 'class' => 'hhk-feeskeys', 'style' => 'border:none;text-align:right;font-weight:bold;', 'readonly' => 'readonly'])
+                ,
+                ['style' => 'text-align:right;border:2px solid #2E99DD;']
+            )
+            ,
+            ['class' => 'totalPaymentTr']
+        );
+
+
+        // Extra payment & distribution Selector
         if (count($excessPays) > 0) {
 
             $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', ['class'=>'tdlabel', 'colspan'=>'2'])

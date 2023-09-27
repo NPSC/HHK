@@ -85,4 +85,4 @@ ALTER TABLE `name_address`
 ADD COLUMN IF NOT EXISTS `DistCalcType` VARCHAR(10) NULL DEFAULT NULL AFTER `Meters_From_House`;
 
 -- New donation label.
-INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('Donation', 'Donation', 's', 'pc');
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('ExtraPayment', 'Extra Payment', 's', 'pc');
