@@ -190,7 +190,7 @@ if($idVisit || $idResv){
 
             $signedTabContent .= HTMLContainer::generateMarkup('div',
                 HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form'))
-                .$r['Doc']
+                .(str_starts_with($r['Mime_Type'], "base64:") ? base64_decode($r['Doc']) : $r['Doc'])
                 .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')),
                 array('id'=>$r['Doc_Id']));
         }
@@ -294,7 +294,7 @@ $(document).ready(function() {
 		formData.append('idVisit', '<?php echo $idVisit; ?>');
 		formData.append('idResv', '<?php echo $idResv; ?>');
 		formData.append('docTitle', "Registration Form");
-		formData.append('docContents', formContent);
+		formData.append('docContents', btoa(formContent));
 
 		$.ajax({
 			url: 'ws_ckin.php',
