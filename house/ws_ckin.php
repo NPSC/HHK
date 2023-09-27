@@ -251,11 +251,11 @@ try {
             $psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
             $idVisit = intval(filter_input(INPUT_POST, 'idVisit', FILTER_SANITIZE_NUMBER_INT), 10);
             $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT), 10);
-            $docContents = $_POST["docContents"];
+            $docContents = filter_input(INPUT_POST, "docContents", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $docTitle = ($idVisit > 0 ? "Visit " . $idVisit : Labels::getString("GuestEdit", "reservationTitle", "Reservation") . " " . $idResv) . " Registration Form";
 
-            $document = Document::createNew($docTitle, "text/html", $docContents, $uS->username, "reg");
+            $document = Document::createNew($docTitle, "base64:text/html", $docContents, $uS->username, "reg");
 
             $document->setAbstract(json_encode(['idVisit'=>$idVisit, 'idResv'=>$idResv]));
 
