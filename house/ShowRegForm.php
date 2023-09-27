@@ -126,7 +126,7 @@ if($idDoc > 0){
     $doc = new Document($idDoc);
     $doc->loadDocument($dbh);
     if($doc->getType() == "reg"){
-        $regContents = $doc->getDoc();
+        $regContents =  (str_starts_with($doc->getMimeType(), "base64:") ? base64_decode($doc->getDoc()) : $doc->getDoc());
         if($uS->RegForm == "3"){
             $form = new CustomRegisterForm();
             $sty = $form->getStyling();
