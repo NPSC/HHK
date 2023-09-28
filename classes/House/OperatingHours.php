@@ -39,7 +39,7 @@ class OperatingHours {
 
         // EKC 9/18/2023 Check for null.
         if ( ! is_string($this->currentHours[$dow]["Start_Date"]) || $this->currentHours[$dow]["Start_Date"] = '') {
-            return true;  // bypass operating hours.
+            return false;  // bypass operating hours.
         }
 
         $startDate = new \DateTime($this->currentHours[$dow]["Start_Date"]);
