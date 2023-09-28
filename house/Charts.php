@@ -144,6 +144,41 @@ function rmNiteData(\PDO $dbh, $year) {
     return $data;
 }
 
+function vlData(\PDO $dbh)
+{
+    $raw = [];
+    $result[] = ['Days', 'Visits'];
+    $sinceDT = new \DateTime();
+    $sinceDT->sub(new \DateInterval('P2Y'));
+    $since = $sinceDT->format('Y-m-d');
+    $maxDays = 0;
+
+    // Get visits
+    $stmt = $dbh->query("SELECT
+            DATEDIFF(DATE(v.Actual_Departure),DATE(v.Arrival_Date)) as `Visit_Age`,
+            count(v.idVisit)
+        FROM
+            visit v
+        WHERE DATE(v.Arrival_Date) > DATE('$since') and v.Actual_Departure is not null
+        group by Visit_Age;"
+    );
+
+    while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+        $raw[$r[0]] = $r[1];
+        $maxDays = $r[0];
+    }
+
+    for ($i = 1; $i <= $maxDays; $i++) {
+        if (isset($raw[$i])) {
+            $result[] = [$i, $raw[$i]];
+        } else {
+            $result[] = [$i, 0];
+        }
+    }
+
+    return $result;
+}
+
 /**
  * Summary of getSum
  * @param array $totals
@@ -168,7 +203,7 @@ function getSum($totals) {
     return $sum;
 }
 
-$mk1 = '<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div>';
+$mk1 = '<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 10px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div>';
 
 
 if (filter_has_var(INPUT_POST, 'cmd')) {
@@ -193,7 +228,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
@@ -201,17 +236,16 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
 
-        <script src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
         <script type="text/javascript">
             google.charts.load('current', {packages: ['corechart', 'bar']});
@@ -223,13 +257,29 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
                 let options = {
                     height:500,
-                    width: 1100,
+                    width: 1400,
                     chart: {title:"HHK Check-in, Checkout Time-of-Day Distribution",
                             subtitle: 'Over the last 12 months'}
                 };
 
                 var chart = new google.charts.Bar(document.getElementById('todChart'));
                 chart.draw(dataTable, google.charts.Bar.convertOptions(options));
+            }
+
+            function drawVLCheckin() {
+
+                let data = <?php echo json_encode(vlData($dbh)); ?>;
+                    let dataTable = google.visualization.arrayToDataTable(data);
+
+                    let options = {
+                        title: "Visit Length Distribution",
+                        subtitle: 'Over the last 2 years',
+                        vAxis: {format: "#", title: 'Visits'},
+                        hAxis: {title: 'Days'}
+                    };
+
+                    var chart = new google.visualization.LineChart(document.getElementById('vlChart'));
+                    chart.draw(dataTable, options);
             }
 
             function drawRoomMonth() {
@@ -276,10 +326,10 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                             google.charts.setOnLoadCallback(drawTODCheckin);
                         }
 
-                        // room-month distribution
-                        //if (ui.newTab.prop('id') == 'rmdTab') {
-
-                        //}
+                        // Visit Length Distribution
+                        if (ui.newTab.prop('id') == 'vlTab') {
+                            google.charts.setOnLoadCallback(drawVLCheckin);
+                        }
 
                     }
                 });
@@ -297,12 +347,18 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
             	<ul>
                     <li id='rmdTab'><a href="#rmDoc">Occupancy Distribution</a></li>
                     <li id='todTab'><a href="#todDoc">Check-in/Out Time of Day</a></li>
+                    <li id='vlTab'><a href="#vlDoc">Visit Length Distribution</a></li>
             	</ul>
             	<div id="todDoc">
                     <div id='todChart'></div>
             	</div>
+            	<div id="vlDoc">
+                    <div id='vlChart'></div>
+            	</div>
             	<div id="rmDoc">
-                    <div id='rmdChart'></div>
+                    <div id='rmdChart'>
+                        <?php echo $mk1; ?>
+                    </div>
             	</div>
             </div>
         </div>
