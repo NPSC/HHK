@@ -748,7 +748,7 @@ class CustomRegisterForm {
 
         @page {
             size: letter;
-            margin: .5in .5in;
+            margin: 0.5in 0;
             //margin-bottom: 0.5in;
         }
 
