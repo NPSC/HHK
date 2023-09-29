@@ -303,7 +303,7 @@ class Document {
      * @param string $username
      * @return int the number of records updated.
      */
-    public function save(\PDO $dbh, $title, $doc, $style, $abstract, $username) {
+    public function save(\PDO $dbh, $title, $doc, $style, $abstract, $mimeType, $username) {
 
         $counter = 0;
 
@@ -311,6 +311,7 @@ class Document {
 
             $this->documentRS->Title->setNewVal($title);
             $this->documentRS->Doc->setNewVal($doc);
+            $this->documentRS->Mime_Type->setNewVal($mimeType);
             $this->documentRS->Style->setNewVal($style);
             $this->documentRS->Abstract->setNewVal($abstract);
             $this->documentRS->Updated_By->setNewVal($username);

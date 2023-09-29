@@ -246,6 +246,7 @@ class HouseServices {
             $notes = filter_var($post["taNewVNote"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($notes != '' && $idVisit > 0) {
+                $notes = filter_var(base64_decode($notes), FILTER_SANITIZE_FULL_SPECIAL_CHARS); //sanitize decoded notes
                 LinkNote::save($dbh, $notes, $idVisit, Note::VisitLink, '', $uS->username, $uS->ConcatVisitNotes);
             }
         }

@@ -138,6 +138,7 @@ try {
          case 'previewform':
 
              $style = "";
+             $formData = "";
              if(isset($_REQUEST['style'])){
                  $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
              }
@@ -147,11 +148,14 @@ try {
              if(isset($_REQUEST['maxGuests'])){
                  $maxGuests = filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT);
              }
+             if(isset($_REQUEST['formData'])){
+                $formData = filter_var($_REQUEST['formData'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+             }
 
              if(!$uS->logged){
                  $events['error'] = "Unauthorized for page: Please login";
              }else{
-                 $events['formData'] = $_REQUEST['formData'];
+                 $events['formData'] = base64_decode($formData);
                  $events['formSettings']['formStyle'] = $style;
                  $events['formSettings']['enableRecaptcha'] = false;
                  $events['formSettings']['initialGuests'] = $initialGuests;
@@ -177,7 +181,7 @@ try {
             $formRenderData = '';
             if(isset($_POST['formRenderData'])){
                 try{
-                    json_decode($_REQUEST['formRenderData']);
+                    json_decode(base64_decode($_REQUEST['formRenderData']));
                     $formRenderData = $_REQUEST['formRenderData'];
                 }catch(\Exception $e){
 

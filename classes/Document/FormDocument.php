@@ -121,10 +121,11 @@ group by g.Code order by g.Order';
         }
 
         $validatedFields = json_encode($validatedDoc['fields']);
-        $sanitizedDoc = json_encode($validatedDoc['sanitizedDoc']);
+        $sanitizedDoc = base64_encode(json_encode($validatedDoc['sanitizedDoc']));
 
         $this->doc = new Document();
         $this->doc->setType(self::JsonType);
+        $this->doc->setMimeType("base64:text/json");
         $this->doc->setCategory(self::formCat);
         $this->doc->setTitle($templateName);
         $this->doc->setUserData($validatedFields);
@@ -236,7 +237,7 @@ group by g.Code order by g.Order';
     public function validateFields($doc){
         $response = ["fields"=>[], "errors"=>[]];
 
-        $fields = json_decode($doc);
+        $fields = json_decode(base64_decode($doc));
         $fieldData = [];
 
         foreach($fields as $key=>$field){
@@ -307,7 +308,11 @@ group by g.Code order by g.Order';
     }
 
     public function getDoc(){
-        return $this->doc->getDoc();
+        if(str_starts_with($this->doc->getMimeType(), "base64:")){
+            return base64_decode($this->doc->getDoc());
+        }else{
+            return $this->doc->getDoc();
+        }
     }
 
     public function getUserData(){

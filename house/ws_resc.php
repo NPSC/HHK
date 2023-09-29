@@ -660,7 +660,7 @@ try {
             if(isset($_REQUEST['doc'])) {
                 try{
                     // Use funciton to test the doc.
-                    json_decode($_REQUEST['doc']);
+                    json_decode(base64_decode($_REQUEST['doc']));
                     $doc = $_REQUEST['doc'];
                 }catch(\Exception $e){
 

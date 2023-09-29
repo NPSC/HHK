@@ -702,14 +702,14 @@
     			type: 'button',
     			events: {
     				click: function() {
-    					var formData = settings.formBuilder.actions.getData();
+    					var formData = btoa(JSON.stringify(settings.formBuilder.actions.getData()));
     					
     					var f = $("<form target='formPreviewIframe' method='POST' style='display:none;'></form>").attr({
         					action: settings.previewURL
     					}).appendTo(document.body);
     					
     					f.append('<input type="hidden" name="cmd" value="preview">');
-    					f.append('<textarea name="formData" style="display:none">' + JSON.stringify(formData) + '</textarea>');
+    					f.append('<textarea name="formData" style="display:none">' + formData + '</textarea>');
     					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea#formStyle").val() + '">');
     					f.append('<input type="hidden" name="initialGuests" value="' + settingsDialog.find("input[name=initialGuests]").val() + '">');
     					f.append('<input type="hidden" name="maxGuests" value="' + settingsDialog.find("input[name=maxGuests]").val() + '">');
@@ -1585,7 +1585,7 @@
 		    				"cmd":"saveformtemplate",
 		    				"idDocument": idDocument,
 		    				"title": title,
-		    				"doc": JSON.stringify(formData),
+		    				"doc": btoa(JSON.stringify(formData)),
 		    				"style": style,
 		    				"successTitle": successTitle,
 		    				"successContent": successContent,

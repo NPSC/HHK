@@ -179,7 +179,7 @@
                                 linkType: settings.linkType,
                                 linkId: settings.linkId,
                                 noteCategory:noteCategory,
-                                data: noteData
+                                data: btoa(noteData)
                             },
                             success: function( data ){
                                 if(data.idNote > 0){

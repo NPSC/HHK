@@ -1160,7 +1160,7 @@ $(document).ready(function() {
                     </form>
                 </div>
             </div>
-            <div id="vInv" style="display:none; font-size:0.8em;">
+            <div id="vInv" style="display:none;">
                 <input type="button" id="btnInvGo" value="Refresh"/>
 
                   <div id="rptInvdiv" class="hhk-visitdialog"></div>

@@ -206,7 +206,8 @@ try {
         $idLink = 0;
 
         if (isset($_POST['data'])) {
-            $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $data = base64_decode(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $data = filter_var($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS); //sanitize decoded data
         }
 
         if(isset($_POST['noteCategory'])){
@@ -234,7 +235,8 @@ try {
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-	       $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+	       $data = base64_decode(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+           $data = filter_var($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS); //sanitize decoded data
         }
 
         if(isset($_POST['noteCategory'])){
