@@ -883,6 +883,9 @@ ORDER BY v.idVisit , v.Span;");
             $feesTbl->addBodyTr($t);
         }
 
+        // Find any taxed items.  If the return is an empty array, then no taxes.
+        $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
+
 
         if ($useKeyDeposit && is_null($visitCharge) === FALSE) {
 
@@ -990,7 +993,7 @@ ORDER BY v.idVisit , v.Span;");
             }
         }
 
-        // Reimburse VAT.
+        // Reimburse VAT for timed out items.
         if (is_null($visitCharge) === FALSE && $visitCharge->getNightsStayed() > 0) {
 
             foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $idVisit, $visitCharge->getNightsStayed()) as $t) {
@@ -1032,13 +1035,13 @@ ORDER BY v.idVisit , v.Span;");
                 , ['class'=>'hhk-RoomFees']
             );
 
-            $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
             if (count($taxedItems) > 0) {
 
                 foreach ($taxedItems as $t) {
                     // show tax line
                     $feesTbl->addBodyTr(HTMLTable::makeTd($t->getTaxingItemDesc() . ' ('. $t->getTextPercentTax().' ):', ['class'=>'tdlabel', 'colspan'=>'2'])
-                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'feesTax'.$t->getIdTaxingItem(), 'data-taxrate'=>$t->getDecimalTax(), 'size'=>'6', 'class'=>'hhk-feeskeys  hhk-TaxingItem hhk-applyTax', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly'])
+                        .HTMLTable::makeTd(
+                            HTMLInput::generateMarkup('', ['name'=>'feesTax'.$t->getIdTaxingItem(), 'data-taxrate'=>$t->getDecimalTax(), 'size'=>'6', 'class'=>'hhk-feeskeys  hhk-TaxingItem hhk-applyTax', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly'])
                             , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay'])
                         , ['class'=>'hhk-RoomFees']);
                 }
