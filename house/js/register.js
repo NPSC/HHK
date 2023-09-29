@@ -1433,7 +1433,7 @@ $(document).ready(function () {
                     } else if (data.success) {
 
                         $('#rptInvdiv').remove();
-                        $('#vInv').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success)));
+                        $('#vInv').append($('<div id="rptInvdiv"/>').append($(data.success)));
                         $('#rptInvdiv .gmenu').menu({
            					focus:function(e, ui){
            						$("#rptInvdiv .gmenu").not(this).menu("collapseAll", null, true);
