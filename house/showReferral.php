@@ -80,7 +80,7 @@ if(isset($_GET['template'])){
 }else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style'])){
     $cmd = 'previewform';
     $method = 'post';
-    $formData = json_decode($_POST['formData']);
+    $formData = json_decode(base64_decode($_POST['formData']));
     $style = $_POST['style'];
     $initialGuests = $_POST['initialGuests'];
     $maxGuests = $_POST['maxGuests'];
@@ -140,7 +140,7 @@ if(isset($_GET['template'])){
         <script type='text/javascript'>
             $(document).ready(function() {
 
-            	var previewFormData = JSON.stringify(<?php echo json_encode($formData); ?>);
+            	var previewFormData = btoa(JSON.stringify(<?php echo json_encode($formData); ?>));
 
 				var guestGroup = [];
 				var addGuestPosition = 0;
@@ -452,7 +452,7 @@ if(isset($_GET['template'])){
                         	   		type: "POST",
                         	    	data : {
                         	    		cmd: "submitform",
-                        	    		formRenderData: JSON.stringify(formRenderData),
+                        	    		formRenderData: btoa(JSON.stringify(formRenderData)),
                         	    		recaptchaToken: token,
                         	    		template: <?php echo (isset($_GET['template']) ? $_GET['template'] : 0); ?>
                         	    	},

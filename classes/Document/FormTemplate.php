@@ -105,6 +105,7 @@ class FormTemplate {
             $this->doc->setTitle($title);
             $this->doc->setType(self::JsonType);
             $this->doc->setCategory(self::TemplateCat);
+            $this->doc->setMimeType("base64:text/json");
             $this->doc->setDoc($doc);
             $this->doc->setStyle($style);
             $this->doc->setAbstract($abstractJson);
@@ -170,8 +171,8 @@ class FormTemplate {
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
             $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
-
-            $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, $username);
+            
+            $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, "base64:text/json", $username);
             if($count == 1){
                 return array('status'=>'success', 'msg'=>"Form updated successfully");
             }else{
@@ -221,7 +222,11 @@ class FormTemplate {
     }
 
     public function getTemplate(){
-        return $this->doc->getDoc();
+        if(str_starts_with($this->doc->getMimeType(), "base64:")){
+            return base64_decode($this->doc->getDoc());
+        }else{
+            return $this->doc->getDoc();
+        }
     }
 
     public function getStyle() {

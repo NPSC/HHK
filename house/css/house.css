@@ -709,7 +709,7 @@ div.dt-buttons .dt-button:hover>span {
 }
 
 .filterWrapper {
-	font-size: 0.9em;
+	font-size: 1em;
 	display: inline-block;
 	padding:10px;
 	min-width: 400px;

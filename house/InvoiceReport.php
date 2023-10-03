@@ -994,7 +994,7 @@ $(document).ready(function() {
                     } else if (data.success) {
 
                         $('#rptInvdiv').remove();
-                        $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" class="hhk-visitdialog" style="min-height:500px;"/>').append($(data.success))));
+                        $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" class="hhk-visitdialog"/>').append($(data.success))));
                         $('#rptInvdiv .gmenu').menu();
 
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
@@ -1088,8 +1088,6 @@ $(document).ready(function() {
 
     }
 
-    $('#mainTabs').addClass('d-inline-block');
-
     $('#includeFields').fieldSets({'reportName': 'invoice', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
 });
  </script>
@@ -1100,7 +1098,7 @@ $(document).ready(function() {
         <h2><?php echo $wInit->pageHeading; ?></h2>
         <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
 
-        <div id="mainTabs" style="font-size:.9em;display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
+        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
             <ul>
                 <li><a href="#invr">All Invoices</a></li>
                 <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
@@ -1160,7 +1158,7 @@ $(document).ready(function() {
                     </form>
                 </div>
             </div>
-            <div id="vInv" style="display:none; font-size:0.8em;">
+            <div id="vInv" style="display:none;">
                 <input type="button" id="btnInvGo" value="Refresh"/>
 
                   <div id="rptInvdiv" class="hhk-visitdialog"></div>

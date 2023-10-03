@@ -109,7 +109,7 @@ class InvoiceActions {
             }
 
 
-            $divAttr = array('id' => 'pudiv', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-panel hhk-visitdialog', 'style' => 'position:absolute; min-width:300px;');
+            $divAttr = array('id' => 'pudiv', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-panel hhk-visitdialog', 'style' => 'position:absolute; min-width:300px; font-size: 1em;');
             $tblAttr = array('style' => 'background-color:lightyellow; width:100%;');
 
             if ($lines[0]['Deleted'] == 1) {

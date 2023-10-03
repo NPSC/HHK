@@ -787,7 +787,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     // Save Note
     if ($('#taNewVNote').length > 0 && $('#taNewVNote').val() !== '') {
-        parms['taNewVNote'] = $('#taNewVNote').val();
+        parms['taNewVNote'] = btoa($('#taNewVNote').val());
     }
 
     // Notice to Checkout
