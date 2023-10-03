@@ -148,6 +148,8 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
     ifnull(pa.Country_Code, '') as pCountry,
     ifnull(pa.Postal_Code, '') as `pZip`,
     concat(if(dc.Description is not null, concat(dc.Description, ': '), ''), ifnull(d.Description, '')) as `Diagnosis`,
+    ifnull(p.BirthDate, '') as `DOB`,
+    TIMESTAMPDIFF(YEAR, p.BirthDate, CURDATE()) as `Age`,
     " . $listDemos . "
     ifnull(v.Span_Start, '') as `Arrival`,
     " . $departureCase . " as `Departure`,
@@ -238,6 +240,8 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
 
         $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
+        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " DOB", 'DOB', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " Age", 'Age', '', '', 'string', '15');
         $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " Diagnosis", 'Diagnosis', '', '', 'string', '20');
 
         //demographics
