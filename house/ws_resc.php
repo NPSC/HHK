@@ -809,7 +809,12 @@ function getCssVars(Session $uS){
     header('Content-Type: text/css');
     $vars = "";
 
-    $vars .= ($uS->printScale ? "--print-scale: " . $uS->printScale . "%;" : '');
+    $vars .= ($uS->printScale ? "
+    @media print{
+        body{
+            font-size: " . $uS->printScale/100 . "rem;
+        }
+    }" : '');
 
-    return ":root { " . $vars . " }";
+    return $vars;
 }
