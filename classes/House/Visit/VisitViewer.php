@@ -402,12 +402,26 @@ class VisitViewer {
         $idV = intval($idVisit, 10);
         $idS = intval($span, 10);
 
+        $titleMkup = HTMLContainer::generateMarkup('span', $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('style' => 'float:left;'));
+
         if ($idV > 0 && $idS > -1) {
             // load stays for this specific visit-span
             $stmt = $dbh->query("select * from `vstays_listing` where `idVisit` = $idV and `Visit_Span` = $idS order by `Span_Start_Date` desc;");
             $staysDtable = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            $visitStatus = $staysDtable[0]['Visit_Status'];
             $staysDtable_rows = count($staysDtable);
+
+            if ($staysDtable_rows < 1) {
+
+                // Return an error in-band
+                return HTMLContainer::generateMarkup(
+                    'fieldset',
+                    HTMLContainer::generateMarkup('legend', $titleMkup , array('style' => 'font-weight:bold;'))
+                    .HTMLContainer::generateMarkup('div', 'Error finding the visit, visit Id = ' . $idV . ', Span = ' . $idS)
+                    , array('class' => 'hhk-panel', 'style' => 'margin-bottom:10px;')
+                );
+            }
+
+            $visitStatus = $staysDtable[0]['Visit_Status'];
         }
 
         // Get previous span status
@@ -516,7 +530,6 @@ class VisitViewer {
 
         $dvTable = HTMLContainer::generateMarkup('div', $sTable->generateMarkup(array('id' => 'tblStays', 'style'=>'width:99%')), array('style'=>'max-height:150px;overflow:auto'));
 
-        $titleMkup = HTMLContainer::generateMarkup('span', $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('style'=>'float:left;'));
 
         return HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $titleMkup . $guestAddButton, array('style'=>'font-weight:bold;'))

@@ -177,17 +177,17 @@ GROUP BY s.idVisit, s.Visit_Span");
             return 0;
         }
 
-        // Flat rate
-        if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::FlatRateCategory) {
-            if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
+        // Flat rate    EKC 10/2/2023  Flat rate now treated as the others.
+        // if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::FlatRateCategory) {
+        //     if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
 
-                $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
-                $days = floor($amount / $rate);
-                $this->remainderAmt = $amount - ($amount * $days);
-                return $days;
-            }
-            return 0;
-        }
+        //         $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
+        //         $days = floor($amount / $rate);
+        //         $this->remainderAmt = $amount - ($amount * $days);
+        //         return $days;
+        //     }
+        //     return 0;
+        // }
 
         // the rest
         if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
@@ -379,7 +379,7 @@ GROUP BY s.idVisit, s.Visit_Span");
                 HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $defattrs), array('style'=>'text-align:center;'))
                 .($r->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
-                .($r->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategories::FlatRateCategory ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal(), 2), $rr2Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal(), 2), $rr2Attrs), array('style'=>'text-align:center;')))
                 .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
         }
@@ -402,14 +402,14 @@ GROUP BY s.idVisit, s.Visit_Span");
 
         if ($incomeRated) {
             $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`, Rate_Breakpoint_Category,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(1,'Rate A','a','a','$modelCode',5.00,3.00,1.00,0,'a'),"
-                . "(2,'Rate B','b','b','$modelCode',10.00,7.00,3.00,0,'a'),"
-                . "(3,'Rate C','c','c','$modelCode',20.00,15.00,10.00,0,'a'),"
-                . "(4,'Rate D','d','d','$modelCode',25.00,20.00,10.00,0,'a');");
+                . "(1,'Rate A','a','a','$modelCode',5.00,3.00,0,0,'a'),"
+                . "(2,'Rate B','b','b','$modelCode',10.00,7.00,0,0,'a'),"
+                . "(3,'Rate C','c','c','$modelCode',20.00,15.00,0,0,'a'),"
+                . "(4,'Rate D','d','d','$modelCode',25.00,20.00,0,0,'a');");
         }
 
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-            . "(5,'Flat Rate','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,0,0,0,'a'), "
+            . "(5,'Flat Rate','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,25.00,0,0,'a'), "
             . "(6,'Assigned','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }
