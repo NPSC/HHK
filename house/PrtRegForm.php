@@ -60,16 +60,13 @@ if ($checkinDate == '') {
         $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, 0, $wInit->resourceURL . '../conf/registrationLogo.png');
 
         $sty = $reservArray['docs'][0]['style'];
-        $regForm .= $reservArray['docs'][0]['doc'];
         
-        if($index < count($rows) - 1){ //add a page break to all reg forms except the last one.
-            $regForm .= HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));
-        }
+        $regForm .= HTMLContainer::generateMarkup('div', $reservArray['docs'][0]['doc'], array('class'=>'regFormContainer pagebreak'));
     }
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" moznomarginboxes>
+<html lang="en">
     <head>
         <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>

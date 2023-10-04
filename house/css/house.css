@@ -890,3 +890,14 @@ table.dataTable tbody td {
 #filterSelectors{
 	font-size: 0.9em;
 }
+
+.pagebreak {
+	page-break-after: always;
+}
+
+@media screen {
+	.regFormContainer {
+		margin-top: 1em;
+		margin-bottom: 1em;
+	}
+}

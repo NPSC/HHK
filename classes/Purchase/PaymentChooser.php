@@ -884,7 +884,11 @@ ORDER BY v.idVisit , v.Span;");
         }
 
         // Find any taxed items.  If the return is an empty array, then no taxes.
-        $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
+        if($vat instanceof ValueAddedTax){
+            $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
+        }else{
+            $taxedItems = array();
+        }
 
 
         if ($useKeyDeposit && is_null($visitCharge) === FALSE) {
