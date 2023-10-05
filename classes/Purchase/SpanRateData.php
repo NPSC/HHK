@@ -67,7 +67,7 @@ class SpanRateData {
         $this->aveGuestsDay = 1;
 
         if ($this->currentDays > 0) {
-            $this->aveGuestsDay = $this->currentGuestDays / $this->currentDays;
+            $this->aveGuestsDay = ($this->currentGuestDays + $this->currentDays) / $this->currentDays;
         }
 
         // any expected future days?

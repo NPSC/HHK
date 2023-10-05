@@ -48,12 +48,12 @@ class PriceGuestDay extends AbstractPriceModel {
         }
 
         $stmt = $dbh->query("SELECT
-    s.Visit_Span,
-    SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date),
-    DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
-FROM stays s JOIN name n ON s.idName = n.idName
-WHERE IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR)) AND s.idVisit = $idVisit
-GROUP BY s.Visit_Span");
+            s.Visit_Span,
+            SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date),
+            DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
+        FROM stays s JOIN name n ON s.idName = n.idName
+        WHERE IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR)) AND s.idVisit = $idVisit
+        GROUP BY s.Visit_Span");
 
 
         $stays = array();
@@ -64,7 +64,7 @@ GROUP BY s.Visit_Span");
 
         $perGuestChg = FALSE;
 
-        for ($n=0; $n<count($spans); $n++) {
+        for ($n=0; $n < count($spans); $n++) {
 
             if (isset($stays[$spans[$n]['Span']])) {
 
@@ -72,7 +72,7 @@ GROUP BY s.Visit_Span");
 
                 // If the extra guest rate exists....
                 if ($rateRs->Reduced_Rate_2->getStoredVal() > 0) {
-                    $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['Span']];
+                    $spans[$n]['Guest_Nights'] = max(($stays[$spans[$n]['Span']] - $spans[$n]['Actual_Span_Nights']), 0);
                     $perGuestChg = TRUE;
                 } else {
                     $spans[$n]['Guest_Nights'] = 0;
@@ -114,7 +114,7 @@ GROUP BY s.idVisit, s.Visit_Span");
             $stays[$r['idVisit']][$r['Visit_Span']] = $r['GDays'] < 0 ? 0 : $r['GDays'];
         }
 
-        $perGuestChg = FALSE;
+        $this->hasPerGuestCharge = FALSE;
 
         for ($n=0; $n<count($spans); $n++) {
 
@@ -124,15 +124,14 @@ GROUP BY s.idVisit, s.Visit_Span");
 
                 // If the extra guest rate exists....
                 if ($rateRs->Reduced_Rate_2->getStoredVal() > 0) {
-                    $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['idVisit']][$spans[$n]['Span']];
-                    $perGuestChg = TRUE;
+                    $spans[$n]['Guest_Nights'] = max(($stays[$spans[$n]['idVisit']][$spans[$n]['Span']] - $spans[$n]['Actual_Span_Nights']), 0);
+                    $this->hasPerGuestCharge = TRUE;
                 } else {
                     $spans[$n]['Guest_Nights'] = 0;
                 }
             }
         }
 
-        $this->hasPerGuestCharge = $perGuestChg;
         return $spans;
     }
 
@@ -147,7 +146,7 @@ GROUP BY s.idVisit, s.Visit_Span");
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
         $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $nites;
-        $guestDays -= $nites;
+        //$guestDays -= $nites;
 
         if ($guestDays > 0) {
             $amount += $rrateRs->Reduced_Rate_2->getStoredVal() * $guestDays;
@@ -226,7 +225,7 @@ GROUP BY s.idVisit, s.Visit_Span");
         $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $days * $adjRatio;
         $tiers[] = array('rate'=>$rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>$amount, 'gdays'=>$days);
 
-        $guestDays -= $days;
+        //$guestDays -= $days;
 
         if ($guestDays > 0 && $this->hasPerGuestCharge) {  // added rate check EKC 12/5/2022
             $amount = $rrateRs->Reduced_Rate_2->getStoredVal() * $guestDays * $adjRatio;
@@ -301,13 +300,8 @@ GROUP BY s.idVisit, s.Visit_Span");
 
     public function rateTotalMarkup(&$tbl, $desc, $numberNites, $totalAmt, $guestNites) {
 
-        $cols = 5;
-        if ($this->hasPerGuestCharge) {
-            $cols = 6;
-        }
-
         // Room Fee totals
-        $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan' => $cols, 'class' => 'tdlabel hhk-tdTotals', 'style' => 'font-weight:bold;'))
+        $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan' => 5, 'class' => 'tdlabel hhk-tdTotals', 'style' => 'font-weight:bold;'))
             . ($this->hasPerGuestCharge ? HTMLTable::makeTd($guestNites, array('class' => 'hhk-tdTotals', 'style' => 'text-align:center;font-weight:bold;')) : '')
             . HTMLTable::makeTd($numberNites, array('class' => 'hhk-tdTotals', 'style' => 'text-align:center;font-weight:bold;'))
             . HTMLTable::makeTd('$' . $totalAmt, array('class' => 'hhk-tdTotals', 'style' => 'text-align:right;font-weight:bold;')));

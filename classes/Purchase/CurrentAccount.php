@@ -170,7 +170,7 @@ class CurrentAccount {
 
         $this->numberNitesStayed = $visitCharge->getNightsStayed();
 
-        $this->setAddnlGuestNites($visitCharge->getGuestNightsStayed() - $visitCharge->getNightsStayed());
+        $this->setAddnlGuestNites($visitCharge->getGuestNightsStayed());
         $this->setVisitGlideCredit($visitCharge->getGlideCredit());
 
         // Charges.
