@@ -301,9 +301,8 @@ GROUP BY s.idVisit, s.Visit_Span");
     public function rateTotalMarkup(&$tbl, $desc, $numberNites, $totalAmt, $guestNites) {
 
         // Room Fee totals
-        $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan' => 5, 'class' => 'tdlabel hhk-tdTotals', 'style' => 'font-weight:bold;'))
+        $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan' => 6, 'class' => 'tdlabel hhk-tdTotals', 'style' => 'font-weight:bold;'))
             . ($this->hasPerGuestCharge ? HTMLTable::makeTd($guestNites, array('class' => 'hhk-tdTotals', 'style' => 'text-align:center;font-weight:bold;')) : '')
-            . HTMLTable::makeTd($numberNites, array('class' => 'hhk-tdTotals', 'style' => 'text-align:center;font-weight:bold;'))
             . HTMLTable::makeTd('$' . $totalAmt, array('class' => 'hhk-tdTotals', 'style' => 'text-align:right;font-weight:bold;')));
 
     }
