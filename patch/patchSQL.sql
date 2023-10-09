@@ -86,3 +86,7 @@ ADD COLUMN IF NOT EXISTS `DistCalcType` VARCHAR(10) NULL DEFAULT NULL AFTER `Met
 
 -- New donation label.
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('ExtraPayment', 'Extra Payment', 's', 'pc');
+
+-- add rebook flag
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('UseRebook', 'false', 'b', 'hf', 'Automatically rebook cancelled reservation', '', '1');
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('RebookNewResv', 'true', 'b', 'hf', 'When true, make new reservation when rebooking, otherwise edit existing reservation', '', '1');

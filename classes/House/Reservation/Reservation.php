@@ -1000,13 +1000,17 @@ where rg.idReservation =" . $r['idReservation']);
             .($moaBalance > 0 ? HTMLTable::makeTd('$'.number_format($moaBalance, 2), ['style'=>'text-align:center;']) : '')
             .($resv->isActive($allResvStatuses) ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), ['style'=>'text-align:center;']) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), FALSE), ['name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'])
-                        .HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;']))
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), FALSE), ['name'=>'selResvStatus', 'class'=>'mr-1'])
+                        .HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;']))
                 );
 
 
         if ($uS->UseWLnotes === FALSE && $resv->isActive($allResvStatuses)) {
             $tbl2->addBodyTr(HTMLTable::makeTd('Registration Note:', ['class'=>'tdlabel']) . HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), ['name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40']), ['colspan'=>'3']));
+        }
+
+        if($uS->UseRebook) {
+            $tbl2->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup("", array("type"=>"checkbox", "name"=>"cbRebook", "id"=>"cbRebook", "class"=>"mr-1")) . HTMLContainer::generateMarkup("label", "Rebook for:", array("for"=>"cbRebook")), array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup("", array('name'=>"newGstDate", "size"=>"14", "class"=>"mr-3")), array("colspan"=>"2")), array("id"=>"rebookRow", "class"=>"d-none"));
         }
 
         //Ribbon Note

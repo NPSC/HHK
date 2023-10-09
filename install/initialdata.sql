@@ -687,6 +687,8 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('UseDocumentUpload','true','b','hf','','Enable Document Uploads','',1),
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout','',1),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
+('UseRebook', 'false', 'b', 'hf', '', 'Automatically rebook cancelled reservation', '', 1);
+('RebookNewResv', 'true', 'b', 'hf', '', 'When true, make new reservation when rebooking, otherwise edit existing reservation', '', '1')
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),

@@ -2045,6 +2045,40 @@ function resvManager(initData, options) {
             });
         }
 
+        function setupRebook(){
+            let datepickerOptions = {
+                yearRange: '00:+2',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                minDate: 0,
+                dateFormat: 'M d, yy'
+            };
+
+            $(document).on('change', '#selResvStatus', function () {
+                if ($(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
+                    // Cancel
+                    newDate = moment().add('1','days').format("MMM D, YYYY");
+                    $("#newGstDate").datepicker(datepickerOptions);
+                    $('#rebookRow').removeClass("d-none");
+                } else {
+                    $("#newGstDate").val("");
+                    $("#cbRebook").prop("checked", "");
+                    $('#rebookRow').addClass("d-none");
+                }
+            });
+
+            $(document).on('click', '#cbRebook', function(){
+                if($(this).prop('checked')){
+                    $("#newGstDate").val(newDate);
+                }else{
+                    $("#newGstDate").val("");
+                }
+            });
+
+            $('#selResvStatus').change();
+        }
+
         function setupNotes(rid, $container, psgId = null) {
 
             if (rid > 0) {
@@ -2105,6 +2139,7 @@ function resvManager(initData, options) {
             // Stat
             if (data.resv.rdiv.rstat !== undefined) {
                 $rDiv.append($(data.resv.rdiv.rstat));
+                setupRebook();
             }
 
             // Multiple Reservations

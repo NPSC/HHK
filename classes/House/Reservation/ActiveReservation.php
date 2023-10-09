@@ -14,6 +14,8 @@ use HHK\Payment\PaymentManager\ResvPaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\House\HouseServices;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Tables\EditRS;
+use HHK\Tables\Reservation\Reservation_GuestRS;
 
 
 
@@ -123,6 +125,8 @@ class ActiveReservation extends Reservation {
             'txtRibbonNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selResource' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'taNewNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'cbRebook' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'newGstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'cbRS'  =>  [
                 'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'flags' => FILTER_REQUIRE_ARRAY
@@ -159,14 +163,20 @@ class ActiveReservation extends Reservation {
             $reservStatus = $resv->getStatus();
         }
 
+        $oldResvStatus = $resv->getStatus();
         // Set reservation status
         $resv->setStatus($reservStatus);
         $this->reserveData->setResvStatusType($reservStatuses[$reservStatus]['Type']);
+        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
         // Cancel reservation?
         if ($resv->isRemovedStatus($reservStatus, $reservStatuses)) {
-            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
-            return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
+            if($uS->UseRebook && isset($post['cbRebook'])){
+                return $this->rebookReservation($dbh, $resv, $oldResvStatus, $post);
+            }else{
+                $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+                return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
+            }
         }
 
         // Registration
@@ -270,6 +280,43 @@ class ActiveReservation extends Reservation {
         $this->reservRs = $resv->getReservationRS();
 
         return $this;
+    }
+
+    protected function rebookReservation(\PDO $dbh, Reservation_1 $resv, $oldResvStatus, array $post){
+        $uS = Session::getInstance();
+        
+        //check dates
+        if(isset($post['newGstDate'])){
+            $newArrival = new \DateTime($post['newGstDate']);
+            $departure = new \DateTime($resv->getDeparture());
+            if($newArrival < $departure){
+                //continue
+            }else{
+                //error - new arrival date must be less than departure date
+            }
+        }else{
+            //error
+            //new arrival date is required
+        }
+
+        if($uS->RebookNewResv){
+            $guests = [];
+            $rgRs = new Reservation_GuestRS();
+            $rgRs->idReservation->setStoredVal($resv->getIdReservation());
+            $rgRows = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
+
+            foreach ($rgRows as $g) {
+                $guests[$g['idGuest']] = $g['Primary_Guest'];
+            }
+
+            return RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
+
+        }else{
+            $resv->setExpectedArrival($newArrival);
+            $resv->setStatus($oldResvStatus);
+            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+            return $resv->getIdReservation();
+        }
     }
 
     /**
