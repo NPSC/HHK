@@ -568,7 +568,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('DefaultRegisterTab','0','lu','h','','Default active tab on register page','Default_Reg_Tab',1),
 ('DefaultVisitFee','1','s','h','','Use the Resource Builder','',0),
 ('DefCalEventTextColor', 'black', 's', 'c', '', 'Default calendar event ribbon text color', '',1),
-('distCalculator', '', 'lu', 'hf', 'Distance calculator method', 'DistCalculator', '1')
+('distCalculator', '', 'lu', 'hf', 'Distance calculator method', 'DistCalculator', '1'),
 ('DKIMdomain', '', 's', 'es', '', 'Domain name of sender (must match FromAddress and NoReplyAddr domains)', '',1),
 ('Doctor','true','b','hf','','Track doctors','',1),
 ('EmailType','','lu','es','','Email protocol','Email_Server',1),
@@ -754,7 +754,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('PayRmFees', 'Pay room fees', 's', 'pc', '', ''),
 ('RoomCharges',	'Room Charges',	's', 'pc', '', ''),
 ('Credit',	'Credit',	's', 'pc', '', ''),
-('ExtraPayment', 'Extra Payment', 's', 'pc', '', '');
+('ExtraPayment', 'Extra Payment', 's', 'pc', '', ''),
 
 
 ('patient','Patient','s','mt','','Default: Patient'),
