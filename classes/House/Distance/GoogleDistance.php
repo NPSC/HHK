@@ -28,11 +28,14 @@ class GoogleDistance extends AbstractDistance {
      */
     protected function calcDistance(\PDO $dbh, array $originAddr, array $destinationAddr) {
 
+        $uS = Session::getInstance();
+        
         $responseJson = $this->sendRequest($dbh, $originAddr, $destinationAddr);
 
         if($responseJson->status == "OK" && isset($responseJson->routes[0]->legs[0]->distance)){
             return array("type"=>"google", "units"=>"meters", "value"=>$responseJson->routes[0]->legs[0]->distance->value);
         }else{
+            HouseLog::logApi($dbh, "GoogleDirections", false, "Error parsing response: " . json_encode($responseJson), $uS->username);
             throw new RuntimeException("Failed to get driving distance: cannot find distance in API response");
         }
 
@@ -60,7 +63,7 @@ class GoogleDistance extends AbstractDistance {
             ];
 
             $client = new Client();
-            $response = $client->get($endpoint, ['query'=>$params, 'headers'=>['Accept'=>'applicatioin/json']]);
+            $response = $client->get($endpoint, ['query'=>$params, 'headers'=>['Accept'=>'application/json']]);
 
             HouseLog::logApi($dbh, "GoogleDirections", true, "Called " . $endpoint . " successfully" . (isset($originAddr['idName_Address']) ? " - idName_Address: " . $originAddr['idName_Address'] : ""), $uS->username);
 
