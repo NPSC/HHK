@@ -422,7 +422,6 @@ BEGIN
 	delete m from mcalendar m join tids n on m.idName = n.idName;
 	delete ml from mail_listing ml join tids n on ml.id = n.idName;
 	delete mn from member_note mn join tids n on mn.idName = n.idName;
-	delete f from fbx f join tids n on f.idName = n.idName;
 	delete mh from member_history mh join tids n on mh.idName = n.idName;
 	-- delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
 	delete gt from guest_token gt join tids n on gt.idGuest = n.idName;
@@ -820,7 +819,6 @@ CREATE PROCEDURE `del_webuser`
 BEGIN
     delete from w_users where idName = id;
     delete from w_auth where idName = id;
-    delete from fbx where idName = id;
     delete from id_securitygroup where idName = id;
 
     insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)

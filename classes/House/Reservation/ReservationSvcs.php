@@ -307,7 +307,7 @@ class ReservationSvcs
             //get primary guest
             if ($idVisit > 0) {
 
-                $stmtv = $dbh->prepare("Select v.idPrimaryGuest, v.idRegistration, r.idPsg from visit v join registration r on v.idRegistration = r.idRegistration where idVisit = :idv and span = :span");
+                $stmtv = $dbh->prepare("Select v.idPrimaryGuest, v.idRegistration, r.idPsg, v.idReservation from visit v join registration r on v.idRegistration = r.idRegistration where idVisit = :idv and span = :span");
                 $stmtv->execute(array(
                     ':idv' => $idVisit,
                     ':span' => $span
@@ -317,6 +317,7 @@ class ReservationSvcs
                 if(count($rows) == 1){
                     $return["idPrimaryGuest"] = $rows[0]["idPrimaryGuest"];
                     $return["idPsg"] = $rows[0]["idPsg"];
+                    $return["idReservation"] = $rows[0]["idReservation"];
                 }
 
             }else if($idReservation > 0){
@@ -559,14 +560,20 @@ class ReservationSvcs
         $sql = 'select * from v_signed_reg_forms where PSG_Id = :idPsg';
         $params = array(':idPsg'=>$idPsg);
 
-        if($idReservation > 0){
-            $sql .= ' AND Resv_Id = :idResv';
-            $params[':idResv'] = $idReservation;
-        }
-
-        if($idVisit > 0){
-            $sql .= ' AND Visit_Id = :idVisit';
-            $params[':idVisit'] = $idVisit;
+        if($idReservation > 0 || $idVisit > 0){
+            $sql .= " AND (";
+            if($idReservation > 0){
+                $sql .= ' Resv_Id = :idResv';
+                $params[':idResv'] = $idReservation;
+            }
+            if($idReservation > 0 && $idVisit > 0){
+                $sql .= " OR ";
+            }
+            if($idVisit > 0){
+                $sql .= '  Visit_Id = :idVisit';
+                $params[':idVisit'] = $idVisit;
+            }
+            $sql .= ")";
         }
 
         $stmt = $dbh->prepare($sql);
