@@ -662,22 +662,12 @@ CREATE PROCEDURE `register_web_user`
 )
 BEGIN
 
-    -- does idName exist in the fbx table?
     declare n int;
     declare u int;
     declare m varchar(250);
     declare codeFound int;
-    set n= -1;
 
-    select idName into n from fbx where fb_id = fbid;
-
-    if n >= 0 then
-    -- fbid found, update id into fbx
-        update fbx set idName=id, Status = 'a', Approved_By=appr, Approved_Date=now() where fb_id = fbid;
-
-    end if;
-
-    -- now check w_users table
+    -- check w_users table
     set n = 0;
     select count(*) into n from w_users where idName = id;
 
