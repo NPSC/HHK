@@ -173,7 +173,7 @@
 
         var $ul, $li;
 
-        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons');
+        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons hhk-flex');
 
         // Edit icon
         $li = $('<li title="Edit Incident" data-incidentid="' + reportId + '" />').addClass('hhk-report-button incident-edit ui-corner-all ui-state-default');
