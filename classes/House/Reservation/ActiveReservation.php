@@ -2,10 +2,12 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\House\Family\Family;
 use HHK\House\Registration;
 use HHK\House\Vehicle;
 use HHK\House\ReserveData\ReserveData;
 use HHK\Note\{LinkNote, Note};
+use HHK\sec\Labels;
 use HHK\SysConst\{ReservationStatus};
 use HHK\sec\Session;
 use HHK\Document\FormDocument;
@@ -16,6 +18,7 @@ use HHK\House\HouseServices;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\Reservation_GuestRS;
+use HHK\Tables\Reservation\ReservationRS;
 
 
 
@@ -167,18 +170,23 @@ class ActiveReservation extends Reservation {
         // Set reservation status
         $resv->setStatus($reservStatus);
         $this->reserveData->setResvStatusType($reservStatuses[$reservStatus]['Type']);
-        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+        
 
         // Cancel reservation?
         if ($resv->isRemovedStatus($reservStatus, $reservStatuses)) {
             if($uS->UseRebook && isset($post['cbRebook'])){
-                return $this->rebookReservation($dbh, $resv, $oldResvStatus, $post);
-            }else{
-                $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
-                return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
+                $newIdResv = $this->rebookReservation($dbh, $resv, $oldResvStatus, $post);
+                if($newIdResv > 0){
+                    $this->reserveData->addMsg( Labels::getString("MemberType","Guest", "Guest") . "s rebooked for " . $post['newGstDate']);
+                }else{
+                    return $this;
+                }
             }
+            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+            return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
         }
-
+        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+        
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
         if ($uS->TrackAuto) {
@@ -290,33 +298,24 @@ class ActiveReservation extends Reservation {
             $newArrival = new \DateTime($post['newGstDate']);
             $departure = new \DateTime($resv->getDeparture());
             if($newArrival < $departure){
-                //continue
+                $guests = [];
+                $rgRs = new Reservation_GuestRS();
+                $rgRs->idReservation->setStoredVal($resv->getIdReservation());
+                $rgRows = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
+    
+                foreach ($rgRows as $g) {
+                    $guests[$g['idGuest']] = $g['Primary_Guest'];
+                }
+    
+                return RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
             }else{
-                //error - new arrival date must be less than departure date
+                $this->reserveData->addError("Error rebooking: New Arrival date cannot be after departure date");
             }
         }else{
-            //error
-            //new arrival date is required
+            $this->reserveData->addMsg("Error rebooking: New arrival date is required");
         }
 
-        if($uS->RebookNewResv){
-            $guests = [];
-            $rgRs = new Reservation_GuestRS();
-            $rgRs->idReservation->setStoredVal($resv->getIdReservation());
-            $rgRows = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
-
-            foreach ($rgRows as $g) {
-                $guests[$g['idGuest']] = $g['Primary_Guest'];
-            }
-
-            return RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
-
-        }else{
-            $resv->setExpectedArrival($newArrival);
-            $resv->setStatus($oldResvStatus);
-            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
-            return $resv->getIdReservation();
-        }
+            
     }
 
     /**
