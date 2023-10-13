@@ -289,7 +289,7 @@ WHERE
         $post = filter_input_array(INPUT_POST, $args);
 
         // Find any deletes
-        if (isset($_POST['cbVehDel']) && filter_has_var(INPUT_POST, $_POST['cbVehDel'])) {
+        if (isset($_POST['cbVehDel']) && is_array($_POST['cbVehDel'])) {
 
             foreach ($_POST['cbVehDel'] as $k => $v) {
 
