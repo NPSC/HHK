@@ -212,7 +212,7 @@ class GuestDemogReport {
         room r on rr.idRoom = r.idRoom
     WHERE
         n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc $whDiags $whPatient
-        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') ";
+        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0";
 
         if ($whichGuests == 'new') {
             $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";
@@ -287,9 +287,10 @@ class GuestDemogReport {
                 $badZipCodes[$r['Postal_Code']] = 'y';
                 if($whichGuests != 'allStayed'){
                     $accum[$startPeriod]['Distance']['']['cnt']++;
+                    $accum[$startPeriod]['Distance']['']['idNames'][] = $r['idName'];
                 }
                 $accum['Total']['Distance']['']['cnt']++;
-
+                $accum['Total']['Distance']['']['idNames'][] = $r['idName'];
             }
 
             if($uS->county){
@@ -300,16 +301,32 @@ class GuestDemogReport {
                     if(!isset($accum[$startPeriod]['County'][$countyKey])){
                         $accum[$startPeriod]['County'][$countyKey]['title'] = $countyTitle;
                         $accum[$startPeriod]['County'][$countyKey]['cnt'] = 1;
+                        if($countyKey == ''){
+                            $accum[$startPeriod]['County'][$countyKey]['idNames'] = [$r['idName']];
+                        }
                     }else{
                         $accum[$startPeriod]['County'][$countyKey]['cnt']++;
+                        if($countyKey == ''){
+                            $accum[$startPeriod]['County'][$countyKey]['idNames'][] = $r['idName'];
+                        }
                     }
                 }
 
                 if(!isset($accum['Total']['County'][$countyKey])){
                     $accum['Total']['County'][$countyKey]['title'] = $countyTitle;
                     $accum['Total']['County'][$countyKey]['cnt'] = 1;
+                    if($countyKey == ''){
+                        $accum['Total']['County'][$countyKey]['idNames'] = [$r['idName']];
+                    }
                 }else{
                     $accum['Total']['County'][$countyKey]['cnt']++;
+                    if($countyKey == ''){
+                        $accum['Total']['County'][$countyKey]['idNames'][] = $r['idName'];
+                    }
+                }
+
+                if($countyKey = ''){
+
                 }
             }
             //$totalPSGs[$r['idPsg']] = 'y';
@@ -363,7 +380,12 @@ class GuestDemogReport {
                     $trs[$rowCount++] .= HTMLTable::makeTd('', array('class' => 'hhk-tdTitle'));
 
                     foreach ($demog as $indx) {
-                        $trs[$rowCount++] .= HTMLTable::makeTd($indx['cnt'] > 0 ? $indx['cnt'] : '');
+                        $dataStr = HTMLContainer::generateMarkup('span', $indx['cnt'] > 0 ? $indx['cnt'] : '');
+
+                        if(isset($indx['idNames']) && count($indx['idNames']) > 0){
+                            $dataStr.= HTMLContainer::generateMarkup('span', '', ['class'=>'getNameDetails hhk-btn ui-icon ui-icon-comment', 'data-idNames'=>json_encode($indx['idNames'])]);
+                        }
+                        $trs[$rowCount++] .= HTMLTable::makeTd($dataStr);
                     }
                 }
             }
@@ -498,6 +520,7 @@ class GuestDemogReport {
         if ($includeBlank) {
             $age['']['cnt'] = 0;
             $age['']['title'] = 'Not Indicated';
+            $age['']['idNames'] = [];
         }
 
         return $age;

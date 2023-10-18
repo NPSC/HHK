@@ -709,7 +709,7 @@ div.dt-buttons .dt-button:hover>span {
 }
 
 .filterWrapper {
-	font-size: 1em;
+	font-size: 0.9em;
 	display: inline-block;
 	padding:10px;
 	min-width: 400px;
@@ -900,4 +900,12 @@ table.dataTable tbody td {
 		margin-top: 1em;
 		margin-bottom: 1em;
 	}
+}
+
+.hhk-btn {
+	cursor: pointer;
+}
+
+.hhk-btn.getNameDetails{
+	margin-left: 0.5em;
 }

@@ -206,6 +206,43 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
                 }
             });
         });
+
+        $("#nameDetails")
+
+        $('.getNameDetails').click(function(){
+            var detailsbtn = $(this);
+            let idNames = $(this).data('idnames');
+            $.ajax({
+                url: 'ws_resc.php',
+                method: 'post',
+                data: {
+                    cmd: "getNameDetails",
+                    idNames: idNames
+                },
+                dataType: "json",
+                success: function(data){
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.location.assign(data.gotopage);
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        return;
+                    }
+                    if(data.resultMkup){
+                        var contr = $(data.resultMkup);
+
+                        $('body').append(contr);
+                        contr.position({
+                            my: 'left top',
+                            at: 'left bottom',
+                            of: detailsbtn
+                        });
+                    }
+                }
+
+            });
+        });
+
         <?php echo $filter->getTimePeriodScript(); ?>;
     });
         </script>
