@@ -26,7 +26,7 @@ use HHK\House\Report\ReportFieldSet;
 
 class EmailReportJob extends AbstractJob implements JobInterface{
 
-    const AVAILABLE_REPORTS = array("CurrentGuestReport"=>["CurrentGuestReport","Current Guests"], "VehiclesReport"=>["VehiclesReport","Vehicles"],"ReservationReport"=>["ReservationReport","Reservations"]);
+    const AVAILABLE_REPORTS = array("CurrentGuestReport"=>["CurrentGuestReport","Current Guests"], "BirthdayReport"=>["BirthdayReport","Birthday Report"], "VehiclesReport"=>["VehiclesReport","Vehicles"],"ReservationReport"=>["ReservationReport","Reservations"]);
 
     public array $paramTemplate = [
         "report"=>[

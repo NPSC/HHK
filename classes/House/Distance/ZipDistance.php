@@ -35,7 +35,7 @@ class ZipDistance extends AbstractDistance{
         if (count($rows) == 2) {
             $miles = self::GPS2Miles($rows[0][1], $rows[0][2], $rows[1][1], $rows[1][2]);
         } else {
-            throw new RuntimeException("One or both zip codes not found in zip table, source=$sourceZip, dest=$destZip.  ");
+            return array("type"=>"zip", "units"=>"miles", "value"=>"-1");
         }
         return array("type"=>"zip", "units"=>"miles", "value"=>$miles);
     }
