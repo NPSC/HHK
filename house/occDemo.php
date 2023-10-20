@@ -207,17 +207,25 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
             });
         });
 
-        $("#nameDetails")
+        // disappear the pop-up nameDetails.
+        $(document).mousedown(function (event) {
+            var target = $(event.target);
+            if ($('div#nameDetails').length > 0 && target[0].id !== 'nameDetails' && target.parents("#" + 'nameDetails').length === 0) {
+                $('div#nameDetails').remove();
+            }
+        });
 
         $('.getNameDetails').click(function(){
             var detailsbtn = $(this);
             let idNames = $(this).data('idnames');
+            let title = $(this).data('title');
             $.ajax({
                 url: 'ws_resc.php',
                 method: 'post',
                 data: {
                     cmd: "getNameDetails",
-                    idNames: idNames
+                    idNames: idNames,
+                    title: title
                 },
                 dataType: "json",
                 success: function(data){
@@ -229,7 +237,7 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
                         return;
                     }
                     if(data.resultMkup){
-                        var contr = $(data.resultMkup);
+                        var contr = $(data.resultMkup).addClass('nameDetails');
 
                         $('body').append(contr);
                         contr.position({

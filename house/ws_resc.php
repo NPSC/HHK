@@ -785,7 +785,7 @@ try {
             break;
 
         case "getNameDetails":
-            $post = filter_input_array(INPUT_POST, ['idNames'=>['filter', FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_FORCE_ARRAY]]);
+            $post = filter_input_array(INPUT_POST, ['idNames'=>['filter', FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_FORCE_ARRAY], 'title'=>['filter', FILTER_SANITIZE_FULL_SPECIAL_CHARS]]);
             $events = getNameDetails($dbh, $post);
             break;
         default:
@@ -830,7 +830,7 @@ function getNameDetails(\PDO $dbh, $post){
 
         $query = "select distinct n.idName, n.Name_First, n.Name_Last, na.Address_1 as `address1`, na.Address_2 as `address2`,	na.City as `city`, na.State_Province, na.Postal_Code
         from name n
-        left join name_address na on n.idName = na.idName
+        left join name_address na on n.idName = na.idName AND na.Purpose = n.Preferred_Mail_Address
         where n.idName in (" . implode(',',$post['idNames']) . ")";
 
         $stmt = $dbh->prepare($query);
@@ -852,8 +852,8 @@ function getNameDetails(\PDO $dbh, $post){
             $resultTbl->addBodyTr($tr);
             
         }
-        $resultTbl->addfooterTr(HTMLTable::makeTd(implode(', ', $post['idNames']), ['colspan'=>'8']));
-        $resultMkup = HTMLContainer::generateMarkup('div', $resultTbl->generateMarkup(), ['class'=>'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog', 'style'=>'width: fit-content; max-width: 100%; font-size: 0.9em; padding: 5px;']);
+        //$resultTbl->addfooterTr(HTMLTable::makeTd(implode(', ', $post['idNames']), ['colspan'=>'8']));
+        $resultMkup = HTMLContainer::generateMarkup('div', $resultTbl->generateMarkup([], (isset($post['title']) ? HTMLContainer::generateMarkup("h4", $post['title'], ['class'=>"my-2"]) : '')), ['class'=>'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog', 'style'=>'width: fit-content; max-width: 100%; font-size: 0.9em; padding: 5px;', 'id'=>'nameDetails']);
         return ["idNames"=>$post["idNames"], "rowCount"=>$stmt->rowCount(), "resultMkup"=>$resultMkup];
 
     }else{

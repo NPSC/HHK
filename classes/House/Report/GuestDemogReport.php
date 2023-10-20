@@ -221,6 +221,7 @@ class GuestDemogReport {
         } else if($whichGuests == 'allStayed'){
             $query .= " AND DATE(ifnull(s.Span_End_Date, now())) > DATE('" . $stDT->format('Y-m-01') . "')";
         }
+        $query .= " ORDER BY s.idName";
 
         $currId = 0;
         $currPeriod = '';
@@ -267,8 +268,9 @@ class GuestDemogReport {
                     $miles = $distanceCalculator->meters2miles($r['Meters_From_House']);	
                 }elseif ($uS->distCalculator == 'zip'){	
                     $miles = $distanceCalculator->getDistance($dbh, ['zip'=>$r["zip"]], Address::getHouseAddress($dbh), "miles");	
-                }else{    
-                    throw new \RuntimeException("Distance not calculated");
+                }else{ //calculate zip distance    
+                    $zipDistance = new ZipDistance();
+                    $miles = $zipDistance->getDistance($dbh, ['zip'=>$r["zip"]], Address::getHouseAddress($dbh), "miles");
                 }
 
                 foreach ($accum[$startPeriod]['Distance'] as $d => $val) {
@@ -373,7 +375,7 @@ class GuestDemogReport {
 
             $rowCount = 0;
 
-            foreach ($accum[$col] as $demog) {
+            foreach ($accum[$col] as $demogTitle=>$demog) {
 
                 if (isset($trs[$rowCount])) {
 
@@ -383,7 +385,14 @@ class GuestDemogReport {
                         $dataStr = HTMLContainer::generateMarkup('span', $indx['cnt'] > 0 ? $indx['cnt'] : '');
 
                         if(isset($indx['idNames']) && count($indx['idNames']) > 0){
-                            $dataStr.= HTMLContainer::generateMarkup('span', '', ['class'=>'getNameDetails hhk-btn ui-icon ui-icon-comment', 'data-idNames'=>json_encode($indx['idNames'])]);
+                            
+                            try{
+                                $colDT = new \DateTime($col . '-01');
+                                $col = $colDT->format('M, Y');
+                            }catch(\Exception $e){
+
+                            }
+                            $dataStr.= HTMLContainer::generateMarkup('span', '', ['class'=>'getNameDetails hhk-btn ui-icon ui-icon-comment', 'data-idNames'=>json_encode($indx['idNames']), 'data-title'=>$col . " " . $demogTitle . ": " . $indx['title']]);
                         }
                         $trs[$rowCount++] .= HTMLTable::makeTd($dataStr);
                     }
