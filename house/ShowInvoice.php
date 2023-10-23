@@ -6,6 +6,8 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLContainer;
+use Mpdf\Mpdf;
+use PHPMailer\PHPMailer\PHPMailer;
 
 /**
  * ShowInvoice.php
@@ -101,12 +103,19 @@ try {
                 $mail->isHTML(true);
 
                 $mail->Subject = htmlspecialchars_decode($emSubject, ENT_QUOTES);
-                $mail->msgHTML($stmtMarkup);
+                //$mail->msgHTML($stmtMarkup);
+                $mail->msgHTML("Your " . $uS->siteName . " invoice is attached");
+                $mpdf = new Mpdf(['tempDir'=>sys_get_temp_dir() . "/mpdf"]);
+                $mpdf->showImageErrors = true;
+                $mpdf->WriteHTML($stmtMarkup);
+                
+                $pdfContent = $mpdf->Output('', 'S');
+                $mail->addStringAttachment($pdfContent, 'Invoice.pdf', PHPMailer::ENCODING_BASE64,'application/pdf');
 
                 $mail->send();
                 $msg .= "Email sent.  ";
             }catch(\Exception $e){
-                $msg .= "Email failed!  " . $mail->ErrorInfo;
+                $msg .= "Email failed!  " . $e->getMessage() . $mail->ErrorInfo;
             }
         }
 
