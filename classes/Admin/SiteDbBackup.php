@@ -169,7 +169,7 @@ class SiteDbBackup {
      * Summary of downloadFile
      * @return bool
      */
-    protected function downloadFile() {
+    public function downloadFile() {
 
         if ($this->fileName == '' || file_exists($this->fileName) === FALSE) {
             // $this->emailError = 'File name is not set or doesnt exist:  ' . $this->fileName;
