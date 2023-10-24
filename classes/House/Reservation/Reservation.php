@@ -1009,7 +1009,7 @@ where rg.idReservation =" . $r['idReservation']);
             $tbl2->addBodyTr(HTMLTable::makeTd('Registration Note:', ['class'=>'tdlabel']) . HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), ['name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40']), ['colspan'=>'3']));
         }
 
-        if($uS->UseRebook) {
+        if($uS->UseRebook && Reservation_1::isActiveStatus($resv->getStatus(), $resvStatuses)) {
             $tbl2->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup("", array("type"=>"checkbox", "name"=>"cbRebook", "id"=>"cbRebook", "class"=>"mr-1")) . HTMLContainer::generateMarkup("label", "Rebook for:", array("for"=>"cbRebook")), array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup("", array('name'=>"newGstDate", "size"=>"14", "class"=>"mr-3")), array("colspan"=>"2")), array("id"=>"rebookRow", "class"=>"d-none"));
         }
 

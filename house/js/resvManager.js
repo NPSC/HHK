@@ -2068,6 +2068,14 @@ function resvManager(initData, options) {
                 }
             });
 
+            $(document).on('change', '#newGstDate', function (){
+                if($(this).val() != ''){
+                    $('#cbRebook').prop('checked', 'checked');
+                }else{
+                    $('#cbRebook').removeAttr('checked');
+                }
+            });
+
             $(document).on('click', '#cbRebook', function(){
                 if($(this).prop('checked')){
                     $("#newGstDate").val(newDate);

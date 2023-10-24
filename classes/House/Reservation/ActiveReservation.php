@@ -297,7 +297,7 @@ class ActiveReservation extends Reservation {
         if(isset($post['newGstDate'])){
             $newArrival = new \DateTime($post['newGstDate']);
             $departure = new \DateTime($resv->getDeparture());
-            if($newArrival < $departure){
+            if($newArrival->diff($departure)->days > 0){
                 $guests = [];
                 $rgRs = new Reservation_GuestRS();
                 $rgRs->idReservation->setStoredVal($resv->getIdReservation());
@@ -309,7 +309,7 @@ class ActiveReservation extends Reservation {
     
                 return RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
             }else{
-                $this->reserveData->addError("Error rebooking: New Arrival date cannot be after departure date");
+                $this->reserveData->addError("Error rebooking: New arrival date must be before departure date");
             }
         }else{
             $this->reserveData->addMsg("Error rebooking: New arrival date is required");
