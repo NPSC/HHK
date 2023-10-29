@@ -167,6 +167,13 @@ abstract class AbstractExportManager {
     public abstract function showConfig(\PDO $dbh);
     public abstract function saveConfig(\PDO $dbh);
 
+    /**
+     * Summary of unwindResponse
+     * @param mixed $line
+     * @param mixed $results
+     * @param mixed $prefix
+     * @return void
+     */
     public function unwindResponse(&$line, $results, $prefix = '') {
 
         if (is_array($results)) {
@@ -200,6 +207,13 @@ abstract class AbstractExportManager {
         return;
     }
 
+    /**
+     * Summary of updateLocalExternalId
+     * @param \PDO $dbh
+     * @param mixed $idName
+     * @param mixed $externalId
+     * @return int
+     */
     protected function updateLocalExternalId(\PDO $dbh, $idName, $externalId) {
 
         $uS = Session::getInstance();
@@ -222,12 +236,23 @@ abstract class AbstractExportManager {
         return $upd;
     }
 
+    /**
+     * Summary of resetExternalId
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @return int
+     */
     public function resetExternalId(\PDO $dbh, $id) {
 
         return $this->updateLocalExternalId($dbh, $id, '');
 
     }
 
+    /**
+     * Summary of unencodeHTML
+     * @param mixed $text
+     * @return array|string|null
+     */
     public function unencodeHTML($text) {
 
         $txt = preg_replace_callback("/(&#[0-9]+;)/",
@@ -241,6 +266,13 @@ abstract class AbstractExportManager {
     }
 
 
+    /**
+     * Summary of loadSearchDB
+     * @param \PDO $dbh
+     * @param mixed $view
+     * @param mixed $sourceIds
+     * @return \PDOStatement|bool|null
+     */
     public static function loadSearchDB(\PDO $dbh, $view, $sourceIds) {
 
         if ($view == '') {
@@ -264,6 +296,14 @@ abstract class AbstractExportManager {
         return NULL;
     }
 
+    /**
+     * Summary of findPrimaryGuest
+     * @param \PDO $dbh
+     * @param mixed $idPrimaryGuest
+     * @param mixed $idPsg
+     * @param \HHK\CrmExport\RelationshipMapper $rMapper
+     * @return array
+     */
     public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper)
     {
         return array();

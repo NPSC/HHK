@@ -58,7 +58,7 @@ try {
                 try {
                     $events['members'] = $transfer->exportMembers($dbh, $post['ids']);
                 } catch (Exception $ex) {
-                    $events = array("error" => "Transfer Error: " . $ex->getMessage());
+                    $events = array("error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex));
                 }
 
             } else {

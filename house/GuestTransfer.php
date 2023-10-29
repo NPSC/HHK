@@ -799,11 +799,11 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                             <th>Local (HHK) Name Search</th>
                             <td><input id="txtSearch" type="text" /></td>
                         </tr>
-                        <tr>
+<!--                         <tr>
                             <th>Relationship</th>
                             <td><input id="btnRelat" type="button" value="click me" /></td>
                         </tr>
-                    </table>
+ -->                    </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
