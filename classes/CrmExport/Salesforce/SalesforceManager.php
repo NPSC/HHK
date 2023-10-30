@@ -664,7 +664,6 @@ class SalesforceManager extends AbstractExportManager {
         $where = '';
         $searchFields = $this->getSearchFields(NULL, '');
         $returnFields = $this->getReturnFields();
-
         $type = 'Contact.';
 
         // Colunm names for $r are also feild names for SF
@@ -677,7 +676,7 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
                 if ($v != '' && isset($searchFields[$k])) {
-                    $where .= ($where == '' ? $type.$k . "='" . $v . "'" : " AND " . $type.$k . "='" . $v . "'");
+                    $where .= ($where == '' ? '('. $type.$k . "='" . $v . "'" : " AND " . $type.$k . "='" . $v . "'");
                 }
             }
         }
@@ -686,6 +685,9 @@ class SalesforceManager extends AbstractExportManager {
         if ($r['Id'] !== '') {
             // Blow away the other search terms.
             $where = $type."Id='" . $r['Id'] . "'";
+        } else {
+            // Check for existing HHK_Id in remote.
+            $where .= ($where == '' ? $type."HHK_idName__c=" . $r['HHK_idName__c'] : ") OR " . $type."HHK_idName__c=" . $r['HHK_idName__c']);
         }
 
 
@@ -695,13 +697,9 @@ class SalesforceManager extends AbstractExportManager {
 
             $result = $this->webService->search($query, $this->queryEndpoint);
 
-//            if ($r['HHK_idName__c'] == 87) {
- //               var_dump($result);
- //          }
         }
 
         return $result;
-
     }
 
     /**
@@ -716,7 +714,6 @@ class SalesforceManager extends AbstractExportManager {
 
         $cols['Id'] = 'Id';
         $cols['FirstName'] = 'FirstName';
-        //$cols['Middle_Name__c'] = 'Middle_Name__c';
         $cols['LastName'] = 'LastName';
         $cols['Email'] = 'Email';
 
