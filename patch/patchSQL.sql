@@ -86,3 +86,6 @@ ADD COLUMN IF NOT EXISTS `DistCalcType` VARCHAR(10) NULL DEFAULT NULL AFTER `Met
 
 -- New donation label.
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('ExtraPayment', 'Extra Payment', 's', 'pc');
+
+-- add showRegEmptyFields toggle
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showRegEmptyFields', 'false', 'b', 'h', 'On Registrations, show empty fields', '1');
