@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Purchase;
 
+use HHK\House\Visit\Visit;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Registration;
 use HHK\Payment\CreditToken;
@@ -59,7 +60,8 @@ class PaymentChooser {
             'txtRtnChargeAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selexcpay' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selccgw' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-
+            'idVisit' =>FILTER_SANITIZE_NUMBER_INT,
+            'span' =>FILTER_SANITIZE_NUMBER_INT,
             'txtCashTendered' => [
                 'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
                 'flags' => FILTER_FLAG_ALLOW_FRACTION
@@ -159,6 +161,15 @@ class PaymentChooser {
         }
 
         // Merchant
+        if (isset($inputs['idVisit']) && isset($inputs['span'])){
+            $uS = Session::getInstance();
+            $visit = new Visit($dbh, 0, $inputs['idVisit'], NULL, NULL, NULL, $uS->username, $inputs['span']);
+            $merchant = $visit->getResource($dbh)->getMerchant();
+            if($merchant != ''){
+                $pmp->setMerchant($merchant);
+            }
+        }
+        
         if (isset($inputs['selccgw'])) {
             $pmp->setMerchant($inputs['selccgw']);
         }
@@ -659,7 +670,7 @@ class PaymentChooser {
                         ['id'=> $i['Invoice_Number']. 'unpaidCb', 'name'=>'unpaidCb['.$i['Invoice_Number'].']', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'])
                     .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', ['style'=>'font-style: italic;']))
                 .HTMLTable::makeTd('$'.
-                    HTMLInput::generateMarkup('', ['id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'size'=>'8', 'class'=>'hhk-feeskeys hhk-payInvAmt','style'=>'text-align:right;']), ['style'=>'text-align:right;']);
+                    HTMLInput::generateMarkup('', ['id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'size'=>'8', 'class'=>'hhk-feeskeys hhk-payInvAmt ml-1','style'=>'text-align:right;']), ['style'=>'text-align:right;']);
 
             $trs[] = $unpaid;
         }
@@ -1023,17 +1034,18 @@ ORDER BY v.idVisit , v.Span;");
 
             // Make middle column td.
             $td = HTMLContainer::generateMarkup('button',
+                    HTMLContainer::generateMarkup('span', '$', ['class'=>'px-2']).
                     HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'readonly'=>'readonly', 'size' => '7', 'style'=>'padding:0; border:none; margin:0;'])
                     . HTMLContainer::generateMarkup('label',  HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-arrowthick-1-e']), ['for'=>'feesCharges'])
                     , ['id'=>'feesChargesContr', 'class'=>'ui-button ui-widget ui-corner-all hhk-RoomCharge', 'style'=>'min-width:fit-content; padding:0;'])
-                .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']
+                .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'8', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']
             );
 
 
         	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', ['class'=>'tdlabel'])
-                .HTMLTable::makeTd('$'. $td, ['style'=>'text-align:center;'])
-                .HTMLTable::makeTd(
-                    HTMLInput::generateMarkup('', ['name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;'])
+                .HTMLTable::makeTd($td, ['style'=>'text-align:center;'])
+                .HTMLTable::makeTd('$'.
+                    HTMLInput::generateMarkup('', ['name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys ml-1','style'=>'text-align:right;'])
                     , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay']
                 )
                 , ['class'=>'hhk-RoomFees']
@@ -1091,7 +1103,7 @@ ORDER BY v.idVisit , v.Span;");
         $feesTbl->addBodyTr(
             HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', ['id' => 'spnPayTitle']), array('colspan' => '2', 'class' => 'tdlabel'))
             . HTMLTable::makeTd(
-                '$' . HTMLInput::generateMarkup('', ['name' => 'totalPayment', 'size' => '8', 'class' => 'hhk-feeskeys', 'style' => 'border:none;text-align:right;font-weight:bold;', 'readonly' => 'readonly'])
+                '$' . HTMLInput::generateMarkup('', ['name' => 'totalPayment', 'size' => '8', 'class' => 'hhk-feeskeys ml-2', 'style' => 'border:none;text-align:right;font-weight:bold;', 'readonly' => 'readonly'])
                 ,
                 ['style' => 'text-align:right;border:2px solid #2E99DD;']
             )
@@ -1104,7 +1116,7 @@ ORDER BY v.idVisit , v.Span;");
         if (count($excessPays) > 0) {
 
             $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', ['class'=>'tdlabel', 'colspan'=>'2'])
-                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', ['name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'])
+                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', ['name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'class'=>'hhk-feeskeys ml-2', 'readonly'=>'readonly', 'size'=>'8'])
                             , ['style'=>'text-align:right;'])
                     , ['class'=>'hhk-Overpayment']);
 
@@ -1336,7 +1348,7 @@ ORDER BY v.idVisit , v.Span;");
                 .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
                     , array('style'=>$display, 'class'=>'tblCredit' . $index));
             $tbl->addBodyTr(
-                 HTMLTable::makeTd('', array('id'=>'tdChargeMsg', 'colspan'=>'3', 'style'=>'color:red;'))
+                 HTMLTable::makeTd('', array('id'=>'tdChargeMsg', 'colspan'=>'3', 'style'=>'color:red; display:none;'))
                      , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
 
             $paymentGateway->selectPaymentMarkup($dbh, $tbl);

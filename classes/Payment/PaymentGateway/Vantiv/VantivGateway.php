@@ -825,31 +825,28 @@ class VantivGateway extends AbstractPaymentGateway {
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
-    	$selArray = ['name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'width:min-content;', 'title'=>'Select the Location'];
-    	$manualArray =  ['type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'title'=>'Check to Key in credit account number'];
+    	$selArray = ['name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'width:100%; min-width: fit-content', 'title'=>'Select the Location'];
+    	$manualArray =  ['type'=>'radio', 'name'=>'btnCapMethod'.$index, 'value'=>'typed', 'id'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'title'=>'Key in credit account number'];
+        $swipeArray = ['type'=>'radio', 'name'=>'btnCapMethod'.$index, 'value'=>'swiped','id'=>'btnvrSwipe'.$index, 'class'=>'hhk-feeskeys'.$index, 'title'=>'Swipe credit card'];
 
         // Precheck the manual account number entry checkbox?
         if ($this->checkManualEntryCheckbox) {
         	$manualArray['checked'] = 'checked';
+        }else{
+            $swipeArray['checked'] = 'checked';
         }
 
-        $keyCb = HTMLContainer::generateMarkup('span',
-        		HTMLContainer::generateMarkup('label', 'Type: ', ['for'=>'btnvrKeyNumber'.$index, 'title'=>'Check to Key in credit account number'])
-                .HTMLInput::generateMarkup('', $manualArray)
-        , ['style'=>'float:right; margin-top:2px;margin-left:3px;']);
+        $capMethodMkup = HTMLContainer::generateMarkup('span',
+                HTMLInput::generateMarkup('', $swipeArray).
+        		HTMLContainer::generateMarkup('label', 'Swipe', ['for'=>'btnvrSwipe'.$index, 'title'=>'Swipe credit card', 'class'=>'ml-1']) 
+        )
+        .HTMLContainer::generateMarkup('span',
+                HTMLInput::generateMarkup('', $manualArray).
+        		HTMLContainer::generateMarkup('label', 'Type', ['for'=>'btnvrKeyNumber'.$index, 'title'=>'Key in credit account number', 'class'=>'ml-1']) 
+        , ['class'=>'ml-3']);
 
         if ($this->getGatewayType() != '') {
         	// A location is already selected.
-
-            $sel = HTMLSelector::doOptionsMkup([0=>[0=>$this->getGatewayType(), 1=> ucfirst($this->getGatewayType())]], $this->getGatewayType(), FALSE);
-
-            $payTbl->addBodyTr(
-                    HTMLTable::makeTh('Selected Location:', ['style'=>'text-align:right;'])
-            		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray)
-            				. $keyCb
-            				, ['colspan'=>'2'])
-            		, ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
-            );
 
         } else {
 			// Show all locations, none is preselected.
@@ -870,11 +867,20 @@ class VantivGateway extends AbstractPaymentGateway {
             		HTMLTable::makeTh('Select a Location:', ['style'=>'text-align:right; width:130px;'])
                     .HTMLTable::makeTd(
                     		HTMLSelector::generateMarkup($sel, $selArray)
-                    		. $keyCb
                     		, ['colspan'=>'2'])
                     , ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
             );
 
+        }
+
+        if($this->usePOS || $this->getGatewayType() == ''){
+            $payTbl->addBodyTr(
+                HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right; width:130px;'])
+                .HTMLTable::makeTd(
+                        $capMethodMkup
+                        , ['colspan'=>'2'])
+                , ['class'=>'tblCredit'.$index]
+        );
         }
 
     }

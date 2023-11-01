@@ -2255,7 +2255,7 @@ function resvManager(initData, options) {
                     cardOnFile($(this).data('id'), $(this).data('idreg'), 'Reserve.php?rid=' + idResv, $(this).data('indx'));
                 });
 
-                setupCOF($('#trvdCHNameg'), $('#btnUpdtCred').data('indx'));
+                setupCOF($('.tblCreditg'), $('#btnUpdtCred').data('indx'));
 
                 $('#selccgwg').val(room.merchant);
             }
