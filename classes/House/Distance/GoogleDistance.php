@@ -7,6 +7,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
+use HHK\sec\Crypto;
 use HHK\sec\Session;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
@@ -55,7 +56,7 @@ class GoogleDistance extends AbstractDistance {
         $uS = Session::getInstance();
 
         $endpoint = "https://maps.googleapis.com/maps/api/directions/json";
-        $apiKey = decryptMessage($uS->recaptchaApiKey);
+        $apiKey = Crypto::decryptMessage($uS->recaptchaApiKey);
 
         try{
 

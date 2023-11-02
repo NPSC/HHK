@@ -1,5 +1,6 @@
 <?php
 use HHK\sec\{Session,WebInit};
+use HHK\sec\Crypto;
 use HHK\SysConst\{ActivityTypes, AddressPurpose, CampaignType, GLTableNames, MemBasis, MemDesignation, MemStatus, SalutationCodes, WebPageCode};
 use HHK\Tables\EditRS;
 use HHK\Tables\ActivityRS;
@@ -45,7 +46,7 @@ $resp = array();
 // check security codes; exit if not secure
 if (filter_has_var(INPUT_POST, "sq")) {
     $sq = filter_input(INPUT_POST, "sq", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $pw = decryptMessage($sq);
+    $pw = Crypto::decryptMessage($sq);
     $ts = strtotime($pw);
     $tnow = time();
 

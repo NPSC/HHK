@@ -5,6 +5,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\AuditLog\NameLog;
 use HHK\Exception\RuntimeException;
+use HHK\sec\Crypto;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Tables\EditRS;
@@ -80,7 +81,7 @@ class GLParameters {
                 if (strtolower($g[0]) == 'password') {
                     // Process password
                     if ($desc != '' && $desc != $g[1] && $desc != '********') {
-                        $desc = encryptMessage($desc);
+                        $desc = Crypto::encryptMessage($desc);
                         $dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
                     }
 
@@ -275,7 +276,7 @@ class GLParameters {
     }
 
     public function getClearPassword() {
-        return decryptMessage($this->password);
+        return Crypto::decryptMessage($this->password);
     }
 
     /**

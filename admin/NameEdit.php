@@ -4,6 +4,7 @@ use HHK\Donation\{Campaign, DonateMarkup};
 use HHK\History;
 use HHK\AlertControl\AlertMessage;
 use HHK\Member\{AbstractMember, WebUser};
+use HHK\sec\Crypto;
 use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, SalutationCodes};
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\Volunteer\VolunteerCategory;
@@ -384,7 +385,7 @@ $usrDataJSON = json_encode($userData);
 // Squirms
 $plus5 = time() + (1 * 60 * 60);
 
-$squirm = encryptMessage(date("Y/m/d H:i:s", $plus5));
+$squirm = Crypto::encryptMessage(date("Y/m/d H:i:s", $plus5));
 
 $PWresultMessage = "";
 

@@ -1,6 +1,7 @@
 <?php
 
 use HHK\Exception\RuntimeException;
+use HHK\sec\Crypto;
 use HHK\sec\Session;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{WebRole};
@@ -55,7 +56,7 @@ function initPDO(bool $override = FALSE)
         }
 
         $dbuName = (!empty($config['db'][ 'ReadonlyUser']) ? $config['db'][ 'ReadonlyUser'] : '');
-        $dbPw = decryptMessage((!empty($config['db']['ReadonlyPassword']) ? $config['db']['ReadonlyPassword'] : ''));
+        $dbPw = Crypto::decryptMessage((!empty($config['db']['ReadonlyPassword']) ? $config['db']['ReadonlyPassword'] : ''));
     }
 
     try {
@@ -202,7 +203,7 @@ function prepareEmail():PHPMailer
             $mail->Username = $uS->SMTP_Username;
 
             if ($uS->SMTP_Password != '') {
-                $mail->Password = decryptMessage($uS->SMTP_Password);
+                $mail->Password = Crypto::decryptMessage($uS->SMTP_Password);
             }
 
             if ($uS->SMTP_Port != '') {

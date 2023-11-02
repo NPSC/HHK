@@ -3,6 +3,7 @@ namespace HHK\sec;
 
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Common;
 use HHK\Exception\CsrfException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
@@ -47,7 +48,7 @@ class Login {
 
         try {
             self::dbParmsToSession($confPath, $confFile);
-        	$dbh = initPDO(TRUE);
+        	$dbh = Common::initPDO(TRUE);
         } catch (RuntimeException $hex) {
         	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
         }
@@ -111,7 +112,7 @@ class Login {
         if (isset($config["db"]["URL"]) && isset($config["db"]["User"]) && isset($config["db"]["Password"]) && isset($config["db"]["Schema"]) && isset($config["db"]["DBMS"])) {
             $ssn->databaseURL = $config["db"]['URL'];
             $ssn->databaseUName = $config["db"]['User'];
-            $ssn->databasePWord = decryptMessage($config["db"]['Password']);
+            $ssn->databasePWord = Crypto::decryptMessage($config["db"]['Password']);
             $ssn->databaseName = $config["db"]['Schema'];
             $ssn->dbms = $config["db"]['DBMS'];
         } else {

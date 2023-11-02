@@ -3,6 +3,7 @@ namespace HHK\CrmExport\Neon;
 
 use HHK\CrmExport\AbstractExportManager;
 use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
+use HHK\sec\Crypto;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Exception\{RuntimeException, UploadException};
@@ -1883,7 +1884,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             $pw = htmlspecialchars($post['_txtpwd']);
 
             if ($pw != '' && $this->getPassword() != $pw) {
-                $pw = encryptMessage($pw);
+                $pw = Crypto::encryptMessage($pw);
             }
 
             $crmRs->password->setnewVal($pw);
@@ -2043,7 +2044,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             throw new UploadException('User Name or Password are missing.');
         }
 
-        $keys = array('orgId'=>$this->getUserId(), 'apiKey'=>decryptMessage($this->getPassword()));
+        $keys = array('orgId'=>$this->getUserId(), 'apiKey'=>Crypto::decryptMessage($this->getPassword()));
 
         $this->webService = new Neon();
         $loginResult = $this->webService->login($keys);

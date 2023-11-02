@@ -3,6 +3,7 @@ namespace HHK\CrmExport\Salesforce;
 
 use HHK\CrmExport\AbstractExportManager;
 use HHK\Member\Relation\RelationCode;
+use HHK\sec\Crypto;
 use HHK\SysConst\RelLinkType;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
@@ -59,10 +60,10 @@ class SalesforceManager extends AbstractExportManager {
         $credentials->setBaseURI($this->endpointURL);
         $credentials->setTokenURI(self::oAuthEndpoint);
         $credentials->setClientId($this->clientId);
-        $credentials->setClientSecret(decryptMessage($this->clientSecret));
+        $credentials->setClientSecret(Crypto::decryptMessage($this->clientSecret));
         $credentials->setSecurityToken($this->securityToken);
         $credentials->setUsername($this->userId);
-        $credentials->setPassword(decryptMessage($this->getPassword()));
+        $credentials->setPassword(Crypto::decryptMessage($this->getPassword()));
 
         $this->webService = new SF_Connector($credentials);
     }
@@ -870,7 +871,7 @@ class SalesforceManager extends AbstractExportManager {
             $pw = $post['_txtpwd'];
 
             if ($pw != '' && $this->getPassword() != $pw) {
-                $pw = encryptMessage($pw);
+                $pw = Crypto::encryptMessage($pw);
             }
 
             $crmRs->password->setnewVal($pw);
@@ -882,7 +883,7 @@ class SalesforceManager extends AbstractExportManager {
             $pw = $post['_txtclientsecret'];
 
             if ($pw != '' && $this->getClientSecret() != $pw) {
-                $pw = encryptMessage($pw);
+                $pw = Crypto::encryptMessage($pw);
             }
 
             $crmRs->clientSecret->setnewVal($pw);

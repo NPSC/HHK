@@ -18,6 +18,7 @@ use HHK\Tables\PaymentGW\{SsoTokenRS, Guest_TokenRS, InstamedGatewayRS};
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\sec\{Session, SecurityComponent};
 use HHK\Exception\{PaymentException, RuntimeException};
+use HHK\sec\Crypto;
 
 /**
  * InstamedGateway.php
@@ -1053,7 +1054,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $parms[InstamedGateway::INSTAMED_TRANS_VAR] = $transVar;
         $parms[InstamedGateway::INSTAMED_RESULT_VAR] = $resultVar;
 
-        $queryStr = encryptMessage(http_build_query($parms));
+        $queryStr = Crypto::encryptMessage(http_build_query($parms));
 
         return $houseUrl . InstamedGateway::TRANSFER_URL . '?' . InstamedGateway::TRANSFER_VAR . '=' . $queryStr;
     }
@@ -1260,7 +1261,7 @@ where r.idRegistration =" . $idReg);
                 $pw = filter_var($post[$indx . '_txtsk'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $ccRs->security_Key->getStoredVal() != $pw) {
-                    $ccRs->security_Key->setNewVal(encryptMessage($pw));
+                    $ccRs->security_Key->setNewVal(Crypto::encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->security_Key->setNewVal('');
                 }
@@ -1270,7 +1271,7 @@ where r.idRegistration =" . $idReg);
                 $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $ccRs->password->getStoredVal() != $pw) {
-                    $ccRs->password->setNewVal(encryptMessage($pw));
+                    $ccRs->password->setNewVal(Crypto::encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->password->setNewVal('');
                 }

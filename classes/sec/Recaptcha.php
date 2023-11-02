@@ -33,7 +33,7 @@ class Recaptcha {
     public function __construct(){
         $uS = Session::getInstance();
 
-        $this->apiKey = decryptMessage($uS->recaptchaApiKey);
+        $this->apiKey = Crypto::decryptMessage($uS->recaptchaApiKey);
         $this->projectID = $uS->googleProjectID;
         $this->siteKey = $uS->recaptchaSiteKey;
     }

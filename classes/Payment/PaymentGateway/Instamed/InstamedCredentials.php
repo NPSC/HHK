@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Instamed;
 
+use HHK\sec\Crypto;
 use HHK\Tables\PaymentGW\InstamedGatewayRS;
 
 /**
@@ -48,7 +49,7 @@ class InstamedCredentials {
         $this->storeId = $gwRs->store_Id->getStoredVal();
         $this->terminalId = $gwRs->terminal_Id->getStoredVal();
         $this->workstationId = $gwRs->WorkStation_Id->getStoredVal();
-        $this->password = decryptMessage($gwRs->password->getStoredVal());
+        $this->password = Crypto::decryptMessage($gwRs->password->getStoredVal());
         
         $parts = explode('@', $this->accountID);
         $this->id = $parts[0];
@@ -58,7 +59,7 @@ class InstamedCredentials {
         
         return array(
             InstaMedCredentials::ACCT_ID => $this->accountID,
-            InstaMedCredentials::SEC_KEY => decryptMessage($this->securityKey),
+            InstaMedCredentials::SEC_KEY => Crypto::decryptMessage($this->securityKey),
             InstaMedCredentials::SSO_ALIAS => $this->ssoAlias,
             InstaMedCredentials::ID => $this->id,
             InstaMedCredentials::WORKSTATION_ID => $this->workstationId,
@@ -78,7 +79,7 @@ class InstamedCredentials {
         
         return array(
             InstaMedCredentials::ACCT_ID => $this->accountID,
-            'password' => decryptMessage($this->securityKey),
+            'password' => Crypto::decryptMessage($this->securityKey),
             'alias' => $this->ssoAlias,
         );
     }

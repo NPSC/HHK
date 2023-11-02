@@ -10,7 +10,7 @@ define('REL_BASE_SITE', '../');
 
 
 // Find the vendor directory
-$dirxx = '../vendor';
+$dirxx = './vendor';
 if (file_exists($dirxx) === FALSE) {
     $dirxx = '../' . $dirxx;
     if (file_exists($dirxx) === FALSE) {

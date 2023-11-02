@@ -32,6 +32,10 @@
 
 	},
 	"scripts" : {
-		"pack" : "HHK\\devTools\\Build::run"
+		"pack" : "HHK\\devTools\\Build::run",
+		"test" : "phpunit --colors=always --testdox --bootstrap tests/bootstrap.php --configuration tests/phpunit.xml tests/"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^10.4"
 	}
 }

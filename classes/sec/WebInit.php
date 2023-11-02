@@ -2,6 +2,7 @@
 namespace HHK\sec;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\{WebPageCode, Mode};
+use HHK\Common;
 
 /**
  * WebInit.php
@@ -233,11 +234,11 @@ class WebInit {
         }
 
         // Demographics
-        $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
+        $demos = Common::readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         foreach ($demos as $d) {
 
-            $entries = readGenLookupsPDO($dbh, $d[0], 'Order');
+            $entries = Common::readGenLookupsPDO($dbh, $d[0], 'Order');
 
             foreach ($entries as $e) {
                 $nameLookups[$d[0]][$e['Code']] = array($e['Code'],$e['Description'],$e['Substitute']);
