@@ -163,11 +163,11 @@ class VantivGateway extends AbstractPaymentGateway {
         // Set up request
         $revRequest = new CreditVoidReturnTokenRequest();
         $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
+            ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
             ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
             ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
             ->setInvoice($invoice->getInvoiceNumber())
             ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-            ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
             ->setToken($tknRs->Token->getStoredVal())
             ->setTokenId($tknRs->idGuest_token->getStoredVal())
             ->setTitle('CreditVoidReturnToken');
@@ -230,13 +230,13 @@ class VantivGateway extends AbstractPaymentGateway {
             // Set up request
             $revRequest = new CreditReversalTokenRequest();
             $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
+                    ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
+                    ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
+                    ->setProcessData($pAuthRs->ProcessData->getStoredVal())
                     ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
                     ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
                     ->setInvoice($invoice->getInvoiceNumber())
                     ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-                    ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
-                    ->setProcessData($pAuthRs->ProcessData->getStoredVal())
-                    ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
                     ->setToken($tknRs->Token->getStoredVal())
                     ->setTokenId($tknRs->idGuest_token->getStoredVal())
                     ->setTitle('CreditReversalToken');
@@ -518,27 +518,19 @@ class VantivGateway extends AbstractPaymentGateway {
 
     }
 
-    public function processHostedReply(\PDO $dbh, $pagePost, $ssoToken, $idInv, $payNotes, $payDate) {
+    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate) {
 
     	$uS = Session::getInstance();
     	$payResult = NULL;
         $rtnCode = '';
         $rtnMessage = '';
 
-        $args = [
-            'ReturnCode' => FILTER_SANITIZE_NUMBER_INT,
-            'ReturnMessage' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            VantivGateway::PAYMENT_ID => FILTER_SANITIZE_FULL_SPECIAL_CHARS
-        ];
-
-        $post = filter_input_array(INPUT_POST, $args);
-
         if (isset($post['ReturnCode'])) {
-            $rtnCode = intval($post['ReturnCode'], 10);
+            $rtnCode = intval(filter_var($post['ReturnCode'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         if (isset($post['ReturnMessage'])) {
-            $rtnMessage = $post['ReturnMessage'];
+            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // THis eventually selects the merchant id
@@ -549,7 +541,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         if (isset($post[VantivGateway::PAYMENT_ID])) {
 
-            $paymentId = $post[VantivGateway::PAYMENT_ID];
+            $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
 
