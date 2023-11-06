@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\SecurityComponent;
@@ -366,7 +367,7 @@ try {
                     $roomRates = $uS->guestLookups['Static_Room_Rate'];
                 }
 
-                $reportCategories = readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
+                $reportCategories = Common::readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
 
 
                 $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GLTableNames::RoomType], $uS->guestLookups[GLTableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GLTableNames::KeyDepositCode], $uS->KeyDeposit);
@@ -393,7 +394,7 @@ try {
                 $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], Common::readGenLookupsPDO($dbh, 'OOS_Codes'));
 
             break;
 

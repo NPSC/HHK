@@ -257,7 +257,7 @@ class IndivMember extends AbstractMember {
         $uS = Session::getInstance();
         $idPrefix = $this->idPrefix;
 
-        $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
+        $demos = Common::readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         $table = new HTMLTable();
 
@@ -285,7 +285,7 @@ class IndivMember extends AbstractMember {
         }
 
         // No Return
-        $nreasons = readGenLookupsPDO($dbh, 'NoReturnReason', 'order');
+        $nreasons = Common::readGenLookupsPDO($dbh, 'NoReturnReason', 'order');
         $table->addBodyTr(
             HTMLTable::makeTd('No Return', array('class'=>'tdlabel', 'title'=>'Flag for No Return'))
             . HTMLTable::makeTd(
@@ -832,7 +832,7 @@ ORDER BY `List_Order`");
         }
 
 
-        $demos = readGenLookupsPDO($dbh, 'Demographics');
+        $demos = Common::readGenLookupsPDO($dbh, 'Demographics');
 
         foreach ($demos as $d) {
 

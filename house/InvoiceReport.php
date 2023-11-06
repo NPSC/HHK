@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
@@ -217,7 +218,7 @@ $hospList = $filter->getHList();
 $aList = $filter->getAList();
 
 // Invoices
-$invoiceStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
+$invoiceStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
 // Billing agent.
 $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .

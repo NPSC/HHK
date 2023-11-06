@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\Config_Lite\Config_Lite;
 use HHK\sec\{Session, WebInit};
 use HHK\AlertControl\AlertMessage;
@@ -85,7 +86,7 @@ if (isset($_POST['cmd'])) {
 
 
 
-$statusList = readGenLookupsPDO($dbh, 'Payment_Status');
+$statusList = Common::readGenLookupsPDO($dbh, 'Payment_Status');
 
 $payTypes = array();
 
@@ -413,7 +414,7 @@ where lp.idPayment > 0
     }
 
     $name_lk = $uS->nameLookups;
-    $name_lk['Pay_Status'] = readGenLookupsPDO($dbh, 'Pay_Status');
+    $name_lk['Pay_Status'] = Common::readGenLookupsPDO($dbh, 'Pay_Status');
     $uS->nameLookups = $name_lk;
     $total = 0;
 

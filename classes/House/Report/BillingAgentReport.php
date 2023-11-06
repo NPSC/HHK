@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
@@ -43,7 +44,7 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
         $this->description = "This report shows all patients who stayed in the time period and were invoiced to a specific billing agent";
         $this->inputSetReportName = "billingAgent";
 
-        $this->demogs = readGenLookupsPDO($dbh, 'Demographics');
+        $this->demogs = Common::readGenLookupsPDO($dbh, 'Demographics');
         $this->billingAgents = $this->loadBillingAgents($dbh);
         if (filter_has_var(INPUT_POST, 'selBillingAgents')) {
             $this->selectedBillingAgents = filter_input(INPUT_POST, 'selBillingAgents', FILTER_SANITIZE_NUMBER_INT, FILTER_REQUIRE_ARRAY);

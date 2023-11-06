@@ -445,8 +445,8 @@ class Hospital {
         }
 
         // Diagnosis
-        $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-        $diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+        $diags = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $diagCats = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 
         if (count($diags) > 0) {
 
@@ -520,7 +520,7 @@ class Hospital {
         }
 
         // Location
-        $locs = readGenLookupsPDO($dbh, 'Location', 'Description');
+        $locs = Common::readGenLookupsPDO($dbh, 'Location', 'Description');
 
         if (count($locs) > 0) {
 

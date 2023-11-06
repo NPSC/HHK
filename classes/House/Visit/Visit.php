@@ -1097,7 +1097,7 @@ class Visit {
         $resc = AbstractResource::getResourceObj($dbh, $this->getidResource());
         $rooms = $resc->getRooms();
 
-        $rmCleans = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $rmCleans = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         foreach ($rooms as $r) {
 

@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\Photo;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
@@ -676,8 +677,8 @@ $recHistory = History::getGuestHistoryMarkup($dbh);
 $currentCheckedIn = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, 'GuestEdit.php', FALSE, TRUE, $labels->getString('MemberType', 'patient', 'Patient'), $labels->getString('hospital', 'hospital', 'Hospital')), 'curres');
 
 $showCharges = TRUE;
-$addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
-$discs = readGenLookupsPDO($dbh, 'House_Discount');
+$addnl = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
+$discs = Common::readGenLookupsPDO($dbh, 'House_Discount');
 
 // decide to show payments and invoices
 if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($discs) == 0 && $uS->VisitFee === false && $uS->KeyDeposit === false) {

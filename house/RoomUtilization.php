@@ -51,7 +51,7 @@ $txtEnd = '';
 $output = '';
 
 // Room Groupings
-$roomGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$roomGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 
 // Callback

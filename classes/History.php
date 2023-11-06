@@ -493,7 +493,7 @@ class History {
 
         unset($roomRatesRaw);
 
-        $cleanCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $cleanCodes = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
         $noCleaning = '';
         foreach ($cleanCodes as $i) {
             if ($i['Substitute'] == '0') {
@@ -509,8 +509,8 @@ class History {
         $returnRows = array();
 
         // Show adjust button?
-        $hdArry = readGenLookupsPDO($dbh, "House_Discount");
-        $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
+        $hdArry = Common::readGenLookupsPDO($dbh, "House_Discount");
+        $roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
 
         $immobilityIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',

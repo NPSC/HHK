@@ -199,7 +199,7 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
 }
 
 //Resource grouping controls
-$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 $rescGroupBy = '';
 

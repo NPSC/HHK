@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\House\OperatingHours;
 use HHK\Notes;
 use HHK\HTMLControls\HTMLContainer;
@@ -246,7 +247,7 @@ where ru.idResource is null" . $whereGroupSql . ";";
 
         $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
-        $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
+        $roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
 
         // Get Rooms OOS
         $query1 = "SELECT
@@ -591,7 +592,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         }
 
 
-        $roomCataegoryTitles = readGenLookupsPDO($dbh, $roomGroup[2]);
+        $roomCataegoryTitles = Common::readGenLookupsPDO($dbh, $roomGroup[2]);
         $roomCataegoryTitles[''] = array(0=>'',1=>'Unknown');
 
         foreach ($rows as $r) {

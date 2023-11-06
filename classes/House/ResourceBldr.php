@@ -165,15 +165,15 @@ Order by `t`.`List_Order`;");
 
 
         } else if($tableName == DIAGNOSIS_TABLE_NAME){
-            $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
-            $diagCats = readGenLookupsPDO($dbh, "Diagnosis_Category", "Description");
+            $diags = Common::readGenLookupsPDO($dbh, $tableName, 'Order');
+            $diagCats = Common::readGenLookupsPDO($dbh, "Diagnosis_Category", "Description");
             foreach($diags as $key=>$diag){
                     if(!empty($diag['Substitute'])){
                         $diags[$key][2] = $diagCats[$diag['Substitute']][1];
                     }
                 }
         }else {
-            $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+            $diags = Common::readGenLookupsPDO($dbh, $tableName, 'Order');
         }
 
         $tbl = new HTMLTable();
@@ -371,7 +371,7 @@ Order by `t`.`List_Order`;");
 
             $rep = NULL;
 
-            $demos = readGenLookupsPDO($dbh, 'Demographics');
+            $demos = Common::readGenLookupsPDO($dbh, 'Demographics');
 
             // Define the return functions.
             if (isset($demos[$tableName])) {

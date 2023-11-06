@@ -4,6 +4,7 @@ namespace HHK\Purchase\PriceModel;
 
 use HHK\SysConst\{RoomRateCategories, RateStatus, ItemPriceCode};
 use HHK\HTMLControls\{HTMLTable, HTMLInput};
+use HHK\Common;
 
 /**
  * Price3Steps.php
@@ -94,7 +95,7 @@ class Price3Steps extends AbstractPriceModel {
 
     public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
 
-        $rp = readGenLookupsPDO($dbh, Price3Steps::TABLE_NAME);
+        $rp = Common::readGenLookupsPDO($dbh, Price3Steps::TABLE_NAME);
 
         $fTbl = new HTMLTable();
         $fTbl->addHeaderTr(

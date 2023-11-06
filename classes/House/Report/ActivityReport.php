@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Payment\{Statement, PostPayment};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -272,7 +273,7 @@ class ActivityReport {
         }
 
 
-        $diagnoses = readGenLookupsPDO($dbh, 'Diagnosis');
+        $diagnoses = Common::readGenLookupsPDO($dbh, 'Diagnosis');
         $psgId = 0;
 
         $stmtd = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'doc'");
@@ -481,7 +482,7 @@ class ActivityReport {
             $active = 'n';
         }
 
-        foreach (readGenLookupsPDO($dbh, 'Payment_Status') as $s) {
+        foreach (Common::readGenLookupsPDO($dbh, 'Payment_Status') as $s) {
             $totals[$s[0]] = array('amount' => 0.00, 'count' => 0, 'title' => $s[1], 'active' => $active);
         }
 
@@ -878,7 +879,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
             . HTMLTable::makeTh('Notes')
         );
 
-        $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
+        $invStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
         $stmt = $dbh->query($query);
 

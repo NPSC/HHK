@@ -2,6 +2,7 @@
 
 namespace HHK\House;
 
+use HHK\Common;
 use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
@@ -617,7 +618,7 @@ where
         $tbl->addBodyTr(HTMLTable::makeTh('Date', array('style'=>'text-align:right;'))
                 . HTMLTable::makeTd(($this->regRS->Date_Registered->getStoredVal() == '' ? '' : date('M j, Y', strtotime($this->regRS->Date_Registered->getStoredVal())))));
 
-        $regs = readGenLookupsPDO($dbh, 'registration', 'Order');
+        $regs = Common::readGenLookupsPDO($dbh, 'registration', 'Order');
 
         // Selected Items.
         foreach ($regs as $r) {

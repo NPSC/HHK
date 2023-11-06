@@ -1,6 +1,7 @@
 <?php
 
 namespace HHK\House\Attribute;
+use HHK\Common;
 
 /**
  * Attributes.php
@@ -36,7 +37,7 @@ class Attributes {
         }
 
 
-        $this->attributeTypes = readGenLookupsPDO($dbh, 'Attribute_Type');
+        $this->attributeTypes = Common::readGenLookupsPDO($dbh, 'Attribute_Type');
 
     }
 

@@ -1,6 +1,7 @@
 <?php
 namespace HHK\GlStmt;
 
+use HHK\Common;
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode, RoomRateCategories};
 use HHK\sec\Session;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
@@ -43,7 +44,7 @@ class FinancialInterval {
 		$this->baArray = [];
 
 		// Category Nights Counter
-		$this->categories = readGenLookupsPDO($dbh, 'Room_Category');
+		$this->categories = Common::readGenLookupsPDO($dbh, 'Room_Category');
 		$this->categories[] = array(0=>'', 1=>'(default)');
 
 		foreach ($this->categories as $c) {

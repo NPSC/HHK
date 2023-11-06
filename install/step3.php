@@ -60,7 +60,7 @@ if (isset($_POST['btnNext'])) {
     header('location:../index.php');
 }
 
-$rPrices = readGenLookupsPDO($dbh, 'Price_Model');
+$rPrices = Common::readGenLookupsPDO($dbh, 'Price_Model');
 
 
 if (isset($_POST['btnRoom']) && count($rPrices) > 0) {

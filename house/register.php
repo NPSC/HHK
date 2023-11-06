@@ -125,8 +125,8 @@ if (isset($_GET['gamess'])) {
 
 }
 
-$locations = readGenLookupsPDO($dbh, 'Location');
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+$locations = Common::readGenLookupsPDO($dbh, 'Location');
+$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
 
 
 
@@ -255,7 +255,7 @@ if($uS->Show_Closed){
     $closedDays = $operatingHours->getClosedDays();
 }
 //Resource grouping controls
-$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = $uS->CalResourceGroupBy;
@@ -266,7 +266,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
 $rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));
 
 $showCharges = TRUE;
-$addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$addnl = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
 // decide to show payments and invoices
 if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->VisitFee == FALSE && $uS->KeyDeposit == FALSE) {
@@ -275,7 +275,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
 } else {
 
     // Prepare controls
-    $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
+    $statusList = Common::readGenLookupsPDO($dbh, 'Payment_Status');
     $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($statusList, ''), array('name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple'));
 
@@ -308,7 +308,7 @@ if ($uS->UseWLnotes) {
 
 $referralStatuses = "";
 if($uS->useOnlineReferral){
-    $referralStatuses = json_encode(readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
+    $referralStatuses = json_encode(Common::readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
 }
 
 
@@ -560,7 +560,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
-        <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
+        <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(Common::readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
         <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
         <input type="hidden" id="closedDays" value='<?php echo json_encode($closedDays); ?>' />
 		<input  type="hidden" id="showCurrentGuestPhotos" value='<?php echo ($uS->showCurrentGuestPhotos && $uS->ShowGuestPhoto); ?>' />

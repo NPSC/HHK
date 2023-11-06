@@ -575,7 +575,7 @@ class GLCodes {
 	    }
 
 
-	    $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+	    $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
 
 	    foreach ($payTypes as $r) {
 	        if ($r[2] != '') {

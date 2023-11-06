@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\House\OperatingHours;
 use HHK\House\Report\RoomReport;
 use HHK\sec\{Session, WebInit, Labels};
@@ -738,7 +739,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     // get session instance
     $uS = Session::getInstance();
 
-    $categories = readGenLookupsPDO($dbh, $rescGroup[2], 'Description');
+    $categories = Common::readGenLookupsPDO($dbh, $rescGroup[2], 'Description');
         // add default category
     $categories[] = array(0=>'', 1=>'(default)');
 
@@ -1601,7 +1602,7 @@ $dataTable = '';
 $statsTable = '';
 $errorMessage = '';
 $cFields = array();
-$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 $useTaxes = FALSE;
 
 $tstmt = $dbh->query("Select count(idItem) from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax . " where i.Deleted = 0");
@@ -1662,12 +1663,12 @@ if ($uS->Doctor) {
     $cFields[] = array("Doctor", 'Doctor', '', '', 's', '', array());
 }
 
-$locations = readGenLookupsPDO($dbh, 'Location');
+$locations = Common::readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
     $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
 }
 
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
 if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
@@ -1688,7 +1689,7 @@ if ($uS->VisitFee) {
     $cFields[] = array($labels->getString('statement', 'cleaningFeeLabel', "Clean Fee"), 'visitFee', 'checked', '', 's', '', array('style'=>'text-align:right;'));
 }
 
-$adjusts = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$adjusts = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 if (count($adjusts) > 0) {
     $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style'=>'text-align:right;'));
 

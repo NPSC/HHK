@@ -1,6 +1,7 @@
 <?php
 namespace HHK\CrmExport\Neon;
 
+use HHK\Common;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\House\ResourceBldr;
 use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
@@ -1714,7 +1715,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
     public function getMyCustomFields(\PDO $dbh) {
 
         if (is_null($this->customFields)) {
-            $cf = readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
+            $cf = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
 
             foreach($cf as $k => $v) {
                 $this->customFields[$k] = $v['Description'];
@@ -1795,7 +1796,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     }
 
                 } else {
-                    $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+                    $hhkLookup = Common::removeOptionGroups(Common::readGenLookupsPDO($dbh, $list['HHK_Lookup']));
                 }
 
                 $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
@@ -1829,7 +1830,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             // Custom fields
             $results = $this->listCustomFields();
             $cfTbl = new HTMLTable();
-            $myCustomFields = readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
+            $myCustomFields = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
 
             $cfTbl->addHeaderTr(HTMLTable::makeTh('Field') . HTMLTable::makeTh($this->serviceName . ' id'));
 
@@ -1942,7 +1943,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         // Custom fields
         $results = $this->listCustomFields();
         $custom_fields = [];
-        $myCustomFields = readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
+        $myCustomFields = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
 
         foreach ($results as $v) {
             if (isset($myCustomFields[ $v['fieldName']])) {
@@ -1984,7 +1985,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                 }
 
             } else {
-                $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+                $hhkLookup = Common::removeOptionGroups(Common::readGenLookupsPDO($dbh, $list['HHK_Lookup']));
             }
 
             $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");

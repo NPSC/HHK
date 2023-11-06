@@ -45,7 +45,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
 
     public function getMainSummaryData(){
 
-        $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
+        $roomTypes = Common::readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
         $resvStatuses = Common::readLookups($this->dbh, "reservStatus", "Code");

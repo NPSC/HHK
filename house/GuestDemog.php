@@ -52,7 +52,7 @@ if(filter_has_var(INPUT_POST, 'btnHere')){
     }
 }
 
-foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
+foreach (Common::readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
     if (strtolower($d[2]) == 'y') {
 
@@ -72,7 +72,7 @@ foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
         $demos[$d[0]] = array(
             'title' => $d[1],
-            'list' => Common::removeOptionGroups(readGenLookupsPDO($dbh, $d[0], 'Order')),
+            'list' => Common::removeOptionGroups(Common::readGenLookupsPDO($dbh, $d[0], 'Order')),
         );
     }
 }

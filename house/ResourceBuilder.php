@@ -250,7 +250,7 @@ if (isset($_POST['btnkfSave'])) {
         // Save the default visit fee selection.
         if ($vfDefault != '') {
 
-            $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
+            $vFees = Common::readGenLookupsPDO($dbh, 'Visit_Fee_Code');
 
             foreach ($vFees as $v) {
 
@@ -268,7 +268,7 @@ if (isset($_POST['btnkfSave'])) {
     if (isset($_POST['ptrbdefault'])) {
 
         $vfDefault = filter_var($_POST['ptrbdefault'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $vFees = readGenLookupsPDO($dbh, 'Pay_Type');
+        $vFees = Common::readGenLookupsPDO($dbh, 'Pay_Type');
 
         foreach ($vFees as $v) {
 
@@ -819,7 +819,7 @@ if (isset($_POST['ldfm'])) {
 
     $formType = filter_var($_POST['ldfm'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
+    $rarry = Common::readGenLookupsPDO($dbh, 'Form_Upload');
 
     // get available doc replacements
     $replacementStmt = $dbh->query("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = '$formType'");
@@ -1090,7 +1090,7 @@ if (isset($_POST['txtformLang'])) {
 
     if ($lang != '') {
 
-        $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
+        $rarry = Common::readGenLookupsPDO($dbh, 'Form_Upload');
 
         // Look for a match
         foreach ($rarry as $f) {
@@ -1170,7 +1170,7 @@ if (isset($_POST['txtformLang'])) {
 $hospitalTabTitle = $labels->getString('hospital', 'hospital', 'Hospitals & Associations');
 
 // Room pricing model
-$rPrices = readGenLookupsPDO($dbh, 'Price_Model');
+$rPrices = Common::readGenLookupsPDO($dbh, 'Price_Model');
 $kTbl = new HTMLTable();
 $kTbl->addHeaderTr(HTMLTable::makeTh('Selected Model'));
 
@@ -1193,7 +1193,7 @@ $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 $fTbl = $priceModel->getEditMarkup($dbh, $uS->RoomRateDefault, $uS->IncomeRated);
 
 // Static room rate
-$rp = readGenLookupsPDO($dbh, 'Static_Room_Rate', 'Description');
+$rp = Common::readGenLookupsPDO($dbh, 'Static_Room_Rate', 'Description');
 
 $sTbl = new HTMLTable();
 $sTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount'));
@@ -1291,7 +1291,7 @@ $visitFeesTable = '';
 
 if ($uS->VisitFee) {
 
-    $kFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
+    $kFees = Common::readGenLookupsPDO($dbh, 'Visit_Fee_Code');
     $kTbl = new HTMLTable();
     $kTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount'));
 
@@ -1497,7 +1497,7 @@ $keysTable = '';
 $rateTableTabTitle = 'Room Rates';
 
 if ($uS->KeyDeposit) {
-    $kFees = readGenLookupsPDO($dbh, 'Key_Deposit_Code');
+    $kFees = Common::readGenLookupsPDO($dbh, 'Key_Deposit_Code');
     $kTbl = new HTMLTable();
     $kTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount')); // .HTMLTable::makeTh('Delete'));
 
@@ -1536,7 +1536,7 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 	$payMethods[''] = '';
 
 
-    $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+    $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
     $ptTbl = new HTMLTable();
     $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('GL Code'));
 
@@ -1573,7 +1573,7 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 $hospRs = new HospitalRS();
 $hrows = EditRS::select($dbh, $hospRs, array(), '', array($hospRs->Status, $hospRs->Title));
 
-$hospTypes = readGenLookupsPDO($dbh, 'Hospital_Type');
+$hospTypes = Common::readGenLookupsPDO($dbh, 'Hospital_Type');
 
 $constraints = new Constraints($dbh);
 $hospConstraints = $constraints->getConstraintsByType(ConstraintType::Hospital);
@@ -1964,7 +1964,7 @@ $taxTable = $tiTbl->generateMarkup(array(
 
 // Form Upload
 
-$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups(readGenLookupsPDO($dbh, 'Form_Upload')), $formType, TRUE), array(
+$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Form_Upload')), $formType, TRUE), array(
     'name' => 'selFormUpload'
 ));
 
@@ -1991,7 +1991,7 @@ $alertMsg->set_Text("uh-oh");
 
 $resultMessage = $alertMsg->createMarkup();
 
-$demogs = readGenLookupsPDO($dbh, 'Demographics');
+$demogs = Common::readGenLookupsPDO($dbh, 'Demographics');
 foreach($demogs as $key=>$demog){
     if($demog["Substitute"] == ""){ //remove disabled demogs
         unset($demogs[$key]);

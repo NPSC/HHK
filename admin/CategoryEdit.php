@@ -12,10 +12,10 @@ use HHK\Exception\RuntimeException;
 /**
  * CategoryEdit.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 
@@ -30,7 +30,7 @@ if ($tableName != '') {
     $volArray = $wInit->reloadSessionVolLkUps();
 
     if (isset($volArray['Vol_Category'][$tableName])) {
-        $rows = readGenLookupsPDO($dbh, $tableName);
+        $rows = Common::readGenLookupsPDO($dbh, $tableName);
     }
 
     echo json_encode($rows);

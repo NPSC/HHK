@@ -439,7 +439,7 @@ class PaymentChooser {
                 $labels,
                 $vat,
                 $visitCharge->getIdVisit(),
-                readGenLookupsPDO($dbh, 'ExcessPays'),
+                Common::readGenLookupsPDO($dbh, 'ExcessPays'),
                 $uS->VisitExcessPaid,
                 $uS->UseHouseWaive,
                 $chkingIn
@@ -447,7 +447,7 @@ class PaymentChooser {
             , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
         );
 
-        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+        $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
 
         if ($uS->ShowTxPayType == FALSE) {
             unset($payTypes[PayType::Transfer]);
@@ -550,7 +550,7 @@ class PaymentChooser {
             .HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y'), array('name'=>'paymentDate', 'readonly'=>'readonly', 'class'=>'hhk-feeskeys ckdate')))
             , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
 
-        $excessPays = readGenLookupsPDO($dbh, 'ExcessPays');
+        $excessPays = Common::readGenLookupsPDO($dbh, 'ExcessPays');
 
         // Extra payment & distribution Selector
         if (count($excessPays) > 0) {
@@ -582,7 +582,7 @@ class PaymentChooser {
 
         $mkup =  $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
 
-        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+        $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
 
         unset($payTypes[PayType::Invoice]);
 
@@ -832,7 +832,7 @@ ORDER BY v.idVisit , v.Span;");
                         , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 
-                $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+                $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
                 unset($payTypes[PayType::Invoice]);
 
 

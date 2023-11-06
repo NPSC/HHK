@@ -520,7 +520,7 @@ class SiteConfig {
             } else if ($r['Type'] == 'lu' && $r['GenLookup'] != '') {
                 // lookup
 
-                $opts = readGenLookupsPDO($dbh, $r['GenLookup'], 'order');
+                $opts = Common::readGenLookupsPDO($dbh, $r['GenLookup'], 'order');
 
                 $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($opts), $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
 
@@ -645,7 +645,7 @@ class SiteConfig {
 
         // Payment Gateway name
 
-        $opts = readGenLookupsPDO($dbh, 'Pay_Gateway_Name');
+        $opts = Common::readGenLookupsPDO($dbh, 'Pay_Gateway_Name');
         $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway'), TRUE), array('name' => 'payGtwyName'));
 
         $tbl->addBodyTr(

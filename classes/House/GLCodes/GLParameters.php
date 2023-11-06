@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\GLCodes;
 
+use HHK\Common;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\AuditLog\NameLog;
@@ -51,7 +52,7 @@ class GLParameters {
 
     public function loadParameters(\PDO $dbh) {
 
-        $this->glParms = readGenLookupsPDO($dbh, $this->tableName, 'Order');
+        $this->glParms = Common::readGenLookupsPDO($dbh, $this->tableName, 'Order');
 
         if (count($this->glParms) > 0) {
             $this->setHost($this->glParms['Host'][1]);
@@ -178,7 +179,7 @@ class GLParameters {
         $payMethods[''] = '';
 
 
-        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+        $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
         $glTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
         $glTbl->addBodyTr(HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('Gl Code'));
 

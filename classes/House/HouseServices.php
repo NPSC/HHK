@@ -3,6 +3,7 @@
 namespace HHK\House;
 
 
+use HHK\Common;
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
@@ -158,8 +159,8 @@ class HouseServices {
 
         // Show adjust button?
         $showAdjust = FALSE;
-        $hdArry = readGenLookupsPDO($dbh, "House_Discount");
-        $adnlArray = readGenLookupsPDO($dbh, 'Addnl_Charge');
+        $hdArry = Common::readGenLookupsPDO($dbh, "House_Discount");
+        $adnlArray = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
         if ($action != 'cf' && (count($hdArry) > 0 || count($adnlArray) > 0)) {
             $showAdjust = TRUE;
@@ -652,7 +653,7 @@ class HouseServices {
 
         if ($idItem == ItemId::Discount) {
 
-            $codes = readGenLookupsPDO($dbh, 'House_Discount');
+            $codes = Common::readGenLookupsPDO($dbh, 'House_Discount');
 
             if (isset($codes[$discount])) {
 
@@ -688,7 +689,7 @@ class HouseServices {
 
         if ($idItem == ItemId::AddnlCharge) {
 
-            $codes = readGenLookupsPDO($dbh, 'Addnl_Charge');
+            $codes = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
             if (isset($codes[$addnlCharge])) {
 

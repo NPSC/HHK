@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
@@ -87,7 +88,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     public function getMainSummaryData(){
 
-        $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
+        $roomTypes = Common::readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
         $query = '

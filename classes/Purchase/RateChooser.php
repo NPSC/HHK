@@ -565,7 +565,7 @@ class RateChooser {
 
         $codes = array();
 
-        foreach (readGenLookupsPDO($dbh, 'Visit_Fee_Code') as $r) {
+        foreach (Common::readGenLookupsPDO($dbh, 'Visit_Fee_Code') as $r) {
 
             if ($r['Type'] != GLTypeCodes::Archive || $visitFeeCharged == $r['Substitute']) {
                 $codes[$r['Code']] = $r;

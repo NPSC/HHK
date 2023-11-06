@@ -778,8 +778,8 @@ class VisitViewer {
         }
 
         $includeAddnlCharge = FALSE;
-        $addnls = readGenLookupsPDO($dbh, 'Addnl_Charge');
-        $discs = readGenLookupsPDO($dbh, 'House_Discount');
+        $addnls = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
+        $discs = Common::readGenLookupsPDO($dbh, 'House_Discount');
         if (count($addnls) > 0 || count($discs) > 0) {
             $includeAddnlCharge = TRUE;
         }
@@ -1358,17 +1358,17 @@ class VisitViewer {
 
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-                $spanEndDt = newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
+                $spanEndDt = Common::newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
                 $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
                 if ($spanEndDt < $tonight) {
-                    $spanEndDt = newDateWithTz('', $uS->tz);
+                    $spanEndDt = Common::newDateWithTz('', $uS->tz);
                     $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
                 }
 
             } else {
                 // Checked out
-                $spanEndDt = newDateWithTz($vRs->Span_End->getStoredVal(), $uS->tz);
+                $spanEndDt = Common::newDateWithTz($vRs->Span_End->getStoredVal(), $uS->tz);
             }
 
 
@@ -1750,7 +1750,7 @@ class VisitViewer {
     public static function changeVisitFee(\PDO $dbh, $visitFeeOption, Visit $visit) {
 
         $uS = Session::getInstance();
-        $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
+        $vFees = Common::readGenLookupsPDO($dbh, 'Visit_Fee_Code');
         $reply = '';
 
         if (isset($vFees[$visitFeeOption])) {

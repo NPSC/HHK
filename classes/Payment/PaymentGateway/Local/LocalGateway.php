@@ -70,7 +70,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$uS = Session::getInstance ();
 
 		// Lookup the charge card types
-		$chgTypes = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
+		$chgTypes = Common::readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 		if (isset ( $chgTypes [$pmp->getChargeCard ()] )) {
 			$pmp->setChargeCard ( $chgTypes [$pmp->getChargeCard ()] [1] );
 		}
@@ -454,7 +454,7 @@ class LocalGateway extends AbstractPaymentGateway {
 	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
 		// Charge card list
-		$ccs = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
+		$ccs = Common::readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 
 		foreach ( $ccs as $v ) {
 		    $v[0] = $v[1];

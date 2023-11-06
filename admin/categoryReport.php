@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\{SecurityComponent, WebInit};
 use HHK\HTMLControls\selCtrl;
 use HHK\sec\Session;
@@ -45,7 +46,7 @@ $catSelTitleMarkup = "";
 $catagoryHeadertable = "";
 
 // Selector Controls for Category section
-$gSel = readGenLookupsPDO($dbh, "Vol_Category");
+$gSel = Common::readGenLookupsPDO($dbh, "Vol_Category");
 $catSelCtrls = array();
 
 foreach ($gSel as $selData) {

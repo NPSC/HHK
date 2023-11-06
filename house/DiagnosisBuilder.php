@@ -35,7 +35,7 @@ function getSelections(\PDO $dbh, $tableName, $type) {
     $uS = Session::getInstance();
 
     // Generate selectors.
-    $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+    $diags = Common::readGenLookupsPDO($dbh, $tableName, 'Order');
 
     $tbl = new HTMLTable();
 
