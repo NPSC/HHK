@@ -221,7 +221,7 @@ class History {
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
         return $this->createMarkup($status, $page, $includeAction, $reservStatuses, $static);
     }
@@ -544,7 +544,7 @@ class History {
             }
 
             if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos && $includeAction && !$static){
-                $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
+                $fixedRows["photo"] = Photo::showGuestPicture($r["Id"], $uS->MemberImageSizePx);
             }
 
             // Guest first name

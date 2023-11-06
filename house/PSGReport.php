@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\HTMLControls\HTMLContainer;
@@ -1165,7 +1166,7 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 // Visit status
-$statusList = removeOptionGroups($uS->guestLookups['Visit_Status']);
+$statusList = Common::removeOptionGroups($uS->guestLookups['Visit_Status']);
 
 // remove unused visit statuses
 unset($statusList['p']);

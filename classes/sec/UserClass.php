@@ -852,8 +852,10 @@ class UserClass
     {
         if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
             $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
-        } else {
+        } elseif (filter_has_var(INPUT_SERVER, 'REMOTE_ADDR')){
             $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
+        }else{
+            $remoteIp = "";
         }
 
         return $remoteIp;
@@ -889,7 +891,7 @@ class UserClass
 
 
         //get user agent
-        if($fromHHK){
+        if($fromHHK || !filter_has_var(INPUT_SERVER, "HTTP_USER_AGENT")){
             $remoteIp = '';
             $browserName = "HHK";
             $osName = "HHK";

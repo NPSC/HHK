@@ -29,11 +29,12 @@
 		"cerdic/css-tidy" : "~2.0",
 		"peppeocchi/php-cron-scheduler" : "~4.0",
 		"guzzlehttp/guzzle" : "~7.5"
-
 	},
 	"scripts" : {
 		"pack" : "HHK\\devTools\\Build::run",
-		"test" : "phpunit --colors=always --testdox --bootstrap tests/bootstrap.php --configuration tests/phpunit.xml tests/"
+		"testdev" : "phpunit --colors=always --testdox --display-warnings --display-notices --bootstrap tests/envs/dev/bootstrap.php",
+		"testdaily" : "phpunit --colors=always --testdox --configuration phpunit.xml --bootstrap=tests/envs/dailyPriceModel/bootstrap.php"
+
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^10.4"

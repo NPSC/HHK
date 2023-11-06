@@ -2,6 +2,7 @@
 
 namespace HHK\House\Visit;
 
+use HHK\Common;
 use HHK\House\OperatingHours;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -1303,7 +1304,7 @@ class VisitViewer {
 
             // Save first arrival
             if ($vRs->Span->getStoredVal() == 0) {
-                $firstArrival = newDateWithTz($vRs->Arrival_Date->getStoredVal(), $uS->tz);
+                $firstArrival = Common::newDateWithTz($vRs->Arrival_Date->getStoredVal(), $uS->tz);
             }
 
             // Changing only the end of the visit, need only the last span
@@ -1353,7 +1354,7 @@ class VisitViewer {
         // change visit span dates
         foreach ($spans as $s => $vRs) {
 
-            $spanStartDT = newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
+            $spanStartDT = Common::newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
 
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 

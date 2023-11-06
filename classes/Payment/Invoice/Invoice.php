@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\Invoice;
 
+use HHK\Common;
 use HHK\Payment\Receipt;
 use HHK\Payment\Invoice\InvoiceLine\{AbstractInvoiceLine, InvoiceInvoiceLine};
 use HHK\Purchase\Item;
@@ -1207,7 +1208,7 @@ where pi.Invoice_Id in ($whAssoc)";
 	 * @return mixed
 	 */
 	private function createNewInvoiceNumber(\PDO $dbh) {
-		return incCounter ( $dbh, 'invoice' );
+		return Common::incCounter ( $dbh, 'invoice' );
 	}
 	/**
 	 * Summary of getIdInvoice

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpunit
+    colors="true"
+    stopOnFailure="true"
+>
+
+    <testsuites>
+        <testsuite name="HHK">
+            <!--<file>tests/installTests/installTest.php</file>-->
+            <directory>tests/loginTests</directory>
+            <directory>tests/userTests</directory>
+        </testsuite>
+    </testsuites>
+
+</phpunit>

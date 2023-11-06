@@ -2,6 +2,7 @@
 
 namespace HHK\Member\RoleMember;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLTable, HTMLSelector};
 use HHK\SysConst\{GLTableNames, RelLinkType, VolMemberType};
 use HHK\sec\Session;
@@ -46,7 +47,7 @@ class GuestMember extends AbstractRoleMember {
                     $parray = array($patientRelationship => $parray[$patientRelationship]);
                 } else {
                     unset($parray[RelLinkType::Self]);
-                    $parray = removeOptionGroups($parray);
+                    $parray = Common::removeOptionGroups($parray);
                 }
 
                 if ($patientRelationship == '') {

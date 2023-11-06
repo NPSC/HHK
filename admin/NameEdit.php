@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\Donation\{Campaign, DonateMarkup};
 use HHK\History;
 use HHK\AlertControl\AlertMessage;
@@ -331,7 +332,7 @@ if ($id != 0 && $donationsFlag) {
 
     $donateMkup = DonateMarkup::createDonateMarkup(
             $CampOpt,
-            removeOptionGroups($uS->nameLookups[GLTableNames::AddrPurpose]),
+            Common::removeOptionGroups($uS->nameLookups[GLTableNames::AddrPurpose]),
             $name->get_preferredMailAddr(),
             $uS->nameLookups[GLTableNames::SalutationCodes],
             SalutationCodes::FirstOnly,

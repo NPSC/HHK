@@ -1209,7 +1209,6 @@ class SAML {
 
     private function updateDefaultSecurityGroups(array $parms){
         // Group Code security table
-        //$sArray = readGenLookups($dbh, "Group_Code");
         $stmt = $this->dbh->query("select Group_Code as Code, Description from w_groups");
         $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

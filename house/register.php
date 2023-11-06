@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\House\OperatingHours;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
@@ -77,25 +78,25 @@ try {
 if (isset($_POST['btnDlCurGuests'])) {
     // Current guests
     $rows = History::getCheckedInGuestMarkup($dbh, '', FALSE);
-    doExcelDownLoad($rows, 'CurrentGuests');
+    Common::doExcelDownLoad($rows, 'CurrentGuests');
 }
 if (isset($_POST['btnDlConfRes'])) {
     // Confirmed Reservations
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'ConfirmedResv');
+    Common::doExcelDownLoad($rows, 'ConfirmedResv');
 }
 if (isset($_POST['btnDlUcRes'])) {
     // Unconfirmed Reservations
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'UnconfirmedResv');
+    Common::doExcelDownLoad($rows, 'UnconfirmedResv');
 }
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'Waitlist');
+    Common::doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
     // Dailey report
@@ -262,7 +263,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = '';
 }
 
-$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));
+$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));
 
 $showCharges = TRUE;
 $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');

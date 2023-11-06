@@ -2,6 +2,7 @@
 namespace HHK\CrmExport\Neon;
 
 use HHK\CrmExport\AbstractExportManager;
+use HHK\House\ResourceBldr;
 use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
 use HHK\sec\Crypto;
 use HHK\sec\Session;
@@ -1950,7 +1951,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         }
 
         // Write Custom Field Ids to the config file.
-        saveGenLk($dbh, 'Cm_Custom_Fields', $custom_fields, [], []);
+        ResourceBldr::saveGenLk($dbh, 'Cm_Custom_Fields', $custom_fields, [], []);
 
 
         // Properties

@@ -19,6 +19,7 @@ use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus, DefaultSettings};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
+use HHK\Common;
 
 
 
@@ -194,7 +195,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setResvStatusCode($rows[0]['Status']);
 
         // Get Resv status codes
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code");
 
         if (isset($reservStatuses[$rData->getResvStatusCode()])) {
             $rData->setResvStatusType($reservStatuses[$rData->getResvStatusCode()]['Type']);
@@ -655,7 +656,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $statusText = $resv->getStatusTitle($dbh);
         $hideCheckinButton = TRUE;
         $dataArray = [];
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
 
         // Registration
@@ -996,7 +997,7 @@ where rg.idReservation =" . $r['idReservation']);
                 );
 
         $tbl2->addBodyTr(
-                ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), ['name'=>'selPayType'])) : '')
+                ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($payTypes), $resv->getExpectedPayType()), ['name'=>'selPayType'])) : '')
             .($moaBalance > 0 ? HTMLTable::makeTd('$'.number_format($moaBalance, 2), ['style'=>'text-align:center;']) : '')
             .($resv->isActive($allResvStatuses) ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), ['style'=>'text-align:center;']) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
@@ -1335,7 +1336,7 @@ WHERE
         $uS = Session::getInstance();
 
         if (count($reservStatuses) == 0) {
-            $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+            $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
         }
 
         // Only resverations in active status can change rooms

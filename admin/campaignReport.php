@@ -1,5 +1,6 @@
 <?php
 
+use HHK\House\Report\ReportFilter;
 use HHK\sec\{Session, WebInit};
 use HHK\Config_Lite\Config_Lite;
 /**
@@ -35,7 +36,7 @@ if (filter_has_var(INPUT_POST, "selYears")) {
 } else {
     $yearSelected = "all";
 }
-$selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
+$selYearOptions = ReportFilter::getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
 
 ?>
 <!DOCTYPE html>

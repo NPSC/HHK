@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Common;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\WebPageCode;
 
@@ -73,7 +74,7 @@ class SecurityComponent {
         if($isAuthorized){
             return true;
         }else{
-            $dbh = initPDO(true);
+            $dbh = Common::initPDO(true);
             UserClass::insertUserLog($dbh, "Unauthorized for page: " . $name, ($uS->username != "" ? $uS->username : "<empty>"));
             return false;
         }

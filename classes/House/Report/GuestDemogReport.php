@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\Exception\RuntimeException;
 use HHK\Member\Address\Address;
@@ -126,14 +127,14 @@ class GuestDemogReport {
                 }
 
                 //room grouping
-                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(Common::removeOptionGroups($roomGrouping));
 
                 // Demographics
                 foreach ($demoCategorys as $k => $d) {
-                    $accum[$thisPeriod][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
+                    $accum[$thisPeriod][$d] = self::makeCounters(Common::removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
                 }
 
-                $accum[$thisPeriod]['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
+                $accum[$thisPeriod]['Distance'] = self::makeCounters(Common::removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
                 $periods[] = $thisPeriod;
 

@@ -2,6 +2,7 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\Common;
 use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\Constraint\{ConstraintsReservation, ConstraintsVisit};
@@ -1333,7 +1334,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
             }
         }
 
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code", true);
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code", true);
 
         if(isset($reservStatuses[$status])){
             return $reservStatuses[$status]["Title"];
@@ -1366,7 +1367,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
             }
         }
 
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code", true);
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code", true);
 
         if(isset($reservStatuses[$status])){
             return HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ' . $reservStatuses[$status]["Icon"], 'style'=>'float: left; margin-left:.3em;', 'title'=>$reservStatuses[$status]["Title"]));

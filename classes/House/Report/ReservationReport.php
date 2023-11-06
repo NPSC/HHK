@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
@@ -41,7 +42,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         $this->inputSetReportName = "reserv";
         $this->locations = readGenLookupsPDO($dbh, 'Location');
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
-        $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
+        $this->resvStatuses = Common::removeOptionGroups(Common::readLookups($dbh, "ReservStatus", "Code", FALSE));
 
         if (filter_has_var(INPUT_POST, 'selResvStatus')) {
             $this->selectedResvStatuses = filter_input(INPUT_POST, 'selResvStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);

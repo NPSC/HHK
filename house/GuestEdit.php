@@ -1,4 +1,5 @@
 <?php
+use HHK\Photo;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\sec\SecurityComponent;
@@ -368,7 +369,7 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
                 }
 
                 if (filter_has_var(INPUT_POST, 'txtFaStatusDate')) {
-                    $faDT = setTimeZone($uS, filter_input(INPUT_POST, 'txtFaStatusDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                    $faDT = Common::setTimeZone($uS, filter_input(INPUT_POST, 'txtFaStatusDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     $faStatDate = $faDT->format('Y-m-d');
                 }
 
@@ -580,7 +581,7 @@ if ($psg->getIdPsg() > 0) {
         EditRS::loadRow($r, $reservRs);
 
         $reserv = new Reservation_1($reservRs);
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
         $rtbl = new HTMLTable();
         $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate') . ($uS->AcceptResvPaymt ? HTMLTable::makeTh('Pre-Paymt') : ''));
 
@@ -631,7 +632,7 @@ if ($psg->getIdPsg() > 0) {
 
 $guestPhotoMarkup = "";
 if($uS->ShowGuestPhoto){
-	$guestPhotoMarkup = showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
+	$guestPhotoMarkup = Photo::showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
 }
 
 $guestName = "<span style='font-size:2em;'>$niceName</span>";

@@ -2,6 +2,7 @@
 namespace HHK\Update;
 
 use DateTime;
+use HHK\Common;
 use HHK\Exception\ValidationException;
 use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
@@ -521,7 +522,7 @@ class SiteConfig {
 
                 $opts = readGenLookupsPDO($dbh, $r['GenLookup'], 'order');
 
-                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($opts), $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
+                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($opts), $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
 
             } else {
 

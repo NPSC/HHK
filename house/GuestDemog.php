@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\DataTableServer\SSP;
@@ -71,7 +72,7 @@ foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
         $demos[$d[0]] = array(
             'title' => $d[1],
-            'list' => removeOptionGroups(readGenLookupsPDO($dbh, $d[0], 'Order')),
+            'list' => Common::removeOptionGroups(readGenLookupsPDO($dbh, $d[0], 'Order')),
         );
     }
 }

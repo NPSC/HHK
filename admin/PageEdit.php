@@ -2,6 +2,7 @@
 
 use HHK\AlertControl\AlertMessage;
 use HHK\Exception\DuplicateException;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Pages;
 use HHK\sec\{SecurityComponent, WebInit};
 use HHK\Exception\RuntimeException;
@@ -99,7 +100,7 @@ if ($stmt->rowCount() > 0) {
 
     $stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
     $grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
-    $securityCodes = doOptionsMkup($grps, false, false);
+    $securityCodes = HTMLSelector::doOptionsMkup($grps, false, false);
 
 
 } else {

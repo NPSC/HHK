@@ -5,6 +5,7 @@ namespace HHK\House\Report;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\HTMLInput;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\ExcelHelper;
@@ -401,7 +402,7 @@ abstract class AbstractReport {
         if(count($errors) == 0 && $body !=''){
 
             try{
-                $mail = prepareEmail();
+                $mail = new HHKMailer();
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

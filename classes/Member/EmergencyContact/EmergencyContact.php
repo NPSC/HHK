@@ -2,6 +2,7 @@
 
 namespace HHK\Member\EmergencyContact;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\RelLinkType;
 use HHK\Tables\EditRS;
@@ -139,7 +140,7 @@ class EmergencyContact implements EmergencyContactInterface {
 
         // Relationship
         $markup->addBodyTr(HTMLTable::makeTd('Relationship to ' . Labels::getString('MemberType', 'visitor', 'Guest'), array('class'=>'tdlabel')) . HTMLTable::makeTd(
-            HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($relOptions), (isset($emergUserData['relation']) && $emergUserData['relation'] !='' ? $emergUserData['relation'] : $this->getEcRelationship())), array('name'=>$idPrefix."selEmrgRel"))));
+            HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($relOptions), (isset($emergUserData['relation']) && $emergUserData['relation'] !='' ? $emergUserData['relation'] : $this->getEcRelationship())), array('name'=>$idPrefix."selEmrgRel"))));
 
         $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbEmrgLater', 'data-prefix'=>$idPrefix, 'class'=>'hhk-EmergCb');
         if ($checkLater) {

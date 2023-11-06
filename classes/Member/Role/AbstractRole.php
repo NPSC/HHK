@@ -2,6 +2,7 @@
 
 namespace HHK\Member\Role;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\ReserveData\PSGMember\PSGMember;
 use HHK\Member\Address\{Address, Addresses, CleanAddress, Emails, Phones};
@@ -479,7 +480,7 @@ where r.idPsg = $idPsg and s.idName = " . $id;
     public function getAddrObj() {
 
         if (is_null($this->addr)) {
-            $dbh = initPDO();
+            $dbh = Common::initPDO();
             $uS = Session::getInstance();
             $this->addr = new Address($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::AddrPurpose]);
         }
@@ -488,7 +489,7 @@ where r.idPsg = $idPsg and s.idName = " . $id;
 
     public function getPhonesObj() {
         if (is_null($this->phones)) {
-            $dbh = initPDO();
+            $dbh = Common::initPDO();
             $uS = Session::getInstance();
             $this->phones = new Phones($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::PhonePurpose]);
         }
@@ -497,7 +498,7 @@ where r.idPsg = $idPsg and s.idName = " . $id;
 
     public function getEmailsObj() {
         if (is_null($this->emails)) {
-            $dbh = initPDO();
+            $dbh = Common::initPDO();
             $uS = Session::getInstance();
             $this->emails = new Emails($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::EmailPurpose]);
         }

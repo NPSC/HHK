@@ -208,7 +208,7 @@ class Login {
 
     public static function IEMsg(){
         try {
-            if ($userAgentArray = get_browser(NULL, TRUE)) {
+            if (filter_has_var(INPUT_SERVER, "HTTP_USER_AGENT") && $userAgentArray = get_browser(NULL, TRUE)) {
 
                 if (is_array($userAgentArray)) {
 

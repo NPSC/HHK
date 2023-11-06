@@ -2,7 +2,9 @@
 
 namespace HHK\House\Visit;
 
+use HHK\Common;
 use HHK\Exception\RuntimeException;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\SysConst\{RoomRateCategories, VisitStatus};
@@ -534,7 +536,7 @@ class Visit {
         if ($uS->NoReplyAddr != '' && ($uS->Guest_Track_Address != '' || $houseKeepingEmail != '')) {
 
             try {
-                $mail = prepareEmail();
+                $mail = new HHKMailer();
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -919,8 +921,8 @@ class Visit {
 
         } else {
 
-            $dateDepartedDT = setTimeZone($uS, $dateDeparted);
-            $depDate = setTimeZone($uS, $dateDeparted);
+            $dateDepartedDT = Common::setTimeZone($uS, $dateDeparted);
+            $depDate = Common::newDateWithTzsetTimeZone($uS, $dateDeparted);
 
         }
 
@@ -1006,7 +1008,7 @@ class Visit {
 	                $subj = "Check-Out from " . $roomTitle . " by " . $uS->username . ".";
 
 	                // Send email
-	                $mail = prepareEmail();
+	                $mail = new HHKMailer();
 
 	                $mail->From = $uS->NoReplyAddr;
 	                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -1160,7 +1162,7 @@ class Visit {
                 // Get the site configuration object
 
                 // Send email
-                $mail = prepareEmail();
+                $mail = new HHKMailer();
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -1583,7 +1585,7 @@ class Visit {
 
             // Creaate new Checkout date
             try {
-                $coDT = setTimeZone(NULL, $coDate);
+                $coDT = Common::setTimeZone(NULL, $coDate);
                 $coDT->setTime(0, 0, 0);
             } catch (\Exception $ex) {
                 $rtnMsg .= "Something wrong with the Expected Checkout Date: " . $coDate;

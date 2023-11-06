@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\GLTableNames;
 use HHK\sec\Labels;
@@ -214,7 +215,7 @@ class ReportFilter {
         $uS = Session::getInstance();
 
         $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-        $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+        $yearSelector = HTMLSelector::generateMarkup($this->getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
         $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
         $tbl = new HTMLTable();
@@ -244,6 +245,41 @@ class ReportFilter {
 
         return $tbl;
     }
+
+    public static function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRUE)
+    {
+        $markup = "";
+
+        $curYear = intval(date("Y")) + 1;
+
+        // Get month number of start of FY
+        $fyDate = 12 - $fyMonths;
+
+        // Show next year in list if we are already into the new FY
+        if ($fyDate <= intval(date("n"))) {
+            $curYear ++;
+        }
+
+        if ($showAllYears) {
+            if ($slctd == "all" || $slctd == "") {
+                $markup .= "<option value='all' selected='selected'>All Years</option>";
+            } else {
+                $markup .= "<option value='all'>All Years</option>";
+            }
+        }
+
+        // load years
+        for ($i = $startYear; $i <= $curYear; $i ++) {
+            if ($slctd == $i) {
+                $slctMarkup = "selected='selected'";
+            } else {
+                $slctMarkup = "";
+            }
+            $markup .= "<option value='" . $i . "' $slctMarkup>" . $i . "</option>";
+        }
+        return $markup;
+    }
+
 
     /**
      * Summary of getTimePeriodScript
@@ -480,7 +516,7 @@ $ckdate";
             $this->selectedResourceGroups = reset($rescGroups)[0];
         }
 
-        $this->resourceGroups = removeOptionGroups($rescGroups);
+        $this->resourceGroups = Common::removeOptionGroups($rescGroups);
         return $this;
     }
 

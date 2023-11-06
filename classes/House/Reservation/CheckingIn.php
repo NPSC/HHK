@@ -3,6 +3,7 @@
 namespace HHK\House\Reservation;
 
 use HHK\AuditLog\NameLog;
+use HHK\Common;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Family\{Family, FamilyAddGuest};
@@ -12,6 +13,7 @@ use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\HouseServices;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Payment\PaymentResult\PaymentResult;
@@ -118,7 +120,7 @@ FROM reservation r
             ->setResvStatusCode($rows[0]['Status']);
 
         // Get Resv status codes
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code");
 
         if (isset($reservStatuses[$rData->getResvStatusCode()])) {
             $rData->setResvStatusType($reservStatuses[$rData->getResvStatusCode()]['Type']);
@@ -512,7 +514,7 @@ FROM reservation r
 
             try {
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer();
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

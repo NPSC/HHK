@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Local;
 
+use HHK\Common;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 
 /**
@@ -187,22 +188,8 @@ class LocalGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getToken() {
-        return $this->getRandomString();
+        return Common::getRandomString();
     }
-    
-    protected function getRandomString($length=40){
-        if(!is_int($length)||$length<1){
-            $length = 40;
-        }
-        $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        $randstring = '';
-        $maxvalue = strlen($chars) - 1;
-        for($i=0; $i<$length; $i++){
-            $randstring .= substr($chars, rand(0,$maxvalue), 1);
-        }
-        return $randstring;
-    }
-    
     
 }
 ?>

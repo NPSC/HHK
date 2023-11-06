@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\Config_Lite\Config_Lite;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\House\ResourceView;
@@ -44,7 +45,7 @@ if (isset($_POST['btnExcelAll'])) {
 
     // download to excel
     $rows = ResourceView::roomsClean($dbh, '', $guestAdmin, true);
-    doExcelDownLoad($rows, 'Show All Rooms');
+    Common::doExcelDownLoad($rows, 'Show All Rooms');
 }
 
 if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {

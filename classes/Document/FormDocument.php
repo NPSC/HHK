@@ -3,6 +3,7 @@
 namespace HHK\Document;
 
 use HHK\DataTableServer\SSP;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 
@@ -160,7 +161,7 @@ group by g.Code order by g.Order';
 //                $userData = $this->getUserData();
                 $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ". <br><br><a href='" . $uS->resourceURL . "house/register.php' target='_blank'>Click here to log into HHK and take action.</a><br>" . PHP_EOL;
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer();
 
                 $mail->From = ($uS->NoReplyAddr ? $uS->NoReplyAddr : "no_reply@nonprofitsoftwarecorp.org");
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -192,7 +193,7 @@ group by g.Code order by g.Order';
         if($this->doc->getIdDocument() > 0 && $templateSettings['emailPatient'] == true && $patientEmailAddress != '' && $templateSettings['notifySubject'] !='' && $templateSettings['notifyContent'] != ''){
             //send email
 
-            $mail = prepareEmail();
+            $mail = new HHKMailer();
 
             $mail->From = $uS->NoReplyAddr;
             $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

@@ -85,7 +85,7 @@ class WebInit {
         // define db connection obj
         try {
 
-            $this->dbh = initPDO(FALSE);
+            $this->dbh = Common::initPDO(FALSE);
 
         } catch (RuntimeException $hex) {
 
@@ -148,7 +148,7 @@ class WebInit {
         } else {
             if ($uS->timeout_idle < time()) {
                 $uS->logged = FALSE;
-                $dbh = initPDO(true);
+                $dbh = Common::initPDO(true);
                 UserClass::insertUserLog($dbh, UserClass::LogoutInactivity, ($uS->username != "" ? $uS->username : "<empty>"));
 
                 $this->page->die_if_not_Logged_In($page_Type, "index.php");

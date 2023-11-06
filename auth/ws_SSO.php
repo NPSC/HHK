@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\sec\SAML;
@@ -24,7 +25,7 @@ try {
     $login = new Login();
     $login->initHhkSession(CONF_PATH, ciCFG_FILE);
     $uS = Session::getInstance();
-    $dbh = initPDO(TRUE);
+    $dbh = Common::initPDO(TRUE);
 
 } catch (InvalidArgumentException $pex) {
     exit ("Database Access Error.");

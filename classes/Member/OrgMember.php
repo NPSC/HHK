@@ -2,6 +2,7 @@
 
 namespace HHK\Member;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\MemBasis;
@@ -81,7 +82,7 @@ class OrgMember extends AbstractMember {
 
         // Status
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[GLTableNames::MemberStatus]),
+                HTMLSelector::doOptionsMkup(Common::removeOptionGroups($uS->nameLookups[GLTableNames::MemberStatus]),
                         $this->nameRS->Member_Status, FALSE), array('name'=>$idPrefix.'selStatus')));
 
         // Basis
@@ -92,7 +93,7 @@ class OrgMember extends AbstractMember {
             }
         }
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($basis),
+                HTMLSelector::doOptionsMkup(Common::removeOptionGroups($basis),
                         $this->nameRS->Member_Type, FALSE), array('name'=>$idPrefix.'selMbrType')),
                 array('id'=>$idPrefix.'basistd'));
 

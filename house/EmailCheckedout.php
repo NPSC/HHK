@@ -1,5 +1,7 @@
 <?php
+use HHK\Common;
 use HHK\Config_Lite\Config_Lite;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Login;
 use HHK\Exception\RuntimeException;
 use HHK\sec\UserClass;
@@ -35,7 +37,7 @@ try {
 
 // Override user DB login credentials
 try {
-    $dbh = initPDO(TRUE);
+    $dbh = Common::initPDO(TRUE);
 } catch (RuntimeException $hex) {
     exit( $hex->getMessage());
 }
@@ -155,7 +157,7 @@ if ($numRecipients > $maxAutoEmail) {
     exit("The number of email recipients, $$numRecipients is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
 }
 
-$mail = prepareEmail();
+$mail = new HHKMailer();
 
 $mail->From = $from;
 $mail->addReplyTo($from);

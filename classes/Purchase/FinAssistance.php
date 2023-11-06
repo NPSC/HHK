@@ -2,6 +2,7 @@
 
 namespace HHK\Purchase;
 
+use HHK\Common;
 use HHK\Notes;
 use HHK\sec\{Session, SecurityComponent};
 use HHK\SysConst\FinAppStatus;
@@ -121,7 +122,7 @@ class FinAssistance {
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh('Status') . HTMLTable::makeTh('Status Date') . HTMLTable::makeTh('Approved By', array('colspan'=>'2')));
         $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($uS->guestLookups['FinAppStatus']), $this->getFaStatus(), TRUE), array('name'=>'SelFaStatus')), array('style'=>'text-align:center;'))
+                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($uS->guestLookups['FinAppStatus']), $this->getFaStatus(), TRUE), array('name'=>'SelFaStatus')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getFaStatusDate() == '' ? '' : date('M j, Y', strtotime($this->getFaStatusDate()))), array('name'=>'txtFaStatusDate', 'readonly'=>'readonly', 'style'=>'width: 100%; border: none; text-align:center;')))
                 .HTMLTable::makeTd($this->getApprovedId(), array('style'=>'text-align:center;'))
                 );

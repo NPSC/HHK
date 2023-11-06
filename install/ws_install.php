@@ -1,5 +1,7 @@
 <?php
+use HHK\Common;
 use HHK\Exception\RuntimeException;
+use HHK\sec\Crypto;
 use HHK\sec\UserClass;
 
 /**
@@ -34,7 +36,7 @@ if ($c == "testdb") {
 
 // define db connection obj
     try {
-        $dbh = initPDO(TRUE);
+        $dbh = Common::initPDO(TRUE);
     } catch (RuntimeException $hex) {
         echo( json_encode(array('error'=>$hex->getMessage())));
         exit();
@@ -105,7 +107,7 @@ function testdb($post) {
         $dbUser = filter_var($post['dbuser'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($post['dbPW'])) {
-        $pw = decryptMessage(filter_var($post['dbPW'], FILTER_UNSAFE_RAW));
+        $pw = Crypto::decryptMessage(filter_var($post['dbPW'], FILTER_UNSAFE_RAW));
     }
     if (isset($post['dbSchema'])) {
         $dbName = filter_var($post['dbSchema'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -114,7 +116,7 @@ function testdb($post) {
 
     try {
 
-        $dbh = initPDO();
+        $dbh = Common::initPDO();
 
         $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $serverInfo = $dbh->getAttribute(\PDO::ATTR_SERVER_VERSION);

@@ -5,6 +5,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\{WebSiteCode, Mode};
+use HHK\Common;
 
 
 /**
@@ -243,7 +244,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             if (self::does_User_Code_Match($this->pageCodes) === FALSE) {
 
-                $dbh = initPDO(true);
+                $dbh = Common::initPDO(true);
                 $uS = Session::getInstance();
                 UserClass::insertUserLog($dbh, "Unauthorized for page: " . $this->get_Page_Title(), ($uS->username != "" ? $uS->username : "<empty>"));
 

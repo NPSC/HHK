@@ -4,6 +4,7 @@ namespace HHK\Cron;
 
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\sec\SysConfig;
@@ -164,7 +165,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
             throw new RuntimeException("The number of email recipients, " . $stmt->rowCount() . " is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
         }
 
-        $mail = prepareEmail();
+        $mail = new HHKMailer();
 
         $mail->From = $from;
         $mail->addReplyTo($from);

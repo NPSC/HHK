@@ -1,5 +1,6 @@
 <?php
 
+use HHK\House\Report\ReportFilter;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\SysConst\VolMemberType;
@@ -392,7 +393,7 @@ if (isset($_POST['btnGlGo'])) {
 // Setups for the page.
 //Month and Year chooser
 $glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
-$glYearSelr = HTMLSelector::generateMarkup(getYearOptionsMarkup($glyear, '2018', 0, FALSE), array('name' => 'selGlYear', 'size'=>'5'));
+$glYearSelr = HTMLSelector::generateMarkup(ReportFilter::getYearOptionsMarkup($glyear, '2018', 0, FALSE), array('name' => 'selGlYear', 'size'=>'5'));
 
 $tbl = new HTMLTable();
 $tbl->addBodyTr(

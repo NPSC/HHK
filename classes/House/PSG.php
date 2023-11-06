@@ -2,6 +2,7 @@
 
 namespace HHK\House;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Member\Role\Guest;
 use HHK\SysConst\{NameGuestStatus, RelLinkType, VisitStatus};
@@ -167,7 +168,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         // Members section
         $relListLessSlf = $relList;
         unset($relListLessSlf[RelLinkType::Self]);
-        $relListLessSlf = removeOptionGroups($relListLessSlf);
+        $relListLessSlf = Common::removeOptionGroups($relListLessSlf);
 
 
         $mTable = new HTMLTable();

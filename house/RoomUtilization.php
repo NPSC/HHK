@@ -1,6 +1,7 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Common;
 use HHK\Config_Lite\Config_Lite;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
@@ -112,7 +113,7 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 $roomGrouping = HTMLSelector::generateMarkup(
-        HTMLSelector::doOptionsMkup(removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));
+        HTMLSelector::doOptionsMkup(Common::removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));
 
 ?>
 <!DOCTYPE html>

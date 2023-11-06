@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\{VisitStatus,ReservationStatus};
 use HHK\sec\Session;
@@ -47,7 +48,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
         $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
-        $resvStatuses = readLookups($this->dbh, "reservStatus", "Code");
+        $resvStatuses = Common::readLookups($this->dbh, "reservStatus", "Code");
         $resvStatusList = (isset($resvStatuses[ReservationStatus::Committed]['Title']) ? $resvStatuses[ReservationStatus::Committed]['Title'] . ", " : "") . 
                 (isset($resvStatuses[ReservationStatus::UnCommitted]['Title']) ? $resvStatuses[ReservationStatus::UnCommitted]['Title'] . ", " : "") . 
                 (isset($resvStatuses[ReservationStatus::Waitlist]['Title']) ? "and " . $resvStatuses[ReservationStatus::Waitlist]['Title'] : "");

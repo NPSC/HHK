@@ -3,10 +3,12 @@
 namespace HHK\House\Reservation;
 
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\House\Report\ActivityReport;
 use HHK\Member\Role\Guest;
 use HHK\Note\{LinkNote, Note};
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Purchase\FinAssistance;
 use HHK\SysConst\{DefaultSettings, GLTableNames, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
@@ -165,7 +167,7 @@ class ReservationSvcs
             if ($emailAddr != '') {
 
                 try{
-                    $mail = prepareEmail();
+                    $mail = new HHKMailer();
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
@@ -762,7 +764,7 @@ class ReservationSvcs
         }
 
         if (isset($post['txtFaStatusDate']) && $post['txtFaStatusDate'] != '') {
-            $faDT = setTimeZone($uS, filter_var($post['txtFaStatusDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $faDT = Common::setTimeZone($uS, filter_var($post['txtFaStatusDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $faStatDate = $faDT->format('Y-m-d');
         }
 

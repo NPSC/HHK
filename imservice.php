@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\sec\Login;
 use HHK\Exception\RuntimeException;
 use HHK\sec\UserClass;
@@ -25,7 +26,7 @@ require ('functions/commonFunc.php');
 
 require ('vendor/autoload.php');
 
-$sequence = getRandomString();
+$sequence = Common::getRandomString();
 
 try {
     $login = new Login();
@@ -38,7 +39,7 @@ try {
 }
 
 try {
-    $dbh = initPDO(TRUE);
+    $dbh = Common::initPDO(TRUE);
 } catch (RuntimeException $hex) {
     // Databasae not set up.  Nothing we can do.
     http_response_code(200);

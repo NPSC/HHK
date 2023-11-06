@@ -3,6 +3,7 @@
 namespace HHK\sec\MFA;
 
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\UserClass;
 use HHK\sec\Session;
 use HHK\Member\IndivMember;
@@ -45,7 +46,7 @@ class Email extends AbstractMultiFactorAuth
         $return = array();
 
         if($this->emailAddr){
-            $mail = prepareEmail();
+            $mail = new HHKMailer();
             $mail->From = SysConfig::getKeyValue($dbh, 'sys_config', "FromAddress");
             $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
             $mail->addAddress(filter_var($this->emailAddr, FILTER_SANITIZE_EMAIL));

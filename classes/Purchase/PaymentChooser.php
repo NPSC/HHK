@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Purchase;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Registration;
 use HHK\Payment\CreditToken;
@@ -691,7 +692,7 @@ class PaymentChooser {
             $buttons .= HTMLContainer::generateMarkup('label', 'Discount', array('for'=>'cbAdjustPmt1'))
             . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt1', 'data-sho'=>'houseDisc', 'data-hid'=>'addnlChg', 'data-item'=>ItemId::Discount));
 
-            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($discounts), '', TRUE), array('name'=>'selHouseDisc', 'class'=>'houseDisc', 'data-amts'=>'disc', "style"=>"width:100%"));
+            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($discounts), '', TRUE), array('name'=>'selHouseDisc', 'class'=>'houseDisc', 'data-amts'=>'disc', "style"=>"width:100%"));
 
         }
 
@@ -700,7 +701,7 @@ class PaymentChooser {
             $buttons .= HTMLContainer::generateMarkup('label', 'Additional Charge', array('for'=>'cbAdjustPmt2'))
                 . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt2', 'data-hid'=>'houseDisc', 'data-sho'=>'addnlChg', 'data-item'=>ItemId::AddnlCharge));
 
-            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($addnls), '', TRUE), array('name'=>'selAddnlChg', 'class'=>'addnlChg', 'data-amts'=>'addnl', "style"=>"width:100%"));
+            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($addnls), '', TRUE), array('name'=>'selAddnlChg', 'class'=>'addnlChg', 'data-amts'=>'addnl', "style"=>"width:100%"));
 
         }
 
@@ -1164,7 +1165,7 @@ ORDER BY v.idVisit , v.Span;");
 
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', ['class'=>'tdlabel'])
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), ['name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'])
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($payTypes), $defaultPayType, FALSE), ['name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'])
                     , ['colspan'=>'2']));
 
         // Cash Amt Tendered
@@ -1233,7 +1234,7 @@ ORDER BY v.idVisit , v.Span;");
 
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('With:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'rtnTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'rtnTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
 
         // Check number
         $payTbl->addBodyTr(

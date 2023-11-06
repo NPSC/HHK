@@ -1,5 +1,6 @@
 <?php
 
+use HHK\sec\Crypto;
 use HHK\Update\SiteConfig;
 use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Session;
@@ -83,7 +84,7 @@ try {
 if (is_array($dbConfig)) {
     $ssn->databaseURL = $dbConfig['URL'];
     $ssn->databaseUName = $dbConfig['User'];
-    $ssn->databasePWord = decryptMessage($dbConfig['Password']);
+    $ssn->databasePWord = Crypto::decryptMessage($dbConfig['Password']);
     $ssn->databaseName = $dbConfig['Schema'];
     $ssn->dbms = $dbConfig['DBMS'];
 } else {

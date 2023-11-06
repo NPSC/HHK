@@ -3,6 +3,7 @@
 namespace HHK\House\Hospital;
 
 
+use HHK\Common;
 use HHK\Member\Role\{Agent, Doctor};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\sec\Labels;
@@ -87,13 +88,13 @@ class Hospital {
         $table->addBodyTr(
                 (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup(removeOptionGroups($aList), ($hstay->getAssociationId() == 0 ? $assocNoneId : $hstay->getAssociationId()), FALSE),
+                                HTMLSelector::doOptionsMkup(Common::removeOptionGroups($aList), ($hstay->getAssociationId() == 0 ? $assocNoneId : $hstay->getAssociationId()), FALSE),
                                 array('name'=>'selAssoc', 'class'=>'ignrSave hospital-stay')
                                 )
                         ) : '')
                 .HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup(removeOptionGroups($hList), ($hstay->getHospitalId() == 0 && count($hList) == 1 ? $hList[0][0] : $hstay->getHospitalId()), $offerBlank),
+                                HTMLSelector::doOptionsMkup(Common::removeOptionGroups($hList), ($hstay->getHospitalId() == 0 && count($hList) == 1 ? $hList[0][0] : $hstay->getHospitalId()), $offerBlank),
                         		array('name'=>'selHospital', 'class'=>'ignrSave hospital-stay' )
                                 )
                         )

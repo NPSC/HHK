@@ -1,6 +1,7 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Common;
 use HHK\sec\{Session, WebInit};
 use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
@@ -39,8 +40,7 @@ use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
 use HHK\House\RegistrationForm\CustomRegisterForm;
 
-use HHK\SysConst\ReservationStatusType;
-use HHK\House\Report\ResourceBldr;
+use HHK\House\ResourceBldr;
 
 /**
  * ResourceBuilder.php
@@ -146,7 +146,7 @@ if (isset($_POST['btnkfSave'])) {
 
         if ($rows[0][0] == 0) {
             // Not there.
-            $newCode = 'g' . incCounter($dbh, 'codes');
+            $newCode = 'g' . Common::incCounter($dbh, 'codes');
 
             $glRs = new GenLookupsRS();
             $glRs->Table_Name->setNewVal('Static_Room_Rate');
@@ -164,13 +164,13 @@ if (isset($_POST['btnkfSave'])) {
     }
 
     // saveArchive($dbh, $_POST['srrDesc'], $_POST['srrAmt'], 'Static_Room_Rate');
-    saveGenLk($dbh, 'Static_Room_Rate', $_POST['srrDesc'], $_POST['srrAmt'], NULL);
+    ResourceBldr::saveGenLk($dbh, 'Static_Room_Rate', $_POST['srrDesc'], $_POST['srrAmt'], NULL);
 
     // Key Deposit
     if (isset($_POST['kdesc'])) {
 
         // Dave deposit
-        saveGenLk($dbh, 'Key_Deposit_Code', $_POST['kdesc'], $_POST['krate'], NULL);
+        ResourceBldr::saveGenLk($dbh, 'Key_Deposit_Code', $_POST['kdesc'], $_POST['krate'], NULL);
 
         // Copy to item
         foreach ($_POST['krate'] as $k => $p) {
@@ -222,7 +222,7 @@ if (isset($_POST['btnkfSave'])) {
 
                     // Insert new cleaning fee
                     $glRs = new GenLookupsRS();
-                    $newCode = incCounter($dbh, 'codes');
+                    $newCode = Common::incCounter($dbh, 'codes');
 
                     $glRs->Table_Name->setNewVal('Visit_Fee_Code');
                     $glRs->Description->setNewVal($newDesc);
@@ -300,7 +300,7 @@ if (isset($_POST['btnkfSave'])) {
     // Excess Pay
     if (isset($_POST['epdesc'][$uS->VisitExcessPaid])) {
 
-        saveGenLk($dbh, 'ExcessPays', $_POST['epdesc'], array(), NULL);
+        ResourceBldr::saveGenLk($dbh, 'ExcessPays', $_POST['epdesc'], array(), NULL);
     }
 
 
@@ -844,7 +844,7 @@ if (isset($_POST['ldfm'])) {
 
     if (empty($formDef)) {
 
-        $formDef = "FormDef-" . incCounter($dbh, 'codes');
+        $formDef = "FormDef-" . Common::incCounter($dbh, 'codes');
         $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
     }
 
@@ -1115,7 +1115,7 @@ if (isset($_POST['txtformLang'])) {
                 // Ah, a recognized language
                 $langCode = $langRows[0]['Code'];
             } else {
-                $langCode = incCounter($dbh, 'codes');
+                $langCode = Common::incCounter($dbh, 'codes');
             }
 
             if ($langCode != '') {
@@ -1245,7 +1245,7 @@ if ($priceModel->hasRateCalculator()) {
     );
     $rateCategories = RoomRate::makeSelectorOptions($priceModel);
 
-    $tbl->addBodyTr(HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), ''), array(
+    $tbl->addBodyTr(HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups($rateCategories), ''), array(
         'name' => 'selRateCategory'
     )) . HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup('', array(
         'name' => 'txtFixedRate',
@@ -1964,7 +1964,7 @@ $taxTable = $tiTbl->generateMarkup(array(
 
 // Form Upload
 
-$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Form_Upload')), $formType, TRUE), array(
+$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(Common::removeOptionGroups(readGenLookupsPDO($dbh, 'Form_Upload')), $formType, TRUE), array(
     'name' => 'selFormUpload'
 ));
 

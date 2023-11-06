@@ -1,4 +1,6 @@
 <?php
+use HHK\Common;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Login;
 use HHK\Exception\InvalidArgumentException;
 use HHK\Exception\RuntimeException;
@@ -41,7 +43,7 @@ if(!$u->isCron()){
 
 // DB login
 try {
-	$dbh = initPDO(TRUE);
+	$dbh = Common::initPDO(TRUE);
 } catch (RuntimeException $hex) {
 	exit($hex->getMessage());
 }
@@ -77,7 +79,7 @@ if ($notificationAddress != '') {
 	$siteName = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
 	$from = SysConfig::getKeyValue($dbh, 'sys_config', 'NoReplyAddr');
 
-	$mail = prepareEmail();
+	$mail = new HHKMailer();
 
 	$mail->From = $from;
 	$mail->addReplyTo($from);

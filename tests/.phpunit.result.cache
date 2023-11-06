@@ -1,1 +1,1 @@
-{"version":1,"defects":[],"times":{"PDOTest::testDbConnection":0.018,"DistanceTest::testGetHouseAddress":0.019,"DistanceTest::testZipDistanceEvartToDekalb":0.01}}
+{"version":1,"defects":{"LoginTest::testLoginAdmin":8,"LoginTest::testLoginTestuser":8,"PDOTest::testDbConnection":8},"times":{"PDOTest::testDbConnection":0.015,"DistanceTest::testGetHouseAddress":0.018,"DistanceTest::testZipDistanceEvartToDekalb":0.008,"LoginTest::testLoginAdmin":0.246,"LoginTest::testLoginTestuser":0.202}}

@@ -6,6 +6,7 @@ use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\Payment\Statement;
 use HHK\Exception\{RuntimeException, PaymentException};
+use HHK\Common;
 
 /**
  * Invoice.php
@@ -205,7 +206,7 @@ class InvoiceActions {
         if ($invDateStr != '') {
 
             try {
-                $billDT = setTimeZone(NULL, $invDateStr);
+                $billDT = Common::setTimeZone(NULL, $invDateStr);
             } catch (RunTImeException $ex) {
                 return array('error' => 'Bad Date:  ' . $ex->getMessage());
             }
