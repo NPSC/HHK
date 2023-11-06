@@ -746,10 +746,8 @@ class CustomRegisterForm {
             display:none;
         }
 
-        @page {
-            size: letter;
-            margin: 0.5in 0;
-            //margin-bottom: 0.5in;
+        .container {
+            max-width: 100% !important;
         }
 
         .agreementContainer p {
