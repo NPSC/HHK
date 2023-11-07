@@ -25,6 +25,14 @@ use HHK\Exception\PaymentException;
  */
 class CheckTX {
 
+    /**
+     * Summary of checkSale
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\CheckResponse $pr
+     * @param mixed $username
+     * @param mixed $paymentDate
+     * @return void
+     */
     public static function checkSale(\PDO $dbh, CheckResponse &$pr, $username, $paymentDate) {
 
         // Record transaction
@@ -40,6 +48,14 @@ class CheckTX {
 
     }
 
+    /**
+     * Summary of returnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\CheckResponse $pr
+     * @param mixed $userName
+     * @param mixed $paymentDate
+     * @return void
+     */
     public static function returnAmount(\PDO $dbh, CheckResponse &$pr, $userName, $paymentDate) {
 
         // Record transaction
@@ -57,6 +73,15 @@ class CheckTX {
 
     }
 
+    /**
+     * Summary of checkReturn
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\CheckResponse $pr
+     * @param mixed $username
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @throws \HHK\Exception\PaymentException
+     * @return void
+     */
     public static function checkReturn(\PDO $dbh, CheckResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
@@ -80,6 +105,15 @@ class CheckTX {
 
     }
 
+    /**
+     * Summary of undoReturnPayment
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\CheckResponse $pr
+     * @param mixed $username
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @throws \HHK\Exception\PaymentException
+     * @return void
+     */
     public static function undoReturnPayment(\PDO $dbh, CheckResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
@@ -103,6 +137,13 @@ class CheckTX {
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
     }
 
+    /**
+     * Summary of undoReturnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\CheckResponse $pr
+     * @param mixed $idPayment
+     * @return void
+     */
     public static function undoReturnAmount(\PDO $dbh, CheckResponse &$pr, $idPayment) {
 
         // Record transaction

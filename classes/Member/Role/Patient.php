@@ -26,6 +26,14 @@ use HHK\Member\RoleMember\PatientMember;
  */
 class Patient extends AbstractRole {
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param mixed $idPrefix
+     * @param mixed $id
+     * @param mixed $title
+     * @throws \HHK\Exception\RuntimeException
+     */
     public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Patient') {
 
         $this->currentlyStaying = NULL;
@@ -44,6 +52,11 @@ class Patient extends AbstractRole {
 
     }
 
+    /**
+     * Summary of getPatientPsg
+     * @param \PDO $dbh
+     * @return PSG|int
+     */
     public function getPatientPsg(\PDO $dbh) {
 
         if (is_null($this->patientPsg)) {
@@ -53,6 +66,12 @@ class Patient extends AbstractRole {
         return $this->patientPsg;
     }
 
+    /**
+     * Summary of createThinMarkup
+     * @param \HHK\House\ReserveData\PSGMember\PSGMember $mem
+     * @param mixed $lockRelChooser
+     * @return string
+     */
     public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         $uS = Session::getInstance();
@@ -86,6 +105,11 @@ class Patient extends AbstractRole {
         return $mu;
     }
 
+    /**
+     * Summary of createStayMarkup
+     * @param \HHK\House\ReserveData\PSGMember\PSGMember $stay
+     * @return string
+     */
     public function createStayMarkup(PSGMember $stay) {
 
         $uS = Session::getInstance();

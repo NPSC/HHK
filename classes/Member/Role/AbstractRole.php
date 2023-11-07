@@ -51,7 +51,15 @@ abstract class AbstractRole {
      */
     protected $emails;
 
+    /**
+     * Summary of incompleteAddress
+     * @var bool
+     */
     protected $incompleteAddress = FALSE;
+    /**
+     * Summary of useHousePhone
+     * @var bool
+     */
     protected $useHousePhone = FALSE;
     /**
      *
@@ -59,14 +67,50 @@ abstract class AbstractRole {
      */
     protected $emergContact;
 
+    /**
+     * Summary of patientPsg
+     * @var int
+     */
     protected $patientPsg;
+    /**
+     * Summary of idVisit
+     * @var int
+     */
     protected $idVisit;
+    /**
+     * Summary of title
+     * @var string
+     */
     protected $title;
+    /**
+     * Summary of currentlyStaying
+     * @var bool
+     */
     protected $currentlyStaying;
+    /**
+     * Summary of status
+     * @var string
+     */
     public $status = '';
+    /**
+     * Summary of checkinDate
+     * @var
+     */
     protected $checkinDate;
+    /**
+     * Summary of expectedCheckOut
+     * @var
+     */
     protected $expectedCheckOut;
+    /**
+     * Summary of incompleteEmergContact
+     * @var bool
+     */
     protected $incompleteEmergContact = FALSE;
+    /**
+     * Summary of patientRelationshipCode
+     * @var string
+     */
     protected $patientRelationshipCode = '';
 
 
@@ -331,10 +375,10 @@ abstract class AbstractRole {
         return $message;
     }
 
-        /**
+    /**
      *
      * @param \PDO $dbh
-     * @return boolean
+     * @return int
      */
     protected static function checkCurrentStay(\PDO $dbh, $idName) {
 
@@ -447,7 +491,6 @@ where r.idPsg = $idPsg and s.idName = " . $id;
             $this->currentlyStaying = FALSE;
             $this->idVisit = 0;
         }
-
     }
 
     /**
@@ -464,18 +507,34 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->emergContact;
     }
 
+    /**
+     * Summary of getIncompleteEmContact
+     * @return bool
+     */
     public function getIncompleteEmContact() {
         return $this->incompleteEmergContact;
     }
 
+    /**
+     * Summary of getIdName
+     * @return mixed
+     */
     public function getIdName() {
         return $this->roleMember->get_idName();
     }
 
+    /**
+     * Summary of getRoleMember
+     * @return AbstractRoleMember
+     */
     public function getRoleMember() {
         return $this->roleMember;
     }
 
+    /**
+     * Summary of getAddrObj
+     * @return Address
+     */
     public function getAddrObj() {
 
         if (is_null($this->addr)) {
@@ -486,6 +545,10 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->addr;
     }
 
+    /**
+     * Summary of getPhonesObj
+     * @return Phones
+     */
     public function getPhonesObj() {
         if (is_null($this->phones)) {
             $dbh = initPDO();
@@ -495,6 +558,10 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->phones;
     }
 
+    /**
+     * Summary of getEmailsObj
+     * @return Emails
+     */
     public function getEmailsObj() {
         if (is_null($this->emails)) {
             $dbh = initPDO();
@@ -504,18 +571,35 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->emails;
     }
 
+    /**
+     * Summary of isNew
+     * @return bool
+     */
     public function isNew() {
         return $this->roleMember->isNew();
     }
 
+    /**
+     * Summary of getHousePhone
+     * @return mixed
+     */
     public function getHousePhone() {
         return $this->useHousePhone;
     }
 
+    /**
+     * Summary of getPatientRelationshipCode
+     * @return mixed
+     */
     public function getPatientRelationshipCode() {
         return $this->patientRelationshipCode;
     }
 
+    /**
+     * Summary of setPatientRelationshipCode
+     * @param mixed $v
+     * @return void
+     */
     public function setPatientRelationshipCode($v) {
         $this->patientRelationshipCode = $v;
     }

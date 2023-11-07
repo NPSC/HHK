@@ -22,6 +22,14 @@ use HHK\SysConst\{MemBasis, MemDesignation};
  */
 class Doctor extends AbstractRole{
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param mixed $idPrefix
+     * @param mixed $id
+     * @param mixed $title
+     * @throws \HHK\Exception\RuntimeException
+     */
     public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Doctor') {
 
         $this->currentlyStaying = NULL;
@@ -40,6 +48,14 @@ class Doctor extends AbstractRole{
     }
 
 
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @param array $post
+     * @param mixed $uname
+     * @param mixed $isStaying
+     * @return string
+     */
     public function save(\PDO $dbh, array $post, $uname, $isStaying = FALSE) {
 
         // Name

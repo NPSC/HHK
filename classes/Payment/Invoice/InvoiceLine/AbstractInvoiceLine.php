@@ -25,26 +25,91 @@ use HHK\SysConst\{InvoiceLineType};
  */
 abstract class AbstractInvoiceLine {
 
+    /**
+     * Summary of lineId
+     * @var int
+     */
     protected $lineId;
+    /**
+     * Summary of amount
+     * @var
+     */
     protected $amount;
+    /**
+     * Summary of quantity
+     * @var int
+     */
     protected $quantity;
+    /**
+     * Summary of price
+     * @var
+     */
     protected $price;
+    /**
+     * Summary of itemId
+     * @var int
+     */
     protected $itemId;
+    /**
+     * Summary of description
+     * @var string
+     */
     protected $description;
+    /**
+     * Summary of typeId
+     * @var int
+     */
     protected $typeId;
+    /**
+     * Summary of sourceItemId
+     * @var int
+     */
     protected $sourceItemId;
+    /**
+     * Summary of invoiceId
+     * @var int
+     */
     protected $invoiceId;
+    /**
+     * Summary of invLineRs
+     * @var InvoiceLineRS
+     */
     protected $invLineRs;
+    /**
+     * Summary of var
+     * @var
+     */
     protected $var;
+    /**
+     * Summary of carriedFrom
+     * @var
+     */
     protected $carriedFrom;
+    /**
+     * Summary of useDetail
+     * @var
+     */
     protected $useDetail;
+    /**
+     * Summary of isPercentage
+     * @var
+     */
     protected $isPercentage;
 
+    /**
+     * Summary of __construct
+     * @param mixed $useDetail
+     */
     public function __construct($useDetail = TRUE) {
         $this->useDetail = $useDetail;
         $this->invLineRs = new InvoiceLineRS();
     }
 
+    /**
+     * Summary of loadRecord
+     * @param \HHK\Tables\Payment\InvoiceLineRS $invoiceLine
+     * @return void
+     */
     public function loadRecord(InvoiceLineRS $invoiceLine) {
 
         $this->lineId = $invoiceLine->idInvoice_Line->getStoredVal();
@@ -61,30 +126,34 @@ abstract class AbstractInvoiceLine {
         $this->useDetail = TRUE;
     }
 
+    /**
+     * Summary of invoiceLineFactory
+     * @param mixed $typeId
+     * @return HoldInvoiceLine|InvoiceInvoiceLine|OneTimeInvoiceLine|RecurringInvoiceLine|ReimburseInvoiceLine|TaxInvoiceLine|WaiveInvoiceLine|null
+     */
     public static function invoiceLineFactory($typeId) {
 
         switch ($typeId) {
             case InvoiceLineType::Recurring:
                 return new RecurringInvoiceLine();
-                break;
+
             case InvoiceLineType::Invoice:
                 return new InvoiceInvoiceLine();
-                break;
+
             case InvoiceLineType::OneTime;
                 return new OneTimeInvoiceLine();
-                break;
+
             case InvoiceLineType::Hold:
                 return new HoldInvoiceLine();
-                break;
+
             case InvoiceLineType::Reimburse:
                 return new ReimburseInvoiceLine();
-                break;
+
             case InvoiceLineType::Tax:
                 return new TaxInvoiceLine();
-                break;
+
             case InvoiceLineType::Waive:
                 return new WaiveInvoiceLine();
-                break;
 
             default:
                 return NULL;
@@ -92,6 +161,14 @@ abstract class AbstractInvoiceLine {
 
     }
 
+    /**
+     * Summary of createNewLine
+     * @param \HHK\Purchase\Item $item
+     * @param mixed $quantity
+     * @param mixed $str1
+     * @param mixed $str2
+     * @return void
+     */
     public function createNewLine(Item $item, $quantity, $str1 = '', $str2 = '') {
 
         $this->var = $str1;
@@ -102,6 +179,12 @@ abstract class AbstractInvoiceLine {
 
     }
 
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @param mixed $deleted
+     * @return int
+     */
     public function save(\PDO $dbh, $deleted = FALSE) {
 
         //
@@ -127,6 +210,11 @@ abstract class AbstractInvoiceLine {
 
     }
 
+    /**
+     * Summary of updateLine
+     * @param \PDO $dbh
+     * @return int
+     */
     public function updateLine(\PDO $dbh) {
 
         $affected = 0;
@@ -139,86 +227,170 @@ abstract class AbstractInvoiceLine {
         return $affected;
     }
 
+    /**
+     * Summary of setDeleted
+     * @return void
+     */
     public function setDeleted() {
         $this->invLineRs->Deleted->setNewVal(1);
     }
 
+    /**
+     * Summary of getAmount
+     * @return mixed
+     */
     public function getAmount() {
         return $this->amount;
     }
 
+    /**
+     * Summary of getQuantity
+     * @return mixed
+     */
     public function getQuantity() {
         return $this->quantity;
     }
 
+    /**
+     * Summary of getPrice
+     * @return mixed
+     */
     public function getPrice() {
         return $this->price;
     }
 
+    /**
+     * Summary of getItemId
+     * @return mixed
+     */
     public function getItemId() {
         return $this->itemId;
     }
 
+    /**
+     * Summary of getDescription
+     * @return mixed|string
+     */
     public function getDescription() {
         return $this->description;
     }
 
+    /**
+     * Summary of getTypeId
+     * @return mixed
+     */
     public function getTypeId() {
         return $this->typeId;
     }
 
+    /**
+     * Summary of getLineId
+     * @return mixed
+     */
     public function getLineId() {
         return $this->lineId;
     }
 
+    /**
+     * Summary of getInvoiceId
+     * @return mixed
+     */
     public function getInvoiceId() {
         return $this->invoiceId;
     }
 
+    /**
+     * Summary of getCarriedFrom
+     * @return mixed|string
+     */
     public function getCarriedFrom() {
         return $this->carriedFrom;
     }
 
+    /**
+     * Summary of getSourceItemId
+     * @return mixed
+     */
     public function getSourceItemId() {
         return $this->sourceItemId;
     }
 
+    /**
+     * Summary of setSourceItemId
+     * @param mixed $sourceItemId
+     * @return static
+     */
     public function setSourceItemId($sourceItemId) {
         $this->sourceItemId = $sourceItemId;
         return $this;
     }
 
 
+    /**
+     * Summary of setCarriedFrom
+     * @param mixed $invoiceNumber
+     * @return static
+     */
     public function setCarriedFrom($invoiceNumber) {
         $this->carriedFrom = $invoiceNumber;
         return $this;
     }
 
+    /**
+     * Summary of setInvoiceId
+     * @param mixed $id
+     * @return static
+     */
     public function setInvoiceId($id) {
         $this->invoiceId = $id;
         return $this;
     }
 
+    /**
+     * Summary of setAmount
+     * @param mixed $amount
+     * @return static
+     */
     public function setAmount($amount) {
         $this->amount = $amount;
         return $this;
     }
 
+    /**
+     * Summary of setQuantity
+     * @param mixed $quantity
+     * @return static
+     */
     public function setQuantity($quantity) {
         $this->quantity = $quantity;
         return $this;
     }
 
+    /**
+     * Summary of setPrice
+     * @param mixed $price
+     * @return static
+     */
     public function setPrice($price) {
         $this->price = $price;
         return $this;
     }
 
+    /**
+     * Summary of setItemId
+     * @param mixed $itemId
+     * @return static
+     */
     public function setItemId($itemId) {
         $this->itemId = $itemId;
         return $this;
     }
 
+    /**
+     * Summary of setUseDetail
+     * @param mixed $bool
+     * @return static
+     */
     public function setUseDetail($bool) {
 
         if ($bool === TRUE) {
@@ -229,14 +401,28 @@ abstract class AbstractInvoiceLine {
         return $this;
     }
 
+    /**
+     * Summary of getUseDetail
+     * @return bool|mixed
+     */
     public function getUseDetail() {
         return $this->useDetail;
     }
 
+    /**
+     * Summary of appendDescription
+     * @param mixed $str
+     * @return void
+     */
     public function appendDescription($str) {
         $this->var = $str;
     }
 
+    /**
+     * Summary of setDescription
+     * @param mixed $description
+     * @return static
+     */
     public function setDescription($description) {
 
         $this->description = $description;
@@ -251,6 +437,11 @@ abstract class AbstractInvoiceLine {
         return $this;
     }
 
+    /**
+     * Summary of setTypeId
+     * @param mixed $typeId
+     * @return static
+     */
     protected function setTypeId($typeId) {
         $this->typeId = $typeId;
         return $this;
