@@ -344,20 +344,26 @@ LIMIT 500");
             }
         }
 
-        $g['PG to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$visits[$g['PG Id']]['Relation_Code']][1];
+        // Only if we caught one.
+        if (isset($visits[$g['PG Id']])) {
 
-        // Address Match?
-        if (strtolower($visits[$g['PG Id']]['Address']) == strtolower($g['Address']) && $g['Address'] != '') {
+            $g['PG to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$visits[$g['PG Id']]['Relation_Code']][1];
 
-            // Map relationship.
-            $rMapper
-                ->clear()
-                ->setPGtoPatient($visits[$g['PG Id']]['Relation_Code']);
+            // Address Match?
+            if (strtolower($visits[$g['PG Id']]['Address']) == strtolower($g['Address']) && $g['Address'] != '') {
+                // Map relationship.
+                $rMapper
+                    ->clear()
+                    ->setPGtoPatient($visits[$g['PG Id']]['Relation_Code']);
 
-            $g['Guest to PG'] = $rMapper->relateGuest($g['Relation_Code']);
+                $g['Guest to PG'] = $rMapper->relateGuest($g['Relation_Code']);
 
+            } else {
+                // empty relationship means address mismatch
+                $g['Guest to PG'] = '';
+            }
         } else {
-            // empty relationship means address mismatch
+            $g['PG to Patient'] = '';
             $g['Guest to PG'] = '';
         }
 
