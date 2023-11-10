@@ -1163,10 +1163,10 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         if (count($rows) > 0) {
 
-        	$roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
+        	$roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
 
             if ($shoDirtyRooms) {
-                $cleanCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+                $cleanCodes = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
                 foreach ($cleanCodes as $i) {
                     if ($i['Substitute'] == '0') {

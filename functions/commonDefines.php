@@ -42,7 +42,6 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
 require(FUNCTIONS . 'errorHandler.php');
 require (THIRD_PARTY . '/autoload.php');
-require (FUNCTIONS . 'commonFunc.php');
 
 define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);
 

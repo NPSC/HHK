@@ -555,8 +555,8 @@ $ckdate";
      * @return ReportFilter
      */
     public function createDiagnoses(\PDO $dbh){
-        $this->diagnoses = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-        $this->diagnosisCategories = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+        $this->diagnoses = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $this->diagnosisCategories = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 
         if (count($this->diagnoses) > 0) {
 

@@ -22,8 +22,6 @@ use HHK\Payment\PaymentSvcs;
 define('ciCFG_FILE', 'site.cfg' );
 define('CONF_PATH', 'conf/');
 
-require ('functions/commonFunc.php');
-
 require ('vendor/autoload.php');
 
 $sequence = Common::getRandomString();

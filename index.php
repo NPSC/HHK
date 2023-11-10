@@ -23,7 +23,6 @@ define('ciCFG_FILE', 'site.cfg');
 date_default_timezone_set('America/Chicago');
 
 require ('vendor/autoload.php');
-require ('functions' . DS . 'commonFunc.php');
 
 $dbh = Login::initHhkSession(CONF_PATH, ciCFG_FILE);
 $uS = Session::getInstance();

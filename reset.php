@@ -36,7 +36,6 @@ define('P_ROOT', dirname(__FILE__) . DS);
 define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
 
 require('vendor/autoload.php');
-require ('functions' . DS . 'commonFunc.php');
 
 function testdb($ssn) {
 

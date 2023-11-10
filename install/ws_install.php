@@ -1,8 +1,5 @@
 <?php
-use HHK\Common;
-use HHK\Exception\RuntimeException;
-use HHK\sec\Crypto;
-use HHK\sec\UserClass;
+use HHK\Update\Install;
 
 /**
  * ws_install.php
@@ -17,115 +14,73 @@ use HHK\sec\UserClass;
 require_once ("InstallIncludes.php");
 
 //Check request
+if(filter_input(INPUT_SERVER, "REQUEST_METHOD", FILTER_SANITIZE_FULL_SPECIAL_CHARS) !== "POST"){
+    http_response_code(415);
+    echo "Error 415: Method Not Allowed";
+    die();
+}
+if(!str_contains(filter_input(INPUT_SERVER, "HTTP_ACCEPT"), "application/json")){
+    http_response_code(406);
+    echo "Error 406: Request Not Acceptable";
+    die();
+}
+
+header('Content-Type: application/json; charset=utf-8');
+$c = "";
 if (filter_has_var(INPUT_POST, 'cmd')) {
     $c = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $events = array();
+$installer = new Install();
 
-
-// switch on command...
-if ($c == "testdb") {
-
-    $events = testdb($_POST);
-
-
-} else if ($c == 'loadmd') {
-
-    $errorMsg = '';
-
-// define db connection obj
-    try {
-        $dbh = Common::initPDO(TRUE);
-    } catch (RuntimeException $hex) {
-        echo( json_encode(array('error'=>$hex->getMessage())));
-        exit();
-    }
-
-
-
-    try {
-        // Load initialization data
-        $filedata = file_get_contents('initialdata.sql');
-        $parts = explode('-- ;', $filedata);
-
-        foreach ($parts as $q) {
-
-            $q = trim($q);
-
-            if ($q != '') {
-                try {
-                    $dbh->exec($q);
-                } catch (PDOException $pex) {
-                    $errorMsg .= $pex->getMessage() . '.  ';
-                }
+try{
+    switch ($c) {
+        case "testdb":
+            $events = $installer->testDB($_POST);
+            break;
+        case "installdb":
+            $events = $installer->installDB();
+            break;
+        case "loadmd":
+            $adminPW = filter_input(INPUT_POST, 'new', FILTER_UNSAFE_RAW);
+            if($adminPW){
+                $events = $installer->loadMetadata($adminPW);
+            }else{
+                $events = ['error'=>"admin password is required"];
             }
-        }
-
-        // Update admin password
-        if (filter_has_var(INPUT_POST, 'new')) {
-
-            $newPw = filter_input(INPUT_POST, 'new', FILTER_UNSAFE_RAW);
-
-            $uclass = new UserClass();
-            if ($uclass->setPassword($dbh, -1, $newPw)) {
-                $events['result'] = "Admin Password set.  ";
-            } else {
-                $errorMsg .= "Admin Password set.  ";
+            break;
+        case "uploadZipCodFile":
+            if(isset($_FILES['zipfile'])){
+                $events = $installer->loadZipFile($_FILES['zipfile']);
+            }else{
+                $events = ['error'=>"zipFile is required"];
             }
-        }
-
-    } catch (Exception $ex) {
-        $errorMsg .= "Installer Error: " . $ex->getMessage();
+            break;
+        case "installRooms":
+            $post = filter_input_array(INPUT_POST, [
+                "txtRooms"=>FILTER_SANITIZE_NUMBER_INT,
+                "selModel"=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                "cbFin"=>FILTER_VALIDATE_BOOLEAN
+            ]);
+            if($post["txtRooms"] && $post['selModel']){
+                $events = $installer->installRooms($post['txtRooms'], $post["selModel"], $post["cbFin"]);
+            }else{
+                $events = ['error'=> 'Fields txtRooms and selModel are required'];
+            }
+            
+            break;
+        default:
+            $events = ["error"=>"Bad Command"];
     }
-
-    if ($errorMsg != '') {
-        $events['error'] = $errorMsg;
-    }
-
+}catch(Exception $e){
+    http_response_code(500);
+    $events = ["server_error"=> $e->getMessage()];
 }
 
 // return results.
+if(isset($events['error']) || isset($events['errors'])){
+    http_response_code(422);
+}
 echo( json_encode($events));
 exit();
-
-function testdb($post) {
-
-    $dbms = '';
-    $dbURL = '';
-    $dbUser = '';
-    $pw = '';
-    $dbName = '';
-
-    if (isset($post['dbms'])) {
-        $dbms = filter_var($post['dbms'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-    if (isset($post['dburl'])) {
-        $dbURL = filter_var($post['dburl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-    if (isset($post['dbuser'])) {
-        $dbUser = filter_var($post['dbuser'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-    if (isset($post['dbPW'])) {
-        $pw = Crypto::decryptMessage(filter_var($post['dbPW'], FILTER_UNSAFE_RAW));
-    }
-    if (isset($post['dbSchema'])) {
-        $dbName = filter_var($post['dbSchema'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-
-
-    try {
-
-        $dbh = Common::initPDO();
-
-        $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $serverInfo = $dbh->getAttribute(\PDO::ATTR_SERVER_VERSION);
-        $driver = $dbh->getAttribute(\PDO::ATTR_DRIVER_NAME);
-
-    } catch (PDOException $e) {
-        return array("error" => $e->getMessage() . "<br/>");
-    }
-
-    return array('success'=>'Good! Server version ' . $serverInfo . '; ' . $driver);
-}
-

@@ -35,11 +35,10 @@ class Patch {
 
         $this->results = array();
 
-        if ($tfile == '') {
-            return $type . ' Filename is missing.  ';
+        $tquery = @file_get_contents($tfile);
+        if($tquery === false) {
+            throw new \Exception('file_get_contents('.$tfile.'): Failed to open stream');
         }
-
-        $tquery = file_get_contents($tfile);
 
         $tresult = self::multiQueryPDO($dbh, $tquery, $delimiter, $splitAt);
 
@@ -48,9 +47,9 @@ class Patch {
             foreach ($tresult as $err) {
                 $this->results[$err['errno']] = $err;
             }
-
+            return false;
         } else {
-            return $type . ' Successful<br/>';
+            return true;
         }
     }
 
@@ -59,14 +58,16 @@ class Patch {
         $msg = array();
 
         if ($query === FALSE || trim($query) == '') {
-            return $msg[] = array('error'=>'Empty query file ', 'errno'=> '', 'query'=> $query );
+            return $msg[] = array('error'=>'Empty query file ', 'errno'=> 'empty', 'query'=> $query );
         }
 
         $qParts = explode($splitAt, $query);
 
         try{
-            $dbh->beginTransaction();
-
+            if($dbh->inTransaction() === FALSE){
+                $dbh->beginTransaction();
+            }
+            
             foreach ($qParts as $q) {
 
                 $q = trim($q);
@@ -75,10 +76,6 @@ class Patch {
                 }
 
                 $dbh->exec($q);
-            }
-
-            if ($dbh->inTransaction()) {
-                $dbh->commit();
             }
 
         }catch(\Exception $e){

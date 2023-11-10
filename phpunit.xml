@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<phpunit
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/|version|/phpunit.xsd"
     colors="true"
     stopOnFailure="true"
+    testdox="true"
 >
 
     <testsuites>
-        <testsuite name="HHK">
-            <!--<file>tests/installTests/installTest.php</file>-->
-            <directory>tests/loginTests</directory>
-            <directory>tests/userTests</directory>
+        <testsuite name="installer">
+            <directory>tests/installTests</directory>
         </testsuite>
     </testsuites>
 

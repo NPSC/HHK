@@ -340,7 +340,7 @@ if ($id != 0 && $donationsFlag) {
             $name->getAssocDonorList($rel),
             $name->getDefaultDonor($rel),
             $name->getAssocDonorLabel(),
-            removeOptionGroups($uS->nameLookups[GLTableNames::PayType]),
+            Common::removeOptionGroups($uS->nameLookups[GLTableNames::PayType]),
             NULL
             );
 

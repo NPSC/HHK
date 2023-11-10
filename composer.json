@@ -32,8 +32,9 @@
 	},
 	"scripts" : {
 		"pack" : "HHK\\devTools\\Build::run",
-		"testdev" : "phpunit --colors=always --testdox --display-warnings --display-notices --bootstrap tests/envs/dev/bootstrap.php",
-		"testdaily" : "phpunit --colors=always --testdox --configuration phpunit.xml --bootstrap=tests/envs/dailyPriceModel/bootstrap.php"
+		"test:dev" : "phpunit --colors=always --testdox --display-warnings --display-notices --bootstrap tests/envs/dev/bootstrap.php",
+		"test:InstallDaily" : "phpunit --colors=always --testdox --bootstrap=tests/envs/dailyPriceModel/bootstrap.php --testsuite installer",
+		"test:InstallGuestday" : "phpunit --colors=always --testdox --bootstrap=tests/envs/guestDayPriceModel/bootstrap.php --testsuite installer"
 
 	},
 	"require-dev": {
