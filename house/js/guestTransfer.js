@@ -3,6 +3,7 @@
 var stopTransfer,
         $visitButton,
         $memberButton,
+        $upsertButton,
         $psgCBs,
         $excCBs,
         $relSels,
@@ -40,6 +41,40 @@ function updateLocal(id) {
             flagAlertMessage(incmg.result, false);
 
         }
+    });
+}
+
+function upsert(transferIds) {
+    var parms = {
+        cmd: 'upsert',
+        ids: transferIds
+    };
+
+    var posting = $.post('ws_tran.php', parms);
+    posting.done(function (incmg) {
+
+        if (!incmg) {
+            alert('Error: Bad Reply from HHK Web Server');
+            return;
+        }
+        // try {
+        //     incmg = $.parseJSON(incmg);
+        // } catch (err) {
+        //     alert('Error: Bad JSON Encoding');
+        //     return;
+        // }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+
+        $('#divMembers').text(incmg);
+        //fillTable(incmg, $('#mTbl'));
     });
 }
 
@@ -90,6 +125,51 @@ function updateRemote(id, accountId, useFlagAlert) {
         }
 
     });
+}
+
+function fillTable(incmg, $mTbl) {
+
+    let tr = '';
+
+    if (incmg) {
+
+        if ($mTbl.length === 0) {
+
+            // Create header row
+            $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+
+            tr = '<thead><tr>';
+            for (let id in incmg) {
+                for (let key in incmg[id]) {
+                    tr += '<th>' + key + '</th>';
+                }
+                tr += '</tr></thead><tbody></tbody>';
+                break;
+            }
+
+            $mTbl.append(tr);
+            let title = $('<h3 style="margin-top:10px;">Processed ' + cmsTitle + ' Members</h3>');
+            $('#divMembers').append(title).append($mTbl).show();
+        }
+
+
+        let first = 'style="border-top: 2px solid #2E99DD;"';
+        for (let id in incmg) {
+
+            tr = '<tr ' + first + '>';
+            first = '';
+
+            for (let key in incmg[id]) {
+                tr += '<td>' + incmg[id][key] + '</td>';
+            }
+            tr += '</tr>';
+        }
+
+        $mTbl.find('tbody').append(tr);
+        $('div#retrieve').empty().hide();
+
+        $('div#printArea').show();
+    }
 }
 
 function transferRemote(transferIds) {
@@ -651,14 +731,12 @@ function getRemote(item, source) {
     });
 }
 
-function getRequest(url, q) {
+function getRelate(id) {
     $('div#printArea').hide();
     $('#divPrintButton').hide();
 
-    // code certain words
-    //q_ = q.replace('Select', 'Find');
 
-    var posting = $.post('ws_tran.php', { cmd: 'getRelat'});
+    var posting = $.post('ws_tran.php', { cmd: 'getRelat', accountId: id});
 
     posting.done(function (incmg) {
         if (!incmg) {
@@ -706,6 +784,45 @@ $(document).ready(function () {
     $('#printButton').button().click(function () {
         $("div#printArea").printArea();
     });
+
+    if (makeTable == 0) {
+
+        $('div#printArea').show();
+        $('#divPrintButton').show();
+        $('#btnPay').hide();
+        $('#btnVisits').hide();
+        $('#divMembers').empty();
+
+        $upsertButton = $('#TxButton');
+
+        $upsertButton
+            .button()
+            .val('Start Upsert')
+            .show();
+
+        $upsertButton.click(function () {
+            let ids = [];
+            let n = 0;
+
+            $('input.hhk-tfmem').each(function () {
+
+                if ($(this).prop('checked')) {
+
+                    const props = { 'checked': false, 'disabled': true };
+
+                    $(this).parents('tr').css('background-color', 'lightgray');
+
+                    $(this).prop(props).end();
+
+                    ids[n++] = $(this).data('txid');
+
+                }
+            });
+
+            upsert(ids);
+        });
+
+    }
 
     // Retrieve HHK Records
     if (makeTable === '1') {
@@ -758,7 +875,7 @@ $(document).ready(function () {
                         $(this).val('Stop Transfers');
                         throttleMembers();
                     }
-                });
+        });
 
         // Retrieve HHK Payments
     } else if (makeTable === '2') {
@@ -891,7 +1008,7 @@ $(document).ready(function () {
     });
 
     $('#btnRelat').click(function () {
-        getRequest($('#txtRequest').val(), $('#txtQuery').val());
+        getRelate($('#txtRelat').val());
     });
 
     $('#selCalendar').change(function () {

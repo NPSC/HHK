@@ -43,13 +43,38 @@ try {
 
     switch ($c) {
 
+        case 'upsert':
+
+            $rags = array(
+                'ids' => array(
+                    'filter' => FILTER_SANITIZE_NUMBER_INT,
+                    'flags' => FILTER_FORCE_ARRAY,
+                ),
+            );
+            $post = filter_input_array(INPUT_POST, $rags);
+
+            if (isset($post['ids']) && count($post['ids']) > 0) {
+
+                try {
+                    $events = $transfer->upsertMembers($dbh, $post['ids']);
+
+                } catch (Exception $ex) {
+                    $events = array("error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex));
+                }
+
+            } else {
+                $events = array("error" => "There are no ids to pass.");
+            }
+
+            break;
+
         case 'members':
 
             $rags = array(
                 'ids' => array(
                             'filter' => FILTER_SANITIZE_NUMBER_INT,
                             'flags'  => FILTER_FORCE_ARRAY,
-                           )
+                ),
             );
             $post = filter_input_array(INPUT_POST, $rags);
 
@@ -193,14 +218,11 @@ try {
 
             $arguments = array(
                 'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                'src' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                'url' => FILTER_SANITIZE_URL
             );
 
             $post = filter_input_array(INPUT_POST, $arguments);
 
-            $events['data'] = $transfer->getRelationship($post);
-            //$events['accountId'] = $transfer->getAccountId();
+            $events['data'] = $transfer->getRelationship($post['accountId']);
 
             break;
 

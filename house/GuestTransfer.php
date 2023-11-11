@@ -546,7 +546,7 @@ function createKeyMap(\PDO $dbh) {
     return  HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys'));
 }
 
-$mkTable = '';
+$mkTable = 'x';
 $dataTable = '';
 $paymentsTable = '';
 $settingstable = '';
@@ -683,7 +683,12 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             $scTbl->addBodyTr($tr);
             $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
 
-            $mkTable = 1;
+            if ($uS->username == 'npscuser') {
+                $mkTable = 0;
+            } else {
+                $mkTable = 1;
+            }
+
         }
 
     } else if (filter_has_var(INPUT_POST, 'btnGetPayments')) {
@@ -805,11 +810,13 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                             <th>Local (HHK) Name Search</th>
                             <td><input id="txtSearch" type="text" /></td>
                         </tr>
-<!--                         <tr>
+                        <?php if ($uS->username == "npscuser") { ?>
+                         <tr>
                             <th>Relationship</th>
-                            <td><input id="btnRelat" type="button" value="click me" /></td>
+                            <td><input id="txtRelat" type="text" placeholder="SF Id" value="" /><input id="btnRelat" type="button" value="Go" /></td>
                         </tr>
- -->                    </table>
+                        <?php } ?>
+                    </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
