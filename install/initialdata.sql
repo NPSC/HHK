@@ -662,6 +662,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
 ('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page','',1),
 ('ShowZeroDayStays','false','b','h','','Include 0-day stays and visits in Reports and Pages','',1),
+('showRegEmptyFields', 'false', 'b', 'h', '', 'On Registrations, show empty fields', '', '1'),
 ('Show_Holidays', 'false', 'b', 'c', '', 'Indicate holidays on the calendar','', '1'),
 ('Show_Closed', 'false', 'b', 'c', '', 'Indicate closed days on the calendar','', '1'),
 ('sId','11','i','a','','House organization Id','',1),
