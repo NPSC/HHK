@@ -901,3 +901,11 @@ table.dataTable tbody td {
 		margin-bottom: 1em;
 	}
 }
+
+.hhk-btn {
+	cursor: pointer;
+}
+
+.hhk-btn.getNameDetails{
+	margin-left: 0.5em;
+}
