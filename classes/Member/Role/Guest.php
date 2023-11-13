@@ -48,6 +48,12 @@ class Guest extends AbstractRole {
 
     }
 
+    /**
+     * Summary of createThinMarkup
+     * @param \HHK\House\ReserveData\PSGMember\PSGMember $mem
+     * @param mixed $lockRelChooser
+     * @return string
+     */
     public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         $uS = Session::getInstance();
@@ -109,6 +115,10 @@ class Guest extends AbstractRole {
         return $message;
     }
 
+   /**
+    * Summary of getCheckinDate
+    * @return string
+    */
    public function getCheckinDate() {
         if (is_null($this->checkinDate)) {
             return '';
@@ -116,6 +126,10 @@ class Guest extends AbstractRole {
         return $this->checkinDate->format('Y-m-d H:i:s');
     }
 
+    /**
+     * Summary of getExpectedCheckinDate
+     * @return string
+     */
     public function getExpectedCheckinDate() {
         if (is_null($this->checkinDate)) {
             return '';
@@ -123,10 +137,20 @@ class Guest extends AbstractRole {
         return $this->checkinDate->format('Y-m-d H:i:s');
     }
 
+    /**
+     * Summary of getCheckinDT
+     * @return \DateTime
+     */
     public function getCheckinDT() {
         return $this->checkinDate;
     }
 
+    /**
+     * Summary of setCheckinDate
+     * @param mixed $stringDate
+     * @param mixed $time
+     * @return void
+     */
     public function setCheckinDate($stringDate, $time = 'H:i:s') {
 
         if ($stringDate != '') {
@@ -142,6 +166,11 @@ class Guest extends AbstractRole {
         }
     }
 
+    /**
+     * Summary of setExpectedCheckinDate
+     * @param string $stringDate
+     * @return void
+     */
     public function setExpectedCheckinDate($stringDate) {
 
         if ($stringDate != '') {
@@ -157,6 +186,10 @@ class Guest extends AbstractRole {
 
     }
 
+    /**
+     * Summary of getExpectedCheckOut
+     * @return string
+     */
     public function getExpectedCheckOut() {
         if (is_null($this->expectedCheckOut)) {
             return '';
@@ -164,10 +197,19 @@ class Guest extends AbstractRole {
         return $this->expectedCheckOut->format('Y-m-d H:i:s');
     }
 
+    /**
+     * Summary of getExpectedCheckOutDT
+     * @return \DateTime
+     */
     public function getExpectedCheckOutDT() {
         return $this->expectedCheckOut;
     }
 
+    /**
+     * Summary of setExpectedCheckOut
+     * @param string $stringDate
+     * @return void
+     */
     public function setExpectedCheckOut($stringDate) {
 
         if ($stringDate != '') {
@@ -182,6 +224,11 @@ class Guest extends AbstractRole {
         }
     }
 
+    /**
+     * Summary of setTitle
+     * @param mixed $title
+     * @return void
+     */
     public function setTitle($title) {
         $this->title = $title;
     }

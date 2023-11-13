@@ -23,7 +23,7 @@ class NeonManager extends AbstractExportManager {
 
     protected $customFields;
 
-    protected $hhReplies;
+    protected $hhReplies = [];
 
     protected $pageNumber;
     protected $relationshipMapper;

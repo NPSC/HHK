@@ -72,9 +72,9 @@ class SalesforceManager extends AbstractExportManager {
      * @param mixed $post
      * @return string
      */
-    public function getRelationship($post) {
+    public function getRelationship($accountId) {
 
-        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/a0B740000003pmmEAA');
+        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/' . $accountId);
 
         $parms = array();
         $this->unwindResponse($parms, $result);
@@ -475,29 +475,40 @@ class SalesforceManager extends AbstractExportManager {
             }
 
             foreach ($row as $k => $w) {
-                if ($w != '' && $w != 'Relationship_Code' && $w != 'PatientId') {
+                if ($w != '' && $k != 'Relationship_Code' && $k != 'PatientId') {
                     $filteredRow[$k] = $w;
                 }
             }
 
-            $compositReq[] = [
+            // Add/update person
+            $subrequest[] = [
                 "method" => "PATCH",
                 "url" => $this->getAcctEndpoint . 'HHK_idName__c/' . $row['HHK_idName__c'],
-                "referenceId" => "refContact",
+                "referenceId" => "refContact" . $row['HHK_idName__c'],
                 "body" => $filteredRow
             ];
 
             if ($row['Relationship_Code'] != RelLinkType::Self) {
                 // Add relationship record
-                $compositReq[] = [
+                $subrequest[] = [
                     "method" => "PATCH",
                     "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
-                    "referenceId" => "refContact",
+                    "referenceId" => "refContact" . $row['HHK_idName__c'],
                     "body" => $filteredRow
                 ];
             }
 
         }
+
+        if (count($subrequest) > 0) {
+
+            $compositRequest["compositeRequest"] = $subrequest;
+
+            return $compositRequest;
+        }
+
+        $replys[0] = array('error' => "The list of HHK Id's to send is empty.");
+        return $replys;
     }
 
 

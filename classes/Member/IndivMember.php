@@ -14,6 +14,7 @@ use HHK\Exception\InvalidArgumentException;
 use HHK\Member\Relation\Siblings;
 use HHK\Member\Relation\Relatives;
 use HHK\sec\Labels;
+use HHK\CrmExport\AbstractExportManager;
 
 /**
  * IndivMember.php
@@ -43,6 +44,10 @@ class IndivMember extends AbstractMember {
     protected $insuranceRSs = array();
 
 
+    /**
+     * Summary of getDefaultMemBasis
+     * @return string
+     */
     protected function getDefaultMemBasis() {
         return MemBasis::Indivual;
     }
@@ -306,10 +311,6 @@ class IndivMember extends AbstractMember {
                 , array('style'=>'display:table-cell;'))
                 );
 
-//           $tbl2->addBodyTr(
-//                HTMLTable::makeTd('Birth Month:', array('class'=>'tdlabel'))
-//                . HTMLTable::makeTd($this->prepBirthMonthMarkup($this->get_bmonth()), array('style'=>'display:table-cell;'))
-//                );
         }
 
         // Deceased checkbox and date
@@ -394,6 +395,24 @@ class IndivMember extends AbstractMember {
             . HTMLTable::makeTd(HTMLContainer::generateMarkup('div',
                 'Date: ' . HTMLInput::generateMarkup(($this->get_DateBackgroundCheck() == '' ? '' : date('M j, Y', strtotime($this->get_DateBackgroundCheck()))), array('name'=>$idPrefix.'txtBackgroundCheckDate', 'class'=>'ckbdate')), $bcdateAttr))
             );
+
+        //CRM External Id
+        if ($uS->ContactManager != '') {
+
+            $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            $tbl2->addBodyTr(
+                HTMLTable::makeTd($CmsManager->getServiceTitle() . ' Id:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup(
+                        $this->nameRS->External_Id,
+                        array('name' => $idPrefix . 'txtExternalId', 'style' => 'width: 222px')
+                    )
+                    ,
+                    array('style' => 'display:table-cell;')
+                )
+            );
+         }
 
         return HTMLContainer::generateMarkup("div", $table->generateMarkup(array('style'=>'margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'margin-right:10px;')) . $insuranceMarkup, array("class"=>"hhk-flex hhk-flex-wrap"));
 
@@ -657,10 +676,19 @@ ORDER BY `List_Order`");
             );
     }
 
+    /**
+     * Summary of getAssocDonorLabel
+     * @return string
+     */
     public function getAssocDonorLabel() {
         return "Associate";
     }
 
+    /**
+     * Summary of getAssocDonorList
+     * @param array $rel
+     * @return array
+     */
     public function getAssocDonorList(array $rel) {
         $rA = array();
         $partner = $rel[RelLinkType::Spouse];
@@ -672,6 +700,11 @@ ORDER BY `List_Order`");
         return $rA;
     }
 
+    /**
+     * Summary of getDefaultDonor
+     * @param array $rel
+     * @return mixed
+     */
     public function getDefaultDonor(array $rel) {
 
         $partner = $rel[RelLinkType::Spouse];
@@ -856,6 +889,11 @@ ORDER BY `List_Order`");
                 $this->demogRS->No_Return->setNewVal('');
             }
 
+        }
+
+        //CRM External Id
+        if ($uS->ContactManager != '' && isset($post[$idPrefix . 'txtExternalId'])) {
+            $n->External_Id->setNewVal(filter_var($post[$idPrefix.'txtExternalId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
     }

@@ -23,14 +23,29 @@ use HHK\sec\Labels;
  */
 class EmergencyContact implements EmergencyContactInterface {
 
+    /**
+     * Summary of ecRS
+     * @var
+     */
     protected $ecRS;
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param mixed $id
+     */
     public function __construct(\PDO $dbh, $id) {
 
         $this->ecRS = $this->loadDbRecord($dbh, $id);
 
     }
 
+    /**
+     * Summary of loadDbRecord
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @return EmergContactRS
+     */
     public static function loadDbRecord(\PDO $dbh, $id) {
 
         $ecRS = new EmergContactRs();
@@ -47,6 +62,15 @@ class EmergencyContact implements EmergencyContactInterface {
         return $ecRS;
     }
 
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @param mixed $pData
+     * @param mixed $uname
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function save(\PDO $dbh, $id, $pData, $uname, $idPrefix = '') {
         // Emergency Contact
         $rtnMsg = "";
@@ -86,6 +110,12 @@ class EmergencyContact implements EmergencyContactInterface {
         return $rtnMsg;
     }
 
+    /**
+     * Summary of extractMarkup
+     * @param mixed $pData
+     * @param mixed $idPrefix
+     * @return void
+     */
     protected function extractMarkup($pData, $idPrefix = "") {
 
         if (isset($pData[$idPrefix.'txtEmrgFirst'])) {
@@ -113,6 +143,14 @@ class EmergencyContact implements EmergencyContactInterface {
 
     }
 
+    /**
+     * Summary of createMarkup
+     * @param mixed $relOptions
+     * @param mixed $idPrefix
+     * @param mixed $checkLater
+     * @param mixed $emergUserData
+     * @return string
+     */
     public function createMarkup($relOptions, $idPrefix = "", $checkLater = FALSE, $emergUserData = []) {
 
         if (isset($relOptions[RelLinkType::Self])) {
@@ -150,22 +188,42 @@ class EmergencyContact implements EmergencyContactInterface {
         return $markup->generateMarkup() . $later;
     }
 
+    /**
+     * Summary of getEcNameFirst
+     * @return mixed
+     */
     public function getEcNameFirst() {
         return $this->ecRS->Name_First->getStoredVal();
     }
 
+    /**
+     * Summary of getEcNameLast
+     * @return mixed
+     */
     public function getEcNameLast() {
         return $this->ecRS->Name_Last->getStoredVal();
     }
 
+    /**
+     * Summary of getEcPhone
+     * @return mixed
+     */
     public function getEcPhone() {
         return $this->ecRS->Phone_Home->getStoredVal();
     }
 
+    /**
+     * Summary of getEcAltPhone
+     * @return mixed
+     */
     public function getEcAltPhone() {
         return $this->ecRS->Phone_Alternate->getStoredVal();
     }
 
+    /**
+     * Summary of getEcRelationship
+     * @return mixed
+     */
     public function getEcRelationship() {
         return $this->ecRS->Relationship->getStoredVal();
     }

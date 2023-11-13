@@ -26,6 +26,12 @@ use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
  */
 class WebUser {
 
+    /**
+     * Summary of loadWebUserRS
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @return W_usersRS
+     */
     public static function loadWebUserRS(\PDO $dbh, $id) {
         $wUserRS = new W_usersRS();
 
@@ -44,6 +50,14 @@ class WebUser {
         return $wUserRS;
     }
 
+    /**
+     * Summary of getWebUserMarkup
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @param mixed $maintFlag
+     * @param mixed $wUserRS
+     * @return string
+     */
     public static function getWebUserMarkup(\PDO $dbh, $id, $maintFlag, $wUserRS = NULL) {
         $uS = Session::getInstance();
 
@@ -156,6 +170,13 @@ class WebUser {
     }
 
 
+    /**
+     * Summary of getSecurityGroupMarkup
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @param mixed $allowFlag
+     * @return string
+     */
     public static function getSecurityGroupMarkup(\PDO $dbh, $id, $allowFlag) {
 
         $stmt = $dbh->query("select `Group_Code` as `Code`, `Title` as `Description` from w_groups");
@@ -202,6 +223,12 @@ class WebUser {
 
     }
 
+    /**
+     * Summary of getSSOMsg
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @return string
+     */
     public static function getSSOMsg(\PDO $dbh, $id){
         $wUserRS = self::loadWebUserRs($dbh, $id);
         $uS = Session::getInstance();
@@ -223,6 +250,14 @@ class WebUser {
     }
 
 
+    /**
+     * Summary of saveUname
+     * @param \PDO $dbh
+     * @param mixed $admin
+     * @param mixed $parms
+     * @param mixed $maintFlag
+     * @return array
+     */
     public static function saveUname(\PDO $dbh, $admin, $parms, $maintFlag) {
 
         $reply = array();
@@ -331,7 +366,7 @@ class WebUser {
                 $pwHash = md5($wUserPw);
             }
 
-            // Register the user 
+            // Register the user
             $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$pwHash', '', 1, 0);";
 
             try{
@@ -392,6 +427,14 @@ class WebUser {
         return $reply;
     }
 
+    /**
+     * Summary of updateSecurityGroups
+     * @param \PDO $dbh
+     * @param int $id
+     * @param array $parms
+     * @param mixed $updatedBy
+     * @return bool
+     */
     public static function updateSecurityGroups(\PDO $dbh, int $id, array $parms, $updatedBy){
         // Group Code security table
         $sArray = array();
@@ -415,7 +458,7 @@ class WebUser {
         $updtd = FALSE;
 
         foreach ($sArray as $code=>$g) {
-			
+
             if (isset($parms["grpSec_" . $code])) {
 
                 if (!isset($g["exist"]) && $parms["grpSec_" . $code] == "checked") {

@@ -26,21 +26,62 @@ use HHK\Exception\RuntimeException;
  */
 class MemberSearch {
 
+    /**
+     * Summary of Name_First
+     * @var
+     */
     protected $Name_First;
+    /**
+     * Summary of Name_Last
+     * @var
+     */
     protected $Name_Last;
+    /**
+     * Summary of Phone
+     * @var
+     */
     protected $Phone;
+    /**
+     * Summary of Company
+     * @var
+     */
     protected $Company;
+    /**
+     * Summary of MRN
+     * @var
+     */
     protected $MRN;
+    /**
+     * Summary of diag
+     * @var
+     */
     protected $diag;
+    /**
+     * Summary of twoParts
+     * @var
+     */
     protected $twoParts;
+    /**
+     * Summary of letters
+     * @var
+     */
     protected $letters;
 
+    /**
+     * Summary of __construct
+     * @param mixed $letters
+     */
     public function __construct($letters) {
 
         $this->letters = $letters;
     	$this->prepareLetters($letters);
     }
 
+    /**
+     * Summary of prepareLetters
+     * @param mixed $letters
+     * @return void
+     */
     public function prepareLetters($letters) {
 
     	$parts = explode(' ', strtolower(trim($letters)));
@@ -72,6 +113,15 @@ class MemberSearch {
 
     }
 
+    /**
+     * Summary of volunteerCmteFilter
+     * @param \PDO $dbh
+     * @param mixed $basis
+     * @param mixed $fltr
+     * @param mixed $additional
+     * @param mixed $psg
+     * @return array
+     */
     public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '', $psg = '') {
         $events = array();
 
@@ -418,6 +468,14 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
+    /**
+     * Summary of searchLinks
+     * @param \PDO $dbh
+     * @param mixed $basis
+     * @param mixed $id
+     * @param mixed $namesOnly
+     * @return array
+     */
     public function searchLinks(\PDO $dbh, $basis, $id, $namesOnly = FALSE) {
         $events = array();
 
@@ -700,6 +758,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
+    /**
+     * Summary of MRNSearch
+     * @param \PDO $dbh
+     * @return array
+     */
     public function MRNSearch(\PDO $dbh) {
 
         $this->MRN = $this->letters . '%';
@@ -775,6 +838,12 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
+    /**
+     * Summary of phoneSearch
+     * @param \PDO $dbh
+     * @param mixed $guestPatient
+     * @return array
+     */
     public function phoneSearch(\PDO $dbh, $guestPatient = TRUE) {
 
         $filterGP = '';
@@ -851,6 +920,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
+    /**
+     * Summary of diagnosisSearch
+     * @param \PDO $dbh
+     * @return array
+     */
     public function diagnosisSearch(\PDO $dbh){
 
         $this->diag = '%' . $this->letters . '%';
@@ -881,6 +955,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
     }
 
+    /**
+     * Summary of guestSearch
+     * @param \PDO $dbh
+     * @return array
+     */
     public function guestSearch(\PDO $dbh) {
 
         $operation = 'OR';
@@ -963,6 +1042,14 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
     }
 
 
+    /**
+     * Summary of roleSearch
+     * @param \PDO $dbh
+     * @param mixed $mode
+     * @param mixed $guestPatient
+     * @param mixed $MRN
+     * @return array
+     */
     public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE, $MRN = FALSE) {
 
         $operation = 'OR';
@@ -1136,6 +1223,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Summary of createDuplicatesDiv
+     * @param array $dups
+     * @return string
+     */
     public static function createDuplicatesDiv(array $dups) {
 
         if (count($dups) !== 0) {
@@ -1155,20 +1247,38 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('id' => 'hhkPossibleDups'));
         }
+
+        return '';
     }
 
+    /**
+     * Summary of getName_First
+     * @return string
+     */
     public function getName_First() {
         return $this->Name_First;
     }
 
+    /**
+     * Summary of getName_Last
+     * @return string
+     */
     public function getName_Last() {
         return $this->Name_Last;
     }
 
+    /**
+     * Summary of getPhone
+     * @return mixed
+     */
     public function getPhone() {
         return $this->Phone;
     }
 
+    /**
+     * Summary of getCompany
+     * @return string
+     */
     public function getCompany() {
         return $this->Company;
     }
