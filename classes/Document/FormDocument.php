@@ -105,7 +105,7 @@ group by g.Code order by g.Order';
      * @param string $json
      * @return array[]|string[]|string[]
      */
-    public function saveNew(\PDO $dbh, $json, $templateId = 0){
+    public function saveNew(\PDO $dbh, array $fields, $templateId = 0){
 
         $this->formTemplate = new FormTemplate();
         $this->formTemplate->loadTemplate($dbh, $templateId);
@@ -114,7 +114,7 @@ group by g.Code order by g.Order';
 
         $abstractJson = json_encode(["enableReservation"=>$templateSettings['enableReservation']]);
 
-        $validatedDoc = $this->validateFields($json);
+        $validatedDoc = $this->validateFields($fields);
 
         if(count($validatedDoc['errors']) > 0){
             return array('errors'=>$validatedDoc['errors']);
@@ -234,10 +234,9 @@ group by g.Code order by g.Order';
         return $this->doc->getStatus();
     }
 
-    public function validateFields($doc){
+    public function validateFields(array $fields){
         $response = ["fields"=>[], "errors"=>[]];
 
-        $fields = json_decode(base64_decode($doc));
         $fieldData = [];
 
         foreach($fields as $key=>$field){

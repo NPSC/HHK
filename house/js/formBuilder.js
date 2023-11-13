@@ -1539,12 +1539,12 @@
 				var missingFields = [];
 				var emailErrorMsg = '';
 				
-				//check field group
-				formData.forEach(function(field){
-					/*if(field.group == 'guest' && field.name && !field.name.startsWith("guests.g")){
-						field.group = '';
-						flagAlertMessage('The "Guest" group can only be used with Guest fields, group has been removed', true);
-					}*/
+				//convert html entities
+				formData.forEach(function(field, i, formData){
+					if(field.label){
+						field.label = he.encode(field.label, {'allowUnsafeSymbols': true});
+						formData[i] = field;
+					}
 				});
 				
 				if(emailPatient){
