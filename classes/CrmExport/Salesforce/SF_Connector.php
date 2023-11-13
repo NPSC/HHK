@@ -58,8 +58,6 @@ class SF_Connector {
      */
     public function search($query, $endpoint) {
 
-        //$client = new Client(['base_uri' => $this->credentials->getBaseURI()]);
-
         try{
             if(!$this->oAuth instanceof OAuth){
                 $this->login();
@@ -92,8 +90,6 @@ class SF_Connector {
      * @return mixed
      */
     public function goUrl($endpoint) {
-
-        //$client = new Client(['base_uri' => $this->credentials->getBaseURI()]);
 
         try{
             if(!$this->oAuth instanceof OAuth){

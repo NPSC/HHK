@@ -714,6 +714,22 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
+     * Summary of searchQuery
+     * @param string $select
+     * @param string $from
+     * @param string $where
+     * @return mixed
+     */
+    public function searchQuery($select, $from, $where) {
+
+        if ($where != '') {
+            $where = " WHERE " . $where;
+        }
+        return $this->webService->search("SELECT $select FROM $from $where LIMIT 100", $this->queryEndpoint);
+
+    }
+
+    /**
      * Summary of getSearchFields
      * @param $dbh
      * @param string $tableName

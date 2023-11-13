@@ -175,6 +175,24 @@ try {
 
             break;
 
+        case 'soql':
+
+            $arguments = array(
+                's' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'f' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'w' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            );
+
+            $post = filter_input_array(INPUT_POST, $arguments);
+
+            try {
+                $events = ['data' => $transfer->searchQuery($post['s'], $post['f'], $post['w'])];
+            } catch (Exception $ex) {
+                $events = ["error" => "Search Error: " . $ex->getMessage()];
+            }
+
+            break;
+
         case 'listCustFields':
 
             try {

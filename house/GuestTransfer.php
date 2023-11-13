@@ -815,6 +815,13 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                             <th>Relationship</th>
                             <td><input id="txtRelat" type="text" placeholder="SF Id" value="" /><input id="btnRelat" type="button" value="Go" /></td>
                         </tr>
+                         <tr>
+                            <th>SOQL</th>
+                            <td><input id="txtSoqls" type="text" placeholder="SELECT" value="" />
+                            <input id="txtSoqlf" type="text" placeholder="FROM" value="" />
+                            <input id="txtSoqlw" type="text" placeholder="WhERE" value="" />
+                            <input id="btnSoql" type="button" value="Go" /></td>
+                        </tr>
                         <?php } ?>
                     </table>
                     <table style="width:100%; margin-top: 15px;">
