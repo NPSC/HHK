@@ -263,6 +263,11 @@ class GuestDemogReport {
 
 
             try {
+
+                if(!$r['zip']){
+                    throw new RuntimeException('zip code not set');
+                }
+
                 $distanceCalculator = DistanceFactory::make();	
                 if($r['Meters_From_House'] > 0){	
                     $miles = $distanceCalculator->meters2miles($r['Meters_From_House']);	
