@@ -67,6 +67,11 @@ class Install{
      * @return array
      */
     public function installDB(){
+        $nextStep = $this->getNextStep();
+        if($nextStep != 'installDB'){
+            return ['error'=>"You can't do this step now. Next step: " . $nextStep];
+        }
+
         try {
 
             $patch = new Patch();
@@ -139,7 +144,12 @@ class Install{
      * Load InitialData
      * @return array
      */
-    public function loadMetadata(string $newPw){
+    public function loadMetadata(string $newPw, $npscuserPw = null){
+        $nextStep = $this->getNextStep();
+        if($nextStep != 'loadMetadata'){
+            return ['error'=>"You can't do this step now. Next step: " . $nextStep];
+        }
+
         try {
             // Load initialization data
             $filedata = file_get_contents(P_ROOT.DS.'install'.DS.'initialdata.sql');
@@ -165,15 +175,21 @@ class Install{
                 }
             }
     
+            $successMsg = "";
             // Update admin password
             if ($newPw != '') {
     
                 $uclass = new UserClass();
                 if ($uclass->setPassword($this->dbh, -1, $newPw)) {
+                    $successMsg = 'Admin';
+                    if($npscuserPw && $npscuserPw != '' && $uclass->setPassword($this->dbh, 10, $npscuserPw)){
+                        $successMsg .= ' and npscuser';
+                    }
+
                     if($this->dbh->inTransaction()){
                         $this->dbh->commit();
                     }
-                    return ['success'=>"Admin Password set."];
+                    return ['success'=>$successMsg .= " password set."];
                 } else {
                     if($this->dbh->inTransaction()){
                         $this->dbh->rollBack();
@@ -193,6 +209,11 @@ class Install{
     }
 
     public function loadZipFile(array $zipFile){
+        $nextStep = $this->getNextStep();
+        if($nextStep != 'loadZipFile'){
+            return ['error'=>"You can't do this step now. Next step: " . $nextStep];
+        }
+
         $result = array();
 
         try {
@@ -217,6 +238,10 @@ class Install{
      * @return array
      */
     public function installRooms(int $numRooms, string $rateCode, bool $finAssist){
+        $nextStep = $this->getNextStep();
+        if($nextStep != 'installRooms'){
+            return ['error'=>"You can't do this step now. Next step: " . $nextStep];
+        }
 
         try{
 
@@ -387,6 +412,39 @@ class Install{
         SysConfig::getCategory($this->dbh, $ssn, "'ha'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $ssn, "'p'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $ssn, "'g'", webInit::SYS_CONFIG);
+    }
+
+    /**
+     * Determine the next step of the install process
+     * @return string
+     */
+    public function getNextStep(){
+
+        //Does sys_config table exist?
+        $stmt = $this->dbh->query("show tables like 'sys_config';");
+        if($stmt->rowCount() === 0){
+            return "installDB";
+        }
+
+        //Does sys_config have data in it?
+        $stmt = $this->dbh->query("select * from sys_config");
+        if($stmt->rowCount() === 0){
+            return "loadMetadata";
+        }
+
+        //Have zip codes been loaded? 
+        $stmt = $this->dbh->query("select * from postal_codes");
+        if($stmt->rowCount() === 0){
+            return "loadZipFile";
+        }
+
+        //have rooms been set up?
+        $stmt = $this->dbh->query("select * from room");
+        if($stmt->rowCount() === 0){
+            return "installRooms";
+        }
+
+        return "done";
     }
 
 }

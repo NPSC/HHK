@@ -36,6 +36,12 @@ $installer = new Install();
 
 try{
     switch ($c) {
+        case 'isAuto': //tell Manager it can complete a full install
+            $events = ["isAuto"=>true];
+            break;
+        case 'getNextStep': //check install status
+            $events = ["nextStep"=>$installer->getNextStep()];
+            break;
         case "testdb":
             $events = $installer->testDB($_POST);
             break;
@@ -44,8 +50,9 @@ try{
             break;
         case "loadmd":
             $adminPW = filter_input(INPUT_POST, 'new', FILTER_UNSAFE_RAW);
+            $npscUserPW = filter_input(INPUT_POST, 'npscuserpw', FILTER_UNSAFE_RAW);
             if($adminPW){
-                $events = $installer->loadMetadata($adminPW);
+                $events = $installer->loadMetadata($adminPW, $npscUserPW);
             }else{
                 $events = ['error'=>"admin password is required"];
             }
@@ -80,7 +87,7 @@ try{
 
 // return results.
 if(isset($events['error']) || isset($events['errors'])){
-    http_response_code(422);
+    http_response_code(422); // error 422: unprocessable Entity
 }
 echo( json_encode($events));
 exit();

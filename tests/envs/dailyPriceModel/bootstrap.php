@@ -6,7 +6,7 @@ define('CONF_PATH','tests'.DS.'envs'.DS.'dailyPriceModel'.DS);
 define('ciCFG_FILE', 'site.cfg');
 
 //testing params
-define('ENC', 'WFgzemRrSUQ0aVlaQkRHdi8zbFZrZz09');
+define('ENC', 'WFgzemRrSUQ0aVlaQkRHdi8zbFZrZz09'); //encrypted admin
 define('NUM_ROOMS', 10);
 define('PRICE_MODEL', 'd');
 
