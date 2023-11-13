@@ -107,7 +107,7 @@ class GoogleAuthenticator extends AbstractMultiFactorAuth
                     <div id="qrcode"></div>
                     <div id="showqrhelp" style="display: none;">Use this QR code to add the existing Authenticator configuration to a new device</div>
                     <form class="otpForm" style="display: none; text-align: center;">
-                        <label for"otp" class="d-block mb-3">Enter Verification Code</label>
+                        <label for="otp" class="d-block mb-3">Enter Verification Code</label>
                         <input type="text" name="otp" size="10" class="mb-3">
                         <input type="hidden" name="secret">
                         <input type="hidden" name="cmd" value="save2fa">
