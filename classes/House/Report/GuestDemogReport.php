@@ -264,10 +264,6 @@ class GuestDemogReport {
 
             try {
 
-                if(!$r['zip']){
-                    throw new RuntimeException('zip code not set');
-                }
-
                 $distanceCalculator = DistanceFactory::make();	
                 if($r['Meters_From_House'] > 0){	
                     $miles = $distanceCalculator->meters2miles($r['Meters_From_House']);	
@@ -276,6 +272,10 @@ class GuestDemogReport {
                 }else{ //calculate zip distance    
                     $zipDistance = new ZipDistance();
                     $miles = $zipDistance->getDistance($dbh, ['zip'=>$r["zip"]], Address::getHouseAddress($dbh), "miles");
+                }
+
+                if($miles == -1){
+                    throw new RuntimeException("Can't calculate distance");
                 }
 
                 foreach ($accum[$startPeriod]['Distance'] as $d => $val) {
