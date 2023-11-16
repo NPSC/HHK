@@ -178,14 +178,32 @@ try {
 			    $score = 1.0;
 			}
 
-            $formRenderData = '';
+            $fields = array();
             if(isset($_POST['formRenderData'])){
                 try{
-                    json_decode(base64_decode($_REQUEST['formRenderData']));
-                    $formRenderData = $_REQUEST['formRenderData'];
-                }catch(\Exception $e){
+                    $jsonStr = base64_decode($_REQUEST['formRenderData']);
+                    $fields = json_decode($jsonStr);
+                    if(!is_array($fields)){
+                        try{
+                            $body = "New bug report received from " . getSiteName() . "\r\n\r\n";
+                            $body .= "Request Type: AJAX\r\n\r\n";
+                            $body .= "Details: \r\n\r\n";
+                            $body .= "Message: fields variable is null\r\n\r\n";
+                            $body .= "doc: " .$_POST['formRenderData'];
+            
+                            sendMail($body);
+                        }catch(\Exception $e){}
 
+                        $events = ['status'=>'error', 'errors'=>['server'=>'Unable to read form, check your submission for special characters and try again.']];
+                        break;
+                    }
+                }catch(\Exception $e){
+                    $events = ['status'=>'error', 'errors'=>['server'=>'Unable to read form, check your submission for special characters and try again.']];
+                    break;
                 }
+            }else{
+                $events = ['status'=>'error', 'errors'=>['server'=>'The form appears to be empty, please try again']];
+                break;
             }
 
             $templateId = '';
@@ -195,7 +213,7 @@ try {
 
 			if($score >= 0.5){
 				$formDocument = new FormDocument();
-				$events = $formDocument->saveNew($dbh, $formRenderData, $templateId);
+				$events = $formDocument->saveNew($dbh, $fields, $templateId);
 				$events['recaptchaScore'] = $score;
 			}else{
 				$events = ['status'=>'error', 'errors'=>['server'=>'Recaptcha spam check failed'], 'recaptchaScore'=>$score];

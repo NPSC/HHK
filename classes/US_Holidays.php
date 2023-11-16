@@ -154,7 +154,7 @@ class US_Holidays {
             (
                 "name" => "Thanksgiving Day ",
                         // 4th Thursday of November
-                "timestamp" => strtotime("last thursday of November $this->year"),
+                "timestamp" => strtotime("fourth thursday of November $this->year"),
                  "type" => self::Federal,
                 'use' => '1'
                 ),

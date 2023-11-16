@@ -23,7 +23,7 @@ class NeonManager extends AbstractExportManager {
 
     protected $customFields;
 
-    protected $hhReplies;
+    protected $hhReplies = [];
 
     protected $pageNumber;
     protected $relationshipMapper;
@@ -1357,7 +1357,12 @@ where
         $pg = $this->findHhPrimaryContact($household);
 
         $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $pg['accountId'];
-        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $pg['relationType']['id'];
+
+        // 2023/11/13 EKC RelationType can be null, it seems.
+        if (isset($pg['relationType']['id']) && is_null($pg['relationType']['id']) === FALSE) {
+            $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $pg['relationType']['id'];
+        }
+
         $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
 
         foreach ($newGuests as $ng) {

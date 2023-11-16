@@ -12,15 +12,32 @@ namespace HHK\Member\Address;
  */
 class CleanAddress {
 
+    /**
+     * Summary of stSuffixes
+     * @var
+     */
     protected $stSuffixes;
+    /**
+     * Summary of secAbvrs
+     * @var
+     */
     protected $secAbvrs;
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     */
     function __construct(\PDO $dbh) {
         $this->stSuffixes = $this->getStreetSuffix($dbh);
         $this->secAbvrs = $this->getSecondary($dbh);
 
     }
 
+    /**
+     * Summary of cleanAddr
+     * @param mixed $adr
+     * @return array
+     */
     public function cleanAddr($adr) {
         $secondary = "";
         $priAdr = "";
@@ -46,6 +63,11 @@ class CleanAddress {
         return $newAdr;
     }
 
+    /**
+     * Summary of checkSecondary
+     * @param mixed $aptAdr
+     * @return mixed
+     */
     public function checkSecondary($aptAdr) {
 
         $secAdr = explode(" ", $aptAdr);
@@ -81,6 +103,11 @@ class CleanAddress {
         return $newAdr;
     }
 
+    /**
+     * Summary of convertSecondary
+     * @param mixed $aptAdr
+     * @return mixed
+     */
     public function convertSecondary($aptAdr) {
 
         $secAdr = explode(" ", $aptAdr);
@@ -124,6 +151,11 @@ class CleanAddress {
         return $newAdr;
     }
 
+    /**
+     * Summary of convertSuffix
+     * @param mixed $primary
+     * @return array
+     */
     public function convertSuffix($primary) {
 
         $wrds = explode(" ", $primary);
@@ -231,6 +263,11 @@ class CleanAddress {
         return array(0=>$newAdr, 1=>$secAdr);
     }
 
+    /**
+     * Summary of getStreetSuffix
+     * @param \PDO $dbh
+     * @return array
+     */
     public static function getStreetSuffix(\PDO $dbh) {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from street_suffix order by Common");
@@ -241,6 +278,11 @@ class CleanAddress {
         return $lst;
     }
 
+    /**
+     * Summary of getSecondary
+     * @param \PDO $dbh
+     * @return array
+     */
     public static function getSecondary(\PDO $dbh) {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from secondary_unit_desig order by Common");

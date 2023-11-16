@@ -706,7 +706,9 @@ class RoomChooser {
             $cat = DefaultSettings::Rate_Category;
         }
 
-        $amt = ($priceModel->amountCalculator($nites, $idRoomRate, $cat, $fixedRate, $guestNites) * (1 + ($rateAdjust / 100)));
+        $adnlGuestNites = ($numberGuests > 1 ? $guestNites - $nites : 0); //WI 10/18/2023 - amountCalculator expects Additional guest nights, NOT total guest nights
+
+        $amt = ($priceModel->amountCalculator($nites, $idRoomRate, $cat, $fixedRate, $adnlGuestNites) * (1 + ($rateAdjust / 100)));
 
         foreach ($priceModel->getActiveModelRoomRates() as $rs) {
 

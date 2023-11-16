@@ -162,17 +162,16 @@ class VisitCharges {
     public function sumDatedRoomCharge(\PDO $dbh, AbstractPriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         $this->priceModel = $priceModel;
+        $depDT = new \DateTime($coDate);
 
         // Get spans with current nights calculated.
-        $spans = $priceModel->loadVisitNights($dbh, $this->idVisit);
+        $spans = $priceModel->loadVisitNights($dbh, $this->idVisit, $depDT);
 
-        // Access the last span
+        // Access the last span, assuming the earlier ones are alreay checked out...
         $span = $spans[(count($spans) - 1)];
 
         $arrDT = new \DateTime($span['Span_Start']);
         $arrDT->setTime(0, 0, 0);
-
-        $depDT = new \DateTime($coDate);
 
         // Check stays for last checkout date;
         $allStays = Visit::loadStaysStatic($dbh, $this->idVisit, $this->span, '');

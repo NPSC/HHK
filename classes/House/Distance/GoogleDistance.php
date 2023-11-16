@@ -28,12 +28,18 @@ class GoogleDistance extends AbstractDistance {
      */
     protected function calcDistance(\PDO $dbh, array $originAddr, array $destinationAddr) {
 
+        $uS = Session::getInstance();
+        
         $responseJson = $this->sendRequest($dbh, $originAddr, $destinationAddr);
 
         if($responseJson->status == "OK" && isset($responseJson->routes[0]->legs[0]->distance)){
             return array("type"=>"google", "units"=>"meters", "value"=>$responseJson->routes[0]->legs[0]->distance->value);
+        }else if($responseJson->status != "OK"){
+            HouseLog::logApi($dbh, "GoogleDirections", false, "Error: " . $responseJson->status . " Origin: " . $this->stringifyAddr($originAddr) . " Dest: " . $this->stringifyAddr($destinationAddr), $uS->username);
+            return array("type"=>"google", "units"=>"meters", "value"=>"-1");
         }else{
-            throw new RuntimeException("Failed to get driving distance: cannot find distance in API response");
+            HouseLog::logApi($dbh, "GoogleDirections", false, "Error parsing response: " . json_encode($responseJson), $uS->username);
+            return array("type"=>"google", "units"=>"meters", "value"=>"-1");
         }
 
     }
@@ -60,7 +66,7 @@ class GoogleDistance extends AbstractDistance {
             ];
 
             $client = new Client();
-            $response = $client->get($endpoint, ['query'=>$params, 'headers'=>['Accept'=>'applicatioin/json']]);
+            $response = $client->get($endpoint, ['query'=>$params, 'headers'=>['Accept'=>'application/json']]);
 
             HouseLog::logApi($dbh, "GoogleDirections", true, "Called " . $endpoint . " successfully" . (isset($originAddr['idName_Address']) ? " - idName_Address: " . $originAddr['idName_Address'] : ""), $uS->username);
 
@@ -68,7 +74,7 @@ class GoogleDistance extends AbstractDistance {
 
         }catch(\Exception $e){
             HouseLog::logApi($dbh, "GoogleDirections", false, "Error calling " . $endpoint . ": " . $e->getMessage(), $uS->username);
-            throw new RuntimeException("Failed to get driving distance: " . $e->getMessage());
+            return json_decode('{"status":"invalidResponse"}');
         }
     }
 

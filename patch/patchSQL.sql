@@ -9,7 +9,7 @@ ALTER TABLE `name_demog`
 -- Multiple reservations
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('UseRepeatResv', 'false', 'b', 'h', 'Enable repeating Reservations', '1');
 -- Some sites may have this key already defined and broken, so update it.
-Update `sys_config` SET `Value` = 'false', `Description` = 'Enable repeating Reservations', `Show` = '1' WHERE (`Key` = 'UseRepeatResv' AND `value` = '0');
+Update `sys_config` SET `Value` = 'false', `Description` = 'Enable repeating Reservations', `Show` = '1' WHERE (`Key` = 'UseRepeatResv' AND `Show` = '0');
 
 -- Keeping minors off the Registration forms
 ALTER TABLE `name_demog`
@@ -87,5 +87,9 @@ ADD COLUMN IF NOT EXISTS `DistCalcType` VARCHAR(10) NULL DEFAULT NULL AFTER `Met
 -- New donation label.
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('ExtraPayment', 'Extra Payment', 's', 'pc');
 
+
 -- add rebook flag
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('UseRebook', 'false', 'b', 'hf', 'Automatically rebook cancelled reservation', '', '1');
+
+-- add showRegEmptyFields toggle
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showRegEmptyFields', 'true', 'b', 'h', 'On Registrations, show empty fields', '1');

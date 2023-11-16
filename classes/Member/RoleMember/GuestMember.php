@@ -70,10 +70,20 @@ class GuestMember extends AbstractRoleMember {
         return $tr;
     }
 
+    /**
+     * Summary of getMyMemberType
+     * @return string
+     */
     protected function getMyMemberType() {
         return VolMemberType::Guest;
     }
 
+    /**
+     * Summary of saveChanges
+     * @param \PDO $dbh
+     * @param array $post
+     * @return string
+     */
     public function saveChanges(\PDO $dbh, array $post) {
 
         $msg = '';

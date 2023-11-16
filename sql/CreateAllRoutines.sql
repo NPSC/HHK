@@ -422,7 +422,6 @@ BEGIN
 	delete m from mcalendar m join tids n on m.idName = n.idName;
 	delete ml from mail_listing ml join tids n on ml.id = n.idName;
 	delete mn from member_note mn join tids n on mn.idName = n.idName;
-	delete f from fbx f join tids n on f.idName = n.idName;
 	delete mh from member_history mh join tids n on mh.idName = n.idName;
 	-- delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
 	delete gt from guest_token gt join tids n on gt.idGuest = n.idName;
@@ -662,22 +661,12 @@ CREATE PROCEDURE `register_web_user`
 )
 BEGIN
 
-    -- does idName exist in the fbx table?
     declare n int;
     declare u int;
     declare m varchar(250);
     declare codeFound int;
-    set n= -1;
 
-    select idName into n from fbx where fb_id = fbid;
-
-    if n >= 0 then
-    -- fbid found, update id into fbx
-        update fbx set idName=id, Status = 'a', Approved_By=appr, Approved_Date=now() where fb_id = fbid;
-
-    end if;
-
-    -- now check w_users table
+    -- check w_users table
     set n = 0;
     select count(*) into n from w_users where idName = id;
 
@@ -830,7 +819,6 @@ CREATE PROCEDURE `del_webuser`
 BEGIN
     delete from w_users where idName = id;
     delete from w_auth where idName = id;
-    delete from fbx where idName = id;
     delete from id_securitygroup where idName = id;
 
     insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)

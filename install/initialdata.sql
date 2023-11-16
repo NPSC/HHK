@@ -87,7 +87,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Diagnosis_Category', 'c', 'Cardiac', '', 'h', 0),
 
 ('DistCalculator', 'zip', 'Nautical (Approx)','', '', 10),
-('DistCalculator', 'google', 'Driving', 20),
+('DistCalculator', 'google', 'Driving', '', '', 20),
 
 ('Dir_Type_Selector_Code','d','Directory','','',0),
 ('Dir_Type_Selector_Code','e','Email Addresses','','',0),
@@ -568,7 +568,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('DefaultRegisterTab','0','lu','h','','Default active tab on register page','Default_Reg_Tab',1),
 ('DefaultVisitFee','1','s','h','','Use the Resource Builder','',0),
 ('DefCalEventTextColor', 'black', 's', 'c', '', 'Default calendar event ribbon text color', '',1),
-('distCalculator', '', 'lu', 'hf', 'Distance calculator method', 'DistCalculator', '1')
+('distCalculator', '', 'lu', 'hf', '', 'Distance calculator method', 'DistCalculator', '1'),
 ('DKIMdomain', '', 's', 'es', '', 'Domain name of sender (must match FromAddress and NoReplyAddr domains)', '',1),
 ('Doctor','true','b','hf','','Track doctors','',1),
 ('EmailType','','lu','es','','Email protocol','Email_Server',1),
@@ -662,6 +662,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
 ('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page','',1),
 ('ShowZeroDayStays','false','b','h','','Include 0-day stays and visits in Reports and Pages','',1),
+('showRegEmptyFields', 'true', 'b', 'h', '', 'On Registrations, show empty fields', '', '1'),
 ('Show_Holidays', 'false', 'b', 'c', '', 'Indicate holidays on the calendar','', '1'),
 ('Show_Closed', 'false', 'b', 'c', '', 'Indicate closed days on the calendar','', '1'),
 ('sId','11','i','a','','House organization Id','',1),
@@ -755,7 +756,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('PayRmFees', 'Pay room fees', 's', 'pc', '', ''),
 ('RoomCharges',	'Room Charges',	's', 'pc', '', ''),
 ('Credit',	'Credit',	's', 'pc', '', ''),
-('ExtraPayment', 'Extra Payment', 's', 'pc', '', '');
+('ExtraPayment', 'Extra Payment', 's', 'pc', '', ''),
 
 
 ('patient','Patient','s','mt','','Default: Patient'),
@@ -799,13 +800,13 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 -- ;
 
 REPLACE INTO `operating_schedules` (`idDay`, `Day`, `Start_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Timestamp`) VALUES
-(1, '0', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
-(2, '1', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
-(3, '2', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
-(4, '3', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
-(5, '4', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
-(6, '5', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp),
-(7, '6', current_timestamp, '09:00:00', '21:00:00', '0', '0', currrent_timestamp);
+(1, '0', current_timestamp, '09:00:00', '21:00:00', '0', '0', current_timestamp),
+(2, '1', current_timestamp, '09:00:00', '21:00:00', '0', '0', current_timestamp),
+(3, '2', current_timestamp, '09:00:00', '21:00:00', '0', '0', current_timestamp),
+(4, '3', current_timestamp, '09:00:00', '21:00:00', '0', '0', current_timestamp),
+(5, '4', current_timestamp, '09:00:00', '21:00:00', '0', '0', current_timestamp),
+(6, '5', current_timestamp, '09:00:00', '21:00:00', '0', '0', current_timestamp),
+(7, '6', current_timestamp, '09:00:00', '21:00:00', '0', '0', current_timestamp);
 
 
 REPLACE INTO `template_tag` VALUES

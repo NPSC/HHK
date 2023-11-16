@@ -67,6 +67,7 @@ define('JQ_DT_SETTINGS', '../js/datatablesSettings.js' . JSV);
 define('DIRRTY_JS', '../js/jquery.dirrty.js' . JSV);
 define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
 define('BOOTSTRAP_JS', '../js/bootstrap5.1.3.min.js' . JSV);
+define('HTMLENTITIES_JS', '../js/he.js'. JSV);
 
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js' . JSV);
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js' . JSV);

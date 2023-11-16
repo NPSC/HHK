@@ -16,6 +16,11 @@ use HHK\House\Registration;
  */
 class Statement {
 
+    /**
+     * Summary of processRatesRooms
+     * @param array $spans
+     * @return array
+     */
     public static function processRatesRooms(array $spans) {
 
         $rates = array();
@@ -90,6 +95,12 @@ class Statement {
         return $rates;
     }
 
+    /**
+     * Summary of processPayments
+     * @param \PDOStatement $stmt
+     * @param array $extraCols
+     * @return array
+     */
     public static function processPayments(\PDOStatement $stmt, array $extraCols = array()) {
 
         $idInvoice = 0;
@@ -244,6 +255,12 @@ class Statement {
 
     }
 
+    /**
+     * Summary of addSavedTrs
+     * @param array $trs
+     * @param mixed $tbl
+     * @return void
+     */
     protected static function addSavedTrs(array $trs, &$tbl) {
 
         foreach ($trs as $t) {
@@ -251,6 +268,20 @@ class Statement {
         }
     }
 
+    /**
+     * Summary of makeOrdersRatesTable
+     * @param mixed $rates
+     * @param mixed $totalAmt
+     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param mixed $labels
+     * @param array $invLines
+     * @param \HHK\Purchase\ValueAddedTax $vat
+     * @param mixed $numberNites
+     * @param \HHK\Purchase\Item $moaItem
+     * @param \HHK\Purchase\Item $donateItem
+     * @param mixed $showDetails
+     * @return array
+     */
     public static function makeOrdersRatesTable($rates, &$totalAmt, AbstractPriceModel $priceModel, $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem, $showDetails) {
 
         $uS = Session::getInstance();
@@ -571,6 +602,15 @@ class Statement {
         return array($tbl, $detailTbl);
     }
 
+    /**
+     * Summary of makePaymentLine
+     * @param array $payLines
+     * @param mixed $tbl
+     * @param mixed $tdAttrs
+     * @param array $descs
+     * @param mixed $i
+     * @return void
+     */
     protected static function makePaymentLine(array $payLines, &$tbl, $tdAttrs, array $descs, $i) {
 
         if (count($payLines) == 0 && count($descs) > 0) {
@@ -625,6 +665,18 @@ class Statement {
 
     }
 
+    /**
+     * Summary of makePaymentsTable
+     * @param mixed $invoices
+     * @param mixed $invLines
+     * @param mixed $subsidyId
+     * @param mixed $returnId
+     * @param mixed $totalAmt
+     * @param mixed $pmtDisclaimer
+     * @param mixed $labels
+     * @param mixed $tdClass
+     * @return HTMLTable
+     */
     public static function makePaymentsTable($invoices, $invLines, $subsidyId, $returnId, &$totalAmt, $pmtDisclaimer, $labels, $tdClass = '') {
 
         // Markup
@@ -823,6 +875,15 @@ class Statement {
         return $tbl;
     }
 
+    /**
+     * Summary of makeThirdParyTable
+     * @param mixed $invoices
+     * @param mixed $invLines
+     * @param mixed $labels
+     * @param mixed $totAmt
+     * @param mixed $tdClass
+     * @return string
+     */
     public static function makeThirdParyTable($invoices, $invLines, $labels, &$totAmt, $tdClass = '') {
 
         $tbl = new HTMLTable();
@@ -920,6 +981,13 @@ class Statement {
         }
     }
 
+    /**
+     * Summary of createComprehensiveStatements
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @param mixed $includeLogo
+     * @return string
+     */
     public static function createComprehensiveStatements(\PDO $dbh, $idRegistration, $includeLogo = TRUE) {
 
         $uS = Session::getInstance();
@@ -1051,6 +1119,14 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
     }
 
+    /**
+     * Summary of createStatementMarkup
+     * @param \PDO $dbh
+     * @param mixed $idVisit
+     * @param mixed $guestName
+     * @param mixed $includeLogo
+     * @return string
+     */
     public static function createStatementMarkup(\PDO $dbh, $idVisit, $guestName, $includeLogo = TRUE) {
 
         $uS = Session::getInstance();

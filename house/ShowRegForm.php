@@ -139,7 +139,7 @@ if($idVisit || $idResv){
 
     // Generate Registration Form
     $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
-    $signedDocsArray = ReservationSvcs::getSignedCkinDocs($dbh, (isset($reservArray['idPsg']) ? $reservArray['idPsg']: 0), $idResv, $idVisit);
+    $signedDocsArray = ReservationSvcs::getSignedCkinDocs($dbh, (isset($reservArray['idPsg']) ? $reservArray['idPsg']: 0), (isset($reservArray['idReservation']) ? $reservArray['idReservation'] : $idResv), $idVisit);
 
     $li = '';
     $tabContent = '';

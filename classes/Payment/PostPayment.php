@@ -23,6 +23,17 @@ use HHK\SysConst\{InvoiceStatus, PaymentStatusCode, PaymentMethod};
  */
 class PostPayment {
 
+    /**
+     * Summary of actionButton
+     * @param \HHK\Payment\PaymentGateway\AbstractPaymentGateway $gateway
+     * @param array $p
+     * @param mixed $invoiceStatusCode
+     * @param mixed $payTypeTotals
+     * @param mixed $stat
+     * @param mixed $amt
+     * @param mixed $attr
+     * @return string
+     */
     public static function actionButton(AbstractPaymentGateway $gateway, array &$p, $invoiceStatusCode, &$payTypeTotals, &$stat, &$amt, &$attr) {
 
         $actionButtonArray = array('type' => 'button', 'style' => 'font-size:.8em', 'id' => 'btnvr' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'data-amt' => $amt);

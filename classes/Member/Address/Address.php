@@ -38,6 +38,11 @@ class Address extends AbstractContactPoint{
      */
     public $cleanAddress;
 
+    /**
+     * Summary of loadRecords
+     * @param \PDO $dbh
+     * @return array
+     */
     protected function loadRecords(\PDO $dbh) {
 
         $adRS = new NameAddressRS();
@@ -304,7 +309,7 @@ class Address extends AbstractContactPoint{
         $distanceCalculator = DistanceFactory::make();
         $distance = $adrRow->Meters_From_House->getStoredVal();
         $distCalcTypeStr = (!empty($adrRow->DistCalcType->getStoredVal()) ? " (" . $adrRow->DistCalcType->getStoredVal() . ")" : "");
-    
+
         if($distance > 0){
             $table->addBodyTr(HTMLTable::makeTd(Labels::getString("Referral", "drivingdistancePrompt", "Distance"), array('class'=>'tdlabel', 'title'=>Labels::getString("Referral", "drivingdistancePrompt", "Distance")))
                 . HTMLTable::makeTd("<b>" . $distanceCalculator->meters2miles($distance) . "</b> miles away" . $distCalcTypeStr));
@@ -466,8 +471,8 @@ class Address extends AbstractContactPoint{
 
                 if ($adrComplete === TRUE ) {
                     $a->Set_Incomplete->setNewVal(0);
-                    
-                    
+
+
                     $distanceCalculator = DistanceFactory::make();
                     if(EditRS::isChanged($a) || !$a->Meters_From_House->getStoredVal() > 0 || ($a->Meters_From_House->getStoredVal() > 0 && $a->DistCalcType->getStoredVal() !== $distanceCalculator->getType())){ //if address has changed and is complete, or distance hasn't been calculated, or the calculation type is different than the current one
                         if($this->name instanceof GuestMember || $this->name instanceof PatientMember){
@@ -674,6 +679,11 @@ class Address extends AbstractContactPoint{
 
     }
 
+    /**
+     * Summary of getHouseAddress
+     * @param \PDO $dbh
+     * @return array|null
+     */
     public static function getHouseAddress(\PDO $dbh){
         try{
             //get house address

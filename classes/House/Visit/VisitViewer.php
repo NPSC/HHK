@@ -1062,8 +1062,8 @@ class VisitViewer {
         );
 
         // TODO
-        // Total Due at end of visit -- but not for Gorecki House
-        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn && ! stristr(strtolower($uS->siteName), 'gorecki')) {
+        // Total Due at end of visit -- but not for Gorecki House or Maynard
+        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn && ! stristr(strtolower($uS->siteName), 'gorecki') && ! stristr(strtolower($uS->siteName), 'maynard')) {
 
             $feesToCharge = round($curAccount->getRoomFeesToCharge());
 

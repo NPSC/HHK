@@ -135,6 +135,7 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
 
         <script type='text/javascript'>
@@ -305,6 +306,11 @@ if(isset($_GET['template'])){
                     			$(this).val(val);
                     		});
 
+							$renderedForm.find('input, textarea').each(function() {
+                                var val = he.decode($(this).val());
+                    			$(this).val(val);
+                            });
+
                     		$(document).on('submit', 'form#renderedForm', function(e){
                         		e.preventDefault();
                         		if(recaptchaEnabled){
@@ -441,18 +447,28 @@ if(isset($_GET['template'])){
                             	}
 							}
 
+							function cleanString(input) {
+								var output = "";
+								for (var i=0; i<input.length; i++) {
+									if (input.charCodeAt(i) <= 127) {
+										output += input.charAt(i);
+									}
+								}
+								return output;
+							}
+
                         	function submitForm(token = ''){
                         		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
                         		$renderedForm.find('.submit-btn').prop('disabled','disabled').html(spinner).append(' Submitting...');
 
-                        		var formRenderData = formRender.userData;
+                        		var formRenderData = cleanString(JSON.stringify(formRender.userData));
 
                         		$.ajax({
                         	    	url : "ws_forms.php",
                         	   		type: "POST",
                         	    	data : {
                         	    		cmd: "submitform",
-                        	    		formRenderData: btoa(JSON.stringify(formRenderData)),
+                        	    		formRenderData: btoa(formRenderData),
                         	    		recaptchaToken: token,
                         	    		template: <?php echo (isset($_GET['template']) ? $_GET['template'] : 0); ?>
                         	    	},

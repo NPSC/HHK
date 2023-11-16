@@ -18,7 +18,6 @@ abstract class AbstractDistance{
      * @return number distance
      */
     public function getDistance(\PDO $dbh, array|null $originAddr, array|null $destinationAddr, string $returnType){
-        $distance = 0;
 
         if(is_array($originAddr) && is_array($destinationAddr) && count(array_diff_assoc($originAddr, $destinationAddr)) > 0){
             $distanceArray = $this->calcDistance($dbh, $originAddr, $destinationAddr);
@@ -30,6 +29,8 @@ abstract class AbstractDistance{
             }elseif(isset($distanceArray['units']) && $distanceArray['units'] == $returnType){
                 $distance = $distanceArray['value'];
             }
+        }else{
+            $distance = -1;
         }
 
         return $distance;

@@ -312,7 +312,7 @@
                     data: {
                             cmd: 'updateNoteContent',
                             idNote: noteId,
-                            data: noteText,
+                            data: btoa(noteText),
                             noteCategory: noteCategory,
                     },
                     success: function( data ){
