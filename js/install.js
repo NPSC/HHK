@@ -122,6 +122,7 @@ $(document).ready(function () {
             url:'ws_install.php',
             data: formData, 
             type:"post",
+            dataType: "json",
             contentType: false,
             processData: false,
             success:function (data) {

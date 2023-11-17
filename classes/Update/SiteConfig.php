@@ -248,7 +248,7 @@ class SiteConfig {
             $dbh->exec("insert into postal_codes values " . substr($query, 0, -1));
         }
 
-        return "Success, " . $recordCounter . " zip codes loaded.";
+        return $recordCounter . " zip codes loaded.";
 
     }
 

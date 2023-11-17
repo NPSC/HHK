@@ -70,6 +70,9 @@ try{
                 "selModel"=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 "cbFin"=>FILTER_VALIDATE_BOOLEAN
             ]);
+
+            $post['cbFin'] = ($post['cbFin'] ? true:false);
+
             if($post["txtRooms"] && $post['selModel']){
                 $events = $installer->installRooms($post['txtRooms'], $post["selModel"], $post["cbFin"]);
             }else{
@@ -77,16 +80,55 @@ try{
             }
             
             break;
+
+        case 'oneStepInstall':
+            $post = filter_input_array(INPUT_POST, [
+                'adminpw'=>FILTER_UNSAFE_RAW,
+                'npscuserpw'=>FILTER_UNSAFE_RAW,
+                "txtRooms"=>FILTER_SANITIZE_NUMBER_INT,
+                "selModel"=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                "cbFin"=>FILTER_VALIDATE_BOOLEAN
+            ]);
+            $post['cbFin'] = ($post['cbFin'] ? true:false);
+
+            if($post['adminpw'] && $post["txtRooms"] && $post['selModel'] && isset($_FILES['zipfile'])){
+                //install DB
+                $events = $installer->installDB();
+                
+                if($events['errors']){
+                    break;
+                }
+
+                //load metadata
+                $events = array_merge_recursive($events, $installer->loadMetadata($post['adminpw'], $post['npscuserpw']));
+
+                if($events['errors']){
+                    break;
+                }
+
+                //load zip codes
+                $events = array_merge_recursive($events, $installer->loadZipFile($_FILES['zipfile']));
+
+                if($events['errors']){
+                    break;
+                }
+
+                //install rooms
+                $events = array_merge_recursive($events, $installer->installRooms($post['txtRooms'], $post["selModel"], $post["cbFin"]));
+            }
+
+            break;
+
         default:
-            $events = ["error"=>"Bad Command"];
+            $events = ["errors"=>["Bad Command"]];
     }
 }catch(Exception $e){
     http_response_code(500);
-    $events = ["server_error"=> $e->getMessage()];
+    $events = ["errors"=> [$e->getMessage()]];
 }
 
 // return results.
-if(isset($events['error']) || isset($events['errors'])){
+if(isset($events['errors'])){
     http_response_code(422); // error 422: unprocessable Entity
 }
 echo( json_encode($events));

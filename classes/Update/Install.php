@@ -22,7 +22,7 @@ class Install{
 
     protected array $sqlFiles = [
             "Tables" => [
-                'path'=>REL_BASE_DIR.'sqfl'.DS.'CreateAllTables.sql',
+                'path'=>REL_BASE_DIR.'sql'.DS.'CreateAllTables.sql',
                 'delimiter'=>';',
                 'split'=>';'
             ],
@@ -69,7 +69,7 @@ class Install{
     public function installDB(){
         $nextStep = $this->getNextStep();
         if($nextStep != 'installDB'){
-            return ['error'=>"You can't do this step now. Next step: " . $nextStep];
+            return ['success'=>["installDB already completed."]];
         }
 
         try {
@@ -85,7 +85,7 @@ class Install{
             foreach($this->sqlFiles as $type=>$file){
                 // Update Tables
                 if($patch->updateWithSqlStmts($this->dbh, $file['path'], $type, $file['delimiter'], $file['split'])){
-                    $results['success'][] = $type . " Successful<br>";
+                    $results['success'][] = $type . " Successful";
                 }else{
                     foreach ($patch->results as $err) {
                         $results['errors'][] = 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
@@ -147,12 +147,12 @@ class Install{
     public function loadMetadata(string $newPw, $npscuserPw = null){
         $nextStep = $this->getNextStep();
         if($nextStep != 'loadMetadata'){
-            return ['error'=>"You can't do this step now. Next step: " . $nextStep];
+            return ['success'=>["loadMetadata already completed."]];
         }
 
         try {
             // Load initialization data
-            $filedata = file_get_contents(P_ROOT.DS.'install'.DS.'initialdata.sql');
+            $filedata = file_get_contents('initialdata.sql');
             $parts = explode('-- ;', $filedata);
     
             if($this->dbh->inTransaction() === false){
@@ -170,7 +170,7 @@ class Install{
                         if($this->dbh->inTransaction()){
                             $this->dbh->rollBack();
                         }
-                        return ['error'=>$pex->getMessage() . '. ' . PHP_EOL . 'Query: '. $q];
+                        return ['errors'=>[$pex->getMessage() . '. ' . PHP_EOL . 'Query: '. $q]];
                     }
                 }
             }
@@ -189,43 +189,43 @@ class Install{
                     if($this->dbh->inTransaction()){
                         $this->dbh->commit();
                     }
-                    return ['success'=>$successMsg .= " password set."];
+                    return ['success'=>[$successMsg .= " password set."]];
                 } else {
                     if($this->dbh->inTransaction()){
                         $this->dbh->rollBack();
                     }
-                    return ['error'=> "Installer Error: Could not set Admin Password"];
+                    return ['errors'=> ["Installer Error: Could not set Admin Password"]];
                 }
             }else{
-                return ['error'=>"Admin Password is required"];
+                return ['errors'=>["Admin Password is required"]];
             }
     
         } catch (\Exception $ex) {
             if($this->dbh->inTransaction()){
                 $this->dbh->rollBack();
             }
-            return ['error'=> "Installer Error: " . $ex->getMessage()];
+            return ['errors'=> ["Installer Error: " . $ex->getMessage()]];
         }
     }
 
     public function loadZipFile(array $zipFile){
         $nextStep = $this->getNextStep();
         if($nextStep != 'loadZipFile'){
-            return ['error'=>"You can't do this step now. Next step: " . $nextStep];
+            return ['success'=>["loadZipFile already completed."]];
         }
 
         $result = array();
 
         try {
-        
+            
             SiteConfig::checkUploadFile('zipfile');
-            $result = ['success'=>SiteConfig::loadZipCodeFile($this->dbh, $zipFile['tmp_name'])];
+            $result = ['success'=>[SiteConfig::loadZipCodeFile($this->dbh, $zipFile['tmp_name'])]];
         
-            SiteLog::writeLog($this->dbh, 'Zip', 'Zip Code File Loaded. ' . $result['success'], CodeVersion::GIT_Id);
+            SiteLog::writeLog($this->dbh, 'Zip', 'Zip Code File Loaded. ' . $result['success'][0], CodeVersion::GIT_Id);
         
         } catch (\Exception $hex) {
-            $result = ['error'=>$hex->getMessage()];
-            SiteLog::writeLog($this->dbh, 'Zip', 'Zip Code File Failed. ' . $result['error'], CodeVersion::GIT_Id);
+            $result = ['errors'=>[$hex->getMessage()]];
+            SiteLog::writeLog($this->dbh, 'Zip', 'Zip Code File Failed. ' . $hex->getMessage(), CodeVersion::GIT_Id);
         }
         return $result;
     }
@@ -240,7 +240,7 @@ class Install{
     public function installRooms(int $numRooms, string $rateCode, bool $finAssist){
         $nextStep = $this->getNextStep();
         if($nextStep != 'installRooms'){
-            return ['error'=>"You can't do this step now. Next step: " . $nextStep];
+            return ['success'=>["installRooms already completed."]];
         }
 
         try{
@@ -326,7 +326,7 @@ class Install{
                 $numRcrds = $this->dbh->exec("insert into `name` (`Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ('$houseName', 'np', 'a', 1, now(), 'admin')");
                 if ($numRcrds != 1) {
                     // problem
-                    exit('Insert of house name record failed.  ');
+                    return ['errors'=>['Insert of house name record failed.']];
                 }
 
                 $siteId = $this->dbh->lastInsertId();
@@ -346,14 +346,14 @@ class Install{
             if($this->dbh->inTransaction()){
                 $this->dbh->rollBack();
             }
-            return ["error"=>"Install Rooms failed: " . $e->getMessage()];
+            return ["errors"=>["Install Rooms failed: " . $e->getMessage()]];
         }
 
         if($this->dbh->inTransaction()){
             $this->dbh->commit();
         }
 
-        return ['success'=>$numRooms." rooms configured."];
+        return ['success'=>[$numRooms." rooms configured."]];
     }
 
     /**
