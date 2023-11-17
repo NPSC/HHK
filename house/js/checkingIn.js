@@ -137,6 +137,10 @@ $(document).ready(function() {
         window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
     });
 
+    $('#form1').on('submit', function(e){
+        e.preventDefault();
+    });
+
     $('#btnDone').click(function () {
 
         if ($(this).val() === 'Saving >>>>') {
