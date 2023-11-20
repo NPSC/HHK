@@ -1,4 +1,125 @@
+// page setup
+function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, primaryGuestId, idPsg){
+    
+    var opt = {mode: 'popup',
+        popClose: true,
+        popHt      : $('div.PrintArea').height(),
+        popWd      : 950,
+        popX       : 20,
+        popY       : 20,
+        popTitle   : 'Registration Form',
+        extraHead  : $('#regFormStyle').prop('outerHTML')};
 
+    $('#mainTabs').tabs();
+
+    $('.btnPrint').click(function() {
+        opt.popHt = $(this).closest('.ui-tabs-panel').find('div.PrintArea').height();
+        opt.popTitle = $(this).data('title');
+        $(this).closest('.ui-tabs-panel').find('div.PrintArea').printArea(opt);
+    }).button();
+
+    $('.btnSave').click(function(){
+        var loading = $('<div/>').addClass('hhk-loading-btn');
+    	var isSigned = ($(this).closest('.ui-tabs-panel').find("div.PrintArea .signDate:visible").length > 0);
+
+    	if(!isSigned){
+    		flagAlertMessage("<strong>Error:</strong> At least one signature is required", true);
+    		return;
+    	}
+
+        $('.btnSave').prop('disabled', 'disabled').html(loading);
+
+        try{
+            var docCode = $(this).data("tab");
+            $(this).closest('.ui-tabs-panel').find("div.PrintArea .btnSign").remove();
+            var formContent = $(this).closest('.ui-tabs-panel').find("div.PrintArea")[0].outerHTML;
+
+            var formData = new FormData();
+            formData.append('cmd', 'saveRegForm');
+            formData.append('guestId', primaryGuestId);
+            formData.append('psgId', idPsg);
+            formData.append('idVisit', '<?php echo $idVisit; ?>');
+            formData.append('idResv', '<?php echo $idResv; ?>');
+            formData.append('docTitle', "Registration Form");
+            formData.append('docContents', btoa(formContent));
+
+            $.ajax({
+                url: 'ws_ckin.php',
+                dataType: 'JSON',
+                type: 'post',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (data) {
+                    if (data.idDoc > 0) {
+                        flagAlertMessage("<strong>Success:</strong> Registration form saved successfully", false);
+                        $(".btnSave").hide();
+                    } else {
+                        if (data.error) {
+                            flagAlertMessage("<strong>Error: </strong>" + data.error, true);
+                        }
+                        $('.btnSave').prop('disabled', false).text("Save");
+                    }
+                },
+                error: function(xhr, errorText, errorThrown){
+                    flagAlertMessage("<strong>Error:</strong> A server error has occurred - " + errorText, true);
+                    $('.btnSave').prop('disabled', false).text("Save");
+                }
+            });
+        }catch(e){
+            flagAlertMessage("<strong>Error:</strong> " + e.message, true);
+            $('.btnSave').prop('disabled', false).text("Save");
+            if(typeof hhkReportError == "function"){
+                var errorInfo = {
+                    stackTrace: e.stack,
+                    source:"saveRegForm",
+                    idResv:"<?php echo $idResv; ?>",
+                    idVisit:"<?php echo $idVisit; ?>"
+                }
+                errorInfo = btoa(JSON.stringify(errorInfo));
+                hhkReportError(e.message, errorInfo);
+            }
+        }
+
+    }).button();
+
+    $('#btnReg').click(function() {
+        getRegistrationDialog(idReg);
+    }).button();
+
+    $('#btnStmt').click(function() {
+        window.open('ShowStatement.php?vid=' + vid, '_blank');
+    }).button();
+
+    $('#pmtRcpt').dialog({
+        autoOpen: false,
+        resizable: true,
+        width: getDialogWidth(530),
+        modal: true,
+        title: 'Payment Receipt'
+    });
+
+    if (rctMkup !== '') {
+        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+    }
+    if (regMarkup) {
+        showRegDialog(regMarkup, idReg);
+    }
+
+    if (payId && payId > 0) {
+        reprintReceipt(payId, '#pmtRcpt');
+    }
+
+    if (invoiceNumber && invoiceNumber !== '') {
+        window.open('ShowInvoice.php?invnum=' + invoiceNumber);
+    }
+
+    $('#mainTabs').show();
+    $('#regTabDiv, #signedRegTabDiv').tabs();
+
+};
+
+// esign JS
 $(document).ready(function(){
 
     $("#jSignDialog").dialog({
