@@ -143,6 +143,8 @@ if($idVisit || $idResv){
 
     $li = '';
     $tabContent = '';
+    $uuid = uniqid();
+    $uS->regFormObjs = [$uuid=>$reservArray['docs']]; //save docs to session for signing
 
     foreach ($reservArray['docs'] as $r) {
 
@@ -151,10 +153,10 @@ if($idVisit || $idResv){
 
         $tabContent .= HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex'])) : '')
+            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex'], 'data-uuid'=>$uuid)) : '')
             .HTMLContainer::generateMarkup('div', $r['doc'], array('class'=>'PrintArea'))
             .HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'])): ''),
+            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'],  'data-uuid'=>$uuid)): ''),
             array('id'=>$r['tabIndex']));
 
         $sty = $r['style'];
@@ -180,6 +182,7 @@ if($idVisit || $idResv){
     if($signedDocCount > 0){
         $showSignedTab = true;
         $blankFormTitle = "Blank Registration Form";
+        
         foreach ($signedDocsArray as $r) {
 
             $signedDate = new \DateTime($r['timestamp']);
@@ -259,10 +262,11 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 let payId = '<?php echo $idPayment; ?>';
                 let invoiceNumber = '<?php echo $invoiceNumber; ?>';
                 let vid = '<?php echo $idVisit; ?>';
+                let rid = '<?php echo $idResv ?>';
                 let idPrimaryGuest = '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>';
                 let idPsg = '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>';
 
-                setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, idPrimaryGuest, idPsg);
+                setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
             });
         </script>
     </head>

@@ -251,20 +251,41 @@ try {
             $psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
             $idVisit = intval(filter_input(INPUT_POST, 'idVisit', FILTER_SANITIZE_NUMBER_INT), 10);
             $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT), 10);
-            $docContents = filter_input(INPUT_POST, "docContents", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $docSignatures = json_decode(filter_input(INPUT_POST, "docSignatures", FILTER_UNSAFE_RAW), true);
+            $uuid = filter_input(INPUT_POST, "uuid", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $formCode = filter_input(INPUT_POST, "formCode", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $docTitle = ($idVisit > 0 ? "Visit " . $idVisit : Labels::getString("GuestEdit", "reservationTitle", "Reservation") . " " . $idResv) . " Registration Form";
 
-            $document = Document::createNew($docTitle, "base64:text/html", $docContents, $uS->username, "reg");
+            $regForms = $uS->regFormObjs;
 
-            $document->setAbstract(json_encode(['idVisit'=>$idVisit, 'idResv'=>$idResv]));
+            if(isset($uS->regFormObjs[$uuid])){
+                //find this form
+                foreach($uS->regFormObjs[$uuid] as $doc){
+                    if($doc["tabIndex"] === $formCode){
+                        $docContents = $doc['doc'];
+                        break;
+                    }
+                }
 
-            $document->saveNew($dbh);
+                if(isset($docContents)){
+                    $document = Document::createNew($docTitle, "text/html", $docContents, $uS->username, "reg");
 
-            if($document->linkNew($dbh, $guestId, $psgId) > 0){
-                $events = ["idDoc"=> $document->getIdDocument()];
+                    $document->setAbstract(json_encode(['idVisit'=>$idVisit, 'idResv'=>$idResv]));
+                    $document->setUserData(json_encode($docSignatures));
+
+                    $document->saveNew($dbh);
+
+                    if($document->linkNew($dbh, $guestId, $psgId) > 0){
+                        $events = ["idDoc"=> $document->getIdDocument()];
+                    }else{
+                        $events = ["error" => "Unable to save Registration Form"];
+                    }
+                }else{
+                    $events = ['error'=>'Unable to save Registration Form: Document not found'];
+                }
             }else{
-                $events = ["error" => "Unable to save Registration Form"];
+                $events = ['error' =>'Unable to save Registration Form: Document UUID does not match'];
             }
             break;
 

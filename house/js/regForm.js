@@ -1,5 +1,5 @@
 // page setup
-function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, primaryGuestId, idPsg){
+function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, primaryGuestId, idPsg){
     
     var opt = {mode: 'popup',
         popClose: true,
@@ -32,16 +32,17 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, prim
         try{
             var docCode = $(this).data("tab");
             $(this).closest('.ui-tabs-panel').find("div.PrintArea .btnSign").remove();
-            var formContent = $(this).closest('.ui-tabs-panel').find("div.PrintArea")[0].outerHTML;
 
             var formData = new FormData();
             formData.append('cmd', 'saveRegForm');
             formData.append('guestId', primaryGuestId);
             formData.append('psgId', idPsg);
-            formData.append('idVisit', '<?php echo $idVisit; ?>');
-            formData.append('idResv', '<?php echo $idResv; ?>');
+            formData.append('idVisit', vid);
+            formData.append('idResv', rid);
             formData.append('docTitle', "Registration Form");
-            formData.append('docContents', btoa(formContent));
+            formData.append('uuid', $(this).data('uuid'));
+            formData.append('formCode', docCode);
+            formData.append('docSignatures', JSON.stringify(regFormSignatures));
 
             $.ajax({
                 url: 'ws_ckin.php',
@@ -122,6 +123,8 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, prim
 // esign JS
 $(document).ready(function(){
 
+    window.regFormSignatures = [];
+
     $("#jSignDialog").dialog({
     	autoOpen: false,
     	width: getDialogWidth(800),
@@ -130,15 +133,23 @@ $(document).ready(function(){
     	buttons: {
             "Clear": function(){
                 var idName = $(this).find("input#idName").val();
-    		var formCode = $(this).find("input#formCode").val();
-    		$(this).find(".signature").jSignature('clear');
-    		$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
-    		$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
+                var formCode = $(this).find("input#formCode").val();
+                $(this).find(".signature").jSignature('clear');
+                regFormSignatures.some((sig, i)=>{
+                    if(sig.formCode == formCode && sig.idName == idName){
+                        regFormSignatures.splice(i, 1);
+                        return true;
+                        
+                    }
+                });
+                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
+                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
             },
             "Sign": function() {
             	var idName = $(this).find("input#idName").val();
             	var formCode = $(this).find("input#formCode").val();
-		var signature = $(this).find('.signature').jSignature("getData");
+                var signature = $(this).find('.signature').jSignature("getData");
+                regFormSignatures.push({formCode: formCode, idName: idName, signature: signature});
             	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", signature).show();
             	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").show();
 
@@ -157,16 +168,24 @@ $(document).ready(function(){
     	buttons: {
             "Clear": function(){
                 var idName = $(this).find("input#idName").val();
-    		var formCode = $(this).find("input#formCode").val();
-    		onClear();
-    		$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
-    		$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
+                var formCode = $(this).find("input#formCode").val();
+                onClear();
+                regFormSignatures.some((sig, i)=>{
+                    if(sig.formCode == formCode && sig.idName == idName){
+                        regFormSignatures.splice(i, 1);
+                        return true;
+                        
+                    }
+                });
+                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
+                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
             },
             "Sign": function() {
             	var idName = $(this).find("input#idName").val();
             	var formCode = $(this).find("input#formCode").val();
                 if(onDone() != false){
                     var signature = $(this).find("canvas#sigImg")[0].toDataURL("image/png");
+                    regFormSignatures.push({formCode: formCode, idName: idName, signature: signature});
                     $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", signature).show();
                     $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").show();
 
