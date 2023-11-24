@@ -74,10 +74,17 @@ class SalesforceManager extends AbstractExportManager {
      */
     public function getRelationship($accountId) {
 
-        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/' . $accountId);
+        // Cutout to test list.
+        if ($accountId == 'picklist') {
+            $parms = $this->getRelationshipPicklist();
+        } else {
+            $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c' . $accountId);
 
-        $parms = array();
-        $this->unwindResponse($parms, $result);
+            $parms = array();
+            $this->unwindResponse($parms, $result);
+
+        }
+
         $resultStr = new HTMLTable();
 
         foreach ($parms as $k => $v) {
@@ -85,6 +92,34 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         return $resultStr->generateMarkup();
+    }
+
+    public function getRelationshipPicklist() {
+
+        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/describe');
+
+        $needle = 'fields.15.picklistValues.';
+        $parms = [];
+        $relatList = ['active' => [], 'value' => []];
+
+        $this->unwindResponse($parms, $result);
+
+        foreach ($parms as $k => $v) {
+
+            if (str_contains($k, $needle)) {
+
+                $fields = explode('.', $k);
+
+                if (isset($fields[4]) && $fields[4] == 'active') {
+                    // set the list for this relationship
+                    $relatList[$fields[3]]['active'] = $v;
+                } else if (isset($fields[4]) && $fields[4] == 'value') {
+                    $relatList[$fields[3]]['value'] = $v;
+                }
+            }
+        }
+
+        return $relatList;
     }
 
     /**
