@@ -120,8 +120,24 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
 
 };
 
+function loadSignatures(signatures){
+    $('#vsignedReg .btnSign').hide();
+    try{
+        for( docId in signatures){
+            $('#'+docId+' .btnSign').hide();
+            signatures[docId].forEach(element => {
+                $('#'+docId+' .signWrapper[data-idname='+element.idName+'] .sigLine img').prop('src', element.signature).show();
+                $('#'+docId+' .signWrapper[data-idname='+element.idName+'] .signDate').show();
+            });
+        };
+    }catch(e){
+        flagAlertMessage("Failed to load signatures: "+ e.message, true);
+    }
+
+}
+
 // esign JS
-$(document).ready(function(){
+function setupEsign(){
 
     window.regFormSignatures = [];
 
@@ -379,9 +395,13 @@ $(document).ready(function(){
     //	2. Tab Closure
     //	3. Tab Refresh
     window.onbeforeunload = function(evt){
-        close();
-        clearInterval(tmr);
-        evt.preventDefault(); //For Firefox, needed for browser closure
+        try{
+            close();
+            clearInterval(tmr);
+            evt.preventDefault(); //For Firefox, needed for browser closure
+        }catch(e){
+
+        }
     };
     //end Topaz code
-});
+};

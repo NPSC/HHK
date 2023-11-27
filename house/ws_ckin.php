@@ -259,11 +259,11 @@ try {
 
             $regForms = $uS->regFormObjs;
 
-            if(isset($uS->regFormObjs[$uuid])){
+            if(isset($uS->regFormObjs[$uuid]) && !is_null($uS->regFormObjs[$uuid])){
                 //find this form
                 foreach($uS->regFormObjs[$uuid] as $doc){
                     if($doc["tabIndex"] === $formCode){
-                        $docContents = $doc['doc'];
+                        $docContents = HTMLContainer::generateMarkup('div', $doc['doc'], array('class'=>'PrintArea'));
                         break;
                     }
                 }
@@ -277,6 +277,9 @@ try {
                     $document->saveNew($dbh);
 
                     if($document->linkNew($dbh, $guestId, $psgId) > 0){
+                        $regformObjs = $uS->regformObjs;
+                        unset($regformObjs[$uuid]);
+                        $uS->regformObjs = $regformObjs;
                         $events = ["idDoc"=> $document->getIdDocument()];
                     }else{
                         $events = ["error" => "Unable to save Registration Form"];
@@ -285,7 +288,7 @@ try {
                     $events = ['error'=>'Unable to save Registration Form: Document not found'];
                 }
             }else{
-                $events = ['error' =>'Unable to save Registration Form: Document UUID does not match'];
+                $events = ['error' =>'Unable to save Registration Form: Document UUID does not match, please reload the page and try again.'];
             }
             break;
 

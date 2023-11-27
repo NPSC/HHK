@@ -50,6 +50,7 @@ $showSignedTab = false;
 $isTopazRequired = false;
 $sty = "";
 $blankFormTitle = "Registration Form";
+$signatures = array();
 
 
 // Hosted payment return
@@ -126,10 +127,14 @@ if($idDoc > 0){
     $doc = new Document($idDoc);
     $doc->loadDocument($dbh);
     if($doc->getType() == "reg"){
-        $regContents =  (str_starts_with($doc->getMimeType(), "base64:") ? base64_decode($doc->getDoc()) : $doc->getDoc());
+        $regContents = (str_starts_with($doc->getMimeType(), "base64:") ? base64_decode($doc->getDoc()) : $doc->getDoc());
         if($uS->RegForm == "3"){
             $form = new CustomRegisterForm();
             $sty = $form->getStyling();
+            $docSignatures = json_decode($doc->getUserData());
+            if($docSignatures){
+                $signatures['vreg'] = $docSignatures;
+            }
         }
     }
 
@@ -181,6 +186,7 @@ if($idVisit || $idResv){
     $signedDocCount = count($signedDocsArray);
     if($signedDocCount > 0){
         $showSignedTab = true;
+        
         $blankFormTitle = "Blank Registration Form";
         
         foreach ($signedDocsArray as $r) {
@@ -196,6 +202,10 @@ if($idVisit || $idResv){
                 .(str_starts_with($r['Mime_Type'], "base64:") ? base64_decode($r['Doc']) : $r['Doc'])
                 .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')),
                 array('id'=>$r['Doc_Id']));
+            $docSignatures = json_decode($r["Signatures"], true);
+            if($docSignatures){
+                $signatures[$r["Doc_Id"]] = $docSignatures;
+            }
         }
 
         $signedUl = HTMLContainer::generateMarkup('ul', $signedLi, array());
@@ -265,8 +275,11 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 let rid = '<?php echo $idResv ?>';
                 let idPrimaryGuest = '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>';
                 let idPsg = '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>';
+                let signatures = JSON.parse(`<?php echo json_encode($signatures); ?>`);
 
                 setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
+                setupEsign();
+                loadSignatures(signatures);
             });
         </script>
     </head>
