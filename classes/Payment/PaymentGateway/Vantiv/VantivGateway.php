@@ -437,7 +437,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         // Card reader?
         if ($this->usePOS && ! $this->manualKey) {
-            $pay->setCardEntryMethod('swipe')
+            $pay->setCardEntryMethod('Swipe')
             		->setPaymentPageCode('CheckoutPOS_Url');
         } else {
         	$pay->setPaymentPageCode('Checkout_Url');
