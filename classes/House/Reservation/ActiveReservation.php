@@ -185,7 +185,6 @@ class ActiveReservation extends Reservation {
             $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
             return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
         }
-        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
         
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
@@ -297,7 +296,7 @@ class ActiveReservation extends Reservation {
         if(isset($post['newGstDate'])){
             $newArrival = new \DateTime($post['newGstDate']);
             $departure = new \DateTime($resv->getDeparture());
-            if($newArrival->diff($departure)->days > 0){
+            if($newArrival < $departure && $newArrival->diff($departure)->days > 0){
                 $guests = [];
                 $rgRs = new Reservation_GuestRS();
                 $rgRs->idReservation->setStoredVal($resv->getIdReservation());
