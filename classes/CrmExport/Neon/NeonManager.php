@@ -1997,9 +1997,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                 $mappedItems[$i['HHK_Type_Code']] = $i;
             }
 
-            $nTbl = new HTMLTable();
-            $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
-
             $listNames = filter_input_array(INPUT_POST, array('sel' . $list['List_Name'] => array('filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_FORCE_ARRAY)));
 
             foreach ($neonItems as $n => $k) {

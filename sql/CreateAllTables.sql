@@ -1873,6 +1873,20 @@ CREATE TABLE if not exists `secondary_unit_desig` (
 
 
 -- -----------------------------------------------------
+-- Table `sf_type_map`
+-- -----------------------------------------------------
+CREATE TABLE `sf_type_map` (
+  `idSf_type_map` INT NOT NULL AUTO_INCREMENT,
+  `List_Name` VARCHAR(45) NOT NULL DEFAULT '',
+  `SF_Type_Code` VARCHAR(45) NULL DEFAULT '',
+  `SF_Type_Name` VARCHAR(45) NULL DEFAULT '',
+  `HHK_Type_Code` VARCHAR(45) NULL DEFAULT '',
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idSf_type_map`)
+  ) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `ssotoken`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `ssotoken` (
@@ -2349,7 +2363,7 @@ ALTER TABLE `invoice_line`
 ALTER TABLE `labels`
 	ADD UNIQUE INDEX IF NOT EXISTS `Unique_Key_Categeory` (`Key` ASC, `Category` ASC);
 
-ALTER TABLE `link_doc` 
+ALTER TABLE `link_doc`
 ADD INDEX IF NOT EXISTS `indx_linkDoc` (`idDocument` ASC, `idGuest` ASC, `idPSG` ASC);
 
 ALTER TABLE `name`

@@ -21,6 +21,7 @@ class SalesforceManager extends AbstractExportManager {
 
     const oAuthEndpoint = 'services/oauth2/token';
     const SearchViewName = 'vguest_search_sf';
+    const PW_PLACEHOLDER = '**********';
 
     /**
      * Summary of endPoint
@@ -100,7 +101,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $needle = 'fields.15.picklistValues.';
         $parms = [];
-        $relatList = ['active' => [], 'value' => []];
+        $relatList = [];
 
         $this->unwindResponse($parms, $result);
 
@@ -112,9 +113,9 @@ class SalesforceManager extends AbstractExportManager {
 
                 if (isset($fields[4]) && $fields[4] == 'active') {
                     // set the list for this relationship
-                    $relatList[$fields[3]]['active'] = $v;
+                    $relatList[$fields[3]] = $v;
                 } else if (isset($fields[4]) && $fields[4] == 'value') {
-                    $relatList[$fields[3]]['value'] = $v;
+                    $relatList[$fields[3]] = $v;
                 }
             }
         }
@@ -782,7 +783,7 @@ class SalesforceManager extends AbstractExportManager {
         return $cols;
     }
 
-    public static function getReturnFields() {
+    protected static function getReturnFields() {
 
         return [
             'Id' => 'Id',
@@ -807,7 +808,7 @@ class SalesforceManager extends AbstractExportManager {
 
     }
 
-     public static function getUpdateFields() {
+     protected static function getUpdateFields() {
 
         return [
             'Id',
@@ -842,6 +843,8 @@ class SalesforceManager extends AbstractExportManager {
 
         $markup = $this->showGatewayCredentials();
 
+        $markup .= $this->createTypeLists($dbh);
+
         return $markup;
     }
 
@@ -868,7 +871,7 @@ class SalesforceManager extends AbstractExportManager {
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Password', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getPassword(), array('name' => '_txtpwd', 'size' => '100')) . ' (Obfuscated)')
+            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getPassword() == '' ? '' : self::PW_PLACEHOLDER), array('name' => '_txtpwd', 'size' => '100')))
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Endpoint URL', array())
@@ -881,7 +884,7 @@ class SalesforceManager extends AbstractExportManager {
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Client Secret', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getClientSecret(), array('name' => '_txtclientsecret', 'size' => '100')) . ' (Obfuscated)')
+            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getClientSecret() == '' ? '' : self::PW_PLACEHOLDER), array('name' => '_txtclientsecret', 'size' => '100')))
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Security Token', array())
@@ -895,6 +898,44 @@ class SalesforceManager extends AbstractExportManager {
 
         return $tbl->generateMarkup();
 
+    }
+
+    private function createTypeLists(\PDO $dbh) {
+
+
+        $neonItems = $this->getRelationshipPicklist();
+
+        $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
+
+        $stmtList = $dbh->query("Select * from sf_type_map where List_Name = 'relationTypes'");
+        $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
+
+        $mappedItems = array();
+        foreach ($items as $i) {
+            $mappedItems[$i['SF_Type_Code']] = $i;
+        }
+
+        $nTbl = new HTMLTable();
+        $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh($this->serviceName . ' Name') . HTMLTable::makeTh($this->serviceName . ' Id'));
+
+        foreach ($neonItems as $n => $k) {
+
+            $hhkTypeCode = '';
+            if (isset($mappedItems[$k])) {
+                $hhkTypeCode = $mappedItems[$k]['HHK_Type_Code'];
+            }
+
+            $nTbl->addBodyTr(
+                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $hhkTypeCode), array('name' => 'selrelationTypes[' . $n . ']')))
+                . HTMLTable::makeTd($k)
+                . HTMLTable::makeTd($k, array('style' => 'text-align:center;'))
+            );
+        }
+
+        $markup = $nTbl->generateMarkup(array('style' => 'margin-top:15px;'), 'relationTypes');
+
+
+        return $markup;
     }
 
     /**
@@ -931,11 +972,11 @@ class SalesforceManager extends AbstractExportManager {
 
             $pw = $post['_txtpwd'];
 
-            if ($pw != '' && $this->getPassword() != $pw) {
-                $pw = encryptMessage($pw);
+            if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
+                $crmRs->password->setnewVal(encryptMessage($pw));
             }
 
-            $crmRs->password->setnewVal($pw);
+
         }
 
         // Client Secret
@@ -943,11 +984,10 @@ class SalesforceManager extends AbstractExportManager {
 
             $pw = $post['_txtclientsecret'];
 
-            if ($pw != '' && $this->getClientSecret() != $pw) {
-                $pw = encryptMessage($pw);
+            if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
+                $crmRs->clientSecret->setnewVal(encryptMessage($pw));
             }
 
-            $crmRs->clientSecret->setnewVal($pw);
         }
 
         // Endpoint URL
@@ -983,7 +1023,7 @@ class SalesforceManager extends AbstractExportManager {
             if ($idGateway > 0) {
                 EditRS::updateStoredVals($crmRs);
                 $this->gatewayId = $idGateway;
-                $result = 'New CMS gateway created.  Id = '.$idGateway;
+                $result = $this->getServiceName().' gateway created.  Id = '.$idGateway;
             }
 
         } else {
@@ -995,12 +1035,65 @@ class SalesforceManager extends AbstractExportManager {
             if ($rc > 0) {
                 // something updated
                 EditRS::updateStoredVals($crmRs);
-                $result = 'New CMS gateway Updated.  ';
+                $result = $this->getServiceName().' gateway Updated.  ';
             }
         }
 
         $this->loadCredentials($crmRs);
         return $result;
+    }
+
+    private function saveTypeLists(\PDO $dbh) {
+
+        $count = 0;
+        $idTypeMap = 0;
+
+        $neonItems = $this->getRelationshipPicklist();
+
+        $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
+
+        $stmtList = $dbh->query("Select * from sf_type_map where List_Name = 'relationTypes';");
+        $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
+        $mappedItems = array();
+        foreach ($items as $i) {
+            $mappedItems[$i['HHK_Type_Code']] = $i;
+        }
+
+        $listNames = filter_input_array(INPUT_POST, array('selrelationTypes' => array('filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY)));
+
+        foreach ($neonItems as $n => $k) {
+
+            if (isset($listNames[$n])) {
+
+                $hhkTypeCode = $listNames[$n];
+
+                if ($hhkTypeCode == '') {
+                    // delete if previously set
+                    foreach ($mappedItems as $i) {
+                        if ($i['SF_Type_Code'] == $n && $i['HHK_Type_Code'] != '') {
+                            $dbh->exec("delete from neon_type_map  where idNeon_type_map = " . $i['idSf_type_map']);
+                            break;
+                        }
+                    }
+
+                    continue;
+
+                } else if (isset($hhkLookup[$hhkTypeCode]) === FALSE) {
+                    continue;
+                }
+
+                if (isset($mappedItems[$hhkTypeCode])) {
+                    // Update
+                    $count = $dbh->exec("update sf_type_map set SF_Type_Code = '$k', SF_Type_name = '$k' where HHK_Type_Code = '$hhkTypeCode' and List_Name = 'relationTypes';");
+                } else {
+                    // Insert
+                    $idTypeMap = $dbh->exec("Insert into sf_type_map (List_Name, SF_Type_Code, SF_Type_Name, HHK_Type_Code) "
+                        . "values ('relationTypes', '" . $k . "', '" . $k . "', '" . $hhkTypeCode . "' );");
+                }
+            }
+        }
+
+        return $count + $idTypeMap;
     }
 
     /**
@@ -1013,7 +1106,9 @@ class SalesforceManager extends AbstractExportManager {
         $uS = Session::getInstance();
 
         // credentials
-        return $this->saveCredentials($dbh, $uS->username);
+        $result = $this->saveCredentials($dbh, $uS->username);
+        $result .= $this->saveTypeLists($dbh);
+        return $result;
 
     }
 }
