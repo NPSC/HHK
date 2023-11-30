@@ -4,6 +4,7 @@ namespace HHK\House;
 
 use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
 use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\ReservationStatusType;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
@@ -244,7 +245,9 @@ where
             join
     	reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
             join
-        reservation r on ri.reservation_Id = r.idReservation and r.Status in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Staying . "', '" . ReservationStatus::Waitlist . "', '" . ReservationStatus::Checkedout . "')
+        reservation r on ri.reservation_Id = r.idReservation 
+            join
+        lookups l on l.Category = 'ReservStatus' and r.Status = l.Code and l.Type != '" . ReservationStatusType::Cancelled . "'
     where
         i.Deleted = 0
         AND i.Order_Number = 0
