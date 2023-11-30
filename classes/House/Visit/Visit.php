@@ -769,7 +769,7 @@ class Visit {
         }
 
         $logTexti = VisitLog::getInsertText($this->visitRS);
-        VisitLog::logVisit($dbh, $this->getIdVisit(), $newSpan, $resc->getIdResource(), $this->visitRS->idRegistration->getStoredVal(), $logTexti, "insert", '');
+        VisitLog::logVisit($dbh, $this->getIdVisit(), $newSpan, $resc->getIdResource(), $this->visitRS->idRegistration->getStoredVal(), $logTexti, "insert", $uS->username);
 
         EditRS::updateStoredVals($this->visitRS);
 

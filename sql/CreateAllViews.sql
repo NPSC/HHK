@@ -529,24 +529,25 @@ FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocume
 -- -----------------------------------------------------
 
 CREATE OR REPLACE VIEW `v_signed_reg_forms` AS
-    SELECT
+    SELECT 
         `d`.`idDocument` AS `Doc_Id`,
         `d`.`Mime_Type` AS `Mime_Type`,
         `d`.`Doc` AS `Doc`,
+        `d`.`userData` AS `Signatures`,
         JSON_VALUE(`d`.`Abstract`, '$.idResv') AS `Resv_Id`,
         JSON_VALUE(`d`.`Abstract`, '$.idVisit') AS `Visit_Id`,
         `ld`.`idGuest` AS `Guest_Id`,
         `ld`.`idPSG` AS `PSG_Id`,
-        `d`.`timestamp`
+        `d`.`Timestamp` AS `timestamp`
     FROM
-        ((`link_doc` `ld`
-        JOIN `document` `d` ON (`ld`.`idDocument` = `d`.`idDocument`))
-        LEFT JOIN `name` `n` ON (`ld`.`idGuest` = `n`.`idName`))
+        `document` `d`
+        JOIN `link_doc` `ld` on `d`.`idDocument` = `ld`.`idDocument`
+        LEFT JOIN `name` `n` ON `ld`.`idGuest` = `n`.`idName`
     WHERE
         `d`.`Status` <> 'd'
             AND `d`.`Type` = 'reg'
             AND `d`.`Abstract` <> ''
-	ORDER BY `d`.`timestamp` desc;
+  ORDER BY `d`.`idDocument` DESC;
 
 
 -- -----------------------------------------------------

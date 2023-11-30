@@ -2349,6 +2349,9 @@ ALTER TABLE `invoice_line`
 ALTER TABLE `labels`
 	ADD UNIQUE INDEX IF NOT EXISTS `Unique_Key_Categeory` (`Key` ASC, `Category` ASC);
 
+ALTER TABLE `link_doc` 
+ADD INDEX IF NOT EXISTS `indx_linkDoc` (`idDocument` ASC, `idGuest` ASC, `idPSG` ASC);
+
 ALTER TABLE `name`
     ADD INDEX IF NOT EXISTS `Index_Name` (`Name_Last` ASC, `Name_First` ASC);
 ALTER TABLE `name`

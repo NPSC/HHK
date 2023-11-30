@@ -201,17 +201,17 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
                 $idPsgs[$d['idPsg']] = $d['idPsg'];
 
                 $d['Id'] = HTMLContainer::generateMarkup('a', $d['Id'], array('href'=>'NameEdit.php?id=' . $d['Id']));
-                $d['P id'] = HTMLContainer::generateMarkup('a', $d['P id'], array('href'=>'NameEdit.php?id=' . $d['P id']));
+                $d['Patient ID'] = HTMLContainer::generateMarkup('a', $d['Patient ID'], array('href'=>'NameEdit.php?id=' . $d['Patient ID']));
 
                 $d['Save'] = HTMLInput::generateMarkup($id, array('type'=>'radio', 'name'=>'rbsave', 'id'=>'s'.$id));
 
-                if ($d['Rel'] == RelLinkType::Self) {
+                if ($d['Patient Relation'] == RelLinkType::Self) {
                     $d['Remove'] = '-';
                 } else {
                     $d['Remove'] = HTMLInput::generateMarkup($id, array('type'=>'radio', 'name'=>'rbremove', 'id'=>'r'.$id));
                 }
 
-                $d['Rel'] = $relLinkTypes[$d['Rel']][1];
+                $d['Patient Relation'] = (isset($relLinkTypes[$d['Patient Relation']][1]) ? $relLinkTypes[$d['Patient Relation']][1] : '');
 
                 $data[] = $d;
             }
@@ -219,12 +219,12 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
 
 
             $markup = CreateMarkupFromDB::generateHTML_Table($data, 'pickId');
-            if(SecurityComponent::is_TheAdmin() || $post['mType'] != VolMemberType::Patient.VolMemberType::Guest ){
+            //if(SecurityComponent::is_TheAdmin() || $post['mType'] != VolMemberType::Patient.VolMemberType::Guest ){
                 $markup .= HTMLInput::generateMarkup('Combine Id\'s', array('id'=>'btnCombId', 'type'=>'button', 'style'=>'margin: 10px 0 5px 0;'));
-            }else{
-                $uS = Session::getInstance();
-                $markup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", "Merging Patients and Guests is not currently available, please contact NPSC at " . $uS->Error_Report_Email . " if you would like to merge Patients and Guests", array("class"=>'ui-widget ui-widget-content ui-corner-all mt-3 p-2 d-inline-block', "style"=>"max-width: 400px;")));
-            }
+            //}else{
+            //    $uS = Session::getInstance();
+            //    $markup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", "Merging Patients and Guests is not currently available, please contact NPSC at " . $uS->Error_Report_Email . " if you would like to merge Patients and Guests", array("class"=>'ui-widget ui-widget-content ui-corner-all mt-3 p-2 d-inline-block', "style"=>"max-width: 400px;")));
+            //}
 
             $markup .= HTMLContainer::generateMarkup('div', '', array('id'=>'spnAlert', 'style'=>'color:red; margin-left:10px;'));
 
@@ -248,16 +248,14 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
 
                 $stmt = $dbh->query("select
             rg.idPsg,
-        n.idName,
-            n.Name_Full,
-            DATE(ifnull(s.Span_Start_Date, '')) as `start`,
-            DATE(ifnull(s.Span_End_Date, '')) as `end`,
-        ifnull(s.idStays, 0) as idStays,
-        ifnull(s.idVisit, 0) as idVisit,
-        ifnull(s.Visit_Span, 0) as Visit_Span,
-        ifnull(s.idRoom, 0) as idRoom,
-        ifnull(s.`Status`, '') as `Status`,
-        ifnull(v.idReservation, 0) as idReservation
+            concat(ifnull(s.idVisit, ''), '-', ifnull(s.Visit_Span, '')) as `Visit ID`,
+            ifnull(v.idReservation, '') as `Reservation ID`,
+            n.idName,
+            n.Name_Full as `Name`,
+            ifnull(date_format(DATE(s.Span_Start_Date), '%b %e, %Y'), '') as `Span Start`,
+            ifnull(date_format(DATE(s.Span_End_Date), '%b %e, %Y'), '') as `Span End`,
+        ifnull(resc.Title, ifnull(s.idRoom, '')) as Room,
+        ifnull(vstat.Description, ifnull(s.`Status`, '')) as `Status`
     from
             registration rg
                     left join
@@ -266,6 +264,10 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
         stays s ON v.idVisit = s.idVisit and v.Span = s.Visit_Span
                     left join
             `name` n on s.idName = n.idName
+            left join
+                resource resc on s.idRoom = resc.idResource
+            left join
+                gen_lookups vstat on vstat.Table_Name = 'Visit_Status' and vstat.Code = s.Status
     where
         rg.idPsg = $idPsg
     order by idStays;");
@@ -351,8 +353,8 @@ where
     ne.Email as Email,
     ms.Description as `Status`,
     ng.idPsg,
-    ng.Relationship_Code as `Rel`,
-    n2.idName as `P id`,
+    ng.Relationship_Code as `Patient Relation`,
+    n2.idName as `Patient ID`,
     n2.Name_Full as `Patient`,
     (select count(*) from visit where idRegistration = r.idregistration) as `visits`,
     (select count(*) from stays where idName = n.idName) as `stays`,
