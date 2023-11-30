@@ -547,4 +547,14 @@ $(document).ready(
 
 		//Logout after inactivity
 		//logoutTimer();
+
+		$.ajaxSetup({
+			error : function(jqXHR, textStatus, errorThrown) {
+				if (jqXHR.status == 403) {
+					if(typeof flagAlertMessage == "function"){
+						flagAlertMessage("Oi, ya can't hack there, mate!", true);
+					}
+				}
+			}
+		});
 });
