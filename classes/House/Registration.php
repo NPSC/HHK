@@ -3,6 +3,7 @@
 namespace HHK\House;
 
 use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
+use HHK\SysConst\ReservationStatus;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
@@ -242,6 +243,8 @@ where
         invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = " . ItemId::LodgingMOA . " AND il.Deleted = 0
             join
     	reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
+            join
+        reservation r on ri.reservation_Id = r.idReservation and r.Status in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Staying . "', '" . ReservationStatus::Waitlist . "', '" . ReservationStatus::Checkedout . "')
     where
         i.Deleted = 0
         AND i.Order_Number = 0
