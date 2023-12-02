@@ -1,7 +1,10 @@
 <?php
 namespace HHK\CrmExport\Salesforce;
 
+use BadFunctionCallException;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\Exception\RuntimeException;
+use HHK\Exception\UnexpectedValueException;
 use HHK\Member\Relation\RelationCode;
 use HHK\SysConst\RelLinkType;
 use HHK\Tables\CmsGatewayRS;
@@ -902,8 +905,10 @@ class SalesforceManager extends AbstractExportManager {
 
     private function createTypeLists(\PDO $dbh) {
 
+        $uS = Session::getInstance();
 
-        $neonItems = $this->getRelationshipPicklist();
+        $crmItems = $this->getRelationshipPicklist();
+        $uS->crmItems = $crmItems;
 
         $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
 
@@ -916,19 +921,18 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         $nTbl = new HTMLTable();
-        $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh($this->serviceName . ' Name') . HTMLTable::makeTh($this->serviceName . ' Id'));
+        $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh($this->serviceName . ' Relationship'));
 
-        foreach ($neonItems as $n => $k) {
+        foreach ($crmItems as $n => $k) {
 
-            $hhkTypeCode = '';
+            $hhkMappedCode = '';
             if (isset($mappedItems[$k])) {
-                $hhkTypeCode = $mappedItems[$k]['HHK_Type_Code'];
+                $hhkMappedCode = $mappedItems[$k]['HHK_Type_Code'];
             }
 
             $nTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $hhkTypeCode), array('name' => 'selrelationTypes[' . $n . ']')))
+                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $hhkMappedCode), array('name' => 'selrelationTypes[' . $n . ']')))
                 . HTMLTable::makeTd($k)
-                . HTMLTable::makeTd($k, array('style' => 'text-align:center;'))
             );
         }
 
@@ -1035,7 +1039,9 @@ class SalesforceManager extends AbstractExportManager {
             if ($rc > 0) {
                 // something updated
                 EditRS::updateStoredVals($crmRs);
-                $result = $this->getServiceName().' gateway Updated.  ';
+                $result = $this->getServiceTitle().' gateway Updated.  ';
+            } else {
+                $result = $this->getServiceTitle() . ' No Updates Found.  ';
             }
         }
 
@@ -1043,57 +1049,83 @@ class SalesforceManager extends AbstractExportManager {
         return $result;
     }
 
-    private function saveTypeLists(\PDO $dbh) {
+    protected function saveTypeLists(\PDO $dbh) {
 
-        $count = 0;
-        $idTypeMap = 0;
+        $uS = Session::getInstance();
+        $result = '';
 
-        $neonItems = $this->getRelationshipPicklist();
+        // The list of CRM types should be in the session
+        if (isset($uS->crmItems) === false) {
+            $result .= 'CRM List Items are missing. ';
+        }
 
         $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
 
         $stmtList = $dbh->query("Select * from sf_type_map where List_Name = 'relationTypes';");
         $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
+
         $mappedItems = array();
         foreach ($items as $i) {
-            $mappedItems[$i['HHK_Type_Code']] = $i;
+            $mappedItems[$i['SF_Type_Code']] = $i;
         }
 
-        $listNames = filter_input_array(INPUT_POST, array('selrelationTypes' => array('filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY)));
+        $postedNames = filter_input_array(INPUT_POST, array('selrelationTypes' => array('filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY)));
+        $matchedNames = $postedNames['selrelationTypes'];
 
-        foreach ($neonItems as $n => $k) {
+        $usedHhkTypes = [];
+        foreach ($matchedNames as $n) {
+            if ($n != '') {
+                $usedHhkTypes[$n] = $n;
+            }
+        }
 
-            if (isset($listNames[$n])) {
+        $updateCount = 0;
+        $insertCount = 0;
 
-                $hhkTypeCode = $listNames[$n];
+        foreach ($uS->crmItems as $n => $k) {
 
-                if ($hhkTypeCode == '') {
+            if (isset($matchedNames[$n])) {
+
+                if ($matchedNames[$n] == '') {
                     // delete if previously set
                     foreach ($mappedItems as $i) {
-                        if ($i['SF_Type_Code'] == $n && $i['HHK_Type_Code'] != '') {
-                            $dbh->exec("delete from neon_type_map  where idNeon_type_map = " . $i['idSf_type_map']);
+                        if ($i['SF_Type_Code'] == $k && $i['HHK_Type_Code'] != '') {
+                            $dbh->exec("delete from sf_type_map  where idSf_type_map = " . $i['idSf_type_map']);
                             break;
                         }
                     }
 
                     continue;
 
-                } else if (isset($hhkLookup[$hhkTypeCode]) === FALSE) {
+                } else if (isset($hhkLookup[$matchedNames[$n]]) === FALSE) {
                     continue;
                 }
 
-                if (isset($mappedItems[$hhkTypeCode])) {
+                if (isset($mappedItems[$k])) {
                     // Update
-                    $count = $dbh->exec("update sf_type_map set SF_Type_Code = '$k', SF_Type_name = '$k' where HHK_Type_Code = '$hhkTypeCode' and List_Name = 'relationTypes';");
+                    $updateCount += $dbh->exec("update sf_type_map set SF_Type_Code = '$k', SF_Type_name = '$k' where HHK_Type_Code = '$matchedNames[$n]' and List_Name = 'relationTypes';");
+
                 } else {
-                    // Insert
-                    $idTypeMap = $dbh->exec("Insert into sf_type_map (List_Name, SF_Type_Code, SF_Type_Name, HHK_Type_Code) "
-                        . "values ('relationTypes', '" . $k . "', '" . $k . "', '" . $hhkTypeCode . "' );");
+
+                    if (isset($usedHhkTypes[$matchedNames[$n]]) === FALSE) {
+                        // Insert
+                        $idTypeMap = $dbh->exec("Insert into sf_type_map (List_Name, SF_Type_Code, SF_Type_Name, HHK_Type_Code) "
+                            . "values ('relationTypes', '" . $k . "', '" . $k . "', '" . $matchedNames[$n] . "' );");
+
+                        if ($idTypeMap > 0) {
+                            $insertCount++;
+                            $usedHhkTypes[$matchedNames[$n]] = $matchedNames[$n];
+                        }
+                    } else {
+                        $result .= 'HHK Relationship type already used: ' . $hhkLookup[$matchedNames[$n]][1] . '.  ';
+                    }
                 }
             }
         }
 
-        return $count + $idTypeMap;
+        unset($uS->crmItems);
+
+        return $result . ($updateCount > 0 ? $updateCount.' types updated.  ' : '') . ($insertCount > 0 ? $insertCount . 'new types inserted' : '');
     }
 
     /**

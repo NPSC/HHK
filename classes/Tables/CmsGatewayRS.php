@@ -47,7 +47,7 @@ class CmsGatewayRS extends AbstractTableRS {
         $this->retryCount = new DB_Field("Retry_Count", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->apiVersion = new DB_Field("CheckoutPOS_Url", "", new DbStrSanitizer(25), TRUE, TRUE);
 
-        $this->Updated_By = new DB_Field("Updated_By", '', new DbStrSanitizer(45), TRUE, True);
+        $this->Updated_By = new DB_Field("Updated_By", '', new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field("Last_Updated", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("Timestamp", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         parent::__construct($TableName);
