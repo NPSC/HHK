@@ -548,11 +548,12 @@ $(document).ready(
 		//Logout after inactivity
 		//logoutTimer();
 
+		//default ajax error handling
 		$.ajaxSetup({
 			error : function(jqXHR, textStatus, errorThrown) {
 				if (jqXHR.status == 403) {
 					if(typeof flagAlertMessage == "function"){
-						flagAlertMessage("Oi, ya can't hack there, mate!", true);
+						flagAlertMessage("A server error occurred (error: 403), if the problem persists, contact support@nonprofitsoftwarecorp.org", true);
 					}
 				}
 			}
