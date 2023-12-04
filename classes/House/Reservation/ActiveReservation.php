@@ -306,7 +306,14 @@ class ActiveReservation extends Reservation {
                     $guests[$g['idGuest']] = $g['Primary_Guest'];
                 }
     
-                return RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
+                $newIdResv = RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
+
+                if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0){
+                    $dbh->exec("UPDATE `Reservation_Invoice` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
+                }
+                
+                return $newIdResv;
+
             }else{
                 $this->reserveData->addError("Error rebooking: New arrival date must be before departure date");
             }
@@ -479,10 +486,10 @@ class ActiveReservation extends Reservation {
     public function savePrePayment(\PDO $dbh) {
 
         $pmp = PaymentChooser::readPostedPayment($dbh);  // Returns PaymentManagerPayment.
+        $resv = new Reservation_1($this->reservRs);
 
         if (is_null($pmp) === FALSE && ($pmp->getTotalPayment() != 0 || $pmp->getOverPayment() != 0)) {
 
-            $resv = new Reservation_1($this->reservRs);
             $resvPaymentManager = new ResvPaymentManager($pmp);
 
             $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php?rid=' . $resv->getIdReservation(), $resv->getIdGuest());
@@ -492,9 +499,13 @@ class ActiveReservation extends Reservation {
                 $dbh->exec("insert ignore into `reservation_invoice` Values(".$resv->getIdReservation()."," .$this->payResult->getIdInvoice() . ")");
             }
 
+        }else if($resv->isRemoved(readLookups($dbh, "reservStatus", "Code")) && $resv->getIdReservation() > 0){ //if reservation is canceled, release prepayments
+            $dbh->exec("delete from `reservation_invoice` where Reservation_Id = ".$resv->getIdReservation().";");
         } else {
             $this->payResult = NULL;
         }
+
+
     }
 
 }

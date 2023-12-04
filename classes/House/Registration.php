@@ -3,8 +3,6 @@
 namespace HHK\House;
 
 use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
-use HHK\SysConst\ReservationStatus;
-use HHK\SysConst\ReservationStatusType;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
@@ -12,7 +10,6 @@ use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
-use HHK\House\Reservation\Reservation_1;
 
 /**
  * Registration.php
@@ -244,10 +241,6 @@ where
         invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = " . ItemId::LodgingMOA . " AND il.Deleted = 0
             join
     	reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
-            join
-        reservation r on ri.reservation_Id = r.idReservation 
-            join
-        lookups l on l.Category = 'ReservStatus' and r.Status = l.Code and l.Type != '" . ReservationStatusType::Cancelled . "'
     where
         i.Deleted = 0
         AND i.Order_Number = 0
