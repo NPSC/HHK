@@ -1023,6 +1023,7 @@ ORDER BY v.idVisit , v.Span;");
 
             // Make middle column td.
             $td = HTMLContainer::generateMarkup('button',
+                    HTMLContainer::generateMarkup('span', '$', ['class'=>'px-2']).
                     HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'readonly'=>'readonly', 'size' => '7', 'style'=>'padding:0; border:none; margin:0;'])
                     . HTMLContainer::generateMarkup('label',  HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-arrowthick-1-e']), ['for'=>'feesCharges'])
                     , ['id'=>'feesChargesContr', 'class'=>'ui-button ui-widget ui-corner-all hhk-RoomCharge', 'style'=>'min-width:fit-content; padding:0;'])
@@ -1031,8 +1032,8 @@ ORDER BY v.idVisit , v.Span;");
 
 
         	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', ['class'=>'tdlabel'])
-                .HTMLTable::makeTd('$'. $td, ['style'=>'text-align:center;'])
-                .HTMLTable::makeTd(
+                .HTMLTable::makeTd($td, ['style'=>'text-align:center;'])
+                .HTMLTable::makeTd('$'.
                     HTMLInput::generateMarkup('', ['name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;'])
                     , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay']
                 )
