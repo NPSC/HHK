@@ -309,7 +309,7 @@ class ActiveReservation extends Reservation {
                 $newIdResv = RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
 
                 if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0){
-                    $dbh->exec("UPDATE `Reservation_Invoice` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
+                    $dbh->exec("UPDATE `reservation_invoice` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
                 }
                 
                 return $newIdResv;
@@ -495,16 +495,15 @@ class ActiveReservation extends Reservation {
             $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php?rid=' . $resv->getIdReservation(), $resv->getIdGuest());
 
             // Relate Invoice to Reservation
-            if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
+            if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0 && !$resv->isRemoved(readLookups($dbh, "reservStatus", "Code"))) {
                 $dbh->exec("insert ignore into `reservation_invoice` Values(".$resv->getIdReservation()."," .$this->payResult->getIdInvoice() . ")");
+            }else if($resv->isRemoved(readLookups($dbh, "reservStatus", "Code")) && $resv->getIdReservation() > 0){ //if reservation is canceled, release prepayments
+                $dbh->exec("delete from `reservation_invoice` where Reservation_Id = ".$resv->getIdReservation().";");
             }
 
-        }else if($resv->isRemoved(readLookups($dbh, "reservStatus", "Code")) && $resv->getIdReservation() > 0){ //if reservation is canceled, release prepayments
-            $dbh->exec("delete from `reservation_invoice` where Reservation_Id = ".$resv->getIdReservation().";");
-        } else {
+        }else{
             $this->payResult = NULL;
         }
-
 
     }
 
