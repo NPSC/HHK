@@ -407,8 +407,8 @@ class SalesforceManager extends AbstractExportManager {
 
                 // Check for not finding the account Id
                 if ($r['Id'] != '') {
-                    // Account was deleted from the Salesforce side.
-                    $f['Result'] = 'Account Deleted at Saleforce';
+                    // Account was missing from the Salesforce side.
+                    $f['Result'] = 'Account/Contact not found';
                     $replys[$r['HHK_idName__c']] = $f;
                     continue;
                 }
@@ -428,8 +428,9 @@ class SalesforceManager extends AbstractExportManager {
                 // Check external Id
                 if (isset($row['Id']) && $row['Id'] == self::EXCLUDE_TERM) {
                     // Skip excluded members.
-                    Continue;
+                    continue;
                 } else if (isset($row['Id'])) {
+                    // Our local account/contact must be wrong.
                     $row['Id'] = '';
                 }
 
@@ -502,6 +503,7 @@ class SalesforceManager extends AbstractExportManager {
 
         // create graphs
 
+        // People
         foreach ($rows as $row) {
             $filteredRow = [];
 
@@ -509,8 +511,6 @@ class SalesforceManager extends AbstractExportManager {
             if (isset($row['Id']) && $row['Id'] == self::EXCLUDE_TERM) {
                 // Skip excluded members.
                 Continue;
-            } else if (isset($row['Id'])) {
-                $row['Id'] = '';
             }
 
             foreach ($row as $k => $w) {
@@ -526,16 +526,34 @@ class SalesforceManager extends AbstractExportManager {
                 "referenceId" => "refContact" . $row['HHK_idName__c'],
                 "body" => $filteredRow
             ];
+        }
 
-            if ($row['Relationship_Code'] != RelLinkType::Self) {
+        // Relationships
+        foreach ($rows as $row) {
+            $relationRow = [];
+
+            // Check external Id
+            if(isset($row['Id']) && $row['Id'] == self::EXCLUDE_TERM) {
+                // Skip excluded members.
+                continue;
+            }
+
+            foreach($row as $k => $w) {
+                if($w != '' && $k != 'Relationship_Code' && $k != 'PatientId') {
+                    $relationRow[$k] = $w;
+                }
+            }
+
+            if($row['Relationship_Code'] != RelLinkType::Self) {
                 // Add relationship record
                 $subrequest[] = [
                     "method" => "PATCH",
-                    "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
-                    "referenceId" => "refContact" . $row['HHK_idName__c'],
-                    "body" => $filteredRow
+                    "url" => $this->endPoint.'sobjects/npe4__Relationship__c/',
+                    "referenceId" => "refContact".$row['HHK_idName__c'],
+                    "body" => $relationRow
                 ];
             }
+
 
         }
 
