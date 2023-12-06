@@ -143,7 +143,7 @@ function newStatsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $
 
 
     $qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, ifnull(r.Retired_At, '') as `Retired_At`
-        from resource r 
+        from resource r
 left join resource_room rr on r.idResource = rr.idResource
 left join room rm on rr.idRoom = rm.idRoom
 where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "') and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')
@@ -340,7 +340,7 @@ order by r.idResource;";
                 }
             }
 
-            
+
         }
 
         //count retired room-nights
@@ -351,8 +351,8 @@ order by r.idResource;";
             }else{
                 $retiredNites = 0;
             }
-            
-            
+
+
             //subtract nights the house is closed
             foreach($closedDates as $date){
                 if($date >= $retiredAt && $date < $enDT){
@@ -372,14 +372,14 @@ order by r.idResource;";
     }
 
     //get visits and check if house is closed during any visits
-    $query = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, DATE(r.`Span_Start`) as `Start`, DATE(ifnull(r.`Span_End`, now())) as `End` from vregister r 
+    $query = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, DATE(r.`Span_Start`) as `Start`, DATE(ifnull(r.`Span_End`, now())) as `End` from vregister r
         left join resource_room rr on r.idResource = rr.idResource
         left join room rm on rr.idRoom = rm.idRoom
         where Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(Span_Start) < DATE('" . $enDT->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$stDT->format('Y-m-d') . "');";
     $stmtv = $dbh->query($query);
     $rows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
-            
+
     foreach($rows as $r){
         $startDT = new \DateTime($r['Start']);
         $endDT = new \DateTIme($r['End']);
@@ -1586,6 +1586,14 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', array('style' => 'text-align:center;')), array('style' => 'margin-right: 15px; width: 100%;'))
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style' => 'text-align: center')), array('style' => 'margin-left: 15px; width: 100%;'))
+                , array('style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1'));
+        }
 
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
