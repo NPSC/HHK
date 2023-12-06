@@ -390,8 +390,16 @@
             		//include docTitle and helptext
             		docTitle = '';
             		//add docTitle
-            		if($(DocUppload.container).find("#docTitle").length == 0){
-            			$(DocUppload.container).find(".uppload-service--local").prepend("<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>");
+            		if($(DocUppload.container).find("#docFields").length == 0){
+                        var docFields = ""+
+                        "<div class='hhk-flex' id='docFields'>"+
+                            "<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'></input>"+
+                            "<select class='input' id='docGuest'><option value='' selected>Select a Guest</option></select>"+
+                        "</div>";
+
+                        console.log($("#resv").val());
+
+            			$(DocUppload.container).find(".uppload-service--local").prepend(docFields);
             		}
             		//add helptext
             		if($(DocUppload.container).find("#docUploadHelp").length == 0){

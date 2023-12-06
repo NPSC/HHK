@@ -108,6 +108,7 @@ body {
     /* prevent horizontal scrollbar */
     overflow-x: hidden;
     min-width: fit-content;
+	z-index: 13000;
 }
 
 .ui-autocomplete .hhk-flex {
@@ -909,4 +910,8 @@ table.dataTable tbody td {
 
 .hhk-btn.getNameDetails{
 	margin-left: 0.5em;
+}
+
+#docFields * {
+	width: 100%;
 }
