@@ -2056,31 +2056,37 @@ function resvManager(initData, options) {
             };
 
             $(document).on('change', '#selResvStatus', function () {
+                $("#selexcpay option[value='m']").hide();
+
                 if ($(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
                     // Cancel
                     newDate = moment().add('1','days').format("MMM D, YYYY");
                     $("#newGstDate").datepicker(datepickerOptions);
-                    $('#rebookRow').removeClass("d-none");
+                    $('#rebookRow').show('fade');
                 } else {
                     $("#newGstDate").val("");
                     $("#cbRebook").prop("checked", "");
-                    $('#rebookRow').addClass("d-none");
+                    $('#rebookRow').hide();
                 }
             });
 
             $(document).on('change', '#newGstDate', function (){
                 if($(this).val() != ''){
                     $('#cbRebook').prop('checked', 'checked');
+                    $("#selexcpay option[value='m']").show();
                 }else{
                     $('#cbRebook').removeAttr('checked');
+                    $("#selexcpay option[value='m']").hide();
                 }
             });
 
             $(document).on('click', '#cbRebook', function(){
                 if($(this).prop('checked')){
                     $("#newGstDate").val(newDate);
+                    $("#selexcpay option[value='m']").show();
                 }else{
                     $("#newGstDate").val("");
+                    $("#selexcpay option[value='m']").hide();
                 }
             });
 

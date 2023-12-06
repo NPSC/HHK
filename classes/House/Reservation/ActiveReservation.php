@@ -16,6 +16,7 @@ use HHK\Payment\PaymentManager\ResvPaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\House\HouseServices;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\SysConst\ExcessPay;
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Tables\Reservation\ReservationRS;
@@ -130,6 +131,7 @@ class ActiveReservation extends Reservation {
             'taNewNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'cbRebook' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'newGstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selexcpay' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'cbRS'  =>  [
                 'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'flags' => FILTER_REQUIRE_ARRAY
@@ -308,7 +310,7 @@ class ActiveReservation extends Reservation {
     
                 $newIdResv = RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
 
-                if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0){
+                if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0 && isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::MoveToResv){
                     $dbh->exec("UPDATE `reservation_invoice` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
                 }
                 
@@ -495,10 +497,8 @@ class ActiveReservation extends Reservation {
             $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php?rid=' . $resv->getIdReservation(), $resv->getIdGuest());
 
             // Relate Invoice to Reservation
-            if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0 && !$resv->isRemoved(readLookups($dbh, "reservStatus", "Code"))) {
+            if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
                 $dbh->exec("insert ignore into `reservation_invoice` Values(".$resv->getIdReservation()."," .$this->payResult->getIdInvoice() . ")");
-            }else if($resv->isRemoved(readLookups($dbh, "reservStatus", "Code")) && $resv->getIdReservation() > 0){ //if reservation is canceled, release prepayments
-                $dbh->exec("delete from `reservation_invoice` where Reservation_Id = ".$resv->getIdReservation().";");
             }
 
         }else{

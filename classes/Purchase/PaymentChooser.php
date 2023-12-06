@@ -551,6 +551,13 @@ class PaymentChooser {
 
         $excessPays = readGenLookupsPDO($dbh, 'ExcessPays');
 
+        unset($excessPays[ExcessPay::Hold]);
+        unset($excessPays[ExcessPay::Ignore]);
+        
+        if($uS->UseRebook){
+            $excessPays[ExcessPay::MoveToResv] = array(ExcessPay::MoveToResv, 'Next Reservation');
+        }
+
         // Extra payment & distribution Selector
         if (count($excessPays) > 0) {
 
@@ -559,7 +566,7 @@ class PaymentChooser {
                     , array('style'=>'text-align:right;'))
                 , array('class'=>'hhk-Overpayment'));
 
-            $sattrs = array('name'=>'selexcpay', 'style'=>'margin-left:3px;', 'class'=>'hhk-feeskeys');
+            $sattrs = array('name'=>'selexcpay', 'style'=>'margin-left:3px; width: 100%;', 'class'=>'hhk-feeskeys');
 
             $feesTbl->addBodyTr(HTMLTable::makeTd('Apply to:', array('class'=>'tdlabel', 'colspan'=>'2'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($excessPays, '', TRUE), $sattrs))
