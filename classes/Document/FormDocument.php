@@ -252,10 +252,13 @@ group by g.Code order by g.Order';
                     }
 
                     $today = new \DateTime();
+                    $dateLimit = new \DateTime('1900-01-01');
                     if(isset($field->validation) && $field->validation == 'lessThanToday' && $date->format('Y-m-d') > $today->format('Y-m-d')){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the past.'];
                     }else if(isset($field->validation) && $field->validation == 'greaterThanToday' && $date->format('Y-m-d') < $today->format('Y-m-d')){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the future.'];
+                    }else if($date->format("Y-m-d") < $dateLimit->format("Y-m-d")){
+                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be at least January 1, 1900'];
                     }
 
                     //save dates in correct format
