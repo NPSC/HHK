@@ -2045,6 +2045,54 @@ function resvManager(initData, options) {
             });
         }
 
+        function setupRebook(){
+            let datepickerOptions = {
+                yearRange: '00:+2',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                minDate: 0,
+                dateFormat: 'M d, yy'
+            };
+
+            $(document).on('change', '#selResvStatus', function () {
+                $("#selexcpay option[value='m']").hide();
+
+                if ($(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
+                    // Cancel
+                    newDate = moment().add('1','days').format("MMM D, YYYY");
+                    $("#newGstDate").datepicker(datepickerOptions);
+                    $('#rebookRow').show('fade');
+                } else {
+                    $("#newGstDate").val("");
+                    $("#cbRebook").prop("checked", "");
+                    $('#rebookRow').hide();
+                }
+            });
+
+            $(document).on('change', '#newGstDate', function (){
+                if($(this).val() != ''){
+                    $('#cbRebook').prop('checked', 'checked');
+                    $("#selexcpay option[value='m']").show();
+                }else{
+                    $('#cbRebook').removeAttr('checked');
+                    $("#selexcpay option[value='m']").hide();
+                }
+            });
+
+            $(document).on('click', '#cbRebook', function(){
+                if($(this).prop('checked')){
+                    $("#newGstDate").val(newDate);
+                    $("#selexcpay option[value='m']").show();
+                }else{
+                    $("#newGstDate").val("");
+                    $("#selexcpay option[value='m']").hide();
+                }
+            });
+
+            $('#selResvStatus').change();
+        }
+
         function setupNotes(rid, $container, psgId = null) {
 
             if (rid > 0) {
@@ -2105,6 +2153,7 @@ function resvManager(initData, options) {
             // Stat
             if (data.resv.rdiv.rstat !== undefined) {
                 $rDiv.append($(data.resv.rdiv.rstat));
+                setupRebook();
             }
 
             // Multiple Reservations

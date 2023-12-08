@@ -2,10 +2,12 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\House\Family\Family;
 use HHK\House\Registration;
 use HHK\House\Vehicle;
 use HHK\House\ReserveData\ReserveData;
 use HHK\Note\{LinkNote, Note};
+use HHK\sec\Labels;
 use HHK\SysConst\{ReservationStatus};
 use HHK\sec\Session;
 use HHK\Document\FormDocument;
@@ -14,6 +16,10 @@ use HHK\Payment\PaymentManager\ResvPaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\House\HouseServices;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\SysConst\ExcessPay;
+use HHK\Tables\EditRS;
+use HHK\Tables\Reservation\Reservation_GuestRS;
+use HHK\Tables\Reservation\ReservationRS;
 
 
 
@@ -123,6 +129,9 @@ class ActiveReservation extends Reservation {
             'txtRibbonNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selResource' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'taNewNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'cbRebook' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'newGstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selexcpay' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'cbRS'  =>  [
                 'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'flags' => FILTER_REQUIRE_ARRAY
@@ -159,16 +168,26 @@ class ActiveReservation extends Reservation {
             $reservStatus = $resv->getStatus();
         }
 
+        $oldResvStatus = $resv->getStatus();
         // Set reservation status
         $resv->setStatus($reservStatus);
         $this->reserveData->setResvStatusType($reservStatuses[$reservStatus]['Type']);
+        
 
         // Cancel reservation?
         if ($resv->isRemovedStatus($reservStatus, $reservStatuses)) {
+            if($uS->UseRebook && isset($post['cbRebook'])){
+                $newIdResv = $this->rebookReservation($dbh, $resv, $oldResvStatus, $post);
+                if($newIdResv > 0){
+                    $this->reserveData->addMsg( Labels::getString("MemberType","Guest", "Guest") . "s rebooked for " . $post['newGstDate']);
+                }else{
+                    return $this;
+                }
+            }
             $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
             return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
         }
-
+        
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
         if ($uS->TrackAuto) {
@@ -270,6 +289,41 @@ class ActiveReservation extends Reservation {
         $this->reservRs = $resv->getReservationRS();
 
         return $this;
+    }
+
+    protected function rebookReservation(\PDO $dbh, Reservation_1 $resv, $oldResvStatus, array $post){
+        $uS = Session::getInstance();
+        
+        //check dates
+        if(isset($post['newGstDate'])){
+            $newArrival = new \DateTime($post['newGstDate']);
+            $departure = new \DateTime($resv->getDeparture());
+            if($newArrival < $departure && $newArrival->diff($departure)->days > 0){
+                $guests = [];
+                $rgRs = new Reservation_GuestRS();
+                $rgRs->idReservation->setStoredVal($resv->getIdReservation());
+                $rgRows = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
+    
+                foreach ($rgRows as $g) {
+                    $guests[$g['idGuest']] = $g['Primary_Guest'];
+                }
+    
+                $newIdResv = RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
+
+                if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0 && isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::MoveToResv){
+                    $dbh->exec("UPDATE `reservation_invoice` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
+                }
+                
+                return $newIdResv;
+
+            }else{
+                $this->reserveData->addError("Error rebooking: New arrival date must be before departure date");
+            }
+        }else{
+            $this->reserveData->addMsg("Error rebooking: New arrival date is required");
+        }
+
+            
     }
 
     /**
@@ -434,10 +488,10 @@ class ActiveReservation extends Reservation {
     public function savePrePayment(\PDO $dbh) {
 
         $pmp = PaymentChooser::readPostedPayment($dbh);  // Returns PaymentManagerPayment.
+        $resv = new Reservation_1($this->reservRs);
 
         if (is_null($pmp) === FALSE && ($pmp->getTotalPayment() != 0 || $pmp->getOverPayment() != 0)) {
 
-            $resv = new Reservation_1($this->reservRs);
             $resvPaymentManager = new ResvPaymentManager($pmp);
 
             $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php?rid=' . $resv->getIdReservation(), $resv->getIdGuest());
@@ -447,9 +501,10 @@ class ActiveReservation extends Reservation {
                 $dbh->exec("insert ignore into `reservation_invoice` Values(".$resv->getIdReservation()."," .$this->payResult->getIdInvoice() . ")");
             }
 
-        } else {
+        }else{
             $this->payResult = NULL;
         }
+
     }
 
 }
