@@ -7,6 +7,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\House\Report\ActivityReport;
 use HHK\Member\Role\Guest;
 use HHK\Note\{LinkNote, Note};
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Purchase\FinAssistance;
 use HHK\SysConst\{DefaultSettings, GLTableNames, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
@@ -165,7 +166,7 @@ class ReservationSvcs
             if ($emailAddr != '') {
 
                 try{
-                    $mail = prepareEmail();
+                    $mail = new HHKMailer();
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient

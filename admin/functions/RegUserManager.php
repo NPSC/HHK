@@ -10,6 +10,7 @@
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Session;
 use HHK\Tables\WebSec\FbxRS;
 use HHK\Tables\EditRS;
@@ -85,7 +86,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
             $regSubject = SysConfig::getKeyValue($dbh, 'sys_config', 'RegSubj');
 
             try{
-                $mail = prepareEmail();
+                $mail = new HHKMailer();
 
                 $mail->From = $uS->ReturnAddress;
                 $mail->addReplyTo($uS->ReturnAddress);

@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\SysConst\WebPageCode;
 use HHK\Member\Role\Guest;
@@ -214,7 +215,7 @@ if (isset($_REQUEST['cmd'])) {
 
             try{
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer();
 
                 $mail->From = $uS->FromAddress;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

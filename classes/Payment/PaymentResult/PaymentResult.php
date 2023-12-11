@@ -4,6 +4,7 @@ namespace HHK\Payment\PaymentResult;
 
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Receipt;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
@@ -171,7 +172,7 @@ WHERE r.Email_Receipt = 1 and
 
 
         try{
-            $mail = prepareEmail();
+            $mail = new HHKMailer();
 
             $mail->From = $fromAddr;
             $mail->addReplyTo($uS->ReplyTo);

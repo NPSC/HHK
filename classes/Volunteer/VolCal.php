@@ -6,6 +6,7 @@ use HHK\sec\{Session, SecurityComponent};
 use HHK\SysConst\{VolCalendarStatus, VolRank, WebRole};
 use HHK\Tables\EditRS;
 use HHK\Tables\VolCalendar\{McalendarRS, Volunteer_HoursRS};
+use HHK\Notification\Mail\HHKMailer;
 
 /**
  * VolCal.php
@@ -1160,7 +1161,7 @@ class VolCal {
         }
 
         try{
-           $mail = prepareEmail();
+           $mail = new HHKMailer();
     
            $mail->From = $uS->ReturnAddress;
            $mail->addReplyTo($uS->ReturnAddress);

@@ -12,6 +12,7 @@ use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\HouseServices;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Payment\PaymentResult\PaymentResult;
@@ -512,7 +513,7 @@ FROM reservation r
 
             try {
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer();
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

@@ -1,5 +1,6 @@
 <?php
 use HHK\Config_Lite\Config_Lite;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Login;
 use HHK\Exception\RuntimeException;
 use HHK\sec\UserClass;
@@ -155,7 +156,7 @@ if ($numRecipients > $maxAutoEmail) {
     exit("The number of email recipients, $$numRecipients is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
 }
 
-$mail = prepareEmail();
+$mail = new HHKMailer();
 
 $mail->From = $from;
 $mail->addReplyTo($from);
