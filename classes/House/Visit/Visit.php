@@ -535,7 +535,7 @@ class Visit {
         if ($uS->NoReplyAddr != '' && ($uS->Guest_Track_Address != '' || $houseKeepingEmail != '')) {
 
             try {
-                $mail = new HHKMailer();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -1009,7 +1009,7 @@ class Visit {
 	                $subj = "Check-Out from " . $roomTitle . " by " . $uS->username . ".";
 
 	                // Send email
-	                $mail = new HHKMailer();
+	                $mail = new HHKMailer($dbh);
 
 	                $mail->From = $uS->NoReplyAddr;
 	                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -1163,7 +1163,7 @@ class Visit {
                 // Get the site configuration object
 
                 // Send email
-                $mail = new HHKMailer();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

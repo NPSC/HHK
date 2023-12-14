@@ -513,7 +513,7 @@ FROM reservation r
 
             try {
 
-                $mail = new HHKMailer();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

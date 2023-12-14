@@ -166,7 +166,7 @@ class ReservationSvcs
             if ($emailAddr != '') {
 
                 try{
-                    $mail = new HHKMailer();
+                    $mail = new HHKMailer($dbh);
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient

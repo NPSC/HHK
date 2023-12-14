@@ -172,7 +172,7 @@ WHERE r.Email_Receipt = 1 and
 
 
         try{
-            $mail = new HHKMailer();
+            $mail = new HHKMailer($dbh);
 
             $mail->From = $fromAddr;
             $mail->addReplyTo($uS->ReplyTo);

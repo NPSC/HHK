@@ -165,7 +165,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
             throw new RuntimeException("The number of email recipients, " . $stmt->rowCount() . " is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
         }
 
-        $mail = new HHKMailer();
+        $mail = new HHKMailer($this->dbh);
 
         $mail->From = $from;
         $mail->addReplyTo($from);

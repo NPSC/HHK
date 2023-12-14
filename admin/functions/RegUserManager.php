@@ -86,7 +86,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
             $regSubject = SysConfig::getKeyValue($dbh, 'sys_config', 'RegSubj');
 
             try{
-                $mail = new HHKMailer();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->ReturnAddress;
                 $mail->addReplyTo($uS->ReturnAddress);

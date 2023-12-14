@@ -156,7 +156,7 @@ if ($numRecipients > $maxAutoEmail) {
     exit("The number of email recipients, $$numRecipients is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
 }
 
-$mail = new HHKMailer();
+$mail = new HHKMailer($dbh);
 
 $mail->From = $from;
 $mail->addReplyTo($from);

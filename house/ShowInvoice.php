@@ -92,7 +92,7 @@ try {
         if (isset($_POST['btnEmail']) && $emAddr != '' && $emSubject != '' && $stmtMarkup != '') {
 
             try{
-                $mail = new HHKMailer();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->FromAddress;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

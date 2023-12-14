@@ -46,7 +46,7 @@ class Email extends AbstractMultiFactorAuth
         $return = array();
 
         if($this->emailAddr){
-            $mail = new HHKMailer();
+            $mail = new HHKMailer($dbh);
             $mail->From = SysConfig::getKeyValue($dbh, 'sys_config', "FromAddress");
             $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
             $mail->addAddress(filter_var($this->emailAddr, FILTER_SANITIZE_EMAIL));

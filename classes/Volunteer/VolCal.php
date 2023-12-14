@@ -178,7 +178,7 @@ class VolCal {
 
                         // email the admin?
                         if ($sendemail != 0 || $evt->get_showEmailDelete() == 1) {
-                            self::emailAdmin($evt, $ar);
+                            self::emailAdmin($dbh, $evt, $ar);
                         }
 
                     } else {
@@ -1152,7 +1152,7 @@ class VolCal {
 
     }
 
-    public static function emailAdmin(cEventClass $evt, $numEvents) {
+    public static function emailAdmin(\PDO $dbh, cEventClass $evt, $numEvents) {
 
         $uS = Session::getInstance();
 
@@ -1161,7 +1161,7 @@ class VolCal {
         }
 
         try{
-           $mail = new HHKMailer();
+           $mail = new HHKMailer($dbh);
     
            $mail->From = $uS->ReturnAddress;
            $mail->addReplyTo($uS->ReturnAddress);

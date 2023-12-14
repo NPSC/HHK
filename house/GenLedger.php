@@ -78,7 +78,7 @@ if ($notificationAddress != '') {
 	$siteName = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
 	$from = SysConfig::getKeyValue($dbh, 'sys_config', 'NoReplyAddr');
 
-	$mail = new HHKMailer();
+	$mail = new HHKMailer($dbh);
 
 	$mail->From = $from;
 	$mail->addReplyTo($from);

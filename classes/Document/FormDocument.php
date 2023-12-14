@@ -139,7 +139,7 @@ group by g.Code order by g.Order';
 
         if($this->doc->getIdDocument() > 0){
             //$this->sendPatientEmail();
-            $this->sendNotifyEmail();
+            $this->sendNotifyEmail($dbh);
             return array("status"=>"success");
         }else{
             return array("status"=>"error");
@@ -152,7 +152,7 @@ group by g.Code order by g.Order';
      *
      * @return boolean
      */
-    private function sendNotifyEmail(){
+    private function sendNotifyEmail(\PDO $dbh){
         $uS = Session::getInstance();
         $to = filter_var(trim($uS->referralFormEmail), FILTER_SANITIZE_EMAIL);
 
@@ -161,7 +161,7 @@ group by g.Code order by g.Order';
 //                $userData = $this->getUserData();
                 $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ". <br><br><a href='" . $uS->resourceURL . "house/register.php' target='_blank'>Click here to log into HHK and take action.</a><br>" . PHP_EOL;
 
-                $mail = new HHKMailer();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = ($uS->NoReplyAddr ? $uS->NoReplyAddr : "no_reply@nonprofitsoftwarecorp.org");
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -184,7 +184,7 @@ group by g.Code order by g.Order';
         return false;
     }
 
-    private function sendPatientEmail(){
+/*     private function sendPatientEmail(){
         $templateSettings = $this->formTemplate->getSettings();
         $userData = json_decode($this->doc->getUserData(), true);
         $patientEmailAddress = (isset($userData['patient']['email']) ? $userData['patient']['email'] : '');
@@ -217,7 +217,7 @@ group by g.Code order by g.Order';
 
         }
 
-    }
+    } */
 
     public function updateStatus(\PDO $dbh, $status){
         if($this->getStatus() == 'd' && $status == 'd'){
