@@ -78,17 +78,10 @@ class SalesforceManager extends AbstractExportManager {
      */
     public function getRelationship($accountId) {
 
-        // Cutout to test list.
-        if ($accountId == 'picklist') {
-            $parms = $this->getRelationshipPicklist();
-        } else {
-            $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c' . $accountId);
+        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/' . $accountId);
 
-            $parms = array();
-            $this->unwindResponse($parms, $result);
-
-        }
-
+        $parms = array();
+        $this->unwindResponse($parms, $result);
         $resultStr = new HTMLTable();
 
         foreach ($parms as $k => $v) {
@@ -407,8 +400,8 @@ class SalesforceManager extends AbstractExportManager {
 
                 // Check for not finding the account Id
                 if ($r['Id'] != '') {
-                    // Account was missing from the Salesforce side.
-                    $f['Result'] = 'Account/Contact not found';
+                    // Account was deleted from the Salesforce side.
+                    $f['Result'] = 'Account Deleted at Saleforce';
                     $replys[$r['HHK_idName__c']] = $f;
                     continue;
                 }
@@ -501,7 +494,6 @@ class SalesforceManager extends AbstractExportManager {
         $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ")");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        // create graphs
 
         // People
         foreach ($rows as $row) {
@@ -512,9 +504,12 @@ class SalesforceManager extends AbstractExportManager {
                 // Skip excluded members.
                 Continue;
             }
+            // else if (isset($row['Id'])) {
+            //     $row['Id'] = '';
+            // }
 
             foreach ($row as $k => $w) {
-                if ($w != '' && $k != 'Relationship_Code' && $k != 'PatientId') {
+                if ($w != '' && $k != 'Patient_Rel_Type' && $k != 'PatientId' && $k != 'LegalCustody') {
                     $filteredRow[$k] = $w;
                 }
             }
@@ -526,36 +521,33 @@ class SalesforceManager extends AbstractExportManager {
                 "referenceId" => "refContact" . $row['HHK_idName__c'],
                 "body" => $filteredRow
             ];
+
         }
+
 
         // Relationships
-        foreach ($rows as $row) {
-            $relationRow = [];
+        // foreach ($rows as $row) {
+        //     $relationRow = [];
 
-            // Check external Id
-            if(isset($row['Id']) && $row['Id'] == self::EXCLUDE_TERM) {
-                // Skip excluded members.
-                continue;
-            }
+        //     if ($row['Patient_Rel_Type'] != RelLinkType::Self && isset($guestsReferenced[$row['PatientId']])) {
+        //         // Add relationship record
 
-            foreach($row as $k => $w) {
-                if($w != '' && $k != 'Relationship_Code' && $k != 'PatientId') {
-                    $relationRow[$k] = $w;
-                }
-            }
+        //         // build the update details
+        //         $relationRow['npe4__Contact__c'] = ;
+        //         $relationRow['npe4__RelatedContact__c']
+        //         $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
+        //         $relationRow['npe4__Type__c'] = // lookup the value from relation type list
+        //         $relationRow['Is_an_Emergency_Contact__c']      // t/f
+        //         $relationRow['Legal_Custody__c']        // t/f
 
-            if($row['Relationship_Code'] != RelLinkType::Self) {
-                // Add relationship record
-                $subrequest[] = [
-                    "method" => "PATCH",
-                    "url" => $this->endPoint.'sobjects/npe4__Relationship__c/',
-                    "referenceId" => "refContact".$row['HHK_idName__c'],
-                    "body" => $relationRow
-                ];
-            }
-
-
-        }
+        //         $subrequest[] = [
+        //             "method" => "PATCH",
+        //             "url" => $this->endPoint.'sobjects/npe4__Relationship__c/',
+        //             //"referenceId" => "refContact".$row['PatientId'],
+        //             "body" => $relationRow
+        //         ];
+        //     }
+        // }
 
         if (count($subrequest) > 0) {
 
