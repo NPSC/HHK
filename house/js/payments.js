@@ -537,11 +537,22 @@ function getPaymentData(p, a) {
         }
 
         // Reservation checking in logic.
-        if (p.heldCb.prop("checked") === true && a.chkingIn == 1 && ppFlag == 1) {
-            a.prePayRoomAmt = a.heldAmt;
-        } else if (p.heldCb.prop("checked") === false && a.chkingIn == 1) {
+        if (a.chkingIn == 1) {
+
+            if (p.heldCb.prop("checked") === true && ppFlag == 1) {
+                a.prePayRoomAmt = a.heldAmt;
+            } else if (p.heldCb.prop("checked") === false) {
+                a.prePayRoomAmt = 0;
+            }
+        } else {
             a.prePayRoomAmt = 0;
         }
+
+        // if (p.heldCb.prop("checked") === true && a.chkingIn == 1 && ppFlag == 1) {
+        //     a.prePayRoomAmt = a.heldAmt;
+        // } else if (p.heldCb.prop("checked") === false && a.chkingIn == 1) {
+        //     a.prePayRoomAmt = 0;
+        // }
     }
 
     // Reimburse value added taxes

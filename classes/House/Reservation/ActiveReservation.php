@@ -124,7 +124,7 @@ class ActiveReservation extends Reservation {
         $args = [
             'resvCkinNow' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selResvStatus' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            'selPayType' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selPayType' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,     // Reservation Pay With Selector, not paying today payment type selector.
             'taCkinNotes' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'txtRibbonNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selResource' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
@@ -172,7 +172,7 @@ class ActiveReservation extends Reservation {
         // Set reservation status
         $resv->setStatus($reservStatus);
         $this->reserveData->setResvStatusType($reservStatuses[$reservStatus]['Type']);
-        
+
 
         // Cancel reservation?
         if ($resv->isRemovedStatus($reservStatus, $reservStatuses)) {
@@ -187,7 +187,7 @@ class ActiveReservation extends Reservation {
             $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
             return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
         }
-        
+
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
         if ($uS->TrackAuto) {
@@ -293,7 +293,7 @@ class ActiveReservation extends Reservation {
 
     protected function rebookReservation(\PDO $dbh, Reservation_1 $resv, $oldResvStatus, array $post){
         $uS = Session::getInstance();
-        
+
         //check dates
         if(isset($post['newGstDate'])){
             $newArrival = new \DateTime($post['newGstDate']);
@@ -303,17 +303,17 @@ class ActiveReservation extends Reservation {
                 $rgRs = new Reservation_GuestRS();
                 $rgRs->idReservation->setStoredVal($resv->getIdReservation());
                 $rgRows = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
-    
+
                 foreach ($rgRows as $g) {
                     $guests[$g['idGuest']] = $g['Primary_Guest'];
                 }
-    
+
                 $newIdResv = RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
 
                 if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0 && isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::MoveToResv){
                     $dbh->exec("UPDATE `reservation_invoice` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
                 }
-                
+
                 return $newIdResv;
 
             }else{
@@ -323,7 +323,7 @@ class ActiveReservation extends Reservation {
             $this->reserveData->addMsg("Error rebooking: New arrival date is required");
         }
 
-            
+
     }
 
     /**
