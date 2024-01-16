@@ -1190,19 +1190,21 @@ CREATE  OR REPLACE VIEW `vguest_data_sf` AS
         IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'), '') as `Birthdate`,
         CASE WHEN IFNULL(`ng1`.`Relationship_Code`, '') = '' THEN 'Family Member' ELSE `gr`.`Description` END AS `Contact_Type__c`,
         CASE WHEN IFNULL(`n`.`Date_Deceased`, '') = '' THEN 'false' ELSE 'true' END AS `Deceased__c`,
-        IFNULL(`ng1`.`Relationship_Code`, '') as `Patient_Rel_Type`,
-        IFNULL(`p`.`idPatient`, 0) as `PatientId`,
-        IFNULL(`ng1`.`Legal_Custody`, 0) as `LegalCustody`
+        IFNULL(`ng1`.`Relationship_Code`, '') AS `Relationship_Code`,
+        IFNULL(`st`.`SF_Type_Code`, '') as `SF_Rel_Type`,
+        IFNULL(`ng1`.`idPsg`, 0) as `idPsg`,
+        IFNULL(`ng1`.`Legal_Custody`, 0) as `Legal_Custody`
     FROM
         `name_guest` `ng1`
-        LEFT JOIN `name` `n` ON `n`.`idName` = `ng1`.`idName`
+        JOIN `name` `n` ON `n`.`idName` = `ng1`.`idName`
         LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
             AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
         LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
         LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
             AND `n`.`Preferred_Email` = `ne`.`Purpose`
-		LEFT JOIN `psg` `p` ON `ng1`.`idPsg` = `p`.`idPsg`
+        LEFT JOIN `sf_type_map` `st` ON `ng1`.`Relationship_Code` = `st`.`HHK_Type_Code`
+            AND `st`.`List_Name` = 'relationTypes'
         LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
             AND `g1`.`Table_Name` = 'Name_Prefix'
         LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
@@ -1215,7 +1217,8 @@ CREATE  OR REPLACE VIEW `vguest_data_sf` AS
     WHERE
         `n`.`idName` > 0
 		AND `n`.`Record_Member` = 1
-		AND `n`.`Member_Status` IN ('a' , 'd', 'in');
+		AND `n`.`Member_Status` IN ('a' , 'd', 'in')
+        AND `n`.`External_Id` != 'excld';
 
 
 -- -----------------------------------------------------

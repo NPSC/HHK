@@ -43,7 +43,9 @@ class SalesforceManager extends AbstractExportManager {
 
      private $searchEndpoint;
 
-    private $getAcctEndpoint;
+    private $getContactEndpoint;
+    private $psgGraphs;
+    private $graphsResult;
 
     /**
      * {@inheritDoc}
@@ -53,10 +55,10 @@ class SalesforceManager extends AbstractExportManager {
         parent::__construct($dbh, $cmsName);
 
         // build the urls
-        $this->endPoint = 'services/data/v' . $this->getApiVersion() . "/";
+        $this->endPoint = '/services/data/v' . $this->getApiVersion() . "/";
         $this->queryEndpoint = $this->endPoint . 'query';
         $this->searchEndpoint = $this->endPoint . 'search';
-        $this->getAcctEndpoint = $this->endPoint . 'sobjects/Contact/';
+        $this->getContactEndpoint = $this->endPoint . 'sobjects/Contact/';
 
 
         $credentials = new Credentials();
@@ -232,7 +234,7 @@ class SalesforceManager extends AbstractExportManager {
 
     public function retrieveRemoteAccount($accountId) {
 
-        return $this->retrieveURL($this->getAcctEndpoint . $accountId);
+        return $this->retrieveURL($this->getContactEndpoint . $accountId);
     }
 
     /**
@@ -482,7 +484,12 @@ class SalesforceManager extends AbstractExportManager {
         return $replys;
     }
 
-
+    /**
+     * Summary of upsertMembers
+     * @param \PDO $dbh
+     * @param array $sourceIds
+     * @return array
+     */
     public function upsertMembers(\PDO $dbh, array $sourceIds) {
 
         if (count($sourceIds) == 0) {
@@ -491,73 +498,161 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         // get the member records
-        $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ")");
+        $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ") ORDER BY `idPsg`;");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+        // Each PSG uses a compositRequest/Graph to identify members and relationships.
+        // GraphId = psgId.
 
-        // People
-        foreach ($rows as $row) {
-            $filteredRow = [];
+        $guests = [];
+        $this->psgGraphs = [];  // The collection of psg graphs
+        $this->graphsResult = [];
+        $psgId = 0;
 
-            // Check external Id
-            if (isset($row['Id']) && $row['Id'] == self::EXCLUDE_TERM) {
-                // Skip excluded members.
-                Continue;
+        // Collect each psg into a guests array and process it as a composit request set
+        // the rows must be ordered by PSG Id
+        foreach ($rows as $r) {
+
+            // New PSG Id?
+            if ($psgId > 0 && $r['idPsg'] != $psgId) {
+
+                // Yes, new Id.  Process current psg
+                $graph = $this->createPsgGraph($guests, $psgId);
+                if (count($graph) > 0) {
+                    $this->psgGraphs[] = $graph;
+                }
+
+                $guests = [];
             }
-            // else if (isset($row['Id'])) {
-            //     $row['Id'] = '';
-            // }
 
-            foreach ($row as $k => $w) {
-                if ($w != '' && $k != 'Patient_Rel_Type' && $k != 'PatientId' && $k != 'LegalCustody') {
+            $psgId = $r['idPsg'];
+            $guests[$r['HHK_idName__c']] = $r;
+        }
+
+        // And last group
+        $graph = $this->createPsgGraph($guests, $psgId);
+        if (count($graph) > 0) {
+            $this->psgGraphs[] = $graph;
+        }
+
+
+        // Anything to transfer?
+        if (count($this->psgGraphs) > 0) {
+
+            $body = [
+                "graphs" => $this->psgGraphs,
+            ];
+
+            // Transfer this package to SF API
+            try {
+                $this->graphsResult = $this->webService->postUrl($this->endPoint . 'composite/graph', $body);
+                $transferResult =  $this->processGraphResult($this->graphsResult, $rows);
+
+            } catch (\RuntimeException $ex) {
+                $transferResult =  ['error' => $ex->getMessage()];
+            }
+        }
+
+        return $transferResult;
+    }
+
+    /**
+     * Summary of createPsgGraph
+     * @param mixed $guests  List of Guests in the PSG
+     * @param mixed $graphId  PSG Id
+     * @return array  The formatted Graph object
+     */
+    protected function createPsgGraph($guests, $graphId) {
+
+        $hasPatient = false;
+        $idPatient = 0;
+        $subrequests = [];
+        $graph = [];
+
+        // Make Contact subrequests
+        foreach ($guests as $g) {
+
+            // Do we have a patient?
+            if ($g['Relationship_Code'] == RelLinkType::Self) {
+                $hasPatient = true;
+                $idPatient = $g['HHK_idName__c'];
+            }
+
+            // remove extra fields
+            foreach ($g as $k => $w) {
+                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'idPsg' && $k != 'Legal_Custody' && $k != 'Id') {
                     $filteredRow[$k] = $w;
                 }
             }
 
-            // Add/update person
-            $subrequest[] = [
+            // Subrequest to upsert guest
+            $subrequests[] = [
                 "method" => "PATCH",
-                "url" => $this->getAcctEndpoint . 'HHK_idName__c/' . $row['HHK_idName__c'],
-                "referenceId" => "refContact" . $row['HHK_idName__c'],
+                "url" => $this->getContactEndpoint . 'HHK_idName__c/' . $g['HHK_idName__c'],
+                "referenceId" => "refContact" . $g['HHK_idName__c'],
                 "body" => $filteredRow
             ];
-
         }
 
 
-        // Relationships
-        // foreach ($rows as $row) {
-        //     $relationRow = [];
+        // If there is a patient, make relationship subrequests
+        if ($hasPatient && $idPatient > 0) {
 
-        //     if ($row['Patient_Rel_Type'] != RelLinkType::Self && isset($guestsReferenced[$row['PatientId']])) {
-        //         // Add relationship record
+            foreach ($guests as $g) {
 
-        //         // build the update details
-        //         $relationRow['npe4__Contact__c'] = ;
-        //         $relationRow['npe4__RelatedContact__c']
-        //         $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
-        //         $relationRow['npe4__Type__c'] = // lookup the value from relation type list
-        //         $relationRow['Is_an_Emergency_Contact__c']      // t/f
-        //         $relationRow['Legal_Custody__c']        // t/f
+                if ($g['Relationship_Code'] == RelLinkType::Self) {
+                    continue;
+                }
 
-        //         $subrequest[] = [
-        //             "method" => "PATCH",
-        //             "url" => $this->endPoint.'sobjects/npe4__Relationship__c/',
-        //             //"referenceId" => "refContact".$row['PatientId'],
-        //             "body" => $relationRow
-        //         ];
-        //     }
-        // }
+                // build the upsert details file
+                $relationRow['npe4__Contact__c'] = "@{refContact" . $g['HHK_idName__c'] . ".id}";
+                $relationRow['npe4__RelatedContact__c'] = "@{refContact" . $idPatient . ".id}";
+                $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
+                $relationRow['npe4__Type__c'] = $g['SF_Rel_Type'];
+                //$relationRow['Is_an_Emergency_Contact__c']      // t/f
+                $relationRow['Legal_Custody__c'] = ($g['Legal_Custody'] == 0 ? 'false' : 'true');       // t/f
 
-        if (count($subrequest) > 0) {
-
-            $compositRequest["compositeRequest"] = $subrequest;
-
-            return $compositRequest;
+                $subrequests[] = [
+                    "method" => "POST",
+                    "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
+                    "referenceId" => "refRel" . $g['HHK_idName__c'],
+                    "body" => $relationRow
+                ];
+            }
         }
 
-        $replys[0] = array('error' => "The list of HHK Id's to send is empty.");
-        return $replys;
+        // Anything to transfer?
+        if (count($subrequests) > 0) {
+
+            $graph[] = [
+                'graphId' => $graphId,
+                'compositeRequest' => $subrequests
+            ];
+        }
+
+        return $graph;
+    }
+
+    /**
+     * Summary of processGraphResult
+     * @param mixed $graphResult
+     * @param mixed $guests
+     * @return array
+     */
+    protected function processGraphResult($graphResult, $guests) {
+
+        $result = [];
+
+
+        return $result;
+    }
+
+    public function getGraphsResult() {
+        return $this->graphsResult;
+    }
+
+    public function getPsgGraphs() {
+        return $this->psgGraphs;
     }
 
 
