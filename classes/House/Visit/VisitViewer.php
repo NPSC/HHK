@@ -398,6 +398,7 @@ class VisitViewer {
         $chkInTitle = 'Checked In';
         $visitStatus = '';
         $guestAddButton = '';
+        $sendMsgButton = '';
         $prevSpanStatus = '';
         $idV = intval($idVisit, 10);
         $idS = intval($span, 10);
@@ -505,6 +506,9 @@ class VisitViewer {
                 // Make add guest button
                 $guestAddButton = HTMLInput::generateMarkup('Add ' . $labels->getString('MemberType', 'visitor', 'Guest') . '...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
             }
+
+            //Make Send Message button
+            $sendMsgButton = HTMLContainer::generateMarkup('button', 'Message ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's...', array("role" => "button", "class" => "viewMsgs ui-button ui-corner-all", "style" => "font-size: 0.8em; margin-left: 0.5em;"));
         }
 
         // 'Checkout All' button
@@ -532,7 +536,7 @@ class VisitViewer {
 
 
         return HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', $titleMkup . $guestAddButton, array('style'=>'font-weight:bold;'))
+                HTMLContainer::generateMarkup('legend', $titleMkup . $guestAddButton . $sendMsgButton , array('style'=>'font-weight:bold;'))
                 . $dvTable
                 , array('class'=>'hhk-panel', 'style'=>'margin-bottom:10px;'));
 
@@ -677,6 +681,10 @@ class VisitViewer {
         } else {
             $idMarkup = HTMLContainer::generateMarkup('a', $name, array('href' => 'GuestEdit.php?id=' . $r['idName'] . '&psg='.$r['idPsg']));
         }
+
+        //if SMS enabled
+        //@TODO check if sms is enabled and mobile number exists
+        $idMarkup = HTMLContainer::generateMarkup('div', $idMarkup, array("class"=>"hhk-flex", "style"=>"justify-content: space-between;"));
 
         // Relationship to patient
         $rel = '';

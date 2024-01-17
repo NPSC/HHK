@@ -513,6 +513,8 @@ div#global-title {
 }
 */
 
+
+
 .hhk-ui-icons {
     margin: 0;
     padding: 0;
@@ -909,4 +911,101 @@ table.dataTable tbody td {
 
 .hhk-btn.getNameDetails{
 	margin-left: 0.5em;
+}
+
+
+#viewMsgsDialog #smsTabs {
+	display: flex;
+	font-size: 0.8em;
+}
+#viewMsgsDialog h4.msgTitle, #viewMsgsDialog div.msgsContainer {
+	padding-bottom: 0.25em;
+	border-bottom: 1px solid #a6c9e2;
+}
+
+.msgsContainer.loading{
+	display: flex;
+	align-items: center;
+	justify-content: space-evenly;
+}
+
+.msgsContainer {
+	height: 400px;
+	overflow-y: auto;
+	padding-right: 0.75em;
+}
+
+.msgsContainer .msg {
+    width: fit-content;
+    max-width: 85%;
+    margin-top: 1em;
+}
+
+.msgsContainer .msgContent {
+    padding: 0.5em;
+}
+
+.msgsContainer .houseMsg .msgContent {
+    background: #3788d8;
+    color: white;
+}
+
+.msgsContainer .msgMeta {
+    color: #707070;
+    margin-top: 0.25em;
+}
+
+.msgsContainer .houseMsg .msgMeta {
+	text-align: right;
+}
+
+.msgsContainer .houseMsg {
+    justify-content: end;
+}
+
+.msgsContainer .houseMsg .msg {
+	align-items: end;
+}
+
+.msgsContainer .guestMsg .msg {
+	align-items: start;
+}
+
+.msgsContainer .msgContainer .msg {
+	display: flex;
+	flex-flow: column;
+}
+
+#viewMsgsDialog .newMsg {
+	align-items: center;
+	margin-top: 0.5em;
+	min-height: 48px;
+}
+
+#viewMsgsDialog .newMsg textarea {
+	margin: 0.5em;
+	width: 90%;
+	resize:none;
+	padding: 0.5em;
+}
+#viewMsgsDialog .newMsg button {
+	min-width: fit-content;
+}
+
+#viewMsgsDialog .allRecipients {
+	display: flex;
+	flex-flow: column;
+	padding: 0 0.5em;
+	margin: 0.5em 0 0 0.5em;
+	align-items: start;
+}
+
+#viewMsgsDialog .allRecipients h5{
+	margin: 0.5em 0;
+}
+
+#viewMsgsDialog .allRecipients .recipient {
+	padding: 0.5em;
+	margin: 0.5em 0;
+	background: #E9F4FD;
 }

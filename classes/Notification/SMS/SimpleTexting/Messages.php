@@ -1,9 +1,11 @@
 <?php
 
 namespace HHK\Notification\SMS\SimpleTexting;
+
+use HHK\Notification\SMS\AbstractMessages;
 use HHK\Exception\RuntimeException;
 
-Class Messages {
+Class Messages extends AbstractMessages {
 
     protected \PDO $dbh;
     protected Settings $settings;
@@ -11,10 +13,8 @@ Class Messages {
 
     public function __construct(\PDO $dbh, string $accountPhone = ""){
 
-        $this->dbh = $dbh;
+        parent::__construct($dbh, $accountPhone);
         $this->settings = new Settings($dbh);
-        $this->accountPhone = $accountPhone;
-
     }
 
     public function getMessages(string $contactPhone, int $limit = 20, string $since = ""){

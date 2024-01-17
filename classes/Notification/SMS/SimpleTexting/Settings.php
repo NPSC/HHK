@@ -29,7 +29,8 @@ Class Settings {
 
     protected function loadSettings():void{
         $uS = Session::getInstance();
-        $this->settings = $uS->smsSettings;
+        $this->settings = ["authToken"=>""];
+        //$this->settings = $uS->smsSettings;
 
         //TODO: set up sms settings in DB
     }

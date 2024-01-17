@@ -220,6 +220,134 @@ function saveHospitalStay(idHs, idVisit) {
 	});
 }
 
+function viewGuestMsgs(idVisit, $dialog, diagTitle) {
+
+    $.get('ws_resv.php', { cmd: 'getVisitMsgsDialog', 'idVisit': idVisit }, function (data) {
+        if (!data) {
+            alert('Bad Reply from Server');
+            return;
+        }
+
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+
+        } else if (data.mkup) {
+            $dialog.empty();
+            $dialog.append($(data.mkup));
+
+            $dialog.find('#smsTabs').tabs({
+                active: 0,
+                create: function (event, ui) {
+                    console.log(ui);
+                    if (ui.tab && ui.tab.data("name")) {
+                        $dialog.find(".msgTitle").text(ui.tab.data("name") + " - " + ui.tab.data("phone"));
+                        $dialog.find(".newMsg textarea").attr("placeholder", "Message " + ui.tab.data("phone") + "...");
+                        $dialog.find(".msgsContainer").html('<div id="hhk-loading-spinner" class="center p-3"><img src="../images/ui-anim_basic_16x16.gif"></div>').addClass("loading");
+                        loadMsgs($dialog, ui.tab.data('idname'));
+                    } else if(ui.tab && ui.tab.data('idvisit')) {
+                        $dialog.find(".msgTitle").text("Message All Guests");
+                        $dialog.find(".newMsg textarea").attr("placeholder", "Message...");
+                    }
+                },
+                beforeActivate: function (event, ui) {
+                    if (ui.newTab && ui.newTab.data("name")) {
+                        $dialog.find(".msgTitle").text(ui.newTab.data("name") + " - " + ui.newTab.data("phone"));
+                        $dialog.find(".newMsg textarea").attr("placeholder", "Message " + ui.newTab.data("phone") + "...");
+                        $dialog.find(".msgsContainer").html('<div id="hhk-loading-spinner" class="center p-3"><img src="../images/ui-anim_basic_16x16.gif"></div>').addClass("loading");
+                        loadMsgs($dialog, ui.newTab.data('idname'));
+                    } else if(ui.newTab && ui.newTab.data('idvisit')) {
+                        $dialog.find(".msgTitle").text("Message All Guests");
+                        $dialog.find(".newMsg textarea").attr("placeholder", "Message...");
+                    }
+                }
+            })
+            $dialog.find("#smsTabs li").removeClass("ui-corner-top").addClass("ui-corner-left");
+            
+            $dialog.on("input", ".newMsg textarea", function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight + 3) + 'px';
+            });
+
+            $dialog.dialog({
+                autoOpen: true,
+                width: getDialogWidth(550),
+                resizable: true,
+                modal: true,
+                title: diagTitle,
+                buttons: {
+                    "Close": function () {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+
+        }
+    });
+}
+
+function loadMsgs($dialog, idName) {
+    $.get('ws_resv.php', { cmd: 'loadMsgs', 'idName':idName }, function (data) {
+        if (!data) {
+            alert('Bad Reply from Server');
+            return;
+        }
+
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+
+        } else if (data.msgs) {
+            $dialog.find(".msgsContainer").empty().removeClass("loading");
+            $.each(data.msgs, function (i, msg) {
+                let msgMkup = `
+                <div class="msgContainer hhk-flex"> 
+                    <div class="msg">
+                        <div class="msgContent ui-widget-content ui-corner-all">` + msg.text + `</div>
+                        <div class="msgMeta">Matt - Today 11:53am</div>
+                    </div>
+                </div>
+                `;
+
+                msgMkup = $(msgMkup);
+
+                let timestamp = moment(msg.timestamp);
+
+                if (msg.directionType == "MO") {
+                    msgMkup.addClass("houseMsg");
+                    msgMkup.find(".msgMeta").text("Hospitality House - " + timestamp.calendar());
+                } else {
+                    msgMkup.addClass("guestMsg");
+                    msgMkup.find(".msgMeta").text(data.Name_Full + " - " + timestamp.calendar());
+                }
+
+                $dialog.find(".msgsContainer").append($(msgMkup)).scrollTop($dialog.find(".msgsContainer").prop('scrollHeight'));
+            });
+
+        }
+    });
+}
+
 var isCheckedOut = false;
 
 /**
@@ -628,6 +756,15 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             $('#btnAddGuest').button();
             $('#btnAddGuest').click(function () {
                 window.location.assign('CheckingIn.php?vid=' + $(this).data('vid') + '&span=' + $(this).data('span') + '&rid=' + $(this).data('rid') + '&vstatus=' + $(this).data('vstatus'));
+            });
+        }
+
+        if ($(".viewMsgs").length > 0) {
+            $(".viewMsgs").button();
+            let $dialog = $('<div id="viewMsgsDialog">');
+            $(".viewMsgs").on('click', function () {
+                console.log(data);
+                viewGuestMsgs(idVisit, $dialog, "Message Guests in Room ");
             });
         }
 

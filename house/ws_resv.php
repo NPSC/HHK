@@ -1,4 +1,5 @@
 <?php
+use HHK\Notification\SMS\SimpleTexting\Messages;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\Session;
@@ -535,7 +536,35 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $events = Reservation::updateAgenda($dbh, $_POST);
         break;
 
+        case 'getVisitMsgsDialog':
 
+            $idVisit = intval(filter_input(INPUT_GET, 'idVisit', FILTER_SANITIZE_NUMBER_INT));
+            $idSpan = intval(filter_input(INPUT_GET, 'idSpan', FILTER_SANITIZE_NUMBER_INT));
+
+            if($idVisit > 0 && $idSpan >= 0){
+                $messages = new Messages($dbh);
+
+                $events = ['mkup' => $messages->getVisitMessagesMkup($idVisit, $idSpan)];
+            }else{
+                throw new NotFoundException("Visit ID not found");
+            }
+
+            break;
+
+        case 'loadMsgs':
+            $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
+
+            if($idName > 0){
+                $messages = new Messages($dbh);
+
+                $events = $messages->getMockupMessages($idName);
+            }else{
+                throw new NotFoundException("idName not found");
+            }
+
+            break;
+
+            
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }
