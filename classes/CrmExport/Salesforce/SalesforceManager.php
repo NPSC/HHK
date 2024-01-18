@@ -549,7 +549,7 @@ class SalesforceManager extends AbstractExportManager {
                 $transferResult =  $this->processGraphResult($this->graphsResult, $rows);
 
             } catch (\RuntimeException $ex) {
-                $transferResult =  ['error' => $ex->getMessage()];
+                $transferResult = ['error' => $ex->getMessage()];
             }
         }
 
@@ -643,6 +643,24 @@ class SalesforceManager extends AbstractExportManager {
 
         $result = [];
 
+        // Top level
+        if (isset($graphResult['graphs'])) {
+
+            foreach ($graphResult['graphs'] as $graph) {
+
+                $idPsg = $graph['graphId'];
+                $isSuccessful = $graph['isSuccessful'];
+                $comResp = $graph['graphResponse']['compositeResonse'];
+
+                foreach ($comResp as $c) {
+
+                }
+            }
+
+        } else {
+            // graphs object is missing.
+            $result = ['error' => 'graphs collection is missing.'];
+        }
 
         return $result;
     }
