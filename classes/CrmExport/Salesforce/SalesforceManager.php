@@ -490,7 +490,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $sourceIds
      * @return array
      */
-    public function upsertMembers(\PDO $dbh, array $sourceIds) {
+    public function upsertMembers(\PDO $dbh, array $sourceIds, $linkRelatives = false) {
 
         if (count($sourceIds) == 0) {
             $replys[0] = array('error' => "The list of HHK Id's to send is empty.");
@@ -517,7 +517,7 @@ class SalesforceManager extends AbstractExportManager {
             if ($psgId > 0 && $r['idPsg'] != $psgId) {
 
                 // Yes, new Id.  Process current psg
-                $graph = $this->createPsgGraph($guests, $psgId);
+                $graph = $this->createPsgGraph($guests, $psgId, $linkRelatives);
                 if (count($graph) > 0) {
                     $this->psgGraphs[] = $graph;
                 }
@@ -530,7 +530,7 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         // And last group
-        $graph = $this->createPsgGraph($guests, $psgId);
+        $graph = $this->createPsgGraph($guests, $psgId, $linkRelatives);
         if (count($graph) > 0) {
             $this->psgGraphs[] = $graph;
         }
@@ -546,7 +546,8 @@ class SalesforceManager extends AbstractExportManager {
             // Transfer this package to SF API
             try {
                 $this->graphsResult = $this->webService->postUrl($this->endPoint . 'composite/graph', $body);
-                $transferResult =  $this->processGraphResult($this->graphsResult, $rows);
+
+                $transferResult =  $this->processGraphsResult($this->graphsResult, $rows);
 
             } catch (\RuntimeException $ex) {
                 $transferResult = ['error' => $ex->getMessage()];
@@ -562,7 +563,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param mixed $graphId  PSG Id
      * @return array  The formatted Graph object
      */
-    protected function createPsgGraph($guests, $graphId) {
+    protected function createPsgGraph($guests, $graphId, $linkRelatives) {
 
         $hasPatient = false;
         $idPatient = 0;
@@ -589,14 +590,14 @@ class SalesforceManager extends AbstractExportManager {
             $subrequests[] = [
                 "method" => "PATCH",
                 "url" => $this->getContactEndpoint . 'HHK_idName__c/' . $g['HHK_idName__c'],
-                "referenceId" => "refContact" . $g['HHK_idName__c'],
+                "referenceId" => "refContact_" . $g['HHK_idName__c'],
                 "body" => $filteredRow
             ];
         }
 
 
         // If there is a patient, make relationship subrequests
-        if ($hasPatient && $idPatient > 0) {
+        if ($linkRelatives && $hasPatient && $idPatient > 0) {
 
             foreach ($guests as $g) {
 
@@ -605,8 +606,8 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
                 // build the upsert details file
-                $relationRow['npe4__Contact__c'] = "@{refContact" . $g['HHK_idName__c'] . ".id}";
-                $relationRow['npe4__RelatedContact__c'] = "@{refContact" . $idPatient . ".id}";
+                $relationRow['npe4__Contact__c'] = "@{refContact_" . $g['HHK_idName__c'] . ".id}";
+                $relationRow['npe4__RelatedContact__c'] = "@{refContact_" . $idPatient . ".id}";
                 $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
                 $relationRow['npe4__Type__c'] = $g['SF_Rel_Type'];
                 //$relationRow['Is_an_Emergency_Contact__c']      // t/f
@@ -615,7 +616,7 @@ class SalesforceManager extends AbstractExportManager {
                 $subrequests[] = [
                     "method" => "POST",
                     "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
-                    "referenceId" => "refRel" . $g['HHK_idName__c'],
+                    "referenceId" => "refRel_" . $g['HHK_idName__c'],
                     "body" => $relationRow
                 ];
             }
@@ -639,7 +640,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param mixed $guests
      * @return array
      */
-    protected function processGraphResult($graphResult, $guests) {
+    protected function processGraphsResult($graphResult, $guestRows) {
 
         $result = [];
 
@@ -647,14 +648,8 @@ class SalesforceManager extends AbstractExportManager {
         if (isset($graphResult['graphs'])) {
 
             foreach ($graphResult['graphs'] as $graph) {
-
-                $idPsg = $graph['graphId'];
-                $isSuccessful = $graph['isSuccessful'];
-                $comResp = $graph['graphResponse']['compositeResonse'];
-
-                foreach ($comResp as $c) {
-
-                }
+                // Each graph has a collection of subCompositeResponces
+                $this->processCompositeResponse($graph, $guestRows, $result)
             }
 
         } else {
@@ -665,13 +660,119 @@ class SalesforceManager extends AbstractExportManager {
         return $result;
     }
 
-    public function getGraphsResult() {
-        return $this->graphsResult;
+    protected function processCompositeResponse($graph, $guests, &$result) {
+
+        $idPsg = $graph['graphId'];
+        $isSuccessful = $graph['isSuccessful'];
+        $comResp = $graph['graphResponse']['compositeResponse'];
+
+        // Each compositeSubrequestResult
+        foreach ($comResp as $c) {
+
+            switch ($c['httpStatusCode']) {
+
+                case '200':
+                    // “OK” success code, for GET, HEAD, and some PATCH requests.
+
+                    break;
+                case '201':
+                    // “Created” success code, for POST requests and some PATCH requests.
+
+                    break;
+                case '300':
+                    // The value returned when an external ID exists in more than one record. The response body contains the list of matching records.
+
+                    break;
+                case '400':
+                    // The request couldn’t be understood, usually because the JSON or XML body contains an error.
+
+                    break;
+                case '401':
+                    // The session ID or OAuth token used has expired or is invalid.
+
+                    break;
+                case '403':
+                    // The request has been refused. Verify that the logged-in user has appropriate permissions. If the error code is REQUEST_LIMIT_EXCEEDED, you’ve exceeded API request limits in your org.
+
+                    break;
+                case '404':
+                    // The requested resource couldn’t be found. Check the URI for errors, and verify that there are no sharing issues.
+
+                    break;
+                case '405':
+                    // The method specified in the Request-Line isn’t allowed for the resource specified in the URI.
+
+                    break;
+                case '409':
+                    // The request couldn’t be completed due to a conflict with the current state of the resource. Check that the API version is compatible with the resource you’re requesting.
+
+                    break;
+                case '410':
+                    // The requested resource has been retired or removed. Delete or update any references to the resource.
+
+                    break;
+                case '412':
+                    // The request wasn’t executed because one or more of the preconditions that the client specified in the request headers wasn’t satisfied.
+
+                    break;
+                case '414':
+                    // The length of the URI exceeds the 16,384-byte limit.
+
+                    break;
+                case '415':
+                    // The entity in the request is in a format that’s not supported by the specified method.
+
+                    break;
+                case '420':
+                    // Salesforce Edge doesn’t have routing information available for this request host. Contact Salesforce Customer Support.
+
+                    break;
+                case '428':
+                    // The request wasn’t executed because it wasn’t conditional.
+
+                    break;
+                case '431':
+                    // The combined length of the URI and headers exceeds the 16,384-byte limit.
+
+                    break;
+                case '500':
+                    // An error has occurred within Lightning Platform, so the request couldn’t be completed.
+
+                    break;
+                case '502':
+                    // Salesforce Edge wasn’t able to communicate successfully with the Salesforce instance.
+
+                    break;
+                case '503':
+                    // The server is unavailable to handle the request. Typically this issue occurs if the server is down for maintenance or is overloaded.
+
+                    break;
+
+                default:
+
+            }
+
+            if (isset($c['body']['success'])) {
+
+                $idName = str_replace('refContact_', '', $c['referenceId']);
+
+                $guest = $this->getGuest($guests, $idPsg, $idName);
+
+            }
+        }
     }
 
-    public function getPsgGraphs() {
-        return $this->psgGraphs;
+    private function getGuest($guests, $idPsg, $idName) {
+
+        foreach ($guests as $g) {
+            if ($g['idPsg'] == $idPsg && $g['HHK_idName__c'] == $idName) {
+                return $g;
+            }
+        }
+
+        return [];
     }
+
 
 
     /**
