@@ -649,7 +649,7 @@ class SalesforceManager extends AbstractExportManager {
 
             foreach ($graphResult['graphs'] as $graph) {
                 // Each graph has a collection of subCompositeResponces
-                $this->processCompositeResponse($graph, $guestRows, $result)
+                $this->processCompositeResponse($graph, $guestRows, $result);
             }
 
         } else {
@@ -660,6 +660,13 @@ class SalesforceManager extends AbstractExportManager {
         return $result;
     }
 
+    /**
+     * Summary of processCompositeResponse
+     * @param mixed $graph
+     * @param mixed $guests
+     * @param mixed $result
+     * @return void
+     */
     protected function processCompositeResponse($graph, $guests, &$result) {
 
         $idPsg = $graph['graphId'];
@@ -669,100 +676,138 @@ class SalesforceManager extends AbstractExportManager {
         // Each compositeSubrequestResult
         foreach ($comResp as $c) {
 
+            $guest = $this->findGuest($guests, $idPsg, str_replace('refContact_', '', $c['referenceId']));
+            $f = [
+                'HHK Id' => $guest['HHK_idName__c'],
+                'Contact Id' => '',
+                'Contact Type' => $guest['Contact_Type__c'],
+                'Name' => ($guest['Salutation'] == '' ? '' : $guest['Salutation'] . ' ') .$guest['FirstName'] . ' ' . ($guest['Middle_Name__c'] == '' ? '' : $guest['Middle_Name__c'] . ' ') . $guest['LastName'] . ' ' . $guest['Suffix__c'] . ($guest['Nickname__c'] == '' ? '' : ', ' . $guest['Nickname__c']),
+                'Birthdate' => $guest['Birthdate'],
+                'Address' => $guest['Street'] . ', ' . $guest['City'] . ', ' . $guest['State'] . ', ' . $guest['Zip'],
+                'Phone' => $guest['HomePhone'],
+                'Email' => $guest['Email'],
+                'Result' => '',
+            ];
+
             switch ($c['httpStatusCode']) {
 
                 case '200':
                     // “OK” success code, for GET, HEAD, and some PATCH requests.
 
+                    $f['Contact Id'] = $c['body']['id'];
+                    $f['Result'] = 'OK';
+
                     break;
                 case '201':
                     // “Created” success code, for POST requests and some PATCH requests.
+
+                    $f['Contact Id'] = $c['body']['id'];
+                    $f['Result'] = 'Contact Created';
 
                     break;
                 case '300':
                     // The value returned when an external ID exists in more than one record. The response body contains the list of matching records.
 
+                    $f['Result'] = 'HHK ID exists in more than one record';
                     break;
                 case '400':
                     // The request couldn’t be understood, usually because the JSON or XML body contains an error.
 
+                    $f['Result'] = $c['body']['message'];
                     break;
                 case '401':
                     // The session ID or OAuth token used has expired or is invalid.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '403':
                     // The request has been refused. Verify that the logged-in user has appropriate permissions. If the error code is REQUEST_LIMIT_EXCEEDED, you’ve exceeded API request limits in your org.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '404':
                     // The requested resource couldn’t be found. Check the URI for errors, and verify that there are no sharing issues.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '405':
                     // The method specified in the Request-Line isn’t allowed for the resource specified in the URI.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '409':
                     // The request couldn’t be completed due to a conflict with the current state of the resource. Check that the API version is compatible with the resource you’re requesting.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '410':
                     // The requested resource has been retired or removed. Delete or update any references to the resource.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '412':
                     // The request wasn’t executed because one or more of the preconditions that the client specified in the request headers wasn’t satisfied.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '414':
                     // The length of the URI exceeds the 16,384-byte limit.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '415':
                     // The entity in the request is in a format that’s not supported by the specified method.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '420':
                     // Salesforce Edge doesn’t have routing information available for this request host. Contact Salesforce Customer Support.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '428':
                     // The request wasn’t executed because it wasn’t conditional.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '431':
                     // The combined length of the URI and headers exceeds the 16,384-byte limit.
 
+                    $f['Result'] = $c['body']['errorCode'];
                     break;
                 case '500':
                     // An error has occurred within Lightning Platform, so the request couldn’t be completed.
 
+                    $f['Result'] = 'A 500 error has occurred within Lightning Platform, so the request couldn’t be completed';
                     break;
                 case '502':
                     // Salesforce Edge wasn’t able to communicate successfully with the Salesforce instance.
 
+                    $f['Result'] = '502: Salesforce Edge wasn’t able to communicate successfully with the Salesforce instance';
                     break;
                 case '503':
                     // The server is unavailable to handle the request. Typically this issue occurs if the server is down for maintenance or is overloaded.
 
+                    $f['Result'] = '503: The server is unavailable to handle the request';
                     break;
 
                 default:
+                    $f['Result'] = 'Unknown http Status Code: "' . $c['httpStatusCode'] . '"';
 
             }
 
-            if (isset($c['body']['success'])) {
-
-                $idName = str_replace('refContact_', '', $c['referenceId']);
-
-                $guest = $this->getGuest($guests, $idPsg, $idName);
-
-            }
+            $result[$guest['HHK_idName__c']] = $f;
         }
     }
 
-    private function getGuest($guests, $idPsg, $idName) {
+    /**
+     * Summary of findGuest
+     * @param mixed $guests
+     * @param mixed $idPsg
+     * @param mixed $idName
+     * @return mixed
+     */
+    private function findGuest($guests, $idPsg, $idName) {
 
         foreach ($guests as $g) {
             if ($g['idPsg'] == $idPsg && $g['HHK_idName__c'] == $idName) {
@@ -1126,7 +1171,11 @@ class SalesforceManager extends AbstractExportManager {
         return $tbl->generateMarkup();
 
     }
-
+    /**
+     * Summary of createTypeLists
+     * @param \PDO $dbh
+     * @return string
+     */
     private function createTypeLists(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -1273,6 +1322,11 @@ class SalesforceManager extends AbstractExportManager {
         return $result;
     }
 
+    /**
+     * Summary of saveTypeLists
+     * @param \PDO $dbh
+     * @return string
+     */
     protected function saveTypeLists(\PDO $dbh) {
 
         $uS = Session::getInstance();
