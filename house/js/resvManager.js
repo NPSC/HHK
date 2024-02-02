@@ -2287,6 +2287,11 @@ function resvManager(initData, options) {
                 });
             });
 
+            //SMS Dialog
+            $("#btnShowResvMsgs").button().smsDialog({
+                resvId: data.rid
+            });
+
             setupRoom(data.rid);
 
             if (data.resv.rdiv.rate !== undefined) {

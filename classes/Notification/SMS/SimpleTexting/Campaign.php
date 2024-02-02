@@ -1,27 +1,22 @@
 <?php
 
 namespace HHK\Notification\SMS\SimpleTexting;
-use HHK\Exception\RuntimeException;
+use GuzzleHttp\Exception\ClientException;
+use HHK\Exception\SmsException;
 
-Class campaign {
+Class Campaign {
 
     protected \PDO $dbh;
     protected Settings $settings;
-    protected string $accountPhone;
-    protected string $title;
-    protected array $contactSegments;
     protected Message $message;
 
-    public function __construct(\PDO $dbh, string $title, array $contactSegments, string $text, string $subject = "", string $fallbackText = "", string $accountPhone = ""){
+    public function __construct(\PDO $dbh, string $text, string $fallbackText = ""){
         $this->dbh = $dbh;
         $this->settings = new Settings($dbh);
-        $this->accountPhone = $accountPhone;
-        $this->title = $title;
-        $this->contactSegments = $contactSegments;
-        $this->message = new Message($dbh, "", $text, $subject, $fallbackText, $accountPhone);
+        $this->message = new Message($dbh, "", $text, '', $fallbackText);
     }
 
-    public function sendCampaign(){
+    protected function sendCampaign(string $listId, string $listName){
         $client = $this->settings->getClient();
 
         $evaluated = $this->message->evaluateMessage();
@@ -37,20 +32,30 @@ Class campaign {
         }
 
         if($warnings || $errors){
-            throw new RuntimeException("Unable to send campaign:" . ($errors ? " Error: " . $errors . '.': '') . ($warnings ? " Warning: " . $warnings . '.': ''));
+            throw new SmsException("Unable to send campaign:" . ($errors ? " Error: " . $errors . '.': '') . ($warnings ? " Warning: " . $warnings . '.': ''));
         }
 
         //send campaign
         $requestArray = [
-            "title"=>$this->title,
-            "accountPhone"=>$this->accountPhone,
-            "segmentIds" => $this->contactSegments,
+            "title"=>$listName,
+            "accountPhone"=>$this->settings->getAccountPhone(),
+            "listIds"=>[$listId],
             "messageTemplate"=>$this->message->getMessageTemplate()
         ];
 
-        $response = $client->post('campaigns',[
-            'json'=>$requestArray
-        ]);
+        try {
+            $response = $client->post('campaigns', [
+                'json' => $requestArray
+            ]);
+        }catch(ClientException $e){
+            $respArr = json_decode($e->getResponse()->getBody(), true);
+
+            if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
+                throw new SmsException("Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"]);
+            } else {
+                throw new SmsException("Error sending campaign: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+            }
+        }
 
 
         if($response->getStatusCode() === 201){
@@ -62,11 +67,62 @@ Class campaign {
                 return ["error"=>"Unable to parse response: " . $e->getMessage()];
             }
         }else{
-            throw new RuntimeException("Invalid response received while trying to send campaign. Error  " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+            throw new SmsException("Invalid response received while trying to send campaign. Error  " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
         }
 
     }
 
-}
+    /**
+     * Summary of prepareAndSendCampaign
+     * @param string $status
+     * @throws \HHK\Exception\SmsException
+     * @return array
+     */
+    public function prepareAndSendCampaign(string $status){
+        $client = $this->settings->getClient();
 
-?>
+        $messages = new Messages($this->dbh);
+        $guestData = $messages->getCampaignGuestsData($status);
+        $now = new \DateTime();
+
+        //make contact list
+        try {
+            $response = $client->post('contact-lists', [
+                'json' => ["name"=>$guestData['title'] . " - " . $now->format("M j, Y h:i:s a")]
+            ]);
+        }catch(ClientException $e){
+            $respArr = json_decode($e->getResponse()->getBody(), true);
+
+            if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
+                throw new SmsException("Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"]);
+            } else {
+                throw new SmsException("Error sending campaign: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+            }
+        }
+
+        if($response->getStatusCode() == 201){
+            $respArr = json_decode($response->getBody(), true);
+            
+            if(isset($respArr["id"])){
+                $campaignListId = $respArr["id"];
+                
+                //sync contacts to new list
+                $contacts = new Contacts($this->dbh);
+                $syncStatus = $contacts->syncContacts($status, [$this->settings->getHhkListId(), $campaignListId]);
+
+                if(strtolower($syncStatus) == "done"){
+                    $this->sendCampaign($campaignListId, $guestData['title'] . " - " . $now->format("M j, Y h:i:s a"));
+
+                    return ["success" => "Message sent successfully"];
+                }else{
+                    throw new SmsException("Error sending campaign: Could not set up campaign list");
+                }
+            }else{
+                throw new SmsException("Error sending campaign message: Could not create contact list");
+            }
+        }else{
+            throw new SmsException("Invalid response received while trying to send message: Status code: " . $response->getStatusCode());
+        }
+    }
+
+}

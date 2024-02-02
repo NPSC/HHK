@@ -99,6 +99,8 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('smsProvider', '', 'lu', 'sms', 'Enable SMS integration', 'smsProvider', '1');
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('smsProvider', '', '', 10);
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('smsProvider', 'SimpleTexting', 'SimpleTexting', 20);
-INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsToken', '', 'pw', 'sms', 'API Token', '1');
-INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsFrom', '', 's', 'sms', 'Account Phone number used as the From address', '1');
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('Sys_Config_Category', 'sms', 'SMS Settings', 55);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsToken', '', 's', 'sms', 'API Token', 1);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsFrom', '', 's', 'sms', 'Account Phone number used as the From address', 1);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsListId', '', 's', 'sms', 'Contact List ID for all HHK Contacts', 0);
 

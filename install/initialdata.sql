@@ -436,6 +436,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Site_Mode', 'demo', 'Demonstration','','',0),
 ('Site_Mode', 'live', 'Production','','',0),
 
+('smsProvider', '', '', '', '', 10),
+('smsProvider', 'SimpleTexting', 'SimpleTexting', '', '', 20),
+
 ('Special_Needs','c','Cancer','','d',0),
 ('Special_Needs','f','Dev. Challenged','','d',0),
 ('Special_Needs','z','Unknown','','d',1000),
@@ -449,6 +452,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'h', 'House','','',30),
 ('Sys_Config_Category', 'a', 'General','','',5),
 ('Sys_Config_Category', 'g', 'Guest','','',20),
+('Sys_Config_Category', 'sms', 'SMS Settings', '', '',55),
 ('Sys_Config_Category', 'es', 'Email Server','','',60),
 ('Sys_Config_Category', 'fg', 'Payment Gateway','','',0),
 ('Sys_Config_Category', 'pr', 'Password Rules','','',70),
@@ -667,6 +671,10 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Show_Closed', 'false', 'b', 'c', '', 'Indicate closed days on the calendar','', '1'),
 ('sId','11','i','a','','House organization Id','',1),
 ('siteName','Hospitality HouseKeeper','s','a','','House or organization  name','',1),
+('smsProvider', '', 'lu', 'sms', '', 'Enable SMS integration', 'smsProvider', '', 1),
+('smsToken', '', 's', 'sms', '', 'API Token', '', 1),
+('smsFrom', '', 's', 'sms', '', 'Account Phone number used as the From address', '', 1),
+('smsListId', '', 's', 'sms', '', 'Contact List ID for all HHK Contacts', '', 0),
 ('SMTP_Auth_Required','true','b','es','','SMTP Authorization required','',1),
 ('SMTP_Debug','0','i','es','','0 = off; 1; 2; 3;  4 = low level','',1),
 ('SMTP_Host','','s','es','','SMTP Host','',1),

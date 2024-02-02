@@ -145,7 +145,9 @@ $(document).ready(function () {
             	flagAlertMessage(text, type);
         	}
 		});
-	}
+    }
+    console.log(memData);
+    $(".btnTextGuest").smsDialog({"guestId":memData.id});
 
     // relationship dialog
     $("#submit").dialog({

@@ -141,7 +141,7 @@ class Emails extends AbstractContactPoint {
 
         foreach ($this->codes as $p) {
 
-            $trContents = HTMLTable::makeTd($this->createEmailMarkup($p, $inputClass, $idPrefix));
+            $trContents = $this->createEmailMarkup($p, $inputClass, $idPrefix);
             // Wrapup this TR
             $table->addBodyTr($trContents);
 
@@ -165,11 +165,7 @@ class Emails extends AbstractContactPoint {
      */
     public function createEmailMarkup($p, $inputClass = '', $idPrefix = "", $showPrefCheckbox = TRUE) {
 
-        $table = new HTMLTable();
-
         // Preferred Radio button
-        //$tdContents = HTMLContainer::generateMarkup('label', $p[1], array('for'=>$idPrefix.'em'.$p[0]));
-
         $prefAttr = array();
         $prefAttr['id'] = $idPrefix.'em' . $p[0];
         $prefAttr['name'] = $idPrefix.'rbEmPref';
@@ -188,14 +184,11 @@ class Emails extends AbstractContactPoint {
             $prefAttr['style'] = 'display:none;';
             $em = ' Email:';
         }
-        //$tdContents .= HTMLInput::generateMarkup($p[0], $prefAttr);
         // The row
         $trContents = HTMLContainer::generateMarkup('td',
                 HTMLContainer::generateMarkup('label', $p[1].$em, array('for'=>$idPrefix.'em'.$p[0]))
                 .' ' .HTMLInput::generateMarkup($p[0], $prefAttr)
-                , array('class'=>$p[2]));
-        // Wrapup this TR
-        $table->addBodyTr($trContents);
+                , array('class'=>"tdlabel " .$p[2]));
 
 
         // email address
@@ -206,12 +199,10 @@ class Emails extends AbstractContactPoint {
         $attr['class'] = 'hhk-emailInput ' . $inputClass;
         $attr['size'] = '26';
 
-        //$tdContents = HTMLInput::generateMarkup($this->rSs[$p[0]]->Email->getStoredVal(), $attr);
-
-        // Wrapup the this tr
-        $table->addBodyTr(HTMLContainer::generateMarkup('td', HTMLInput::generateMarkup($this->rSs[$p[0]]->Email->getStoredVal(), $attr), array('class'=>$p[2])));
-
-        return $table->generateMarkup();
+        //add input td
+        $trContents .= HTMLContainer::generateMarkup('td', HTMLInput::generateMarkup($this->rSs[$p[0]]->Email->getStoredVal(), $attr), array('class' => $p[2]));
+        
+        return $trContents;
     }
 
 
@@ -316,4 +307,3 @@ class Emails extends AbstractContactPoint {
     }
 
 }
-?>

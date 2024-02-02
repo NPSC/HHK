@@ -694,7 +694,13 @@ $(document).ready(function () {
 
 		if(showCurrentGuestPhotos){
 			cgCols.unshift({data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px"});
-		}
+    }
+    
+    $("#btnTextCurGuests").button().smsDialog({ "campaign": "checked_in"});
+
+    $("#btnTextConfResvGuests").button().smsDialog({ "campaign": "confirmed_reservation" });
+
+    $("#btnTextWaitlistGuests").button().smsDialog({ "campaign": "waitlist" });
 
     // Reservations
     let rvCols = [
@@ -1677,6 +1683,10 @@ $(document).ready(function () {
            		focus:function(e, ui){
            			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);
            		}
+            });
+           
+           $(".btnShowResvMsgs").each(function () {
+               $(this).smsDialog({ "resvId": $(this).data('rid') });
            });
        },
        columns: wlCols,

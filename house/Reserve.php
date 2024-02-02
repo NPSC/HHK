@@ -227,12 +227,8 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
-
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo FAVICON; ?>
-<!--        Fix the ugly checkboxes-->
-        <style>
-            .ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
-        </style>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -256,6 +252,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
         ?>
@@ -326,7 +323,7 @@ $resvObjEncoded = json_encode($resvAr);
 
         </div>
         <form name="xform" id="xform" method="post"></form>
-        <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
+        <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size: 0.9em;">
             <form id="frmConfirm" action="Reserve.php" method="post"></form>
         </div>
         <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate"/>

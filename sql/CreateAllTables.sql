@@ -1054,6 +1054,18 @@ CREATE TABLE if not exists `name_email` (
 
 
 
+
+-- -----------------------------------------------------
+-- Table `name_external`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `name_external` (
+  `idName` int(11) NOT NULL,
+  `Service` varchar(25) NOT NULL DEFAULT '',
+  `External_Id` varchar(140) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idName`,`Service`)
+) ENGINE=InnoDB;
+
 -- -----------------------------------------------------
 -- Table `name_guest`
 -- -----------------------------------------------------

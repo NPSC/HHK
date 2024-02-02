@@ -106,11 +106,13 @@ class Phones extends AbstractContactPoint {
 
             $data["Phone_Num"] = $this->rSs[$code]->Phone_Num->getStoredVal();
             $data["Phone_Extension"] = $this->rSs[$code]->Phone_Extension->getStoredVal();
+            $data["Unformatted_Phone"] = $this->rSs[$code]->Phone_Search->getStoredVal();
 
         } else {
 
             $data["Phone_Num"] = "";
             $data["Phone_Extension"] = "";
+            $data["Unformatted_Phone"] = "";
 
         }
 
@@ -219,6 +221,8 @@ class Phones extends AbstractContactPoint {
                     unset($attr['class']);
                 }
                 $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
+            } else if ($this->rSs[$p[0]]->Phone_Num->getStoredVal() != "" && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
+                $tdContents .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>'ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest']);
             }
         }
 
@@ -395,4 +399,3 @@ class Phones extends AbstractContactPoint {
     }
 
 }
-?>

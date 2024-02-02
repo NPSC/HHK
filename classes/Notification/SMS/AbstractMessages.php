@@ -3,10 +3,16 @@
 namespace HHK\Notification\SMS;
 
 use HHK\Exception\RuntimeException;
-use HHK\House\Visit\Visit;
-use HHK\HTMLControls\HTMLContainer;
+use HHK\Member\Address\Phones;
+use HHK\Member\IndivMember;
+use HHK\Notification\SMS\SimpleTexting\Message;
+use HHK\sec\Session;
 use HHK\sec\Labels;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\PhonePurpose;
 use HHK\SysConst\VisitStatus;
+use HHK\Notification\SMS\SimpleTexting\Contacts;
 
 abstract class AbstractMessages
 {
@@ -20,11 +26,25 @@ abstract class AbstractMessages
         $this->accountPhone = $accountPhone;
     }
 
-    public function getVisitMessagesMkup(int $idVisit, int $idSpan){
+    public function getVisitGuestsData(int $idVisit, int $idSpan){
+        $query = 'SELECT DISTINCT
+    n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, r.Title as "Room", v.Status, if(s.idName = v.idPrimaryGuest,1,0) as "isPrimaryGuest", if(np.Phone_Code is null,0,1) as "isMobile"
+FROM
+    stays s
+		join 
+	visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+        join
+    resource r on v.idResource = r.idResource
+        LEFT JOIN
+    name n ON s.idName = n.idName
+        left JOIN
+    name_phone np ON s.idName = np.idName and np.Phone_Code = "mc"
+WHERE
+    s.idVisit = :idVisit AND s.Visit_Span = :idSpan
+        AND s.Status = :status
+        order by isMobile desc, isPrimaryGuest desc';
 
-        $mkup = "";
-
-        $stmt = $this->dbh->prepare("select distinct n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search from stays s left join name n on s.idName = n.idName left join name_phone np on s.idName = np.idName where s.idVisit = :idVisit and s.Visit_Span = :idSpan and s.Status = :status and np.Phone_Search != '' and np.Phone_Code = 'mc';");
+        $stmt = $this->dbh->prepare($query);
 
         $stmt->execute([
             ':idVisit' => $idVisit,
@@ -32,209 +52,104 @@ abstract class AbstractMessages
             ':status' => VisitStatus::Active
         ]);
 
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $li = '';
-        $allRecipientsMkup = HTMLContainer::generateMarkup("h5", "To");
-
-        foreach($rows as $row){
-            $li .= HTMLContainer::generateMarkup("li", HTMLContainer::generateMarkup("a", $row["Name_Full"], array("href" => "#msgsTabContent")), array("data-idName" => $row["idName"], "data-name"=>$row["Name_Full"], "data-phone" => $row["Phone_Num"], "data-phone-unformatted" => $row["Phone_Search"]));
-            $allRecipientsMkup .= HTMLContainer::generateMarkup("div", $row["Name_Full"] . " - " . $row["Phone_Num"], array("class"=>"ui-widget-content ui-corner-all recipient"));
-        }
-
-        $li .= HTMLContainer::generateMarkup("li", HTMLContainer::generateMarkup("a", "Current " . Labels::getString("MemberType", "guest", "Guest") . 's', array("href" => "#allGuestsTabContent")), array("data-idVisit" => $idVisit));
-
-        $ul = HTMLContainer::generateMarkup("ul", $li, array("class"=>"ui-tabs-nav ui-corner-all ui-helper-reset ui-helper-clearfix ui-widget-header"));
-
-        $tabContent = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("h4", "", array("class"=>"msgTitle")).
-            HTMLContainer::generateMarkup("div", '<div id="hhk-loading-spinner" class="center p-3"><img src="../images/ui-anim_basic_16x16.gif"></div>', array("class"=>"msgsContainer loading")).
-            HTMLContainer::generateMarkup("div",
-                HTMLContainer::generateMarkup("textarea", "", array("class"=>"ui-widget-content ui-corner-all", "maxlength"=>"160")).
-                HTMLContainer::generateMarkup("button", "Send Message", array("class"=>"ui-button ui-corner-all"))
-            , array("class"=>"newMsg hhk-flex"))
-        , array("id"=>"msgsTabContent", "class"=>"hhk-overflow-x ui-tabs-panel ui-corner-bottom ui-widget-content"));
-
-        //all guests tab
-        $tabContent .= HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("h4", "", array("class"=>"msgTitle")).
-            HTMLContainer::generateMarkup("div", $allRecipientsMkup, array("class"=>"allRecipients ui-widget-content ui-corner-all")).
-            HTMLContainer::generateMarkup("div",
-                HTMLContainer::generateMarkup("textarea", "", array("class"=>"ui-widget-content ui-corner-all", "maxlength"=>"160")).
-                HTMLContainer::generateMarkup("button", "Send Message", array("class"=>"ui-button ui-corner-all"))
-            , array("class"=>"newMsg hhk-flex"))
-        , array("id"=>"allGuestsTabContent", "class"=>"hhk-overflow-x ui-tabs-panel ui-corner-bottom ui-widget-content"));
-
-        $mkup .= HTMLContainer::generateMarkup("div", $ul . $tabContent, array("id" => "smsTabs", "class" => "ui-tabs ui-corner-all, ui-widget ui-widget-content ui-tabs-vertical ui-helper-clearfix"));
-
-        return $mkup;
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function getMockupMessages(int $idName){
-        return [
-            "idName" => "123",
-            "Name_Full"=>"Matt Smith",
-            "phone"=>"(555) 666-5656",
-            "msgs"=>[
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"When is check in time?",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MI",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"3pm, See you soon!",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MO",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"Where's the entrance?",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MI",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"123 Main St",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MO",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"Dinner starts at 6pm in the dining room",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MO",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"We'll be there!",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MI",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"When is check in time?",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MI",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"3pm, See you soon!",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MO",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"Where's the entrance?",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MI",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"123 Main St",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MO",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"Dinner starts at 6pm in the dining room",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MO",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"We'll be there!",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MI",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-                [
-                    "id"=>"507f191e810c19729de860ea",
-                    "subject"=>"Some message from SimpleTexting",
-                    "text"=>"What happens when the message is very long, like so long that you dread even reading it because it hurts your eyes and your brain just shuts off?",
-                    "contactPhone"=>"8001234567",
-                    "accountPhone"=>"8005551234",
-                    "directionType"=>"MI",
-                    "timestamp"=>"2024-01-15T23:20:08.489Z",
-                    "referenceType"=>"API_SEND",
-                    "category"=>"SMS",
-                    "mediaItems"=>[]
-                ],
-            ]
-        ];
+    public function getResvGuestsData(int $idResv){
+        $query = 'SELECT DISTINCT
+        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, rg.Primary_Guest as "isPrimaryGuest", if(np.Phone_Code is null,0,1) as "isMobile"
+    FROM
+        reservation_guest rg
+            LEFT JOIN
+        name n ON rg.idGuest = n.idName
+            left JOIN
+        name_phone np ON rg.idGuest = np.idName and np.Phone_Code = "mc"
+    WHERE
+        rg.idReservation = :idResv
+            order by isMobile desc, isPrimaryGuest desc';
+
+        $stmt = $this->dbh->prepare($query);
+
+        $stmt->execute([
+            ':idResv' => $idResv
+        ]);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function getGuestData(int $idName){
+        $query = 'SELECT DISTINCT
+        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, if(np.Phone_Code is null,0,1) as "isMobile", concat("Text ", n.Name_Full) as "dialogTitle"
+    FROM
+        name n
+            left JOIN
+        name_phone np ON n.idName = np.idName and np.Phone_Code = "mc"
+    WHERE
+        n.idName = :idName
+            order by isMobile desc';
+
+        $stmt = $this->dbh->prepare($query);
+
+        $stmt->execute([
+            ':idName' => $idName
+        ]);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function getCampaignGuestsData(string $status){
+        $contacts = new Contacts($this->dbh);
+
+        switch ($status){
+            case "checked_in":
+                return ["status"=>$status, "title"=>"Current " . Labels::getString('MemberType', 'visitor', 'Guest') . "s", "contacts"=>$contacts->getCheckedInGuestPhones()];
+            case "confirmed_reservation":
+                return ["status" => $status, "title" => Labels::getString('register', 'reservationTab', 'Confirmed Reservations'), "contacts" => $contacts->getConfirmedReservationGuestPhones()];
+            case "waitlist":
+                return ["status" => $status, "title" => Labels::getString('register', 'waitlistTab', 'Wait List'), "contacts" => $contacts->getWaitlistReservationGuestPhones()];
+            default:
+                return false;
+        }
+    }
+
+    public function sendVisitMessage(int $idVisit, int $idSpan, string $msgTxt, string $subject = ""){
+        $guests = $this->getVisitGuestsData($idVisit, $idSpan);
+
+        $results = array();
+
+        if (count($guests) > 0){
+            foreach($guests as $guest){
+                $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
+                $results[$guest["idName"]] = $message->sendMessage();
+            }
+        } else {
+            return ['error' => "No guests found"];
+        }
+        return $results;
+    }
+
+    public function getMessages(int $idName){
+        $uS = Session::getInstance();
+        $name = new IndivMember($this->dbh, MemBasis::Indivual, $idName);
+        $phones = new Phones($this->dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+        $cell = $phones->get_Data(PhonePurpose::Cell);
+
+        if(strlen($cell["Unformatted_Phone"]) >= 10){
+            $msgs = $this->fetchMessages($cell["Unformatted_Phone"]);
+
+            return [
+                "idName" => $name->get_idName(),
+                "Name_Full" => $name->get_fullName(),
+                "Name_First" => $name->get_firstName(),
+                "siteName"=>html_entity_decode($uS->siteName),
+                "phone" => $cell["Phone_Num"],
+                "totalPages" => $msgs['totalPages'],
+                "totalMsgs" => $msgs['totalElements'],
+                "msgs" => array_reverse($msgs['content']),
+            ];
+        }else{
+            throw new RuntimeException("Mobile number not found for idName " . $idName);
+        }
     }
 
 }
-?>

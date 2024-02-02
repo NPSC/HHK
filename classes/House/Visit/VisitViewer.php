@@ -508,7 +508,7 @@ class VisitViewer {
             }
 
             //Make Send Message button
-            $sendMsgButton = HTMLContainer::generateMarkup('button', 'Message ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's...', array("role" => "button", "class" => "viewMsgs ui-button ui-corner-all", "style" => "font-size: 0.8em; margin-left: 0.5em;"));
+            $sendMsgButton = HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's...', array("role" => "button", "class" => "viewMsgs ui-button ui-corner-all", "style" => "font-size: 0.8em; margin-left: 0.5em;"));
         }
 
         // 'Checkout All' button
@@ -1791,4 +1791,3 @@ class VisitViewer {
 
     }
 }
-?>

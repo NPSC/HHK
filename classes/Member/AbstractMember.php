@@ -4,6 +4,7 @@ namespace HHK\Member;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\Address\AbstractContactPoint;
+use HHK\Member\Address\Phones;
 use HHK\SysConst\{GLTableNames, MemDesignation, MemStatus};
 use HHK\SysConst\MemBasis;
 use HHK\Tables\EditRS;

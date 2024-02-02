@@ -1019,7 +1019,9 @@ where rg.idReservation =" . $r['idReservation']);
         // Confirmation button  updated 5/20/2023:  add uncommitted to allowable statuses. #815
         $mk2 = '';
         if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::UnCommitted) {
-            $mk2 .= HTMLInput::generateMarkup('Send Confirmation...', ['type'=>'button', 'id'=>'btnShowCnfrm', 'style'=>'margin:.3em;float:right;', 'data-rid'=>$resv->getIdReservation()]);
+            $mk2 .= HTMLInput::generateMarkup('Send Text Message...', ['type'=>'button', 'id'=>'btnShowResvMsgs', "class"=>'mx-2']);
+            $mk2 .= HTMLInput::generateMarkup('Send Confirmation Email...', ['type'=>'button', 'id'=>'btnShowCnfrm', 'data-rid'=>$resv->getIdReservation()]);
+            $mk2 = HTMLContainer::generateMarkup("div", $mk2, ['class' => "hhk-flex mt-2 justify-content-end"]);
         }
 
         // fieldset wrapper
@@ -1028,7 +1030,7 @@ where rg.idReservation =" . $r['idReservation']);
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
                     . $tbl2->generateMarkup() . $mk2,
                     ['class'=>'hhk-panel'])
-            , ['style'=>'display: inline-block', 'class'=>'mr-3']);
+            , ['class'=>'mr-3 d-inline-block']);
 
     }
 
@@ -1609,4 +1611,3 @@ WHERE
 		return $this;
 	}
 }
-?>

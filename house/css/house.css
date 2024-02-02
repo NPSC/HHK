@@ -780,7 +780,6 @@ div.dt-buttons .dt-button:hover>span {
     border-color: #2C3E50;
     cursor: pointer;
     
-    -webkit-appearance: button;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -913,32 +912,59 @@ table.dataTable tbody td {
 	margin-left: 0.5em;
 }
 
+.hhk-btn-small {
+	padding: 0.2em 0.4em;
+}
 
-#viewMsgsDialog #smsTabs {
-	display: flex;
+
+.ui-tooltip {
+	box-shadow: none !important;
+}
+
+#viewMsgsDialog {
+	min-height: 150px !important;
 	font-size: 0.8em;
 }
+#viewMsgsDialog #smsTabs {
+	display: flex;
+}
+
+#viewMsgsDialog #smsTabs.ui-tabs .ui-tabs-nav li {
+	white-space: normal;
+}
+
+#viewMsgsDialog .ui-tabs-nav {
+	width: 14em;
+}
+
 #viewMsgsDialog h4.msgTitle, #viewMsgsDialog div.msgsContainer {
 	padding-bottom: 0.25em;
 	border-bottom: 1px solid #a6c9e2;
 }
 
-.msgsContainer.loading{
-	display: flex;
-	align-items: center;
-	justify-content: space-evenly;
+#viewMsgsDialog #msgsTabContent, #viewMsgsDialog #allGuestsTabContent, #viewMsgsDialog #campaignTabContent {
+	padding: 1em;
+}
+
+#viewMsgsDialog.loading, #viewMsgsDialog .loading {
+	background: url(../../images/ui-anim_basic_16x16.gif);
+	background-repeat: no-repeat;
+	background-position: center;
+}
+#viewMsgsDialog.loading *, #viewMsgsDialog .loading *{
+	display: none !important;
 }
 
 .msgsContainer {
 	height: 400px;
 	overflow-y: auto;
-	padding-right: 0.75em;
+	padding: 0.5em 0.75em 0.5em 0 !important;
 }
 
 .msgsContainer .msg {
     width: fit-content;
     max-width: 85%;
-    margin-top: 1em;
+    margin: 0.5em 0;
 }
 
 .msgsContainer .msgContent {
@@ -988,24 +1014,44 @@ table.dataTable tbody td {
 	resize:none;
 	padding: 0.5em;
 }
+
+#viewMsgsDialog .smsSubject {
+	margin-top: 0.5em;
+}
+
+#viewMsgsDialog input[name=subject] {
+	margin: 0.5em;
+	padding: 0.5em;
+	width: 100%;
+}
+
 #viewMsgsDialog .newMsg button {
 	min-width: fit-content;
 }
 
 #viewMsgsDialog .allRecipients {
 	display: flex;
-	flex-flow: column;
 	padding: 0 0.5em;
 	margin: 0.5em 0 0 0.5em;
-	align-items: start;
+	align-items: baseline;
+	flex-wrap: wrap;
 }
 
-#viewMsgsDialog .allRecipients h5{
-	margin: 0.5em 0;
+#viewMsgsDialog .allRecipients *{
+	margin: 0.5em 0.5em 0.5em 0;
 }
 
 #viewMsgsDialog .allRecipients .recipient {
 	padding: 0.5em;
 	margin: 0.5em 0;
 	background: #E9F4FD;
+}
+
+#viewMsgsDialog .allRecipients *:not(:first-child,:last-child):after {
+	content: ",";
+}
+
+/* fix ugly stay checkboxes on reservation */
+#tblFamily .ui-icon-background, #tblFamily .ui-state-active .ui-icon-background {
+	background-color:#fff;
 }
