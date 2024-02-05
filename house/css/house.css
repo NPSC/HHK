@@ -666,8 +666,8 @@ div.dt-buttons .dt-button:hover>span {
 	width: 100%;
 }
 
-#mfaEmail td {
-	border: none;
+#mfaEmail td:not(.tdlabel) {
+	text-align: left;
 }
 
 

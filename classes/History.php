@@ -290,7 +290,7 @@ class History {
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none; display:block;')))
-                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Text Guests', array("class"=>"btnShowResvMsgs", 'data-rid'=>$r['idReservation'])))
+                            . ($uS->smsProvider ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Text Guests', array("class"=>"btnShowResvMsgs", 'data-rid'=>$r['idReservation']))) : "")
                             . ($r['PrePaymt'] > 0 ? '' : $this->makeResvCanceledStatuses($reservStatuses, $r['idReservation']))
                             . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
                             . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')

@@ -148,10 +148,10 @@ where u.User_Name = :uname";
             $mkup = HTMLContainer::generateMarkup('div',
                         HTMLContainer::generateMarkup('div',
                             HTMLContainer::generateMarkup("div", "Perferred Verification Email", array("class"=>"ui-widget-header ui-corner-top p-1")) .
-                            HTMLContainer::generateMarkup("form", $emails->createMarkup(), array("class"=>"ui-widget-content ui-corner-bottom", 'id'=>'userSettingsEmail'))
+                            HTMLContainer::generateMarkup("form", $emails->createMarkup(), array("class"=>"ui-widget-content ui-corner-bottom p-1", 'id'=>'userSettingsEmail'))
                         , array("class"=>"ui-widget")) .
                         HTMLContainer::generateMarkup('button', "Enable Email 2 Factor Verification", array('id'=>'genEmailSecret', "class"=>"mt-3"))
-                , array('class'=>'my-3', 'style'=>'text-align:center;'));
+                , array('class'=>'mb-3', 'style'=>'text-align:center;'));
         }
 
         $mkup .= '

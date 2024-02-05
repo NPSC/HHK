@@ -2292,6 +2292,11 @@ function resvManager(initData, options) {
                 resvId: data.rid
             });
 
+            $(".btnTextGuest").each(function () {
+                var guestId = $(this).data("idname");
+                $(this).smsDialog({"guestId":guestId});
+            });
+
             setupRoom(data.rid);
 
             if (data.resv.rdiv.rate !== undefined) {

@@ -156,13 +156,13 @@
                             window.open(data.gotopage, '_self');
                         }
                         flagAlertMessage(data.error, 'error');
-                        sendMsgBtn.attr('disabled', false).html(uiMkup.sendIcon).removeClass("loading");
-                        msgMkup.attr('disabled', false);
-                    } else if (data) {
-                        //TODO check data
-                        sendMsgBtn.attr('disabled', false).html(uiMkup.sendIcon).removeClass("loading");
-                        msgMkup.val("").attr("disabled", false);
                     }
+                    
+                    if (data.success) {
+                        flagAlertMessage(data.success, "success");
+                    }
+                    sendMsgBtn.attr('disabled', false).html(uiMkup.sendIcon).removeClass("loading");
+                    msgMkup.attr('disabled', false);
                 }
             });
             

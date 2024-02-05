@@ -2,6 +2,7 @@
 
 namespace HHK\Notification\SMS;
 
+use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\RuntimeException;
 use HHK\Member\Address\Phones;
 use HHK\Member\IndivMember;
@@ -119,9 +120,26 @@ WHERE
 
         if (count($guests) > 0){
             foreach($guests as $guest){
-                $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
-                $results[$guest["idName"]] = $message->sendMessage();
+                try {
+                    $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
+                    $results["success"][$guest["idName"]] = $message->sendMessage();
+                }catch(ClientException $e){
+                    $errResponse = json_decode($e->getResponse()->getBody(), true);
+                    if (is_array($errResponse) && isset($errResponse["status"]) && isset($errResponse["message"])) {
+                        $results["error"][] = "Failed to send to " . $guest["Name_Full"] . ": " . $errResponse["message"];
+                    }
+                }
             }
+
+            if(count($results["success"]) > 0){
+                $guestLabel = Labels::getString('MemberType', 'visitor', 'Guest') . (count($results["success"]) > 1 ? "s": "");
+                $results["success"] = "Message sent to " . count($results["success"]) . " " . $guestLabel . " in room " . $guests[0]["Room"] . " successfully";
+            }
+
+            if(count($results["errors"]) > 0){
+                $results["error"] = implode("<br>", $results["error"]);
+            }
+
         } else {
             return ['error' => "No guests found"];
         }

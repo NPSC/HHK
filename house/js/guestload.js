@@ -146,7 +146,7 @@ $(document).ready(function () {
         	}
 		});
     }
-    console.log(memData);
+    
     $(".btnTextGuest").smsDialog({"guestId":memData.id});
 
     // relationship dialog

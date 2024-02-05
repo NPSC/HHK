@@ -507,8 +507,11 @@ class VisitViewer {
                 $guestAddButton = HTMLInput::generateMarkup('Add ' . $labels->getString('MemberType', 'visitor', 'Guest') . '...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
             }
 
-            //Make Send Message button
-            $sendMsgButton = HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's...', array("role" => "button", "class" => "viewMsgs ui-button ui-corner-all", "style" => "font-size: 0.8em; margin-left: 0.5em;"));
+            $uS = Session::getInstance();
+            if($uS->smsProvider){
+                //Make Send Message button
+                $sendMsgButton = HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's...', array("role" => "button", "class" => "viewMsgs ui-button ui-corner-all", "style" => "font-size: 0.8em; margin-left: 0.5em;"));
+            }
         }
 
         // 'Checkout All' button

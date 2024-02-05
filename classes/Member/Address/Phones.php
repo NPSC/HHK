@@ -4,6 +4,7 @@ namespace HHK\Member\Address;
 
 use HHK\AuditLog\NameLog;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\sec\Session;
 use HHK\SysConst\PhonePurpose;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NamePhoneRS;
@@ -171,7 +172,7 @@ class Phones extends AbstractContactPoint {
      * @return string
      */
     public function createPhoneMarkup($p, $inputClass = '', $idPrefix = "", $showPrefCheckbox = TRUE) {
-
+        $uS = Session::getInstance();
         // Preferred Radio button
         $tdContents = HTMLContainer::generateMarkup('label', $p[1], array('for'=>$idPrefix.'ph'.$p[0], 'style'=>'margin-right:6px;'));
 
@@ -221,8 +222,8 @@ class Phones extends AbstractContactPoint {
                     unset($attr['class']);
                 }
                 $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
-            } else if ($this->rSs[$p[0]]->Phone_Num->getStoredVal() != "" && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
-                $tdContents .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>'ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest']);
+            } else if ($uS->smsProvider && $this->rSs[$p[0]]->Phone_Num->getStoredVal() != "" && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
+                $tdContents .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>'ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest', "data-idname"=>$this->rSs[$p[0]]->idName->getStoredVal()]);
             }
         }
 
