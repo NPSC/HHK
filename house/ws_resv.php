@@ -620,7 +620,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
             if (strlen($cell["Unformatted_Phone"]) <= 10) {
                 //upsert contact before send
-                $contact = new Contact($dbh);
+                $contact = new Contact($dbh, true);
                 $contact->upsert($cell["Unformatted_Phone"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
                 
                 $msg = new Message($dbh, $cell["Unformatted_Phone"], $msgText);
@@ -639,11 +639,21 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $idSpan = intval(filter_input(INPUT_POST, 'idSpan', FILTER_SANITIZE_NUMBER_INT));
         $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $messages = new Messages($dbh);
+        $messages = new Messages($dbh, true);
 
         $events = $messages->sendVisitMessage($idVisit, $idSpan, $msgText);
 
         break;
+
+        case 'sendResvMsg':
+            $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT));
+            $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    
+            $messages = new Messages($dbh, true);
+
+            $events = $messages->sendResvMessage($idResv, $msgText);
+    
+            break;
 
     case 'sendCampaign':
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -670,7 +680,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
     case 'syncContacts':
         $status = filter_input(INPUT_GET, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $contacts = new Contacts($dbh);
+        $contacts = new Contacts($dbh, true);
 
         $events = $contacts->syncContacts($status);
 

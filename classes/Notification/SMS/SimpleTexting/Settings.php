@@ -29,11 +29,13 @@ Class Settings {
      * Init SimpleTexting Settings, API Client and validate settings
      * @param \PDO $dbh
      */
-    public function __construct(\PDO $dbh){
+    public function __construct(\PDO $dbh, bool $validateSettings = false){
         $this->dbh = $dbh;
         $this->loadSettings();
         $this->client = $this->buildClient();
-        $this->validateSettings();
+        if($validateSettings){
+            $this->validateSettings();
+        }
     }
 
     /**

@@ -9,9 +9,9 @@ use HHK\Notification\SMS\AbstractContacts;
 Class Contacts extends AbstractContacts{
     protected Settings $settings;
 
-    public function __construct(\PDO $dbh){
+    public function __construct(\PDO $dbh, bool $validateSettings = false){
         parent::__construct($dbh);
-        $this->settings = new Settings($dbh);
+        $this->settings = new Settings($dbh, $validateSettings);
     }
 
     public function fetchContacts(string $status = ""){

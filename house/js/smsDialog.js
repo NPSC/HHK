@@ -139,16 +139,28 @@
             
             var msgMkup = $(this).parent('.newMsg').find("textarea").attr("disabled", true);
             var msgText = msgMkup.val();
-                
-            $.ajax({
-                method: "post",
-                url: settings.serviceURL,
-                data: {
+            
+            if (settings.visitId > 0) {
+                var data = {
                     cmd: "sendVisitMsg",
                     idVisit: settings.visitId,
                     idSpan: settings.spanId,
                     msgText: msgText
-                },
+                }
+            } else if (settings.resvId > 0) {
+                var data = {
+                    cmd: "sendResvMsg",
+                    idResv: settings.resvId,
+                    msgText: msgText
+                }
+            } else {
+                var data = {};
+            }
+
+            $.ajax({
+                method: "post",
+                url: settings.serviceURL,
+                data: data,
                 dataType: "json",
                 success: function (data) {
                     if (data.error) {

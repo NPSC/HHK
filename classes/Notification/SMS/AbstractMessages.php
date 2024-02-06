@@ -113,9 +113,41 @@ WHERE
         }
     }
 
+    /**
+     * Summary of sendVisitMessage
+     * @param int $idVisit
+     * @param int $idSpan
+     * @param string $msgTxt
+     * @param string $subject
+     * @return array
+     */
     public function sendVisitMessage(int $idVisit, int $idSpan, string $msgTxt, string $subject = ""){
         $guests = $this->getVisitGuestsData($idVisit, $idSpan);
 
+        return $this->sendBulkMessage($guests, $msgTxt, $subject);
+    }
+
+    /**
+     * Summary of sendResvMessage
+     * @param int $idResv
+     * @param string $msgTxt
+     * @param string $subject
+     * @return array
+     */
+    public function sendResvMessage(int $idResv, string $msgTxt, string $subject = ""){
+        $guests = $this->getResvGuestsData($idResv);
+
+        return $this->sendBulkMessage($guests, $msgTxt, $subject);
+    }
+
+    /**
+     * Send message to array of guests
+     * @param array $guests
+     * @param string $msgTxt
+     * @param string $subject
+     * @return array
+     */
+    protected function sendBulkMessage(array $guests, string $msgTxt, string $subject = ""){
         $results = array();
 
         if (count($guests) > 0){

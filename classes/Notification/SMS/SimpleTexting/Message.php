@@ -49,9 +49,9 @@ Class Message {
      * @param string $subject
      * @param string $fallbackText
      */
-    public function __construct(\PDO $dbh, string $contactPhone, string $text, string $subject = "", string $fallbackText = ""){
+    public function __construct(\PDO $dbh, string $contactPhone, string $text, string $subject = "", string $fallbackText = "", bool $validateSettings = false){
         $this->dbh = $dbh;
-        $this->settings = new Settings($dbh);
+        $this->settings = new Settings($dbh, $validateSettings);
         $this->contactPhone = $contactPhone;
         $this->MMSsubject = $subject;
         $this->text = $text;

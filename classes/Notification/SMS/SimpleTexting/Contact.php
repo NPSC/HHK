@@ -9,9 +9,9 @@ Class Contact {
     protected \PDO $dbh;
     protected Settings $settings;
 
-    public function __construct(\PDO $dbh){
+    public function __construct(\PDO $dbh, bool $validateSettings = false){
         $this->dbh = $dbh;
-        $this->settings = new Settings($dbh);
+        $this->settings = new Settings($dbh, $validateSettings);
     }
 
     /**

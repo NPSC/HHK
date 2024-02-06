@@ -12,7 +12,7 @@ Class Campaign {
 
     public function __construct(\PDO $dbh, string $text, string $fallbackText = ""){
         $this->dbh = $dbh;
-        $this->settings = new Settings($dbh);
+        $this->settings = new Settings($dbh, true);
         $this->message = new Message($dbh, "", $text, '', $fallbackText);
     }
 

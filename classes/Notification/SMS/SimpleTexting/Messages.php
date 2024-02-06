@@ -17,10 +17,10 @@ Class Messages extends AbstractMessages {
      * @param \PDO $dbh
      * @param string $accountPhone
      */
-    public function __construct(\PDO $dbh, string $accountPhone = ""){
+    public function __construct(\PDO $dbh, bool $validateSettings = false, string $accountPhone = ""){
 
         parent::__construct($dbh, $accountPhone);
-        $this->settings = new Settings($dbh);
+        $this->settings = new Settings($dbh, $validateSettings);
     }
 
     /**
