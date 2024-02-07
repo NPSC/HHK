@@ -42,6 +42,15 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
+/**
+ * Summary of getGuestNights
+ * @param PDO $dbh
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $actual
+ * @param mixed $preInterval
+ * @return void
+ */
 function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
 
     $uS = Session::getInstance();
@@ -112,6 +121,21 @@ GROUP BY s.idVisit, s.Visit_Span");
     }
 
 }
+/**
+ * Summary of newStatsPanel
+ * @param PDO $dbh
+ * @param mixed $visitNites
+ * @param mixed $rates
+ * @param mixed $totalCatNites
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $categories
+ * @param mixed $avDailyFee
+ * @param mixed $medDailyFee
+ * @param mixed $rescGroup
+ * @param mixed $siteName
+ * @return string
+ */
 function newStatsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
@@ -261,6 +285,21 @@ order by r.idResource;";
 
 }
 
+/**
+ * Summary of statsPanel
+ * @param PDO $dbh
+ * @param mixed $visitNites
+ * @param mixed $rates
+ * @param mixed $totalCatNites
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $categories
+ * @param mixed $avDailyFee
+ * @param mixed $medDailyFee
+ * @param mixed $rescGroup
+ * @param mixed $siteName
+ * @return string
+ */
 function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
@@ -1622,7 +1661,7 @@ if ($taxItems[0][0] > 0) {
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
-$filter->createResoourceGroups($rescGroups, $uS->CalResourceGroupBy);
+$filter->createResourceGroups($rescGroups, $uS->CalResourceGroupBy);
 
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
@@ -1910,162 +1949,9 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="js/visitInterval.js"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
-<script type="text/javascript">
-    var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
-    var rctMkup, pmtMkup;
-    var dateFormat = '<?php echo $dateFormat; ?>';
-    $(document).ready(function() {
-        var makeTable = '<?php echo $mkTable; ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-		pmtMkup = $('#pmtMkup').val(),
-        rctMkup = $('#rctMkup').val();
-        <?php echo $filter->getTimePeriodScript(); ?>;
-
-        $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
-        $('#btnHere, #btnExcel').click(function () {
-            $('#paymentMessage').hide();
-        });
-        $('#cbColClearAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', false);
-            });
-        });
-        $('#cbColSelAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', true);
-            });
-        });
-        $('#keysfees').dialog({
-            autoOpen: false,
-            resizable: true,
-            modal: true,
-            close: function () {$('div#submitButtons').show();},
-            open: function () {$('div#submitButtons').hide();}
-        });
-        $('#pmtRcpt').dialog({
-            autoOpen: false,
-            resizable: true,
-            width: getDialogWidth(530),
-            modal: true,
-            title: 'Payment Receipt'
-        });
-        $("#faDialog").dialog({
-            autoOpen: false,
-            resizable: true,
-            width: getDialogWidth(650),
-            modal: true,
-            title: 'Income Chooser'
-        });
-
-        $('.hhk-viewVisit').button();
-        $('.hhk-viewVisit').click(function () {
-            var vid = $(this).data('vid');
-            var gid = $(this).data('gid');
-            var span = $(this).data('span');
-
-            var buttons = {
-                "Show Statement": function() {
-                    window.open('ShowStatement.php?vid=' + vid, '_blank');
-                },
-                "Show Registration Form": function() {
-                    window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
-                },
-                "Save": function() {
-                    saveFees(gid, vid, span, false, 'VisitInterval.php');
-                },
-                "Cancel": function() {
-                    $(this).dialog("close");
-                }
-            };
-             viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-        });
-
-        if (makeTable === '1') {
-            $('div#printArea, div#stats').css('display', 'block');
-
-            $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': columnDefs,
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                 ],
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"if><"hhk-overflow-x"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
-            });
-            $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
-            });
-        }
-        if (rctMkup !== '') {
-            showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
-        }
-    if (pmtMkup !== '') {
-        $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
-    }
-
-    $('#keysfees').mousedown(function (event) {
-        var target = $(event.target);
-        if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
-            $('div#pudiv').remove();
-        }
-    });
-
-	$('#includeFields').fieldSets({'reportName': 'visit', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
-
-	// disappear the pop-up room chooser.
-    $(document).mousedown(function (event) {
-        var target = $(event.target);
-        if ($('div#insDetailDiv').length > 0 && target[0].id !== 'insDetailDiv' && target.parents("#" + 'insDetailDiv').length === 0) {
-            $('div#insDetailDiv').remove();
-        }
-    });
-
-	var detailDiv = $("<div>").attr('id','insDetailDiv');
-	$("body").append(detailDiv);
-	$('#tblrpt').on('click', '.insAction', function (event) {
-        viewInsurance($(this).data('idname'), event.target.id, detailDiv);
-    });
-
-	function viewInsurance(idName, eventTarget) {
-        "use strict";
-        detailDiv.empty();
-        $.post('ws_resc.php', {cmd: 'viewInsurance', idName: idName},
-          function(data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.location.assign(data.gotopage);
-                    }
-                    flagAlertMessage(data.error, 'error');
-                    return;
-                }
-
-                if (data.markup) {
-                    var contr = $(data.markup);
-
-                    $('body').append(contr);
-                    contr.position({
-                        my: 'left top',
-                        at: 'left bottom',
-                        of: "#" + eventTarget
-                    });
-                }
-            }
-        });
-    }
-
-    });
- </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $wInit->generatePageMenu(); ?>
@@ -2110,6 +1996,11 @@ if ($uS->CoTod) {
         </div>
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+        <input type="hidden" id="startYear" value= '<?php echo $uS->startYear; ?>' />
+        <input type="hidden" id="dateFormat" value='<?php echo $dateFormat; ?>' />;
+        <input type="hidden" id="makeTable" value='<?php echo $mkTable; ?>' />;
+        <input type="hidden" id="columnDefs" value='<?php echo json_encode($colSelector->getColumnDefs()); ?>' />
+        <input type="hidden" id="defaultFields" value='<?php echo json_encode($defaultFields); ?>' />
         <div id="keysfees" style="font-size: .9em;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
