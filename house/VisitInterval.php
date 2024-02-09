@@ -1232,12 +1232,11 @@ where
                 $lodgeTax = $taxSums[ItemId::Lodging];
             }
 
-
             $visit = array(
                 'id' => $r['idVisit'],
-                'chg' => 0, // charges
+                'chg' => 0, // room charges
                 'fcg' => 0, // Flat Rate Charge (For comparison)
-                'adj' => 0,
+                'adj' => 0, // adjustment amount
                 'taxcgd' => 0,
                 'gpd' => $r['AmountPaid'] - $r['ThrdPaid'],
                 'pndg' => $r['AmountPending'],
@@ -1258,7 +1257,7 @@ where
                 'gnit' => 0, // guest nights
                 'pin' => 0, // Pre-interval nights
                 'gpin' => 0, // Guest pre-interval nights
-                'preCh' => 0,
+                'preCh' => 0,  // Reservation precharge
                 'rmc' => 0, // Room change counter
                 'rtc' => 0  // Rate Category counter
                 );

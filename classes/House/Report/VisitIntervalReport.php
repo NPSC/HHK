@@ -222,6 +222,7 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
     /**
      */
     function makeQuery() {
+        $uS = Session::getInstance();
 
         // Hospitals
         $whHosp = implode(",", $this->filter->getSelectedHosptials());
