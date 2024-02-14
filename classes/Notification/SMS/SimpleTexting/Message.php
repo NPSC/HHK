@@ -115,6 +115,7 @@ Class Message {
     public function sendMessage(){
         $client = $this->settings->getClient();
 
+        /*
         $evaluated = $this->evaluateMessage();
         $warnings = false;
         $errors = false;
@@ -130,7 +131,7 @@ Class Message {
         if($warnings || $errors){
             throw new SmsException("Unable to send message:" . ($errors ? " Error: " . $errors . '.': '') . ($warnings ? " Warning: " . $warnings . '.': ''));
         }
-
+*/
         //send message
         $requestArray = [
             "contactPhone"=>$this->contactPhone,

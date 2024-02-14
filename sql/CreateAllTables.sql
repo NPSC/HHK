@@ -1256,6 +1256,23 @@ CREATE TABLE IF NOT EXISTS `note_category` (
 
 
 -- -----------------------------------------------------
+-- Table `notification_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `notification_log` (
+  `idLog` INT NOT NULL AUTO_INCREMENT,
+  `Log_Type` varchar(45) NOT NULL DEFAULT '',
+  `Sub_Type` varchar(45) NOT NULL DEFAULT '',
+  `username` varchar(45) NOT NULL DEFAULT '',
+  `To` varchar(255) NOT NULL DEFAULT '',
+  `From` varchar(255) NOT NULL DEFAULT '',
+  `Log_Text` varchar(255) NOT NULL DEFAULT '',
+  `Log_Details` JSON NOT NULL DEFAULT '{}',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idLog`)
+) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `reservation_note`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `reservation_note` (

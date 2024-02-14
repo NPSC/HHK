@@ -4,9 +4,11 @@ namespace HHK\Notification\SMS;
 
 use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\RuntimeException;
+use HHK\Exception\SmsException;
 use HHK\Member\Address\Phones;
 use HHK\Member\IndivMember;
 use HHK\Notification\SMS\SimpleTexting\Message;
+use HHK\Notification\SMS\SimpleTexting\Contact;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\SysConst\MemBasis;
@@ -14,6 +16,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\SysConst\PhonePurpose;
 use HHK\SysConst\VisitStatus;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
+use HHK\TableLog\NotificationLog;
 
 abstract class AbstractMessages
 {
@@ -29,7 +32,7 @@ abstract class AbstractMessages
 
     public function getVisitGuestsData(int $idVisit, int $idSpan){
         $query = 'SELECT DISTINCT
-    n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, r.Title as "Room", v.Status, if(s.idName = v.idPrimaryGuest,1,0) as "isPrimaryGuest", if(np.Phone_Code is null,0,1) as "isMobile"
+    n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, r.Title as "Room", v.Status, if(s.idName = v.idPrimaryGuest,1,0) as "isPrimaryGuest", if(np.Phone_Code is null or np.is_SMS = 0,0,1) as "isMobile"
 FROM
     stays s
 		join 
@@ -58,7 +61,7 @@ WHERE
 
     public function getResvGuestsData(int $idResv){
         $query = 'SELECT DISTINCT
-        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, rg.Primary_Guest as "isPrimaryGuest", if(np.Phone_Code is null,0,1) as "isMobile"
+        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, rg.Primary_Guest as "isPrimaryGuest", if(np.Phone_Code is null or np.is_SMS = 0,0,1) as "isMobile"
     FROM
         reservation_guest rg
             LEFT JOIN
@@ -80,7 +83,7 @@ WHERE
 
     public function getGuestData(int $idName){
         $query = 'SELECT DISTINCT
-        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, if(np.Phone_Code is null,0,1) as "isMobile", concat("Text ", n.Name_Full) as "dialogTitle"
+        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, if(np.Phone_Code is null or np.is_SMS = 0,0,1) as "isMobile", concat("Text ", n.Name_Full) as "dialogTitle"
     FROM
         name n
             left JOIN
@@ -149,17 +152,16 @@ WHERE
      */
     protected function sendBulkMessage(array $guests, string $msgTxt, string $subject = ""){
         $results = array();
-
+        $uS = Session::getInstance();
         if (count($guests) > 0){
             foreach($guests as $guest){
                 try {
                     $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
                     $results["success"][$guest["idName"]] = $message->sendMessage();
-                }catch(ClientException $e){
-                    $errResponse = json_decode($e->getResponse()->getBody(), true);
-                    if (is_array($errResponse) && isset($errResponse["status"]) && isset($errResponse["message"])) {
-                        $results["error"][] = "Failed to send to " . $guest["Name_Full"] . ": " . $errResponse["message"];
-                    }
+                    NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $this->accountPhone, "Message sent Successfully", ["msgText"=>$msgTxt]);
+                }catch(SmsException $e){
+                    $results["errors"][] = "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage();
+                    NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $this->accountPhone, "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage(), ["msgText"=>$msgTxt]);
                 }
             }
 
@@ -169,7 +171,7 @@ WHERE
             }
 
             if(count($results["errors"]) > 0){
-                $results["error"] = implode("<br>", $results["error"]);
+                $results["error"] = implode("<br>", $results["errors"]);
             }
 
         } else {
@@ -187,6 +189,14 @@ WHERE
         if(strlen($cell["Unformatted_Phone"]) >= 10){
             $msgs = $this->fetchMessages($cell["Unformatted_Phone"]);
 
+            $contact = new Contact($this->dbh);
+            $contact = $contact->fetchContact($cell["Unformatted_Phone"]);
+
+            $subscriptionStatus = true;
+            if (isset($contact["subscriptionStatus"]) && $contact["subscriptionStatus"] === "OPT_OUT") {
+                $subscriptionStatus = false;
+            }
+
             return [
                 "idName" => $name->get_idName(),
                 "Name_Full" => $name->get_fullName(),
@@ -196,6 +206,7 @@ WHERE
                 "totalPages" => $msgs['totalPages'],
                 "totalMsgs" => $msgs['totalElements'],
                 "msgs" => array_reverse($msgs['content']),
+                "subscriptionStatus" => $subscriptionStatus,
             ];
         }else{
             throw new RuntimeException("Mobile number not found for idName " . $idName);

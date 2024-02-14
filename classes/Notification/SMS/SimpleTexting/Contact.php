@@ -2,7 +2,9 @@
 
 namespace HHK\Notification\SMS\SimpleTexting;
 
+use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\RuntimeException;
+use HHK\Exception\SmsException;
 
 Class Contact {
 
@@ -29,7 +31,8 @@ Class Contact {
             "contactPhone"=>$contactPhone,
             "firstName"=>$firstName,
             "lastName"=>$lastName,
-            "listIds"=>[$this->settings->getHhkListId()]
+            "listIds"=>[$this->settings->getHhkListId()],
+            "subscriptionStatus"=>"OPT_IN"
         ];
 
         $response = $client->put('contacts/' . $contactPhone,[
@@ -53,6 +56,30 @@ Class Contact {
                 throw new RuntimeException("Error updating Contact: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
                 throw new RuntimeException("Invalid response received while trying to update Contact. Error  " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+            }
+        }
+    }
+
+    public function fetchContact(string $contactPhone){
+        $client = $this->settings->getClient();
+
+        try {
+            $response = $client->get("contacts/" . $contactPhone);
+
+            $respArr = json_decode($response->getBody(), true);
+            if (is_array($respArr) && isset($respArr["contactId"])) {
+                return $respArr;
+            } else {
+                throw new SmsException("Error getting contact: content not found on remote");
+            }
+            
+        }catch(ClientException $e){
+            $respArr = json_decode($e->getResponse()->getBody(), true);
+
+            if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
+                throw new SmsException("Error getting contact: " . $respArr["status"] . ": " . $respArr["message"]);
+            } else {
+                throw new SmsException("Error getting contact: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
             }
         }
     }

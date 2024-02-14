@@ -1625,6 +1625,10 @@ $(document).ready(function () {
            			$("#curres .gmenu").not(this).menu("collapseAll", null, true);
            		}
            });
+
+            $(".btnShowVisitMsgs").each(function () {
+                $(this).smsDialog({ "visitId": $(this).data('vid'), "spanId": $(this).data("span") });
+            });
        },
        columns: cgCols,
        "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY")),

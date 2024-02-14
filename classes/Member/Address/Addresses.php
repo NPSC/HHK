@@ -2,7 +2,9 @@
 
 namespace HHK\Member\Address;
 
+use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
+use HHK\sec\Session;
 use HHK\SysConst\PhonePurpose;
 
 /**
@@ -45,18 +47,25 @@ class Addresses {
 
         // Make phone number
         $phData = $phone->get_Data();
+        $uS = Session::getInstance();
 
+        
         if ($phData['Preferred_Phone'] == PhonePurpose::NoPhone) {
             $phoneMkup = 'No Phone';
         } else {
-            $phoneMkup = $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x".$phData["Phone_Extension"]);
+            $phoneMkup = $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x" . $phData["Phone_Extension"]);
+        }
+
+        //sms dialog
+        $cellPhone = $phone->get_recordSet(PhonePurpose::Cell);
+        if($uS->smsProvider && $cellPhone->Phone_Search->getStoredVal() != "" &&  $cellPhone->is_SMS->getStoredVal() == 1){
+            $phoneMkup .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>"ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest", "data-idname" => $cellPhone->idName->getStoredVal()]);
         }
 
 
-
         $table->addBodyTr(
-                HTMLTable::makeTd($phoneMkup)
-                );
+            HTMLTable::makeTd($phoneMkup)
+        );
 
         $table->addBodyTr(HTMLTable::makeTd("&nbsp;", array('style'=>'border-width:0;')));
 
@@ -64,11 +73,10 @@ class Addresses {
 
         $emData = $email->get_Data();
         $table->addBodyTr(
-                HTMLTable::makeTd($emData["Email"])
-                );
+            HTMLTable::makeTd($emData["Email"])
+        );
 
         return $table->generateMarkup();
     }
 
 }
-?>

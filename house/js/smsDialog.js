@@ -174,7 +174,7 @@
                         flagAlertMessage(data.success, "success");
                     }
                     sendMsgBtn.attr('disabled', false).html(uiMkup.sendIcon).removeClass("loading");
-                    msgMkup.attr('disabled', false);
+                    msgMkup.val("").attr('disabled', false);
                 }
             });
             
@@ -220,8 +220,12 @@
     function createViewer($dialog, uiMkup, settings) {
 
         $dialog.dialog({
-            autoOpen:false,
-            width: getDialogWidth(550),
+            autoOpen: false,
+            position: {
+                my: "top",
+                at: "top+10%"
+            },
+            width: getDialogWidth(600),
             resizable: true,
             modal: true,
             title: settings.dialogTitle,
@@ -279,7 +283,7 @@
                         }
                     });
 
-                    if (settings.guestData.length > 1) {
+                    if (settings.guestData.length > 1 && phoneCount > 0) {
                         $dialog.html(uiMkup.smsTabs);
 
                         $dialog.find("#smsTabs ul").append($(`<li><a href="#allGuestsTabContent">Current Guests</a></li>`));
@@ -341,7 +345,7 @@
                         loadMsgs($msgsContainer, uiMkup, settings, settings.guestData[0].idName);
                         $dialog.removeClass("loading");
                     } else if (settings.guestData.length == 0 || phoneCount === 0) {
-                        $dialog.html("<div class='ui-state-error ui-corner-all p-2'>No guests have a mobile phone entered.</div>");
+                        $dialog.html("<div class='ui-state-error ui-corner-all p-2'>No guests have opted in to receive text messages.</div>");
                         $dialog.removeClass("loading");
                     }
                     
@@ -384,11 +388,14 @@
                         
                         $dialog.removeClass("loading");
                     } else if (settings.guestData.contacts.length == 0) {
-                        $dialog.html("<div class='ui-state-error ui-corner-all p-2'>No guests have a mobile phone entered.</div>");
+                        $dialog.html("<div class='ui-state-error ui-corner-all p-2'>No guests have opted in to recieve text messages.</div>");
                         $dialog.removeClass("loading");
                     }
                 }
             });
+        } else {
+            $dialog.html("<div class='ui-state-error ui-corner-all p-2'>No guests found.</div>");
+            $dialog.removeClass("loading");
         }
     }
 
@@ -411,6 +418,14 @@
                     return;
         
                 } else if (data.msgs) {
+                    $msgsTab = $msgsContainer.parent();
+                    if (data.subscriptionStatus === false) {
+                        $msgsTab.find(".msgTitle").append("<span class='smsUnsubscribed ui-corner-all p-1 ui-state-error' title='The user has unsubscribed and will not receive any messages.'>Unsubscribed</span>");
+                        $msgsTab.find(".newMsg").addClass("d-none");
+
+                    } else {
+                        $msgsTab.find(".newMsg").removeClass("d-none");
+                    }
 
                     $msgsContainer.empty();
                     

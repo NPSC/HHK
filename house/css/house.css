@@ -955,6 +955,16 @@ table.dataTable tbody td {
 	display: none !important;
 }
 
+#viewMsgsDialog #msgsTabContent .msgTitle{
+	display: flex;
+	justify-content: space-between;
+}
+
+#viewMsgsDialog #msgsTabContent .msgTitle .smsUnsubscribed {
+	font-weight: normal;
+	cursor: default;
+}
+
 .msgsContainer {
 	height: 400px;
 	overflow-y: auto;

@@ -222,8 +222,15 @@ class Phones extends AbstractContactPoint {
                     unset($attr['class']);
                 }
                 $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
-            } else if ($uS->smsProvider && $this->rSs[$p[0]]->Phone_Num->getStoredVal() != "" && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
-                $tdContents .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>'ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest', "data-idname"=>$this->rSs[$p[0]]->idName->getStoredVal()]);
+            } else if ($uS->smsProvider && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
+                if($this->rSs[$p[0]]->is_SMS->getStoredVal()){
+                    $smsOptedMkup = HTMLInput::generateMarkup("", ["type"=>"checkbox", "checked"=>"true", 'name'=>$idPrefix.'cbSMS[' . $p[0] . ']', 'id'=>$idPrefix.'cbSMS' . $p[0], "class"=>"ml-2 mr-1"]);
+                }else{
+                    $smsOptedMkup = HTMLInput::generateMarkup("", ["type"=>"checkbox", 'name'=>$idPrefix.'cbSMS[' . $p[0] . ']', 'id'=>$idPrefix.'cbSMS' . $p[0], "class"=>"ml-2 mr-1"]);
+                }
+                $smsOptedMkup .= HTMLContainer::generateMarkup("label", "Opt In", ["for" => $idPrefix . 'cbSMS' . $p[0], "title"=>"Opt In to receive text messages"]);
+
+                $tdContents .= $smsOptedMkup;
             }
         }
 
@@ -377,6 +384,7 @@ class Phones extends AbstractContactPoint {
 
         $ph = '';
         $extn = '';
+        $smsOptIn = 0;
 
         if (isset($p[$idPrefix.'txtPhone'][$typeCode])) {
             $ph = trim(filter_var($p[$idPrefix.'txtPhone'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
@@ -389,6 +397,13 @@ class Phones extends AbstractContactPoint {
         }
 
         $a->Phone_Extension->setNewVal($extn);
+        
+        if (isset($p[$idPrefix.'cbSMS'][$typeCode])) {
+            $smsOptIn = boolval(filter_var($p[$idPrefix.'cbSMS'][$typeCode], FILTER_VALIDATE_BOOL));
+        }
+
+        $a->is_SMS->setNewVal($smsOptIn);
+
 
         // phone search - use only the numberals for efficient phone number search
         $ary = array('+', '-');

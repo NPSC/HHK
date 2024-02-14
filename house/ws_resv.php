@@ -26,6 +26,7 @@ use HHK\SysConst\MemBasis;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\PhonePurpose;
 use HHK\Notification\SMS\SimpleTexting\Contact;
+use HHK\TableLog\NotificationLog;
 
 /**
  * ws_resv.php
@@ -622,9 +623,14 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
                 //upsert contact before send
                 $contact = new Contact($dbh, true);
                 $contact->upsert($cell["Unformatted_Phone"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
-                
-                $msg = new Message($dbh, $cell["Unformatted_Phone"], $msgText);
-                $events = $msg->sendMessage();
+                try {
+                    $msg = new Message($dbh, $cell["Unformatted_Phone"], $msgText);
+                    $events = $msg->sendMessage();
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
+                }catch(SmsException $e){
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
+                    throw $e;
+                }
             }else{
                 throw new ValidationException("Cell Number Invalid");
             }

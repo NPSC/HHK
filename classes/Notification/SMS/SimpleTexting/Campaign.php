@@ -3,6 +3,8 @@
 namespace HHK\Notification\SMS\SimpleTexting;
 use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\SmsException;
+use HHK\sec\Session;
+use HHK\TableLog\NotificationLog;
 
 Class Campaign {
 
@@ -18,7 +20,9 @@ Class Campaign {
 
     protected function sendCampaign(string $listId, string $listName){
         $client = $this->settings->getClient();
-
+        $uS = Session::getInstance();
+        
+/*
         $evaluated = $this->message->evaluateMessage();
         $warnings = false;
         $errors = false;
@@ -34,7 +38,7 @@ Class Campaign {
         if($warnings || $errors){
             throw new SmsException("Unable to send campaign:" . ($errors ? " Error: " . $errors . '.': '') . ($warnings ? " Warning: " . $warnings . '.': ''));
         }
-
+*/
         //send campaign
         $requestArray = [
             "title"=>$listName,
@@ -51,8 +55,10 @@ Class Campaign {
             $respArr = json_decode($e->getResponse()->getBody(), true);
 
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
+                NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"], ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
                 throw new SmsException("Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
+                NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase(), ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
                 throw new SmsException("Error sending campaign: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
             }
         }
@@ -60,6 +66,8 @@ Class Campaign {
 
         if($response->getStatusCode() === 201){
             $body = $response->getBody();
+
+            NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Campaign sent Successfully", ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
 
             try{
                 return json_decode($body, true);
