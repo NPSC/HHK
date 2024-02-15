@@ -4,6 +4,7 @@ namespace HHK\Notification\Mail;
 
 use HHK\sec\Session;
 use HHK\SysConst\NotificationStatus;
+use HHK\TableLog\NotificationLog;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -67,6 +68,30 @@ class HHKMailer extends PHPMailer {
 
     }
 
+    public function getToString(){
+        $to = [];
+        foreach($this->to as $toArr){
+            $to[] = $toArr[0];
+        }
+        return $to;
+    }
+
+    public function getCCString(){
+        $to = [];
+        foreach($this->cc as $toArr){
+            $to[] = $toArr[0];
+        }
+        return $to;
+    }
+
+    public function getBCCString(){
+        $to = [];
+        foreach($this->bcc as $toArr){
+            $to[] = $toArr[0];
+        }
+        return $to;
+    }
+
     /**
      * Create a message and send it.
      * Uses the sending method specified by $Mailer.
@@ -95,26 +120,30 @@ class HHKMailer extends PHPMailer {
 
         $this->addCustomHeader("X-HHK-Mail-Id", $messageId);
 
+        $logDetails = [
+            "Subject" => $this->Subject,
+            "CC" => implode(', ', $this->getCCString()),
+            "BCC" => implode(', ', $this->getBCCString())
+        ];
+
         try{
             if(parent::send()){
-                $stmt = $this->dbh->prepare("UPDATE `Notifications_Log` SET `Status` = '" . NotificationStatus::Sent . "' where `idMessage` = " . $messageId);
-                $stmt->execute();
+                $logDetails["messageId"] = $this->getLastMessageID();
+                $to = $this->getToAddresses();
+                NotificationLog::logEmail($this->dbh, $uS->username, implode(', ', $this->getToString()), $this->From, "Email submitted for delivery", $logDetails);
                 return true;
             }else{
-                $stmt = $this->dbh->prepare("UPDATE `Notifications_Log` SET `Details` = :details, `Status` = '" . NotificationStatus::Invalid . "' where `idMessage` = " . $messageId);
-                $stmt->execute([":details"=> json_encode(["error"=>$this->ErrorInfo])]);
+                $logDetails["error"] = $this->ErrorInfo;
+                NotificationLog::logEmail($this->dbh, $uS->username, implode(', ',$this->getToString()), $this->From, "Email failed to send", $logDetails);
                 return false;
             }
             
         }catch(Exception $e){
 
-            $stmt = $this->dbh->prepare("UPDATE `Notifications_Log` SET `Details` = :details, `Status` = '" . NotificationStatus::Invalid . "' where `idMessage` = " . $messageId);
-            $stmt->execute([":details"=> json_encode(["error"=>$this->ErrorInfo])]);
-
+            $logDetails["error"] = $this->ErrorInfo;
+            NotificationLog::logEmail($this->dbh, $uS->username, implode(', ', $this->getToString()), $this->From, "Email failed to send", $logDetails);
             throw $e;
         }
     }
 
 }
-
-?>

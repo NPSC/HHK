@@ -158,10 +158,10 @@ WHERE
                 try {
                     $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
                     $results["success"][$guest["idName"]] = $message->sendMessage();
-                    NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $this->accountPhone, "Message sent Successfully", ["msgText"=>$msgTxt]);
+                    NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Message sent Successfully", ["msgText"=>$msgTxt]);
                 }catch(SmsException $e){
                     $results["errors"][] = "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage();
-                    NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $this->accountPhone, "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage(), ["msgText"=>$msgTxt]);
+                    NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage(), ["msgText"=>$msgTxt]);
                 }
             }
 

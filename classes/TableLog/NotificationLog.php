@@ -20,16 +20,16 @@ class NotificationLog extends AbstractTableLog {
 
     }
 
-    public static function logEmail(\PDO $dbh){
+    public static function logEmail(\PDO $dbh, string $username, string $to, string $from, string $logText, array $details = []){
 
         $logRS = new Notification_LogRS();
         $logRS->Log_Type->setNewVal("Email");
         $logRS->Sub_Type->setNewVal("");
-        $logRS->username->setNewVal("");
-        $logRS->To->setNewVal("");
-        $logRS->From->setNewVal("");
-        $logRS->Log_Text->setNewVal("");
-        $logRS->Log_Details->setNewVal("");
+        $logRS->username->setNewVal($username);
+        $logRS->To->setNewVal($to);
+        $logRS->From->setNewVal($from);
+        $logRS->Log_Text->setNewVal($logText);
+        $logRS->Log_Details->setNewVal(json_encode($details));
         $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
