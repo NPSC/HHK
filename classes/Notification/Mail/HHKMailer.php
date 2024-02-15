@@ -129,7 +129,6 @@ class HHKMailer extends PHPMailer {
         try{
             if(parent::send()){
                 $logDetails["messageId"] = $this->getLastMessageID();
-                $to = $this->getToAddresses();
                 NotificationLog::logEmail($this->dbh, $uS->username, implode(', ', $this->getToString()), $this->From, "Email submitted for delivery", $logDetails);
                 return true;
             }else{
