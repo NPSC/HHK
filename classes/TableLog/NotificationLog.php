@@ -1,6 +1,6 @@
 <?php
 namespace HHK\TableLog;
-use HHK\Tables\House\Notification_LogRS;
+use HHK\Tables\Notification_LogRS;
 
 class NotificationLog extends AbstractTableLog {
 

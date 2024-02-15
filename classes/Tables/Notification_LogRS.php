@@ -1,5 +1,5 @@
 <?php
-namespace HHK\Tables\House;
+namespace HHK\Tables;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbBlobSanitizer, DbStrSanitizer, DbDateSanitizer};
