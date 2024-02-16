@@ -88,9 +88,10 @@ class HTMLSelector extends AbstractHTMLControl {
      * @param array $gArray - 0 = index, 1 = description, 2 = option group name.
      * @param array|string  $sel - Selected value (if any)
      * @param bool $offerBlank - Offer a blank option
+     * @param string $placeholder - set 
      * @return string
      */
-    public static function doOptionsMkup($gArray, $sel, $offerBlank = TRUE) {
+    public static function doOptionsMkup($gArray, $sel, $offerBlank = TRUE, $placeholder = "") {
 
         $data = "";
         $sels = array();
@@ -104,11 +105,18 @@ class HTMLSelector extends AbstractHTMLControl {
 
         if ($offerBlank) {
 
-            if (array_search('', $sels) === FALSE) {
-                $data = HTMLContainer::generateMarkup('option', '', array('value'=>''));
-            } else {
-                $data = HTMLContainer::generateMarkup('option', '', array('selected'=>'selected', 'value'=>''));
+            $attrs = ["value" => ""];
+
+            if($placeholder !== ""){
+                $attrs["disabled"] = "disabled";
             }
+
+            //if blank is selected or selection doesn't exist, select blank
+            if (array_search('', $sels) !== FALSE || array_search($sel, $gArray) === false) {
+                $attrs["selected"] = "selected";
+            }
+
+            $data = HTMLContainer::generateMarkup('option', $placeholder, $attrs);
         }
 
         if (is_array($gArray)) {

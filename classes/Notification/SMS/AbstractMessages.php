@@ -32,7 +32,7 @@ abstract class AbstractMessages
 
     public function getVisitGuestsData(int $idVisit, int $idSpan){
         $query = 'SELECT DISTINCT
-    n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, r.Title as "Room", v.Status, if(s.idName = v.idPrimaryGuest,1,0) as "isPrimaryGuest", if(np.Phone_Code is null or np.is_SMS = 0,0,1) as "isMobile"
+    n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, r.Title as "Room", v.Status, if(s.idName = v.idPrimaryGuest,1,0) as "isPrimaryGuest", if(np.Phone_Code is null or np.SMS_status = "" or np.SMS_status = "opt_out",0,1) as "isMobile"
 FROM
     stays s
 		join 
@@ -61,7 +61,7 @@ WHERE
 
     public function getResvGuestsData(int $idResv){
         $query = 'SELECT DISTINCT
-        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, rg.Primary_Guest as "isPrimaryGuest", if(np.Phone_Code is null or np.is_SMS = 0,0,1) as "isMobile"
+        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, rg.Primary_Guest as "isPrimaryGuest", if(np.Phone_Code is null or np.SMS_status = "" or np.SMS_status = "opt_out",0,1) as "isMobile"
     FROM
         reservation_guest rg
             LEFT JOIN
@@ -83,7 +83,7 @@ WHERE
 
     public function getGuestData(int $idName){
         $query = 'SELECT DISTINCT
-        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, if(np.Phone_Code is null or np.is_SMS = 0,0,1) as "isMobile", concat("Text ", n.Name_Full) as "dialogTitle"
+        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, if(np.Phone_Code is null or np.SMS_status = "" or np.SMS_status = "opt_out",0,1) as "isMobile", concat("Text ", n.Name_Full) as "dialogTitle"
     FROM
         name n
             left JOIN
@@ -189,8 +189,12 @@ WHERE
         if(strlen($cell["Unformatted_Phone"]) >= 10){
             $msgs = $this->fetchMessages($cell["Unformatted_Phone"]);
 
-            $contact = new Contact($this->dbh);
-            $contact = $contact->fetchContact($cell["Unformatted_Phone"]);
+            try {
+                $contact = new Contact($this->dbh);
+                $contact = $contact->fetchContact($cell["Unformatted_Phone"]);
+            }catch(\Exception $e){
+                $contact = [];
+            }
 
             $subscriptionStatus = true;
             if (isset($contact["subscriptionStatus"]) && $contact["subscriptionStatus"] === "OPT_OUT") {

@@ -104,3 +104,5 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsFrom', '', 's', 'sms', 'Account Phone number used as the From address', 1);
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsListId', '', 's', 'sms', 'Contact List ID for all HHK Contacts', 0);
 
+ALTER TABLE `name_phone` 
+CHANGE COLUMN if exists `is_SMS` `SMS_status` VARCHAR(10) NOT NULL DEFAULT '';

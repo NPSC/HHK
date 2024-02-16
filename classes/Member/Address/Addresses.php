@@ -58,7 +58,7 @@ class Addresses {
 
         //sms dialog
         $cellPhone = $phone->get_recordSet(PhonePurpose::Cell);
-        if($uS->smsProvider && $cellPhone->Phone_Search->getStoredVal() != "" &&  $cellPhone->is_SMS->getStoredVal() == 1){
+        if($uS->smsProvider && $cellPhone->Phone_Search->getStoredVal() != "" &&  $cellPhone->SMS_status->getStoredVal() == "opt_in"){
             $phoneMkup .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>"ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest", "data-idname" => $cellPhone->idName->getStoredVal()]);
         }
 

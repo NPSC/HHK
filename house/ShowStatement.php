@@ -125,14 +125,19 @@ if ($idRegistration > 0) {
 } else if ($idVisit > 0) {
     // Visit Statement
 
-    $visit = new Visit($dbh, 0, $idVisit);
+    try {
+        $visit = new Visit($dbh, 0, $idVisit);
 
 
-    // Generate Statement
-    $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
-    $name = $guest->getRoleMember();
+        // Generate Statement
+        $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
+        $name = $guest->getRoleMember();
 
-    $stmtMarkup = Statement::createStatementMarkup($dbh, $idVisit, $name->get_fullName(), $includeLogo);
+        $stmtMarkup = Statement::createStatementMarkup($dbh, $idVisit, $name->get_fullName(), $includeLogo);
+    }catch(\Exception $e){
+        $msg = $e->getMessage();
+        $stmtMarkup = $e->getMessage();
+    }
 
 } else {
     $stmtMarkup = 'No Information.';
@@ -197,10 +202,10 @@ if (isset($_REQUEST['cmd'])) {
 
     if ($cmd == 'email') {
 
-        $msg = '';
+        $return = [];
 
         if (isset($_POST['txtEmail'])) {
-            $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_EMAIL);
+            $emAddr = filter_var($_POST['txtEmail'], FILTER_VALIDATE_EMAIL);
         }
 
         if (isset($_POST['txtSubject'])) {
@@ -208,9 +213,9 @@ if (isset($_REQUEST['cmd'])) {
         }
 
         if ($emAddr == '' || $emSubject == '') {
-            $msg .= "The Email Address and Subject are both required.  ";
+            $return["error"] = "Subject and Email must be present and valid.";
         } else if ($stmtMarkup == '') {
-            $msg .= "No Statement.  ";
+            $return["error"] = "No Statement.  ";
         } else {
 
             try{
@@ -236,7 +241,7 @@ if (isset($_REQUEST['cmd'])) {
 
 
                 $mail->send();
-                $msg .= "Email sent.  ";
+                $return["msg"] = "Email sent.";
 
                 // Make a note in the visit or PSG
                 if($idVisit > 0){
@@ -249,12 +254,13 @@ if (isset($_REQUEST['cmd'])) {
                     LinkNote::save($dbh, $noteText, $idRegistration, Note::PsgLink, '', $uS->username, $uS->ConcatVisitNotes);
                 }
             }catch (\Exception $e){
-                $msg .= "Email failed! " . $mail->ErrorInfo;
+                $return["error"] = "Email failed! " . $mail->ErrorInfo;
+                
             }
 
         }
 
-        echo (json_encode(array('msg'=>$msg)));
+        echo json_encode($return);
 
     } else {
         echo "<script type='text/javascript'>" . createScript($labels->getString('Member', 'guest', 'Guest')) . "</script>" . $emtableMarkup . $stmtMarkup;
@@ -268,7 +274,7 @@ if (isset($_REQUEST['cmd'])) {
 
 
 if ($msg != '') {
-    $msg = HTMLContainer::generateMarkup('div', $msg, array('class'=>'ui-state-highlight', 'style'=>'font-size:14pt;'));
+    $msg = HTMLContainer::generateMarkup('div', $msg, array('class'=>'ui-state-highlight ui-corner-all', 'style'=>'font-size:14pt; padding:0.5em; margin-top: 0.5em'));
 }
 ?>
 <!DOCTYPE html>
@@ -321,6 +327,7 @@ $(document).ready(function() {
                 if (data.gotopage) {
                     window.open(data.gotopage, '_self');
                 }
+                flagAlertMessage(data.error, "error");
             }
             if (data.msg) {
                 flagAlertMessage(data.msg, 'success');

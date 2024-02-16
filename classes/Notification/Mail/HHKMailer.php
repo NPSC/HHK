@@ -104,22 +104,6 @@ class HHKMailer extends PHPMailer {
 
         $uS = Session::getInstance();
 
-        $stmt = $this->dbh->prepare("INSERT INTO `Notifications_Log` (`To`,`From`, `Type`,`Sub_Type`, `Subject`, `Content`, `Status`, `Updated_By`) VALUES (:to, :from, :type, :subType, :subject, :content, :status, :updatedBy)");
-        $stmt->execute([
-            ":to"=> implode(',', array_keys($this->all_recipients)),
-            ':from'=> $this->From,
-            ':type'=>"Email",
-            ':subType'=>"",
-            ':subject'=>$this->Subject,
-            ':content'=>$this->Body,
-            ':status'=>NotificationStatus::Queued,
-            ':updatedBy'=>$uS->username
-        ]);
-
-        $messageId = $this->dbh->lastInsertId();
-
-        $this->addCustomHeader("X-HHK-Mail-Id", $messageId);
-
         $logDetails = [
             "Subject" => $this->Subject,
             "CC" => implode(', ', $this->getCCString()),

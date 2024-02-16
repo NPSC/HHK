@@ -21,7 +21,7 @@ class NamePhoneRS extends AbstractTableRS {
     public $Phone_Code;  // varchar(5) NOT NULL,
     public $Phone_Search;  // varchar(25) NOT NULL DEFAULT '',
     public $is_Mobile;  // bit(1) NOT NULL DEFAULT b'0',
-    public $is_SMS;  // bit(1) NOT NULL DEFAULT b'0',
+    public $SMS_status;  // varchar(10) NOT NULL DEFAULT '',
     public $is_Toll_Free;  // bit(1) NOT NULL DEFAULT b'0',
     public $is_International;  // bit(1) NOT NULL DEFAULT b'0',
     public $Bad_Number;  // varchar(15) NOT NULL DEFAULT '',
@@ -38,7 +38,7 @@ class NamePhoneRS extends AbstractTableRS {
         $this->Phone_Extension = new DB_Field("Phone_Extension", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Phone_Code = new DB_Field("Phone_Code", "", new DbStrSanitizer(5));
         $this->is_Mobile = new DB_Field("is_Mobile", 0, new DbBitSanitizer());
-        $this->is_SMS = new DB_Field("is_SMS", 0, new DbBitSanitizer());
+        $this->SMS_status = new DB_Field("SMS_status", '', new DbStrSanitizer(10));
         $this->is_Toll_Free = new DB_Field("is_Toll_Free", 0, new DbBitSanitizer());
         $this->is_International = new DB_Field("is_International", 0, new DbBitSanitizer());
         $this->Bad_Number = new DB_Field("Bad_Number", "", new DbStrSanitizer(5));

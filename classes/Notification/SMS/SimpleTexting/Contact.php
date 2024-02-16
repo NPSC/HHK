@@ -79,7 +79,7 @@ Class Contact {
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                 throw new SmsException("Error getting contact: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
-                throw new SmsException("Error getting contact: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                throw new SmsException("Error getting contact: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
     }

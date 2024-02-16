@@ -4,6 +4,7 @@ namespace HHK\Member\Address;
 
 use HHK\AuditLog\NameLog;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\SysConst\PhonePurpose;
 use HHK\Tables\EditRS;
@@ -223,14 +224,10 @@ class Phones extends AbstractContactPoint {
                 }
                 $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
             } else if ($uS->smsProvider && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
-                if($this->rSs[$p[0]]->is_SMS->getStoredVal()){
-                    $smsOptedMkup = HTMLInput::generateMarkup("", ["type"=>"checkbox", "checked"=>"true", 'name'=>$idPrefix.'cbSMS[' . $p[0] . ']', 'id'=>$idPrefix.'cbSMS' . $p[0], "class"=>"ml-2 mr-1"]);
-                }else{
-                    $smsOptedMkup = HTMLInput::generateMarkup("", ["type"=>"checkbox", 'name'=>$idPrefix.'cbSMS[' . $p[0] . ']', 'id'=>$idPrefix.'cbSMS' . $p[0], "class"=>"ml-2 mr-1"]);
-                }
-                $smsOptedMkup .= HTMLContainer::generateMarkup("label", "Opt In", ["for" => $idPrefix . 'cbSMS' . $p[0], "title"=>"Opt In to receive text messages"]);
-
-                $tdContents .= $smsOptedMkup;
+                $smsOptions = [["opt_in", "Opt In"],["opt_out", "Opt Out"]];
+                $smsOptInMkup = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($smsOptions, $this->rSs[$p[0]]->SMS_status->getStoredVal(), true, "SMS?"), ["name" => $idPrefix . 'selSMS[' . $p[0] . ']', 'id' => $idPrefix . 'selSMS' . $p[0], "class" => "ml-2 mr-1"]);
+                
+                $tdContents .= $smsOptInMkup;
             }
         }
 
@@ -398,11 +395,11 @@ class Phones extends AbstractContactPoint {
 
         $a->Phone_Extension->setNewVal($extn);
         
-        if (isset($p[$idPrefix.'cbSMS'][$typeCode])) {
-            $smsOptIn = boolval(filter_var($p[$idPrefix.'cbSMS'][$typeCode], FILTER_VALIDATE_BOOL));
+        if (isset($p[$idPrefix.'selSMS'][$typeCode])) {
+            $smsOptIn = filter_var($p[$idPrefix.'selSMS'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $a->is_SMS->setNewVal($smsOptIn);
+        $a->SMS_status->setNewVal($smsOptIn);
 
 
         // phone search - use only the numberals for efficient phone number search

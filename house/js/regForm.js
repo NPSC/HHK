@@ -215,6 +215,11 @@ function setupEsign(){
         open: function(){
         	initTopaz();
             $(this).dialog("option", "height", 300);
+        },
+        close: function () {
+            //gracefully close Topaz
+            close();
+            clearInterval(tmr);
         }
     });
 
@@ -390,18 +395,13 @@ function setupEsign(){
         }
     }
 
-    //Perform the following actions on
-    //	1. Browser Closure
-    //	2. Tab Closure
-    //	3. Tab Refresh
-    window.onbeforeunload = function(evt){
+    document.addEventListener("beforeunload", function (evt) {
         try{
             close();
             clearInterval(tmr);
-            evt.preventDefault(); //For Firefox, needed for browser closure
         }catch(e){
 
         }
-    };
+    }, false);
     //end Topaz code
 };

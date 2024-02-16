@@ -1150,7 +1150,7 @@ CREATE TABLE if not exists `name_phone` (
   `is_Land_Line` bit(1) NOT NULL DEFAULT b'0',
   `is_Personal` bit(1) NOT NULL DEFAULT b'0',
   `is_Party_Line` bit(1) NOT NULL DEFAULT b'0',
-  `is_SMS` bit(1) NOT NULL DEFAULT b'0',
+  `SMS_status` varchar(10) NOT NULL DEFAULT '',
   `Carrier` varchar(45) NOT NULL DEFAULT '',
   `Bad_Number` varchar(15) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
