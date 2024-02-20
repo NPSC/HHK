@@ -55,18 +55,14 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
 
     $uS = Session::getInstance();
     $ageYears = $uS->StartGuestFeesYr;
-    $parm = "NOW()";
-    if ($end != '') {
-        $parm = "'$end'";
-    }
 
-    $stmt = $dbh->query("SELECT
+    $stmt = $dbh->query("
+SELECT
     s.idVisit,
     s.Visit_Span,
-
     CASE
         WHEN
-            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
+            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start')
         THEN 0
         WHEN
             DATE(s.Span_Start_Date) >= DATE('$end')
@@ -74,20 +70,24 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
         ELSE
             SUM(DATEDIFF(
                 CASE
-                    WHEN
-                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('$end')
+                    WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('$end')
                     THEN
                         DATE('$end')
-                    ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                    ELSE
+                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
                 END,
                 CASE
-                    WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
-                    ELSE DATE(s.Span_Start_Date)
+                    WHEN DATE(s.Span_Start_Date) < DATE('$start')
+                    THEN
+                        DATE('$start')
+                    ELSE
+                        DATE(s.Span_Start_Date)
                 END
             ))
         END AS `Actual_Guest_Nights`,
     CASE
-        WHEN DATE(s.Span_Start_Date) >= DATE('$start') THEN 0
+        WHEN DATE(s.Span_Start_Date) >= DATE('$start')
+        THEN 0
         WHEN
             DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start')
         THEN
@@ -1289,10 +1289,14 @@ where
         $days = $r['Actual_Month_Nights'];
         $gdays = isset($actualGuestNights[$r['idVisit']][$r['Span']]) ? $actualGuestNights[$r['idVisit']][$r['Span']] : 0;
 
-        //$rates[] = $r['idRoom_Rate'];
+        // $gdays contains all the guests.
+        if ($gdays >= $days) {
+            $gdays -= $days;
+        }
+
         $visit['nit'] += $days;
         $totalCatNites[$r[$rescGroup[0]]] += $days;
-        $visit['gnit'] += $gdays;
+        $visit['gnit'] += $gdays + $days;
         $visit['pin'] += $r['Pre_Interval_Nights'];
         $visit['gpin'] += isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0;
 
@@ -1754,8 +1758,8 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
 
         $cFields[] = array($labels->getString('MemberType', 'guest', 'Guest')." Nights", 'gnights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
-        $cFields[] = array("Rate Per ".$labels->getString('MemberType', 'guest', 'Guest'), 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
-        $cFields[] = array("Mean Rate Per ".$labels->getString('MemberType', 'guest', 'Guest'), 'meanGstRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+        $cFields[] = array("Rate", 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
+        $cFields[] = array("Mean Rate ", 'meanGstRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
     } else {
 
