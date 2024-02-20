@@ -1290,10 +1290,14 @@ where
         $days = $r['Actual_Month_Nights'];
         $gdays = isset($actualGuestNights[$r['idVisit']][$r['Span']]) ? $actualGuestNights[$r['idVisit']][$r['Span']] : 0;
 
-        //$rates[] = $r['idRoom_Rate'];
+        // $gdays contains all the guests.
+        if ($gdays >= $days) {
+            $gdays -= $days;
+        }
+
         $visit['nit'] += $days;
         $totalCatNites[$r[$rescGroup[0]]] += $days;
-        $visit['gnit'] += $gdays;
+        $visit['gnit'] += $gdays + $days;
         $visit['pin'] += $r['Pre_Interval_Nights'];
         $visit['gpin'] += isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0;
 
