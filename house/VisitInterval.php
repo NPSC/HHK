@@ -1953,7 +1953,7 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="js/visitInterval.js"></script>
+        <script type="text/javascript" src="<?php echo VISIT_INTERVAL_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -1998,6 +1998,7 @@ if ($uS->CoTod) {
                 </form>
             </div>
         </div>
+        <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate" />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input type="hidden" id="startYear" value= '<?php echo $uS->startYear; ?>' />

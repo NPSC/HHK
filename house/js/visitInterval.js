@@ -107,11 +107,12 @@ $(document).ready(function () {
 
     $('.hhk-viewVisit').button();
     $('.hhk-viewVisit').click(function () {
-        var vid = $(this).data('vid');
-        var gid = $(this).data('gid');
-        var span = $(this).data('span');
+        let vid = $(this).data('vid'),
+            gid = $(this).data('gid'),
+            span = $(this).data('span'),
+            fixedRate = $('#fixedRate').val();
 
-        var buttons = {
+        const buttons = {
             "Show Statement": function () {
                 window.open('ShowStatement.php?vid=' + vid, '_blank');
             },

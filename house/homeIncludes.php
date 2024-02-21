@@ -43,6 +43,7 @@ define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js
 define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js' . JSV. '"></script>');
 define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js' . JSV);
 define('REG_FORM_JS', 'js/regForm.js' . JSV);
+define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);
 
 define('FULLCALENDAR_CSS', '<link href="css/fullcalendar5.11.0.min.css' . JSV . '"  rel="stylesheet" type="text/css" />');
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
