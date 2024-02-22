@@ -63,7 +63,6 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
     $stmt = $dbh->query("SELECT
     s.idVisit,
     s.Visit_Span,
-
     CASE
         WHEN
             DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
@@ -610,7 +609,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $
     $r['hosp'] = $hosp;
 
     $r['nights'] = $visit['nit'];
-    $r['gnights'] = $visit['gnit'];
+    $r['gnights'] = max($visit['gnit'] - $visit['nit'], 0);
     $r['lodg'] = number_format($visit['chg'],2);
     $r['days'] = $visit['day'];
 
@@ -694,7 +693,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $
         $expDepart = new DateTime($r['Expected_Departure']);
         $expDepart->setTime(0, 0, 0);
 
-        $r['Status'] = HTMLContainer::generateMarkup('span', $uS->guestLookups['Visit_Status'][$r['Status']][1], array('class'=>'hhk-getVDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']));
+        //$r['Status'] = HTMLContainer::generateMarkup('span', $uS->guestLookups['Visit_Status'][$r['Status']][1], array('class'=>'hhk-getVDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']));
 
         if ($visitFeePaid != '') {
             $r['visitFee'] = $visitFeePaid . $r['visitFee'];
@@ -1038,7 +1037,6 @@ where
     $totalCharged = 0;
     $totalVisitFee = 0;
     $totalLodgingCharge = 0;
-    //$totalFullCharge = 0;
     $totalAddnlCharged = 0;
 
     $totalAddnlTax = 0;
@@ -1053,7 +1051,6 @@ where
     $totalthrdPaid = 0;
     $totalSubsidy = 0;
     $totalUnpaid = 0;
-    //$totalAddnlPaid = 0;
     $totalDonationPaid = 0;
 
     $totalNights = 0;
@@ -1072,7 +1069,6 @@ where
     $rates = [];
     $chargesAr = [];
 
-    //$reportStartDT = new DateTime($start . ' 00:00:00');
     $reportEndDT = new \DateTime($end . ' 00:00:00');
     $now = new \DateTime();
     $now->setTime(0, 0, 0);
@@ -1105,10 +1101,9 @@ where
                 }
 
                 $totalCharged += $visit['chg'];
-                //$totalFullCharge += $visit['fcg'];
                 $totalAmtPending += $visit['pndg'];
                 $totalNights += $visit['nit'];
-                $totalGuestNights += $visit['gnit'];
+                $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
 
                 // Set expected departure to now if earlier than "today"
                 $expDepDT = new \DateTime($savedr['Expected_Departure']);
@@ -1195,7 +1190,6 @@ where
                 $totalHousePaid += $visit['hpd'];
                 $totalGuestPaid += $visit['gpd'];
                 $totalthrdPaid += $visit['thdpd'];
-                //$totalAddnlPaid += $visit['addpd'];
                 $totalDonationPaid += $visit['donpd'];
                 $totalUnpaid += $unpaid;
                 $totalSubsidy += ($visit['fcg'] - $visit['chg']);
@@ -1288,7 +1282,9 @@ where
         $visit['adj'] = $r['Expected_Rate'];
 
         $days = $r['Actual_Month_Nights'];
-        $gdays = isset($actualGuestNights[$r['idVisit']][$r['Span']]) ? $actualGuestNights[$r['idVisit']][$r['Span']] : 0;
+        $gdays = $actualGuestNights[$r['idVisit']][$r['Span']] ?? 0;
+
+        $visit['gnit'] += $gdays;
 
         // $gdays contains all the guests.
         if ($gdays >= $days) {
@@ -1297,26 +1293,33 @@ where
 
         $visit['nit'] += $days;
         $totalCatNites[$r[$rescGroup[0]]] += $days;
-        $visit['gnit'] += $gdays + $days;
-        $visit['pin'] += $r['Pre_Interval_Nights'];
-        $visit['gpin'] += isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0;
+
+        $piDays = $r['Pre_Interval_Nights'];
+        $piGdays = $piGuestNights[$r['idVisit']][$r['Span']] ?? 0;
+        $visit['pin'] += $piDays;
+        $visit['gpin'] += $piGdays;
+
+        if ($piGdays >= $piDays) {
+            $piGdays -= $piDays;
+        }
+
 
         //  Add up any pre-interval charges
-        if ($r['Pre_Interval_Nights'] > 0) {
+        if ($piDays > 0) {
 
             // collect all pre-charges
             $priceModel->setCreditDays($r['Rate_Glide_Credit']);
-            $visit['preCh'] += ($priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], (isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0)) * $adjRatio);
+            $visit['preCh'] += $priceModel->amountCalculator($piDays, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $piGdays) * $adjRatio;
 
         }
 
         if ($days > 0) {
 
-            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
-            $visit['chg'] += ($priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio);
+            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
+            $visit['chg'] += $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
             $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
 
-            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
+            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
             $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
 
             if ($adjRatio > 0) {
@@ -1344,10 +1347,10 @@ where
         $totalAddnlCharged += ($visit['addch']);
         $totalVisitFee += $visit['vfa'];
         $totalCharged += $visit['chg'];
-        //$totalFullCharge += $visit['fcg'];
+
         $totalAmtPending += $visit['pndg'];
         $totalNights += $visit['nit'];
-        $totalGuestNights += $visit['gnit'];
+        $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
 
         $totalTaxCharged += $visit['taxcgd'];
         $totalAddnlTax += $visit['adjchtx'];
@@ -1441,7 +1444,6 @@ where
         $totalHousePaid += $visit['hpd'];
         $totalGuestPaid += $visit['gpd'];
         $totalthrdPaid += $visit['thdpd'];
-        //$totalAddnlPaid += $visit['addpd'];
         $totalDonationPaid += $visit['donpd'];
         $totalUnpaid += $unpaid;
         $totalSubsidy += ($visit['fcg'] - $visit['chg']);
@@ -1758,7 +1760,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
 
     if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
 
-        $cFields[] = array($labels->getString('MemberType', 'guest', 'Guest')." Nights", 'gnights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
+        $cFields[] = array('Extra ' . $labels->getString('MemberType', 'guest', 'Guest').' Nights', 'gnights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
         $cFields[] = array("Rate Per ".$labels->getString('MemberType', 'guest', 'Guest'), 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
         $cFields[] = array("Mean Rate Per ".$labels->getString('MemberType', 'guest', 'Guest'), 'meanGstRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 

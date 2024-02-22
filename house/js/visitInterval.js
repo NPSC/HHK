@@ -33,6 +33,8 @@ function viewInsurance(idName, eventTarget) {
         });
 }
 
+var fixedRate;  // used by VisitDialog.hs
+
 $(document).ready(function () {
 
     let startYear = $('#startYear').val(),
@@ -109,8 +111,9 @@ $(document).ready(function () {
     $('.hhk-viewVisit').click(function () {
         let vid = $(this).data('vid'),
             gid = $(this).data('gid'),
-            span = $(this).data('span'),
-            fixedRate = $('#fixedRate').val();
+            span = $(this).data('span');
+
+        fixedRate = $('#fixedRate').val();
 
         const buttons = {
             "Show Statement": function () {
