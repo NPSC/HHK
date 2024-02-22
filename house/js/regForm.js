@@ -25,13 +25,23 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
     	if(!isSigned){
     		flagAlertMessage("<strong>Error:</strong> At least one signature is required", true);
     		return;
-    	}
+        }
+        
+        $(this).parents(".ui-tabs-panel").find(".regFormInput").each(function (i, element) {
+            var val = $(this).val();
+
+            if ($(this).data("inputtype") != undefined) {
+                regFormSignatures.push({ class: "regFormInput", type: $(this).data("inputtype"), uniqId: i, val: val });
+            } else {
+                regFormSignatures.push({ class: "regFormInput", type: "text", uniqId: i, val: val });
+            }
+        });
 
         $('.btnSave').prop('disabled', 'disabled').html(loading);
 
         try{
             var docCode = $(this).data("tab");
-            $(this).closest('.ui-tabs-panel').find("div.PrintArea .btnSign").remove();
+            $(this).closest('.ui-tabs-panel').find("div.PrintArea .btnSign, div.PrintArea .btnInitial").remove();
 
             var formData = new FormData();
             formData.append('cmd', 'saveRegForm');
@@ -121,17 +131,30 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
 };
 
 function loadSignatures(signatures){
-    $('#vsignedReg .btnSign').hide();
+    $('#vsignedReg .btnSign, #vsignedReg .btnInitial').hide();
+
     try{
         for( docId in signatures){
-            $('#'+docId+' .btnSign').hide();
+            $('#' + docId + ' .btnSign, #' + docId + ' .btnInitial').hide();
+            
+            //get regforminputs
+            var regFormInputs = $('#' + docId + ' .regFormInput').attr("disabled", true);
+
             signatures[docId].forEach(element => {
-                $('#'+docId+' .signWrapper[data-idname='+element.idName+'] .sigLine img').prop('src', element.signature).show();
-                $('#'+docId+' .signWrapper[data-idname='+element.idName+'] .signDate').show();
+                if (element.type == "signature" && element.uniqId !== undefined) { // if is agreement signature
+                    var signWrapper = $(regFormInputs[element.uniqId]).parents(".signWrapper");
+                    signWrapper.find('.sigLine img').prop('src', element.val).show();
+                    signWrapper.find('.signDate').show();
+                }else if (element.class == "regFormInput" && element.uniqId !== undefined) { //other agreement fields
+                    $(regFormInputs[element.uniqId]).val(element.val);
+                } else if (element.idName) { //original/default signature lines
+                    $('#' + docId + ' .signWrapper[data-idname=' + element.idName + '] .sigLine img').prop('src', element.signature).show();
+                    $('#' + docId + ' .signWrapper[data-idname=' + element.idName + '] .signDate').show();
+                }
             });
         };
     }catch(e){
-        flagAlertMessage("Failed to load signatures: "+ e.message, true);
+        flagAlertMessage("Failed to load registration form fields: "+ e.message, true);
     }
 
 }
@@ -144,37 +167,41 @@ function setupEsign(){
     $("#jSignDialog").dialog({
     	autoOpen: false,
     	width: getDialogWidth(800),
-    	height: 350,
+    	height: 375,
     	modal: true,
     	buttons: {
             "Clear": function(){
                 var idName = $(this).find("input#idName").val();
                 var formCode = $(this).find("input#formCode").val();
+                var uniqId = $(this).find("input#idBtn").val();
                 $(this).find(".signature").jSignature('clear');
                 regFormSignatures.some((sig, i)=>{
-                    if(sig.formCode == formCode && sig.idName == idName){
+                    if(sig.formCode == formCode && sig.idName == idName && sig.uniqId == uniqId){
                         regFormSignatures.splice(i, 1);
                         return true;
                         
                     }
                 });
                 $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
+                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine input.regFormInput").val("");
                 $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
             },
             "Sign": function() {
             	var idName = $(this).find("input#idName").val();
             	var formCode = $(this).find("input#formCode").val();
                 var signature = $(this).find('.signature').jSignature("getData");
-                regFormSignatures.push({formCode: formCode, idName: idName, signature: signature});
-            	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", signature).show();
-            	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").show();
+                var uniqId = $(this).find("input#idBtn").val();
+                regFormSignatures.push({formCode: formCode, idName: idName, uniqId: uniqId, signature: signature});
+                $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine img").attr("src", signature).show();
+                $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine input.regFormInput").val(signature);
+            	$("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .signDate").show();
 
                 $(this).dialog("close");
             }
         }
     });
 
-    $("#jSignDialog .signature").jSignature({"width": "750px", "height": "141px"});
+    $("#jSignDialog .signature").jSignature({"width": "175px", "height": "141px"});
 
     $("#topazDialog").dialog({
     	autoOpen: false,
@@ -185,26 +212,27 @@ function setupEsign(){
             "Clear": function(){
                 var idName = $(this).find("input#idName").val();
                 var formCode = $(this).find("input#formCode").val();
+                var idBtn = $(this).find("input#idBtn").val();
                 onClear();
                 regFormSignatures.some((sig, i)=>{
-                    if(sig.formCode == formCode && sig.idName == idName){
+                    if(sig.formCode == formCode && sig.idName == idName && sig.idBtn == idBtn){
                         regFormSignatures.splice(i, 1);
                         return true;
                         
                     }
                 });
-                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
-                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
+                $("#" + formCode + " .signWrapper[data-idbtn=" + idBtn + "] .sigLine img").attr("src", "").hide();
+                $("#" + formCode + " .signWrapper[data-idbtn=" + idBtn + "] .signDate").hide();
             },
             "Sign": function() {
             	var idName = $(this).find("input#idName").val();
-            	var formCode = $(this).find("input#formCode").val();
+                var formCode = $(this).find("input#formCode").val();
+                var idBtn = $(this).find("input#idBtn").val();
                 if(onDone() != false){
                     var signature = $(this).find("canvas#sigImg")[0].toDataURL("image/png");
-                    regFormSignatures.push({formCode: formCode, idName: idName, signature: signature});
-                    $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", signature).show();
-                    $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").show();
-
+                    regFormSignatures.push({formCode: formCode, idName: idName, idBtn:idBtn, signature: signature});
+                    $("#" + formCode + " .signWrapper[data-idbtn=" + idBtn + "] .sigLine img").attr("src", signature).show();
+                    $("#" + formCode + " .signWrapper[data-idbtn=" + idBtn + "] .signDate").show();
                     $(this).dialog("close");
                 }else{
                     showAlert("Please sign before continuing", false, false);
@@ -212,7 +240,7 @@ function setupEsign(){
                 }
             }
         },
-        open: function(){
+        open: function () {
         	initTopaz();
             $(this).dialog("option", "height", 300);
         },
@@ -223,20 +251,39 @@ function setupEsign(){
         }
     });
 
-    $(".btnSign").on("click", function(){
+    $(".btnSign, .btnInitial").uniqueId().on("click", function(){
     	let eSignMethod = $(this).data('esign');
-    	let name = $(this).closest(".row").find(".printName").text();
+        let name = $(this).closest(".row").find(".printName").text();
+        let uniqId = $(this).attr("id");
+        $(this).parents(".signWrapper").attr("data-uniqid", uniqId);
 
     	if(eSignMethod === 'jSign'){
             $("#jSignDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
             $("#jSignDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
+            $("#jSignDialog input#idBtn").val(uniqId);
             $("#jSignDialog").find(".signature").jSignature('clear');
-            $("#jSignDialog").dialog("option", "title", "Signature: " + name).dialog("open");
+            if ($(this).hasClass("btnInitial")) {
+                $("#jSignDialog .signature").empty().jSignature({"width": "175px", "height": "141px"});
+                $("#jSignDialog").dialog("option", "title", "Initial").dialog("option", "width", getDialogWidth(240)).dialog("open");
+            } else {
+                $("#jSignDialog .signature").empty().jSignature({"width": "750px", "height": "141px"});
+                $("#jSignDialog").dialog("option", "title", "Signature: " + name).dialog("option", "width", getDialogWidth(800)).dialog("open");
+            }
         }else if(eSignMethod === 'topaz'){
             $("#topazDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
             $("#topazDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
-            $("#topazDialog").dialog("option", "title", "Signature: " + name).dialog("open");
-	}
+            $("#topazDialog input#idBtn").val(uniqId);
+            if ($(this).hasClass("btnInitial")) {
+                $("#topazDialog").dialog("option", "title", "Initial").dialog("option", "width", getDialogWidth(240)).dialog("open");
+            } else {
+                $("#topazDialog").dialog("option", "title", "Signature: " + name).dialog("option", "width", getDialogWidth(800)).dialog("open");
+            }
+	    }
+    });
+
+    $(document).on("input", "textarea.regFormInput", function () {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight + 3) + 'px';
     });
 
     //start topaz code

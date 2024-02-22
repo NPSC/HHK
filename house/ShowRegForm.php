@@ -244,6 +244,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <?php echo NAVBAR_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo CSSVARS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -315,12 +316,14 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
             <div id="jSignDialog" style="display:none;">
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
+                <input type="hidden" id="idBtn">
             	<p style="text-align:center">Use your mouse, finger or touch pen to sign</p>
             	<div class="signature ui-widget-content ui-corner-all"></div>
             </div>
             <div id="topazDialog" style="display:none; text-align:center;">
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
+                <input type="hidden" id="idBtn">
             	<p style="text-align:center">Use your Topaz Signature Pad to sign</p>
             	<canvas name="signature" id="sigImg" class="signature ui-widget-content ui-corner-all" width="500" height="100"></canvas>
             	<div class="alertContainer" id="sigWebAlert" style="display:none;">

@@ -840,7 +840,18 @@ REPLACE INTO `template_tag` VALUES
 (25,'c','Room Rate Title','${RoomRateTitle}',''),
 (26,'c','Room Rate (pre tax)','${RoomRateAmount}',''),
 (27,'c','Rate Adjustment Percent','${RateAdjust}',''),
-(28,'c','Nightly Rate (pre tax)','${NightlyRate}','');
+(28,'c','Nightly Rate (pre tax)','${NightlyRate}',''),
+(29,'ra', 'Room', '${Room}',''),
+(30,'ra', 'Arrival Date', '${ArrivalDate}',''),
+(31,'ra', 'Arrival Time', '${ArrivalTime}',''),
+(32,'ra', 'Expected Departure Date', '${ExpectedDepartureDate}',''),
+(33,'ra', 'Signature Lines', '${SignatureLines}',''),
+(34,'ra', 'Initial Line', '${InitialLine}',''),
+(35,'ra', 'Date Today', '${DateToday}',''),
+(36,'ra', 'Blank Signature Line', '${BlankSignatureLine}',''),
+(37,'ra', 'Blank Textbox', '${BlankTextBox}',''),
+(38,'ra', 'Blank Inline Textbox', '${BlankInlineTextBox}',''),
+(39,'ra', 'Blank Textarea', '${BlankTextArea}','');
 -- ;
 
 replace into `item` (`idItem`, `Description`) values

@@ -5,6 +5,7 @@ namespace HHK\House\RegistrationForm;
 use HHK\House\Constraint\ConstraintsVisit;
 use HHK\House\PSG;
 use HHK\House\Registration;
+use HHK\House\TemplateForm\RegAgreementForm;
 use HHK\House\Vehicle;
 use HHK\House\Visit\Visit;
 use HHK\HTMLControls\HTMLContainer;
@@ -441,7 +442,7 @@ class CustomRegisterForm {
 
     }
 
-    protected function AgreementBlock(array $guests, $primaryGuestId, $agreementLabel, $agreement) {
+    protected function AgreementBlock(array $guests, $primaryGuestId, string $agreementLabel, string $agreement) {
         $uS = Session::getInstance();
 
         $style = (!empty($this->settings["Agreement"]["pagebreak"]) ? $this->settings["Agreement"]["pagebreak"] : "");
@@ -457,57 +458,115 @@ class CustomRegisterForm {
         }
 
         if (!empty($this->settings['Signatures']['show'])){
-
-            $usedNames = array();
-
-            foreach ($guests as $g) {
-
-                if (!isset($usedNames[$g->getIdName()])) {
-                    $sigMkup = '<div class="row mt-4 signWrapper" data-idname="' . $g->getIdName() . '">
-                                    <div class="col-8 row" style="align-items:flex-end;">
-                                        <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
-                                        <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"></div>
-                                        <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
-                                    </div>
-                                    <div class="col-4 row" style="align-items:flex-end;">
-                                        <div class="col pr-0" style="max-width: fit-content;">Date</div>
-                                        <div class="col" style="border-bottom: 1px solid black; text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
-                                    </div>
-                                </div>';
-                    if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'primary' && $g->getRoleMember()->get_IdName() == $primaryGuestId){
-                        //show primary guest signature line
-                        $mkup .= $sigMkup;
-                        $usedNames[$g->getIdName()] = 'y';
-                        break;
-                    }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'all'){
-                        //if showing all guests
-                        $mkup .= $sigMkup;
-                    }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'adults'){
-                        //if excluding minors
-                        if ($uS->RegNoMinorSigLines && $g->getRoleMember()->get_demogRS()->Is_Minor->getStoredVal() > 0) {
-                            // #816, EKC, 5/23/2023
-                            continue;
-                        } else if($g->getRoleMember()->get_birthDate() != ''){
-                            $dob = new \DateTime($g->getRoleMember()->get_birthDate());
-                            $now = new \DateTime();
-                            $age = $dob->diff($now);
-                            $age = $age->format("%y");
-
-                            if($age < 18){
-                                continue;
-                            }
-                        }
-                        $mkup .= $sigMkup;
-                        $usedNames[$g->getIdName()] = 'y';
-                    }
-                }
-            }
-
+            $mkup .= $this->SignatureLinesMkup($guests, $primaryGuestId);
         }
 
         $mkup .= "</div> <!-- end .agreementContainer -->";
 
         return $mkup;
+    }
+
+    /**
+     * Summary of SignatureLinesMkup
+     * @param array $guests
+     * @param mixed $primaryGuestId
+     * @param bool $includeIdName
+     * @return string
+     */
+    public function SignatureLinesMkup(array $guests, $primaryGuestId, bool $insideAgreement = false){
+        $uS = Session::getInstance();
+
+        $mkup = "";
+
+        $usedNames = array();
+
+        foreach ($guests as $g) {
+
+            if (!isset($usedNames[$g->getIdName()])) {
+                $sigMkup = '<div class="row mt-4 signWrapper" ' . ($insideAgreement == false ? 'data-idname="' . $g->getIdName() . '"' : '') . '>
+                                <div class="col-8 row" style="align-items:flex-end;">
+                                    <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
+                                    <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%">' . ($insideAgreement ? '<input type="hidden" class="regFormInput" data-inputtype="signature">' : '') . '</div>
+                                    <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
+                                </div>
+                                <div class="col-4 row" style="align-items:flex-end;">
+                                    <div class="col pr-0" style="max-width: fit-content;">Date</div>
+                                    <div class="col" style="border-bottom: 1px solid black; text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
+                                </div>
+                            </div>';
+                if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'primary' && $g->getRoleMember()->get_IdName() == $primaryGuestId){
+                    //show primary guest signature line
+                    $mkup .= $sigMkup;
+                    $usedNames[$g->getIdName()] = 'y';
+                    break;
+                }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'all'){
+                    //if showing all guests
+                    $mkup .= $sigMkup;
+                }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'adults'){
+                    //if excluding minors
+                    if ($uS->RegNoMinorSigLines && $g->getRoleMember()->get_demogRS()->Is_Minor->getStoredVal() > 0) {
+                        // #816, EKC, 5/23/2023
+                        continue;
+                    } else if($g->getRoleMember()->get_birthDate() != ''){
+                        $dob = new \DateTime($g->getRoleMember()->get_birthDate());
+                        $now = new \DateTime();
+                        $age = $dob->diff($now);
+                        $age = $age->format("%y");
+
+                        if($age < 18){
+                            continue;
+                        }
+                    }
+                    $mkup .= $sigMkup;
+                    $usedNames[$g->getIdName()] = 'y';
+                }
+            }
+        }
+
+        return $mkup;
+    }
+
+    public function BlankSignatureLineMkup(){
+        return '<div class="row mt-4 signWrapper">
+        <div class="col-8 row" style="align-items:flex-end;">
+            <div class="col pr-0" style="max-width: fit-content;">Signature</div>
+            <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></div>
+            <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
+        </div>
+        <div class="col-4 row" style="align-items:flex-end;">
+            <div class="col pr-0" style="max-width: fit-content;">Date</div>
+            <div class="col" style="border-bottom: 1px solid black; text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
+        </div>
+    </div>';
+    }
+
+    public function InitialsLineMkup(){
+        return '<span class="signWrapper" data-idbtn="">
+                            <i class="bi bi-arrow-right-circle-fill pr-2"></i>
+                            <span class="sigLine" style="border-bottom: 1px solid black; justify-content:end; width: 50px; display: inline-block;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></span>
+                            <button class="ui-button ui-corner-all mb-1 ml-2 btnInitial" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Initial</button>' : '</span>') . '
+                    </span>';
+    }
+
+    public function BlankTextBox(){
+        return '<span class="textboxWrapper hhk-flex">
+                    <i class="bi bi-arrow-right-circle-fill pr-2"></i>
+                    <input type="text" class="regFormInput ui-state-highlight">
+                </span>';
+    }
+
+    public function BlankInlineTextBox(){
+        return '<span class="textboxWrapper hhk-flex" style="display: inline-flex">
+                    <i class="bi bi-arrow-right-circle-fill pr-2"></i>
+                    <input type="text" class="regFormInput ui-state-highlight">
+                </span>';
+    }
+
+    public function BlankTextarea(){
+        return '<span class="textboxWrapper hhk-flex">
+                    <i class="bi bi-arrow-right-circle-fill pr-2"></i>
+                    <textarea class="regFormInput ui-state-highlight"></textarea>
+                </span>';
     }
 
     protected function paymentRecord($feesRecord) {
@@ -640,7 +699,7 @@ class CustomRegisterForm {
     }
 
     protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, $referralAgent, array $guests,  $houseAddr, $hospital, $mrn, $hospRoom, $diagnosis, $location, $doctor, $patientRelCodes,
-            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $cardTokens, $notes, $primaryGuestId = 0) {
+            $vehicles, $agent, $rate, $roomTitle, $arrival, $expectedDeparture, $expDepartPrompt, $agreementDocId, $cardTokens, $notes, $primaryGuestId = 0) {
 
         $uS = Session::getInstance();
 
@@ -679,6 +738,9 @@ class CustomRegisterForm {
         }else{
             $agreementTitle = $this->labels->getString('referral', 'agreementTitle','Agreement');
         }
+
+        $agreementForm = new RegAgreementForm($dbh, $agreementDocId);
+        $agreement = $agreementForm->createForm($agreementForm->makeReplacements($dbh, $this, $guests, $primaryGuestId, $roomTitle, $arrival, $expectedDeparture));
 
         $mkup .= $this->AgreementBlock($guests, $primaryGuestId, $agreementTitle, $agreement);
 
@@ -731,6 +793,29 @@ class CustomRegisterForm {
         page-break-inside: avoid;
     }
 
+    .agreement .btnSign, .agreement .btnInitial {
+        padding: .4em 1em;
+    }
+
+    .agreement .textboxWrapper .regFormInput {
+        width: 100%;
+        border: 0;
+        padding: 0.5rem;
+    }
+
+    .agreement .textboxWrapper {
+        align-items: center;
+    }
+
+    .agreement .textboxWrapper .regFormInput:disabled {
+        background: none;
+        color: #000;
+    }
+
+    .agreement .textboxWrapper textarea {
+        resize: none;
+    }
+
     @media screen {
         footer {
             display: none !important;
@@ -745,8 +830,12 @@ class CustomRegisterForm {
             //display: table-footer-group;
         }
 
-        button.btnSign{
+        button.btnSign {
             display:none;
+        }
+
+        button.btnInitial {
+            display: none;
         }
 
         .container {
@@ -782,9 +871,9 @@ class CustomRegisterForm {
         $expectedDeparturePrompt = 'Expected Departure';
         $hospital = '';
 
-        $agreement = "";
-        if(isset($doc['Doc'])){
-            $agreement = $doc['Doc'];
+        $agreementDocId = 0;
+        if(isset($doc['docId'])){
+            $agreementDocId = $doc['docId'];
         }
 
         if ($idVisit > 0) {
@@ -793,6 +882,8 @@ class CustomRegisterForm {
             $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, '', $span);
             $reg = new Registration($dbh, 0, $visit->getIdRegistration());
             $visit->getResource($dbh);
+
+            $arrival = $visit->getArrivalDate();
 
             $stayingSql = ($visit->getVisitStatus() == VisitStatus::CheckedIn ? " and s.Status = 'a' " : ""); //only show current stays if visit is checked in
             $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest`
@@ -1065,9 +1156,10 @@ class CustomRegisterForm {
                 $agent,
                 $rate,
                 $roomTitle,
+                $arrival,
                 $depDate,
                 $expectedDeparturePrompt,
-                $agreement,
+                $agreementDocId,
                 $cardTokens,
                 $notes,
                 $primaryGuestId
@@ -1167,5 +1259,3 @@ class CustomRegisterForm {
         return $settings;
     }
 }
-
-?>

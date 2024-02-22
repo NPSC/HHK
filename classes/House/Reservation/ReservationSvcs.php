@@ -241,7 +241,7 @@ class ReservationSvcs
         $return = array("docs"=>[]);
         $docs = array();
 
-        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
+        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc`, d.idDocument as `docId` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
         $docRows = $stmt->fetchAll();
 
         if ($uS->RegForm == 1) {

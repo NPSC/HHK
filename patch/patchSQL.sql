@@ -106,3 +106,15 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 ALTER TABLE `name_phone` 
 CHANGE COLUMN if exists `is_SMS` `SMS_status` VARCHAR(10) NOT NULL DEFAULT '';
+
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Room', '${Room}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Arrival Date', '${ArrivalDate}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Arrival Time', '${ArrivalTime}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Expected Departure Date', '${ExpectedDepartureDate}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Signature Lines', '${SignatureLines}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Initial Line', '${InitialLine}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Date Today', '${DateToday}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Signature Line', '${BlankSignatureLine}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Textbox', '${BlankTextBox}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Inline Textbox', '${BlankInlineTextBox}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Textarea', '${BlankTextArea}','');

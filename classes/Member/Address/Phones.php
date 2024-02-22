@@ -224,7 +224,7 @@ class Phones extends AbstractContactPoint {
                 }
                 $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
             } else if ($uS->smsProvider && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
-                $smsOptions = [["opt_in", "Opt In"],["opt_out", "Opt Out"]];
+                $smsOptions = [[" ",""],["opt_in", "Opt In"],["opt_out", "Opt Out"]];
                 $smsOptInMkup = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($smsOptions, $this->rSs[$p[0]]->SMS_status->getStoredVal(), true, "SMS?"), ["name" => $idPrefix . 'selSMS[' . $p[0] . ']', 'id' => $idPrefix . 'selSMS' . $p[0], "class" => "ml-2 mr-1"]);
                 
                 $tdContents .= $smsOptInMkup;
