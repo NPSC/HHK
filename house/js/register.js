@@ -1649,6 +1649,10 @@ $(document).ready(function () {
            			$("#reservs .gmenu").not(this).menu("collapseAll", null, true);
            		}
            });
+
+           $(".btnShowResvMsgs").each(function () {
+            $(this).smsDialog({ "resvId": $(this).data('rid') });
+        });
        },
        columns: rvCols,
        "buttons": getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
@@ -1667,7 +1671,11 @@ $(document).ready(function () {
            			focus:function(e, ui){
            				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
            			}
-           		});
+                });
+               
+                $(".btnShowResvMsgs").each(function () {
+                    $(this).smsDialog({ "resvId": $(this).data('rid') });
+                });
            },
            columns: rvCols,
            "buttons": getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
