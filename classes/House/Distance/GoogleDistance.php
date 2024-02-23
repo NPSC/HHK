@@ -112,7 +112,7 @@ class GoogleDistance extends AbstractDistance {
     }
 
     public function getUncalculatedAddresses(\PDO $dbh){
-        $stmt = $dbh->query("select na.idName_Address, na.idName, n.Name_Full, na.Address_1 as 'address1, na.Address_2, na.City as 'city', na.State_Province as 'state', na.Postal_Code as 'zip' from name_address na join name n on na.idName = n.idName where Meters_From_House is null and Address_1 != '' and City != '' and State_province != '' and Postal_Code != '' order by na.Timestamp desc;");
+        $stmt = $dbh->query("select na.idName_Address, na.idName, n.Name_Full, na.Address_1 as 'address1', na.Address_2 as 'address2', na.City as 'city', na.State_Province as 'state', na.Postal_Code as 'zip' from name_address na join name n on na.idName = n.idName where Meters_From_House is null and Address_1 != '' and City != '' and State_province != '' and Postal_Code != '' order by na.Timestamp desc;");
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
