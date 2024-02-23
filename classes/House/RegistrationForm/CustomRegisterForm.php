@@ -486,6 +486,7 @@ class CustomRegisterForm {
                 $sigMkup = '<div class="row mt-4 signWrapper" ' . ($insideAgreement == false ? 'data-idname="' . $g->getIdName() . '"' : '') . '>
                                 <div class="col-8 row" style="align-items:flex-end;">
                                     <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
+                                    <i class="bi bi-arrow-right-circle-fill px-2" style="border-bottom: 1px solid black;"></i>
                                     <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%">' . ($insideAgreement ? '<input type="hidden" class="regFormInput" data-inputtype="signature">' : '') . '</div>
                                     <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
                                 </div>
@@ -530,6 +531,7 @@ class CustomRegisterForm {
         return '<div class="row mt-4 signWrapper">
         <div class="col-8 row" style="align-items:flex-end;">
             <div class="col pr-0" style="max-width: fit-content;">Signature</div>
+            <i class="bi bi-arrow-right-circle-fill px-2" style="border-bottom: 1px solid black;"></i>
             <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></div>
             <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
         </div>
@@ -565,7 +567,7 @@ class CustomRegisterForm {
     public function BlankTextarea(){
         return '<span class="textboxWrapper hhk-flex">
                     <i class="bi bi-arrow-right-circle-fill pr-2"></i>
-                    <textarea class="regFormInput ui-state-highlight"></textarea>
+                    <textarea class="regFormInput ui-state-highlight" data-inputtype="textarea"></textarea>
                 </span>';
     }
 

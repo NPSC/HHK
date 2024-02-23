@@ -276,7 +276,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 let rid = '<?php echo $idResv ?>';
                 let idPrimaryGuest = '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>';
                 let idPsg = '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>';
-                let signatures = JSON.parse(`<?php echo json_encode($signatures); ?>`);
+                let signatures = <?php echo json_encode($signatures); ?>;
 
                 setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
                 setupEsign();

@@ -29,12 +29,12 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
         
         $(this).parents(".ui-tabs-panel").find(".regFormInput").each(function (i, element) {
             var val = $(this).val();
+            var field = { class: "regFormInput", uniqId: i, val: val };
 
-            if ($(this).data("inputtype") != undefined) {
-                regFormSignatures.push({ class: "regFormInput", type: $(this).data("inputtype"), uniqId: i, val: val });
-            } else {
-                regFormSignatures.push({ class: "regFormInput", type: "text", uniqId: i, val: val });
-            }
+            field.type = ($(this).data("inputtype") != undefined ? $(this).data("inputtype") : "text");
+            field.height = ($(this).data("inputtype") == "textarea" ? $(this).height(): undefined);
+
+            regFormSignatures.push(field);
         });
 
         $('.btnSave').prop('disabled', 'disabled').html(loading);
@@ -147,6 +147,11 @@ function loadSignatures(signatures){
                     signWrapper.find('.signDate').show();
                 }else if (element.class == "regFormInput" && element.uniqId !== undefined) { //other agreement fields
                     $(regFormInputs[element.uniqId]).val(element.val);
+
+                    if (element.height !== undefined) {
+                        $(regFormInputs[element.uniqId]).height(element.height);
+                    }
+
                 } else if (element.idName) { //original/default signature lines
                     $('#' + docId + ' .signWrapper[data-idname=' + element.idName + '] .sigLine img').prop('src', element.signature).show();
                     $('#' + docId + ' .signWrapper[data-idname=' + element.idName + '] .signDate').show();
