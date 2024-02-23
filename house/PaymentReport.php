@@ -1,6 +1,6 @@
 <?php
 
-use HHK\Config_Lite\Config_Lite;
+
 use HHK\sec\{Session, WebInit};
 use HHK\AlertControl\AlertMessage;
 use HHK\SysConst\GLTableNames;

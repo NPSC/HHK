@@ -42,6 +42,15 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
+/**
+ * Summary of getGuestNights
+ * @param PDO $dbh
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $actual
+ * @param mixed $preInterval
+ * @return void
+ */
 function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
 
     $uS = Session::getInstance();
@@ -54,7 +63,6 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
     $stmt = $dbh->query("SELECT
     s.idVisit,
     s.Visit_Span,
-
     CASE
         WHEN
             DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
@@ -112,6 +120,21 @@ GROUP BY s.idVisit, s.Visit_Span");
     }
 
 }
+/**
+ * Summary of newStatsPanel
+ * @param PDO $dbh
+ * @param mixed $visitNites
+ * @param mixed $rates
+ * @param mixed $totalCatNites
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $categories
+ * @param mixed $avDailyFee
+ * @param mixed $medDailyFee
+ * @param mixed $rescGroup
+ * @param mixed $siteName
+ * @return string
+ */
 function newStatsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
@@ -261,6 +284,21 @@ order by r.idResource;";
 
 }
 
+/**
+ * Summary of statsPanel
+ * @param PDO $dbh
+ * @param mixed $visitNites
+ * @param mixed $rates
+ * @param mixed $totalCatNites
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $categories
+ * @param mixed $avDailyFee
+ * @param mixed $medDailyFee
+ * @param mixed $rescGroup
+ * @param mixed $siteName
+ * @return string
+ */
 function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
@@ -571,7 +609,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $
     $r['hosp'] = $hosp;
 
     $r['nights'] = $visit['nit'];
-    $r['gnights'] = $visit['gnit'];
+    $r['gnights'] = max($visit['gnit'] - $visit['nit'], 0);
     $r['lodg'] = number_format($visit['chg'],2);
     $r['days'] = $visit['day'];
 
@@ -655,7 +693,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $
         $expDepart = new DateTime($r['Expected_Departure']);
         $expDepart->setTime(0, 0, 0);
 
-        $r['Status'] = HTMLContainer::generateMarkup('span', $uS->guestLookups['Visit_Status'][$r['Status']][1], array('class'=>'hhk-getVDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']));
+        //$r['Status'] = HTMLContainer::generateMarkup('span', $uS->guestLookups['Visit_Status'][$r['Status']][1], array('class'=>'hhk-getVDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']));
 
         if ($visitFeePaid != '') {
             $r['visitFee'] = $visitFeePaid . $r['visitFee'];
@@ -999,7 +1037,6 @@ where
     $totalCharged = 0;
     $totalVisitFee = 0;
     $totalLodgingCharge = 0;
-    //$totalFullCharge = 0;
     $totalAddnlCharged = 0;
 
     $totalAddnlTax = 0;
@@ -1014,7 +1051,6 @@ where
     $totalthrdPaid = 0;
     $totalSubsidy = 0;
     $totalUnpaid = 0;
-    //$totalAddnlPaid = 0;
     $totalDonationPaid = 0;
 
     $totalNights = 0;
@@ -1033,7 +1069,6 @@ where
     $rates = [];
     $chargesAr = [];
 
-    //$reportStartDT = new DateTime($start . ' 00:00:00');
     $reportEndDT = new \DateTime($end . ' 00:00:00');
     $now = new \DateTime();
     $now->setTime(0, 0, 0);
@@ -1066,10 +1101,9 @@ where
                 }
 
                 $totalCharged += $visit['chg'];
-                //$totalFullCharge += $visit['fcg'];
                 $totalAmtPending += $visit['pndg'];
                 $totalNights += $visit['nit'];
-                $totalGuestNights += $visit['gnit'];
+                $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
 
                 // Set expected departure to now if earlier than "today"
                 $expDepDT = new \DateTime($savedr['Expected_Departure']);
@@ -1156,7 +1190,6 @@ where
                 $totalHousePaid += $visit['hpd'];
                 $totalGuestPaid += $visit['gpd'];
                 $totalthrdPaid += $visit['thdpd'];
-                //$totalAddnlPaid += $visit['addpd'];
                 $totalDonationPaid += $visit['donpd'];
                 $totalUnpaid += $unpaid;
                 $totalSubsidy += ($visit['fcg'] - $visit['chg']);
@@ -1249,31 +1282,44 @@ where
         $visit['adj'] = $r['Expected_Rate'];
 
         $days = $r['Actual_Month_Nights'];
-        $gdays = isset($actualGuestNights[$r['idVisit']][$r['Span']]) ? $actualGuestNights[$r['idVisit']][$r['Span']] : 0;
+        $gdays = $actualGuestNights[$r['idVisit']][$r['Span']] ?? 0;
 
-        //$rates[] = $r['idRoom_Rate'];
+        $visit['gnit'] += $gdays;
+
+        // $gdays contains all the guests.
+        if ($gdays >= $days) {
+            $gdays -= $days;
+        }
+
         $visit['nit'] += $days;
         $totalCatNites[$r[$rescGroup[0]]] += $days;
-        $visit['gnit'] += $gdays;
-        $visit['pin'] += $r['Pre_Interval_Nights'];
-        $visit['gpin'] += isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0;
+
+        $piDays = $r['Pre_Interval_Nights'];
+        $piGdays = $piGuestNights[$r['idVisit']][$r['Span']] ?? 0;
+        $visit['pin'] += $piDays;
+        $visit['gpin'] += $piGdays;
+
+        if ($piGdays >= $piDays) {
+            $piGdays -= $piDays;
+        }
+
 
         //  Add up any pre-interval charges
-        if ($r['Pre_Interval_Nights'] > 0) {
+        if ($piDays > 0) {
 
             // collect all pre-charges
             $priceModel->setCreditDays($r['Rate_Glide_Credit']);
-            $visit['preCh'] += ($priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], (isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0)) * $adjRatio);
+            $visit['preCh'] += $priceModel->amountCalculator($piDays, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $piGdays) * $adjRatio;
 
         }
 
         if ($days > 0) {
 
-            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
-            $visit['chg'] += ($priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio);
+            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
+            $visit['chg'] += $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
             $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
 
-            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
+            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
             $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
 
             if ($adjRatio > 0) {
@@ -1301,10 +1347,10 @@ where
         $totalAddnlCharged += ($visit['addch']);
         $totalVisitFee += $visit['vfa'];
         $totalCharged += $visit['chg'];
-        //$totalFullCharge += $visit['fcg'];
+
         $totalAmtPending += $visit['pndg'];
         $totalNights += $visit['nit'];
-        $totalGuestNights += $visit['gnit'];
+        $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
 
         $totalTaxCharged += $visit['taxcgd'];
         $totalAddnlTax += $visit['adjchtx'];
@@ -1398,7 +1444,6 @@ where
         $totalHousePaid += $visit['hpd'];
         $totalGuestPaid += $visit['gpd'];
         $totalthrdPaid += $visit['thdpd'];
-        //$totalAddnlPaid += $visit['addpd'];
         $totalDonationPaid += $visit['donpd'];
         $totalUnpaid += $unpaid;
         $totalSubsidy += ($visit['fcg'] - $visit['chg']);
@@ -1622,7 +1667,7 @@ if ($taxItems[0][0] > 0) {
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
-$filter->createResoourceGroups($rescGroups, $uS->CalResourceGroupBy);
+$filter->createResourceGroups($rescGroups, $uS->CalResourceGroupBy);
 
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
@@ -1715,7 +1760,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
 
     if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
 
-        $cFields[] = array($labels->getString('MemberType', 'guest', 'Guest')." Nights", 'gnights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
+        $cFields[] = array('Extra ' . $labels->getString('MemberType', 'guest', 'Guest').' Nights', 'gnights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
         $cFields[] = array("Rate Per ".$labels->getString('MemberType', 'guest', 'Guest'), 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
         $cFields[] = array("Mean Rate Per ".$labels->getString('MemberType', 'guest', 'Guest'), 'meanGstRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
@@ -1910,162 +1955,9 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_INTERVAL_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
-<script type="text/javascript">
-    var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
-    var rctMkup, pmtMkup;
-    var dateFormat = '<?php echo $dateFormat; ?>';
-    $(document).ready(function() {
-        var makeTable = '<?php echo $mkTable; ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-		pmtMkup = $('#pmtMkup').val(),
-        rctMkup = $('#rctMkup').val();
-        <?php echo $filter->getTimePeriodScript(); ?>;
-
-        $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
-        $('#btnHere, #btnExcel').click(function () {
-            $('#paymentMessage').hide();
-        });
-        $('#cbColClearAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', false);
-            });
-        });
-        $('#cbColSelAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', true);
-            });
-        });
-        $('#keysfees').dialog({
-            autoOpen: false,
-            resizable: true,
-            modal: true,
-            close: function () {$('div#submitButtons').show();},
-            open: function () {$('div#submitButtons').hide();}
-        });
-        $('#pmtRcpt').dialog({
-            autoOpen: false,
-            resizable: true,
-            width: getDialogWidth(530),
-            modal: true,
-            title: 'Payment Receipt'
-        });
-        $("#faDialog").dialog({
-            autoOpen: false,
-            resizable: true,
-            width: getDialogWidth(650),
-            modal: true,
-            title: 'Income Chooser'
-        });
-
-        $('.hhk-viewVisit').button();
-        $('.hhk-viewVisit').click(function () {
-            var vid = $(this).data('vid');
-            var gid = $(this).data('gid');
-            var span = $(this).data('span');
-
-            var buttons = {
-                "Show Statement": function() {
-                    window.open('ShowStatement.php?vid=' + vid, '_blank');
-                },
-                "Show Registration Form": function() {
-                    window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
-                },
-                "Save": function() {
-                    saveFees(gid, vid, span, false, 'VisitInterval.php');
-                },
-                "Cancel": function() {
-                    $(this).dialog("close");
-                }
-            };
-             viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-        });
-
-        if (makeTable === '1') {
-            $('div#printArea, div#stats').css('display', 'block');
-
-            $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': columnDefs,
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                 ],
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"if><"hhk-overflow-x"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
-            });
-            $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
-            });
-        }
-        if (rctMkup !== '') {
-            showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
-        }
-    if (pmtMkup !== '') {
-        $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
-    }
-
-    $('#keysfees').mousedown(function (event) {
-        var target = $(event.target);
-        if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
-            $('div#pudiv').remove();
-        }
-    });
-
-	$('#includeFields').fieldSets({'reportName': 'visit', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
-
-	// disappear the pop-up room chooser.
-    $(document).mousedown(function (event) {
-        var target = $(event.target);
-        if ($('div#insDetailDiv').length > 0 && target[0].id !== 'insDetailDiv' && target.parents("#" + 'insDetailDiv').length === 0) {
-            $('div#insDetailDiv').remove();
-        }
-    });
-
-	var detailDiv = $("<div>").attr('id','insDetailDiv');
-	$("body").append(detailDiv);
-	$('#tblrpt').on('click', '.insAction', function (event) {
-        viewInsurance($(this).data('idname'), event.target.id, detailDiv);
-    });
-
-	function viewInsurance(idName, eventTarget) {
-        "use strict";
-        detailDiv.empty();
-        $.post('ws_resc.php', {cmd: 'viewInsurance', idName: idName},
-          function(data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.location.assign(data.gotopage);
-                    }
-                    flagAlertMessage(data.error, 'error');
-                    return;
-                }
-
-                if (data.markup) {
-                    var contr = $(data.markup);
-
-                    $('body').append(contr);
-                    contr.position({
-                        my: 'left top',
-                        at: 'left bottom',
-                        of: "#" + eventTarget
-                    });
-                }
-            }
-        });
-    }
-
-    });
- </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $wInit->generatePageMenu(); ?>
@@ -2108,8 +2000,14 @@ if ($uS->CoTod) {
                 </form>
             </div>
         </div>
+        <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate" />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+        <input type="hidden" id="startYear" value= '<?php echo $uS->startYear; ?>' />
+        <input type="hidden" id="dateFormat" value='<?php echo $dateFormat; ?>' />;
+        <input type="hidden" id="makeTable" value='<?php echo $mkTable; ?>' />;
+        <input type="hidden" id="columnDefs" value='<?php echo json_encode($colSelector->getColumnDefs()); ?>' />
+        <input type="hidden" id="defaultFields" value='<?php echo json_encode($defaultFields); ?>' />
         <div id="keysfees" style="font-size: .9em;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>

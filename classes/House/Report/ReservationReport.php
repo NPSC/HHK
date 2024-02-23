@@ -260,7 +260,7 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
 
         // Address.
         $pFields = array('gAddr', 'gCity');
-        $pTitles = array('Address', 'City');
+        $pTitles = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . ' Address', 'City');
 
         if ($uS->county) {
             $pFields[] = 'gCounty';

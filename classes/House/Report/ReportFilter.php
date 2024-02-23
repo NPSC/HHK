@@ -467,12 +467,12 @@ $ckdate";
     }
 
     /**
-     * Summary of createResoourceGroups
+     * Summary of createResourceGroups
      * @param mixed $rescGroups
      * @param mixed $defaultGroupBy
      * @return ReportFilter
      */
-    public function createResoourceGroups($rescGroups, $defaultGroupBy) {
+    public function createResourceGroups($rescGroups, $defaultGroupBy) {
 
         if (isset($rescGroups[$defaultGroupBy])) {
             $this->selectedResourceGroups = $defaultGroupBy;

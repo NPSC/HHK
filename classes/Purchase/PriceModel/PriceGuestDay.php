@@ -173,6 +173,15 @@ GROUP BY s.idVisit, s.Visit_Span");
         return $spans;
     }
 
+    /**
+     * Summary of amountCalculator
+     * @param mixed $nites
+     * @param mixed $idRoomRate
+     * @param mixed $rateCategory
+     * @param mixed $pledgedRate
+     * @param mixed $guestDays // only the extra guest days.  Do not include the number of days in the visit.
+     * @return float
+     */
     public function amountCalculator($nites, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {
 
         // Short circuit for fixed rate x
@@ -180,11 +189,9 @@ GROUP BY s.idVisit, s.Visit_Span");
             return $nites * $pledgedRate;
         }
 
-
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
         $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $nites;
-        //$guestDays -= $nites;
 
         if ($guestDays > 0) {
             $amount += $rrateRs->Reduced_Rate_2->getStoredVal() * $guestDays;
