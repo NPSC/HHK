@@ -167,12 +167,12 @@ WHERE
                 }
             }
 
-            if(count($results["success"]) > 0){
+            if(isset($results["success"]) && count($results["success"]) > 0){
                 $guestLabel = Labels::getString('MemberType', 'visitor', 'Guest') . (count($results["success"]) > 1 ? "s": "");
                 $results["success"] = "Message sent to " . count($results["success"]) . " " . $guestLabel . " in room " . $guests[0]["Room"] . " successfully";
             }
 
-            if(count($results["errors"]) > 0){
+            if(isset($results["errors"]) && count($results["errors"]) > 0){
                 $results["error"] = implode("<br>", $results["errors"]);
             }
 

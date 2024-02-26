@@ -62,7 +62,7 @@ Class Settings {
         $this->settings = [
             "authToken"=>$uS->smsToken,
             "accountPhone"=>$uS->smsFrom,
-            "smsListId"=>$uS->smsListId
+            "smsListId"=>SysConfig::getKeyValue($this->dbh, "sys_config", "smsListId")
         ];
 
     }
