@@ -2314,7 +2314,7 @@ function resvManager(initData, options) {
             }
 
             if (data.resv.rdiv.vehicle !== undefined) {
-                setupVehicle($(data.resv.rdiv.vehicle));
+                setupVehicle($rDiv);
             }
 
 

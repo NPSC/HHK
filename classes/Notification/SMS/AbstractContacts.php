@@ -58,11 +58,29 @@ abstract class AbstractContacts
     }
 
     /**
+     * Summary of getConfirmedReservationGuestPhones
+     * @return array
+     */
+    public function getUnConfirmedReservationGuestPhones(){
+        $query = "select distinct n.idName, n.Name_First, n.Name_Last, np.Phone_Num, np.Phone_Search from reservation_guest rg join reservation r on rg.idReservation = r.idReservation join name n on rg.idGuest = n.idName join name_phone np on n.idName = np.idName and np.Phone_Code = :code where r.Status = :status and Phone_Search != '' and n.Member_Status = :memStatus and np.SMS_status = 'opt_in'";
+
+        $stmt = $this->dbh->prepare($query);
+
+        $stmt->execute([
+            ":code" => PhonePurpose::Cell,
+            ":status" => ReservationStatus::UnCommitted,
+            ":memStatus" => MemStatus::Active
+        ]);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);        
+    }
+
+    /**
      * Summary of getWaitlistReservationGuestPhones
      * @return array
      */
     public function getWaitlistReservationGuestPhones(){
-        $query = "select distinct n.idName, n.Name_First, n.Name_Last, np.Phone_Num, np.Phone_Search from reservation_guest rg join reservation r on rg.idReservation = r.idReservation join name n on rg.idGuest = n.idName join name_phone np on n.idName = np.idName and np.Phone_Code = :code where r.Status = :status and Phone_Search != '' and n.Member_Status = :memStatus and np.SMS_status = 'opt_in";
+        $query = "select distinct n.idName, n.Name_First, n.Name_Last, np.Phone_Num, np.Phone_Search from reservation_guest rg join reservation r on rg.idReservation = r.idReservation join name n on rg.idGuest = n.idName join name_phone np on n.idName = np.idName and np.Phone_Code = :code where r.Status = :status and Phone_Search != '' and n.Member_Status = :memStatus and np.SMS_status = 'opt_in'";
 
         $stmt = $this->dbh->prepare($query);
 

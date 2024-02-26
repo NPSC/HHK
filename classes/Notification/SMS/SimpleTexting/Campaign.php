@@ -116,7 +116,7 @@ Class Campaign {
                 
                 //sync contacts to new list
                 $contacts = new Contacts($this->dbh);
-                $syncStatus = $contacts->syncContacts($status, [$this->settings->getHhkListId(), $campaignListId]);
+                $syncStatus = $contacts->syncContacts($status, [$this->settings->getSmsListId(), $campaignListId]);
 
                 if(strtolower($syncStatus) == "done"){
                     $this->sendCampaign($campaignListId, $guestData['title'] . " - " . $now->format("M j, Y h:i:s a"));

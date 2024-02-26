@@ -109,6 +109,8 @@ WHERE
                 return ["status"=>$status, "title"=>"Current " . Labels::getString('MemberType', 'visitor', 'Guest') . "s", "contacts"=>$contacts->getCheckedInGuestPhones()];
             case "confirmed_reservation":
                 return ["status" => $status, "title" => Labels::getString('register', 'reservationTab', 'Confirmed Reservations'), "contacts" => $contacts->getConfirmedReservationGuestPhones()];
+            case "unconfirmed_reservation":
+                return ["status" => $status, "title" => Labels::getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'), "contacts" => $contacts->getUnConfirmedReservationGuestPhones()];
             case "waitlist":
                 return ["status" => $status, "title" => Labels::getString('register', 'waitlistTab', 'Wait List'), "contacts" => $contacts->getWaitlistReservationGuestPhones()];
             default:

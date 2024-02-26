@@ -161,7 +161,7 @@ $currentReservations = HTMLContainer::generateMarkup('h3',
         . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
 
 if ($uS->ShowUncfrmdStatusTab) {
-    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'font-size:.9em;', 'class'=>'ml-5')), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
+    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'font-size:.9em;', 'class'=>'ml-5')) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextUnConfResvGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')): ""), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
         . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divunreserv'));
 }
 

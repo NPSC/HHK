@@ -62,7 +62,7 @@ Class Settings {
         $this->settings = [
             "authToken"=>$uS->smsToken,
             "accountPhone"=>$uS->smsFrom,
-            "hhkListId"=>$uS->smsListId
+            "smsListId"=>$uS->smsListId
         ];
 
     }
@@ -75,8 +75,8 @@ Class Settings {
         return $this->settings["accountPhone"];
     }
 
-    public function getHhkListId(){
-        return $this->settings['hhkListId'];
+    public function getSmsListId(){
+        return $this->settings['smsListId'];
     }
 
     /**
@@ -87,8 +87,8 @@ Class Settings {
     public function validateSettings(){
         if(isset($this->settings["authToken"]) && strlen($this->settings["authToken"]) > 0){
             try {
-                if (isset($this->settings["hhkListId"]) && strlen($this->settings["hhkListId"]) > 0) {
-                    $resp = $this->client->get("contact-lists/" . $this->settings["hhkListId"]);
+                if (isset($this->settings["smsListId"]) && strlen($this->settings["smsListId"]) > 0) {
+                    $resp = $this->client->get("contact-lists/" . $this->settings["smsListId"]);
                 } else {
                     $resp = $this->client->post("contact-lists",['json'=>['name'=>"HHK Contacts"]]);
                 }
@@ -100,8 +100,8 @@ Class Settings {
                     return true;
                 }else if(isset($body['id'])){
                     //if response contains id - list was created successfully, now save new list id in db
-                    SysConfig::saveKeyValue($this->dbh, "sys_config", "hhkListId", $body['id']);
-                    $this->settings['hhkListId'] = $body['id'];
+                    SysConfig::saveKeyValue($this->dbh, "sys_config", "smsListId", $body['id']);
+                    $this->settings['smsListId'] = $body['id'];
                     return true;
                 }else{
                     throw new SmsException("Unable to validate SMS settings: An unknown error occurred.");
@@ -114,8 +114,8 @@ Class Settings {
                         $resp = $this->client->post("contact-lists", ['json' => ['name' => "HHK Contacts"]]);
                         if (isset($body['id'])) {
                             //if response contains id - list was created successfully, now save new list id in db
-                            SysConfig::saveKeyValue($this->dbh, "sys_config", "hhkListId", $body['id']);
-                            $this->settings['hhkListId'] = $body['id'];
+                            SysConfig::saveKeyValue($this->dbh, "sys_config", "smsListId", $body['id']);
+                            $this->settings['smsListId'] = $body['id'];
                             return true;
                         } else {
                             throw new SmsException("Unable to validate SMS settings: Error creating Contact List");

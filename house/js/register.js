@@ -700,6 +700,8 @@ $(document).ready(function () {
 
     $("#btnTextConfResvGuests").button().smsDialog({ "campaign": "confirmed_reservation" });
 
+    $("#btnTextUnConfResvGuests").button().smsDialog({ "campaign": "unconfirmed_reservation" });
+
     $("#btnTextWaitlistGuests").button().smsDialog({ "campaign": "waitlist" });
 
     // Reservations

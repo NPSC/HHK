@@ -55,7 +55,7 @@ Class Contacts extends AbstractContacts{
 
     public function syncContacts(string $status, array $listIds = []){
 
-        $listIds = (count($listIds) == 0 ? [$this->settings->getHhkListId()] : $listIds);
+        $listIds = (count($listIds) == 0 ? [$this->settings->getSmsListId()] : $listIds);
         $phones = [];
         
         switch ($status){
@@ -64,6 +64,9 @@ Class Contacts extends AbstractContacts{
                 break;
             case "confirmed_reservations":
                 $phones = $this->getConfirmedReservationGuestPhones();
+                break;
+            case "unconfirmed_reservations":
+                $phones = $this->getUnConfirmedReservationGuestPhones();
                 break;
             case "waitlist":
                 $phones = $this->getWaitlistReservationGuestPhones();
