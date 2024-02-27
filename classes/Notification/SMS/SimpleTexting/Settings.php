@@ -25,6 +25,8 @@ Class Settings {
         ReservationStatus::Committed=>"confirmed_reservation"
     ];
 
+    const HHKListName = "HHK Contacts";
+
     /**
      * Init SimpleTexting Settings, API Client and validate settings
      * @param \PDO $dbh
@@ -60,9 +62,8 @@ Class Settings {
         $uS = Session::getInstance();
 
         $this->settings = [
-            "authToken"=>$uS->smsToken,
-            "accountPhone"=>$uS->smsFrom,
-            "smsListId"=>SysConfig::getKeyValue($this->dbh, "sys_config", "smsListId")
+            "authToken" => $uS->smsToken,
+            "accountPhone" => $uS->smsFrom
         ];
 
     }
@@ -75,8 +76,8 @@ Class Settings {
         return $this->settings["accountPhone"];
     }
 
-    public function getSmsListId(){
-        return $this->settings['smsListId'];
+    public function getSmsListName(){
+        return Settings::HHKListName;
     }
 
     /**
@@ -87,21 +88,12 @@ Class Settings {
     public function validateSettings(){
         if(isset($this->settings["authToken"]) && strlen($this->settings["authToken"]) > 0){
             try {
-                if (isset($this->settings["smsListId"]) && strlen($this->settings["smsListId"]) > 0) {
-                    $resp = $this->client->get("contact-lists/" . $this->settings["smsListId"]);
-                } else {
-                    $resp = $this->client->post("contact-lists",['json'=>['name'=>"HHK Contacts"]]);
-                }
+                $resp = $this->client->get("contact-lists/" . Settings::HHKListName);
 
                 $body = json_decode($resp->getBody(), true);
 
                 if(isset($body['listId'])){
                     //if response contains listId - list already exists, all good
-                    return true;
-                }else if(isset($body['id'])){
-                    //if response contains id - list was created successfully, now save new list id in db
-                    SysConfig::saveKeyValue($this->dbh, "sys_config", "smsListId", $body['id']);
-                    $this->settings['smsListId'] = $body['id'];
                     return true;
                 }else{
                     throw new SmsException("Unable to validate SMS settings: An unknown error occurred.");
@@ -111,14 +103,11 @@ Class Settings {
                 if($e->getResponse()->getStatusCode() == 404){
                     try {
                         //list does not exist on remote, create it
-                        $resp = $this->client->post("contact-lists", ['json' => ['name' => "HHK Contacts"]]);
+                        $resp = $this->client->post("contact-lists", ['json' => ['name' => Settings::HHKListName]]);
                         if (isset($body['id'])) {
-                            //if response contains id - list was created successfully, now save new list id in db
-                            SysConfig::saveKeyValue($this->dbh, "sys_config", "smsListId", $body['id']);
-                            $this->settings['smsListId'] = $body['id'];
                             return true;
                         } else {
-                            throw new SmsException("Unable to validate SMS settings: Error creating Contact List");
+                            throw new SmsException("Unable to validate SMS settings: Error creating Contact List: " . Settings::HHKListName);
                         }
                     }catch(ClientException $e){
                         if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {

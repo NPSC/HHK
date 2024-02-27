@@ -125,4 +125,3 @@ if($error) {
 $uS->destroy(TRUE);
 
 exit();
-?>

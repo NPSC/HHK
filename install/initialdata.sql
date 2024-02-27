@@ -674,7 +674,6 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('smsProvider', '', 'lu', 'sms', '', 'Enable SMS integration', 'smsProvider', '', 1),
 ('smsToken', '', 's', 'sms', '', 'API Token', '', 1),
 ('smsFrom', '', 's', 'sms', '', 'Account Phone number used as the From address', '', 1),
-('smsListId', '', 's', 'sms', '', 'Contact List ID for all HHK Contacts', '', 0),
 ('SMTP_Auth_Required','true','b','es','','SMTP Authorization required','',1),
 ('SMTP_Debug','0','i','es','','0 = off; 1; 2; 3;  4 = low level','',1),
 ('SMTP_Host','','s','es','','SMTP Host','',1),

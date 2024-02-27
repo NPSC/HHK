@@ -55,7 +55,7 @@ Class Contacts extends AbstractContacts{
 
     public function syncContacts(string $status, array $listIds = []){
 
-        $listIds = (count($listIds) == 0 ? [$this->settings->getSmsListId()] : $listIds);
+        $listIds = (count($listIds) == 0 ? [$this->settings->getSmsListName()] : $listIds);
         $phones = [];
         
         switch ($status){

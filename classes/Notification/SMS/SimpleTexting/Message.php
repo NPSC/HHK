@@ -4,6 +4,7 @@ namespace HHK\Notification\SMS\SimpleTexting;
 use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\SmsException;
+use HHK\sec\Labels;
 
 /**
  * Summary of Message
@@ -164,7 +165,9 @@ Class Message {
         }catch(ClientException $e){
             $respArr = json_decode($e->getResponse()->getBody(), true);
 
-            if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
+            if (is_array($respArr) && isset($respArr["errorCode"]) && $respArr["errorCode"] === "LOCAL_OPT_OUT"){ //detect unsubscribe
+                throw new SmsException(Labels::getString("MemberType", "visitor", "Guest") . " is unsubscribed");
+            }else if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                 throw new SmsException("Error sending message: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
                 throw new SmsException("Invalid response received while trying to send message. Error  " . $response->getStatusCode() . ": " . $response->getReasonPhrase());

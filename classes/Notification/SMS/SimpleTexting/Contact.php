@@ -31,7 +31,7 @@ Class Contact {
             "contactPhone"=>$contactPhone,
             "firstName"=>$firstName,
             "lastName"=>$lastName,
-            "listIds"=>[$this->settings->getSmsListId()],
+            "listIds"=>[$this->settings->getSmsListName()],
             "subscriptionStatus"=>"OPT_IN"
         ];
 

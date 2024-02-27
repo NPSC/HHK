@@ -157,13 +157,15 @@ WHERE
         $uS = Session::getInstance();
         if (count($guests) > 0){
             foreach($guests as $guest){
-                try {
-                    $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
-                    $results["success"][$guest["idName"]] = $message->sendMessage();
-                    NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Message sent Successfully", ["msgText"=>$msgTxt]);
-                }catch(SmsException $e){
-                    $results["errors"][] = "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage();
-                    NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage(), ["msgText"=>$msgTxt]);
+                if ($guest["isMobile"]) {
+                    try {
+                        $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
+                        $results["success"][$guest["idName"]] = $message->sendMessage();
+                        NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Message sent Successfully", ["msgText" => $msgTxt]);
+                    } catch (SmsException $e) {
+                        $results["errors"][] = "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage();
+                        NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage(), ["msgText" => $msgTxt]);
+                    }
                 }
             }
 
