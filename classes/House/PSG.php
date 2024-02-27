@@ -252,6 +252,8 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                     , array('class'=>'hhk-panel')),
             );
 
+        // PSG checkboxes
+        $checklist = self::createCheckboxes(readGenLookupsPDO($dbh, 'Checklist_PSG', 'Order'), $this->psgRS);
 
         // Change log
         $c = '';
@@ -290,12 +292,39 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $v = HTMLContainer::generateMarkup('div', $lTable->generateMarkup(), array('id'=>'divPsgLog', 'style'=>'display:none; clear:left;'));
         }
 
-        $editDiv = HTMLContainer::generateMarkup("div", $memMkup . $lastConfirmed, array("class"=>"hhk-flex hhk-flex-wrap"))
+        $editDiv = HTMLContainer::generateMarkup("div", $memMkup . $lastConfirmed. $checklist, array("class"=>"hhk-flex hhk-flex-wrap"))
                 . $notesContainer //$nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))
                 . $c . $v;
 
         return $editDiv;
 
+    }
+
+    public static function createCheckboxes($items, $psgRs) {
+
+        // PSG checkboxes
+        $tableName = 'Checklist_PSG';
+        $checklist = '';
+
+        foreach ($items as $cbsRow) {
+            if (strtolower($cbsRow['Substitute']) == 'y') {
+                // Got a live one
+                $checklist .= HTMLContainer::generateMarkup(
+                    'div',
+                    HTMLContainer::generateMarkup(
+                        'fieldset',
+                        HTMLContainer::generateMarkup('legend', $cbsRow['Description'], array('style' => 'font-weight:bold;'))
+                        . HTMLContainer::generateMarkup('label', 'Update:', array('for' => $tableName . 'Item' . $cbsRow['Code']))
+                        . HTMLInput::generateMarkup('', array('name' => $tableName . 'Item' . $cbsRow['Code'], 'type' => 'checkbox', 'style' => 'margin-left:.3em;'))
+                        . HTMLInput::generateMarkup('', array('name' => $tableName . 'Date' . $cbsRow['Code'], 'class' => 'ckdate', 'style' => 'margin-left:1em;'))
+                        ,
+                        array('class' => 'hhk-panel')
+                    ),
+                );
+            }
+        }
+
+        return $checklist;
     }
 
     protected function verifyUniquePatient(\PDO $dbh, $idPatient) {
@@ -553,4 +582,3 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         return $nameRS->Member_Status->getStoredVal();
     }
 }
-?>

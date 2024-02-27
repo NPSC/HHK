@@ -1501,6 +1501,12 @@ CREATE TABLE if not exists `psg` (
   `Language_Notes` TEXT NULL DEFAULT NULL ,
   `Info_Last_Confirmed` DATETIME NULL DEFAULT NULL,
   `Notes` TEXT NULL DEFAULT NULL ,
+  `Checklist_Item1` TINYINT(1) NOT NULL DEFAULT '0',
+  `Checklist_Date1` DATETIME NULL ,
+  `Checklist_Item2` TINYINT(1) NOT NULL DEFAULT '0' ,
+  `Checklist_Date2` DATETIME NULL ,
+  `Checklist_Item3` TINYINT(1) NOT NULL DEFAULT '0',
+  `Checklist_Date3` DATETIME NULL ,
   `Last_Updated` DATETIME NULL DEFAULT NULL ,
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '' ,
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
@@ -2349,7 +2355,7 @@ ALTER TABLE `invoice_line`
 ALTER TABLE `labels`
 	ADD UNIQUE INDEX IF NOT EXISTS `Unique_Key_Categeory` (`Key` ASC, `Category` ASC);
 
-ALTER TABLE `link_doc` 
+ALTER TABLE `link_doc`
 ADD INDEX IF NOT EXISTS `indx_linkDoc` (`idDocument` ASC, `idGuest` ASC, `idPSG` ASC);
 
 ALTER TABLE `name`

@@ -93,3 +93,17 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 -- add showRegEmptyFields toggle
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showRegEmptyFields', 'true', 'b', 'h', 'On Registrations, show empty fields', '1');
+
+-- PSG checklist
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '1', 'PSG Checklist Item', 'm');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '2', 'PSG Checklist Item', 'm');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '3', 'PSG Checklist Item', 'm');
+
+-- PSG Table
+ALTER TABLE `psg`
+ADD COLUMN IF NOT EXISTS `Checklist_Item1` TINYINT(1) NOT NULL DEFAULT '0' AFTER `Notes`,
+ADD COLUMN IF NOT EXISTS `Checklist_Date1` DATETIME NULL AFTER `Checklist_Item1`,
+ADD COLUMN IF NOT EXISTS `Checklist_Item2` TINYINT(1) NOT NULL DEFAULT '0' AFTER `Checklist_Date1`,
+ADD COLUMN IF NOT EXISTS `Checklist_Date2` DATETIME NULL AFTER `Checklist_Item2`,
+ADD COLUMN IF NOT EXISTS `Checklist_Item3` TINYINT(1) NOT NULL DEFAULT '0' AFTER `Checklist_Date2`,
+ADD COLUMN IF NOT EXISTS `Checklist_Date3` DATETIME NULL AFTER `Checklist_Item3`;

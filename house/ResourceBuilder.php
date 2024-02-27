@@ -1740,6 +1740,12 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
     'class' => 'hhk-selLookup'
 ));
 
+// Checkbox lists
+$tbl = ResourceBldr::getSelections($dbh, 'Checklist_PSG', 'm', $labels);
+$cblistSelections = $tbl->generateMarkup(["class"=>"sortable"]);
+
+
+
 $insuranceType = new InsuranceType();
 
 // save insurance types
@@ -1980,17 +1986,6 @@ if(count($forms) > 0){
 }
 
 
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
-
-$resultMessage = $alertMsg->createMarkup();
-
 $demogs = readGenLookupsPDO($dbh, 'Demographics');
 foreach($demogs as $key=>$demog){
     if($demog["Substitute"] == ""){ //remove disabled demogs
@@ -2051,9 +2046,8 @@ $formBuilderOptions = [
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-			<h1 class="mt-2"><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
+			<h1 class="mt-2"><?php echo $wInit->pageHeading; ?>&nbsp; <h4> (Any changes require everybody to log out and log back in!)</h4></h1>
 
-			<?php echo $resultMessage ?>
             <div id="mainTabs"
 			style="font-size: .9em; display: none;">
 			<ul>
@@ -2135,6 +2129,19 @@ $formBuilderOptions = [
 							value="Save" /></span>
 					</form>
 				</div>
+
+                <div style="float: left; margin-left: 30px;">
+					<h3>PSG Checkbox Items</h3>
+					<form id="formcblist">
+						<div>
+                            <?php echo $cblistSelections; ?>
+                        </div>
+                        <span style="margin: 10px; float: right;"><input type="button"
+                            id='btncblistSave' class="hhk-savecblist"
+                            data-type="h" value="Save" /></span>
+                    </form>
+                </div>
+
 			</div>
 			<div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
 				style="font-size: .9em;">

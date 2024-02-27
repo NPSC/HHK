@@ -11,6 +11,7 @@ use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay, PSGMemVisit, PSGMemR
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Vehicle;
+use HHK\House\PSG;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentResult\PaymentResult;
@@ -757,6 +758,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $resv,
                 $resv->getChooserStatuses($reservStatuses),
                 $uS->nameLookups[GLTableNames::PayType],
+                readGenLookupsPDO($dbh, 'Checklist_PSG', 'Order'),
                 $labels,
                 $showPayWith,
                 $moaBalance);
@@ -789,6 +791,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $resv,
                 $resv->getChooserStatuses($reservStatuses),
                 $uS->nameLookups[GLTableNames::PayType],
+                readGenLookupsPDO($dbh, 'Checklist_PSG', 'Order'),
                 $labels,
                 $showPayWith);
         }
@@ -962,11 +965,12 @@ where rg.idReservation =" . $r['idReservation']);
      * @param Reservation_1 $resv
      * @param array $limResvStatuses
      * @param array $payTypes
+     * @param array $psgCheckboxes
      * @param Labels $labels
      * @param bool $showPayWith
      * @return string
      */
-    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, $labels, $showPayWith, $moaBalance = 0) {
+    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, array $psgChecboxes, $labels, $showPayWith, $moaBalance = 0) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -1016,8 +1020,11 @@ where rg.idReservation =" . $r['idReservation']);
         //Ribbon Note
         $tbl2->addBodyTr(HTMLTable::makeTd('Ribbon Note:',['class'=>'tdlabel']).HTMLTable::makeTd(HTMLInput::generateMarkup($resv->getNotes(), ['name'=>'txtRibbonNote', 'maxlength'=>'20']),['colspan'=>'3']));
 
+        // PSG Checkboxes
+        $mk2 = PSG::createCheckboxes($psgChecboxes, 1);
+
+
         // Confirmation button  updated 5/20/2023:  add uncommitted to allowable statuses. #815
-        $mk2 = '';
         if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::UnCommitted) {
             $mk2 .= HTMLInput::generateMarkup('Send Confirmation...', ['type'=>'button', 'id'=>'btnShowCnfrm', 'style'=>'margin:.3em;float:right;', 'data-rid'=>$resv->getIdReservation()]);
         }
