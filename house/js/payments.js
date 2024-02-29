@@ -428,7 +428,7 @@ function getPaymentData(p, a) {
         }
     }
 
-    // Deposits - kdep
+    // Deposit Payments - kdep
     if (!a.isChdOut && p.keyDepCb.length > 0) {
 
         a.kdepCharge = parseFloat($('#hdnKeyDepAmt').val());
@@ -647,7 +647,7 @@ function doOverpayment(p, a) {
             minAmtDue = a.totRmBalDue;
         }
 
-        let deltaFeePay = Math.max((a.feePayPreTax - minAmtDue), 0);
+        let deltaFeePay = a.feePayPreTax - minAmtDue;
 
         if (deltaFeePay > a.overPayAmt) {
 
@@ -661,16 +661,18 @@ function doOverpayment(p, a) {
 
         } else if (a.overPayAmt >= deltaFeePay) {
 
-            a.overPayAmt -= deltaFeePay;
-            // subtract any extra amount.
-            if (a.extraPayment > 0) {
-                a.overPayAmt -= a.extraPayment;
-                a.totPay -= a.extraPayment;
-                p.extraPay.val('');
-                alert('Extra Payment amount is reduced to 0');
+            // Only if actually paying more than we owe.
+            if (deltaFeePay >= 0) {
+                a.overPayAmt -= deltaFeePay;
+                // subtract any extra amount.
+                if (a.extraPayment > 0) {
+                    a.overPayAmt -= a.extraPayment;
+                    a.totPay -= a.extraPayment;
+                    p.extraPay.val('');
+                    alert('Extra Payment amount is reduced to 0');
+                }
+                a.feePayPreTax = minAmtDue;
             }
-
-            a.feePayPreTax = minAmtDue;
 
             if (a.overPayAmt > 0) {
                 $('#divReturnPay').show('fade');
@@ -692,13 +694,14 @@ function doOverpayment(p, a) {
         }
 
     } else {
-        // Not asking for a fefund
+        // Not asking for a refund
         $('#txtRtnAmount').val('');
         $('#divReturnPay').hide();
     }
 
-    // Manage page entities
+    // Manage page formats for overpayment
     if (a.overPayAmt.toFixed(2) <= 0) {
+        // no overpayments, disappear
         p.overPay.val('');
         $('.hhk-Overpayment').hide();
         p.selBalTo.val('');

@@ -300,9 +300,21 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
     }
 
+    /**
+     * Summary of createCheckboxes
+     * @param mixed $items  genLookup table name 'Checklist_PSG'
+     * @param mixed $psgRs  psg table with items and dates.
+     * @return string
+     */
     public static function createCheckboxes($items, $psgRs) {
 
-        // PSG checkboxes
+// Keep out of next release (2/28/2024)
+$uS = Session::getInstance();
+if ($uS->Site_Mode == "live") {
+    return '';
+}
+
+    // PSG checkboxes
         $tableName = 'Checklist_PSG';
         $checklist = '';
 
