@@ -1,12 +1,11 @@
 <?php
 
-use HHK\AlertControl\AlertMessage;
 use HHK\sec\{Session, WebInit};
+use HHK\SysConst\HospitalType;
 use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
 use HHK\TableLog\HouseLog;
 use HHK\SysConst\GLTypeCodes;
-use HHK\House\Reservation\Reservation_1;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\SysConst\WebRole;
 use HHK\sec\SysConfig;
@@ -38,8 +37,6 @@ use HHK\Tables\House\Rate_BreakpointRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
 use HHK\House\RegistrationForm\CustomRegisterForm;
-
-use HHK\SysConst\ReservationStatusType;
 use HHK\House\Report\ResourceBldr;
 
 /**
@@ -576,6 +573,12 @@ if (isset($_POST['btnhSave'])) {
         $hospRs->Last_Updated->setNewVal(date('Y-m-d'));
 
         if ($idHosp > 0) {
+
+            // bug 898 cannot change an assoc to a hospital
+            if ($hospRs->Type->getStoredVal() == HospitalType::Association && $type == HospitalType::Hospital) {
+                continue;
+            }
+
             // update
             EditRS::update($dbh, $hospRs, array(
                 $hospRs->idHospital
@@ -1658,7 +1661,7 @@ foreach ($hrows as $h) {
 
 // new hospital
 $hTbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
-    'name' => 'hTitle[0]'
+    'name' => 'hTitle[0]', 'placeholder'=>'New'
 ))) . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, ''), array(
     'name' => 'hType[0]'
 ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
