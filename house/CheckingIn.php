@@ -135,6 +135,9 @@ $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 $resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;
 $resvAr['isCheckin'] = TRUE;
+$resvAr['insistCkinEmail'] = $uS->insistCkinEmail;
+$resvAr['insistCkinPhone'] = $uS->insistCkinPhone;
+$resvAr['insistCkinAddress'] = $uS->insistCkinAddress;
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 $resvAr['datePickerButtons'] = $uS->RegNoMinorSigLines;
 
@@ -179,6 +182,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 		<?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
 <!--        Fix the ugly checkboxes-->
         <style>

@@ -141,12 +141,18 @@ FROM reservation r
         // Staying resv - add guests
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
             $rData->setInsistCkinDemog($uS->InsistCkinDemog);
+            $rData->setInsistCkinPhone($uS->InsistCkinPhone);
+            $rData->setInsistCkinEmail($uS->InsistCkinEmail);
+            $rData->setInsistCkinAddress($uS->InsistCkinAddress);
             return new StayingReservation($rData, $rRs, new FamilyAddGuest($dbh, $rData, TRUE));
         }
 
         // Otherwise we can check in.
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal(), $reservStatuses)) {
             $rData->setInsistCkinDemog($uS->InsistCkinDemog);
+            $rData->setInsistCkinPhone($uS->InsistCkinPhone);
+            $rData->setInsistCkinEmail($uS->InsistCkinEmail);
+            $rData->setInsistCkinAddress($uS->InsistCkinAddress);
             return new CheckingIn($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
 
@@ -620,4 +626,3 @@ FROM reservation r
     }
 
 }
-?>

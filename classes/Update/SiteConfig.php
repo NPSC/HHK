@@ -538,12 +538,12 @@ class SiteConfig {
 
         }
 
-        if(SecurityComponent::is_TheAdmin() && $category == NULL){
+        //if(SecurityComponent::is_TheAdmin() && $category == NULL){
             // site.cfg entries
-            $tblMkup = self::createCliteMarkup()->generateMarkup();
-        }else{
+            //$tblMkup = self::createCliteMarkup()->generateMarkup();
+        //}else{
             $tblMkup = '';
-        }
+        //}
 
         return $sctbl->generateMarkup() . $tblMkup;
     }

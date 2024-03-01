@@ -3,7 +3,6 @@
 namespace HHK\Notification\SMS;
 
 use GuzzleHttp\Exception\ClientException;
-use HHK\Exception\RuntimeException;
 use HHK\Exception\SmsException;
 use HHK\Member\Address\Phones;
 use HHK\Member\IndivMember;
@@ -32,7 +31,7 @@ abstract class AbstractMessages
 
     public function getVisitGuestsData(int $idVisit, int $idSpan){
         $query = 'SELECT DISTINCT
-    n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, r.Title as "Room", v.Status, if(s.idName = v.idPrimaryGuest,1,0) as "isPrimaryGuest", if(np.Phone_Code is null or np.SMS_status = "" or np.SMS_status = "opt_out",0,1) as "isMobile"
+    n.idName, n.Name_Full, n.Name_First, n.Name_Last, np.Phone_Num, np.Phone_Search, r.Title as "Room", v.Status, if(s.idName = v.idPrimaryGuest,1,0) as "isPrimaryGuest", if(np.Phone_Code is not null and np.SMS_status = "opt_in",1,0) as "isMobile"
 FROM
     stays s
 		join 
@@ -61,7 +60,7 @@ WHERE
 
     public function getResvGuestsData(int $idResv){
         $query = 'SELECT DISTINCT
-        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, rg.Primary_Guest as "isPrimaryGuest", if(np.Phone_Code is null or np.SMS_status = "" or np.SMS_status = "opt_out",0,1) as "isMobile"
+        n.idName, n.Name_Full, n.Name_First, n.Name_Last, np.Phone_Num, np.Phone_Search, rg.Primary_Guest as "isPrimaryGuest", if(np.Phone_Code is not null and np.SMS_status = "opt_in",1,0) as "isMobile"
     FROM
         reservation_guest rg
             LEFT JOIN
@@ -83,7 +82,7 @@ WHERE
 
     public function getGuestData(int $idName){
         $query = 'SELECT DISTINCT
-        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, if(np.Phone_Code is null or np.SMS_status = "" or np.SMS_status = "opt_out",0,1) as "isMobile", concat("Text ", n.Name_Full) as "dialogTitle"
+        n.idName, n.Name_Full, np.Phone_Num, np.Phone_Search, if(np.Phone_Code is not null and np.SMS_status = "opt_in",1,0) as "isMobile", concat("Text ", n.Name_Full) as "dialogTitle"
     FROM
         name n
             left JOIN
@@ -101,6 +100,11 @@ WHERE
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Get contacts and metadata for sending a campaign
+     * @param string $status
+     * @return array
+     */
     public function getCampaignGuestsData(string $status){
         $contacts = new Contacts($this->dbh);
 
@@ -114,7 +118,7 @@ WHERE
             case "waitlist":
                 return ["status" => $status, "title" => Labels::getString('register', 'waitlistTab', 'Wait List'), "contacts" => $contacts->getWaitlistReservationGuestPhones()];
             default:
-                return false;
+                return ["status" => $status, "title" => "", "contacts" => []];
         }
     }
 
@@ -159,6 +163,12 @@ WHERE
             foreach($guests as $guest){
                 if ($guest["isMobile"]) {
                     try {
+
+                        //upsert contact before send
+                        $contact = new Contact($this->dbh, false);
+                        $contact->upsert($guest["Phone_Search"], $guest["Name_First"], $guest["Name_Last"]);
+
+                        //send message
                         $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
                         $results["success"][$guest["idName"]] = $message->sendMessage();
                         NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Message sent Successfully", ["msgText" => $msgTxt]);
@@ -171,7 +181,7 @@ WHERE
 
             if(isset($results["success"]) && count($results["success"]) > 0){
                 $guestLabel = Labels::getString('MemberType', 'visitor', 'Guest') . (count($results["success"]) > 1 ? "s": "");
-                $results["success"] = "Message sent to " . count($results["success"]) . " " . $guestLabel . " in room " . $guests[0]["Room"] . " successfully";
+                $results["success"] = "Message sent to " . count($results["success"]) . " " . $guestLabel . (isset($guests[0]["Room"]) && strlen($guests[0]["Room"]) > 0 ? " in room " . $guests[0]["Room"] : "") . " successfully";
             }
 
             if(isset($results["errors"]) && count($results["errors"]) > 0){
@@ -217,7 +227,7 @@ WHERE
                 "subscriptionStatus" => $subscriptionStatus,
             ];
         }else{
-            throw new RuntimeException("Mobile number not found for idName " . $idName);
+            throw new SmsException("Mobile number not found for idName " . $idName);
         }
     }
 

@@ -62,10 +62,10 @@ Class Contacts extends AbstractContacts{
             case "checked_in":
                 $phones = $this->getCheckedInGuestPhones();
                 break;
-            case "confirmed_reservations":
+            case "confirmed_reservation":
                 $phones = $this->getConfirmedReservationGuestPhones();
                 break;
-            case "unconfirmed_reservations":
+            case "unconfirmed_reservation":
                 $phones = $this->getUnConfirmedReservationGuestPhones();
                 break;
             case "waitlist":
@@ -75,7 +75,7 @@ Class Contacts extends AbstractContacts{
                 return false;
         }
 
-        $contacts = ["listReplacement"=> false, "updates" => []];
+        $contacts = ["listsReplacement"=> false, "updates" => []];
         foreach($phones as $phone){
             $contact = [
                 "contactPhone"=>$phone["Phone_Search"],

@@ -22,7 +22,8 @@ Class Settings {
         VisitStatus::ChangeRate=>"checked_in",
         VisitStatus::OnLeave=>"on_leave",
         ReservationStatus::Waitlist=>"waitlist",
-        ReservationStatus::Committed=>"confirmed_reservation"
+        ReservationStatus::Committed=>"confirmed_reservation",
+        ReservationStatus::UnCommitted=>"unconfirmed_reservation"
     ];
 
     const HHKListName = "HHK Contacts";
@@ -104,11 +105,7 @@ Class Settings {
                     try {
                         //list does not exist on remote, create it
                         $resp = $this->client->post("contact-lists", ['json' => ['name' => Settings::HHKListName]]);
-                        if (isset($body['id'])) {
-                            return true;
-                        } else {
-                            throw new SmsException("Unable to validate SMS settings: Error creating Contact List: " . Settings::HHKListName);
-                        }
+                        return true;
                     }catch(ClientException $e){
                         if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                             throw new SmsException("Unable to validate SMS settings: " . $respArr["status"] . ": " . $respArr["message"]);

@@ -26,7 +26,7 @@ ifnull(`g2`.`Description`,'') AS `Name_Suffix`,
 (case when (`n`.`Exclude_Mail` = 1) then '' else ifnull(`na`.`Country`,'') end) AS `Country`,
 (case when (`n`.`Exclude_Mail` = 1) then '' else ifnull(`na`.`Country_Code`,'') end) AS `Country_Code`,
 ifnull(`na`.`Bad_Address`,'') AS `Bad_Address`,
-(case when (`n`.`Exclude_Email` = 1) then '' else ifnull(`ne`.`Email`,'') end) AS `Preferred_Email`,
+(case when (`n`.`Exclude_Email` = 1) then '' else (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) end) AS `Preferred_Email`,
 `n`.`Member_Status` AS `MemberStatus`,
 `n`.`Gender` AS `Gender`,
 `n`.`Birth_Month` AS `Birth_Month`,
@@ -95,7 +95,7 @@ ifnull(`g2`.`Description`,'') AS `Name_Suffix`,
 (case when (`n`.`Exclude_Mail` = 1 && n.Company_CareOf <> 'y') then '' else ifnull(`na`.`Country`,'') end) AS `Country`,
 (case when (`n`.`Exclude_Mail` = 1 && n.Company_CareOf <> 'y') then '' else ifnull(`na`.`Country_Code`,'') end) AS `Country_Code`,
 ifnull(`na`.`Bad_Address`,'') AS `Bad_Address`,
-ifnull(`ne`.`Email`,'') AS `Preferred_Email`,
+(case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Preferred_Email`,
 `n`.`Member_Status` AS `MemberStatus`,
 `n`.`Gender` AS `Gender`,
 `n`.`Birth_Month` AS `Birth_Month`,
@@ -1085,7 +1085,7 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
                     `np`.`Phone_Num`,
                     `np`.`Phone_Extension`)
         END) AS `Phone`,
-        IFNULL(`ne`.`Email`, '') AS `Email`,
+        (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Email`,
         (CASE
             WHEN (IFNULL(`na`.`Address_2`, '') = '') THEN IFNULL(`na`.`Address_1`, '')
             ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),
@@ -2160,7 +2160,7 @@ create or replace view `vname_list` as
                     `np`.`Phone_Num`,
                     `np`.`Phone_Extension`)
         END) AS `Phone`,
-        IFNULL(`ne`.`Email`, '') AS `Email`,
+        (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Email`,
         (CASE
             WHEN (IFNULL(`na`.`Address_2`, '') = '') THEN IFNULL(`na`.`Address_1`, '')
             ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),

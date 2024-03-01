@@ -138,7 +138,7 @@ Class Message {
             "contactPhone"=>$this->contactPhone,
             "accountPhone"=>$this->settings->getAccountPhone(),
             "mode"=>"AUTO",
-            "text"=>$this->text,
+            "text"=>html_entity_decode($this->text),
         ];
 
         if(strlen($this->MMSsubject) > 0){
@@ -183,8 +183,8 @@ Class Message {
     public function getMessageTemplate():array{
         $template = [
             "mode"=>"AUTO",
-            "text"=>$this->text,
-            "fallbackText"=>$this->fallbackText
+            "text"=>html_entity_decode($this->text),
+            "fallbackText"=>html_entity_decode($this->fallbackText)
         ];
         
         if($this->MMSsubject){

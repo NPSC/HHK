@@ -120,6 +120,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Email_Purpose','1','Home','i','',10),
 ('Email_Purpose','2','Work','i','',20),
 ('Email_Purpose','4','Office','o','',40),
+('Email_Purpose','no','No Email','i','',50),
 
 ('Email_Server', '', '(None)','','',0),
 ('Email_Server', 'SMTP', 'SMTP','','',0),
@@ -593,6 +594,9 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('IncludeLastDay','false','b','h','','Include the departure day in room searches','',1),
 ('IncomeRated','true','b','hf','','Enable guest income chooser rate assistance','',1),
 ('InitResvStatus','a','lu','h','','Initial reservation status setting, confirmed or unconfirmed','Init_Reserv_Status',1),
+('insistCkinPhone', 'false', 'b', 'h', '', 'Insist phone for all guests be filled in on check in page', '', 1),
+('insistCkinEmail', 'false', 'b', 'h', '', 'Insist email for all guests be filled in on check in page', '', 1),
+('insistCkinAddress', 'false', 'b', 'h', '', 'Insist valid address for all guests be filled in on check in page', '', 1),
 ('InsistCkinDemog','false','b','h','','Insist that user fill in the demographics on the check in page','',1),
 ('InsistCkinPayAmt','true','b','h','','Insist the user fills in the payment amount on checkin page','',1),
 ('InsistGuestBD', 'false', 'b', 'g', '', 'Insist on user filling in guest birthdates', '',1),

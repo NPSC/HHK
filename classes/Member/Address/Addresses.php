@@ -5,6 +5,7 @@ namespace HHK\Member\Address;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Session;
+use HHK\SysConst\EmailPurpose;
 use HHK\SysConst\PhonePurpose;
 
 /**
@@ -72,8 +73,15 @@ class Addresses {
         $table->addBodyTr(HTMLTable::makeTh("Preferred Email"));
 
         $emData = $email->get_Data();
+
+        if ($emData['Preferred_Email'] == EmailPurpose::NoEmail) {
+            $emMkup = 'No Email';
+        } else {
+            $emMkup = $emData["Email"];
+        }
+
         $table->addBodyTr(
-            HTMLTable::makeTd($emData["Email"])
+            HTMLTable::makeTd($emMkup)
         );
 
         return $table->generateMarkup();

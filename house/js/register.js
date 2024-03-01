@@ -1652,7 +1652,7 @@ $(document).ready(function () {
            		}
            });
 
-           $(".btnShowResvMsgs").each(function () {
+           $("#reservs .btnShowResvMsgs").each(function () {
             $(this).smsDialog({ "resvId": $(this).data('rid') });
         });
        },
@@ -1675,7 +1675,7 @@ $(document).ready(function () {
            			}
                 });
                
-                $(".btnShowResvMsgs").each(function () {
+                $("#unreserv .btnShowResvMsgs").each(function () {
                     $(this).smsDialog({ "resvId": $(this).data('rid') });
                 });
            },
@@ -1699,7 +1699,7 @@ $(document).ready(function () {
            		}
             });
            
-           $(".btnShowResvMsgs").each(function () {
+           $("#waitlist .btnShowResvMsgs").each(function () {
                $(this).smsDialog({ "resvId": $(this).data('rid') });
            });
        },

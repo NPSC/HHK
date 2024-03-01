@@ -96,7 +96,7 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
     ifnull(na.Country_Code, '') as gCountry,
     ifnull(na.Postal_Code, '') as gZip,
     CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' ELSE np.Phone_Num END as Phone_Num,
-    ne.Email,
+    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ne.Email END as Email,
     rm.Phone,
     " . $arrivalCase . " as `Arrival`,
     " . $departureCase . " as `Departure`,

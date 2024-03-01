@@ -112,7 +112,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     ifnull(na.Country_Code, '') as gCountry,
     ifnull(na.Postal_Code, '') as gZip,
     CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' ELSE np.Phone_Num END as Phone_Num,
-    ne.Email,
+    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ne.Email END as Email,
     rm.Phone,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
     ifnull(r.Actual_Departure, r.Expected_Departure) as `Departure`,

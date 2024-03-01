@@ -3,6 +3,7 @@
 namespace HHK\Notification\SMS\SimpleTexting;
 use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\SmsException;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\TableLog\NotificationLog;
 
@@ -58,13 +59,13 @@ Class Campaign {
                 NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"], ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
                 throw new SmsException("Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
-                NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase(), ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
-                throw new SmsException("Error sending campaign: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase(), ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
+                throw new SmsException("Error sending campaign: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
 
 
-        if($response->getStatusCode() === 201){
+        if($response->getStatusCode() == 201){
             $body = $response->getBody();
 
             NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Campaign sent Successfully", ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
@@ -91,45 +92,63 @@ Class Campaign {
 
         $messages = new Messages($this->dbh);
         $guestData = $messages->getCampaignGuestsData($status);
-        $now = new \DateTime();
+        $campaignListName = $this->makeContactListName($guestData);
 
-        //make contact list
-        try {
-            $response = $client->post('contact-lists', [
-                'json' => ["name"=>$guestData['title'] . " - " . $now->format("M j, Y h:i:s a")]
-            ]);
-        }catch(ClientException $e){
-            $respArr = json_decode($e->getResponse()->getBody(), true);
+        if(isset($guestData["contacts"]) && count($guestData["contacts"]) > 0){
+            //make contact list
+            try {
+                $response = $client->post('contact-lists', [
+                    'json' => ["name"=>$campaignListName]
+                ]);
+            }catch(ClientException $e){
+                $respArr = json_decode($e->getResponse()->getBody(), true);
 
-            if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
-                throw new SmsException("Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"]);
-            } else {
-                throw new SmsException("Error sending campaign: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                if (is_array($respArr) && isset($respArr["message"])) {
+                    throw new SmsException("Error sending campaign: " . $respArr["message"] . (isset($respArr["details"]) ? $respArr["details"]:""));
+                } else {
+                    throw new SmsException("Error sending campaign: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
+                }
             }
-        }
 
-        if($response->getStatusCode() == 201){
-            $respArr = json_decode($response->getBody(), true);
-            
-            if(isset($respArr["id"])){
-                $campaignListId = $respArr["id"];
+            if($response->getStatusCode() == 201){
+                $respArr = json_decode($response->getBody(), true);
                 
-                //sync contacts to new list
-                $contacts = new Contacts($this->dbh);
-                $syncStatus = $contacts->syncContacts($status, [$this->settings->getSmsListName(), $campaignListId]);
+                if(isset($respArr["id"])){
+                    $campaignListId = $respArr["id"];
+                    
+                    //sync contacts to new list
+                    $contacts = new Contacts($this->dbh);
+                    $syncStatus = $contacts->syncContacts($status, [$this->settings->getSmsListName(), $campaignListId]);
 
-                if(strtolower($syncStatus) == "done"){
-                    $this->sendCampaign($campaignListId, $guestData['title'] . " - " . $now->format("M j, Y h:i:s a"));
+                    if(strtolower($syncStatus) == "done"){
+                        $this->sendCampaign($campaignListId, $campaignListName);
 
-                    return ["success" => "Message sent successfully"];
+                        return ["success" => "Message sent successfully"];
+                    }else{
+                        throw new SmsException("Error sending campaign: Could not set up campaign list");
+                    }
                 }else{
-                    throw new SmsException("Error sending campaign: Could not set up campaign list");
+                    throw new SmsException("Error sending campaign message: Could not create contact list");
                 }
             }else{
-                throw new SmsException("Error sending campaign message: Could not create contact list");
+                throw new SmsException("Invalid response received while trying to send message: Status code: " . $response->getStatusCode());
             }
         }else{
-            throw new SmsException("Invalid response received while trying to send message: Status code: " . $response->getStatusCode());
+            throw new SmsException("No " . Labels::getString("MemberType", "visitor", "Guest") . "s have opted in to receive text messages");
+        }
+    }
+
+    protected function makeContactListName(array $guestData){
+        $now = new \DateTime();
+
+        if(strlen($guestData['title'] . " - " . $now->format("M j, Y h:i:s a")) > 50){
+
+            $maxTitleLength = 47 - strlen(" - " . $now->format("M j, Y h:i:s a")); //50 max length - 3 characters for "..." - date
+
+            return substr($guestData["title"], 0, $maxTitleLength) . "... - " . $now->format("M j, Y h:i:s a");
+
+        }else{
+            return $guestData['title'] . " - " . $now->format("M j, Y h:i:s a");
         }
     }
 

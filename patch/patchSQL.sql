@@ -117,3 +117,11 @@ INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replace
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Textbox', '${BlankTextBox}','');
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Inline Textbox', '${BlankInlineTextBox}','');
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Textarea', '${BlankTextArea}','');
+
+-- add phone/email/address requirement on checkin
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('insistCkinPhone', 'false', 'b', 'h', 'Insist phone for all guests be filled in on check in page', 1);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('insistCkinEmail', 'false', 'b', 'h', 'Insist email for all guests be filled in on check in page', 1);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('insistCkinAddress', 'false', 'b', 'h', 'Insist valid address for all guests be filled in on check in page', 1);
+
+-- add No Email option
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES ('Email_Purpose', 'no', 'No Email', 'i', '50');

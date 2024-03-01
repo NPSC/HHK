@@ -887,11 +887,11 @@ abstract class AbstractMember {
         $msg = "";
         $foundOne = FALSE;
 
-        if ($cp->get_preferredCode() == "" || $cp->isRecordSetDefined($cp->get_preferredCode()) === FALSE) {
+        if ($cp->get_preferredCode() == "" || $cp->isRecordSetDefined($cp->get_preferredCode()) === FALSE || $cp->get_preferredCode() == "no") {
             // None Preferred.  Is there a defined address?
             foreach ($cp->get_CodeArray() as $code) {
 
-                if ($cp->isRecordSetDefined($code[0])) {
+                if ($code[0] !== "no" && $cp->isRecordSetDefined($code[0])) {
                     $cp->setPreferredCode($code[0]);
                     EditRS::update($dbh, $this->nameRS, array($this->nameRS->idName));
                     NameLog::writeUpdate($dbh, $this->nameRS, $this->nameRS->idName->getStoredVal(), $uname);
@@ -902,7 +902,7 @@ abstract class AbstractMember {
                 }
             }
 
-            if ($foundOne === FALSE && $cp->get_preferredCode() != "") {
+            if ($foundOne === FALSE && $cp->get_preferredCode() != "" && $cp->get_preferredCode() != "no") {
                 $cp->setPreferredCode("");
                 EditRS::update($dbh, $this->nameRS, array($this->nameRS->idName));
                 NameLog::writeUpdate($dbh, $this->nameRS, $this->nameRS->idName->getStoredVal(), $uname);
@@ -1798,4 +1798,3 @@ abstract class AbstractMember {
         $this->nameRS->External_Id->setNewVal($id);
     }
 }
-?>

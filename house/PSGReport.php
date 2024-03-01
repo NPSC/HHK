@@ -1349,7 +1349,7 @@ if ($uS->UseIncidentReports) {
         	<div class="title mb-3">
             	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">This report shows people who stayed in the time frame selected below</span>
             </div>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog p-2" style="font-size:0.9em; max-width:1280px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog p-2" style="font-size:0.9em; max-width:fit-content;">
                 <form id="fcat" action="PSGReport.php" method="post">
                     <fieldset class="hhk-panel" style="margin-bottom: 15px;"><legend style='font-weight:bold;'>Report Type</legend>
                      <table style="width:100%">

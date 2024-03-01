@@ -1470,7 +1470,7 @@ WHERE
     		}
 
     	} else {
-    		$mkup = HTMLContainer::generateMarkup('span', 'First House Visit', array('class'=>'ui-state-active', 'style'=>'padding:2px;'));
+    		$mkup = HTMLContainer::generateMarkup('span', 'First House Visit', array('class'=>'ui-state-active ui-corner-all p-1'));
     	}
 
     	return $mkup;
