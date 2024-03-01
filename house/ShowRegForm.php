@@ -48,7 +48,6 @@ $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
 $isTopazRequired = false;
-$sty = "";
 $blankFormTitle = "Registration Form";
 $signatures = array();
 
@@ -130,7 +129,6 @@ if($idDoc > 0){
         $regContents = (str_starts_with($doc->getMimeType(), "base64:") ? base64_decode($doc->getDoc()) : $doc->getDoc());
         if($uS->RegForm == "3"){
             $form = new CustomRegisterForm();
-            $sty = $form->getStyling();
             $docSignatures = json_decode($doc->getUserData());
             if($docSignatures){
                 $signatures['vreg'] = $docSignatures;
@@ -245,6 +243,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <?php echo NOTY_CSS; ?>
         <?php echo CSSVARS; ?>
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
+        <?php echo ($uS->RegForm == 3 ? CUSTOM_REGFORM_CSS : ""); ?>
 
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}

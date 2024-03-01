@@ -225,4 +225,3 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
         return parent::generateMarkup($outputType);
     }
 }
-?>

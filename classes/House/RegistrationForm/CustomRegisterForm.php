@@ -486,13 +486,13 @@ class CustomRegisterForm {
                 $sigMkup = '<div class="row mt-4 signWrapper" ' . ($insideAgreement == false ? 'data-idname="' . $g->getIdName() . '"' : '') . '>
                                 <div class="col-8 row" style="align-items:flex-end;">
                                     <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
-                                    <i class="bi bi-arrow-right-circle-fill px-2" style="border-bottom: 1px solid black;"></i>
-                                    <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%">' . ($insideAgreement ? '<input type="hidden" class="regFormInput" data-inputtype="signature">' : '') . '</div>
+                                    <i class="bi bi-arrow-right-circle-fill px-2 hhk-line"></i>
+                                    <div class="col sigLine hhk-line" style="justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%">' . ($insideAgreement ? '<input type="hidden" class="regFormInput" data-inputtype="signature">' : '') . '</div>
                                     <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
                                 </div>
                                 <div class="col-4 row" style="align-items:flex-end;">
                                     <div class="col pr-0" style="max-width: fit-content;">Date</div>
-                                    <div class="col" style="border-bottom: 1px solid black; text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
+                                    <div class="col hhk-line" style="text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
                                 </div>
                             </div>';
                 if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'primary' && $g->getRoleMember()->get_IdName() == $primaryGuestId){
@@ -531,13 +531,13 @@ class CustomRegisterForm {
         return '<div class="row mt-4 signWrapper">
         <div class="col-8 row" style="align-items:flex-end;">
             <div class="col pr-0" style="max-width: fit-content;">Signature</div>
-            <i class="bi bi-arrow-right-circle-fill px-2" style="border-bottom: 1px solid black;"></i>
-            <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></div>
+            <i class="bi bi-arrow-right-circle-fill px-2 hhk-line"></i>
+            <div class="col sigLine hhk-line" style="justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></div>
             <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
         </div>
         <div class="col-4 row" style="align-items:flex-end;">
             <div class="col pr-0" style="max-width: fit-content;">Date</div>
-            <div class="col" style="border-bottom: 1px solid black; text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
+            <div class="col hhk-line" style="text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
         </div>
     </div>';
     }
@@ -545,7 +545,7 @@ class CustomRegisterForm {
     public function InitialsLineMkup(){
         return '<span class="signWrapper" data-idbtn="">
                             <i class="bi bi-arrow-right-circle-fill pr-2"></i>
-                            <span class="sigLine" style="border-bottom: 1px solid black; justify-content:end; width: 50px; display: inline-block;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></span>
+                            <span class="sigLine hhk-line" style="justify-content:end; width: 50px; display: inline-block;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></span>
                             <button class="ui-button ui-corner-all mb-1 ml-2 btnInitial" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Initial</button>' : '</span>') . '
                     </span>';
     }
@@ -558,7 +558,7 @@ class CustomRegisterForm {
     }
 
     public function BlankInlineTextBox(){
-        return '<span class="textboxWrapper hhk-flex" style="display: inline-flex">
+        return '<span class="textboxWrapper hhk-flex d-inline-flex">
                     <i class="bi bi-arrow-right-circle-fill pr-2"></i>
                     <input type="text" class="regFormInput ui-state-highlight">
                 </span>';
@@ -569,6 +569,10 @@ class CustomRegisterForm {
                     <i class="bi bi-arrow-right-circle-fill pr-2"></i>
                     <textarea class="regFormInput ui-state-highlight" data-inputtype="textarea"></textarea>
                 </span>';
+    }
+
+    public function checkbox(){
+        return '<span class="checkboxWrapper"></span>';
     }
 
     protected function paymentRecord($feesRecord) {
@@ -761,100 +765,6 @@ class CustomRegisterForm {
         $this->setPageTitle($primaryGuestName, $roomTitle);
 
         return $mkup;
-    }
-
-    public static function getStyling() {
-        return '<style id="regFormStyle">
-     /* Style Definitions */
-
-    * {
-        line-height:1.5em;
-    }
-
-    .header * {
-        line-height: 1.1em;
-    }
-
-    .agreement * {
-        line-height: 1em;
-    }
-
-    h2 {
-        line-height: 1.1em;
-    }
-
-    h2:not(.title):not(.agreement h2) {
-        border-bottom:1.5pt solid #98C723;
-    }
-
-    .title {
-        padding-left: 0;
-    }
-
-    .row {
-        page-break-inside: avoid;
-    }
-
-    .agreement .btnSign, .agreement .btnInitial {
-        padding: .4em 1em;
-    }
-
-    .agreement .textboxWrapper .regFormInput {
-        width: 100%;
-        border: 0;
-        padding: 0.5rem;
-    }
-
-    .agreement .textboxWrapper {
-        align-items: center;
-    }
-
-    .agreement .textboxWrapper .regFormInput:disabled {
-        background: none;
-        color: #000;
-    }
-
-    .agreement .textboxWrapper textarea {
-        resize: none;
-    }
-
-    @media screen {
-        footer {
-            display: none !important;
-        }
-    }
-
-    @media print {
-        footer {
-            position: fixed;
-            bottom: 0;
-            //height: .25in;
-            //display: table-footer-group;
-        }
-
-        button.btnSign {
-            display:none;
-        }
-
-        button.btnInitial {
-            display: none;
-        }
-
-        .container {
-            max-width: 100% !important;
-        }
-
-        .agreementContainer p {
-            page-break-inside: always;
-        }
-
-        .agreementContainer li {
-            page-break-inside: always;
-        }
-
-    }
-
-</style>';
     }
 
     public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $doc = []) {

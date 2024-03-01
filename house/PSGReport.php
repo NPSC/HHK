@@ -1255,9 +1255,6 @@ if ($uS->UseIncidentReports) {
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-
-        <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>
-
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
@@ -1347,11 +1344,11 @@ if ($uS->UseIncidentReports) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         	<div class="title mb-3">
-            	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">This report shows people who stayed in the time frame selected below</span>
+            	<h2 class="d-inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">This report shows people who stayed in the time frame selected below</span>
             </div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog p-2" style="font-size:0.9em; max-width:fit-content;">
                 <form id="fcat" action="PSGReport.php" method="post">
-                    <fieldset class="hhk-panel" style="margin-bottom: 15px;"><legend style='font-weight:bold;'>Report Type</legend>
+                    <fieldset class="hhk-panel mb-3"><legend style='font-weight:bold;'>Report Type</legend>
                      <table style="width:100%">
                         <tr>
                             <th><label for='rbpsg'><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></label><input type="radio" id='rbpsg' name="rbReport" value="psg" style='margin-left:.5em;' <?php if ($rptSetting == 'psg') {echo 'checked="checked"';} ?>/></th>
@@ -1362,7 +1359,7 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     </fieldset>
-                    <table class="hhk-IncdtRpt" style="clear:left;float:left;display:none;">
+                    <table class="hhk-IncdtRpt" style="display:none;">
                         <tr>
                             <th > Incident Reports Status</th>
                         </tr>
@@ -1406,8 +1403,8 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     </div>
-					<div style="display: flex">
-                    <table style="display:none; margin-top: 10px;" class="showStateCountry">
+					<div class="hhk-flex">
+                    <table style="display:none;" class="showStateCountry mt-3">
                         <tr>
                             <th>Country</th>
                             <th>State</th>
@@ -1428,7 +1425,7 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     </div>
-                    <table style="width:100%; margin-top: 15px;">
+                    <table class="mt-3" style="width:100%;">
                         <tr>
                             <td class="checkboxesShow"><input type="checkbox" name="cbAddr" class="psgsel" id="cbAddr" <?php echo $showAddressSelection; ?>/><label for="cbAddr" class="psgsel"> Show Address</label></td>
                             <td class="checkboxesShow"><input type="checkbox" name="cbFullName" class="psgsel" id="cbFullName" <?php echo $showFullNameSelection; ?>/><label for="cbFullName" class="psgsel"> Show Full Name</label></td>
@@ -1440,9 +1437,9 @@ if ($uS->UseIncidentReports) {
                     </table>
                 </form>
             </div>
-            <div id="divPrintButton" style="display:none; margin: 10px 0;"><input id="printButton" value="Print" type="button" /></div>
+            <div id="divPrintButton" class="my-3" style="display:none;"><input id="printButton" value="Print" type="button" /></div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog ui-corner-all p-2 pb-3 hhk-overflow-x" style="display:none; font-size: .8em; max-width:fit-content">
-                <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
+                <div class="mb-2"><?php echo $settingstable; ?></div>
                 <form autocomplete="off">
                 <?php echo $dataTable; ?>
                 </form>

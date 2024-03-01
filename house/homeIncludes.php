@@ -15,6 +15,7 @@ require ('../functions/commonDefines.php');
 
 define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 /* mins */
 define('RESV_MANAGER_JS', 'js/resvManager.js' . JSV);

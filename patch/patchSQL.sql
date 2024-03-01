@@ -117,6 +117,7 @@ INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replace
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Textbox', '${BlankTextBox}','');
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Inline Textbox', '${BlankInlineTextBox}','');
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Textarea', '${BlankTextArea}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Checkbox Toggle', '${CheckBox}','');
 
 -- add phone/email/address requirement on checkin
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('insistCkinPhone', 'false', 'b', 'h', 'Insist phone for all guests be filled in on check in page', 1);

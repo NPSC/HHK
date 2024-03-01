@@ -42,6 +42,7 @@ class RegAgreementForm extends AbstractTemplateForm {
             'BlankTextBox' => $regForm->BlankTextBox(),
             'BlankInlineTextBox' => $regForm->BlankInlineTextBox(),
             'BlankTextArea' => $regForm->BlankTextarea(),
+            'CheckBox' => $regForm->checkbox(),
             'DateToday' => date('M j, Y')
         );
 

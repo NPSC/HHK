@@ -285,7 +285,7 @@ class ReservationSvcs
 
                     $docs[] = array(
                         'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d),
-                        'style' => CustomRegisterForm::getStyling(),
+                        'style' => '',
                         'tabIndex' => $d['Code'],
                         'tabTitle' => $d['Description'],
                         'pageTitle' => $regForm->getPageTitle(),
@@ -299,7 +299,7 @@ class ReservationSvcs
 
                 $docs[] = array(
                     'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
-                    'style' => CustomRegisterForm::getStyling(),
+                    'style' => '',
                     'tabIndex' => 'en',
                     'tabTitle' => 'English'
                 );

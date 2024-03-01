@@ -125,6 +125,14 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
         window.open('ShowInvoice.php?invnum=' + invoiceNumber);
     }
 
+    $("#regTabDiv .checkboxWrapper").addClass("bi bi-square").on("click", function () {
+        if ($(this).hasClass("bi-square")) {
+            $(this).removeClass("bi-square").addClass("bi-check-square-fill");
+        } else if ($(this).hasClass("bi-check-square-fill")) {
+            $(this).removeClass("bi-check-square-fill").addClass("bi-square");
+        }
+    });
+
     $('#mainTabs').show();
     $('#regTabDiv, #signedRegTabDiv').tabs();
 
