@@ -134,7 +134,7 @@ $(document).ready(function () {
             flagAlertMessage(text, type);
         }
     });
-    
+
     if(useDocUpload){
     	//doc uploader
     	$('#vDocsContent').docUploader({
@@ -168,6 +168,7 @@ $(document).ready(function () {
         open: function () {$('div#submitButtons').hide();}
     });
 
+    // Payment Recepit
     $('#pmtRcpt').dialog({
         autoOpen: false,
         resizable: true,
@@ -175,6 +176,7 @@ $(document).ready(function () {
         title: 'Payment Receipt'
     });
 
+    // Income Dialog
     $("#faDialog").dialog({
         autoOpen: false,
         resizable: true,
@@ -191,16 +193,17 @@ $(document).ready(function () {
         $('#paymentMessage').html(pmtMkup).show();
     }
 
+    // Visits
     $('.hhk-view-visit').click(function (event) {
         var vid = $(this).data('vid');
         var gid = $(this).data('gid');
         var span = $(this).data('span');
         var target = $(event.target);
-        
+
         if (target.hasClass('hhk-hospitalstay')) {
         	return;
         }
-        
+
         var buttons = {
             "Show Statement": function() {
                 window.open('ShowStatement.php?vid=' + vid, '_blank');
@@ -226,7 +229,7 @@ $(document).ready(function () {
         active: false,
         icons: false
     });
-    
+
     // relationship events
     $('div.hhk-relations').each(function () {
         var schLinkCode = $(this).attr('name');
@@ -247,6 +250,7 @@ $(document).ready(function () {
         });
     });
 
+    // Vehicle
     $('#cbNoVehicle').change(function () {
         if (this.checked) {
             $('#tblVehicle').hide();
@@ -270,6 +274,7 @@ $(document).ready(function () {
 
         beforeActivate: function (event, ui) {
 
+        // Change Log
 		if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
 
                 listEvtTable = $('#dataTbl').dataTable({
@@ -299,7 +304,7 @@ $(document).ready(function () {
     $('#emergTabs').tabs();
     $('#addrsTabs').tabs();
     $('#InsTabs').tabs();
-    
+
     $psgList = $('#psgList').tabs({
         collapsible: true,
         beforeActivate: function (event, ui) {
@@ -497,7 +502,7 @@ $(document).ready(function () {
             $('#disp_deceased').hide();
         }
     });
-    
+
     // Date of background check
     $('#cbbackgroundcheck').change(function () {
         if ($(this).prop('checked')) {
@@ -559,7 +564,7 @@ $(document).ready(function () {
             $('input.hhk-ex').prop('checked', false);
         }
     });
-    
+
     $('#divFuncTabs').show();
 
     $('.hhk-showonload').show();
@@ -639,10 +644,10 @@ $(document).ready(function () {
                         flagAlertMessage(data.error, 'error');
 
                     } else if (data.success) {
-                        
+
                         $('#activityLog').remove();
 						$('#vvisitLog').append($('<div id="activityLog"/>').append($(data.success)));
-							
+
                         $('.hhk-viewvisit').css('cursor', 'pointer');
                         $('#activityLog').on('click', '.hhk-viewvisit', function () {
                             if ($(this).data('visitid')) {
@@ -666,7 +671,7 @@ $(document).ready(function () {
                 }
           });
 	});
-	
+
 	//guest photo
     if(showGuestPhoto || useDocUpload){
 		var guestPhoto = window.uploader;
@@ -682,7 +687,7 @@ $(document).ready(function () {
 	                	formData.append('cmd', 'putguestphoto');
 	                	formData.append('guestId', memData.id);
 	                	formData.append('guestPhoto', file);
-	
+
 	                	$.ajax({
 	                    	type: "POST",
 	                   	 	url: "../house/ws_resc.php",
@@ -708,22 +713,22 @@ $(document).ready(function () {
 	            	});
 	        	},
 			});
-	
-	
+
+
 			var guestphotoLocal = new Upploader.Local(
 	    	{
 	        	maxFileSize: 5000000,
 	        	mimeTypes: ["image/jpeg", "image/png"]
 	    	});
-	    	
+
 	    	window.camera = new Upploader.Camera()
-	            
+
 	    	guestPhoto.use([guestphotoLocal, new Upploader.Crop({aspectRatio: 1}), window.camera]);
-	    	
+
 	    	guestPhoto.open();
-	    
+
 	    });
-	    
+
 	    guestPhoto.on("open", function(){
 			//hide effects if only one
 	        if(guestPhoto.effects.length == 1) {
@@ -732,7 +737,7 @@ $(document).ready(function () {
 	        	$(guestPhoto.container).find(".effects-tabs").show();
 	        }
 	    });
-	    
+
 	    guestPhoto.on('close', function(){
 	    	guestPhoto.navigate('local'); //trigger camera to stop
 	    	var camera = guestPhoto.services.filter(service => service.name == 'camera');
@@ -740,11 +745,11 @@ $(document).ready(function () {
 	    		camera[0].stop();
 	    	}
 	    });
-	
+
 	    $(document).on("click", "#hhk-guest-photo", function(e){
 	        e.preventDefault();
 	    });
-	
+
 	    //toggle guest photo action buttons on hover
 	    $(".hhk-visitdialog #hhk-guest-photo").on({
 	        mouseenter: function () {
@@ -756,9 +761,9 @@ $(document).ready(function () {
 	            $(this).find("#hhk-guest-photo img").fadeTo(100, 1);
 	        }
 	    });
-	
+
 	    $(".delete-guest-photo").on("click", function(){
-	
+
 	        if (confirm("Really Delete this photo?")) {
 	            $.ajax({
 	                type: "POST",
@@ -770,14 +775,14 @@ $(document).ready(function () {
 	                    },
 	                success: function(data) {
 	                    if(data.error){
-	
+
 	                        if (data.gotopage) {
 	                            window.location.assign(data.gotopage);
 	                        }
-	
+
 	                        flagAlertMessage("Server error - " + data.error, 'error');
 	                        return;
-	
+
 	                    }else{
 	                        $("#hhk-guest-photo").css("background-image", "url(../house/ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "&rx="+new Date().getTime() + ")");
 	                    }
