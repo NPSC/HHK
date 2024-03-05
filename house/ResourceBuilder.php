@@ -1743,10 +1743,15 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
     'class' => 'hhk-selLookup'
 ));
 
-// Checkbox lists
-$tbl = ResourceBldr::getSelections($dbh, 'Checklist_PSG', 'm', $labels);
-$cblistSelections = $tbl->generateMarkup(["class"=>"sortable"]);
+// Keep out of Live for now.
+if ($uS->Site_Mode != "live") {
 
+    // Checklists
+    $tbl = ResourceBldr::getSelections($dbh, 'Checklist_PSG', 'm', $labels);
+    $cblistSelections = $tbl->generateMarkup(["class" => "sortable"]);
+} else {
+    $cblistSelections = 'Coming Soon!';
+}
 
 
 $insuranceType = new InsuranceType();
@@ -2134,7 +2139,7 @@ $formBuilderOptions = [
 				</div>
 
                 <div style="float: left; margin-left: 30px;">
-					<h3>PSG Checkbox Items</h3>
+					<h3>PSG Checklist Items</h3>
 					<form id="formcblist">
 						<div>
                             <?php echo $cblistSelections; ?>

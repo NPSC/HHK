@@ -18,6 +18,17 @@ namespace HHK\Note;
  */
 class LinkNote {
 
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @param mixed $noteText
+     * @param mixed $linkId
+     * @param mixed $linkType
+     * @param mixed $noteCategory
+     * @param mixed $userName
+     * @param mixed $concatNotes
+     * @return int|string[]
+     */
     public static function save(\PDO $dbh, $noteText, $linkId, $linkType, $noteCategory, $userName, $concatNotes = FALSE) {
 
         if ($linkType == '' || $linkId < 0) {
@@ -38,6 +49,13 @@ class LinkNote {
 
     }
 
+    /**
+     * Summary of findIdPsg
+     * @param \PDO $dbh
+     * @param mixed $linkType
+     * @param mixed $linkId
+     * @return mixed
+     */
     public static function findIdPsg(\PDO $dbh, $linkType, $linkId) {
 
         $query = '';
@@ -66,6 +84,14 @@ class LinkNote {
         return $idPsg;
     }
 
+    /**
+     * Summary of saveLink
+     * @param \PDO $dbh
+     * @param mixed $note
+     * @param mixed $linkId
+     * @param mixed $linkType
+     * @return string
+     */
     protected static function saveLink(\PDO $dbh, $note, $linkId, $linkType) {
 
         if ($note->getIdNote() > 0) {
@@ -153,4 +179,3 @@ WHERE
     }
 
 }
-?>
