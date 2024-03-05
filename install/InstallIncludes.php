@@ -35,17 +35,11 @@ date_default_timezone_set('America/Chicago');
 /*
  * includes
  */
-require (REL_BASE_SITE . 'vendor/autoload.php');
-//require (CLASSES . 'Exception_hk' . DS . 'Hk_Exception.php');
+
+if (file_exists(REL_BASE_SITE . 'vendor/autoload.php')) {
+    require(REL_BASE_SITE . 'vendor/autoload.php');
+} else {
+    exit("Unable to laod dependancies, be sure to run 'composer install'");
+}
 
 require (FUNCTIONS . 'commonFunc.php');
-/* require (SEC . 'sessionClass.php');
-require (CLASSES . 'alertMessage.php');
-require (CLASSES . 'config'. DS . 'Lite.php');
-require (SEC . 'SecurityComponent.php');
-require (SEC . 'ScriptAuthClass.php');
-require (CLASSES . 'SysConst.php');
-require (SEC . 'webInit.php');
-require (CLASSES . 'HTML_Controls.php');
-
- */

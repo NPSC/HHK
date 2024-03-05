@@ -23,8 +23,11 @@ define('CONF_PATH', 'conf/');
 
 require ('functions/commonFunc.php');
 
-require ('vendor/autoload.php');
-
+if (file_exists('vendor/autoload.php')) {
+    require('vendor/autoload.php');
+} else {
+    exit("Unable to laod dependancies, be sure to run 'composer install'");
+}
 $sequence = getRandomString();
 
 try {

@@ -151,9 +151,9 @@ function loadSignatures(signatures){
 
     try{
         for( docId in signatures){
-            
             //get regforminputs
-            var regFormInputs = $('#vsignedReg #' + docId + ' .regFormInput').attr("disabled", true);
+            var regFormInputs = (docId == "vreg" ? $('#vreg .regFormInput') : $('#vsignedReg #' + docId + ' .regFormInput'));
+            regFormInputs.attr("disabled", true);
 
             signatures[docId].forEach(element => {
                 if (element.type == "signature" && element.uniqId !== undefined) { // if is agreement signature
