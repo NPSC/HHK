@@ -572,7 +572,7 @@ class CustomRegisterForm {
     }
 
     public function checkbox(){
-        return '<span class="checkboxWrapper"></span>';
+        return '<span class="checkboxWrapper bi bi-square"><input type="hidden" class="regFormInput" data-inputtype="checkbox"></span>';
     }
 
     protected function paymentRecord($feesRecord) {

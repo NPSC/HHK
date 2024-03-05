@@ -20,22 +20,28 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
 
     $('.btnSave').click(function(){
         var loading = $('<div/>').addClass('hhk-loading-btn');
-    	var isSigned = ($(this).closest('.ui-tabs-panel').find("div.PrintArea .signDate:visible").length > 0);
+        var isSigned = ($(this).closest('.ui-tabs-panel').find("div.PrintArea .signDate:visible").length > 0);
 
     	if(!isSigned){
     		flagAlertMessage("<strong>Error:</strong> At least one signature is required", true);
     		return;
         }
         
-        $(this).parents(".ui-tabs-panel").find(".regFormInput").each(function (i, element) {
+        var regFormFields = [];
+
+        //gather input fields
+        $(this).parent(".ui-tabs-panel").find(".regFormInput").each(function (i, element) {
             var val = $(this).val();
             var field = { class: "regFormInput", uniqId: i, val: val };
 
             field.type = ($(this).data("inputtype") != undefined ? $(this).data("inputtype") : "text");
             field.height = ($(this).data("inputtype") == "textarea" ? $(this).height(): undefined);
 
-            regFormSignatures.push(field);
+            regFormFields.push(field);
         });
+
+        //append signatures
+        regFormFields = regFormFields.concat(window.regFormSignatures);
 
         $('.btnSave').prop('disabled', 'disabled').html(loading);
 
@@ -52,7 +58,7 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
             formData.append('docTitle', "Registration Form");
             formData.append('uuid', $(this).data('uuid'));
             formData.append('formCode', docCode);
-            formData.append('docSignatures', JSON.stringify(regFormSignatures));
+            formData.append('docSignatures', JSON.stringify(regFormFields));
 
             $.ajax({
                 url: 'ws_ckin.php',
@@ -125,10 +131,12 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
         window.open('ShowInvoice.php?invnum=' + invoiceNumber);
     }
 
-    $("#regTabDiv .checkboxWrapper").addClass("bi bi-square").on("click", function () {
+    $("#regTabDiv .checkboxWrapper").on("click", function () {
         if ($(this).hasClass("bi-square")) {
+            $(this).find("input").val("true");
             $(this).removeClass("bi-square").addClass("bi-check-square-fill");
         } else if ($(this).hasClass("bi-check-square-fill")) {
+            $(this).find("input").val("false");
             $(this).removeClass("bi-check-square-fill").addClass("bi-square");
         }
     });
@@ -143,18 +151,24 @@ function loadSignatures(signatures){
 
     try{
         for( docId in signatures){
-            $('#' + docId + ' .btnSign, #' + docId + ' .btnInitial').hide();
             
             //get regforminputs
-            var regFormInputs = $('#' + docId + ' .regFormInput').attr("disabled", true);
+            var regFormInputs = $('#vsignedReg #' + docId + ' .regFormInput').attr("disabled", true);
 
             signatures[docId].forEach(element => {
                 if (element.type == "signature" && element.uniqId !== undefined) { // if is agreement signature
                     var signWrapper = $(regFormInputs[element.uniqId]).parents(".signWrapper");
-                    signWrapper.find('.sigLine img').prop('src', element.val).show();
-                    signWrapper.find('.signDate').show();
+                    if (element.val.length > 0) {
+                        signWrapper.find('.sigLine img').prop('src', element.val).show();
+                        signWrapper.find('.signDate').show();
+                    }
                 }else if (element.class == "regFormInput" && element.uniqId !== undefined) { //other agreement fields
                     $(regFormInputs[element.uniqId]).val(element.val);
+
+                    if (element.type == "checkbox" && element.val == "true") {
+                        var wrapper = $(regFormInputs[element.uniqId]).parents(".checkboxWrapper");
+                        wrapper.removeClass("bi-square").addClass("bi-check-square-fill");
+                    }
 
                     if (element.height !== undefined) {
                         $(regFormInputs[element.uniqId]).height(element.height);
@@ -180,7 +194,6 @@ function setupEsign(){
     $("#jSignDialog").dialog({
     	autoOpen: false,
     	width: getDialogWidth(800),
-    	height: 375,
     	modal: true,
     	buttons: {
             "Clear": function(){
@@ -188,23 +201,25 @@ function setupEsign(){
                 var formCode = $(this).find("input#formCode").val();
                 var uniqId = $(this).find("input#idBtn").val();
                 $(this).find(".signature").jSignature('clear');
-                regFormSignatures.some((sig, i)=>{
+                window.regFormSignatures.some((sig, i)=>{
                     if(sig.formCode == formCode && sig.idName == idName && sig.uniqId == uniqId){
-                        regFormSignatures.splice(i, 1);
+                        window.regFormSignatures.splice(i, 1);
                         return true;
                         
                     }
                 });
-                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
-                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine input.regFormInput").val("");
-                $("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
+                $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine img").attr("src", "").hide();
+                $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine input.regFormInput").val("");
+                $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .signDate").hide();
             },
             "Sign": function() {
             	var idName = $(this).find("input#idName").val();
             	var formCode = $(this).find("input#formCode").val();
-                var signature = $(this).find('.signature').jSignature("getData");
+                var signature = "data:" + $(this).find('.signature').jSignature("getData", "svgbase64").join(",");
                 var uniqId = $(this).find("input#idBtn").val();
-                regFormSignatures.push({formCode: formCode, idName: idName, uniqId: uniqId, signature: signature});
+                if (idName > 0) {
+                    window.regFormSignatures.push({formCode: formCode, idName: idName, uniqId: uniqId, signature: signature});
+                }
                 $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine img").attr("src", signature).show();
                 $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine input.regFormInput").val(signature);
             	$("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .signDate").show();
@@ -219,43 +234,44 @@ function setupEsign(){
     $("#topazDialog").dialog({
     	autoOpen: false,
     	width: getDialogWidth(550),
-    	height: 300,
     	modal: true,
     	buttons: {
             "Clear": function(){
                 var idName = $(this).find("input#idName").val();
                 var formCode = $(this).find("input#formCode").val();
-                var idBtn = $(this).find("input#idBtn").val();
+                var uniqId = $(this).find("input#idBtn").val();
                 onClear();
-                regFormSignatures.some((sig, i)=>{
-                    if(sig.formCode == formCode && sig.idName == idName && sig.idBtn == idBtn){
-                        regFormSignatures.splice(i, 1);
+                window.regFormSignatures.some((sig, i)=>{
+                    if(sig.formCode == formCode && sig.idName == idName && sig.uniqId == uniqId){
+                        window.regFormSignatures.splice(i, 1);
                         return true;
                         
                     }
                 });
-                $("#" + formCode + " .signWrapper[data-idbtn=" + idBtn + "] .sigLine img").attr("src", "").hide();
-                $("#" + formCode + " .signWrapper[data-idbtn=" + idBtn + "] .signDate").hide();
+                $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine img").attr("src", "").hide();
+                $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine input.regFormInput").val("");
+                $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .signDate").hide();
             },
             "Sign": function() {
             	var idName = $(this).find("input#idName").val();
                 var formCode = $(this).find("input#formCode").val();
-                var idBtn = $(this).find("input#idBtn").val();
+                var uniqId = $(this).find("input#idBtn").val();
                 if(onDone() != false){
                     var signature = $(this).find("canvas#sigImg")[0].toDataURL("image/png");
-                    regFormSignatures.push({formCode: formCode, idName: idName, idBtn:idBtn, signature: signature});
-                    $("#" + formCode + " .signWrapper[data-idbtn=" + idBtn + "] .sigLine img").attr("src", signature).show();
-                    $("#" + formCode + " .signWrapper[data-idbtn=" + idBtn + "] .signDate").show();
+                    if (idName > 0) {
+                        window.regFormSignatures.push({ formCode: formCode, idName: idName, uniqId: uniqId, signature: signature });
+                    }
+                    $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine img").attr("src", signature).show();
+                    $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .sigLine input.regFormInput").val(signature);
+                    $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .signDate").show();
                     $(this).dialog("close");
                 }else{
                     showAlert("Please sign before continuing", false, false);
-                    $(this).dialog("option", "height", 350);
                 }
             }
         },
         open: function () {
         	initTopaz();
-            $(this).dialog("option", "height", 300);
         },
         close: function () {
             //gracefully close Topaz
@@ -287,10 +303,13 @@ function setupEsign(){
             $("#topazDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
             $("#topazDialog input#idBtn").val(uniqId);
             if ($(this).hasClass("btnInitial")) {
-                $("#topazDialog").dialog("option", "title", "Initial").dialog("option", "width", getDialogWidth(240)).dialog("open");
+                $("#topazDialog #sigImg").attr("width", "150");
+                $("#topazDialog").dialog("option", "title", "Initial").dialog("option", "width", getDialogWidth(225)).dialog("open");
             } else {
-                $("#topazDialog").dialog("option", "title", "Signature: " + name).dialog("option", "width", getDialogWidth(800)).dialog("open");
+                $("#topazDialog #sigImg").attr("width", "500");
+                $("#topazDialog").dialog("option", "title", "Signature: " + name).dialog("option", "width", getDialogWidth(550)).dialog("open");
             }
+
 	    }
     });
 
@@ -326,6 +345,7 @@ function setupEsign(){
 
     function initTopaz(){
         $("#sigWebAlert").hide();
+        
     	if(IsSigWebInstalled()){
     	    var sigWebVer = "";
     	    try{
@@ -408,10 +428,10 @@ function setupEsign(){
         if(IsSigWebInstalled()){
             $("#sigImg").show();
             var ctx = document.getElementById('sigImg').getContext('2d');
-            SetDisplayXSize( 500 );
-            SetDisplayYSize( 100 );
+            SetDisplayXSize( $("#sigImg")[0].width );
+            SetDisplayYSize( $("#sigImg")[0].height );
             SetTabletState(0, tmr);
-            SetJustifyMode(0);
+            SetJustifyMode(5);
             ClearTablet();
             if(tmr === null){
                 tmr = SetTabletState(1, ctx, 50);
