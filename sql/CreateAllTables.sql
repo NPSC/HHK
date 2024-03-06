@@ -1054,6 +1054,18 @@ CREATE TABLE if not exists `name_email` (
 
 
 
+
+-- -----------------------------------------------------
+-- Table `name_external`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `name_external` (
+  `idName` int(11) NOT NULL,
+  `Service` varchar(25) NOT NULL DEFAULT '',
+  `External_Id` varchar(140) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idName`,`Service`)
+) ENGINE=InnoDB;
+
 -- -----------------------------------------------------
 -- Table `name_guest`
 -- -----------------------------------------------------
@@ -1138,7 +1150,7 @@ CREATE TABLE if not exists `name_phone` (
   `is_Land_Line` bit(1) NOT NULL DEFAULT b'0',
   `is_Personal` bit(1) NOT NULL DEFAULT b'0',
   `is_Party_Line` bit(1) NOT NULL DEFAULT b'0',
-  `is_SMS` bit(1) NOT NULL DEFAULT b'0',
+  `SMS_status` varchar(10) NOT NULL DEFAULT '',
   `Carrier` varchar(45) NOT NULL DEFAULT '',
   `Bad_Number` varchar(15) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
@@ -1241,6 +1253,23 @@ CREATE TABLE IF NOT EXISTS `note_category` (
   `Category_Code` VARCHAR(5) NOT NULL,
   PRIMARY KEY (`Note_Id`, `Category_Code`)
 ) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `notification_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `notification_log` (
+  `idLog` INT NOT NULL AUTO_INCREMENT,
+  `Log_Type` varchar(45) NOT NULL DEFAULT '',
+  `Sub_Type` varchar(45) NOT NULL DEFAULT '',
+  `username` varchar(45) NOT NULL DEFAULT '',
+  `To` varchar(255) NOT NULL DEFAULT '',
+  `From` varchar(255) NOT NULL DEFAULT '',
+  `Log_Text` varchar(255) NOT NULL DEFAULT '',
+  `Log_Details` JSON NOT NULL DEFAULT '{}',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idLog`)
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------

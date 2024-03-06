@@ -1,4 +1,10 @@
 <?php
+use HHK\Exception\SmsException;
+use HHK\Exception\ValidationException;
+use HHK\Notification\SMS\SimpleTexting\Campaign;
+use HHK\Notification\SMS\SimpleTexting\Contacts;
+use HHK\Notification\SMS\SimpleTexting\Message;
+use HHK\Notification\SMS\SimpleTexting\Messages;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\Session;
@@ -14,6 +20,13 @@ use HHK\Incident\ListReports;
 use HHK\Incident\Report;
 use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\Exception\NotFoundException;
+use HHK\Member\Address\Phones;
+use HHK\Member\IndivMember;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\PhonePurpose;
+use HHK\Notification\SMS\SimpleTexting\Contact;
+use HHK\TableLog\NotificationLog;
 
 /**
  * ws_resv.php
@@ -535,12 +548,155 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $events = Reservation::updateAgenda($dbh, $_POST);
         break;
 
+    case 'getVisitMsgsDialog':
+
+        $idVisit = intval(filter_input(INPUT_GET, 'idVisit', FILTER_SANITIZE_NUMBER_INT));
+        $idSpan = intval(filter_input(INPUT_GET, 'idSpan', FILTER_SANITIZE_NUMBER_INT));
+
+        if($idVisit > 0 && $idSpan >= 0){
+            $messages = new Messages($dbh);
+
+            //$events = ['mkup' => $messages->getVisitMessagesMkup($idVisit, $idSpan)];
+            $events = $messages->getVisitGuestsData($idVisit, $idSpan);
+        }else{
+            throw new NotFoundException("Visit ID not found");
+        }
+
+        break;
+
+    case 'getResvMsgsDialog':
+
+        $idResv = intval(filter_input(INPUT_GET, 'idResv', FILTER_SANITIZE_NUMBER_INT));
+                
+        if($idResv > 0){
+            $messages = new Messages($dbh);
+    
+            $events = $messages->getResvGuestsData($idResv);
+        }else{
+            throw new NotFoundException("Reservation ID not found");
+        }
+
+        break;
+
+    case 'getCampaignMsgsDialog':
+        $status = filter_input(INPUT_GET, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $messages = new Messages($dbh);
+
+        $events = $messages->getCampaignGuestsData($status);
+
+        break;
+
+    case 'getGuestMsgsDialog':
+        $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
+    
+        $messages = new Messages($dbh);
+
+        $events = $messages->getGuestData($idName);
+    
+        break;
+
+    case 'loadMsgs':
+        $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
+
+        if($idName > 0){
+            $messages = new Messages($dbh);
+
+            $events = $messages->getMessages($idName);
+        }else{
+            throw new NotFoundException("idName not found");
+        }
+
+        break;
+
+    case 'sendMsg':
+        $idName = intval(filter_input(INPUT_POST, 'idName', FILTER_SANITIZE_NUMBER_INT));
+        $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        if ($idName > 0) {
+            $uS = Session::getInstance();
+            $name = new IndivMember($dbh, MemBasis::Indivual, $idName);
+            $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+            $cell = $phones->get_Data(PhonePurpose::Cell);
+
+            if (strlen($cell["Unformatted_Phone"]) <= 10) {
+                //upsert contact before send
+                $contact = new Contact($dbh, true);
+                $contact->upsert($cell["Unformatted_Phone"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
+                try {
+                    $msg = new Message($dbh, $cell["Unformatted_Phone"], $msgText);
+                    $events = $msg->sendMessage();
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
+                }catch(SmsException $e){
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
+                    throw $e;
+                }
+            }else{
+                throw new ValidationException("Cell Number Invalid");
+            }
+        }else{
+            throw new NotFoundException("idName not found");
+        }
+
+        break;
+
+    case 'sendVisitMsg':
+        $idVisit = intval(filter_input(INPUT_POST, 'idVisit', FILTER_SANITIZE_NUMBER_INT));
+        $idSpan = intval(filter_input(INPUT_POST, 'idSpan', FILTER_SANITIZE_NUMBER_INT));
+        $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $messages = new Messages($dbh, true);
+
+        $events = $messages->sendVisitMessage($idVisit, $idSpan, $msgText);
+
+        break;
+
+        case 'sendResvMsg':
+            $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT));
+            $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    
+            $messages = new Messages($dbh, true);
+
+            $events = $messages->sendResvMessage($idResv, $msgText);
+    
+            break;
+
+    case 'sendCampaign':
+        $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $campaign = new Campaign($dbh, $msgText, $msgText);
+        $events = $campaign->prepareAndSendCampaign($status);
+
+        break;
+    case 'loadContacts':
+
+        $status = filter_input(INPUT_GET, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $contacts = new Contacts($dbh);
+
+        if($status){
+            $events = $contacts->fetchContacts($status);
+        }else{
+            $events = $contacts->fetchContacts();
+        }
+        
+        break;
+
+    case 'syncContacts':
+        $status = filter_input(INPUT_GET, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $contacts = new Contacts($dbh, true);
+
+        $events = $contacts->syncContacts($status);
+
+        break;
 
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }
 
-} catch (NotFoundException $e){
+} catch (NotFoundException | ValidationException | SmsException $e){
     $events = array("error" => $e->getMessage());
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
@@ -566,4 +722,3 @@ if (is_array($events)) {
 }
 
 exit();
-?>

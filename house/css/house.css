@@ -82,6 +82,7 @@ body {
 .hhk-checkinHdr {
     font-size:1.2em;
     margin-top:3px;
+	margin-bottom: 3px;
 }
 .hhk-addrCopy, .hhk-addrErase, .hhk-fincalc {
     cursor:pointer;
@@ -513,6 +514,8 @@ div#global-title {
 }
 */
 
+
+
 .hhk-ui-icons {
     margin: 0;
     padding: 0;
@@ -664,8 +667,8 @@ div.dt-buttons .dt-button:hover>span {
 	width: 100%;
 }
 
-#mfaEmail td {
-	border: none;
+#mfaEmail td:not(.tdlabel) {
+	text-align: left;
 }
 
 
@@ -778,7 +781,6 @@ div.dt-buttons .dt-button:hover>span {
     border-color: #2C3E50;
     cursor: pointer;
     
-    -webkit-appearance: button;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -909,4 +911,162 @@ table.dataTable tbody td {
 
 .hhk-btn.getNameDetails{
 	margin-left: 0.5em;
+}
+
+.hhk-btn-small {
+	padding: 0.2em 0.4em;
+}
+
+
+.ui-tooltip {
+	box-shadow: none !important;
+}
+
+#viewMsgsDialog {
+	min-height: 150px !important;
+	font-size: 0.8em;
+}
+#viewMsgsDialog #smsTabs {
+	display: flex;
+}
+
+#viewMsgsDialog #smsTabs.ui-tabs .ui-tabs-nav li {
+	white-space: normal;
+}
+
+#viewMsgsDialog .ui-tabs-nav {
+	width: 14em;
+}
+
+#viewMsgsDialog h4.msgTitle, #viewMsgsDialog div.msgsContainer {
+	padding-bottom: 0.25em;
+	border-bottom: 1px solid #a6c9e2;
+}
+
+#viewMsgsDialog #msgsTabContent, #viewMsgsDialog #allGuestsTabContent, #viewMsgsDialog #campaignTabContent {
+	padding: 1em;
+}
+
+#viewMsgsDialog.loading, #viewMsgsDialog .loading {
+	background: url(../../images/ui-anim_basic_16x16.gif);
+	background-repeat: no-repeat;
+	background-position: center;
+}
+#viewMsgsDialog.loading *, #viewMsgsDialog .loading *{
+	display: none !important;
+}
+
+#viewMsgsDialog #msgsTabContent .msgTitle{
+	display: flex;
+	justify-content: space-between;
+}
+
+#viewMsgsDialog #msgsTabContent .msgTitle .smsUnsubscribed {
+	font-weight: normal;
+	cursor: default;
+}
+
+.msgsContainer {
+	height: 400px;
+	overflow-y: auto;
+	padding: 0.5em 0.75em 0.5em 0 !important;
+}
+
+.msgsContainer .msg {
+    width: fit-content;
+    max-width: 85%;
+    margin: 0.5em 0;
+}
+
+.msgsContainer .msgContent {
+    padding: 0.5em;
+}
+
+.msgsContainer .houseMsg .msgContent {
+    background: #3788d8;
+    color: white;
+}
+
+.msgsContainer .msgMeta {
+    color: #707070;
+    margin-top: 0.25em;
+}
+
+.msgsContainer .houseMsg .msgMeta {
+	text-align: right;
+}
+
+.msgsContainer .houseMsg {
+    justify-content: end;
+}
+
+.msgsContainer .houseMsg .msg {
+	align-items: end;
+}
+
+.msgsContainer .guestMsg .msg {
+	align-items: start;
+}
+
+.msgsContainer .msgContainer .msg {
+	display: flex;
+	flex-flow: column;
+}
+
+#viewMsgsDialog .newMsg {
+	align-items: center;
+	margin-top: 0.5em;
+	min-height: 48px;
+}
+
+#viewMsgsDialog .newMsg textarea {
+	margin: 0.5em;
+	width: 90%;
+	resize:none;
+	padding: 0.5em;
+}
+
+#viewMsgsDialog .smsSubject {
+	margin-top: 0.5em;
+}
+
+#viewMsgsDialog input[name=subject] {
+	margin: 0.5em;
+	padding: 0.5em;
+	width: 100%;
+}
+
+#viewMsgsDialog .newMsg button {
+	min-width: fit-content;
+}
+
+#viewMsgsDialog .allRecipients {
+	display: flex;
+	padding: 0 0.5em;
+	margin: 0.5em 0 0 0.5em;
+	align-items: baseline;
+	flex-wrap: wrap;
+}
+
+#viewMsgsDialog .allRecipients *{
+	margin: 0.5em 0.5em 0.5em 0;
+}
+
+#viewMsgsDialog .allRecipients .recipient {
+	padding: 0.5em;
+	margin: 0.5em 0;
+	background: #E9F4FD;
+}
+
+#viewMsgsDialog .allRecipients *:not(:first-child,:last-child):after {
+	content: ",";
+}
+
+/* fix ugly stay checkboxes on reservation */
+#tblFamily .ui-icon-background, #tblFamily .ui-state-active .ui-icon-background {
+	background-color:#fff;
+}
+
+.hhk-rowseparater { 
+	border-top: 2px #0074c7 solid !important;
 }

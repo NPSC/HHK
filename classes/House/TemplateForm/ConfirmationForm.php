@@ -111,4 +111,3 @@ class ConfirmationForm extends AbstractTemplateForm {
     }
 
 }
-?>

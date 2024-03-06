@@ -374,3 +374,7 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 #duplicatesReadme * {
     padding: revert;
 }
+
+#divaddrTabs button.btnTextGuest {
+	display: none;
+}

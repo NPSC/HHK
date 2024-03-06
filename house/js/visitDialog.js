@@ -631,6 +631,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             });
         }
 
+        if ($(".viewMsgs").length > 0) {
+            $(".viewMsgs").button().smsDialog({
+                visitId: idVisit,
+                spanId: visitSpan
+            });
+        }
+
         if ($('#selRateCategory').length > 0) {
             $('#selRateCategory').change(function () {
                 if ($(this).val() == fixedRate) {

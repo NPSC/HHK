@@ -35,6 +35,9 @@ function resvManager(initData, options) {
     var closedDays = options.closedDays;
 
     var insistCkinDemog = false;
+    var insistCkinEmail = initData.insistCkinEmail;
+    var insistCkinPhone = initData.insistCkinPhone;
+    var insistCkinAddress = initData.insistCkinAddress;
     var rooms = [];
     var people = new Items();
     var addrs = new Items();
@@ -338,8 +341,8 @@ function resvManager(initData, options) {
             var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
             var msg = false;
 
-            // Incomplete checked?
-            if ($('#' + prefix + 'incomplete').length > 0 && $('#' + prefix + 'incomplete').prop('checked') === false) {
+            // Incomplete not checked or complete address required?
+            if ($('#' + prefix + 'incomplete').length > 0 && ($('#' + prefix + 'incomplete').prop('checked') === false || (isCheckin == true && insistCkinAddress == true))) {
 
                 // Look at each entry
                 $('.' + prefix + 'hhk-addr-val').not('.hhk-MissingOk').each(function () {
@@ -368,6 +371,7 @@ function resvManager(initData, options) {
             }
 
             // Validate Phone Number
+            var phoneFilled = false;
             $('.hhk-phoneInput[id^="' + prefix + 'txtPhone"]').each(function () {
 
                 if ($.trim($(this).val()) !== '' && testreg.test($(this).val()) === false) {
@@ -388,7 +392,33 @@ function resvManager(initData, options) {
                 } else {
                     $(this).removeClass('ui-state-error');
                 }
+
+                if ($.trim($(this).val()) !== '' && !$(this).hasClass("ui-state-error") && phoneFilled == false) {
+                    phoneFilled = true;
+                }
+
             });
+
+            var isNoPhone = ($('.prefPhone[id^="' + prefix + 'phno"]:checked').length === 0 ? false:true);
+
+            if (isCheckin == true && insistCkinPhone == true && phoneFilled == false && isNoPhone == false) {
+                return "At least one phone number or 'No Phone' is required for check in."
+            }
+
+            // Validate Email
+            var emailFilled = false;
+            var isNoEmail = ($('.prefEmail[id^="' + prefix + 'emno"]:checked').length === 0 ? false:true);
+            $('.hhk-emailInput[id^="' + prefix + 'txtEmail"]').each(function () {
+
+                if ($.trim($(this).val()) !== '' && !$(this).hasClass("ui-state-error") && emailFilled == false) {
+                    emailFilled = true;
+                }
+
+            });
+
+            if (isCheckin == true && insistCkinEmail == true && emailFilled == false && isNoEmail == false) {
+                return "At least one email address or 'No Email' is required for check in."
+            }
 
             return '';
 
@@ -2289,6 +2319,16 @@ function resvManager(initData, options) {
                 });
             });
 
+            //SMS Dialog
+            $("#btnShowResvMsgs").button().smsDialog({
+                resvId: data.rid
+            });
+
+            $(".btnTextGuest").each(function () {
+                var guestId = $(this).data("idname");
+                $(this).smsDialog({"guestId":guestId});
+            });
+
             setupRoom(data.rid);
 
             if (data.resv.rdiv.rate !== undefined) {
@@ -2304,7 +2344,7 @@ function resvManager(initData, options) {
             }
 
             if (data.resv.rdiv.vehicle !== undefined) {
-                setupVehicle($(data.resv.rdiv.vehicle));
+                setupVehicle($rDiv);
             }
 
 

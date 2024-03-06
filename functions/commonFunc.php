@@ -169,62 +169,6 @@ function doExcelDownLoad(array $rows, string $fileName):void
     $writer->download();
 }
 
-/**
- * Set up PHPMailer with proper settings
- *
- * @return PHPMailer
- */
-function prepareEmail():PHPMailer
-{
-
-    $uS = Session::getInstance();
-
-    $mail = new PHPMailer(true);
-
-    $mail->CharSet = "utf-8";
-    $mail->Encoding = "base64";
-
-    if($uS->DKIMdomain && @file_get_contents($uS->keyPath . '/dkim/dkimPrivateKey.pem')){
-        $mail->DKIM_domain = $uS->DKIMdomain;
-        $mail->DKIM_private = $uS->keyPath . '/dkim/dkimPrivateKey.pem';
-        $mail->DKIM_selector = "hhk";
-        $mail->DKIM_identity = $mail->From;
-    }
-
-    switch (strtolower($uS->EmailType)) {
-
-        case 'smtp':
-
-            $mail->isSMTP();
-
-            $mail->Host = $uS->SMTP_Host;
-            $mail->SMTPAuth = $uS->SMTP_Auth_Required;
-            $mail->Username = $uS->SMTP_Username;
-
-            if ($uS->SMTP_Password != '') {
-                $mail->Password = decryptMessage($uS->SMTP_Password);
-            }
-
-            if ($uS->SMTP_Port != '') {
-                $mail->Port = $uS->SMTP_Port;
-            }
-
-            if ($uS->SMTP_Secure != '') {
-                $mail->SMTPSecure = $uS->SMTP_Secure;
-            }
-
-            $mail->SMTPDebug = $uS->SMTP_Debug;
-
-            break;
-
-        case 'mail':
-            $mail->isMail();
-            break;
-    }
-
-    return $mail;
-}
-
 function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
 
 	$startDT = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');

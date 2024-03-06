@@ -15,11 +15,13 @@ require ('../functions/commonDefines.php');
 
 define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 /* mins */
-define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
+define('RESV_MANAGER_JS', 'js/resvManager.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
+define('SMS_DIALOG_JS', "js/smsDialog-min.js" . JSV);
 define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
 define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
@@ -50,3 +52,4 @@ define('GRID_CSS', "<link href='css/bootstrap-grid.min.css" . JSV . "' rel='styl
 define('BOOTSTRAP_CSS', "<link href='css/bootstrap.min.css" . JSV . "' rel='stylesheet' type='text/css' /><link href='css/bootstrap-print-fix.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('CSSVARS', "<link href='ws_resc.php?cmd=getCssVars' rel='stylesheet' type='text/css' />");
+define('BOOTSTRAP_ICONS_CSS', "<link href='css/bootstrap-icons.min.css" . JSV . "' rel='stylesheet' type='text/css' />");

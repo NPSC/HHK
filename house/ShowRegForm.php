@@ -48,7 +48,6 @@ $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
 $isTopazRequired = false;
-$sty = "";
 $blankFormTitle = "Registration Form";
 $signatures = array();
 
@@ -130,7 +129,6 @@ if($idDoc > 0){
         $regContents = (str_starts_with($doc->getMimeType(), "base64:") ? base64_decode($doc->getDoc()) : $doc->getDoc());
         if($uS->RegForm == "3"){
             $form = new CustomRegisterForm();
-            $sty = $form->getStyling();
             $docSignatures = json_decode($doc->getUserData());
             if($docSignatures){
                 $signatures['vreg'] = $docSignatures;
@@ -244,6 +242,8 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <?php echo NAVBAR_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo CSSVARS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
+        <?php echo ($uS->RegForm == 3 ? CUSTOM_REGFORM_CSS : ""); ?>
 
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -275,7 +275,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 let rid = '<?php echo $idResv ?>';
                 let idPrimaryGuest = '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>';
                 let idPsg = '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>';
-                let signatures = JSON.parse(`<?php echo json_encode($signatures); ?>`);
+                let signatures = <?php echo json_encode($signatures); ?>;
 
                 setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
                 setupEsign();
@@ -315,12 +315,14 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
             <div id="jSignDialog" style="display:none;">
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
+                <input type="hidden" id="idBtn">
             	<p style="text-align:center">Use your mouse, finger or touch pen to sign</p>
             	<div class="signature ui-widget-content ui-corner-all"></div>
             </div>
             <div id="topazDialog" style="display:none; text-align:center;">
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
+                <input type="hidden" id="idBtn">
             	<p style="text-align:center">Use your Topaz Signature Pad to sign</p>
             	<canvas name="signature" id="sigImg" class="signature ui-widget-content ui-corner-all" width="500" height="100"></canvas>
             	<div class="alertContainer" id="sigWebAlert" style="display:none;">
