@@ -452,6 +452,9 @@ function setupEsign(){
     function onClear(){
         if (typeof clearTablet !== 'undefined') {
             ClearTablet();
+            let canvas = document.getElementById("sigImg");
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     }
 

@@ -128,7 +128,7 @@ if (isset($_GET['r'])) {
     $result = filter_var($_GET['r'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
-$pageTitle = $ssn->siteName;
+$pageTitle = ($ssn->siteName ? $ssn->siteName : "Hospitality Housekeeper");
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 $copyYear = date('Y');
 
