@@ -5,6 +5,7 @@ namespace HHK\Document;
 use HHK\House\Hospital\Hospital;
 use HHK\sec\Session;
 use HHK\sec\Recaptcha;
+use HHK\sec\Labels;
 /**
  * FormTemplate.php
  *
@@ -55,7 +56,7 @@ class FormTemplate {
         return $rows;
     }
 
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -81,8 +82,8 @@ class FormTemplate {
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
-        if($emailPatient && $notifySubject == '' && $notifyContent == ''){
-            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
+        if($notifySubject == ''){
+            $validationErrors['notifySubject'] = "The Email Subject field is required";
         }
 
         if($initialGuests > self::MAX_GUESTS){
@@ -97,7 +98,7 @@ class FormTemplate {
             $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
         }
 
-        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
+        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
 
         if(count($validationErrors) == 0){
 
@@ -125,7 +126,7 @@ class FormTemplate {
         }
     }
 
-    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -153,8 +154,8 @@ class FormTemplate {
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
-        if($emailPatient && $notifySubject == '' && $notifyContent == ''){
-            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled.";
+        if($notifySubject == ''){
+            $validationErrors['notifySubject'] = "The Email Subject field is required";
         }
 
         if($initialGuests > 20){
@@ -170,7 +171,7 @@ class FormTemplate {
         }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
             
             $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, "base64:text/json", $username);
             if($count == 1){
@@ -248,9 +249,7 @@ class FormTemplate {
             'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
-            'emailPatient'=>(isset($abstract->emailPatient) ? $abstract->emailPatient : false),
-            'notifySubject'=>(isset($abstract->notifySubject) ? $abstract->notifySubject : ''),
-            'notifyContent'=>(isset($abstract->notifyContent) ? htmlspecialchars_decode($abstract->notifyContent, ENT_QUOTES) : ''),
+            'notifySubject'=>(isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " submitted"),
             'recaptchaScript'=>$recaptcha->getScriptTag(),
             'maxGuests'=>(isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
             'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1),

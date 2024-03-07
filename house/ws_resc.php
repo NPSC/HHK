@@ -731,9 +731,9 @@ try {
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $uS->username);
             }
 
             break;
