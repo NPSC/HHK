@@ -1178,4 +1178,3 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
                                 return $dash_str;
     }
 }
-?>

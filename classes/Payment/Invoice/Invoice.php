@@ -597,6 +597,193 @@ where
 
 		return $rec;
 	}
+
+	public function createPDFMarkup(\PDO $dbh) {
+		$uS = Session::getInstance ();
+
+		$hospital = '';
+		$roomTitle = '';
+		$idGuest = 0;
+		$idPatient = 0;
+		$idAssoc = 0;
+		$idHosp = 0;
+		$patientName = '';
+
+		// Find Hospital and Room
+		$pstmt = $dbh->query ( "select
+    hs.idHospital, hs.idAssociation, re.Title, v.idPrimaryGuest, hs.idPatient, n.Name_Full
+from
+    visit v
+	left join
+    resource re on v.idResource = re.idResource
+        left join
+    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        left join
+    name n on n.idName = hs.idPatient
+where
+    v.idVisit = " . $this->getOrderNumber () . " and v.Span = " . $this->getSuborderNumber());
+
+		$rows = $pstmt->fetchAll ( \PDO::FETCH_ASSOC );
+
+		if (count ( $rows ) > 0) {
+			$idAssoc = $rows [0] ['idAssociation'];
+			$idGuest = $rows [0] ['idPrimaryGuest'];
+			$idHosp = $rows [0] ['idHospital'];
+			$idPatient = $rows [0] ['idPatient'];
+			$roomTitle = $rows [0] ['Title'];
+			$patientName = $rows [0] ['Name_Full'];
+		}
+
+		// Hospital
+		if ($idAssoc > 0 && isset ( $uS->guestLookups [GLTableNames::Hospital] [$idAssoc] ) && $uS->guestLookups [GLTableNames::Hospital] [$idAssoc] [1] != '(None)') {
+			$hospital .= $uS->guestLookups [GLTableNames::Hospital] [$idAssoc] [1] . ' / ';
+		}
+		if ($idHosp > 0 && isset ( $uS->guestLookups [GLTableNames::Hospital] [$idHosp] )) {
+			$hospital .= $uS->guestLookups [GLTableNames::Hospital] [$idHosp] [1];
+		}
+
+		// Items
+		$tbl = new HTMLTable ();
+
+		$tbl->addHeaderTr ( HTMLTable::makeTh ( 'Room' ) . HTMLTable::makeTh ( 'Item' ) . HTMLTable::makeTh ( 'Amount' ) );
+
+		foreach ( $this->getLines ( $dbh ) as $line ) {
+			$tbl->addBodyTr ( HTMLTable::makeTd ( $roomTitle ) . HTMLTable::makeTd ( $line->getDescription () ) . HTMLTable::makeTd ( number_format ( $line->getAmount (), 2 ), array (
+					'class' => 'tdlabel'
+			) ) );
+		}
+
+		// totals
+		$tbl->addBodyTr ( HTMLTable::makeTd ( "Total:", array (
+				'class' => 'tdlabel hhk-tdTotals',
+				'colspan' => '2'
+		) ) . HTMLTable::makeTd ( '$' . number_format ( $this->getAmount (), 2 ), array (
+				'class' => 'hhk-tdTotals tdlabel'
+		) ) );
+		$tbl->addBodyTr ( HTMLTable::makeTd ( "Previous Payments:", array (
+				'class' => 'tdlabel',
+				'colspan' => '2'
+		) ) . HTMLTable::makeTd ( number_format ( ($this->getAmount () - $this->getBalance ()), 2 ), array (
+				'class' => 'hhk-tdTotals tdlabel'
+		) ) );
+
+		if ($this->getDelegatedStatus () == InvoiceStatus::Paid) {
+			$tbl->addBodyTr ( HTMLTable::makeTd ( "Balance Due:", array (
+					'class' => 'tdlabel',
+					'colspan' => '2'
+			) ) . HTMLTable::makeTd ( '$0.00', array (
+					'class' => 'hhk-tdTotals tdlabel'
+			) ) );
+		} else {
+			$tbl->addBodyTr ( HTMLTable::makeTd ( "Balance Due:", array (
+					'class' => 'tdlabel',
+					'colspan' => '2'
+			) ) . HTMLTable::makeTd ( '$' . number_format ( $this->getBalance (), 2 ), array (
+					'class' => 'hhk-tdTotals tdlabel'
+			) ) );
+		}
+
+		// House Icon and address
+		$headerTbl = new HTMLTable();
+		$headerTbl->addBodyTr(
+			HTMLTable::makeTd(Receipt::getHouseIconMarkup (), ['style'=>'width: 30%;']) . 
+			HTMLTable::makeTd(Receipt::getAddressTable ( $dbh, $uS->sId ))
+		);
+		$rec = $headerTbl->generateMarkup(['class'=>'mb-3', 'style'=>'width: 100%']);
+
+		// Invoice dates
+		$invDate = new \DateTime ( $this->getDate () );
+		$invDateString = $invDate->format ( 'M jS, Y' );
+		$invDate->add ( new \DateInterval ( 'P' . $uS->InvoiceTerm . 'D' ) );
+
+		$invTbl = new HTMLTable ();
+
+		if ($this->isDeleted ()) {
+			$rec .= HTMLContainer::generateMarkup ( 'h2', 'INVOICE - DELETED', array (
+					'class'=>'mb-3', 'style' => 'color:darkred;'
+			) );
+		} else if ($this->getStatus () == InvoiceStatus::Carried) {
+			$rec .= HTMLContainer::generateMarkup ( 'h2', 'INVOICE - (Delegated To Invoice #' . $this->getDelegatedInvoiceNumber () . ')', array (
+					'class'=>'mb-3', 'style' => 'color:blue;'
+			) );
+		} else {
+			$rec .= HTMLContainer::generateMarkup ( 'h2', 'INVOICE', array (
+					'class' => 'mb-3'
+			) );
+		}
+
+		$invTbl->addBodyTr ( HTMLTable::makeTd ( 'INVOICE #:', array (
+				'class' => 'tdlabel'
+		) ) . HTMLTable::makeTd ( $this->getInvoiceNumber () ) );
+
+		$invTbl->addBodyTr ( HTMLTable::makeTd ( 'DATE:', array (
+				'class' => 'tdlabel'
+		) ) . HTMLTable::makeTd ( $invDateString ) );
+
+		if ($uS->InvoiceTerm > 0) {
+			$invTbl->addBodyTr ( HTMLTable::makeTd ( 'TERMS NET:', array (
+					'class' => 'tdlabel'
+			) ) . HTMLTable::makeTd ( $uS->InvoiceTerm ) );
+			$invTbl->addBodyTr ( HTMLTable::makeTd ( 'DUE DATE:', array (
+					'class' => 'tdlabel'
+			) ) . HTMLTable::makeTd ( $invDate->format ( 'M jS, Y' ) ) );
+		}
+
+		if ($this->getDelegatedStatus () == InvoiceStatus::Paid) {
+			$invTbl->addBodyTr ( HTMLTable::makeTd ( 'BALANCE DUE:', array (
+					'class' => 'tdlabel'
+			) ) . HTMLTable::makeTd ( '$0.00' ) );
+		} else {
+			$invTbl->addBodyTr ( HTMLTable::makeTd ( 'BALANCE DUE:', array (
+					'class' => 'tdlabel'
+			) ) . HTMLTable::makeTd ( '$' . number_format ( $this->getBalance (), 2 ) ) );
+		}
+
+		$billTbl = new HTMLTable ();
+		$billTbl->addBodyTr ( HTMLTable::makeTd ( HTMLContainer::generateMarkup('h4', 'Bill To')));
+		$billTbl->addBodyTr ( HTMLTable::makeTd ( $this->getBillToAddress ( $dbh, $this->getSoldToId () )->generateMarkup () ) );
+
+
+		$rec .= (new HTMLTable())->addBodyTr(
+			HTMLTable::makeTd($invTbl->generateMarkup(['class'=>'hhk-tdbox-noborder'])) . 
+			HTMLTable::makeTd($billTbl->generateMarkup())
+		)->generateMarkup(['class'=>'mb-3', 'style'=>'width: 100%;']);
+
+		// Patient and guest
+		if ($idPatient != $idGuest && $patientName != '') {
+			$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('memberType', 'patient', 'Patient')  . ':  ' . $patientName, array (
+					'class' => 'mt-3'
+			) );
+		}
+
+		$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('memberType', 'primaryGuest', 'Primary Guest'), array (
+				'class' => 'mt-3'
+		) );
+		$rec .= $this->getGuestAddress ( $dbh, $idGuest );
+
+		$rec .= HTMLContainer::generateMarkup ( 'h4', 'Hospital:  ' . $hospital, array (
+				'class' => 'my-3'
+		) );
+
+		$rec .= HTMLContainer::generateMarkup ( 'div', $tbl->generateMarkup(['style'=>'width: 100%;']), array (
+				'class' => 'hhk-tdbox'
+		) );
+
+		if ($this->getInvoiceNotes () != '') {
+			$rec .= HTMLContainer::generateMarkup ( 'p', $this->getInvoiceNotes (), array (
+					'class' => 'mt-3'
+			) );
+		}
+
+		if ($this->isDeleted ()) {
+			$rec = HTMLContainer::generateMarkup ( 'div', $rec, array (
+					'style' => 'background-color:pink;'
+			) );
+		}
+
+		return $rec;
+	}
+
 	/**
 	 * Summary of getGuestAddress
 	 * @param \PDO $dbh

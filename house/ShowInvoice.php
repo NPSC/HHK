@@ -53,7 +53,7 @@ try {
     if ($invNum != '') {
 
         $invoice = new Invoice($dbh, $invNum);
-        $stmtMarkup = $invoice->createMarkup($dbh);
+        $stmtMarkup = $invoice->createPDFMarkup($dbh);
 
         if (isset($_POST['btnWord'])) {
 
@@ -108,7 +108,8 @@ try {
                 $mail->msgHTML("Your " . $uS->siteName . " invoice is attached");
                 $mpdf = new Mpdf(['tempDir'=>sys_get_temp_dir() . "/mpdf"]);
                 $mpdf->showImageErrors = true;
-                $mpdf->WriteHTML($stmtMarkup);
+                $mpdf->WriteHTML(
+                    '<html><head>' . HOUSE_CSS . '</head><body>' . $stmtMarkup . '</body></html>');
                 
                 $pdfContent = $mpdf->Output('', 'S');
                 $mail->addStringAttachment($pdfContent, 'Invoice.pdf', PHPMailer::ENCODING_BASE64,'application/pdf');
@@ -163,6 +164,8 @@ if ($msg != '') {
         <?php echo CSSVARS; ?>
         <?php echo $sty; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
+
         <style type="text/css" media="print">
             body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             .hhk-noprint {display:none;}
