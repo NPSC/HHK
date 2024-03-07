@@ -243,15 +243,20 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $lastConfDate = $lcdDT->format('M j, Y');
         }
 
-        $lastConfirmed =  HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('fieldset',
-                    HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group').' Info Last Confirmed', array('style'=>'font-weight:bold;'))
-                    . HTMLContainer::generateMarkup('label', 'Update:', array('for'=>'cbLastConfirmed'))
-                    . HTMLInput::generateMarkup('', array('name'=>'cbLastConfirmed', 'type'=>'checkbox','style'=>'margin-left:.3em;'))
-                    . HTMLInput::generateMarkup($lastConfDate, array('name'=>'txtLastConfirmed', 'class'=>'ckdate','style'=>'margin-left:1em;'))
-                    , array('class'=>'hhk-panel')),
-            );
+        $lastConfirmed = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup(
+                'fieldset',
+                HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group') . ' Info Last Confirmed', array('style' => 'font-weight:bold;'))
+                . HTMLContainer::generateMarkup('label', 'Update:', ['for' => 'cbLastConfirmed'])
+                . HTMLInput::generateMarkup('', ['name' => 'cbLastConfirmed', 'type' => 'checkbox', 'style' => 'margin-left:.3em;'])
+                . HTMLInput::generateMarkup($lastConfDate, ['name' => 'txtLastConfirmed', 'class' => 'ckdate', 'style' => 'margin-left:1em;'])
+                ,
+                ['class' => 'hhk-panel']
+            )
 
+            // PSG checkboxes
+            .self::createCheckboxes(readGenLookupsPDO($dbh, 'Checklist_PSG', 'Order'), $this->psgRS)
+        );
 
         // Change log
         $c = '';
@@ -296,6 +301,47 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         return $editDiv;
 
+    }
+
+    /**
+     * Summary of createCheckboxes
+     * @param mixed $items  use genLookup table name 'Checklist_PSG'
+     * @param mixed $psgRs  psg table with items and dates.
+     * @return string
+     */
+    public static function createCheckboxes($items, $psgRs) {
+
+// Keep out of next release (2/28/2024)
+$uS = Session::getInstance();
+if ($uS->Site_Mode == "live") {
+    return '';
+}
+
+        // PSG checkboxes
+
+        // Any items to process?
+        if (Count($items) == 0) {
+            return '';
+        }
+
+        $tableName = 'Checklist_PSG';
+        $checklistTbl = new HTMLTable();
+
+        foreach ($items as $cbsRow) {
+
+            if (strtolower($cbsRow['Substitute']) == 'y') {
+                // Got a live one
+                $label = HTMLContainer::generateMarkup('label', $cbsRow['Description'].': ', array('for' => $tableName . 'Item' . $cbsRow['Code']));
+
+                $cbAttr = ['name' => $tableName . 'Item' . $cbsRow['Code'], 'type' => 'checkbox'];
+
+
+                $checklistTbl->addBodyTr(HTMLTable::makeTd($label . HTMLInput::generateMarkup('', $cbAttr), ['class' => 'tdlabel'])
+                    . HTMLTable::makeTd('Date: '.HTMLInput::generateMarkup('', ['name' => $tableName . 'Date' . $cbsRow['Code'], 'class' => 'ckbdate', 'style' => 'margin-left:1em;'])));
+            }
+        }
+
+        return $checklistTbl->generateMarkup();
     }
 
     protected function verifyUniquePatient(\PDO $dbh, $idPatient) {
@@ -553,4 +599,3 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         return $nameRS->Member_Status->getStoredVal();
     }
 }
-?>

@@ -22,6 +22,7 @@ $(document).ready(function () {
                     flagAlertMessage(data.error, true);
                     return;
                 }
+                $('#duplicatesReadme').hide();
                 $('#divList').children().remove().end().append($(data.mk));
                 $('#divList').find('input[type=button]').button();
                 $('#divList').show();
@@ -135,7 +136,9 @@ $(document).ready(function () {
                                     $('#spnAlert').text('Pick a different save and remove Id to combine.');
                                     return false;
                                 }
-                                $.post('Duplicates.php', {cmd: 'cids', idg: idGood, idb: idBad},
+
+                                if(confirm("Are you sure you want to save ID " + idGood + " and remove ID " + idBad + "? This cannot be undone.")){
+                                    $.post('Duplicates.php', {cmd: 'cids', idg: idGood, idb: idBad},
                                         function (data) {
                                             "use strict";
                                             if (!data) {
@@ -157,7 +160,8 @@ $(document).ready(function () {
                                                 $('.hhk-expand.selected').trigger('click');
                                                 
                                             }
-                                });
+                                    });
+                                };
                             });
                     });
                 });

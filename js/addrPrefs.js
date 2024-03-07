@@ -94,3 +94,69 @@ function addrPrefs(memData) {
         }
     });
 }
+
+function verifyAddrs(container) {
+    "use strict";
+    var $container;
+    if (typeof(container) === 'string') {
+        $container = $(container);
+    } else {
+        $container = container;
+    }
+
+    $container.on('change', 'input.hhk-emailInput', function() {
+        var rexEmail = /^[A-Z0-9._%+\-]+@(?:[A-Z0-9]+\.)+[A-Z]{2,20}$/i;
+        if ($.trim($(this).val()) !== '' && rexEmail.test($(this).val()) === false) {
+            $(this).addClass('ui-state-error');
+        } else {
+            $(this).removeClass('ui-state-error');
+        }
+    });
+
+    $container.on('change', 'input.hhk-phoneInput', function() {
+        // inspect each phone number text box for correctness
+        var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
+        var regexp = /^(?:(?:[\+]?([\d]{1,3}(?:[ ]+|[\-.])))?[(]?([2-9][\d]{2})[\-\/)]?(?:[ ]+)?)?([2-9][0-9]{2})[\-.\/)]?(?:[ ]+)?([\d]{4})(?:(?:[ ]+|[xX]|(i:ext[\.]?)){1,2}([\d]{1,5}))?$/;
+        var numarry;
+
+        //strip out non printable characters
+        $(this).val($(this).val().replace(/[\u{0080}-\u{FFFF}]/gu, ""));
+
+        if ($.trim($(this).val()) != '' && testreg.test($(this).val()) === false) {
+            // error
+            $(this).addClass('ui-state-error');
+
+        } else {
+
+            $(this).removeClass('ui-state-error');
+            regexp.lastIndex = 0;
+            // 0 = matached, 1 = 1st capturing group, 2 = 2nd, etc.
+            numarry = regexp.exec($(this).val());
+            if (numarry != null && numarry.length > 3) {
+                var ph = "";
+
+                // Country code?
+                if (numarry[1] != null && numarry[1] != "") {
+                    ph = '+' + numarry[1];
+                }
+
+                // The main part
+                $(this).val(ph + '(' + numarry[2] + ') ' + numarry[3] + '-' + numarry[4]);
+
+                // Extension?
+                if (numarry[6] != null && numarry[6] != "") {
+                    $(this).next('input').val(numarry[6]);
+                }
+            }
+        }
+    });
+
+    $container.on('change', 'input.ckzip', function() {
+        var postCode = /^(?:[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][ABD-HJLNP-UW-Z]{2}|[ABCEGHJKLMNPRSTVXY][0-9][A-Z] [0-9][A-Z][0-9]|[0-9]{5}(?:\-[0-9]{4})?)$/i;
+        if ($(this).val() !== "" && !postCode.test($(this).val())) {
+            $(this).addClass('ui-state-error');
+        } else {
+            $(this).removeClass('ui-state-error');
+        }
+    });
+}

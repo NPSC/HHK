@@ -80,6 +80,14 @@ try {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
 
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', array('style' => 'text-align:center;')), array('style' => 'margin-right: 15px; width: 100%;'))
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style' => 'text-align: center')), array('style' => 'margin-left: 15px; width: 100%;'))
+                , array('style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1'));
+        }
+
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
@@ -705,6 +713,7 @@ $uS->guestId = $id;
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -728,6 +737,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';

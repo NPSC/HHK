@@ -3,6 +3,7 @@
 namespace HHK\Document;
 
 use HHK\DataTableServer\SSP;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 
@@ -105,7 +106,7 @@ group by g.Code order by g.Order';
      * @param string $json
      * @return array[]|string[]|string[]
      */
-    public function saveNew(\PDO $dbh, $json, $templateId = 0){
+    public function saveNew(\PDO $dbh, array $fields, $templateId = 0){
 
         $this->formTemplate = new FormTemplate();
         $this->formTemplate->loadTemplate($dbh, $templateId);
@@ -114,7 +115,7 @@ group by g.Code order by g.Order';
 
         $abstractJson = json_encode(["enableReservation"=>$templateSettings['enableReservation']]);
 
-        $validatedDoc = $this->validateFields($json);
+        $validatedDoc = $this->validateFields($fields);
 
         if(count($validatedDoc['errors']) > 0){
             return array('errors'=>$validatedDoc['errors']);
@@ -138,7 +139,7 @@ group by g.Code order by g.Order';
 
         if($this->doc->getIdDocument() > 0){
             //$this->sendPatientEmail();
-            $this->sendNotifyEmail();
+            $this->sendNotifyEmail($dbh);
             return array("status"=>"success");
         }else{
             return array("status"=>"error");
@@ -151,7 +152,7 @@ group by g.Code order by g.Order';
      *
      * @return boolean
      */
-    private function sendNotifyEmail(){
+    private function sendNotifyEmail(\PDO $dbh){
         $uS = Session::getInstance();
         $to = filter_var(trim($uS->referralFormEmail), FILTER_SANITIZE_EMAIL);
 
@@ -160,7 +161,7 @@ group by g.Code order by g.Order';
 //                $userData = $this->getUserData();
                 $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ". <br><br><a href='" . $uS->resourceURL . "house/register.php' target='_blank'>Click here to log into HHK and take action.</a><br>" . PHP_EOL;
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = ($uS->NoReplyAddr ? $uS->NoReplyAddr : "no_reply@nonprofitsoftwarecorp.org");
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -183,7 +184,7 @@ group by g.Code order by g.Order';
         return false;
     }
 
-    private function sendPatientEmail(){
+/*     private function sendPatientEmail(){
         $templateSettings = $this->formTemplate->getSettings();
         $userData = json_decode($this->doc->getUserData(), true);
         $patientEmailAddress = (isset($userData['patient']['email']) ? $userData['patient']['email'] : '');
@@ -192,7 +193,7 @@ group by g.Code order by g.Order';
         if($this->doc->getIdDocument() > 0 && $templateSettings['emailPatient'] == true && $patientEmailAddress != '' && $templateSettings['notifySubject'] !='' && $templateSettings['notifyContent'] != ''){
             //send email
 
-            $mail = prepareEmail();
+            $mail = new HHKMailer();
 
             $mail->From = $uS->NoReplyAddr;
             $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -216,7 +217,7 @@ group by g.Code order by g.Order';
 
         }
 
-    }
+    } */
 
     public function updateStatus(\PDO $dbh, $status){
         if($this->getStatus() == 'd' && $status == 'd'){
@@ -234,10 +235,9 @@ group by g.Code order by g.Order';
         return $this->doc->getStatus();
     }
 
-    public function validateFields($doc){
+    public function validateFields(array $fields){
         $response = ["fields"=>[], "errors"=>[]];
 
-        $fields = json_decode(base64_decode($doc));
         $fieldData = [];
 
         foreach($fields as $key=>$field){
@@ -253,10 +253,13 @@ group by g.Code order by g.Order';
                     }
 
                     $today = new \DateTime();
+                    $dateLimit = new \DateTime('1900-01-01');
                     if(isset($field->validation) && $field->validation == 'lessThanToday' && $date->format('Y-m-d') > $today->format('Y-m-d')){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the past.'];
                     }else if(isset($field->validation) && $field->validation == 'greaterThanToday' && $date->format('Y-m-d') < $today->format('Y-m-d')){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the future.'];
+                    }else if($date->format("Y-m-d") < $dateLimit->format("Y-m-d")){
+                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be at least January 1, 1900'];
                     }
 
                     //save dates in correct format

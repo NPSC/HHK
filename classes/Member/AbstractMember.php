@@ -4,6 +4,7 @@ namespace HHK\Member;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\Address\AbstractContactPoint;
+use HHK\Member\Address\Phones;
 use HHK\SysConst\{GLTableNames, MemDesignation, MemStatus};
 use HHK\SysConst\MemBasis;
 use HHK\Tables\EditRS;
@@ -42,8 +43,20 @@ abstract class AbstractMember {
      */
     protected $demogRS;
 
+    /**
+     * Summary of idPrefix
+     * @var string
+     */
     protected $idPrefix = '';
+    /**
+     * Summary of message
+     * @var string
+     */
     private $message = '';
+    /**
+     * Summary of newMember
+     * @var bool
+     */
     private $newMember;
     const CODE = 0;
     const DESC = 1;
@@ -55,7 +68,7 @@ abstract class AbstractMember {
      * @param string $defaultMemberBasis
      * @param int $nid
      * @param NameRS $nRS
-     * @throws RuntimeException::
+     * @throws RuntimeException
      */
     public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS $nRS = null) {
 
@@ -118,6 +131,10 @@ abstract class AbstractMember {
 
 
 
+    /**
+     * Summary of isNew
+     * @return bool
+     */
     public function isNew() {
         return $this->newMember;
     }
@@ -195,25 +212,48 @@ abstract class AbstractMember {
         return $nRS;
     }
 
+    /**
+     * Summary of getDefaultMemBasis
+     * @return void
+     */
     protected abstract function getDefaultMemBasis();
 
+    /**
+     * Summary of getIdPrefix
+     * @return string
+     */
     public function getIdPrefix():string {
         return $this->idPrefix;
     }
 
+    /**
+     * Summary of setIdPrefix
+     * @param mixed $idPrefix
+     * @return \HHK\Member\AbstractMember
+     */
     public function setIdPrefix($idPrefix):AbstractMember {
         $this->idPrefix = $idPrefix;
         return $this;
     }
 
+    /**
+     * Summary of createMarkupTable
+     * @return void
+     */
     public abstract function createMarkupTable();
 
+    /**
+     * Summary of genNotesMarkup
+     * @param array $volNotesMkup
+     * @param mixed $showSearchButton
+     * @return string
+     */
     public function genNotesMarkup(array $volNotesMkup = array(), $showSearchButton = FALSE) {
 
         if(empty($this->get_genNotes())){
             return "";
         }
-        
+
         $searchMarkup = "";
         $idPrefix = $this->getIdPrefix();
 
@@ -269,8 +309,18 @@ abstract class AbstractMember {
         return $searchMarkup . $nTable->generateMarkup();
     }
 
+    /**
+     * Summary of createDemographicsPanel
+     * @param \PDO $dbh
+     * @return void
+     */
     public abstract function createDemographicsPanel(\PDO $dbh);
 
+    /**
+     * Summary of getDemographicsEntry
+     * @param mixed $tableName
+     * @return mixed
+     */
     public function getDemographicsEntry($tableName) {
 
         $val = '';
@@ -289,6 +339,11 @@ abstract class AbstractMember {
         return $val;
     }
 
+    /**
+     * Summary of getDemographicField
+     * @param mixed $tableName
+     * @return mixed
+     */
     public function getDemographicField($tableName) {
 
         if ($tableName == 'Gender') {
@@ -306,6 +361,10 @@ abstract class AbstractMember {
         return NULL;
     }
 
+    /**
+     * Summary of createAdminPanel
+     * @return string
+     */
     public function createAdminPanel() {
 
         $table = new HTMLTable();
@@ -328,6 +387,11 @@ abstract class AbstractMember {
         return $table->generateMarkup();
     }
 
+    /**
+     * Summary of createExcludesPanel
+     * @param \PDO $dbh
+     * @return array
+     */
     public function createExcludesPanel(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -449,10 +513,26 @@ abstract class AbstractMember {
 
     }
 
+    /**
+     * Summary of createRelationsTabs
+     * @param array $rel
+     * @param mixed $page
+     * @return void
+     */
     public abstract function createRelationsTabs(array $rel, $page = "NameEdit.php");
 
+    /**
+     * Summary of loadRealtionships
+     * @param \PDO $dbh
+     * @return void
+     */
     public abstract function loadRealtionships(\PDO $dbh);
 
+    /**
+     * Summary of createMiscTabsMarkup
+     * @param \PDO $dbh
+     * @return void
+     */
     public abstract function createMiscTabsMarkup(\PDO $dbh);
 
     /**
@@ -625,6 +705,11 @@ abstract class AbstractMember {
         return $message;
     }
 
+    /**
+     * Summary of processMember
+     * @param \PDO $dbh
+     * @param array $post
+     */
     protected abstract function processMember(\PDO $dbh, array $post);
 
     /**
@@ -790,16 +875,23 @@ abstract class AbstractMember {
     }
 
 
+    /**
+     * Summary of verifyPreferredAddress
+     * @param \PDO $dbh
+     * @param \HHK\Member\Address\AbstractContactPoint $cp
+     * @param mixed $uname
+     * @return string
+     */
     public function verifyPreferredAddress(\PDO $dbh, AbstractContactPoint $cp, $uname) {
 
         $msg = "";
         $foundOne = FALSE;
 
-        if ($cp->get_preferredCode() == "" || $cp->isRecordSetDefined($cp->get_preferredCode()) === FALSE) {
+        if ($cp->get_preferredCode() == "" || $cp->isRecordSetDefined($cp->get_preferredCode()) === FALSE || $cp->get_preferredCode() == "no") {
             // None Preferred.  Is there a defined address?
             foreach ($cp->get_CodeArray() as $code) {
 
-                if ($cp->isRecordSetDefined($code[0])) {
+                if ($code[0] !== "no" && $cp->isRecordSetDefined($code[0])) {
                     $cp->setPreferredCode($code[0]);
                     EditRS::update($dbh, $this->nameRS, array($this->nameRS->idName));
                     NameLog::writeUpdate($dbh, $this->nameRS, $this->nameRS->idName->getStoredVal(), $uname);
@@ -810,7 +902,7 @@ abstract class AbstractMember {
                 }
             }
 
-            if ($foundOne === FALSE && $cp->get_preferredCode() != "") {
+            if ($foundOne === FALSE && $cp->get_preferredCode() != "" && $cp->get_preferredCode() != "no") {
                 $cp->setPreferredCode("");
                 EditRS::update($dbh, $this->nameRS, array($this->nameRS->idName));
                 NameLog::writeUpdate($dbh, $this->nameRS, $this->nameRS->idName->getStoredVal(), $uname);
@@ -823,6 +915,11 @@ abstract class AbstractMember {
         return $msg;
     }
 
+    /**
+     * Summary of setAllExcludes
+     * @param mixed $setting
+     * @return void
+     */
     public function setAllExcludes($setting = 'off') {
 
         $ex = 1;
@@ -896,24 +993,54 @@ abstract class AbstractMember {
         return $stmt->execute(array(':id'=>$this->nameRS->idName, ':byuser'=>$user));
     }
 
+    /**
+     * Summary of getMemberDesignation
+     * @return void
+     */
     public abstract function getMemberDesignation();
 
+    /**
+     * Summary of getMemberName
+     * @return void
+     */
     public abstract function getMemberName();
 
+    /**
+     * Summary of getAssocDonorLabel
+     * @return void
+     */
     public abstract function getAssocDonorLabel();
 
+    /**
+     * Summary of getAssocDonorList
+     * @param array $rel
+     * @return void
+     */
     public abstract function getAssocDonorList(array $rel);
 
     // return the default donor for the donor list
+    /**
+     * Summary of getDefaultDonor
+     * @param array $rel
+     * @return string
+     */
     public function getDefaultDonor(array $rel) {
         return '';
     }
 
+    /**
+     * Summary of get_ExternalId
+     * @return mixed
+     */
     public function get_ExternalId() {
         return $this->nameRS->External_Id->getStoredVal();
     }
 
 
+    /**
+     * Summary of get_nameRS
+     * @return NameRS
+     */
     public function get_nameRS() {
         return $this->nameRS;
     }
@@ -926,118 +1053,248 @@ abstract class AbstractMember {
         return $this->demogRS;
     }
 
+    /**
+     * Summary of set_message
+     * @param mixed $v
+     * @return void
+     */
     protected function set_message($v) {
         $this->message = $v;
     }
 
+    /**
+     * Summary of get_message
+     * @return mixed|string
+     */
     public function get_message() {
         return $this->message;
     }
 
+    /**
+     * Summary of get_errorMessage
+     * @return mixed|string
+     */
     public function get_errorMessage() {
         return $this->message;
     }
 
+    /**
+     * Summary of set_idName
+     * @param mixed $idName
+     * @return void
+     */
     public function set_idName($idName) {
         $this->nameRS->idName->setNewVal($idName);
     }
 
+    /**
+     * Summary of get_idName
+     * @return mixed
+     */
     public function get_idName() {
         return $this->nameRS->idName->getStoredVal();
     }
 
+    /**
+     * Summary of set_firstName
+     * @param mixed $firstName
+     * @return void
+     */
     public function set_firstName($firstName) {
         $this->nameRS->Name_First->setNewVal($firstName);
     }
 
+    /**
+     * Summary of get_firstName
+     * @return mixed
+     */
     public function get_firstName() {
         return $this->nameRS->Name_First->getStoredVal();
     }
 
+    /**
+     * Summary of set_middleName
+     * @param mixed $middleName
+     * @return void
+     */
     public function set_middleName($middleName) {
         $this->nameRS->Name_Middle->setNewVal($middleName);
     }
 
+    /**
+     * Summary of get_middleName
+     * @return mixed
+     */
     public function get_middleName() {
         return $this->nameRS->Name_Middle->getStoredVal();
     }
 
+    /**
+     * Summary of set_lastName
+     * @param mixed $lastName
+     * @return void
+     */
     public function set_lastName($lastName) {
         $this->nameRS->Name_Last->setNewVal($lastName);
     }
 
+    /**
+     * Summary of get_lastName
+     * @return mixed
+     */
     public function get_lastName() {
         return $this->nameRS->Name_Last->getStoredVal();
     }
 
+    /**
+     * Summary of set_lastFirst
+     * @param mixed $lastFirst
+     * @return void
+     */
     public function set_lastFirst($lastFirst) {
         $this->nameRS->Name_Last_First->setNewVal($lastFirst);
     }
 
+    /**
+     * Summary of get_lastFirst
+     * @return mixed
+     */
     public function get_lastFirst() {
         return $this->nameRS->Name_Last_First->getStoredVal();
     }
 
+    /**
+     * Summary of set_nickName
+     * @param mixed $nickName
+     * @return void
+     */
     public function set_nickName($nickName) {
         $this->nameRS->Name_Nickname->setNewVal($nickName);
     }
 
+    /**
+     * Summary of get_nickName
+     * @return mixed
+     */
     public function get_nickName() {
         return $this->nameRS->Name_Nickname->getStoredVal();
     }
 
+    /**
+     * Summary of set_fullName
+     * @param mixed $fullName
+     * @return void
+     */
     public function set_fullName($fullName) {
         $this->nameRS->Name_Full->setNewVal($fullName);
     }
 
+    /**
+     * Summary of get_fullName
+     * @return mixed
+     */
     public function get_fullName() {
         return $this->nameRS->Name_Full->getStoredVal();
     }
 
+    /**
+     * Summary of set_previousName
+     * @param mixed $previousName
+     * @return void
+     */
     public function set_previousName($previousName) {
         $this->nameRS->Name_Previous->setNewVal($previousName);
     }
 
+    /**
+     * Summary of get_previousName
+     * @return mixed
+     */
     public function get_previousName() {
         return $this->nameRS->Name_Previous->getStoredVal();
     }
 
+    /**
+     * Summary of set_type
+     * @param mixed $type
+     * @return void
+     */
     public function set_type($type) {
         $this->nameRS->Member_Type->setNewVal($type);
     }
 
+    /**
+     * Summary of get_type
+     * @return mixed
+     */
     public function get_type() {
         return $this->nameRS->Member_Type->getStoredVal();
     }
 
+    /**
+     * Summary of set_status
+     * @param mixed $status
+     * @return void
+     */
     public function set_status($status) {
         $this->nameRS->Member_Status->setNewVal($status);
     }
 
+    /**
+     * Summary of get_status
+     * @return mixed
+     */
     public function get_status() {
         return $this->nameRS->Member_Status->getStoredVal();
     }
 
+    /**
+     * Summary of set_webSite
+     * @param mixed $webSite
+     * @return void
+     */
     public function set_webSite($webSite) {
         $this->nameRS->Web_Site->setNewVal($webSite);
     }
 
+    /**
+     * Summary of get_webSite
+     * @return mixed
+     */
     public function get_webSite() {
         return $this->nameRS->Web_Site->getStoredVal();
     }
 
+    /**
+     * Summary of set_updatedBy
+     * @param mixed $updatedBy
+     * @return void
+     */
     public function set_updatedBy($updatedBy) {
         $this->nameRS->Updated_By->setNewVal($updatedBy);
     }
 
+    /**
+     * Summary of get_updatedBy
+     * @return mixed
+     */
     public function get_updatedBy() {
         return $this->nameRS->Updated_By->getStoredVal();
     }
 
+    /**
+     * Summary of set_exclDirectory
+     * @param mixed $v
+     * @return void
+     */
     public function set_exclDirectory($v) {
         $this->nameRS->Exclude_Directory->setNewVal($v);
     }
 
+    /**
+     * Summary of get_exclDirectory
+     * @return bool
+     */
     public function get_exclDirectory() {
         if ($this->nameRS->Exclude_Directory->getStoredVal() == '1' || ord($this->nameRS->Exclude_Directory->getStoredVal()) == 1) {
             return TRUE;
@@ -1046,10 +1303,19 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_exclMail
+     * @param mixed $v
+     * @return void
+     */
     public function set_exclMail($v) {
         $this->nameRS->Exclude_Mail->setNewVal($v);
     }
 
+    /**
+     * Summary of get_exclMail
+     * @return bool
+     */
     public function get_exclMail() {
         if ($this->nameRS->Exclude_Mail->getStoredVal() == '1' || ord($this->nameRS->Exclude_Mail->getStoredVal()) == 1) {
             return TRUE;
@@ -1058,10 +1324,19 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_exclPhone
+     * @param mixed $v
+     * @return void
+     */
     public function set_exclPhone($v) {
         $this->nameRS->Exclude_Phone->setNewVal($v);
     }
 
+    /**
+     * Summary of get_exclPhone
+     * @return bool
+     */
     public function get_exclPhone() {
         if ($this->nameRS->Exclude_Phone->getStoredVal() == '1' || ord($this->nameRS->Exclude_Phone->getStoredVal()) == 1) {
             return TRUE;
@@ -1070,10 +1345,19 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_exclEmail
+     * @param mixed $v
+     * @return void
+     */
     public function set_exclEmail($v) {
         $this->nameRS->Exclude_Email->setNewVal($v);
     }
 
+    /**
+     * Summary of get_exclEmail
+     * @return bool
+     */
     public function get_exclEmail() {
         if ($this->nameRS->Exclude_Email->getStoredVal() == '1' || ord($this->nameRS->Exclude_Email->getStoredVal()) == 1) {
             return TRUE;
@@ -1082,10 +1366,19 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_dateAdded
+     * @param mixed $dateAdded
+     * @return void
+     */
     public function set_dateAdded($dateAdded) {
         $this->nameRS->Date_Added->setNewVal($dateAdded);
     }
 
+    /**
+     * Summary of get_dateAdded
+     * @return string
+     */
     public function get_dateAdded() {
         if ($this->nameRS->Date_Added->getStoredVal() != '') {
             return date('M j, Y', strtotime($this->nameRS->Date_Added->getStoredVal()));
@@ -1094,38 +1387,79 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_orientationDate
+     * @param mixed $v
+     * @return void
+     */
     public function set_orientationDate($v) {
         $this->demogRS->Orientation_Date->setNewVal($v);
     }
 
+    /**
+     * Summary of get_orientationDate
+     * @return mixed
+     */
     public function get_orientationDate() {
         return $this->demogRS->Orientation_Date->getStoredVal();
     }
 
+    /**
+     * Summary of set_contactDate
+     * @param mixed $v
+     * @return void
+     */
     public function set_contactDate($v) {
         $this->demogRS->Contact_Date->setNewVal($v);
     }
 
+    /**
+     * Summary of get_contactDate
+     * @return mixed
+     */
     public function get_contactDate() {
         return $this->demogRS->Contact_Date->getStoredVal();
     }
 
+    /**
+     * Summary of set_confirmedDate
+     * @param mixed $v
+     * @return void
+     */
     public function set_confirmedDate($v) {
         $this->demogRS->Confirmed_Date->setNewVal($v);
     }
 
+    /**
+     * Summary of get_confirmedDate
+     * @return mixed
+     */
     public function get_confirmedDate() {
         return $this->demogRS->Confirmed_Date->getStoredVal();
     }
 
+    /**
+     * Summary of set_genNotes
+     * @param mixed $v
+     * @return void
+     */
     public function set_genNotes($v) {
         $this->demogRS->Gen_Notes->setNewVal($v);
     }
 
+    /**
+     * Summary of get_genNotes
+     * @return mixed
+     */
     public function get_genNotes() {
         return $this->demogRS->Gen_Notes->getStoredVal();
     }
 
+    /**
+     * Summary of set_bmonth
+     * @param mixed $bmonth
+     * @return void
+     */
     public function set_bmonth($bmonth) {
         if (is_null($bmonth) || $bmonth < 0 || $bmonth > 12) {
             $bmonth = 0;
@@ -1133,6 +1467,10 @@ abstract class AbstractMember {
         $this->nameRS->Birth_Month->setNewVal($bmonth);
     }
 
+    /**
+     * Summary of get_bmonth
+     * @return mixed
+     */
     public function get_bmonth() {
         if ($this->nameRS->BirthDate->getStoredVal() == '') {
             return $this->nameRS->Birth_Month->getStoredVal();
@@ -1141,54 +1479,112 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_birthDate
+     * @param mixed $v
+     * @return void
+     */
     public function set_birthDate($v) {
         $this->nameRS->BirthDate->setNewVal($v);
     }
 
+    /**
+     * Summary of get_birthDate
+     * @return mixed
+     */
     public function get_birthDate() {
         return $this->nameRS->BirthDate->getStoredVal();
     }
 
+    /**
+     * Summary of set_DateDeceased
+     * @param mixed $v
+     * @return void
+     */
     public function set_DateDeceased($v) {
         $this->nameRS->Date_Deceased->setNewVal($v);
     }
 
+    /**
+     * Summary of get_DateDeceased
+     * @return mixed
+     */
     public function get_DateDeceased() {
         return $this->nameRS->Date_Deceased->getStoredVal();
     }
 
+    /**
+     * Summary of get_DateBackgroundCheck
+     * @return mixed
+     */
     public function get_DateBackgroundCheck() {
         return $this->demogRS->Background_Check_Date->getStoredVal();
     }
 
+    /**
+     * Summary of set_sex
+     * @param mixed $sex
+     * @return void
+     */
     public function set_sex($sex) {
         $this->nameRS->Gender->setNewVal($sex);
     }
 
+    /**
+     * Summary of get_sex
+     * @return mixed
+     */
     public function get_sex() {
         return $this->nameRS->Gender->getStoredVal();
     }
 
+    /**
+     * Summary of set_suffix
+     * @param mixed $suffix
+     * @return void
+     */
     public function set_suffix($suffix) {
         $this->nameRS->Name_Suffix->setNewVal($suffix);
     }
 
+    /**
+     * Summary of get_suffix
+     * @return mixed
+     */
     public function get_suffix() {
         return $this->nameRS->Name_Suffix->getStoredVal();
     }
 
+    /**
+     * Summary of set_prefix
+     * @param mixed $prefix
+     * @return void
+     */
     public function set_prefix($prefix) {
         $this->nameRS->Name_Prefix->setNewVal($prefix);
     }
 
+    /**
+     * Summary of get_prefix
+     * @return mixed
+     */
     public function get_prefix() {
         return $this->nameRS->Name_Prefix->getStoredVal();
     }
 
+    /**
+     * Summary of set_since
+     * @param mixed $since
+     * @return void
+     */
     public function set_since($since) {
         $this->nameRS->Member_Since->setNewVal($since);
     }
 
+    /**
+     * Summary of get_since
+     * @return string
+     */
     public function get_since() {
         return date('M j, Y', strtotime($this->nameRS->Member_Since->getStoredVal()));
     }
@@ -1202,70 +1598,146 @@ abstract class AbstractMember {
         $this->nameRS->Preferred_Mail_Address->setNewVal($preferredMailAddr);
     }
 
+    /**
+     * Summary of get_preferredMailAddr
+     * @return mixed
+     */
     public function get_preferredMailAddr() {
         return (is_null($this->nameRS->Preferred_Mail_Address->getStoredVal()) ? "" : $this->nameRS->Preferred_Mail_Address->getStoredVal());
     }
 
+    /**
+     * Summary of set_preferredEmail
+     * @param mixed $preferredEmail
+     * @return void
+     */
     public function set_preferredEmail($preferredEmail) {
         $this->nameRS->Preferred_Email->setNewVal($preferredEmail);
     }
 
+    /**
+     * Summary of get_preferredEmail
+     * @return mixed
+     */
     public function get_preferredEmail() {
         return (is_null($this->nameRS->Preferred_Email->getStoredVal()) ? "" : $this->nameRS->Preferred_Email->getStoredVal());
     }
 
+    /**
+     * Summary of set_preferredPhone
+     * @param mixed $preferredPhone
+     * @return void
+     */
     public function set_preferredPhone($preferredPhone) {
         $this->nameRS->Preferred_Phone->setNewVal($preferredPhone);
     }
 
+    /**
+     * Summary of get_preferredPhone
+     * @return mixed
+     */
     public function get_preferredPhone() {
         return (is_null($this->nameRS->Preferred_Phone->getStoredVal()) ? "" : $this->nameRS->Preferred_Phone->getStoredVal());
     }
 
+    /**
+     * Summary of set_orgCode
+     * @param mixed $orgCode
+     * @return void
+     */
     public function set_orgCode($orgCode) {
         $this->nameRS->Organization_Code->setNewVal($orgCode);
     }
 
+    /**
+     * Summary of get_orgCode
+     * @return mixed
+     */
     public function get_orgCode() {
         return $this->nameRS->Organization_Code->getStoredVal();
     }
 
+    /**
+     * Summary of set_company
+     * @param mixed $company
+     * @return void
+     */
     public function set_company($company) {
         $this->nameRS->Company->setNewVal($company);
     }
 
+    /**
+     * Summary of get_company
+     * @return mixed
+     */
     public function get_company() {
         return $this->nameRS->Company->getStoredVal();
     }
 
+    /**
+     * Summary of set_companyId
+     * @param mixed $companyId
+     * @return void
+     */
     public function set_companyId($companyId) {
         $this->nameRS->Company_Id->setNewVal($companyId);
     }
 
+    /**
+     * Summary of get_companyId
+     * @return mixed
+     */
     public function get_companyId() {
         return $this->nameRS->Company_Id->getStoredVal();
     }
 
+    /**
+     * Summary of set_companyCareOf
+     * @param mixed $v
+     * @return void
+     */
     public function set_companyCareOf($v) {
         $this->nameRS->Company_CareOf->setnewVal($v);
     }
 
+    /**
+     * Summary of get_companyCareOf
+     * @return mixed
+     */
     public function get_companyCareOf() {
         return $this->nameRS->Company_CareOf->getStoredVal();
     }
 
+    /**
+     * Summary of set_title
+     * @param mixed $title
+     * @return void
+     */
     public function set_title($title) {
         $this->nameRS->Title->setNewVal($title);
     }
 
+    /**
+     * Summary of get_title
+     * @return mixed
+     */
     public function get_title() {
         return $this->nameRS->Title->getStoredVal();
     }
 
+    /**
+     * Summary of set_memberRcrd
+     * @param mixed $v
+     * @return void
+     */
     public function set_memberRcrd($v) {
         $this->nameRS->Record_Member->setNewVal($v);
     }
 
+    /**
+     * Summary of get_memberRcrd
+     * @return bool
+     */
     public function get_memberRcrd() {
         if ($this->nameRS->Record_Member->getStoredVal() == '1' || ord($this->nameRS->Record_Member->getStoredVal()) == 1) {
             return TRUE;
@@ -1274,10 +1746,19 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_companyRcrd
+     * @param mixed $v
+     * @return void
+     */
     public function set_companyRcrd($v) {
         $this->nameRS->Record_Company->setNewVal($v);
     }
 
+    /**
+     * Summary of get_companyRcrd
+     * @return bool
+     */
     public function get_companyRcrd() {
         if ($this->nameRS->Record_Company->getStoredVal() == '1' || ord($this->nameRS->Record_Company->getStoredVal()) == 1) {
             return TRUE;
@@ -1286,10 +1767,19 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_lastUpdated
+     * @param mixed $lastUpdated
+     * @return void
+     */
     public function set_lastUpdated($lastUpdated) {
         $this->nameRS->Last_Updated->setNewVal($lastUpdated);
     }
 
+    /**
+     * Summary of get_lastUpdated
+     * @return string
+     */
     public function get_lastUpdated() {
         if ($this->nameRS->Last_Updated->getStoredVal() != '') {
             return date('M j, Y', strtotime($this->nameRS->Last_Updated->getStoredVal()));
@@ -1298,9 +1788,13 @@ abstract class AbstractMember {
         }
     }
 
+    /**
+     * Summary of set_ExternalId
+     * @param mixed $v
+     * @return void
+     */
     public function set_ExternalId($v) {
         $id = intval($v, 10);
         $this->nameRS->External_Id->setNewVal($id);
     }
 }
-?>

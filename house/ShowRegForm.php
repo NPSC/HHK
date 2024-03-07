@@ -48,8 +48,8 @@ $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
 $isTopazRequired = false;
-$sty = "";
 $blankFormTitle = "Registration Form";
+$signatures = array();
 
 
 // Hosted payment return
@@ -126,10 +126,13 @@ if($idDoc > 0){
     $doc = new Document($idDoc);
     $doc->loadDocument($dbh);
     if($doc->getType() == "reg"){
-        $regContents =  (str_starts_with($doc->getMimeType(), "base64:") ? base64_decode($doc->getDoc()) : $doc->getDoc());
+        $regContents = (str_starts_with($doc->getMimeType(), "base64:") ? base64_decode($doc->getDoc()) : $doc->getDoc());
         if($uS->RegForm == "3"){
             $form = new CustomRegisterForm();
-            $sty = $form->getStyling();
+            $docSignatures = json_decode($doc->getUserData());
+            if($docSignatures){
+                $signatures['vreg'] = $docSignatures;
+            }
         }
     }
 
@@ -143,6 +146,8 @@ if($idVisit || $idResv){
 
     $li = '';
     $tabContent = '';
+    $uuid = uniqid();
+    $uS->regFormObjs = [$uuid=>$reservArray['docs']]; //save docs to session for signing
 
     foreach ($reservArray['docs'] as $r) {
 
@@ -150,11 +155,11 @@ if($idVisit || $idResv){
                 HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
 
         $tabContent .= HTMLContainer::generateMarkup('div',
-            HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex'])) : '')
+            HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
+            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex'], 'data-uuid'=>$uuid)) : '')
             .HTMLContainer::generateMarkup('div', $r['doc'], array('class'=>'PrintArea'))
-            .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'])): ''),
+            .HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
+            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'],  'data-uuid'=>$uuid)): ''),
             array('id'=>$r['tabIndex']));
 
         $sty = $r['style'];
@@ -179,7 +184,9 @@ if($idVisit || $idResv){
     $signedDocCount = count($signedDocsArray);
     if($signedDocCount > 0){
         $showSignedTab = true;
+        
         $blankFormTitle = "Blank Registration Form";
+        
         foreach ($signedDocsArray as $r) {
 
             $signedDate = new \DateTime($r['timestamp']);
@@ -193,6 +200,10 @@ if($idVisit || $idResv){
                 .(str_starts_with($r['Mime_Type'], "base64:") ? base64_decode($r['Doc']) : $r['Doc'])
                 .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')),
                 array('id'=>$r['Doc_Id']));
+            $docSignatures = json_decode($r["Signatures"], true);
+            if($docSignatures){
+                $signatures[$r["Doc_Id"]] = $docSignatures;
+            }
         }
 
         $signedUl = HTMLContainer::generateMarkup('ul', $signedLi, array());
@@ -231,6 +242,8 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <?php echo NAVBAR_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo CSSVARS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
+        <?php echo ($uS->RegForm == 3 ? CUSTOM_REGFORM_CSS : ""); ?>
 
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -243,118 +256,32 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-	<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-	<script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-	<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <?php echo ($isTopazRequired ? '<script type="text/javascript" src="' . TOPAZ_SIGWEB_JS . '"></script>': ''); ?>
-        <script type="text/javascript" src="<?php echo REG_FORM_ESIGN_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REG_FORM_JS; ?>"></script>
 
         <script type='text/javascript'>
-$(document).ready(function() {
-    "use strict";
-    var idReg = '<?php echo $idRegistration; ?>';
-    var rctMkup = '<?php echo $receiptMarkup; ?>';
-    var regMarkup = '<?php echo $regDialogmkup; ?>';
-    var payId = '<?php echo $idPayment; ?>';
-    var invoiceNumber = '<?php echo $invoiceNumber; ?>';
-    var vid = '<?php echo $idVisit; ?>';
-    var opt = {mode: 'popup',
-        popClose: true,
-        popHt      : $('div.PrintArea').height(),
-        popWd      : 950,
-        popX       : 20,
-        popY       : 20,
-        popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' + ' Registration Form',
-        extraHead  : $('#regFormStyle').prop('outerHTML')};
 
-    $('#mainTabs').tabs();
+            $(document).ready(function(){
+                let idReg = '<?php echo $idRegistration; ?>';
+                let rctMkup = '<?php echo $receiptMarkup; ?>';
+                let regMarkup = '<?php echo $regDialogmkup; ?>';
+                let payId = '<?php echo $idPayment; ?>';
+                let invoiceNumber = '<?php echo $invoiceNumber; ?>';
+                let vid = '<?php echo $idVisit; ?>';
+                let rid = '<?php echo $idResv ?>';
+                let idPrimaryGuest = '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>';
+                let idPsg = '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>';
+                let signatures = <?php echo json_encode($signatures); ?>;
 
-    $('.btnPrint').click(function() {
-        opt.popHt = $(this).closest('.ui-tabs-panel').find('div.PrintArea').height();
-        opt.popTitle = $(this).data('title');
-        $(this).closest('.ui-tabs-panel').find('div.PrintArea').printArea(opt);
-    }).button();
-
-    $('.btnSave').click(function(){
-    	var isSigned = ($(this).closest('.ui-tabs-panel').find("div.PrintArea .signDate:visible").length > 0);
-
-    	if(!isSigned){
-    		flagAlertMessage("<strong>Error:</strong> At least one signature is required", true);
-    		return;
-    	}
-    	var docCode = $(this).data("tab");
-    	$(this).closest('.ui-tabs-panel').find("div.PrintArea .btnSign").remove();
-    	var formContent = $(this).closest('.ui-tabs-panel').find("div.PrintArea")[0].outerHTML;
-
-    	var formData = new FormData();
-		formData.append('cmd', 'saveRegForm');
-		formData.append('guestId', '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>');
-		formData.append('psgId', '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>');
-		formData.append('idVisit', '<?php echo $idVisit; ?>');
-		formData.append('idResv', '<?php echo $idResv; ?>');
-		formData.append('docTitle', "Registration Form");
-		formData.append('docContents', btoa(formContent));
-
-		$.ajax({
-			url: 'ws_ckin.php',
-			dataType: 'JSON',
-			type: 'post',
-			data: formData,
-			contentType: false,
-			processData: false,
-			success: function (data) {
-				if (data.idDoc > 0) {
-			    	flagAlertMessage("<strong>Success:</strong> Registration form saved successfully", false);
-			    	$(".btnSave").hide();
-			    } else {
-			        if (data.error) {
-						flagAlertMessage("<strong>Error: </strong>" + data.error, true);
-			        } else {
-
-			        }
-			    }
-			},
-		});
-
-    }).button();
-
-    $('#btnReg').click(function() {
-        getRegistrationDialog(idReg);
-    }).button();
-
-    $('#btnStmt').click(function() {
-        window.open('ShowStatement.php?vid=' + vid, '_blank');
-    }).button();
-
-    $('#pmtRcpt').dialog({
-        autoOpen: false,
-        resizable: true,
-        width: getDialogWidth(530),
-        modal: true,
-        title: 'Payment Receipt'
-    });
-
-    if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
-    }
-    if (regMarkup) {
-        showRegDialog(regMarkup, idReg);
-    }
-
-    if (payId && payId > 0) {
-        reprintReceipt(payId, '#pmtRcpt');
-    }
-
-    if (invoiceNumber && invoiceNumber !== '') {
-        window.open('ShowInvoice.php?invnum=' + invoiceNumber);
-    }
-
-    $('#mainTabs').show();
-    $('#regTabDiv, #signedRegTabDiv').tabs();
-
-});
-</script>
+                setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
+                setupEsign();
+                loadSignatures(signatures);
+            });
+        </script>
     </head>
     <body>
  <?php echo $menuMarkup; ?>
@@ -388,12 +315,14 @@ $(document).ready(function() {
             <div id="jSignDialog" style="display:none;">
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
+                <input type="hidden" id="idBtn">
             	<p style="text-align:center">Use your mouse, finger or touch pen to sign</p>
             	<div class="signature ui-widget-content ui-corner-all"></div>
             </div>
             <div id="topazDialog" style="display:none; text-align:center;">
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
+                <input type="hidden" id="idBtn">
             	<p style="text-align:center">Use your Topaz Signature Pad to sign</p>
             	<canvas name="signature" id="sigImg" class="signature ui-widget-content ui-corner-all" width="500" height="100"></canvas>
             	<div class="alertContainer" id="sigWebAlert" style="display:none;">

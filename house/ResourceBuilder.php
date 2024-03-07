@@ -1,12 +1,11 @@
 <?php
 
-use HHK\AlertControl\AlertMessage;
 use HHK\sec\{Session, WebInit};
+use HHK\SysConst\HospitalType;
 use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
 use HHK\TableLog\HouseLog;
 use HHK\SysConst\GLTypeCodes;
-use HHK\House\Reservation\Reservation_1;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\SysConst\WebRole;
 use HHK\sec\SysConfig;
@@ -38,8 +37,6 @@ use HHK\Tables\House\Rate_BreakpointRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
 use HHK\House\RegistrationForm\CustomRegisterForm;
-
-use HHK\SysConst\ReservationStatusType;
 use HHK\House\Report\ResourceBldr;
 
 /**
@@ -576,6 +573,12 @@ if (isset($_POST['btnhSave'])) {
         $hospRs->Last_Updated->setNewVal(date('Y-m-d'));
 
         if ($idHosp > 0) {
+
+            // bug 898 cannot change an assoc to a hospital
+            if ($hospRs->Type->getStoredVal() == HospitalType::Association && $type == HospitalType::Hospital) {
+                continue;
+            }
+
             // update
             EditRS::update($dbh, $hospRs, array(
                 $hospRs->idHospital
@@ -1658,7 +1661,7 @@ foreach ($hrows as $h) {
 
 // new hospital
 $hTbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
-    'name' => 'hTitle[0]'
+    'name' => 'hTitle[0]', 'placeholder'=>'New'
 ))) . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, ''), array(
     'name' => 'hType[0]'
 ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
@@ -1739,6 +1742,17 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
     'data-type' => 'd',
     'class' => 'hhk-selLookup'
 ));
+
+// Keep out of Live for now.
+if ($uS->Site_Mode != "live") {
+
+    // Checklists
+    $tbl = ResourceBldr::getSelections($dbh, 'Checklist_PSG', 'm', $labels);
+    $cblistSelections = $tbl->generateMarkup(["class" => "sortable"]);
+} else {
+    $cblistSelections = 'Coming Soon!';
+}
+
 
 $insuranceType = new InsuranceType();
 
@@ -1980,17 +1994,6 @@ if(count($forms) > 0){
 }
 
 
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
-
-$resultMessage = $alertMsg->createMarkup();
-
 $demogs = readGenLookupsPDO($dbh, 'Demographics');
 foreach($demogs as $key=>$demog){
     if($demog["Substitute"] == ""){ //remove disabled demogs
@@ -2041,6 +2044,7 @@ $formBuilderOptions = [
 	<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+    <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
 	<script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
 	<script type="text/javascript" src="<?php echo FORMBUILDER_JS; ?>"></script>
     <script type="text/javascript" src="<?php echo SERIALIZEJSON; ?>"></script>
@@ -2050,9 +2054,8 @@ $formBuilderOptions = [
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-			<h1 class="mt-2"><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
+			<h1 class="mt-2"><?php echo $wInit->pageHeading; ?>&nbsp; <h4> (Any changes require everybody to log out and log back in!)</h4></h1>
 
-			<?php echo $resultMessage ?>
             <div id="mainTabs"
 			style="font-size: .9em; display: none;">
 			<ul>
@@ -2134,6 +2137,19 @@ $formBuilderOptions = [
 							value="Save" /></span>
 					</form>
 				</div>
+
+                <div style="float: left; margin-left: 30px;">
+					<h3>PSG Checklist Items</h3>
+					<form id="formcblist">
+						<div>
+                            <?php echo $cblistSelections; ?>
+                        </div>
+                        <span style="margin: 10px; float: right;"><input type="button"
+                            id='btncblistSave' class="hhk-savecblist"
+                            data-type="h" value="Save" /></span>
+                    </form>
+                </div>
+
 			</div>
 			<div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
 				style="font-size: .9em;">

@@ -10,7 +10,6 @@ use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
-use HHK\House\Reservation\Reservation_1;
 
 /**
  * Registration.php

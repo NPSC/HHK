@@ -26,7 +26,7 @@ ifnull(`g2`.`Description`,'') AS `Name_Suffix`,
 (case when (`n`.`Exclude_Mail` = 1) then '' else ifnull(`na`.`Country`,'') end) AS `Country`,
 (case when (`n`.`Exclude_Mail` = 1) then '' else ifnull(`na`.`Country_Code`,'') end) AS `Country_Code`,
 ifnull(`na`.`Bad_Address`,'') AS `Bad_Address`,
-(case when (`n`.`Exclude_Email` = 1) then '' else ifnull(`ne`.`Email`,'') end) AS `Preferred_Email`,
+(case when (`n`.`Exclude_Email` = 1) then '' else (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) end) AS `Preferred_Email`,
 `n`.`Member_Status` AS `MemberStatus`,
 `n`.`Gender` AS `Gender`,
 `n`.`Birth_Month` AS `Birth_Month`,
@@ -95,7 +95,7 @@ ifnull(`g2`.`Description`,'') AS `Name_Suffix`,
 (case when (`n`.`Exclude_Mail` = 1 && n.Company_CareOf <> 'y') then '' else ifnull(`na`.`Country`,'') end) AS `Country`,
 (case when (`n`.`Exclude_Mail` = 1 && n.Company_CareOf <> 'y') then '' else ifnull(`na`.`Country_Code`,'') end) AS `Country_Code`,
 ifnull(`na`.`Bad_Address`,'') AS `Bad_Address`,
-ifnull(`ne`.`Email`,'') AS `Preferred_Email`,
+(case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Preferred_Email`,
 `n`.`Member_Status` AS `MemberStatus`,
 `n`.`Gender` AS `Gender`,
 `n`.`Birth_Month` AS `Birth_Month`,
@@ -529,24 +529,25 @@ FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocume
 -- -----------------------------------------------------
 
 CREATE OR REPLACE VIEW `v_signed_reg_forms` AS
-    SELECT
+    SELECT 
         `d`.`idDocument` AS `Doc_Id`,
         `d`.`Mime_Type` AS `Mime_Type`,
         `d`.`Doc` AS `Doc`,
+        `d`.`userData` AS `Signatures`,
         JSON_VALUE(`d`.`Abstract`, '$.idResv') AS `Resv_Id`,
         JSON_VALUE(`d`.`Abstract`, '$.idVisit') AS `Visit_Id`,
         `ld`.`idGuest` AS `Guest_Id`,
         `ld`.`idPSG` AS `PSG_Id`,
-        `d`.`timestamp`
+        `d`.`Timestamp` AS `timestamp`
     FROM
-        ((`link_doc` `ld`
-        JOIN `document` `d` ON (`ld`.`idDocument` = `d`.`idDocument`))
-        LEFT JOIN `name` `n` ON (`ld`.`idGuest` = `n`.`idName`))
+        `document` `d`
+        JOIN `link_doc` `ld` on `d`.`idDocument` = `ld`.`idDocument`
+        LEFT JOIN `name` `n` ON `ld`.`idGuest` = `n`.`idName`
     WHERE
         `d`.`Status` <> 'd'
             AND `d`.`Type` = 'reg'
             AND `d`.`Abstract` <> ''
-	ORDER BY `d`.`timestamp` desc;
+  ORDER BY `d`.`idDocument` DESC;
 
 
 -- -----------------------------------------------------
@@ -1084,7 +1085,7 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
                     `np`.`Phone_Num`,
                     `np`.`Phone_Extension`)
         END) AS `Phone`,
-        IFNULL(`ne`.`Email`, '') AS `Email`,
+        (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Email`,
         (CASE
             WHEN (IFNULL(`na`.`Address_2`, '') = '') THEN IFNULL(`na`.`Address_1`, '')
             ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),
@@ -1170,7 +1171,7 @@ CREATE OR REPLACE VIEW `vguest_search_sf` AS
 -- View `vguest_data_sf`
 -- -----------------------------------------------------
 CREATE  OR REPLACE VIEW `vguest_data_sf` AS
-    SELECT
+     SELECT
         `n`.`idName` AS `HHK_idName__c`,
         `n`.`External_Id` AS `Id`,
         IFNULL(`g1`.`Description`, '') AS `Salutation`,
@@ -1179,42 +1180,89 @@ CREATE  OR REPLACE VIEW `vguest_data_sf` AS
         `n`.`Name_Middle` AS `Middle_Name__c`,
         IFNULL(`g2`.`Description`, '') AS `Suffix__c`,
         `n`.`Name_Nickname` AS `Nickname__c`,
-        IFNULL(`g3`.`Description`, '') AS `Gender__c`,
+        IFNULL(`g3`.`Description`, '')  AS `Gender__c`,
         IFNULL(`ne`.`Email`, '') AS `Email`,
-        IFNULL(`np`.`Phone_Num`, '') AS `HomePhone`,
-        IFNULL(CONCAT_WS(' ', `na`.`Address_1`, `na`.`Address_2`), '') AS `MailingStreet`,
+        IFNULL(np.Phone_Num, '') AS `HomePhone`,
+        IFNULL(concat_ws(' ', na.Address_1, na.Address_2), '')  as `MailingStreet`,
         IFNULL(`na`.`City`, '') AS `MailingCity`,
         IFNULL(`na`.`State_Province`, '') AS `MailingState`,
         IFNULL(`na`.`Postal_Code`, '') AS `MailingPostalCode`,
         IFNULL(`cc`.`Country_Name`, '') AS `MailingCountry`,
-        IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'), '') AS `Birthdate`,
-        CASE
-            WHEN `n`.`Member_Status` = 'd' THEN 'true'
-            ELSE 'false'
-        END AS `Deceased__c`,
-        `ng`.`Relationship_Code`,
-        `p`.`idPatient` AS `PatientId`
+        IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'), '') as `Birthdate`,
+        CASE WHEN IFNULL(`ng1`.`Relationship_Code`, '') = '' THEN 'Family Member' ELSE 'Patient' END AS `Contact_Type__c`,
+        CASE WHEN IFNULL(`n`.`Date_Deceased`, '') = '' THEN 'false' ELSE 'true' END AS `Deceased__c`
     FROM
-		`name_guest` ng
-		JOIN `name` `n` ON `n`.`idName` = `ng`.`idName`
-        LEFT JOIN `name_address` `na` ON (`n`.`idName` = `na`.`idName`
-            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`)
-        LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
-            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`)
-        LEFT JOIN `name_email` `ne` ON (`n`.`idName` = `ne`.`idName`
-            AND `n`.`Preferred_Email` = `ne`.`Purpose`)
-        LEFT JOIN `gen_lookups` `g1` ON (`n`.`Name_Prefix` = `g1`.`Code`
-            AND `g1`.`Table_Name` = 'Name_Prefix')
-        LEFT JOIN `gen_lookups` `g2` ON (`n`.`Name_Suffix` = `g2`.`Code`
-            AND `g2`.`Table_Name` = 'Name_Suffix')
-        LEFT JOIN `gen_lookups` `g3` ON (`n`.`Gender` = `g3`.`Code`
-            AND `g3`.`Table_Name` = 'Gender')
-        LEFT JOIN `country_code` `cc` ON (`na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`)
-        LEFT JOIN `psg` `p` ON `p`.`idPsg` = `ng`.`idPsg`
+        `name` `n`
+        LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+        LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
+            AND `n`.`Preferred_Email` = `ne`.`Purpose`
+        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
+            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix'
+        LEFT JOIN `gen_lookups` `g3` ON `n`.`Gender` = `g3`.`Code`
+            AND `g3`.`Table_Name` = 'Gender'
+        LEFT JOIN `country_code` `cc` on `na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`
+        LEFT JOIN `name_guest` `ng1` ON `n`.`idName` = `ng1`.idName
+            AND `ng1`.`Relationship_Code` = 'slf'
     WHERE
         `n`.`idName` > 0
-		AND `n`.`Record_Member` = 1
-		AND `n`.`Member_Status` IN ('a' , 'd', 'in');
+            AND `n`.`idName` IN (SELECT
+                `name_guest`.`idName`
+            FROM
+                `name_guest`)
+            AND `n`.`Record_Member` = 1
+            AND `n`.`Member_Status` IN ('a' , 'd', 'in');
+
+-- CREATE  OR REPLACE VIEW `vguest_data_sf` AS
+--     SELECT
+--         `n`.`idName` AS `HHK_idName__c`,
+--         `n`.`External_Id` AS `Id`,
+--         IFNULL(`g1`.`Description`, '') AS `Salutation`,
+--         `n`.`Name_First` AS `FirstName`,
+--         `n`.`Name_Last` AS `LastName`,
+--         `n`.`Name_Middle` AS `Middle_Name__c`,
+--         IFNULL(`g2`.`Description`, '') AS `Suffix__c`,
+--         `n`.`Name_Nickname` AS `Nickname__c`,
+--         IFNULL(`g3`.`Description`, '') AS `Gender__c`,
+--         IFNULL(`ne`.`Email`, '') AS `Email`,
+--         IFNULL(`np`.`Phone_Num`, '') AS `HomePhone`,
+--         IFNULL(CONCAT_WS(' ', `na`.`Address_1`, `na`.`Address_2`), '') AS `MailingStreet`,
+--         IFNULL(`na`.`City`, '') AS `MailingCity`,
+--         IFNULL(`na`.`State_Province`, '') AS `MailingState`,
+--         IFNULL(`na`.`Postal_Code`, '') AS `MailingPostalCode`,
+--         IFNULL(`cc`.`Country_Name`, '') AS `MailingCountry`,
+--         IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'), '') AS `Birthdate`,
+--         CASE
+--             WHEN `n`.`Member_Status` = 'd' THEN 'true'
+--             ELSE 'false'
+--         END AS `Deceased__c`,
+--         `ng`.`Relationship_Code`,
+--         `p`.`idPatient` AS `PatientId`
+--     FROM
+-- 		`name_guest` ng
+-- 		JOIN `name` `n` ON `n`.`idName` = `ng`.`idName`
+--         LEFT JOIN `name_address` `na` ON (`n`.`idName` = `na`.`idName`
+--             AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`)
+--         LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
+--             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`)
+--         LEFT JOIN `name_email` `ne` ON (`n`.`idName` = `ne`.`idName`
+--             AND `n`.`Preferred_Email` = `ne`.`Purpose`)
+--         LEFT JOIN `gen_lookups` `g1` ON (`n`.`Name_Prefix` = `g1`.`Code`
+--             AND `g1`.`Table_Name` = 'Name_Prefix')
+--         LEFT JOIN `gen_lookups` `g2` ON (`n`.`Name_Suffix` = `g2`.`Code`
+--             AND `g2`.`Table_Name` = 'Name_Suffix')
+--         LEFT JOIN `gen_lookups` `g3` ON (`n`.`Gender` = `g3`.`Code`
+--             AND `g3`.`Table_Name` = 'Gender')
+--         LEFT JOIN `country_code` `cc` ON (`na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`)
+--         LEFT JOIN `psg` `p` ON `p`.`idPsg` = `ng`.`idPsg`
+--     WHERE
+--         `n`.`idName` > 0
+-- 		AND `n`.`Record_Member` = 1
+-- 		AND `n`.`Member_Status` IN ('a' , 'd', 'in');
 
 
 -- -----------------------------------------------------
@@ -2112,7 +2160,7 @@ create or replace view `vname_list` as
                     `np`.`Phone_Num`,
                     `np`.`Phone_Extension`)
         END) AS `Phone`,
-        IFNULL(`ne`.`Email`, '') AS `Email`,
+        (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Email`,
         (CASE
             WHEN (IFNULL(`na`.`Address_2`, '') = '') THEN IFNULL(`na`.`Address_1`, '')
             ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),

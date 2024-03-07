@@ -25,10 +25,21 @@ use HHK\sec\Session;
 
 class PatientMember extends AbstractRoleMember {
 
+    /**
+     * Summary of getMyMemberType
+     * @return string
+     */
     protected function getMyMemberType() {
         return VolMemberType::Patient;
     }
 
+    /**
+     * Summary of createThinMarkupRow
+     * @param mixed $patientRelationship
+     * @param mixed $hideRelChooser
+     * @param mixed $lockRelChooser
+     * @return string
+     */
     public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
 
         $labels = Labels::getLabels();
@@ -36,6 +47,12 @@ class PatientMember extends AbstractRoleMember {
 
     }
 
+    /**
+     * Summary of saveChanges
+     * @param \PDO $dbh
+     * @param array $post
+     * @return string
+     */
     public function saveChanges(\PDO $dbh, array $post) {
 
         $msg = '';

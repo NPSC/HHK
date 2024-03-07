@@ -344,20 +344,26 @@ LIMIT 500");
             }
         }
 
-        $g['PG to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$visits[$g['PG Id']]['Relation_Code']][1];
+        // Only if we caught one.
+        if (isset($visits[$g['PG Id']])) {
 
-        // Address Match?
-        if (strtolower($visits[$g['PG Id']]['Address']) == strtolower($g['Address']) && $g['Address'] != '') {
+            $g['PG to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$visits[$g['PG Id']]['Relation_Code']][1];
 
-            // Map relationship.
-            $rMapper
-                ->clear()
-                ->setPGtoPatient($visits[$g['PG Id']]['Relation_Code']);
+            // Address Match?
+            if (strtolower($visits[$g['PG Id']]['Address']) == strtolower($g['Address']) && $g['Address'] != '') {
+                // Map relationship.
+                $rMapper
+                    ->clear()
+                    ->setPGtoPatient($visits[$g['PG Id']]['Relation_Code']);
 
-            $g['Guest to PG'] = $rMapper->relateGuest($g['Relation_Code']);
+                $g['Guest to PG'] = $rMapper->relateGuest($g['Relation_Code']);
 
+            } else {
+                // empty relationship means address mismatch
+                $g['Guest to PG'] = '';
+            }
         } else {
-            // empty relationship means address mismatch
+            $g['PG to Patient'] = '';
             $g['Guest to PG'] = '';
         }
 
@@ -540,7 +546,7 @@ function createKeyMap(\PDO $dbh) {
     return  HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys'));
 }
 
-$mkTable = '';
+$mkTable = 'x';
 $dataTable = '';
 $paymentsTable = '';
 $settingstable = '';
@@ -677,7 +683,12 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             $scTbl->addBodyTr($tr);
             $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
 
-            $mkTable = 1;
+            if ($uS->username == 'npscuser') {
+                $mkTable = 0;
+            } else {
+                $mkTable = 1;
+            }
+
         }
 
     } else if (filter_has_var(INPUT_POST, 'btnGetPayments')) {
@@ -745,7 +756,6 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <style>
-            .hhk-rowseparater { border-top: 2px #0074c7 solid !important; }
             #aLoginLink:hover {background-color: #337a8e; }
         </style>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
@@ -799,10 +809,19 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                             <th>Local (HHK) Name Search</th>
                             <td><input id="txtSearch" type="text" /></td>
                         </tr>
-                        <tr>
+                        <?php if ($uS->username == "npscuser") { ?>
+                         <tr>
                             <th>Relationship</th>
-                            <td><input id="btnRelat" type="button" value="click me" /></td>
+                            <td><input id="txtRelat" type="text" placeholder="SF Id" value="" /><input id="btnRelat" type="button" value="Go" /></td>
                         </tr>
+                         <tr>
+                            <th>SOQL</th>
+                            <td><input id="txtSoqls" type="text" placeholder="SELECT" value="" />
+                            <input id="txtSoqlf" type="text" placeholder="FROM" value="" />
+                            <input id="txtSoqlw" type="text" placeholder="WhERE" value="" />
+                            <input id="btnSoql" type="button" value="Go" /></td>
+                        </tr>
+                        <?php } ?>
                     </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>

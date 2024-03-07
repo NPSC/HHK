@@ -72,9 +72,9 @@ class SalesforceManager extends AbstractExportManager {
      * @param mixed $post
      * @return string
      */
-    public function getRelationship($post) {
+    public function getRelationship($accountId) {
 
-        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/a0B740000003pmmEAA');
+        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/' . $accountId);
 
         $parms = array();
         $this->unwindResponse($parms, $result);
@@ -271,10 +271,15 @@ class SalesforceManager extends AbstractExportManager {
                 continue;
             }
 
-
+            // Need a totalSize
+            if (isset($rawResult['totalSize']) === FALSE) {
+                $f['Result'] = 'API ERROR: totalSize parameter is missing;  ' . $this->errorMessage;
+                $replys[$r['HHK_idName__c']] = $f;
+                continue;
+            }
 
             // Test results
-            if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] == 1 ) {
+            if ($rawResult['totalSize'] == 1 ) {
 
                 // We have a similar contact
 
@@ -309,7 +314,7 @@ class SalesforceManager extends AbstractExportManager {
                 $replys[$r['HHK_idName__c']] = $f;
 
 
-            } else if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] > 1 ) {
+            } else if ($rawResult['totalSize'] > 1 ) {
 
                 // Multiple records.
 
@@ -319,16 +324,13 @@ class SalesforceManager extends AbstractExportManager {
                 // Look through the results
                 foreach ($rawResult['records'] as $m) {
 
-                    $name  = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
-                    $title = ($m['HHK_idName__c'] == '' ? '' : $m['HHK_idName__c'] . ', ') . $name . ($m['Email'] == '' ? '' : ', ' . $m['Email']) . $m['HomePhone'];
-                    $options[$m['Id']] = [$m['Id'], $title];
-
                     // Did we find our HHK ID?
                     if ($m['HHK_idName__c'] != '' && $m['HHK_idName__c'] == $r['HHK_idName__c']) {
 
                         $this->updateRemoteMember($dbh, $m, 0, $r, FALSE);
 
                         if (count($this->getProposedUpdates()) > 0) {
+
                             $f['Result'] = HTMLInput::generateMarkup('', array('id'=>'updt_'.$r['HHK_idName__c'], 'class'=>'hhk-txCbox hhk-updatemem', 'data-txid'=>$r['HHK_idName__c'], 'data-txacct'=>$m['Id'], 'type'=>'checkbox'));
                             $label =  'Updates Proposed: ';
                             foreach ($this->getProposedUpdates() as $k => $v) {
@@ -338,7 +340,7 @@ class SalesforceManager extends AbstractExportManager {
                             $f['Result'] .= HTMLContainer::generateMarkup('label', $label, array('for'=>'updt_'.$r['HHK_idName__c'], 'style'=>'margin-left:.3em; background-color:#FBF6CD;'));
 
                         } else {
-                            $f['Result'] = 'Up to date.';
+                            $f['Result'] = 'Up to date. (MR)';
                         }
 
                         $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $m['Id']);
@@ -349,6 +351,10 @@ class SalesforceManager extends AbstractExportManager {
                     }
                 }
 
+                $name = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
+                $title = ($m['HHK_idName__c'] == '' ? '' : $m['HHK_idName__c'] . ', ') . $name . ($m['Email'] == '' ? '' : ', ' . $m['Email']) . $m['HomePhone'];
+                $options[$m['Id']] = [$m['Id'], $title];
+
                 $f['Result'] = ' Found ' . $rawResult['totalSize'] . ' similar accounts ';
                 // Create selector
                 $f['Result'] .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, '', TRUE), array('name'=>'selmultimem_' . $r['HHK_idName__c'], 'class'=>'multimemsels'));
@@ -358,7 +364,7 @@ class SalesforceManager extends AbstractExportManager {
 
 
 
-            } else if ( isset($rawResult['totalSize']) && $rawResult['totalSize'] == 0 ) {
+            } else if ($rawResult['totalSize'] == 0 ) {
 
                 // Check for not finding the account Id
                 if ($r['Id'] != '') {
@@ -395,13 +401,29 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
                 // Create new account
-                $newAcctResult = $this->webService->postUrl($this->endPoint . 'sobjects/Contact/', $filteredRow);
+                try {
 
-                if ($this->checkError($newAcctResult)) {
-                    $f['Result'] = $this->errorMessage;
-                    $replys[$r['HHK_idName__c']] = $f;
-                    continue;
+                    $newAcctResult = $this->webService->postUrl($this->endPoint . 'sobjects/Contact/', $filteredRow);
+
+                    if ($this->checkError($newAcctResult)) {
+                        $f['Result'] = $this->errorMessage;
+                        $replys[$r['HHK_idName__c']] = $f;
+                        continue;
+                    }
+
+                } catch (\RuntimeException $ex) {
+
+                    if (strstr($ex->getMessage(), 'DUPLICATE_VALUE')) {
+                        // mark duplicate and continue
+                        $f['Result'] = $ex->getMessage();
+                        $replys[$r['HHK_idName__c']] = $f;
+                        continue;
+                    }
+
+                    // Re-throw the exception.
+                    throw new \RuntimeException($ex->getMessage());
                 }
+
 
                 $accountId = filter_var($newAcctResult['id'], FILTER_SANITIZE_SPECIAL_CHARS);
 
@@ -453,29 +475,40 @@ class SalesforceManager extends AbstractExportManager {
             }
 
             foreach ($row as $k => $w) {
-                if ($w != '' && $w != 'Relationship_Code' && $w != 'PatientId') {
+                if ($w != '' && $k != 'Relationship_Code' && $k != 'PatientId') {
                     $filteredRow[$k] = $w;
                 }
             }
 
-            $compositReq[] = [
+            // Add/update person
+            $subrequest[] = [
                 "method" => "PATCH",
                 "url" => $this->getAcctEndpoint . 'HHK_idName__c/' . $row['HHK_idName__c'],
-                "referenceId" => "refContact",
+                "referenceId" => "refContact" . $row['HHK_idName__c'],
                 "body" => $filteredRow
             ];
 
             if ($row['Relationship_Code'] != RelLinkType::Self) {
                 // Add relationship record
-                $compositReq[] = [
+                $subrequest[] = [
                     "method" => "PATCH",
                     "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
-                    "referenceId" => "refContact",
+                    "referenceId" => "refContact" . $row['HHK_idName__c'],
                     "body" => $filteredRow
                 ];
             }
 
         }
+
+        if (count($subrequest) > 0) {
+
+            $compositRequest["compositeRequest"] = $subrequest;
+
+            return $compositRequest;
+        }
+
+        $replys[0] = array('error' => "The list of HHK Id's to send is empty.");
+        return $replys;
     }
 
 
@@ -642,7 +675,6 @@ class SalesforceManager extends AbstractExportManager {
         $where = '';
         $searchFields = $this->getSearchFields(NULL, '');
         $returnFields = $this->getReturnFields();
-
         $type = 'Contact.';
 
         // Colunm names for $r are also feild names for SF
@@ -655,7 +687,7 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
                 if ($v != '' && isset($searchFields[$k])) {
-                    $where .= ($where == '' ? $type.$k . "='" . $v . "'" : " AND " . $type.$k . "='" . $v . "'");
+                    $where .= ($where == '' ? '('. $type.$k . "='" . $v . "'" : " AND " . $type.$k . "='" . $v . "'");
                 }
             }
         }
@@ -664,6 +696,9 @@ class SalesforceManager extends AbstractExportManager {
         if ($r['Id'] !== '') {
             // Blow away the other search terms.
             $where = $type."Id='" . $r['Id'] . "'";
+        } else {
+            // Check for existing HHK_Id in remote.
+            $where .= ($where == '' ? $type."HHK_idName__c=" . $r['HHK_idName__c'] : ") OR " . $type."HHK_idName__c=" . $r['HHK_idName__c']);
         }
 
 
@@ -673,12 +708,24 @@ class SalesforceManager extends AbstractExportManager {
 
             $result = $this->webService->search($query, $this->queryEndpoint);
 
-//            if ($r['HHK_idName__c'] == 87) {
- //               var_dump($result);
- //          }
         }
 
         return $result;
+    }
+
+    /**
+     * Summary of searchQuery
+     * @param string $select
+     * @param string $from
+     * @param string $where
+     * @return mixed
+     */
+    public function searchQuery($select, $from, $where) {
+
+        if ($where != '') {
+            $where = " WHERE " . $where;
+        }
+        return $this->webService->search("SELECT $select FROM $from $where LIMIT 100", $this->queryEndpoint);
 
     }
 
@@ -694,7 +741,6 @@ class SalesforceManager extends AbstractExportManager {
 
         $cols['Id'] = 'Id';
         $cols['FirstName'] = 'FirstName';
-        //$cols['Middle_Name__c'] = 'Middle_Name__c';
         $cols['LastName'] = 'LastName';
         $cols['Email'] = 'Email';
 

@@ -3,6 +3,7 @@
 namespace HHK\sec\MFA;
 
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\UserClass;
 use HHK\sec\Session;
 use HHK\Member\IndivMember;
@@ -45,7 +46,7 @@ class Email extends AbstractMultiFactorAuth
         $return = array();
 
         if($this->emailAddr){
-            $mail = prepareEmail();
+            $mail = new HHKMailer($dbh);
             $mail->From = SysConfig::getKeyValue($dbh, 'sys_config', "FromAddress");
             $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
             $mail->addAddress(filter_var($this->emailAddr, FILTER_SANITIZE_EMAIL));
@@ -147,15 +148,15 @@ where u.User_Name = :uname";
             $mkup = HTMLContainer::generateMarkup('div',
                         HTMLContainer::generateMarkup('div',
                             HTMLContainer::generateMarkup("div", "Perferred Verification Email", array("class"=>"ui-widget-header ui-corner-top p-1")) .
-                            HTMLContainer::generateMarkup("form", $emails->createMarkup(), array("class"=>"ui-widget-content ui-corner-bottom", 'id'=>'userSettingsEmail'))
+                            HTMLContainer::generateMarkup("form", $emails->createMarkup(), array("class"=>"ui-widget-content ui-corner-bottom p-1", 'id'=>'userSettingsEmail'))
                         , array("class"=>"ui-widget")) .
                         HTMLContainer::generateMarkup('button', "Enable Email 2 Factor Verification", array('id'=>'genEmailSecret', "class"=>"mt-3"))
-                , array('class'=>'my-3', 'style'=>'text-align:center;'));
+                , array('class'=>'mb-3', 'style'=>'text-align:center;'));
         }
 
         $mkup .= '
                     <form class="otpForm" style="display: none; text-align: center;">
-                        <label for"otp" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
+                        <label for="otp" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
                         <input type="text" name="otp" size="10">
                         <input type="hidden" name="secret">
                         <input type="hidden" name="cmd" value="save2fa">

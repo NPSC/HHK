@@ -60,7 +60,7 @@ $dateInterval = new DateInterval('P1M');
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months, array(ReportFilter::DATES));
 $filter->createHospitals();
-$filter->createResoourceGroups(readGenLookupsPDO($dbh, 'Room_Group'), $uS->CalResourceGroupBy);
+$filter->createResourceGroups(readGenLookupsPDO($dbh, 'Room_Group'), $uS->CalResourceGroupBy);
 $filter->createDiagnoses($dbh);
 
 if (isset($_POST['rbAllGuests'])) {
@@ -206,6 +206,51 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
                 }
             });
         });
+
+        // disappear the pop-up nameDetails.
+        $(document).mousedown(function (event) {
+            var target = $(event.target);
+            if ($('div#nameDetails').length > 0 && target[0].id !== 'nameDetails' && target.parents("#" + 'nameDetails').length === 0) {
+                $('div#nameDetails').remove();
+            }
+        });
+
+        $('.getNameDetails').click(function(){
+            var detailsbtn = $(this);
+            let idNames = $(this).data('idnames');
+            let title = $(this).data('title');
+            $.ajax({
+                url: 'ws_resc.php',
+                method: 'post',
+                data: {
+                    cmd: "getNameDetails",
+                    idNames: idNames,
+                    title: title
+                },
+                dataType: "json",
+                success: function(data){
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.location.assign(data.gotopage);
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        return;
+                    }
+                    if(data.resultMkup){
+                        var contr = $(data.resultMkup).addClass('nameDetails');
+
+                        $('body').append(contr);
+                        contr.position({
+                            my: 'left top',
+                            at: 'left bottom',
+                            of: detailsbtn
+                        });
+                    }
+                }
+
+            });
+        });
+
         <?php echo $filter->getTimePeriodScript(); ?>;
     });
         </script>

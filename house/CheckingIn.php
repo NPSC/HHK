@@ -53,6 +53,14 @@ try {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
 
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', array('style' => 'text-align:center;')), array('style' => 'margin-right: 15px; width: 100%;'))
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style' => 'text-align: center')), array('style' => 'margin-left: 15px; width: 100%;'))
+                , array('style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1'));
+        }
+
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
@@ -127,6 +135,9 @@ $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 $resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;
 $resvAr['isCheckin'] = TRUE;
+$resvAr['insistCkinEmail'] = $uS->insistCkinEmail;
+$resvAr['insistCkinPhone'] = $uS->insistCkinPhone;
+$resvAr['insistCkinAddress'] = $uS->insistCkinAddress;
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 $resvAr['datePickerButtons'] = $uS->RegNoMinorSigLines;
 
@@ -171,6 +182,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 		<?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -198,6 +210,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 		<?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
         ?>

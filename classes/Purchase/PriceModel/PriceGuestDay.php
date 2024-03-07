@@ -35,17 +35,59 @@ class PriceGuestDay extends AbstractPriceModel {
      }
 
 
-    public function loadVisitNights(\PDO $dbh, $idVisit, $endDate = '') {
+    public function loadVisitNights(\PDO $dbh, $idVisit, $depDT = null) {
 
         $uS = Session::getInstance();
 
-        $spans = parent::loadVisitNights($dbh, $idVisit);
+        $parm = "NOW()";
+        if (is_null($depDT) === FALSE) {
+            $parm = "'" . $depDT->format('Y-m-d') . "'";
+        }
+
+        // Run the vvisit_stmt view, but modified by $parm
+        $stmt1 = $dbh->query("select
+    v.idVisit,
+    v.Span,
+    v.idRegistration,
+    v.idPrimaryGuest,
+    v.idResource,
+    ifnull(v.Arrival_Date, '') as `Arrival_Date`,
+    ifnull(v.Expected_Departure, '') as `Expected_Departure`,
+    ifnull(v.Actual_Departure, '') as `Actual_Departure`,
+    ifnull(v.Span_Start, '') as `Span_Start`,
+    ifnull(v.Span_End, '') as `Span_End`,
+    v.`Status`,
+    v.Rate_Glide_Credit,
+    ifnull(rm.Title, '') as `Title`,
+    ifnull(g.Substitute, 0) as Deposit_Amount,
+    v.DepositPayType,
+    v.Pledged_Rate,
+    v.Rate_Category,
+    v.idRoom_Rate,
+    v.Expected_Rate,
+    rv.Visit_Fee as `Visit_Fee_Amount`,
+    DATEDIFF(ifnull(v.Span_End, $parm), v.Span_Start) as `Actual_Span_Nights`,
+    ifnull(hs.idPsg, 0) as `idPsg`,
+    ifnull(hs.idHospital, 0) as `idHospital`,
+    ifnull(hs.idAssociation, 0) as `idAssociation`
+from
+    visit v
+        left join
+    reservation rv on v.idReservation = rv.idReservation
+        left join
+    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        left join
+    resource_room re ON v.idResource = re.idResource
+        left join
+    room rm on re.idRoom = rm.idRoom
+        left join
+    gen_lookups g on g.`Table_Name` = 'Key_Deposit_Code' and g.`Code` = rm.Key_Deposit_Code
+WHERE v.`Status` not in ( 'c', 'p' ) and v.idVisit = $idVisit
+order by v.`Span`;");
+
+        $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         $ageYears = $uS->StartGuestFeesYr;
-        $parm = "NOW()";
-        if ($endDate != '') {
-            $parm = "'$endDate'";
-        }
 
         $stmt = $dbh->query("SELECT
             s.Visit_Span,
@@ -59,7 +101,7 @@ class PriceGuestDay extends AbstractPriceModel {
         $stays = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $stays[$r['Visit_Span']] = $r['GDays'] < 0 ? 0 : $r['GDays'];
+            $stays[$r['Visit_Span']] = max($r['GDays'], 0);
         }
 
         $perGuestChg = FALSE;
@@ -85,7 +127,7 @@ class PriceGuestDay extends AbstractPriceModel {
         return $spans;
     }
 
-    public function loadRegistrationNights(\PDO $dbh, $idRegistration, $endDate = '') {
+    public function loadRegistrationNights(\PDO $dbh, $idRegistration) {
 
         $uS = Session::getInstance();
 
@@ -93,10 +135,6 @@ class PriceGuestDay extends AbstractPriceModel {
 
         $ageYears = $uS->StartGuestFeesYr;
         $parm = "NOW()";
-
-        if ($endDate != '') {
-            $parm = "'$endDate'";
-        }
 
         $stmt = $dbh->query("SELECT
     s.idVisit,
@@ -135,6 +173,15 @@ GROUP BY s.idVisit, s.Visit_Span");
         return $spans;
     }
 
+    /**
+     * Summary of amountCalculator
+     * @param mixed $nites
+     * @param mixed $idRoomRate
+     * @param mixed $rateCategory
+     * @param mixed $pledgedRate
+     * @param mixed $guestDays // only the extra guest days.  Do not include the number of days in the visit.
+     * @return float
+     */
     public function amountCalculator($nites, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {
 
         // Short circuit for fixed rate x
@@ -142,11 +189,9 @@ GROUP BY s.idVisit, s.Visit_Span");
             return $nites * $pledgedRate;
         }
 
-
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
         $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $nites;
-        //$guestDays -= $nites;
 
         if ($guestDays > 0) {
             $amount += $rrateRs->Reduced_Rate_2->getStoredVal() * $guestDays;

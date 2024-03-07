@@ -9,7 +9,7 @@ ALTER TABLE `name_demog`
 -- Multiple reservations
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('UseRepeatResv', 'false', 'b', 'h', 'Enable repeating Reservations', '1');
 -- Some sites may have this key already defined and broken, so update it.
-Update `sys_config` SET `Value` = 'false', `Description` = 'Enable repeating Reservations', `Show` = '1' WHERE (`Key` = 'UseRepeatResv' AND `value` = '0');
+Update `sys_config` SET `Value` = 'false', `Description` = 'Enable repeating Reservations', `Show` = '1' WHERE (`Key` = 'UseRepeatResv' AND `Show` = '0');
 
 -- Keeping minors off the Registration forms
 ALTER TABLE `name_demog`
@@ -86,3 +86,50 @@ ADD COLUMN IF NOT EXISTS `DistCalcType` VARCHAR(10) NULL DEFAULT NULL AFTER `Met
 
 -- New donation label.
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('ExtraPayment', 'Extra Payment', 's', 'pc');
+
+
+-- add rebook flag
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('UseRebook', 'false', 'b', 'hf', 'Automatically rebook cancelled reservation', '', '1');
+
+-- add showRegEmptyFields toggle
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showRegEmptyFields', 'true', 'b', 'h', 'On Registrations, show empty fields', '1');
+
+
+-- PSG checklist
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '1', 'PSG Checklist Item', 'm');
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '2', 'PSG Checklist Item', 'm');
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '3', 'PSG Checklist Item', 'm');
+
+
+-- SMS settings
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('smsProvider', '', 'lu', 'sms', 'Enable SMS integration', 'smsProvider', '1');
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('smsProvider', '', '', 10);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('smsProvider', 'SimpleTexting', 'SimpleTexting', 20);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('Sys_Config_Category', 'sms', 'SMS Settings', 55);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsToken', '', 's', 'sms', 'API Token', 1);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsFrom', '', 's', 'sms', 'Account Phone number used as the From address', 1);
+
+ALTER TABLE `name_phone` 
+CHANGE COLUMN if exists `is_SMS` `SMS_status` VARCHAR(10) NOT NULL DEFAULT '';
+
+-- new reg form replacement codes
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Room', '${Room}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Arrival Date', '${ArrivalDate}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Arrival Time', '${ArrivalTime}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Expected Departure Date', '${ExpectedDepartureDate}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Signature Lines', '${SignatureLines}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Initial Line', '${InitialLine}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Date Today', '${DateToday}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Signature Line', '${BlankSignatureLine}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Textbox', '${BlankTextBox}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Inline Textbox', '${BlankInlineTextBox}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Blank Textarea', '${BlankTextArea}','');
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Checkbox Toggle', '${CheckBox}','');
+
+-- add phone/email/address requirement on checkin
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('insistCkinPhone', 'false', 'b', 'h', 'Insist phone for all guests be filled in on check in page', 1);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('insistCkinEmail', 'false', 'b', 'h', 'Insist email for all guests be filled in on check in page', 1);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('insistCkinAddress', 'false', 'b', 'h', 'Insist valid address for all guests be filled in on check in page', 1);
+
+-- add No Email option
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES ('Email_Purpose', 'no', 'No Email', 'i', '50');

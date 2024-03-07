@@ -499,24 +499,32 @@ $(document).ready(function () {
         $btn.val('Saving...');
 
         var lookupData = $frm.serializeJSON();
-
-        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify(lookupData) + '&cmd=save' + '&table=' + table + '&tp=' + type,
-            function(data) {
+        
+        $.ajax({
+            url: "ResourceBuilder.php",
+            type: "POST",
+            data: {
+                lookups:JSON.stringify(lookupData),
+                cmd: "save",
+                table: table,
+                tp: type
+            },            
+            success: function (data) {
                 $btn.val('Save');
                 if (data) {
                     $frm.children('div').empty().append(data).find(".sortable tbody")
-                        	.sortable({
-                        		items: "tr:not(.no-sort)",
-                        		handle: ".sort-handle",
-                        		update: function (e, ui) {
-                        			$(this).find("tr").each(function(i){
-                        				$(this).find("td:first input").val(i);
-                        			});
-                        		}
-                        	});
-
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
                 }
-            });
+            }
+        });
     }).button();
 
     //sortable demo categories
@@ -531,22 +539,44 @@ $(document).ready(function () {
             }
         });
 
+    // Save Demo categories.
     $('#btndemoSave').click(function () {
         var $frm = $(this).closest('form');
 
         $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
-            function(data) {
+            function (data) {
                 if (data) {
                     $frm.children('div').children().remove().end().append(data).find(".sortable tbody")
-                        	.sortable({
-                        		items: "tr:not(.no-sort)",
-                        		handle: ".sort-handle",
-                        		update: function (e, ui) {
-                        			$(this).find("tr").each(function(i){
-                        				$(this).find("td:first input").val(i);
-                        			});
-                        		}
-                        	});
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
+                }
+            });
+    }).button();
+
+    // Save PSG checkbox list.
+    $('#btncblistSave').click(function () {
+        var $frm = $(this).closest('form');
+
+        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Checklist_PSG' + '&tp=' + 'm',
+            function (data) {
+                if (data) {
+                    $frm.children('div').children().remove().end().append(data).find(".sortable tbody")
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
                 }
             });
     }).button();

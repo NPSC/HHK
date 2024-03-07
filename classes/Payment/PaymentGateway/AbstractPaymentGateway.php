@@ -30,6 +30,8 @@ abstract class AbstractPaymentGateway {
     const VANTIV = 'vantiv';
     const INSTAMED = 'instamed';
     const LOCAL = '';
+    const PW_PLACEHOLDER = '**********';
+
 
     protected $gwType;
     protected $credentials;

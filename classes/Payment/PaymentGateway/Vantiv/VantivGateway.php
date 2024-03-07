@@ -163,11 +163,11 @@ class VantivGateway extends AbstractPaymentGateway {
         // Set up request
         $revRequest = new CreditVoidReturnTokenRequest();
         $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
+            ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
             ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
             ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
             ->setInvoice($invoice->getInvoiceNumber())
             ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-            ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
             ->setToken($tknRs->Token->getStoredVal())
             ->setTokenId($tknRs->idGuest_token->getStoredVal())
             ->setTitle('CreditVoidReturnToken');
@@ -230,13 +230,13 @@ class VantivGateway extends AbstractPaymentGateway {
             // Set up request
             $revRequest = new CreditReversalTokenRequest();
             $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
+                    ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
+                    ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
+                    ->setProcessData($pAuthRs->ProcessData->getStoredVal())
                     ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
                     ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
                     ->setInvoice($invoice->getInvoiceNumber())
                     ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-                    ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
-                    ->setProcessData($pAuthRs->ProcessData->getStoredVal())
-                    ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
                     ->setToken($tknRs->Token->getStoredVal())
                     ->setTokenId($tknRs->idGuest_token->getStoredVal())
                     ->setTitle('CreditReversalToken');
@@ -437,7 +437,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         // Card reader?
         if ($this->usePOS && ! $this->manualKey) {
-            $pay->setCardEntryMethod('swipe')
+            $pay->setCardEntryMethod('Swipe')
             		->setPaymentPageCode('CheckoutPOS_Url');
         } else {
         	$pay->setPaymentPageCode('Checkout_Url');
@@ -518,27 +518,19 @@ class VantivGateway extends AbstractPaymentGateway {
 
     }
 
-    public function processHostedReply(\PDO $dbh, $pagePost, $ssoToken, $idInv, $payNotes, $payDate) {
+    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate) {
 
     	$uS = Session::getInstance();
     	$payResult = NULL;
         $rtnCode = '';
         $rtnMessage = '';
 
-        $args = [
-            'ReturnCode' => FILTER_SANITIZE_NUMBER_INT,
-            'ReturnMessage' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            VantivGateway::PAYMENT_ID => FILTER_SANITIZE_FULL_SPECIAL_CHARS
-        ];
-
-        $post = filter_input_array(INPUT_POST, $args);
-
         if (isset($post['ReturnCode'])) {
-            $rtnCode = intval($post['ReturnCode'], 10);
+            $rtnCode = intval(filter_var($post['ReturnCode'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         if (isset($post['ReturnMessage'])) {
-            $rtnMessage = $post['ReturnMessage'];
+            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // THis eventually selects the merchant id
@@ -549,7 +541,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         if (isset($post[VantivGateway::PAYMENT_ID])) {
 
-            $paymentId = $post[VantivGateway::PAYMENT_ID];
+            $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
 
@@ -918,7 +910,7 @@ class VantivGateway extends AbstractPaymentGateway {
             );
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Password:', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
             );
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Credit URL:', array('class' => 'tdlabel'))
@@ -946,7 +938,7 @@ class VantivGateway extends AbstractPaymentGateway {
        		);
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Manual Password:', array('class' => 'tdlabel'))
-                		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Manual_Password->getStoredVal(), array('name' => $indx . '_txtManMerchPW', 'size' => '90')). ' (Obfuscated)')
+                		. HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Manual_Password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtManMerchPW', 'size' => '90')). ' (Obfuscated)')
             );
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Use AVS:', array('class' => 'tdlabel'))
@@ -1104,7 +1096,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
             	$pw = filter_var($post[$indx . '_txtManMerchPW'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            	if ($pw != '' && $ccRs->Manual_Password->getStoredVal() != $pw) {
+            	if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
             		$ccRs->Manual_Password->setNewVal(encryptMessage($pw));
             	} else if ($pw == '') {
             		$ccRs->Manual_Password->setNewVal('');
@@ -1131,7 +1123,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
                 $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
-                if ($pw != '' && $ccRs->Password->getStoredVal() != $pw) {
+                if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
                     $ccRs->Password->setNewVal(encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->Password->setNewVal('');

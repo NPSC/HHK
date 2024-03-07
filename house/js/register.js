@@ -694,7 +694,15 @@ $(document).ready(function () {
 
 		if(showCurrentGuestPhotos){
 			cgCols.unshift({data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px"});
-		}
+    }
+    
+    $("#btnTextCurGuests").button().smsDialog({ "campaign": "checked_in"});
+
+    $("#btnTextConfResvGuests").button().smsDialog({ "campaign": "confirmed_reservation" });
+
+    $("#btnTextUnConfResvGuests").button().smsDialog({ "campaign": "unconfirmed_reservation" });
+
+    $("#btnTextWaitlistGuests").button().smsDialog({ "campaign": "waitlist" });
 
     // Reservations
     let rvCols = [
@@ -1619,6 +1627,10 @@ $(document).ready(function () {
            			$("#curres .gmenu").not(this).menu("collapseAll", null, true);
            		}
            });
+
+            $(".btnShowVisitMsgs").each(function () {
+                $(this).smsDialog({ "visitId": $(this).data('vid'), "spanId": $(this).data("span") });
+            });
        },
        columns: cgCols,
        "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY")),
@@ -1639,6 +1651,10 @@ $(document).ready(function () {
            			$("#reservs .gmenu").not(this).menu("collapseAll", null, true);
            		}
            });
+
+           $("#reservs .btnShowResvMsgs").each(function () {
+            $(this).smsDialog({ "resvId": $(this).data('rid') });
+        });
        },
        columns: rvCols,
        "buttons": getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
@@ -1657,7 +1673,11 @@ $(document).ready(function () {
            			focus:function(e, ui){
            				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
            			}
-           		});
+                });
+               
+                $("#unreserv .btnShowResvMsgs").each(function () {
+                    $(this).smsDialog({ "resvId": $(this).data('rid') });
+                });
            },
            columns: rvCols,
            "buttons": getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
@@ -1677,6 +1697,10 @@ $(document).ready(function () {
            		focus:function(e, ui){
            			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);
            		}
+            });
+           
+           $("#waitlist .btnShowResvMsgs").each(function () {
+               $(this).smsDialog({ "resvId": $(this).data('rid') });
            });
        },
        columns: wlCols,

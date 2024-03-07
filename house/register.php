@@ -63,6 +63,15 @@ try {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
 
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', array('style' => 'text-align:center;')), array('style' => 'margin-right: 15px; width: 100%;'))
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style' => 'text-align: center')), array('style' => 'margin-left: 15px; width: 100%;'))
+                , array('style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1'));
+        }
+
+        // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
@@ -137,7 +146,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
 
 // Currently Checked In guests
-        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'class'=>'ml-5', 'style'=>'font-size:.9em;')), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
+        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'class'=>'ml-5', 'style'=>'font-size:.9em;')) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextCurGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')) :""), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
 
 // make registration form print button
@@ -147,12 +156,12 @@ $regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput
 
 $currentReservations = HTMLContainer::generateMarkup('h3',
         '<span>' . $labels->getString('register', 'reservationTab', 'Confirmed Reservations') . '</span>' .
-        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'font-size:.9em;', 'class'=>"ml-5")) . $regButton
+        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'font-size:.9em;', 'class'=>"ml-5")) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextConfResvGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')): "") . $regButton
         , array('style' => 'background-color:#D3D3D3; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap p-3"))
         . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
 
 if ($uS->ShowUncfrmdStatusTab) {
-    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'font-size:.9em;', 'class'=>'ml-5')), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
+    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'font-size:.9em;', 'class'=>'ml-5')) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextUnConfResvGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')): ""), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
         . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divunreserv'));
 }
 
@@ -164,7 +173,7 @@ if ($uS->ShowUncfrmdStatusTab) {
 
 
 $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'waitlistTab', 'Wait List') . '</span>' .
-        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'font-size:.9em;', "class"=>"ml-5"))
+        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'font-size:.9em;', "class"=>"ml-5")) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextWaitlistGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')): "")
         //.$wlButton
         , array('style' => 'background-color:#D3D3D3; align-items:baseline;','class'=>'hhk-flex hhk-flex-wrap p-2'))
         . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divwaitlist'));
@@ -327,6 +336,7 @@ if($uS->useOnlineReferral){
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo CSSVARS; ?>
 
 		<script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -349,6 +359,7 @@ if($uS->useOnlineReferral){
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REFERRAL_VIEWER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>

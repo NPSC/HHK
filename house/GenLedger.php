@@ -1,4 +1,5 @@
 <?php
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Login;
 use HHK\Exception\InvalidArgumentException;
 use HHK\Exception\RuntimeException;
@@ -77,7 +78,7 @@ if ($notificationAddress != '') {
 	$siteName = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
 	$from = SysConfig::getKeyValue($dbh, 'sys_config', 'NoReplyAddr');
 
-	$mail = prepareEmail();
+	$mail = new HHKMailer($dbh);
 
 	$mail->From = $from;
 	$mail->addReplyTo($from);

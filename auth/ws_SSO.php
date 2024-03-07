@@ -91,4 +91,3 @@ if (is_array($events)) {
 }
 
 exit();
-?>

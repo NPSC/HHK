@@ -92,9 +92,10 @@ abstract class AbstractPriceModel {
      * Summary of loadVisitNights
      * @param \PDO $dbh
      * @param int $idVisit
+     * @param \DateTime|null $depDT  Used by PriceGuestDay.
      * @return array
      */
-    public function loadVisitNights(\PDO $dbh, $idVisit) {
+    public function loadVisitNights(\PDO $dbh, $idVisit, $depDT = null) {
 
         // Get current nights .
         $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = $idVisit and `Status` != 'p' order by `Span`");

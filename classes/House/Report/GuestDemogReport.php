@@ -212,7 +212,7 @@ class GuestDemogReport {
         room r on rr.idRoom = r.idRoom
     WHERE
         n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc $whDiags $whPatient
-        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') ";
+        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0";
 
         if ($whichGuests == 'new') {
             $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";
@@ -221,6 +221,7 @@ class GuestDemogReport {
         } else if($whichGuests == 'allStayed'){
             $query .= " AND DATE(ifnull(s.Span_End_Date, now())) > DATE('" . $stDT->format('Y-m-01') . "')";
         }
+        $query .= " ORDER BY s.idName";
 
         $currId = 0;
         $currPeriod = '';
@@ -262,13 +263,19 @@ class GuestDemogReport {
 
 
             try {
+
                 $distanceCalculator = DistanceFactory::make();	
                 if($r['Meters_From_House'] > 0){	
                     $miles = $distanceCalculator->meters2miles($r['Meters_From_House']);	
                 }elseif ($uS->distCalculator == 'zip'){	
                     $miles = $distanceCalculator->getDistance($dbh, ['zip'=>$r["zip"]], Address::getHouseAddress($dbh), "miles");	
-                }else{    
-                    throw new \RuntimeException("Distance not calculated");
+                }else{ //calculate zip distance    
+                    $zipDistance = new ZipDistance();
+                    $miles = $zipDistance->getDistance($dbh, ['zip'=>$r["zip"]], Address::getHouseAddress($dbh), "miles");
+                }
+
+                if($miles == -1){
+                    throw new RuntimeException("Can't calculate distance");
                 }
 
                 foreach ($accum[$startPeriod]['Distance'] as $d => $val) {
@@ -287,9 +294,10 @@ class GuestDemogReport {
                 $badZipCodes[$r['Postal_Code']] = 'y';
                 if($whichGuests != 'allStayed'){
                     $accum[$startPeriod]['Distance']['']['cnt']++;
+                    $accum[$startPeriod]['Distance']['']['idNames'][] = $r['idName'];
                 }
                 $accum['Total']['Distance']['']['cnt']++;
-
+                $accum['Total']['Distance']['']['idNames'][] = $r['idName'];
             }
 
             if($uS->county){
@@ -300,16 +308,32 @@ class GuestDemogReport {
                     if(!isset($accum[$startPeriod]['County'][$countyKey])){
                         $accum[$startPeriod]['County'][$countyKey]['title'] = $countyTitle;
                         $accum[$startPeriod]['County'][$countyKey]['cnt'] = 1;
+                        if($countyKey == ''){
+                            $accum[$startPeriod]['County'][$countyKey]['idNames'] = [$r['idName']];
+                        }
                     }else{
                         $accum[$startPeriod]['County'][$countyKey]['cnt']++;
+                        if($countyKey == ''){
+                            $accum[$startPeriod]['County'][$countyKey]['idNames'][] = $r['idName'];
+                        }
                     }
                 }
 
                 if(!isset($accum['Total']['County'][$countyKey])){
                     $accum['Total']['County'][$countyKey]['title'] = $countyTitle;
                     $accum['Total']['County'][$countyKey]['cnt'] = 1;
+                    if($countyKey == ''){
+                        $accum['Total']['County'][$countyKey]['idNames'] = [$r['idName']];
+                    }
                 }else{
                     $accum['Total']['County'][$countyKey]['cnt']++;
+                    if($countyKey == ''){
+                        $accum['Total']['County'][$countyKey]['idNames'][] = $r['idName'];
+                    }
+                }
+
+                if($countyKey = ''){
+
                 }
             }
             //$totalPSGs[$r['idPsg']] = 'y';
@@ -356,14 +380,26 @@ class GuestDemogReport {
 
             $rowCount = 0;
 
-            foreach ($accum[$col] as $demog) {
+            foreach ($accum[$col] as $demogTitle=>$demog) {
 
                 if (isset($trs[$rowCount])) {
 
                     $trs[$rowCount++] .= HTMLTable::makeTd('', array('class' => 'hhk-tdTitle'));
 
                     foreach ($demog as $indx) {
-                        $trs[$rowCount++] .= HTMLTable::makeTd($indx['cnt'] > 0 ? $indx['cnt'] : '');
+                        $dataStr = HTMLContainer::generateMarkup('span', $indx['cnt'] > 0 ? $indx['cnt'] : '');
+
+                        if(isset($indx['idNames']) && count($indx['idNames']) > 0){
+                            
+                            try{
+                                $colDT = new \DateTime($col . '-01');
+                                $col = $colDT->format('M, Y');
+                            }catch(\Exception $e){
+
+                            }
+                            $dataStr.= HTMLContainer::generateMarkup('span', '', ['class'=>'getNameDetails hhk-btn ui-icon ui-icon-comment', 'data-idNames'=>json_encode($indx['idNames']), 'data-title'=>$col . " " . $demogTitle . ": " . $indx['title']]);
+                        }
+                        $trs[$rowCount++] .= HTMLTable::makeTd($dataStr);
                     }
                 }
             }
@@ -498,6 +534,7 @@ class GuestDemogReport {
         if ($includeBlank) {
             $age['']['cnt'] = 0;
             $age['']['title'] = 'Not Indicated';
+            $age['']['idNames'] = [];
         }
 
         return $age;

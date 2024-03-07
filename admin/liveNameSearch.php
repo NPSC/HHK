@@ -184,4 +184,3 @@ function deleteFBRow(PDO $dbh, $fbid) {
 
     return $events;
 }
-?>

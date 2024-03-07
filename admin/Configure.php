@@ -200,12 +200,13 @@ if (filter_has_var(INPUT_POST, 'btnLogs')) {
     $logs = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
 }
 
-$logSelRows = array(
-    1 => array(0 => 'sl', 1 => 'Combined Log'),
-    2 => array(0 => 'ss', 1 => 'Sys Config Log'),
-    3 => array(0 => 'rr', 1 => 'Rooms Log'),
-    4 => array(0 => 'll', 1 => 'Lookups Log'),
-);
+$logSelRows = [
+    ['sl','Combined Log'],
+    ['ss','Sys Config Log'],
+    ['rr','Rooms Log'],
+    ['ll','Lookups Log'],
+    ['nl', 'Notification Log']
+];
 
 try {
     $payments = SiteConfig::createPaymentCredentialsMarkup($dbh, $ccResultMessage);

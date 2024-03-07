@@ -100,7 +100,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 
         }
 
-        $groupBy = " and rg.Primary_Guest = 1 Group By rg.idReservation";
+        $groupBy = " Group By r.idReservation";
 
         $this->query = "select
     r.idReservation,
@@ -112,7 +112,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     ifnull(na.Country_Code, '') as gCountry,
     ifnull(na.Postal_Code, '') as gZip,
     CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' ELSE np.Phone_Num END as Phone_Num,
-    ne.Email,
+    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ne.Email END as Email,
     rm.Phone,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
     ifnull(r.Actual_Departure, r.Expected_Departure) as `Departure`,
@@ -146,7 +146,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 from
     reservation r
         left join
-	reservation_guest rg on r.idReservation = rg.idReservation
+	reservation_guest rg on r.idReservation = rg.idReservation and rg.Primary_Guest = 1
 		left join
     resource re ON re.idResource = r.idResource
         left join
@@ -255,12 +255,12 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
             $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
         }
 
-        $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
-        $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " First", 'Name_First', 'checked', '', 'string', '20');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " Last", 'Name_Last', 'checked', '', 'string', '20');
 
         // Address.
         $pFields = array('gAddr', 'gCity');
-        $pTitles = array('Address', 'City');
+        $pTitles = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . ' Address', 'City');
 
         if ($uS->county) {
             $pFields[] = 'gCounty';
@@ -273,9 +273,9 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
         $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
-        $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
-        $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
-        $cFields[] = array("Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');

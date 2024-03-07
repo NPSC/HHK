@@ -37,8 +37,14 @@ class SysConfig {
             throw new RuntimeException('System Configuration database table name or category not specified.  ');
         }
 
-        $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        try {
+            $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\PDOException $e){
+            if($e->getCode() === "42S02"){ //table doesn't exist
+                throw new RuntimeException("Error: " . $e->errorInfo[2] . ": It looks like HHK isn't installed properly. Try running the installer.");
+            }
+        }
 
         foreach ($rows as $r) {
 
