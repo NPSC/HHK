@@ -648,8 +648,8 @@ where
 		$tbl->addHeaderTr ( HTMLTable::makeTh ( 'Room' ) . HTMLTable::makeTh ( 'Item' ) . HTMLTable::makeTh ( 'Amount' ) );
 
 		foreach ( $this->getLines ( $dbh ) as $line ) {
-			$tbl->addBodyTr ( HTMLTable::makeTd ( $roomTitle ) . HTMLTable::makeTd ( $line->getDescription () ) . HTMLTable::makeTd ( number_format ( $line->getAmount (), 2 ), array (
-					'class' => 'tdlabel'
+			$tbl->addBodyTr ( HTMLTable::makeTd ( $roomTitle , ['class'=>'invLineRoom']) . HTMLTable::makeTd ( $line->getDescription () , ['class'=>'invLineDesc']) . HTMLTable::makeTd ( number_format ( $line->getAmount (), 2 ), array (
+					'class' => 'tdlabel invLineAmt'
 			) ) );
 		}
 
@@ -765,8 +765,9 @@ where
 				'class' => 'my-3'
 		) );
 
-		$rec .= HTMLContainer::generateMarkup ( 'div', $tbl->generateMarkup(['style'=>'width: 100%;']), array (
-				'class' => 'hhk-tdbox'
+		//invoice table
+		$rec .= HTMLContainer::generateMarkup ( 'div', $tbl->generateMarkup(), array (
+				'class' => 'hhk-tdbox invoiceItemTbl'
 		) );
 
 		if ($this->getInvoiceNotes () != '') {

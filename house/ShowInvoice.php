@@ -35,7 +35,6 @@ $stmtMarkup = '';
 $emAddr = '';
 $emtableMarkup = '';
 $msg = '';
-$sty = '';
 $guest = NULL;
 $invNum = '';
 
@@ -109,7 +108,7 @@ try {
                 $mpdf = new Mpdf(['tempDir'=>sys_get_temp_dir() . "/mpdf"]);
                 $mpdf->showImageErrors = true;
                 $mpdf->WriteHTML(
-                    '<html><head>' . HOUSE_CSS . '</head><body>' . $stmtMarkup . '</body></html>');
+                    '<html><head>' . HOUSE_CSS . INVOICE_CSS . '</head><body>' . $stmtMarkup . '</body></html>');
                 
                 $pdfContent = $mpdf->Output('', 'S');
                 $mail->addStringAttachment($pdfContent, 'Invoice.pdf', PHPMailer::ENCODING_BASE64,'application/pdf');
@@ -133,14 +132,14 @@ try {
     // create send email table
         if ($invoice->isDeleted() === FALSE) {
             $emTbl = new HTMLTable();
-            $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'style' => 'width: 100%; margin-left: 0.5em;')), array("class"=>"hhk-flex", "style"=>"align-items:center;")));
+            $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'class' => 'ml-2')), array("class"=>"hhk-flex")));
             $emTbl->addBodyTr(HTMLTable::makeTd(
                             'Email: '
-                            . HTMLInput::generateMarkup($emAddr, array('name' => 'txtEmail', 'style' => 'width:100%; margin-left: 0.5em;'))
-                . HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')), array("class"=>"hhk-flex", "style"=>"align-items:center;")));
-            $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit', 'style'=>'font-size:0.9em;'))));
+                            . HTMLInput::generateMarkup($emAddr, array('name' => 'txtEmail', 'class' => 'ml-2'))
+                . HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')), array("class"=>"hhk-flex")));
+            $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit'))));
 
-            $emtableMarkup .= $emTbl->generateMarkup(array("style"=>"width:100%;"), 'Email Invoice');
+            $emtableMarkup .= $emTbl->generateMarkup(array("class"=>"emTbl"), 'Email Invoice');
         }
     } else {
         $msg .= 'Invoice not found.';
@@ -161,34 +160,30 @@ if ($msg != '') {
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo INVOICE_CSS; ?>
         <?php echo CSSVARS; ?>
-        <?php echo $sty; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
 
-        <style type="text/css" media="print">
-            body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
-            .hhk-noprint {display:none;}
-        </style>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type='text/javascript'>
-$(document).ready(function () {
-    "use strict";
-    $('#btnPrint, #btnEmail, #btnWord').button();
-    var opt = {mode: 'popup',
-        popClose: true,
-        popHt      : $('#divBody').height(),
-        popWd      : $('#divBody').width(),
-        popX       : 20,
-        popY       : 20,
-        popTitle   : 'Print Invoice'};
+            $(document).ready(function () {
+                "use strict";
+                $('#btnPrint, #btnEmail, #btnWord').button();
+                var opt = {mode: 'popup',
+                    popClose: true,
+                    popHt      : $('#divBody').height(),
+                    popWd      : $('#divBody').width(),
+                    popX       : 20,
+                    popY       : 20,
+                    popTitle   : 'Print Invoice'};
 
-    $('#btnPrint').click(function () {
-        $("div.PrintArea").printArea(opt);
-    });
-});
+                $('#btnPrint').click(function () {
+                    $("div.PrintArea").printArea(opt);
+                });
+            });
         </script>
     </head>
     <body>
@@ -197,17 +192,19 @@ $(document).ready(function () {
                 <?php echo $msg; ?>
             </div>
             <?php if($stmtMarkup != '') { ?>
-            <div style="margin-top: 10px;">
-                <div style='margin-bottom:10px; max-width:800px' class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'>
-                    <form name="formEm" method="Post" action="ShowInvoice.php">
-                    <?php echo $emtableMarkup; ?>
+            <div class="mt-3 invPage">
+                <div class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox mb-3'>
+                    <form name="formEm" method="POST" action="ShowInvoice.php">
+                        <?php echo $emtableMarkup; ?>
                         <input type="button" value="Print" id='btnPrint' style="margin-right:.3em;margin-top:.5em;font-size:0.9em;"/>
                         <input type="submit" value="Download MS Word" name='btnWord' id='btnWord' style="margin-right:.3em;margin-top:.5em; font-size:0.9em;"/>
                     </form>
 
                 </div>
-                <div id="divBody" style="max-width: 800px;" class='PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'>
+                <div class='ui-widget ui-widget-content ui-corner-all'>
+                    <div id="divBody" class="PrintArea hhk-panel">
                         <?php echo $stmtMarkup; ?>
+                    </div>
                 </div>
             </div>
             <?php } ?>

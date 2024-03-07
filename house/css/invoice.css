@@ -1,0 +1,55 @@
+.invoiceItemTbl table {
+    width: 100%;
+}
+
+.invPage {
+    max-width: 800px;
+}
+
+.emTbl, .emTbl input[type=text] {
+    width: 100%;
+}
+
+.emTbl td.hhk-flex {
+    align-items: center;
+}
+
+.emTbl input[type=submit] {
+    font-size: 0.9em;
+}
+
+.invoiceItemTbl .invLineDesc {
+    width: 100%;
+}
+
+.invoiceItemTbl .invLineRoom, .invoiceItemTbl .invLineAmt {
+    white-space: nowrap;
+}
+
+.invoiceItemTbl.hhk-tdbox td, .invoiceItemTbl.hhk-tdbox th {
+    border: 1px solid #c5dbec;
+}
+
+.invoiceItemTbl.hhk-tdbox td.hhk-tdTotals {
+    border-top-color: #333 !important;
+    border-top-width: 2px !important;
+}
+
+@media print {
+    body {
+        margin:0; 
+        padding:0; 
+        line-height: 1.4em; 
+        word-spacing:1px; 
+        letter-spacing:0.2px; 
+        font: 13px Arial, Helvetica,"Lucida Grande", serif; 
+        color: #000;
+    }
+    .hhk-noprint {
+        display:none;
+    }
+
+    .PrintArea {
+        border: none !important;
+    }
+}
