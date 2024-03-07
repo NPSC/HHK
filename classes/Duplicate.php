@@ -34,6 +34,7 @@ class Duplicate {
         $rows = array();
 
         $groupByStr = self::buildGroupBy($filters);
+        $whereStr = self::buildWhere($filters);
 
         if ($mType == VolMemberType::ReferralAgent || $mType == VolMemberType::Doctor) {
 
@@ -58,7 +59,7 @@ from
     left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
     left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 where
-    n.Member_Status in ('a','d') and n.Record_Member = 1
+    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
 group by LOWER(n.Name_Full)" . $groupByStr . "
 having count(n.idName) > 1
 order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
@@ -75,7 +76,7 @@ from
     left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
     left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 where
-    n.Member_Status in ('a','d') and n.Record_Member = 1
+    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
 group by LOWER(n.Name_Full), ng.idPsg" . $groupByStr . "
 having count(n.idName) > 1
 order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
@@ -92,7 +93,7 @@ from
     left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
     left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 where
-    n.Member_Status in ('a','d') and n.Record_Member = 1
+    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
 group by LOWER(n.Name_Full)" . $groupByStr . "
 having count(distinct n.idName) > 1
 order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
@@ -599,6 +600,29 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
         }
 
         return (count($groupBy) > 0 ? "," . implode(",", $groupBy) : "");
+    }
+
+    protected static function buildWhere(array $filters){
+        $where = [];
+        foreach($filters as $filter){
+            switch($filter){
+                case "birthdate":
+                    $where[] = "n.BirthDate != ''";
+                    break;
+                case "phone":
+                    $where[] = "np.Phone_Search != ''";
+                    break;
+                case "email":
+                    $where[] = "LOWER(ne.Email) != ''";
+                    break;
+                case "address":
+                    $where[] = "LOWER(concat(na.Address_1, na.Address_2, na.City, na.State_province, na.Postal_Code)) != ''";
+                    break;
+                default:
+            }
+        }
+
+        return (count($where) > 0 ? " AND " . implode(" AND ", $where) : "");
     }
 
 }

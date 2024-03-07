@@ -249,7 +249,7 @@ class FormTemplate {
             'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
-            'notifySubject'=>(isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " submitted"),
+            'notifySubject'=>(isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted"),
             'recaptchaScript'=>$recaptcha->getScriptTag(),
             'maxGuests'=>(isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
             'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1),

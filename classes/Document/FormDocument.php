@@ -170,7 +170,7 @@ group by g.Code order by g.Order';
 
                 $mail->isHTML(true);
 
-                $mail->Subject = (isset($formSettings["notifySubject"]) && $formSettings["notifySubject"] != "" ? $formSettings["notifySubject"] : "New " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " submitted");
+                $mail->Subject = (isset($formSettings["notifySubject"]) && $formSettings["notifySubject"] != "" ? $formSettings["notifySubject"] : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted");
                 $mail->msgHTML($content);
 
                 if ($mail->send() === FALSE) {
