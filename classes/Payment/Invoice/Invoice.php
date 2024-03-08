@@ -654,13 +654,13 @@ where
 		}
 
 		// totals
-		$tbl->addBodyTr ( HTMLTable::makeTd ( "Total:", array (
+		$tbl->addFooterTr ( HTMLTable::makeTd ( "Total:", array (
 				'class' => 'tdlabel hhk-tdTotals',
 				'colspan' => '2'
 		) ) . HTMLTable::makeTd ( '$' . number_format ( $this->getAmount (), 2 ), array (
 				'class' => 'hhk-tdTotals tdlabel'
 		) ) );
-		$tbl->addBodyTr ( HTMLTable::makeTd ( "Previous Payments:", array (
+		$tbl->addFooterTr ( HTMLTable::makeTd ( "Previous Payments:", array (
 				'class' => 'tdlabel',
 				'colspan' => '2'
 		) ) . HTMLTable::makeTd ( number_format ( ($this->getAmount () - $this->getBalance ()), 2 ), array (
@@ -668,14 +668,14 @@ where
 		) ) );
 
 		if ($this->getDelegatedStatus () == InvoiceStatus::Paid) {
-			$tbl->addBodyTr ( HTMLTable::makeTd ( "Balance Due:", array (
+			$tbl->addFooterTr ( HTMLTable::makeTd ( "Balance Due:", array (
 					'class' => 'tdlabel',
 					'colspan' => '2'
 			) ) . HTMLTable::makeTd ( '$0.00', array (
 					'class' => 'hhk-tdTotals tdlabel'
 			) ) );
 		} else {
-			$tbl->addBodyTr ( HTMLTable::makeTd ( "Balance Due:", array (
+			$tbl->addFooterTr ( HTMLTable::makeTd ( "Balance Due:", array (
 					'class' => 'tdlabel',
 					'colspan' => '2'
 			) ) . HTMLTable::makeTd ( '$' . number_format ( $this->getBalance (), 2 ), array (

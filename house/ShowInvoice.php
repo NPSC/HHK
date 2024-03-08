@@ -33,9 +33,10 @@ $logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
 
 $stmtMarkup = '';
 $emAddr = '';
+$emAddrs = [];
 $emtableMarkup = '';
 $msg = '';
-$guest = NULL;
+$emBody = '';
 $invNum = '';
 
 if (isset($_GET["invnum"])) {
@@ -56,13 +57,12 @@ try {
 
         if (isset($_POST['btnWord'])) {
 
-
             $form = "<!DOCTYPE html>"
                     . "<html>"
                         . "<head>"
-                            . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
+                            . "<style type='text/css'>" . file_get_contents("css/house.css") . file_get_contents("css/invoice.css") . "</style>"
                         . "</head>"
-                        . "<body><div class='ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
+                        . "<body><div class='PrintArea'>" . $stmtMarkup . '</div></body>'
                     . '</html>';
 
             header('Content-Disposition: attachment; filename=Invoice.doc');
@@ -77,10 +77,24 @@ try {
         }
 
         if (isset($_POST['txtEmail'])) {
-            $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_EMAIL);
+            $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
             if ($emAddr == '') {
                 $msg .= "The Email address is required.  ";
+            } else {
+                if (str_contains($emAddr, ",")) { //assume multiple addresses
+                    $emAddrs = explode(",", $emAddr);
+                } else {
+                    $emAddrs = [$emAddr];
+                }
+                foreach($emAddrs as $key=>$addr){
+                    $emAddrs[$key] = filter_var($addr, FILTER_SANITIZE_EMAIL);
+                    if($emAddrs[$key] == ""){
+                        unset($emAddrs[$key]);
+                    }
+                }
             }
+            
         }
 
         if (isset($_POST['txtSubject'])) {
@@ -90,54 +104,67 @@ try {
             }
         }
 
-        if (isset($_POST['btnEmail']) && $emAddr != '' && $emSubject != '' && $stmtMarkup != '') {
+        if (isset($_POST['txtBody'])) {
+            $emBody = str_replace(["\r\n", "\r", "\n"], "<br/>", filter_var($_POST['txtBody'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            if ($emBody == '') {
+                $msg .= "The email Body is required.  ";
+            }
+        }
 
-            try{
-                $mail = new HHKMailer($dbh);
+        if (isset($_POST['btnEmail']) && count($emAddrs) > 0 && $emSubject != '' && $emBody && $stmtMarkup != '') {
 
-                $mail->From = $uS->FromAddress;
-                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
-                $mail->addAddress($emAddr);     // Add a recipient
-                $mail->addReplyTo($uS->ReplyTo);
+            foreach ($emAddrs as $emAddr) {
+                if ($emAddr != '') {
+                    try {
+                        $mail = new HHKMailer($dbh);
 
-                $mail->isHTML(true);
+                        $mail->From = $uS->FromAddress;
+                        $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
+                        $mail->addAddress($emAddr);     // Add a recipient
+                        $mail->addReplyTo($uS->ReplyTo);
 
-                $mail->Subject = htmlspecialchars_decode($emSubject, ENT_QUOTES);
-                //$mail->msgHTML($stmtMarkup);
-                $mail->msgHTML("Your " . $uS->siteName . " invoice is attached");
-                $mpdf = new Mpdf(['tempDir'=>sys_get_temp_dir() . "/mpdf"]);
-                $mpdf->showImageErrors = true;
-                $mpdf->WriteHTML(
-                    '<html><head>' . HOUSE_CSS . INVOICE_CSS . '</head><body>' . $stmtMarkup . '</body></html>');
-                
-                $pdfContent = $mpdf->Output('', 'S');
-                $mail->addStringAttachment($pdfContent, 'Invoice.pdf', PHPMailer::ENCODING_BASE64,'application/pdf');
+                        $mail->isHTML(true);
 
-                $mail->send();
-                $msg .= "Email sent.  ";
-            }catch(\Exception $e){
-                $msg .= "Email failed!  " . $e->getMessage() . $mail->ErrorInfo;
+                        $mail->Subject = htmlspecialchars_decode($emSubject, ENT_QUOTES);
+                        //$mail->msgHTML($stmtMarkup);
+                        $mail->msgHTML($emBody);
+                        $mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
+                        $mpdf->showImageErrors = true;
+                        $mpdf->WriteHTML(
+                            '<html><head>' . HOUSE_CSS . INVOICE_CSS . '</head><body><div class="PrintArea">' . $stmtMarkup . '</div></body></html>'
+                        );
+
+                        $pdfContent = $mpdf->Output('', 'S');
+                        $mail->addStringAttachment($pdfContent, 'Invoice.pdf', PHPMailer::ENCODING_BASE64, 'application/pdf');
+
+                        $mail->send();
+                        $msg .= "Email sent to " . $emAddr . ".  ";
+                    } catch (\Exception $e) {
+                        $msg .= "Email failed!  " . $e->getMessage() . $mail->ErrorInfo;
+                    }
+                }
             }
         }
 
         $emSubject = $wInit->siteName . " Invoice";
 
-        // if (is_null($guest) === FALSE && $emAddr == '') {
-        //     $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-        //     $emAddr = $email["Email"];
-        // }
+        $emBody = "Hello,\n" . 
+        "Your invoice from " . $uS->siteName . " is attached.\n\r" . 
+        "Thank You,\n" . 
+        $uS->siteName;
 
-
-
-    // create send email table
+        // create send email table
         if ($invoice->isDeleted() === FALSE) {
             $emTbl = new HTMLTable();
             $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'class' => 'ml-2')), array("class"=>"hhk-flex")));
             $emTbl->addBodyTr(HTMLTable::makeTd(
                             'Email: '
-                            . HTMLInput::generateMarkup($emAddr, array('name' => 'txtEmail', 'class' => 'ml-2'))
+                            . HTMLInput::generateMarkup(implode(", ", $emAddrs), array('name' => 'txtEmail', 'class' => 'ml-2'))
                 . HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')), array("class"=>"hhk-flex")));
-            $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit'))));
+            $emTbl->addBodyTr(HTMLTable::makeTd(
+                    'Body: '
+                    . HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'ml-2 hhk-autosize')), array("class"=>"hhk-flex")));
+            $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit'))));
 
             $emtableMarkup .= $emTbl->generateMarkup(array("class"=>"emTbl"), 'Email Invoice');
         }
@@ -150,7 +177,7 @@ try {
 
 
 if ($msg != '') {
-    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight ui-widget ui-widget-content ui-corner-all', 'style' => 'font-size:14pt; padding: 0.5em; margin-left:10px;'));
+    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight ui-widget ui-widget-content ui-corner-all d-inline-block p-2 ml-3'));
 }
 ?>
 <!DOCTYPE html>
@@ -167,6 +194,7 @@ if ($msg != '') {
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type='text/javascript'>
             $(document).ready(function () {
@@ -188,27 +216,24 @@ if ($msg != '') {
     </head>
     <body>
         <div id="contentDiv">
-            <div style="float:left; margin-top:5px;margin-bottom:5px;" class="hhk-noprint">
-                <?php echo $msg; ?>
+            <div class=" my-3 hhk-noprint">
+            <?php echo $msg; ?>
             </div>
             <?php if($stmtMarkup != '') { ?>
             <div class="mt-3 invPage">
                 <div class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox mb-3'>
-                    <form name="formEm" method="POST" action="ShowInvoice.php">
+                    <form class="formEm" name="formEm" method="POST" action="ShowInvoice.php">
                         <?php echo $emtableMarkup; ?>
-                        <input type="button" value="Print" id='btnPrint' style="margin-right:.3em;margin-top:.5em;font-size:0.9em;"/>
-                        <input type="submit" value="Download MS Word" name='btnWord' id='btnWord' style="margin-right:.3em;margin-top:.5em; font-size:0.9em;"/>
+                        <input type="button" value="Print" id='btnPrint' class="ui-button ui-corner-all ui-widget mr-3 mt-2"/>
+                        <input type="submit" value="Download MS Word" name='btnWord' id='btnWord' class="ui-button ui-corner-all ui-widget mr-3 mt-2"/>
                     </form>
 
                 </div>
-                <div class='ui-widget ui-widget-content ui-corner-all'>
-                    <div id="divBody" class="PrintArea hhk-panel">
-                        <?php echo $stmtMarkup; ?>
-                    </div>
+                <div id="divBody" class='ui-widget ui-widget-content ui-corner-all PrintArea hhk-panel'>
+                    <?php echo $stmtMarkup; ?>
                 </div>
             </div>
             <?php } ?>
         </div>
-
     </body>
 </html>

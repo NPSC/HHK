@@ -547,4 +547,11 @@ $(document).ready(
 
 		//Logout after inactivity
 		//logoutTimer();
+
+		//autosize textarea based on content
+		$(document).on("input", "textarea.hhk-autosize", function () {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight + 3) + 'px';
+		});
+		$(document).find("textarea.hhk-autosize").trigger("input");
 });

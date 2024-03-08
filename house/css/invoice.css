@@ -1,20 +1,25 @@
 .invoiceItemTbl table {
     width: 100%;
+    border: 1px solid #c5dbec;
 }
 
 .invPage {
     max-width: 800px;
 }
 
-.emTbl, .emTbl input[type=text] {
+.emTbl, .emTbl input[type=text], .emTbl textarea {
     width: 100%;
+}
+
+.emTbl textarea {
+    resize: vertical;
 }
 
 .emTbl td.hhk-flex {
     align-items: center;
 }
 
-.emTbl input[type=submit] {
+.formEm input[type=submit], .formEm input[type=button] {
     font-size: 0.9em;
 }
 
@@ -26,13 +31,23 @@
     white-space: nowrap;
 }
 
-.invoiceItemTbl.hhk-tdbox td, .invoiceItemTbl.hhk-tdbox th {
+.invoiceItemTbl.hhk-tdbox tbody td, .invoiceItemTbl.hhk-tdbox th {
     border: 1px solid #c5dbec;
 }
 
+.invoiceItemTbl.hhk-tdbox tfoot td{
+    border-left: 1px solid #c5dbec;
+    border-right: 1px solid #c5dbec;
+    border-bottom: none;
+    border-top: none;
+}
+
 .invoiceItemTbl.hhk-tdbox td.hhk-tdTotals {
-    border-top-color: #333 !important;
-    border-top-width: 2px !important;
+    border-top: 2px solid #333 !important;
+}
+
+.PrintArea {
+    font-size: 1em;
 }
 
 @media print {
