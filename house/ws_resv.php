@@ -1,31 +1,31 @@
 <?php
+use HHK\Exception\NotFoundException;
 use HHK\Exception\SmsException;
 use HHK\Exception\ValidationException;
+use HHK\House\Hospital\{Hospital, HospitalStay};
+use HHK\House\PSG;
+use HHK\House\Reservation\ActiveReservation;
+use HHK\House\Reservation\CheckingIn;
+use HHK\House\Reservation\Reservation;
+use HHK\House\ReserveData\ReserveData;
+use HHK\Incident\ListReports;
+use HHK\Incident\Report;
+use HHK\Member\Address\Phones;
+use HHK\Member\IndivMember;
+use HHK\Note\LinkNote;
+use HHK\Note\ListNotes;
+use HHK\Note\Note;
 use HHK\Notification\SMS\SimpleTexting\Campaign;
+use HHK\Notification\SMS\SimpleTexting\Contact;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\Notification\SMS\SimpleTexting\Message;
 use HHK\Notification\SMS\SimpleTexting\Messages;
-use HHK\sec\WebInit;
-use HHK\SysConst\WebPageCode;
 use HHK\sec\Session;
-use HHK\House\Reservation\Reservation;
-use HHK\House\Reservation\CheckingIn;
-use HHK\House\Reservation\ActiveReservation;
-use HHK\House\ReserveData\ReserveData;
-use HHK\House\PSG;
-use HHK\Note\ListNotes;
-use HHK\Note\LinkNote;
-use HHK\Note\Note;
-use HHK\Incident\ListReports;
-use HHK\Incident\Report;
-use HHK\House\Hospital\{Hospital, HospitalStay};
-use HHK\Exception\NotFoundException;
-use HHK\Member\Address\Phones;
-use HHK\Member\IndivMember;
-use HHK\SysConst\MemBasis;
+use HHK\sec\WebInit;
 use HHK\SysConst\GLTableNames;
+use HHK\SysConst\MemBasis;
 use HHK\SysConst\PhonePurpose;
-use HHK\Notification\SMS\SimpleTexting\Contact;
+use HHK\SysConst\WebPageCode;
 use HHK\TableLog\NotificationLog;
 
 /**
@@ -57,7 +57,7 @@ if (isset($_REQUEST["cmd"])) {
 }
 
 
-$events = array();
+$events = [];
 
 
 try {
@@ -159,7 +159,7 @@ try {
 
     	$hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, 0, $idHs), FALSE);
 
-    	$events = array('success'=>$hArray['div'], 'title'=>$hArray['title']);
+    	$events = ['success' => $hArray['div'], 'title' => $hArray['title']];
 
     	break;
 
@@ -185,10 +185,10 @@ try {
     			$dbh->exec("call updt_visit_hospstay($idVisit, $newHsId);");
     		}
 
-    		$events = array('success'=>'Hospital Saved', 'newHsId' => $newHsId);
+    		$events = ['success' => 'Hospital Saved', 'newHsId' => $newHsId];
 
     	} else {
-    		$events = array('error'=>'Missing ids. ');
+    		$events = ['error' => 'Missing ids. '];
     	}
 
     	break;
@@ -235,7 +235,7 @@ try {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $noteCategory, $uS->username, $uS->ConcatVisitNotes));
+        $events = ['idNote' => LinkNote::save($dbh, $data, $idLink, $linkType, $noteCategory, $uS->username, $uS->ConcatVisitNotes)];
 
         break;
 
@@ -266,7 +266,7 @@ try {
             $updateCount = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
         }
 
-        $events = array('update'=>$updateCount, 'idNote'=>$noteId);
+        $events = ['update' => $updateCount, 'idNote' => $noteId];
 
         break;
 
@@ -285,7 +285,7 @@ try {
             $deleteCount = $note->deleteNote($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+        $events = ['delete' => $deleteCount, 'idNote' => $noteId];
 
         break;
 
@@ -304,7 +304,7 @@ try {
             $deleteCount = $note->undoDeleteNote($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+        $events = ['delete' => $deleteCount, 'idNote' => $noteId];
 
         break;
 
@@ -326,7 +326,7 @@ try {
             $flagCount = $note->flagNote($dbh, $flag, $uS->userName);
         }
 
-        $events = array('update'=>$flagCount, 'idNote'=>$noteId, 'flag'=>$flag);
+        $events = ['update' => $flagCount, 'idNote' => $noteId, 'flag' => $flag];
 
         break;
 
@@ -348,7 +348,7 @@ try {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('warning'=>'Link Note is not implemented.  ');
+        $events = ['warning' => 'Link Note is not implemented.  '];
 
         break;
 
@@ -453,7 +453,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $report = Report::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $signature, $signatureDate, $guestId, $psgId);
 		$report->saveNew($dbh);
 
-        $events = array('status'=>'success', 'idReport'=>$report->getIdReport());
+        $events = ['status' => 'success', 'idReport' => $report->getIdReport()];
 
         break;
 
@@ -500,7 +500,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $report = new Report($repId);
         $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution,$signature, $signatureDate, $incidentStatus, $uS->username);
 
-        $events = array('status'=>'success', 'idReport'=>$report->getIdReport(), 'incidentTitle'=>$incidentTitle, 'incidentDate'=>$incidentDate, 'incidentStatus'=>$incidentStatus);
+        $events = ['status' => 'success', 'idReport' => $report->getIdReport(), 'incidentTitle' => $incidentTitle, 'incidentDate' => $incidentDate, 'incidentStatus' => $incidentStatus];
 
         break;
 
@@ -519,7 +519,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $deleteCount = $report->deleteReport($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idReport'=>$repId);
+        $events = ['delete' => $deleteCount, 'idReport' => $repId];
 
         break;
 
@@ -538,7 +538,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $deleteCount = $report->undoDeleteReport($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idReport'=>$repId);
+        $events = ['delete' => $deleteCount, 'idReport' => $repId];
 
         break;
 
@@ -693,15 +693,15 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         break;
 
     default:
-        $events = array("error" => "Bad Command: \"" . $c . "\"");
+        $events = ["error" => "Bad Command: \"" . $c . "\""];
 }
 
 } catch (NotFoundException | ValidationException | SmsException $e){
-    $events = array("error" => $e->getMessage());
+    $events = ["error" => $e->getMessage()];
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 } catch (Exception $ex) {
-    $events = array("error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = ["error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 }
 
 
@@ -713,7 +713,7 @@ if (is_array($events)) {
     if ($json !== FALSE) {
         echo ($json);
     } else {
-        $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+        $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);
     }
 

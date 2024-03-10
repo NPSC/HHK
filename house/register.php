@@ -1,19 +1,19 @@
 <?php
 
-use HHK\House\OperatingHours;
-use HHK\sec\{SecurityComponent, Session, WebInit};
-use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
-use HHK\Payment\PaymentSvcs;
 use HHK\Exception\RuntimeException;
 use HHK\History;
-use HHK\SysConst\ReservationStatus;
+use HHK\House\OperatingHours;
 use HHK\House\Report\PaymentReport;
-use HHK\SysConst\ItemPriceCode;
-use HHK\SysConst\GLTableNames;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\House\Report\RoomReport;
-use HHK\SysConst\RoomRateCategories;
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentSvcs;
+use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\sec\Labels;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\ItemPriceCode;
+use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\RoomRateCategories;
 use HHK\US_Holidays;
 
 /**
@@ -51,8 +51,8 @@ $guestAddMessage = '';
 $shoHosptialName = FALSE;
 $colorKey = '';
 $countUnpaidInvoices = '';
-$rvCols = array();
-$wlCols = array();
+$rvCols = [];
+$wlCols = [];
 
 
 
@@ -66,9 +66,10 @@ try {
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
             $receiptMarkup = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', array('style' => 'text-align:center;')), array('style' => 'margin-right: 15px; width: 100%;'))
-                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style' => 'text-align: center')), array('style' => 'margin-left: 15px; width: 100%;'))
-                , array('style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1'));
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
         }
 
         // Display a status message.
@@ -129,7 +130,7 @@ if (isset($_GET['gamess'])) {
 
     $contents = filter_var($_GET['gamess'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    $guestAddMessage = HTMLContainer::generateMarkup('div', $contents, array('style'=>'clear:left;float:left; margin-top:5px;margin-bottom:5px;', 'class'=>"hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"));
+    $guestAddMessage = HTMLContainer::generateMarkup('div', $contents, ['style' => 'clear:left;float:left; margin-top:5px;margin-bottom:5px;', 'class' => "hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"]);
 
 }
 
@@ -140,29 +141,32 @@ $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
-    . HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrtDaily', 'style'=>'font-size:.8em;', 'class'=>'ml-5'))
-        . HTMLInput::generateMarkup('Refresh', array('type'=>'button', 'id'=>'btnRefreshDaily', 'style'=>'font-size:.8em;', 'class'=>'ml-5'))
-        , array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
-        . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
+    . HTMLInput::generateMarkup('Print', ['type' => 'button', 'id' => 'btnPrtDaily', 'style' => 'font-size:.8em;', 'class' => 'ml-5'])
+        . HTMLInput::generateMarkup('Refresh', ['type' => 'button', 'id' => 'btnRefreshDaily', 'style' => 'font-size:.8em;', 'class' => 'ml-5'])
+        ,
+    ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+        . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divdaily']);
 
 // Currently Checked In guests
-        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'class'=>'ml-5', 'style'=>'font-size:.9em;')) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextCurGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')) :""), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
-        . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
+        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlCurGuests', 'class' => 'ml-5', 'style' => 'font-size:.9em;']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextCurGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']) :""), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+        . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divcurres']);
 
 // make registration form print button
-$regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm ml-2 mr-3'))
-        . HTMLInput::generateMarkup('Print Default Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm mt-3 mt-md-0', 'style'=>'font-size:0.86em;'))
-        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;',"class"=>"hhk-flex hhk-flex-wrap my-3 my-lg-0 ml-lg-5"));
+$regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', ['id' => 'regckindate', 'class' => 'ckdate hhk-prtRegForm ml-2 mr-3'])
+        . HTMLInput::generateMarkup('Print Default Registration Forms', ['id' => 'btnPrintRegForm', 'type' => 'button', 'data-page' => 'PrtRegForm.php', 'class' => 'hhk-prtRegForm mt-3 mt-md-0', 'style' => 'font-size:0.86em;'])
+        ,
+    ['style' => 'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap my-3 my-lg-0 ml-lg-5"]);
 
 $currentReservations = HTMLContainer::generateMarkup('h3',
         '<span>' . $labels->getString('register', 'reservationTab', 'Confirmed Reservations') . '</span>' .
-        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'font-size:.9em;', 'class'=>"ml-5")) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextConfResvGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')): "") . $regButton
-        , array('style' => 'background-color:#D3D3D3; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap p-3"))
-        . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
+        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlConfRes', 'style' => 'font-size:.9em;', 'class' => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . $regButton
+        ,
+    ['style' => 'background-color:#D3D3D3; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap p-3"])
+        . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divreservs']);
 
 if ($uS->ShowUncfrmdStatusTab) {
-    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'font-size:.9em;', 'class'=>'ml-5')) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextUnConfResvGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')): ""), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
-        . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divunreserv'));
+    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlUcRes', 'style' => 'font-size:.9em;', 'class' => 'ml-5']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextUnConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): ""), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+        . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divunreserv']);
 }
 
 
@@ -173,10 +177,11 @@ if ($uS->ShowUncfrmdStatusTab) {
 
 
 $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'waitlistTab', 'Wait List') . '</span>' .
-        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'font-size:.9em;', "class"=>"ml-5")) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('role'=>'button', 'id'=>"btnTextWaitlistGuests", 'class'=>'ml-5', 'style'=>'font-size:.9em;')): "")
+        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlWlist', 'style' => 'font-size:.9em;', "class" => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextWaitlistGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "")
         //.$wlButton
-        , array('style' => 'background-color:#D3D3D3; align-items:baseline;','class'=>'hhk-flex hhk-flex-wrap p-2'))
-        . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divwaitlist'));
+        ,
+    ['style' => 'background-color:#D3D3D3; align-items:baseline;', 'class' => 'hhk-flex hhk-flex-wrap p-2'])
+        . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divwaitlist']);
 
 
 // Hospital Selector
@@ -194,13 +199,13 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
     $rightArrow = '<div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>';
 
     // All button
-    $colorKey = HTMLContainer::generateMarkup('button', 'All', array('class'=>'btnHosp hospActive', 'data-id'=>0));
+    $colorKey = HTMLContainer::generateMarkup('button', 'All', ['class' => 'btnHosp hospActive', 'data-id' => 0]);
 
     while ($r = $stmth->fetch(\PDO::FETCH_ASSOC)) {
 
     	if (strtolower($r['Reservation_Style']) != 'transparent') {
 
-	        $attrs = array('class'=>'btnHosp', 'data-id'=>$r['idHospital']);
+	        $attrs = ['class' => 'btnHosp', 'data-id' => $r['idHospital']];
 	        $attrs['style'] = '';
 	        if($r['Reservation_Style'] != ''){
 	            $attrs['style'] .= 'background-color:' . $r['Reservation_Style'] . ';';
@@ -219,7 +224,7 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
     	}
     }
 
-    $colorKey = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $leftArrow . HTMLContainer::generateMarkup("div", $colorKey, array("id"=>"hospBtns")) . $rightArrow, array("class"=>"d-flex")), array("id"=>"hospBtnWrapper"));
+    $colorKey = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $leftArrow . HTMLContainer::generateMarkup("div", $colorKey, ["id" => "hospBtns"]) . $rightArrow, ["class" => "d-flex"]), ["id" => "hospBtnWrapper"]);
 }
 
 
@@ -249,7 +254,7 @@ if ($uS->Show_Holidays) {
 
         foreach($list as $h){
             if ($h['use'] == 1) {
-                $date1 = \DateTime::createFromFormat('U', $h['timestamp']);
+                $date1 = \DateTime::createFromFormat('U', (string)$h['timestamp']);
                 $holidays[] = $date1->format('Y') . '-' . $date1->format('n') . '-' . $date1->format('j');
             }
         }
@@ -271,7 +276,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = '';
 }
 
-$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));
+$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), ['id' => 'selRoomGroupScheme']);
 
 $showCharges = TRUE;
 $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
@@ -285,18 +290,20 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
     // Prepare controls
     $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
     $statusSelector = HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($statusList, ''), array('name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple'));
+            HTMLSelector::doOptionsMkup($statusList, ''),
+        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple']);
 
-    $payTypes = array();
+    $payTypes = [];
 
     foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
         if ($p[2] != '') {
-            $payTypes[$p[2]] = array($p[2], $p[1]);
+            $payTypes[$p[2]] = [$p[2], $p[1]];
         }
     }
 
     $payTypeSelector = HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($payTypes, ''), array('name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple'));
+            HTMLSelector::doOptionsMkup($payTypes, ''),
+        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple']);
 
     // Count unpaid invoices
 
