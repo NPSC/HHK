@@ -48,7 +48,10 @@
             sendIcon: `<i class="bi bi-send-fill"></i>`
         };
 
-        var $dialog = $('<div id="viewMsgsDialog" class="loading">');
+        var $dialog = $(document).find("#viewMsgsDialog");
+        if ($dialog.length == 0) {
+            $dialog = $('<div id="viewMsgsDialog" class="loading">');
+        }
         
         var defaults = {
             guestId: 0,
@@ -69,7 +72,6 @@
         var $btn = $(this);
 
 		reinitialize($dialog, settings);
-        createViewer($dialog, uiMkup, settings);
 
         actions($dialog, uiMkup, settings, $btn);
 
@@ -79,6 +81,7 @@
     function actions($dialog, uiMkup, settings, $btn) {
         $btn.on('click', function (e) {
             e.preventDefault();
+            createDialog($dialog, uiMkup, settings);
             $dialog.dialog('open');
         });
 
@@ -217,7 +220,7 @@
         });
     }
 
-    function createViewer($dialog, uiMkup, settings) {
+    function createDialog($dialog, uiMkup, settings) {
 
         $dialog.dialog({
             autoOpen: false,
@@ -233,6 +236,9 @@
                 "Close": function () {
                     $(this).dialog("close");
                 }
+            },
+            close: function(event, ui) {
+                $(this).empty().dialog('destroy');
             }
         });
 
@@ -240,6 +246,8 @@
     }
 
     function loadDialog($dialog, uiMkup, settings) {
+        $dialog.addClass("loading");
+        
         //if is visit, resv or single guest
         if (settings.visitId || settings.resvId || settings.guestId) {
 
@@ -450,6 +458,6 @@
     
     function reinitialize($dialog, settings){
 		$dialog.off('click', '*');
-	}
+    }
 
 }(jQuery));

@@ -1628,7 +1628,8 @@ $(document).ready(function () {
            		}
            });
 
-            $(".btnShowVisitMsgs").each(function () {
+           $("#curres .btnShowVisitMsgs").off('click');
+            $("#curres .btnShowVisitMsgs").each(function () {
                 $(this).smsDialog({ "visitId": $(this).data('vid'), "spanId": $(this).data("span") });
             });
        },
@@ -1652,6 +1653,7 @@ $(document).ready(function () {
            		}
            });
 
+           $("#reservs .btnShowResvMsgs").off('click');
            $("#reservs .btnShowResvMsgs").each(function () {
             $(this).smsDialog({ "resvId": $(this).data('rid') });
         });
@@ -1675,6 +1677,7 @@ $(document).ready(function () {
            			}
                 });
                
+               $("#unreserv .btnShowResvMsgs").off('click');
                 $("#unreserv .btnShowResvMsgs").each(function () {
                     $(this).smsDialog({ "resvId": $(this).data('rid') });
                 });
@@ -1699,6 +1702,7 @@ $(document).ready(function () {
            		}
             });
            
+           $("#waitlist .btnShowResvMsgs").off('click');
            $("#waitlist .btnShowResvMsgs").each(function () {
                $(this).smsDialog({ "resvId": $(this).data('rid') });
            });
