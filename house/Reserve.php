@@ -69,9 +69,10 @@ try {
     //make receipt copy
     if($receiptMarkup != '' && $uS->merchantReceipt == true) {
         $receiptMarkup = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', array('style' => 'text-align:center;')), array('style' => 'margin-right: 15px; width: 100%;'))
-            .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style' => 'text-align: center')), array('style' => 'margin-left: 15px; width: 100%;'))
-            , array('style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1'));
+            HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+            .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+            ,
+            ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
     }
 
 
