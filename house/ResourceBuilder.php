@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Checklist;
 use HHK\Document\FormTemplate;
 use HHK\House\Attribute\Attributes;
 use HHK\House\Constraint\Constraints;
@@ -1929,16 +1930,8 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
     ]
 );
 
-// Keep out of Live for now.
-if ($uS->Site_Mode != "live") {
-
-    // Checklists
-    $tbl = ResourceBldr::getSelections($dbh, 'Checklist_PSG', 'm', $labels);
-    $cblistSelections = $tbl->generateMarkup(["class" => "sortable"]);
-} else {
-    $cblistSelections = 'Coming Soon!';
-}
-
+// Checklists Manager
+$cblistSelections = Checklist::createChecklistSelectors($dbh, $labels);
 
 $insuranceType = new InsuranceType();
 
@@ -2380,13 +2373,29 @@ $formBuilderOptions = [
                 </div>
 
                 <div style="float: left; margin-left: 30px;">
-                    <h3>PSG Checklist Items</h3>
+                    <h3>Checklist Categories </h3>
                     <form id="formcblist">
                         <div>
                             <?php echo $cblistSelections; ?>
                         </div>
                         <span style="margin: 10px; float: right;"><input type="button" id='btncblistSave'
                                 class="hhk-savecblist" data-type="h" value="Save" /></span>
+                    </form>
+                </div>
+                <div style="float: left; margin-left: 30px;">
+                    <h3>Demographics</h3>
+                    <form id="formcbCat">
+                        <table>
+                            <tr>
+                                <th>Checklist</th>
+                                <td>
+                                    <?php echo $selChecklistItems; ?>
+                                </td>
+                            </tr>
+                        </table>
+                        <div id="divchecklistCat"></div>
+                        <span style="margin: 10px; float: right;"><input type="button" id='btnChecklistSaveCat' class="hhk-saveLookup"
+                                data-type="d" value="Save" /></span>
                     </form>
                 </div>
 
