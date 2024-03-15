@@ -149,7 +149,7 @@ CREATE TABLE if not exists `cc_hosted_gateway` (
 -- -----------------------------------------------------
 -- Table `checklist_item`
 -- -----------------------------------------------------
-CREATE TABLE `checklist_item` (
+CREATE TABLE it not exists `checklist_item` (
   `idChecklist_item` int(11) NOT NULL AUTO_INCREMENT,
   `GL_TableName` varchar(45) NOT NULL DEFAULT '',
   `GL_Code` varchar(65) NOT NULL DEFAULT '',
