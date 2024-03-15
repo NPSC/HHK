@@ -1,6 +1,7 @@
 <?php
 
 use HHK\Notification\Mail\HHKMailer;
+use HHK\Payment\Statement;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
@@ -155,18 +156,7 @@ try {
 
         // create send email table
         if ($invoice->isDeleted() === FALSE) {
-            $emTbl = new HTMLTable();
-            $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'class' => 'ml-2')), array("class"=>"hhk-flex")));
-            $emTbl->addBodyTr(HTMLTable::makeTd(
-                            'Email: '
-                            . HTMLInput::generateMarkup(implode(", ", $emAddrs), array('name' => 'txtEmail', 'class' => 'ml-2'))
-                . HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')), array("class"=>"hhk-flex")));
-            $emTbl->addBodyTr(HTMLTable::makeTd(
-                    'Body: '
-                    . HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'ml-2 hhk-autosize')), array("class"=>"hhk-flex")));
-            $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit'))));
-
-            $emtableMarkup .= $emTbl->generateMarkup(array("class"=>"emTbl"), 'Email Invoice');
+            $emtableMarkup = Invoice::makeEmailTbl($emSubject, $emAddrs, $emBody, $invNum);
         }
     } else {
         $msg .= 'Invoice not found.';
@@ -224,8 +214,7 @@ if ($msg != '') {
                 <div class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox mb-3'>
                     <form class="formEm" name="formEm" method="POST" action="ShowInvoice.php">
                         <?php echo $emtableMarkup; ?>
-                        <input type="button" value="Print" id='btnPrint' class="ui-button ui-corner-all ui-widget mr-3 mt-2"/>
-                        <input type="submit" value="Download MS Word" name='btnWord' id='btnWord' class="ui-button ui-corner-all ui-widget mr-3 mt-2"/>
+                        
                     </form>
 
                 </div>

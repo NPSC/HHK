@@ -715,6 +715,7 @@ $uS->guestId = $id;
         <?php echo NAVBAR_CSS; ?>
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo CSSVARS; ?>
+        <?php echo STATEMENT_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>

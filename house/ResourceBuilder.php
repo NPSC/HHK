@@ -2054,10 +2054,12 @@ $formBuilderOptions = [
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-			<h1 class="mt-2"><?php echo $wInit->pageHeading; ?>&nbsp; <h4> (Any changes require everybody to log out and log back in!)</h4></h1>
+            <div class="my-1 d-flex align-items-center" id="rescBuilderTitle">
+			    <h1 class="mr-3"><?php echo $wInit->pageHeading; ?></h1>
+                <span class="p-1 ui-corner-all ui-state-highlight">Changes won't take effect until the next login</span>
+            </div>
 
-            <div id="mainTabs"
-			style="font-size: .9em; display: none;">
+            <div id="mainTabs" style="font-size: .9em; display: none;">
 			<ul>
 				<li><a href="#rescTable">Resources</a></li>
 				<li><a href="#roomTable">Rooms</a></li>

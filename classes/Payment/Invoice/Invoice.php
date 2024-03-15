@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\Invoice;
 
+use HHK\HTMLControls\HTMLInput;
 use HHK\Payment\Receipt;
 use HHK\Payment\Invoice\InvoiceLine\{AbstractInvoiceLine, InvoiceInvoiceLine};
 use HHK\Purchase\Item;
@@ -850,6 +851,29 @@ where
 
 		return $mkup;
 	}
+
+	public static function makeEmailTbl($emSubject = "", $emAddrs = "", $emBody = "", $invNum = null){
+        $emtableMarkup = "";
+        $emTbl = new HTMLTable();
+
+        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'class' => 'ml-2')), array("class"=>"hhk-flex")));
+        $emTbl->addBodyTr(HTMLTable::makeTd(
+            'Email: '
+            . HTMLInput::generateMarkup(implode(", ", $emAddrs), array('name' => 'txtEmail', 'class' => 'ml-2'))
+            . ($invNum !== null ? HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')): ""), array("class"=>"hhk-flex")));
+        $emTbl->addBodyTr(HTMLTable::makeTd(
+            'Body: '
+            . HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'ml-2 hhk-autosize')), array("class"=>"hhk-flex")));
+        $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit'))));
+
+        $emtableMarkup .= $emTbl->generateMarkup(array("class"=>"emTbl"), 'Email Invoice');
+
+        $emtableMarkup .= HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3 mt-2"]);
+        $emtableMarkup .= HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3 mt-2"]);
+        
+        return $emtableMarkup;
+    }
+	
 	/**
 	 * Summary of getBillToAddress
 	 * @param \PDO $dbh
@@ -1571,4 +1595,3 @@ where pi.Invoice_Id in ($whAssoc)";
 		}
 	}
 }
-?>

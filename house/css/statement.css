@@ -1,0 +1,95 @@
+.emTbl, .emTbl input[type=text], .emTbl textarea{
+    width: 100%;
+}
+
+#formEm input[type=submit], #formEm input[type=button], #formWord input[type=submit], #formWord input[type=button] {
+    font-size: 0.9em;
+}
+
+#stmtDiv {
+    max-width: 800px;
+}
+
+#divStmt > table > tbody > tr > td {
+    vertical-align: top;
+}
+
+#divStmt .hhk-tdbox tr.stmtHead {
+    border-top: 2px solid #2E99DD !important;
+}
+
+#divStmt #stmtSummary tr.sumDivider {
+    border-bottom: 2px solid #2E99DD !important;
+}
+
+#divStmt #stmtSummary .balanceLine {
+    font-weight:bold;
+    font-size:1.2em;
+}
+
+#divStmt.PrintArea {
+    font-family: Arial, Helvetica,"Lucida Grande", serif; 
+    color: #000;
+}
+
+@media print {
+    #divStmt.PrintArea {
+        border: none !important;
+    }
+}
+
+@page {
+    margin: 1cm;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.align-center {
+    text-align: center;
+}
+
+.align-right {
+    text-align: right;
+}
+
+.hhk-tdTotals {
+    font-weight: bold;
+}
+
+.pmtDisclaimer {
+    font-size:0.6em;
+    text-align:justify;
+    max-width:600px;
+}
+
+#divStmt #stmtHeader * {
+    border: none;
+    padding: 0;
+}
+
+#divStmt #stmtSummary > tbody > tr > td {
+    border: none;
+}
+
+#divStmt {
+    font-size: 0.9em;
+}
+
+#divStmt table.tblStmtSummary {
+    margin-left: auto;
+}
+
+
+#emailStmtDiv #divStmt {
+    max-width: 800px;
+    border: none;
+}
+
+@media print {
+    #emailStmtDiv #divStmt {
+        max-width: none !important;
+    }
+}
+
