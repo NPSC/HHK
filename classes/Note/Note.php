@@ -236,7 +236,13 @@ class Note {
         return $counter;
     }
 
-    public function saveTitle(\PDO $dbh, $title) {
+    /**
+     * Summary of saveTitle
+     * @param \PDO $dbh
+     * @param string $title
+     * @return int
+     */
+    public function saveTitle(\PDO $dbh, string $title) {
 
         $counter = 0;
 
