@@ -1931,7 +1931,7 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
 );
 
 // Checklists Manager
-$cblistSelections = Checklist::createChecklistSelectors($dbh, $labels);
+$cblistSelections = '';  //Checklist::createChecklistSelectors($dbh, $labels);
 
 $insuranceType = new InsuranceType();
 
@@ -2371,7 +2371,7 @@ $formBuilderOptions = [
                                 class="hhk-saveLookup" data-type="d" value="Save" /></span>
                     </form>
                 </div>
-
+<!-- 
                 <div style="float: left; margin-left: 30px;">
                     <h3>Checklist Categories </h3>
                     <form id="formcblist">
@@ -2398,7 +2398,7 @@ $formBuilderOptions = [
                                 data-type="d" value="Save" /></span>
                     </form>
                 </div>
-
+ -->
             </div>
             <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                 <div style="float: left;">
