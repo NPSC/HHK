@@ -2376,7 +2376,7 @@ $formBuilderOptions = [
                     <h3>Checklist Categories </h3>
                     <form id="formcblist">
                         <div>
-                            <?php echo $cblistSelections; ?>
+                            <?php //echo $cblistSelections; ?>
                         </div>
                         <span style="margin: 10px; float: right;"><input type="button" id='btncblistSave'
                                 class="hhk-savecblist" data-type="h" value="Save" /></span>
