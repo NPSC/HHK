@@ -1931,7 +1931,8 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
 );
 
 // Checklists Manager
-$cblistSelections = '';  //Checklist::createChecklistSelectors($dbh, $labels);
+$cblistSelections = Checklist::createChecklists($dbh, $labels);
+$selChecklistItems = Checklist::createChecklistList($dbh);
 
 $insuranceType = new InsuranceType();
 
@@ -1977,7 +1978,7 @@ foreach ($rows2 as $r) {
         $r[1] = $labels->getString('hospital', 'location', LOCATION_TABLE_NAME);
     }
 
-    if ($r[1] != 'Demographics') {
+    if ($r[1] != 'Demographics' && $r[1] != 'Checklist') {
         $lkups[] = $r;
     }
 }
@@ -2344,6 +2345,7 @@ $formBuilderOptions = [
                 <div>
                     <?php echo $demoMessage; ?>
                 </div>
+                <div style="border:1px inset black; float: left; padding:5px;">
                 <div style="float: left;">
                     <h3>Demographic Categories</h3>
                     <form id="formdemo">
@@ -2371,19 +2373,20 @@ $formBuilderOptions = [
                                 class="hhk-saveLookup" data-type="d" value="Save" /></span>
                     </form>
                 </div>
-<!-- 
+            </div>
+            <div style="border:1px inset black; float: left; padding:5px;">
                 <div style="float: left; margin-left: 30px;">
                     <h3>Checklist Categories </h3>
                     <form id="formcblist">
                         <div>
-                            <?php //echo $cblistSelections; ?>
+                            <?php echo $cblistSelections; ?>
                         </div>
                         <span style="margin: 10px; float: right;"><input type="button" id='btncblistSave'
                                 class="hhk-savecblist" data-type="h" value="Save" /></span>
                     </form>
                 </div>
                 <div style="float: left; margin-left: 30px;">
-                    <h3>Demographics</h3>
+                    <h3>Checklist</h3>
                     <form id="formcbCat">
                         <table>
                             <tr>
@@ -2398,7 +2401,7 @@ $formBuilderOptions = [
                                 data-type="d" value="Save" /></span>
                     </form>
                 </div>
- -->
+            </div>
             </div>
             <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                 <div style="float: left;">

@@ -4,6 +4,7 @@ namespace HHK;
 
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\House\Report\ResourceBldr;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Labels;
 
 
@@ -35,11 +36,39 @@ class Checklist
         readGenLookupsPDO($dbh, 'Checklist', 'Order');
     }
 
-    public static function createChecklistSelectors(\PDO $dbh, Labels $labels, $checklistRootTablename = 'Checklist') {
+    public static function createChecklists(\PDO $dbh, Labels $labels, $checklistRootTablename = 'Checklist') {
 
-        $tbl = ResourceBldr::getSelections($dbh, 'Checklist', 'm', $labels);
+        $tbl = ResourceBldr::getSelections($dbh, $checklistRootTablename, 'm', $labels);
 
         return $tbl->generateMarkup(["class" => "sortable"]);
+    }
+
+    public static function createChecklistList(\PDO $dbh) {
+
+        // Chceklist category selectors
+        $stmt = $dbh->query("SELECT DISTINCT
+            `g`.`Table_Name`, g2.Description
+        FROM
+            `gen_lookups` `g`
+                JOIN
+            `gen_lookups` `g2` ON `g`.`Table_Name` = `g2`.`Code`
+                AND `g2`.`Table_Name` = 'Checklist'
+                AND `g2`.`Substitute` = 'y'
+        WHERE
+            `g`.`Type` = 'd';");
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        $selChecklists = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
+            [
+                'name' => 'selChecklistLookup',
+                'data-type' => 'd',
+                'class' => 'hhk-selLookup'
+            ]
+        );
+
+
+        return $selChecklists;
     }
 
     /**
