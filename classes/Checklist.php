@@ -26,6 +26,7 @@ use HHK\sec\Labels;
 
 class Checklist
 {
+    const ChecklistRootTablename = 'Checklist';
 
     protected $checklistType;
 
@@ -36,14 +37,25 @@ class Checklist
         readGenLookupsPDO($dbh, 'Checklist', 'Order');
     }
 
-    public static function createChecklists(\PDO $dbh, Labels $labels, $checklistRootTablename = 'Checklist') {
+    /**
+     * Creates a list of checklist categories with the USE column.
+     * @param \PDO $dbh
+     * @param \HHK\sec\Labels $labels
+     * @return string
+     */
+    public static function createChecklistCategories(\PDO $dbh, Labels $labels) {
 
-        $tbl = ResourceBldr::getSelections($dbh, $checklistRootTablename, 'm', $labels);
+        $tbl = ResourceBldr::getSelections($dbh, self::ChecklistRootTablename, 'm', $labels);
 
         return $tbl->generateMarkup(["class" => "sortable"]);
     }
 
-    public static function createChecklistList(\PDO $dbh) {
+    /**
+     * Summary of createChecklistTypes
+     * @param \PDO $dbh
+     * @return string
+     */
+    public static function createChecklistTypes(\PDO $dbh) {
 
         // Chceklist category selectors
         $stmt = $dbh->query("SELECT DISTINCT
@@ -52,8 +64,8 @@ class Checklist
             `gen_lookups` `g`
                 JOIN
             `gen_lookups` `g2` ON `g`.`Table_Name` = `g2`.`Code`
-                AND `g2`.`Table_Name` = 'Checklist'
-                AND `g2`.`Substitute` = 'y'
+                AND `g2`.`Table_Name` = '" . self::ChecklistRootTablename .
+                "' AND `g2`.`Substitute` = 'y'
         WHERE
             `g`.`Type` = 'd';");
 
@@ -66,7 +78,6 @@ class Checklist
                 'class' => 'hhk-selLookup'
             ]
         );
-
 
         return $selChecklists;
     }

@@ -25,6 +25,7 @@ use HHK\SysConst\HospitalType;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\ItemType;
+use HHK\SysConst\Mode;
 use HHK\SysConst\PayType;
 use HHK\SysConst\RateStatus;
 use HHK\SysConst\RoomRateCategories;
@@ -1931,8 +1932,12 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
 );
 
 // Checklists Manager
-$cblistSelections = Checklist::createChecklists($dbh, $labels);
-$selChecklistItems = Checklist::createChecklistList($dbh);
+// TODO
+if ($uS->mode != Mode::Live) {
+
+    $cblistSelections = Checklist::createChecklistCategories($dbh, $labels);
+    $selChecklistItems = Checklist::createChecklistTypes($dbh);
+}
 
 $insuranceType = new InsuranceType();
 
@@ -2345,7 +2350,7 @@ $formBuilderOptions = [
                 <div>
                     <?php echo $demoMessage; ?>
                 </div>
-                <div style="border:1px inset black; float: left; padding:5px;">
+                <div style="border:1px inset #9B9B9E; float: left; padding:9px; margin-right: 9px;">
                 <div style="float: left;">
                     <h3>Demographic Categories</h3>
                     <form id="formdemo">
@@ -2374,7 +2379,7 @@ $formBuilderOptions = [
                     </form>
                 </div>
             </div>
-            <div style="border:1px inset black; float: left; padding:5px;">
+<!--             <div style="border:1px inset #9B9B9E; float: left; padding:9px;">
                 <div style="float: left; margin-left: 30px;">
                     <h3>Checklist Categories </h3>
                     <form id="formcblist">
@@ -2402,7 +2407,7 @@ $formBuilderOptions = [
                     </form>
                 </div>
             </div>
-            </div>
+ -->            </div>
             <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                 <div style="float: left;">
                     <h3>General Lookups</h3>

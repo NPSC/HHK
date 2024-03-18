@@ -246,6 +246,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         }
 
         // PSG checklists
+        // TODO
 //        $checklist = '' new Checklist($dbh, ChecklistType::PSG);
 
         $lastConfirmed = HTMLContainer::generateMarkup('div',
@@ -260,6 +261,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             )
 
             // PSG checklist
+            // TODO
 //            . $checklist->createChecklist($this->getIdPsg())
         );
 
