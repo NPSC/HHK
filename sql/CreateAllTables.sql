@@ -2312,6 +2312,10 @@ CREATE TABLE if not exists `w_users` (
   PRIMARY KEY (`User_Name`)
 ) ENGINE=InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `w_user_tokens`
+-- -----------------------------------------------------
 CREATE TABLE if not exists `w_user_tokens` (
 	`idToken` INT(11) NOT NULL AUTO_INCREMENT,
 	`idName` INT(11) NOT NULL,
