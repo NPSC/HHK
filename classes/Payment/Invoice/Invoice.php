@@ -977,8 +977,14 @@ where
 					$adrTbl->addBodyTr ( HTMLTable::makeTd ( 'c/o: ' . $careOf ) );
 				}
 
+				$cityLine = "";
+				if($city != ""){
+					$cityLine = $city . ', ';
+				}
+				$cityLine .= $state . ' ' . $zip;
+
 				$adrTbl->addBodyTr ( HTMLTable::makeTd ( $street ) );
-				$adrTbl->addBodyTr ( HTMLTable::makeTd ( $city . ', ' . $state . ' ' . $zip ) );
+				$adrTbl->addBodyTr ( HTMLTable::makeTd ( $cityLine ) );
 				if ($rows [0] ['Phone_Num'] != '') {
 					$adrTbl->addBodyTr ( HTMLTable::makeTd ( 'Phone: ' . $rows [0] ['Phone_Num'] ) );
 				}
