@@ -690,7 +690,7 @@ where
 			HTMLTable::makeTd(Receipt::getHouseIconMarkup (), ['style'=>'width: 30%;']) . 
 			HTMLTable::makeTd(Receipt::getAddressTable ( $dbh, $uS->sId ))
 		);
-		$rec = $headerTbl->generateMarkup(['class'=>'mb-3', 'style'=>'width: 100%']);
+		$rec = $headerTbl->generateMarkup(['class'=>'mb-3 fullWidth']);
 
 		// Invoice dates
 		$invDate = new \DateTime ( $this->getDate () );
@@ -748,7 +748,7 @@ where
 		$rec .= (new HTMLTable())->addBodyTr(
 			HTMLTable::makeTd($invTbl->generateMarkup(['class'=>'hhk-tdbox-noborder'])) . 
 			HTMLTable::makeTd($billTbl->generateMarkup())
-		)->generateMarkup(['class'=>'mb-3', 'style'=>'width: 100%;']);
+		)->generateMarkup(['class'=>'mb-3 fullWidth']);
 
 		// Patient and guest
 		if ($idPatient != $idGuest && $patientName != '') {

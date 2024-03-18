@@ -68,3 +68,7 @@
         border: none !important;
     }
 }
+
+.fullWidth {
+    width: 100%;
+}
