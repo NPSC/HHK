@@ -268,10 +268,6 @@ $(document).ready(function() {
                         $('#btnDone').val('Save').show();
                     }
 
-                    if (data.warning) {
-                        flagAlertMessage(data.warning, 'warning');
-                    }
-
                     if (data.xfer || data.inctx) {
                         paymentRedirect (data, $('#xform'));
                         return;

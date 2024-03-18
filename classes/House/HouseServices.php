@@ -765,6 +765,7 @@ class HouseServices {
 
         $uS = Session::getInstance();
         $payResult = NULL;
+        $invoice = NULL;
 
         if (is_null($paymentManager->pmp)) {
             return $payResult;
@@ -787,8 +788,10 @@ class HouseServices {
             $idPayor = $paymentManager->pmp->getIdInvoicePayor();
         }
 
-        // Create Invoice.
-        $invoice = $paymentManager->createInvoice($dbh, $visit, $idPayor, $paymentManager->pmp->getInvoiceNotes());
+        if($paymentManager->pmp->getBalWith() != ExcessPay::MoveToResv){
+            // Create Invoice.
+            $invoice = $paymentManager->createInvoice($dbh, $visit, $idPayor, $paymentManager->pmp->getInvoiceNotes());
+        }
 
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 

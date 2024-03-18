@@ -46,6 +46,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
+('Checklist', 'checklist_1_items', 'Checklist 1', '','m',0),
+
+('checklist_1_items', 'cl1', 'Item 1', '', 'd',0),
+
 ('Cm_Custom_Fields', 'HHK_ID', '','','',0),
 ('Cm_Custom_Fields', 'Deceased_Date', '','','',0),
 ('Cm_Custom_Fields', 'Diagnosis', '','','',0),
@@ -120,6 +124,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Email_Purpose','1','Home','i','',10),
 ('Email_Purpose','2','Work','i','',20),
 ('Email_Purpose','4','Office','o','',40),
+('Email_Purpose','no','No Email','i','',50),
 
 ('Email_Server', '', '(None)','','',0),
 ('Email_Server', 'SMTP', 'SMTP','','',0),
@@ -436,6 +441,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Site_Mode', 'demo', 'Demonstration','','',0),
 ('Site_Mode', 'live', 'Production','','',0),
 
+('smsProvider', '', '', '', '', 10),
+('smsProvider', 'SimpleTexting', 'SimpleTexting', '', '', 20),
+
 ('Special_Needs','c','Cancer','','d',0),
 ('Special_Needs','f','Dev. Challenged','','d',0),
 ('Special_Needs','z','Unknown','','d',1000),
@@ -449,6 +457,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'h', 'House','','',30),
 ('Sys_Config_Category', 'a', 'General','','',5),
 ('Sys_Config_Category', 'g', 'Guest','','',20),
+('Sys_Config_Category', 'sms', 'SMS Settings', '', '',55),
 ('Sys_Config_Category', 'es', 'Email Server','','',60),
 ('Sys_Config_Category', 'fg', 'Payment Gateway','','',0),
 ('Sys_Config_Category', 'pr', 'Password Rules','','',70),
@@ -589,6 +598,9 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('IncludeLastDay','false','b','h','','Include the departure day in room searches','',1),
 ('IncomeRated','true','b','hf','','Enable guest income chooser rate assistance','',1),
 ('InitResvStatus','a','lu','h','','Initial reservation status setting, confirmed or unconfirmed','Init_Reserv_Status',1),
+('insistCkinPhone', 'false', 'b', 'h', '', 'Insist phone for all guests be filled in on check in page', '', 1),
+('insistCkinEmail', 'false', 'b', 'h', '', 'Insist email for all guests be filled in on check in page', '', 1),
+('insistCkinAddress', 'false', 'b', 'h', '', 'Insist valid address for all guests be filled in on check in page', '', 1),
 ('InsistCkinDemog','false','b','h','','Insist that user fill in the demographics on the check in page','',1),
 ('InsistCkinPayAmt','true','b','h','','Insist the user fills in the payment amount on checkin page','',1),
 ('InsistGuestBD', 'false', 'b', 'g', '', 'Insist on user filling in guest birthdates', '',1),
@@ -667,6 +679,9 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Show_Closed', 'false', 'b', 'c', '', 'Indicate closed days on the calendar','', '1'),
 ('sId','11','i','a','','House organization Id','',1),
 ('siteName','Hospitality HouseKeeper','s','a','','House or organization  name','',1),
+('smsProvider', '', 'lu', 'sms', '', 'Enable SMS integration', 'smsProvider', '', 1),
+('smsToken', '', 's', 'sms', '', 'API Token', '', 1),
+('smsFrom', '', 's', 'sms', '', 'Account Phone number used as the From address', '', 1),
 ('SMTP_Auth_Required','true','b','es','','SMTP Authorization required','',1),
 ('SMTP_Debug','0','i','es','','0 = off; 1; 2; 3;  4 = low level','',1),
 ('SMTP_Host','','s','es','','SMTP Host','',1),
@@ -688,6 +703,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('UseDocumentUpload','true','b','hf','','Enable Document Uploads','',1),
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout','',1),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
+('UseRebook', 'false', 'b', 'hf', '', 'Automatically rebook cancelled reservation', '', 1),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
@@ -831,7 +847,19 @@ REPLACE INTO `template_tag` VALUES
 (25,'c','Room Rate Title','${RoomRateTitle}',''),
 (26,'c','Room Rate (pre tax)','${RoomRateAmount}',''),
 (27,'c','Rate Adjustment Percent','${RateAdjust}',''),
-(28,'c','Nightly Rate (pre tax)','${NightlyRate}','');
+(28,'c','Nightly Rate (pre tax)','${NightlyRate}',''),
+(29,'ra', 'Room', '${Room}',''),
+(30,'ra', 'Arrival Date', '${ArrivalDate}',''),
+(31,'ra', 'Arrival Time', '${ArrivalTime}',''),
+(32,'ra', 'Expected Departure Date', '${ExpectedDepartureDate}',''),
+(33,'ra', 'Signature Lines', '${SignatureLines}',''),
+(34,'ra', 'Initial Line', '${InitialLine}',''),
+(35,'ra', 'Date Today', '${DateToday}',''),
+(36,'ra', 'Blank Signature Line', '${BlankSignatureLine}',''),
+(37,'ra', 'Blank Textbox', '${BlankTextBox}',''),
+(38,'ra', 'Blank Inline Textbox', '${BlankInlineTextBox}',''),
+(39,'ra', 'Blank Textarea', '${BlankTextArea}',''),
+(40,'ra', 'Checkbox Toggle', '${CheckBox}','');
 -- ;
 
 replace into `item` (`idItem`, `Description`) values

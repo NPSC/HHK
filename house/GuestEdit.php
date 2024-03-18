@@ -1,39 +1,39 @@
 <?php
-use HHK\sec\WebInit;
-use HHK\sec\Session;
-use HHK\sec\SecurityComponent;
-use HHK\Payment\PaymentSvcs;
-use HHK\HTMLControls\HTMLContainer;
+use HHK\CreateMarkupFromDB;
 use HHK\Exception\RuntimeException;
+use HHK\History;
 use HHK\House\HouseServices;
 use HHK\House\PSG;
-use HHK\SysConst\VolMemberType;
-use HHK\SysConst\MemBasis;
-use HHK\Member\RoleMember\GuestMember;
-use HHK\Member\Address\Address;
-use HHK\Member\Address\Phones;
-use HHK\Member\Address\Emails;
-use HHK\History;
-use HHK\HTMLControls\HTMLTable;
 use HHK\House\Registration;
-use HHK\Member\EmergencyContact\EmergencyContact;
-use HHK\House\Vehicle;
-use HHK\Purchase\FinAssistance;
-use HHK\Member\Address\Addresses;
-use HHK\SysConst\GLTableNames;
-use HHK\HTMLControls\HTMLInput;
-use HHK\SysConst\VisitStatus;
-use HHK\Tables\Reservation\ReservationRS;
-use HHK\Tables\EditRS;
 use HHK\House\Reservation\Reservation_1;
-use HHK\Purchase\RoomRate;
-use HHK\SysConst\ItemPriceCode;
-use HHK\SysConst\MemStatus;
-use HHK\CreateMarkupFromDB;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
-use HHK\SysConst\RoomRateCategories;
 use HHK\House\Room\RoomChooser;
+use HHK\House\Vehicle;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Member\Address\Address;
+use HHK\Member\Address\Addresses;
+use HHK\Member\Address\Emails;
+use HHK\Member\Address\Phones;
+use HHK\Member\EmergencyContact\EmergencyContact;
+use HHK\Member\RoleMember\GuestMember;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentSvcs;
+use HHK\Purchase\FinAssistance;
+use HHK\Purchase\RoomRate;
 use HHK\sec\Labels;
+use HHK\sec\SecurityComponent;
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\ItemPriceCode;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\MemStatus;
+use HHK\SysConst\RoomRateCategories;
+use HHK\SysConst\VisitStatus;
+use HHK\SysConst\VolMemberType;
+use HHK\Tables\EditRS;
+use HHK\Tables\Reservation\ReservationRS;
 
 /**
  * GuestEdit.php
@@ -63,9 +63,9 @@ $uname = $uS->username;
 $guestTabIndex = 0;
 $guestName = '';
 $psgmkup = '';
-$memberData = array();
+$memberData = [];
 $showSearchOnly = FALSE;
-$ngRss = array();
+$ngRss = [];
 
 $memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
@@ -79,6 +79,15 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+        }
 
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
@@ -150,7 +159,7 @@ if ($id > 0) {
             }
 
         } else {
-        	$alertMessage = "This person is not a ".$labels->getString('MemberType', 'patient', 'Patient')." or ".$labels->getString('MemberType', 'guest', 'Guest') . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? " " . HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
+        	$alertMessage = "This person is not a ".$labels->getString('MemberType', 'patient', 'Patient')." or ".$labels->getString('MemberType', 'guest', 'Guest') . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? " " . HTMLContainer::generateMarkup('a', 'Go to Member Edit', ['href' => '../admin/NameEdit.php?id=' . $id]) : '');
             $showSearchOnly = TRUE;
         }
     }
@@ -207,7 +216,7 @@ if ($idPsg > 0) {
             $gpsg = new PSG($dbh, $n->idPsg->getStoredVal());
 
             $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $gpsg->getPatientName($dbh), array('href'=> 'GuestEdit.php?id='.$id.'&psg='.$gpsg->getIdPsg())))
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $gpsg->getPatientName($dbh), ['href' => 'GuestEdit.php?id=' . $id . '&psg=' . $gpsg->getIdPsg()]))
                 );
 
         }
@@ -470,17 +479,19 @@ if ($psg->getIdPsg() > 0) {
 
     // Credit card on file
     $ccMarkup = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-            HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+            HTMLContainer::generateMarkup('legend', 'Credit Cards', ['style' => 'font-weight:bold;'])
             . HouseServices::guestEditCreditTable($dbh, $registration->getIdRegistration(), $id, 'g')
-            . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-indx'=>'g', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-        ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel ignrSave')));
+            . HTMLInput::generateMarkup('Update Credit', ['type' => 'button', 'id' => 'btnCred', 'data-indx' => 'g', 'data-id' => $id, 'data-idreg' => $registration->getIdRegistration(), 'style' => 'margin:5px;float:right;'])
+        ,
+            ['id' => 'upCreditfs', 'style' => 'float:left;', 'class' => 'hhk-panel ignrSave']));
 
 
     // Registration markup
     $regTabMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-            HTMLContainer::generateMarkup('legend', 'Registration', array('style'=>'font-weight:bold;'))
+            HTMLContainer::generateMarkup('legend', 'Registration', ['style' => 'font-weight:bold;'])
             . $registration->createRegMarkup($dbh, $memberFlag)
-            , array('style'=>'float:left;', 'class'=>'hhk-panel'))) . $ccMarkup;
+            ,
+            ['style' => 'float:left;', 'class' => 'hhk-panel'])) . $ccMarkup;
 
     if ($uS->TrackAuto) {
         $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), $registration->getNoVehicle());
@@ -488,7 +499,7 @@ if ($psg->getIdPsg() > 0) {
 
     // Look for visits
 
-    $visitRows = array();
+    $visitRows = [];
     if ($registration->getIdRegistration() > 0) {
 
         $query = "select * from vspan_listing where "
@@ -499,7 +510,7 @@ if ($psg->getIdPsg() > 0) {
     }
 
 
-    $stays = array();
+    $stays = [];
     if ($id > 0) {
         $query = "select * from vstays_listing where idName = $id order by Checkin_Date desc;";
         $stmt = $dbh->query($query);
@@ -524,14 +535,14 @@ if ($psg->getIdPsg() > 0) {
         foreach ($visitRows as $r) {
 
             $room = $r['Status_Title'] . ' to ' . $r['Title'];
-            $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
+            $stIcon = HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-check', 'style' => 'float: left; margin-left:.3em;', 'title' => $r['Status_Title']]);
             $hospitalButton = '';
             $stayIcon = '';
 
             foreach ($stays as $s) {
 
                 if ($s['idVisit'] == $r['idVisit'] && $s['Visit_Span'] == $r['Span']) {
-                    $stayIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float: left; margin-left:.3em;', 'title'=>$labels->getString('MemberType', 'guest', 'Guest').' Stayed'));
+                    $stayIcon = HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-suitcase', 'style' => 'float: left; margin-left:.3em;', 'title' => $labels->getString('MemberType', 'guest', 'Guest') . ' Stayed']);
                     break;
                 }
 
@@ -541,17 +552,17 @@ if ($psg->getIdPsg() > 0) {
 
                 // Get the next room if room was changed
                 $room = $r['Status_Title'] . ' from ' . $r['Title'] . $r['nxtRoom'];
-                $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-newwin', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
+                $stIcon = HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-newwin', 'style' => 'float: left; margin-left:.3em;', 'title' => $r['Status_Title']]);
 
             } else if ($r['Status'] == VisitStatus::ChangeRate) {
 
                 $room = $r['Status_Title'] . " (Room: " . $r['Title'] . ")";
-                $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-tag', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
+                $stIcon = HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-tag', 'style' => 'float: left; margin-left:.3em;', 'title' => $r['Status_Title']]);
 
             } else if ($r['Status'] == VisitStatus::CheckedOut) {
 
                 $room =  $r['Status_Title'] . ' from ' . $r['Title'];
-                $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-extlink', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
+                $stIcon = HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-extlink', 'style' => 'float: left; margin-left:.3em;', 'title' => $r['Status_Title']]);
             }
 
             // Compile header
@@ -561,7 +572,7 @@ if ($psg->getIdPsg() > 0) {
                     . " to "
                     . ($r['Span_End'] == '' ? date('M j', strtotime($r['Expected_Departure'])) : date('M j', strtotime($r['Span_End'])))
             		. ".  " . $room . $stIcon . $stayIcon . $hospitalButton),
-                    array('class'=>'ui-accordion-header ui-helper-reset ui-state-default ui-corner-all hhk-view-visit', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'data-gid'=>$id, 'style'=>'min-height:20px; padding-top:5px;'));
+                    ['class' => 'ui-accordion-header ui-helper-reset ui-state-default ui-corner-all hhk-view-visit', 'data-vid' => $r['idVisit'], 'data-span' => $r['Span'], 'data-gid' => $id, 'style' => 'min-height:20px; padding-top:5px;']);
 
             $visitList .= $hdr;
 
@@ -592,7 +603,7 @@ if ($psg->getIdPsg() > 0) {
             $prePayment = $reserv->getPrePayment($dbh, $reserv->getIdReservation());
         }
 
-        $getResvArray = array('href'=>"Reserve.php?rid=" . $reserv->getIdReservation() );
+        $getResvArray = ['href' => "Reserve.php?rid=" . $reserv->getIdReservation()];
 
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), $getResvArray))
             . HTMLTable::makeTd($reserv->getStatusTitle($dbh, $reserv->getStatus()))
@@ -600,7 +611,7 @@ if ($psg->getIdPsg() > 0) {
             . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
             . HTMLTable::makeTd($reserv->getRoomTitle($dbh))
             . ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTd($categoryTitles[$reserv->getIdRoomRate()]) : HTMLTable::makeTd(''))
-            . ($uS->AcceptResvPaymt ? HTMLTable::makeTd($prePayment == 0 ? '0' : '$' . number_format($prePayment, 2), array('style'=>'text-align:center')) : '')
+            . ($uS->AcceptResvPaymt ? HTMLTable::makeTd($prePayment == 0 ? '0' : '$' . number_format($prePayment, 2), ['style' => 'text-align:center']) : '')
         );
 
         $constraintMkup = RoomChooser::createResvConstMkup($dbh, $reserv->getIdReservation(), TRUE);
@@ -608,7 +619,7 @@ if ($psg->getIdPsg() > 0) {
             $constraintMkup = "<p style='padding:4px;'>(No Room Attributes Selected.)<p>";
         }
 
-        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
+        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, ['style' => 'float:left;margin-left:10px;']), ['colspan' => '7']));
 
         // Accordian header
         $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
@@ -617,7 +628,8 @@ if ($psg->getIdPsg() > 0) {
                 . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture()))). '.'
             . ($prePayment > 0 && $reserv->isActive($reservStatuses) ? '  &nbsp; Pre-Payment = $' . number_format($prePayment, 2) : '')
                 . $reserv->getStatusIcon($dbh)
-                , array('style'=>'margin-left:10px;')), array('style'=>'min-height:25px; padding-top:5px;'));
+                ,
+                ['style' => 'margin-left:10px;']), ['style' => 'min-height:25px; padding-top:5px;']);
 
         $reservMarkup .= $hdr . HTMLContainer::generateMarkup('div', $rtbl->generateMarkup());
 
@@ -705,6 +717,7 @@ $uS->guestId = $id;
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -728,6 +741,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';

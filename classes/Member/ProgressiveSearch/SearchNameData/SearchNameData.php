@@ -454,6 +454,10 @@ class SearchNameData implements SearchNameDataInterface {
             $this->setRelationship($this->setIfNew($r["Relationship"], $formData->getRelationship()));
         }
 
+        if (isset($r["County"])){
+            $this->setAddressCounty($this->setIfNew($r["County"], $formData->getAddressCounty()));
+        }
+
     }
 
     public function setNoReturn($v)

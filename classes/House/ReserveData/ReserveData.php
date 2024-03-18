@@ -98,6 +98,9 @@ class ReserveData {
     protected $msgs;
     protected $resvPrompt;
     protected $insistCkinDemog;
+    protected $insistCkinPhone;
+    protected $insistCkinEmail;
+    protected $insistCkinAddress;
     protected $searchTerm;
     protected $resvStatusCode;
     protected $resvStatusType;
@@ -210,6 +213,9 @@ class ReserveData {
         $this->showBirthDate = $uS->ShowBirthDate;
         $this->useRepeatingResv = $uS->UseRepeatResv;
         $this->insistCkinDemog = FALSE;
+        $this->insistCkinPhone = FALSE;
+        $this->insistCkinEmail = FALSE;
+        $this->insistCkinAddress = FALSE;
         $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->guestLabel = $labels->getString('MemberType', 'guest', 'Guest');
@@ -672,6 +678,21 @@ class ReserveData {
         $this->insistCkinDemog = $id;
         return $this;
     }
+    
+    public function setInsistCkinPhone($id) {
+        $this->insistCkinPhone = $id;
+        return $this;
+    }
+    
+    public function setInsistCkinEmail($id) {
+        $this->insistCkinEmail = $id;
+        return $this;
+    }
+    
+    public function setInsistCkinAddress($id) {
+        $this->insistCkinAddress = $id;
+        return $this;
+    }
 
     public function setHasMOA($bol) {
         $this->hasMOA = $bol;
@@ -816,4 +837,3 @@ class ReserveData {
     }
 
 }
-?>

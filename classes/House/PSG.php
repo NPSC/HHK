@@ -2,16 +2,18 @@
 
 namespace HHK\House;
 
+use HHK\Checklist;
+use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Member\Role\Guest;
+use HHK\sec\{Session, Labels};
 use HHK\SysConst\{NameGuestStatus, RelLinkType, VisitStatus};
+use HHK\SysConst\ChecklistType;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
-use HHK\Tables\Visit\Visit_LogRS;
 use HHK\Tables\Name\{Name_GuestRS, NameRS};
 use HHK\Tables\Registration\PSG_RS;
-use HHK\sec\{Session, Labels};
-use HHK\Exception\RuntimeException;
+use HHK\Tables\Visit\Visit_LogRS;
 
 /**
  * PSG.php
@@ -243,15 +245,25 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $lastConfDate = $lcdDT->format('M j, Y');
         }
 
-        $lastConfirmed =  HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('fieldset',
-                    HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group').' Info Last Confirmed', array('style'=>'font-weight:bold;'))
-                    . HTMLContainer::generateMarkup('label', 'Update:', array('for'=>'cbLastConfirmed'))
-                    . HTMLInput::generateMarkup('', array('name'=>'cbLastConfirmed', 'type'=>'checkbox','style'=>'margin-left:.3em;'))
-                    . HTMLInput::generateMarkup($lastConfDate, array('name'=>'txtLastConfirmed', 'class'=>'ckdate','style'=>'margin-left:1em;'))
-                    , array('class'=>'hhk-panel')),
-            );
+        // PSG checklists
+        // TODO
+//        $checklist = '' new Checklist($dbh, ChecklistType::PSG);
 
+        $lastConfirmed = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup(
+                'fieldset',
+                HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group') . ' Info Last Confirmed', array('style' => 'font-weight:bold;'))
+                . HTMLContainer::generateMarkup('label', 'Update:', ['for' => 'cbLastConfirmed'])
+                . HTMLInput::generateMarkup('', ['name' => 'cbLastConfirmed', 'type' => 'checkbox', 'style' => 'margin-left:.3em;'])
+                . HTMLInput::generateMarkup($lastConfDate, ['name' => 'txtLastConfirmed', 'class' => 'ckdate', 'style' => 'margin-left:1em;'])
+                ,
+                ['class' => 'hhk-panel']
+            )
+
+            // PSG checklist
+            // TODO
+//            . $checklist->createChecklist($this->getIdPsg())
+        );
 
         // Change log
         $c = '';
@@ -553,4 +565,3 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         return $nameRS->Member_Status->getStoredVal();
     }
 }
-?>

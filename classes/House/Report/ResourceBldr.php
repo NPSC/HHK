@@ -177,7 +177,13 @@ Order by `t`.`List_Order`;");
         $tbl = new HTMLTable();
 
         $hdrTr =
-        ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('') : '') . HTMLTable::makeTh(count($diags) . ' Entries') . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTh('Category') : '') . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '') . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '') . ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '') . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
+        ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('') : '')
+             . HTMLTable::makeTh(count($diags) . ' Entries')
+              . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTh('Category') : '')
+               . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
+                . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
+                 . ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
+                  . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
         $tbl->addHeaderTr($hdrTr);
 

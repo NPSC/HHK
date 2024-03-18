@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
@@ -91,7 +92,7 @@ try {
         if (isset($_POST['btnEmail']) && $emAddr != '' && $emSubject != '' && $stmtMarkup != '') {
 
             try{
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->FromAddress;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);

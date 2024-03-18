@@ -169,6 +169,22 @@ try {
 
             break;
 
+        case "showNotificationLog":
+
+            $columns = array(
+                array( 'db' => 'Log_Type',  'dt' => 'Log_Type' ),
+                array( 'db' => 'Sub_Type',   'dt' => 'Sub_Type' ),
+                array( 'db' => 'username', 'dt' => 'username'),
+                array( 'db' => 'To', 'dt' => 'To'),
+                array( 'db' => 'From', 'dt' => 'From'),
+                array( 'db' => 'Log_Text', 'dt' => 'Log_Text'),
+                array( 'db' => 'Log_Details', 'dt' => 'Log_Details'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
+                );
+            $events = SSP::complex ( $_GET, $dbh, "notification_log", "idLog", $columns, null, null );
+    
+            break;
+
         case "showCron":
 
             $columns = array(

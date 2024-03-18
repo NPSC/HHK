@@ -219,7 +219,7 @@ class NewGuest
     IFNULL(na.Postal_Code, '') AS `Postal_Code`,
     IFNULL(na.Country_Code, '') AS `Country`,
 	CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone' ELSE IFNULL(np.Phone_Num, '') END AS `Phone`,
-	IFNULL(ne.Email, '') AS `Email`,
+	CASE WHEN (n.Preferred_Email = 'no') THEN 'No Email' ELSE IFNULL(ne.Email, '') END AS `Email`,
     IFNULL(g3.Description, '') AS `Relationship`,
     IFNULL(ng.idPsg, 0) as `idPsg`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,

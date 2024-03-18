@@ -35,6 +35,9 @@ function resvManager(initData, options) {
     var closedDays = options.closedDays;
 
     var insistCkinDemog = false;
+    var insistCkinEmail = initData.insistCkinEmail;
+    var insistCkinPhone = initData.insistCkinPhone;
+    var insistCkinAddress = initData.insistCkinAddress;
     var rooms = [];
     var people = new Items();
     var addrs = new Items();
@@ -112,7 +115,6 @@ function resvManager(initData, options) {
             } else if (namePart.toLowerCase() == 'first' && names.length > 1) {
                 return names[1].trim();
             }
-
         }
 
         return '';
@@ -339,8 +341,8 @@ function resvManager(initData, options) {
             var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
             var msg = false;
 
-            // Incomplete checked?
-            if ($('#' + prefix + 'incomplete').length > 0 && $('#' + prefix + 'incomplete').prop('checked') === false) {
+            // Incomplete not checked or complete address required?
+            if ($('#' + prefix + 'incomplete').length > 0 && ($('#' + prefix + 'incomplete').prop('checked') === false || (isCheckin == true && insistCkinAddress == true))) {
 
                 // Look at each entry
                 $('.' + prefix + 'hhk-addr-val').not('.hhk-MissingOk').each(function () {
@@ -369,6 +371,7 @@ function resvManager(initData, options) {
             }
 
             // Validate Phone Number
+            var phoneFilled = false;
             $('.hhk-phoneInput[id^="' + prefix + 'txtPhone"]').each(function () {
 
                 if ($.trim($(this).val()) !== '' && testreg.test($(this).val()) === false) {
@@ -389,7 +392,33 @@ function resvManager(initData, options) {
                 } else {
                     $(this).removeClass('ui-state-error');
                 }
+
+                if ($.trim($(this).val()) !== '' && !$(this).hasClass("ui-state-error") && phoneFilled == false) {
+                    phoneFilled = true;
+                }
+
             });
+
+            var isNoPhone = ($('.prefPhone[id^="' + prefix + 'phno"]:checked').length === 0 ? false:true);
+
+            if (isCheckin == true && insistCkinPhone == true && phoneFilled == false && isNoPhone == false) {
+                return "At least one phone number or 'No Phone' is required for check in."
+            }
+
+            // Validate Email
+            var emailFilled = false;
+            var isNoEmail = ($('.prefEmail[id^="' + prefix + 'emno"]:checked').length === 0 ? false:true);
+            $('.hhk-emailInput[id^="' + prefix + 'txtEmail"]').each(function () {
+
+                if ($.trim($(this).val()) !== '' && !$(this).hasClass("ui-state-error") && emailFilled == false) {
+                    emailFilled = true;
+                }
+
+            });
+
+            if (isCheckin == true && insistCkinEmail == true && emailFilled == false && isNoEmail == false) {
+                return "At least one email address or 'No Email' is required for check in."
+            }
 
             return '';
 
@@ -1859,7 +1888,8 @@ function resvManager(initData, options) {
 
     function ResvSection($wrapper) {
         var t = this;
-        var $rDiv, $veh, $rHdr, $expanderButton;
+        var $rDiv, $rHdr, $expanderButton;
+        let prePayErrorMsg = "Determine how to handle the pre-payment.";
 
         t.setupComplete = false;
         t.checkPayments = true;
@@ -2005,7 +2035,7 @@ function resvManager(initData, options) {
 
         }
 
-        function setupPay(data) {
+        function setupPay() {
 
             if ($('#selResource').length > 0 && $('#selRateCategory').length > 0) {
 
@@ -2019,16 +2049,20 @@ function resvManager(initData, options) {
                 });
 
                 // Return pre-payment if cancelling reserv.
-                $('#selResvStatus').change(function () {
+                $(document).on('change', '#selResvStatus', function () {
+                    // clean up pWarning error message
+                    if ($pWarning.text() == prePayErrorMsg) {
+                        $pWarning.hide();
+                    }
                     if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
                         // Cancel
                         isCheckedOut = true;
-                        $('#cbHeld').prop('checked', true);
-                        amtPaid();
+                        $('#cbHeld').prop('checked', true).trigger('change');
                     } else {
                         isCheckedOut = false;
-                        $('#cbHeld').prop('checked', false);
-                        amtPaid();
+                        $('#heldAmount').val('');
+                        $('#txtOverPayAmt').val('');
+                        $('#cbHeld').prop('checked', false).trigger('change');
                     }
                 });
                 $('#selResvStatus').change();
@@ -2043,6 +2077,55 @@ function resvManager(initData, options) {
             $('input.hhk-constraintsCB').change(function () {
                 updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
             });
+        }
+
+        function setupRebook(){
+            let datepickerOptions = {
+                    yearRange: '00:+2',
+                    changeMonth: true,
+                    changeYear: true,
+                    autoSize: true,
+                    minDate: 0,
+                    dateFormat: 'M d, yy'
+                },
+                newDate = moment().add('1', 'days').format("MMM D, YYYY");
+
+            // Resv Status selector
+            $(document).on('change', '#selResvStatus', function () {
+                $("#selexcpay option[value='m']").hide();
+
+                if ($(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
+                    // Cancel
+                    $("#newGstDate").datepicker(datepickerOptions);
+                    $('#rebookRow').show('fade');
+                } else {
+                    $("#newGstDate").val("");
+                    $("#cbRebook").prop("checked", false);
+                    $('#rebookRow').hide();
+                }
+            });
+
+            $(document).on('change', '#newGstDate', function (){
+                if($(this).val() != ''){
+                    $('#cbRebook').prop('checked', true);
+                    $("#selexcpay option[value='m']").show();
+                }else{
+                    $('#cbRebook').removeAttr('checked');
+                    $("#selexcpay option[value='m']").hide();
+                }
+            });
+
+            $(document).on('click', '#cbRebook', function(){
+                if($(this).prop('checked')){
+                    $("#newGstDate").val(newDate);
+                    $("#selexcpay option[value='m']").show();
+                }else{
+                    $("#newGstDate").val("");
+                    $("#selexcpay option[value='m']").hide();
+                }
+            });
+
+            $('#selResvStatus').change();
         }
 
         function setupNotes(rid, $container, psgId = null) {
@@ -2102,7 +2185,12 @@ function resvManager(initData, options) {
                 $rDiv.append(data.resv.rdiv.cof);
             }
 
-            // Stat
+            // Payment
+            if (data.resv.rdiv.pay !== undefined) {
+                $rDiv.append($(data.resv.rdiv.pay));
+            }
+
+            // Reservation Status
             if (data.resv.rdiv.rstat !== undefined) {
                 $rDiv.append($(data.resv.rdiv.rstat));
             }
@@ -2114,14 +2202,7 @@ function resvManager(initData, options) {
 
             // Vehicle section
             if (data.resv.rdiv.vehicle !== undefined) {
-                $veh = $(data.resv.rdiv.vehicle);
-                $rDiv.append($veh);
-                setupVehicle($veh);
-            }
-
-            // Payment
-            if (data.resv.rdiv.pay !== undefined) {
-                $rDiv.append($(data.resv.rdiv.pay));
+                $rDiv.append($(data.resv.rdiv.vehicle));
             }
 
             // Reservation notes.
@@ -2239,6 +2320,16 @@ function resvManager(initData, options) {
                 });
             });
 
+            //SMS Dialog
+            $("#btnShowResvMsgs").button().smsDialog({
+                resvId: data.rid
+            });
+
+            $(".btnTextGuest").each(function () {
+                var guestId = $(this).data("idname");
+                $(this).smsDialog({"guestId":guestId});
+            });
+
             setupRoom(data.rid);
 
             if (data.resv.rdiv.rate !== undefined) {
@@ -2246,8 +2337,18 @@ function resvManager(initData, options) {
             }
 
             if (data.resv.rdiv.pay !== undefined) {
-                setupPay(data);
+                setupPay();
             }
+
+            if (data.resv.rdiv.rstat !== undefined) {
+                setupRebook();
+            }
+
+            if (data.resv.rdiv.vehicle !== undefined) {
+                setupVehicle($rDiv);
+            }
+
+
 
             if (data.resv.rdiv.cof !== undefined) {
                 var room = rooms[$('#selResource').val()];
@@ -2303,6 +2404,8 @@ function resvManager(initData, options) {
 
         function verify() {
 
+            $pWarning.hide();
+
             // vehicle
             if ($('#cbNoVehicle').length > 0) {
 
@@ -2351,6 +2454,7 @@ function resvManager(initData, options) {
 
                     } else {
                         $('input#feesPayment').removeClass('ui-state-error');
+                        $('#payChooserMsg').text('');
                     }
 
                     // Verify cash amount tendered
@@ -2364,13 +2468,14 @@ function resvManager(initData, options) {
                 if (prePaymtAmt > 0 && isCheckedOut && $('#selexcpay').val() == '') {
 
                     $('#selexcpay').addClass('ui-state-error');
-                    flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
-                    $('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
+                    flagAlertMessage(prePayErrorMsg, 'alert', $pWarning);
+                    $('#payChooserMsg').text(prePayErrorMsg).show();
 
                     return false;
 
                 } else {
                     $('#selexcpay').removeClass('ui-state-error');
+                    $('#payChooserMsg').text('');
                 }
 
                 // Selected Merchant?

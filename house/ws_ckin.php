@@ -60,7 +60,7 @@ if (isset($_REQUEST["idVisit"])) {
 }
 
 
-$events = array();
+$events = [];
 
 
 try {
@@ -85,7 +85,7 @@ try {
                 $events = ReservationSvcs::getRoomList($dbh, $resv, $x, $guestAdmin);
 
             } else {
-                $events =  array('error'=>'Reservation Id is not set.');
+                $events = ['error' => 'Reservation Id is not set.'];
             }
 
             break;
@@ -263,7 +263,7 @@ try {
                 //find this form
                 foreach($uS->regFormObjs[$uuid] as $doc){
                     if($doc["tabIndex"] === $formCode){
-                        $docContents = HTMLContainer::generateMarkup('div', $doc['doc'], array('class'=>'PrintArea'));
+                        $docContents = HTMLContainer::generateMarkup('div', $doc['doc'], ['class' => 'PrintArea']);
                         break;
                     }
                 }
@@ -395,7 +395,7 @@ try {
                 $invoice->loadInvoice($dbh, $idInvoice);
 
                 if ($invoice->deleteLine($dbh, $idLine, $uS->username)) {
-                    $events = array('bid' => $bid, 'success' => 'House Payment Deleted.  ');
+                    $events = ['bid' => $bid, 'success' => 'House Payment Deleted.  '];
                 }
             }
 
@@ -620,7 +620,7 @@ try {
             $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, $vat->getTaxedItemSums($ordNum, 0), $arrDate);
 
         } else {
-            $events = array('error'=>'Visit Id is missing.  ');
+            $events = ['error' => 'Visit Id is missing.  '];
         }
 
         break;
@@ -674,10 +674,10 @@ try {
         if (isset($_POST['psg'])) {
             $idPsg = intval(filter_var($_POST['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $psg = new PSG($dbh, $idPsg);
-            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], new Labels()));
+            $events = ['markup' => $psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], new Labels())];
 
         } else {
-            $events = array('error'=>'PSG ID is missing.');
+            $events = ['error' => 'PSG ID is missing.'];
         }
 
         break;
@@ -784,7 +784,7 @@ try {
 
         if ($guestAdmin) {
             //$events = HouseServices::changePaymentAmount($dbh, $pid, $newAmt);
-            $events = array('error'=>'HouseServices::changePaymentAmount is Deprecated');
+            $events = ['error' => 'HouseServices::changePaymentAmount is Deprecated'];
         }
 
         break;
@@ -796,21 +796,22 @@ try {
         break;
 
     default:
-        $events = array("error" => "Bad Command: \"" . $c . "\"");
+        $events = ["error" => "Bad Command: \"" . $c . "\""];
 }
 
 //make receipt copy
 if(isset($events['receipt']) && $uS->merchantReceipt == true){
     $events['receipt'] = HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Customer Copy', array('style'=>'text-align:center;')), array('style'=>'margin-right: 15px; width: 100%;'))
-        . HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style'=> 'text-align: center')), array('style'=>'margin-left: 15px; width: 100%;'))
-        , array('style'=>'display: flex; min-width: 100%;', 'data-merchCopy'=>'1'));
+        HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+        . HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+        ,
+            ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
 }
 
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 } catch (Exception $ex) {
-    $events = array("error" => "Web Server Error: " . $ex->getMessage());
+    $events = ["error" => "Web Server Error: " . $ex->getMessage()];
 }
 
 
@@ -822,7 +823,7 @@ if (is_array($events)) {
     if ($json !== FALSE) {
         echo ($json);
     } else {
-        $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+        $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);
     }
 
@@ -831,4 +832,4 @@ if (is_array($events)) {
 }
 
 exit();
-?>
+

@@ -1200,7 +1200,7 @@
 				<div id="formSettingsTabs">
     				<ul>
         				<li><a href="#tabs-1">Success Message</a></li>
-        				<li class="d-none"><a href="#tabs-2">Notifications</a></li>
+        				<li><a href="#tabs-2">Notifications</a></li>
         				<li><a href="#tabs-3">Form Styles</a></li>
         				<li><a href="#tabs-5">Guests</a></li>
         				<li><a href="#tabs-4">Miscellaneous</a></li>
@@ -1218,21 +1218,12 @@
 						</div>
 				    </div>
 				    
-				    <div id="tabs-2" class="d-none">
+				    <div id="tabs-2">
 				        <div class="row">
 							<div class="col-12">
-								<p style="margin-bottom: 1em;">Notify patient by email after form submission</p>
-								<div class="mb-3">
-				        		<div>
-				        			<label for="emailPatient" style="margin-right: 0.5em;">Enable</label>
-				        			<input type="checkbox" name="emailPatient" id="emailPatient">
-				        		</div>
-				        		<small class="mb-3">Email will be sent to the email address from the Patient Details section</small>
-				        		</div>
+								<p style="margin-bottom: 1em;">Any addresses listed in "referralFormEmail" in Site Configuration will be notified by email when a form is submitted</p>
 								<label for="notifySubject" style="display:block">Email Subject</label>
 								<input type="text" id="notifySubject" name="notifySubject" placeholder="Email Subject" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
-								<label for="notifyContent" style="display:block">Email Content</label>
-								<textarea id="notifyContent" name="notifyContent" placeholder="Email Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
 							</div>
 						</div>
 				    </div>
@@ -1418,7 +1409,7 @@
 									"location":"../js/formBuilder"
 								}
 							});
-							
+							console.log(data.formSettings)
 							$wrapper.find('#formiframebtn').data('url', data.formURL).show();
 							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
 							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
