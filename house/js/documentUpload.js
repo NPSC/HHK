@@ -155,6 +155,28 @@
         $wrapper.on('click', '.doc-edit', function(e){
             e.preventDefault();
             $(this).closest('tr').find('.docTitle').html('<input type="text" style="width: 100%; height: ' + $(this).closest('tr').find('.docTitle').height() +'px;" id="editDocTitle" value="' + $(this).data('doctitle') + '">');
+            $(this).closest('tr').find('.docGuest').html('<input type="text" style="width: 100%; height: ' + $(this).closest('tr').find('.docGuest').height() + 'px;" id="editDocGuest" value="' + $(this).data('docguest') + '">');
+            
+            let selectGuest = function (item) {
+                console.log(item);
+            }
+
+            let inputParms = {
+                cmd: "filter",
+                psg: settings.psgId,
+                basis: "psg"
+            };
+
+            /*
+            // change attached guest
+            createAutoComplete($(DocUppload.container).find("#docGuest"), 0, inputParms, selectGuest, false);
+
+            $(DocUppload.container).on("focus", "#docGuest", function () {
+                if ($(this).val() == "") {
+                    $(this).autocomplete("search", "");
+                }
+            });
+*/
             $(this).closest('td').find('.doc-action').show();
             $(this).closest('td').find('.doc-delete').hide();
             $(this).hide();
@@ -393,13 +415,11 @@
             		if($(DocUppload.container).find("#docFields").length == 0){
                         var docFields = ""+
                         "<div class='hhk-flex' id='docFields'>"+
-                            "<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'></input>"+
-                            "<select class='input' id='docGuest'><option value='' selected>Select a Guest</option></select>"+
+                            "<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>" +
                         "</div>";
 
-                        console.log($("#resv").val());
+                        $(DocUppload.container).find(".uppload-service--local").prepend(docFields);
 
-            			$(DocUppload.container).find(".uppload-service--local").prepend(docFields);
             		}
             		//add helptext
             		if($(DocUppload.container).find("#docUploadHelp").length == 0){
