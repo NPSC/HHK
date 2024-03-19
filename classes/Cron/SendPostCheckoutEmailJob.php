@@ -55,7 +55,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
         ],
     ];
 
-    public function __construct(\PDO $dbh, int $idJob, array $params=[], bool $dryRun=false){
+    public function __construct(PDO $dbh, int $idJob, array $params=[], bool $dryRun=false){
         $uS = Session::getInstance();
         $this->paramTemplate["solicitBuffer"]["defaultVal"] = $uS->SolicitBuffer;
         $this->paramTemplate["EmailTemplate"]["values"] = $this->getSurveyDocList($dbh);
@@ -266,9 +266,9 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
     }
 
-    protected function getSurveyDocList(\PDO $dbh){
+    protected function getSurveyDocList(PDO $dbh){
         $stmt = $dbh->query("Select d.`idDocument`,concat(d.`Title`, ': ', g.`Description`) as `Title` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 's' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
-        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
         $result = [];
         foreach($rows as $row){
@@ -279,4 +279,3 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
     }
 
 }
-?>

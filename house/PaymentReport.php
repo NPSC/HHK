@@ -50,11 +50,13 @@ $dataTable = '';
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
+$filter->createBillingAgents($dbh);
 
 $hospitalSelections = array();
 $assocSelections = array();
 $statusSelections = array();
 $payTypeSelections = array();
+$billingAgentSelections = array();
 $calSelection = '19';
 $gwList = array();
 $gwSelector = '';
@@ -167,6 +169,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $colSelector->setColumnSelectors($_POST);
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
+    $filter->loadSelectedBillingAgents();
 
     if (isset($_POST['selPayStatus'])) {
         $reqs = $_POST['selPayStatus'];
@@ -222,6 +225,19 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             }
         }
     }
+
+    // Billing Agents
+    $whBillAgent = '';
+    foreach ($filter->getSelectedBillingAgents() as $a) {
+        if ($a != '') {
+            if ($whBillAgent == '') {
+                $whBillAgent .= $a;
+            } else {
+                $whBillAgent .= ",". $a;
+            }
+        }
+    }
+
     if ($whHosp != '') {
         $whHosp = " and hs.idHospital in (".$whHosp.") ";
     }
@@ -230,8 +246,13 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
+    if ($whBillAgent != '') {
+        $whBillAgent = " and lp.Payment_idPayor in (".$whBillAgent.") ";
+    }
+
     $hdrHosps = $filter->getSelectedHospitalsString();
     $hdrAssocs = $filter->getSelectedAssocString();
+    $hdrBillingAgents = $filter->getSelectedBillingAgentsString();
     $hospList = $filter->getHospitals();
 
     if(count($hospList) > 0){
@@ -240,6 +261,10 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     if (count($filter->getAList()) > 1) {
         $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
+    }
+
+    if (count($filter->getBillingAgents()) > 1) {
+        $headerTable->addBodyTr(HTMLTable::makeTd('Billing Agents: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrBillingAgents));
     }
 
 
@@ -363,7 +388,7 @@ from
         left join
     name np on hs.idPatient = np.idName
 where lp.idPayment > 0
- $whHosp $whAssoc $whDates $whStatus $whType $whGw ";
+ $whHosp $whAssoc $whDates $whStatus $whType $whGw $whBillAgent ";
 
     $tbl = null;
     $sml = null;
@@ -471,10 +496,12 @@ $payTypeSelector = HTMLSelector::generateMarkup(
 
 $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gwList, $gwSelections), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($gwList) + 1)));
 
-$timePeriodMarkup = $filter->timePeriodMarkup('Payment')->generateMarkup(array('style'=>'float: left;'));
-$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
+$timePeriodMarkup = $filter->timePeriodMarkup('Payment')->generateMarkup(array('class'=>'mb-2 mr-2'));
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('class'=>'mb-2 mr-2'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left; margin-left: 5px;', 'id'=>'includeFields'));
+$baSelector = $filter->billingAgentMarkup()->generateMarkup(array('class'=>'mb-2 mr-2'));
+
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('class'=>'mb-2 mr-2', 'id'=>'includeFields'));
 
 ?>
 <!DOCTYPE html>
@@ -629,7 +656,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         });
         if (makeTable === '1') {
             $('#rptFeeLoading').hide();
-            $('div#printArea').css('display', 'block');
+            $('div#hhk-reportWrapper').css('display', 'block');
             $('#tblrpt').dataTable({
                 'columnDefs': [
                     {'targets': columnDefs,
@@ -643,7 +670,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             });
 
             $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
+                $("div#hhk-reportWrapper").printArea();
             });
             $('#tblrpt').on('click', '.invAction', function (event) {
                 invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
@@ -666,17 +693,20 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 <?php }?>
             </ul>
             <div id="payr" >
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper">
                 <form id="fcat" action="PaymentReport.php" method="post">
-                    <div class="ui-helper-clearfix">
+                    <div class="ui-helper-clearfix hhk-flex hhk-flex-wrap">
                     <?php
                         echo $timePeriodMarkup;
 
                     	if (count($filter->getHospitals()) > 1) {
                             echo $hospitalMarkup;
                         }
+                        if(count($filter->getBillingAgents()) > 1) {
+                            echo $baSelector;
+                        }
                     ?>
-                    <table style="float: left; margin-left: 5px;">
+                    <table class="mb-2 mr-2">
                         <tr>
                             <th colspan="2">Pay Type</th>
                         </tr>
@@ -684,7 +714,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                            <td><?php echo $payTypeSelector; ?></td>
                         </tr>
                     </table>
-                    <table style="float: left; margin-left: 5px;">
+                    <table class="mb-2 mr-2">
                         <tr>
                             <th colspan="2">Pay Status</th>
                         </tr>
@@ -693,7 +723,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                         </tr>
                     </table>
                     <?php if (count($gwList) > 1) { ?>
-                    <table style="float: left; margin-left: 5px;">
+                    <table class="mb-2 mr-2">
                         <tr>
                             <th colspan="2">Location</th>
                         </tr>
@@ -703,16 +733,15 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                     </table>
                     <?php } echo $columSelector; ?>
                     </div>
-                    <div style="text-align:center; margin-top: 10px;">
-                       <input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right:1em;"/>
+                    <div id="filterBtns" class="mt-3">
+                       <input type="submit" name="btnHere" id="btnHere" value="Run Here"/>
                        <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/>
                     </div>
                 </form>
                 </div>
-			<div style="clear:left;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: 0.9em; padding: 5px 5px 25px; margin: 10px 0px;">
+            <div id="hhk-reportWrapper" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: 0.9em;">
                 <div><input id="printButton" value="Print" type="button"/></div>
-                <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
+                <div class="my-3" style="min-width: 350px;">
                     <?php echo $hdrTbl; ?>
                 </div>
                 <form autocomplete="off">

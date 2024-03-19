@@ -131,5 +131,4 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 
 
 -- change Maintenance security group
-
 UPDATE `w_groups` set `Title` = "Site/DB Maintenance" where `Group_Code` = "db";
