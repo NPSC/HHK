@@ -988,7 +988,7 @@ VALUES
 REPLACE INTO `w_groups`
 (`Group_Code`,`Title`,`Description`,`Default_Access_Level`,`Max_Level`,`Min_Access_Level`,`Cookie_Restricted`,`Password_Policy`)
 VALUES
-('db','Maintenance','Configure metadata.','','','','\0',''),
+('db','Site/DB Maintenance','Configure metadata.','','','','\0',''),
 ('dm','Donation Management','Donation Management','','','','\0',''),
 ('dna','Donors (No Amounts)','View lists of donors but without donation amounts','','','','\0',''),
 ('g','Guest Operations','Guest Operations, basic access to guest tracking site','','','','\0',''),

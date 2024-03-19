@@ -128,3 +128,8 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 -- add No Email option
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES ('Email_Purpose', 'no', 'No Email', 'i', '50');
+
+
+-- change Maintenance security group
+
+UPDATE `w_groups` set `Title` = "Site/DB Maintenance" where `Group_Code` = "db";
