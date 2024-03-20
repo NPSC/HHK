@@ -150,6 +150,39 @@ class ReportFilter {
     protected $billingAgents;
 
     /**
+     * Summary of selectedPayTypes
+     * @var 
+     */
+    protected $selectedPayTypes;
+    /**
+     * Summary of payTypes
+     * @var 
+     */
+    protected $payTypes;
+
+    /**
+     * Summary of selectedPayStatuses
+     * @var 
+     */
+    protected $selectedPayStatuses;
+    /**
+     * Summary of payStatuses
+     * @var 
+     */
+    protected $payStatuses;
+
+    /**
+     * Summary of selectedPaymentGateways
+     * @var 
+     */
+    protected $selectedPaymentGateways;
+    /**
+     * Summary of paymentGateways
+     * @var 
+     */
+    protected $paymentGateways;
+
+    /**
      * Summary of reportStart
      * @var
      */
@@ -174,8 +207,12 @@ class ReportFilter {
         $this->selectedResourceGroups = array();
         $this->selectedDiagnoses = array();
         $this->selectedBillingAgents = array();
+        $this->selectedPayStatuses = array();
+        $this->selectedPayTypes = array();
+        $this->selectedPaymentGateways = array();
         $this->selectedMonths = array();
         $this->hospitals = array();
+        $this->paymentGateways = array();
     }
 
     /**
@@ -649,6 +686,153 @@ $ckdate";
     }
 
     /**
+     * Load Pay Types
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createPayTypes(\PDO $dbh){
+        $this->payTypes = array();
+        $uS = Session::getInstance();
+
+        foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
+            if ($p[2] != '') {
+                $this->payTypes[$p[2]] = array($p[2], $p[1]);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedPayTypes
+     * @return ReportFilter
+     */
+    public function loadSelectedPayTypes() {
+
+        if (filter_has_var(INPUT_POST, 'selPayType')) {
+            $reqs = $_POST['selPayType'];
+            if (is_array($reqs)) {
+                $this->selectedPayTypes = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of payTypesMarkup
+     * @return HTMLTable
+     */
+    public function payTypesMarkup() {
+
+        $payTypeSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->payTypes, $this->selectedPayTypes), array('name' => 'selPayType[]', 'size' => '5', 'multiple' => 'multiple'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Pay Type"));
+        $tbl->addBodyTr(HTMLTable::makeTd($payTypeSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
+     * Load Pay Statuses
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createPayStatuses(\PDO $dbh){
+        $this->payStatuses = readGenLookupsPDO($dbh, 'Payment_Status');
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedPayStatuses
+     * @return ReportFilter
+     */
+    public function loadSelectedPayStatuses() {
+
+        if (filter_has_var(INPUT_POST, 'selPayStatus')) {
+            $reqs = $_POST['selPayStatus'];
+            if (is_array($reqs)) {
+                $this->selectedPayStatuses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of payStatusMarkup
+     * @return HTMLTable
+     */
+    public function payStatusMarkup() {
+
+        $statusSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->payStatuses, $this->selectedPayStatuses), array('name' => 'selPayStatus[]', 'size' => '7', 'multiple' => 'multiple'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Pay Status"));
+        $tbl->addBodyTr(HTMLTable::makeTd($statusSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
+     * Load Payment Gateways
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createPaymentGateways(\PDO $dbh){
+        $this->paymentGateways = array();
+        $uS = Session::getInstance();
+
+        // Payment gateway lists
+        $gwstmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name = '" . $uS->PaymentGateway . "' and cc_name not in ('Production', 'Test', '')");
+        $gwRows = $gwstmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($gwRows) > 1) {
+
+            foreach ($gwRows as $g) {
+                $this->paymentGateways[$g[0]] = array(0=>$g[0], 1=>ucfirst($g[0]));
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedPaymentGateways
+     * @return ReportFilter
+     */
+    public function loadSelectedPaymentGateways() {
+
+        if (filter_has_var(INPUT_POST, 'selGateway')) {
+            $reqs = $_POST['selGateway'];
+            if (is_array($reqs)) {
+                $this->selectedPaymentGateways = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of paymentGatwaysMarkup
+     * @return HTMLTable
+     */
+    public function paymentGatewaysMarkup() {
+
+        $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->paymentGateways, $this->selectedPaymentGateways), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($this->paymentGateways) + 1)));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Location"));
+        $tbl->addBodyTr(HTMLTable::makeTd($gwSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
      * Summary of getSelectedHospitalsString
      * @return string
      */
@@ -746,6 +930,30 @@ $ckdate";
      */
     public function getSelectedBillingAgents() {
         return $this->selectedBillingAgents;
+    }
+
+    public function getPayStatuses(){
+        return $this->payStatuses;
+    }
+
+    public function getSelectedPayStatuses(){
+        return $this->selectedPayStatuses;
+    }
+
+    public function getPayTypes(){
+        return $this->payTypes;
+    }
+
+    public function getSelectedPayTypes(){
+        return $this->selectedPayTypes;
+    }
+
+    public function getPaymentGateways(){
+        return $this->paymentGateways;
+    }
+
+    public function getSelectedPaymentGateways(){
+        return $this->selectedPaymentGateways;
     }
 
     /**

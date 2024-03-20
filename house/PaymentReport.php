@@ -51,6 +51,9 @@ $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
 $filter->createBillingAgents($dbh);
+$filter->createPaymentGateways($dbh);
+$filter->createPayStatuses($dbh);
+$filter->createPayTypes($dbh);
 
 $hospitalSelections = array();
 $assocSelections = array();
@@ -86,28 +89,6 @@ if (isset($_POST['cmd'])) {
 }
 
 
-
-$statusList = readGenLookupsPDO($dbh, 'Payment_Status');
-
-$payTypes = array();
-
-foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
-    if ($p[2] != '') {
-        $payTypes[$p[2]] = array($p[2], $p[1]);
-    }
-}
-
-// Payment gateway lists
-$gwstmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name = '" . $uS->PaymentGateway . "' and cc_name not in ('Production', 'Test', '')");
-$gwRows = $gwstmt->fetchAll(PDO::FETCH_NUM);
-
-if (count($gwRows) > 1) {
-
-	foreach ($gwRows as $g) {
-		$gwList[$g[0]] = array(0=>$g[0], 1=>ucfirst($g[0]));
-	}
-}
-
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms, DT Type
 $cFields[] = array('Payor Last', 'Last', 'checked', '', 'string', '20', array());
@@ -130,7 +111,7 @@ $cFields[] = array("Original Amount", 'Orig_Amount', 'checked', '', 'dollar', '1
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 
 // Show payment gateway
-if (count($gwList) > 1) {
+if (count($filter->getPaymentGateways()) > 1) {
 	$cFields[] = array('Location', 'Merchant', 'checked', '', 'string', '20', array());
 }
 
@@ -170,31 +151,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
     $filter->loadSelectedBillingAgents();
-
-    if (isset($_POST['selPayStatus'])) {
-        $reqs = $_POST['selPayStatus'];
-        if (is_array($reqs)) {
-            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
-    }
-
-    if (isset($_POST['selPayType'])) {
-    	// Payment Types
-    	$reqs = $_POST['selPayType'];
-
-    	if (is_array($reqs)) {
-    		$payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    	}
-    }
-
-    if (isset($_POST['selGateway'])) {
-    	// Payment Types
-    	$reqs = $_POST['selGateway'];
-
-    	if (is_array($reqs)) {
-    		$gwSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    	}
-    }
+    $filter->loadSelectedPayStatuses();
+    $filter->loadSelectedPayTypes();
+    $filter->loadSelectedPaymentGateways();
 
     $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('" . $filter->getQueryEnd() . "') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $filter->getReportStart() . "') ";
 
@@ -272,7 +231,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $payStatusText = '';
     $rtnIncluded = FALSE;
 
-    foreach ($statusSelections as $s) {
+    foreach ($filter->getSelectedPayStatuses() as $s) {
         if ($s != '') {
             // Set up query where part.
             if ($whStatus == '') {
@@ -310,7 +269,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $whType = '';
     $payTypeText = '';
-    foreach ($payTypeSelections as $s) {
+    foreach ($filter->getSelectedPayTypes() as $s) {
         if ($s != '') {
             // Set up query where part.
             if ($whType == '') {
@@ -338,7 +297,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $whGw = '';
     $gwText = '';
-    foreach ($gwSelections as $s) {
+    foreach ($filter->getSelectedPaymentGateways() as $s) {
     	if ($s != '') {
     		// Set up query where part.
     		if ($whGw == '') {
@@ -438,7 +397,7 @@ where lp.idPayment > 0
     }
 
     $name_lk = $uS->nameLookups;
-    $name_lk['Pay_Status'] = readGenLookupsPDO($dbh, 'Pay_Status');
+    $name_lk['Pay_Status'] = $filter->getPayStatuses();
     $uS->nameLookups = $name_lk;
     $total = 0;
 
@@ -487,18 +446,11 @@ where lp.idPayment > 0
 }
 
 // Setups for the page.
-$statusSelector = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selPayStatus[]', 'size' => '7', 'multiple' => 'multiple'));
-
-
-$payTypeSelector = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($payTypes, $payTypeSelections), array('name' => 'selPayType[]', 'size' => '5', 'multiple' => 'multiple'));
-
-$gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gwList, $gwSelections), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($gwList) + 1)));
-
+$statusSelector = $filter->payStatusMarkup()->generateMarkup(array('class' => 'mb-2 mr-2'));
+$payTypeSelector = $filter->payTypesMarkup()->generateMarkup(array('class' => 'mb-2 mr-2'));
+$gwSelector = $filter->paymentGatewaysMarkup()->generateMarkup(array('class' => 'mb-2 mr-2'));
 $timePeriodMarkup = $filter->timePeriodMarkup('Payment')->generateMarkup(array('class'=>'mb-2 mr-2'));
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('class'=>'mb-2 mr-2'));
-
 $baSelector = $filter->billingAgentMarkup()->generateMarkup(array('class'=>'mb-2 mr-2'));
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('class'=>'mb-2 mr-2', 'id'=>'includeFields'));
@@ -666,7 +618,8 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
                  ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                //"dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                "dom": '<\"top ui-toolbar ui-helper-clearfix\"if><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>',
             });
 
             $('#printButton').button().click(function() {
@@ -695,7 +648,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
             <div id="payr" >
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper">
                 <form id="fcat" action="PaymentReport.php" method="post">
-                    <div class="ui-helper-clearfix hhk-flex hhk-flex-wrap">
+                    <div class="hhk-flex hhk-flex-wrap" id="filterSelectors">
                     <?php
                         echo $timePeriodMarkup;
 
@@ -705,33 +658,15 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
                         if(count($filter->getBillingAgents()) > 1) {
                             echo $baSelector;
                         }
+
+                        echo $payTypeSelector;
+                        echo $statusSelector;
+
+                        if(count($filter->getPaymentGateways()) > 1){
+                            echo $gwSelector;
+                        }
+                        echo $columSelector;
                     ?>
-                    <table class="mb-2 mr-2">
-                        <tr>
-                            <th colspan="2">Pay Type</th>
-                        </tr>
-                        <tr>
-                           <td><?php echo $payTypeSelector; ?></td>
-                        </tr>
-                    </table>
-                    <table class="mb-2 mr-2">
-                        <tr>
-                            <th colspan="2">Pay Status</th>
-                        </tr>
-                        <tr>
-                           <td><?php echo $statusSelector; ?></td>
-                        </tr>
-                    </table>
-                    <?php if (count($gwList) > 1) { ?>
-                    <table class="mb-2 mr-2">
-                        <tr>
-                            <th colspan="2">Location</th>
-                        </tr>
-                        <tr>
-                           <td><?php echo $gwSelector; ?></td>
-                        </tr>
-                    </table>
-                    <?php } echo $columSelector; ?>
                     </div>
                     <div id="filterBtns" class="mt-3">
                        <input type="submit" name="btnHere" id="btnHere" value="Run Here"/>
