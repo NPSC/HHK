@@ -601,6 +601,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('insistCkinPhone', 'false', 'b', 'h', '', 'Insist phone for all guests be filled in on check in page', '', 1),
 ('insistCkinEmail', 'false', 'b', 'h', '', 'Insist email for all guests be filled in on check in page', '', 1),
 ('insistCkinAddress', 'false', 'b', 'h', '', 'Insist valid address for all guests be filled in on check in page', '', 1),
+('HideRoomFeeCalc', 'false', 'b', 'h', '', 'Hide "# days" room fee calculator on Paying Today', '', 1),
 ('InsistCkinDemog','false','b','h','','Insist that user fill in the demographics on the check in page','',1),
 ('InsistCkinPayAmt','true','b','h','','Insist the user fills in the payment amount on checkin page','',1),
 ('InsistGuestBD', 'false', 'b', 'g', '', 'Insist on user filling in guest birthdates', '',1),
