@@ -41,7 +41,7 @@ class ScriptAuthClass extends SecurityComponent {
         parent::__construct();
         $uS = Session::getInstance();
 
-        SysConfig::getCategory($dbh, $uS, "'a'", 'sys_config');
+        SysConfig::getCategory($dbh, $uS, "a", WebInit::SYS_CONFIG);
 
 
         // try reading the web site table

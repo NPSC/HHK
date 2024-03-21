@@ -24,7 +24,7 @@ class SysConfig {
      *
      * @param \PDO $dbh
      * @param Session $uS
-     * @param string $category
+     * @param string|array $category
      * @param string $tableName
      * @param bool $returnArray
      * @throws RuntimeException
@@ -35,6 +35,15 @@ class SysConfig {
 
         if ($tableName == '' || $category == '') {
             throw new RuntimeException('System Configuration database table name or category not specified.  ');
+        }
+
+        if(is_array($category)){
+            foreach($category as $key=>$cat){
+                $category[$key] = "'" . $cat . "'";
+            }
+            $category = implode(",", $category);
+        }else{
+            $category = "'" . $category . "'";
         }
 
         try {
@@ -113,9 +122,7 @@ class SysConfig {
 
         if (count($rows) == 1) {
 
-            $keyrow = $rows[0];
-            //$keyrow['Value'] = self::getTypedVal($rows[0]['Type'], $rows[0]['Value']);
-            return $keyrow;
+            return $rows[0];
 
         }else{
             throw new RuntimeException('System Configuration key not found: ' . $key);
@@ -243,4 +250,3 @@ class SysConfig {
         return $val;
     }
 }
-?>
