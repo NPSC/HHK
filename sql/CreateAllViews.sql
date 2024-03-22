@@ -2417,23 +2417,16 @@ CREATE or replace VIEW `vregister` AS
         `nd`.`Income_Bracket` AS `Income_Bracket`,
         `nd`.`Age_Bracket` AS `Age_Bracket`,
         `nd`.`Education_Level` AS `Education_Level`,
-        `nd`.`Special_Needs` AS `Special_Needs`,
-        `s`.`On_Leave` AS `On_Leave`,
-        COUNT(`s`.`idName`) AS `Guest_Count`
+        `nd`.`Special_Needs` AS `Special_Needs`
     FROM
-        ((((((`visit` `v`
+        (((((`visit` `v`
         LEFT JOIN `hospital_stay` `hs` ON (`v`.`idHospital_stay` = `hs`.`idHospital_stay`))
         LEFT JOIN `name` `n` ON (`v`.`idPrimaryGuest` = `n`.`idName`))
         LEFT JOIN `name_demog` `nd` ON (`v`.`idPrimaryGuest` = `nd`.`idName`))
-        LEFT JOIN `stays` `s` ON (`v`.`idVisit` = `s`.`idVisit`
-            AND `v`.`Span` = `s`.`Visit_Span`
-            AND `v`.`Status` = `s`.`Status`))
         LEFT JOIN `gen_lookups` `gs` ON (`gs`.`Table_Name` = 'Name_Suffix'
             AND `gs`.`Code` = `n`.`Name_Suffix`))
         LEFT JOIN `gen_lookups` `gv` ON (`gv`.`Table_Name` = 'Visit_Status'
-            AND `gv`.`Code` = `v`.`Status`))
-    GROUP BY `v`.`idVisit` , `v`.`Span`
-    ORDER BY `v`.`idVisit` , `v`.`Span`;
+            AND `gv`.`Code` = `v`.`Status`));
 
 
 

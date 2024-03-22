@@ -420,7 +420,7 @@ order by r.idResource;";
 
     foreach($rows as $r){
         $startDT = new \DateTime($r['Start']);
-        $endDT = new \DateTIme($r['End']);
+        $endDT = new \DateTime($r['End']);
         foreach($closedDates as $closedDate){
             if($closedDate >= $startDT && $closedDate < $endDT){ //if house is closed but there's a visit, subtract night from Unavailble
                 if (isset($rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable]) === FALSE) {
