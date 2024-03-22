@@ -991,8 +991,8 @@ class ReferralForm {
 
 	    $post['rbEmPref'] = ($data->getEmail() == '' ? '' : EmailPurpose::Home);
 	    $post['txtEmail'] = array(EmailPurpose::Home=>$data->getEmail());
-	    $post['rbPhPref'] = PhonePurpose::Home;
-	    $post['txtPhone'] = array(PhonePurpose::Home=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
+	    $post['rbPhPref'] = PhonePurpose::Cell;
+	    $post['txtPhone'] = array(PhonePurpose::Cell=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
 
 	    $adr1 = array(AddressPurpose::Home => array(
 	        'address1' => $data->getAddressStreet1(),
