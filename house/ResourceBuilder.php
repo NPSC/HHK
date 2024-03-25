@@ -1937,6 +1937,9 @@ if ($uS->mode != Mode::Live) {
 
     $cblistSelections = Checklist::createChecklistCategories($dbh, $labels);
     $selChecklistItems = Checklist::createChecklistTypes($dbh);
+}else{
+    $cblistSelections = "";
+    $selChecklistItems = "";
 }
 
 $insuranceType = new InsuranceType();
