@@ -468,4 +468,3 @@ class ScriptAuthClass extends SecurityComponent {
     }
 
 }
-?>
