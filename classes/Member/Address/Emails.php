@@ -306,10 +306,13 @@ class Emails extends AbstractContactPoint {
      * @return void
      */
     private function loadPostData(NameEmailRS $a, array $p, $typeCode, $uname, $idPrefix = "") {
-        $email = filter_var(filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL), FILTER_VALIDATE_EMAIL);
-
-        if($email == false){
-            throw new ValidationException("Email field must be a valid Email address");
+        if ($typeCode !== EmailPurpose::NoEmail) {
+            $email = filter_var(filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL), FILTER_VALIDATE_EMAIL);
+            if($email == false){
+                throw new ValidationException("Email field must be a valid Email address");
+            }
+        }else{
+            $email = "";
         }
 
         $a->Email->setNewVal(strtolower(trim($email)));
