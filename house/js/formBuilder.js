@@ -191,7 +191,6 @@
 						"className": "form-select",
 						"name": "patient.sms_status",
 						"width": "col-md-3",
-						"group": "guest",
 						"multiple": false,
 						"values": [
 						  {
