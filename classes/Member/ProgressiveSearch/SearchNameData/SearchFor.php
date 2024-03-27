@@ -67,6 +67,16 @@ class SearchFor extends SearchNameData
         return $this;
     }
 
+    /**
+     * @param string $phone
+     */
+    public function setSMS_Status($status, $include = TRUE) {
+
+        parent::setSMS_Status($status);
+
+        return $this;
+    }
+
     public function getSuffixTitle() {
 
         $uS = Session::getInstance();

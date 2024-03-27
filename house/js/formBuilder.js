@@ -183,7 +183,34 @@
     				"className": "form-control hhk-phoneInput",
     				"name": "patient.phone",
     				"width": "col-md-6"
-    			},
+					},
+					{
+						"type": "select",
+						"label": "SMS Opt In",
+						"placeholder": "Opt in to receive text messages",
+						"className": "form-select",
+						"name": "patient.sms_status",
+						"width": "col-md-3",
+						"group": "guest",
+						"multiple": false,
+						"values": [
+						  {
+							"label": "",
+							"value": "",
+							"selected": true
+							},
+							{
+							  "label": "Opt In",
+							  "value": "opt_in",
+							  "selected": false
+							},
+							{
+							  "label": "Opt Out",
+							  "value": "opt_out",
+							  "selected": false
+							}
+						]
+					  },
     			{
     				"type": "text",
     				"subtype": "email",
@@ -442,7 +469,34 @@
     				"name": "guests.g0.phone",
     				"width": "col-md-3",
     				"group": "guest"
-    			},
+					},
+					{
+					  "type": "select",
+					  "label": "SMS Opt In",
+					  "placeholder": "Opt in to receive text messages",
+					  "className": "form-select",
+					  "name": "guests.g0.sms_status",
+					  "width": "col-md-3",
+					  "group": "guest",
+					  "multiple": false,
+					  "values": [
+						{
+						  "label": "",
+						  "value": "",
+						  "selected": true
+						  },
+						  {
+							"label": "Opt In",
+							"value": "opt_in",
+							"selected": false
+						  },
+						  {
+							"label": "Opt Out",
+							"value": "opt_out",
+							"selected": false
+						  }
+					  ]
+					},
     			{
     				"type": "text",
     				"subtype": "email",
