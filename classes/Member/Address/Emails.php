@@ -246,7 +246,7 @@ class Emails extends AbstractContactPoint {
                 if ($a->idName->getStoredVal() > 0) {
                     // Email Address exists in the DB
 
-                    if ($post[$idPrefix.'txtEmail'][$purpose[0]] == '' && $purpose[0] !== EmailPurpose::NoEmail) {
+                    if ($post[$idPrefix.'txtEmail'][$purpose[0]] == '' && $purpose[0] != EmailPurpose::NoEmail) {
 
                         // Delete the Email Address record
                         if (EditRS::delete($dbh, $a, array($a->idName, $a->Purpose)) === FALSE) {
@@ -306,14 +306,16 @@ class Emails extends AbstractContactPoint {
      * @return void
      */
     private function loadPostData(NameEmailRS $a, array $p, $typeCode, $uname, $idPrefix = "") {
-        if ($typeCode !== EmailPurpose::NoEmail) {
-            $email = filter_var(filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL), FILTER_VALIDATE_EMAIL);
-            if($email == false){
-                throw new ValidationException("Email field must be a valid Email address");
-            }
-        }else{
-            $email = "";
-        }
+        //if ($typeCode !== EmailPurpose::NoEmail) {
+            //$email = filter_var(filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL), FILTER_VALIDATE_EMAIL);
+            //if($email == false){
+            //    throw new ValidationException("Email field must be a valid Email address");
+            //}
+        //}else{
+        //    $email = "";
+        //}
+
+        $email = filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $a->Email->setNewVal(strtolower(trim($email)));
         $a->Status->setNewVal("a");
