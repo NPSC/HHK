@@ -322,7 +322,7 @@ class Phones extends AbstractContactPoint {
             if ($a->idName->getStoredVal() > 0) {
                 // Phone Number exists in the DB
 
-                if ($postedPhone == '' && $purpose[0] !== PhonePurpose::NoPhone) {
+                if ($postedPhone == '') {
 
                     // Delete the Phone Number record
                     if (EditRS::delete($dbh, $a, array($a->idName, $a->Phone_Code)) === FALSE) {
@@ -347,7 +347,7 @@ class Phones extends AbstractContactPoint {
             } else {
                 // Phone Number does not exist inthe DB.
                 // Did the user fill in this Phone Number panel?
-                if ($postedPhone != '' || $purpose[0] === PhonePurpose::NoPhone) {
+                if ($postedPhone != '') {
 
                     // Insert a new Phone Number
                     $this->loadPostData($a, $post, $purpose[0], $user, $idPrefix);

@@ -180,7 +180,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             ng.Relationship_Code,
             ng.Legal_Custody,
             IFNULL(n.Name_Full, '') AS `Name_Full`,
-            IFNULL(np.Phone_Num, '') AS `Preferred_Phone`
+            CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END AS `Preferred_Phone`
         FROM
             name_guest ng
                 JOIN

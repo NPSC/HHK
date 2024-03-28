@@ -997,8 +997,8 @@ Select
     ifnull(rv.Expected_Departure, '') as `Expected_Departure`,
     ifnull(rv.Actual_Arrival, '') as `Actual_Arrival`,
     IFNULL(rv.Actual_Departure, '') as `Actual_Departure`,
-    ifnull(ne.Email, '') as `Email`,
-    ifnull(np.Phone_Num, '') as `Phone`
+    case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end as `Email`,
+    case when (`n`.`Preferred_Phone` = 'no') then 'No Phone' else ifnull(`np`.`Phone_Num`, '') end as `Phone`
 from
     name_guest ng
             left join
@@ -2154,7 +2154,7 @@ create or replace view `vname_list` as
         `n`.`Name_Middle` AS `Middle`,
         `n`.`Name_Last` AS `Last`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
-        (CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone'
+        (CASE WHEN (`n`.`Preferred_Phone` = 'no') THEN 'No Phone'
             WHEN (IFNULL(`np`.`Phone_Extension`, '') = '') THEN IFNULL(`np`.`Phone_Num`, '')
             ELSE CONCAT_WS('x',
                     `np`.`Phone_Num`,

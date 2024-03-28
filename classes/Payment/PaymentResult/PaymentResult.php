@@ -142,7 +142,7 @@ class PaymentResult {
         }
 
 
-        $query = "SELECT ne.Email, n.Name_Full FROM
+        $query = "SELECT IFNULL(ne.Email, ''), n.Name_Full FROM
     `registration` r,
     `name` n
         LEFT JOIN
