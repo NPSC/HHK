@@ -947,7 +947,14 @@ AS SELECT
    `r`.`Timestamp` AS `Timestamp`,
    `r`.`Guest_Id` AS `Guest_Id`,
    `r`.`Psg_Id` AS `Psg_Id`
-FROM ((`report` `r` left join `name_guest` `ng` on((`r`.`Guest_Id` = `ng`.`idName`))) left join `name` `n` on((`ng`.`idName` = `n`.`idName`))) where ((`r`.`idReport` > 0) and (`r`.`Status` in ('a','r','h'))) group by `r`.`idReport`;
+FROM
+        ((`report` `r`
+        LEFT JOIN `name_guest` `ng` ON (`r`.`Guest_Id` = `ng`.`idName`
+            AND `r`.`Psg_Id` = `ng`.`idPsg`))
+        LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`))
+    WHERE
+        `r`.`idReport` > 0
+            AND `r`.`Status` IN ('a' , 'r', 'h');
 
 
 
@@ -1593,7 +1600,7 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         IFNULL(`n`.`Name_First`, '') AS `First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
         CASE
-            WHEN `np`.`Phone_Code` = 'no' THEN 'No Phone'
+            WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone'
             ELSE IFNULL(`np`.`Phone_Num`, '')
         END AS `Phone`,
         `s`.`Checkin_Date` AS `Arrival`,
@@ -2828,9 +2835,8 @@ CREATE or replace VIEW `vresv_patient` AS
         left join visit v on r.idReservation = v.idReservation and v.Status = 'a'
         left join `hospital_stay` `h` ON `r`.`idHospital_Stay` = `h`.`idHospital_stay`
         left join resource re on r.idResource = re.idResource
-        left join `name` `n` ON `h`.`idPatient` = `n`.`idName`, sys_config s
-	where
-		s.Key = 'AcceptResvPaymt';
+        left join `name` `n` ON `h`.`idPatient` = `n`.`idName`
+        left join `sys_config` `s` ON `s`.`Key` = 'AcceptResvPaymt';
 
 
 

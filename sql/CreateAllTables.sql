@@ -2461,6 +2461,8 @@ ALTER TABLE `reservation_multiple`
 
 ALTER TABLE `resource_room`
     ADD INDEX IF NOT EXISTS `Index_idResource` (`idResource` ASC);
+ALTER TABLE `resource_room`
+    ADD INDEX IF NOT EXISTS `Index_idRoom` (`idRoom` ASC);
 
 ALTER TABLE `resource_use`
     ADD INDEX IF NOT EXISTS `Index_idResource` (`idResource` ASC);
