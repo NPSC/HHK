@@ -38,10 +38,10 @@ class FormDocument {
 
         if($totalsOnly){
             //sync referral/resv statuses
-            $dbh->exec('CALL sync_referral_resv_status()');
+            //$dbh->exec('CALL sync_referral_resv_status()');  // takes too long.
 
             $query = 'SELECT g.Code AS "idStatus", g.Description AS "Status", g.Substitute AS "icon", COUNT(*) AS "count" FROM `document` d
-            join `gen_lookups` g on g.Table_Name = "Referral_Form_Status" and g.Code = d.Status 
+            join `gen_lookups` g on g.Table_Name = "Referral_Form_Status" and g.Code = d.Status
             WHERE `d`.`Type` = "json" AND `d`.`Category` = "form"
             GROUP BY g.Code;';
 
