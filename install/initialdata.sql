@@ -46,9 +46,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
-('Checklist', 'checklist_1_items', 'Checklist 1', '','m',0),
+('Checklist', 'psg_items_Cklst', 'PSG', '','m',0),
+-- ('Checklist', 'resv_items_Cklst', 'Resv', '','m',0),
 
-('checklist_1_items', 'cl1', 'Item 1', '', 'd',0),
+('psg_items_Cklst', 'cl1', 'Item 1', '', 'd',0),
+-- ('resv_items_Cklst', 'cl2e', 'Item 1', '', 'd',0),
 
 ('Cm_Custom_Fields', 'HHK_ID', '','','',0),
 ('Cm_Custom_Fields', 'Deceased_Date', '','','',0),

@@ -245,12 +245,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $lastConfDate = $lcdDT->format('M j, Y');
         }
 
-        // PSG checklists
-        // TODO
-//        $checklist = '' new Checklist($dbh, ChecklistType::PSG);
-
-        $lastConfirmed = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup(
+        $lastConfirmed = HTMLContainer::generateMarkup(
                 'fieldset',
                 HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group') . ' Info Last Confirmed', array('style' => 'font-weight:bold;'))
                 . HTMLContainer::generateMarkup('label', 'Update:', ['for' => 'cbLastConfirmed'])
@@ -258,12 +253,15 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                 . HTMLInput::generateMarkup($lastConfDate, ['name' => 'txtLastConfirmed', 'class' => 'ckdate', 'style' => 'margin-left:1em;'])
                 ,
                 ['class' => 'hhk-panel']
-            )
-
-            // PSG checklist
-            // TODO
-//            . $checklist->createChecklist($this->getIdPsg())
         );
+
+        // Checklist
+        $checklistTable = new HTMLTable();
+        $clName = Checklist::createChecklist($dbh, $this->getIdPsg(), ChecklistType::PSG, $checklistTable);
+
+        // Wrap last confirmed and checklists
+        $memMkup .= HTMLContainer::generateMarkup('div', $lastConfirmed . $checklistTable->generateMarkup(['style' => 'margin-top: 3px;'], $clName . ' Checklist'), []);
+
 
         // Change log
         $c = '';
@@ -302,7 +300,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $v = HTMLContainer::generateMarkup('div', $lTable->generateMarkup(), array('id'=>'divPsgLog', 'style'=>'display:none; clear:left;'));
         }
 
-        $editDiv = HTMLContainer::generateMarkup("div", $memMkup . $lastConfirmed, array("class"=>"hhk-flex hhk-flex-wrap"))
+        $editDiv = HTMLContainer::generateMarkup("div", $memMkup, array("class"=>"hhk-flex hhk-flex-wrap"))
                 . $notesContainer //$nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))
                 . $c . $v;
 

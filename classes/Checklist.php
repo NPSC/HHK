@@ -10,7 +10,7 @@ use HHK\sec\Labels;
 
 
 /**
- * Notes.php
+ * Checklist.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2024 <nonprofitsoftwarecorp.org>
@@ -19,7 +19,7 @@ use HHK\sec\Labels;
  */
 
 /**
- * Description of Notes
+ * Description of Checklist
  *
  * @author Eric
  */
@@ -28,13 +28,12 @@ class Checklist
 {
     const ChecklistRootTablename = 'Checklist';
 
-    protected $checklistType;
 
     public function __construct(\PDO $dbh, $checklistType) {
 
         $this->checklistType = $checklistType;
 
-        readGenLookupsPDO($dbh, 'Checklist', 'Order');
+        readGenLookupsPDO($dbh, self::ChecklistRootTablename, 'Order');
     }
 
     /**
@@ -51,7 +50,7 @@ class Checklist
     }
 
     /**
-     * Summary of createChecklistTypes
+     * Creates the types for editing the item content.
      * @param \PDO $dbh
      * @return string
      */
@@ -83,35 +82,99 @@ class Checklist
     }
 
     /**
-     * Summary of createChecklist
+     * Create a checklist for a user page
      * @param mixed $entityId Id for the checklist type.
-     * @return string
+     * @return null
      */
-    public function createChecklist($entityId) {
+    public static function createChecklist(\PDO $dbh, $entityId, $checklistType, HTMLTable &$checklistTbl) {
 
-        // PSG checkboxes
+        $clName = '';
+        $query = "
+SELECT
+    g.`Table_Name`,
+    g.`Code`,
+    g.`Description`,
+    g2.`Description` AS `CkListName`,
+    IFNULL(cl.`Value`, '') AS `Value`,
+    IFNULL(cl.`Value_Date`, '') AS `Date`
+FROM
+    `gen_lookups` g
+        JOIN
+    `gen_lookups` `g2` ON `g`.`Table_Name` = `g2`.`Code`
+        AND `g2`.`Table_Name` = '" . self::ChecklistRootTablename . "'
+        AND `g2`.`Substitute` = 'y'
+        LEFT JOIN
+    checklist_item cl ON g.Table_Name = cl.GL_TableName
+        AND cl.`GL_Code` = g.Code
+        AND cl.`Entity_Id` = :entityId
+WHERE g.Table_Name = :tblName
+ORDER BY g.`Order`;";
 
-        $tableName = 'Checklist_PSG';
-        $checklistTbl = new HTMLTable();
-        $items = [];
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':entityId' => $entityId, ':tblName' => $checklistType]);
 
-        foreach ($items as $cbsRow) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            if (strtolower($cbsRow['Substitute']) == 'y') {
-                // Got a live one
-                $label = HTMLContainer::generateMarkup('label', $cbsRow['Description'] . ': ', array('for' => $tableName . 'Item' . $cbsRow['Code']));
+            // Got a live one
+            $label = HTMLContainer::generateMarkup('label', $r['Description'] . ': ', array('for' => 'Item' . $r['Code']));
 
-                $cbAttr = ['name' => $tableName . 'Item' . $cbsRow['Code'], 'type' => 'checkbox'];
+            $bcdateAttr = array('style' => 'display:none;', 'id' => 'disp' . $r['Code']);
+            $cbAttr = ['name' => 'Item' . $r['Code'], 'type' => 'checkbox', 'data-code'=> $r['Code'], 'class' => 'hhk-checkboxlist'];
 
-
-                $checklistTbl->addBodyTr(HTMLTable::makeTd($label . HTMLInput::generateMarkup('', $cbAttr), ['class' => 'tdlabel'])
-                    . HTMLTable::makeTd('Date: ' . HTMLInput::generateMarkup('', ['name' => $tableName . 'Date' . $cbsRow['Code'], 'class' => 'ckbdate', 'style' => 'margin-left:1em;'])));
+            $strDate = '';
+            if ($r['Date'] !== '') {
+                $strDate = new \DateTime($r['Date']);
+                $strDate = $strDate->format('m, j, Y');
+                $cbAttr['checked'] = 'checked';
+                $bcdateAttr['style'] = 'display:table-cell;';
             }
+
+
+            $checklistTbl->addBodyTr(
+                HTMLTable::makeTd($label . HTMLInput::generateMarkup('', $cbAttr)
+                . HTMLInput::generateMarkup('0', ['type'=>'hidden','name'=>'cbMarker' . $r['Code']]), ['class' => 'tdlabel'])
+
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', 'Date: ' .
+                    HTMLInput::generateMarkup($strDate, ['name' => 'date' . $r['Code'], 'class' => 'ckdate', 'readonly'=>'readonly', 'style' => 'margin-left:1em;']), $bcdateAttr)
+                    , ['style'=>'min-width:200px;'])
+
+            );
+
+            $clName = $r['CkListName'];
         }
 
-        return $checklistTbl->generateMarkup();
+        return $clName;
     }
 
+    public static function saveChecklist(\PDO $dbh, $entityId, $checklistType) {
 
+         $query = "
+SELECT
+    g.`Table_Name`,
+    g.`Code`,
+    g.`Description`,
+    g2.`Description` AS `CkListName`,
+    IFNULL(cl.`Value`, '') AS `Value`,
+    IFNULL(cl.`Value_Date`, '') AS `Date`
+FROM
+    `gen_lookups` g
+        JOIN
+    `gen_lookups` `g2` ON `g`.`Table_Name` = `g2`.`Code`
+        AND `g2`.`Table_Name` = '" . self::ChecklistRootTablename . "'
+        AND `g2`.`Substitute` = 'y'
+        LEFT JOIN
+    checklist_item cl ON g.Table_Name = cl.GL_TableName
+        AND cl.`GL_Code` = g.Code
+        AND cl.`Entity_Id` = :entityId
+WHERE g.Table_Name = :tblName
+ORDER BY g.`Order`;";
 
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':entityId' => $entityId, ':tblName' => $checklistType]);
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+        }
+
+    }
 }

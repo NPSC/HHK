@@ -11,13 +11,13 @@ use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay, PSGMemVisit, PSGMemR
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Vehicle;
-use HHK\House\PSG;
+use HHK\Checklist;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Purchase\{FinAssistance, CheckinCharges, PaymentChooser, RateChooser};
 use HHK\sec\{Labels, SecurityComponent, Session};
-use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus, DefaultSettings};
+use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus, DefaultSettings, ChecklistType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 
@@ -753,12 +753,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $moaBalance = max(0, Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()) - Registration::loadPrepayments($dbh, $resv->getIdRegistration()));
 
+            $checklistTable = new HTMLTable();
+            $clName = Checklist::createChecklist($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG, $checklistTable);
+
             // Reservation Data
             $dataArray['rstat'] = $this->createStatusChooser(
                 $resv,
                 $resv->getChooserStatuses($reservStatuses),
                 $uS->nameLookups[GLTableNames::PayType],
-                readGenLookupsPDO($dbh, 'Checklist_PSG', 'Order'),
+                $checklistTable->generateMarkup(['style' => 'margin-top: 3px;'], $clName . ' Checklist'),
                 $labels,
                 $showPayWith,
                 $moaBalance);
@@ -786,12 +789,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
         } else {
             // Cancelled.
 
+            $checklistTable = new HTMLTable();
+            $clName = Checklist::createChecklist($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG, $checklistTable);
+
             // Allow to change reserv status.
             $dataArray['rstat'] = $this->createStatusChooser(
                 $resv,
                 $resv->getChooserStatuses($reservStatuses),
                 $uS->nameLookups[GLTableNames::PayType],
-                readGenLookupsPDO($dbh, 'Checklist_PSG', 'Order'),
+                $checklistTable->generateMarkup(['style'=>'margin-top: 3px;'], $clName . ' Checklist'),
                 $labels,
                 $showPayWith);
         }
@@ -965,12 +971,12 @@ where rg.idReservation =" . $r['idReservation']);
      * @param Reservation_1 $resv
      * @param array $limResvStatuses
      * @param array $payTypes
-     * @param array $psgCheckboxes
+     * @param string $psgCheckboxes  Markup
      * @param Labels $labels
      * @param bool $showPayWith
      * @return string
      */
-    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, array $psgChecboxes, $labels, $showPayWith, $moaBalance = 0) {
+    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, $psgChecboxes, $labels, $showPayWith, $moaBalance = 0) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -1020,10 +1026,7 @@ where rg.idReservation =" . $r['idReservation']);
         //Ribbon Note
         $tbl2->addBodyTr(HTMLTable::makeTd('Ribbon Note:',['class'=>'tdlabel']).HTMLTable::makeTd(HTMLInput::generateMarkup($resv->getNotes(), ['name'=>'txtRibbonNote', 'maxlength'=>'20']),['colspan'=>'3']));
 
-        // PSG Checkboxes
-        // TODO
         $mk2 = '';
-
 
         // Confirmation button  updated 5/20/2023:  add uncommitted to allowable statuses. #815
         if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::UnCommitted) {
@@ -1038,7 +1041,7 @@ where rg.idReservation =" . $r['idReservation']);
         return HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
-                    . $tbl2->generateMarkup() . $mk2,
+                    . $tbl2->generateMarkup() . $psgChecboxes . $mk2,
                     ['class'=>'hhk-panel'])
             , ['class'=>'mr-3 d-inline-block']);
 

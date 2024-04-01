@@ -24,7 +24,7 @@ define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
 define('SMS_DIALOG_JS', "js/smsDialog-min.js" . JSV);
 define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
 define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
-define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
+define('GUESTLOAD_JS', 'js/guestload.js' . JSV);
 define('REGISTER_JS', 'js/register-min.js' . JSV);
 define('FULLCALENDAR_JS', "../js/fullcalendar5.11.0.min.js" . JSV);
 define('REG_FORM_JS', 'js/regForm-min.js' . JSV);

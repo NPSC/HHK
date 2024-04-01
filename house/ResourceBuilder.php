@@ -2353,7 +2353,7 @@ $formBuilderOptions = [
                 <div>
                     <?php echo $demoMessage; ?>
                 </div>
-                <div> <!-- style="border:1px inset #9B9B9E; float: left; padding:9px; margin-right: 9px;" -->
+
                 <div style="float: left;">
                     <h3>Demographic Categories</h3>
                     <form id="formdemo">
@@ -2364,7 +2364,6 @@ $formBuilderOptions = [
                                 class="hhk-savedemoCat" data-type="h" value="Save" /></span>
                     </form>
                 </div>
-
                 <div style="float: left; margin-left: 30px;">
                     <h3>Demographics</h3>
                     <form id="formdemoCat">
@@ -2381,9 +2380,9 @@ $formBuilderOptions = [
                                 class="hhk-saveLookup" data-type="d" value="Save" /></span>
                     </form>
                 </div>
-            </div>
-<!--             <div style="border:1px inset #9B9B9E; float: left; padding:9px;">
-                <div style="float: left; margin-left: 30px;">
+
+             <div style="float: left; padding:9px; margin-left: 50px;">
+                <div style="float: left; ">
                     <h3>Checklist Categories </h3>
                     <form id="formcblist">
                         <div>
@@ -2410,7 +2409,7 @@ $formBuilderOptions = [
                     </form>
                 </div>
             </div>
- -->            </div>
+            </div>
             <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                 <div style="float: left;">
                     <h3>General Lookups</h3>

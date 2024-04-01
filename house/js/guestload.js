@@ -146,7 +146,7 @@ $(document).ready(function () {
         	}
 		});
     }
-    
+
     $(".btnTextGuest").smsDialog({"guestId":memData.id});
 
     // relationship dialog
@@ -461,6 +461,17 @@ $(document).ready(function () {
             $('#cbLastConfirmed').prop('checked', false);
         } else {
             $('#cbLastConfirmed').prop('checked', true);
+        }
+    });
+
+    $('.hhk-checkboxlist').change(function () {
+        if ($(this).prop('checked')) {
+            $('#date' + $(this).data('code')).datepicker('setDate', '+0');
+            $('#disp' + $(this).data('code')).show();
+        } else {
+            // restore date textbox
+            $('#date' + $(this).data('code')).val($('#date' + $(this).data('code')).prop('defaultValue'));
+            $('#disp' + $(this).data('code')).hide();
         }
     });
 

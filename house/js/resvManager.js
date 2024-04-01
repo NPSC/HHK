@@ -2193,6 +2193,18 @@ function resvManager(initData, options) {
             // Reservation Status
             if (data.resv.rdiv.rstat !== undefined) {
                 $rDiv.append($(data.resv.rdiv.rstat));
+
+                $('.hhk-checkboxlist').change(function () {
+                    if ($(this).prop('checked')) {
+                        $('#date' + $(this).data('code')).datepicker('setDate', '+0');
+                        $('#disp' + $(this).data('code')).show();
+                    } else {
+                        // restore date textbox
+                        $('#date' + $(this).data('code')).val($('#date' + $(this).data('code')).prop('defaultValue'));
+                        $('#disp' + $(this).data('code')).hide();
+                    }
+                });
+
             }
 
             // Multiple Reservations

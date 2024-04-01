@@ -14,5 +14,5 @@ class ChecklistType {
     const Reservation = 'reservation_Checklist';
     const Hospital = 'hospital_Checklist';
     const Visit = 'visit_Checklist';
-    const PSG = 'psg_Checklist';
+    const PSG = 'psg_items_Cklst';
 }
