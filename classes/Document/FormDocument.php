@@ -40,10 +40,10 @@ class FormDocument {
             //sync referral/resv statuses
             //$dbh->exec('CALL sync_referral_resv_status()');  // takes too long.
 
-            $query = 'SELECT g.Code AS "idStatus", g.Description AS "Status", g.Substitute AS "icon", COUNT(*) AS "count" FROM `document` d
-            join `gen_lookups` g on g.Table_Name = "Referral_Form_Status" and g.Code = d.Status
-            WHERE `d`.`Type` = "json" AND `d`.`Category` = "form"
-            GROUP BY g.Code;';
+            $query = "SELECT g.Code AS 'idStatus', g.Description AS 'Status', g.Substitute AS 'icon', COUNT(d.idDocument) AS 'count' FROM gen_lookups g
+			left join document d on g.Code = d.Status and `d`.`Type` = 'json' and `d`.`Category` = 'form'
+		where g.Table_Name = 'Referral_Form_Status'
+        group by g.Code;";
 
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
