@@ -753,15 +753,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $moaBalance = max(0, Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()) - Registration::loadPrepayments($dbh, $resv->getIdRegistration()));
 
-            $checklistTable = new HTMLTable();
-            $clName = Checklist::createChecklist($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG, $checklistTable);
+            $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
 
             // Reservation Data
             $dataArray['rstat'] = $this->createStatusChooser(
                 $resv,
                 $resv->getChooserStatuses($reservStatuses),
                 $uS->nameLookups[GLTableNames::PayType],
-                $checklistTable->generateMarkup(['style' => 'margin-top: 3px;'], $clName . ' Checklist'),
+                $checklistMkup,
                 $labels,
                 $showPayWith,
                 $moaBalance);
@@ -789,15 +788,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
         } else {
             // Cancelled.
 
-            $checklistTable = new HTMLTable();
-            $clName = Checklist::createChecklist($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG, $checklistTable);
+            $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
 
             // Allow to change reserv status.
             $dataArray['rstat'] = $this->createStatusChooser(
                 $resv,
                 $resv->getChooserStatuses($reservStatuses),
                 $uS->nameLookups[GLTableNames::PayType],
-                $checklistTable->generateMarkup(['style'=>'margin-top: 3px;'], $clName . ' Checklist'),
+                $checklistMkup,
                 $labels,
                 $showPayWith);
         }

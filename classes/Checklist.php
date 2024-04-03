@@ -3,7 +3,7 @@
 namespace HHK;
 
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
-use HHK\House\Report\ResourceBldr;
+use HHK\House\ResourceBldr;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Labels;
 
@@ -57,18 +57,18 @@ class Checklist
     public static function createChecklistTypes(\PDO $dbh) {
 
         // Chceklist category selectors
-        $stmt = $dbh->query("SELECT DISTINCT
-            `g`.`Table_Name`, g2.Description
+        $stmt = $dbh->query("SELECT
+            `g`.`Code` as `Table_Name`, g.Description
         FROM
             `gen_lookups` `g`
-                JOIN
-            `gen_lookups` `g2` ON `g`.`Table_Name` = `g2`.`Code`
-                AND `g2`.`Table_Name` = '" . self::ChecklistRootTablename .
-                "' AND `g2`.`Substitute` = 'y'
         WHERE
-            `g`.`Type` = 'd';");
+            `g`.`Table_Name` = '" . self::ChecklistRootTablename . "' and `g`.`Substitute` = 'y';");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        if(count($rows) == 0){
+            return "";
+        }
 
         $selChecklists = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
             [
@@ -84,11 +84,13 @@ class Checklist
     /**
      * Create a checklist for a user page
      * @param mixed $entityId Id for the checklist type.
-     * @return null
+     * @return string
      */
-    public static function createChecklist(\PDO $dbh, $entityId, $checklistType, HTMLTable &$checklistTbl) {
+    public static function createChecklistMkup(\PDO $dbh, $entityId, $checklistType) {
 
         $clName = '';
+        $checklistTbl = new HTMLTable();
+
         $query = "
 SELECT
     g.`Table_Name`,
@@ -112,6 +114,10 @@ ORDER BY g.`Order`;";
 
         $stmt = $dbh->prepare($query);
         $stmt->execute([':entityId' => $entityId, ':tblName' => $checklistType]);
+
+        if($stmt->rowCount() == 0){
+            return "";
+        }
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -143,7 +149,7 @@ ORDER BY g.`Order`;";
             $clName = $r['CkListName'];
         }
 
-        return $clName;
+        return $checklistTbl->generateMarkup(['class' => 'checklistTbl'], $clName . ' Checklist');
     }
 
     public static function saveChecklist(\PDO $dbh, $entityId, $checklistType) {

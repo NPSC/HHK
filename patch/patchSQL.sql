@@ -132,3 +132,6 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 -- Checklist
 ALTER TABLE `checklist_item`
 	ADD COLUMN IF NOT EXISTS `Entity_Id` INT NOT NULL AFTER `idChecklist_item`;
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 
+('Checklist', 'psg_items_Cklst', 'PSG', '','m',0);

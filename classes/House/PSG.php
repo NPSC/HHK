@@ -256,11 +256,10 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         );
 
         // Checklist
-        $checklistTable = new HTMLTable();
-        $clName = Checklist::createChecklist($dbh, $this->getIdPsg(), ChecklistType::PSG, $checklistTable);
+        $cheklistMkup = Checklist::createChecklistMkup($dbh, $this->getIdPsg(), ChecklistType::PSG);
 
         // Wrap last confirmed and checklists
-        $memMkup .= HTMLContainer::generateMarkup('div', $lastConfirmed . $checklistTable->generateMarkup(['style' => 'margin-top: 3px;'], $clName . ' Checklist'), []);
+        $memMkup .= HTMLContainer::generateMarkup('div', $lastConfirmed . $cheklistMkup, []);
 
 
         // Change log

@@ -245,7 +245,7 @@ $(document).ready(function () {
 	});
 
     var tabIndex = parseInt($('#tabIndex').val());
-    $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
+    $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, #btnTaxSave, .reNewBtn').button();
 
     $('#txtFaIncome, #txtFaSize').change(function () {
         var inc = $('#txtFaIncome').val().replace(',', ''),
@@ -460,14 +460,14 @@ $(document).ready(function () {
         	type = $sel.val();
         }
 
-        $sel.closest('form').children('div').empty().text('Loading...');
+        $sel.closest('form').children('div.lookupDetailTbl').empty().text('Loading...');
         $sel.prop('disabled', true);
 
         $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
                 function (data) {
                     $sel.prop('disabled', false);
                     if (data) {
-                        $sel.closest('form').children('div').empty().append(data).find(".sortable tbody")
+                        $sel.closest('form').children('div.lookupDetailTbl').empty().append(data).find(".sortable tbody")
                         	.sortable({
                         		items: "tr:not(.no-sort)",
                         		handle: ".sort-handle",
@@ -477,6 +477,8 @@ $(document).ready(function () {
                         			});
                         		}
                         	});
+                    } else {
+                        $sel.closest('form').children('div.lookupDetailTbl').empty();
                     }
                 });
     });
@@ -512,7 +514,7 @@ $(document).ready(function () {
             success: function (data) {
                 $btn.val('Save');
                 if (data) {
-                    $frm.children('div').empty().append(data).find(".sortable tbody")
+                    $frm.children('div.lookupDetailTbl').empty().append(data).find(".sortable tbody")
                         .sortable({
                             items: "tr:not(.no-sort)",
                             handle: ".sort-handle",
@@ -542,11 +544,14 @@ $(document).ready(function () {
     // Save Demo categories.
     $('#btndemoSave').click(function () {
         var $frm = $(this).closest('form');
+        var $btn = $(this);
+        $btn.val('Saving...');
 
         $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
             function (data) {
                 if (data) {
-                    $frm.children('div').children().remove().end().append(data).find(".sortable tbody")
+                    $btn.val('Save');
+                    $frm.children('div.lookupTbl').children().remove().end().append(data).find(".sortable tbody")
                         .sortable({
                             items: "tr:not(.no-sort)",
                             handle: ".sort-handle",
@@ -563,11 +568,14 @@ $(document).ready(function () {
     // Save PSG checkbox list.
     $('#btncblistSave').click(function () {
         var $frm = $(this).closest('form');
+        var $btn = $(this);
+        $btn.val('Saving...');
 
         $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Checklist' + '&tp=' + 'm',
             function (data) {
                 if (data) {
-                    $frm.children('div').children().remove().end().append(data).find(".sortable tbody")
+                    $btn.val('Save');
+                    $frm.children('div.lookupTbl').children().remove().end().append(data).find(".sortable tbody")
                         .sortable({
                             items: "tr:not(.no-sort)",
                             handle: ".sort-handle",
