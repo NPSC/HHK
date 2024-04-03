@@ -1074,3 +1074,18 @@ table.dataTable tbody td {
 #rescBuilderTitle span {
 	font-size: 0.8em;
 }
+
+
+/* calendar colors */
+
+#calendar .hhk-event-light.fc-timeline-event:not(.fc-event-end):after, #calendar .hhk-event-light.fc-timeline-event:not(.fc-event-start):before {
+	opacity: 0.75;
+	border-left-color: #fff;
+	border-right-color: #fff;
+}
+
+#calendar .fc-timeline-event:not(.fc-event-end):after, #calendar .fc-timeline-event:not(.fc-event-start):before {
+	opacity: 0.75;
+	border-left-color: #000;
+	border-right-color: #000;
+}

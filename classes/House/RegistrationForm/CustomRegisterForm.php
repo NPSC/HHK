@@ -1031,7 +1031,7 @@ class CustomRegisterForm {
 
         $houseAddr = '';
 
-        $stmth = $dbh->query("select a.Address_1, a.Address_2, a.City, a.State_Province, a.Postal_Code, p.Phone_Num
+        $stmth = $dbh->query("select a.Address_1, a.Address_2, a.City, a.State_Province, a.Postal_Code, ifnull(p.Phone_Num, '') as 'Phone_Num'
     from name n left join name_phone p on n.idName = p.idName and n.Preferred_Phone = p.Phone_Code left join name_address a on n.idName = a.idName and n.Preferred_Mail_Address = a.Purpose where n.idName = " . $uS->sId);
 
         $rows = $stmth->fetchAll(\PDO::FETCH_ASSOC);

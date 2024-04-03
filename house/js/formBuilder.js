@@ -183,7 +183,33 @@
     				"className": "form-control hhk-phoneInput",
     				"name": "patient.phone",
     				"width": "col-md-6"
-    			},
+					},
+					{
+						"type": "select",
+						"label": "SMS Opt In",
+						"placeholder": "Opt in to receive text messages",
+						"className": "form-select",
+						"name": "patient.sms_status",
+						"width": "col-md-3",
+						"multiple": false,
+						"values": [
+						  {
+							"label": "",
+							"value": "",
+							"selected": true
+							},
+							{
+							  "label": "Opt In",
+							  "value": "opt_in",
+							  "selected": false
+							},
+							{
+							  "label": "Opt Out",
+							  "value": "opt_out",
+							  "selected": false
+							}
+						]
+					  },
     			{
     				"type": "text",
     				"subtype": "email",
@@ -442,7 +468,34 @@
     				"name": "guests.g0.phone",
     				"width": "col-md-3",
     				"group": "guest"
-    			},
+					},
+					{
+					  "type": "select",
+					  "label": "SMS Opt In",
+					  "placeholder": "Opt in to receive text messages",
+					  "className": "form-select",
+					  "name": "guests.g0.sms_status",
+					  "width": "col-md-3",
+					  "group": "guest",
+					  "multiple": false,
+					  "values": [
+						{
+						  "label": "",
+						  "value": "",
+						  "selected": true
+						  },
+						  {
+							"label": "Opt In",
+							"value": "opt_in",
+							"selected": false
+						  },
+						  {
+							"label": "Opt Out",
+							"value": "opt_out",
+							"selected": false
+						  }
+					  ]
+					},
     			{
     				"type": "text",
     				"subtype": "email",
@@ -1055,6 +1108,16 @@
 			        bottom: 'auto',
 			        right: 'auto',
 			    },
+			},
+			defaultFormSettings: {
+				successTitle: "Referral Form Submitted",
+				successContent:
+`Thank you for submitting your referral form. Someone will be in touch shortly.
+
+Thank You,
+House Staff`,
+				initialGuests: 1,
+				maxGuests: 4
 			}
         };
 
@@ -1375,6 +1438,11 @@
 					"location":"../js/formBuilder"
 				}
 			});
+
+			settingsDialog.find('input#formSuccessTitle').val(settings.defaultFormSettings.successTitle).data('oldVal', "");
+			settingsDialog.find('textarea#formSuccessContent').val(settings.defaultFormSettings.successContent).data('oldVal', "");
+			settingsDialog.find('input[name=initialGuests]').val(settings.defaultFormSettings.initialGuests).data('oldVal',"");
+			settingsDialog.find('input[name=maxGuests]').val(settings.defaultFormSettings.maxGuests).data('oldVal',"");
 		});
 		
 		$wrapper.on('change', '#selectform', function(){
@@ -1409,7 +1477,7 @@
 									"location":"../js/formBuilder"
 								}
 							});
-							console.log(data.formSettings)
+							
 							$wrapper.find('#formiframebtn').data('url', data.formURL).show();
 							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
 							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
@@ -1559,7 +1627,7 @@
 				});
 				
 				//format font import
-				matches = fontImport.match(/@import url\('https:\/\/fonts.googleapis.com\/css2(\?.*)\'\);/);
+				matches = fontImport.match(/.*@import url\('https:\/\/fonts.googleapis.com\/css2(\?.*)\'\).*/);
 				if(Array.isArray(matches) && matches[1] != null){
 					queryString = matches[1];
 					urlparams = new URLSearchParams(queryString);

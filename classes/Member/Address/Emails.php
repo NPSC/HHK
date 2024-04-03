@@ -226,6 +226,7 @@ class Emails extends AbstractContactPoint {
 
         $message = '';
         $id = $this->name->get_idName();
+        $prefEmail = "";
 
         if ($id < 1) {
             return "Bad member Id.  ";
@@ -237,8 +238,12 @@ class Emails extends AbstractContactPoint {
 
         foreach ($this->codes as $purpose) {
 
+            $postedEmail = "";
+
             // Is the element even present?
-            if (isset($post[$idPrefix.'txtEmail'][$purpose[0]])) {
+            if (isset($post[$idPrefix . 'txtEmail'][$purpose[0]])) {
+                $postedEmail = trim($post[$idPrefix . 'txtEmail'][$purpose[0]]);
+
                 // Set some convenience vars.
                 $a = $this->rSs[$purpose[0]];
 
@@ -246,7 +251,7 @@ class Emails extends AbstractContactPoint {
                 if ($a->idName->getStoredVal() > 0) {
                     // Email Address exists in the DB
 
-                    if ($post[$idPrefix.'txtEmail'][$purpose[0]] == '' && $purpose[0] !== EmailPurpose::NoEmail) {
+                    if ($postedEmail == '') {
 
                         // Delete the Email Address record
                         if (EditRS::delete($dbh, $a, array($a->idName, $a->Purpose)) === FALSE) {
@@ -271,7 +276,7 @@ class Emails extends AbstractContactPoint {
                 } else {
                     // Email Address does not exist inthe DB.
                     // Did the user fill in this Email Address panel?
-                    if ($post[$idPrefix.'txtEmail'][$purpose[0]] != ''|| $purpose[0] === EmailPurpose::NoEmail) {
+                    if ($postedEmail != '') {
 
                         // Insert a new Email Address
                         $this->loadPostData($a, $post, $purpose[0], $user, $idPrefix);
@@ -290,6 +295,7 @@ class Emails extends AbstractContactPoint {
                 EditRS::updateStoredVals($a);
             }
         }
+
         $message .= $this->name->verifyPreferredAddress($dbh, $this, $user);
 
         return $message;
@@ -306,10 +312,18 @@ class Emails extends AbstractContactPoint {
      * @return void
      */
     private function loadPostData(NameEmailRS $a, array $p, $typeCode, $uname, $idPrefix = "") {
-        $email = filter_var(filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL), FILTER_VALIDATE_EMAIL);
+        //if ($typeCode !== EmailPurpose::NoEmail) {
+            //$email = filter_var(filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL), FILTER_VALIDATE_EMAIL);
+            //if($email == false){
+            //    throw new ValidationException("Email field must be a valid Email address");
+            //}
+        //}else{
+        //    $email = "";
+        //}
 
-        if($email == false){
-            throw new ValidationException("Email field must be a valid Email address");
+        $email = "";
+        if (isset($p[$idPrefix . 'txtEmail'][$typeCode])) {
+            $email = filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $a->Email->setNewVal(strtolower(trim($email)));

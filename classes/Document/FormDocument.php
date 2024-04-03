@@ -38,12 +38,13 @@ class FormDocument {
 
         if($totalsOnly){
             //sync referral/resv statuses
-            $dbh->exec('CALL sync_referral_resv_status()');
+            //$dbh->exec('CALL sync_referral_resv_status()');  // takes too long.
 
-            $query = 'select g.Code as "idStatus", g.Description as "Status", g.Substitute as "icon", count(v.idDocument) as "count" from `gen_lookups` g
-left join `vform_listing` v on g.Code = v.`status ID`
-where g.Table_Name = "Referral_Form_Status"
-group by g.Code order by g.Order';
+            $query = "SELECT g.Code AS 'idStatus', g.Description AS 'Status', g.Substitute AS 'icon', COUNT(d.idDocument) AS 'count' FROM gen_lookups g
+			left join document d on g.Code = d.Status and `d`.`Type` = 'json' and `d`.`Category` = 'form'
+		where g.Table_Name = 'Referral_Form_Status'
+        group by g.Code;";
+
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $totals = [];

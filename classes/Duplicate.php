@@ -303,7 +303,7 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
     concat(na.Address_1, na.Address_2) as `Address`,
     na.City,
     na.State_Province as `St`,
-    np.Phone_Num as Phone,
+    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone,
     ms.Description as `Status`,
     ng.Relationship_Code as `Rel`,
     n2.idName as `P id`,
@@ -350,8 +350,8 @@ where
     na.City,
     na.State_Province as `St`,
     date_format(n.BirthDate, '%b %e, %Y') as `Birth Date`,
-    np.Phone_Num as Phone,
-    ne.Email as Email,
+    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone,
+    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ifnull(ne.Email, '') END as Email,
     ms.Description as `Status`,
     ng.idPsg,
     ng.Relationship_Code as `Patient Relation`,
@@ -396,7 +396,9 @@ where
     public static function expandOther(\PDO $dbh, $nameLastFirst, $mType) {
 
         $stmt = $dbh->query("SELECT
-    n.idName, n.Name_Full, np.Phone_Num, ne.Email
+    n.idName, n.Name_Full, 
+    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone_Num, 
+    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ifnull(ne.Email, '') END as Email
 FROM
     name n
         LEFT JOIN

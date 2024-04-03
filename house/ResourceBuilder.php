@@ -1937,6 +1937,9 @@ if ($uS->mode != Mode::Live) {
 
     $cblistSelections = Checklist::createChecklistCategories($dbh, $labels);
     $selChecklistItems = Checklist::createChecklistTypes($dbh);
+}else{
+    $cblistSelections = "";
+    $selChecklistItems = "";
 }
 
 $insuranceType = new InsuranceType();
@@ -2350,7 +2353,7 @@ $formBuilderOptions = [
                 <div>
                     <?php echo $demoMessage; ?>
                 </div>
-                <div style="border:1px inset #9B9B9E; float: left; padding:9px; margin-right: 9px;">
+                <div> <!-- style="border:1px inset #9B9B9E; float: left; padding:9px; margin-right: 9px;" -->
                 <div style="float: left;">
                     <h3>Demographic Categories</h3>
                     <form id="formdemo">

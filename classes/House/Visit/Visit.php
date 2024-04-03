@@ -809,8 +809,10 @@ class Visit {
                 $stayEndDT->setTime(0, 0, 0);
             }
 
+            $rm = $this->resource->allocateRoom(0, $this->overrideMaxOccupants); //get room object regardless of status
+
             if($stayRS->Status->getStoredVal() == VisitStatus::Active){
-                $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
+                $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants); //only allocate a room if the stay is checked in
                 if (is_null($rm)) {
                     throw new RuntimeException('Room is full.  ');
                 }

@@ -11,6 +11,7 @@ use HHK\House\Room\Room;
 use HHK\Member\RoleMember\GuestMember;
 use HHK\Note\{LinkNote, Note};
 use HHK\SysConst\{MemBasis, ReservationStatus, RoomState, VisitStatus, RoomRateCategories, ItemId, InvoiceStatus};
+use HHK\SysConst\ReferralFormStatus;
 use HHK\TableLog\{ReservationLog, VisitLog};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
@@ -519,6 +520,19 @@ class Reservation_1 {
             }
         }
 
+        $uS = Session::getInstance();
+
+        if ($uS->useOnlineReferral && $this->getIdReferralDoc() > 0) {
+            // Update the referral form document status
+            $resvStatuses = ['a', 'p', 'uc', 'w'];
+
+            if (in_array($this->reservRs->Status->getStoredVal(), $resvStatuses)) {
+                $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Accepted . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+            } else {
+                $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Archived . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+            }
+        }
+
         return $this->reservRs;
     }
 
@@ -537,7 +551,7 @@ class Reservation_1 {
         }
 
         // Set referal doc to archived
-        $dbh->exec("update document d left join reservation r on d.idDocument = r.idReferralDoc set d.Status = 'ar' where r.idReservation = " . $this->getIdReservation());
+        $dbh->exec("update document d left join reservation r on d.idDocument = r.idReferralDoc set d.Status = '" . ReferralFormStatus::Archived . "' where r.idReservation = " . $this->getIdReservation());
 
         // Delete
         $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
@@ -584,7 +598,7 @@ class Reservation_1 {
         foreach ($rows as $r) {
             $boDays[] = intval($r[0], 10);
         }
-        
+
 
         return $boDays;
 

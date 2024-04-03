@@ -257,14 +257,7 @@ class WebInit {
 
         $this->loadNameLookups($this->dbh, $uS);
 
-        SysConfig::getCategory($this->dbh, $uS, "'a'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'d'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'es'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'f'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'fg'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'pr'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'v'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'ga'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, ["a", "d", "es", "f", "fg", "pr", "v", "ga"], webInit::SYS_CONFIG);
 
         return $uS->nameLookups;
 
@@ -297,13 +290,7 @@ class WebInit {
         // get session instance
         $uS = Session::getInstance();
 
-        SysConfig::getCategory($this->dbh, $uS, "'h'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'ha'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'hf'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'c'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'g'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'p'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'ga'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, ["h", "ha", "hf", "c", "g", "p", "ga"], webInit::SYS_CONFIG);
 
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
@@ -372,7 +359,7 @@ class WebInit {
 
         $uS->volLookups = $nameLookups;
 
-        SysConfig::getCategory($this->dbh, $uS, "'v'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "v", webInit::SYS_CONFIG);
         return $uS->volLookups;
 
     }
@@ -392,5 +379,3 @@ class WebInit {
     }
 
 }
-
-?>

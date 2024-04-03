@@ -75,7 +75,7 @@ class VehiclesReport extends AbstractReport implements ReportInterface {
     ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', g.`Description`) end), '') as `Last Name`,
     ifnull(n.Name_First, '') as `First Name`,
     ifnull(rm.Title, '')as `Room`,
-    ifnull(np.Phone_Num, '') as `Phone`,
+    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as `Phone`,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
     case when r.Expected_Departure < now() then now() else r.Expected_Departure end as `Expected Departure`,
 	l.Title as `Status`,
