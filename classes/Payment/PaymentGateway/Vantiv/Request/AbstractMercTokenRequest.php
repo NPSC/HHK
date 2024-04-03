@@ -3,7 +3,10 @@
 namespace HHK\Payment\PaymentGateway\Vantiv\Request;
 
 use HHK\Exception\PaymentException;
-use HHK\Payment\PaymentGateway\Vantiv\Response\AbstractMercResponse;
+use HHK\Exception\UnexpectedValueException;
+use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
+
+
 /**
  * AbstractMercTokenRequest.php
  *
@@ -55,10 +58,17 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
      * The password is handled differently for Tokens.
      *
      * @param array $gway
-     * @return AbstractMercResponse
+     * @return CreditTokenResponse
      * @throws PaymentException
+     * @throws UnexpectedValueException
      */
     public function submit(array $gway, $trace = FALSE) {
+
+        // Check credentials for type and contents
+        if (is_null($gway['Merchant_Id']) || $gway['Merchant_Id'] == '' || is_null($gway['Password']) || $gway['Password'] == '') {
+            throw new UnexpectedValueException('Merchant Id or Password are missing.');
+        }
+
 
         $this->setMerchantId($gway['Merchant_Id']);
         $data = array("request" => $this->getFieldsArray(), "password" => $gway['Password']);
@@ -210,4 +220,3 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     }
 
 }
-?>

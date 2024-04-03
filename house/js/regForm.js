@@ -433,6 +433,7 @@ function setupEsign(){
             SetTabletState(0, tmr);
             SetJustifyMode(5);
             ClearTablet();
+            
             if(tmr === null){
                 tmr = SetTabletState(1, ctx, 50);
             }else{
@@ -449,19 +450,14 @@ function setupEsign(){
         }
     }
 
-    function onClear(){
-        if (typeof clearTablet !== 'undefined') {
-            ClearTablet();
-            let canvas = document.getElementById("sigImg");
-            let ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+    function onClear() {
+        ClearTablet();
     }
 
     function onDone(){
         if(NumberOfTabletPoints() == 0){
             return false;
-        }else{
+        } else {
             SetTabletState(0, tmr);
             return true;
         }

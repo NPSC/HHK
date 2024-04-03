@@ -2,7 +2,7 @@
 namespace HHK\SysConst;
 
 /**
- * DefaultSettings.php
+ * ChecklistType.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
@@ -10,7 +10,9 @@ namespace HHK\SysConst;
  * @link      https://github.com/NPSC/HHK
  */
 
-class DefaultSettings {
-    const Rate_Category = 'e';
-    const Fixed_Rate_Category = 'f';
+class ChecklistType {
+    const Reservation = 'reservation_Checklist';
+    const Hospital = 'hospital_Checklist';
+    const Visit = 'visit_Checklist';
+    const PSG = 'psg_Checklist';
 }

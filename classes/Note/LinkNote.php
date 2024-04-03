@@ -87,12 +87,12 @@ class LinkNote {
     /**
      * Summary of saveLink
      * @param \PDO $dbh
-     * @param mixed $note
+     * @param Note $note
      * @param mixed $linkId
      * @param mixed $linkType
      * @return string
      */
-    protected static function saveLink(\PDO $dbh, $note, $linkId, $linkType) {
+    protected static function saveLink(\PDO $dbh, Note $note, $linkId, $linkType) {
 
         if ($note->getIdNote() > 0) {
 

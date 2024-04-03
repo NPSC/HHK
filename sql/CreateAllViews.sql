@@ -947,7 +947,14 @@ AS SELECT
    `r`.`Timestamp` AS `Timestamp`,
    `r`.`Guest_Id` AS `Guest_Id`,
    `r`.`Psg_Id` AS `Psg_Id`
-FROM ((`report` `r` left join `name_guest` `ng` on((`r`.`Guest_Id` = `ng`.`idName`))) left join `name` `n` on((`ng`.`idName` = `n`.`idName`))) where ((`r`.`idReport` > 0) and (`r`.`Status` in ('a','r','h'))) group by `r`.`idReport`;
+FROM
+        ((`report` `r`
+        LEFT JOIN `name_guest` `ng` ON (`r`.`Guest_Id` = `ng`.`idName`
+            AND `r`.`Psg_Id` = `ng`.`idPsg`))
+        LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`))
+    WHERE
+        `r`.`idReport` > 0
+            AND `r`.`Status` IN ('a' , 'r', 'h');
 
 
 
@@ -997,8 +1004,8 @@ Select
     ifnull(rv.Expected_Departure, '') as `Expected_Departure`,
     ifnull(rv.Actual_Arrival, '') as `Actual_Arrival`,
     IFNULL(rv.Actual_Departure, '') as `Actual_Departure`,
-    ifnull(ne.Email, '') as `Email`,
-    ifnull(np.Phone_Num, '') as `Phone`
+    case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end as `Email`,
+    case when (`n`.`Preferred_Phone` = 'no') then 'No Phone' else ifnull(`np`.`Phone_Num`, '') end as `Phone`
 from
     name_guest ng
             left join
@@ -1593,7 +1600,7 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         IFNULL(`n`.`Name_First`, '') AS `First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
         CASE
-            WHEN `np`.`Phone_Code` = 'no' THEN 'No Phone'
+            WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone'
             ELSE IFNULL(`np`.`Phone_Num`, '')
         END AS `Phone`,
         `s`.`Checkin_Date` AS `Arrival`,
@@ -2154,7 +2161,7 @@ create or replace view `vname_list` as
         `n`.`Name_Middle` AS `Middle`,
         `n`.`Name_Last` AS `Last`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
-        (CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone'
+        (CASE WHEN (`n`.`Preferred_Phone` = 'no') THEN 'No Phone'
             WHEN (IFNULL(`np`.`Phone_Extension`, '') = '') THEN IFNULL(`np`.`Phone_Num`, '')
             ELSE CONCAT_WS('x',
                     `np`.`Phone_Num`,
@@ -2417,23 +2424,16 @@ CREATE or replace VIEW `vregister` AS
         `nd`.`Income_Bracket` AS `Income_Bracket`,
         `nd`.`Age_Bracket` AS `Age_Bracket`,
         `nd`.`Education_Level` AS `Education_Level`,
-        `nd`.`Special_Needs` AS `Special_Needs`,
-        `s`.`On_Leave` AS `On_Leave`,
-        COUNT(`s`.`idName`) AS `Guest_Count`
+        `nd`.`Special_Needs` AS `Special_Needs`
     FROM
-        ((((((`visit` `v`
+        (((((`visit` `v`
         LEFT JOIN `hospital_stay` `hs` ON (`v`.`idHospital_stay` = `hs`.`idHospital_stay`))
         LEFT JOIN `name` `n` ON (`v`.`idPrimaryGuest` = `n`.`idName`))
         LEFT JOIN `name_demog` `nd` ON (`v`.`idPrimaryGuest` = `nd`.`idName`))
-        LEFT JOIN `stays` `s` ON (`v`.`idVisit` = `s`.`idVisit`
-            AND `v`.`Span` = `s`.`Visit_Span`
-            AND `v`.`Status` = `s`.`Status`))
         LEFT JOIN `gen_lookups` `gs` ON (`gs`.`Table_Name` = 'Name_Suffix'
             AND `gs`.`Code` = `n`.`Name_Suffix`))
         LEFT JOIN `gen_lookups` `gv` ON (`gv`.`Table_Name` = 'Visit_Status'
-            AND `gv`.`Code` = `v`.`Status`))
-    GROUP BY `v`.`idVisit` , `v`.`Span`
-    ORDER BY `v`.`idVisit` , `v`.`Span`;
+            AND `gv`.`Code` = `v`.`Status`));
 
 
 
@@ -2835,9 +2835,8 @@ CREATE or replace VIEW `vresv_patient` AS
         left join visit v on r.idReservation = v.idReservation and v.Status = 'a'
         left join `hospital_stay` `h` ON `r`.`idHospital_Stay` = `h`.`idHospital_stay`
         left join resource re on r.idResource = re.idResource
-        left join `name` `n` ON `h`.`idPatient` = `n`.`idName`, sys_config s
-	where
-		s.Key = 'AcceptResvPaymt';
+        left join `name` `n` ON `h`.`idPatient` = `n`.`idName`
+        left join `sys_config` `s` ON `s`.`Key` = 'AcceptResvPaymt';
 
 
 

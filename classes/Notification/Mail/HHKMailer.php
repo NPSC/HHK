@@ -104,6 +104,8 @@ class HHKMailer extends PHPMailer {
 
         $uS = Session::getInstance();
 
+        $username = ($uS->username ? $uS->username : "Web");
+
         $logDetails = [
             "Subject" => $this->Subject,
             "CC" => implode(', ', $this->getCCString()),
@@ -113,18 +115,18 @@ class HHKMailer extends PHPMailer {
         try{
             if(parent::send()){
                 $logDetails["messageId"] = $this->getLastMessageID();
-                NotificationLog::logEmail($this->dbh, $uS->username, implode(', ', $this->getToString()), $this->From, "Email submitted for delivery", $logDetails);
+                NotificationLog::logEmail($this->dbh, $username, implode(', ', $this->getToString()), $this->From, "Email submitted for delivery", $logDetails);
                 return true;
             }else{
                 $logDetails["error"] = $this->ErrorInfo;
-                NotificationLog::logEmail($this->dbh, $uS->username, implode(', ',$this->getToString()), $this->From, "Email failed to send", $logDetails);
+                NotificationLog::logEmail($this->dbh, $username, implode(', ',$this->getToString()), $this->From, "Email failed to send", $logDetails);
                 return false;
             }
             
         }catch(Exception $e){
 
             $logDetails["error"] = $this->ErrorInfo;
-            NotificationLog::logEmail($this->dbh, $uS->username, implode(', ', $this->getToString()), $this->From, "Email failed to send", $logDetails);
+            NotificationLog::logEmail($this->dbh, $username, implode(', ', $this->getToString()), $this->From, "Email failed to send", $logDetails);
             throw $e;
         }
     }

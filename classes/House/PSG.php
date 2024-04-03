@@ -2,16 +2,18 @@
 
 namespace HHK\House;
 
+use HHK\Checklist;
+use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Member\Role\Guest;
+use HHK\sec\{Session, Labels};
 use HHK\SysConst\{NameGuestStatus, RelLinkType, VisitStatus};
+use HHK\SysConst\ChecklistType;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
-use HHK\Tables\Visit\Visit_LogRS;
 use HHK\Tables\Name\{Name_GuestRS, NameRS};
 use HHK\Tables\Registration\PSG_RS;
-use HHK\sec\{Session, Labels};
-use HHK\Exception\RuntimeException;
+use HHK\Tables\Visit\Visit_LogRS;
 
 /**
  * PSG.php
@@ -178,7 +180,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             ng.Relationship_Code,
             ng.Legal_Custody,
             IFNULL(n.Name_Full, '') AS `Name_Full`,
-            IFNULL(np.Phone_Num, '') AS `Preferred_Phone`
+            CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END AS `Preferred_Phone`
         FROM
             name_guest ng
                 JOIN
@@ -243,6 +245,10 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $lastConfDate = $lcdDT->format('M j, Y');
         }
 
+        // PSG checklists
+        // TODO
+//        $checklist = '' new Checklist($dbh, ChecklistType::PSG);
+
         $lastConfirmed = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup(
                 'fieldset',
@@ -254,8 +260,9 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                 ['class' => 'hhk-panel']
             )
 
-            // PSG checkboxes
-            .self::createCheckboxes(readGenLookupsPDO($dbh, 'Checklist_PSG', 'Order'), $this->psgRS)
+            // PSG checklist
+            // TODO
+//            . $checklist->createChecklist($this->getIdPsg())
         );
 
         // Change log
@@ -301,47 +308,6 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         return $editDiv;
 
-    }
-
-    /**
-     * Summary of createCheckboxes
-     * @param mixed $items  use genLookup table name 'Checklist_PSG'
-     * @param mixed $psgRs  psg table with items and dates.
-     * @return string
-     */
-    public static function createCheckboxes($items, $psgRs) {
-
-// Keep out of next release (2/28/2024)
-$uS = Session::getInstance();
-if ($uS->Site_Mode == "live") {
-    return '';
-}
-
-        // PSG checkboxes
-
-        // Any items to process?
-        if (Count($items) == 0) {
-            return '';
-        }
-
-        $tableName = 'Checklist_PSG';
-        $checklistTbl = new HTMLTable();
-
-        foreach ($items as $cbsRow) {
-
-            if (strtolower($cbsRow['Substitute']) == 'y') {
-                // Got a live one
-                $label = HTMLContainer::generateMarkup('label', $cbsRow['Description'].': ', array('for' => $tableName . 'Item' . $cbsRow['Code']));
-
-                $cbAttr = ['name' => $tableName . 'Item' . $cbsRow['Code'], 'type' => 'checkbox'];
-
-
-                $checklistTbl->addBodyTr(HTMLTable::makeTd($label . HTMLInput::generateMarkup('', $cbAttr), ['class' => 'tdlabel'])
-                    . HTMLTable::makeTd('Date: '.HTMLInput::generateMarkup('', ['name' => $tableName . 'Date' . $cbsRow['Code'], 'class' => 'ckbdate', 'style' => 'margin-left:1em;'])));
-            }
-        }
-
-        return $checklistTbl->generateMarkup();
     }
 
     protected function verifyUniquePatient(\PDO $dbh, $idPatient) {

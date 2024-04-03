@@ -1,30 +1,30 @@
 <?php
 
-use HHK\HTMLControls\HTMLTable;
-use HHK\sec\WebInit;
-use HHK\SysConst\WebPageCode;
-use HHK\sec\SecurityComponent;
-use HHK\sec\Session;
-use HHK\Photo;
-use HHK\Update\SiteConfig;
-use HHK\Document\ListDocuments;
 use HHK\Document\Document;
+use HHK\Document\FormDocument;
+use HHK\Document\FormTemplate;
+use HHK\Document\ListDocuments;
+use HHK\History;
+use HHK\House\Constraint\Constraints;
+use HHK\House\Report\ActivityReport;
+use HHK\House\Report\RoomReport;
+use HHK\House\ResourceView;
+use HHK\House\Room\Room;
 use HHK\House\Vehicle;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\House\Report\ActivityReport;
-use HHK\SysConst\GLTableNames;
-use HHK\House\ResourceView;
-use HHK\House\Constraint\Constraints;
-use HHK\History;
-use HHK\House\Report\RoomReport;
-use HHK\SysConst\ReservationStatus;
-use HHK\House\Room\Room;
-use HHK\SysConst\RoomState;
-use HHK\Payment\Invoice\InvoiceActions;
-use HHK\Document\FormTemplate;
-use HHK\Document\FormDocument;
+use HHK\HTMLControls\HTMLTable;
 use HHK\Member\IndivMember;
+use HHK\Payment\Invoice\InvoiceActions;
+use HHK\Photo;
+use HHK\sec\SecurityComponent;
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\SysConst\GLTableNames;
 use HHK\SysConst\MemBasis;
+use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\RoomState;
+use HHK\SysConst\WebPageCode;
+use HHK\Update\SiteConfig;
 
 
 
@@ -57,7 +57,7 @@ if (isset($_REQUEST["cmd"])) {
 $uS = Session::getInstance();
 
 
-$events = array();
+$events = [];
 
 try {
 
@@ -266,26 +266,26 @@ try {
 
             $markup = '';
             if (isset($_REQUEST['visit'])) {
-                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::staysLog($dbh, $strt, $end, $idPsg), array('style' => 'float:left;'));
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::staysLog($dbh, $strt, $end, $idPsg), ['style' => 'float:left;']);
             }
 
             if (isset($_REQUEST['resv'])) {
-                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::reservLog($dbh, $strt, $end, 0, $idPsg), array('style' => 'float:left;'));
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::reservLog($dbh, $strt, $end, 0, $idPsg), ['style' => 'float:left;']);
             }
 
             if (isset($_REQUEST['hstay'])) {
 
 
-                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::HospStayLog($dbh, $strt, $end, $idPsg), array('style' => 'float:left;'));
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::HospStayLog($dbh, $strt, $end, $idPsg), ['style' => 'float:left;']);
             }
 
             if (isset($_REQUEST['fee'])) {
 
-                $st = array();
+                $st = [];
                 if (isset($_REQUEST['st'])) {
                     $st = filter_var_array($_REQUEST['st'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
-                $pt = array();
+                $pt = [];
                 if (isset($_REQUEST['pt'])) {
                     $pt = filter_var_array($_REQUEST['pt'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
@@ -299,20 +299,16 @@ try {
                     $showDelInv = TRUE;
                 }
 
-                $markup = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, $startDT, $endDT, $st, $pt, $id, 'Payments Report', $showDelInv), array('style' => 'margin-left:5px;'));
+                $markup = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, $startDT, $endDT, $st, $pt, $id, 'Payments Report', $showDelInv), ['style' => 'margin-left:5px;']);
             }
 
             if (isset($_REQUEST['inv'])) {
 
 
-                $markup = HTMLContainer::generateMarkup('div', ActivityReport::unpaidInvoiceLog($dbh), array('style' => 'margin-left:5px;'));
+                $markup = HTMLContainer::generateMarkup('div', ActivityReport::unpaidInvoiceLog($dbh), ['style' => 'margin-left:5px;']);
             }
 
-            if (isset($_REQUEST['direct'])) {
-                $events = HTMLContainer::generateMarkup('div', $markup, array('style' => 'position:relative;top:12px;')) . HTMLContainer::generateMarkup('div', '', array('style' => 'clear:both;'));
-            } else {
-                $events = array('success' => HTMLContainer::generateMarkup('div', $markup, array('style' => 'position:relative;top:12px;')) . HTMLContainer::generateMarkup('div', '', array('style' => 'clear:both;')));
-            }
+            $events = (isset($_REQUEST['direct'])) ? HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;']) : ['success' => HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;'])];
 
             break;
 
@@ -334,11 +330,7 @@ try {
                 $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            if ($id > 0) {
-                $events = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, NULL, NULL, array(0 => ''), array(0 => ''), $id, 'Payment History', FALSE), array('id' => 'rptfeediv', 'class' => 'ignrSave'));
-            } else {
-                $events = '';
-            }
+            $events = ($id > 0) ? HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, NULL, NULL, [0 => ''], [0 => ''], $id, 'Payment History', FALSE), ['id' => 'rptfeediv', 'class' => 'ignrSave']) : '';
             break;
 
         case "getResc":
@@ -354,7 +346,7 @@ try {
 
             if ($type == 'resc') {
 
-                $hospList = array();
+                $hospList = [];
                 if (isset($uS->guestLookups[GLTableNames::Hospital])) {
                     $hospList = $uS->guestLookups[GLTableNames::Hospital];
                 }
@@ -362,7 +354,7 @@ try {
                 $events = ResourceView::resourceDialog($dbh, $id, $uS->guestLookups[GLTableNames::RescType], $hospList);
             } else if ($type == 'room') {
 
-                $roomRates = array();
+                $roomRates = [];
                 if (isset($uS->guestLookups['Static_Room_Rate'])) {
                     $roomRates = $uS->guestLookups['Static_Room_Rate'];
                 }
@@ -624,7 +616,7 @@ try {
             break;
 
         case "getformtemplates" :
-            $events = array('forms'=>FormTemplate::listTemplates($dbh));
+            $events = ['forms' => FormTemplate::listTemplates($dbh)];
             break;
 
         case "loadformtemplate" :
@@ -633,15 +625,15 @@ try {
                 $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
                 $formTemplate = new FormTemplate();
                 if($formTemplate->loadTemplate($dbh, $idDocument)){
-                    $events = array(
-                        'status'=>'success',
-                        'formTitle'=>htmlspecialchars_decode($formTemplate->getTitle(), ENT_QUOTES),
-                        'formTemplate'=>$formTemplate->getTemplate(),
-                        'formSettings'=>$formTemplate->getSettings(),
-                        'formURL'=>$uS->resourceURL . 'house/showReferral.php?template=' . $idDocument
-                    );
+                    $events = [
+                        'status' => 'success',
+                        'formTitle' => htmlspecialchars_decode($formTemplate->getTitle(), ENT_QUOTES),
+                        'formTemplate' => $formTemplate->getTemplate(),
+                        'formSettings' => $formTemplate->getSettings(),
+                        'formURL' => $uS->resourceURL . 'house/showReferral.php?template=' . $idDocument
+                    ];
                 }else{
-                    $events = array("error"=>"Form not found");
+                    $events = ["error" => "Form not found"];
                 }
             }
             break;
@@ -722,7 +714,7 @@ try {
 
             $fontImport = '';
             if(isset($_REQUEST['fontImport']) && is_array($_REQUEST['fontImport'])) {
-                $fontImport = array();
+                $fontImport = [];
                 foreach($_REQUEST['fontImport'] as $font){
                     $fontImport[] = filter_var($font, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
@@ -731,9 +723,9 @@ try {
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $uS->username);
             }
 
             break;
@@ -776,7 +768,7 @@ try {
                 $idName = filter_var($_REQUEST['idName'], FILTER_VALIDATE_INT);
                 $mem = new IndivMember($dbh, MemBasis::Indivual, $idName);
 
-                $events = array("markup"=>$mem->createInsuranceSummaryPanel($dbh));
+                $events = ["markup" => $mem->createInsuranceSummaryPanel($dbh)];
             }
             break;
 
@@ -789,14 +781,14 @@ try {
             $events = getNameDetails($dbh, $post);
             break;
         default:
-            $events = array("error" => "Bad Command: \"" . $c . "\"");
+            $events = ["error" => "Bad Command: \"" . $c . "\""];
     }
 
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage());
+    $events = ["error" => "Database Error: " . $ex->getMessage()];
 
 } catch (Exception $ex) {
-    $events = array("error" => "Programming Error: " . $ex->getMessage());
+    $events = ["error" => "Programming Error: " . $ex->getMessage()];
 }
 
 

@@ -34,7 +34,7 @@ if (isset($_REQUEST["cmd"])) {
 $uS = Session::getInstance();
 
 
-$events = array();
+$events = [];
 
 try {
 
@@ -60,12 +60,12 @@ try {
 
             $stmt = $obh->query("Select Rate, count(Rate) from overview.site group by Rate order by Start_Date;");
 
-            $events = array();
-            $events[] = array('Rate', 'Houses at Rate');
+            $events = [];
+            $events[] = ['Rate', 'Houses at Rate'];
 
             while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
-                $events[] = array('$'.$r[0], intval($r[1]));
+                $events[] = ['$' . $r[0], intval($r[1])];
             }
 
             break;
@@ -85,12 +85,12 @@ try {
 
             $stmt = $obh->query("Select Title, Contracted_Rooms from overview.site  order by Start_Date;");
 
-            $events = array();
-            $events[] = array('Rooms', 'House Rooms');
+            $events = [];
+            $events[] = ['Rooms', 'House Rooms'];
 
             while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
-                $events[] = array($r[0], intval($r[1]));
+                $events[] = [$r[0], intval($r[1])];
             }
 
 
@@ -108,7 +108,7 @@ try {
             $obh->exec("SET SESSION wait_timeout = 3600;");
 
 
-            $events[] = array('Year', 'Visit Nights');
+            $events[] = ['Year', 'Visit Nights'];
 
             $stmt = $obh->query("Select Title, Db_Schema, Start_Date from site order by Start_Date;");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -145,7 +145,7 @@ try {
                 }
 
                 reset($rows);
-                $events[] = array("$y: $houses", intval($total));
+                $events[] = ["$y: $houses", intval($total)];
             }
             break;
 
@@ -162,13 +162,13 @@ try {
             $obh->exec("SET SESSION wait_timeout = 3600;");
 
 
-            $events[] = array('Year', 'Income');
+            $events[] = ['Year', 'Income'];
 
             $stmt = $obh->query("Select Title, Db_Schema, Start_Date from site order by Start_Date;");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
-            $total = array();
+            $total = [];
             $houses = 0;
 
             // Each House
@@ -195,7 +195,7 @@ try {
             }
 
             foreach ($total as $k => $t) {
-                $events[] = array($k, $t);
+                $events[] = [$k, $t];
             }
 
 
@@ -207,10 +207,10 @@ try {
     }
 
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage());
+    $events = ["error" => "Database Error: " . $ex->getMessage()];
 
 } catch (Exception $ex) {
-    $events = array("error" => "Programming Error: " . $ex->getMessage());
+    $events = ["error" => "Programming Error: " . $ex->getMessage()];
 }
 
 
@@ -224,7 +224,7 @@ if (is_array($events)) {
 exit();
 
 
-function houseTable() {
+/* function houseTable() {
 
     $dsn = "mysql:host=10.138.0.21;dbname=overview;charset=utf8mb4";
     $options = [
@@ -398,3 +398,4 @@ function roomRates($rows) {
     //                   "rows":[{"c":[{"v": [12,30,0]}, {"v": 4}]}, {"c":[{"v": [13,30,0]}, {"v": 6}]}, {"c":[{"v": [15,45,0]}, {"v": 10}]}, {"c":[{"v": [17,30,0]}, {"v": 7}]}, {"c":[{"v": [19,30,0]}, {"v": 6}]}]}';
 
 }
+ */

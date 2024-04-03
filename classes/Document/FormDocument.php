@@ -38,12 +38,13 @@ class FormDocument {
 
         if($totalsOnly){
             //sync referral/resv statuses
-            $dbh->exec('CALL sync_referral_resv_status()');
+            //$dbh->exec('CALL sync_referral_resv_status()');  // takes too long.
 
-            $query = 'select g.Code as "idStatus", g.Description as "Status", g.Substitute as "icon", count(v.idDocument) as "count" from `gen_lookups` g
-left join `vform_listing` v on g.Code = v.`status ID`
-where g.Table_Name = "Referral_Form_Status"
-group by g.Code order by g.Order';
+            $query = "SELECT g.Code AS 'idStatus', g.Description AS 'Status', g.Substitute AS 'icon', COUNT(d.idDocument) AS 'count' FROM gen_lookups g
+			left join document d on g.Code = d.Status and `d`.`Type` = 'json' and `d`.`Category` = 'form'
+		where g.Table_Name = 'Referral_Form_Status'
+        group by g.Code;";
+
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $totals = [];
@@ -158,7 +159,8 @@ group by g.Code order by g.Order';
 
         try{
             if ($to !== FALSE && $to != '') {
-//                $userData = $this->getUserData();
+                $formSettings = $this->formTemplate->getSettings();
+
                 $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ". <br><br><a href='" . $uS->resourceURL . "house/register.php' target='_blank'>Click here to log into HHK and take action.</a><br>" . PHP_EOL;
 
                 $mail = new HHKMailer($dbh);
@@ -169,7 +171,7 @@ group by g.Code order by g.Order';
 
                 $mail->isHTML(true);
 
-                $mail->Subject = "New " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " submitted";
+                $mail->Subject = (isset($formSettings["notifySubject"]) && $formSettings["notifySubject"] != "" ? $formSettings["notifySubject"] : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted");
                 $mail->msgHTML($content);
 
                 if ($mail->send() === FALSE) {

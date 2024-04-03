@@ -161,6 +161,11 @@ class ReferralForm {
 	        $searchFor->setPhone($formUserData['phone'], (isset($searchIncludes[self::HTML_Incl_Phone]) ? TRUE : FALSE));
 	    }
 
+		// Phone SMS
+	    if (isset($formUserData['sms_status']) && $formUserData['sms_status'] != '') {
+	        $searchFor->setSMS_Status($formUserData['sms_status']);
+	    }
+
 	    // email
 	    if (isset($formUserData['email']) && $formUserData['email'] != '') {
 	        $searchFor->setEmail($formUserData['email'], (isset($searchIncludes[self::HTML_Incl_Email]) ? TRUE : FALSE));
@@ -991,8 +996,9 @@ class ReferralForm {
 
 	    $post['rbEmPref'] = ($data->getEmail() == '' ? '' : EmailPurpose::Home);
 	    $post['txtEmail'] = array(EmailPurpose::Home=>$data->getEmail());
-	    $post['rbPhPref'] = PhonePurpose::Home;
-	    $post['txtPhone'] = array(PhonePurpose::Home=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
+	    $post['rbPhPref'] = ($data->getPhone() == '' ? '' : PhonePurpose::Cell);
+	    $post['txtPhone'] = array(PhonePurpose::Cell=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
+		$post['selSMS'] = array(PhonePurpose::Cell => $data->getSMS_Status());
 
 	    $adr1 = array(AddressPurpose::Home => array(
 	        'address1' => $data->getAddressStreet1(),

@@ -95,11 +95,6 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showRegEmptyFields', 'true', 'b', 'h', 'On Registrations, show empty fields', '1');
 
 
--- PSG checklist
-INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '1', 'PSG Checklist Item', 'm');
-INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '2', 'PSG Checklist Item', 'm');
-INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Checklist_PSG', '3', 'PSG Checklist Item', 'm');
-
 
 -- SMS settings
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('smsProvider', '', 'lu', 'sms', 'Enable SMS integration', 'smsProvider', '1');
@@ -109,7 +104,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsToken', '', 's', 'sms', 'API Token', 1);
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsFrom', '', 's', 'sms', 'Account Phone number used as the From address', 1);
 
-ALTER TABLE `name_phone` 
+ALTER TABLE `name_phone`
 CHANGE COLUMN if exists `is_SMS` `SMS_status` VARCHAR(10) NOT NULL DEFAULT '';
 
 -- new reg form replacement codes

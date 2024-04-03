@@ -1,15 +1,15 @@
 <?php
-use HHK\House\OperatingHours;
-use HHK\sec\Session;
-use HHK\sec\WebInit;
-use HHK\Payment\PaymentSvcs;
-use HHK\HTMLControls\HTMLContainer;
+
 use HHK\Exception\RuntimeException;
 use HHK\House\ReserveData\ReserveData;
-use HHK\SysConst\VisitStatus;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
-use HHK\SysConst\RoomRateCategories;
+use HHK\Payment\PaymentSvcs;
 use HHK\sec\Labels;
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\SysConst\RoomRateCategories;
+use HHK\SysConst\VisitStatus;
 
 /**
  * CheckingIn.php
@@ -56,9 +56,10 @@ try {
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
             $receiptMarkup = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', array('style' => 'text-align:center;')), array('style' => 'margin-right: 15px; width: 100%;'))
-                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style' => 'text-align: center')), array('style' => 'margin-left: 15px; width: 100%;'))
-                , array('style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1'));
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
         }
 
         if ($payResult->getDisplayMessage() != '') {

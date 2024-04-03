@@ -1272,6 +1272,11 @@ $(document).ready(function () {
 
                 let resource = calendar.getResourceById("id-" + info.event.extendedProps.idResc);
 
+                //set arrow color
+                if (typeof info.textColor === 'string' && info.textColor.toLowerCase() == "#ffffff") {
+                    info.el.classList.add("hhk-event-light");
+                }
+
                 // Reservations
                 if (info.event.extendedProps.idReservation !== undefined) {
 
@@ -1628,7 +1633,8 @@ $(document).ready(function () {
            		}
            });
 
-            $(".btnShowVisitMsgs").each(function () {
+           $("#curres .btnShowVisitMsgs").off('click');
+            $("#curres .btnShowVisitMsgs").each(function () {
                 $(this).smsDialog({ "visitId": $(this).data('vid'), "spanId": $(this).data("span") });
             });
        },
@@ -1652,6 +1658,7 @@ $(document).ready(function () {
            		}
            });
 
+           $("#reservs .btnShowResvMsgs").off('click');
            $("#reservs .btnShowResvMsgs").each(function () {
             $(this).smsDialog({ "resvId": $(this).data('rid') });
         });
@@ -1675,6 +1682,7 @@ $(document).ready(function () {
            			}
                 });
                
+               $("#unreserv .btnShowResvMsgs").off('click');
                 $("#unreserv .btnShowResvMsgs").each(function () {
                     $(this).smsDialog({ "resvId": $(this).data('rid') });
                 });
@@ -1699,6 +1707,7 @@ $(document).ready(function () {
            		}
             });
            
+           $("#waitlist .btnShowResvMsgs").off('click');
            $("#waitlist .btnShowResvMsgs").each(function () {
                $(this).smsDialog({ "resvId": $(this).data('rid') });
            });

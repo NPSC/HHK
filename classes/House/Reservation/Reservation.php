@@ -1021,7 +1021,8 @@ where rg.idReservation =" . $r['idReservation']);
         $tbl2->addBodyTr(HTMLTable::makeTd('Ribbon Note:',['class'=>'tdlabel']).HTMLTable::makeTd(HTMLInput::generateMarkup($resv->getNotes(), ['name'=>'txtRibbonNote', 'maxlength'=>'20']),['colspan'=>'3']));
 
         // PSG Checkboxes
-        $mk2 = PSG::createCheckboxes($psgChecboxes, 1);
+        // TODO
+        $mk2 = '';
 
 
         // Confirmation button  updated 5/20/2023:  add uncommitted to allowable statuses. #815

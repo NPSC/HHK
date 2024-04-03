@@ -236,6 +236,27 @@ class Note {
         return $counter;
     }
 
+    /**
+     * Summary of saveTitle
+     * @param \PDO $dbh
+     * @param string $title
+     * @return int
+     */
+    public function saveTitle(\PDO $dbh, string $title) {
+
+        $counter = 0;
+
+        if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
+
+            $this->noteRS->Title->setNewVal($title);
+
+            $counter = EditRS::update($dbh, $this->noteRS, array($this->noteRS->idNote));
+            EditRS::updateStoredVals($this->noteRS);
+        }
+
+        return $counter;
+    }
+
 
     /**
      *

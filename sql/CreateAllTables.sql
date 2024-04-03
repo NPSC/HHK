@@ -146,6 +146,22 @@ CREATE TABLE if not exists `cc_hosted_gateway` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1;
 
 
+-- -----------------------------------------------------
+-- Table `checklist_item`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `checklist_item` (
+  `idChecklist_item` int(11) NOT NULL AUTO_INCREMENT,
+  `GL_TableName` varchar(45) NOT NULL DEFAULT '',
+  `GL_Code` varchar(65) NOT NULL DEFAULT '',
+  `Status` varchar(5) NOT NULL DEFAULT '',
+  `Value` smallint(4) NOT NULL DEFAULT 0,
+  `Value_Date` datetime DEFAULT NULL,
+  `Updated_By` varchar(45) NOT NULL DEFAULT '',
+  `Last_Updated` datetime DEFAULT NULL,
+  `Timestamp` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`idChecklist_item`)
+) ENGINE=InnoDB AUTO_INCREMENT=1;
+
 
 -- -----------------------------------------------------
 -- Table `cleaning_log`
@@ -2296,6 +2312,10 @@ CREATE TABLE if not exists `w_users` (
   PRIMARY KEY (`User_Name`)
 ) ENGINE=InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `w_user_tokens`
+-- -----------------------------------------------------
 CREATE TABLE if not exists `w_user_tokens` (
 	`idToken` INT(11) NOT NULL AUTO_INCREMENT,
 	`idName` INT(11) NOT NULL,
@@ -2441,6 +2461,8 @@ ALTER TABLE `reservation_multiple`
 
 ALTER TABLE `resource_room`
     ADD INDEX IF NOT EXISTS `Index_idResource` (`idResource` ASC);
+ALTER TABLE `resource_room`
+    ADD INDEX IF NOT EXISTS `Index_idRoom` (`idRoom` ASC);
 
 ALTER TABLE `resource_use`
     ADD INDEX IF NOT EXISTS `Index_idResource` (`idResource` ASC);
