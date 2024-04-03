@@ -520,15 +520,18 @@ class Reservation_1 {
             }
         }
 
-        // Update the form document status
-        $resvStatuses = ['a', 'p', 'uc', 'w'];
+        $uS = Session::getInstance();
 
-        if (in_array($this->reservRs->Status->getStoredVal(), $resvStatuses)) {
-            $dbh->exec("UPDATE `document` SET `Status` = '".ReferralFormStatus::Accepted . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
-        } else {
-            $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Archived . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+        if ($uS->useOnlineReferral && $this->getIdReferralDoc() > 0) {
+            // Update the referral form document status
+            $resvStatuses = ['a', 'p', 'uc', 'w'];
+
+            if (in_array($this->reservRs->Status->getStoredVal(), $resvStatuses)) {
+                $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Accepted . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+            } else {
+                $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Archived . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+            }
         }
-
 
         return $this->reservRs;
     }

@@ -518,8 +518,10 @@ Order by `t`.`List_Order`;");
                         $use = '';
                         if (isset($postLookups['cbDiagDel'][$c])) {
                             $use = 'y';
-                            $on = $orderNumber + 100;
-                            $dbh->exec("Insert Ignore into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) values ('RibbonColors', '$c', '$desc', '$on');");
+                            if (isset($demos[$tableName])) {
+                                $on = $orderNumber + 100;
+                                $dbh->exec("Insert Ignore into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) values ('RibbonColors', '$c', '$desc', '$on');");
+                            }
                         } else {
                             $dbh->exec("DELETE FROM `gen_lookups` where `Table_Name` = 'Ribbon_Colors' and `Code` = '$c';");
                         }
