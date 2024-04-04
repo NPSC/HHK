@@ -804,7 +804,7 @@ $uS->guestId = $id;
                 <div class="hhk-showonload hhk-tdbox" style="display:none;" >
                 <div id="divNametabs" class="hhk-tdbox hhk-mobile-tabs">
                     <div class="hhk-flex ui-widget-header ui-corner-all">
-                    	<div class="d-md-none d-flex"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
+                    	<div class="d-md-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
                         <ul class="hhk-flex">
                             <li><a href="#nameTab" title="Addresses, Phone Numbers, Email Addresses">Contact Info</a></li>
                             <li><a href="#demoTab" title="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?> Demographics">Demographics</a></li>
@@ -814,7 +814,7 @@ $uS->guestId = $id;
                             <?php } ?>
                             <li id="chglog"><a href="#vchangelog">Change Log</a></li>
                         </ul>
-                        <div class="d-md-none d-flex"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
+                        <div class="d-md-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
                     </div>
                     <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-flex">
                         <?php echo $demogTab; ?>
@@ -879,7 +879,7 @@ $uS->guestId = $id;
                 <?php if ($id > 0) {  ?>
                 <div id="psgList" class="hhk-showonload hhk-tdbox hhk-visitdialog hhk-mobile-tabs" style="display:none; margin:10px 0;">
                     <div class="hhk-flex ui-widget-header ui-corner-all">
-                    	<div class="d-xl-none d-flex"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
+                    	<div class="d-xl-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
                         <ul class="hhk-flex">
                             <li><a href="#vVisits">Visits</a></li>
                             <li id="lipsg"><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
@@ -901,7 +901,7 @@ $uS->guestId = $id;
                             <li><a href="#vDocs">Documents</a></li>
                             <?php } ?>
                         </ul>
-                        <div class="d-xl-none d-flex"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
+                        <div class="d-xl-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
                     </div>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>

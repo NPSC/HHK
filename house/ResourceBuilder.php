@@ -1932,14 +1932,9 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
 );
 
 // Checklists Manager
-// TODO
+$checklistSectionMkup = "";
 if ($uS->mode != Mode::Live) {
-
-    $cblistSelections = Checklist::createChecklistCategories($dbh, $labels);
-    $selChecklistItems = Checklist::createChecklistTypes($dbh);
-}else{
-    $cblistSelections = "";
-    $selChecklistItems = "";
+    $checklistSectionMkup = HTMLContainer::generateMarkup("div", Checklist::createEditMarkup($dbh), ['id'=>'checklistSection', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-flex flex-wrap mb-3']);
 }
 
 $insuranceType = new InsuranceType();
@@ -2286,13 +2281,13 @@ $formBuilderOptions = [
 } ?>>
     <?php echo $wInit->generatePageMenu(); ?>
     <div id="contentDiv">
-        <div class="my-1 d-flex align-items-center" id="rescBuilderTitle">
+        <div class="my-1 d-flex hhk-flex-wrap align-items-center" id="rescBuilderTitle">
 			<h1 class="mr-3"><?php echo $wInit->pageHeading; ?></h1>
             <span class="p-1 ui-corner-all ui-state-highlight">Changes won't take effect until the next login</span>
         </div>
 
-        <div id="mainTabs" style="font-size: .9em; display: none; max-width: 100%;">
-            <div class="hhk-flex ui-widget-header ui-corner-all" style="align-items:normal;">
+        <div id="mainTabs" style="display: none;" class="hhk-mobile-tabs">
+            <div class="hhk-flex ui-widget-header ui-corner-all">
             	<div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
                 <ul class="hhk-flex" style="border:none;">
                     <li><a href="#rescTable">Resources</a></li>
@@ -2389,38 +2384,7 @@ $formBuilderOptions = [
                             </form>
                         </div>
                     </div>
-                    <div id="checklistSection" class="ui-widget ui-widget-content ui-corner-all hhk-flex hhk-flex-wrap mb-3">
-                        <div class="m-2">
-                            <h3>Checklists</h3>
-                            <form id="formcblist">
-                                <div class="lookupTbl">
-                                    <?php echo $cblistSelections; ?>
-                                </div>
-                                <div class="hhk-flex justify-content-end mt-2">
-                                    <input type="button" id='btncblistSave' class="hhk-savecblist" data-type="h" value="Save" />
-                                </div>
-                            </form>
-                        </div>
-                        <?php if($selChecklistItems !== ""){ ?>
-                            <div class="m-2">
-                                <h3>Checklist Items</h3>
-                                <form id="formcbCat">
-                                    <table>
-                                        <tr>
-                                            <th>Checklist</th>
-                                            <td>
-                                                <?php echo $selChecklistItems; ?>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <div class="lookupDetailTbl" id="divchecklistCat"></div>
-                                    <div class="hhk-flex justify-content-end mt-2">
-                                        <input type="button" id='btnChecklistSaveCat' class="hhk-saveLookup" data-type="d" value="Save" />
-                                    </div>
-                                </form>
-                            </div>
-                        <?php } ?>
-                    </div>
+                    <?php echo $checklistSectionMkup; ?>
                 </div>
             </div>
             <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">

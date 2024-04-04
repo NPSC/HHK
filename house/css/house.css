@@ -841,15 +841,18 @@ div.dt-buttons .dt-button:hover>span {
 	width: fit-content;
 }
 
-.hhk-mobile-tabs .ui-widget-header {
-	align-items:normal;
-}
-.hhk-mobile-tabs .ui-widget-header>div {
+.hhk-mobile-tabs>.ui-widget-header {
 	align-items:center;
+	border: none;
 }
 
-.hhk-mobile-tabs ul {
+.hhk-mobile-tabs ul.ui-tabs-nav {
 	border:none;
+	align-items: start;
+}
+
+.hhk-mobile-tabs ul.ui-tabs-nav li.ui-tabs-active {
+	padding-bottom: 2px;
 }
 
 

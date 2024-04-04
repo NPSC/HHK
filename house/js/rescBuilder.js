@@ -444,7 +444,7 @@ $(document).ready(function () {
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });
 
-    $('.hhk-selLookup').change(function () {
+    $("#mainTabs").on('change', '.hhk-selLookup', function () {
         let $sel = $(this),
             table = $(this).find("option:selected").text(),
             type = $(this).val();
@@ -482,7 +482,9 @@ $(document).ready(function () {
                     }
                 });
     });
-    $('.hhk-saveLookup').click(function () {
+
+    
+    $("#mainTabs").on('click', '.hhk-saveLookup', function () {
         let $frm = $(this).closest('form');
         let sel = $frm.find('select.hhk-selLookup');
         let table = sel.find('option:selected').text(),
@@ -506,11 +508,11 @@ $(document).ready(function () {
             url: "ResourceBuilder.php",
             type: "POST",
             data: {
-                lookups:JSON.stringify(lookupData),
+                lookups: JSON.stringify(lookupData),
                 cmd: "save",
                 table: table,
                 tp: type
-            },            
+            },
             success: function (data) {
                 $btn.val('Save');
                 if (data) {
@@ -527,7 +529,7 @@ $(document).ready(function () {
                 }
             }
         });
-    }).button();
+    });
 
     //sortable demo categories
     $("#formdemo .sortable tbody")
@@ -566,7 +568,7 @@ $(document).ready(function () {
     }).button();
 
     // Save PSG checkbox list.
-    $('#btncblistSave').click(function () {
+    $("#checklistSection").on('click', '#btncblistSave', function () {
         var $frm = $(this).closest('form');
         var $btn = $(this);
         $btn.val('Saving...');
@@ -575,7 +577,7 @@ $(document).ready(function () {
             function (data) {
                 if (data) {
                     $btn.val('Save');
-                    $frm.children('div.lookupTbl').children().remove().end().append(data).find(".sortable tbody")
+                    $("#checklistSection").empty().append(data).find(".sortable tbody")
                         .sortable({
                             items: "tr:not(.no-sort)",
                             handle: ".sort-handle",
@@ -585,24 +587,28 @@ $(document).ready(function () {
                                 });
                             }
                         });
+                    
+                        $("#checklistSection").find(".hhk-saveLookup, .hhk-saveccblist").button();
                 }
             });
-    }).button();
+    })
 
     $(document).on("click", "#btnInsSave", function (e) {
         var $frm = $(this).closest('form');
 
         $.post('ResourceBuilder.php', $frm.serialize(),
-            function(data) {
-            	if(data.success){
-            		flagAlertMessage(data.success, false);
-            	}else if(data.error){
-            		flagAlertMessage(data.error, true);
-            	}
+            function (data) {
+                if (data.success) {
+                    flagAlertMessage(data.success, false);
+                } else if (data.error) {
+                    flagAlertMessage(data.error, true);
+                }
                 $("#selInsLookup").trigger("change");
             },
             "json");
-    })
+    });
+
+    $("#mainTabs .hhk-saveLookup, #mainTabs .hhk-saveccblist").button();
 
     // Add diagnosis and locations
     if ($('#btnAddDiags').length > 0) {

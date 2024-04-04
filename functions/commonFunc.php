@@ -733,7 +733,7 @@ function showGuestPicture ($idGuest, $widthPx) {
         htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
         , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
         , array('style'=>"display:none;", 'id'=>'hhk-guest-photo-actions'))
-        ,array("class"=>"ui-widget ui-widget-content ui-corner-all", "style"=>"width:" . $widthPx . "px; height:" . $widthPx . "px; background-image: url(../house/ws_resc.php?cmd=getguestphoto&guestId=$idGuest);", 'id'=>'hhk-guest-photo'));
+        ,array("class"=>"ui-widget ui-widget-content ui-corner-all", "style"=>"width:" . $widthPx . "px; height:" . $widthPx . "px; min-width:" . $widthPx . "px; background-image: url(../house/ws_resc.php?cmd=getguestphoto&guestId=$idGuest);", 'id'=>'hhk-guest-photo'));
 }
 
 /**

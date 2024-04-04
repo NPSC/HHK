@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House;
 
+use HHK\Checklist;
 use HHK\sec\{Session};
 use HHK\Tables\{EditRS, GenLookupsRS};
 use HHK\TableLog\HouseLog;
@@ -555,6 +556,11 @@ Order by `t`.`List_Order`;");
             $insurance = new Insurance();
             $insurance->loadInsurances($dbh, $type);
             echo $insurance->generateTblMarkup();
+            exit();
+        }
+
+        if($cmd == "save" && $tableName == "Checklist"){
+            echo Checklist::createEditMarkup($dbh);
             exit();
         }
 

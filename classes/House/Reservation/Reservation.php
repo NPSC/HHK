@@ -753,7 +753,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $moaBalance = max(0, Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()) - Registration::loadPrepayments($dbh, $resv->getIdRegistration()));
 
-            $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
+            $checklistMkup = HTMLContainer::generateMarkup("div", Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG), ["class"=>"mr-3 d-inline-block"]);
 
             // Reservation Data
             $dataArray['rstat'] = $this->createStatusChooser(
@@ -1039,9 +1039,9 @@ where rg.idReservation =" . $r['idReservation']);
         return HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
-                    . $tbl2->generateMarkup() . $psgChecboxes . $mk2,
+                    . $tbl2->generateMarkup() . $mk2,
                     ['class'=>'hhk-panel'])
-            , ['class'=>'mr-3 d-inline-block']);
+            , ['class'=>'mr-3 d-inline-block']) . $psgChecboxes;
 
     }
 

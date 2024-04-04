@@ -81,6 +81,44 @@ class Checklist
         return $selChecklists;
     }
 
+    public static function createEditMarkup(\PDO $dbh){
+
+        $labels = new Labels();
+        $cblistSelections = self::createChecklistCategories($dbh, $labels);
+        $selChecklistItems = self::createChecklistTypes($dbh);
+
+        //Checklist categories
+        $cblistMkup = HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("h3", "Checklists") . 
+            HTMLContainer::generateMarkup("form",
+                HTMLContainer::generateMarkup("div", $cblistSelections, ['class'=>'lookupTbl']) .
+                HTMLContainer::generateMarkup("div",
+                    HTMLInput::generateMarkup("Save", ['type'=>'button', 'id'=>'btncblistSave', 'class'=>'hhk-saveccblist', 'data-type'=>'h'])
+                ,['class'=>'hhk-flex justify-content-end mt-2'])
+            ,['id'=>'formcblist'])
+        ,['class'=>'m-2']);
+
+        //checklist items
+        if($selChecklistItems !== ""){
+            $tbl = new HTMLTable();
+            $tbl->addBodyTr(HTMLTable::makeTh("Checklist") . HTMLTable::makeTd($selChecklistItems));
+
+            $cblistMkup .= HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("h3", "Checklist Items") . 
+                HTMLContainer::generateMarkup("form",
+                    $tbl->generateMarkup() .
+                    HTMLContainer::generateMarkup("div", "", ['class'=>'lookupDetailTbl', 'id'=>'divchecklistCat']) .
+                    HTMLContainer::generateMarkup("div",
+                        HTMLInput::generateMarkup("Save", ['type'=>'button', 'id'=>'btncblistSaveCat', 'class'=>'hhk-saveLookup', 'data-type'=>'d'])
+                    ,['class'=>'hhk-flex justify-content-end mt-2'])
+                ,['id'=>'formcbCat'])
+            ,['class'=>'m-2']);
+        }
+
+        return $cblistMkup;
+
+    }
+
     /**
      * Create a checklist for a user page
      * @param mixed $entityId Id for the checklist type.
@@ -137,7 +175,7 @@ ORDER BY g.`Order`;";
 
 
             $checklistTbl->addBodyTr(
-                HTMLTable::makeTd($label . HTMLInput::generateMarkup('', $cbAttr)
+                HTMLTable::makeTh($label . HTMLInput::generateMarkup('', $cbAttr)
                 . HTMLInput::generateMarkup('0', ['type'=>'hidden','name'=>'cbMarker' . $r['Code']]), ['class' => 'tdlabel'])
 
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', 'Date: ' .
@@ -149,7 +187,10 @@ ORDER BY g.`Order`;";
             $clName = $r['CkListName'];
         }
 
-        return $checklistTbl->generateMarkup(['class' => 'checklistTbl'], $clName . ' Checklist');
+        return HTMLContainer::generateMarkup("fieldset", 
+            HTMLContainer::generateMarkup("legend", $clName . ' Checklist', ['style'=>'font-weight: bold;']) .
+            $checklistTbl->generateMarkup(['class' => 'checklistTbl'])
+        , ['class'=>'hhk-panel']);
     }
 
     public static function saveChecklist(\PDO $dbh, $entityId, $checklistType) {
