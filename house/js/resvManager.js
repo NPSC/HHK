@@ -2194,7 +2194,7 @@ function resvManager(initData, options) {
             if (data.resv.rdiv.rstat !== undefined) {
                 $rDiv.append($(data.resv.rdiv.rstat));
 
-                $('.hhk-checkboxlist').change(function () {
+                $rDiv.on('change', '.hhk-checkboxlist', function () {
                     if ($(this).prop('checked')) {
                         $('#date' + $(this).data('code')).datepicker('setDate', '+0');
                         $('#disp' + $(this).data('code')).show();
@@ -2203,6 +2203,15 @@ function resvManager(initData, options) {
                         $('#date' + $(this).data('code')).val($('#date' + $(this).data('code')).prop('defaultValue'));
                         $('#disp' + $(this).data('code')).hide();
                     }
+                });
+
+                $rDiv.find('.ckdate').datepicker({
+                    yearRange: '-02:+03',
+                    changeMonth: true,
+                    changeYear: true,
+                    autoSize: true,
+                    numberOfMonths: 1,
+                    dateFormat: 'M d, yy'
                 });
 
             }

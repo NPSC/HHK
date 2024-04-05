@@ -2360,6 +2360,10 @@ ALTER TABLE `activity`
 ALTER TABLE `campaign`
 	ADD UNIQUE KEY IF NOT EXISTS `Campaign_Code_UNIQUE` (`Campaign_Code`);
 
+ALTER TABLE `checklist_item` 
+ADD UNIQUE INDEX `Unique_Checklist_Item` (`Entity_Id` ASC, `GL_TableName` ASC, `GL_Code` ASC);
+
+
 ALTER TABLE `donations`
 	Add INDEX IF NOT EXISTS `Activity_Id_INDEX` (`Activity_Id`);
 ALTER TABLE `donations`

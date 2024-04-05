@@ -1,4 +1,5 @@
 <?php
+use HHK\Checklist;
 use HHK\CreateMarkupFromDB;
 use HHK\Exception\RuntimeException;
 use HHK\History;
@@ -25,6 +26,7 @@ use HHK\sec\Labels;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
+use HHK\SysConst\ChecklistType;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\MemBasis;
@@ -341,6 +343,10 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
             $registration->extractVehicleFlag();
             $msg .= $registration->saveRegistrationRs($dbh, $psg->getIdPsg(), $uname);
 
+            //save checklists
+            if(Checklist::saveChecklist($dbh, $psg->getIdPsg(), ChecklistType::PSG) > 0){
+                $msg .= " Checklist items updated.";
+            }
 
             if ($uS->TrackAuto && $registration->getNoVehicle() == 0) {
                 Vehicle::saveVehicle($dbh, $registration->getIdRegistration());

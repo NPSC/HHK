@@ -464,7 +464,7 @@ $(document).ready(function () {
         }
     });
 
-    $('.hhk-checkboxlist').change(function () {
+    $('.checklistTbl').on('change', '.hhk-checkboxlist', function () {
         if ($(this).prop('checked')) {
             $('#date' + $(this).data('code')).datepicker('setDate', '+0');
             $('#disp' + $(this).data('code')).show();

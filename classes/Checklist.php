@@ -2,10 +2,12 @@
 
 namespace HHK;
 
+use DateTime;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\House\ResourceBldr;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Labels;
+use HHK\sec\Session;
 
 
 
@@ -163,24 +165,23 @@ ORDER BY g.`Order`;";
             $label = HTMLContainer::generateMarkup('label', $r['Description'] . ': ', array('for' => 'Item' . $r['Code']));
 
             $bcdateAttr = array('style' => 'display:none;', 'id' => 'disp' . $r['Code']);
-            $cbAttr = ['name' => 'Item' . $r['Code'], 'type' => 'checkbox', 'data-code'=> $r['Code'], 'class' => 'hhk-checkboxlist'];
+            $cbAttr = ['name' => 'cbChecklistItem[' . $checklistType . '][' . $r['Code'] . ']', 'id'=>'Item' . $r['Code'], 'type' => 'checkbox', 'data-code'=> $r['Code'], 'class' => 'hhk-checkboxlist'];
 
             $strDate = '';
             if ($r['Date'] !== '') {
-                $strDate = new \DateTime($r['Date']);
-                $strDate = $strDate->format('m, j, Y');
+                $strDate = new DateTime($r['Date']);
+                $strDate = $strDate->format('M j, Y');
                 $cbAttr['checked'] = 'checked';
-                $bcdateAttr['style'] = 'display:table-cell;';
+                $bcdateAttr['style'] = '';
             }
 
 
             $checklistTbl->addBodyTr(
-                HTMLTable::makeTh($label . HTMLInput::generateMarkup('', $cbAttr)
-                . HTMLInput::generateMarkup('0', ['type'=>'hidden','name'=>'cbMarker' . $r['Code']]), ['class' => 'tdlabel'])
+                HTMLTable::makeTh($label . HTMLInput::generateMarkup('', $cbAttr), ['class' => 'tdlabel'])
 
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', 'Date: ' .
-                    HTMLInput::generateMarkup($strDate, ['name' => 'date' . $r['Code'], 'class' => 'ckdate', 'readonly'=>'readonly', 'style' => 'margin-left:1em;']), $bcdateAttr)
-                    , ['style'=>'min-width:200px;'])
+                    HTMLInput::generateMarkup($strDate, ['name' => 'checklistDate[' . $checklistType . '][' . $r['Code'] .']', 'class' => 'ckdate ml-1', 'readonly'=>'readonly']), $bcdateAttr)
+                    , ['class'=>'tdChecklistDate'])
 
             );
 
@@ -193,7 +194,21 @@ ORDER BY g.`Order`;";
         , ['class'=>'hhk-panel']);
     }
 
-    public static function saveChecklist(\PDO $dbh, $entityId, $checklistType) {
+    /**
+     * Save Checklist items
+     * @param \PDO $dbh
+     * @param int $entityId
+     * @param string $checklistType
+     * @return int number of affected items
+     */
+    public static function saveChecklist(\PDO $dbh, int $entityId, string $checklistType) {
+
+        $checklistDates = filter_input(INPUT_POST, "checklistDate", FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
+        $cbChecklistItems = filter_input(INPUT_POST, "cbChecklistItem", FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
+
+        $affectedRows = 0;
+
+        $uS = Session::getInstance();
 
          $query = "
 SELECT
@@ -202,7 +217,7 @@ SELECT
     g.`Description`,
     g2.`Description` AS `CkListName`,
     IFNULL(cl.`Value`, '') AS `Value`,
-    IFNULL(cl.`Value_Date`, '') AS `Date`
+    IFNULL(DATE(cl.`Value_Date`), '') AS `Date`
 FROM
     `gen_lookups` g
         JOIN
@@ -220,8 +235,44 @@ ORDER BY g.`Order`;";
         $stmt->execute([':entityId' => $entityId, ':tblName' => $checklistType]);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            if(isset($cbChecklistItems[$checklistType][$r["Code"]]) && strtolower($cbChecklistItems[$checklistType][$r["Code"]]) == "on"){ //if item is checked
+                if(isset($checklistDates[$checklistType][$r["Code"]]) && $checklistDates[$checklistType][$r["Code"]] != ""){ //date is filled
+                    $date = new DateTime($checklistDates[$checklistType][$r["Code"]]);
+
+                    if($r["Date"] != $date->format("Y-m-d")){
+                        //upsert
+                        $stmt = $dbh->prepare("insert into checklist_item (`Entity_Id`, `GL_tableName`,`GL_Code`,`Status`,`Value`,`Value_Date`) values 
+                        (:entityId, :tblName, :code, :status, :value, :date) ON DUPLICATE KEY 
+                        UPDATE `Value_Date` = :date2, `Updated_By` = :updatedBy, `Last_Updated` = :lastUpdated;");
+
+                        $stmt->execute([
+                            ':entityId' => $entityId,
+                            ':tblName' => $checklistType,
+                            ':code' => $r["Code"],
+                            ':status' => "a",
+                            ':value' => true,
+                            ':date' => $date->format("Y-m-d"),
+                            ':date2' => $date->format("Y-m-d"),
+                            ':updatedBy' => $uS->username,
+                            ':lastUpdated' => (new DateTime())->format("Y-m-d H:i:s")
+                        ]);
+
+                        $affectedRows++;
+                    }
+
+                }
+            }else if ($r["Value"] == "1"){ //if not checked but item in DB - delete
+                //Clear checklist item
+                $stmt = $dbh->prepare("delete from checklist_item where Entity_Id = :entityId and GL_TableName = :tblName and GL_Code = :code;");
+                $stmt->execute([
+                    ':entityId' => $entityId,
+                    ':tblName' => $checklistType,
+                    ':code' => $r["Code"]
+                ]);
+                $affectedRows++;
+            }
 
         }
-
+        return $affectedRows;
     }
 }
