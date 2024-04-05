@@ -184,12 +184,12 @@ class HouseServices {
         $mkup = HTMLContainer::generateMarkup('div',
         		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
                 . $mkup,
-            array('id'=>'divksStays'));
+            array('id'=>'divksStays', 'style'=>'min-width: max-content;'));
 
         // Show fees if not hf = hide fees.
         if ($action != 'hf') {
         	$mkup .= HTMLContainer::generateMarkup('div',
-                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
+                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('class' => 'hhk-flex'));
         }
 
 

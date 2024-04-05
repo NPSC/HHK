@@ -253,7 +253,7 @@ class VisitViewer {
         // add completed rows to table
         $table->addBodyTr($tr);
         $table->addHeaderTr($th);
-        $tblMarkup = $table->generateMarkup(array('id' => 'tblActiveVisit', 'style'=>'width:99%;'));
+        $tblMarkup = $table->generateMarkup(array('id' => 'tblActiveVisit', 'style'=>'width:99%; min-width: max-content;'));
 
         $weekendRowMkup = "";
 
@@ -535,7 +535,7 @@ class VisitViewer {
 
         $sTable->addHeaderTr($th);
 
-        $dvTable = HTMLContainer::generateMarkup('div', $sTable->generateMarkup(array('id' => 'tblStays', 'style'=>'width:99%')), array('style'=>'max-height:150px;overflow:auto'));
+        $dvTable = HTMLContainer::generateMarkup('div', $sTable->generateMarkup(array('id' => 'tblStays', 'style'=>'width: 99%; min-width: max-content;')), array('style'=>'max-height:150px;overflow:auto'));
 
 
         return HTMLContainer::generateMarkup('fieldset',
@@ -821,8 +821,8 @@ class VisitViewer {
             // Current fees block
             $currFees = HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', ($r['Status'] == VisitStatus::CheckedIn ? 'To-Date Fees & Balance Due' : 'Final Fees & Balance Due'), ['style'=>'font-weight:bold;'])
-                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $vat, $includeVisitFee, $showRoomFees, $showGuestNights), ['style'=>'float:left;', 'id'=>'divCurrFees'])
-                        , ['class'=>'hhk-panel', 'style'=>'float:left;margin-right:10px;']);
+                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $vat, $includeVisitFee, $showRoomFees, $showGuestNights), ['id'=>'divCurrFees'])
+                        , ['class'=>'hhk-panel mr-2','style'=>'min-width: max-content;']);
 
             // Enable Final payment?
             $enableFinalPayment = FALSE;
