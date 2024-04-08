@@ -1096,3 +1096,7 @@ table.dataTable tbody td {
 .tdChecklistDate {
 	min-width:160px;
 }
+
+.brownBg {
+	background-color:#EFDBC2 !important;
+}

@@ -8,6 +8,7 @@ use HHK\House\ResourceBldr;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Labels;
 use HHK\sec\Session;
+use HHK\SysConst\ChecklistType;
 
 
 
@@ -30,12 +31,12 @@ class Checklist
 {
     const ChecklistRootTablename = 'Checklist';
 
-
     public function __construct(\PDO $dbh, $checklistType) {
 
         $this->checklistType = $checklistType;
 
         readGenLookupsPDO($dbh, self::ChecklistRootTablename, 'Order');
+
     }
 
     /**
@@ -46,7 +47,12 @@ class Checklist
      */
     public static function createChecklistCategories(\PDO $dbh, Labels $labels) {
 
-        $tbl = ResourceBldr::getSelections($dbh, self::ChecklistRootTablename, 'm', $labels);
+        $checklistDescriptions = [
+            ChecklistType::PSG => "This checklist applies to " . Labels::getString("statement", "psgPlural", "PSGs") . " as a whole and follow through from " . Labels::getString("guestEdit", "reservationTitle", "Reservation") . " to " . Labels::getString("guestEdit", "reservationTitle", "Reservation"),
+            ChecklistType::Reservation => "This checklist applies to individual " . Labels::getString("guestEdit", "reservationTab", "Reservations") . " and do NOT follow through to new " . Labels::getString("guestEdit", "reservationTab", "Reservations")
+        ];
+
+        $tbl = ResourceBldr::getSelections($dbh, self::ChecklistRootTablename, 'm', $labels, $checklistDescriptions);
 
         return $tbl->generateMarkup(["class" => "sortable"]);
     }

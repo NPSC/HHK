@@ -28,6 +28,12 @@ class HHKMailer extends PHPMailer {
         $this->Encoding = "base64";
         $this->addCustomHeader('X-HHK-Source', $uS->databaseName);
 
+        //set bounce address
+        if($uS->ReplyTo){
+            $this->addCustomHeader('X-HHK-BounceAddress', $uS->ReplyTo);
+        }
+        
+
         if($uS->DKIMdomain && @file_get_contents($uS->keyPath . '/dkim/dkimPrivateKey.pem')){
             $this->DKIM_domain = $uS->DKIMdomain;
             $this->DKIM_private = $uS->keyPath . '/dkim/dkimPrivateKey.pem';

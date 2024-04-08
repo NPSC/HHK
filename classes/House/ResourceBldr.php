@@ -126,9 +126,10 @@ class ResourceBldr
      * @param mixed $tableName
      * @param mixed $type
      * @param mixed $labels
+     * @param array $descriptions optional item descriptions
      * @return HTMLTable
      */
-    public static function getSelections(\PDO $dbh, $tableName, $type, $labels) {
+    public static function getSelections(\PDO $dbh, $tableName, $type, $labels, array $descriptions = []) {
 
         $uS = Session::getInstance();
         $diags = array();
@@ -233,7 +234,7 @@ Order by `t`.`List_Order`;");
                         HTMLInput::generateMarkup($d[4], ["name"=>'txtDOrder[' . $d[0] . ']', "type"=>"hidden"])
                         , ["class"=>"sort-handle", "title"=>"Drag to sort"]) : '') .
                 HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($d[1], ['name' => 'txtDiag[' . $d[0] . ']'])
+                    HTMLInput::generateMarkup($d[1], ['name' => 'txtDiag[' . $d[0] . ']', 'title'=>(isset($descriptions[$d[0]]) ? $descriptions[$d[0]] : '')])
                 ) .
                 ($tableName == DIAGNOSIS_TABLE_NAME ?
                     HTMLTable::makeTd(

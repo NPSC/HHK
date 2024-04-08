@@ -489,7 +489,7 @@ if ($psg->getIdPsg() > 0) {
             . HouseServices::guestEditCreditTable($dbh, $registration->getIdRegistration(), $id, 'g')
             . HTMLInput::generateMarkup('Update Credit', ['type' => 'button', 'id' => 'btnCred', 'data-indx' => 'g', 'data-id' => $id, 'data-idreg' => $registration->getIdRegistration(), 'style' => 'margin:5px;float:right;'])
         ,
-            ['id' => 'upCreditfs', 'style' => 'float:left;', 'class' => 'hhk-panel ignrSave']));
+            ['id' => 'upCreditfs', 'class' => 'hhk-panel ignrSave mb-3 mr-3']));
 
 
     // Registration markup
@@ -497,7 +497,7 @@ if ($psg->getIdPsg() > 0) {
             HTMLContainer::generateMarkup('legend', 'Registration', ['style' => 'font-weight:bold;'])
             . $registration->createRegMarkup($dbh, $memberFlag)
             ,
-            ['style' => 'float:left;', 'class' => 'hhk-panel'])) . $ccMarkup;
+            ['class' => 'hhk-panel mb-3 mr-3'])) . $ccMarkup;
 
     if ($uS->TrackAuto) {
         $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), $registration->getNoVehicle());
@@ -807,7 +807,7 @@ $uS->guestId = $id;
                        <?php echo $contactLastUpdated; ?>
 	                </div>
                 </div>
-                <div class="hhk-showonload hhk-tdbox" style="display:none;" >
+                <div class="hhk-showonload hhk-tdbox mb-2" style="display:none;" >
                 <div id="divNametabs" class="hhk-tdbox hhk-mobile-tabs">
                     <div class="hhk-flex ui-widget-header ui-corner-all">
                     	<div class="d-md-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
@@ -883,7 +883,7 @@ $uS->guestId = $id;
                 </div>
                 </div>
                 <?php if ($id > 0) {  ?>
-                <div id="psgList" class="hhk-showonload hhk-tdbox hhk-visitdialog hhk-mobile-tabs" style="display:none; margin:10px 0;">
+                <div id="psgList" class="hhk-showonload hhk-tdbox hhk-visitdialog hhk-mobile-tabs mb-2" style="display:none;">
                     <div class="hhk-flex ui-widget-header ui-corner-all">
                     	<div class="d-xl-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
                         <ul class="hhk-flex">
@@ -913,7 +913,7 @@ $uS->guestId = $id;
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
                     </div>
                     <div id="vregister"  class="ui-tabs-hide" style="display:none;">
-                        <div id="divRegContainer"><?php echo $regTabMarkup; ?></div>
+                        <div id="divRegContainer" class="hhk-flex hhk-flex-wrap"><?php echo $regTabMarkup; ?></div>
                     </div>
                     <div id="vvehicle"  class="ui-tabs-hide" style="display:none;">
                         <div><?php echo $vehicleTabMarkup; ?></div>
@@ -957,10 +957,10 @@ $uS->guestId = $id;
                     <li><a href="#vckin">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
                     <li><a href="#vhistory">Recently Viewed <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
                 </ul>
-                <div id="vhistory" class="hhk-tdbox ui-tabs-hide" style="background:#EFDBC2;">
+                <div id="vhistory" class="hhk-tdbox ui-tabs-hide brownBg">
                     <?php echo $recHistory; ?>
                 </div>
-                <div id="vckin" class="hhk-tdbox ui-tabs-hide" style="background:#EFDBC2;">
+                <div id="vckin" class="hhk-tdbox ui-tabs-hide brownBg">
                     <?php echo $currentCheckedIn; ?>
                 </div>
             </div>
