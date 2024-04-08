@@ -385,17 +385,20 @@ if($uS->useOnlineReferral){
             .hhk-fc-slot-title {
                 background-color: #E3EFF9;
             }
+            .hhk-fc-slot-title.fc-day-today {
+                background-color: #fbec88;
+            }
             .hhk-fcslot-today {
                 background-color: #fbec88;
-                opacity: .4;
+                opacity: .6;
             }
             .hhk-fcslot-holiday {
                 background-color: #dbfcb5;
-                opacity: .4;
+                opacity: .6;
             }
             .hhk-fcslot-closed {
                 background-color: #fcb5b5;
-                opacity: .4;
+                opacity: .6;
             }
 
         </style>
