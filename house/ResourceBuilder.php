@@ -1562,7 +1562,7 @@ if ($uS->IncomeRated) {
 
         $tr .= HTMLTable::makeTd($symb . HTMLInput::generateMarkup(
             $rbRs->Breakpoint->getStoredVal() == 0 ? '' : number_format($rbRs->Breakpoint->getStoredVal()),
-                ['name' => 'rateBp' . $rbRs->Rate_Category->getStoredVal() . '[]', 'size' => '6', 'style' => $bpStyle, $attr => '']
+                ['name' => 'rateBp' . $rbRs->Rate_Category->getStoredVal() . '[]', 'size' => '6', 'style' => $bpStyle, $attr => '', 'id' => false]
         )
         );
 
@@ -1686,7 +1686,8 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
         $ptAttrs = [
             'type' => 'radio',
-            'name' => 'ptrbdefault'
+            'name' => 'ptrbdefault',
+            'id' => false
         ];
 
         if ($uS->DefaultPayType == $r[0]) {

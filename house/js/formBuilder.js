@@ -1351,13 +1351,13 @@ House Staff`,
 				    	<div class="row mb-3">
 				    		<div class="col-12">
 				    			<label for="initialGuests">Initial Guests:</label>
-				        		<input type="number" name="initialGuests" min="1" max="20" style="width: 5em;">
+				        		<input type="number" name="initialGuests" min="1" max="20" style="width: 5em;" id="initialGuests">
 				    		</div>
 				    	</div>
 				    	<div class="row mb-3">
 				    		<div class="col-12">
 				    			<label for="maxGuests">Max Guests:</label>
-				        		<input type="number" name="maxGuests" min="1" max="20" style="width: 5em;">
+				        		<input type="number" name="maxGuests" min="1" max="20" style="width: 5em;" id="maxGuests">
 				    		</div>
 				    	</div>
 				    	<div class="ui-state-highlight ui-corner-all p-1" id="guestErrorMsg" style="display:none;">

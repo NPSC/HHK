@@ -20,6 +20,8 @@ abstract class AbstractHTMLControl {
 
         if (isset($attr['name']) && !isset($attr['id'])) {
             $attr['id'] = str_replace('[]', '', $attr['name']);
+        }elseif(isset($attr['id']) && $attr['id'] == false){
+            unset($attr['id']);
         }
 
         foreach ($attr as $k => $v) {
