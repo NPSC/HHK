@@ -2,12 +2,14 @@
 
 namespace HHK\House\Report;
 
+use HHK\Checklist;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\HTMLControls\HTMLTable;
 use HHK\SysConst\{ReservationStatus, ItemId};
+use HHK\SysConst\ChecklistType;
 use HHK\SysConst\InvoiceStatus;
 
 
@@ -32,6 +34,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     public array $diags;
     public array $resvStatuses;
     public array $selectedResvStatuses;
+    public array $checklistItems;
+    public array $checklistTypes;
 
 
     public function __construct(\PDO $dbh, array $request = []){
@@ -42,6 +46,9 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         $this->locations = readGenLookupsPDO($dbh, 'Location');
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
         $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
+
+        $this->checklistItems = readGenLookupsPDO($dbh, ChecklistType::PSG);
+        $this->checklistTypes = readGenLookupsPDO($dbh, Checklist::ChecklistRootTablename);
 
         if (filter_has_var(INPUT_POST, 'selResvStatus')) {
             $this->selectedResvStatuses = filter_input(INPUT_POST, 'selResvStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
@@ -100,6 +107,18 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 
         }
 
+        
+        //checklist items
+        $checklistJoin = "";
+        $checklistFields = "";
+        if ($uS->useChecklists) {
+            foreach ($this->checklistItems as $item) {
+                $checklistJoin .= " left join gen_lookups g" . $item[0] . " on g" . $item[0] . ".Code = '" . $item[0] . "' and g" . $item[0] . ".Table_Name = '" . ChecklistType::PSG . "'" .
+                    " left join checklist_item ci" . $item[0] . " on hs.idPsg = ci" . $item[0] . ".Entity_Id and ci" . $item[0] . ".GL_TableName = '" . ChecklistType::PSG . "' and ci" . $item[0] . ".GL_Code = '" . $item[0] . "'";
+                $checklistFields .= " ifnull(ci" . $item[0] . ".Value_Date, '') as `" . $item[1] . "`,";
+            }
+        }
+
         $groupBy = " Group By r.idReservation";
 
         $this->query = "select
@@ -140,6 +159,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     hs.Diagnosis2,
     ifnull(g2.`Description`, '') as `Location`,
+    $checklistFields
     r.`Timestamp` as `Created_Date`,
     $prePayQuery
     r.Last_Updated
@@ -178,6 +198,7 @@ from
         and g2.`Code` = hs.`Location`
     LEFT JOIN hospital h on hs.idHospital = h.idHospital and h.Type = 'h'
     LEFT JOIN hospital a on hs.idAssociation = a.idHospital and a.Type = 'a'
+    $checklistJoin
     , sys_config s
 where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.idRegistration";
     }
@@ -287,6 +308,19 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
             $cFields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)');
         }
 
+        if ($uS->useChecklists) {
+            //checklist items
+            $ciFields = [];
+            $ciTitles = [];
+
+            foreach ($this->checklistItems as $item) {
+                $ciFields[] = $item[1];
+                $ciTitles[] = $item[1];
+            }
+
+            $cFields[] = array($ciTitles, $ciFields, '', '', 'MM/DD/YYYY', '15', array(), 'date', 'selOptionTitle' => (isset($this->checklistTypes[ChecklistType::PSG]["Description"]) ? $this->checklistTypes[ChecklistType::PSG]["Description"] . " Checklist" : "PSG Checklist"));
+        }
+        
         $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
         $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');

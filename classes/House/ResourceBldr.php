@@ -3,6 +3,7 @@ namespace HHK\House;
 
 use HHK\Checklist;
 use HHK\sec\{Session};
+use HHK\SysConst\ChecklistType;
 use HHK\Tables\{EditRS, GenLookupsRS};
 use HHK\TableLog\HouseLog;
 use HHK\SysConst\{ReservationStatusType, GLTypeCodes};
@@ -469,6 +470,13 @@ Order by `t`.`List_Order`;");
                             return $dbh->exec("update name_demog set `No_Return` = '$newId' where `No_Return` = '$oldId';");
                         };
                         break;
+
+                    case (ChecklistType::PSG || ChecklistType::Reservation || ChecklistType::Visit || ChecklistType::Hospital):
+
+                        $rep = function ($dbh, $newId, $oldId) {
+                            return $dbh->exec("update checklist_item set `GL_Code` = '$newId' where `GL_Code` = '$oldId';");
+                        };
+                        break; 
                 }
             }
 
@@ -548,7 +556,7 @@ Order by `t`.`List_Order`;");
                 }
             } else if (isset($postLookups['selmisc'])) {
                 replaceLookups($dbh, $postLookups['selmisc'], $codeArray, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : array()));
-            } else {
+            } else{
                 replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? $postLookups['selDiagDel'] : array()));
             }
         }

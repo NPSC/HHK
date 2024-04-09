@@ -1934,7 +1934,7 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
 
 // Checklists Manager
 $checklistSectionMkup = "";
-if ($uS->mode != Mode::Live) {
+if ($uS->useChecklists) {
     $checklistSectionMkup = HTMLContainer::generateMarkup("div", Checklist::createEditMarkup($dbh), ['id'=>'checklistSection', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-flex flex-wrap mb-3']);
 }
 

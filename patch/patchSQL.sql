@@ -135,3 +135,5 @@ ALTER TABLE `checklist_item`
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 
 ('Checklist', 'psg_items_Cklst', 'PSG', '','m',0);
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('useChecklists', 'false', 'b', 'hf', 'Enable Checklist feature', 1);

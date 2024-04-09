@@ -255,13 +255,15 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                 ['class' => 'hhk-panel']
         );
 
-        // Checklist
-        $cheklistMkup = Checklist::createChecklistMkup($dbh, $this->getIdPsg(), ChecklistType::PSG);
-
-        // Wrap last confirmed and checklists
+        // Wrap last confirmed
         $memMkup .= HTMLContainer::generateMarkup('div', $lastConfirmed, ["class"=>"mr-3 mb-3"]);
-        $memMkup .= HTMLContainer::generateMarkup("div", $cheklistMkup, ["class"=>"mr-3 mb-3"]);
 
+        $uS = Session::getInstance();
+        if ($uS->useChecklists) {
+            // Checklist
+            $cheklistMkup = Checklist::createChecklistMkup($dbh, $this->getIdPsg(), ChecklistType::PSG);
+            $memMkup .= HTMLContainer::generateMarkup("div", $cheklistMkup, ["class" => "mr-3 mb-3"]);
+        }
 
         // Change log
         $c = '';

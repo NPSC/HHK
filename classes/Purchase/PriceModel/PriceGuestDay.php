@@ -386,7 +386,7 @@ GROUP BY s.idVisit, s.Visit_Span");
                 continue;
             }
 
-            $defattrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $defattrs = array('type'=>'radio', 'name'=>'rrdefault', 'id'=>false);
             $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
             $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
             $rr2Attrs = array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');

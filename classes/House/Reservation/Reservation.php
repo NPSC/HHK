@@ -753,8 +753,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $moaBalance = max(0, Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()) - Registration::loadPrepayments($dbh, $resv->getIdRegistration()));
 
-            $checklistMkup = HTMLContainer::generateMarkup("div", Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG), ["class"=>"mr-3 d-inline-block"]);
-
+            if ($uS->useChecklists) {
+                $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
+                if($checklistMkup != ""){
+                    $checklistMkup = HTMLContainer::generateMarkup("div", $checklistMkup, ["class" => "mr-3 d-inline-block"]);
+                }
+            }else{
+                $checklistMkup = "";
+            }
             // Reservation Data
             $dataArray['rstat'] = $this->createStatusChooser(
                 $resv,
@@ -788,8 +794,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
         } else {
             // Cancelled.
 
-            $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
-
+            if ($uS->useChecklists) {
+                $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
+                if($checklistMkup != ""){
+                    $checklistMkup = HTMLContainer::generateMarkup("div", $checklistMkup, ["class" => "mr-3 d-inline-block"]);
+                }
+            }else{
+                $checklistMkup = "";
+            }
+            
             // Allow to change reserv status.
             $dataArray['rstat'] = $this->createStatusChooser(
                 $resv,
