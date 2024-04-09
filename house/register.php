@@ -338,7 +338,6 @@ if($uS->useOnlineReferral){
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
-        <?php echo FULLCALENDAR_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>

@@ -1248,22 +1248,23 @@ $(document).ready(function () {
         },
 
         eventContent: function (info) {
+            let titleEl = document.createElement('span');
+            titleEl.appendChild(document.createTextNode(info.event.title));
+            titleEl.classList.add("ml-1");
 
 			if (info.event.extendedProps.idReservation !== undefined) {
-
-				let titleEl = document.createElement('span');
-				titleEl.appendChild(document.createTextNode(info.event.title));
 
 				let chooserEl = document.createElement('Span');
 				chooserEl.classList.add("hhk-schrm", "ui-icon", "ui-icon-arrowthick-2-n-s");
 				chooserEl.style.backgroundColor = '#fff';
 				chooserEl.style.border = '0px solid black';
-				chooserEl.style.marginRight = '.3em';
 				chooserEl.id = info.event.extendedProps.idResc
 
 				let arrayOfNodes = [chooserEl, titleEl];
 				return { domNodes: arrayOfNodes }
-			}
+            } else {
+                return { domNodes: [titleEl] };
+            }
 		},
 
         eventDidMount: function (info) {
