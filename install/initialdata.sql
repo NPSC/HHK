@@ -30,6 +30,15 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Cal_Select','Vol_Activities1','n','','',0),
 ('Cal_Show_Delete_Email','Vol_Activities1','y','','',0),
 
+('Calendar_Status_Colors', 'ci', 'Checked In', '','u',10),
+('Calendar_Status_Colors', 'citod', 'Checking In Today', '','u',20),
+('Calendar_Status_Colors', 'citom', 'Checking In Tomorrow', '','u',30),
+('Calendar_Status_Colors', 'cifut', 'Checking In in the Future', '','u',40),
+('Calendar_Status_Colors', 'co', 'Checked Out', '','u',50),
+('Calendar_Status_Colors', 'cotod', 'Checking Out Today', '','u',60),
+('Calendar_Status_Colors', 'cotom', 'Checking Out Tomorrow', '','u',70),
+('Calendar_Status_Colors', 'copast', 'Checked in past Expected Departure', '','u',80),
+
 ('Campaign_Status','a','Active','','',0),
 ('Campaign_Status','d','Disabled','','',0),
 
@@ -395,6 +404,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('RibbonColors', '','None', '', '', 0),
 ('RibbonColors', 'hospital','Hospital', '', '', 1),
+('RibbonColors', 'Calendar_Status_Colors', 'Reservation/Visit Status', '','',2),
 
 ('RoomColors', '','None', '', '', 0),
 ('RoomColors', 'room','Room', '', '', 1),

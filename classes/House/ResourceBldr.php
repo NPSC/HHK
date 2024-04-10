@@ -182,7 +182,7 @@ Order by `t`.`List_Order`;");
               . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTh('Category') : '')
                . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
                 . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
-                 . ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
+                 . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
                   . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
         $tbl->addHeaderTr($hdrTr);
@@ -289,10 +289,10 @@ Order by `t`.`List_Order`;");
         $uS = Session::getInstance();
         $mkup = "";
 
-        if($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName)){
+        if(($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName)){
             $splits = explode(',', $d[2]);
-            $fontColor = (isset($splits[0]) && $splits[0] != '' ? $splits[0]: "#ffffff");
-            $backgroundColor = (isset($splits[1]) && $splits[1] != '' ? $splits[1]: "#3788d8");
+            $fontColor = (isset($splits[0]) && $splits[0] != '' ? $splits[0]: ($uS->DefCalEventTextColor != '' ? $uS->DefCalEventTextColor : "#ffffff"));
+            $backgroundColor = (isset($splits[1]) && $splits[1] != '' ? $splits[1]: ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : "#3788d8"));
 
             //font color
             $mkup .= HTMLTable::makeTd(
@@ -506,6 +506,14 @@ Order by `t`.`List_Order`;");
             }
 
             $amounts = array();
+
+            //overload amounts var for demog colors
+            if(isset($postLookups['txtDiagFontColor']) && isset($postLookups['txtDiagBkColor'])){
+                foreach ($postLookups['txtDiagFontColor'] as $k =>$fontColor){
+                    $amounts[$k] = $fontColor . (isset($postLookups['txtDiagBkColor'][$k]) ? "," . $postLookups['txtDiagBkColor'][$k] : "");
+                }
+            }
+
             if (isset($postLookups['txtDiagAmt'])) {
 
                 foreach ($postLookups['txtDiagAmt'] as $k => $a) {
