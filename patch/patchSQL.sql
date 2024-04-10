@@ -128,3 +128,13 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 -- add No Email option
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES ('Email_Purpose', 'no', 'No Email', 'i', '50');
+
+-- status colors
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'co', 'Checked Out', '','h',0);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'ci', 'Checked In', '','h',0);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'citod', 'Checking In Today', '','h',0);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cotod', 'Checking Out Today', '','h',0);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'citom', 'Checking In Tomorrow', '','h',0);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cifut', 'Checking In in the Future', '','h',0);
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('RibbonColors', 'Calendar_Status_Colors', 'Reservation/Visit Status', '','m',0);
