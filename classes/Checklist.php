@@ -3,7 +3,7 @@
 namespace HHK;
 
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
-use HHK\House\Report\ResourceBldr;
+use HHK\House\ResourceBldr;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Labels;
 

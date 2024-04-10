@@ -8,7 +8,7 @@ use HHK\House\Constraint\ConstraintsHospital;
 use HHK\House\Insurance\Insurance;
 use HHK\House\Insurance\InsuranceType;
 use HHK\House\RegistrationForm\CustomRegisterForm;
-use HHK\House\Report\ResourceBldr;
+use HHK\House\ResourceBldr;
 use HHK\House\ResourceView;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Purchase\FinAssistance;
