@@ -1089,3 +1089,7 @@ table.dataTable tbody td {
 	border-left-color: #000;
 	border-right-color: #000;
 }
+
+textarea.hhk-fluidheight {
+	resize: none;
+}

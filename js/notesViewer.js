@@ -14,9 +14,9 @@
             },
             newNoteAttrs: {
                 id: 'noteText',
-                style: 'width: 80%;',
+                style: 'width: 100%;',
                 rows: 2,
-                class: 'mr-3'
+                class: 'mr-3 p-2 hhk-fluidheight ui-widget-content ui-corner-all'
             },
             newNoteLocation: 'bottom',
             
@@ -25,7 +25,7 @@
             
             alertMessage: function (text, type) {},
 
-            newTaLabel: 'New note text here',
+            newTaLabel: 'New note...',
             
             dtCols: [
                 {
@@ -166,7 +166,10 @@
                         return;
                     }
 
-                    if(noteData != ""){
+                    if (noteData != "") {
+                        
+                        //convert noteData to base64
+                        let base64note = buffer.Buffer.from(noteData).toString("base64");
 
                         $('#note-newNote').attr("disabled", "disabled").text("Saving...");
 
@@ -179,12 +182,12 @@
                                 linkType: settings.linkType,
                                 linkId: settings.linkId,
                                 noteCategory:noteCategory,
-                                data: btoa(noteData)
+                                data: base64note
                             },
                             success: function( data ){
                                 if(data.idNote > 0){
                                     dtTable.ajax.reload();
-                                    noteTextarea.val("");
+                                    noteTextarea.val("").trigger('input');
                                     $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
                                 }else if(data.error){
                                     if (data.gotopage) {
@@ -288,7 +291,7 @@
             e.preventDefault();
             var selectedCategory = $(this).closest('tr').find('.noteCategory span[data-cat]').data('cat');
             $(this).closest('tr').find('.noteCategory').html(categorySelector(settings, selectedCategory));
-            $(this).closest('tr').find('.noteText').html('<textarea style="width: 99%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + $(this).data('notetext') + '</textarea>');
+            $(this).closest('tr').find('.noteText').html('<div class="hhk-flex"><textarea class="p-2 hhk-fluidheight ui-widget-content ui-corner-all" style="width: 100%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + $(this).data('notetext') + '</textarea></div>');
             $(this).closest('td').find('.note-action').show();
             $(this).closest('td').find('.note-delete').hide();
             $(this).hide();
@@ -304,7 +307,12 @@
             var noteText = $(this).closest('tr').find('#editNoteText').val();
             var noteId = $(this).closest('td').find('.note-edit').data('noteid');
 
-            if(noteText != ""){
+            if (noteText != "") {
+                
+                //convert noteText to base64
+                let base64note = buffer.Buffer.from(noteText).toString("base64");
+
+
                 $.ajax({
                     url: settings.serviceURL,
                     dataType: 'JSON',
@@ -312,7 +320,7 @@
                     data: {
                             cmd: 'updateNoteContent',
                             idNote: noteId,
-                            data: btoa(noteText),
+                            data: base64note,
                             noteCategory: noteCategory,
                     },
                     success: function( data ){
