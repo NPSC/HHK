@@ -1115,7 +1115,11 @@ class SalesforceManager extends AbstractExportManager {
 
         $markup = $this->showGatewayCredentials();
 
-        $markup .= $this->createTypeLists($dbh);
+        try {
+            $markup .= $this->createTypeLists($dbh);
+        }catch(\Exception $e){
+            
+        }
 
         return $markup;
     }
