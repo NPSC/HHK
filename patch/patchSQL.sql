@@ -143,3 +143,15 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 ('Checklist', 'psg_items_Cklst', 'PSG', '','m',0);
 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('useChecklists', 'false', 'b', 'hf', 'Enable Checklist feature', 1);
+
+-- status colors
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'ci', 'Checked In', '','u',10);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'citod', 'Checking In Today', '','u',20);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'citom', 'Checking In Tomorrow', '','u',30);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cifut', 'Checking In in the Future', '','u',40);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'co', 'Checked Out', '','u',50);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cotod', 'Checking Out Today', '','u',60);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cotom', 'Checking Out Tomorrow', '','u',70);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'copast', 'Checked in past Expected Departure', '','u',80);
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('RibbonColors', 'Calendar_Status_Colors', 'Reservation/Visit Status', '','m',0);

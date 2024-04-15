@@ -185,7 +185,7 @@ Order by `t`.`List_Order`;");
               . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTh('Category') : '')
                . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
                 . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
-                 . ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
+                 . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
                   . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
         $tbl->addHeaderTr($hdrTr);
@@ -252,8 +252,11 @@ Order by `t`.`List_Order`;");
                             'name' => 'txtDiagAmt[' . $d[0] . ']'
                         ])
                        )
-                     : '')
+
+                     : ''
                 ) .
+
+                self::makeRibbonColorMkup($type, $tableName, $d) . 
 
                 $cbDelMU .
 
@@ -284,6 +287,39 @@ Order by `t`.`List_Order`;");
         }
 
         return $tbl;
+    }
+
+    public static function makeRibbonColorMkup(string $type, string $tableName, array $d){
+        $uS = Session::getInstance();
+        $mkup = "";
+
+        if(($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName)){
+            $splits = explode(',', $d[2]);
+            $fontColor = (isset($splits[0]) && $splits[0] != '' ? $splits[0]: ($uS->DefCalEventTextColor != '' ? $uS->DefCalEventTextColor : "#ffffff"));
+            $backgroundColor = (isset($splits[1]) && $splits[1] != '' ? $splits[1]: ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : "#3788d8"));
+
+            //font color
+            $mkup .= HTMLTable::makeTd(
+                HTMLInput::generateMarkup($fontColor,
+                [
+                    'size' => '10',
+                    'name' => 'txtDiagFontColor[' . $d[0] . ']',
+                    'type'=>'color'
+                ])
+            );
+
+            //background color
+            $mkup .= HTMLTable::makeTd(
+                HTMLInput::generateMarkup($backgroundColor,
+                [
+                    'size' => '10',
+                    'name' => 'txtDiagBkColor[' . $d[0] . ']',
+                    'type'=>'color'
+                ])
+            );
+
+        }
+        return $mkup;
     }
 
     /**
@@ -481,6 +517,15 @@ Order by `t`.`List_Order`;");
             }
 
             $amounts = array();
+
+
+            //overload amounts var for demog colors
+            if(isset($postLookups['txtDiagFontColor']) && isset($postLookups['txtDiagBkColor'])){
+                foreach ($postLookups['txtDiagFontColor'] as $k =>$fontColor){
+                    $amounts[$k] = $fontColor . (isset($postLookups['txtDiagBkColor'][$k]) ? "," . $postLookups['txtDiagBkColor'][$k] : "");
+                }
+            }
+
             if (isset($postLookups['txtDiagAmt'])) {
 
                 foreach ($postLookups['txtDiagAmt'] as $k => $a) {
@@ -556,7 +601,7 @@ Order by `t`.`List_Order`;");
                 }
             } else if (isset($postLookups['selmisc'])) {
                 replaceLookups($dbh, $postLookups['selmisc'], $codeArray, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : array()));
-            } else{
+            } else {
                 replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? $postLookups['selDiagDel'] : array()));
             }
         }
@@ -573,6 +618,7 @@ Order by `t`.`List_Order`;");
             exit();
         }
 
+
         // Generate selectors.
         if (isset($postLookups['selmisc'])) {
             $tbl = self::getSelections($dbh, RESERV_STATUS_TABLE_NAME, $postLookups['selmisc'], $labels);
@@ -585,4 +631,3 @@ Order by `t`.`List_Order`;");
 
     }
 }
-

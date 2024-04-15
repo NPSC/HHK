@@ -1274,7 +1274,7 @@ $(document).ready(function () {
                 let resource = calendar.getResourceById("id-" + info.event.extendedProps.idResc);
 
                 //set arrow color
-                if (typeof info.textColor === 'string' && info.textColor.toLowerCase() == "#ffffff") {
+                if (!info.textColor || (typeof info.textColor === 'string' && (info.textColor.toLowerCase() == "white" || info.textColor.toLowerCase() == "#ffffff"))) {
                     info.el.classList.add("hhk-event-light");
                 }
 
