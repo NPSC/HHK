@@ -2,6 +2,7 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\Checklist;
 use HHK\House\Family\Family;
 use HHK\House\Registration;
 use HHK\House\Vehicle;
@@ -16,6 +17,7 @@ use HHK\Payment\PaymentManager\ResvPaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\House\HouseServices;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\SysConst\ChecklistType;
 use HHK\SysConst\ExcessPay;
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\Reservation_GuestRS;
@@ -200,6 +202,9 @@ class ActiveReservation extends Reservation {
         if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
             Vehicle::saveVehicle($dbh, $reg->getIdRegistration());
         }
+
+        // Save Checklists
+        Checklist::saveChecklist($dbh, $reg->getIdPsg(), ChecklistType::PSG);
 
         // Find any staying people.
         $stayingMembers = $this->getStayingMembers();

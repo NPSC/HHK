@@ -772,7 +772,7 @@ FROM
         AND g.Code = ru.Status        LEFT JOIN
     gen_lookups gr ON gr.Table_Name = 'OOS_Codes'
         AND gr.Code = ru.OOS_Code
-where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('" . $beginDate->format('Y-m-d') . "');";
+where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(ru.End_Date), DATE(now())) >= DATE('" . $beginDate->format('Y-m-d') . "');";
 
         $stmtrs = $dbh->query($query1);
 

@@ -46,9 +46,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
-('Checklist', 'checklist_1_items', 'Checklist 1', '','m',0),
+('Checklist', 'psg_items_Cklst', 'PSG', '','m',0),
+-- ('Checklist', 'resv_items_Cklst', 'Resv', '','m',0),
 
-('checklist_1_items', 'cl1', 'Item 1', '', 'd',0),
+('psg_items_Cklst', 'cl1', 'Item 1', '', 'd',0),
+-- ('resv_items_Cklst', 'cl2e', 'Item 1', '', 'd',0),
 
 ('Cm_Custom_Fields', 'HHK_ID', '','','',0),
 ('Cm_Custom_Fields', 'Deceased_Date', '','','',0),
@@ -706,6 +708,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
 ('UseRebook', 'false', 'b', 'hf', '', 'Automatically rebook cancelled reservation', '', 1),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
+('useChecklists', 'false', 'b', 'hf', '', 'Enable Checklist feature', '', 1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),

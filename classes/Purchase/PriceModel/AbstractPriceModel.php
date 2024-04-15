@@ -555,7 +555,7 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
                 continue;
             }
 
-            $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $attrs = array('type'=>'radio', 'name'=>'rrdefault', 'id'=>false);
             $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
             $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
 

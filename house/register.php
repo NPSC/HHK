@@ -385,17 +385,20 @@ if($uS->useOnlineReferral){
             .hhk-fc-slot-title {
                 background-color: #E3EFF9;
             }
+            .hhk-fc-slot-title.fc-day-today {
+                background-color: #fbec88;
+            }
             .hhk-fcslot-today {
                 background-color: #fbec88;
-                opacity: .4;
+                opacity: .6;
             }
             .hhk-fcslot-holiday {
                 background-color: #dbfcb5;
-                opacity: .4;
+                opacity: .6;
             }
             .hhk-fcslot-closed {
                 background-color: #fcb5b5;
-                opacity: .4;
+                opacity: .6;
             }
 
         </style>
@@ -420,10 +423,10 @@ if($uS->useOnlineReferral){
             <?php echo $guestAddMessage; ?>
             <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
             <form name="frmdownload" action="#" method="post">
-            <div id="mainTabs" style="display:none; font-size:.9em;">
-            	<div class="hhk-flex ui-widget-header ui-corner-all" style="align-items:normal;">
-            		<div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
-                    <ul class="hhk-flex" style="border:none;">
+            <div id="mainTabs" style="display:none; font-size:.9em; width: 100%;" class="hhk-mobile-tabs">
+            	<div class="hhk-flex ui-widget-header ui-corner-all">
+            		<div class="d-xl-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
+                    <ul class="hhk-flex">
                         <li id="liCal"><a href="#vcal">Calendar</a></li>
                         <li id="liCurrGuests"><a href="#vstays"><span id="spnNumCurrent"></span> Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?><span id="spnCurrentS"></span></a></li>
                         <li><a href="#vresvs"><span id="spnNumConfirmed"></span> <?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?></a></li>
@@ -441,13 +444,13 @@ if($uS->useOnlineReferral){
                         <li id="liDaylog"><a href="#vdaily">Daily Log</a></li>
                         <li id="liStaffNotes"><a href="#vStaffNotes">Staff Notes</a></li>
                     </ul>
-                    <div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
+                    <div class="d-xl-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
                 </div>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
                     <div id="divGoto" class="hideMobile" style="display: none;">
                         <span id="spnGotoDate" >Go to Date: <input id="txtGotoDate" type="text" class="ckdate" value="" /></span>
-                        <span id="pCalLoad" style="font-weight:bold;">Loading...</span>
+                        <span id="pCalLoad" style="text-align:center;"><img src="../images/ui-anim_basic_16x16.gif"></span>
                     </div>
                     <div id="divRoomGrouping" style="position:absolute; padding: 1.2em; display:none;" class="ui-widget ui-front ui-widget-content ui-corner-all ui-widget-shadow">
                         <table>
