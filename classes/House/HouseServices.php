@@ -184,7 +184,7 @@ class HouseServices {
         $mkup = HTMLContainer::generateMarkup('div',
         		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
                 . $mkup,
-            array('id'=>'divksStays', 'style'=>'min-width: max-content;'));
+            array('id'=>'divksStays'));
 
         // Show fees if not hf = hide fees.
         if ($action != 'hf') {

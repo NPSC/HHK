@@ -231,11 +231,13 @@ Order by `t`.`List_Order`;");
             $tbl->addBodyTr(
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(
-                        HTMLContainer::generateMarkup("span", "", ["class"=>"ui-icon ui-icon-arrowthick-2-n-s"]) .
-                        HTMLInput::generateMarkup($d[4], ["name"=>'txtDOrder[' . $d[0] . ']', "type"=>"hidden"])
-                        , ["class"=>"sort-handle", "title"=>"Drag to sort"]) : '') .
+                        HTMLContainer::generateMarkup("span", "", ["class" => "ui-icon ui-icon-arrowthick-2-n-s"]) .
+                        HTMLInput::generateMarkup($d[4], ["name" => 'txtDOrder[' . $d[0] . ']', "type" => "hidden"])
+                        ,
+                        ["class" => "sort-handle", "title" => "Drag to sort"]
+                    ) : '') .
                 HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($d[1], ['name' => 'txtDiag[' . $d[0] . ']', 'title'=>(isset($descriptions[$d[0]]) ? $descriptions[$d[0]] : '')])
+                    HTMLInput::generateMarkup($d[1], ['name' => 'txtDiag[' . $d[0] . ']', 'title' => (isset($descriptions[$d[0]]) ? $descriptions[$d[0]] : '')])
                 ) .
                 ($tableName == DIAGNOSIS_TABLE_NAME ?
                     HTMLTable::makeTd(
@@ -243,28 +245,30 @@ Order by `t`.`List_Order`;");
                     ) : ''
                 ) .
 
-                (($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName))
-                     ? HTMLTable::makeTd(
-                        HTMLInput::generateMarkup($d[2],
-                        [
-                            'size' => '10',
-                            'style' => 'text-align:right;',
-                            'name' => 'txtDiagAmt[' . $d[0] . ']'
-                        ])
-                       )
+                ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName))
+                    ? HTMLTable::makeTd(
+                        HTMLInput::generateMarkup(
+                            $d[2],
+                            [
+                                'size' => '10',
+                                'style' => 'text-align:right;',
+                                'name' => 'txtDiagAmt[' . $d[0] . ']'
+                            ]
+                        )
+                    )
 
-                     : ''
+                    : ''
                 ) .
 
-                self::makeRibbonColorMkup($type, $tableName, $d) . 
+                self::makeRibbonColorMkup($type, $tableName, $d) .
 
                 $cbDelMU .
 
                 ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME ?
-                         HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diags, ''), ['name' => 'selDiagDel[' . $d[0] . ']']))
-                         : '')
+                    HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diags, ''), ['name' => 'selDiagDel[' . $d[0] . ']']))
+                    : '')
 
-                );
+            );
         }
 
         // New Entry Markup?

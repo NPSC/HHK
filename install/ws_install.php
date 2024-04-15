@@ -61,15 +61,28 @@ if ($c == "testdb") {
         }
 
         // Update admin password
-        if (filter_has_var(INPUT_POST, 'new')) {
+        if (filter_has_var(INPUT_POST, 'adminpw')) {
 
-            $newPw = filter_input(INPUT_POST, 'new', FILTER_UNSAFE_RAW);
+            $adminPw = filter_input(INPUT_POST, 'adminpw', FILTER_UNSAFE_RAW);
 
             $uclass = new UserClass();
-            if ($uclass->setPassword($dbh, -1, $newPw)) {
+            if ($uclass->setPassword($dbh, -1, $adminPw)) {
                 $events['result'] = "Admin Password set.  ";
             } else {
                 $errorMsg .= "Admin Password set.  ";
+            }
+        }
+
+        // Update npscuser password
+        if (filter_has_var(INPUT_POST, 'npscuserpw')) {
+
+            $npscuserPw = filter_input(INPUT_POST, 'npscuserpw', FILTER_UNSAFE_RAW);
+
+            $uclass = new UserClass();
+            if ($uclass->setPassword($dbh, 10, $npscuserPw)) {
+                $events['result'] .= "npscuser Password set.  ";
+            } else {
+                $errorMsg .= "npscuser Password set.  ";
             }
         }
 

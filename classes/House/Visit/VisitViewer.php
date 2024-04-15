@@ -253,7 +253,7 @@ class VisitViewer {
         // add completed rows to table
         $table->addBodyTr($tr);
         $table->addHeaderTr($th);
-        $tblMarkup = $table->generateMarkup(array('id' => 'tblActiveVisit', 'style'=>'width:99%; min-width: max-content;'));
+        $tblMarkup = $table->generateMarkup(array('id' => 'tblActiveVisit', 'style'=>'width:100%; min-width: max-content;'));
 
         $weekendRowMkup = "";
 
@@ -365,7 +365,7 @@ class VisitViewer {
         return
             HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $visitBoxLabel, array('style'=>'font-weight:bold;'))
-                . $tblMarkup
+                   . HTMLContainer::generateMarkup("div", $tblMarkup, array("style"=>"overflow:auto;"))
                 , array('class'=>'hhk-panel', 'style'=>'margin-bottom:10px;'));
 
     }
