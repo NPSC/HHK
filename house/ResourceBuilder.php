@@ -2280,7 +2280,6 @@ $formBuilderOptions = [
     <script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
     <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 </head>
-
 <body <?php if ($wInit->testVersion) {
     echo "class='testbody'";
 } ?>>

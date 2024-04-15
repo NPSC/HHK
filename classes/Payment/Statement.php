@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Payment;
 
+use HHK\HTMLControls\HTMLInput;
 use HHK\Purchase\{Item, ValueAddedTax};
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\sec\Labels;
@@ -349,7 +350,7 @@ class Statement {
                             $totalAmt += $totalTax;
 
                             $tbl->addBodyTr(
-                                HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of ' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
+                                HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of ' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'class'=>'align-right'))
                                 .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                                 );
 
@@ -359,7 +360,7 @@ class Statement {
 
 
                 // Prepare new visit.
-                $separator = 'border-top: 2px solid #2E99DD;';
+                $separator = 'stmtHead';
 
                 $visitNights = 0;
                 $preTaxRmCharge = 0;
@@ -616,12 +617,12 @@ class Statement {
         if (count($payLines) == 0 && count($descs) > 0) {
             // fake a payment
             // Add top border for each new invoice.
-            $attrs = array('style'=>'border-top: 2px solid #2E99DD;');
-
+            //$attrs = array('style'=>'border-top: 2px solid #2E99DD;');
+            $attrs = [];
             $payLines[] = HTMLTable::makeTd(($i['Invoice_Date'] == '' ? '' : date('M j, Y', strtotime($i['Invoice_Date']))), $attrs)
             .HTMLTable::makeTd('', array_merge($attrs, array('colspan'=>'2')))
             .HTMLTable::makeTd('', $attrs)
-            .HTMLTable::makeTd('0.00', array('style'=>'text-align:right;border-top: 2px solid #2E99DD;'));
+            .HTMLTable::makeTd('0.00', array('class'=>'align-right'));
 
         }
 
@@ -633,10 +634,10 @@ class Statement {
             if ($firstT) {
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($i['Order_Number'] . '-' . $i['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>"$rspan", 'style'=>'border-top: 2px solid #2E99DD;')))
-                    .HTMLTable::makeTd($i['Invoice_Number'], array_merge($tdAttrs, array('rowspan'=>"$rspan", 'style'=>'border-top: 2px solid #2E99DD;')))
+                    HTMLTable::makeTd($i['Order_Number'] . '-' . $i['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>"$rspan")))
+                    .HTMLTable::makeTd($i['Invoice_Number'], array_merge($tdAttrs, array('rowspan'=>"$rspan")))
                     .$t
-                    );
+                    ,["class"=>"stmtHead"]);
 
                 $firstT = FALSE;
 
@@ -651,10 +652,10 @@ class Statement {
             if ($firstT) {
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($i['Order_Number'] . '-' . $i['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>"$rspan", 'style'=>'border-top: 2px solid #2E99DD;')))
-                    .HTMLTable::makeTd($i['Invoice_Number'], array_merge($tdAttrs, array('rowspan'=>"$rspan", 'style'=>'border-top: 2px solid #2E99DD;')))
+                    HTMLTable::makeTd($i['Order_Number'] . '-' . $i['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>"$rspan")))
+                    .HTMLTable::makeTd($i['Invoice_Number'], array_merge($tdAttrs, array('rowspan'=>"$rspan")))
                     .$d
-                    );
+                    , ["class"=>"stmtHead"]);
 
                 $firstT = FALSE;
 
@@ -764,12 +765,7 @@ class Statement {
                     $addnl = ($p['Check_Number'] == '' ? ' ' : '#' . $p['Check_Number']);
                 }
 
-                // Add top border for each new invoice.
-                if (count($payLines) == 0) {
-                    $attrs = array_merge($tdAttrs, array('style'=>'border-top: 2px solid #2E99DD;'));
-                } else {
-                    $attrs = $tdAttrs;
-                }
+                $attrs = $tdAttrs;
 
                 // Style the amount
                 $amtAttrs = $attrs;
@@ -814,7 +810,7 @@ class Statement {
                 foreach ($myLines as $l) {
 
                     if ($first) {
-                        $initialTd = HTMLTable::makeTd('Item' . (count($myLines) > 1 ? 's:' : ':'), array('rowspan'=>count($myLines), 'style'=>'border: 0 none red; text-align:right; font-size:.8em;'));
+                        $initialTd = HTMLTable::makeTd('Item' . (count($myLines) > 1 ? 's:' : ':'), array('rowspan'=>count($myLines), 'class'=>'align-right', 'style'=>'border: 0 none red; font-size:.8em;'));
                         $first = FALSE;
                     } else {
                         $initialTd = '';
@@ -846,20 +842,20 @@ class Statement {
 
             if ($totalReimbursment > 0) {
 
-                $tbl->addBodyTr(HTMLTable::makeTd('Total Reimbursed', array('colspan'=>'6', 'class'=>'tdlabel '.$blackLine.$tdClass, 'style'=>'font-weight:bold;'))
-                    .HTMLTable::makeTd('$'. number_format($totalReimbursment, 2), array('class'=>'hhk-tdTotals '.$tdClass, 'style'=>'text-align:right;')));
+                $tbl->addBodyTr(HTMLTable::makeTd('Total Reimbursed', array('colspan'=>'6', 'class'=>'tdlabel '.$blackLine.$tdClass))
+                    .HTMLTable::makeTd('$'. number_format($totalReimbursment, 2), array('class'=>'hhk-tdTotals align-right '.$tdClass)));
 
                 $blackLine = '';
             }
 
             $guestPayment = $totalPment - $totalReimbursment;
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('memberType', 'visitor', 'Visitor') . ' ' . $labels->getString('statement', 'paymentTotalLabel', 'Payment Total (Thank You!)'), array('colspan'=>'6', 'class'=>'tdlabel '.$blackLine.$tdClass, 'style'=>'font-weight:bold;'))
-                .HTMLTable::makeTd('$'. number_format($guestPayment, 2), array('class'=>$tdClass.$blackLine, 'style'=>'text-align:right;')));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('memberType', 'visitor', 'Visitor') . ' ' . $labels->getString('statement', 'paymentTotalLabel', 'Payment Total (Thank You!)'), array('colspan'=>'6', 'class'=>'tdlabel '.$blackLine.$tdClass))
+                .HTMLTable::makeTd('$'. number_format($guestPayment, 2), array('class'=>'align-right ' . $tdClass.$blackLine)));
 
             // Totals Line needed?
             if ($totalReimbursment > 0) {
-                $tbl->addBodyTr(HTMLTable::makeTd('Total Payments', array('colspan'=>'6', 'class'=>'tdlabel hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;'))
-                    .HTMLTable::makeTd('$'. number_format($totalPment, 2), array('class'=>'hhk-tdTotals '.$tdClass, 'style'=>'text-align:right;')));
+                $tbl->addBodyTr(HTMLTable::makeTd('Total Payments', array('colspan'=>'6', 'class'=>'tdlabel hhk-tdTotals '.$tdClass))
+                    .HTMLTable::makeTd('$'. number_format($totalPment, 2), array('class'=>'hhk-tdTotals align-right'.$tdClass)));
             }
 
         } else if ($numPayments == 0) {
@@ -869,7 +865,7 @@ class Statement {
         $totalAmt = $totalAmt - $totalPment;
         // Disclaimer
         if ($pmtDisclaimer != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $pmtDisclaimer, array('style'=>'font-size:0.6em;text-align:justify;max-width:600px;')), array('colspan'=>'7', 'class'=>$tdClass)));
+            $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $pmtDisclaimer, array('class'=>'pmtDisclaimer')), array('colspan'=>'7', 'class'=>$tdClass)));
         }
 
         return $tbl;
@@ -919,7 +915,7 @@ class Statement {
 
                 $numPayments++;
                 $first = TRUE;
-                $descs = array();
+                $trAttrs = array();
 
                 foreach ($myLines as $l) {
 
@@ -930,30 +926,28 @@ class Statement {
                             $payor = $r['i']['First'] . ' ' . $r['i']['Last'];
                         }
 
-                        $mattrs = array_merge($tdAttrs, array('style'=>'border-top: 2px solid #2E99DD;'));
-                        $vattrs = array_merge($tdAttrs, array('style'=>'border-top: 2px solid #2E99DD;text-align:right;'));
+                        $mattrs = array_merge($tdAttrs);
+                        $vattrs = array_merge($tdAttrs, array('class'=>'align-right'));
 
-                        $initialTd = HTMLTable::makeTd($r['i']['Order_Number'] . '-' . $r['i']['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>count($myLines), 'style'=>'border-top: 2px solid #2E99DD;')))
-                        .HTMLTable::makeTd($payor, array_merge($tdAttrs, array('rowspan'=>count($myLines), 'style'=>'border-top: 2px solid #2E99DD;')));
+                        $initialTd = HTMLTable::makeTd($r['i']['Order_Number'] . '-' . $r['i']['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>count($myLines))))
+                        .HTMLTable::makeTd($payor, array_merge($tdAttrs, array('rowspan'=>count($myLines))));
+
+                        $trAttrs = array("class" => "stmtHead");
 
                         $first = FALSE;
 
                     } else {
                         $initialTd = '';
                         $mattrs = $tdAttrs;
-                        $vattrs = array_merge($tdAttrs, array('style'=>'text-align:right;'));
+                        $vattrs = array_merge($tdAttrs, array('class'=>'align-right'));
                     }
 
-                    $descs[] = $initialTd . HTMLTable::makeTd(($r['i']['Invoice_Date'] == '' ? '' : date('M j, Y', strtotime($r['i']['Invoice_Date']))), $mattrs)
+                    $tr = $initialTd . HTMLTable::makeTd(($r['i']['Invoice_Date'] == '' ? '' : date('M j, Y', strtotime($r['i']['Invoice_Date']))), $mattrs)
                     .HTMLTable::makeTd($l['Description'], array_merge($mattrs, array('colspan'=>'3')))
                     .HTMLTable::makeTd(($l['Status'] == InvoiceStatus::Unpaid ? 'Pending' : 'Paid'), $mattrs)
                     .HTMLTable::makeTd('$'.number_format($l['Amount'],2), $vattrs);
 
-                }
-
-                foreach ($descs as $d) {
-                    $tbl->addBodyTr($d);
-                }
+                    $tbl->addBodyTr($tr, $trAttrs);                }
             }
         }
 
@@ -969,13 +963,13 @@ class Statement {
                 .HTMLTable::makeTh('Status', $tdAttrs)
                 .HTMLTable::makeTh($labels->getString('statement', 'paymentHeader', 'Payment'), $tdAttrs));
 
-            $tbl->addBodyTr(HTMLTable::makeTd('3rd Party Payment Total', array('colspan'=>'7', 'class'=>'tdlabel hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;'))
-                .HTMLTable::makeTd('$'. number_format($totalPment, 2), array('class'=>'hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;text-align:right;')));
+            $tbl->addBodyTr(HTMLTable::makeTd('3rd Party Payment Total', array('colspan'=>'7', 'class'=>'tdlabel hhk-tdTotals '.$tdClass))
+                .HTMLTable::makeTd('$'. number_format($totalPment, 2), array('class'=>'hhk-tdTotals align-right '.$tdClass)));
 
         }
 
         if ($numPayments > 0) {
-            return $tbl->generateMarkup();
+            return $tbl->generateMarkup(["class"=>"fullWidth"]);
         }else {
             return '';
         }
@@ -1075,19 +1069,8 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Build the statement
-        $logoUrl = $uS->resourceURL . 'conf/' . $uS->statementLogoFile;
-        $rec = '';
-
-        // Don't write img if logo URL not sepcified
-        if ($includeLogo && $logoUrl != '') {
-
-            $rec .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth)),
-                array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
-        }
-
-        $rec .= HTMLContainer::generateMarkup('div', Receipt::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:1em;'));
-        $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
+        $rec = self::makeHeaderMkup($dbh, $includeLogo);
+        $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('class'=>'mb-3'));
 
 
         $rec .= self::makeSummaryDiv(
@@ -1104,16 +1087,16 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
             $totalNights
         );
 
-        $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'margin-top:25px;'));
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox'));
+        $rec .= HTMLContainer::generateMarkup('h3', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox mb-3'));
 
         if ($tpTbl != '') {
-            $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'thirdParty', '3rd Party'). ' Payments', array('style'=>'margin-top:15px;'));
-            $rec .= HTMLContainer::generateMarkup('div', $tpTbl, array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
+            $rec .= HTMLContainer::generateMarkup('h3', $labels->getString('statement', 'thirdParty', '3rd Party'). ' Payments');
+            $rec .= HTMLContainer::generateMarkup('div', $tpTbl, array('class'=>'hhk-tdbox mb-3'));
         }
 
-        $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'paymentsCaption', 'Payments'), array('style'=>'margin-top:15px;'));
-        $rec .= HTMLContainer::generateMarkup('div', $ptbl->generateMarkup(), array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
+        $rec .= HTMLContainer::generateMarkup('h3', $labels->getString('statement', 'paymentsCaption', 'Payments'));
+        $rec .= HTMLContainer::generateMarkup('div', $ptbl->generateMarkup(['class'=>'fullWidth']), array('class'=>'hhk-tdbox mb-3'));
 
         return $rec;
 
@@ -1221,20 +1204,9 @@ WHERE
 
 
         // Build the statement
-        $logoUrl = $uS->resourceURL . 'conf/' . $uS->statementLogoFile;
-        $rec = '';
+        $rec = self::makeHeaderMkup($dbh, $includeLogo);
 
-        // Don't write img if logo URL not sepcified
-        if ($includeLogo && $logoUrl != '') {
-
-            $rec .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth)),
-                array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
-        }
-
-        $rec .= HTMLContainer::generateMarkup('div', Receipt::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:1em;'));
-
-        $rec .= HTMLContainer::generateMarkup('h2', 'Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
+        $rec .= HTMLContainer::generateMarkup('h2', 'Statement of Account', array('class'=>'mb-3'));
 
         $rec .= self::makeSummaryDiv(
             $guestName,
@@ -1249,25 +1221,80 @@ WHERE
             Registration::loadDepositBalance($dbh, 0, $idVisit),
             $totalNights);
 
-        $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'clear:both;margin-top:25px;'));
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox'));
+        $rec .= HTMLContainer::generateMarkup('h3', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox mb-3'));
 
         if ($tpTbl != '') {
-            $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'thirdParty', '3rd Party'). ' Payments', array('style'=>'clear:both;margin-top:15px;'));
-            $rec .= HTMLContainer::generateMarkup('div', $tpTbl, array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
+            $rec .= HTMLContainer::generateMarkup('h3', $labels->getString('statement', 'thirdParty', '3rd Party'). ' Payments');
+            $rec .= HTMLContainer::generateMarkup('div', $tpTbl, array('class'=>'hhk-tdbox mb-3'));
         }
 
-        $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'paymentsCaption', 'Payments'), array('style'=>'margin-top:15px;'));
-        $rec .= HTMLContainer::generateMarkup('div', $ptbl->generateMarkup(), array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
+        $rec .= HTMLContainer::generateMarkup('h3', $labels->getString('statement', 'paymentsCaption', 'Payments'));
+        $rec .= HTMLContainer::generateMarkup('div', $ptbl->generateMarkup(array("class"=>"fullWidth")), array('class'=>'hhk-tdbox mb-3'));
 
         if ($uS->ShowRateDetail) {
-            $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'rateHeader', 'Rate').' Detail', array('style'=>'margin-top:15px;'));
-            $rec .= HTMLContainer::generateMarkup('div', $tbls[1]->generateMarkup(), array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
+            $rec .= HTMLContainer::generateMarkup('h3', $labels->getString('statement', 'rateHeader', 'Rate').' Detail');
+            $rec .= HTMLContainer::generateMarkup('div', $tbls[1]->generateMarkup(), array('class'=>'hhk-tdbox mb-3'));
         }
         return $rec;
 
     }
 
+    public static function createEmailStmtWrapper(string $stmtMarkup){
+        return '<html><head><style type="text/css">' .
+            file_get_contents("css/jqui/jquery-ui.min.css") .
+            file_get_contents("css/house.css") .
+            file_get_contents("css/statement.css") .
+            file_get_contents("css/bootstrap-grid.min.css") .
+            '</style></head><body><div id="emailStmtDiv">' . $stmtMarkup . '</div></body></html>';
+    }
+
+    public static function makeHeaderMkup(\PDO $dbh, $includeLogo = true){
+        $uS = Session::getInstance();
+
+        $logoUrl = $uS->resourceURL . 'conf/' . $uS->statementLogoFile;
+        $header = "";
+
+        // Don't write img if logo URL not sepcified
+        if ($includeLogo && $logoUrl != '') {
+
+            $header .= HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth, "class"=>"mr-5")),
+            array("style"=>"width: " . $uS->statementLogoWidth ."px"));
+        }
+
+        $header .= HTMLTable::makeTd(Receipt::getAddressTable($dbh, $uS->sId));
+
+        $hdrTbl = new HTMLTable();
+
+        $hdrTbl->addBodyTr($header);
+
+        return $hdrTbl->generateMarkup(array("id"=>"stmtHeader", "class" => "mb-3 fullWidth"));
+    }
+
+    public static function makeEmailTbl($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
+        // create send email table
+        $emTbl = new HTMLTable();
+        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'class'=>'ignrSave ml-2')), array("class"=>"hhk-flex")));
+        $emTbl->addBodyTr(HTMLTable::makeTd(
+                'Email: '
+                . HTMLInput::generateMarkup($emAddrs, array('name'=>'txtEmail', 'class'=>'ignrSave ml-2')), array("class"=>"hhk-flex")));
+        $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('class'=> 'ui-button ui-corner-all ui-widget', 'name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit))));
+
+        $emtableMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('form',
+                $emTbl->generateMarkup(array('class'=>'emTbl'), 'Email '.Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement'), array('id'=>'formEm'))
+
+                .HTMLContainer::generateMarkup('form',
+                        HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'class'=>'ui-button ui-corner-all ui-widget mr-3 mt-2'))
+                        .HTMLInput::generateMarkup('Download to MS Word', array('name'=>'btnWord', 'type'=>'submit', 'class'=>'ui-button ui-corner-all ui-widget mr-3 mt-2'))
+                        .HTMLInput::generateMarkup($idRegistration, array('name'=>'hdnIdReg', 'type'=>'hidden'))
+                        .HTMLInput::generateMarkup($idVisit, array('name'=>'hdnIdVisit', 'type'=>'hidden'))
+                        , array('name'=>'formWord','action'=>'ShowStatement.php', 'method'=>'post'))
+                ,array('class'=>'ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox my-3'));
+
+        return $emtableMarkup;
+    }
+    
     /**
      * Summary of makeSummaryDiv
      * @param mixed $guestName
@@ -1319,49 +1346,57 @@ WHERE
         $sTbl = new HTMLTable();
 
         $sTbl->addBodyTr(
-            HTMLTable::makeTd('Total Nights:', array('class'=>'tdlabel', 'style'=>'border-bottom: 2px solid #2E99DD;'))
-            . HTMLTable::makeTd(number_format($totalNights, 0), array('style'=>'text-align:center;border-bottom: 2px solid #2E99DD;')));
+            HTMLTable::makeTd('Total Nights:', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd(number_format($totalNights, 0), array('class'=>'align-center')),
+            ["class"=>"sumDivider"]);
 
         $sTbl->addBodyTr(
-            HTMLTable::makeTd($labels->getString('statement', 'TotalLabel', 'Total') . ':', array('class'=>'tdlabel', 'style'=>'border-bottom: 2px solid #2E99DD;'))
-            . HTMLTable::makeTd('$'. number_format($totalCharge, 2), array('style'=>'text-align:right;border-bottom: 2px solid #2E99DD;')));
+            HTMLTable::makeTd($labels->getString('statement', 'TotalLabel', 'Total') . ':', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd('$'. number_format($totalCharge, 2), array('class'=>'align-right')),
+            ["class"=>"sumDivider"]);
 
         if ($totalThirdPayments > 0) {
             $sTbl->addBodyTr(
                 HTMLTable::makeTd('3rd Party Payments:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$'. number_format($totalThirdPayments, 2), array('style'=>'text-align:right;')));
+                . HTMLTable::makeTd('$'. number_format($totalThirdPayments, 2), array('class'=>'align-right')));
         }
 
         $sTbl->addBodyTr(
-            HTMLTable::makeTd($labels->getString('memberType', 'visitor', 'Guest') . ' Payments:', array('class'=>'tdlabel', 'style'=>'border-bottom: 2px solid #2E99DD;'))
-            . HTMLTable::makeTd('$'. number_format($totalGuestPayments, 2), array('style'=>'text-align:right;border-bottom: 2px solid #2E99DD;')));
+            HTMLTable::makeTd($labels->getString('memberType', 'visitor', 'Guest') . ' Payments:', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd('$'. number_format($totalGuestPayments, 2), array('class'=>'align-right')),
+            ["class"=>"sumDivider"]);
 
         $sTbl->addBodyTr(
-            HTMLTable::makeTd($finalWord . ':', array('class'=>'tdlabel', 'style'=>'font-weight:bold;font-size:1.2em;'))
-            . HTMLTable::makeTd('$'. number_format($bal, 2), array('style'=>'text-align:right;font-weight:bold;font-size:1.2em;')));
+            HTMLTable::makeTd($finalWord . ':', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd('$'. number_format($bal, 2), array('class'=>'align-right')),
+        ['class'=>'balanceLine']);
 
 
         if ($MOABalance > 0) {
             $sTbl->addBodyTr(
                 HTMLTable::makeTd('Money on Account:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('($'. number_format($MOABalance, 2) . ')', array('style'=>'text-align:right;')));
+                . HTMLTable::makeTd('($'. number_format($MOABalance, 2) . ')', array('class'=>'align-right')));
         }
 
         if ($depositBalance > 0) {
             $sTbl->addBodyTr(
                 HTMLTable::makeTd($labels->getString('statement', 'keyDepositLabel', 'Deposit'), array('class' => 'tdlabel'))
-                . HTMLTable::makeTd('($' . number_format($depositBalance, 2) . ')', array('style' => 'text-align:right;'))
+                . HTMLTable::makeTd('($' . number_format($depositBalance, 2) . ')', array('class' => 'align-right'))
             );
         }
 
-        $rec = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array(),
-            HTMLContainer::generateMarkup('span', 'Prepared '.date('M jS, Y'), array('style'=>'font-weight:bold;')))
-            , array('style'=>'float:left;'))
-            . HTMLContainer::generateMarkup('div', $sTbl->generateMarkup(array(),
-                HTMLContainer::generateMarkup('span', 'Statement Summary', array('style'=>'font-weight:bold;')))
-                , array('style'=>'float:left;margin-left:100px;'));
+        $bodyTbl = new HTMLTable();
 
-            return HTMLContainer::generateMarkup('div', $rec, array('style'=>'clear:both;')).HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+        $bodyTbl->addBodyTr(
+            HTMLTable::makeTd(
+                HTMLContainer::generateMarkup("strong", 'Prepared '.date('M jS, Y')) . 
+                $tbl->generateMarkup()) . 
+            HTMLTable::makeTd(
+                $sTbl->generateMarkup(["class"=>"tblStmtSummary"], HTMLContainer::generateMarkup("strong", 'Statement Summary'))
+            , array("class"=>"align-center"))
+        );
+
+        return $bodyTbl->generateMarkup(array("id"=>"stmtSummary", "class" => "mb-3 fullWidth"));
     }
 
 }
