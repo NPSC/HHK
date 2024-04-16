@@ -19,4 +19,5 @@ class CalendarStatusColors {
     const CheckingOutToday = 'cotod';
     const CheckingOutTomorrow = 'cotom';
     const CheckedInPastExpectedDepart = 'copast';
+    const Waitlist = 'w';
 }

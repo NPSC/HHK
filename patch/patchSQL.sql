@@ -153,5 +153,8 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cotod', 'Checking Out Today', '','u',60);
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cotom', 'Checking Out Tomorrow', '','u',70);
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'copast', 'Checked in past Expected Departure', '','u',80);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'w', 'Waitlist', '','u',90);
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('RibbonColors', 'Calendar_Status_Colors', 'Reservation/Visit Status', '','m',0);
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showResvHousekeeping', 'false', 'b', 'h', 'Show reservations on Guests Checking Out tab of Housekeeping', 1);

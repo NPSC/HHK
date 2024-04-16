@@ -1012,6 +1012,9 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays > 1){ //arriving in future
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInFuture]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInFuture]['t'];
+                } else if(isset($r["Status"]) && $r["Status"] == 'w'){ //waitlist
+                    $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::Waitlist]['b'];
+                    $s['textColor'] = $this->ribbonColors[CalendarStatusColors::Waitlist]['t'];
                 } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == 'co') { //checked out
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedOut]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedOut]['t'];
@@ -1065,6 +1068,8 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingInTomorrow];
                 } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays > 1){ //arriving in future
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingInFuture];
+                } else if(isset($r["Status"]) && $r["Status"] == 'w'){ //waitlist
+                    $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::Waitlist];
                 } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == 'co') { //checked out
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckedOut];
                 }

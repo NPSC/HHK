@@ -162,14 +162,14 @@ class WebInit {
                     . "default-src data: blob: $cspURL https://fonts.gstatic.com/ https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net; "
                     . "script-src $cspURL https://www.gstatic.com/charts/ https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline' 'unsafe-eval'; "
                     . "style-src $cspURL https://fonts.googleapis.com https://fonts.gstatic.com/ https://www.gstatic.com https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline';"
-                    . "connect-src $cspURL tablet.sigwebtablet.com:47290 ;"
+                    . "connect-src data: blob: $cspURL tablet.sigwebtablet.com:47290 ;"
                     . "object-src $cspURL blob: ; "); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
 
             header("X-Content-Security-Policy: "
                     . "default-src data: blob: $cspURL https://fonts.gstatic.com/ https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net; "
                     . "script-src $cspURL https://www.gstatic.com/charts/ https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline'; "
                     . "style-src $cspURL https://fonts.googleapis.com https://fonts.gstatic.com/ https://www.gstatic.com https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline'; "
-                    . "connect-src $cspURL tablet.sigwebtablet.com:47290 ;"
+                    . "connect-src data: blob: $cspURL tablet.sigwebtablet.com:47290 ;"
                     . "object-src $cspURL blob: ;"); // IE 10+
 
             header('X-Frame-Options: DENY');

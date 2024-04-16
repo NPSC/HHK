@@ -38,6 +38,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Calendar_Status_Colors', 'cotod', 'Checking Out Today', '','u',60),
 ('Calendar_Status_Colors', 'cotom', 'Checking Out Tomorrow', '','u',70),
 ('Calendar_Status_Colors', 'copast', 'Checked in past Expected Departure', '','u',80),
+('Calendar_Status_Colors', 'w', 'Waitlist', '','u',90),
 
 ('Campaign_Status','a','Active','','',0),
 ('Campaign_Status','d','Disabled','','',0),
@@ -683,6 +684,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
+('showResvHousekeeping', 'false', 'b', 'h', '', 'Show reservations on Guests Checking Out tab of Housekeeping', '', 1)
 ('ShowRoomOcc', 'false', 'b', 'c', '', 'Show current occupancy percentage on calendar','','1'),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
 ('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page','',1),

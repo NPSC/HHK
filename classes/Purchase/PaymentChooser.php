@@ -533,7 +533,7 @@ class PaymentChooser {
 
         // Show the prepayment input box.
         $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), ($uS->HideRoomFeeCalc ? ['class'=>"d-none"] : ['style'=>'text-align:center;'])), ['style'=>'text-align: center;min-width: 62px;'])
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
             , array('class'=>'hhk-RoomFees'));
 
