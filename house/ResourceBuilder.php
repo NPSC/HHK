@@ -5,6 +5,7 @@ use HHK\Document\FormTemplate;
 use HHK\House\Attribute\Attributes;
 use HHK\House\Constraint\Constraints;
 use HHK\House\Constraint\ConstraintsHospital;
+use HHK\House\Hospital\Hospital;
 use HHK\House\Insurance\Insurance;
 use HHK\House\Insurance\InsuranceType;
 use HHK\House\RegistrationForm\CustomRegisterForm;
@@ -511,9 +512,14 @@ if (isset($_POST['btnhSave'])) {
         // Delete?
         if (isset($_POST['hdel'][$idHosp])) {
 
-            // Change status to "Retired"
-            $hospRs->Status->setNewVal('r');
-            EditRS::update($dbh, $hospRs, [$hospRs->idHospital]);
+            //is hospital in use?
+            if (Hospital::isHospitalInUse($dbh, $idHosp)) {
+                // Change status to "Retired"
+                $hospRs->Status->setNewVal('r');
+                EditRS::update($dbh, $hospRs, [$hospRs->idHospital]);
+            }else{
+                EditRS::delete($dbh, $hospRs, [$hospRs->idHospital]);
+            }
 
             // Delete any attribute entries
             $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
