@@ -2,7 +2,6 @@
 
 
 use HHK\sec\{Session, WebInit};
-use HHK\AlertControl\AlertMessage;
 use HHK\SysConst\GLTableNames;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector};
@@ -11,7 +10,6 @@ use HHK\Payment\Statement;
 use HHK\House\Report\PaymentReport;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
-use HHK\Purchase\PriceModel\PriceNone;
 use HHK\SysConst\ItemPriceCode;
 use HHK\Payment\CreditToken;
 use HHK\House\Report\ReportFieldSet;
@@ -200,144 +198,164 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
 
-    // Hospitals
-    $whHosp = '';
-    foreach ($filter->getSelectedHosptials() as $a) {
-        if ($a != '') {
-            if ($whHosp == '') {
-                $whHosp .= $a;
-            } else {
-                $whHosp .= ",". $a;
+    if (isset($_POST['txtInvoiceNumber']) && $_POST['txtInvoiceNumber'] != '') {
+
+        if (($invoiceNumber = filter_input(INPUT_POST,'txtInvoiceNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS)) === false) {
+            $invoiceNumber = '0';
+        }
+
+        $where = "and lp.Invoice_Number = '$invoiceNumber' ";
+        $headerTable->addBodyTr(HTMLTable::makeTd('Invoice Number: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($invoiceNumber));
+
+
+    } else {
+
+
+        // Hospitals
+        $whHosp = '';
+        foreach ($filter->getSelectedHosptials() as $a) {
+            if ($a != '') {
+                if ($whHosp == '') {
+                    $whHosp .= $a;
+                } else {
+                    $whHosp .= "," . $a;
+                }
             }
         }
-    }
 
-    $whAssoc = '';
-    foreach ($filter->getSelectedAssocs() as $a) {
-        if ($a != '') {
-            if ($whAssoc == '') {
-                $whAssoc .= $a;
-            } else {
-                $whAssoc .= ",". $a;
+        $whAssoc = '';
+        foreach ($filter->getSelectedAssocs() as $a) {
+            if ($a != '') {
+                if ($whAssoc == '') {
+                    $whAssoc .= $a;
+                } else {
+                    $whAssoc .= "," . $a;
+                }
             }
         }
-    }
-    if ($whHosp != '') {
-        $whHosp = " and hs.idHospital in (".$whHosp.") ";
-    }
+        if ($whHosp != '') {
+            $whHosp = " and hs.idHospital in (" . $whHosp . ") ";
+        }
 
-    if ($whAssoc != '') {
-        $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
-    }
+        if ($whAssoc != '') {
+            $whAssoc = " and hs.idAssociation in (" . $whAssoc . ") ";
+        }
 
-    $hdrHosps = $filter->getSelectedHospitalsString();
-    $hdrAssocs = $filter->getSelectedAssocString();
-    $hospList = $filter->getHospitals();
+        $hdrHosps = $filter->getSelectedHospitalsString();
+        $hdrAssocs = $filter->getSelectedAssocString();
+        $hospList = $filter->getHospitals();
 
-    if(count($hospList) > 0){
-        $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
-    }
+        if (count($hospList) > 0) {
+            $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+        }
 
-    if (count($filter->getAList()) > 1) {
-        $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
-    }
+        if (count($filter->getAList()) > 1) {
+            $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
+        }
 
 
-    $whStatus = '';
-    $payStatusText = '';
-    $rtnIncluded = FALSE;
+        $whStatus = '';
+        $payStatusText = '';
+        $rtnIncluded = FALSE;
 
-    foreach ($statusSelections as $s) {
-        if ($s != '') {
-            // Set up query where part.
-            if ($whStatus == '') {
-                $whStatus = "'" . $s . "'";
-            } else {
-                $whStatus .= ",'".$s . "'";
-            }
+        foreach ($statusSelections as $s) {
+            if ($s != '') {
+                // Set up query where part.
+                if ($whStatus == '') {
+                    $whStatus = "'" . $s . "'";
+                } else {
+                    $whStatus .= ",'" . $s . "'";
+                }
 
-            if ($s == PaymentStatusCode::Retrn) {
-                $rtnIncluded = TRUE;
-            }
+                if ($s == PaymentStatusCode::Retrn) {
+                    $rtnIncluded = TRUE;
+                }
 
-            if ($payStatusText == '') {
-                $payStatusText = $statusList[$s][1];
-            } else {
-                $payStatusText .= ', ' . $statusList[$s][1];
+                if ($payStatusText == '') {
+                    $payStatusText = $statusList[$s][1];
+                } else {
+                    $payStatusText .= ', ' . $statusList[$s][1];
+                }
             }
         }
-    }
 
-    if ($whStatus != '') {
+        if ($whStatus != '') {
 
-        if ($rtnIncluded) {
-            $whStatus = " and (lp.Payment_Status in (" . $whStatus . ") or (lp.Is_Refund = 1 && lp.Payment_Status = '" . PaymentStatusCode::Paid. "')) ";
+            if ($rtnIncluded) {
+                $whStatus = " and (lp.Payment_Status in (" . $whStatus . ") or (lp.Is_Refund = 1 && lp.Payment_Status = '" . PaymentStatusCode::Paid . "')) ";
+            } else {
+                $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+            }
+
         } else {
-            $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+            $payStatusText = 'All';
         }
 
-    } else {
-        $payStatusText = 'All';
-    }
-
-    $headerTable->addBodyTr(HTMLTable::makeTd('Pay Statuses: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($payStatusText));
+        $headerTable->addBodyTr(HTMLTable::makeTd('Pay Statuses: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($payStatusText));
 
 
-    $whType = '';
-    $payTypeText = '';
-    foreach ($payTypeSelections as $s) {
-        if ($s != '') {
-            // Set up query where part.
-            if ($whType == '') {
-            	$whType = "'" . $s . "'";
-            } else {
-            	$whType .= ",'".$s . "'";
-            }
+        $whType = '';
+        $payTypeText = '';
+        foreach ($payTypeSelections as $s) {
+            if ($s != '') {
+                // Set up query where part.
+                if ($whType == '') {
+                    $whType = "'" . $s . "'";
+                } else {
+                    $whType .= ",'" . $s . "'";
+                }
 
-            if ($payTypeText == '') {
-                $payTypeText .= (isset($payTypes[$s][1]) ? $payTypes[$s][1] : '');
-            } else {
+                if ($payTypeText == '') {
+                    $payTypeText .= (isset($payTypes[$s][1]) ? $payTypes[$s][1] : '');
+                } else {
 
-                $payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
+                    $payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
+                }
             }
         }
+
+        if ($whType != '') {
+            $whType = " and lp.idPayment_Method in (" . $whType . ") ";
+        } else {
+            $payTypeText = 'All';
+        }
+
+        $headerTable->addBodyTr(HTMLTable::makeTd('Pay Types: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($payTypeText));
+
+        $whGw = '';
+        $gwText = '';
+
+        if (count($gwSelections) > 0) {
+
+            foreach ($gwSelections as $s) {
+                if ($s != '') {
+                    // Set up query where part.
+                    if ($whGw == '') {
+                        $whGw = " '" . $s . "' ";
+                    } else {
+                        $whGw .= ", '" . $s . "' ";
+                    }
+
+                    if ($gwText == '') {
+                        $gwText .= (isset($gwList[$s][1]) ? $gwList[$s][1] : '');
+                    } else {
+
+                        $gwText .= (isset($gwList[$s][1]) ? ', ' . $gwList[$s][1] : '');
+                    }
+                }
+            }
+
+            if ($whGw != '') {
+                $whGw = " and lp.`Merchant` in (" . $whGw . ") ";
+            } else {
+                $gwText = 'All';
+            }
+
+            $headerTable->addBodyTr(HTMLTable::makeTd('Locations: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($gwText));
+        }
+
+        $where = $whHosp . $whAssoc . $whDates . $whStatus . $whType . $whGw;
     }
-
-    if ($whType != '') {
-        $whType = " and lp.idPayment_Method in (" . $whType . ") ";
-    } else {
-        $payTypeText = 'All';
-    }
-
-    $headerTable->addBodyTr(HTMLTable::makeTd('Pay Types: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($payTypeText));
-
-    $whGw = '';
-    $gwText = '';
-    foreach ($gwSelections as $s) {
-    	if ($s != '') {
-    		// Set up query where part.
-    		if ($whGw == '') {
-    			$whGw = " '" . $s . "' ";
-    		} else {
-    			$whGw .= ", '" . $s . "' ";
-    		}
-
-    		if ($gwText == '') {
-    			$gwText .= (isset($gwList[$s][1]) ? $gwList[$s][1] : '');
-    		} else {
-
-    			$gwText .= (isset($gwList[$s][1]) ? ', ' .$gwList[$s][1] : '');
-    		}
-    	}
-    }
-
-    if ($whGw != '') {
-    	$whGw = " and lp.`Merchant` in (" . $whGw . ") ";
-    } else {
-    	$gwText = 'All';
-    }
-
-    $headerTable->addBodyTr(HTMLTable::makeTd('Locations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($gwText));
 
     $query = "Select
     lp.*,
@@ -363,7 +381,7 @@ from
         left join
     name np on hs.idPatient = np.idName
 where lp.idPayment > 0
- $whHosp $whAssoc $whDates $whStatus $whType $whGw ";
+  $where ";
 
     $tbl = null;
     $sml = null;
@@ -704,6 +722,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                     <?php } echo $columSelector; ?>
                     </div>
                     <div style="text-align:center; margin-top: 10px;">
+                        <input type='text' name="txtInvoiceNumber" id="txtInvoiceNumber" placeholder="Search Invoice Number" value='' style="margin-right:1em;"/>
                        <input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right:1em;"/>
                        <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/>
                     </div>

@@ -1,28 +1,25 @@
 <?php
-use HHK\SysConst\WebPageCode;
-use HHK\sec\WebInit;
-use HHK\sec\Session;
-use HHK\AlertControl\AlertMessage;
-
-use HHK\HTMLControls\HTMLContainer;
-use HHK\SysConst\InvoiceStatus;
-use HHK\SysConst\ItemId;
-use HHK\HTMLControls\HTMLTable;
-use HHK\Payment\PaymentSvcs;
-use HHK\Exception\RuntimeException;
-use HHK\SysConst\GLTableNames;
-use HHK\SysConst\VolMemberType;
-use HHK\SysConst\ItemPriceCode;
 use HHK\ColumnSelectors;
-use HHK\House\GLCodes\GLParameters;
-use HHK\House\GLCodes\GLCodes;
-use HHK\HTMLControls\HTMLSelector;
-use HHK\House\GLCodes\GLTemplateRecord;
-use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
-use HHK\sec\Labels;
+use HHK\Exception\RuntimeException;
+use HHK\House\GLCodes\GLCodes;
+use HHK\House\GLCodes\GLParameters;
+use HHK\House\GLCodes\GLTemplateRecord;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Payment\PaymentSvcs;
+use HHK\sec\Labels;
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\InvoiceStatus;
+use HHK\SysConst\ItemId;
+use HHK\SysConst\VolMemberType;
+use HHK\SysConst\WebPageCode;
 
 /**
  * InvoiceReport.php
@@ -73,18 +70,18 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
 
     $g['Patient'] = $r['Patient_Name'];
     if ($r['idPatient'] > 0) {
-        $g['Patient'] = HTMLContainer::generateMarkup('a', $g['Patient'], array('href'=>'GuestEdit.php?id='.$r['idPatient']));
+        $g['Patient'] = HTMLContainer::generateMarkup('a', $g['Patient'], ['href' => 'GuestEdit.php?id=' . $r['idPatient']]);
     }
 
-    $g['payments'] = HTMLContainer::generateMarkup('span', number_format(($r['Amount'] - $r['Balance']), 2), array('style'=>'float:right;'));
+    $g['payments'] = HTMLContainer::generateMarkup('span', number_format(($r['Amount'] - $r['Balance']), 2), ['style' => 'float:right;']);
     if (($r['Amount'] - $r['Balance']) != 0 && $r['Sold_To_Id'] != $subsidyId) {
-        $g['payments'] .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'vwpmt'.$r['idInvoice'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'vpmt', 'style'=>'cursor:pointer;', 'title'=>'View Payments'));
+        $g['payments'] .= HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'vwpmt' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'vpmt', 'style' => 'cursor:pointer;', 'title' => 'View Payments']);
     }
 
     $invoiceNumber = $r['Invoice_Number'];
     if ($invoiceNumber != '') {
 
-        $invAttr = array('href'=>'ShowInvoice.php?invnum='.$r['Invoice_Number'], 'style'=>'float:left;', 'target'=>'_blank');
+        $invAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank'];
 
         if ($r['Balance'] != 0 && $r['Balance'] != $r['Amount']) {
             $invoiceNumber .= HTMLContainer::generateMarkup('sup', '-p');
@@ -92,22 +89,22 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         }
 
         $invoiceNumber = HTMLContainer::generateMarkup('a', $invoiceNumber, $invAttr)
-            .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$r['idInvoice'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'view', 'style'=>'cursor:pointer;', 'title'=>'View Items'));
+            .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items']);
     }
 
-    $g['invoiceMkup'] = HTMLContainer::generateMarkup('span', $invoiceNumber, array("style"=>'white-space:nowrap;'));
+    $g['invoiceMkup'] = HTMLContainer::generateMarkup('span', $invoiceNumber, ["style" => 'white-space:nowrap;']);
 
     if ($r['Status'] == InvoiceStatus::Carried && $r['Deleted'] == 0) {
 
         $r['Balance'] = 0;
 
         $g['Status'] = HTMLContainer::generateMarkup('span',
-                HTMLContainer::generateMarkup('span', $statusTxt . ' by ' . HTMLContainer::generateMarkup('a', $r['Delegated_Invoice_Number'], array('href'=>'ShowInvoice.php?invnum='.$r['Delegated_Invoice_Number'], 'target'=>'_blank')), array('style'=>'float:left;'))
-                .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicond'.$r['Delegated_Invoice_Id'], 'data-iid'=>$r['Delegated_Invoice_Id'], 'data-stat'=>'view', 'style'=>'cursor:pointer;', 'title'=>'View Items'))
+                HTMLContainer::generateMarkup('span', $statusTxt . ' by ' . HTMLContainer::generateMarkup('a', $r['Delegated_Invoice_Number'], ['href' => 'ShowInvoice.php?invnum=' . $r['Delegated_Invoice_Number'], 'target' => '_blank']), array('style'=>'float:left;'))
+                .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicond' . $r['Delegated_Invoice_Id'], 'data-iid' => $r['Delegated_Invoice_Id'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items'])
                 , array("style"=>'white-space:nowrap;'));
     } else {
 
-        $g['Status']= HTMLContainer::generateMarkup('span', $statusTxt, array("style"=>'white-space:nowrap;'));
+        $g['Status']= HTMLContainer::generateMarkup('span', $statusTxt, ["style" => 'white-space:nowrap;']);
     }
 
     $dateDT = new DateTime($r['Invoice_Date']);
@@ -115,15 +112,15 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
 
     $billDateStr = ($r['BillDate'] == '' ? '' : date('M j, Y', strtotime($r['BillDate'])));
 
-    $g['billed'] = HTMLContainer::generateMarkup('span', $billDateStr, array('id'=>'trBillDate' . $r['Invoice_Number']))
-        . HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-calendar invSetBill', 'data-name'=>$g['Payor'], 'data-inb'=>$r['Invoice_Number'], 'style'=>'float:right;cursor:pointer;margin-left:5px;', 'title'=>'Set Billing Date'));
+    $g['billed'] = HTMLContainer::generateMarkup('span', $billDateStr, ['id' => 'trBillDate' . $r['Invoice_Number']])
+        . HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-calendar invSetBill', 'data-name' => $g['Payor'], 'data-inb' => $r['Invoice_Number'], 'style' => 'float:right;cursor:pointer;margin-left:5px;', 'title' => 'Set Billing Date']);
 
 
     $g['Amount'] = number_format($r['Amount'], 2);
 
     // Show Delete Icon?
     if (($r['Amount'] == 0 || $r['Item_Id'] == ItemId::Discount) && $r['Deleted'] != 1) {
-        $g['Amount'] .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$r['idInvoice'], 'data-inv'=>$r['Invoice_Number'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'del', 'style'=>'cursor:pointer;float:left;', 'title'=>'Delete This Invoice'));
+        $g['Amount'] .= HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-trash invAction', 'id' => 'invdel' . $r['idInvoice'], 'data-inv' => $r['Invoice_Number'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'del', 'style' => 'cursor:pointer;float:left;', 'title' => 'Delete This Invoice']);
     }
 
     $g['County'] = $r['County'];
@@ -131,7 +128,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     $g['Title'] = $r['Title'];
     $g['hospital'] = $hospital;
     $g['Balance'] = number_format($r['Balance'], 2);
-    $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], array('id'=>'divInvNotes' . $r['Invoice_Number'], 'style'=>'max-width:190px;'));
+    $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], ['id' => 'divInvNotes' . $r['Invoice_Number'], 'style' => 'max-width:190px;']);
 
 
     if ($isLocal) {
@@ -224,7 +221,7 @@ $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .
         " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
         " where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First, n.Company");
 
-$bagnts = array();
+$bagnts = [];
 
 while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -248,7 +245,7 @@ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms, DT Type
-$cFields[] = array('Inv #', 'invoiceMkup', 'checked', '', 'string', '20', array('style'=>'text-align:center;'));
+$cFields[] = ['Inv #', 'invoiceMkup', 'checked', '', 'string', '20', array('style' => 'text-align:center;')];
 $cFields[] = array("Date", 'date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
 $cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
@@ -285,13 +282,13 @@ foreach($cFields as $field){
 }
 
 $invNum = '';
-if (isset($_REQUEST['invNum'])) {
+if (filter_has_var(INPUT_POST, 'invNum')) {
 
-    $invNum = filter_var($_REQUEST['invNum'], FILTER_SANITIZE_NUMBER_INT);
+    $invNum = filter_var($_POST['invNum'], FILTER_SANITIZE_NUMBER_INT);
 }
 
 
-if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
+if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExcel') || $invNum != '') {
 
     $headerTable = new HTMLTable();
     $headerTable->addBodyTr(HTMLTable::makeTd('Report Generated: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y')));
@@ -436,45 +433,45 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
 
 
     $query = "SELECT
-`i`.`idInvoice`,
-`i`.`Delegated_Invoice_Id`,
-ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number,
-ifnull(di.Status, '') as Delegated_Invoice_Status,
-i.Deleted,
-`i`.`Invoice_Number`,
-`i`.`Amount`,
-`i`.`Carried_Amount`,
-`i`.`Balance`,
-`i`.`Order_Number`,
-`i`.`Sold_To_Id`,
-`i`.`Notes`,
-n.Name_Full as Sold_To_Name,
-n.Company,
-ifnull(np.Name_Full, '') as Patient_Name,
-ifnull(nap.County, '') as `County`,
-ifnull(nap.Postal_Code, '') as `Zip`,
-ifnull(re.Title, '') as `Title`,
-ifnull(hs.idHospital, 0) as `idHospital`,
-ifnull(hs.idAssociation, 0) as `idAssociation`,
-ifnull(hs.idPatient, 0) as `idPatient`,
-`i`.`idGroup`,
-`i`.`Invoice_Date`,
-i.BillStatus,
-i.BillDate,
-`i`.`Payment_Attempts`,
-`i`.`Status`,
-`i`.`Updated_By`,
-`i`.`Last_Updated`,
-ifnull(il.Item_Id, 0) as `Item_Id`
-FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
-    left join invoice_line il on il.Invoice_Id = i.idInvoice and il.Item_Id = 6
-    left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
-    left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    left join name np on hs.idPatient = np.idName
-    left join name_address nap on np.idName = nap.idName and nap.Purpose = np.Preferred_Mail_Address
-    left join resource re on v.idResource = re.idResource
-    left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
-where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
+    `i`.`idInvoice`,
+    `i`.`Delegated_Invoice_Id`,
+    ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number,
+    ifnull(di.Status, '') as Delegated_Invoice_Status,
+    i.Deleted,
+    `i`.`Invoice_Number`,
+    `i`.`Amount`,
+    `i`.`Carried_Amount`,
+    `i`.`Balance`,
+    `i`.`Order_Number`,
+    `i`.`Sold_To_Id`,
+    `i`.`Notes`,
+    n.Name_Full as Sold_To_Name,
+    n.Company,
+    ifnull(np.Name_Full, '') as Patient_Name,
+    ifnull(nap.County, '') as `County`,
+    ifnull(nap.Postal_Code, '') as `Zip`,
+    ifnull(re.Title, '') as `Title`,
+    ifnull(hs.idHospital, 0) as `idHospital`,
+    ifnull(hs.idAssociation, 0) as `idAssociation`,
+    ifnull(hs.idPatient, 0) as `idPatient`,
+    `i`.`idGroup`,
+    `i`.`Invoice_Date`,
+    i.BillStatus,
+    i.BillDate,
+    `i`.`Payment_Attempts`,
+    `i`.`Status`,
+    `i`.`Updated_By`,
+    `i`.`Last_Updated`,
+    ifnull(il.Item_Id, 0) as `Item_Id`
+    FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
+        left join invoice_line il on il.Invoice_Id = i.idInvoice and il.Item_Id = 6
+        left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
+        left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
+        left join name np on hs.idPatient = np.idName
+        left join name_address nap on np.idName = nap.idName and nap.Purpose = np.Preferred_Mail_Address
+        left join resource re on v.idResource = re.idResource
+        left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
+    where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     $tbl = null;
@@ -630,7 +627,7 @@ if ($useGlReport) {
 	$glMonth = date('m');
 
 	// Output report
-	if (isset($_POST['btnGlGo']) || isset($_POST['btnGlTx']) || isset($_POST['btnGlcsv'])) {
+	if (filter_has_var(INPUT_POST, 'btnGlGo') || filter_has_var(INPUT_POST, 'btnGlTx') || filter_has_var(INPUT_POST, 'btnGlcsv')) {
 
 		$tabReturn = 2;
 
@@ -668,7 +665,7 @@ if ($useGlReport) {
 
 			foreach ($glCodes->getLines() as $l) {
 
-				$glInvoices .= implode(',', $l) . "\r\n";
+				$glInvoices .= implode(',', $l['l']) . "\r\n";
 
 			}
 
@@ -776,7 +773,7 @@ if ($useGlReport) {
 
 			foreach ($glCodes->getLines() as $l) {
 
-				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
+				$tbl->addBodyTr(HTMLTable::makeTd($l['in'], array('style' => 'font-size:0.8em')) . HTMLTable::makeTd(implode(',', $l['l']), array('style'=>'font-size:0.8em')));
 
 			}
 
