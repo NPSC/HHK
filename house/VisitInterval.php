@@ -1485,8 +1485,8 @@ where
             }
         }
 
-        if ($totalGuestNights > 0 && $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
-            $avGuestFee = $totalCharged / $totalGuestNights;
+        if (($totalNights + $totalGuestNights) > 0 && $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
+            $avGuestFee = $totalCharged / ($totalNights + $totalGuestNights); // $totalGuestNights is actually total additional nights: total guest nights = $toalNights + $totalGuestNights
         }
 
 
