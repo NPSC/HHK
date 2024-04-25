@@ -129,6 +129,8 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     $g['County'] = $r['County'];
     $g['Zip'] = $r['Zip'];
     $g['Title'] = $r['Title'];
+    $g['Span_Start'] = $r['Span_Start'];
+    $g['Span_End'] = $r['Span_End'];
     $g['hospital'] = $hospital;
     $g['Balance'] = number_format($r['Balance'], 2);
     $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], array('id'=>'divInvNotes' . $r['Invoice_Number'], 'style'=>'max-width:190px;'));
@@ -254,6 +256,8 @@ $cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
 $cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
 $cFields[] = array("Billed", 'billed', 'checked', '', 'string', '20', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
+$cFields[] = array("Arrival", 'Span_Start', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Departure", 'Span_End', '', '', 'MM/DD/YYYY', '15', array(), 'date');
 
 if ((count($hospList)) > 1) {
     $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospital', 'checked', '', 'string', '20', array());
@@ -454,6 +458,8 @@ ifnull(np.Name_Full, '') as Patient_Name,
 ifnull(nap.County, '') as `County`,
 ifnull(nap.Postal_Code, '') as `Zip`,
 ifnull(re.Title, '') as `Title`,
+ifnull(v.Span_Start, '') as `Span_Start`,
+ifnull(v.Span_End, '') as `Span_End`,
 ifnull(hs.idHospital, 0) as `idHospital`,
 ifnull(hs.idAssociation, 0) as `idAssociation`,
 ifnull(hs.idPatient, 0) as `idPatient`,
@@ -1037,7 +1043,7 @@ $(document).ready(function() {
                                  'render': function ( data, type, row ) {return dateRender(data, type);}
                                 }
                              ],
-                            "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                            "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
                             "displayLength": 50,
                             "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
                             "order": [[ 1, 'asc' ]]
@@ -1067,7 +1073,7 @@ $(document).ready(function() {
                  ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+            "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
         });
 
         $('#printButton').button().click(function() {
