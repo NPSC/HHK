@@ -23,6 +23,7 @@ use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
+use HHK\TableLog\HouseLog;
 
 /**
  * InvoiceReport.php
@@ -608,6 +609,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     } else {
+        HouseLog::logDownload($dbh, 'Invoice Report', "Excel", "Invoice Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
         $writer->download();
     }
 

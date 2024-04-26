@@ -5,6 +5,7 @@ use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\TableLog\HouseLog;
 use Mpdf\Mpdf;
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -54,6 +55,8 @@ try {
         $stmtMarkup = $invoice->createPDFMarkup($dbh);
 
         if (isset($_POST['btnWord'])) {
+
+            HouseLog::logDownload($dbh, "Invoice", "Word", "Invoice $invNum Word Doc downloaded", $uS->username);
 
             $form = "<!DOCTYPE html>"
                     . "<html>"

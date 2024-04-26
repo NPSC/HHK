@@ -18,6 +18,7 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\ExcelHelper;
 use HHK\House\Report\ReportFieldSet;
 use HHK\SysConst\VisitStatus;
+use HHK\TableLog\HouseLog;
 
 
 /**
@@ -1609,6 +1610,7 @@ where
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
     } else {
+        HouseLog::logDownload($dbh, 'Visit Report', "Excel", "Visit Report for " . $start . " - " . $end . " downloaded", $uS->username);
         $writer->download();
 
     }

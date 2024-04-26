@@ -16,6 +16,7 @@ use HHK\SysConst\ItemPriceCode;
 use HHK\Payment\CreditToken;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
+use HHK\TableLog\HouseLog;
 
 /**
  * PaymentReport.php
@@ -440,6 +441,7 @@ where lp.idPayment > 0
                 . $headerTable->generateMarkup();
 
     } else {
+        HouseLog::logDownload($dbh, 'Payment Report', "Excel", "Payment Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
         $writer->download();
     }
 

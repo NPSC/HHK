@@ -1,8 +1,6 @@
 <?php
 use HHK\sec\WebInit;
 use HHK\sec\Session;
-use HHK\Config_Lite\Config_Lite;
-use HHK\AlertControl\AlertMessage;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLTable;
@@ -15,6 +13,7 @@ use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
+use HHK\TableLog\HouseLog;
 
 /**
  * ItemReport.php
@@ -574,6 +573,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags grou
         $headerTableMu = $headerTable->generateMarkup();
 
     } else {
+        HouseLog::logDownload($dbh, 'Item Report', "Excel", "Item Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
         $writer->download();
     }
 

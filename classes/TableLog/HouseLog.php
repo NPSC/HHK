@@ -132,6 +132,29 @@ class HouseLog extends AbstractTableLog {
     }
 
     /**
+     * Log Downloads
+     *
+     * @param \PDO $dbh
+     * @param string $type report, invoice, etc
+     * @param string $fileType Word, Excel, etc
+     * @param string $logText
+     * @param string $userName
+     * @return number
+     */
+    public static function logDownload(\PDO $dbh, string $type, string $fileType, string $logText, string $userName) {
+
+        $logRS = new House_LogRS();
+        $logRS->Log_Type->setNewVal('Download');
+        $logRS->Sub_Type->setNewVal($type);
+        $logRS->Log_Text->setNewVal($logText);
+        $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
+
+        return self::insertLog($dbh, $logRS);
+
+    }
+
+    /**
      * Log errors/exceptions
      *
      * @param \PDO $dbh

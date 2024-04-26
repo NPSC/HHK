@@ -11,6 +11,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Note\Note;
 use HHK\Note\LinkNote;
 use HHK\House\Registration;
+use HHK\TableLog\HouseLog;
 
 /**
  * ShowStatement.php
@@ -112,13 +113,13 @@ if (isset($_POST['hdnIdVisit'])) {
     $includeLogo = FALSE;
 }
 
-
+$statementTitle = "";
 if ($idRegistration > 0) {
     // Comprehensive Statement
 
     $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
     $stmtMarkup = Statement::createComprehensiveStatements($dbh, $idRegistration, $includeLogo);
-
+    $statementTitle = "Comprehensive Statement for PSG $idRegistration";
 
 } else if ($idVisit > 0) {
     // Visit Statement
@@ -137,6 +138,8 @@ if ($idRegistration > 0) {
         $stmtMarkup = $e->getMessage();
     }
 
+    $statementTitle = "Visit $idVisit";
+
 } else {
     $stmtMarkup = 'No Information.';
 }
@@ -145,6 +148,7 @@ $stmtMarkup = HTMLContainer::generateMarkup('div', $stmtMarkup, array('id'=>'div
 
 if (isset($_POST['btnWord'])) {
 
+    HouseLog::logDownload($dbh, "Statement", "Word", "Statement Word Doc for $statementTitle downloaded", $uS->username);
 
     $form = "<!DOCTYPE html>"
             . "<html>"

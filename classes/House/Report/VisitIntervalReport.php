@@ -24,7 +24,7 @@ use HHK\SysConst\VolMemberType;
  */
 
 /**
- * Description of ReservationReport
+ * Description of VisitIntervalReport
  *
  * @author Eric
  */
@@ -223,6 +223,8 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
      */
     function makeQuery() {
 
+        $uS = Session::getInstance();
+
         // Hospitals
         $whHosp = implode(",", $this->filter->getSelectedHosptials());
         $whAssoc = implode(",", $this->filter->getSelectedAssocs());
@@ -401,7 +403,7 @@ where
                 end)) >= DATE('" . $this->filter->getReportStart() . "')) "
             . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
 
-        return $query;
+        $this->query = $query;
     }
 
     /**
