@@ -190,7 +190,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
         if(isset($r["Distance (miles)"]) && $r["Distance (miles)"] > 0){
             $r["Distance (miles)"] = $distanceCalculator->meters2miles($r["Distance (miles)"]);
             $totalDistance += $r["Distance (miles)"];
-        }else{
+        }else if(isset($r["Distance (miles)"])){
             $r["Distance (miles)"] = '';
         }
 
