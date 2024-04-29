@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Exception\AuthException;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\WebPageCode;
 
@@ -39,9 +40,11 @@ class SecurityComponent {
     /**
      * Summary of is_Authorized
      * @param mixed $name
+     * @param bool $isLogin write log and throw exception if user flow is login
      * @return bool
+     * @throws AuthException
      */
-    public static function is_Authorized($name) {
+    public static function is_Authorized($name, $isLogin = false) {
 
         if (self::is_Admin()) {
             return TRUE;
@@ -69,12 +72,27 @@ class SecurityComponent {
 
         // check authorization codes.
         $isAuthorized = self::does_User_Code_Match($pageCode);
+        $isIpRestricted = self::does_User_Code_Match($pageCode, true);
 
         if($isAuthorized){
             return true;
+        }else if ($isIpRestricted){
+            $errorMsg = "Unauthorized for page:" . $name . " at this location";
+
+            if($isLogin){
+                $dbh = initPDO(true);
+                UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
+                throw new AuthException($errorMsg);
+            }
+            return false;
         }else{
-            $dbh = initPDO(true);
-            UserClass::insertUserLog($dbh, "Unauthorized for page: " . $name, ($uS->username != "" ? $uS->username : "<empty>"));
+            $errorMsg = "Unauthorized for page: " . $name;
+
+            if($isLogin){
+                $dbh = initPDO(true);
+                UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
+                throw new AuthException($errorMsg);
+            }
             return false;
         }
 
@@ -156,14 +174,20 @@ class SecurityComponent {
     }
 
     /**
-     * Summary of does_User_Code_Match
+     * Check if user is authorized for a set of page codes or if the user is IP Restricted
      * @param array $pageCodes
+     * @param bool $isIpRestricted causes function to return true if the user is IP restricted for the given page(s)
      * @return bool
      */
-    protected static function does_User_Code_Match(array $pageCodes) {
+    public static function does_User_Code_Match(array $pageCodes, bool $isIpRestricted = false) {
 
         $ssn = Session::getInstance();
-        $userCodes = $ssn->groupcodes;
+
+        if($isIpRestricted){
+            $userCodes = $ssn->groupcodesIpRestricted;
+        } else {
+            $userCodes = $ssn->groupcodes;
+        }
 
         foreach ($pageCodes as $pageCode) {
             // allow access to public pages.

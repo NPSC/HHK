@@ -213,7 +213,9 @@ class UserClass
 
         $this->setSession($dbh, $ssn, $r);
 
-        $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+        $userCodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+        $ssn->groupcodes = $userCodes["authorized"];
+        $ssn->groupcodesIpRestricted = $userCodes["ip_restricted"];
 
         $this->defaultPage = $r['Default_Page'];
 
@@ -999,14 +1001,17 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
     {
         $id = intval($idName, 10);
 
-        $grpArray = array();
+        $grpArray = array("authorized"=>array(), "ip_restricted"=>array());
         $query = "SELECT s.Group_Code, case when w.IP_Restricted = 1 then '1' else '0' end as `IP_Restricted` FROM id_securitygroup s join w_groups w on s.Group_Code = w.Group_Code WHERE s.idName = $id";
         $stmt = $dbh->query($query);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            if ($r["Group_Code"] != "" && ($r['IP_Restricted'] == "0" || self::checkPCAccess($dbh, $r["Group_Code"]))) {
-                $grpArray[$r["Group_Code"]] = $r["Group_Code"];
+            $pcAuthorized = self::checkPCAccess($dbh, $r["Group_Code"]);
+            if ($r["Group_Code"] != "" && ($r['IP_Restricted'] == "0" || $pcAuthorized)) {
+                $grpArray['authorized'][$r["Group_Code"]] = $r["Group_Code"];
+            }else if($r['IP_Restricted'] == "1" && $pcAuthorized == false){
+                $grpArray['ip_restricted'][$r["Group_Code"]] = $r["Group_Code"];
             }
         }
 

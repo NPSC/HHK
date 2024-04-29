@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Exception\AuthException;
 use OneLogin\Saml2\Auth;
 use OneLogin\Saml2\Error;
 use OneLogin\Saml2\IdPMetadataParser;
@@ -126,10 +127,14 @@ class SAML {
                     $pge = $u->getDefaultPage();
                 }
 
-                if (SecurityComponent::is_Authorized($pge)) {
-                    header('location:../' . (!empty($uS->webSite['Relative_Address']) ? $uS->webSite['Relative_Address'] : "").$pge);
-                } else {
-                    $error = "Unauthorized for page: " . $pge;
+                try {
+                    if (SecurityComponent::is_Authorized($pge, true)) {
+                        header('location:../' . (!empty($uS->webSite['Relative_Address']) ? $uS->webSite['Relative_Address'] : "") . $pge);
+                    } else {
+                        $error = "Unauthorized for page: " . $pge;
+                    }
+                }catch(AuthException $e){
+                    $error = $e->getMessage();
                 }
             }
         }
