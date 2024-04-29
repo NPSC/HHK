@@ -49,6 +49,7 @@
                     title: settings.visitorLabel,
                     searchable: true,
                     sortable: true,
+                    className: 'docGuest',
                     data: "Guest",
                     width: "150px"
                 },
@@ -98,11 +99,11 @@
     function createActions(docId, row) {
         
         var $ul, $li;
-        
+
         $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons hhk-flex');
         
         // Edit icon
-        $li = $('<li title="Edit Doc" data-docid="' + docId + '" data-docTitle="' + row.Title + '" />').addClass('hhk-doc-button doc-edit ui-corner-all ui-state-default');
+        $li = $('<li title="Edit Doc" data-docid="' + docId + '" data-docTitle="' + row.Title + '" data-docguest="' + row.Guest + '" />').addClass('hhk-doc-button doc-edit ui-corner-all ui-state-default');
         $li.append($('<span class="ui-icon ui-icon-pencil" />'));
         
         $ul.append($li);
@@ -154,11 +155,15 @@
         //Show Edit mode
         $wrapper.on('click', '.doc-edit', function(e){
             e.preventDefault();
-            $(this).closest('tr').find('.docTitle').html('<input type="text" style="width: 100%; height: ' + $(this).closest('tr').find('.docTitle').height() +'px;" id="editDocTitle" value="' + $(this).data('doctitle') + '">');
-            $(this).closest('tr').find('.docGuest').html('<input type="text" style="width: 100%; height: ' + $(this).closest('tr').find('.docGuest').height() + 'px;" id="editDocGuest" value="' + $(this).data('docguest') + '">');
+            var $row = $(this).closest('tr');
+            let rowdata = $table.row($row).data();
+            console.log(rowdata);
+            $row.find('.docTitle').html('<input type="text" size="' + rowdata.Title.length + '" id="editDocTitle" value="' + rowdata.Title + '" class="p-1">');
+            $row.find('.docGuest').html('<input type="text" size="' + rowdata.Guest.length + '" id="editDocGuest" value="' + rowdata.Guest + '" data-idguest="" class="p-1" readonly>');
             
             let selectGuest = function (item) {
-                console.log(item);
+                $row.find("#editDocGuest").attr("data-idguest", item.id).blur();
+
             }
 
             let inputParms = {
@@ -167,16 +172,14 @@
                 basis: "psg"
             };
 
-            /*
+            
             // change attached guest
-            createAutoComplete($(DocUppload.container).find("#docGuest"), 0, inputParms, selectGuest, false);
+            createAutoComplete($row.find('#editDocGuest'), 0, inputParms, selectGuest, false, null, null, true);
 
-            $(DocUppload.container).on("focus", "#docGuest", function () {
-                if ($(this).val() == "") {
-                    $(this).autocomplete("search", "");
-                }
+            $row.on("focus", "#editDocGuest", function () {
+                $(this).autocomplete("search", "");
             });
-*/
+
             $(this).closest('td').find('.doc-action').show();
             $(this).closest('td').find('.doc-delete').hide();
             $(this).hide();
@@ -187,25 +190,25 @@
         $wrapper.on('click', '.doc-done', function(e){
             e.preventDefault();
             var row = $(this).closest('tr');
+            var rowdata = $table.row(row).data();
             var docTitle = row.find('#editDocTitle').val();
-            var docId = $(this).closest('td').find('.doc-edit').data('docid');
+            var docGuestId = row.find('#editDocGuest').data('idguest');
+            var docId = rowdata.DocId;
 
-            if(docTitle != ""){
+            if(docTitle != "" || docGuestId != ""){
                 $.ajax({
                     url: settings.serviceURL,
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                            cmd: 'updatedoctitle',
-                            docId: docId,
-                            docTitle: docTitle
+                        cmd: 'updatedoc',
+                        docId: docId,
+                        docTitle: docTitle,
+                        docGuestId: docGuestId
                     },
                     success: function( data ){
                         if(data.idDoc > 0){
-                            //$table.ajax.reload();
-                            var rowdata = $table.row(row).data();
-                            rowdata["Title"] = docTitle;
-							$table.row(row).data(rowdata);
+                            $table.ajax.reload(null, false);
                         }else{
                             if(data.error){
                                 settings.alertMessage(data.error, 'error');
@@ -222,11 +225,7 @@
         //Cancel Doc
         $wrapper.on('click', '.doc-cancel', function(e){
             e.preventDefault();
-            var docTitle = $(this).closest('tr').find('#editDocTitle').val();
-            $(this).closest('tr').find('.docTitle').html(docTitle);
-            $(this).closest('td').find('.doc-action').hide();
-            $(this).closest('td').find('.doc-edit').show();
-            $(this).closest('td').find('.doc-delete').show();
+            $table.ajax.reload(null, false);
 
         });
         //End Cancel Doc
