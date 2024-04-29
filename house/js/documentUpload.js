@@ -103,7 +103,7 @@
         $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons hhk-flex');
         
         // Edit icon
-        $li = $('<li title="Edit Doc" data-docid="' + docId + '" data-docTitle="' + row.Title + '" data-docguest="' + row.Guest + '" />').addClass('hhk-doc-button doc-edit ui-corner-all ui-state-default');
+        $li = $('<li title="Edit Doc" />').addClass('hhk-doc-button doc-edit ui-corner-all ui-state-default');
         $li.append($('<span class="ui-icon ui-icon-pencil" />'));
         
         $ul.append($li);
@@ -115,7 +115,7 @@
         $ul.append($li);
         
         // Cancel Edit Icon
-        $li = $('<li title="Cancel" data-titletext="' + row.Title + '" />').addClass('hhk-doc-button doc-cancel doc-action ui-corner-all ui-state-default').hide();
+        $li = $('<li title="Cancel" />').addClass('hhk-doc-button doc-cancel doc-action ui-corner-all ui-state-default').hide();
         $li.append($('<span class="ui-icon ui-icon-cancel" />'));
         
         $ul.append($li);
@@ -157,7 +157,6 @@
             e.preventDefault();
             var $row = $(this).closest('tr');
             let rowdata = $table.row($row).data();
-            console.log(rowdata);
             $row.find('.docTitle').html('<input type="text" size="' + rowdata.Title.length + '" id="editDocTitle" value="' + rowdata.Title + '" class="p-1">');
             $row.find('.docGuest').html('<input type="text" size="' + rowdata.Guest.length + '" id="editDocGuest" value="' + rowdata.Guest + '" data-idguest="" class="p-1" readonly>');
             
