@@ -1111,3 +1111,11 @@ textarea.hhk-fluidheight {
 .brownBg {
 	background-color:#EFDBC2 !important;
 }
+
+#vDocs td{
+	box-sizing: inherit;
+}
+
+#vDocs td input{
+	min-width: 100%;
+}

@@ -512,14 +512,14 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
 -- -----------------------------------------------------
 
 CREATE or replace VIEW `v_docs`
-AS SELECT
+AS SELECT distinct
    `d`.`Timestamp` AS `Timestamp`,
    `d`.`Created_By` AS `Created_By`,
    `d`.`Title` AS `Title`,
    `d`.`idDocument` AS `Doc_Id`,
    `d`.`idDocument` AS `Action`,
    `d`.`idDocument` AS `ViewDoc`,
-   `n`.`Name_Full` AS `Guest`,
+   ifnull(`n`.`Name_Full`, '') AS `Guest`,
    `ld`.`idGuest` AS `Guest_Id`,
    `ld`.`idPSG` AS `PSG_Id`
 FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocument`))) left join `name` `n` on((`ld`.`idGuest` = `n`.`idName`))) where (`d`.`Status` not in ('d'));
