@@ -2233,6 +2233,7 @@ function resvManager(initData, options) {
 
             // Reservation docs.
             if (data.resv.rdiv.docViewer !== undefined) {
+                console.log(data);
                 $rDiv.append(setupDocs(data.idPsg, $(data.resv.rdiv.docViewer)));
             }
 
