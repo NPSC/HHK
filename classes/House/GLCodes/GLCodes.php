@@ -303,7 +303,7 @@ class GLCodes {
 			return;
 		}
 
-		$lodgingCharge = 0;
+		$lodgingCharge = 0.0;
 
 		foreach ($invLines as $l) {
 
@@ -313,10 +313,13 @@ class GLCodes {
 
 		}
 
+		// round the float
+		$lodgingCharge = round($lodgingCharge,2);
+
 		if ($rate != 0 && $lodgingCharge != 0) {
 
 
-		    if ($lodgingCharge > 0 && $p['pAmount'] >= $lodgingCharge) {
+		    if ($lodgingCharge > 0 && $p['pAmount'] > $lodgingCharge) {
 
 				// Reduce original payment line by the above amount.
 		        $p['pAmount'] -= $lodgingCharge;
@@ -434,6 +437,16 @@ class GLCodes {
     	$stmt = $dbh->query($query);
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$stmt->nextRowset();
+
+// Testing data
+// 		$rows = [
+// ['idInvoice'=>24704, 'Order_Number'=>20938, 'Suborder_Number'=>0, 'iAmount'=>649.92, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25697, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47507, 'il_Amount'=>577.07, 'il_Item_Id'=>1, 'il_Type_Id'=>1, 'idPayment'=>24500, 'pAmount'=>649.92, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>3614, 'pTimestamp'=>'4/15/2024 15:01', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-1007582-500014-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24704, 'Order_Number'=>20938, 'Suborder_Number'=>0, 'iAmount'=>649.92, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25697, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47508, 'il_Amount'=>28.85, 'il_Item_Id'=>12, 'il_Type_Id'=>2, 'idPayment'=>24500, 'pAmount'=>649.92, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>3614, 'pTimestamp'=>'4/15/2024 15:01', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-0000000-210115-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24704, 'Order_Number'=>20938, 'Suborder_Number'=>0, 'iAmount'=>649.92, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25697, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47509, 'il_Amount'=>44, 'il_Item_Id'=>13, 'il_Type_Id'=>2, 'idPayment'=>24500, 'pAmount'=>649.92, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>3614, 'pTimestamp'=>'4/15/2024 15:01', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-0000000-210100-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24865, 'Order_Number'=>21106, 'Suborder_Number'=>0, 'iAmount'=>99.99, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25858, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47954, 'il_Amount'=>88.78, 'il_Item_Id'=>1, 'il_Type_Id'=>1, 'idPayment'=>24456, 'pAmount'=>99.99, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>5123, 'pTimestamp'=>'4/9/2024 11:18', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-1007582-500014-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24865, 'Order_Number'=>21106, 'Suborder_Number'=>0, 'iAmount'=>99.99, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25858, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47955, 'il_Amount'=>4.44, 'il_Item_Id'=>12, 'il_Type_Id'=>2, 'idPayment'=>24456, 'pAmount'=>99.99, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>5123, 'pTimestamp'=>'4/9/2024 11:18', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-0000000-210115-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24865, 'Order_Number'=>21106, 'Suborder_Number'=>0, 'iAmount'=>99.99, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25858, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47956, 'il_Amount'=>6.77, 'il_Item_Id'=>13, 'il_Type_Id'=>2, 'idPayment'=>24456, 'pAmount'=>99.99, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>5123, 'pTimestamp'=>'4/9/2024 11:18', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-0000000-210100-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000']
+// 		];
 
     	foreach ($rows as $p) {
 
