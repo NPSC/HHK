@@ -3,6 +3,7 @@
 namespace HHK\House\Visit;
 
 use HHK\House\OperatingHours;
+use HHK\Purchase\PriceModel\PriceGuestDay;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
@@ -1012,10 +1013,36 @@ class VisitViewer {
             );
         }
 
+        // Partial guest payments
+        $dbh = initPDO(true);
+        $stmt = $dbh->prepare("SELECT ifnull(sum(`Amount` - `Balance`), 0) FROM `invoice`
+	        where `Deleted` = 0 and `Status` = 'up'
+            and `Amount` - `Balance` > 0
+            and `Order_Number` = :idvisit
+            and `Suborder_Number` = :span;");
+
+        $stmt->execute([':idvisit'=> $curAccount->getIdVisit(), ':span'=>$curAccount->getSpan()]);
+        $row = $stmt->fetchAll(\PDO::FETCH_NUM);
+        $partialPaymentAmt = (float) $row[0][0];
+
+        if ($partialPaymentAmt < 0) {
+            $partialPaymentAmt = 0.0;
+        }
+
+
+        // Partial payments to date
+        if ($partialPaymentAmt > 0) {
+
+            $tbl2->addBodyTr(
+                HTMLTable::makeTd('Partial Payments:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd('$' . number_format($partialPaymentAmt, 2), array('style' => 'text-align:right;'))
+            );
+        }
+
         // Total Paid to date
         $tbl2->addBodyTr(
                 HTMLTable::makeTd('Amount paid to-date:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($curAccount->getTotalPaid(), 2), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getTotalPaid() + $partialPaymentAmt, 2), array('style'=>'text-align:right;'))
         );
 
         // unpaid invoices
@@ -1031,8 +1058,9 @@ class VisitViewer {
         // Special class for current balance.
         $balAttr = array();
         $feesTitle = "";
+        $dueToday = $curAccount->getDueToday() - $partialPaymentAmt;
 
-        if ($curAccount->getDueToday() > 0) {
+        if ($dueToday > 0) {
 
             $balAttr['class'] = 'ui-state-highlight';
             $balAttr['title'] = 'Payment due today.';
@@ -1043,7 +1071,7 @@ class VisitViewer {
                 $feesTitle = 'House is owed as of today:';
             }
 
-        } else if ($curAccount->getDueToday() == 0) {
+        } else if ($dueToday == 0) {
 
             $balAttr['title'] = 'No payments are due today.';
             $feesTitle = 'Balance as of today:';
@@ -1061,7 +1089,7 @@ class VisitViewer {
 
         $tbl2->addBodyTr(
                 HTMLTable::makeTd($feesTitle, array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', number_format(abs($curAccount->getDueToday()), 2)
+                . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', number_format(abs($dueToday), 2)
                         , array(
                             'id'=>'spnCfBalDue',
                         	'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2, '.', ''),
@@ -1073,8 +1101,8 @@ class VisitViewer {
         );
 
         // TODO
-        // Total Due at end of visit -- but not for Gorecki House or Maynard
-        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn && ! stristr(strtolower($uS->siteName), 'gorecki') && ! stristr(strtolower($uS->siteName), 'maynard')) {
+        // Total Due at end of visit -- but not for Gorecki House or PriceGuestDaily
+        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn && ! stristr(strtolower($uS->siteName), 'gorecki') && ! $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
 
             $feesToCharge = round($curAccount->getRoomFeesToCharge());
 
@@ -1082,7 +1110,7 @@ class VisitViewer {
                 $feesToCharge += $totalTaxAmt;
             }
 
-            $finalCharge = $curAccount->getTotalCharged() + $feesToCharge - $curAccount->getTotalPaid() - $curAccount->getAmtPending();
+            $finalCharge = $curAccount->getTotalCharged() + $feesToCharge - $curAccount->getTotalPaid() - $curAccount->getAmtPending() - $partialPaymentAmt;
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Exp\'d payment at checkout:', array('class'=>'tdlabel'))

@@ -132,7 +132,7 @@ class CurrentAccount {
 
     // Pending amounts
     /**
-     * Summary of amtPending
+     * Third party pending (up) amounts only
      * @var float
      */
     protected $amtPending = 0;
@@ -142,6 +142,9 @@ class CurrentAccount {
      */
     protected $dueToday = 0;
 
+    protected $idVisit;
+    protected $visitSpan;
+
     /**
      * Summary of __construct
      * @param string $visitStatus
@@ -150,7 +153,6 @@ class CurrentAccount {
      * @param bool $showGuestNights
      */
     public function __construct($visitStatus, $showVisitFee = FALSE, $showRoomFees = FALSE, $showGuestNights = FALSE) {
-
 
         $this->visitStatus = $visitStatus;
         $this->showRoomFees = $showRoomFees === FALSE ? FALSE : TRUE;
@@ -167,6 +169,9 @@ class CurrentAccount {
      * @return void
      */
     public function load(VisitCharges $visitCharge, ValueAddedTax $vat) {
+
+        $this->idVisit = $visitCharge->getIdVisit();
+        $this->visitSpan = $visitCharge->getSpan();
 
         $this->numberNitesStayed = $visitCharge->getNightsStayed();
 
@@ -672,5 +677,19 @@ class CurrentAccount {
         return $this;
     }
 
+	/**
+	 * @return int
+	 */
+	public function getIdVisit() {
+		return $this->idVisit;
+	}
+
+
+	/**
+	 * @return int
+	 */
+	public function getSpan() {
+		return $this->visitSpan;
+	}
 
 }
