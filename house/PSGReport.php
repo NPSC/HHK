@@ -63,7 +63,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $totalDistance = 0;
 
     if($showUnique){
-        $spanDates = ""; //" MIN(s.Span_Start_Date) as `First Arrival`, CASE WHEN count(s.Span_End_Date)=sum(1) then max(s.Span_End_Date) else null end as `Last Departure`, ";
+        $spanDates = " ifnull(max(s.Span_End_Date), '') as `Last Departure`, ";
         $docSql = " group_concat(DISTINCT n.Name_Full SEPARATOR ', ') as `Doctor`, ";
         $hospAssocSql = "group_concat(DISTINCT h.Title SEPARATOR ', ') as `Hospital`, group_concat(DISTINCT a.Title SEPARATOR ', ') as `Association`, ";
         $agentSql = "group_concat(DISTINCT nr.Name_Full SEPARATOR', ') as `$agentTitle` ";
@@ -83,7 +83,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     if ($showAddr && $showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, " . ($showUnique ? "" : "v.idReservation as `Resv ID`, ")
-            . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
+            . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', ifnull(vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
                 . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, vn.Phone, vn.Email, "
                     . ($showUnique ? "" : $queryStatus  . "r.title as `Room`,")
@@ -96,7 +96,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     } else if ($showAddr && !$showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code,
-            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, `nd`.`No_Return`, "
+            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, `nd`.`No_Return`, "
             . ($showUnique ? "" : $queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . $hospAssocSql
@@ -105,7 +105,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else if (!$showAddr && $showFullName) {
 
-        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `$guestFirst`, vn.Middle, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `$guestFirst`, vn.Middle, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . ($showUnique ? "" :$queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
@@ -113,7 +113,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else {
 
-        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . ($showUnique ? "" : $queryStatus . "r.title as `Room`, ") . $spanDates
                 . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
                 . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
@@ -311,6 +311,9 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
 
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
                 $r['Birth Date'] = date('n/d/Y', strtotime($r['Birth Date']));
+            }
+            if (isset($r['Deceased Date']) && $r['Deceased Date'] != '' && $r['Deceased Date'] != "Deceased") {
+                $r['Deceased Date'] = date('n/d/Y', strtotime($r['Deceased Date']));
             }
             if (isset($r['Arrival']) && $r['Arrival'] != '') {
                 $r['Arrival'] = date('n/d/Y', strtotime($r['Arrival']));

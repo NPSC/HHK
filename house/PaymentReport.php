@@ -290,12 +290,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 					$whType .= ",'".$s . "'";
 				}
 
-					if ($payTypeText == '') {
-						$payTypeText .= (isset($payTypes[$s][1]) ? $payTypes[$s][1] : '');
-					} else {
+				if ($payTypeText == '') {
+					$payTypeText .= (isset($payTypes[$s][1]) ? $payTypes[$s][1] : '');
+				} else {
 
-						$payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
-					}
+					$payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
 				}
 			}
 
