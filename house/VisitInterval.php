@@ -18,6 +18,7 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\ExcelHelper;
 use HHK\House\Report\ReportFieldSet;
 use HHK\SysConst\VisitStatus;
+use HHK\TableLog\HouseLog;
 
 
 /**
@@ -177,7 +178,8 @@ order by r.idResource;";
     $rooms = array();
 
     $roomReport = new RoomReport();
-    $roomReport->collectUtilizationData($dbh, $start, $end);
+    $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+    $roomReport->collectUtilizationData($dbh, $start, $end, $rescStatuses);
     $daysAr = $roomReport->getDays();
 
     // transform room report data for visit report
@@ -1485,8 +1487,8 @@ where
             }
         }
 
-        if ($totalGuestNights > 0 && $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
-            $avGuestFee = $totalCharged / $totalGuestNights;
+        if (($totalNights + $totalGuestNights) > 0 && $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
+            $avGuestFee = $totalCharged / ($totalNights + $totalGuestNights); // $totalGuestNights is actually total additional nights: total guest nights = $toalNights + $totalGuestNights
         }
 
 
@@ -1609,6 +1611,7 @@ where
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
     } else {
+        HouseLog::logDownload($dbh, 'Visit Report', "Excel", "Visit Report for " . $start . " - " . $end . " downloaded", $uS->username);
         $writer->download();
 
     }
@@ -1667,7 +1670,7 @@ if ($taxItems[0][0] > 0) {
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
-$filter->createResourceGroups($rescGroups, $uS->CalResourceGroupBy);
+$filter->createResourceGroups($dbh);
 
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms

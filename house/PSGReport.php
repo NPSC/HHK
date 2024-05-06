@@ -12,6 +12,7 @@ use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
 use HHK\House\Distance\DistanceFactory;
+use HHK\TableLog\HouseLog;
 
 /**
  * PSG_Report.php
@@ -189,7 +190,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
         if(isset($r["Distance (miles)"]) && $r["Distance (miles)"] > 0){
             $r["Distance (miles)"] = $distanceCalculator->meters2miles($r["Distance (miles)"]);
             $totalDistance += $r["Distance (miles)"];
-        }else{
+        }else if(isset($r["Distance (miles)"])){
             $r["Distance (miles)"] = '';
         }
 
@@ -387,6 +388,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
 
 
     } else {
+        HouseLog::logDownload($dbh, 'People Report', "Excel", "People Report for " . $start . " - " . $end . " downloaded", $uS->username);
         $writer->download();
     }
 }
@@ -605,18 +607,17 @@ order by ng.idPsg, `ispat`, `Id`";
 	     }
  	}
 
- if ($local) {
+    if ($local) {
 
-     $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblroom', $separatorClassIndicator);
+        $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblroom', $separatorClassIndicator);
 
-     return array('table'=>$dataTable, 'rows'=>$rowCount, 'psgs'=>$numberPSGs);
+        return array('table'=>$dataTable, 'rows'=>$rowCount, 'psgs'=>$numberPSGs);
 
-
- } else {
-
-     $writer->download();
-
- }
+    } else {
+        $uS = Session::getInstance();
+        HouseLog::logDownload($dbh, 'PSG Report', "Excel", "PSG Report for " . $start . " - " . $end . " downloaded", $uS->username);
+        $writer->download();
+    }
 
 }
 
@@ -675,7 +676,8 @@ function getNoReturn(\PDO $dbh, $local){
 
             $writer->writeSheetRow("Sheet1", $row);
         }
-
+        $uS = Session::getInstance();
+        HouseLog::logDownload($dbh, 'No-Return Guest Report', "Excel", "No-Return Guest Report downloaded", $uS->username);
         $writer->download();
 
     }
@@ -785,6 +787,8 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 			$writer->writeSheetRow("Sheet1", $row);
 		}
 
+        $uS = Session::getInstance();
+        HouseLog::logDownload($dbh, 'Incidents Report', "Excel", "Incidents Report downloaded", $uS->username);
 		$writer->download();
 	}
 

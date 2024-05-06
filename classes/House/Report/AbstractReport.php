@@ -10,6 +10,7 @@ use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\TableLog\HouseLog;
 
 /**
  * AbtractReport.php
@@ -356,6 +357,8 @@ abstract class AbstractReport {
             $row = $writer->convertStrings($hdr, $flds);
             $writer->writeSheetRow("Sheet1", $row);
         }
+
+        HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);
 
         $writer->download();
     }

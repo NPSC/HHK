@@ -725,7 +725,9 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
      */
     public function rescUtilization(\PDO $dbh, $startDate, $endDate) {
 
-        $this->collectUtilizationData($dbh, $startDate, $endDate);
+        $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+        
+        $this->collectUtilizationData($dbh, $startDate, $endDate, $rescStatuses);
 
         // Rooms report
         $tbl = new HTMLTable();
@@ -778,8 +780,14 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
 
             $tds .= HTMLTable::makeTd($this->rescs[$idRm]['Title']);
 
-            foreach ($daysOccupied as $d) {
-                $tds .= HTMLTable::makeTd($d, array('style'=>'text-align:right;'));
+            foreach ($daysOccupied as $k=>$d) {
+                if ((isset($rescStatuses[ResourceStatus::OutOfService]) && $k == "o") ||
+                    (isset($rescStatuses[ResourceStatus::Delayed]) && $k == "t") ||
+                    (isset($rescStatuses[ResourceStatus::Unavailable]) && $k == "u") ||
+                    $k == "n" || $k == "c")
+                {
+                    $tds .= HTMLTable::makeTd($d, array('style'=>'text-align:right;'));
+                }
             }
 
             $tbl->addBodyTr($tds);
@@ -814,7 +822,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         return $tbl->generateMarkup();
     }
 
-    public function collectUtilizationData(\PDO $dbh, $startDate, $endDate) {
+    public function collectUtilizationData(\PDO $dbh, $startDate, $endDate, array $rescStatuses) {
 
         if ($startDate == '') {
             return '';
@@ -865,7 +873,17 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         }
         unset($stRows);
 
-        $this->summary = array('nits'=>'Nights', 'oos'=>'OOS', 'to'=>'Delayed', 'un'=>'Unavailable', 'c'=>'Closed');
+        $this->summary = array('nits'=>'Nights');
+        if(isset($rescStatuses[ResourceStatus::OutOfService])){
+            $this->summary['oos'] = "OOS";
+        }
+        if (isset($rescStatuses[ResourceStatus::Delayed])) {
+            $this->summary['to'] = 'Delayed';
+        }
+        if (isset($rescStatuses[ResourceStatus::Unavailable])) {
+            $this->summary['un'] = 'Unavailable';
+        }
+        $this->summary['c'] = 'Closed';
 
 
         $this->days = array();
@@ -916,12 +934,12 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
 
         }
 
-        $this->th .= HTMLTable::makeTh('Room');
-        $this->th .= HTMLTable::makeTh('Nights');
-        $this->th .= HTMLTable::makeTh('OOS');
-        $this->th .= HTMLTable::makeTh('Delayed');
-        $this->th .= HTMLTable::makeTh('Unavailable');
-        $this->th .= HTMLTable::makeTh('Closed');
+        $this->th .= HTMLTable::makeTh('Room') .
+        HTMLTable::makeTh('Nights') . 
+        (isset($rescStatuses[ResourceStatus::OutOfService]) ? HTMLTable::makeTh('OOS') :'') . 
+        (isset($rescStatuses[ResourceStatus::Delayed]) ? HTMLTable::makeTh('Delayed') :'') . 
+        (isset($rescStatuses[ResourceStatus::Unavailable]) ? HTMLTable::makeTh('Unavailable') :'') . 
+        HTMLTable::makeTh('Closed');
 
 
         // Collect visit records

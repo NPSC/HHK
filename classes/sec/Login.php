@@ -3,6 +3,7 @@ namespace HHK\sec;
 
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Exception\AuthException;
 use HHK\Exception\CsrfException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
@@ -185,11 +186,14 @@ class Login {
                     $pge = $u->getDefaultPage();
                 }
 
-                if (SecurityComponent::is_Authorized($pge)) {
-                    $events['page'] = $pge;
-                } else {
-
-                    $this->validateMsg .= "Unauthorized for page: " . $pge;
+                try {
+                    if (SecurityComponent::is_Authorized($pge, true)) {
+                        $events['page'] = $pge;
+                    } else {
+                        $this->validateMsg .= "Unauthorized for page: " . $pge;
+                    }
+                }catch(AuthException $e){
+                    $this->validateMsg .= $e->getMessage();
                 }
             }
 

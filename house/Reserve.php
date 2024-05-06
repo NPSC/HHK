@@ -14,6 +14,7 @@ use HHK\Payment\PaymentSvcs;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
 use HHK\SysConst\RoomRateCategories;
+use HHK\TableLog\HouseLog;
 
 /**
  * Reserve.php
@@ -104,6 +105,8 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
 
     try {
         $confirmForm = new ConfirmationForm($dbh, $docId);
+
+        HouseLog::logDownload($dbh, "Confirmation Form", "Word", "Confirmation Form Word Doc for reservation $idReserv downloaded", $uS->username);
 
         $formNotes = $confirmForm->createNotes($notes, FALSE, '');
         $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($dbh, $resv, $guest, $amt, $formNotes));

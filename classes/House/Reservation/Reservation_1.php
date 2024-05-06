@@ -2230,4 +2230,3 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
     }
 
 }
-?>

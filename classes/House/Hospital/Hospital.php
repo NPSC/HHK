@@ -686,5 +686,42 @@ $(document).ready(function () {
         return $hstay->save($dbh, $psg, $hstay->getAgentId(), $uS->username, $idResv);
 
     }
+
+    /**
+     * Check if a given hospital/association is attached to reservations or visits
+     * @param \PDO $dbh
+     * @param int $idHosp
+     * @return bool
+     */
+    public static function isHospitalInUse(\PDO $dbh, int $idHosp){
+        $totalRecords = 0;
+
+        $resvQuery = "select count(hs.idHospital_stay) from hospital_stay hs
+        join reservation r on hs.idHospital_stay = r.idHospital_Stay where hs.idHospital = :idH or hs.idAssociation = :idA;";
+
+        $visitQuery = "select count(hs.idHospital_stay) from hospital_stay hs
+        join visit v on hs.idHospital_stay = v.idHospital_Stay where hs.idHospital = :idH or hs.idAssociation = :idA;";
+
+        $resvStmt = $dbh->prepare($resvQuery);
+        $resvStmt->execute([":idH" => $idHosp, ":idA"=>$idHosp]);
+        $resvRows = $resvStmt->fetchAll(\PDO::FETCH_NUM);
+        if(isset($resvRows[0][0])){
+            $totalRecords += $resvRows[0][0];
+        }else{
+            //something's wrong, abort
+            return true;
+        }
+
+        $visitStmt = $dbh->prepare($visitQuery);
+        $visitStmt->execute([":idH" => $idHosp, ":idA"=>$idHosp]);
+        $visitRows = $visitStmt->fetchAll(\PDO::FETCH_NUM);
+        if(isset($visitRows[0][0])){
+            $totalRecords += $visitRows[0][0];
+        }else{
+            //something's wrong, abort
+            return true;
+        }
+
+        return ($totalRecords > 0);
+    }
 }
-?>

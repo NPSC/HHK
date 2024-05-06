@@ -5,10 +5,11 @@ use HHK\Document\FormTemplate;
 use HHK\House\Attribute\Attributes;
 use HHK\House\Constraint\Constraints;
 use HHK\House\Constraint\ConstraintsHospital;
+use HHK\House\Hospital\Hospital;
 use HHK\House\Insurance\Insurance;
 use HHK\House\Insurance\InsuranceType;
 use HHK\House\RegistrationForm\CustomRegisterForm;
-use HHK\House\Report\ResourceBldr;
+use HHK\House\ResourceBldr;
 use HHK\House\ResourceView;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Purchase\FinAssistance;
@@ -96,23 +97,23 @@ $labels = Labels::getLabels();
 // Add diags and locations buttons
 if (isset($_POST['btnAddDiags'])) {
     $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Diagnosis', 'q9', 'New Entry', 'h', 10 )");
-    $tabIndex = 5;
+    $tabIndex = 6;
 }
 
 if (isset($_POST['btnAddLocs'])) {
     $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Location', 'q9', 'New Entry', 'h', 10 )");
-    $tabIndex = 5;
+    $tabIndex = 6;
 }
 
 // Add House Discounts and additional charges.
 if (isset($_POST['btnHouseDiscs'])) {
     $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('House_Discount', 'q9', 'New Entry', 'ca', 10 )");
-    $tabIndex = 5;
+    $tabIndex = 6;
 }
 
 if (isset($_POST['btnAddnlCharge'])) {
     $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Addnl_Charge', 'q9', 'New Entry', 'ca', 10 )");
-    $tabIndex = 5;
+    $tabIndex = 6;
 }
 
 // Lookups
@@ -511,9 +512,14 @@ if (isset($_POST['btnhSave'])) {
         // Delete?
         if (isset($_POST['hdel'][$idHosp])) {
 
-            // Change status to "Retired"
-            $hospRs->Status->setNewVal('r');
-            EditRS::update($dbh, $hospRs, [$hospRs->idHospital]);
+            //is hospital in use?
+            if (Hospital::isHospitalInUse($dbh, $idHosp)) {
+                // Change status to "Retired"
+                $hospRs->Status->setNewVal('r');
+                EditRS::update($dbh, $hospRs, [$hospRs->idHospital]);
+            }else{
+                EditRS::delete($dbh, $hospRs, [$hospRs->idHospital]);
+            }
 
             // Delete any attribute entries
             $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
@@ -622,7 +628,7 @@ if (isset($_POST['btnhSave'])) {
 
 if (isset($_POST['btnAttrSave'])) {
 
-    $tabIndex = 10;
+    $tabIndex = 11;
     $postedAttr = [];
     if (isset($_POST['atTitle'])) {
         $postedAttr = filter_var_array($_POST['atTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -706,7 +712,7 @@ if (isset($_POST['btnAttrSave'])) {
 
 if (isset($_POST['btnItemSave'])) {
 
-    $tabIndex = 6;
+    $tabIndex = 7;
 
     // item-item table
     $iistmt = $dbh->query("Select * from item_item");
@@ -761,7 +767,7 @@ if (isset($_POST['btnItemSave'])) {
 }
 
 if (isset($_POST['btnTaxSave'])) {
-    $tabIndex = 7;
+    $tabIndex = 8;
 
     $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
         from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax);
@@ -1562,7 +1568,7 @@ if ($uS->IncomeRated) {
 
         $tr .= HTMLTable::makeTd($symb . HTMLInput::generateMarkup(
             $rbRs->Breakpoint->getStoredVal() == 0 ? '' : number_format($rbRs->Breakpoint->getStoredVal()),
-                ['name' => 'rateBp' . $rbRs->Rate_Category->getStoredVal() . '[]', 'size' => '6', 'style' => $bpStyle, $attr => '']
+                ['name' => 'rateBp' . $rbRs->Rate_Category->getStoredVal() . '[]', 'size' => '6', 'style' => $bpStyle, $attr => '', 'id' => false]
         )
         );
 
@@ -1686,7 +1692,8 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
         $ptAttrs = [
             'type' => 'radio',
-            'name' => 'ptrbdefault'
+            'name' => 'ptrbdefault',
+            'id' => false
         ];
 
         if ($uS->DefaultPayType == $r[0]) {
@@ -1932,14 +1939,9 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
 );
 
 // Checklists Manager
-// TODO
-if ($uS->mode != Mode::Live) {
-
-    $cblistSelections = Checklist::createChecklistCategories($dbh, $labels);
-    $selChecklistItems = Checklist::createChecklistTypes($dbh);
-}else{
-    $cblistSelections = "";
-    $selChecklistItems = "";
+$checklistSectionMkup = "";
+if ($uS->useChecklists) {
+    $checklistSectionMkup = HTMLContainer::generateMarkup("div", Checklist::createEditMarkup($dbh), ['id'=>'checklistSection', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-flex flex-wrap mb-3']);
 }
 
 $insuranceType = new InsuranceType();
@@ -2280,39 +2282,42 @@ $formBuilderOptions = [
     <script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
     <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 </head>
-
 <body <?php if ($wInit->testVersion) {
     echo "class='testbody'";
 } ?>>
     <?php echo $wInit->generatePageMenu(); ?>
     <div id="contentDiv">
-        <div class="my-1 d-flex align-items-center" id="rescBuilderTitle">
+        <div class="my-1 d-flex hhk-flex-wrap align-items-center" id="rescBuilderTitle">
 			<h1 class="mr-3"><?php echo $wInit->pageHeading; ?></h1>
             <span class="p-1 ui-corner-all ui-state-highlight">Changes won't take effect until the next login</span>
         </div>
 
-        <div id="mainTabs" style="font-size: .9em; display: none;">
-            <ul>
-                <li><a href="#rescTable">Resources</a></li>
-                <li><a href="#roomTable">Rooms</a></li>
-                <li><a href="#rateTable">
-                        <?php echo $rateTableTabTitle; ?>
-                    </a></li>
-                <li><a href="#hospTable">
-                        <?php echo $hospitalTabTitle; ?>
-                    </a></li>
-                <?php if ($uS->InsuranceChooser) { ?>
-                    <li><a href="#insTable">Insurance</a></li>
-                <?php } ?>
-                <li><a href="#demoTable">Demographics</a></li>
-                <li><a href="#lkTable">Lookups</a></li>
-                <li><a href="#itemTable">Items</a></li>
-                <li><a href="#taxTable">Taxes</a></li>
-                <li><a href="#formUpload">Forms Upload</a></li>
-                <li><a href="#formBuilder">Form Builder</a></li>
-                <li><a href="#attrTable">Attributes</a></li>
-                <li><a href="#constr">Constraints</a></li>
-            </ul>
+        <div id="mainTabs" style="display: none;" class="hhk-mobile-tabs">
+            <div class="hhk-flex ui-widget-header ui-corner-all">
+            	<div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
+                <ul class="hhk-flex" style="border:none;">
+                    <li><a href="#rescTable">Resources</a></li>
+                    <li><a href="#roomTable">Rooms</a></li>
+                    <li><a href="#rateTable">
+                            <?php echo $rateTableTabTitle; ?>
+                        </a></li>
+                    <li><a href="#hospTable">
+                            <?php echo $hospitalTabTitle; ?>
+                        </a></li>
+                    <?php if ($uS->InsuranceChooser) { ?>
+                        <li><a href="#insTable">Insurance</a></li>
+                    <?php } ?>
+                    <li><a href="#demoTable">Demographics</a></li>
+                    <li><a href="#lkTable">Lookups</a></li>
+                    <li><a href="#itemTable">Items</a></li>
+                    <li><a href="#taxTable">Taxes</a></li>
+                    <li><a href="#formUpload">Forms Upload</a></li>
+                    <li><a href="#formBuilder">Form Builder</a></li>
+                    <li><a href="#attrTable">Attributes</a></li>
+                    <li><a href="#constr">Constraints</a></li>
+                </ul>
+                <div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
+            </div>
             <div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                 <form autocomplete="off">
                     <?php echo $rescTable; ?>
@@ -2335,7 +2340,7 @@ $formBuilderOptions = [
 
                     <div style="float: left; margin-left: 30px;">
                         <h3>Insurance Companies</h3>
-                        <form id="formdemoCat">
+                        <form id="formInsuranceCat">
                             <table>
                                 <tr>
                                     <th>Insurance</th>
@@ -2344,7 +2349,7 @@ $formBuilderOptions = [
                                     </td>
                                 </tr>
                             </table>
-                            <div id="divdemoCat"></div>
+                            <div class="lookupDetailTbl"></div>
                         </form>
                     </div>
                 </div>
@@ -2353,64 +2358,41 @@ $formBuilderOptions = [
                 <div>
                     <?php echo $demoMessage; ?>
                 </div>
-                <div> <!-- style="border:1px inset #9B9B9E; float: left; padding:9px; margin-right: 9px;" -->
-                <div style="float: left;">
-                    <h3>Demographic Categories</h3>
-                    <form id="formdemo">
-                        <div>
-                            <?php echo $demoSelections; ?>
-                        </div>
-                        <span style="margin: 10px; float: right;"><input type="button" id='btndemoSave'
-                                class="hhk-savedemoCat" data-type="h" value="Save" /></span>
-                    </form>
-                </div>
 
-                <div style="float: left; margin-left: 30px;">
-                    <h3>Demographics</h3>
-                    <form id="formdemoCat">
-                        <table>
-                            <tr>
-                                <th>Demographic</th>
-                                <td>
-                                    <?php echo $selDemos; ?>
-                                </td>
-                            </tr>
-                        </table>
-                        <div id="divdemoCat"></div>
-                        <span style="margin: 10px; float: right;"><input type="button" id='btndemoSaveCat'
-                                class="hhk-saveLookup" data-type="d" value="Save" /></span>
-                    </form>
-                </div>
-            </div>
-<!--             <div style="border:1px inset #9B9B9E; float: left; padding:9px;">
-                <div style="float: left; margin-left: 30px;">
-                    <h3>Checklist Categories </h3>
-                    <form id="formcblist">
-                        <div>
-                            <?php echo $cblistSelections; ?>
+                <div class="hhk-flex hhk-flex-wrap">
+                    <div id="demosSection" class="ui-widget ui-widget-content ui-corner-all hhk-flex hhk-flex-wrap mr-3 mb-3">
+                        <div class="m-2">
+                            <h3>Demographic Categories</h3>
+                            <form id="formdemo">
+                                <div class="lookupTbl">
+                                    <?php echo $demoSelections; ?>
+                                </div>
+                                <div class="hhk-flex justify-content-end mt-2">
+                                    <input type="button" id='btndemoSave' class="hhk-savedemoCat" data-type="h" value="Save" />
+                                </div>
+                            </form>
                         </div>
-                        <span style="margin: 10px; float: right;"><input type="button" id='btncblistSave'
-                                class="hhk-savecblist" data-type="h" value="Save" /></span>
-                    </form>
-                </div>
-                <div style="float: left; margin-left: 30px;">
-                    <h3>Checklist</h3>
-                    <form id="formcbCat">
-                        <table>
-                            <tr>
-                                <th>Checklist</th>
-                                <td>
-                                    <?php echo $selChecklistItems; ?>
-                                </td>
-                            </tr>
-                        </table>
-                        <div id="divchecklistCat"></div>
-                        <span style="margin: 10px; float: right;"><input type="button" id='btnChecklistSaveCat' class="hhk-saveLookup"
-                                data-type="d" value="Save" /></span>
-                    </form>
+                        <div class="m-2">
+                            <h3>Demographics</h3>
+                            <form id="formdemoCat">
+                                <table>
+                                    <tr>
+                                        <th>Demographic</th>
+                                        <td>
+                                            <?php echo $selDemos; ?>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div class="lookupDetailTbl" id="divdemoCat"></div>
+                                <div class="hhk-flex justify-content-end mt-2">
+                                    <input type="button" id='btndemoSaveCat' class="hhk-saveLookup" data-type="d" value="Save" />
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <?php echo $checklistSectionMkup; ?>
                 </div>
             </div>
- -->            </div>
             <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                 <div style="float: left;">
                     <h3>General Lookups</h3>
@@ -2423,7 +2405,7 @@ $formBuilderOptions = [
                                 </td>
                             </tr>
                         </table>
-                        <div id="divlk" class="hhk-divLk"></div>
+                        <div id="divLk" class="hhk-divLk lookupDetailTbl"></div>
                         <span style="margin: 10px; float: right;">
                             <?php if (!$hasDiags) { ?>
                                 <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis" />
@@ -2446,7 +2428,7 @@ $formBuilderOptions = [
                                 </td>
                             </tr>
                         </table>
-                        <div id="divdisc" class="hhk-divLk"></div>
+                        <div id="divdisc" class="hhk-divLk lookupDetailTbl"></div>
                         <span style="margin: 10px; float: right;">
                             <?php if (!$hasDiscounts) { ?>
                                 <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts" />
@@ -2470,7 +2452,7 @@ $formBuilderOptions = [
                                 </td>
                             </tr>
                         </table>
-                        <div id="divmisc" class="hhk-divLk"></div>
+                        <div id="divmisc" class="hhk-divLk lookupDetailTbl"></div>
                         <span style="margin: 10px; float: right;"> <input type="button" id='btnmiscSave'
                                 class="hhk-saveLookup" data-type="ha" value="Save" />
                         </span>
@@ -2527,7 +2509,7 @@ $formBuilderOptions = [
                 <form method="POST" action="ResourceBuilder.php" name="formtax">
                     <?php echo $taxTable; ?>
                     <div style="clear: both"></div>
-                    <span style="margin: 10px; float: right;"><input type="submit" id='btnItemSave' name="btnTaxSave"
+                    <span style="margin: 10px; float: right;"><input type="submit" id='btnTaxSave' name="btnTaxSave"
                             value="Save" /></span>
                 </form>
             </div>

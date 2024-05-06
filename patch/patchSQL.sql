@@ -53,7 +53,7 @@ delete from gen_lookups where Table_Name = "Non_Cleaning_Day" ;
 
 -- fix operating_schedules
 ALTER TABLE `operating_schedules`
-CHANGE COLUMN `Timestamp` `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+	CHANGE COLUMN `Timestamp` `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 -- set start date for operating hours
 UPDATE `operating_schedules` SET `Start_Date` = now();
@@ -70,7 +70,7 @@ CALL new_webpage("BillingAgentReport.php", 0, "Billing Agent Report", 1, "h", ""
 
 -- distance calculator
 ALTER TABLE `name_address`
-ADD COLUMN IF NOT EXISTS `Meters_From_House` INT(11) NULL AFTER `County`;
+	ADD COLUMN IF NOT EXISTS `Meters_From_House` INT(11) NULL AFTER `County`;
 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('distCalculator', '', 'lu', 'c', 'Distance calculator method', 'DistCalculator', '1');
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('DistCalculator', 'zip', 'Nautical (Approx)', 10);
@@ -105,7 +105,7 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('smsFrom', '', 's', 'sms', 'Account Phone number used as the From address', 1);
 
 ALTER TABLE `name_phone`
-CHANGE COLUMN if exists `is_SMS` `SMS_status` VARCHAR(10) NOT NULL DEFAULT '';
+	CHANGE COLUMN if exists `is_SMS` `SMS_status` VARCHAR(10) NOT NULL DEFAULT '';
 
 -- new reg form replacement codes
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`) VALUES ('ra', 'Room', '${Room}','');
@@ -128,3 +128,35 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 -- add No Email option
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES ('Email_Purpose', 'no', 'No Email', 'i', '50');
+
+-- change Maintenance security group
+UPDATE `w_groups` set `Title` = "Site/DB Maintenance" where `Group_Code` = "db";
+
+-- add toggle for paying today room fee calculator
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('HideRoomFeeCalc', 'false', 'b', 'h', 'Hide "# days" room fee calculator on Paying Today', 1);
+
+-- Checklist
+ALTER TABLE `checklist_item`
+	ADD COLUMN IF NOT EXISTS `Entity_Id` INT NOT NULL AFTER `idChecklist_item`;
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 
+('Checklist', 'psg_items_Cklst', 'PSG', '','m',0);
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('useChecklists', 'false', 'b', 'hf', 'Enable Checklist feature', 1);
+
+-- status colors
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'ci', 'Checked In', '','u',10);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'citod', 'Checking In Today', '','u',20);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'citom', 'Checking In Tomorrow', '','u',30);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cifut', 'Checking In in the Future', '','u',40);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'co', 'Checked Out', '','u',50);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cotod', 'Checking Out Today', '','u',60);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'cotom', 'Checking Out Tomorrow', '','u',70);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'copast', 'Checked in past Expected Departure', '','u',80);
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Calendar_Status_Colors', 'w', 'Waitlist', '','u',90);
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('RibbonColors', 'Calendar_Status_Colors', 'Reservation/Visit Status', '','m',0);
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showResvHousekeeping', 'false', 'b', 'h', 'Show reservations on Guests Checking Out tab of Housekeeping', 1);
+
+ALTER TABLE `w_user_log` CHANGE COLUMN `Action` `Action` VARCHAR(255) NOT NULL DEFAULT '' ;

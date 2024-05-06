@@ -177,10 +177,11 @@ try {
                 }
                 break;
 
-        case 'updatedoctitle':
+        case 'updatedoc':
 
             $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
             $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $docGuestId = intval(filter_input(INPUT_POST, 'docGuestId', FILTER_SANITIZE_NUMBER_INT), 10);
 
             if (is_null($docId) || $docId === FALSE) {
                 throw new Exception('DocId missing');
@@ -189,6 +190,7 @@ try {
             $document = new Document($docId);
 
             $document->saveTitle($dbh, $docTitle);
+            $document->saveGuest($dbh, $docGuestId);
 
             $events = ["idDoc"=> $document->getIdDocument()];
 

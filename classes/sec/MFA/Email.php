@@ -156,8 +156,8 @@ where u.User_Name = :uname";
 
         $mkup .= '
                     <form class="otpForm" style="display: none; text-align: center;">
-                        <label for="otp" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
-                        <input type="text" name="otp" size="10">
+                        <label for="Eotp" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
+                        <input type="text" name="otp" size="10" id="Eotp">
                         <input type="hidden" name="secret">
                         <input type="hidden" name="cmd" value="save2fa">
                         <input type="hidden" name="method" value="email">

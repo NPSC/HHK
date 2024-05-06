@@ -225,6 +225,20 @@ class Document {
         return $counter;
     }
 
+    public function saveGuest(\PDO $dbh, $guestId) {
+
+        $counter = 0;
+
+        if ($this->idDocument > 0 && $guestId >= 0) {
+            $query = 'update `link_doc` set idGuest = "' . intval($guestId) . '" where idDocument = "' . $this->idDocument . '";';
+            $stmt = $dbh->prepare($query);
+            $stmt->execute();
+            return $dbh->lastInsertId();
+        }
+
+        return $counter;
+    }
+
     public function savePDFTitle(\PDO $dbh) {
 
         $counter = 0;

@@ -30,6 +30,16 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Cal_Select','Vol_Activities1','n','','',0),
 ('Cal_Show_Delete_Email','Vol_Activities1','y','','',0),
 
+('Calendar_Status_Colors', 'ci', 'Checked In', '','u',10),
+('Calendar_Status_Colors', 'citod', 'Checking In Today', '','u',20),
+('Calendar_Status_Colors', 'citom', 'Checking In Tomorrow', '','u',30),
+('Calendar_Status_Colors', 'cifut', 'Checking In in the Future', '','u',40),
+('Calendar_Status_Colors', 'co', 'Checked Out', '','u',50),
+('Calendar_Status_Colors', 'cotod', 'Checking Out Today', '','u',60),
+('Calendar_Status_Colors', 'cotom', 'Checking Out Tomorrow', '','u',70),
+('Calendar_Status_Colors', 'copast', 'Checked in past Expected Departure', '','u',80),
+('Calendar_Status_Colors', 'w', 'Waitlist', '','u',90),
+
 ('Campaign_Status','a','Active','','',0),
 ('Campaign_Status','d','Disabled','','',0),
 
@@ -46,9 +56,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
-('Checklist', 'checklist_1_items', 'Checklist 1', '','m',0),
+('Checklist', 'psg_items_Cklst', 'PSG', '','m',0),
+-- ('Checklist', 'resv_items_Cklst', 'Resv', '','m',0),
 
-('checklist_1_items', 'cl1', 'Item 1', '', 'd',0),
+('psg_items_Cklst', 'cl1', 'Item 1', '', 'd',0),
+-- ('resv_items_Cklst', 'cl2e', 'Item 1', '', 'd',0),
 
 ('Cm_Custom_Fields', 'HHK_ID', '','','',0),
 ('Cm_Custom_Fields', 'Deceased_Date', '','','',0),
@@ -395,6 +407,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('RibbonColors', '','None', '', '', 0),
 ('RibbonColors', 'hospital','Hospital', '', '', 1),
+('RibbonColors', 'Calendar_Status_Colors', 'Reservation/Visit Status', '','',2),
 
 ('RoomColors', '','None', '', '', 0),
 ('RoomColors', 'room','Room', '', '', 1),
@@ -601,6 +614,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('insistCkinPhone', 'false', 'b', 'h', '', 'Insist phone for all guests be filled in on check in page', '', 1),
 ('insistCkinEmail', 'false', 'b', 'h', '', 'Insist email for all guests be filled in on check in page', '', 1),
 ('insistCkinAddress', 'false', 'b', 'h', '', 'Insist valid address for all guests be filled in on check in page', '', 1),
+('HideRoomFeeCalc', 'false', 'b', 'h', '', 'Hide "# days" room fee calculator on Paying Today', '', 1),
 ('InsistCkinDemog','false','b','h','','Insist that user fill in the demographics on the check in page','',1),
 ('InsistCkinPayAmt','true','b','h','','Insist the user fills in the payment amount on checkin page','',1),
 ('InsistGuestBD', 'false', 'b', 'g', '', 'Insist on user filling in guest birthdates', '',1),
@@ -670,6 +684,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
+('showResvHousekeeping', 'false', 'b', 'h', '', 'Show reservations on Guests Checking Out tab of Housekeeping', '', 1)
 ('ShowRoomOcc', 'false', 'b', 'c', '', 'Show current occupancy percentage on calendar','','1'),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
 ('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page','',1),
@@ -705,6 +720,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
 ('UseRebook', 'false', 'b', 'hf', '', 'Automatically rebook cancelled reservation', '', 1),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
+('useChecklists', 'false', 'b', 'hf', '', 'Enable Checklist feature', '', 1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
@@ -988,7 +1004,7 @@ VALUES
 REPLACE INTO `w_groups`
 (`Group_Code`,`Title`,`Description`,`Default_Access_Level`,`Max_Level`,`Min_Access_Level`,`Cookie_Restricted`,`Password_Policy`)
 VALUES
-('db','Maintenance','Configure metadata.','','','','\0',''),
+('db','Site/DB Maintenance','Configure metadata.','','','','\0',''),
 ('dm','Donation Management','Donation Management','','','','\0',''),
 ('dna','Donors (No Amounts)','View lists of donors but without donation amounts','','','','\0',''),
 ('g','Guest Operations','Guest Operations, basic access to guest tracking site','','','','\0',''),

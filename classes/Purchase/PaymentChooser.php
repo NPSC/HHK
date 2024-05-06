@@ -485,7 +485,7 @@ class PaymentChooser {
 
         return HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Paying Today', array('style'=>'font-weight:bold;'))
-                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
+                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel hhk-flex', 'style'=>'min-width: max-content'));
 
     }
 
@@ -533,7 +533,7 @@ class PaymentChooser {
 
         // Show the prepayment input box.
         $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), ($uS->HideRoomFeeCalc ? ['class'=>"d-none"] : ['style'=>'text-align:center;'])), ['style'=>'text-align: center;min-width: 62px;'])
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
             , array('class'=>'hhk-RoomFees'));
 
@@ -1027,19 +1027,19 @@ ORDER BY v.idVisit , v.Span;");
 
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
+            $uS = Session::getInstance();
 
             // Make middle column td.
-            $td = HTMLContainer::generateMarkup('button',
+            $td = HTMLContainer::generateMarkup('span', HTMLContainer::generateMarkup('button',
                     HTMLContainer::generateMarkup('span', '$', ['class'=>'px-2']).
                     HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'readonly'=>'readonly', 'size' => '7', 'style'=>'padding:0; border:none; margin:0;'])
                     . HTMLContainer::generateMarkup('label',  HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-arrowthick-1-e']), ['for'=>'feesCharges'])
                     , ['id'=>'feesChargesContr', 'class'=>'ui-button ui-widget ui-corner-all hhk-RoomCharge', 'style'=>'min-width:fit-content; padding:0;'])
                 .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']
-            );
-
+            ), ($uS->HideRoomFeeCalc ? ['class'=>"d-none"] : []) );
 
         	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', ['class'=>'tdlabel'])
-                .HTMLTable::makeTd($td, ['style'=>'text-align:center;'])
+                .HTMLTable::makeTd($td, ["style"=>"text-align: center;min-width: 62px;"])
                 .HTMLTable::makeTd('$'.
                     HTMLInput::generateMarkup('', ['name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;'])
                     , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay']

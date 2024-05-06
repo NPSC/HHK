@@ -237,7 +237,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                         HTMLContainer::generateMarkup('legend','Members', array('style'=>'font-weight:bold;'))
                         . $mTable->generateMarkup(),
                         array('class'=>'hhk-panel')),
-                );
+                ["class"=>"mr-3 mb-3"]);
 
         $lastConfDate = $this->psgRS->Info_Last_Confirmed->getStoredVal();
         if ($lastConfDate != '') {
@@ -245,12 +245,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $lastConfDate = $lcdDT->format('M j, Y');
         }
 
-        // PSG checklists
-        // TODO
-//        $checklist = '' new Checklist($dbh, ChecklistType::PSG);
-
-        $lastConfirmed = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup(
+        $lastConfirmed = HTMLContainer::generateMarkup(
                 'fieldset',
                 HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group') . ' Info Last Confirmed', array('style' => 'font-weight:bold;'))
                 . HTMLContainer::generateMarkup('label', 'Update:', ['for' => 'cbLastConfirmed'])
@@ -258,12 +253,17 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                 . HTMLInput::generateMarkup($lastConfDate, ['name' => 'txtLastConfirmed', 'class' => 'ckdate', 'style' => 'margin-left:1em;'])
                 ,
                 ['class' => 'hhk-panel']
-            )
-
-            // PSG checklist
-            // TODO
-//            . $checklist->createChecklist($this->getIdPsg())
         );
+
+        // Wrap last confirmed
+        $memMkup .= HTMLContainer::generateMarkup('div', $lastConfirmed, ["class"=>"mr-3 mb-3"]);
+
+        $uS = Session::getInstance();
+        if ($uS->useChecklists) {
+            // Checklist
+            $cheklistMkup = Checklist::createChecklistMkup($dbh, $this->getIdPsg(), ChecklistType::PSG);
+            $memMkup .= HTMLContainer::generateMarkup("div", $cheklistMkup, ["class" => "mr-3 mb-3"]);
+        }
 
         // Change log
         $c = '';
@@ -302,7 +302,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $v = HTMLContainer::generateMarkup('div', $lTable->generateMarkup(), array('id'=>'divPsgLog', 'style'=>'display:none; clear:left;'));
         }
 
-        $editDiv = HTMLContainer::generateMarkup("div", $memMkup . $lastConfirmed, array("class"=>"hhk-flex hhk-flex-wrap"))
+        $editDiv = HTMLContainer::generateMarkup("div", $memMkup, array("class"=>"hhk-flex hhk-flex-wrap"))
                 . $notesContainer //$nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))
                 . $c . $v;
 

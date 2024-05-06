@@ -141,10 +141,14 @@ if (isset($_POST['btnNext'])) {
 
                     var pw1 = $('#txtpw1'),
                         pw2 = $('#txtpw2'),
-                        pword;
+                        pw3 = $('#txtpw3'),
+                        pw4 = $('#txtpw4'),
+                        pword,
+                        pword2;
 
-                    $('#spanpwerror').text('');
+                    $('#spanpwerror, #spanpw3error').text('');
                     pword = pw1.val();
+                    pword2 = pw2.val();
 
                     if (checkStrength(pword)) {
 
@@ -154,12 +158,31 @@ if (isset($_POST['btnNext'])) {
                             return;
                         }
 
+                        if (pword2 !== pw3.val()) {
+                            $('#spanpw3error').text('Passwords are not the same.');
+                            return;
+                        }
+
                     } else {
                         $('#spanpwerror').text("Password must have 8 or more characters including at least one uppercase and one lower case alphabetical character and one number and one of ! @ # $ % ^ & * ( ) - = _ + ~ . , \" < > / ? ; : ' | [ ] { }");
                         return;
                     }
 
-                    $.post('ws_install.php', {cmd: 'loadmd', 'new': pword}, function (data) {
+                    if (checkStrength(pword2)) {
+
+                        // Strength ok, check second copy
+
+                        if (pword2 !== pw3.val()) {
+                            $('#spanpw3error').text('Passwords are not the same.');
+                            return;
+                        }
+
+                    } else {
+                        $('#spanpw3error').text("Password must have 8 or more characters including at least one uppercase and one lower case alphabetical character and one number and one of ! @ # $ % ^ & * ( ) - = _ + ~ . , \" < > / ? ; : ' | [ ] { }");
+                        return;
+                    }
+
+                    $.post('ws_install.php', {cmd: 'loadmd', 'adminpw': pword, 'npscuserpw' : pword2}, function (data) {
                         if (data) {
                             try {
                                 data = $.parseJSON(data);
@@ -181,6 +204,8 @@ if (isset($_POST['btnNext'])) {
 
                     pw1.val('');
                     pw2.val('');
+                    pw3.val('');
+                    pw4.val('');
 
                 });
             });
@@ -213,9 +238,18 @@ if (isset($_POST['btnNext'])) {
                     </fieldset>
                     <fieldset>
                         <legend>2.  Load Metadata</legend>
-                        <p>Admin account password: <input type='password' id='txtpw1'/><span id='spanpwerror' style='color:red; margin-left: .5em;'></span></p>
-                        <p>Admin account password again: <input type='password' id='txtpw2'/></p>
-
+                        <table>
+                            <tr>
+                                <td>Admin account password: <input type='password' id='txtpw1'/></td>
+                                <td style="padding-left: 0.5em;">Confirm: <input type='password' id='txtpw2'/></td>
+                                <td><span id='spanpwerror' style='color:red; margin-left: .5em;'></span></td>
+                            </tr>
+                            <tr>
+                                <td>npscuser account password: <input type='password' id='txtpw3'/></td>
+                                <td style="padding-left: 0.5em;">Confirm: <input type='password' id='txtpw4'/></td>
+                                <td><span id='spanpw3error' style='color:red; margin-left: .5em;'></span></td>
+                            </tr>
+                        </table>
                         <input type="button" id="btnMeta" value="Load Metadata" style="margin:20px;"/><span id='spanDone' style='font-weight: bold;'></span>
                     </fieldset>
                 </form>

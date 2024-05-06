@@ -196,7 +196,18 @@ class ReservationSvcs
                     $mail->send();
 
                     // Make a note in the reservation.
-                    $noteText = (isset($docs[$docCode]['tabTitle']) ? $docs[$docCode]['tabTitle'] . ' ' : '') . 'Confirmation Email sent to ' . $emailAddr .  " with subject: " . $docs[$docCode]["subjectLine"];
+                    $noteText = (isset($docs[$docCode]['tabTitle']) ? $docs[$docCode]['tabTitle'] . ' ' : '') . 'Confirmation Email';
+
+                    try {
+                        $arrive = (new \DateTime($reserv->getArrival()))->format("M d, Y");
+                        $depart = (new \DateTime($reserv->getDeparture()))->format("M d, Y");
+
+                        $noteText .= " for " . $arrive . " to " . $depart;
+                    }catch(\Exception $e){
+
+                    }
+                    
+                    $noteText .= ' sent to ' . $emailAddr .  " with subject: " . $docs[$docCode]["subjectLine"];
                     if($ccEmailAddr != '' && count($ccs) > 0){
                         $noteText .= '; CC\'d to ';
                         foreach ($ccs as $cc){

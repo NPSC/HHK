@@ -151,6 +151,7 @@ CREATE TABLE if not exists `cc_hosted_gateway` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `checklist_item` (
   `idChecklist_item` int(11) NOT NULL AUTO_INCREMENT,
+  `Entity_Id` int(11) NOT NULL,
   `GL_TableName` varchar(45) NOT NULL DEFAULT '',
   `GL_Code` varchar(65) NOT NULL DEFAULT '',
   `Status` varchar(5) NOT NULL DEFAULT '',
@@ -2265,7 +2266,7 @@ CREATE TABLE if not exists `w_user_log` (
   `IP` VARCHAR(45) NOT NULL DEFAULT '',
   `Session_Id` VARCHAR(45) NOT NULL DEFAULT '',
   `Page` VARCHAR(45) NOT NULL DEFAULT '',
-  `Action` VARCHAR(45) NOT NULL DEFAULT '',
+  `Action` VARCHAR(255) NOT NULL DEFAULT '',
   `Browser` VARCHAR(45) NOT NULL DEFAULT '',
   `OS` VARCHAR(45) NOT NULL DEFAULT ''
 ) ENGINE = MyISAM;
@@ -2358,6 +2359,10 @@ ALTER TABLE `activity`
 
 ALTER TABLE `campaign`
 	ADD UNIQUE KEY IF NOT EXISTS `Campaign_Code_UNIQUE` (`Campaign_Code`);
+
+ALTER TABLE `checklist_item` 
+ADD UNIQUE INDEX IF NOT EXISTS `Unique_Checklist_Item` (`Entity_Id` ASC, `GL_TableName` ASC, `GL_Code` ASC);
+
 
 ALTER TABLE `donations`
 	Add INDEX IF NOT EXISTS `Activity_Id_INDEX` (`Activity_Id`);

@@ -2,7 +2,7 @@
 
 namespace HHK\House;
 
-use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
+use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus, ItemPriceCode};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
@@ -658,32 +658,34 @@ where
             . HTMLTable::makeTd(HTMLInput::generateMarkup('', $emAttrs))
             );
 
+        if($uS->RoomPriceModel != ItemPriceCode::None){
 
-        // Key Deposit
-        if ($uS->KeyDeposit) {
-            $kdBal = $this->getDepositBalance($dbh);
+            // Key Deposit
+            if ($uS->KeyDeposit) {
+                $kdBal = $this->getDepositBalance($dbh);
 
+                $tbl->addBodyTr(
+                    HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'), array('style'=>'text-align:right;'))
+                    .HTMLTable::makeTd('$' . number_format($kdBal, 2), array('style'=>'text-align:left;')));
+            }
+
+            // Lodging MOA
             $tbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'), array('style'=>'text-align:right;'))
-                .HTMLTable::makeTd('$' . number_format($kdBal, 2), array('style'=>'text-align:left;')));
+                HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'), array('style'=>'text-align:right;'))
+                .HTMLTable::makeTd('$' . number_format($this->getLodgingMOA($dbh), 2), array('style'=>'text-align:left;')));
+
+    //         // Pre-Payments
+    //         if ($uS->AcceptResvPaymt) {
+    //             $tbl->addBodyTr(
+    //                 HTMLTable::makeTh($labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Pre-Payments', array('style'=>'text-align:right;'))
+    //                 .HTMLTable::makeTd('$' . number_format($this->getPrePayments($dbh), 2), array('style'=>'text-align:left;')));
+    //         }
+
+            // Donations
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Donations', array('style'=>'text-align:right;'))
+                .HTMLTable::makeTd('$' . number_format($this->getDonations($dbh), 2), array('style'=>'text-align:left;')));
         }
-
-        // Lodging MOA
-        $tbl->addBodyTr(
-            HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'), array('style'=>'text-align:right;'))
-            .HTMLTable::makeTd('$' . number_format($this->getLodgingMOA($dbh), 2), array('style'=>'text-align:left;')));
-
-//         // Pre-Payments
-//         if ($uS->AcceptResvPaymt) {
-//             $tbl->addBodyTr(
-//                 HTMLTable::makeTh($labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Pre-Payments', array('style'=>'text-align:right;'))
-//                 .HTMLTable::makeTd('$' . number_format($this->getPrePayments($dbh), 2), array('style'=>'text-align:left;')));
-//         }
-
-        // Donations
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Donations', array('style'=>'text-align:right;'))
-            .HTMLTable::makeTd('$' . number_format($this->getDonations($dbh), 2), array('style'=>'text-align:left;')));
 
         return $tbl->generateMarkup();
 

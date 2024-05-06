@@ -213,7 +213,9 @@ class UserClass
 
         $this->setSession($dbh, $ssn, $r);
 
-        $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+        $userCodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+        $ssn->groupcodes = $userCodes["authorized"];
+        $ssn->groupcodesIpRestricted = $userCodes["ip_restricted"];
 
         $this->defaultPage = $r['Default_Page'];
 
@@ -930,29 +932,17 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
-        $stmt = $dbh->query("select count(*) from information_schema.TABLES where (table_schema = '" . $uS->databaseName . "') and (table_name = 'w_idp')");
-
-        if ($stmt->rowCount() === 1) {
-            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-            if($rows[0][0] == 1){ //w_idp table exists
-                $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
+        $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
 left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
 WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = :uname");
-            }else{ //w_idp table does not exist
-                $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, 'Unknown Provider' as 'authProvider'
-FROM w_users u join w_auth a on u.idName = a.idName
-join `name` n on n.idName = u.idName
-WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = :uname");
-            }
 
-            $stmt->execute(array(':uname'=>$uname));
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $stmt->execute(array(':uname'=>$uname));
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            if (count($rows) == 1) {
-                return $rows[0];
-            }
+        if (count($rows) == 1) {
+            return $rows[0];
         }
 
         return NULL;
@@ -1011,14 +1001,17 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
     {
         $id = intval($idName, 10);
 
-        $grpArray = array();
+        $grpArray = array("authorized"=>array(), "ip_restricted"=>array());
         $query = "SELECT s.Group_Code, case when w.IP_Restricted = 1 then '1' else '0' end as `IP_Restricted` FROM id_securitygroup s join w_groups w on s.Group_Code = w.Group_Code WHERE s.idName = $id";
         $stmt = $dbh->query($query);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            if ($r["Group_Code"] != "" && ($r['IP_Restricted'] == "0" || self::checkPCAccess($dbh, $r["Group_Code"]))) {
-                $grpArray[$r["Group_Code"]] = $r["Group_Code"];
+            $pcAuthorized = self::checkPCAccess($dbh, $r["Group_Code"]);
+            if ($r["Group_Code"] != "" && ($r['IP_Restricted'] == "0" || $pcAuthorized)) {
+                $grpArray['authorized'][$r["Group_Code"]] = $r["Group_Code"];
+            }else if($r['IP_Restricted'] == "1" && $pcAuthorized == false){
+                $grpArray['ip_restricted'][$r["Group_Code"]] = $r["Group_Code"];
             }
         }
 
@@ -1178,4 +1171,3 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
                                 return $dash_str;
     }
 }
-?>

@@ -20,6 +20,7 @@ use HHK\SysConst\InvoiceStatus;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\VolMemberType;
 use HHK\SysConst\WebPageCode;
+use HHK\TableLog\HouseLog;
 
 /**
  * InvoiceReport.php
@@ -126,6 +127,8 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     $g['County'] = $r['County'];
     $g['Zip'] = $r['Zip'];
     $g['Title'] = $r['Title'];
+    $g['Span_Start'] = $r['Span_Start'];
+    $g['Span_End'] = $r['Span_End'];
     $g['hospital'] = $hospital;
     $g['Balance'] = number_format($r['Balance'], 2);
     $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], ['id' => 'divInvNotes' . $r['Invoice_Number'], 'style' => 'max-width:190px;']);
@@ -251,6 +254,8 @@ $cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
 $cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
 $cFields[] = array("Billed", 'billed', 'checked', '', 'string', '20', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
+$cFields[] = array("Arrival", 'Span_Start', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Departure", 'Span_End', '', '', 'MM/DD/YYYY', '15', array(), 'date');
 
 if ((count($hospList)) > 1) {
     $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospital', 'checked', '', 'string', '20', array());
@@ -433,45 +438,47 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
 
 
     $query = "SELECT
-    `i`.`idInvoice`,
-    `i`.`Delegated_Invoice_Id`,
-    ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number,
-    ifnull(di.Status, '') as Delegated_Invoice_Status,
-    i.Deleted,
-    `i`.`Invoice_Number`,
-    `i`.`Amount`,
-    `i`.`Carried_Amount`,
-    `i`.`Balance`,
-    `i`.`Order_Number`,
-    `i`.`Sold_To_Id`,
-    `i`.`Notes`,
-    n.Name_Full as Sold_To_Name,
-    n.Company,
-    ifnull(np.Name_Full, '') as Patient_Name,
-    ifnull(nap.County, '') as `County`,
-    ifnull(nap.Postal_Code, '') as `Zip`,
-    ifnull(re.Title, '') as `Title`,
-    ifnull(hs.idHospital, 0) as `idHospital`,
-    ifnull(hs.idAssociation, 0) as `idAssociation`,
-    ifnull(hs.idPatient, 0) as `idPatient`,
-    `i`.`idGroup`,
-    `i`.`Invoice_Date`,
-    i.BillStatus,
-    i.BillDate,
-    `i`.`Payment_Attempts`,
-    `i`.`Status`,
-    `i`.`Updated_By`,
-    `i`.`Last_Updated`,
-    ifnull(il.Item_Id, 0) as `Item_Id`
-    FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
-        left join invoice_line il on il.Invoice_Id = i.idInvoice and il.Item_Id = 6
-        left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
-        left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-        left join name np on hs.idPatient = np.idName
-        left join name_address nap on np.idName = nap.idName and nap.Purpose = np.Preferred_Mail_Address
-        left join resource re on v.idResource = re.idResource
-        left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
-    where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
+`i`.`idInvoice`,
+`i`.`Delegated_Invoice_Id`,
+ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number,
+ifnull(di.Status, '') as Delegated_Invoice_Status,
+i.Deleted,
+`i`.`Invoice_Number`,
+`i`.`Amount`,
+`i`.`Carried_Amount`,
+`i`.`Balance`,
+`i`.`Order_Number`,
+`i`.`Sold_To_Id`,
+`i`.`Notes`,
+n.Name_Full as Sold_To_Name,
+n.Company,
+ifnull(np.Name_Full, '') as Patient_Name,
+ifnull(nap.County, '') as `County`,
+ifnull(nap.Postal_Code, '') as `Zip`,
+ifnull(re.Title, '') as `Title`,
+ifnull(v.Span_Start, '') as `Span_Start`,
+ifnull(v.Span_End, '') as `Span_End`,
+ifnull(hs.idHospital, 0) as `idHospital`,
+ifnull(hs.idAssociation, 0) as `idAssociation`,
+ifnull(hs.idPatient, 0) as `idPatient`,
+`i`.`idGroup`,
+`i`.`Invoice_Date`,
+i.BillStatus,
+i.BillDate,
+`i`.`Payment_Attempts`,
+`i`.`Status`,
+`i`.`Updated_By`,
+`i`.`Last_Updated`,
+ifnull(il.Item_Id, 0) as `Item_Id`
+FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
+    left join invoice_line il on il.Invoice_Id = i.idInvoice and il.Item_Id = 6
+    left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
+    left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
+    left join name np on hs.idPatient = np.idName
+    left join name_address nap on np.idName = nap.idName and nap.Purpose = np.Preferred_Mail_Address
+    left join resource re on v.idResource = re.idResource
+    left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
+where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     $tbl = null;
@@ -599,6 +606,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
 
 
     } else {
+        HouseLog::logDownload($dbh, 'Invoice Report', "Excel", "Invoice Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
         $writer->download();
     }
 
@@ -1034,7 +1042,7 @@ $(document).ready(function() {
                                  'render': function ( data, type, row ) {return dateRender(data, type);}
                                 }
                              ],
-                            "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                            "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
                             "displayLength": 50,
                             "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
                             "order": [[ 1, 'asc' ]]
@@ -1064,7 +1072,7 @@ $(document).ready(function() {
                  ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+            "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
         });
 
         $('#printButton').button().click(function() {

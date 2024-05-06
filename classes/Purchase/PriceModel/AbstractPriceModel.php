@@ -284,14 +284,14 @@ abstract class AbstractPriceModel {
             $roomCharge += $t['amt'];
 
             $tbl->addBodyTr(
-                 HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
-                .HTMLTable::makeTd($r['title'], array('style'=>$separator))
-                .HTMLTable::makeTd($startDT->format('M j, Y'), array('style'=>$separator))
-                .HTMLTable::makeTd($startDT->add(new \DateInterval('P' . $t['days'] . 'D'))->format('M j, Y'), array('style'=>$separator))
-                .HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
-                .HTMLTable::makeTd($t['days'], array('style'=>'text-align:center;' . $separator))
-                .HTMLTable::makeTd(number_format($t['amt'], 2), array('style'=>'text-align:right;' . $separator))
-            );
+                 HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('class'=>"align-center"))
+                .HTMLTable::makeTd($r['title'])
+                .HTMLTable::makeTd($startDT->format('M j, Y'))
+                .HTMLTable::makeTd($startDT->add(new \DateInterval('P' . $t['days'] . 'D'))->format('M j, Y'))
+                .HTMLTable::makeTd(number_format($t['rate'], 2), array('class'=>'align-right'))
+                .HTMLTable::makeTd($t['days'], array('class'=>'align-center'))
+                .HTMLTable::makeTd(number_format($t['amt'], 2), array('class'=>'align-right'))
+            , ["class"=>$separator]);
 
             $separator = '';
 
@@ -320,11 +320,11 @@ abstract class AbstractPriceModel {
 
     		while ($days > 0) {
 	    		$tbl->addBodyTr(
-	    				HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
-	    				.HTMLTable::makeTd($r['title'], array('style'=>$separator))
-	    				.HTMLTable::makeTd($sDate->format('M j, Y'), array('style'=>$separator))
-	    				.HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
-	    				);
+	    				HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('class'=>'align-center'))
+	    				.HTMLTable::makeTd($r['title'])
+	    				.HTMLTable::makeTd($sDate->format('M j, Y'))
+	    				.HTMLTable::makeTd(number_format($t['rate'], 2), array('class'=>'align-right'))
+	    				, ["class"=>$separator]);
 
 	    		$separator = '';
 	    		$sDate->add(new \DateInterval('P1D'));
@@ -345,10 +345,10 @@ abstract class AbstractPriceModel {
     public function itemDetailMarkup($r, &$tbl) {
 
     	$tbl->addBodyTr(
-    			HTMLTable::makeTd($r['orderNum'], array('style'=>'text-align:center;'))
-    			.HTMLTable::makeTd($r['desc'], array('style'=>'text-align:right;'))
+    			HTMLTable::makeTd($r['orderNum'], array('class'=>'align-center'))
+    			.HTMLTable::makeTd($r['desc'], array('class'=>'align-right'))
     			.HTMLTable::makeTd($r['date'])
-    			.HTMLTable::makeTd($r['amt'], array('style'=>'text-align:right;')));
+    			.HTMLTable::makeTd($r['amt'], array('class'=>'align-right')));
 
     }
 
@@ -361,11 +361,11 @@ abstract class AbstractPriceModel {
     public function itemMarkup($r, &$tbl) {
 
         $tbl->addBodyTr(
-            HTMLTable::makeTd($r['orderNum'], array('style'=>'text-align:center;'))
+            HTMLTable::makeTd($r['orderNum'], array('class'=>'align-center'))
             .HTMLTable::makeTd('')
             .HTMLTable::makeTd($r['date'])
-            .HTMLTable::makeTd($r['desc'], array('colspan'=>'3', 'style'=>'text-align:right;'))
-            .HTMLTable::makeTd($r['amt'], array('style'=>'text-align:right;')));
+            .HTMLTable::makeTd($r['desc'], array('colspan'=>'3', 'class'=>'align-right'))
+            .HTMLTable::makeTd($r['amt'], array('class'=>'align-right')));
 
     }
 
@@ -555,7 +555,7 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
                 continue;
             }
 
-            $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $attrs = array('type'=>'radio', 'name'=>'rrdefault', 'id'=>false);
             $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
             $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
 

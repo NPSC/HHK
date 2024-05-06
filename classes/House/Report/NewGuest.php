@@ -7,6 +7,7 @@ use HHK\ColumnSelectors;
 use HHK\SysConst\GLTableNames;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\TableLog\HouseLog;
 
 /**
  *
@@ -192,6 +193,7 @@ class NewGuest
             return $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
 
         } else {
+            HouseLog::logDownload($dbh, 'New Guest Report', "Excel", "New Guests Report for " . $this->getStartDT()->format("Y-m-d") . " - " . $this->getEndDT()->format("Y-m-d") . " downloaded", $uS->username);
             $writer->download();
         }
     }

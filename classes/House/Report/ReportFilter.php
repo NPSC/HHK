@@ -6,6 +6,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\GLTableNames;
 use HHK\sec\Labels;
 use HHK\sec\Session;
+use HHK\SysConst\VolMemberType;
 
 /*
  * The MIT License
@@ -125,7 +126,7 @@ class ReportFilter {
      */
     protected $resourceGroups;
 
-        /**
+    /**
      * Summary of selectedDiagnoses
      * @var
      */
@@ -136,6 +137,50 @@ class ReportFilter {
      */
     protected $diagnoses;
     protected $diagnosisCategories;
+
+    /**
+     * Summary of selectedBillingAgents
+     * @var 
+     */
+    protected $selectedBillingAgents;
+    /**
+     * Summary of billingAgents
+     * @var 
+     */
+    protected $billingAgents;
+
+    /**
+     * Summary of selectedPayTypes
+     * @var 
+     */
+    protected $selectedPayTypes;
+    /**
+     * Summary of payTypes
+     * @var 
+     */
+    protected $payTypes;
+
+    /**
+     * Summary of selectedPayStatuses
+     * @var 
+     */
+    protected $selectedPayStatuses;
+    /**
+     * Summary of payStatuses
+     * @var 
+     */
+    protected $payStatuses;
+
+    /**
+     * Summary of selectedPaymentGateways
+     * @var 
+     */
+    protected $selectedPaymentGateways;
+    /**
+     * Summary of paymentGateways
+     * @var 
+     */
+    protected $paymentGateways;
 
     /**
      * Summary of reportStart
@@ -161,8 +206,13 @@ class ReportFilter {
         $this->selectedHosptials = array();
         $this->selectedResourceGroups = array();
         $this->selectedDiagnoses = array();
+        $this->selectedBillingAgents = array();
+        $this->selectedPayStatuses = array();
+        $this->selectedPayTypes = array();
+        $this->selectedPaymentGateways = array();
         $this->selectedMonths = array();
         $this->hospitals = array();
+        $this->paymentGateways = array();
     }
 
     /**
@@ -472,10 +522,14 @@ $ckdate";
      * @param mixed $defaultGroupBy
      * @return ReportFilter
      */
-    public function createResourceGroups($rescGroups, $defaultGroupBy) {
+    public function createResourceGroups(\PDO $dbh) {
 
-        if (isset($rescGroups[$defaultGroupBy])) {
-            $this->selectedResourceGroups = $defaultGroupBy;
+        $uS = Session::getInstance();
+
+        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+
+        if (isset($rescGroups[$uS->CalResourceGroupBy])) {
+            $this->selectedResourceGroups = $uS->CalResourceGroupBy;
         } else {
             $this->selectedResourceGroups = reset($rescGroups)[0];
         }
@@ -570,6 +624,219 @@ $ckdate";
     }
 
     /**
+     * Load Billing Agents
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createBillingAgents(\PDO $dbh){
+        $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .
+        " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
+        " where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First, n.Company");
+
+        $this->billingAgents = array();
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $entry = '';
+
+            if ($r['Name_First'] != '' || $r['Name_Last'] != '') {
+                $entry = trim($r['Name_First'] . ' ' . $r['Name_Last']);
+            }
+
+            if ($entry != '' && $r['Company'] != '') {
+                $entry .= '; ' . $r['Company'];
+            }
+
+            if ($entry == '' && $r['Company'] != '') {
+                $entry = $r['Company'];
+            }
+
+            $this->billingAgents[$r['idName']] = array(0=>$r['idName'], 1=>$entry);
+        }
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedBillingAgents
+     * @return ReportFilter
+     */
+    public function loadSelectedBillingAgents() {
+
+        if (filter_has_var(INPUT_POST, 'selBillingAgents')) {
+            $reqs = $_POST['selBillingAgents'];
+            if (is_array($reqs)) {
+                $this->selectedBillingAgents = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of billingAgentMarkup
+     * @return HTMLTable
+     */
+    public function billingAgentMarkup() {
+
+        $agents = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->billingAgents, $this->selectedBillingAgents, TRUE),
+        array('name'=>'selBillingAgents[]', 'size'=>(count($this->billingAgents)>12 ? '12' : count($this->billingAgents)), 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Billing Agents"));
+        $tbl->addBodyTr(HTMLTable::makeTd($agents, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
+     * Load Pay Types
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createPayTypes(\PDO $dbh){
+        $this->payTypes = array();
+        $uS = Session::getInstance();
+
+        foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
+            if ($p[2] != '') {
+                $this->payTypes[$p[2]] = array($p[2], $p[1]);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedPayTypes
+     * @return ReportFilter
+     */
+    public function loadSelectedPayTypes() {
+
+        if (filter_has_var(INPUT_POST, 'selPayType')) {
+            $reqs = $_POST['selPayType'];
+            if (is_array($reqs)) {
+                $this->selectedPayTypes = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of payTypesMarkup
+     * @return HTMLTable
+     */
+    public function payTypesMarkup() {
+
+        $payTypeSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->payTypes, $this->selectedPayTypes), array('name' => 'selPayType[]', 'size' => '5', 'multiple' => 'multiple'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Pay Type"));
+        $tbl->addBodyTr(HTMLTable::makeTd($payTypeSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
+     * Load Pay Statuses
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createPayStatuses(\PDO $dbh){
+        $this->payStatuses = readGenLookupsPDO($dbh, 'Payment_Status');
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedPayStatuses
+     * @return ReportFilter
+     */
+    public function loadSelectedPayStatuses() {
+
+        if (filter_has_var(INPUT_POST, 'selPayStatus')) {
+            $reqs = $_POST['selPayStatus'];
+            if (is_array($reqs)) {
+                $this->selectedPayStatuses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of payStatusMarkup
+     * @return HTMLTable
+     */
+    public function payStatusMarkup() {
+
+        $statusSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->payStatuses, $this->selectedPayStatuses), array('name' => 'selPayStatus[]', 'size' => '7', 'multiple' => 'multiple'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Pay Status"));
+        $tbl->addBodyTr(HTMLTable::makeTd($statusSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
+     * Load Payment Gateways
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createPaymentGateways(\PDO $dbh){
+        $this->paymentGateways = array();
+        $uS = Session::getInstance();
+
+        // Payment gateway lists
+        $gwstmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name = '" . $uS->PaymentGateway . "' and cc_name not in ('Production', 'Test', '')");
+        $gwRows = $gwstmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($gwRows) > 1) {
+
+            foreach ($gwRows as $g) {
+                $this->paymentGateways[$g[0]] = array(0=>$g[0], 1=>ucfirst($g[0]));
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedPaymentGateways
+     * @return ReportFilter
+     */
+    public function loadSelectedPaymentGateways() {
+
+        if (filter_has_var(INPUT_POST, 'selGateway')) {
+            $reqs = $_POST['selGateway'];
+            if (is_array($reqs)) {
+                $this->selectedPaymentGateways = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of paymentGatwaysMarkup
+     * @return HTMLTable
+     */
+    public function paymentGatewaysMarkup() {
+
+        $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->paymentGateways, $this->selectedPaymentGateways), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($this->paymentGateways) + 1)));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Location"));
+        $tbl->addBodyTr(HTMLTable::makeTd($gwSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
      * Summary of getSelectedHospitalsString
      * @return string
      */
@@ -610,6 +877,26 @@ $ckdate";
     }
 
     /**
+     * Summary of getSelectedBillingAgentsString
+     * @return string
+     */
+    public function getSelectedBillingAgentsString(){
+        $billingList = $this->getBillingAgents();
+        $billingTitles = "";
+        foreach ($this->getSelectedBillingAgents() as $h) {
+            if (isset($billingList[$h])) {
+                $billingTitles .= $billingList[$h][1] . ', ';
+            }
+        }
+        if ($billingTitles != '') {
+            $h = trim($billingTitles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
+    }
+
+    /**
      * Summary of getSelectedResourceGroups
      * @return array|mixed
      */
@@ -631,6 +918,46 @@ $ckdate";
      */
     public function getSelectedDiagnoses() {
         return $this->selectedDiagnoses;
+    }
+
+    /**
+     * Summary of getBillingAgents
+     * @return array<array>
+     */
+    public function getBillingAgents() {
+        return $this->billingAgents;
+    }
+
+    /**
+     * Summary of getSelectedBillingAgents
+     * @return array|mixed
+     */
+    public function getSelectedBillingAgents() {
+        return $this->selectedBillingAgents;
+    }
+
+    public function getPayStatuses(){
+        return $this->payStatuses;
+    }
+
+    public function getSelectedPayStatuses(){
+        return $this->selectedPayStatuses;
+    }
+
+    public function getPayTypes(){
+        return $this->payTypes;
+    }
+
+    public function getSelectedPayTypes(){
+        return $this->selectedPayTypes;
+    }
+
+    public function getPaymentGateways(){
+        return $this->paymentGateways;
+    }
+
+    public function getSelectedPaymentGateways(){
+        return $this->selectedPaymentGateways;
     }
 
     /**
