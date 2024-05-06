@@ -1,5 +1,5 @@
 
-function viewInsurance(idName, eventTarget) {
+function viewInsurance(idName, eventTarget, detailDiv) {
     "use strict";
     detailDiv.empty();
     $.post('ws_resc.php', { cmd: 'viewInsurance', idName: idName },

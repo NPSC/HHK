@@ -522,10 +522,14 @@ $ckdate";
      * @param mixed $defaultGroupBy
      * @return ReportFilter
      */
-    public function createResourceGroups($rescGroups, $defaultGroupBy) {
+    public function createResourceGroups(\PDO $dbh) {
 
-        if (isset($rescGroups[$defaultGroupBy])) {
-            $this->selectedResourceGroups = $defaultGroupBy;
+        $uS = Session::getInstance();
+
+        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+
+        if (isset($rescGroups[$uS->CalResourceGroupBy])) {
+            $this->selectedResourceGroups = $uS->CalResourceGroupBy;
         } else {
             $this->selectedResourceGroups = reset($rescGroups)[0];
         }

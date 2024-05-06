@@ -178,7 +178,8 @@ order by r.idResource;";
     $rooms = array();
 
     $roomReport = new RoomReport();
-    $roomReport->collectUtilizationData($dbh, $start, $end);
+    $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+    $roomReport->collectUtilizationData($dbh, $start, $end, $rescStatuses);
     $daysAr = $roomReport->getDays();
 
     // transform room report data for visit report
@@ -1669,7 +1670,7 @@ if ($taxItems[0][0] > 0) {
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
-$filter->createResourceGroups($rescGroups, $uS->CalResourceGroupBy);
+$filter->createResourceGroups($dbh);
 
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms

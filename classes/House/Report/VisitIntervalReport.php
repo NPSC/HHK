@@ -4,6 +4,9 @@ namespace HHK\House\Report;
 
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\Purchase\RoomRate;
+use HHK\Purchase\ValueAddedTax;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\HTMLControls\HTMLTable;
@@ -11,6 +14,7 @@ use HHK\SysConst\{ReservationStatus, ItemId};
 use HHK\SysConst\InvoiceStatus;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\ItemType;
+use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\VolMemberType;
 
 
@@ -47,7 +51,6 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
         $this->locations = readGenLookupsPDO($dbh, 'Location');
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
         $this->adjusts = readGenLookupsPDO($dbh, 'Addnl_Charge');
-        $this->rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
         $this->useTaxes = FALSE;
 
         $tstmt = $dbh->query("Select count(idItem) from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax . " where i.Deleted = 0");
@@ -56,19 +59,15 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
             $this->useTaxes = TRUE;
         }
 
-        if (filter_has_var(INPUT_POST, 'selRoomGroup')) {
-            $this->selectedRescGroups = filter_input(INPUT_POST, 'selRoomGroup', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
-        } else {
-            $this->selectedRescGroups = [];
-        }
-
         parent::__construct($dbh, $this->inputSetReportName, $request);
+
+        $this->filter->createResourceGroups($this->dbh);
     }
 
 
     /**
      */
-    public function makeCFields() {
+    public function makeCFields():array {
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
 
@@ -210,18 +209,17 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
     /**
      */
     public function makeFilterMkup():void {
-        $uS = Session::getInstance();
 
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
-        $this->filterMkup .= $this->filter->createResourceGroups($this->rescGroups, $uS->CalResourceGroupBy);
         $this->filterMkup .= $this->filter->hospitalMarkup()->generateMarkup();
+        $this->filterMkup .= $this->filter->resourceGroupsMarkup()->generateMarkup();
         $this->filterMkup .= $this->getColSelectorMkup();
 
     }
 
     /**
      */
-    function makeQuery() {
+    function makeQuery():void {
 
         $uS = Session::getInstance();
 
@@ -245,7 +243,8 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
     v.idResource,
     v.Expected_Departure,
     ifnull(v.Actual_Departure, '') as Actual_Departure,
-    v.Arrival_Date,
+    ifnull(v.Actual_Departure, v.Expected_Departure) as Departure,
+    v.Arrival_Date as Arrival,
     v.Span_Start,
     ifnull(v.Span_End, '') as Span_End,
     v.Pledged_Rate,
@@ -310,9 +309,12 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
     ifnull(np.BirthDate, '') as pBirth,
     ifnull(nd.Name_Last,'') as Doctor_Last,
     ifnull(nd.Name_First,'') as Doctor_First,
+    concat_ws(', ', nd.Name_Last, nd.Name_First) as Doctor,
     ifnull(hs.idPsg, 0) as idPsg,
     ifnull(hs.idHospital, 0) as idHospital,
     ifnull(hs.idAssociation, 0) as idAssociation,
+    ifnull(h.Title, '') as Hospital,
+    ifnull(a.Title, '') as Assoc,
     ifnull(nra.Name_Full, '') as Referral_Agent,
     ifnull(g.Description, hs.Diagnosis) as Diagnosis,
     ifnull(hs.Diagnosis2, '') as Diagnosis2,
@@ -370,6 +372,10 @@ from
         left join
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
         left join
+    hospital h ON hs.idHospital = h.idHospital
+        left join
+    hospital a on hs.idAssociation = a.idHospital
+        left join
     name np ON hs.idPatient = np.idName
         left join
     name nd ON hs.idDoctor = nd.idName
@@ -408,16 +414,10 @@ where
 
     /**
      */
-    function makeSummaryMkup() {
+    function makeSummaryMkup():string {
         $mkup = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 
         $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
-
-        if (isset($this->request["cbShowAll"])) {
-            $mkup .= HTMLContainer::generateMarkup("p", "Showing All Guests");
-        } else {
-            $mkup .= HTMLContainer::generateMarkup("p", "Showing Primary Guests Only");
-        }
 
         $hospitalTitles = '';
         $hospList = $this->filter->getHospitals();
@@ -441,22 +441,429 @@ where
             $mkup .= HTMLContainer::generateMarkup('p', 'All ' . Labels::getString('hospital', 'hospital', 'Hospital') . 's');
         }
 
-        // $resourceTitles = '';
-        // foreach ($this->selectedRescGroups as $s) {
-        //     if (isset($this->rescGroups[$s])) {
-        //         $resourceTitles .= $this->rescGroups[$s][1] . ', ';
-        //     }
-        // }
-
-        // if ($resourceTitles != '') {
-        //     $s = trim($resourceTitles);
-        //     $resourceTitles = substr($s, 0, strlen($s) - 1);
-        //     $mkup .= HTMLContainer::generateMarkup('p', 'Room Groups: ' . $resourceTitles);
-        // } else {
-        //     $mkup .= HTMLContainer::generateMarkup('p', 'All Room Groups');
-        // }
-
         return $mkup;
+
+    }
+
+    public function generateMarkup(string $outputType = ""){
+        $this->getResultSet();
+
+        foreach($this->resultSet as &$r) {
+            $r['Insurance'] = ($r['Insurance'] != '' ? HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment insAction', 'style'=>'cursor:pointer;', 'data-idName'=>$r['idPatient'], 'id'=>'insAction' . $r['idPatient'], 'title'=>'View Insurance')) . $r["Insurance"] : $r["Insurance"]);
+            $r['idVisit'] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit', 'data-gid'=>$r['idPrimaryGuest'], 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'style'=>'display:inline-table;'));
+            $r['idPrimaryGuest'] = HTMLContainer::generateMarkup('a', $r['Name_Last'] . ', ' . $r['Name_First'], array('href'=>'GuestEdit.php?id=' . $r['idPrimaryGuest'] . '&psg=' . $r['idPsg']));
+            $r['idPatient'] = HTMLContainer::generateMarkup('a', $r['Patient_Last'] . ', ' . $r['Patient_First'], array('href'=>'GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']));
+        
+        }
+
+        //$this->generateNumbers();
+
+        return parent::generateMarkup($outputType);
+    }
+
+    protected function generateNumbers(){
+        $uS = Session::getInstance();
+
+        $now = (new \DateTime())->setTime(0,0,0);
+        $reportEndDT = new \DateTime($this->filter->getReportEnd() . ' 00:00:00');
+
+        $priceModel = AbstractPriceModel::priceModelFactory($this->dbh, $uS->RoomPriceModel);
+
+        // Make titles for all the rates
+        $rateTitles = RoomRate::makeDescriptions($this->dbh);
+        $vat = new ValueAddedTax($this->dbh);
+
+        // Get Guest days
+        $actualGuestNights = [];
+        $piGuestNights = [];
+
+        if($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily){
+            // routine defines acutalGuestNights and piGuestNights.
+            $this->getGuestNights($actualGuestNights, $piGuestNights);
+
+        }
+
+        $rescGroup = $this->filter->getResourceGroups()[$this->filter->getSelectedResourceGroups()];
+        
+        $curVisit = 0;
+        $curRoom = 0;
+        $curRate = '';
+        $curAmt = 0;
+
+        $visit = array();
+        $savedr = array();
+        $nites = array();
+        $rates = [];
+        $chargesAr = [];
+
+        foreach($this->resultSet as &$r){
+
+            // records ordered by idVisit.
+            if ($curVisit != $r['idVisit']) {
+    
+                // If i did not just start
+                if (count($visit) > 0 && $visit['nit'] > 0) {
+    
+                    $totalLodgingCharge += $visit['chg'];
+                    $chargesAr[] = $visit['chg']/$visit['nit'];
+                    $totalAddnlCharged += ($visit['addch']);
+    
+                    $totalTaxCharged += $visit['taxcgd'];
+                    $totalAddnlTax += $visit['adjchtx'];
+                    $totalTaxPaid += $visit['taxpd'];
+                    $totalTaxPending += $visit['taxpndg'];
+    
+                    if ($visit['nit'] > $uS->VisitFeeDelayDays) {
+                        $totalVisitFee += $visit['vfa'];
+                    }
+    
+                    $totalCharged += $visit['chg'];
+                    $totalAmtPending += $visit['pndg'];
+                    $totalNights += $visit['nit'];
+                    $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
+    
+                    // Set expected departure to now if earlier than "today"
+                    $expDepDT = new \DateTime($savedr['Expected_Departure']);
+                    $expDepDT->setTime(0,0,0);
+    
+                    if ($expDepDT < $now) {
+                        $expDepStr = $now->format('Y-m-d');
+                    } else {
+                        $expDepStr = $expDepDT->format('Y-m-d');
+                    }
+    
+                    $paid = $visit['gpd'] + $visit['thdpd'] + $visit['hpd'];
+                    $unpaid = ($visit['chg'] + $visit['preCh']) - $paid;
+                    $preCharge = $visit['preCh'];
+                    $charged = $visit['chg'];
+    
+                    // Reduce all payments by precharge
+                    if ($preCharge >= $visit['gpd']) {
+                        $preCharge -= $visit['gpd'];
+                        $visit['gpd'] = 0;
+                    } else if ($preCharge > 0) {
+                        $visit['gpd'] -= $preCharge;
+                    }
+    
+                    if ($preCharge >= $visit['thdpd']) {
+                        $preCharge -= $visit['thdpd'];
+                        $visit['thdpd'] = 0;
+                    } else if ($preCharge > 0) {
+                        $visit['thdpd'] -= $preCharge;
+                    }
+    
+                    if ($preCharge >= $visit['hpd']) {
+                        $preCharge -= $visit['hpd'];
+                        $visit['hpd'] = 0;
+                    } else if ($preCharge > 0) {
+                        $visit['hpd'] -= $preCharge;
+                    }
+    
+    
+                    $dPaid = $visit['hpd'] + $visit['gpd'] + $visit['thdpd'];
+    
+                    $departureDT = new \DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
+    
+                    if ($departureDT > $reportEndDT) {
+    
+                        // report period ends before the visit
+                        $visit['day'] = $visit['nit'];
+    
+                        if ($unpaid < 0) {
+                            $unpaid = 0;
+                        }
+    
+                        if ($visit['gpd'] >= $charged) {
+                            $dPaid -= $visit['gpd'] - $charged;
+                            $visit['gpd'] = $charged;
+                            $charged = 0;
+                        } else if ($charged > 0) {
+                            $charged -= $visit['gpd'];
+                        }
+    
+                        if ($visit['thdpd'] >= $charged) {
+                            $dPaid -= $visit['thdpd'] - $charged;
+                            $visit['thdpd'] = $charged;
+                            $charged = 0;
+                        } else if ($charged > 0) {
+                            $charged -= $visit['thdpd'];
+                        }
+    
+                        if ($visit['hpd'] >= $charged) {
+                            $dPaid -= $visit['hpd'] - $charged;
+                            $visit['hpd'] = $charged;
+                            $charged = 0;
+                        } else if ($charged > 0) {
+                            $charged -= $visit['hpd'];
+                        }
+    
+                    } else {
+                        // visit ends in this report period
+                        $visit['day'] = $visit['nit'] + 1;
+                    }
+    
+                    $totalDays += $visit['day'];
+                    $totalPaid += $dPaid;
+                    $totalHousePaid += $visit['hpd'];
+                    $totalGuestPaid += $visit['gpd'];
+                    $totalthrdPaid += $visit['thdpd'];
+                    $totalDonationPaid += $visit['donpd'];
+                    $totalUnpaid += $unpaid;
+                    $totalSubsidy += ($visit['fcg'] - $visit['chg']);
+                    $nites[] = $visit['nit'];
+
+                    if ($r['Rate_Category'] == RoomRateCategories::Fixed_Rate_Category) {
+
+                        $r['rate'] = $r['Pledged_Rate'];
+                
+                    } else if (isset($visit['rateId']) && isset($rateTitles[$visit['rateId']])) {
+                
+                        $rateTxt = $rateTitles[$visit['rateId']];
+                
+                        if ($visit['adj'] != 0) {
+                            $parts = explode('$', $rateTxt);
+                
+                            if (count($parts) == 2) {
+                                $amt = floatval($parts[1]) * (1 + $visit['adj']/100);
+                                $rateTxt = $parts[0] . '$' . number_format($amt, 2);
+                            }
+                        }
+                
+                        $r['rate'] = $rateTxt;
+                
+                    } else {
+                        $r['rate'] = '';
+                    }
+                
+                    // Average rate
+                    $r['meanRate'] = 0;
+                    if ($visit['nit'] > 0) {
+                        $r['meanRate'] = number_format(($visit['chg'] / $visit['nit']), 2);
+                    }
+                
+                    $r['meanGstRate'] = 0;
+                    if ($visit['gnit'] > 0) {
+                        $r['meanGstRate'] = number_format(($visit['chg'] / $visit['gnit']), 2);
+                    }
+    /*
+                    if (!$statsOnly) {
+                        try{
+                            doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
+                        }catch(\Exception $e){
+                            if(isset($writer)){
+                                die();
+                            }
+                        }
+                    }*/
+                }
+    
+                $curVisit = $r['idVisit'];
+                $curRate = '';
+                $curRateId = 0;
+                $curAdj = 0;
+                $curAmt = 0;
+                $curRoom = 0;
+    
+                $addChgTax = 0;
+                $lodgeTax = 0;
+    
+                $taxSums = $vat->getTaxedItemSums($r['idVisit'], $r['Visit_Age']);
+    
+                if (isset($taxSums[ItemId::AddnlCharge])) {
+                    $addChgTax = $taxSums[ItemId::AddnlCharge];
+                }
+    
+                if (isset($taxSums[ItemId::Lodging])) {
+                    $lodgeTax = $taxSums[ItemId::Lodging];
+                }
+    
+    
+                $visit = array(
+                    'id' => $r['idVisit'],
+                    'chg' => 0, // charges
+                    'fcg' => 0, // Flat Rate Charge (For comparison)
+                    'adj' => 0,
+                    'taxcgd' => 0,
+                    'gpd' => $r['AmountPaid'] - $r['ThrdPaid'],
+                    'pndg' => $r['AmountPending'],
+                    'taxpndg' => $r['TaxPending'],
+                    'hpd' => abs($r['HouseDiscount']),
+                    'thdpd' => $r['ThrdPaid'],
+                    'addpd' => $r['AddnlPaid'],
+                    'addtxpd'=> $r['AddnlTaxPaid'],
+                    'taxpd' => $r['TaxPaid'],
+                    'addch' => $r['AddnlCharged'],
+                    'adjchtx' => round($r['AddnlCharged'] * $addChgTax, 2),
+                    'donpd' => $r['ContributionPaid'],
+                    'vfpd' => $r['VisitFeePaid'],  // Visit fees paid
+                    'plg' => 0, // Pledged rate
+                    'vfa' => $r['Visit_Fee_Amount'], // visit fees amount
+                    'nit' => 0, // Nights
+                    'day' => 0,  // Days
+                    'gnit' => 0, // guest nights
+                    'pin' => 0, // Pre-interval nights
+                    'gpin' => 0, // Guest pre-interval nights
+                    'preCh' => 0,
+                    'rmc' => 0, // Room change counter
+                    'rtc' => 0  // Rate Category counter
+                    );
+    
+            }
+    
+            // Count rate changes
+            if ($curRateId != $r['idRoom_Rate']
+                    || ($curRate == RoomRateCategories::Fixed_Rate_Category && $curAmt != $r['Pledged_Rate'])
+                    || ($curRate != RoomRateCategories::Fixed_Rate_Category && $curAdj != $r['Expected_Rate'])) {
+    
+                $curRate = $r['Rate_Category'];
+                $curRateId = $r['idRoom_Rate'];
+                $curAdj = $r['Expected_Rate'];
+                $curAmt = $r['Pledged_Rate'];
+                $visit['rateId'] = $r['idRoom_Rate'];
+                $visit['rtc']++;
+            }
+    
+            // Count room changes
+            if ($curRoom != $r['idResource']) {
+                $curRoom = $r['idResource'];
+                $visit['rmc']++;
+            }
+    
+            $adjRatio = (1 + $r['Expected_Rate']/100);
+            $visit['adj'] = $r['Expected_Rate'];
+    
+            $days = $r['Actual_Month_Nights'];
+            $gdays = $actualGuestNights[$r['idVisit']][$r['Span']] ?? 0;
+    
+            $visit['gnit'] += $gdays;
+    
+            // $gdays contains all the guests.
+            if ($gdays >= $days) {
+                $gdays -= $days;
+            }
+    
+            $visit['nit'] += $days;
+            $totalCatNites[$r[$rescGroup[0]]] += $days;
+    
+            $piDays = $r['Pre_Interval_Nights'];
+            $piGdays = $piGuestNights[$r['idVisit']][$r['Span']] ?? 0;
+            $visit['pin'] += $piDays;
+            $visit['gpin'] += $piGdays;
+    
+            if ($piGdays >= $piDays) {
+                $piGdays -= $piDays;
+            }
+    
+    
+            //  Add up any pre-interval charges
+            if ($piDays > 0) {
+    
+                // collect all pre-charges
+                $priceModel->setCreditDays($r['Rate_Glide_Credit']);
+                $visit['preCh'] += $priceModel->amountCalculator($piDays, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $piGdays) * $adjRatio;
+    
+            }
+    
+            if ($days > 0) {
+    
+                $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
+                $visit['chg'] += $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
+                $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
+    
+                $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
+                $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
+    
+                if ($adjRatio > 0) {
+                    // Only adjust when the charge will be more.
+                    $fullCharge = $fullCharge * $adjRatio;
+                }
+    
+                // Only Positive values.
+                $visit['fcg'] += ($fullCharge > 0 ? $fullCharge : 0);
+            }
+    
+            $savedr = $r;
+
+            
+    
+        }
+    }
+
+    /**
+     * Summary of getGuestNights
+     * @param mixed $actual
+     * @param mixed $preInterval
+     * @return void
+     */
+    protected function getGuestNights(&$actual, &$preInterval) {
+
+        $start = $this->filter->getReportStart();
+        $end = $this->filter->getReportEnd();
+        $uS = Session::getInstance();
+        $ageYears = $uS->StartGuestFeesYr;
+        $parm = "NOW()";
+        if ($end != '') {
+            $parm = "'$end'";
+        }
+
+        $stmt = $this->dbh->query("SELECT
+        s.idVisit,
+        s.Visit_Span,
+        CASE
+            WHEN
+                DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
+            THEN 0
+            WHEN
+                DATE(s.Span_Start_Date) >= DATE('$end')
+            THEN 0
+            ELSE
+                SUM(DATEDIFF(
+                    CASE
+                        WHEN
+                            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('$end')
+                        THEN
+                            DATE('$end')
+                        ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                    END,
+                    CASE
+                        WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
+                        ELSE DATE(s.Span_Start_Date)
+                    END
+                ))
+            END AS `Actual_Guest_Nights`,
+        CASE
+            WHEN DATE(s.Span_Start_Date) >= DATE('$start') THEN 0
+            WHEN
+                DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start')
+            THEN
+                SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))),
+                        DATE(s.Span_Start_Date)))
+            ELSE SUM(DATEDIFF(CASE
+                        WHEN
+                            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$start')
+                        THEN
+                            DATE('$start')
+                        ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                    END,
+                    DATE(s.Span_Start_Date)))
+        END AS `PI_Guest_Nights`
+
+    FROM stays s JOIN name n ON s.idName = n.idName
+
+    WHERE  IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
+        AND DATE(s.Span_Start_Date) < DATE('$end')
+        and DATE(ifnull(s.Span_End_Date,
+        case
+        when now() > s.Expected_Co_Date then now()
+        else s.Expected_Co_Date
+        end)) >= DATE('$start')
+    GROUP BY s.idVisit, s.Visit_Span");
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $actual[$r['idVisit']][$r['Visit_Span']] = $r['Actual_Guest_Nights'] < 0 ? 0 : $r['Actual_Guest_Nights'];
+            $preInterval[$r['idVisit']][$r['Visit_Span']] = $r['PI_Guest_Nights'] < 0 ? 0 : $r['PI_Guest_Nights'];
+        }
 
     }
 }
