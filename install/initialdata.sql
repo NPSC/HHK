@@ -684,7 +684,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
-('showResvHousekeeping', 'false', 'b', 'h', '', 'Show reservations on Guests Checking Out tab of Housekeeping', '', 1)
+('showResvHousekeeping', 'false', 'b', 'h', '', 'Show reservations on Guests Checking Out tab of Housekeeping', '', 1),
 ('ShowRoomOcc', 'false', 'b', 'c', '', 'Show current occupancy percentage on calendar','','1'),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
 ('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page','',1),
@@ -694,7 +694,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Show_Closed', 'false', 'b', 'c', '', 'Indicate closed days on the calendar','', '1'),
 ('sId','11','i','a','','House organization Id','',1),
 ('siteName','Hospitality HouseKeeper','s','a','','House or organization  name','',1),
-('smsProvider', '', 'lu', 'sms', '', 'Enable SMS integration', 'smsProvider', '', 1),
+('smsProvider', '', 'lu', 'sms', '', 'Enable SMS integration', 'smsProvider', 1),
 ('smsToken', '', 's', 'sms', '', 'API Token', '', 1),
 ('smsFrom', '', 's', 'sms', '', 'Account Phone number used as the From address', '', 1),
 ('SMTP_Auth_Required','true','b','es','','SMTP Authorization required','',1),

@@ -142,24 +142,15 @@ if (isset($_POST['btnNext'])) {
                     var pw1 = $('#txtpw1'),
                         pw2 = $('#txtpw2'),
                         pw3 = $('#txtpw3'),
-                        pw4 = $('#txtpw4'),
-                        pword,
-                        pword2;
+                        pw4 = $('#txtpw4');
 
                     $('#spanpwerror, #spanpw3error').text('');
-                    pword = pw1.val();
-                    pword2 = pw2.val();
 
-                    if (checkStrength(pword)) {
+                    if (checkStrength(pw1.val())) {
 
                         // Strength ok, check second copy
-                        if (pword !== pw2.val()) {
+                        if (pw1.val() !== pw2.val()) {
                             $('#spanpwerror').text('Passwords are not the same.');
-                            return;
-                        }
-
-                        if (pword2 !== pw3.val()) {
-                            $('#spanpw3error').text('Passwords are not the same.');
                             return;
                         }
 
@@ -168,11 +159,11 @@ if (isset($_POST['btnNext'])) {
                         return;
                     }
 
-                    if (checkStrength(pword2)) {
+                    if (checkStrength(pw3.val())) {
 
                         // Strength ok, check second copy
 
-                        if (pword2 !== pw3.val()) {
+                        if (pw3.val() !== pw4.val()) {
                             $('#spanpw3error').text('Passwords are not the same.');
                             return;
                         }
@@ -182,7 +173,7 @@ if (isset($_POST['btnNext'])) {
                         return;
                     }
 
-                    $.post('ws_install.php', {cmd: 'loadmd', 'adminpw': pword, 'npscuserpw' : pword2}, function (data) {
+                    $.post('ws_install.php', {cmd: 'loadmd', 'adminpw': pw1.val(), 'npscuserpw' : pw3.val()}, function (data) {
                         if (data) {
                             try {
                                 data = $.parseJSON(data);
