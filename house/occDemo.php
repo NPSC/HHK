@@ -60,7 +60,7 @@ $dateInterval = new DateInterval('P1M');
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months, array(ReportFilter::DATES));
 $filter->createHospitals();
-$filter->createResourceGroups(readGenLookupsPDO($dbh, 'Room_Group'), $uS->CalResourceGroupBy);
+$filter->createResourceGroups($dbh);
 $filter->createDiagnoses($dbh);
 
 if (isset($_POST['rbAllGuests'])) {
