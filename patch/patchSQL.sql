@@ -160,3 +160,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showResvHousekeeping', 'false', 'b', 'h', 'Show reservations on Guests Checking Out tab of Housekeeping', 1);
 
 ALTER TABLE `w_user_log` CHANGE COLUMN `Action` `Action` VARCHAR(255) NOT NULL DEFAULT '' ;
+
+
+ALTER TABLE `link_doc` 
+ADD COLUMN IF NOT EXISTS `reportName` VARCHAR(100) NULL DEFAULT NULL AFTER `idPSG`;

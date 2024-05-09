@@ -103,5 +103,3 @@ order by l.Title, `Arrival`";
     }
 
 }
-
-?>

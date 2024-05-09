@@ -187,6 +187,9 @@ function buildPage($error, $success = false) {
                                     <div class="form-input">
                                         <input type="submit" class="ui-button ui-corner-all ui-widget" value="Submit" style="width: initial;">
                                     </div>
+                                    <div style="display:none;">
+                                        <?php echo json_encode($error); ?>
+                                    </div>
                                 </form>
     <?php } ?>
                         </div>

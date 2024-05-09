@@ -1,16 +1,9 @@
 <?php
-use HHK\sec\WebInit;
-use HHK\Config_Lite\Config_Lite;
-use HHK\sec\Session;
-use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLInput;
-use HHK\HTMLControls\HTMLTable;
+use HHK\sec\WebInit;
+use HHK\sec\Session;
 use HHK\sec\Labels;
-use HHK\House\Report\{ReportFilter, ReportFieldSet};
-use HHK\ColumnSelectors;
 use HHK\House\Report\CurrentGuestReport;
-use HHK\House\Report\GuestVehicleReportOld;
 use HHK\House\Report\VehiclesReport;
 use HHK\House\Report\BirthdayReport;
 
@@ -48,32 +41,20 @@ $vehicleReport = new VehiclesReport($dbh, $_REQUEST);
 
 $resultMessage = "";
 
-$guestReportMkup = '';
-$birthdayReportMkup = '';
 $tab = 0;
-
-if (isset($_POST['btnHere-' . $currentGuestReport->getInputSetReportName()])){
-    $guestReportMkup = $currentGuestReport->generateMarkup();
-}
-
-if (isset($_POST['btnExcel-' . $currentGuestReport->getInputSetReportName()])) {
-    $currentGuestReport->downloadExcel("CurrentGuestsReport");
-}
 
 if (isset($_POST['btnHere-' . $birthdayReport->getInputSetReportName()])){
     $tab = 1;
-    $birthdayReportMkup = $birthdayReport->generateMarkup();
 }
 
 if (isset($_POST['btnExcel-' . $birthdayReport->getInputSetReportName()])) {
     $tab = 1;
-    $birthdayReport->downloadExcel("BirthdayReport");
 }
 
 //vehicle report
 $vehicleReportMkup = '';
 if ($uS->TrackAuto) {
-    $vehicleReportMkup = $vehicleReport->generateMarkup() . $vehicleReport->generateEmailDialog();
+    $vehicleReportMkup = HTMLContainer::generateMarkup("div", $vehicleReport->generateMarkup() . $vehicleReport->generateEmailDialog(), ["id"=>$vehicleReport->getInputSetReportName() . "Wrapper"]);
 }
 
 
@@ -106,6 +87,7 @@ $emtableMarkupv = '';
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTVIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
@@ -113,8 +95,6 @@ $emtableMarkupv = '';
     $(document).ready(function () {
         "use strict";
 
-
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var tabReturn = '<?php echo $tab; ?>';
 
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
@@ -179,13 +159,13 @@ $emtableMarkupv = '';
                     <li><a href="#tabsrch"><?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?> Search</a></li>
                     <?php } ?>
                 </ul>
-                <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
-                	<?php echo $currentGuestReport->generateFilterMarkup() . $guestReportMkup; ?>
+                <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style="display:none;">
+                	<?php echo $currentGuestReport->generateWrapperMarkup(); ?>
                 </div>
-                <div id="tabBirthday" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
-                	<?php echo $birthdayReport->generateFilterMarkup() . $birthdayReportMkup; ?>
+                <div id="tabBirthday" class="hhk-tdbox hhk-visitdialog" style="display:none;">
+                	<?php echo $birthdayReport->generateWrapperMarkup() ?>
                 </div>
-                <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
+                <div id="tabVeh" class="hhk-tdbox" style="display:none;">
                     <?php echo $vehicleReportMkup; ?>
                 </div>
                 <div id="tabsrch" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">

@@ -55,6 +55,8 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
         }
         $this->selectedBillingAgentNames = $this->getSelectedBillingAgentNames();
 
+        $this->makeDrawCallback();
+
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
@@ -204,6 +206,33 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
         return ["TotalPatientsServed" => count(array_unique($patientIds)), "TotalBilled"=>$totalBilled];
     }
 
+    public function makeDrawCallback():void{
+        $this->drawCallback = 'function (settings) {
+            $(".hhk-viewVisit").button();
+            $(".hhk-viewVisit").click(function () {
+                var vid = $(this).data("vid");
+                var gid = $(this).data("gid");
+                var span = $(this).data("span");
+
+                var buttons = {
+                    "Show Statement": function() {
+                        window.open("ShowStatement.php?vid=" + vid, "_blank");
+                    },
+                    "Show Registration Form": function() {
+                        window.open("ShowRegForm.php?vid=" + vid + "&span=" + span, "_blank");
+                    },
+                    "Save": function() {
+                        saveFees(gid, vid, span, false, "VisitInterval.php");
+                    },
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    }
+                };
+                viewVisit(gid, vid, buttons, "Edit Visit #" + vid + "-" + span, "", span);
+            });
+        }';
+    }
+
     public function makeFilterMkup():void{
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
         $this->filterMkup .= $this->getBillingAgentMarkup()->generateMarkup();
@@ -301,4 +330,3 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
         return parent::generateMarkup($outputType);
     }
 }
-?>

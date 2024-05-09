@@ -107,6 +107,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTVIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
 
@@ -182,7 +183,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                     google.charts.setOnLoadCallback(drawGuestsPerNight);
                 }
 
-                $("#historicalOcc #repSummary>img").remove();
+                $("#historicalOcc .repSummary>img").remove();
 
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = $.parseJSON('<?php echo json_encode($occupancyReport->colSelector->getColumnDefs()); ?>');

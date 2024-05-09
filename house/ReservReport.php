@@ -1,18 +1,8 @@
 <?php
 
-use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
+
 use HHK\sec\{Session, WebInit};
-use HHK\HTMLControls\HTMLContainer;
-use HHK\House\Report\ReportFilter;
-use HHK\ColumnSelectors;
-use HHK\HTMLControls\HTMLTable;
-use HHK\SysConst\RoomRateCategories;
-use HHK\SysConst\GLTableNames;
-use HHK\HTMLControls\HTMLSelector;
-use HHK\ExcelHelper;
 use HHK\sec\Labels;
-use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReservationReport;
 
 /**
@@ -43,18 +33,7 @@ $uS = Session::getInstance();
 $labels = Labels::getLabels();
 $menuMarkup = $wInit->generatePageMenu();
 
-$dataTableWrapper = '';
-
 $reservationReport = new ReservationReport($dbh, $_REQUEST);
-
-if (isset($_POST['btnHere-' . $reservationReport->getInputSetReportName()])) {
-    $dataTableWrapper = $reservationReport->generateMarkup();
-}
-
-if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
-    ini_set('memory_limit', "280M");
-    $reservationReport->downloadExcel("reservReport");
-}
 
 ?>
 <!DOCTYPE html>
@@ -81,14 +60,11 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTVIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
         <script type="text/javascript">
             $(document).ready(function() {
-                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-                var columnDefs = $.parseJSON('<?php echo json_encode($reservationReport->colSelector->getColumnDefs()); ?>');
-
-                <?php echo $reservationReport->filter->getTimePeriodScript(); ?>;
                 <?php echo $reservationReport->generateReportScript(); ?>
             });
          </script>
@@ -97,7 +73,7 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <?php echo $reservationReport->generateFilterMarkup() . $dataTableWrapper; ?>
+            <?php echo $reservationReport->generateWrapperMarkup() ?>
         </div>
     </body>
 </html>

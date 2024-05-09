@@ -36,18 +36,7 @@ $menuMarkup = $wInit->generatePageMenu();
 $paymentMarkup = '';
 $receiptMarkup = '';
 
-$dataTableWrapper = '';
-
 $report = new BillingAgentReport($dbh, $_REQUEST);
-
-if (isset($_POST['btnHere-' . $report->getInputSetReportName()])) {
-    $dataTableWrapper = $report->generateMarkup();
-}
-
-if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
-    ini_set('memory_limit', "280M");
-    $report->downloadExcel("BillingAgentReport");
-}
 
 ?>
 <!DOCTYPE html>
@@ -81,42 +70,16 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTVIEWER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
         <script type="text/javascript">
-            var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-            var columnDefs = $.parseJSON('<?php echo json_encode($report->colSelector->getColumnDefs()); ?>');
             var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
             var rctMkup, pmtMkup;
             $(document).ready(function() {
 
-                var drawCallback = function (settings) {
-                    $('.hhk-viewVisit').button();
-                    $('.hhk-viewVisit').click(function () {
-                        var vid = $(this).data('vid');
-                        var gid = $(this).data('gid');
-                        var span = $(this).data('span');
-
-                        var buttons = {
-                            "Show Statement": function() {
-                                window.open('ShowStatement.php?vid=' + vid, '_blank');
-                            },
-                            "Show Registration Form": function() {
-                                window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
-                            },
-                            "Save": function() {
-                                saveFees(gid, vid, span, false, 'VisitInterval.php');
-                            },
-                            "Cancel": function() {
-                                $(this).dialog("close");
-                            }
-                        };
-                        viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-                    });
-                };
-
-                <?php echo $report->filter->getTimePeriodScript(); ?>;
                 <?php echo $report->generateReportScript(); ?>
                 
 		        pmtMkup = $('#pmtMkup').val(),
@@ -173,7 +136,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <?php echo $report->generateFilterMarkup() . $dataTableWrapper; ?>
+            <?php echo $report->generateWrapperMarkup(); ?>
         </div>
 
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />

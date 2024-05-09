@@ -40,6 +40,8 @@ class Document {
         'application/pdf' => 'pdf',
         'application/msword' => 'doc',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+        'application/msexcel' => 'xls',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
         'text/html'=>'html',
     ];
 
@@ -191,12 +193,14 @@ class Document {
      * @param string $psgId
      * @return int last insert id.
      */
-    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null) {
-        if ($this->idDocument && ($psgId || $guestId)) {
-            $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`) VALUES("' . $this->idDocument . '", "' . intval($guestId) . '", "' . intval($psgId) . '");';
+    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null, $reportName = '') {
+        if ($this->idDocument && ($psgId || $guestId || $reportName)) {
+            $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`, `reportName`) VALUES("' . $this->idDocument . '", "' . intval($guestId) . '", "' . intval($psgId) . '", "' . $reportName . '");';
             $stmt = $dbh->prepare($query);
             $stmt->execute();
             return $dbh->lastInsertId();
+        }else{
+            return false;
         }
     }
 

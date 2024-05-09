@@ -1,6 +1,10 @@
 <?php
 
 namespace HHK;
+use HHK\Document\Document;
+use HHK\Notification\Mail\HHKMailer;
+use HHK\sec\Session;
+use PHPMailer\PHPMailer\PHPMailer;
 
 /**
  * ExcelHelper.php
@@ -16,6 +20,10 @@ namespace HHK;
 class ExcelHelper extends \XLSXWriter{
 
     CONST hdrStyle = ['font-style'=>'bold', 'halign'=>'center', 'auto_filter'=>true, 'widths'=>[]];
+
+    const ACTION_DOWNLOAD = "download";
+    const ACTION_EMAIL    = "email";
+    const ACTION_SAVE_DOC = "save";
     protected $filename = '';
 
     /**
@@ -39,6 +47,44 @@ class ExcelHelper extends \XLSXWriter{
         header('Cache-Control: max-age=0');
         $this->writeToStdOut();
         exit();
+    }
+
+    public function saveDoc(\PDO $dbh, string $username, string $reportInputSetName = ""){
+        
+        $document = Document::createNew($this->filename, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $this->writeToString(), $username);
+
+        $document->saveNew($dbh);
+
+        if($document->linkNew($dbh, null, null, $reportInputSetName) > 0){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public function emailDoc(\PDO $dbh, string $to = ""){
+        $uS = Session::getInstance();
+        if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            $mail = new HHKMailer($dbh);
+            $mail->From = ($uS->NoReplyAddr ? $uS->NoReplyAddr : "no_reply@nonprofitsoftwarecorp.org");
+            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
+            $mail->addAddress($to);
+
+            $mail->isHTML(true);
+
+            $mail->Subject = "Your HHK Report is ready";
+            $mail->msgHTML("Your requested report is attached.");
+
+            $mail->addStringAttachment($this->writeToString(), $this->filename . ".xlsx", PHPMailer::ENCODING_BASE64, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            if ($mail->send() === FALSE) {
+                return false;
+            } else {
+                return true;
+            }
+        }else{
+            return false;
+        }
     }
 
     /**

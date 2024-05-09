@@ -45,6 +45,8 @@ abstract class AbstractReport {
     protected string $description = "";
     protected string $inputSetReportName = "";
     protected bool $rendered = false;
+    protected bool $render = false;
+    protected string $drawCallback = "";
 
     /**
      * @param \PDO $dbh
@@ -82,7 +84,7 @@ abstract class AbstractReport {
         }
 
         //register actions
-        $this->actions($dbh, $request);
+        $this->actions();
     }
 
     /**
@@ -117,7 +119,7 @@ abstract class AbstractReport {
         return HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("form",
                     $this->filterMkup . $btnMkup . $emDialog
-                , array("method"=>"POST", "action"=>htmlspecialchars($_SERVER["PHP_SELF"]), "id"=>$this->inputSetReportName . "RptFilterForm"))
+                , array("method"=>"POST", "action"=>htmlspecialchars($_SERVER["PHP_SELF"]), "id"=>$this->inputSetReportName . "RptFilterForm", 'class'=>'rptFilterForm'))
             , array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper"));
     }
 
@@ -139,7 +141,20 @@ abstract class AbstractReport {
     }
 
     /**
-     * Generate HTML markup
+     * Generate full report markup including filters, table, dialogs
+     * @param bool $excelDownload - set to false to disable excel download
+     * @return string
+     */
+    public function generateWrapperMarkup(bool $excelDownload = true){
+        $mkup = $this->generateFilterMarkup($excelDownload);
+        if($this->render){
+            $mkup .= $this->generateMarkup();
+        }
+        return HTMLContainer::generateMarkup("div", $mkup, ['id' => $this->inputSetReportName . "Wrapper"]);
+    }
+
+    /**
+     * Generate report HTML markup
      *
      * @param string $outputType if sending email, set to "email" to format fields for email
      * @return string
@@ -173,7 +188,7 @@ abstract class AbstractReport {
 
         $this->rendered = true;
 
-        return HTMLContainer::generateMarkup('form', HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper')), array('autocomplete'=>'off'));
+        return HTMLContainer::generateMarkup('form', HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'tblrpt display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper')), array('autocomplete'=>'off'));
     }
 
     public function generateSummaryMkup():string {
@@ -182,7 +197,7 @@ abstract class AbstractReport {
         $summaryMkup = $this->makeSummaryMkup();
 
         $titleMkup = HTMLContainer::generateMarkup('h3', $this->reportTitle, array('class'=>'mt-2'));
-        $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ml-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/" . $uS->statementLogoFile, "width"=>$uS->statementLogoWidth)), array('id'=>'repSummary', 'class'=>'hhk-flex mb-3', 'style'=>'justify-content: space-between'));
+        $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ml-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/" . $uS->statementLogoFile, "width"=>$uS->statementLogoWidth)), array('class'=>'repSummary hhk-flex mb-3', 'style'=>'justify-content: space-between'));
         return $titleMkup . $bodyMkup;
 
     }
@@ -191,93 +206,18 @@ abstract class AbstractReport {
         $jsonColumnDefs = json_encode($this->colSelector->getColumnDefs());
         $uS = Session::getInstance();
 
-        return '
-        $("#' . $this->inputSetReportName . '-includeFields").fieldSets({"reportName": "' . $this->inputSetReportName .  '", "defaultFields": ' . json_encode($this->getDefaultFields()) . '});' .
-
-        ($this->rendered ? '
-        var dtOptions = {
-            "columnDefs": [
-            {"targets": ' . $jsonColumnDefs . ',
-            "type": "date",
-            "render": function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-            }
-            ],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bif><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
-            "buttons": [
-            {
-                extend: "print",
-                className: "ui-corner-all",
-                autoPrint: true,
-                paperSize: "letter",
-                title: function(){
-                    return "' . $this->reportTitle . '";
-                },
-                messageTop: function(){
-                    return document.getElementById("repSummary").outerHTML;
-                },
-                messageBottom: function(){
-                    var now = moment().format("' . Labels::getString("momentFormats", 'dateTime', 'MMM D, YYYY h:mm a') . '");
-
-                    return "<div style=\"padding-top: 10px; position: fixed; bottom: 0; right: 0\">Generated by <strong>' . $uS->username . '</strong> on " + now + "</div>";
-                },
-                customize: function (win) {
-                    $(win.document.body)
-                        .css("font-size", "0.9em");
-
-                    $(win.document.body).find("table")
-                        //.addClass("compact")
-                        .css("font-size", "inherit");
-                }
-            },
-            {
-                text: "Email",
-                className: "ui-corner-all",
-                action: function (e) {
-                    $("#em' . $this->inputSetReportName . 'RptDialog").dialog("open");
-                }
-            },
-            ],
-        }
-
-        if(typeof drawCallback === "function"){
-            dtOptions["drawCallback"] = drawCallback;
-        }
-
-        $("#tbl' . $this->inputSetReportName . 'rpt").dataTable(dtOptions);
-
-        $("#em' . $this->inputSetReportName . 'RptDialog").dialog({
-            autoOpen:false,
-            modal:true,
-            title: "Email ' . $this->reportTitle . '",
-            width: "auto",
-            buttons: {
-                "Send":function(){
-                    var data = $("#' . $this->inputSetReportName . 'RptFilterForm").serializeArray();
-                        data.push({"name":"btn' . $this->inputSetReportName . 'Email", "value":"true"});
-                        data.push({"name":"txtSubject", "value":$(this).find("#txtSubject").val()});
-                        data.push({"name":"txtEmail", "value":$(this).find("#txtEmail").val()});
-                    $.ajax({
-                        type:"post",
-                        data:data,
-                        dataType: "json",
-                        success: function(data){
-                            if(data.success){
-                                flagAlertMessage(data.success,false);
-                                $("#em' . $this->inputSetReportName . 'RptDialog").dialog("close");
-                            }else if(data.error){
-                                flagAlertMessage(data.error, true);
-                            }else{
-                                flagAlertMessage("An unknown error occurred", true);
-                            }
-                        }
-                    });
-                }
-            }
-        });
-': '')  . $this->filter->getTimePeriodScript();
-
+        return '$("#' . $this->inputSetReportName . 'Wrapper").reportViewer(
+        {
+            reportTitle: "' . $this->reportTitle . '",
+            inputSetReportName: "' . $this->inputSetReportName . '",
+            defaultFields: ' . json_encode($this->getDefaultFields()) . ',
+            dtCols: ' . $jsonColumnDefs . ',
+            dateFormat: "' . Labels::getString("momentFormats", 'dateTime', 'MMM D, YYYY h:mm a') . '",
+            dtDateFormat: "' . Labels::getString("momentFormats", "report", "MMM D, YYYY") . '",
+            username: "' . $uS->username . '",
+            startYear: "' . $uS->StartYear . '",
+            drawCallback: ' . ($this->drawCallback != "" ? $this->drawCallback : '""') . '
+        });';
     }
 
     public function generateEmailStyles():string {
@@ -304,16 +244,16 @@ abstract class AbstractReport {
         float:right;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt {
+    table.tblrpt {
         border-collapse: collapse;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt td {
+    table.tblrpt td {
         border:1px solid #c1c1c1;
         padding: 10px;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt thead th {
+    table.tblrpt thead th {
         padding:10px;
         border-bottom: 2px solid #111
     }
@@ -433,8 +373,17 @@ abstract class AbstractReport {
         }
     }
 
-    protected function actions(\PDO $dbh, array $request):void{
+    protected function actions():void{
         $result = array();
+
+        if (isset($this->request['btnHere-' . $this->getInputSetReportName()])) {
+            $this->render = true;
+        }
+        
+        if (isset($this->request['btnExcel-' . $this->getInputSetReportName()])) {
+            ini_set('memory_limit', "280M");
+            $this->downloadExcel();
+        }
 
         if (isset($this->request['btn' . $this->inputSetReportName . 'Email']) && $this->request['btn' . $this->inputSetReportName . 'Email'] == 'true') {
 
@@ -449,7 +398,7 @@ abstract class AbstractReport {
                 $subject = filter_input(INPUT_POST, 'txtSubject', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $result = $this->sendEmail($dbh, $emailAddress, $subject);
+            $result = $this->sendEmail($this->dbh, $emailAddress, $subject);
         }
 
         if(count($result) > 0){
@@ -479,8 +428,12 @@ abstract class AbstractReport {
         return $this->inputSetReportName;
     }
 
+    public function getReportTitle(){
+        return $this->reportTitle;
+    }
+
     public function getColSelectorMkup(){
-        return $this->colSelector->makeSelectorTable(TRUE)->generateMarkup(array('id'=>$this->inputSetReportName . '-includeFields'));
+        return $this->colSelector->makeSelectorTable(TRUE)->generateMarkup(array('class'=>'includeFields'));
     }
 
 }

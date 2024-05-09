@@ -343,6 +343,7 @@ CREATE TABLE if not exists `link_doc` (
   `idDocument` int(11) NOT NULL,
   `idGuest` int(11) DEFAULT NULL,
   `idPSG` int(11) DEFAULT NULL,
+  `reportName` VARCHAR(100) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
