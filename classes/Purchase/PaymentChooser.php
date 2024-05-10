@@ -485,7 +485,7 @@ class PaymentChooser {
 
         return HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Paying Today', array('style'=>'font-weight:bold;'))
-                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel hhk-flex', 'style'=>'min-width: max-content'));
+                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel hhk-flex', 'style'=>'width: fit-content;max-width: 100%;'));
 
     }
 
