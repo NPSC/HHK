@@ -1,0 +1,26 @@
+{
+  "name": "hhk",
+  "version": "3.23.0",
+  "description": "",
+  "main": "js/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NPSC/HHK.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NPSC/HHK/issues"
+  },
+  "homepage": "https://github.com/NPSC/HHK#readme",
+  "devDependencies": {
+    "buffer": "^6.0.3",
+    "dirrty": "^1.0.0",
+    "formBuilder": "^3.19.7",
+    "jquery": "^3.7.1",
+    "jsignature": "^2.1.3",
+    "toastr": "^2.1.4"
+  }
+}
