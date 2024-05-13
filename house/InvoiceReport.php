@@ -127,8 +127,8 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     $g['County'] = $r['County'];
     $g['Zip'] = $r['Zip'];
     $g['Title'] = $r['Title'];
-    $g['Span_Start'] = $r['Span_Start'];
-    $g['Span_End'] = $r['Span_End'];
+    $g['Arrival'] = $r['Arrival'];
+    $g['Departure'] = $r['Departure'];
     $g['hospital'] = $hospital;
     $g['Balance'] = number_format($r['Balance'], 2);
     $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], ['id' => 'divInvNotes' . $r['Invoice_Number'], 'style' => 'max-width:190px;']);
@@ -254,8 +254,8 @@ $cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
 $cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
 $cFields[] = array("Billed", 'billed', 'checked', '', 'string', '20', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
-$cFields[] = array("Arrival", 'Span_Start', '', '', 'MM/DD/YYYY', '15', array(), 'date');
-$cFields[] = array("Departure", 'Span_End', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Visit Arrival", 'Arrival', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Visit Departure", 'Departure', '', '', 'MM/DD/YYYY', '15', array(), 'date');
 
 if ((count($hospList)) > 1) {
     $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospital', 'checked', '', 'string', '20', array());
@@ -456,8 +456,8 @@ ifnull(np.Name_Full, '') as Patient_Name,
 ifnull(nap.County, '') as `County`,
 ifnull(nap.Postal_Code, '') as `Zip`,
 ifnull(re.Title, '') as `Title`,
-ifnull(v.Span_Start, '') as `Span_Start`,
-ifnull(v.Span_End, '') as `Span_End`,
+ifnull(v.Arrival_Date, '') as `Arrival`,
+ifnull(v.Actual_Departure, ifnull(v.Expected_Departure, '')) as `Departure`,
 ifnull(hs.idHospital, 0) as `idHospital`,
 ifnull(hs.idAssociation, 0) as `idAssociation`,
 ifnull(hs.idPatient, 0) as `idPatient`,
