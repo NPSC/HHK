@@ -873,7 +873,27 @@ where
         
         return $emtableMarkup;
     }
-	
+
+	/**
+	 * Summary of getBillToEmail
+	 * @param \PDO $dbh
+	 * @return string
+	 */
+	public function getBillToEmail(\PDO $dbh):string{
+		$idName = $this->getSoldToId();
+		if ($idName > 0) {
+
+			$stmt = $dbh->query("select e.Email from name n left join name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose where n.idName = $idName");
+
+			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
+
+			if (count($rows) == 1) {
+				return $rows[0]["Email"];
+			}
+		};
+		return "";
+	}
+
 	/**
 	 * Summary of getBillToAddress
 	 * @param \PDO $dbh

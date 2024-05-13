@@ -54,6 +54,8 @@ try {
         $invoice = new Invoice($dbh, $invNum);
         $stmtMarkup = $invoice->createPDFMarkup($dbh);
 
+        $emAddrs[] = $invoice->getBillToEmail($dbh);
+
         if (isset($_POST['btnWord'])) {
 
             HouseLog::logDownload($dbh, "Invoice", "Word", "Invoice $invNum Word Doc downloaded", $uS->username);

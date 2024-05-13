@@ -1739,7 +1739,7 @@ foreach ($hospConstraints as $c) {
     $hths .= HTMLTable::makeTh($c->getTitle());
 }
 
-$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire') . HTMLTable::makeTh('Hide from calendar list');
+$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire/Delete') . HTMLTable::makeTh('Hide from calendar list');
 $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
@@ -1755,11 +1755,9 @@ foreach ($hrows as $h) {
         [
             'name' => 'hTitle[' . $h['idHospital'] . ']'
         ]
-    )) . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, $h['Type'], FALSE),
-                    [
-                        'name' => 'hType[' . $h['idHospital'] . ']'
-                    ]
-                )) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Description'],
+    )) . HTMLTable::makeTd((isset($hospTypes[$h['Type']]) ? $hospTypes[$h['Type']]['Description'] : "") 
+        . HTMLInput::generateMarkup($h['Type'], ['name'=>'hType[' . $h['idHospital'] . ']', 'type'=>'hidden']))
+     . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Description'],
                     [
                         'name' => 'hDesc[' . $h['idHospital'] . ']',
                         'size' => '25'
@@ -2478,7 +2476,6 @@ $formBuilderOptions = [
             <div id="hospTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                 <form method="POST" action="ResourceBuilder.php" name="formh">
                     <?php echo $hospTable; ?>
-                    <div style="clear: both"></div>
                     <span style="margin: 10px; float: right;"><input type="submit" id='btnhSave' name="btnhSave"
                             value="Save" /></span>
                 </form>
