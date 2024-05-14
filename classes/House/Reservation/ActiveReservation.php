@@ -513,4 +513,3 @@ class ActiveReservation extends Reservation {
     }
 
 }
-?>

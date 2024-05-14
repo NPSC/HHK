@@ -857,7 +857,7 @@ div.dt-buttons .dt-button:hover>span {
 }
 
 
-.ui-widget-content.hhk-widget-mobile, .hhk-mobile-tabs .ui-widget-content {
+.ui-widget-content.hhk-widget-mobile, .hhk-mobile-tabs .ui-widget-content:not("ul") {
 	overflow-x: auto;
 	overflow-y: auto
 }

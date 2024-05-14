@@ -1004,6 +1004,9 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] == 'a' && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0){ //checked in past expected departure
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedInPastExpectedDepart]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedInPastExpectedDepart]['t'];
+                }else if(isset($r["Visit_Status"]) && $r["Visit_Status"] == 'a' && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1){ //checking out tomorrow
+                    $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutTomorrow]['b'];
+                    $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutTomorrow]['t'];
                 } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] == 'a'){ //checked in
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedIn]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedIn]['t'];
@@ -1202,4 +1205,3 @@ class Event {
   }
 
 }
-?>
