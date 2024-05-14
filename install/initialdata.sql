@@ -34,11 +34,13 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Calendar_Status_Colors', 'citod', 'Checking In Today', '','u',20),
 ('Calendar_Status_Colors', 'citom', 'Checking In Tomorrow', '','u',30),
 ('Calendar_Status_Colors', 'cifut', 'Checking In in the Future', '','u',40),
+('Calendar_Status_Colors', 'cipast', 'Checking In in the Past', '','u',45),
 ('Calendar_Status_Colors', 'co', 'Checked Out', '','u',50),
 ('Calendar_Status_Colors', 'cotod', 'Checking Out Today', '','u',60),
 ('Calendar_Status_Colors', 'cotom', 'Checking Out Tomorrow', '','u',70),
 ('Calendar_Status_Colors', 'copast', 'Checked in past Expected Departure', '','u',80),
 ('Calendar_Status_Colors', 'w', 'Waitlist', '','u',90),
+('Calendar_Status_Colors', 'uc', 'Unconfirmed', '','u',100),
 
 ('Campaign_Status','a','Active','','',0),
 ('Campaign_Status','d','Disabled','','',0),

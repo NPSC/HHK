@@ -13,6 +13,7 @@ namespace HHK\SysConst;
 class CalendarStatusColors {
     const CheckedIn = 'ci';
     const CheckingInFuture = 'cifut';
+    const CheckingInPast = 'cipast';
     const CheckingInToday = 'citod';
     const CheckingInTomorrow = 'citom';
     const CheckedOut = 'co';
@@ -20,4 +21,5 @@ class CalendarStatusColors {
     const CheckingOutTomorrow = 'cotom';
     const CheckedInPastExpectedDepart = 'copast';
     const Waitlist = 'w';
+    const Unconfirmed = 'uc';
 }

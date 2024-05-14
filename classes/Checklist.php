@@ -240,7 +240,9 @@ ORDER BY g.`Order`;";
         $stmt = $dbh->prepare($query);
         $stmt->execute([':entityId' => $entityId, ':tblName' => $checklistType]);
 
-        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($rows as $r) {
             if(isset($cbChecklistItems[$checklistType][$r["Code"]]) && strtolower($cbChecklistItems[$checklistType][$r["Code"]]) == "on"){ //if item is checked
                 if(isset($checklistDates[$checklistType][$r["Code"]]) && $checklistDates[$checklistType][$r["Code"]] != ""){ //date is filled
                     $date = new DateTime($checklistDates[$checklistType][$r["Code"]]);
