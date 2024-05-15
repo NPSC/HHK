@@ -338,17 +338,16 @@ if($uS->useOnlineReferral){
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
-        <?php echo NOTY_CSS; ?>
+        <!-- <?php echo NOTY_CSS; ?> -->
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo CSSVARS; ?>
 
-		<script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MAIN_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo FULLCALENDAR_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
@@ -360,13 +359,7 @@ if($uS->useOnlineReferral){
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo REFERRAL_VIEWER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>

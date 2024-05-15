@@ -83,3 +83,6 @@ define('NOTES_VIEWER_JS', '../js/notesViewer.js' . JSV);
 define('SELECT2_JS', '../js/select2.min.js' . JSV);
 define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js' . JSV);
 define('BUFFER_JS', '../js/buffer.min.js' . JSV);
+
+
+define('MAIN_JS', '../js/main.js');

@@ -1,0 +1,47 @@
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+/*!
+ * jQuery JavaScript Library v3.7.1
+ * https://jquery.com/
+ *
+ * Copyright OpenJS Foundation and other contributors
+ * Released under the MIT license
+ * https://jquery.org/license
+ *
+ * Date: 2023-08-28T13:37Z
+ */
+
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
+/**
+ * referralViewer.js
+ *
+ *
+ * @category  house
+ * @package   Hospitality HouseKeeper
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2021 <nonprofitsoftwarecorp.org>
+ * @license   GPL and MIT
+ * @link      https://github.com/NPSC/HHK
+ */
+
+/**
+ * reportfieldSets.js
+ *
+ *
+ * @category  house
+ * @package   Hospitality HouseKeeper
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @license   GPL and MIT
+ * @link      https://github.com/NPSC/HHK
+ */
+
+//! moment.js
+
+//! moment.js locale configuration
