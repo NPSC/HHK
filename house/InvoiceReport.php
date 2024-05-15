@@ -82,7 +82,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     $invoiceNumber = $r['Invoice_Number'];
     if ($invoiceNumber != '') {
 
-        $invAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank'];
+        $invAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'target' => '_blank'];
 
         if ($r['Balance'] != 0 && $r['Balance'] != $r['Amount']) {
             $invoiceNumber .= HTMLContainer::generateMarkup('sup', '-p');
@@ -90,17 +90,18 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         }
 
         $invoiceNumber = HTMLContainer::generateMarkup('a', $invoiceNumber, $invAttr)
-            .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items']);
+            .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction ml-2', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items']);
     }
 
-    $g['invoiceMkup'] = HTMLContainer::generateMarkup('span', $invoiceNumber, ["style" => 'white-space:nowrap;']);
+    //$g['invoiceMkup'] = HTMLContainer::generateMarkup('span', $invoiceNumber, ["style" => 'white-space:nowrap;']);
+    $g['invoiceMkup'] = $invoiceNumber;
 
     if ($r['Status'] == InvoiceStatus::Carried && $r['Deleted'] == 0) {
 
         $r['Balance'] = 0;
 
         $g['Status'] = HTMLContainer::generateMarkup('span',
-                HTMLContainer::generateMarkup('span', $statusTxt . ' by ' . HTMLContainer::generateMarkup('a', $r['Delegated_Invoice_Number'], ['href' => 'ShowInvoice.php?invnum=' . $r['Delegated_Invoice_Number'], 'target' => '_blank']), array('style'=>'float:left;'))
+                HTMLContainer::generateMarkup('span', $statusTxt . ' by ' . HTMLContainer::generateMarkup('a', $r['Delegated_Invoice_Number'], ['href' => 'ShowInvoice.php?invnum=' . $r['Delegated_Invoice_Number'], 'target' => '_blank']))
                 .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicond' . $r['Delegated_Invoice_Id'], 'data-iid' => $r['Delegated_Invoice_Id'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items'])
                 , array("style"=>'white-space:nowrap;'));
     } else {
@@ -113,15 +114,16 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
 
     $billDateStr = ($r['BillDate'] == '' ? '' : date('M j, Y', strtotime($r['BillDate'])));
 
-    $g['billed'] = HTMLContainer::generateMarkup('span', $billDateStr, ['id' => 'trBillDate' . $r['Invoice_Number']])
-        . HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-calendar invSetBill', 'data-name' => $g['Payor'], 'data-inb' => $r['Invoice_Number'], 'style' => 'float:right;cursor:pointer;margin-left:5px;', 'title' => 'Set Billing Date']);
+    $g['billed'] = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('span', $billDateStr, ['id' => 'trBillDate' . $r['Invoice_Number']])
+        . HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-calendar invSetBill', 'data-name' => $g['Payor'], 'data-inb' => $r['Invoice_Number'], 'style' => 'cursor:pointer;margin-left:5px;', 'title' => 'Set Billing Date']),
+        ["class"=>"hhk-flex", "style"=>"justify-content: space-between; align-items: end;"]);
 
 
     $g['Amount'] = number_format($r['Amount'], 2);
 
     // Show Delete Icon?
     if (($r['Amount'] == 0 || $r['Item_Id'] == ItemId::Discount) && $r['Deleted'] != 1) {
-        $g['Amount'] .= HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-trash invAction', 'id' => 'invdel' . $r['idInvoice'], 'data-inv' => $r['Invoice_Number'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'del', 'style' => 'cursor:pointer;float:left;', 'title' => 'Delete This Invoice']);
+        $g['Amount'] .= HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-trash invAction', 'id' => 'invdel' . $r['idInvoice'], 'data-inv' => $r['Invoice_Number'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'del', 'style' => 'cursor:pointer;', 'title' => 'Delete This Invoice']);
     }
 
     $g['County'] = $r['County'];
@@ -457,7 +459,7 @@ ifnull(nap.County, '') as `County`,
 ifnull(nap.Postal_Code, '') as `Zip`,
 ifnull(re.Title, '') as `Title`,
 ifnull(v.Arrival_Date, '') as `Arrival`,
-ifnull(v.Actual_Departure, ifnull(v.Expected_Departure, '')) as `Departure`,
+ifnull(v.Actual_Departure, '') as `Departure`,
 ifnull(hs.idHospital, 0) as `idHospital`,
 ifnull(hs.idAssociation, 0) as `idAssociation`,
 ifnull(hs.idPatient, 0) as `idPatient`,
@@ -584,7 +586,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     // Finalize and print.
     if ($local) {
 
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display', 'style'=>'font-size:.8em;width:100%'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display', 'style'=>'font-size:.9em;width:100%'));
         $mkTable = 1;
 
         $totTable = new HTMLTable();
@@ -1113,36 +1115,38 @@ $(document).ready(function() {
             </ul>
             <div id="invr" >
                 <form id="fcat" action="InvoiceReport.php" method="post">
-                	<div style="display: inline-block; vertical-align: top;">
-                    	<?php echo $timePeriodMarkup; ?>
-                    	<table style="width: 100%;">
-                    		<tr>
-                    			<td style="border-top: 0px;"><?php echo $useVisitDatesCb; ?></td>
-                    		</tr>
-                    	</table>
+                    <div class="hhk-flex hhk-flex-wrap" id="filterSelectors">
+                        <div>
+                            <?php echo $timePeriodMarkup; ?>
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td style="border-top: 0px;"><?php echo $useVisitDatesCb; ?></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <?php echo $hospitalMarkup; ?>
+                        <table>
+                            <tr>
+                                <th>Status</th>
+                            </tr>
+
+                            <tr>
+                                <td><?php echo $invStatusSelector; ?></td>
+                            </tr>
+                        </table>
+                        <?php if ($baSelector != '') { ?>
+                        <table>
+                            <tr>
+                                <th>Billing Agent</th>
+                            </tr>
+
+                            <tr>
+                                <td><?php echo $baSelector; ?></td>
+                            </tr>
+                        </table>
+                        <?php } ?>
+                        <?php echo $columSelector; ?>
                     </div>
-                    <?php echo $hospitalMarkup; ?>
-                    <table style="display: inline-block; vertical-align: top;">
-                        <tr>
-                            <th>Status</th>
-                        </tr>
-
-                        <tr>
-                            <td><?php echo $invStatusSelector; ?></td>
-                        </tr>
-                    </table>
-                    <?php if ($baSelector != '') { ?>
-                    <table style="display: inline-block; vertical-align:top;">
-                        <tr>
-                            <th>Billing Agent</th>
-                        </tr>
-
-                        <tr>
-                            <td><?php echo $baSelector; ?></td>
-                        </tr>
-                    </table>
-                    <?php } ?>
-                    <?php echo $columSelector; ?>
                     <table style="width:100%; margin: 10px 0px;">
                         <tr>
                             <td><?php echo $shoDeletedCb; ?></td>
