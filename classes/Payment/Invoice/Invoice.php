@@ -687,7 +687,7 @@ where
 		// House Icon and address
 		$headerTbl = new HTMLTable();
 		$headerTbl->addBodyTr(
-			HTMLTable::makeTd(Receipt::getHouseIconMarkup (), ['style'=>'width: 30%;']) . 
+			HTMLTable::makeTd(Receipt::getHouseIconMarkup (), ['style'=>'width: 30%;']) .
 			HTMLTable::makeTd(Receipt::getAddressTable ( $dbh, $uS->sId ))
 		);
 		$rec = $headerTbl->generateMarkup(['class'=>'mb-3 fullWidth']);
@@ -746,7 +746,7 @@ where
 
 
 		$rec .= (new HTMLTable())->addBodyTr(
-			HTMLTable::makeTd($invTbl->generateMarkup(['class'=>'hhk-tdbox-noborder'])) . 
+			HTMLTable::makeTd($invTbl->generateMarkup(['class'=>'hhk-tdbox-noborder'])) .
 			HTMLTable::makeTd($billTbl->generateMarkup())
 		)->generateMarkup(['class'=>'mb-3 fullWidth']);
 
@@ -870,7 +870,7 @@ where
 
         $emtableMarkup .= HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3 mt-2"]);
         $emtableMarkup .= HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3 mt-2"]);
-        
+
         return $emtableMarkup;
     }
 
@@ -883,12 +883,12 @@ where
 		$idName = $this->getSoldToId();
 		if ($idName > 0) {
 
-			$stmt = $dbh->query("select e.Email from name n left join name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose where n.idName = $idName");
+			$stmt = $dbh->query("select ifnull(e.Email, '') from name n left join name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose where n.idName = $idName");
 
-			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
+			$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
 
 			if (count($rows) == 1) {
-				return $rows[0]["Email"];
+				return $rows[0][0];
 			}
 		};
 		return "";
