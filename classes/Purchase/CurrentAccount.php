@@ -135,7 +135,8 @@ class CurrentAccount {
      * Third party pending (up) amounts only
      * @var float
      */
-    protected $amtPending = 0;
+    protected $amtPending3P = 0;
+    protected $amtPending1P = 0;
     /**
      * Summary of dueToday
      * @var float
@@ -242,7 +243,7 @@ class CurrentAccount {
                 + $visitCharge->getItemInvPayments('tax'));
 
         // Pending amounts
-        $this->setAmtPending($visitCharge->get3pRoomFeesPending()
+        $this->setAmtPending3P($visitCharge->get3pRoomFeesPending()
                 + $visitCharge->get3pVisitFeesPending()
                 + $visitCharge->get3rdPartyPending(ItemId::AddnlCharge)
                 + $visitCharge->get3rdPartyPending(ItemId::LodgingMOA)
@@ -358,8 +359,8 @@ class CurrentAccount {
      * Summary of getAmtPending
      * @return int|mixed
      */
-    public function getAmtPending() {
-        return $this->amtPending;
+    public function getAmtPending3P() {
+        return $this->amtPending3P;
     }
 
     /**
@@ -542,7 +543,7 @@ class CurrentAccount {
      */
     public function setDueToday() {
 
-        $this->dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending(), 2);
+        $this->dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending3P(), 2);
 
     }
 
@@ -669,11 +670,11 @@ class CurrentAccount {
 
     /**
      * Summary of setAmtPending
-     * @param mixed $amtPending
+     * @param mixed $amtPending3P
      * @return static
      */
-    public function setAmtPending($amtPending) {
-        $this->amtPending = $amtPending;
+    public function setAmtPending3P($amtPending) {
+        $this->amtPending3P = $amtPending;
         return $this;
     }
 

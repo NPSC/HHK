@@ -885,6 +885,7 @@ class VisitViewer {
         // Get labels
         $labels = Labels::getLabels();
         $totalTaxAmt = 0;
+        $partialPaymentAmt = 0;
 
         // Number of nights
         $tbl2->addBodyTr(
@@ -1015,15 +1016,24 @@ class VisitViewer {
 
         // Partial guest payments
         $dbh = initPDO(true);
-        $stmt = $dbh->prepare("SELECT ifnull(sum(`Amount` - `Balance`), 0) FROM `invoice`
-	        where `Deleted` = 0 and `Status` = 'up'
-            and `Amount` - `Balance` > 0
-            and `Order_Number` = :idvisit
-            and `Suborder_Number` = :span;");
+        $stmt = $dbh->prepare("SELECT ifnull(sum(`Amount` - `Balance`), 0)
+FROM `invoice` `i` left join `name_volunteer2` `nv` on `i`.`Sold_To_Id` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' and `nv`.`Vol_Code` = 'ba'
+where `Deleted` = 0 and `Status` = 'up'
+	and `Amount` - `Balance` > 0
+	and `Order_Number` = :idvisit
+    and ifnull(nv.idName, 0) = 0;");
 
-        $stmt->execute([':idvisit'=> $curAccount->getIdVisit(), ':span'=>$curAccount->getSpan()]);
+            // "SELECT ifnull(sum(`Amount` - `Balance`), 0) FROM `invoice`
+	        // where `Deleted` = 0 and `Status` = 'up'
+            // and `Amount` - `Balance` > 0
+            // and `Order_Number` = :idvisit
+            // and `Suborder_Number` = :span;");
+
+        $stmt->execute([':idvisit'=> $curAccount->getIdVisit()]);
+
         $row = $stmt->fetchAll(\PDO::FETCH_NUM);
-        $partialPaymentAmt = (float) $row[0][0];
+        $partialPaymentAmt = round($row[0][0], 2);
+
 
         if ($partialPaymentAmt < 0) {
             $partialPaymentAmt = 0.0;
@@ -1046,10 +1056,10 @@ class VisitViewer {
         );
 
         // unpaid invoices
-        if ($curAccount->getAmtPending() != 0) {
+        if ($curAccount->getAmtPending3P() != 0) {
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Amount Pending:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($curAccount->getAmtPending(), 2), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getAmtPending3P(), 2), array('style'=>'text-align:right;'))
             );
         }
 
@@ -1110,7 +1120,7 @@ class VisitViewer {
                 $feesToCharge += $totalTaxAmt;
             }
 
-            $finalCharge = $curAccount->getTotalCharged() + $feesToCharge - $curAccount->getTotalPaid() - $curAccount->getAmtPending() - $partialPaymentAmt;
+            $finalCharge = $curAccount->getTotalCharged() + $feesToCharge - $curAccount->getTotalPaid() - $curAccount->getAmtPending3P() - $partialPaymentAmt;
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Exp\'d payment at checkout:', array('class'=>'tdlabel'))
