@@ -802,7 +802,7 @@ $uS->guestId = $id;
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
-                <div class="mb-2 ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog hhk-flex hhk-widget-mobile">
+                <div class="mb-2 ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog hhk-flex hhk-widget-mobile hhk-overflow-x">
 	                <?php echo $guestPhotoMarkup; ?>
 	                <div class="hhk-panel">
                         <?php echo $nameMarkup; ?>
@@ -911,7 +911,7 @@ $uS->guestId = $id;
                         </ul>
                         <div class="d-xl-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
                     </div>
-                    <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
+                    <div id="vpsg" class="ui-tabs-hide hhk-overflow-x"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
                     </div>
                     <div id="vregister"  class="ui-tabs-hide" style="display:none;">
@@ -959,10 +959,10 @@ $uS->guestId = $id;
                     <li><a href="#vckin">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
                     <li><a href="#vhistory">Recently Viewed <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
                 </ul>
-                <div id="vhistory" class="hhk-tdbox ui-tabs-hide brownBg">
+                <div id="vhistory" class="hhk-tdbox ui-tabs-hide brownBg hhk-overflow-x">
                     <?php echo $recHistory; ?>
                 </div>
-                <div id="vckin" class="hhk-tdbox ui-tabs-hide brownBg">
+                <div id="vckin" class="hhk-tdbox ui-tabs-hide brownBg hhk-overflow-x">
                     <?php echo $currentCheckedIn; ?>
                 </div>
             </div>
