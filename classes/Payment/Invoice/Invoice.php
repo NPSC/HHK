@@ -299,6 +299,7 @@ where il.Invoice_Id = " . $this->idInvoice . " order by ilt.Order_Position" );
 		$invLine->setInvoiceId ( $this->getIdInvoice () );
 		$invLine->save ( $dbh );
 		$this->updateInvoiceAmount ( $dbh, $user );
+
 	}
 	/**
 	 * Summary of deleteLine
