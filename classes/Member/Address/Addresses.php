@@ -7,6 +7,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Session;
 use HHK\SysConst\EmailPurpose;
 use HHK\SysConst\PhonePurpose;
+use HHK\Tables\Name\NamePhoneRS;
 
 /**
  * Addresses.php
@@ -59,7 +60,7 @@ class Addresses {
 
         //sms dialog
         $cellPhone = $phone->get_recordSet(PhonePurpose::Cell);
-        if($uS->smsProvider && $cellPhone->Phone_Search->getStoredVal() != "" &&  $cellPhone->SMS_status->getStoredVal() == "opt_in"){
+        if($uS->smsProvider && $cellPhone instanceof NamePhoneRS && $cellPhone->Phone_Search->getStoredVal() != "" &&  $cellPhone->SMS_status->getStoredVal() == "opt_in"){
             $phoneMkup .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>"ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest", "data-idname" => $cellPhone->idName->getStoredVal()]);
         }
 
