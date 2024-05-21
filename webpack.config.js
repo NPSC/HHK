@@ -1,17 +1,30 @@
 const path = require('path');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerWebpackPlugin = require("css-minimizer-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
-    entry: './src/js/index.js',
+    mode: 'production',
+    entry: {
+        admin: "./src/js/admin.js",
+        house: "./src/js/house.js",
+        vendor: "./src/js/vendor.js"
+    },
     module: {
         rules: [
             {
                 test: /\.(s(a|c)ss)$/,
-                use: ['style-loader','css-loader', 'sass-loader']
+                use: [MiniCssExtractPlugin.loader,'css-loader', 'sass-loader']
             }
         ]
     },
     output: {
-        filename: 'main.js',
+        filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'js'),
-    }
+    },
+    optimization: {
+        minimizer: [new CssMinimizerWebpackPlugin(), new TerserPlugin()],
+    },
+    plugins: [new CleanWebpackPlugin(), new MiniCssExtractPlugin({filename: "../css/[name].css"})]
 }
