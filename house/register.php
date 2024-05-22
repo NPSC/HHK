@@ -345,7 +345,8 @@ if($uS->useOnlineReferral){
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo MAIN_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VENDOR_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo HOUSE_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo FULLCALENDAR_JS; ?>"></script>

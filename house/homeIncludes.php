@@ -13,7 +13,7 @@
  */
 require ('../functions/commonDefines.php');
 
-define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('HOUSE_CSS', "<link href='../css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('INVOICE_CSS', "<link href='css/invoice.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('STATEMENT_CSS', "<link href='css/statement.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");

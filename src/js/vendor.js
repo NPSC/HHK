@@ -5,4 +5,13 @@ window.$ = window.jQuery = require('jquery');
 window.buffer = require('buffer');
 
 //moment
-//window.moment = require("moment");
+window.moment = require("moment");
+
+window.he = require('he');
+
+require("dirrty");
+require("jsignature");
+
+//common HHK JS
+require("./addrPrefs");
+require("./createAutoComplete");

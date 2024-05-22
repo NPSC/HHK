@@ -85,4 +85,6 @@ define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js' . JSV);
 define('BUFFER_JS', '../js/buffer.min.js' . JSV);
 
 
-define('MAIN_JS', '../js/main.js');
+define('VENDOR_JS', '../js/vendor.bundle.js' . JSV);
+define('HOUSE_JS', '../js/house.bundle.js' . JSV);
+define('ADMIN_JS', '../js/admin.bundle.js' . JSV);

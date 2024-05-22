@@ -1,7 +1,7 @@
 
 
 //load css
-require("../css/app.scss");
+require("../css/admin.scss");
 
 require("./pag");
 

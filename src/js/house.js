@@ -1,5 +1,5 @@
 //load css
-require("../css/app.scss");
+require("../css/house.scss");
 
 require("./pag");
 

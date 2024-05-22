@@ -1,0 +1,380 @@
+/**
+ * default.css
+ *
+ *
+ * @package   Hospitality HouseKeeper
+ * @author    Eric K. Crane <ecrane@hospitalityhousekeeper.com>
+ * @copyright 2010-2012 <ecrane@hospitalityhousekeeper.com>
+ * @license   GPL and MIT
+ * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ */
+ * {
+    padding: 0;
+    margin: 0;
+}
+body, .ui-widget {
+	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
+}
+
+body.testbody {
+    background-color: #C7EFB3; /* #DFF7FF;*/
+}
+
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
+.navbar {
+	--nav-bg-color: #459e00;
+	--nav-active-color: #2d6700;
+	--nav-text-color: #fff;
+}
+
+.navbar .hhk-active {
+	background-color: var(--nav-active-color);
+}
+
+.pageHeader {
+    width: 100%;
+    background-color: #459e00;
+    color: white;
+    position:sticky;
+    margin-bottom:0.5em;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+}
+
+.copyright {
+	text-align:right;font-size: smaller; margin-top:5px;margin-right:.3em;
+}
+.build {
+	text-align:right;font-size: .6em;margin-right:5px;
+}
+
+.rssWidget .item {
+	border-bottom:1px solid #dfd9c3;
+}
+
+.hhk-relations td {
+    background-color: #ffffff;
+}
+.nplogo {
+    background-image: url("../../images/NPSClogoSm.png");
+    background-repeat: no-repeat;
+    width: 258px;
+    height: 55px;
+    margin-top:5px;
+    display:inline-block;
+}
+.hhk-gotoweb {
+    background-color: #ffffff;
+    padding-top: 3px;
+}
+.hhk-gotoweb:hover {
+    background-color: #67b021;
+    color: whitesmoke;
+    cursor:pointer;
+}
+.hhk-member-detail {
+	max-width:fit-content;
+    padding: 0.7em 0.7em;
+    font-size: 0.9em;
+}
+
+.ui-widget-content.hhk-widget-content {
+	max-width:fit-content;
+    padding: 0.7em 0.7em;
+    font-size: 0.9em;
+    overflow-x:auto;
+}
+
+.hhk-loginLabel {
+    text-align:right;
+    padding: 5px;
+}
+.hhk-logerrmsg {
+    color:red;
+}
+
+.hhk-deceased {
+    background-color: yellow;
+}
+table.hhk-badAddress {
+    background-color: lightsalmon;
+}
+#content {
+    margin-top: 45px;
+    margin-left: 20px;
+}
+h1, h2, h3 {
+    padding: 3px 5px;
+}
+
+h2 {
+	margin-bottom:0.5em;
+}
+
+h2.logo {
+    position: absolute;
+    top: 0px;
+    color: white;
+    padding: 0 4px;
+    margin: 7px 5px;
+    z-index: 99;
+}
+#version {
+/*    height: 15px; */
+/*    position: absolute; */
+    position: relative;
+    right: 2px;
+/*     top: 47px; */
+    font-size: .6em;
+/*     padding: 0 6px; */
+    padding: 7px 6px;
+    float: right;
+}
+#banner {
+    height: 45px;
+}
+div.divSubmitButtons {
+    position: fixed;
+    bottom: 1px;
+    right: 80px;
+    padding: 5px 10px;
+    border: solid 1px teal;
+    background-color: white;
+}
+
+div#contentDiv {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
+.ui-menu-item .ui-autocomplete {width:250px;font-size:.8em;}
+.hhk-date-sel {
+    background: url("../../admin/css/jqui/images/ui-bg_highlight-hard_100_fafaf4_1x100.png") repeat-x scroll 50% 50% #FAFAF4;
+    border: 1px solid #D4CCB0;
+    color: #459E00;
+    font-weight: bold;
+}
+div.hhk-recent {
+    margin-bottom: 25px;
+    border: 1px solid;
+    padding-bottom: 3px;
+    padding-left: 2px;
+    overflow-x: auto;
+}
+div.hhk-recent table {
+    margin-bottom: 5px;
+}
+li.menuspacer {
+    background-color: #C8DFB5;
+}
+.clsVolBottom {
+    border-bottom: 2px solid  black;
+    vertical-align: middle;
+}
+table
+{
+    border-collapse:collapse;
+}
+.xdebug-error {
+    position: relative;
+    top: 40px;
+}
+.ui-widget th {
+    padding: 2px 3px;
+    border: 1px solid #D4CCB0;
+}
+.ui-widget td {
+    border: 1px solid #D4CCB0;
+    vertical-align: top;
+    padding: 2px 3px;
+}
+.ui-tabs-panel td {
+    border-style: none;
+    vertical-align: middle;
+    padding: 2px 3px;
+}
+.option-description td {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 2px 3px;
+}
+.hhk-tdbox td {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 2px 3px;
+}
+#vcategory td, #vcategory th {
+    padding: 0px 10px;
+}
+.tdlabel {
+    text-align: right;
+    border-style: none !important;
+}
+span.hhk-recent-tablenames {
+    font-weight: bold;
+}
+span.costDeduct {
+    color: red;
+}
+span.donListing {
+    font-size: .7em;
+}
+span.donlistingtotal {
+    font-size: .8em;
+}
+input.ro {
+    background-color: transparent;
+}
+span.class_history {
+    font-size: .85em;
+}
+.input-medium {
+  width: 150px;
+}
+
+div#global-title {
+    color: white;
+    font-size: 1.5em;
+}
+
+.hhk-tooltip .ui-icon-help {
+	border: 1px solid #dfd9c3;
+    border-radius: 1em;
+    background-color: #fff;
+    margin-left: 2px;
+}
+
+*:focus {
+outline: none;
+}
+
+#TwoFactorHelp p {
+	margin-bottom: 1em;
+}
+
+#TwoFactorHelp li {
+	margin-bottom: 0.5em;
+}
+
+/* Datatables fixes */
+
+.dataTables_wrapper .dataTables_length select {
+	background-color: white !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+	background-color: white !important;
+}
+
+.dataTables_wrapper .top, .dataTables_wrapper .bottom,.dataTables_wrapper .dtTop, .dataTables_wrapper .dtBottom {
+	padding: 8px;
+	
+}
+
+.dataTables_wrapper .top:before,
+.dataTables_wrapper .bottom:before,
+.dataTables_wrapper .top:after,
+.dataTables_wrapper .bottom:after,
+.dataTables_wrapper .dtTop:before,
+.dataTables_wrapper .dtBottom:before,
+.dataTables_wrapper .dtTop:after,
+.dataTables_wrapper .dtBottom:after  {
+	content: "";
+    display: table;
+    border-collapse: collapse;
+}
+
+.dataTables_wrapper .top:after,
+.dataTables_wrapper .bottom:after,
+.dataTables_wrapper .dtTop:after,
+.dataTables_wrapper .dtBottom:after {
+	clear: both;
+}
+
+/* use white ui-icons on tabs */
+ul.ui-tabs-nav .ui-icon {
+    background-image: url(../../admin/css/jqui/images/ui-icons_ffffff_256x240.png);
+}
+ul.ui-tabs-nav .ui-state-active .ui-icon {
+	background-image: url(../../admin/css/jqui/images/ui-icons_8DC262_256x240.png);
+}
+
+/* Add flexbox support */
+.hhk-flex {
+	display: flex;
+	align-items: flex-start;
+}
+
+.hhk-flex-wrap {
+	flex-flow: wrap;
+}
+
+#tabs.ui-tabs{
+	display: inline-block;
+	max-width: 100%;
+}
+
+.cronActions button {
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+}
+
+.hhk-overflow-x {
+	overflow-x: auto;
+}
+
+@media only screen and (max-width: 1024px){
+
+	.hideMobile {
+		display: none!important;
+	}
+	
+}
+
+#hhk-guest-photo-actions {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: space-evenly;
+}
+
+#hhk-guest-photo {
+	background-size: cover;
+}
+
+
+.actionBtns .hhk-ui-icons li {
+    margin: 2px;
+    position: relative;
+    padding: 4px;
+    cursor: pointer;
+    float: left;
+    list-style: none;
+}
+
+#searchSel {
+    margin: 1em 0; 
+    font-size:.85em; 
+    align-items: center;
+}
+
+#searchSel div, #searchSel select, #searchSel span {
+    margin-right: 1em;
+}
+
+#searchSel div label {
+    margin-left: 0.25em;
+}
+
+#duplicatesReadme * {
+    padding: revert;
+}
+
+#divaddrTabs button.btnTextGuest {
+	display: none;
+}

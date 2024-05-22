@@ -23,6 +23,7 @@
     "css-minimizer-webpack-plugin": "^7.0.0",
     "dirrty": "^1.0.0",
     "formBuilder": "^3.19.7",
+    "he": "^1.2.0",
     "jquery": "^3.7.1",
     "jsignature": "^2.1.3",
     "mini-css-extract-plugin": "^2.9.0",
