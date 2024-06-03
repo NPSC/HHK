@@ -242,6 +242,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $whStatus = '';
         $payStatusText = '';
         $rtnIncluded = FALSE;
+        $statusList = $filter->getPayStatuses();
 
 		foreach ($filter->getSelectedPayStatuses() as $s) {
 			if ($s != '') {
