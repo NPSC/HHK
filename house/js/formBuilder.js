@@ -332,7 +332,15 @@
     				"className": "form-control",
     				"name": "vehicle.license",
     				"width": "col-md-2"
-  				},
+					},
+					{
+						"type": "text",
+						"label": "Notes",
+						"placeholder": "Notes",
+						"className": "form-control",
+						"name": "vehicle.note",
+						"width": "col-md-2"
+					  },
   				]
   			},
   			{
