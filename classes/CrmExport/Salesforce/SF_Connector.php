@@ -3,8 +3,8 @@ namespace HHK\CrmExport\Salesforce;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
-use HHK\CrmExport\OAuth\OAuth;
-use HHK\CrmExport\OAuth\Credentials;
+use HHK\OAuth\OAuth;
+use HHK\OAuth\Credentials;
 use HHK\Exception\{RuntimeException, UploadException};
 use GuzzleHttp\Exception\BadResponseException;
 

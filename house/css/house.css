@@ -1119,3 +1119,10 @@ textarea.hhk-fluidheight {
 #vDocs td input{
 	min-width: 100%;
 }
+
+
+.hhk-formbuilder-readonly, .hhk-formbuilder-readonly:focus {
+	border: transparent !important;
+	background: transparent !important;
+	box-shadow: none !important;
+}

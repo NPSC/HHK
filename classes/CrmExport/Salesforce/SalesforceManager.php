@@ -8,7 +8,7 @@ use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\Session;
-use HHK\CrmExport\OAuth\Credentials;
+use HHK\OAuth\Credentials;
 
 
 /**
