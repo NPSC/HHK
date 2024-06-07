@@ -1269,7 +1269,7 @@ $(document).ready(function () {
 
         eventDidMount: function (info) {
 
-            if (hindx === undefined || hindx === 0 || info.event.extendedProps.idHosp === undefined || info.event.extendedProps.idAssoc == hindx || info.event.extendedProps.idHosp == hindx) {
+            if (hindx === undefined || hindx === 0 || info.event.extendedProps.idHosp === undefined || info.event.extendedProps.idAssoc == hindx || info.event.extendedProps.idHosp == hindx || info.event.extendedProps.filterId == hindx) {
 
                 let resource = calendar.getResourceById("id-" + info.event.extendedProps.idResc);
 
@@ -1345,9 +1345,10 @@ $(document).ready(function () {
             $(".hhk-alert").hide();
             $('.btnHosp').removeClass("hospActive");
             $(this).addClass("hospActive");
-            hindx = parseInt($(this).data('id'), 10);
-            if (isNaN(hindx))
-                hindx = 0;
+            hindx = $(this).data('id');
+            //hindx = parseInt($(this).data('id'), 10);
+            //if (isNaN(hindx))
+            //    hindx = 0;
             calendar.refetchEvents();
             //$(this).css('border', 'solid 3px black').css('font-size', '120%');
         });

@@ -2,6 +2,7 @@
 
 use HHK\Exception\RuntimeException;
 use HHK\History;
+use HHK\House\GuestRegister;
 use HHK\House\OperatingHours;
 use HHK\House\Report\PaymentReport;
 use HHK\House\Report\RoomReport;
@@ -183,7 +184,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('r
     ['style' => 'background-color:#D3D3D3; align-items:baseline;', 'class' => 'hhk-flex hhk-flex-wrap p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divwaitlist']);
 
-
+/*
 // Hospital Selector
 $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)' and Hide = 0 order by Title asc");
 
@@ -226,7 +227,10 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
 
     $colorKey = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $leftArrow . HTMLContainer::generateMarkup("div", $colorKey, ["id" => "hospBtns"]) . $rightArrow, ["class" => "d-flex"]), ["id" => "hospBtnWrapper"]);
 }
+*/
 
+$guestRegister = new GuestRegister();
+$colorKey .= $guestRegister->getRibbonColorMkup($dbh, "Status");
 
 // Calendar View density
 $weeks = intval($uS->CalViewWeeks);

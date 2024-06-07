@@ -2,6 +2,7 @@
 
 namespace HHK\House;
 
+use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\Session;
 use HHK\SysConst\CalendarStatusColors;
 use HHK\SysConst\ResourceStatus;
@@ -877,8 +878,8 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
                 $this->ribbonColors[$h['idHospital']] = array(
                     't' => trim(strtolower($h['Text_Color'])),
-                    'b' => trim(strtolower($h['Background_Color']))
-
+                    'b' => trim(strtolower($h['Background_Color'])),
+                    'title' => $h['Title']
                 );
             }
 
@@ -894,12 +895,14 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
                     $this->ribbonColors[$d[0]] = array(
                         't' => trim(strtolower($splits[0])),
-                        'b' => isset($splits[1]) ? trim(strtolower($splits[1])) : 'transparent'
+                        'b' => isset($splits[1]) ? trim(strtolower($splits[1])) : 'transparent',
+                        'title' => $d[1]
                     );
                 }else{
                     $this->ribbonColors[$d[0]] = array(
                         't' => "#ffffff",
-                        'b' => ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor: "#3788d8")
+                        'b' => ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor: "#3788d8"),
+                        'title' => $d[1]
                     );
                 }
             }
@@ -939,10 +942,10 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
     protected function getHospitals(\PDO $dbh) {
 
-        $hospitals = array(0 => array('Title'=>'', 'idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
+        $hospitals = array(0 => array('Title'=>'', 'idHospital'=>0, 'Background_Color'=>'var(--fc-event-bg-color)', 'Text_Color'=>'white'));
         $this->noAssocId = 0;
 
-        $hstmt = $dbh->query("Select IF(status='r', concat(Title, ' (Retired)'), Title) as Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital;"); // where `Status` = 'a'
+        $hstmt = $dbh->query("Select IF(status='r', concat(Title, ' (Retired)'), Title) as Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color, if(`Hide` = 0 and `Status` = 'a', 0, 1) as `Hide` from hospital order by Title asc;"); // where `Status` = 'a'
 
         foreach ($hstmt->fetchAll(\PDO::FETCH_ASSOC) as $h) {
 
@@ -1001,36 +1004,47 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0){ //checking out today
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutToday]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutToday]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckingOutToday;
                 } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0){ //checked in past expected departure
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedInPastExpectedDepart]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedInPastExpectedDepart]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckedInPastExpectedDepart;
                 }else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1){ //checking out tomorrow
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutTomorrow]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutTomorrow]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckingOutTomorrow;
                 } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut){ //checked in
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedIn]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedIn]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckedIn;
                 } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 0){ //arriving today
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInToday]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInToday]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckingInToday;
                 } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 1){ //arriving tomorrow
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInTomorrow]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInTomorrow]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckingInTomorrow;
                 } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays > 1){ //arriving in future
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInFuture]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInFuture]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckingInFuture;
                 }else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays < 0){ //arriving in past (but not checked in)
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInPast]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInPast]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckingInPast;
                 } else if(isset($r["Status"]) && $r["Status"] == 'w'){ //waitlist
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::Waitlist]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::Waitlist]['t'];
+                    $s['filterId'] = CalendarStatusColors::Waitlist;
                 }else if(isset($r["Status"]) && $r["Status"] == 'uc'){
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::Unconfirmed]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::Unconfirmed]['t'];
+                    $s['filterId'] = CalendarStatusColors::Unconfirmed;
                 } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == 'co') { //checked out
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedOut]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedOut]['t'];
+                    $s['filterId'] = CalendarStatusColors::CheckedOut;
                 }
             }
         }
@@ -1102,6 +1116,56 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         }else{
             return false;
         }
+    }
+
+    public function getRibbonColorMkup(\PDO $dbh, string $label){
+        $colorKey = "";
+
+        $hospitals = $this->getHospitals($dbh);
+        $this->getRibbonColors($dbh, $hospitals);
+        $ribbonColors = $this->ribbonColors;
+
+        $uS = Session::getInstance();
+        if($uS->RibbonColor == "hospital"){
+            unset($ribbonColors[0]);
+            foreach($hospitals as $idHosp=>$hosp){
+                if(isset($hosp["Hide"]) && $hosp["Hide"] == 1){
+                    unset($ribbonColors[$idHosp]);
+                }
+            }
+        }
+
+        if (count($ribbonColors) > 1) {
+
+            $label = HTMLContainer::generateMarkup('span', $label . ': ');
+        
+            $leftArrow = '<div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>';
+            $rightArrow = '<div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>';
+        
+            // All button
+            $colorKey = HTMLContainer::generateMarkup('button', 'All', ['class' => 'btnHosp hospActive', 'data-id' => 0]);
+        
+            foreach($ribbonColors as $k=>$color){
+        
+                if (strtolower($color['t']) != 'transparent') {
+        
+                    $attrs = ['class' => 'btnHosp', 'data-id' => $k];
+                    $attrs['style'] = '';
+                    
+                    //bg color
+                    $attrs['style'] .= "background-color: " . $color['b'] . ";";
+
+                    //text color
+                    $attrs['style'] .= "color: " . $color['t'] . ";";
+        
+                    $colorKey .= HTMLContainer::generateMarkup('button', $color['title'], $attrs);
+                }
+            }
+        
+            $colorKey = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $leftArrow . HTMLContainer::generateMarkup("div", $colorKey, ["id" => "hospBtns"]) . $rightArrow, ["class" => "d-flex"]), ["id" => "hospBtnWrapper"]);
+        }
+
+        return $colorKey;
     }
 
 }
