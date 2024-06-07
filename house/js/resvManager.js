@@ -401,7 +401,7 @@ function resvManager(initData, options) {
 
             var isNoPhone = ($('.prefPhone[id^="' + prefix + 'phno"]:checked').length === 0 ? false:true);
 
-            if (isCheckin == true && insistCkinPhone == true && phoneFilled == false && isNoPhone == false) {
+            if (isCheckin == true && insistCkinPhone == true && phoneFilled == false && isNoPhone == false && $('#' + prefix + 'cbStay').prop('checked') === true) {
                 return "At least one phone number or 'No Phone' is required for check in."
             }
 
