@@ -342,7 +342,7 @@ function resvManager(initData, options) {
             var msg = false;
 
             // Incomplete not checked or complete address required?
-            if ($('#' + prefix + 'incomplete').length > 0 && ($('#' + prefix + 'incomplete').prop('checked') === false || (isCheckin == true && insistCkinAddress == true))) {
+            if ($('#' + prefix + 'incomplete').length > 0 && ($('#' + prefix + 'incomplete').prop('checked') === false || (isCheckin == true && insistCkinAddress == true && $('#' + prefix + 'cbStay').prop('checked') === true))) {
 
                 // Look at each entry
                 $('.' + prefix + 'hhk-addr-val').not('.hhk-MissingOk').each(function () {
@@ -416,7 +416,7 @@ function resvManager(initData, options) {
 
             });
 
-            if (isCheckin == true && insistCkinEmail == true && emailFilled == false && isNoEmail == false) {
+            if (isCheckin == true && insistCkinEmail == true && emailFilled == false && isNoEmail == false && $('#' + prefix + 'cbStay').prop('checked') === true) {
                 return "At least one email address or 'No Email' is required for check in."
             }
 
@@ -429,7 +429,7 @@ function resvManager(initData, options) {
 
             $('.' + prefix + 'hhk-demog-input').each(function () {
 
-                if ($(this).val() === '') {
+                if ($(this).val() === '' && $('#' + prefix + 'cbStay').prop("checked") === true) {
 
                     // error
                     $(this).addClass('ui-state-error');
