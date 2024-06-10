@@ -923,7 +923,7 @@ if (isset($_POST['ldfm'])) {
             ]
         ), ['class' => 'hhk-sortable', 'data-code' => $r['Code']]);
 
-        $tabContent .= HTMLContainer::generateMarkup('div', $help . ($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'],
+        $tabContent .= HTMLContainer::generateMarkup('div', $help . HTMLContainer::generateMarkup('div', ($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'],
                 [
                     'id' => 'form' . $r['idDocument'],
                     'class' => 'p-3 mb-3 user-agent-spacing'
@@ -946,10 +946,10 @@ if (isset($_POST['ldfm'])) {
             '<button type="submit" id="docSaveFm"><span class="ui-icon ui-icon-disk"></span>Save Form</button>' .
             '</div>' .
             '</form></div></div>',
+            ['class'=>'hhk-flex']),
             [
                 'id' => $r['Code']
-            ]
-        );
+            ]);
     }
 
     if (count($replacementRows) > 0) {
