@@ -217,6 +217,16 @@ if($idVisit || $idResv){
         $regContents
     );
 }
+
+//if preview mode
+if(filter_has_var(INPUT_GET, "preview") && ($idVisit || $idResv) && filter_has_var(INPUT_GET, "docId") && filter_has_var(INPUT_GET, "settings")){
+    $docId = filter_input(INPUT_GET, "docId", FILTER_SANITIZE_NUMBER_INT);
+    $settings = json_decode(filter_input(INPUT_GET, "settings", FILTER_UNSAFE_RAW), true);
+    $regForm = new CustomRegisterForm($docId, $settings);
+    $previewMkup = HTMLContainer::generateMarkup("div", $regForm->prepareRegForm($dbh, $idVisit, $span, $idResv, ['docId'=>$docId]), ['id'=>'regFormPreview']);
+}
+
+
 //"<span class='ui-icon ui-icon-extlink' style='float: right; margin-left: .3em;'></span>"
 
 $shoStmtBtn = HTMLInput::generateMarkup("Show Statement", array('type'=>'button', 'id'=>'btnStmt', 'style'=>$regButtonStyle));
@@ -290,6 +300,10 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 <?php echo $paymentMarkup; ?>
             </div>
 
+            <?php if (isset($previewMkup)) {
+                echo $previewMkup;
+            }else{ ?>
+
             <div id="mainTabs" class="mt-2" style="max-width:900px; display:none; font-size:.9em;">
                 <ul>
                     <li id="liReg"><a href="#vreg"><?php echo $blankFormTitle; ?></a></li>
@@ -307,6 +321,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 </div>
                 <?php } ?>
             </div>
+            <?php } ?>
             <div id="vperm" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                 <h2>No permission forms were found.</h2>
             </div>

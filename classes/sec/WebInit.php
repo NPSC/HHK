@@ -172,7 +172,7 @@ class WebInit {
                     . "connect-src data: blob: $cspURL tablet.sigwebtablet.com:47290 ;"
                     . "object-src $cspURL blob: ;"); // IE 10+
 
-            header('X-Frame-Options: DENY');
+            header('X-Frame-Options: SAMEORIGIN');
 
             if (SecurityComponent::isHTTPS()) {
                 header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12

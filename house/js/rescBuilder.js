@@ -327,6 +327,7 @@ $(document).ready(function () {
     $('#btnNewForm').button().click(function () {
     	$('#divNewForm').dialog('open');
     });
+
     $('#selFormUpload').change(function (e, changeEventData) {
 
         $('#hdnFormType').val('');
@@ -355,6 +356,10 @@ $(document).ready(function () {
                         collapsible: true,
                     });
 
+                    $('#formUpload').find('iframe').on('load', function () {
+                        $(this).removeClass("loading");
+                    });
+                    
                     $('#regTabDiv .ui-tabs-nav').sortable({
                         axis: "x",
                         items: "> li.hhk-sortable",
@@ -403,31 +408,54 @@ $(document).ready(function () {
 		$(".uploadFormDiv form input[name=docAction]").val("docUpload");
 	});
 
+    $(document).on("click", ".uploadFormDiv form #docPreviewFm", function(e){
+        $(".uploadFormDiv form input[name=docAction]").val("docPreview");
+    });
+    
+    $(document).on("change", "#divUploadForm .selResvId", function () {
+        let formJSON = $(this).parents("#regTabDiv .ui-tabs-panel").find(".uploadFormDiv form").serializeJSON();
+        let formSettings = formJSON.regForm[formJSON.docCode];
+        let resvId = $(this).val();
+        $("#formUpload").find("#regTabDiv iframe#form" + formJSON.docId).empty().addClass("loading").attr('src', "ShowRegForm.php?rid=" + resvId + "&docId=" + formJSON.docId + "&settings=" + JSON.stringify(formSettings) + "&preview");
+    });
+
 	$(document).on("submit", ".uploadFormDiv form, #formFormNew", function(e) {
 	    e.preventDefault();
 	    var formData = new FormData(this);
 
-		$.ajax({
-	        url: $(this).attr("action"),
-	        type: 'POST',
-	        data: formData,
-	        dataType: "json",
-	        success: function (data) {
-	        	if(data.success){
-	        		flagAlertMessage(data.success, false);
-	        	}else if(data.error){
-	        		flagAlertMessage(data.error, true);
-	        	}
-	            if(data.docCode){
-	            	$('#selFormUpload').trigger('change', [{"docCode":data.docCode}]);
-	            }else{
-	            	$('#selFormUpload').change();
-	            }
-	        },
-	        cache: false,
-	        contentType: false,
-	        processData: false
-	    });
+        if ($(".uploadFormDiv form input[name=docAction]").val() == "docPreview") {
+            //preview mode
+            let formJSON = $(this).serializeJSON();
+            let formSettings = formJSON.regForm[formJSON.docCode];
+            let resvId = $("#formUpload").find("#regTabDiv #" + formJSON.docCode + " .regTabDivTitle .selResvId").val();
+            $("#formUpload").find("#regTabDiv iframe#form" + formJSON.docId).empty().addClass("loading").attr('src', "ShowRegForm.php?rid=" + resvId + "&docId=" + formJSON.docId + "&settings=" + JSON.stringify(formSettings) + "&preview");
+            flagAlertMessage("Preview updated", "success");
+            $("#formUpload").find("#regTabDiv #" + formJSON.docCode + " .regTabDivTitle h3").text("Form Preview");
+            $("#formUpload").find("#regTabDiv #" + formJSON.docCode + " .regTabDivTitle span").show();
+        } else {
+            //save or delete
+            $.ajax({
+                url: $(this).attr("action"),
+                type: 'POST',
+                data: formData,
+                dataType: "json",
+                success: function (data) {
+                    if (data.success) {
+                        flagAlertMessage(data.success, false);
+                    } else if (data.error) {
+                        flagAlertMessage(data.error, true);
+                    }
+                    if (data.docCode) {
+                        $('#selFormUpload').trigger('change', [{ "docCode": data.docCode }]);
+                    } else {
+                        $('#selFormUpload').change();
+                    }
+                },
+                cache: false,
+                contentType: false,
+                processData: false
+            });
+        }
 	});
 
     $('#tblresc').dataTable({

@@ -961,6 +961,14 @@ table.dataTable tbody td {
 	background-repeat: no-repeat;
 	background-position: center;
 }
+
+iframe.loading {
+	background: url(../../images/ui-anim_basic_16x16.gif);
+	background-repeat: no-repeat;
+	background-position-x: center;
+	background-position-y: 3em;
+}
+
 #viewMsgsDialog.loading *, #viewMsgsDialog .loading *{
 	display: none !important;
 }
@@ -1125,4 +1133,12 @@ textarea.hhk-fluidheight {
 	border: transparent !important;
 	background: transparent !important;
 	box-shadow: none !important;
+}
+
+#regFormPreview {
+	font-size: 0.8em;
+}
+
+#regFormPreview .container {
+	max-width: none;
 }
