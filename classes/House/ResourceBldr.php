@@ -185,7 +185,7 @@ Order by `t`.`List_Order`;");
               . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTh('Category') : '')
                . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
                 . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
-                 . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
+                 . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
                   . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
         $tbl->addHeaderTr($hdrTr);
@@ -245,7 +245,7 @@ Order by `t`.`List_Order`;");
                     ) : ''
                 ) .
 
-                ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName))
+                ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA
                     ? HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                             $d[2],
@@ -286,7 +286,8 @@ Order by `t`.`List_Order`;");
                     HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, ''), ['name' => 'selDiagCat[0]'])) : '')
                 . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ?
                     HTMLTable::makeTd(HTMLInput::generateMarkup('', ['size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'])) : '')
-                . HTMLTable::makeTd('New', ['colspan' => 2])
+                    . self::makeRibbonColorMkup($type, $tableName, [0,'',''])
+                    . HTMLTable::makeTd('New', ['colspan' => 2])
             );
         }
 
@@ -297,7 +298,7 @@ Order by `t`.`List_Order`;");
         $uS = Session::getInstance();
         $mkup = "";
 
-        if(($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName)){
+        if(($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors")){
             $splits = explode(',', $d[2]);
             $fontColor = (isset($splits[0]) && $splits[0] != '' ? $splits[0]: ($uS->DefCalEventTextColor != '' ? $uS->DefCalEventTextColor : "#ffffff"));
             $backgroundColor = (isset($splits[1]) && $splits[1] != '' ? $splits[1]: ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : "#3788d8"));
@@ -373,6 +374,12 @@ Order by `t`.`List_Order`;");
                 // new entry
                 $dText = filter_var($postLookups['txtDiag'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $aText = '';
+
+                if(isset($postLookups['txtDiagFontColor'][0]) && isset($postLookups['txtDiagBkColor'][0])){
+                    $fontColor = filter_var($postLookups['txtDiagFontColor'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    $backgroundColor = filter_var($postLookups['txtDiagBkColor'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    $aText = $fontColor . "," . $backgroundColor;
+                }
 
                 if(isset($postLookups['selDiagCat'][0])){
                     $aText = filter_var($postLookups['selDiagCat'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
