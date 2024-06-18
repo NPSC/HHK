@@ -1390,7 +1390,13 @@ class HouseServices {
 	        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(array('style'=>'width:100%;')), array('colspan'=>'4', 'style'=>'padding:0;')));
         }
 
-        return $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
+        $mkup = $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
+
+        if($gateway->getGatewayName() == AbstractPaymentGateway::DELUXE){
+            $mkup .= HTMLContainer::generateMarkup("div", "", ["id"=>"deluxeDialog"]);
+        }
+
+        return $mkup;
 
     }
 

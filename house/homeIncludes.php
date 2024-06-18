@@ -21,7 +21,7 @@ define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel=
 
 /* common mins */
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
-define('PAYMENT_JS', "js/payments-min.js" . JSV);
+define('PAYMENT_JS', "js/payments.js" . JSV);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
 define('SMS_DIALOG_JS', "js/smsDialog-min.js" . JSV);
 define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
@@ -46,6 +46,7 @@ define('RESCBUILDER_JS', 'js/rescBuilder.js' . JSV);
 define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/guestTransfer.js' . JSV);
 define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
+define('DELUXE_EMBED_JS', '<script src="https://hostedform2.deluxe.com/V2/deluxe.js"></script>');
 define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js' . JSV. '"></script>');
 define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js' . JSV);
 define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);

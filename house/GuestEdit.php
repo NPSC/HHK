@@ -764,6 +764,7 @@ $uS->guestId = $id;
         }
 
         if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

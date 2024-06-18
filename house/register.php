@@ -2,6 +2,7 @@
 
 use HHK\Exception\RuntimeException;
 use HHK\History;
+use HHK\House\GuestRegister;
 use HHK\House\OperatingHours;
 use HHK\House\Report\PaymentReport;
 use HHK\House\Report\RoomReport;
@@ -370,6 +371,7 @@ if($uS->useOnlineReferral){
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
 
         <style>
             .hhk-justify-r {

@@ -439,6 +439,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+		<?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
 
 <script type="text/javascript">
 function displayVids(vids) {

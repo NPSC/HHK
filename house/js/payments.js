@@ -1445,6 +1445,72 @@ function paymentRedirect(data, $xferForm) {
 
             // openiframe(data.inctx, 600, 400, "Add New Card On File");
 
+        } else if (data.hpfToken) {
+            var height = (data.useSwipe ? 200 : 500);
+            var width = (data.useSwipe ? 400 : 700);
+            var $deluxeDialog = $("#deluxeDialog").attr("style", "overflow-y: hidden;").dialog({
+                modal: true,
+                width: getDialogWidth(width),
+                height: height,
+                autoOpen: true,
+                title: "Add New Card On File",
+                open: function (event, ui) {
+                    var options = {
+                        containerId: "deluxeDialog",
+                        xtoken: data.hpfToken,
+                        xrtype: "Generate Token",
+                        xbtntext: "Save Card On File",
+                        xmsrattached: data.useSwipe,
+                        xswptext: "Please Swipe Card now..."
+
+                    };
+                    HostedForm.init(options, {
+                        onSuccess: (hpfData) => {
+                            //console.log(JSON.stringify(hpfData));
+                            $.post(encodeURI(data.pbp),
+                                {
+                                    token: hpfData.data.token,
+                                    nameOnCard: hpfData.data.nameOnCard,
+                                    expDate: hpfData.data.expDate,
+                                    cardType: hpfData.data.cardType
+                                },
+                                function (data) {
+                                    if (data) {
+                                        try {
+                                            data = $.parseJSON(data);
+                                        } catch (e) {
+                                            alert("Parser error - " + e.message);
+                                            return;
+                                        }
+                    
+                                        if (data.error) {
+                                            if (data.gotopage) {
+                                                window.location.assign(data.gotopage);
+                                            }
+                                            flagAlertMessage(data.error, 'error');
+                    
+                                        }
+                    
+                                        if (data.cardInfoMkup) {
+                                            $("#upCreditfs").append(data.cardInfoMkup);
+                                        }
+                                        
+                                        if (data.gotopage) {
+                                            window.location.assign(data.gotopage);
+                                        }
+                                    }
+                                });
+                            $deluxeDialog.dialog("close");
+                        },
+                        onFailure: (data) => { console.log(JSON.stringify(data)); },
+                        onInvalid: (data) => { console.log(JSON.stringify(data)); }
+                    }).then((instance) => instance.renderHpf());
+                },
+                close: function (event, ui) {
+                    $(this).dialog('destroy').empty();
+                }
+
+            });
         }
     }
 }

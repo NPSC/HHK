@@ -83,6 +83,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
 
         <script type="text/javascript">
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
