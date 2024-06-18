@@ -95,6 +95,12 @@ class DeluxeGateway extends AbstractPaymentGateway
             $rows[0]['oAuthClientId'] = $oAuthClientId;
         }
 
+        $oAuthURL = $gwRs->CheckoutPOS_Url->getStoredVal();
+        unset($rows[0]['CheckoutPOS_Url']);
+        if ($oAuthURL != '') {
+            $rows[0]['oAuthURL'] = $oAuthURL;
+        }
+
         $oAuthSecret = $gwRs->Password->getStoredVal();
         unset($rows[0]['Password']);
         if ($oAuthSecret != '') {
@@ -148,6 +154,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         	$this->manualKey = $uS->manualKey;
         }
 
+        //captured card info
         if(isset($post['token'])){
             $data = $post;
             $mkup = "";
@@ -252,7 +259,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             return false;
         } else {
         	//Card not present
-            return HostedCheckout::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup());
+            return HostedPaymentForm::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $this->manualKey, "");
         }
     }
 
@@ -289,7 +296,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             return false;
         } else {
         	//Card not present
-            return HostedCheckout::sendToPortal($dbh, $this, $idGuest, $idGroup, $manualKey, $postbackUrl);
+            return HostedPaymentForm::sendToPortal($dbh, $this, $idGuest, $idGroup, $manualKey, $postbackUrl);
         }
 
     }
@@ -401,10 +408,22 @@ class DeluxeGateway extends AbstractPaymentGateway
                 HTMLTable::makeTh('Oauth Client Id:', array('class' => 'tdlabel'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
             );
+            
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Oauth Secret:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('type'=>'password', 'name' => $indx . '_txtsecret', 'size' => '90')) . ' (Obfuscated)')
             );
+            
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Oauth URL:', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CheckoutPOS_Url->getStoredVal(), array('name' => $indx . '_txtoauthurl', 'size' => '90')))
+            );
+
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Payments API URL:', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Checkout_Url->getStoredVal(), array('name' => $indx . '_txtapiurl', 'size' => '90')))
+            );
+
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Hosted Payment Access Token:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Credit_Url->getStoredVal() == '' ? '': self::PW_PLACEHOLDER), array('type'=>'password', 'name' => $indx . '_txtaccesstoken', 'size' => '90')) . ' (Obfuscated)')
@@ -513,6 +532,16 @@ class DeluxeGateway extends AbstractPaymentGateway
             // Oauth Client Id
             if (isset($post[$indx . '_txtuid'])) {
                 $ccRs->Merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            }
+
+            // Oauth token URL
+            if (isset($post[$indx . '_txtoauthurl'])) {
+                $ccRs->CheckoutPOS_Url->setNewVal(filter_var($post[$indx . '_txtoauthurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            }
+
+            // Payments API URL
+            if (isset($post[$indx . '_txtapiurl'])) {
+                $ccRs->Checkout_Url->setNewVal(filter_var($post[$indx . '_txtapiurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Hosted Payment Access Token

@@ -12,7 +12,7 @@ use HHK\sec\Session;
 use HHK\Exception\PaymentException;
 
 /**
- * HostedCheckout.php
+ * HostedPaymentForm.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2024 <nonprofitsoftwarecorp.org>
@@ -21,7 +21,7 @@ use HHK\Exception\PaymentException;
  */
 
 
-class HostedCheckout {
+class HostedPaymentForm {
 
     /**
      * Summary of sendToPortal
