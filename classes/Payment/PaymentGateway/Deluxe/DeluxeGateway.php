@@ -9,6 +9,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\CreditToken;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\Deluxe\Request\AuthorizeRequest;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\TableLog\AbstractTableLog;
@@ -155,16 +156,21 @@ class DeluxeGateway extends AbstractPaymentGateway
         }
 
         //captured card info
-        if(isset($post['token'])){
+        if(isset($post['token']) && isset($data['expDate'])){
             $data = $post;
-            $mkup = "";
+
+            //Authorize $1 to ensure card is valid
+            $authRequest = new AuthorizeRequest($dbh, $this);
+            $authRequest->submit(1.00, $data['token'], $data['expDate']);
+
+            /* $mkup = "";
             foreach($post as $k=>$v){
                 $mkup .= HTMLContainer::generateMarkup("p", $k . ": " . $v);
             }
             $mkup = HTMLContainer::generateMarkup("div", $mkup);
             $data["cardInfoMkup"] = $mkup;
             echo json_encode($data);
-            exit;
+            exit; */
         }
 /*
         if (isset($post[VantivGateway::PAYMENT_ID])) {
