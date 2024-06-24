@@ -41,11 +41,19 @@ function makeParmtable($parms) {
     if (is_array($parms)) {
 
         foreach ($parms as $key => $v) {
-           if ($key == 'MerchantID' && $v != '') {
-               $v = 'xxxx.' . substr($v, -4);
-           }
+            if ($key == 'MerchantID' && $v != '') {
+                $v = 'xxxx.' . substr($v, -4);
+            }
 
-            $reqTbl->addBodyTr(HTMLTable::makeTd($key . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($v));
+            if(is_array($v)){
+                $tbl = new HTMLTable();
+                foreach($v as $k => $val){
+                    $tbl->addBodyTr(HTMLTable::makeTd($k . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($val));
+                }
+                $reqTbl->addBodyTr(HTMLTable::makeTd($key . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($tbl->generateMarkup(['style'=>'width: 100%'])));
+            } else {
+                $reqTbl->addBodyTr(HTMLTable::makeTd($key . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($v));
+            }
         }
     } else {
         $reqTbl->addBodyTr(HTMLTable::makeTd($parms));

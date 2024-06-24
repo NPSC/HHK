@@ -922,7 +922,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     "use strict";
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
-    var $chrgExpand = $('#trvdCHName');
+    var $chrgExpand = $('.tblCreditExpand');//$('#trvdCHName');
     var p = new PayCtrls();
 
     if (chg.length === 0) {
@@ -1448,6 +1448,7 @@ function paymentRedirect(data, $xferForm) {
         } else if (data.hpfToken) {
             var height = (data.useSwipe ? 200 : 500);
             var width = (data.useSwipe ? 400 : 700);
+            var hpfObj = null;
             var $deluxeDialog = $("#deluxeDialog").attr("style", "overflow-y: hidden;").dialog({
                 modal: true,
                 width: getDialogWidth(width),
@@ -1466,8 +1467,17 @@ function paymentRedirect(data, $xferForm) {
                     };
                     HostedForm.init(options, {
                         onSuccess: (hpfData) => {
-                            //console.log(JSON.stringify(hpfData));
-                            $.post(encodeURI(data.pbp),
+                            var form = $('<form action="' + encodeURI(data.pbp) + '" method="post" style="display:none;">' +
+                                '<input type="hidden" name="token" value="' + hpfData.data.token + '" />' +
+                                '<input type="hidden" name="nameOnCard" value="' + hpfData.data.nameOnCard + '" />' +
+                                '<input type="hidden" name="expDate" value="' + hpfData.data.expDate + '" />' +
+                                '<input type="hidden" name="cardType" value="' + hpfData.data.cardType + '" />' +
+                                '<input type="hidden" name="maskedPan" value="' + hpfData.data.maskedPan + '" />' +
+                                '</form>');
+                            $('body').append(form);
+                            form.submit();
+                            
+                            /*$.post(encodeURI(data.pbp),
                                 {
                                     token: hpfData.data.token,
                                     nameOnCard: hpfData.data.nameOnCard,
@@ -1501,6 +1511,7 @@ function paymentRedirect(data, $xferForm) {
                                     }
                                 });
                             $deluxeDialog.dialog("close");
+                        */
                         },
                         onFailure: (data) => { console.log(JSON.stringify(data)); },
                         onInvalid: (data) => { console.log(JSON.stringify(data)); }

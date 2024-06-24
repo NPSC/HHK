@@ -598,7 +598,7 @@ $(document).ready(function () {
         cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg, $(this).data('indx'));
     });
 
-    setupCOF($('#trvdCHNameg'), $('#btnCred').data('indx'));
+    setupCOF($('.tblCreditExpandg'), $('#btnCred').data('indx'));
 
     $('#keysfees').mousedown(function (event) {
         var target = $(event.target);

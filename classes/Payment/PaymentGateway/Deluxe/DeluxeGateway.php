@@ -9,7 +9,17 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\CreditToken;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentGateway\Deluxe\Request\AuthorizeRequest;
+use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentRequest;
+use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeCreditResponse;
+use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeGatewayResponse;
+use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentCreditResponse;
+use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentGatewayResponse;
+use HHK\Payment\PaymentManager\PaymentManagerPayment;
+use HHK\Payment\PaymentResponse\AbstractCreditResponse;
+use HHK\Payment\PaymentResult\CofResult;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\TableLog\AbstractTableLog;
@@ -142,108 +152,16 @@ class DeluxeGateway extends AbstractPaymentGateway
         $rtnCode = '';
         $rtnMessage = '';
 
-        if (isset($post['ReturnCode'])) {
-            $rtnCode = intval(filter_var($post['ReturnCode'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($post['ReturnMessage'])) {
-            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
-
         // THis eventually selects the merchant id
         if (isset($uS->manualKey)) {
         	$this->manualKey = $uS->manualKey;
         }
 
         //captured card info
-        if(isset($post['token']) && isset($data['expDate'])){
+        if (isset($post['token']) && isset($post['expDate'])) {
             $data = $post;
-
-            //Authorize $1 to ensure card is valid
-            $authRequest = new AuthorizeRequest($dbh, $this);
-            $authRequest->submit(1.00, $data['token'], $data['expDate']);
-
-            /* $mkup = "";
-            foreach($post as $k=>$v){
-                $mkup .= HTMLContainer::generateMarkup("p", $k . ": " . $v);
-            }
-            $mkup = HTMLContainer::generateMarkup("div", $mkup);
-            $data["cardInfoMkup"] = $mkup;
-            echo json_encode($data);
-            exit; */
+            return $this->saveCOF($dbh, $data);
         }
-/*
-        if (isset($post[VantivGateway::PAYMENT_ID])) {
-
-            $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-            $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
-
-            try {
-                self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'HostedCoPostBack');
-            } catch (\Exception $ex) {
-                // Do nothing
-            }
-
-            if ($rtnCode > 0) {
-
-                $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
-                $payResult->setStatus(PaymentResult::ERROR);
-                $payResult->setDisplayMessage($rtnMessage);
-                return $payResult;
-            }
-
-            try {
-
-                $csResp = HostedCheckout::portalReply($dbh, $this, $cidInfo, $payNotes, $payDate);
-
-                if ($csResp->response->getTranType() == MpTranType::ZeroAuth) {
-
-                    // Zero auth card info
-                    $payResult = new CofResult($csResp->response->getDisplayMessage(), $csResp->response->getStatus(), $csResp->idPayor, $csResp->idRegistration);
-
-                    if ($this->useAVS) {
-                        $avsResult = new AVSResult($csResp->response->getAVSResult());
-
-                        if ($avsResult->isZipMatch() === FALSE) {
-                            $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
-                        }
-                    }
-
-                    if ($this->useCVV) {
-                        $cvvResult = new CVVResult($csResp->response->getCvvResult());
-                        if ($cvvResult->isCvvMatch() === FALSE) {
-                            $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
-                        }
-                    }
-
-                } else {
-
-                    // Hosted payment response.
-                    if ($csResp->getInvoiceNumber() != '') {
-
-                        $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
-
-                        // Analyze the result
-                        $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0);
-
-                    } else {
-
-                        $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
-                        $payResult->setStatus(PaymentResult::ERROR);
-                        $payResult->setDisplayMessage('Invoice Not Found!  ');
-                    }
-                }
-            } catch (PaymentException $hex) {
-
-                $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
-                $payResult->setStatus(PaymentResult::ERROR);
-                $payResult->setDisplayMessage($hex->getMessage());
-            }
-        }
-
-        return $payResult;
-        */
     }
     
     Protected function initHostedPayment(\PDO $dbh, Invoice $invoice) {
@@ -307,6 +225,153 @@ class DeluxeGateway extends AbstractPaymentGateway
 
     }
 
+    protected function saveCOF(\PDO $dbh, array $data) {
+
+        $uS = Session::getInstance();
+
+        //authorize $1 to make sure card is real
+        $authRequest = new AuthorizeRequest($dbh, $this);
+        $response = $authRequest->submit(1.00, $data["token"], $data["expDate"], $data["cardType"], $data["maskedPan"], $data["nameOnCard"]);
+
+        $respBody = $authRequest->getResponseBody();
+        $respBody['InvoiceNumber'] = 0;
+        $respBody['cardHolderName'] = $data["nameOnCard"];
+        $respBody["expDate"] = $data["expDate"];
+        $respBody["cardType"] = $data["cardType"];
+        $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
+
+        // Save raw transaction in the db.
+        try {
+            //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
+            self::logGwTx($dbh, 0, json_encode($data), json_encode($respBody), 'CardInfoVerify');
+        } catch (\Exception $ex) {
+            // Do Nothing
+        }
+
+        $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
+        $vr->expDate = $data["expDate"];
+
+        // save token
+        CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response, $data["token"]);
+
+        return new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
+    }
+
+    public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
+
+        $uS = Session::getInstance();
+        $payResult = NULL;
+
+        if ($this->getGatewayType() == '') {
+            // Undefined Gateway.
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->feePaymentError($dbh, $uS);
+            $payResult->setDisplayMessage('Location not selected. ');
+
+        } else {
+
+            $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
+
+            // Do we have a token?
+            if (CreditToken::hasToken($tokenRS)) {
+
+                $paymentRequest = new PaymentRequest($dbh, $this);
+
+                $gatewayResponse = $paymentRequest->submit($invoice, $tokenRS);
+
+                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup());
+
+                $payResult = $this->analyzeCredSaleResult($dbh, $paymentResponse, $invoice, $pmp->getIdToken());
+
+            } else {
+
+            	$this->manualKey = $pmp->getManualKeyEntry();
+
+                // Initialiaze hosted payment
+                $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
+
+                $payIds = array();
+                if (isset($uS->paymentIds)) {
+                    $payIds = $uS->paymentIds;
+                }
+
+                $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
+                $uS->paymentIds = $payIds;
+                $uS->paymentNotes = $pmp->getPayNotes();
+                $uS->paymentDate = $pmp->getPayDate();
+
+                $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $payResult->setForwardHostedPayment($fwrder);
+                $payResult->setDisplayMessage('Forward to Payment Page. ');
+            }
+        }
+
+        return $payResult;
+    }
+
+
+    public function analyzeCredSaleResult(\PDO $dbh, AbstractCreditResponse $payResp, Invoice $invoice, $idToken) {
+
+        $uS = Session::getInstance();
+
+        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
+
+
+        switch ($payResp->getStatus()) {
+
+            case AbstractCreditPayments::STATUS_APPROVED:
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $payResp->response->getAuthorizedAmount(), $uS->username);
+
+                $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
+                $payResult->setDisplayMessage('Paid by Credit Card.  ');
+
+                if ($payResp->isPartialPayment()) {
+                    $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
+                }
+/*
+                if ($this->useAVS) {
+                    $avsResult = new AVSResult($payResp->response->getAVSResult());
+
+                    if ($avsResult->isZipMatch() === FALSE) {
+                        $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
+                    }
+                }
+
+                if ($this->useCVV) {
+                    $cvvResult = new CVVResult($payResp->response->getCvvResult());
+                    if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
+                        $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
+                    }
+                }
+*/
+                break;
+
+            case AbstractCreditPayments::STATUS_DECLINED:
+
+                $payResult->setStatus(PaymentResult::DENIED);
+                $payResult->feePaymentRejected($dbh, $uS, $payResp, $invoice);
+
+                $msg = '** The Payment is Declined. **';
+                if ($payResp->response->getResponseMessage() != '') {
+                    $msg .= 'Message: ' . $payResp->response->getResponseMessage();
+                }
+                $payResult->setDisplayMessage($msg);
+
+                break;
+
+            default:
+
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->feePaymentError($dbh, $uS);
+                $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
+        }
+
+        return $payResult;
+    }
+
     /**
      *
      * @param \PDO $dbh
@@ -333,6 +398,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             HTMLContainer::generateMarkup("span", "Type")
             , ["class"=>"hhk-flex"]);
 
+
         if ($this->getGatewayType() != '') {
         	// A location is already selected.
 
@@ -342,13 +408,10 @@ class DeluxeGateway extends AbstractPaymentGateway
                     HTMLTable::makeTh('Selected Location:', ['style'=>'text-align:right;'])
             		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray)
             				, ['colspan'=>'2'])
-            		, ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
+            		, ['id'=>'trvdCHName'.$index, 'class'=>'d-none tblCreditExpand'.$index.' tblCredit'.$index]
             );
 
-            $payTbl->addBodyTr(
-                HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
-                .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
-            );
+            
 
         } else {
 			// Show all locations, none is preselected.
@@ -369,12 +432,16 @@ class DeluxeGateway extends AbstractPaymentGateway
             		HTMLTable::makeTh('Select a Location:', ['style'=>'text-align:right; width:130px;'])
                     .HTMLTable::makeTd(
                     		HTMLSelector::generateMarkup($sel, $selArray)
-                    		. $keyCb
                     		, ['colspan'=>'2'])
-                    , ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
+                    , ['id'=>'trvdCHName'.$index, 'class'=>'tblCreditExpand'.$index.' tblCredit'.$index]
             );
 
         }
+
+        $payTbl->addBodyTr(
+            HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
+            .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
+        ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index]);
     }
     
     protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {

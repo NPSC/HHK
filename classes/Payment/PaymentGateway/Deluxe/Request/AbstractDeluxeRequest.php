@@ -16,6 +16,10 @@ abstract class AbstractDeluxeRequest
 
     protected string $hpfAccessToken;
 
+    protected string $responseCode;
+
+    protected array $responseBody;
+
     public function __construct(\PDO $dbh, DeluxeGateway $gway)
     {
         $this->oAuth = $this->oAuthSetup($gway);
@@ -52,5 +56,12 @@ abstract class AbstractDeluxeRequest
         return $oAuth;
     }
 
+    public function getResponseCode(){
+        return $this->responseCode;
+    }
+
+    public function getResponseBody(){
+        return $this->responseBody;
+    }
 
 }
