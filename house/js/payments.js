@@ -1475,13 +1475,14 @@ function paymentRedirect(data, $xferForm, initialParams) {
                                 expDate: hpfData.data.expDate,
                                 cardType: hpfData.data.cardType,
                                 maskedPan: hpfData.data.maskedPan,
-                                cmd: "COF",
+                                cmd: data.cmd,
                                 pbp: data.pbp
                             }
 
-                            if (data.idGroup && data.idPayor) {
+                            if (data.idGroup && data.idPayor && data.invoiceNum) {
                                 submitData.psg = data.idGroup;
                                 submitData.id = data.idPayor;
+                                submitData.invoiceNum = data.invoiceNum;
                             }
 
                             $.post(encodeURI(data.pbp),

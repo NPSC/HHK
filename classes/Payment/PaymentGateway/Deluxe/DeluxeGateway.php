@@ -26,6 +26,7 @@ use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\Transaction;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
+use HHK\SysConst\PayType;
 use HHK\SysConst\TransMethod;
 use HHK\SysConst\TransType;
 use HHK\TableLog\AbstractTableLog;
@@ -172,6 +173,16 @@ class DeluxeGateway extends AbstractPaymentGateway
                 echo json_encode($result);
                 exit;
             }
+        } else if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "payment"){
+            $data = $post;
+            $result = $this->saveCOF($dbh, $data);
+
+            if($result["idToken"]){
+                $pmp = new PaymentManagerPayment(PayType::Charge);
+                $pmp->setIdToken($result["idToken"]);
+                $invoice = new Invoice($dbh, $post["invoiceNum"]);
+                return $this->creditSale($dbh, $pmp, $invoice, $post['pbp']);
+            }
         }
     }
     
@@ -194,7 +205,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             return false;
         } else {
         	//Card not present
-            return HostedPaymentForm::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $this->manualKey, $postbackUrl, "payment");
+            return HostedPaymentForm::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $this->manualKey, $postbackUrl, "payment", $invoice->getInvoiceNumber());
         }
     }
 
