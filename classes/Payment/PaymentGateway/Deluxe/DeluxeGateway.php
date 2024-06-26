@@ -181,6 +181,7 @@ class DeluxeGateway extends AbstractPaymentGateway
                 $pmp = new PaymentManagerPayment(PayType::Charge);
                 $pmp->setIdToken($result["idToken"]);
                 $invoice = new Invoice($dbh, $post["invoiceNum"]);
+                $invoice->setAmountToPay($invoice->getBalance());
                 return $this->creditSale($dbh, $pmp, $invoice, $post['pbp']);
             }
         }
@@ -265,14 +266,6 @@ class DeluxeGateway extends AbstractPaymentGateway
         if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
             $voidRequest = new VoidRequest($dbh, $this);
             $voidResponse = $voidRequest->submit($respBody["paymentId"]);
-        }
-
-        // Save raw transaction in the db.
-        try {
-            //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
-            self::logGwTx($dbh, 0, json_encode($data), json_encode($respBody), 'CardInfoVerify');
-        } catch (\Exception $ex) {
-            // Do Nothing
         }
 
         $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);

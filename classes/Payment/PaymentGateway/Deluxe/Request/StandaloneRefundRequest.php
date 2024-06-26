@@ -4,24 +4,33 @@ namespace HHK\Payment\PaymentGateway\Deluxe\Request;
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\Exception\PaymentException;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentGateway\Deluxe\Response\VoidGatewayResponse;
 use HHK\sec\Session;
 use HHK\SysConst\MpTranType;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
 
-Class VoidRequest extends AbstractDeluxeRequest {
-    const ENDPOINT = "payments/cancel";
+Class StandaloneRefundRequest extends AbstractDeluxeRequest {
+    const ENDPOINT = "refunds";
 
     public function __construct(\PDO $dbh, DeluxeGateway $gway){
         parent::__construct($dbh, $gway);
     }
 
-    public function submit(string $paymentId){
+    public function submit(float $amount, Guest_TokenRS $tokenRS, $currency = "USD"){
 
         $uS = Session::getInstance();
 
         //build request data
         $requestData = [
-            "paymentId"=>$paymentId
+            "paymentMethod"=>[
+                'token'=>[
+                    "token"=>$tokenRS->Token->getStoredVal(),
+                    "expiry"=>$tokenRS->ExpDate->getStoredVal()
+                ]
+            ],
+            "amount"=>[
+                "amount" => $amount,
+                "currency" => $currency
+            ]
         ];
 
         //send request
@@ -37,12 +46,12 @@ Class VoidRequest extends AbstractDeluxeRequest {
 
             try {
                 //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
-                DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Void');
+                DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Refund');
             } catch (\Exception $ex) {
                 // Do Nothing
             }
 
-            return new VoidGatewayResponse($this->responseBody, MpTranType::Void);
+            return new RefundGatewayResponse($this->responseBody, MpTranType::ReturnSale);
 
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();

@@ -24,7 +24,7 @@ Class PaymentRequest extends AbstractDeluxeRequest {
         $requestData = [
             'paymentType' => 'Sale',
             'amount'=>[
-                'amount'=>$invoice->getAmountToPay(),
+                'amount'=>(float) round($invoice->getAmountToPay(), 2),
                 'currency'=>$currrency
             ],
             'paymentMethod'=>[
@@ -55,12 +55,27 @@ Class PaymentRequest extends AbstractDeluxeRequest {
             $this->responseCode = $status;
 
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
+
+            try {
+                //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
+                DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Payment');
+            } catch (\Exception $ex) {
+                // Do Nothing
+            }
+
             return new PaymentGatewayResponse($invoice->getAmountToPay(), $invoice->getInvoiceNumber(), $tokenRS->CardType->getStoredVal(), $tokenRS->MaskedAccount->getStoredVal(), $tokenRS->CardHolderName->getStoredVal(), "sale", $uS->username, $this->responseBody["responseCode"]);
             
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();
             $this->responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
             
+            try {
+                //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
+                DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Payment');
+            } catch (\Exception $ex) {
+                // Do Nothing
+            }
+
             if(isset($this->responseBody["error"]["message"])){
                 throw new PaymentException("Error making payment with Payment Gateway: Error: " . $this->responseBody["error"]["message"]);
             }else{

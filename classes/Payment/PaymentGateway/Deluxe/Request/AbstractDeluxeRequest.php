@@ -22,9 +22,12 @@ abstract class AbstractDeluxeRequest
 
     protected array $responseBody;
 
+    protected \PDO $dbh;
+
     public function __construct(\PDO $dbh, DeluxeGateway $gway)
     {
         $this->oAuth = $this->oAuthSetup($gway);
+        $this->dbh = $dbh;
         $this->merchant = $gway->getMerchant();
         $this->hpfAccessToken = (isset($gway->getCredentials()["hpfAccessToken"]) ? $gway->getCredentials()["hpfAccessToken"] : "");
         $this->baseApiUrl = (isset($gway->getCredentials()["Checkout_Url"]) ? $gway->getCredentials()["Checkout_Url"] : "");

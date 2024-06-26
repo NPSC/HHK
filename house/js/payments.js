@@ -1448,13 +1448,17 @@ function paymentRedirect(data, $xferForm, initialParams) {
         } else if (data.hpfToken) {
             var height = (data.useSwipe ? 200 : 500);
             var width = (data.useSwipe ? 400 : 700);
+
+            var title = (data.cmd == "payment" ? "Enter Payment Details" : "Add New Card On File");
+            var deluxeSmtBtnTxt = (data.cmd == "payment" ? "Submit Payment" : "Save Card On File");
+
             var hpfObj = null;
             var $deluxeDialog = $("#deluxeDialog").attr("style", "overflow-y: hidden;").dialog({
                 modal: true,
                 width: getDialogWidth(width),
                 height: height,
                 autoOpen: true,
-                title: "Add New Card On File",
+                title: title,
                 open: function (event, ui) {
                     console.log(initialParams);
                     console.log(data);
@@ -1462,7 +1466,7 @@ function paymentRedirect(data, $xferForm, initialParams) {
                         containerId: "deluxeDialog",
                         xtoken: data.hpfToken,
                         xrtype: "Generate Token",
-                        xbtntext: "Save Card On File",
+                        xbtntext: deluxeSmtBtnTxt,
                         xmsrattached: data.useSwipe,
                         xswptext: "Please Swipe Card now..."
 
@@ -1484,6 +1488,8 @@ function paymentRedirect(data, $xferForm, initialParams) {
                                 submitData.id = data.idPayor;
                                 submitData.invoiceNum = data.invoiceNum;
                             }
+
+                            $deluxeDialog.empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
                             $.post(encodeURI(data.pbp),
                                 submitData,
@@ -1512,57 +1518,21 @@ function paymentRedirect(data, $xferForm, initialParams) {
                                             window.location.assign(data.gotopage);
                                         }
 
-                                        if (data.idToken) {
-                                            console.log(initialParams);
-                                            initialParams.rbUseCard = data.idToken;
-
-                                            $.post('ws_ckin.php', initialParams,
-                                                function(data) {
-                                        
-                                                    try {
-                                                        data = $.parseJSON(data);
-                                                    } catch (err) {
-                                                        alert("Parser error - " + err.message);
-                                                        return;
-                                                    }
-                                        
-                                                    if (data.error) {
-                                                        if (data.gotopage) {
-                                                            window.location.assign(data.gotopage);
-                                                        }
-                                                        flagAlertMessage(data.error, 'error');
-                                                        return;
-                                                    }
-                                        
-                                                    if (typeof refreshdTables !== 'undefined') {
-                                                        refreshdTables(data);
-                                                    }
-                                        
-                                                    if (data.success && data.success !== '') {
-                                                        flagAlertMessage(data.success, 'success');
-                                        
-                                                        if (typeof calendar !== 'undefined') {
-                                                            calendar.refetchEvents();
-                                                        }
-                                                    }
-                                        
-                                                    if (data.warning && data.warning !== '') {
-                                                        flagAlertMessage(data.warning, 'error');
-                                                    }
-                                        
-                                                    if (data.receipt && data.receipt !== '') {
-                                                        showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
-                                                    }
-                                        
-                                                    if (data.invoiceNumber && data.invoiceNumber !== '') {
-                                                        window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
-                                                    }
-                                        
-                                            });
+                                        if (data.success && data.success !== '') {
+                                            flagAlertMessage(data.success, 'success');
                                         }
+                            
+                                        if (data.warning && data.warning !== '') {
+                                            flagAlertMessage(data.warning, 'error');
+                                        }
+                            
+                                        if (data.receipt && data.receipt !== '') {
+                                            showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                                        }
+
+                                        $deluxeDialog.dialog("close");
                                     }
                                 });
-                            $deluxeDialog.dialog("close");
                         
                         },
                         onFailure: (data) => { console.log(JSON.stringify(data)); },

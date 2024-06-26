@@ -77,6 +77,11 @@ try {
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, "success"=>$payResult->getDisplayMessage()]);
+            exit;
+        }
     }
 
 } catch (RuntimeException $ex) {
