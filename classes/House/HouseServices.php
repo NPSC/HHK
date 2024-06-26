@@ -1392,10 +1392,6 @@ class HouseServices {
 
         $mkup = $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
 
-        if($gateway->getGatewayName() == AbstractPaymentGateway::DELUXE){
-            $mkup .= HTMLContainer::generateMarkup("div", "", ["id"=>"deluxeDialog"]);
-        }
-
         return $mkup;
 
     }

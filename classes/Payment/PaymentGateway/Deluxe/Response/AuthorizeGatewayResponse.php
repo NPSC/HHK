@@ -32,17 +32,19 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     protected $cardType;
     protected $invoiceNumber;
     protected $token;
+    protected $expDate;
     
-    public function __construct($token, $amount, $invoiceNumber, $cardType, $cardAcct, $cardHolderName, $tranType, $operatorId) {
+    public function __construct($token, $amount, $invoiceNumber, $cardType, $cardAcct, $expDate, $cardHolderName, $tranType, $operatorId) {
         
         $this->tranType = $tranType;
         $this->setOperatorId($operatorId);
         $this->setCardHolderName( $cardHolderName);
         $this->authorizedAmount = $amount;
-        $this->account = $cardAcct;
+        $this->account = substr($cardAcct, -4);
         $this->cardType = $cardType;
         $this->invoiceNumber = $invoiceNumber;
         $this->token = $token;
+        $this->expDate = $expDate;
     }
     
     public function getStatus() {
@@ -59,6 +61,9 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     
     public function getMerchant() {
         return $this->merchant;
+    }
+    public function setMerchant($v){
+        $this->merchant = $v;
     }
     public function saveCardOnFile() {
         return TRUE;
@@ -137,7 +142,7 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getExpDate() {
-        return '';
+        return $this->expDate;
     }
     
     public function getOperatorId() {
@@ -203,6 +208,10 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
             $randstring .= substr($chars, rand(0,$maxvalue), 1);
         }
         return $randstring;
+    }
+
+    public function setExpDate($v){
+        $this->expDate = $v;
     }
     
     

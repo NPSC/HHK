@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Payment\PaymentGateway\Deluxe;
 
+use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
@@ -10,8 +11,10 @@ use HHK\Payment\CreditToken;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
+use HHK\Payment\PaymentGateway\CreditPayments\SaleReply;
 use HHK\Payment\PaymentGateway\Deluxe\Request\AuthorizeRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentRequest;
+use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeGatewayResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentCreditResponse;
@@ -20,8 +23,11 @@ use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\PaymentResult\CofResult;
 use HHK\Payment\PaymentResult\PaymentResult;
+use HHK\Payment\Transaction;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
+use HHK\SysConst\TransMethod;
+use HHK\SysConst\TransType;
 use HHK\TableLog\AbstractTableLog;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
@@ -83,6 +89,7 @@ class DeluxeGateway extends AbstractPaymentGateway
      * @param mixed $payNotes
      */
     public function getPaymentResponseObj(\HHK\Payment\GatewayResponse\GatewayResponseInterface $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
+        return new PaymentCreditResponse($vcr, $idPayor, $idGroup);
     }
     
     protected function loadGateway(\PDO $dbh) {
@@ -158,13 +165,17 @@ class DeluxeGateway extends AbstractPaymentGateway
         }
 
         //captured card info
-        if (isset($post['token']) && isset($post['expDate'])) {
+        if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "COF") {
             $data = $post;
-            return $this->saveCOF($dbh, $data);
+            $result = $this->saveCOF($dbh, $data);
+            if (is_array($result)){
+                echo json_encode($result);
+                exit;
+            }
         }
     }
     
-    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice) {
+    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -183,7 +194,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             return false;
         } else {
         	//Card not present
-            return HostedPaymentForm::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $this->manualKey, "");
+            return HostedPaymentForm::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $this->manualKey, $postbackUrl, "payment");
         }
     }
 
@@ -220,7 +231,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             return false;
         } else {
         	//Card not present
-            return HostedPaymentForm::sendToPortal($dbh, $this, $idGuest, $idGroup, $manualKey, $postbackUrl);
+            return HostedPaymentForm::sendToPortal($dbh, $this, $idGuest, $idGroup, $manualKey, $postbackUrl, "cof");
         }
 
     }
@@ -240,6 +251,11 @@ class DeluxeGateway extends AbstractPaymentGateway
         $respBody["cardType"] = $data["cardType"];
         $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
 
+        if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
+            $voidRequest = new VoidRequest($dbh, $this);
+            $voidResponse = $voidRequest->submit($respBody["paymentId"]);
+        }
+
         // Save raw transaction in the db.
         try {
             //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
@@ -249,12 +265,11 @@ class DeluxeGateway extends AbstractPaymentGateway
         }
 
         $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
-        $vr->expDate = $data["expDate"];
 
         // save token
-        CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response, $data["token"]);
+        $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response, $data["token"]);
 
-        return new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
+        return ["idToken" => $idToken, "CofResult" => new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration)];
     }
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
@@ -270,7 +285,6 @@ class DeluxeGateway extends AbstractPaymentGateway
             $payResult->setDisplayMessage('Location not selected. ');
 
         } else {
-
             $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
 
             // Do we have a token?
@@ -281,6 +295,16 @@ class DeluxeGateway extends AbstractPaymentGateway
                 $gatewayResponse = $paymentRequest->submit($invoice, $tokenRS);
 
                 $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup());
+                
+                // Record transaction
+                try {
+                    $transRs = Transaction::recordTransaction($dbh, $paymentResponse, $this->getGatewayName(), TransType::Sale, TransMethod::Token);
+                    $paymentResponse->setIdTrans($transRs->idTrans->getStoredVal());
+                } catch (\Exception $ex) {
+                    throw new PaymentException("Error creating transaction: " . $ex->getMessage());
+                }
+
+                $paymentResponse = SaleReply::processReply($dbh, $paymentResponse, $uS->username);
 
                 $payResult = $this->analyzeCredSaleResult($dbh, $paymentResponse, $invoice, $pmp->getIdToken());
 
@@ -291,13 +315,6 @@ class DeluxeGateway extends AbstractPaymentGateway
                 // Initialiaze hosted payment
                 $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
 
-                $payIds = array();
-                if (isset($uS->paymentIds)) {
-                    $payIds = $uS->paymentIds;
-                }
-
-                $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
-                $uS->paymentIds = $payIds;
                 $uS->paymentNotes = $pmp->getPayNotes();
                 $uS->paymentDate = $pmp->getPayDate();
 

@@ -32,7 +32,7 @@ class HostedPaymentForm {
      * @throws \HHK\Exception\PaymentException
      * @return array
      */
-    public static function sendToPortal(\PDO $dbh, DeluxeGateway $gway, $idPayor, $idGroup, $manualKey, $postbackUrl) {
+    public static function sendToPortal(\PDO $dbh, DeluxeGateway $gway, $idPayor, $idGroup, $manualKey, $postbackUrl, $cmd) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -46,6 +46,7 @@ class HostedPaymentForm {
         $dataArray["hpfToken"] = $creds['hpfAccessToken'];
         $dataArray["useSwipe"] = ($manualKey == false);
         $dataArray["pbp"] = html_entity_decode($postbackUrl);
+        $dataArray["cmd"] = $cmd;
 
         return $dataArray;
     }

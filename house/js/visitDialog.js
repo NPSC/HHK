@@ -849,10 +849,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 return;
             }
 
+            paymentRedirect(data, $('#xform'), parms);
+
             $('#keysfees').dialog("close");
-
-
-            paymentRedirect(data, $('#xform'));
 
             if (typeof refreshdTables !== 'undefined') {
                 refreshdTables(data);

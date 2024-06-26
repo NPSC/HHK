@@ -9,7 +9,7 @@ use HHK\SysConst\PaymentMethod;
 use HHK\SysConst\PaymentStatusCode;
 
 /**
- * ImCofResponse.php
+ * PaymentCreditResponse.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2019 <nonprofitsoftwarecorp.org>
@@ -27,6 +27,8 @@ class PaymentCreditResponse extends AbstractCreditResponse {
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->idToken = $vcr->getToken();
+        $this->amount = $vcr->getAuthorizedAmount();
+        $this->invoiceNumber = $vcr->getInvoiceNumber();
 
     }
 

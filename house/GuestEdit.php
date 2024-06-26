@@ -992,6 +992,7 @@ $uS->guestId = $id;
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"></form>
         <table id="feesTable" style="display:none;"></table>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { ?> <div id="deluxeDialog" style="display:none;"></div> <?php } ?>
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);

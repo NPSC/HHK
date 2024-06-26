@@ -1410,7 +1410,7 @@ function reprintReceipt(pid, idDialg) {
 
 }
 
-function paymentRedirect(data, $xferForm) {
+function paymentRedirect(data, $xferForm, initialParams) {
     "use strict";
     if (data) {
 
@@ -1456,6 +1456,8 @@ function paymentRedirect(data, $xferForm) {
                 autoOpen: true,
                 title: "Add New Card On File",
                 open: function (event, ui) {
+                    console.log(initialParams);
+                    console.log(data);
                     var options = {
                         containerId: "deluxeDialog",
                         xtoken: data.hpfToken,
@@ -1467,23 +1469,23 @@ function paymentRedirect(data, $xferForm) {
                     };
                     HostedForm.init(options, {
                         onSuccess: (hpfData) => {
-                            var form = $('<form action="' + encodeURI(data.pbp) + '" method="post" style="display:none;">' +
-                                '<input type="hidden" name="token" value="' + hpfData.data.token + '" />' +
-                                '<input type="hidden" name="nameOnCard" value="' + hpfData.data.nameOnCard + '" />' +
-                                '<input type="hidden" name="expDate" value="' + hpfData.data.expDate + '" />' +
-                                '<input type="hidden" name="cardType" value="' + hpfData.data.cardType + '" />' +
-                                '<input type="hidden" name="maskedPan" value="' + hpfData.data.maskedPan + '" />' +
-                                '</form>');
-                            $('body').append(form);
-                            form.submit();
-                            
-                            /*$.post(encodeURI(data.pbp),
-                                {
-                                    token: hpfData.data.token,
-                                    nameOnCard: hpfData.data.nameOnCard,
-                                    expDate: hpfData.data.expDate,
-                                    cardType: hpfData.data.cardType
-                                },
+                            let submitData = {
+                                token: hpfData.data.token,
+                                nameOnCard: hpfData.data.nameOnCard,
+                                expDate: hpfData.data.expDate,
+                                cardType: hpfData.data.cardType,
+                                maskedPan: hpfData.data.maskedPan,
+                                cmd: "COF",
+                                pbp: data.pbp
+                            }
+
+                            if (data.idGroup && data.idPayor) {
+                                submitData.psg = data.idGroup;
+                                submitData.id = data.idPayor;
+                            }
+
+                            $.post(encodeURI(data.pbp),
+                                submitData,
                                 function (data) {
                                     if (data) {
                                         try {
@@ -1508,10 +1510,59 @@ function paymentRedirect(data, $xferForm) {
                                         if (data.gotopage) {
                                             window.location.assign(data.gotopage);
                                         }
+
+                                        if (data.idToken) {
+                                            console.log(initialParams);
+                                            initialParams.rbUseCard = data.idToken;
+
+                                            $.post('ws_ckin.php', initialParams,
+                                                function(data) {
+                                        
+                                                    try {
+                                                        data = $.parseJSON(data);
+                                                    } catch (err) {
+                                                        alert("Parser error - " + err.message);
+                                                        return;
+                                                    }
+                                        
+                                                    if (data.error) {
+                                                        if (data.gotopage) {
+                                                            window.location.assign(data.gotopage);
+                                                        }
+                                                        flagAlertMessage(data.error, 'error');
+                                                        return;
+                                                    }
+                                        
+                                                    if (typeof refreshdTables !== 'undefined') {
+                                                        refreshdTables(data);
+                                                    }
+                                        
+                                                    if (data.success && data.success !== '') {
+                                                        flagAlertMessage(data.success, 'success');
+                                        
+                                                        if (typeof calendar !== 'undefined') {
+                                                            calendar.refetchEvents();
+                                                        }
+                                                    }
+                                        
+                                                    if (data.warning && data.warning !== '') {
+                                                        flagAlertMessage(data.warning, 'error');
+                                                    }
+                                        
+                                                    if (data.receipt && data.receipt !== '') {
+                                                        showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                                                    }
+                                        
+                                                    if (data.invoiceNumber && data.invoiceNumber !== '') {
+                                                        window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
+                                                    }
+                                        
+                                            });
+                                        }
                                     }
                                 });
                             $deluxeDialog.dialog("close");
-                        */
+                        
                         },
                         onFailure: (data) => { console.log(JSON.stringify(data)); },
                         onInvalid: (data) => { console.log(JSON.stringify(data)); }
@@ -1519,6 +1570,7 @@ function paymentRedirect(data, $xferForm) {
                 },
                 close: function (event, ui) {
                     $(this).dialog('destroy').empty();
+                    HostedForm.ifLoaded = false;
                 }
 
             });

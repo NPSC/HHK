@@ -55,8 +55,11 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
             $this->responseCode = $status;
 
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
-            return new AuthorizeGatewayResponse($this->responseBody['token'], $this->responseBody["amountApproved"], 0, $cardType, $maskedAcct, $cardHolderName, "COF", $uS->username);
-
+            $response = new AuthorizeGatewayResponse($this->responseBody['token'], $this->responseBody["amountApproved"], 0, $cardType, $maskedAcct, $expDate, $cardHolderName, "COF", $uS->username);
+            $response->setExpDate($expDate);
+            $response->setMerchant($this->merchant);
+            return $response;
+            
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();
             $this->responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
