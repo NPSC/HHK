@@ -39,7 +39,7 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
             ],
             'paymentMethod'=>[
                 'token'=>[
-                    "token"=>$token, 
+                    "token"=>$token,
                     "expiry"=>$expDate
                 ]
             ]
@@ -55,8 +55,15 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
             $this->responseCode = $status;
 
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
-            $response = new AuthorizeGatewayResponse($this->responseBody['token'], $this->responseBody["amountApproved"], 0, $cardType, $maskedAcct, $expDate, $cardHolderName, "COF", $uS->username);
-            $response->setExpDate($expDate);
+            $this->responseCode = (isset($this->responseBody["responseCode"]) ? $this->responseBody["responseCode"] : $resp->getStatusCode());
+            
+            if(is_array($this->responseBody["responseMessage"])){
+                $this->responseMsg = implode(", ", $this->responseBody["responseMessage"]);
+            }else if(isset($this->responseBody["responseMessage"])){
+                $this->responseMsg = $this->responseBody["responseMessage"];
+            }
+
+            $response = new AuthorizeGatewayResponse($this->responseBody['token'], $this->responseBody["amountApproved"], 0, $cardType, $maskedAcct, $expDate, $cardHolderName, "COF", $uS->username, $this->responseBody["paymentId"]);
             $response->setMerchant($this->merchant);
             
             try {
@@ -81,7 +88,10 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
 
             if(isset($this->responseBody["error"]["message"])){
                 throw new PaymentException("Error making payment with Payment Gateway: Error: " . $this->responseBody["error"]["message"]);
-            }else{
+            }else if(isset($this->responseBody["errors"]) && is_array($this->responseBody["errors"])){
+                $msg = $this->responseBody["errors"]["message"] . ": " . $this->responseBody["errors"]["details"];
+                throw new PaymentException("Error making payment with Payment Gateway: " . $msg);
+            } else{
                 throw new PaymentException("Error making payment with Payment Gateway: Unknown Error: " . $e->getMessage());
             }
             

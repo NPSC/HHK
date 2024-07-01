@@ -3,10 +3,12 @@ namespace HHK\Payment\PaymentGateway\Deluxe\Request;
 
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\Exception\PaymentException;
+use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Response\VoidGatewayResponse;
 use HHK\sec\Session;
 use HHK\SysConst\MpTranType;
+use HHK\Tables\Payment\PaymentRS;
 
 Class VoidRequest extends AbstractDeluxeRequest {
     const ENDPOINT = "payments/cancel";
@@ -15,7 +17,7 @@ Class VoidRequest extends AbstractDeluxeRequest {
         parent::__construct($dbh, $gway);
     }
 
-    public function submit(string $paymentId){
+    public function submit(string $paymentId, Invoice $invoice, PaymentRS $payRs){
 
         $uS = Session::getInstance();
 
@@ -35,12 +37,21 @@ Class VoidRequest extends AbstractDeluxeRequest {
 
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
 
+            if(is_array($this->responseBody["responseMessage"])){
+                $this->responseMsg = implode(", ", $this->responseBody["responseMessage"]);
+            }else if(isset($this->responseBody["responseMessage"])){
+                $this->responseMsg = $this->responseBody["responseMessage"];
+            }
+            
             try {
                 //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
                 DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Void');
             } catch (\Exception $ex) {
                 // Do Nothing
             }
+
+            $this->responseBody["amount"] = $payRs->Amount->getStoredVal();
+            $this->responseBody["invoiceNumber"] = $invoice->getInvoiceNumber();
 
             return new VoidGatewayResponse($this->responseBody, MpTranType::Void);
 
@@ -57,7 +68,10 @@ Class VoidRequest extends AbstractDeluxeRequest {
 
             if(isset($this->responseBody["error"]["message"])){
                 throw new PaymentException("Error making payment with Payment Gateway: Error: " . $this->responseBody["error"]["message"]);
-            }else{
+            }else if(isset($this->responseBody["errors"]) && is_array($this->responseBody["errors"])){
+                $msg = $this->responseBody["errors"]["message"] . ": " . $this->responseBody["errors"]["details"];
+                throw new PaymentException("Error making payment with Payment Gateway: " . $msg);
+            } else{
                 throw new PaymentException("Error making payment with Payment Gateway: Unknown Error: " . $e->getMessage());
             }
             

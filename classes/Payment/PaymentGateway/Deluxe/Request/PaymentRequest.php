@@ -51,10 +51,14 @@ Class PaymentRequest extends AbstractDeluxeRequest {
                 \GuzzleHttp\RequestOptions::JSON => $requestData
             ]);
 
-            $status = $resp->getStatusCode();
-            $this->responseCode = $status;
-
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
+            $this->responseCode = (isset($this->responseBody["responseCode"]) ? $this->responseBody["responseCode"] : $resp->getStatusCode());
+            
+            if(is_array($this->responseBody["responseMessage"])){
+                $this->responseMsg = implode(", ", $this->responseBody["responseMessage"]);
+            }else if(isset($this->responseBody["responseMessage"])){
+                $this->responseMsg = $this->responseBody["responseMessage"];
+            }
 
             try {
                 //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
@@ -63,8 +67,10 @@ Class PaymentRequest extends AbstractDeluxeRequest {
                 // Do Nothing
             }
 
-            return new PaymentGatewayResponse($invoice->getAmountToPay(), $invoice->getInvoiceNumber(), $tokenRS->CardType->getStoredVal(), $tokenRS->MaskedAccount->getStoredVal(), $tokenRS->CardHolderName->getStoredVal(), "sale", $uS->username, $this->responseBody["responseCode"]);
-            
+            $response = new PaymentGatewayResponse($invoice->getAmountToPay(), $invoice->getInvoiceNumber(), $tokenRS->CardType->getStoredVal(), $tokenRS->MaskedAccount->getStoredVal(), $tokenRS->ExpDate->getStoredVal(), $tokenRS->CardHolderName->getStoredVal(), "sale", $uS->username, $this->responseBody["responseCode"], $tokenRS->Token->getStoredVal(), $this->responseMsg, $this->responseBody["paymentId"]);
+            $response->setMerchant($this->merchant);
+            return $response;
+
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();
             $this->responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
@@ -78,7 +84,10 @@ Class PaymentRequest extends AbstractDeluxeRequest {
 
             if(isset($this->responseBody["error"]["message"])){
                 throw new PaymentException("Error making payment with Payment Gateway: Error: " . $this->responseBody["error"]["message"]);
-            }else{
+            }else if(isset($this->responseBody["errors"]) && is_array($this->responseBody["errors"])){
+                $msg = $this->responseBody["errors"]["message"] . ": " . $this->responseBody["errors"]["details"];
+                throw new PaymentException("Error making payment with Payment Gateway: " . $msg);
+            } else{
                 throw new PaymentException("Error making payment with Payment Gateway: Unknown Error: " . $e->getMessage());
             }
             

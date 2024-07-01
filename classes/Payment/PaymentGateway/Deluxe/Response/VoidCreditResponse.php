@@ -7,30 +7,25 @@ use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\SysConst\PaymentMethod;
 use HHK\SysConst\PaymentStatusCode;
+use HHK\Tables\Payment\PaymentRS;
 
 /**
- * ImCofResponse.php
+ * VoidCreditResponse.php
  *
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2019 <nonprofitsoftwarecorp.org>
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
+ * @copyright 2024 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
-class AuthorizeCreditResponse extends AbstractCreditResponse {
+class VoidCreditResponse extends AbstractCreditResponse {
 
-    public $idToken;
-    public $merchant;
-    public $expDate;
-
-
-    function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup) {
+    function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup, PaymentRS $payRS) {
         $this->response = $vcr;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
-        $this->idToken = $vcr->getToken();
-        $this->merchant = $vcr->getMerchant();
-        $this->expDate = $vcr->getExpDate();
+        $this->amount = $payRS->Amount->getStoredVal();
+        $this->invoiceNumber = $vcr->getInvoiceNumber();
 
     }
 
@@ -39,21 +34,20 @@ class AuthorizeCreditResponse extends AbstractCreditResponse {
     }
 
     public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
+        return PaymentStatusCode::VoidSale;
     }
 
     public function getStatus() {
 
-        switch ($this->response->getResponseCode()) {
+        switch ($this->response->getStatus()) {
 
-            case '000':
+            case '0':
                 $status = AbstractCreditPayments::STATUS_APPROVED;
                 break;
 
             case '1434'://decline
                 $status = AbstractCreditPayments::STATUS_DECLINED;
                 break;
-
             case '1446'://expired card
                 $status = AbstractCreditPayments::STATUS_DECLINED;
                 break;
@@ -83,4 +77,3 @@ class AuthorizeCreditResponse extends AbstractCreditResponse {
     }
 
 }
-?>

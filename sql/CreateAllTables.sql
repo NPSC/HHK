@@ -2040,7 +2040,7 @@ CREATE TABLE if not exists `trans` (
   `Card_Authorize` varchar(15) NOT NULL DEFAULT '',
   `Card_Name` varchar(45) NOT NULL DEFAULT '',
   `Auth_Code` varchar(45) NOT NULL DEFAULT '',
-  `RefNo` varchar(25) NOT NULL DEFAULT '',
+  `RefNo` varchar(50) NOT NULL DEFAULT '',
   `Process_Code` varchar(15) NOT NULL DEFAULT '',
   `Gateway_Ref` varchar(45) NOT NULL DEFAULT '',
   `Payment_Status` varchar(15) NOT NULL DEFAULT '',

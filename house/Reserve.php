@@ -55,31 +55,33 @@ try {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
 
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+        }
+
+        // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
 
-    } else if (isset($_REQUEST['receiptMarkup']) && ! empty($_REQUEST['receiptMarkup'])) {
-        // Catch receipt
-        $receiptMarkup = filter_var($_REQUEST['receiptMarkup'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        if ($payResult->getDisplayMessage() != '') {
-            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
         }
     }
-
-    //make receipt copy
-    if($receiptMarkup != '' && $uS->merchantReceipt == true) {
-        $receiptMarkup = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
-            .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
-            ,
-            ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
-    }
-
-
 
 } catch (RuntimeException $ex) {
-    $paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 // Confirmation form return

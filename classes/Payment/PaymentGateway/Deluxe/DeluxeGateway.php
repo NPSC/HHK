@@ -11,21 +11,27 @@ use HHK\Payment\CreditToken;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
+use HHK\Payment\PaymentGateway\CreditPayments\ReturnReply;
 use HHK\Payment\PaymentGateway\CreditPayments\SaleReply;
+use HHK\Payment\PaymentGateway\CreditPayments\VoidReply;
 use HHK\Payment\PaymentGateway\Deluxe\Request\AuthorizeRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentRequest;
+use HHK\Payment\PaymentGateway\Deluxe\Request\RefundRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeCreditResponse;
-use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeGatewayResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentCreditResponse;
-use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentGatewayResponse;
+use HHK\Payment\PaymentGateway\Deluxe\Response\RefundCreditResponse;
+use HHK\Payment\PaymentGateway\Deluxe\Response\VoidCreditResponse;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\PaymentResult\CofResult;
 use HHK\Payment\PaymentResult\PaymentResult;
+use HHK\Payment\PaymentResult\ReturnResult;
+use HHK\Payment\Receipt;
 use HHK\Payment\Transaction;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
+use HHK\SysConst\PaymentStatusCode;
 use HHK\SysConst\PayType;
 use HHK\SysConst\TransMethod;
 use HHK\SysConst\TransType;
@@ -33,7 +39,10 @@ use HHK\TableLog\AbstractTableLog;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\House\LocationRS;
+use HHK\Tables\Payment\Payment_AuthRS;
+use HHK\Tables\Payment\PaymentRS;
 use HHK\Tables\PaymentGW\CC_Hosted_GatewayRS;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
 /**
  * DeluxeGateway.php
  *
@@ -167,23 +176,18 @@ class DeluxeGateway extends AbstractPaymentGateway
 
         //captured card info
         if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "COF") {
-            $data = $post;
-            $result = $this->saveCOF($dbh, $data);
+            //card on file
+            $result = $this->saveCOF($dbh, $post);
             if (is_array($result)){
                 echo json_encode($result);
                 exit;
             }
         } else if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "payment"){
-            $data = $post;
-            $result = $this->saveCOF($dbh, $data);
-
-            if($result["idToken"]){
-                $pmp = new PaymentManagerPayment(PayType::Charge);
-                $pmp->setIdToken($result["idToken"]);
-                $invoice = new Invoice($dbh, $post["invoiceNum"]);
-                $invoice->setAmountToPay($invoice->getBalance());
-                return $this->creditSale($dbh, $pmp, $invoice, $post['pbp']);
-            }
+            //payment with new card
+            $pmp = new PaymentManagerPayment(PayType::Charge);
+            $invoice = new Invoice($dbh, $post["invoiceNum"]);
+            $invoice->setAmountToPay($invoice->getBalance());
+            return $this->creditSale($dbh, $pmp, $invoice, $post['pbp']);
         }
     }
     
@@ -312,7 +316,40 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $payResult = $this->analyzeCredSaleResult($dbh, $paymentResponse, $invoice, $pmp->getIdToken());
 
-            } else {
+            } else if (filter_has_var(INPUT_POST, 'token') && filter_has_var(INPUT_POST, 'expDate')){
+                $paymentRequest = new PaymentRequest($dbh, $this);
+
+                $token = filter_input(INPUT_POST, "token", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $expDate = filter_input(INPUT_POST, "expDate", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $nameOnCard = filter_input(INPUT_POST, "nameOnCard", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $cardType = filter_input(INPUT_POST, "cardType", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $acct = substr(filter_input(INPUT_POST, "maskedPan", FILTER_SANITIZE_FULL_SPECIAL_CHARS), -4);
+
+                $newTokenRS = new Guest_TokenRS();
+                $newTokenRS->Token->setStoredVal($token);
+                $newTokenRS->ExpDate->setStoredVal($expDate);
+                $newTokenRS->CardHolderName->setStoredVal($nameOnCard);
+                $newTokenRS->CardType->setStoredVal($cardType);
+                $newTokenRS->MaskedAccount->setStoredVal($acct);
+
+                $gatewayResponse = $paymentRequest->submit($invoice, $newTokenRS);
+
+                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup());
+                
+                // Record transaction
+                try {
+                    $transRs = Transaction::recordTransaction($dbh, $paymentResponse, $this->getGatewayName(), TransType::Sale, TransMethod::HostedPayment);
+                    $paymentResponse->setIdTrans($transRs->idTrans->getStoredVal());
+                } catch (\Exception $ex) {
+                    throw new PaymentException("Error creating transaction: " . $ex->getMessage());
+                }
+
+                $paymentResponse = SaleReply::processReply($dbh, $paymentResponse, $uS->username);
+
+                $payResult = $this->analyzeCredSaleResult($dbh, $paymentResponse, $invoice, $paymentResponse->getIdToken());
+
+                
+            }else {
 
             	$this->manualKey = $pmp->getManualKeyEntry();
 
@@ -393,6 +430,198 @@ class DeluxeGateway extends AbstractPaymentGateway
         return $payResult;
     }
 
+    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid){
+
+        $uS = Session::getInstance();
+        
+        $paymentId = $pAuthRs->AcqRefData->getStoredVal();
+
+        $voidRequest = new VoidRequest($dbh, $this);
+
+        $gatewayResponse = $voidRequest->submit($paymentId, $invoice, $payRs);
+
+        $voidResponse = new VoidCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $payRs);
+                
+        // Record transaction
+        try {
+            $transRs = Transaction::recordTransaction($dbh, $voidResponse, $this->getGatewayName(), TransType::Void, TransMethod::Token);
+            $voidResponse->setIdTrans($transRs->idTrans->getStoredVal());
+        } catch (\Exception $ex) {
+            throw new PaymentException("Error creating transaction: " . $ex->getMessage());
+        }
+
+        // Record payment
+        $csResp = VoidReply::processReply($dbh, $voidResponse, $uS->username, $payRs);
+
+        switch ($csResp->getStatus()) {
+
+            case AbstractCreditPayments::STATUS_APPROVED:
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
+
+                $csResp->idVisit = $invoice->getOrderNumber();
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                $dataArray['success'] = 'Payment is void.  ';
+
+                break;
+
+            case AbstractCreditPayments::STATUS_DECLINED:
+
+                $dataArray['warning'] = '** Void Declined. **  Message: ' . $csResp->response->getResponseMessage();
+
+                break;
+
+            default:
+
+                $dataArray['warning'] = '** Void Invalid or Error. **  Message: ' . $csResp->response->getResponseMessage();
+        }
+
+        return $dataArray;
+    }
+
+    protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
+
+        $uS = Session::getInstance();
+
+        $csResp = $this->processReturnPayment($dbh, $payRs, $pAuthRs->AcqRefData->getStoredVal(), $invoice, $returnAmt, $uS->username, '');
+
+        $dataArray = array('bid' => $bid);
+
+        switch ($csResp->getStatus()) {
+
+            case AbstractCreditPayments::STATUS_APPROVED:
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
+
+                $csResp->idVisit = $invoice->getOrderNumber();
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+
+                break;
+
+            case AbstractCreditPayments::STATUS_DECLINED:
+
+                $dataArray['warning'] = $csResp->response->getResponseMessage();
+
+                break;
+
+            default:
+
+                $dataArray['warning'] = $csResp->response->getResponseMessage();
+        }
+
+        return $dataArray;
+    }
+
+    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
+
+        $uS = Session::getInstance();
+
+        // Find a credit payment
+        $idGroup = intval($invoice->getIdGroup(), 10);
+        $amount = abs($invoice->getAmount());
+        $idToken = intval($rtnToken, 10);
+
+        $stmt = $dbh->query("select sum(CASE WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData
+from payment p join payment_auth pa on p.idPayment = pa.idPayment
+    join payment_invoice pi on p.idPayment = pi.Payment_Id
+    join invoice i on pi.Invoice_Id = i.idInvoice
+where p.idToken = $idToken and i.idGroup = $idGroup
+group by pa.Approved_Amount having `Total` >= $amount;");
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) == 0) {
+
+            $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
+            return $payResult;
+        }
+
+        $csResp = $this->processReturnPayment($dbh, null, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
+        //$csResp = $this->processStandaloneReturn($dbh, $tokenRS, $invoice, $amount, $uS->username, $paymentNotes);
+
+        $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+
+        switch ($csResp->getStatus()) {
+
+            case AbstractCreditPayments::STATUS_APPROVED:
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
+
+                $payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
+                $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
+
+                break;
+
+            case AbstractCreditPayments::STATUS_DECLINED:
+
+                $payResult->feePaymentRejected($dbh, $uS, $csResp, $invoice);
+
+                $msg = '** The Return is Declined. **';
+                if ($csResp->response->getResponseMessage() != '') {
+                    $msg .= 'Message: ' . $csResp->response->getResponseMessage();
+                }
+                $payResult->setDisplayMessage($msg);
+
+                break;
+
+            default:
+
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->setDisplayMessage('**  Error Message: ' . $csResp->response->getResponseMessage());
+        }
+
+        return $payResult;
+    }
+
+    /**
+     *
+     * @param \PDO $dbh
+     * @param PaymentRS|null $payRs
+     * @param string $paymentTransId
+     * @param Invoice $invoice
+     * @param float $returnAmt
+     * @param string $userName
+     * @return object
+     */
+    protected function processReturnPayment(\PDO $dbh, PaymentRS|null $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
+
+        $returnRequest = new RefundRequest($dbh, $this);
+
+        $returnGatewayResponse = $returnRequest->submit($paymentTransId, $invoice->getInvoiceNumber(), $returnAmt);
+
+        // Make a return response...
+        $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
+        $sr->setResult($returnGatewayResponse->getStatus());
+
+        if ($sr->getStatus() == AbstractCreditPayments::STATUS_APPROVED) {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+        } else {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
+//         if ($curlResponse->getResponseMessage() != self::RESPONSE_APPROVED) {
+//         	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
+//         } else {
+//         	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+//         }
+
+        // Record transaction
+        try {
+        	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Retrn, TransMethod::Token);
+            $sr->setIdTrans($transRs->idTrans->getStoredVal());
+        } catch (\Exception $ex) {
+            // do nothing
+        }
+
+        // Record return
+        return ReturnReply::processReply($dbh, $sr, $userName, $payRs);
+
+    }
+    
     /**
      *
      * @param \PDO $dbh
@@ -454,7 +683,7 @@ class DeluxeGateway extends AbstractPaymentGateway
                     .HTMLTable::makeTd(
                     		HTMLSelector::generateMarkup($sel, $selArray)
                     		, ['colspan'=>'2'])
-                    , ['id'=>'trvdCHName'.$index, 'class'=>'tblCreditExpand'.$index.' tblCredit'.$index]
+                    , ['id'=>'trvdCHName'.$index, 'class'=>'tblCreditExpand'.$index.' tblCredit'.$index, 'style'=>'display: none;']
             );
 
         }

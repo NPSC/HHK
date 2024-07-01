@@ -20,6 +20,8 @@ abstract class AbstractDeluxeRequest
 
     protected string $responseCode;
 
+    protected string $responseMsg;
+
     protected array $responseBody;
 
     protected \PDO $dbh;
@@ -39,6 +41,7 @@ abstract class AbstractDeluxeRequest
                 'content-type' =>'application/json'
             ]
         ]);
+        $this->responseMsg = "";
     }
 
     /**

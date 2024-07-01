@@ -4,6 +4,7 @@ namespace HHK\Payment\PaymentGateway\Deluxe\Request;
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\Exception\PaymentException;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Deluxe\Response\RefundGatewayResponse;
 use HHK\sec\Session;
 use HHK\SysConst\MpTranType;
 
@@ -14,7 +15,7 @@ Class RefundRequest extends AbstractDeluxeRequest {
         parent::__construct($dbh, $gway);
     }
 
-    public function submit($paymentId, $amount, $currency = "USD"){
+    public function submit($paymentId, $invoiceNumber, $amount, $currency = "USD"){
 
         $uS = Session::getInstance();
 
@@ -22,7 +23,7 @@ Class RefundRequest extends AbstractDeluxeRequest {
         $requestData = [
             "paymentId"=>$paymentId,
             "amount"=>[
-                "amount" => $amount,
+                "amount" => (float) round($amount, 2),
                 "currency" => $currency
             ]
         ];
@@ -37,7 +38,16 @@ Class RefundRequest extends AbstractDeluxeRequest {
             $this->responseCode = $status;
 
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
+            $this->responseBody["invoiceNumber"] = $invoiceNumber;
 
+            $this->responseCode = (isset($this->responseBody["responseCode"]) ? $this->responseBody["responseCode"] : $resp->getStatusCode());
+            
+            if(is_array($this->responseBody["responseMessage"])){
+                $this->responseMsg = implode(", ", $this->responseBody["responseMessage"]);
+            }else if(isset($this->responseBody["responseMessage"])){
+                $this->responseMsg = $this->responseBody["responseMessage"];
+            }
+            
             try {
                 //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
                 DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Refund');
@@ -60,7 +70,10 @@ Class RefundRequest extends AbstractDeluxeRequest {
 
             if(isset($this->responseBody["error"]["message"])){
                 throw new PaymentException("Error making payment with Payment Gateway: Error: " . $this->responseBody["error"]["message"]);
-            }else{
+            }else if(isset($this->responseBody["errors"]) && is_array($this->responseBody["errors"])){
+                $msg = $this->responseBody["errors"]["message"] . ": " . $this->responseBody["errors"]["details"];
+                throw new PaymentException("Error making payment with Payment Gateway: " . $msg);
+            } else{
                 throw new PaymentException("Error making payment with Payment Gateway: Unknown Error: " . $e->getMessage());
             }
             

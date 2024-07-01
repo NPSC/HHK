@@ -48,11 +48,10 @@ class PaymentCreditResponse extends AbstractCreditResponse {
                 $status = AbstractCreditPayments::STATUS_APPROVED;
                 break;
 
-            case '001':
+            case '1434'://decline
                 $status = AbstractCreditPayments::STATUS_DECLINED;
                 break;
-
-            case '003':
+            case '1446'://expired card
                 $status = AbstractCreditPayments::STATUS_DECLINED;
                 break;
 

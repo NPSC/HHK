@@ -482,7 +482,11 @@ class HouseServices {
 
             if (is_null($payResult) === FALSE) {
 
-                $reply .= $payResult->getReplyMessage();
+                if($payResult->wasError()){
+                    $dataArray["error"] = $payResult->getReplyMessage();
+                }else{
+                    $reply .= $payResult->getReplyMessage();
+                }
 
                 if ($payResult->getStatus() == PaymentResult::FORWARDED) {
                     $creditCheckOut = $payResult->getForwardHostedPayment();

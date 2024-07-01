@@ -846,6 +846,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
+                $('#keysfees').dialog("close");
                 return;
             }
 

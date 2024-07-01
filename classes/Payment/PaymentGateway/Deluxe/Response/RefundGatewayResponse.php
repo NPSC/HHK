@@ -7,7 +7,7 @@ use HHK\Payment\GatewayResponse\AbstractGatewayResponse;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 
 /**
- * VoidGatewayResponse.php
+ * RefundGatewayResponse.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2024 <nonprofitsoftwarecorp.org>
@@ -15,14 +15,14 @@ use HHK\Payment\GatewayResponse\GatewayResponseInterface;
  * @link      https://github.com/NPSC/HHK
  */
 
-class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResponseInterface {
+class RefundGatewayResponse extends AbstractGatewayResponse implements GatewayResponseInterface {
 
     protected function parseResponse() {
 
         if(is_array($this->response)){
             $this->result = $this->response;
         }else{
-            throw new PaymentException("Void response is missing from the payment gateway response.  ");
+            throw new PaymentException("Refund response is missing from the payment gateway response.  ");
         }
     }
 
@@ -35,10 +35,16 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
         return '';
     }
 
+    public function getStatus(){
+        return $this->getResponseCode();
+    }
+
     public function getResponseMessage() {
 
-        if (isset($this->result['responseMessage'])) {
+        if (isset($this->result['responseMessage']) && is_string($this->result['responseMessage'])) {
             return $this->result['responseMessage'];
+        }else if (isset($this->result['responseMessage']) && is_array($this->result['responseMessage'])){
+            return implode(", ", $this->result['responseMessage']);
         }
 
         return '';
@@ -46,8 +52,8 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
 
     public function getAuthorizedAmount()
     {
-        if (isset($this->result['amount'])) {
-            return $this->result['amount'];
+        if (isset($this->result['amountApproved'])) {
+            return $this->result['amountApproved'];
         }
 
         return '';
@@ -68,7 +74,8 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
 
         return '';
     }
-    
+
+
     /**
      * @inheritDoc
      */
@@ -144,12 +151,6 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
     /**
      * @inheritDoc
      */
-    public function getErrorMessage() {
-    }
-    
-    /**
-     * @inheritDoc
-     */
     public function getExpDate() {
     }
     
@@ -173,12 +174,6 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
     /**
      * @inheritDoc
      */
-    public function getMerchant() {
-    }
-    
-    /**
-     * @inheritDoc
-     */
     public function getOperatorId() {
     }
     
@@ -197,12 +192,6 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
     /**
      * @inheritDoc
      */
-    public function getProcessor() {
-    }
-    
-    /**
-     * @inheritDoc
-     */
     public function getRefNo() {
     }
     
@@ -210,13 +199,6 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getRequestAmount() {
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    public function getStatus() {
-        return $this->getResponseCode();
     }
     
     /**
@@ -235,18 +217,6 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getTransPostTime() {
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    public function getTranType() {
-    }
-    
-    /**
-     * @inheritDoc
-     */
-    public function saveCardonFile() {
     }
     
     /**

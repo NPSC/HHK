@@ -53,25 +53,39 @@ $signatures = array();
 
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+try {
 
-    if ($payResult->getDisplayMessage() != '') {
-        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+
+        $receiptMarkup = $payResult->getReceiptMarkup();
+
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+        }
+
+        // Display a status message.
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
+        }
     }
 
-    $receiptMarkup = $payResult->getReceiptMarkup();
-
-    $idRegistration = $payResult->getIdRegistration();
-//    $idInvoice = $payResult->getIdInvoice();
-//
-//    $invoice = new Invoice($dbh);
-//    try {
-//        $invoice->loadInvoice($dbh, $idInvoice);
-//        $idVisit = $invoice->getOrderNumber();
-//    } catch(Exception $ex) {
-//
-//    }
-
+} catch (RuntimeException $ex) {
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 if (isset($_REQUEST['regid'])) {

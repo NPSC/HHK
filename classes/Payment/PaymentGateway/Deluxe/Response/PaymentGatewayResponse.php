@@ -30,21 +30,28 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     protected $cardHolderName;
     protected $authorizedAmount;
     protected $account;
+    protected $expDate;
     protected $cardType;
     protected $invoiceNumber;
+    protected $token;
     protected $status;
+    protected $responseMessage;
+    protected $acqRefData;
     
-    public function __construct($amount, $invoiceNumber, $cardType, $cardAcct, $cardHolderName, $tranType, $operatorId, $status) {
+    public function __construct($amount, $invoiceNumber, $cardType, $cardAcct, $expDate, $cardHolderName, $tranType, $operatorId, $status, $token, $responseMessage, $acqRefData) {
         
         $this->setOperatorId($operatorId);
         $this->setCardHolderName( $cardHolderName);
         $this->authorizedAmount = $amount;
         $this->account = $cardAcct;
+        $this->expDate = $expDate;
         $this->cardType = $cardType;
         $this->invoiceNumber = $invoiceNumber;
         $this->status = $status;
+        $this->token = $token;
         $this->tranType = MpTranType::Sale;
-        ;
+        $this->responseMessage = $responseMessage;
+        $this->acqRefData = $acqRefData;
     }
     
     public function getStatus() {
@@ -62,10 +69,15 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     public function getMerchant() {
         return $this->merchant;
     }
+
+    public function setMerchant($v){
+        $this->merchant = $v;
+    }
+
     public function saveCardOnFile() {
         return TRUE;
     }
-    
+
     public function getCardHolderName() {
         return $this->cardHolderName;
     }
@@ -139,7 +151,7 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getExpDate() {
-        return '';
+        return $this->expDate;
     }
     
     public function getOperatorId() {
@@ -151,7 +163,7 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getResponseMessage() {
-        return '';
+        return $this->responseMessage;
     }
     
     public function getResponseCode() {
@@ -163,7 +175,7 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getAcqRefData() {
-        return '';
+        return $this->acqRefData;
     }
     
     public function getAuthCode() {
@@ -191,7 +203,11 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getToken() {
-        return $this->getRandomString();
+        return $this->token;
+    }
+
+    public function setToken($v){
+        $this->token = $v;
     }
     
     protected function getRandomString($length=40){

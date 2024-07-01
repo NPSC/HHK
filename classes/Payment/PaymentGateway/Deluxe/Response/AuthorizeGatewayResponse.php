@@ -33,8 +33,9 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     protected $invoiceNumber;
     protected $token;
     protected $expDate;
+    protected $acqRefData;
     
-    public function __construct($token, $amount, $invoiceNumber, $cardType, $cardAcct, $expDate, $cardHolderName, $tranType, $operatorId) {
+    public function __construct($token, $amount, $invoiceNumber, $cardType, $cardAcct, $expDate, $cardHolderName, $tranType, $operatorId, $acqRefData) {
         
         $this->tranType = $tranType;
         $this->setOperatorId($operatorId);
@@ -45,6 +46,7 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
         $this->invoiceNumber = $invoiceNumber;
         $this->token = $token;
         $this->expDate = $expDate;
+        $this->acqRefData = $acqRefData;
     }
     
     public function getStatus() {
@@ -166,7 +168,7 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getAcqRefData() {
-        return '';
+        return $this->acqRefData;
     }
     
     public function getAuthCode() {

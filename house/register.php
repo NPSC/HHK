@@ -79,13 +79,18 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, "success"=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
             exit;
         }
     }
 
 } catch (RuntimeException $ex) {
-    $paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 

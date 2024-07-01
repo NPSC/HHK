@@ -930,7 +930,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     }
 
     if (ptsel.length > 0) {
-        ptsel.change(function () {
+        ptsel.on('change', function () {
             $('.hhk-cashTndrd').hide();
             $('.hhk-cknum').hide();
             $('#tblInvoice').hide();
@@ -945,8 +945,10 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
             if ($(this).val() === 'cc') {
                 chg.show('fade');
                 if ($('input[name=rbUseCard]:checked').val() == 0) {
-                    $chrgExpand.show();
+                    //$chrgExpand.show('fade');
                 }
+                //$('input[name=rbUseCard]:checked').trigger('change');
+
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
             } else if ($(this).val() === 'in') {
@@ -962,7 +964,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     }
 
     // Card on file Cardholder name.
-    setupCOF($chrgExpand);
+    //setupCOF($chrgExpand);
 
 
     // Set up return table
@@ -1580,6 +1582,8 @@ function setupCOF($chgExpand, idx) {
         if ($('input[name=rbUseCard' + idx + ']:checked').val() > 0 || ($('input[name=rbUseCard' + idx + ']').prop('checked') === false && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
             $chgExpand.hide();
         }
+
+        $('input[name=rbUseCard' + idx + ']').trigger('change');
 
         // Instamed-specific controls
         if ($('#btnvrKeyNumber' + idx).length > 0) {
