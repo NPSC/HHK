@@ -37,7 +37,9 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
 
     public function getResponseMessage() {
 
-        if (isset($this->result['responseMessage'])) {
+        if (isset($this->result['responseMessage']) && is_array($this->result['responseMessage'])) {
+            return implode(', ', $this->result['responseMessage']);
+        }else if(isset($this->result['responseMessage'])){
             return $this->result['responseMessage'];
         }
 

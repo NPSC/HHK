@@ -1,6 +1,8 @@
 <?php
 
 use HHK\Notification\Mail\HHKMailer;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentLinkRequest;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
@@ -45,6 +47,12 @@ if (isset($_GET["invnum"])) {
 // Catch post-back
 if (isset($_POST['hdninvnum'])) {
     $invNum = filter_var($_POST["hdninvnum"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+}
+
+if (isset($_GET['createlink'])){
+    $createLink = true;
+}else{
+    $createLink = false;
 }
 
 try {
@@ -156,10 +164,24 @@ try {
         "Thank You,\n" . 
         $uS->siteName;
 
+        /* 
+        if(isset($_GET['createlink'])){
+            $linkRequest = new PaymentLinkRequest($dbh, new DeluxeGateway($dbh, 'wireland'));
+            $response = $linkRequest->submit($invoice);
+
+            if(isset($response['paymentLinkURL'])){
+                $emBody .= "\n\rPay invoice online - " . $response["paymentLinkURL"];
+            }
+        }
+        */
+        
         // create send email table
         if ($invoice->isDeleted() === FALSE) {
             $emtableMarkup = Invoice::makeEmailTbl($emSubject, $emAddrs, $emBody, $invNum);
         }
+
+        
+
     } else {
         $msg .= 'Invoice not found.';
     }

@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Deluxe\Response;
 
+use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
@@ -73,7 +74,30 @@ class VoidCreditResponse extends AbstractCreditResponse {
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
-        return array('error'=>'Receipts not available.');
+
+        if ($this->isPartialPayment()) {
+            $tbl->addBodyTr(HTMLTable::makeTd("Partial Payment", array('colspan'=>2, 'style'=>'font-weight:bold;align:center;')));
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd('xxx...' . $this->response->getMaskedAccount()));
+
+        if ($this->response->getCardHolderName() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getCardHolderName()));
+        }
+
+        if ($this->response->getAuthCode() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
+        }
+
+        if ($this->response->getResponseMessage() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
+        }
+
+        if ($this->response->getAuthorizationText() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd($this->response->getAuthorizationText(), array('colspan'=>2, 'style'=>'font-size:.8em;')));
+        }
+
     }
 
 }
