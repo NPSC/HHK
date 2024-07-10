@@ -5,6 +5,7 @@ namespace HHK\Payment\PaymentGateway\Deluxe\Response;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\MpTranType;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
 
 /**
  * AuthorizeGatewayResponse.php
@@ -37,18 +38,20 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     protected $status;
     protected $responseMessage;
     protected $acqRefData;
+    protected Guest_TokenRS $tkRs;
     
-    public function __construct($amount, $invoiceNumber, $cardType, $cardAcct, $expDate, $cardHolderName, $tranType, $operatorId, $status, $token, $responseMessage, $acqRefData) {
-        
+    public function __construct($amount, $invoiceNumber, Guest_TokenRS $tkRs, $tranType, $operatorId, $status, $responseMessage, $acqRefData) {
+
+        $this->tkRs = $tkRs;
         $this->setOperatorId($operatorId);
-        $this->setCardHolderName( $cardHolderName);
+        $this->setCardHolderName( $this->tkRs->CardHolderName->getStoredVal());
         $this->authorizedAmount = $amount;
-        $this->account = $cardAcct;
-        $this->expDate = $expDate;
-        $this->cardType = $cardType;
+        $this->account = $this->tkRs->MaskedAccount->getStoredVal();
+        $this->expDate = $this->tkRs->ExpDate->getStoredVal();
+        $this->cardType = $this->tkRs->CardType->getStoredVal();
         $this->invoiceNumber = $invoiceNumber;
         $this->status = $status;
-        $this->token = $token;
+        $this->token = $this->tkRs->Token->getStoredVal();
         $this->tranType = MpTranType::Sale;
         $this->responseMessage = $responseMessage;
         $this->acqRefData = $acqRefData;

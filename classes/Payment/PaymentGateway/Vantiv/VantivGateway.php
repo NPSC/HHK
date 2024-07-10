@@ -825,10 +825,16 @@ class VantivGateway extends AbstractPaymentGateway {
         	$manualArray['checked'] = 'checked';
         }
 
-        $keyCb = HTMLContainer::generateMarkup('span',
-        		HTMLContainer::generateMarkup('label', 'Type: ', ['for'=>'btnvrKeyNumber'.$index, 'title'=>'Check to Key in credit account number'])
-                .HTMLInput::generateMarkup('', $manualArray)
-        , ['style'=>'float:right; margin-top:2px;margin-left:3px;']);
+        $keyCb = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", "Swipe") .
+            HTMLContainer::generateMarkup(
+                'label',
+                HTMLInput::generateMarkup('', $manualArray) .
+                HTMLContainer::generateMarkup("div", "", ['class' => 'hhk-slider round'])
+                ,
+                ['for' => 'btnvrKeyNumber' . $index, 'title' => 'Check to Key in credit account number', 'class' => 'hhk-switch mx-2']
+            ) .
+            HTMLContainer::generateMarkup("span", "Type")
+            , ["class"=>"hhk-flex"]);
 
         if ($this->getGatewayType() != '') {
         	// A location is already selected.
@@ -837,10 +843,8 @@ class VantivGateway extends AbstractPaymentGateway {
 
             $payTbl->addBodyTr(
                     HTMLTable::makeTh('Selected Location:', ['style'=>'text-align:right;'])
-            		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray)
-            				. $keyCb
-            				, ['colspan'=>'2'])
-            		, ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
+            		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), ['colspan'=>'2'])
+            	, ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
             );
 
         } else {
@@ -860,14 +864,16 @@ class VantivGateway extends AbstractPaymentGateway {
 
             $payTbl->addBodyTr(
             		HTMLTable::makeTh('Select a Location:', ['style'=>'text-align:right; width:130px;'])
-                    .HTMLTable::makeTd(
-                    		HTMLSelector::generateMarkup($sel, $selArray)
-                    		. $keyCb
-                    		, ['colspan'=>'2'])
-                    , ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), ['colspan'=>'2'])
+                , ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
             );
 
         }
+
+        $payTbl->addBodyTr(
+            HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
+            .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
+        ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
 
     }
 

@@ -3,6 +3,7 @@
 namespace HHK\Payment\PaymentGateway\Deluxe\Response;
 
 use HHK\HTMLControls\HTMLTable;
+use HHK\Payment\CreditToken;
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
@@ -30,7 +31,6 @@ class PaymentCreditResponse extends AbstractCreditResponse {
         $this->idToken = $vcr->getToken();
         $this->amount = $vcr->getAuthorizedAmount();
         $this->invoiceNumber = $vcr->getInvoiceNumber();
-
     }
 
     public function getPaymentMethod() {

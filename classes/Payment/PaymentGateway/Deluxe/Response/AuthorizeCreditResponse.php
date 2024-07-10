@@ -46,7 +46,7 @@ class AuthorizeCreditResponse extends AbstractCreditResponse {
 
         switch ($this->response->getResponseCode()) {
 
-            case '000':
+            case '0':
                 $status = AbstractCreditPayments::STATUS_APPROVED;
                 break;
 

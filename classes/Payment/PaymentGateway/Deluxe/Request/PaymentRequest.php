@@ -67,7 +67,7 @@ Class PaymentRequest extends AbstractDeluxeRequest {
                 // Do Nothing
             }
 
-            $response = new PaymentGatewayResponse($invoice->getAmountToPay(), $invoice->getInvoiceNumber(), $tokenRS->CardType->getStoredVal(), $tokenRS->MaskedAccount->getStoredVal(), $tokenRS->ExpDate->getStoredVal(), $tokenRS->CardHolderName->getStoredVal(), "sale", $uS->username, $this->responseBody["responseCode"], $tokenRS->Token->getStoredVal(), $this->responseMsg, $this->responseBody["paymentId"]);
+            $response = new PaymentGatewayResponse($invoice->getAmountToPay(), $invoice->getInvoiceNumber(), $tokenRS, "sale", $uS->username, $this->responseBody["responseCode"], $this->responseMsg, $this->responseBody["paymentId"]);
             $response->setMerchant($this->merchant);
             return $response;
 

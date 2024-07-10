@@ -1,48 +1,35 @@
 <?php
-namespace HHK\Payment\PaymentGateway\Deluxe\Request;
+namespace HHK\Payment\PaymentGateway\Deluxe\Request\Reports;
 
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\Exception\PaymentException;
-use HHK\Payment\CreditToken;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeGatewayResponse;
+use HHK\Payment\PaymentGateway\Deluxe\Request\AbstractDeluxeRequest;
 use HHK\sec\Session;
 
-Class AuthorizeRequest extends AbstractDeluxeRequest {
-    const ENDPOINT = "payments/authorize";
+Class CcTransactionReport extends AbstractDeluxeRequest {
+    const ENDPOINT = "reports";
 
     public function __construct(\PDO $dbh, DeluxeGateway $gway){
         parent::__construct($dbh, $gway);
     }
 
     /**
-     * Submit a payment authorization request
-     * @param float $amount
-     * @param string $token
-     * @param string $expDate
-     * @param string $cardType
-     * @param string $maskedAcct
-     * @param string $cardHolderName
-     * @param string $currrency
-     * @return AuthorizeGatewayResponse
+     * Retreive Reconciliation report
+     * @param \DateTimeInterface $startDate
+     * @param \DateTimeInterface $endDate
+     * @return array
      * @throws PaymentException
      */
-    public function submit(float $amount, string $token, string $expDate, $cardType, $maskedAcct, $cardHolderName, string $currrency = "USD"){
+    public function submit(\DateTimeInterface $startDate, \DateTimeInterface $endDate){
 
         $uS = Session::getInstance();
 
         //build request data
         $requestData = [
-            'amount'=>[
-                'amount'=>$amount,
-                'currency'=>$currrency
-            ],
-            'paymentMethod'=>[
-                'token'=>[
-                    "token"=>$token,
-                    "expiry"=>$expDate
-                ]
-            ]
+            'reportTitle'=>"ccTransaction",
+            'reportStartDate'=>$startDate->format("n/j/Y"),
+            'reportEndDate'=>$endDate->format("n/j/Y")
         ];
 
         //send request
@@ -57,34 +44,17 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
             $this->responseCode = (isset($this->responseBody["responseCode"]) ? $this->responseBody["responseCode"] : $resp->getStatusCode());
             
-            if(is_array($this->responseBody["responseMessage"])){
+            if(isset($this->responseBody["responseMessage"]) && is_array($this->responseBody["responseMessage"])){
                 $this->responseMsg = implode(", ", $this->responseBody["responseMessage"]);
             }else if(isset($this->responseBody["responseMessage"])){
                 $this->responseMsg = $this->responseBody["responseMessage"];
             }
 
-            $response = new AuthorizeGatewayResponse($this->responseBody, 0, $cardType, $maskedAcct, $expDate, $cardHolderName, "COF");
-            $response->setMerchant($this->merchant);
-            
-            try {
-                //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
-                DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Authorize');
-            } catch (\Exception $ex) {
-                // Do Nothing
-            }
-
-            return $response;
+            return $this->responseBody;
             
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();
             $this->responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
-            
-            try {
-                //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
-                DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Authorize');
-            } catch (\Exception $ex) {
-                // Do Nothing
-            }
 
             if(isset($this->responseBody["error"]["message"])){
                 throw new PaymentException("Error making payment with Payment Gateway: Error: " . $this->responseBody["error"]["message"]);

@@ -818,7 +818,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
-                parms[$(this).attr('id')] = $(this).val();
+                parms[$(this).attr('name')] = $(this).val();
             }
         } else{
             parms[$(this).attr('id')] = $(this).val();

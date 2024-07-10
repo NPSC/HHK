@@ -99,12 +99,22 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getCardHolderName() {
+        if(isset($this->result['cardholderName'])){
+            return $this->result['cardholderName'];
+        }
+
+        return '';
     }
     
     /**
      * @inheritDoc
      */
     public function getCardType() {
+        if(isset($this->result['cardType'])){
+            return $this->result['cardType'];
+        }
+
+        return '';
     }
     
     /**
@@ -170,6 +180,11 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getMaskedAccount() {
+        if(isset($this->result['maskedAccount'])){
+            return $this->result['maskedAccount'];
+        }
+
+        return '';
     }
     
     /**

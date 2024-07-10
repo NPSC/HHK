@@ -3,6 +3,7 @@ namespace HHK\Payment\PaymentGateway\Deluxe\Request;
 
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\Exception\PaymentException;
+use HHK\Payment\CreditToken;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Response\VoidGatewayResponse;
@@ -17,7 +18,7 @@ Class VoidRequest extends AbstractDeluxeRequest {
         parent::__construct($dbh, $gway);
     }
 
-    public function submit(string $paymentId, Invoice $invoice, PaymentRS $payRs){
+    public function submit(string $paymentId, Invoice|null $invoice = null, PaymentRS|null $payRs = null){
 
         $uS = Session::getInstance();
 
@@ -50,8 +51,15 @@ Class VoidRequest extends AbstractDeluxeRequest {
                 // Do Nothing
             }
 
-            $this->responseBody["amount"] = $payRs->Amount->getStoredVal();
-            $this->responseBody["invoiceNumber"] = $invoice->getInvoiceNumber();
+            if ($payRs instanceof PaymentRS && $invoice instanceof Invoice) {
+                $this->responseBody["amount"] = $payRs->Amount->getStoredVal();
+                $this->responseBody["invoiceNumber"] = $invoice->getInvoiceNumber();
+
+                $tkRs = CreditToken::getTokenRsFromId($this->dbh, $payRs->idToken->getStoredVal());
+                $this->responseBody["cardholderName"] = $tkRs->CardHolderName->getStoredVal();
+                $this->responseBody["cardType"] = $tkRs->CardType->getStoredVal();
+                $this->responseBody["maskedAccount"] = $tkRs->MaskedAccount->getStoredVal();
+            }
 
             return new VoidGatewayResponse($this->responseBody, MpTranType::Void);
 

@@ -3,6 +3,7 @@ namespace HHK\Payment\PaymentGateway\Deluxe;
 
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
+use HHK\House\HouseServices;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
@@ -175,7 +176,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         }
 
         //captured card info
-        if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "COF") {
+        if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "cof") {
             //card on file
             $result = $this->saveCOF($dbh, $post);
             if (is_array($result)){
@@ -273,11 +274,15 @@ class DeluxeGateway extends AbstractPaymentGateway
         }
 
         $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
+        $responseMessage = "";
+        if($vr->getStatus() == AbstractCreditPayments::STATUS_APPROVED){
+            // save token
+            $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response, $data["token"]);
 
-        // save token
-        $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response, $data["token"]);
-
-        return ["idToken" => $idToken, "CofResult" => new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration)];
+            return ["success" => "New Card saved successfully","COFmkup"=> HouseServices::guestEditCreditTable($dbh, $data['psg'], $data['id'], 'g'), 'idx'=>'g'];
+        }else{
+            return ["warning" => $vr->response->getResponseMessage()];
+        }
     }
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
@@ -440,7 +445,9 @@ class DeluxeGateway extends AbstractPaymentGateway
 
         $gatewayResponse = $voidRequest->submit($paymentId, $invoice, $payRs);
 
-        $voidResponse = new VoidCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $payRs);
+        $tkRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
+
+        $voidResponse = new VoidCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $payRs, $tkRs);
                 
         // Record transaction
         try {
@@ -656,8 +663,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
             $payTbl->addBodyTr(
                     HTMLTable::makeTh('Selected Location:', ['style'=>'text-align:right;'])
-            		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray)
-            				, ['colspan'=>'2'])
+            		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), ['colspan'=>'2'])
             		, ['id'=>'trvdCHName'.$index, 'class'=>'d-none tblCreditExpand'.$index.' tblCredit'.$index]
             );
 
@@ -680,9 +686,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
             $payTbl->addBodyTr(
             		HTMLTable::makeTh('Select a Location:', ['style'=>'text-align:right; width:130px;'])
-                    .HTMLTable::makeTd(
-                    		HTMLSelector::generateMarkup($sel, $selArray)
-                    		, ['colspan'=>'2'])
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), ['colspan'=>'2'])
                     , ['id'=>'trvdCHName'.$index, 'class'=>'tblCreditExpand'.$index.' tblCredit'.$index, 'style'=>'display: none;']
             );
 
@@ -691,7 +695,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $payTbl->addBodyTr(
             HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
             .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
-        ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index]);
+        ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
     }
     
     protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {

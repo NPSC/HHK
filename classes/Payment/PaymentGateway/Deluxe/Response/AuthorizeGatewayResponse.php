@@ -4,6 +4,7 @@ namespace HHK\Payment\PaymentGateway\Deluxe\Response;
 
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\sec\Session;
 
 /**
  * AuthorizeGatewayResponse.php
@@ -21,7 +22,8 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
  */
  
 class AuthorizeGatewayResponse implements GatewayResponseInterface {
-    
+
+    protected $response; 
     protected $tranType;
     protected $merchant = '';
     protected $processor = AbstractPaymentGateway::DELUXE;
@@ -35,22 +37,25 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     protected $expDate;
     protected $acqRefData;
     
-    public function __construct($token, $amount, $invoiceNumber, $cardType, $cardAcct, $expDate, $cardHolderName, $tranType, $operatorId, $acqRefData) {
-        
+    public function __construct(array $response, $invoiceNumber, $cardType, $cardAcct, $expDate, $cardHolderName, $tranType) {
+
+        $uS = Session::getInstance();
+
+        $this->response = $response;
         $this->tranType = $tranType;
-        $this->setOperatorId($operatorId);
+        $this->setOperatorId($uS->username);
         $this->setCardHolderName( $cardHolderName);
-        $this->authorizedAmount = $amount;
+        $this->authorizedAmount = $response['amountApproved'];
         $this->account = substr($cardAcct, -4);
         $this->cardType = $cardType;
         $this->invoiceNumber = $invoiceNumber;
-        $this->token = $token;
+        $this->token = $response['token'];
         $this->expDate = $expDate;
-        $this->acqRefData = $acqRefData;
+        $this->acqRefData = $response['paymentId'];
     }
     
     public function getStatus() {
-        return '';
+        return $this->getResponseCode();
     }
     
     public function getTranType() {
@@ -156,10 +161,18 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getResponseMessage() {
+        if(isset($this->response['responseMessage'])){
+            return $this->response['responseMessage'];
+        }
+
         return '';
     }
     
     public function getResponseCode() {
+        if(isset($this->response['responseCode'])){
+            return $this->response['responseCode'];
+        }
+
         return '';
     }
     
@@ -172,6 +185,10 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getAuthCode() {
+        if(isset($this->response['authResponse'])){
+            return $this->response['authResponse'];
+        }
+
         return '';
     }
     
@@ -198,24 +215,8 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
     public function getToken() {
         return $this->token;
     }
-    
-    protected function getRandomString($length=40){
-        if(!is_int($length)||$length<1){
-            $length = 40;
-        }
-        $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        $randstring = '';
-        $maxvalue = strlen($chars) - 1;
-        for($i=0; $i<$length; $i++){
-            $randstring .= substr($chars, rand(0,$maxvalue), 1);
-        }
-        return $randstring;
-    }
 
     public function setExpDate($v){
         $this->expDate = $v;
-    }
-    
-    
+    }   
 }
-?>

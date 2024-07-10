@@ -944,10 +944,12 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
 
             if ($(this).val() === 'cc') {
                 chg.show('fade');
-                if ($('input[name=rbUseCard]:checked').val() == 0) {
-                    //$chrgExpand.show('fade');
+                if ($(document).find('input[name=rbUseCard]:checked').val() == 0) {
+                    $chrgExpand.show('fade');
+                } else {
+                    $chrgExpand.hide('fade');
                 }
-                //$('input[name=rbUseCard]:checked').trigger('change');
+                $(document).find('input[name=rbUseCard]:checked').trigger('change');
 
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
@@ -964,7 +966,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     }
 
     // Card on file Cardholder name.
-    //setupCOF($chrgExpand);
+    setupCOF($chrgExpand);
 
 
     // Set up return table
@@ -1448,11 +1450,15 @@ function paymentRedirect(data, $xferForm, initialParams) {
             // openiframe(data.inctx, 600, 400, "Add New Card On File");
 
         } else if (data.hpfToken) {
-            var height = (data.useSwipe ? 200 : 500);
-            var width = (data.useSwipe ? 400 : 700);
+            var height = (data.useSwipe ? 200 : 400);
+            var width = (data.useSwipe ? 400 : 650);
 
             var title = (data.cmd == "payment" ? "Enter Payment Details" : "Add New Card On File");
             var deluxeSmtBtnTxt = (data.cmd == "payment" ? "Submit Payment" : "Save Card On File");
+
+            if (initialParams && initialParams.idVisit && initialParams.span) {
+                title += " for Visit " + initialParams.idVisit + "-" + initialParams.span;
+            }
 
             var hpfObj = null;
             var $deluxeDialog = $("#deluxeDialog").attr("style", "overflow-y: hidden;").dialog({
@@ -1462,15 +1468,15 @@ function paymentRedirect(data, $xferForm, initialParams) {
                 autoOpen: true,
                 title: title,
                 open: function (event, ui) {
-                    console.log(initialParams);
-                    console.log(data);
                     var options = {
                         containerId: "deluxeDialog",
                         xtoken: data.hpfToken,
                         xrtype: "Generate Token",
                         xbtntext: deluxeSmtBtnTxt,
                         xmsrattached: data.useSwipe,
-                        xswptext: "Please Swipe Card now..."
+                        xswptext: "Please Swipe Card now...",
+                        xpm: "1"
+
 
                     };
                     HostedForm.init(options, {
@@ -1512,8 +1518,10 @@ function paymentRedirect(data, $xferForm, initialParams) {
                     
                                         }
                     
-                                        if (data.cardInfoMkup) {
-                                            $("#upCreditfs").append(data.cardInfoMkup);
+                                        if (data.COFmkup) {
+                                            $('#tblupCredit' + data.idx).remove();
+                                            $('#upCreditfs').prepend($(data.COFmkup));
+                                            setupCOF($('.tblCreditExpand' + data.idx), data.idx);
                                         }
                                         
                                         if (data.gotopage) {
@@ -1566,7 +1574,7 @@ function setupCOF($chgExpand, idx) {
     // Card on file Cardholder name.
     if ($chgExpand.length > 0) {
 
-        $('input[name=rbUseCard' + idx + ']').on('change', function () {
+        $(document).find('input[name=rbUseCard' + idx + ']').on('change', function () {
             if ($(this).val() == 0 || ($(this).prop('checked') === true && $(this).prop('type') === 'checkbox')) {
                 $chgExpand.show();
             } else {
@@ -1579,11 +1587,11 @@ function setupCOF($chgExpand, idx) {
             $('#selccgw' + idx).removeClass('ui-state-highlight');
         });
 
-        if ($('input[name=rbUseCard' + idx + ']:checked').val() > 0 || ($('input[name=rbUseCard' + idx + ']').prop('checked') === false && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
+        if ($(document).find('input[name=rbUseCard' + idx + ']:checked').val() > 0 || ($(document).find('input[name=rbUseCard' + idx + ']').prop('checked') === false && $(document).find('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
             $chgExpand.hide();
         }
 
-        $('input[name=rbUseCard' + idx + ']').trigger('change');
+        $(document).find('input[name=rbUseCard' + idx + ']').trigger('change');
 
         // Instamed-specific controls
         if ($('#btnvrKeyNumber' + idx).length > 0) {
@@ -1693,7 +1701,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
                     if (data.COFmkup && data.COFmkup !== '') {
                         $('#tblupCredit' + idx).remove();
                         $('#upCreditfs').prepend($(data.COFmkup));
-                        setupCOF($('#trvdCHName' + idx), idx);
+                        setupCOF($('.tblCreditExpand' + idx), idx);
                     }
                 }
             });

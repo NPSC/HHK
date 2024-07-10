@@ -9,6 +9,7 @@ use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\SysConst\PaymentMethod;
 use HHK\SysConst\PaymentStatusCode;
 use HHK\Tables\Payment\PaymentRS;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
 
 /**
  * VoidCreditResponse.php
@@ -21,8 +22,11 @@ use HHK\Tables\Payment\PaymentRS;
 
 class VoidCreditResponse extends AbstractCreditResponse {
 
-    function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup, PaymentRS $payRS) {
+    protected $tkRs;
+
+    function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup, PaymentRS $payRS, Guest_TokenRS $tkRs) {
         $this->response = $vcr;
+        $this->tkRs = $tkRs;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->amount = $payRS->Amount->getStoredVal();
@@ -80,10 +84,10 @@ class VoidCreditResponse extends AbstractCreditResponse {
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd('xxx...' . $this->response->getMaskedAccount()));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->tkRs->CardType->getStoredVal() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd('xxx...' . $this->tkRs->MaskedAccount->getStoredVal()));
 
-        if ($this->response->getCardHolderName() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getCardHolderName()));
+        if ($this->tkRs->CardHolderName->getStoredVal() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->tkRs->CardHolderName->getStoredVal()));
         }
 
         if ($this->response->getAuthCode() != '') {
