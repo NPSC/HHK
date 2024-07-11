@@ -540,46 +540,77 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 0) {
+            //try returning multiple payments
+            $remainingAmount = $amount;
 
-            $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
-            $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
-            return $payResult;
-        }
+            $stmt = $dbh->query("select pa.Approved_Amount as `Total`, pa.AcqRefData
+from payment p join payment_auth pa on p.idPayment = pa.idPayment
+    join payment_invoice pi on p.idPayment = pi.Payment_Id
+    join invoice i on pi.Invoice_Id = i.idInvoice
+where p.idToken = $idToken and i.idGroup = $idGroup
+order by pa.Timestamp desc");
 
-        $csResp = $this->processReturnPayment($dbh, null, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
-        //$csResp = $this->processStandaloneReturn($dbh, $tokenRS, $invoice, $amount, $uS->username, $paymentNotes);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $rowCount = $stmt->rowCount();
+            $i = 0;
+            while($i < $rowCount && $remainingAmount > 0){
+                if($remainingAmount > $rows[$i]["Total"]){ //return full payment
+                    $csResp = $this->processReturnPayment($dbh, null, $rows[$i]["AcqRefData"], $invoice, $rows[$i]["Total"], $uS->username, $paymentNotes);
+                }else{ //partially return the remaining amount
+                    $csResp = $this->processReturnPayment($dbh, null, $rows[$i]["AcqRefData"], $invoice, $remainingAmount, $uS->username, $paymentNotes);
+                }
+                
+                
+                if($csResp->getStatus() == AbstractCreditPayments::STATUS_APPROVED && (float) $csResp->getAmount() > 0){
+                    $remainingAmount -= (float) $csResp->getAmount();
+                }
+                $i++;
+            }
 
-        $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-
-        switch ($csResp->getStatus()) {
-
-            case AbstractCreditPayments::STATUS_APPROVED:
-
+            if($remainingAmount == 0){
+                $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
-                $payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
+                //$payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
                 $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
+            }
+        } else {
 
-                break;
+            $csResp = $this->processReturnPayment($dbh, null, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
+            //$csResp = $this->processStandaloneReturn($dbh, $tokenRS, $invoice, $amount, $uS->username, $paymentNotes);
 
-            case AbstractCreditPayments::STATUS_DECLINED:
+            $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
 
-                $payResult->feePaymentRejected($dbh, $uS, $csResp, $invoice);
+            switch ($csResp->getStatus()) {
 
-                $msg = '** The Return is Declined. **';
-                if ($csResp->response->getResponseMessage() != '') {
-                    $msg .= 'Message: ' . $csResp->response->getResponseMessage();
-                }
-                $payResult->setDisplayMessage($msg);
+                case AbstractCreditPayments::STATUS_APPROVED:
 
-                break;
+                    // Update invoice
+                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
-            default:
+                    $payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
+                    $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
 
-                $payResult->setStatus(PaymentResult::ERROR);
-                $payResult->setDisplayMessage('**  Error Message: ' . $csResp->response->getResponseMessage());
+                    break;
+
+                case AbstractCreditPayments::STATUS_DECLINED:
+
+                    $payResult->feePaymentRejected($dbh, $uS, $csResp, $invoice);
+
+                    $msg = '** The Return is Declined. **';
+                    if ($csResp->response->getResponseMessage() != '') {
+                        $msg .= 'Message: ' . $csResp->response->getResponseMessage();
+                    }
+                    $payResult->setDisplayMessage($msg);
+
+                    break;
+
+                default:
+
+                    $payResult->setStatus(PaymentResult::ERROR);
+                    $payResult->setDisplayMessage('**  Error Message: ' . $csResp->response->getResponseMessage());
+            }
         }
 
         return $payResult;
@@ -593,7 +624,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
      * @param Invoice $invoice
      * @param float $returnAmt
      * @param string $userName
-     * @return object
+     * @return AbstractCreditResponse
      */
     protected function processReturnPayment(\PDO $dbh, PaymentRS|null $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
 
