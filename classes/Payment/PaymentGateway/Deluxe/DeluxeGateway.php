@@ -4,6 +4,8 @@ namespace HHK\Payment\PaymentGateway\Deluxe;
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\House\HouseServices;
+use HHK\House\Reservation\Reservation;
+use HHK\House\Reservation\Reservation_1;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
@@ -150,6 +152,10 @@ class DeluxeGateway extends AbstractPaymentGateway
         $this->credentials = $gwRow;
     }
 
+    /**
+     * Summary of getCredentials
+     * @return mixed
+     */
     public function getCredentials() {
     	return $this->credentials;
     }
@@ -192,7 +198,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         }
     }
     
-    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
+    protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -256,6 +262,11 @@ class DeluxeGateway extends AbstractPaymentGateway
     protected function saveCOF(\PDO $dbh, array $data) {
 
         $uS = Session::getInstance();
+
+        if(isset($data['rid'])){
+            $data['psg'] = Reservation_1::getIdPsgStatic($dbh, $data['rid']);
+            $data['id'] = 0;
+        }
 
         //authorize $1 to make sure card is real
         $authRequest = new AuthorizeRequest($dbh, $this);
@@ -630,7 +641,14 @@ order by pa.Timestamp desc");
 
         $returnRequest = new RefundRequest($dbh, $this);
 
-        $returnGatewayResponse = $returnRequest->submit($paymentTransId, $invoice->getInvoiceNumber(), $returnAmt);
+        //find token for building the receipt
+        try{
+            $tokenRS = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
+        }catch(\Exception $e){
+            throw new PaymentException("Unable to return payment: " . $e->getMessage());
+        }
+
+        $returnGatewayResponse = $returnRequest->submit($paymentTransId, $tokenRS, $invoice->getInvoiceNumber(), $returnAmt);
 
         // Make a return response...
         $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);

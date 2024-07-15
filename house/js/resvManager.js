@@ -2377,9 +2377,11 @@ function resvManager(initData, options) {
                     cardOnFile($(this).data('id'), $(this).data('idreg'), 'Reserve.php?rid=' + idResv, $(this).data('indx'));
                 });
 
-                setupCOF($('#trvdCHNameg'), $('#btnUpdtCred').data('indx'));
-
-                $('#selccgwg').val(room.merchant);
+                //setupCOF($('#trvdCHNameg'), $('#btnUpdtCred').data('indx'));
+                setupCOF($('.tblCreditExpandg'), $('#btnUpdtCred').data('indx'));
+                if (room.merchant !== "") {
+                    $('#selccgwg').val(room.merchant);
+                }
             }
 
             if ($('#addGuestHeader').length > 0) {
@@ -2730,7 +2732,7 @@ function resvManager(initData, options) {
 
     function loadResv(data) {
 
-        if (data.xfer || data.inctx) {
+        if (data.xfer || data.inctx || data.hpfToken) {
             transferToGw(data);
             return;
         }

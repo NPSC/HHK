@@ -10,6 +10,7 @@ use HHK\Payment\PaymentGateway\Deluxe\Response\VoidGatewayResponse;
 use HHK\sec\Session;
 use HHK\SysConst\MpTranType;
 use HHK\Tables\Payment\PaymentRS;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
 
 Class VoidRequest extends AbstractDeluxeRequest {
     const ENDPOINT = "payments/cancel";
@@ -21,6 +22,17 @@ Class VoidRequest extends AbstractDeluxeRequest {
     public function submit(string $paymentId, Invoice|null $invoice = null, PaymentRS|null $payRs = null){
 
         $uS = Session::getInstance();
+
+        try{
+            if ($payRs instanceof PaymentRS) {
+                $tokenRS = CreditToken::getTokenRsFromId($this->dbh, $payRs->idToken->getStoredVal());
+            }else{
+                $tokenRS = new Guest_TokenRS();
+            }
+        }catch(\Exception $e){
+            throw new PaymentException("Unable to perform void request: " . $e->getMessage());
+        }
+        
 
         //build request data
         $requestData = [
@@ -61,7 +73,7 @@ Class VoidRequest extends AbstractDeluxeRequest {
                 $this->responseBody["maskedAccount"] = $tkRs->MaskedAccount->getStoredVal();
             }
 
-            return new VoidGatewayResponse($this->responseBody, MpTranType::Void);
+            return new VoidGatewayResponse($this->responseBody, $tokenRS, MpTranType::Void);
 
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();

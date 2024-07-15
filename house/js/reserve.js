@@ -205,7 +205,7 @@ $(document).ready(function() {
 				        flagAlertMessage(data.warning, 'warning');
 				    }
 
-				    if (data.xfer || data.inctx) {
+				    if (data.xfer || data.inctx || data.hpfToken) {
 				        paymentRedirect (data, $('#xform'));
 				        return;
 				    }
@@ -268,7 +268,7 @@ $(document).ready(function() {
                         $('#btnDone').val('Save').show();
                     }
 
-                    if (data.xfer || data.inctx) {
+                    if (data.xfer || data.inctx || data.hpfToken) {
                         paymentRedirect (data, $('#xform'));
                         return;
                     }

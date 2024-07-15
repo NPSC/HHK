@@ -5,6 +5,7 @@ namespace HHK\Payment\PaymentGateway\Deluxe\Response;
 use HHK\Exception\PaymentException;
 use HHK\Payment\GatewayResponse\AbstractGatewayResponse;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
 
 /**
  * RefundGatewayResponse.php
@@ -16,6 +17,13 @@ use HHK\Payment\GatewayResponse\GatewayResponseInterface;
  */
 
 class RefundGatewayResponse extends AbstractGatewayResponse implements GatewayResponseInterface {
+
+    protected Guest_TokenRS $tokenRS;
+
+    public function __construct($response, Guest_TokenRS $tokenRS, $tranType = ''){
+        $this->tokenRS = $tokenRS;
+        parent::__construct($response, $tranType);
+    }
 
     protected function parseResponse() {
 
@@ -104,12 +112,14 @@ class RefundGatewayResponse extends AbstractGatewayResponse implements GatewayRe
      * @inheritDoc
      */
     public function getCardHolderName() {
+        return $this->tokenRS->CardHolderName->getStoredVal();
     }
     
     /**
      * @inheritDoc
      */
     public function getCardType() {
+        return $this->tokenRS->CardType->getStoredVal();
     }
     
     /**
@@ -152,6 +162,7 @@ class RefundGatewayResponse extends AbstractGatewayResponse implements GatewayRe
      * @inheritDoc
      */
     public function getExpDate() {
+        return $this->tokenRS->ExpDate->getStoredVal();
     }
     
     /**
@@ -169,6 +180,7 @@ class RefundGatewayResponse extends AbstractGatewayResponse implements GatewayRe
      * @inheritDoc
      */
     public function getMaskedAccount() {
+        return $this->tokenRS->MaskedAccount->getStoredVal();
     }
     
     /**
@@ -205,6 +217,7 @@ class RefundGatewayResponse extends AbstractGatewayResponse implements GatewayRe
      * @inheritDoc
      */
     public function getToken() {
+        $this->tokenRS->Token->getStoredVal();
     }
     
     /**

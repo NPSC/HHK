@@ -5,6 +5,8 @@ namespace HHK\Payment\PaymentGateway\Deluxe\Response;
 use HHK\Exception\PaymentException;
 use HHK\Payment\GatewayResponse\AbstractGatewayResponse;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
+use HHK\SysConst\MpTranType;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
 
 /**
  * VoidGatewayResponse.php
@@ -17,6 +19,12 @@ use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 
 class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResponseInterface {
 
+    protected Guest_TokenRS $tokenRS;
+
+    public function __construct($response, Guest_TokenRS $tokenRS, $tranType = ''){
+        $this->tokenRS = $tokenRS;
+        parent::__construct($response, $tranType);
+    }
     protected function parseResponse() {
 
         if(is_array($this->response)){
@@ -99,22 +107,14 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getCardHolderName() {
-        if(isset($this->result['cardholderName'])){
-            return $this->result['cardholderName'];
-        }
-
-        return '';
+        return $this->tokenRS->CardHolderName->getStoredVal();
     }
     
     /**
      * @inheritDoc
      */
     public function getCardType() {
-        if(isset($this->result['cardType'])){
-            return $this->result['cardType'];
-        }
-
-        return '';
+        return $this->tokenRS->CardType->getStoredVal();
     }
     
     /**
@@ -163,6 +163,7 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getExpDate() {
+        return $this->tokenRS->ExpDate->getStoredVal();
     }
     
     /**
@@ -180,11 +181,7 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getMaskedAccount() {
-        if(isset($this->result['maskedAccount'])){
-            return $this->result['maskedAccount'];
-        }
-
-        return '';
+        return $this->tokenRS->MaskedAccount->getStoredVal();
     }
     
     /**
@@ -240,6 +237,7 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getToken() {
+        return $this->tokenRS->Token->getStoredVal();
     }
     
     /**
@@ -258,6 +256,7 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
      * @inheritDoc
      */
     public function getTranType() {
+        return $this->tranType;
     }
     
     /**

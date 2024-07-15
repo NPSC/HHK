@@ -7,6 +7,7 @@ use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Response\RefundGatewayResponse;
 use HHK\sec\Session;
 use HHK\SysConst\MpTranType;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
 
 Class RefundRequest extends AbstractDeluxeRequest {
     const ENDPOINT = "refunds";
@@ -15,7 +16,7 @@ Class RefundRequest extends AbstractDeluxeRequest {
         parent::__construct($dbh, $gway);
     }
 
-    public function submit($paymentId, $invoiceNumber, $amount, $currency = "USD"){
+    public function submit($paymentId, Guest_TokenRS $tokenRS, $invoiceNumber, $amount, $currency = "USD"){
 
         $uS = Session::getInstance();
 
@@ -55,7 +56,7 @@ Class RefundRequest extends AbstractDeluxeRequest {
                 // Do Nothing
             }
 
-            return new RefundGatewayResponse($this->responseBody, MpTranType::ReturnSale);
+            return new RefundGatewayResponse($this->responseBody, $tokenRS, MpTranType::ReturnSale);
 
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();
@@ -63,7 +64,7 @@ Class RefundRequest extends AbstractDeluxeRequest {
             
             try {
                 //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');
-                DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Void');
+                DeluxeGateway::logGwTx($this->dbh, $this->responseCode, json_encode($requestData), json_encode($this->responseBody), 'Return');
             } catch (\Exception $ex) {
                 // Do Nothing
             }

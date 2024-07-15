@@ -74,7 +74,11 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            $data = [($payResult->wasError() ? "error" : "success") => $payResult->getDisplayMessage()];
+            if($payResult->wasError() == false){
+                $data["gotopage"] = 'ShowRegForm.php?regid=' . $payResult->getIdRegistration() . '&vid=' . $_GET['vid'] . '&payId=' . $payResult->getIdPayment() . '&invoiceNumber=' . $payResult->getInvoiceNumber();
+            }
+            echo json_encode($data);
             exit;
         }
     }

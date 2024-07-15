@@ -1456,7 +1456,7 @@ function paymentRedirect(data, $xferForm, initialParams) {
             var title = (data.cmd == "payment" ? "Enter Payment Details" : "Add New Card On File");
             var deluxeSmtBtnTxt = (data.cmd == "payment" ? "Submit Payment" : "Save Card On File");
 
-            if (initialParams && initialParams.idVisit && initialParams.span) {
+            if (initialParams && initialParams.idVisit != undefined && initialParams.span != undefined) {
                 title += " for Visit " + initialParams.idVisit + "-" + initialParams.span;
             }
 
@@ -1636,7 +1636,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
 
         $('#selccgw' + idx).removeClass('ui-state-highlight');
 
-        if ($('#selccgw' + idx + ' option:selected').length === 0) {
+        if ($('#selccgw' + idx).val().length === 0) {
             $('#tdChargeMsg' + idx).text('Select a location.').show('fade');
             $('#selccgw' + idx).addClass('ui-state-highlight');
             return false;
