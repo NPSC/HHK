@@ -24,6 +24,7 @@ use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\RefundCreditResponse;
+use HHK\Payment\PaymentGateway\Deluxe\Response\RefundGatewayResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\VoidCreditResponse;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
@@ -498,6 +499,11 @@ class DeluxeGateway extends AbstractPaymentGateway
         return $dataArray;
     }
 
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid)
+    {
+        return $this->_voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+    }
+
     protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
@@ -541,7 +547,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $amount = abs($invoice->getAmount());
         $idToken = intval($rtnToken, 10);
 
-        $stmt = $dbh->query("select sum(CASE WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData
+        $stmt = $dbh->query("select sum(CASE WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment
 from payment p join payment_auth pa on p.idPayment = pa.idPayment
     join payment_invoice pi on p.idPayment = pi.Payment_Id
     join invoice i on pi.Invoice_Id = i.idInvoice
@@ -554,7 +560,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
             //try returning multiple payments
             $remainingAmount = $amount;
 
-            $stmt = $dbh->query("select pa.Approved_Amount as `Total`, pa.AcqRefData
+            $stmt = $dbh->query("select pa.Approved_Amount as `Total`, pa.AcqRefData, p.idPayment
 from payment p join payment_auth pa on p.idPayment = pa.idPayment
     join payment_invoice pi on p.idPayment = pi.Payment_Id
     join invoice i on pi.Invoice_Id = i.idInvoice
@@ -564,31 +570,49 @@ order by pa.Timestamp desc");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $rowCount = $stmt->rowCount();
             $i = 0;
+
+            $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $returnedAmount = 0;
+            $csResps = [];
             while($i < $rowCount && $remainingAmount > 0){
-                if($remainingAmount > $rows[$i]["Total"]){ //return full payment
-                    $csResp = $this->processReturnPayment($dbh, null, $rows[$i]["AcqRefData"], $invoice, $rows[$i]["Total"], $uS->username, $paymentNotes);
+                //get paymentRS
+                $payRS = new PaymentRS();
+                $payRS->idPayment->setStoredVal($rows[0]['idPayment']);
+                $paymentRows = EditRS::select($dbh, $payRS, [$payRS->idPayment]);
+                if(count($paymentRows) == 1){
+                    EditRS::loadRow($paymentRows[0], $payRS);
+                }
+
+                if($remainingAmount >= $rows[$i]["Total"]){ //return full payment
+                    $csResps[$i] = $this->processReturnPayment($dbh, $payRS, $rows[$i]["AcqRefData"], $invoice, $rows[$i]["Total"], $uS->username, $paymentNotes);
                 }else{ //partially return the remaining amount
-                    $csResp = $this->processReturnPayment($dbh, null, $rows[$i]["AcqRefData"], $invoice, $remainingAmount, $uS->username, $paymentNotes);
+                    $csResps[$i] = $this->processReturnPayment($dbh, $payRS, $rows[$i]["AcqRefData"], $invoice, $remainingAmount, $uS->username, $paymentNotes);
                 }
                 
                 
-                if($csResp->getStatus() == AbstractCreditPayments::STATUS_APPROVED && (float) $csResp->getAmount() > 0){
-                    $remainingAmount -= (float) $csResp->getAmount();
+                if($csResps[$i]->getStatus() == AbstractCreditPayments::STATUS_APPROVED && (float) $csResps[$i]->getAmount() > 0){
+                    $returnedAmount += $csResps[$i]->getAmount();
+                    $remainingAmount -= (float) $csResps[$i]->getAmount();
                 }
                 $i++;
             }
 
             if($remainingAmount == 0){
-                $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-                // Update invoice
-                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
-
-                //$payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
+                $payResult->feePaymentsAccepted($dbh, $uS, $csResps, $invoice);
+                $invoice->updateInvoiceBalance($dbh, 0 - $returnedAmount, $uS->username);
+                
                 $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
             }
-        } else {
+        } else { //return the payment found
+            //get paymentRS
+            $payRS = new PaymentRS();
+            $payRS->idPayment->setStoredVal($rows[0]['idPayment']);
+            $paymentRows = EditRS::select($dbh, $payRS, [$payRS->idPayment]);
+            if(count($paymentRows) == 1){
+                EditRS::loadRow($paymentRows[0], $payRS);
+            }
 
-            $csResp = $this->processReturnPayment($dbh, null, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
+            $csResp = $this->processReturnPayment($dbh, $payRS, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
             //$csResp = $this->processStandaloneReturn($dbh, $tokenRS, $invoice, $amount, $uS->username, $paymentNotes);
 
             $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());

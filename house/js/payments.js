@@ -1417,7 +1417,7 @@ function reprintReceipt(pid, idDialg) {
 function paymentRedirect(data, $xferForm, initialParams) {
     "use strict";
     if (data) {
-
+console.log("redirect called");
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
 

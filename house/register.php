@@ -40,6 +40,7 @@ $labels = Labels::getLabels();
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $paymentMarkup = '';
+$paymentStatus = '';
 $receiptMarkup = '';
 $statusSelector = '';
 $payTypeSelector = '';
@@ -75,7 +76,9 @@ try {
 
         // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
-            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+            //$paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+            $paymentMarkup = $payResult->getDisplayMessage();
+            $paymentStatus = ($payResult->wasError() ? "error" : "success");
         }
 
         if(WebInit::isAJAX()){
@@ -560,6 +563,7 @@ if($uS->useOnlineReferral){
 
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+        <input  type="hidden" id="pmtStatus" value='<?php echo $paymentStatus; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />

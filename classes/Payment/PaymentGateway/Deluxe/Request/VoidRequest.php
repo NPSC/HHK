@@ -73,7 +73,9 @@ Class VoidRequest extends AbstractDeluxeRequest {
                 $this->responseBody["maskedAccount"] = $tkRs->MaskedAccount->getStoredVal();
             }
 
-            return new VoidGatewayResponse($this->responseBody, $tokenRS, MpTranType::Void);
+            $response = new VoidGatewayResponse($this->responseBody, $tokenRS, MpTranType::Void);
+            $response->setMerchant($this->merchant);
+            return $response;
 
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();

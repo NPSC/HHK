@@ -56,7 +56,9 @@ Class RefundRequest extends AbstractDeluxeRequest {
                 // Do Nothing
             }
 
-            return new RefundGatewayResponse($this->responseBody, $tokenRS, MpTranType::ReturnSale);
+            $response = new RefundGatewayResponse($this->responseBody, $tokenRS, MpTranType::ReturnSale);
+            $response->setMerchant($this->merchant);
+            return $response;
 
         }catch(BadResponseException $e){//error
             $this->responseCode = $e->getResponse()->getStatusCode();
