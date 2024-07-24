@@ -88,7 +88,7 @@ class DeluxeGateway extends AbstractPaymentGateway
      */
     public function getCofResponseObj(\HHK\Payment\GatewayResponse\GatewayResponseInterface $vcr, $idPayor, $idGroup) {
     }
-    
+
     /**
      */
     public function getGatewayName() {
@@ -109,7 +109,7 @@ class DeluxeGateway extends AbstractPaymentGateway
     public function hasVoidReturn() {
     	return FALSE;
     }
-    
+
     /**
      *
      * @param \HHK\Payment\GatewayResponse\GatewayResponseInterface $vcr
@@ -122,7 +122,7 @@ class DeluxeGateway extends AbstractPaymentGateway
     public function getPaymentResponseObj(\HHK\Payment\GatewayResponse\GatewayResponseInterface $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
         return new PaymentCreditResponse($vcr, $idPayor, $idGroup);
     }
-    
+
     protected function loadGateway(\PDO $dbh) {
 
         $query = "select * from `cc_hosted_gateway` where `cc_name` = '" . $this->getGatewayType() . "' and `Gateway_Name` = '" .$this->getGatewayName()."'";
@@ -177,7 +177,7 @@ class DeluxeGateway extends AbstractPaymentGateway
     public function getCredentials() {
     	return $this->credentials;
     }
-    
+
     /**
      *
      * @param \PDO $dbh
@@ -215,7 +215,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             return $this->creditSale($dbh, $pmp, $invoice, $post['pbp']);
         }
     }
-    
+
     protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -337,7 +337,7 @@ class DeluxeGateway extends AbstractPaymentGateway
                 $gatewayResponse = $paymentRequest->submit($invoice, $tokenRS);
 
                 $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup());
-                
+
                 // Record transaction
                 try {
                     $transRs = Transaction::recordTransaction($dbh, $paymentResponse, $this->getGatewayName(), TransType::Sale, TransMethod::Token);
@@ -369,7 +369,7 @@ class DeluxeGateway extends AbstractPaymentGateway
                 $gatewayResponse = $paymentRequest->submit($invoice, $newTokenRS);
 
                 $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup());
-                
+
                 // Record transaction
                 try {
                     $transRs = Transaction::recordTransaction($dbh, $paymentResponse, $this->getGatewayName(), TransType::Sale, TransMethod::HostedPayment);
@@ -382,7 +382,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $payResult = $this->analyzeCredSaleResult($dbh, $paymentResponse, $invoice, $paymentResponse->getIdToken());
 
-                
+
             }else {
 
             	$this->manualKey = $pmp->getManualKeyEntry();
@@ -467,7 +467,7 @@ class DeluxeGateway extends AbstractPaymentGateway
     protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid){
 
         $uS = Session::getInstance();
-        
+
         $paymentId = $pAuthRs->AcqRefData->getStoredVal();
 
         $voidRequest = new VoidRequest($dbh, $this);
@@ -477,7 +477,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $tkRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
 
         $voidResponse = new VoidCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $payRs, $tkRs);
-                
+
         // Record transaction
         try {
             $transRs = Transaction::recordTransaction($dbh, $voidResponse, $this->getGatewayName(), TransType::Void, TransMethod::Token);
@@ -577,7 +577,7 @@ where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order 
             $payResult->setStatus(PaymentResult::ERROR);
             $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
             return $payResult;
-            
+
             /*
             //try returning multiple payments
             $remainingAmount = $amount;
@@ -610,7 +610,7 @@ order by pa.Timestamp desc");
                 }else{ //partially return the remaining amount
                     $csResps[$i] = $this->processReturnPayment($dbh, $payRS, $rows[$i]["AcqRefData"], $invoice, $remainingAmount, $uS->username, $paymentNotes);
                 }
-                
+
                 if($csResps[$i]->getStatus() == AbstractCreditPayments::STATUS_APPROVED && (float) $csResps[$i]->getAmount() > 0){
                     $returnedAmount += $csResps[$i]->getAmount();
                     $remainingAmount -= (float) $csResps[$i]->getAmount();
@@ -621,7 +621,7 @@ order by pa.Timestamp desc");
             if($remainingAmount == 0){
                 $payResult->feePaymentsAccepted($dbh, $uS, $csResps, $invoice);
                 $invoice->updateInvoiceBalance($dbh, 0 - $returnedAmount, $uS->username);
-                
+
                 $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
             } */
         } else { //return the payment found
@@ -769,7 +769,7 @@ order by pa.Timestamp desc");
         return ReturnReply::processReply($dbh, $sr, $userName);
 
     }
-    
+
     /**
      *
      * @param \PDO $dbh
@@ -808,7 +808,7 @@ order by pa.Timestamp desc");
             		, ['id'=>'trvdCHName'.$index, 'class'=>'d-none tblCreditExpand'.$index.' tblCredit'.$index]
             );
 
-            
+
 
         } else {
 			// Show all locations, none is preselected.
@@ -838,7 +838,7 @@ order by pa.Timestamp desc");
             .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
         ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
     }
-    
+
     protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
 
         $gwRs = new CC_Hosted_GatewayRS();
@@ -876,12 +876,12 @@ order by pa.Timestamp desc");
                 HTMLTable::makeTh('Oauth Client Id:', array('class' => 'tdlabel'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
             );
-            
+
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Oauth Secret:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('type'=>'password', 'name' => $indx . '_txtsecret', 'size' => '90')) . ' (Obfuscated)')
             );
-            
+
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Oauth URL:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CheckoutPOS_Url->getStoredVal(), array('name' => $indx . '_txtoauthurl', 'size' => '90')))
@@ -896,7 +896,7 @@ order by pa.Timestamp desc");
                 HTMLTable::makeTh('Hosted Payment Access Token:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Credit_Url->getStoredVal() == '' ? '': self::PW_PLACEHOLDER), array('type'=>'password', 'name' => $indx . '_txtaccesstoken', 'size' => '90')) . ' (Obfuscated)')
             );
-            
+
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Use Card Swiper:', array('class' => 'tdlabel'))
             		.HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Retry_Count->getStoredVal(), FALSE), array('name' => $indx . '_txtuseSwipe')))

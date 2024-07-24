@@ -34,9 +34,6 @@ class RefundCreditResponse extends AbstractCreditResponse {
         return PaymentMethod::Charge;
     }
 
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Retrn;
-    }
 
     public function getStatus() {
 
