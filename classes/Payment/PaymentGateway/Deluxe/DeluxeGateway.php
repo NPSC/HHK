@@ -746,10 +746,11 @@ order by pa.Timestamp desc");
         }
 
         $returnGatewayResponse = $returnRequest->submit($paymentTransId, $tokenRS, $invoice->getInvoiceNumber(), $returnAmt, MpTranType::ReturnAmt);
-
+        
         // Make a return response...
         $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
         $sr->setResult($returnGatewayResponse->getStatus());
+        $sr->setIdToken($tokenRS->idGuest_token->getStoredVal());
 
         if ($sr->getStatus() == AbstractCreditPayments::STATUS_APPROVED) {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Paid);
