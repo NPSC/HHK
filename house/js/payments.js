@@ -1450,8 +1450,10 @@ console.log("redirect called");
             // openiframe(data.inctx, 600, 400, "Add New Card On File");
 
         } else if (data.hpfToken) {
-            var height = (data.useSwipe ? 200 : 400);
-            var width = (data.useSwipe ? 400 : 650);
+            //var height = (data.useSwipe ? 200 : 400);
+            //var width = (data.useSwipe ? 400 : 650);
+            var height = 650;
+            var width = 650;
 
             var title = (data.cmd == "payment" ? "Enter Payment Details" : "Add New Card On File");
             var deluxeSmtBtnTxt = (data.cmd == "payment" ? "Submit Payment" : "Save Card On File");
@@ -1460,8 +1462,7 @@ console.log("redirect called");
                 title += " for Visit " + initialParams.idVisit + "-" + initialParams.span;
             }
 
-            var hpfObj = null;
-            var $deluxeDialog = $("#deluxeDialog").attr("style", "overflow-y: hidden;").dialog({
+            var $deluxeDialog = $("#deluxeDialog").dialog({
                 modal: true,
                 width: getDialogWidth(width),
                 height: height,
@@ -1475,12 +1476,14 @@ console.log("redirect called");
                         xbtntext: deluxeSmtBtnTxt,
                         xmsrattached: data.useSwipe,
                         xswptext: "Please Swipe Card now...",
-                        xpm: "1"
+                        xpm:"1",
+                        xdisplayvafields: "true"
 
 
                     };
                     HostedForm.init(options, {
                         onSuccess: (hpfData) => {
+                            console.log("onSuccess called");
                             let submitData = {
                                 token: hpfData.data.token,
                                 nameOnCard: hpfData.data.nameOnCard,
@@ -1550,8 +1553,12 @@ console.log("redirect called");
                     }).then((instance) => instance.renderHpf());
                 },
                 close: function (event, ui) {
+                    console.log(HostedForm);
                     $(this).dialog('destroy').empty();
-                    HostedForm.ifLoaded = false;
+                    HostedForm = null;
+                    console.log(HostedForm);
+                    
+                    //HostedForm.ifLoaded = false;
                 }
 
             });

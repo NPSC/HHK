@@ -25,7 +25,7 @@ class ReturnReply extends AbstractCreditPayments {
      * @param \PDO $dbh
      * @param \HHK\Payment\PaymentResponse\AbstractCreditResponse $pr
      * @param mixed $username
-     * @param mixed $payRs
+     * @param \HHK\Tables\Payment\PaymentRS|null $payRs
      * @param mixed $attempts
      * @throws \HHK\Exception\PaymentException
      * @return AbstractCreditResponse
@@ -48,7 +48,9 @@ class ReturnReply extends AbstractCreditPayments {
         } else if ($payRs->idPayment->getStoredVal() > 0) {
 
             // Update existing Payment record
-            $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
+            if($pr->getAmount() == $payRs->Amount->getStoredVal()){
+                $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
+            }
             $payRs->Updated_By->setNewVal($username);
             $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 

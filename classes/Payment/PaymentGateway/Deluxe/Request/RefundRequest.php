@@ -16,7 +16,7 @@ Class RefundRequest extends AbstractDeluxeRequest {
         parent::__construct($dbh, $gway);
     }
 
-    public function submit($paymentId, Guest_TokenRS $tokenRS, $invoiceNumber, $amount, $currency = "USD"){
+    public function submit($paymentId, Guest_TokenRS $tokenRS, $invoiceNumber, $amount, $paymentStatusCode, $currency = "USD"){
 
         $uS = Session::getInstance();
 
@@ -56,7 +56,7 @@ Class RefundRequest extends AbstractDeluxeRequest {
                 // Do Nothing
             }
 
-            $response = new RefundGatewayResponse($this->responseBody, $tokenRS, MpTranType::ReturnSale);
+            $response = new RefundGatewayResponse($this->responseBody, $tokenRS, $paymentStatusCode);
             $response->setMerchant($this->merchant);
             return $response;
 

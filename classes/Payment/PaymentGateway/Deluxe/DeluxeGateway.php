@@ -35,10 +35,12 @@ use HHK\Payment\Receipt;
 use HHK\Payment\Transaction;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
+use HHK\SysConst\MpTranType;
 use HHK\SysConst\PaymentStatusCode;
 use HHK\SysConst\PayType;
 use HHK\SysConst\TransMethod;
 use HHK\SysConst\TransType;
+use HHK\SysConst\VisitStatus;
 use HHK\TableLog\AbstractTableLog;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
@@ -91,6 +93,21 @@ class DeluxeGateway extends AbstractPaymentGateway
      */
     public function getGatewayName() {
         return AbstractPaymentGateway::DELUXE;
+    }
+
+    public function hasCofService() {
+		return TRUE;
+	}
+	public function hasUndoReturnPmt() {
+		return FALSE;
+	}
+
+	public function hasUndoReturnAmt() {
+		return FALSE;
+	}
+
+    public function hasVoidReturn() {
+    	return FALSE;
     }
     
     /**
@@ -547,16 +564,21 @@ class DeluxeGateway extends AbstractPaymentGateway
         $amount = abs($invoice->getAmount());
         $idToken = intval($rtnToken, 10);
 
-        $stmt = $dbh->query("select sum(CASE WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment
+        $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment
 from payment p join payment_auth pa on p.idPayment = pa.idPayment
-    join payment_invoice pi on p.idPayment = pi.Payment_Id
-    join invoice i on pi.Invoice_Id = i.idInvoice
-where p.idToken = $idToken and i.idGroup = $idGroup
-group by pa.Approved_Amount having `Total` >= $amount;");
+where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by idPayment desc;
+;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 0) {
+
+            $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
+            return $payResult;
+            
+            /*
             //try returning multiple payments
             $remainingAmount = $amount;
 
@@ -589,7 +611,6 @@ order by pa.Timestamp desc");
                     $csResps[$i] = $this->processReturnPayment($dbh, $payRS, $rows[$i]["AcqRefData"], $invoice, $remainingAmount, $uS->username, $paymentNotes);
                 }
                 
-                
                 if($csResps[$i]->getStatus() == AbstractCreditPayments::STATUS_APPROVED && (float) $csResps[$i]->getAmount() > 0){
                     $returnedAmount += $csResps[$i]->getAmount();
                     $remainingAmount -= (float) $csResps[$i]->getAmount();
@@ -602,7 +623,7 @@ order by pa.Timestamp desc");
                 $invoice->updateInvoiceBalance($dbh, 0 - $returnedAmount, $uS->username);
                 
                 $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
-            }
+            } */
         } else { //return the payment found
             //get paymentRS
             $payRS = new PaymentRS();
@@ -612,7 +633,7 @@ order by pa.Timestamp desc");
                 EditRS::loadRow($paymentRows[0], $payRS);
             }
 
-            $csResp = $this->processReturnPayment($dbh, $payRS, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
+            $csResp = $this->processReturnAmount($dbh, $payRS, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
             //$csResp = $this->processStandaloneReturn($dbh, $tokenRS, $invoice, $amount, $uS->username, $paymentNotes);
 
             $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
@@ -623,6 +644,7 @@ order by pa.Timestamp desc");
 
                     // Update invoice
                     $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
+                    $payResult->setStatus(PaymentResult::ACCEPTED);
 
                     $payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
                     $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
@@ -672,7 +694,7 @@ order by pa.Timestamp desc");
             throw new PaymentException("Unable to return payment: " . $e->getMessage());
         }
 
-        $returnGatewayResponse = $returnRequest->submit($paymentTransId, $tokenRS, $invoice->getInvoiceNumber(), $returnAmt);
+        $returnGatewayResponse = $returnRequest->submit($paymentTransId, $tokenRS, $invoice->getInvoiceNumber(), $returnAmt, MpTranType::ReturnSale);
 
         // Make a return response...
         $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
@@ -699,6 +721,52 @@ order by pa.Timestamp desc");
 
         // Record return
         return ReturnReply::processReply($dbh, $sr, $userName, $payRs);
+
+    }
+
+    /**
+     *
+     * @param \PDO $dbh
+     * @param PaymentRS|null $payRs
+     * @param string $paymentTransId
+     * @param Invoice $invoice
+     * @param float $returnAmt
+     * @param string $userName
+     * @return AbstractCreditResponse
+     */
+    protected function processReturnAmount(\PDO $dbh, PaymentRS|null $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
+
+        $returnRequest = new RefundRequest($dbh, $this);
+
+        //find token for building the receipt
+        try{
+            $tokenRS = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
+        }catch(\Exception $e){
+            throw new PaymentException("Unable to return payment: " . $e->getMessage());
+        }
+
+        $returnGatewayResponse = $returnRequest->submit($paymentTransId, $tokenRS, $invoice->getInvoiceNumber(), $returnAmt, MpTranType::ReturnAmt);
+
+        // Make a return response...
+        $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
+        $sr->setResult($returnGatewayResponse->getStatus());
+
+        if ($sr->getStatus() == AbstractCreditPayments::STATUS_APPROVED) {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::Paid);
+        } else {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
+
+        // Record transaction
+        try {
+        	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Retrn, TransMethod::Token);
+            $sr->setIdTrans($transRs->idTrans->getStoredVal());
+        } catch (\Exception $ex) {
+            // do nothing
+        }
+
+        // Record return
+        return ReturnReply::processReply($dbh, $sr, $userName);
 
     }
     
