@@ -37,10 +37,6 @@ class PaymentCreditResponse extends AbstractCreditResponse {
         return PaymentMethod::Charge;
     }
 
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
-    }
-
     public function getStatus() {
 
         switch ($this->response->getStatus()) {
