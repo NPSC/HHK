@@ -46,7 +46,7 @@ define('RESCBUILDER_JS', 'js/rescBuilder.js' . JSV);
 define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/guestTransfer.js' . JSV);
 // define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
-// Javascript file Embed moved to new server.
+// Javascript file Embed.js moved to new server.  7/26/2024
 define('INS_EMBED_JS', '<script src="https://cdn.instamed.com/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
 define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js' . JSV. '"></script>');
 define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js' . JSV);
