@@ -37,7 +37,7 @@ class HostedPaymentForm {
         $dataArray["idPayor"] = $idPayor;
         $dataArray["idGroup"] = $idGroup;
         $dataArray["hpfToken"] = $creds['hpfAccessToken'];
-        $dataArray["useSwipe"] = ($manualKey == false);
+        $dataArray["useSwipe"] = $creds["Retry_Count"]; // Retry_Count maps to useSwipe in site config
         $dataArray["pbp"] = html_entity_decode($postbackUrl);
         $dataArray["cmd"] = $cmd;
         $dataArray["invoiceNum"] = $invoiceNum;

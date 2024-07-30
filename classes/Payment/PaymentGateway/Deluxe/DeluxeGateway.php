@@ -837,7 +837,7 @@ order by pa.Timestamp desc");
         $payTbl->addBodyTr(
             HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
             .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
-        ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
+        ,['class'=>'d-none tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
     }
 
     protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {

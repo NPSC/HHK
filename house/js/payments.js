@@ -1462,10 +1462,10 @@ console.log("redirect called");
                 title += " for Visit " + initialParams.idVisit + "-" + initialParams.span;
             }
 
-            var $deluxeDialog = $("#deluxeDialog").dialog({
+            var $deluxeDialog = $("#deluxeDialog").attr("style", "overflow-y: hidden;").dialog({
                 modal: true,
-                width: getDialogWidth(width),
-                height: height,
+                width: getDialogWidth(650),
+                height: 400,
                 autoOpen: true,
                 title: title,
                 open: function (event, ui) {
@@ -1476,11 +1476,10 @@ console.log("redirect called");
                         xbtntext: deluxeSmtBtnTxt,
                         xmsrattached: data.useSwipe,
                         xswptext: "Please Swipe Card now...",
-                        xpm:"1",
-                        xdisplayvafields: "true"
-
+                        xPM:1,
 
                     };
+
                     HostedForm.init(options, {
                         onSuccess: (hpfData) => {
                             console.log("onSuccess called");
@@ -1550,15 +1549,12 @@ console.log("redirect called");
                         },
                         onFailure: (data) => { console.log(JSON.stringify(data)); },
                         onInvalid: (data) => { console.log(JSON.stringify(data)); }
-                    }).then((instance) => instance.renderHpf());
+                    }).then((instance) => { instance.renderHpf(); });
                 },
                 close: function (event, ui) {
-                    console.log(HostedForm);
+                    //HostedForm.destroy();
+                    $(this).find("iframe").remove();
                     $(this).dialog('destroy').empty();
-                    HostedForm = null;
-                    console.log(HostedForm);
-                    
-                    //HostedForm.ifLoaded = false;
                 }
 
             });
