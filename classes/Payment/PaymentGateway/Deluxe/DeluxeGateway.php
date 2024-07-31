@@ -829,7 +829,7 @@ order by pa.Timestamp desc");
             $payTbl->addBodyTr(
             		HTMLTable::makeTh('Select a Location:', ['style'=>'text-align:right; width:130px;'])
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), ['colspan'=>'2'])
-                    , ['id'=>'trvdCHName'.$index, 'class'=>'tblCreditExpand'.$index.' tblCredit'.$index, 'style'=>'display: none;']
+                    , ['id'=>'trvdCHName'.$index, 'class'=> (count($gwRows) == 1 ? "d-none " : "") . 'tblCreditExpand'.$index.' tblCredit'.$index, 'style'=>'display: none;']
             );
 
         }
