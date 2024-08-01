@@ -571,9 +571,15 @@ class Statement {
                 $donAmt += $itemAmount;
             }
 
-            // Only show payments to MOA here.
-            if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Status'] == InvoiceStatus::Paid && $itemAmount > 0) {
-                $moaAmt += $itemAmount;
+
+            if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Status'] == InvoiceStatus::Paid) {
+                if ($itemAmount > 0) {
+                    // Only show payments to MOA here.
+                    $moaAmt += $itemAmount;
+                } else if ($l['Order_Number'] === 0 && $itemAmount < 0) {
+                    // refunded reservation prepayment.
+                    $moaAmt += $itemAmount;
+                }
             }
         }
 
@@ -1294,7 +1300,7 @@ WHERE
 
         return $emtableMarkup;
     }
-    
+
     /**
      * Summary of makeSummaryDiv
      * @param mixed $guestName
@@ -1389,8 +1395,8 @@ WHERE
 
         $bodyTbl->addBodyTr(
             HTMLTable::makeTd(
-                HTMLContainer::generateMarkup("strong", 'Prepared '.date('M jS, Y')) . 
-                $tbl->generateMarkup()) . 
+                HTMLContainer::generateMarkup("strong", 'Prepared '.date('M jS, Y')) .
+                $tbl->generateMarkup()) .
             HTMLTable::makeTd(
                 $sTbl->generateMarkup(["class"=>"tblStmtSummary"], HTMLContainer::generateMarkup("strong", 'Statement Summary'))
             , array("class"=>"align-center"))
