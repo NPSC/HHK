@@ -1286,6 +1286,8 @@ ORDER BY v.idVisit , v.Span;");
      */
     public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, AbstractPaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;') {
 
+        $merchants = $paymentGateway->getMerchants($dbh);
+
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
             // Cannot return to a new card...
             $tbl->addBodyTr(HTMLTable::makeTh("No Cards on file", array('colspan'=>'3'))
@@ -1317,7 +1319,7 @@ ORDER BY v.idVisit , v.Span;");
                 unset($attr['checked']);
             }
 
-            if ($tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+            if (count($merchants) == 1) {
                 $merchant = '';
             } else {
                 $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';

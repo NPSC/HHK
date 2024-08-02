@@ -21,12 +21,24 @@ use HHK\Tables\Payment\PaymentRS;
 
 class RefundCreditResponse extends AbstractCreditResponse {
 
+    protected $idToken;
+
     function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup, $amount) {
         $this->response = $vcr;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->amount = $amount;
         $this->invoiceNumber = $vcr->getInvoiceNumber();
+        $this->idGuestToken = $vcr->getToken();
+
+        switch($this->getStatus()){
+            case AbstractCreditPayments::STATUS_APPROVED:
+                $this->setPaymentStatusCode(PaymentStatusCode::Retrn);
+                break;
+            case AbstractCreditPayments::STATUS_DECLINED:
+                $this->setPaymentStatusCode(PaymentStatusCode::Declined);
+                break;
+        }
 
     }
 
@@ -94,4 +106,3 @@ class RefundCreditResponse extends AbstractCreditResponse {
     }
 
 }
-?>

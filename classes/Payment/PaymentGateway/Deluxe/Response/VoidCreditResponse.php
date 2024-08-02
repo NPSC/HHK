@@ -32,14 +32,19 @@ class VoidCreditResponse extends AbstractCreditResponse {
         $this->amount = $payRS->Amount->getStoredVal();
         $this->invoiceNumber = $vcr->getInvoiceNumber();
 
+        switch($this->getStatus()){
+            case AbstractCreditPayments::STATUS_APPROVED:
+                $this->setPaymentStatusCode(PaymentStatusCode::VoidSale);
+                break;
+            case AbstractCreditPayments::STATUS_DECLINED:
+                $this->setPaymentStatusCode(PaymentStatusCode::Declined);
+                break;
+        }
+
     }
 
     public function getPaymentMethod() {
         return PaymentMethod::Charge;
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::VoidSale;
     }
 
     public function getStatus() {

@@ -517,7 +517,11 @@ class HouseServices {
 
         // divert to credit payment site.
         if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
+            if(isset($creditCheckOut['hpfToken'])){ // if deluxe, don't forward
+                $dataArray['deluxehpf'] = $creditCheckOut;
+            }else{
+                return $creditCheckOut;
+            }
         }
 
         // Return checked in guests markup?
@@ -614,7 +618,11 @@ class HouseServices {
 
         // divert to credit payment site.
         if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
+            if(isset($creditCheckOut['hpfToken'])){ //if deluxe, don't forward
+                $dataArray['deluxehpf'] = $creditCheckOut;
+            }else{
+                return $creditCheckOut;
+            }
         }
 
         $dataArray['success'] = $reply;
@@ -1347,6 +1355,9 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
+        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
+        $merchants = $gateway->getMerchants($dbh);
+
         $tbl = new HTMLTable();
 
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
@@ -1357,7 +1368,7 @@ class HouseServices {
         foreach ($tkRsArray as $tkRs) {
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (strtolower($tkRs->Merchant->getStoredVal()) == 'local' || $tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production') {
+            if (count($merchants) == 1) {
                 $merchant = '';
             }
 
@@ -1370,8 +1381,6 @@ class HouseServices {
         }
 
         // New card.
-        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
-
         if ($gateway->hasCofService()) {
 
         	$attr = array('type'=>'checkbox', 'name'=>'rbUseCard'.$index);

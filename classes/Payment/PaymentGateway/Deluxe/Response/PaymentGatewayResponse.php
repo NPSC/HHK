@@ -2,6 +2,8 @@
 
 namespace HHK\Payment\PaymentGateway\Deluxe\Response;
 
+use HHK\Exception\PaymentException;
+use HHK\Payment\GatewayResponse\AbstractGatewayResponse;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\MpTranType;
@@ -22,43 +24,34 @@ use HHK\Tables\PaymentGW\Guest_TokenRS;
  * @author Will
  */
  
-class PaymentGatewayResponse implements GatewayResponseInterface {
+class PaymentGatewayResponse extends AbstractGatewayResponse implements GatewayResponseInterface {
     
-    protected $tranType;
-    protected $merchant = '';
-    protected $processor = AbstractPaymentGateway::DELUXE;
-    protected $operatorId;
-    protected $cardHolderName;
-    protected $authorizedAmount;
-    protected $account;
-    protected $expDate;
-    protected $cardType;
-    protected $invoiceNumber;
-    protected $token;
-    protected $status;
-    protected $responseMessage;
-    protected $acqRefData;
-    protected Guest_TokenRS $tkRs;
-    
-    public function __construct($amount, $invoiceNumber, Guest_TokenRS $tkRs, $tranType, $operatorId, $status, $responseMessage, $acqRefData) {
+    protected Guest_TokenRS $tokenRS;
 
-        $this->tkRs = $tkRs;
-        $this->setOperatorId($operatorId);
-        $this->setCardHolderName( $this->tkRs->CardHolderName->getStoredVal());
-        $this->authorizedAmount = $amount;
-        $this->account = $this->tkRs->MaskedAccount->getStoredVal();
-        $this->expDate = $this->tkRs->ExpDate->getStoredVal();
-        $this->cardType = $this->tkRs->CardType->getStoredVal();
+    protected $invoiceNumber;
+
+    protected $operatorId;
+    
+    public function __construct($response, Guest_TokenRS $tokenRS, $tranType = '', $invoiceNumber, $operatorId) {
+
+        $this->tokenRS = $tokenRS;
+        $this->operatorId = $operatorId;
         $this->invoiceNumber = $invoiceNumber;
-        $this->status = $status;
-        $this->token = $this->tkRs->Token->getStoredVal();
-        $this->tranType = MpTranType::Sale;
-        $this->responseMessage = $responseMessage;
-        $this->acqRefData = $acqRefData;
+
+        parent::__construct($response, $tranType);
+    }
+
+    protected function parseResponse() {
+
+        if(is_array($this->response)){
+            $this->result = $this->response;
+        }else{
+            throw new PaymentException("Payment response is missing from the payment gateway response.  ");
+        }
     }
     
     public function getStatus() {
-        return $this->status;
+        return $this->getResponseCode();
     }
     
     public function getTranType() {
@@ -82,27 +75,23 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
 
     public function getCardHolderName() {
-        return $this->cardHolderName;
-    }
-    
-    public function setCardHolderName($v) {
-        $this->cardHolderName = $v;
+        return $this->tokenRS->CardHolderName->getStoredVal();
     }
     
     public function getMaskedAccount() {
-        return $this->account;
-    }
-    
-    public function setMaskedAccount($v) {
-        $this->account = $v;
+        return $this->tokenRS->MaskedAccount->getStoredVal();
     }
     
     public function getAuthorizedAmount() {
-        return $this->authorizedAmount;
+        if (isset($this->result['amountApproved'])) {
+            return $this->result['amountApproved'];
+        }
+
+        return '';
     }
     
     public function getCardType() {
-        return $this->cardType;
+        return $this->tokenRS->CardType->getStoredVal();
     }
     
     public function getInvoiceNumber() {
@@ -154,7 +143,7 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getExpDate() {
-        return $this->expDate;
+        return $this->tokenRS->ExpDate->getStoredVal();
     }
     
     public function getOperatorId() {
@@ -166,10 +155,20 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getResponseMessage() {
-        return $this->responseMessage;
+        if (isset($this->result['responseMessage']) && is_string($this->result['responseMessage'])) {
+            return $this->result['responseMessage'];
+        }else if (isset($this->result['responseMessage']) && is_array($this->result['responseMessage'])){
+            return implode(", ", $this->result['responseMessage']);
+        }
+
+        return '';
     }
     
     public function getResponseCode() {
+        if (isset($this->result['responseCode'])) {
+            return $this->result['responseCode'];
+        }
+
         return '';
     }
     
@@ -178,10 +177,18 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getAcqRefData() {
-        return $this->acqRefData;
+        if(isset($this->result['paymentId'])){
+            return $this->result['paymentId'];
+        }
+
+        return '';
     }
     
     public function getAuthCode() {
+        if(isset($this->result['authResponse'])){
+            return $this->result['authResponse'];
+        }
+
         return '';
     }
     
@@ -206,26 +213,6 @@ class PaymentGatewayResponse implements GatewayResponseInterface {
     }
     
     public function getToken() {
-        return $this->token;
+        return $this->tokenRS->Token->getStoredVal();
     }
-
-    public function setToken($v){
-        $this->token = $v;
-    }
-    
-    protected function getRandomString($length=40){
-        if(!is_int($length)||$length<1){
-            $length = 40;
-        }
-        $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        $randstring = '';
-        $maxvalue = strlen($chars) - 1;
-        for($i=0; $i<$length; $i++){
-            $randstring .= substr($chars, rand(0,$maxvalue), 1);
-        }
-        return $randstring;
-    }
-    
-    
 }
-?>

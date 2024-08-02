@@ -32,14 +32,19 @@ class AuthorizeCreditResponse extends AbstractCreditResponse {
         $this->merchant = $vcr->getMerchant();
         $this->expDate = $vcr->getExpDate();
 
+        switch($this->getStatus()){
+            case AbstractCreditPayments::STATUS_APPROVED:
+                $this->setPaymentStatusCode(PaymentStatusCode::Paid);
+                break;
+            case AbstractCreditPayments::STATUS_DECLINED:
+                $this->setPaymentStatusCode(PaymentStatusCode::Declined);
+                break;
+        }
+
     }
 
     public function getPaymentMethod() {
         return PaymentMethod::Charge;
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
     }
 
     public function getStatus() {

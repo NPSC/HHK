@@ -10,6 +10,8 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Member\Role\AbstractRole;
 use HHK\Member\Role\Guest;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
@@ -70,7 +72,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), "cmd"=>"loadResv"]);
             exit;
         }
     }
@@ -320,7 +322,7 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
-            <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { ?> <div id="deluxeDialog" style="display:none;"></div> <?php } ?>
+            <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
             <div id="ecSearch" style="display:none;">
                 <table>
                     <tr>
@@ -330,7 +332,7 @@ $resvObjEncoded = json_encode($resvAr);
                 </table>
             </div>
 
-        </div>
+        </>
         <form name="xform" id="xform" method="post"></form>
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size: 0.9em;">
             <form id="frmConfirm" action="Reserve.php" method="post"></form>

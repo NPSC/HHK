@@ -8,6 +8,8 @@ use HHK\House\Report\PaymentReport;
 use HHK\House\Report\RoomReport;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\sec\Labels;
@@ -601,7 +603,7 @@ if($uS->useOnlineReferral){
         <input type="hidden" id="closedDays" value='<?php echo json_encode($closedDays); ?>' />
 		<input  type="hidden" id="showCurrentGuestPhotos" value='<?php echo ($uS->showCurrentGuestPhotos && $uS->ShowGuestPhoto); ?>' />
 
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { ?> <div id="deluxeDialog" style="display:none;"></div> <?php } ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>

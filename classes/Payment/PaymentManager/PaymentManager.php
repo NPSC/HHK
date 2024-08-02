@@ -569,8 +569,9 @@ class PaymentManager {
 
                 // Make the payment
                 $payResult = PaymentSvcs::payAmount($dbh, $this->invoice, $this->pmp, $postBackPage);
-                $payResult->setReplyMessage($payResult->getDisplayMessage() . '  ' . $this->result);
-
+                if (strlen($payResult->getDisplayMessage() . $this->result) > 0) {
+                    $payResult->setReplyMessage($payResult->getDisplayMessage() . '  ' . $this->result);
+                }
 
             } catch (\Exception $exPay) {
 

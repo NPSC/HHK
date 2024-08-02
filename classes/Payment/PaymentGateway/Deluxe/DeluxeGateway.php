@@ -235,7 +235,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             return false;
         } else {
         	//Card not present
-            return HostedPaymentForm::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $this->manualKey, $postbackUrl, "payment", $invoice->getInvoiceNumber());
+            return HostedPaymentForm::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $this->manualKey, $postbackUrl, "payment", $invoice->getInvoiceNumber(), $invoice->getAmountToPay());
         }
     }
 
@@ -395,7 +395,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $payResult->setForwardHostedPayment($fwrder);
-                $payResult->setDisplayMessage('Forward to Payment Page. ');
+                //$payResult->setDisplayMessage('Forward to Payment Page. ');
             }
         }
 
@@ -564,10 +564,10 @@ class DeluxeGateway extends AbstractPaymentGateway
         $amount = abs($invoice->getAmount());
         $idToken = intval($rtnToken, 10);
 
-        $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment
-from payment p join payment_auth pa on p.idPayment = pa.idPayment
-where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by idPayment desc;
-;");
+        //find payment >= amount that hasn't been used for a refund yet. Payments used for return amount already can't be used again.
+        $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) WHEN rp.Is_Refund = 1 THEN 0 ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment
+from payment p join payment_auth pa on p.idPayment = pa.idPayment left join payment rp on p.idPayment = rp.parent_idPayment
+where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by idPayment desc;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -751,6 +751,10 @@ order by pa.Timestamp desc");
         $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
         $sr->setResult($returnGatewayResponse->getStatus());
         $sr->setIdToken($tokenRS->idGuest_token->getStoredVal());
+
+        if($payRs instanceof PaymentRS){
+            $sr->setParentIdPayment($payRs->idPayment->getStoredVal());
+        }
 
         if ($sr->getStatus() == AbstractCreditPayments::STATUS_APPROVED) {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Paid);
@@ -1224,5 +1228,9 @@ order by pa.Timestamp desc");
         }
 
         return $num;
+    }
+
+    public static function getIframeMkup(){
+        return HTMLContainer::generateMarkup("div", "", ["id"=>"deluxeDialog", "style"=>"display:none;"]);
     }
 }

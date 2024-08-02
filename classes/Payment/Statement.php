@@ -195,6 +195,7 @@ class Statement {
                         'Payment_Date'=>$p['Payment_Date'],
                         'Payment_Timestamp'=>$p['Payment_Timestamp'],
                         'Is_Refund'=>$p['Is_Refund'],
+                        'Has_ReturnPayment'=>$p['Has_ReturnPayment'],
                         'Payment_idPayor'=>$p['Payment_idPayor'],
                         'Payment_Updated_By'=>$p['Payment_Updated_By'],
                         'Last_Updated'=>$p['Payment_Last_Updated'],

@@ -4,6 +4,8 @@ use HHK\Exception\RuntimeException;
 use HHK\House\ReserveData\ReserveData;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -286,7 +288,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { ?> <div id="deluxeDialog" style="display:none;"></div> <?php } ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
         <script type="text/javascript" src='<?php echo CHECKINGIN_JS; ?>'></script>
 

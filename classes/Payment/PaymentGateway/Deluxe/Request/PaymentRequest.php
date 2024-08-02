@@ -7,6 +7,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentGatewayResponse;
 use HHK\sec\Session;
+use HHK\SysConst\MpTranType;
 use HHK\Tables\PaymentGW\Guest_TokenRS;
 
 Class PaymentRequest extends AbstractDeluxeRequest {
@@ -67,7 +68,7 @@ Class PaymentRequest extends AbstractDeluxeRequest {
                 // Do Nothing
             }
 
-            $response = new PaymentGatewayResponse($invoice->getAmountToPay(), $invoice->getInvoiceNumber(), $tokenRS, "sale", $uS->username, $this->responseBody["responseCode"], $this->responseMsg, $this->responseBody["paymentId"]);
+            $response = new PaymentGatewayResponse($this->responseBody, $tokenRS, MpTranType::Sale, $invoice->getInvoiceNumber(), $uS->username);
             $response->setMerchant($this->merchant);
             return $response;
 

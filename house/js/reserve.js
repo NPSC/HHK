@@ -205,11 +205,6 @@ $(document).ready(function() {
 				        flagAlertMessage(data.warning, 'warning');
 				    }
 
-				    if (data.xfer || data.inctx || data.hpfToken) {
-				        paymentRedirect (data, $('#xform'));
-				        return;
-				    }
-
                     if (data.receiptMarkup && data.receiptMarkup != '') {
 						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
 					}
@@ -219,7 +214,12 @@ $(document).ready(function() {
 						$('#contentDiv').append('<p>' + data.deleted + '</p>');
 
 						$('#spnStatus').text('Deleted');
-					}
+                    }
+                     
+                    if (data.xfer || data.inctx || data.deluxehpf) {
+				        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
+				        //return;
+				    }
 
                 }
         	);
@@ -268,9 +268,9 @@ $(document).ready(function() {
                         $('#btnDone').val('Save').show();
                     }
 
-                    if (data.xfer || data.inctx || data.hpfToken) {
-                        paymentRedirect (data, $('#xform'));
-                        return;
+                    if (data.xfer || data.inctx || data.deluxehpf) {
+                        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
+                        //return;
                     }
 
                     if (data.redirTo) {

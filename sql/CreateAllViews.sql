@@ -1894,6 +1894,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`p`.`Payment_Date`, 0) AS `Payment_Date`,
         IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+        IF(`rp`.`idPayment` > 0, 1, 0) AS `Has_ReturnPayment`,
         IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
         IFNULL(`p`.`Updated_By`, '') AS `Payment_Updated_By`,
         IFNULL(`p`.`Created_By`, '') AS `Payment_Created_By`,
@@ -1916,6 +1917,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         LEFT JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Item_Id` = 11 and `il`.`Deleted` < 1
         LEFT JOIN `payment_invoice` `pi` ON `i`.`idInvoice` = `pi`.`Invoice_Id`
         LEFT JOIN `payment` `p` ON `pi`.`Payment_Id` = `p`.`idPayment`
+        LEFT JOIN `payment` `rp` ON `p`.`idPayment` = `rp`.`parent_idPayment` and `rp`.`Is_Refund` > 0
         LEFT JOIN `payment_auth` `pa` ON `pi`.`Payment_Id` = `pa`.`idPayment`
         LEFT JOIN `payment_info_check` `pc` ON `pi`.`Payment_Id` = `pc`.`idPayment`
         LEFT JOIN `payment_method` `pm` ON `p`.`idPayment_Method` = `pm`.`idPayment_method`

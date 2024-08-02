@@ -11,9 +11,9 @@ function ckedIn(data) {
         flagAlertMessage(data.warning, 'warning');
     }
 
-    if (data.xfer || data.inctx || data.hpfToken) {
+    if (data.xfer || data.inctx || data.deluxehpf) {
         paymentRedirect (data, $('#xform'));
-        return;
+        //return;
     }
     
     if (data.redirTo) {

@@ -1,5 +1,7 @@
 <?php
 
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\SysConst\VolMemberType;
@@ -627,7 +629,7 @@ var pmtMkup,
 		<input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
-		<?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { ?> <div id="deluxeDialog" style="display:none;"></div> <?php } ?>
+		<?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
     </body>
 </html>

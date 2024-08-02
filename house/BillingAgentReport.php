@@ -2,6 +2,7 @@
 
 use HHK\House\Report\BillingAgentReport;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
 use HHK\House\Report\ReservationReport;
@@ -183,6 +184,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <div id="pmtRcpt" style="font-size: .9em; display: none;"></div>
         <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { ?> <div id="deluxeDialog" style="display:none;"></div> <?php } ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+            echo DeluxeGateway::getIframeMkup(); } ?>
     </body>
 </html>

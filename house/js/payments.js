@@ -1449,32 +1449,41 @@ console.log("redirect called");
 
             // openiframe(data.inctx, 600, 400, "Add New Card On File");
 
-        } else if (data.hpfToken) {
+        } else if (data.deluxehpf) {
             //var height = (data.useSwipe ? 200 : 400);
             //var width = (data.useSwipe ? 400 : 650);
             var height = 650;
             var width = 650;
 
-            var title = (data.cmd == "payment" ? "Enter Payment Details" : "Add New Card On File");
-            var deluxeSmtBtnTxt = (data.cmd == "payment" ? "Submit Payment" : "Save Card On File");
+            var title = (data.deluxehpf.cmd == "payment" ? "Enter Payment Details" : "Add New Card On File");
+            var deluxeSmtBtnTxt = (data.deluxehpf.cmd == "payment" ? "Submit Payment" : "Save Card On File");
 
             if (initialParams && initialParams.idVisit != undefined && initialParams.span != undefined) {
                 title += " for Visit " + initialParams.idVisit + "-" + initialParams.span;
+            }else if (initialParams && initialParams.resvId != undefined) {
+                title += " for Reservation " + initialParams.resvId;
             }
 
-            var $deluxeDialog = $("#deluxeDialog").attr("style", "overflow-y: hidden;").dialog({
+
+            var $deluxeDialog = $("#deluxeDialog");
+
+            if (data.deluxehpf.cmd == "payment" && data.deluxehpf.payAmount > 0) {
+                $deluxeDialog.html('<div class="row justify-content-center mt-2" id="deluxePayInfo"><div class="col" style="text-align: center;"><label class="mx-1">Payment Amount</label><input class="mx-1" size="10" disabled="" value="$ ' + data.deluxehpf.payAmount.toFixed(2) + '" id="deluxePayAmount" type="text"></div></div>');
+            }
+
+            $deluxeDialog.attr("style", "overflow-y: hidden;").dialog({
                 modal: true,
                 width: getDialogWidth(650),
-                height: 400,
+                height: 450,
                 autoOpen: true,
                 title: title,
                 open: function (event, ui) {
                     var options = {
                         containerId: "deluxeDialog",
-                        xtoken: data.hpfToken,
+                        xtoken: data.deluxehpf.hpfToken,
                         xrtype: "Generate Token",
                         xbtntext: deluxeSmtBtnTxt,
-                        xmsrattached: data.useSwipe,
+                        xmsrattached: data.deluxehpf.useSwipe,
                         xswptext: "Please Swipe Card now...",
                         xPM:1,
 
@@ -1489,19 +1498,19 @@ console.log("redirect called");
                                 expDate: hpfData.data.expDate,
                                 cardType: hpfData.data.cardType,
                                 maskedPan: hpfData.data.maskedPan,
-                                cmd: data.cmd,
-                                pbp: data.pbp
+                                cmd: data.deluxehpf.cmd,
+                                pbp: data.deluxehpf.pbp
                             }
 
-                            if (data.idGroup && data.idPayor && data.invoiceNum) {
-                                submitData.psg = data.idGroup;
-                                submitData.id = data.idPayor;
-                                submitData.invoiceNum = data.invoiceNum;
+                            if (data.deluxehpf.idGroup && data.deluxehpf.idPayor && data.deluxehpf.invoiceNum) {
+                                submitData.psg = data.deluxehpf.idGroup;
+                                submitData.id = data.deluxehpf.idPayor;
+                                submitData.invoiceNum = data.deluxehpf.invoiceNum;
                             }
 
                             $deluxeDialog.empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
-                            $.post(encodeURI(data.pbp),
+                            $.post(encodeURI(data.deluxehpf.pbp),
                                 submitData,
                                 function (data) {
                                     if (data) {
@@ -1524,6 +1533,10 @@ console.log("redirect called");
                                             $('#tblupCredit' + data.idx).remove();
                                             $('#upCreditfs').prepend($(data.COFmkup));
                                             setupCOF($('.tblCreditExpand' + data.idx), data.idx);
+                                        }
+
+                                        if (initialParams.resvId) {
+                                            $("#btnDone").click();
                                         }
                                         
                                         if (data.gotopage) {

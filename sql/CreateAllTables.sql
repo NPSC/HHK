@@ -1390,6 +1390,7 @@ CREATE TABLE if not exists `payment` (
   `idTrans` int(11) NOT NULL DEFAULT '0',
   `idToken` int(11) NOT NULL DEFAULT '0',
   `Is_Refund` tinyint(4) NOT NULL DEFAULT '0',
+  `parent_idPayment` INT(11) NOT NULL DEFAULT '0',
   `Is_Preauth` tinyint(4) NOT NULL DEFAULT '0',
   `Status_Code` varchar(5) NOT NULL DEFAULT '',
   `Data1` varchar(15) NOT NULL DEFAULT '',

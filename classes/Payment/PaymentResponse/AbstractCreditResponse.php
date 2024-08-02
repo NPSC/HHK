@@ -48,6 +48,8 @@ abstract class AbstractCreditResponse extends AbstractPaymentResponse {
      */
     public $cardName;
 
+    public $parentIdPayment = 0;
+
     /**
      * Summary of recordPaymentAuth
      * @param \PDO $dbh
@@ -128,6 +130,14 @@ abstract class AbstractCreditResponse extends AbstractPaymentResponse {
      */
     public function getIdPaymentAuth() {
         return $this->idPaymentAuth;
+    }
+
+    public function getParentIdPayment(){
+        return $this->parentIdPayment;
+    }
+
+    public function setParentIdPayment($v){
+        $this->parentIdPayment = $v;
     }
 
 }

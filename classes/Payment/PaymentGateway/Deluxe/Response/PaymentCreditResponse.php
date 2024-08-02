@@ -31,6 +31,15 @@ class PaymentCreditResponse extends AbstractCreditResponse {
         $this->idToken = $vcr->getToken();
         $this->amount = $vcr->getAuthorizedAmount();
         $this->invoiceNumber = $vcr->getInvoiceNumber();
+        
+        switch($this->getStatus()){
+            case AbstractCreditPayments::STATUS_APPROVED:
+                $this->setPaymentStatusCode(PaymentStatusCode::Paid);
+                break;
+            case AbstractCreditPayments::STATUS_DECLINED:
+                $this->setPaymentStatusCode(PaymentStatusCode::Declined);
+                break;
+        }
     }
 
     public function getPaymentMethod() {

@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\Payment\PaymentSvcs;
 use HHK\SysConst\WebPageCode;

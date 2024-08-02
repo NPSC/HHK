@@ -2,6 +2,8 @@
 
 use HHK\House\OperatingHours;
 use HHK\House\Report\RoomReport;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\House\Resource\ResourceTypes;
 use HHK\SysConst\{ResourceStatus, RoomRateCategories, GLTableNames, ItemPriceCode, InvoiceStatus, ItemType, ItemId, VolMemberType};
@@ -2031,7 +2033,7 @@ if ($uS->CoTod) {
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { ?> <div id="deluxeDialog" style="display:none;"></div> <?php } ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup();} ?>
         <form name="xform" id="xform" method="post"></form>
     </body>
 </html>

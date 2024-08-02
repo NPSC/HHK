@@ -2587,8 +2587,8 @@ function resvManager(initData, options) {
 
     }
 
-    function transferToGw(data) {
-        paymentRedirect(data, $('#xform'));
+    function transferToGw(data, rid) {
+        paymentRedirect(data, $('#xform'), {resvId: rid});
     }
 
     function resvPicker(data, $resvDiag, $psgDiag) {
@@ -2731,10 +2731,9 @@ function resvManager(initData, options) {
     }
 
     function loadResv(data) {
-
-        if (data.xfer || data.inctx || data.hpfToken) {
-            transferToGw(data);
-            return;
+        if (data.xfer || data.inctx || data.deluxehpf) {
+            transferToGw(data, data.rid);
+            //return;
         }
 
         if (data.deleted) {
