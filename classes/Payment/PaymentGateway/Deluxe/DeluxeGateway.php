@@ -21,6 +21,7 @@ use HHK\Payment\PaymentGateway\Deluxe\Request\AuthorizeRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\RefundRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
+use HHK\Payment\PaymentGateway\Deluxe\Request\Webhooks\SubscribeEventRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\RefundCreditResponse;
@@ -555,7 +556,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         return $dataArray;
     }
 
-    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
 
         $uS = Session::getInstance();
 
@@ -918,6 +919,12 @@ order by pa.Timestamp desc");
                 HTMLTable::makeTh('Delete ' . $title . ':', array('class' => 'tdlabel'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbdelMerchant', 'class'=>'hhk-delMerchant', 'data-merchant'=>$title, 'type'=>'checkbox')))
                 );
+
+            //webhooks
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Transaction Webhook', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbTransactionWebhook', 'class'=>'hhk-transactionWebhook', 'data-merchant'=>$title, 'type'=>'checkbox'))),
+                ['class'=>'d-none']);
         }
 
 
@@ -1075,6 +1082,20 @@ order by pa.Timestamp desc");
 
                 if ($rooms > 0) {
                     $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - " . $rooms . " rooms set to $merchantName");
+                }
+
+            }
+
+            //transaction webhook
+            if (isset($post[$indx . '_cbTransactionWebhook']) && $ccRs->cc_name->getStoredVal() != '' && !$ccRs->Trans_Url->getStoredVal() > 0) {
+
+                $gway = new DeluxeGateway($dbh, $ccRs->cc_name->getStoredVal());
+                $webhookRequest = new SubscribeEventRequest($dbh, $gway);
+                $response = $webhookRequest->submit($webhookRequest::EVENT_TRANSACTION);
+
+                if ($response["success"] == true) {
+                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - " . $response['eventType'] . " webhook: " . $response['message']);
+                    $ccRs->Trans_Url->setNewVal($response['eventSubscriptionId']);
                 }
 
             }
