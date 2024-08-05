@@ -270,7 +270,7 @@ abstract class AbstractPaymentGateway {
      * @return array
      */
     public function getMerchants(\PDO $dbh){
-        $stmt = $dbh->query("SELECT * FROM demo.cc_hosted_gateway where Gateway_Name = '" . $this->getGatewayName() . "';");
+        $stmt = $dbh->query("SELECT * FROM cc_hosted_gateway where Gateway_Name = '" . $this->getGatewayName() . "';");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
