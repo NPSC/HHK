@@ -142,8 +142,7 @@ where
      * @param int $idVisit
      * @return float
      */
-    public static function loadLodgingBalance(\PDO $dbh, $idRegistration, $idVisit = 0)
-    {
+    public static function loadLodgingBalance(\PDO $dbh, $idRegistration, $idVisit = 0) {
         $lodgingBalance = 0.0;
         $where = '';
 
@@ -152,9 +151,9 @@ where
             if ($idg < 1) {
                 return $lodgingBalance;
             }
-            $where = " and i.idGroup = " . $idg;
+            $where = " and i.idGroup = $idg";
         } else {
-            $where = " and i.Order_Number = " . $idVisit;
+            $where = " and i.Order_Number = $idVisit";
         }
 
 
@@ -671,15 +670,15 @@ where
 
             // Lodging MOA
             $tbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'), array('style'=>'text-align:right;'))
-                .HTMLTable::makeTd('$' . number_format($this->getLodgingMOA($dbh), 2), array('style'=>'text-align:left;')));
+                HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'), ['style' => 'text-align:right;'])
+                .HTMLTable::makeTd('$' . number_format(max($this->getLodgingMOA($dbh) - $this->getPrePayments($dbh), 0), 2), ['style' => 'text-align:left;']));
 
-    //         // Pre-Payments
-    //         if ($uS->AcceptResvPaymt) {
-    //             $tbl->addBodyTr(
-    //                 HTMLTable::makeTh($labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Pre-Payments', array('style'=>'text-align:right;'))
-    //                 .HTMLTable::makeTd('$' . number_format($this->getPrePayments($dbh), 2), array('style'=>'text-align:left;')));
-    //         }
+            // Pre-Payments
+            if ($uS->AcceptResvPaymt) {
+                $tbl->addBodyTr(
+                    HTMLTable::makeTh($labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Pre-Payments', ['style' => 'text-align:right;'])
+                    .HTMLTable::makeTd('$' . number_format($this->getPrePayments($dbh), 2), ['style' => 'text-align:left;']));
+            }
 
             // Donations
             $tbl->addBodyTr(

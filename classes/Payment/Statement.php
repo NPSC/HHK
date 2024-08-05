@@ -572,9 +572,15 @@ class Statement {
                 $donAmt += $itemAmount;
             }
 
-            // Only show payments to MOA here.
-            if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Status'] == InvoiceStatus::Paid && $itemAmount > 0) {
-                $moaAmt += $itemAmount;
+
+            if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Status'] == InvoiceStatus::Paid) {
+                if ($itemAmount > 0) {
+                    // Only show payments to MOA here.
+                    $moaAmt += $itemAmount;
+                } else if ($l['Order_Number'] === 0 && $itemAmount < 0) {
+                    // refunded reservation prepayment.
+                    $moaAmt += $itemAmount;
+                }
             }
         }
 
@@ -1083,7 +1089,8 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
             $totalCharge,
             $totalThirdPayments,
             $totalGuestPayments,
-            Registration::loadLodgingBalance($dbh, $idRegistration),
+            max(Registration::loadLodgingBalance($dbh, $idRegistration) - Registration::loadPrepayments($dbh, $idRegistration), 0),
+            Registration::loadPrepayments($dbh, $idRegistration),
             Registration::loadDepositBalance($dbh, $idRegistration),
             $totalNights
         );
@@ -1218,7 +1225,8 @@ WHERE
             $totalCharge,
             $totalThirdPayments,
             $totalGuestPayments,
-            Registration::loadLodgingBalance($dbh, $idRegistration, 0),
+            Registration::loadLodgingBalance($dbh, $idRegistration, $idVisit),
+            0,
             Registration::loadDepositBalance($dbh, 0, $idVisit),
             $totalNights);
 
@@ -1295,7 +1303,7 @@ WHERE
 
         return $emtableMarkup;
     }
-    
+
     /**
      * Summary of makeSummaryDiv
      * @param mixed $guestName
@@ -1311,7 +1319,7 @@ WHERE
      * @param mixed $totalNights
      * @return string
      */
-    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $depositBalance, $totalNights) {
+    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $prepayments, $depositBalance, $totalNights) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -1368,21 +1376,27 @@ WHERE
             ["class"=>"sumDivider"]);
 
         $sTbl->addBodyTr(
-            HTMLTable::makeTd($finalWord . ':', array('class'=>'tdlabel'))
-            . HTMLTable::makeTd('$'. number_format($bal, 2), array('class'=>'align-right')),
+            HTMLTable::makeTd("$finalWord:", ['class' => 'tdlabel'])
+            . HTMLTable::makeTd('$'. number_format($bal, 2), ['class' => 'align-right']),
         ['class'=>'balanceLine']);
 
 
         if ($MOABalance > 0) {
             $sTbl->addBodyTr(
-                HTMLTable::makeTd('Money on Account:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('($'. number_format($MOABalance, 2) . ')', array('class'=>'align-right')));
+                HTMLTable::makeTd('Money on Account:', ['class' => 'tdlabel'])
+                . HTMLTable::makeTd('($'. number_format($MOABalance, 2) . ')', ['class' => 'align-right']));
+        }
+
+        if ($prepayments > 0) {
+            $sTbl->addBodyTr(
+                HTMLTable::makeTd('Reservation Prepayments:', ['class' => 'tdlabel'])
+                . HTMLTable::makeTd('($'. number_format($prepayments, 2) . ')', ['class' => 'align-right']));
         }
 
         if ($depositBalance > 0) {
             $sTbl->addBodyTr(
-                HTMLTable::makeTd($labels->getString('statement', 'keyDepositLabel', 'Deposit'), array('class' => 'tdlabel'))
-                . HTMLTable::makeTd('($' . number_format($depositBalance, 2) . ')', array('class' => 'align-right'))
+                HTMLTable::makeTd($labels->getString('statement', 'keyDepositLabel', 'Deposit'), ['class' => 'tdlabel'])
+                . HTMLTable::makeTd('($' . number_format($depositBalance, 2) . ')', ['class' => 'align-right'])
             );
         }
 
@@ -1390,8 +1404,8 @@ WHERE
 
         $bodyTbl->addBodyTr(
             HTMLTable::makeTd(
-                HTMLContainer::generateMarkup("strong", 'Prepared '.date('M jS, Y')) . 
-                $tbl->generateMarkup()) . 
+                HTMLContainer::generateMarkup("strong", 'Prepared '.date('M jS, Y')) .
+                $tbl->generateMarkup()) .
             HTMLTable::makeTd(
                 $sTbl->generateMarkup(["class"=>"tblStmtSummary"], HTMLContainer::generateMarkup("strong", 'Statement Summary'))
             , array("class"=>"align-center"))

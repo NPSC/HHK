@@ -317,6 +317,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 		$whType = '';
 		$payTypeText = '';
+        $payTypes = $filter->getPayTypes();
 		foreach ($filter->getSelectedPayTypes() as $s) {
 			if ($s != '') {
 				// Set up query where part.
@@ -333,14 +334,15 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 					$payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
 				}
 			}
-
-			if ($whType != '') {
-				$whType = " and lp.idPayment_Method in (" . $whType . ") ";
-			} else {
-				$payTypeText = 'All';
-			}
 		
 		}
+
+        if ($whType != '') {
+            $whType = " and lp.idPayment_Method in (" . $whType . ") ";
+        } else {
+            $payTypeText = 'All';
+        }
+
 		$headerTable->addBodyTr(HTMLTable::makeTd('Pay Types: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($payTypeText));
 
         $whGw = '';
