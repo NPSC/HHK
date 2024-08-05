@@ -1053,6 +1053,20 @@ order by pa.Timestamp desc");
                 }
             }
 
+            //transaction webhook
+            if (isset($post[$indx . '_cbTransactionWebhook']) && $ccRs->cc_name->getStoredVal() != '' && !$ccRs->Trans_Url->getStoredVal() > 0) {
+
+                $gway = new DeluxeGateway($dbh, $ccRs->cc_name->getStoredVal());
+                $webhookRequest = new SubscribeEventRequest($dbh, $gway);
+                $response = $webhookRequest->submit($webhookRequest::EVENT_TRANSACTION);
+
+                if ($response["success"] == true) {
+                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - " . $response['eventType'] . " webhook: " . $response['message']);
+                    $ccRs->Trans_Url->setNewVal($response['eventSubscriptionId']);
+                }
+
+            }
+
             $num = 0;
 
             // Save record.
@@ -1082,20 +1096,6 @@ order by pa.Timestamp desc");
 
                 if ($rooms > 0) {
                     $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - " . $rooms . " rooms set to $merchantName");
-                }
-
-            }
-
-            //transaction webhook
-            if (isset($post[$indx . '_cbTransactionWebhook']) && $ccRs->cc_name->getStoredVal() != '' && !$ccRs->Trans_Url->getStoredVal() > 0) {
-
-                $gway = new DeluxeGateway($dbh, $ccRs->cc_name->getStoredVal());
-                $webhookRequest = new SubscribeEventRequest($dbh, $gway);
-                $response = $webhookRequest->submit($webhookRequest::EVENT_TRANSACTION);
-
-                if ($response["success"] == true) {
-                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - " . $response['eventType'] . " webhook: " . $response['message']);
-                    $ccRs->Trans_Url->setNewVal($response['eventSubscriptionId']);
                 }
 
             }
