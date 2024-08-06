@@ -32,7 +32,7 @@ class PaymentGatewayResponse extends AbstractGatewayResponse implements GatewayR
 
     protected $operatorId;
     
-    public function __construct($response, Guest_TokenRS $tokenRS, $tranType = '', $invoiceNumber, $operatorId) {
+    public function __construct($response, Guest_TokenRS $tokenRS, $tranType, $invoiceNumber, $operatorId) {
 
         $this->tokenRS = $tokenRS;
         $this->operatorId = $operatorId;

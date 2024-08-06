@@ -1966,6 +1966,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`p`.`Payment_Date`, '') AS `Payment_Date`,
         IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+        IF(`rp`.`idPayment` > 0, 1, 0) AS `Has_ReturnPayment`,
         IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
         IFNULL(`p`.`Updated_By`, '') AS `Payment_Updated_By`,
         IFNULL(`p`.`Created_By`, '') AS `Payment_Created_By`,
@@ -1985,6 +1986,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`pc`.`Check_Number`, '') AS `Check_Number`
     FROM
         `payment` `p`
+        LEFT JOIN `payment` `rp` ON `p`.`idPayment` = `rp`.`parent_idPayment` and `rp`.`Is_Refund` > 0
         LEFT JOIN `payment_auth` `pa` ON `p`.`idPayment` = `pa`.`idPayment`
         LEFT JOIN `payment_info_check` `pc` ON `p`.`idPayment` = `pc`.`idPayment`
         LEFT JOIN `payment_method` `pm` ON `p`.`idPayment_Method` = `pm`.`idPayment_method`

@@ -273,7 +273,7 @@ class DeluxeGateway extends AbstractPaymentGateway
             return false;
         } else {
         	//Card not present
-            return HostedPaymentForm::sendToPortal($dbh, $this, $idGuest, $idGroup, $manualKey, $postbackUrl, "cof");
+            return ["deluxehpf"=>HostedPaymentForm::sendToPortal($dbh, $this, $idGuest, $idGroup, $manualKey, $postbackUrl, "cof")];
         }
 
     }
