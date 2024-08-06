@@ -46,6 +46,15 @@ Class PaymentRequest extends AbstractDeluxeRequest {
             ]
         ];
 
+        //add customer info
+        $billTo = $invoice->getBillTo($this->dbh);
+        if(isset($billTo["Name_First"]) && isset($billTo["Name_Last"])){
+            $requestData['paymentMethod']["billingAddress"] = [
+                "firstName"=>$billTo["Name_First"],
+                "lastName"=>$billTo["Name_Last"]
+            ];
+        }
+
         //send request
         try{
             $resp = $this->GuzzleClient->post(self::ENDPOINT, [

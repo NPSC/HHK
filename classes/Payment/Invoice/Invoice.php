@@ -896,6 +896,26 @@ where
 	}
 
 	/**
+	 * Get billTo info from `name` table
+	 * @param \PDO $dbh
+	 * @return array
+	 */
+	public function getBillTo(\PDO $dbh):array{
+		$idName = $this->getSoldToId();
+		if ($idName > 0) {
+
+			$stmt = $dbh->query("select n.*, ifnull(e.Email, '') from name n left join name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose where n.idName = $idName");
+
+			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
+
+			if (count($rows) == 1) {
+				return $rows[0];
+			}
+		};
+		return [];
+	}
+
+	/**
 	 * get name, phone and email of billing contact
 	 * @param \PDO $dbh
 	 * @param int $idName

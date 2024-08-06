@@ -1534,8 +1534,8 @@ console.log("redirect called");
                                             $('#upCreditfs').prepend($(data.COFmkup));
                                             setupCOF($('.tblCreditExpand' + data.idx), data.idx);
                                         }
-
-                                        if (initialParams.resvId) {
+                                        
+                                        if (initialParams !== undefined && initialParams.resvId !== undefined) {
                                             $("#btnDone").click();
                                         }
                                         
