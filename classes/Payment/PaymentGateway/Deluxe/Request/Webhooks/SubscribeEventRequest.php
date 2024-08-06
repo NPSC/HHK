@@ -32,9 +32,12 @@ Class SubscribeEventRequest extends AbstractDeluxeRequest {
 
         //build request data
         $requestData = [
+            'userName'=>"",//$this->hpfAccessToken,
             'events'=>[
-                'eventUri'=>$uS->resourceURL . self::EVENT_URI,
-                'eventType'=>$eventType
+                [
+                    'eventUri'=>$uS->resourceURL . self::EVENT_URI,
+                    'eventType'=>$eventType
+                ]
             ]
         ];
 

@@ -1,22 +1,36 @@
 <?php
+use HHK\sec\Login;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+
 define('ROOT', '../../../');
 define('ciCFG_FILE', 'site.cfg' );
 define('CONF_PATH', ROOT . 'conf/');
 
-require ('functions/commonFunc.php');
+require (ROOT.'functions/commonFunc.php');
 
 if (file_exists(ROOT.'vendor/autoload.php')) {
     require(ROOT.'vendor/autoload.php');
 } else {
+    http_response_code(500);
     exit("Unable to laod dependancies, be sure to run 'composer install'");
+}
+
+try {
+    $login = new Login();
+    $login->initHhkSession(CONF_PATH, ciCFG_FILE);
+
+} catch (\Exception $ex) {
+    session_unset();
+    http_response_code(500);
+    exit ();
 }
 
 try {
     $dbh = initPDO(TRUE);
 } catch (RuntimeException $hex) {
     // Databasae not set up.  Nothing we can do.
-    http_response_code(200);
+    http_response_code(500);
+    echo $hex->getMessage();
     exit();
 }
 
@@ -27,10 +41,15 @@ if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
     $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
 }
 
+$inputJSON = file_get_contents('php://input');
+$data = json_decode($inputJSON, TRUE); //convert JSON into array
 
-// log the data
-try {
-    DeluxeGateway::logGwTx($wInit->dbh, '', json_encode([]), json_encode($_REQUEST), 'Webhook');
-} catch(\Exception $ex) {
-    // Do Nothing
+if(isset($data["Payload"])){
+    // log the data
+    try {
+        DeluxeGateway::logGwTx($dbh, '', json_encode([]), json_encode($data), 'Webhook');
+    } catch(\Exception $ex) {
+        http_response_code(500);
+        exit();
+    }
 }
