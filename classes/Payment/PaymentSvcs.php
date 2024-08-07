@@ -156,7 +156,7 @@ class PaymentSvcs {
      * @param string $paymentDate
      * @return ReturnResult
      */
-    public static function returnAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $paymentDate = '') {
+    public static function returnAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $paymentDate = '', $resvId = 0) {
 
         $uS = Session::getInstance();
 
@@ -197,7 +197,7 @@ class PaymentSvcs {
 
                 // Load gateway
                 $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant(), $pmp->getRtnIdToken());
-                $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes());
+                $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes(), $resvId);
 
                 break;
 

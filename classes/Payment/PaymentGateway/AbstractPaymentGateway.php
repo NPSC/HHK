@@ -118,7 +118,7 @@ abstract class AbstractPaymentGateway {
         return array('warning' => '_returnPayment is not implemented. ');
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes, $resvId = 0) {
         return array('warning' => 'Return Amount is not implemented. ');
     }
 

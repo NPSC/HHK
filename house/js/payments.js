@@ -1491,7 +1491,6 @@ console.log("redirect called");
 
                     HostedForm.init(options, {
                         onSuccess: (hpfData) => {
-                            console.log("onSuccess called");
                             let submitData = {
                                 token: hpfData.data.token,
                                 nameOnCard: hpfData.data.nameOnCard,
@@ -1502,9 +1501,13 @@ console.log("redirect called");
                                 pbp: data.deluxehpf.pbp
                             }
 
-                            if (data.deluxehpf.idGroup && data.deluxehpf.idPayor && data.deluxehpf.invoiceNum) {
+                            if (data.deluxehpf.idGroup) {
                                 submitData.psg = data.deluxehpf.idGroup;
+                            }
+                            if (data.deluxehpf.idPayor) {
                                 submitData.id = data.deluxehpf.idPayor;
+                            }
+                            if(data.deluxehpf.invoiceNum) {
                                 submitData.invoiceNum = data.deluxehpf.invoiceNum;
                             }
 

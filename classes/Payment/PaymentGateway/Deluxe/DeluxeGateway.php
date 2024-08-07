@@ -121,7 +121,7 @@ class DeluxeGateway extends AbstractPaymentGateway
      * @param mixed $payNotes
      */
     public function getPaymentResponseObj(\HHK\Payment\GatewayResponse\GatewayResponseInterface $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
-        return new PaymentCreditResponse($vcr, $idPayor, $idGroup);
+        return new PaymentCreditResponse($vcr, $idPayor, $idGroup, $payNotes);
     }
 
     protected function loadGateway(\PDO $dbh) {
@@ -211,6 +211,9 @@ class DeluxeGateway extends AbstractPaymentGateway
         } else if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "payment"){
             //payment with new card
             $pmp = new PaymentManagerPayment(PayType::Charge);
+            $pmp->setPayNotes($payNotes);
+            $pmp->setPayDate($payDate);
+
             $invoice = new Invoice($dbh, $post["invoiceNum"]);
             $invoice->setAmountToPay($invoice->getBalance());
             return $this->creditSale($dbh, $pmp, $invoice, $post['pbp']);
@@ -281,15 +284,25 @@ class DeluxeGateway extends AbstractPaymentGateway
     protected function saveCOF(\PDO $dbh, array $data) {
 
         $uS = Session::getInstance();
+        $billingFirstName = "";
+        $billingLastName = "";
 
-        if(isset($data['rid'])){
-            $data['psg'] = Reservation_1::getIdPsgStatic($dbh, $data['rid']);
-            $data['id'] = 0;
-        }
+        //get billing name
+        if (isset($data['id']) && $data['id'] > 0) {
+
+			$stmt = $dbh->query("select ifnull(n.Name_First, '') as `Name_First`, ifnull(n.Name_Last, '') as `Name_Last` from name n where n.idName = " . $data['id']);
+
+			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
+
+			if (count($rows) == 1) {
+				$billingFirstName = $rows[0]["Name_First"];
+                $billingLastName = $rows[0]["Name_Last"];
+			}
+		};
 
         //authorize $1 to make sure card is real
         $authRequest = new AuthorizeRequest($dbh, $this);
-        $response = $authRequest->submit(1.00, $data["token"], $data["expDate"], $data["cardType"], $data["maskedPan"], $data["nameOnCard"]);
+        $response = $authRequest->submit(1.00, $data["token"], $data["expDate"], $data["cardType"], $data["maskedPan"], $data["nameOnCard"], $billingFirstName, $billingLastName);
 
         $respBody = $authRequest->getResponseBody();
         $respBody['InvoiceNumber'] = 0;
@@ -337,7 +350,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $gatewayResponse = $paymentRequest->submit($invoice, $tokenRS);
 
-                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup());
+                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getPayNotes());
 
                 // Record transaction
                 try {
@@ -369,7 +382,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $gatewayResponse = $paymentRequest->submit($invoice, $newTokenRS);
 
-                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup());
+                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getPayNotes());
 
                 // Record transaction
                 try {
@@ -556,7 +569,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         return $dataArray;
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0) {
 
         $uS = Session::getInstance();
 
@@ -565,10 +578,16 @@ class DeluxeGateway extends AbstractPaymentGateway
         $amount = abs($invoice->getAmount());
         $idToken = intval($rtnToken, 10);
 
+        $resvPayment = "";
+
+
         //find payment >= amount that hasn't been used for a refund yet. Payments used for return amount already can't be used again.
         $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) WHEN rp.Is_Refund = 1 THEN 0 ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment
 from payment p join payment_auth pa on p.idPayment = pa.idPayment left join payment rp on p.idPayment = rp.parent_idPayment
-where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by idPayment desc;");
+left join payment_invoice pi on p.idPayment = pi.Payment_Id
+left join invoice i on pi.Invoice_Id = i.idInvoice
+left join reservation_invoice ri on i.idInvoice = ri.Invoice_id and ri.Reservation_Id = $resvId
+where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by ri.Reservation_Id IS NULL asc, idPayment desc;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

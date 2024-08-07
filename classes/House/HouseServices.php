@@ -805,6 +805,9 @@ class HouseServices {
             $invoice = $paymentManager->createInvoice($dbh, $visit, $idPayor, $paymentManager->pmp->getInvoiceNotes());
         }
 
+        //get resvId
+        $resvId = ($visit instanceof Reservation_1 ? $visit->getIdReservation():0);
+
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 
             if ($invoice->getAmountToPay() >= 0) {
@@ -813,7 +816,7 @@ class HouseServices {
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
-                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
+                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate(), $resvId);
             }
         }
 

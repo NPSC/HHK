@@ -83,8 +83,10 @@ class PaymentGatewayResponse extends AbstractGatewayResponse implements GatewayR
     }
     
     public function getAuthorizedAmount() {
-        if (isset($this->result['amountApproved'])) {
+        if (isset($this->result['amountApproved']) && $this->result['amountApproved'] > 0) {
             return $this->result['amountApproved'];
+        }else if(isset($this->result['amountRequested'])){
+            return $this->result['amountRequested'];
         }
 
         return '';

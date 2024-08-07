@@ -24,13 +24,14 @@ class PaymentCreditResponse extends AbstractCreditResponse {
     public $idToken;
 
 
-    function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup) {
+    function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup, $payNotes = "") {
         $this->response = $vcr;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->idToken = $vcr->getToken();
         $this->amount = $vcr->getAuthorizedAmount();
         $this->invoiceNumber = $vcr->getInvoiceNumber();
+        $this->payNotes = $payNotes;
         
         switch($this->getStatus()){
             case AbstractCreditPayments::STATUS_APPROVED:
@@ -61,7 +62,7 @@ class PaymentCreditResponse extends AbstractCreditResponse {
                 $status = AbstractCreditPayments::STATUS_DECLINED;
                 break;
 
-            case '005':
+            case '10': //insufficient funds
                 $status = AbstractCreditPayments::STATUS_DECLINED;
                 break;
 

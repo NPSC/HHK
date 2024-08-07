@@ -63,7 +63,7 @@ class AuthorizeCreditResponse extends AbstractCreditResponse {
                 $status = AbstractCreditPayments::STATUS_DECLINED;
                 break;
 
-            case '005':
+            case '10': //insufficient funds
                 $status = AbstractCreditPayments::STATUS_DECLINED;
                 break;
 

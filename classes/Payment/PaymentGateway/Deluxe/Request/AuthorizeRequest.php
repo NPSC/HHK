@@ -27,7 +27,7 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
      * @return AuthorizeGatewayResponse
      * @throws PaymentException
      */
-    public function submit(float $amount, string $token, string $expDate, $cardType, $maskedAcct, $cardHolderName, string $currrency = "USD"){
+    public function submit(float $amount, string $token, string $expDate, $cardType, $maskedAcct, $cardHolderName, $billingFirstName = "", $billingLastName = "", string $currrency = "USD"){
 
         $uS = Session::getInstance();
 
@@ -44,6 +44,14 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
                 ]
             ]
         ];
+
+        //add customer info
+        if($billingFirstName != "" && $billingLastName != ""){
+            $requestData['paymentMethod']["billingAddress"] = [
+                "firstName"=>$billingFirstName,
+                "lastName"=>$billingLastName
+            ];
+        }
 
         //send request
         try{

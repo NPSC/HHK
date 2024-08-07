@@ -12,8 +12,8 @@ function ckedIn(data) {
     }
 
     if (data.xfer || data.inctx || data.deluxehpf) {
-        paymentRedirect (data, $('#xform'));
-        //return;
+        paymentRedirect(data, $('#xform'));
+        return;
     }
     
     if (data.redirTo) {

@@ -77,6 +77,9 @@ Class PaymentRequest extends AbstractDeluxeRequest {
                 // Do Nothing
             }
 
+            //add request payment amount to responseBody
+            $this->responseBody["amountRequested"] = (float) round($invoice->getAmountToPay(), 2);
+
             $response = new PaymentGatewayResponse($this->responseBody, $tokenRS, MpTranType::Sale, $invoice->getInvoiceNumber(), $uS->username);
             $response->setMerchant($this->merchant);
             return $response;

@@ -32,10 +32,10 @@ Class SubscribeEventRequest extends AbstractDeluxeRequest {
 
         //build request data
         $requestData = [
-            'userName'=>"",//$this->hpfAccessToken,
+            'userName'=>"wireland@nonprofitsoftwarecorp.org",//$this->hpfAccessToken,
             'events'=>[
                 [
-                    'eventUri'=>$uS->resourceURL . self::EVENT_URI,
+                    'eventUri'=>"https://hospitalityhousekeeper.net/demo/test_deluxe" . self::EVENT_URI,
                     'eventType'=>$eventType
                 ]
             ]

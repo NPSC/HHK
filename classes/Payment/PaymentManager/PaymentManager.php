@@ -597,7 +597,7 @@ class PaymentManager {
      * @param mixed $paymentDate
      * @return ReturnResult
      */
-    public function makeHouseReturn(\PDO $dbh, $paymentDate) {
+    public function makeHouseReturn(\PDO $dbh, $paymentDate, $resvId = 0) {
 
         if (! $this->hasInvoice()) {
             $rtnResult = new ReturnResult(0, 0, 0);
@@ -610,7 +610,7 @@ class PaymentManager {
         // Return from the Hosue
         try {
 
-            $rtnResult = PaymentSvcs::returnAmount($dbh, $this->invoice, $this->pmp, $paymentDate);
+            $rtnResult = PaymentSvcs::returnAmount($dbh, $this->invoice, $this->pmp, $paymentDate, $resvId);
 
 
         } catch (\Exception $exPay) {
