@@ -941,7 +941,7 @@ order by pa.Timestamp desc");
 
             //webhooks
             $tbl->addBodyTr(
-                HTMLTable::makeTh('Transaction Webhook', array('class' => 'tdlabel'))
+                HTMLTable::makeTh('Set up Webhooks', array('class' => 'tdlabel'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbTransactionWebhook', 'class'=>'hhk-transactionWebhook', 'data-merchant'=>$title, 'type'=>'checkbox'))),
                 ['class'=>'d-none']);
         }
@@ -1078,11 +1078,20 @@ order by pa.Timestamp desc");
                 try {
                     $gway = new DeluxeGateway($dbh, $ccRs->cc_name->getStoredVal());
                     $webhookRequest = new SubscribeEventRequest($dbh, $gway);
-                    $response = $webhookRequest->submit($webhookRequest::EVENT_TRANSACTION);
+                    $response = $webhookRequest->submit([$webhookRequest::EVENT_TRANSACTION, $webhookRequest::EVENT_MERCHANT_BOARDED]);
 
-                    if ($response["success"] == true) {
-                        $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - " . $response['eventType'] . " webhook: " . $response['message']);
-                        $ccRs->Trans_Url->setNewVal($response['eventSubscriptionId']);
+                    foreach($response['events'] as $event){
+                        $success = ($event["success"]);
+                        if($success == false){
+                            break;
+                        }
+                    }
+
+                    if ($success) {
+                        $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - Webhooks configured successfully");
+                        $ccRs->Trans_Url->setNewVal(json_encode($response["events"]));
+                    }else{
+                        $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - Error: some webhook subscriptions failed");
                     }
                 }catch(PaymentException $e){
                     $msg .= $e->getMessage();

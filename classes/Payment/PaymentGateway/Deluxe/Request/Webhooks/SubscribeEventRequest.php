@@ -26,19 +26,23 @@ Class SubscribeEventRequest extends AbstractDeluxeRequest {
      * Submit a webhook subscribe request
      * @throws PaymentException
      */
-    public function submit(string $eventType){
+    public function submit(array $eventTypes){
 
         $uS = Session::getInstance();
+
+        $events = [];
+        
+        foreach($eventTypes as $eventType){
+            $events[] = [
+                'eventUri' => $uS->resourceURL . self::EVENT_URI,
+                'eventType' => $eventType
+            ];
+        }
 
         //build request data
         $requestData = [
             'userName'=>"wireland@nonprofitsoftwarecorp.org",//$this->hpfAccessToken,
-            'events'=>[
-                [
-                    'eventUri'=>"https://hospitalityhousekeeper.net/demo/test_deluxe" . self::EVENT_URI,
-                    'eventType'=>$eventType
-                ]
-            ]
+            'events'=>$events
         ];
 
         //send request
@@ -53,7 +57,7 @@ Class SubscribeEventRequest extends AbstractDeluxeRequest {
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
             $this->responseCode = (isset($this->responseBody["responseCode"]) ? $this->responseBody["responseCode"] : $resp->getStatusCode());
             
-            if(is_array($this->responseBody["responseMessage"])){
+            if(isset($this->responseBody["responseMessage"]) && is_array($this->responseBody["responseMessage"])){
                 $this->responseMsg = implode(", ", $this->responseBody["responseMessage"]);
             }else if(isset($this->responseBody["responseMessage"])){
                 $this->responseMsg = $this->responseBody["responseMessage"];
