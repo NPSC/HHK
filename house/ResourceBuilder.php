@@ -856,7 +856,7 @@ if (isset($_POST['ldfm'])) {
     $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
 
     // get available doc replacements
-    $replacementStmt = $dbh->query("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = '$formType'");
+    $replacementStmt = $dbh->query("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = '$formType' order by Tag_Title");
     $replacementRows = $replacementStmt->fetchAll();
     $rTbl = new HTMLTable();
 

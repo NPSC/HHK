@@ -69,6 +69,10 @@ class ConfirmationForm extends AbstractTemplateForm {
 
         return array(
             'GuestName' => $guest->getRoleMember()->get_fullName(),
+            'GuestFirstName' => $guest->getRoleMember()->get_firstName(),
+            'GuestLastName' => $guest->getRoleMember()->get_lastName(),
+            'GuestNameSuffix' => $guest->getRoleMember()->get_suffix(),
+            'GuestNamePrefix' => $guest->getRoleMember()->get_prefix(),
             'GuestAddr1' => $guest->getAddrObj()->get_Data()['Address_1'],
             'GuestAddr2' => $guest->getAddrObj()->get_Data()['Address_2'],
             'GuestCity' => $guest->getAddrObj()->get_Data()['City'],
