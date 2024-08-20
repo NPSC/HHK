@@ -209,6 +209,13 @@ class DeluxeGateway extends AbstractPaymentGateway
                 exit;
             }
         } else if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "payment"){
+            //log hosted payment form response
+            try {
+                DeluxeGateway::logGwTx($dbh, "", "&nbsp;", json_encode($post["hpfData"]), 'CaptureCardInfo');
+            }catch(\Exception $e){
+
+            }
+
             //payment with new card
             $pmp = new PaymentManagerPayment(PayType::Charge);
             $pmp->setPayNotes($payNotes);
@@ -286,6 +293,13 @@ class DeluxeGateway extends AbstractPaymentGateway
         $uS = Session::getInstance();
         $billingFirstName = "";
         $billingLastName = "";
+
+        //log hosted payment form response
+        try {
+            DeluxeGateway::logGwTx($dbh, "", "&nbsp;", json_encode($data["hpfData"]), 'CaptureCardInfo');
+        }catch(\Exception $e){
+
+        }
 
         //get billing name
         if (isset($data['id']) && $data['id'] > 0) {

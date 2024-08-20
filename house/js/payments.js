@@ -1492,6 +1492,7 @@ console.log("redirect called");
                     HostedForm.init(options, {
                         onSuccess: (hpfData) => {
                             let submitData = {
+                                hpfData: hpfData,
                                 token: hpfData.data.token,
                                 nameOnCard: hpfData.data.nameOnCard,
                                 expDate: hpfData.data.expDate,

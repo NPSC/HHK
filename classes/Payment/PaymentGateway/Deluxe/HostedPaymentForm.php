@@ -46,6 +46,15 @@ class HostedPaymentForm {
             $dataArray["payAmount"] = $payAmount;
         }
 
+        //log hosted payment form response
+        try {
+            $loggedData = $dataArray;
+            $loggedData["hpfToken"] = "******";
+            DeluxeGateway::logGwTx($dbh, "", "&nbsp;", json_encode($loggedData), 'initHostedPaymentsForm');
+        }catch(\Exception $e){
+
+        }
+
         return $dataArray;
     }
 }
