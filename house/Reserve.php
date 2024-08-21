@@ -15,6 +15,7 @@ use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
+use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
 use HHK\TableLog\HouseLog;
 
@@ -263,7 +264,15 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
+        <?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
         <?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
         ?>
         	<script>

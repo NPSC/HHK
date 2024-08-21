@@ -4,6 +4,7 @@ use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
+use HHK\SysConst\Mode;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
@@ -461,7 +462,15 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-		<?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
+		<?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 
 <script type="text/javascript">
 function displayVids(vids) {

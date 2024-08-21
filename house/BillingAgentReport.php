@@ -6,6 +6,7 @@ use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
 use HHK\House\Report\ReservationReport;
+use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
 
 /**
@@ -84,7 +85,15 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
+        <?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 
         <script type="text/javascript">
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';

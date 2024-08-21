@@ -19,6 +19,7 @@ use HHK\House\Report\ReportFilter;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\ExcelHelper;
 use HHK\House\Report\ReportFieldSet;
+use HHK\SysConst\Mode;
 use HHK\SysConst\VisitStatus;
 use HHK\TableLog\HouseLog;
 
@@ -1977,7 +1978,15 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo VISIT_INTERVAL_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
+        <?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>

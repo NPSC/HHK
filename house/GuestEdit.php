@@ -33,6 +33,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\MemBasis;
 use HHK\SysConst\MemStatus;
+use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\VolMemberType;
@@ -777,7 +778,15 @@ $uS->guestId = $id;
         }
 
         if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
+        <?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

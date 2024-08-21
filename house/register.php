@@ -15,6 +15,7 @@ use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\sec\Labels;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\ItemPriceCode;
+use HHK\SysConst\Mode;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\RoomRateCategories;
 use HHK\US_Holidays;
@@ -386,7 +387,15 @@ if($uS->useOnlineReferral){
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {echo DELUXE_EMBED_JS;} ?>
+        <?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 
         <style>
             .hhk-justify-r {
