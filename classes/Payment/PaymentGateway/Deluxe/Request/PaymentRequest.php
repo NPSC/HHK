@@ -47,13 +47,11 @@ Class PaymentRequest extends AbstractDeluxeRequest {
         ];
 
         //add customer info
-        $billTo = $invoice->getBillTo($this->dbh);
-        if(isset($billTo["Name_First"]) && isset($billTo["Name_Last"])){
-            $requestData['paymentMethod']["billingAddress"] = [
-                "firstName"=>$billTo["Name_First"],
-                "lastName"=>$billTo["Name_Last"]
-            ];
-        }
+        $cardholder = explode(" ", $tokenRS->CardHolderName->getStoredVal(), 2);
+        $requestData['paymentMethod']["billingAddress"] = [
+            "firstName"=>isset($cardholder[0]) ? $cardholder[0]:"",
+            "lastName"=>isset($cardholder[1]) ? $cardholder[1]:""
+        ];
 
         //send request
         try{

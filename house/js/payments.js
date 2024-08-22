@@ -1466,10 +1466,13 @@ console.log("redirect called");
 
 
             var $deluxeDialog = $("#deluxeDialog");
+            $deluxeDialog.html("");
 
             if (data.deluxehpf.cmd == "payment" && data.deluxehpf.payAmount > 0) {
-                $deluxeDialog.html('<div class="row justify-content-center mt-2" id="deluxePayInfo"><div class="col" style="text-align: center;"><label class="mx-1">Payment Amount</label><input class="mx-1" size="10" disabled="" value="$ ' + data.deluxehpf.payAmount.toFixed(2) + '" id="deluxePayAmount" type="text"></div></div>');
+                $deluxeDialog.html('<div class="row justify-content-center mt-3" id="deluxePayInfo"><div class="col" style="text-align: center;"><label class="mx-1">Payment Amount</label><input class="mx-1" size="10" disabled="" value="$ ' + data.deluxehpf.payAmount.toFixed(2) + '" id="deluxePayAmount" type="text"></div></div>');
             }
+
+            $deluxeDialog.append('<div class="row justify-content-center mt-3"><div class="col" style="text-align: center;"><label class="mx-1">Cardholder Name</label><input class="mx-1" id="deluxeCardHolderName" type="text" size="30"></div></div>');
 
             $deluxeDialog.attr("style", "overflow-y: hidden;").dialog({
                 modal: true,
@@ -1500,6 +1503,11 @@ console.log("redirect called");
                                 maskedPan: hpfData.data.maskedPan,
                                 cmd: data.deluxehpf.cmd,
                                 pbp: data.deluxehpf.pbp
+                            }
+
+                            let cardholderName = $deluxeDialog.find("#deluxeCardHolderName").val();
+                            if (submitData.nameOnCard == "CardHolder" && cardholderName.length > 0) {
+                                submitData.nameOnCard = cardholderName;
                             }
 
                             if (data.deluxehpf.idGroup) {
@@ -1562,7 +1570,7 @@ console.log("redirect called");
                                         $deluxeDialog.dialog("close");
                                     }
                                 });
-                        
+
                         },
                         onFailure: (data) => { console.log(JSON.stringify(data)); },
                         onInvalid: (data) => { console.log(JSON.stringify(data)); }

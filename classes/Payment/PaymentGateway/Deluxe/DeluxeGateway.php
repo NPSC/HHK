@@ -302,7 +302,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         }
 
         //get billing name
-        if (isset($data['id']) && $data['id'] > 0) {
+        if (isset($data['id']) && $data['id'] > 0 && $data["nameOnCard"] == "CardHolder") {
 
 			$stmt = $dbh->query("select ifnull(n.Name_First, '') as `Name_First`, ifnull(n.Name_Last, '') as `Name_Last` from name n where n.idName = " . $data['id']);
 
@@ -312,7 +312,11 @@ class DeluxeGateway extends AbstractPaymentGateway
 				$billingFirstName = $rows[0]["Name_First"];
                 $billingLastName = $rows[0]["Name_Last"];
 			}
-		};
+		}else{
+            $cardHolder = explode(" ", trim($data["nameOnCard"]), 2);
+            $billingFirstName = isset($cardHolder[0]) ? $cardHolder[0] : "";
+            $billingLastName = isset($cardHolder[1]) ? $cardHolder[1] : "";
+        };
 
         //authorize $1 to make sure card is real
         $authRequest = new AuthorizeRequest($dbh, $this);
@@ -386,6 +390,11 @@ class DeluxeGateway extends AbstractPaymentGateway
                 $nameOnCard = filter_input(INPUT_POST, "nameOnCard", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $cardType = filter_input(INPUT_POST, "cardType", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $acct = substr(filter_input(INPUT_POST, "maskedPan", FILTER_SANITIZE_FULL_SPECIAL_CHARS), -4);
+
+                if($nameOnCard == "CardHolder"){
+                    $billTo = $invoice->getBillTo($dbh);
+                    $nameOnCard = $billTo["Name_First"] . " " . $billTo["Name_Last"];
+                }
 
                 $newTokenRS = new Guest_TokenRS();
                 $newTokenRS->Token->setStoredVal($token);

@@ -1200,6 +1200,14 @@ input:checked + .hhk-slider:before {
     transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
 
+#deluxeDialog input:focus {
+	color: #212529;
+    background-color: #fff;
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+}
+
 #deluxeDialog input:disabled{
 	background-color: #e9ecef;
     opacity: 1;
