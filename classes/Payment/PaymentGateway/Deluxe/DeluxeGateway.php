@@ -139,8 +139,8 @@ class DeluxeGateway extends AbstractPaymentGateway
         $gwRs = new CC_Hosted_GatewayRS();
         EditRS::loadRow($rows[0], $gwRs);
 
-        $oAuthClientId = $gwRs->Merchant_Id->getStoredVal();
-        unset($rows[0]['Merchant_Id']);
+        $oAuthClientId = $gwRs->CardInfo_Url->getStoredVal();
+        unset($rows[0]['CardInfo_Url']);
         if ($oAuthClientId != '') {
             $rows[0]['oAuthClientId'] = $oAuthClientId;
         }
@@ -922,7 +922,7 @@ order by pa.Timestamp desc");
 
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Oauth Client Id:', array('class' => 'tdlabel'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CardInfo_Url->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
             );
 
             $tbl->addBodyTr(
@@ -1053,7 +1053,7 @@ order by pa.Timestamp desc");
 
             // Oauth Client Id
             if (isset($post[$indx . '_txtuid'])) {
-                $ccRs->Merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                $ccRs->CardInfo_Url->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Oauth token URL
