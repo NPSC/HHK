@@ -139,7 +139,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $gwRs = new CC_Hosted_GatewayRS();
         EditRS::loadRow($rows[0], $gwRs);
 
-        $oAuthClientId = $gwRs->CardInfo_Url->getStoredVal();
+        $oAuthClientId = $gwRs->Page_Header_URL->getStoredVal();
         unset($rows[0]['CardInfo_Url']);
         if ($oAuthClientId != '') {
             $rows[0]['oAuthClientId'] = $oAuthClientId;
@@ -155,6 +155,12 @@ class DeluxeGateway extends AbstractPaymentGateway
         unset($rows[0]['Password']);
         if ($oAuthSecret != '') {
         	$rows[0]['oAuthSecret'] = decryptMessage($oAuthSecret);
+        }
+
+        $merchantId = $gwRs->Merchant_Id->getStoredVal();
+        unset($rows[0]['Merchant_Id']);
+        if ($merchantId != '') {
+            $rows[0]['Merchant_Id'] = $merchantId;
         }
 
         $hpfAccessToken = $gwRs->Credit_Url->getStoredVal();
@@ -922,7 +928,7 @@ order by pa.Timestamp desc");
 
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Oauth Client Id:', array('class' => 'tdlabel'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CardInfo_Url->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Page_Header_URL, array('name' => $indx . '_txtuid', 'size' => '50')))
             );
 
             $tbl->addBodyTr(
@@ -941,7 +947,12 @@ order by pa.Timestamp desc");
             );
 
             $tbl->addBodyTr(
-                HTMLTable::makeTh('Hosted Payment Access Token:', array('class' => 'tdlabel'))
+                HTMLTable::makeTh('Merchant Id:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id, array('name' => $indx . '_txtmerchid', 'size' => '50')))
+            );
+
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Access Token:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Credit_Url->getStoredVal() == '' ? '': self::PW_PLACEHOLDER), array('type'=>'password', 'name' => $indx . '_txtaccesstoken', 'size' => '90')) . ' (Obfuscated)')
             );
 
@@ -1053,7 +1064,7 @@ order by pa.Timestamp desc");
 
             // Oauth Client Id
             if (isset($post[$indx . '_txtuid'])) {
-                $ccRs->CardInfo_Url->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                $ccRs->Page_Header_URL->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Oauth token URL
@@ -1064,6 +1075,11 @@ order by pa.Timestamp desc");
             // Payments API URL
             if (isset($post[$indx . '_txtapiurl'])) {
                 $ccRs->Checkout_Url->setNewVal(filter_var($post[$indx . '_txtapiurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            }
+
+            // Merchant Id
+            if (isset($post[$indx . '_txtmerchid'])) {
+                $ccRs->Merchant_Id->setNewVal(filter_var($post[$indx . '_txtmerchid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Hosted Payment Access Token
