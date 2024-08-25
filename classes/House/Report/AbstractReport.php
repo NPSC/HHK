@@ -5,10 +5,12 @@ namespace HHK\House\Report;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\HTMLInput;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\TableLog\HouseLog;
 
 /**
  * AbtractReport.php
@@ -80,7 +82,7 @@ abstract class AbstractReport {
         }
 
         //register actions
-        $this->actions($request);
+        $this->actions($dbh, $request);
     }
 
     /**
@@ -356,6 +358,8 @@ abstract class AbstractReport {
             $writer->writeSheetRow("Sheet1", $row);
         }
 
+        HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);
+
         $writer->download();
     }
 
@@ -367,7 +371,7 @@ abstract class AbstractReport {
         return HTMLContainer::generateMarkup("div", $emTbl->generateMarkup(), array("id"=>"em" . $this->inputSetReportName . "RptDialog", "class"=>"emRptDialog", "style"=>"display:none;"));
     }
 
-    public function sendEmail(string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
+    public function sendEmail(\PDO $dbh, string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
         $uS = Session::getInstance();
 
         $errors = array();
@@ -401,7 +405,7 @@ abstract class AbstractReport {
         if(count($errors) == 0 && $body !=''){
 
             try{
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -429,7 +433,7 @@ abstract class AbstractReport {
         }
     }
 
-    protected function actions(array $request):void{
+    protected function actions(\PDO $dbh, array $request):void{
         $result = array();
 
         if (isset($this->request['btn' . $this->inputSetReportName . 'Email']) && $this->request['btn' . $this->inputSetReportName . 'Email'] == 'true') {
@@ -445,7 +449,7 @@ abstract class AbstractReport {
                 $subject = filter_input(INPUT_POST, 'txtSubject', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $result = $this->sendEmail($emailAddress, $subject);
+            $result = $this->sendEmail($dbh, $emailAddress, $subject);
         }
 
         if(count($result) > 0){

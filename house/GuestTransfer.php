@@ -756,7 +756,6 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <style>
-            .hhk-rowseparater { border-top: 2px #0074c7 solid !important; }
             #aLoginLink:hover {background-color: #337a8e; }
         </style>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>

@@ -11,6 +11,7 @@ use HHK\SysConst\MemBasis;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\House\Registration;
 use HHK\Member\AbstractMember;
+use HHK\SysConst\PaymentStatusCode;
 
 /**
  * Receipt.php
@@ -142,7 +143,12 @@ class Receipt {
             $disclaimer = HTMLContainer::generateMarkup('div', $uS->PaymentDisclaimer, array('style'=>'font-size:0.7em; text-align:justify'));
         }
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup() . $disclaimer, array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $receiptAttrs = array('style' => 'margin-bottom:10px;clear:both;float:left;');
+        if($invoice->getBalance() > 0){
+            $receiptAttrs['class'] = "ui-state-highlight";
+        }
+
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup() . $disclaimer, $receiptAttrs);
         $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));

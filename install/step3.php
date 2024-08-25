@@ -29,7 +29,6 @@ try {
 }
 
 // define db connection obj
-// define db connection obj
 try {
     $dbh = initPDO(TRUE);
 } catch (RuntimeException $hex) {
@@ -40,15 +39,7 @@ try {
 // get session instance
 $ssn = Session::getInstance();
 
-SysConfig::getCategory($dbh, $ssn, "'f'", WebInit::SYS_CONFIG);
-SysConfig::getCategory($dbh, $ssn, "'r'", webInit::SYS_CONFIG);
-SysConfig::getCategory($dbh, $ssn, "'d'", webInit::SYS_CONFIG);
-SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
-SysConfig::getCategory($dbh, $ssn, "'a'", WebInit::SYS_CONFIG);
-SysConfig::getCategory($dbh, $ssn, "'hf'", webInit::SYS_CONFIG);
-SysConfig::getCategory($dbh, $ssn, "'ha'", webInit::SYS_CONFIG);
-SysConfig::getCategory($dbh, $ssn, "'p'", webInit::SYS_CONFIG);
-SysConfig::getCategory($dbh, $ssn, "'g'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, ["f", "r", "d", "h", "a", "hf", "ha", "p", "g"], WebInit::SYS_CONFIG);
 
 $pageTitle = $ssn->siteName;
 
@@ -113,8 +104,7 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
         	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'IncomeRated', 'false');
         }
 
-        SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'hf'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $ssn, ["h", "hf"], webInit::SYS_CONFIG);
 
         $dbh->exec("delete from `room_rate`");
 

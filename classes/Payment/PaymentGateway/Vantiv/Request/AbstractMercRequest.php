@@ -3,7 +3,8 @@
 namespace HHK\Payment\PaymentGateway\Vantiv\Request;
 
 use HHK\Exception\PaymentException;
-use HHK\Payment\PaymentGateway\Vantiv\Response\AbstractMercResponse;
+use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
+use HHK\Exception\UnexpectedValueException;
 
 /**
  * AbstractMercRequest.php
@@ -61,13 +62,19 @@ abstract class AbstractMercRequest {
     protected $title;
 
     /**
-     *
+     * Summary of submit
      * @param array $gway
-     * @param boolean $trace  True to turn trace on.  This writes to the file system, which may not allow write priv.
-     * @return AbstractMercResponse $xaction
-     * @throws PaymentException
+     * @param mixed $trace
+     * @throws UnexpectedValueException
+     * @throws \HHK\Exception\PaymentException
+     * @return CreditTokenResponse
      */
     public function submit(array $gway, $trace = FALSE) {
+
+        // Check credentials for type and contents
+        if (is_null($gway['Merchant_Id']) || $gway['Merchant_Id'] == '' || is_null($gway['Password']) || $gway['Password'] == '') {
+            throw new UnexpectedValueException('Merchant Id or Password are missing.');
+        }
 
         $this->setMerchantId(trim($gway['Merchant_Id']));
         $this->gateWay = $gway;
@@ -104,6 +111,12 @@ abstract class AbstractMercRequest {
 
 
     // Each child must call it's own soap method.
+    /**
+     * Summary of execute
+     * @param \SoapClient $txClient
+     * @param array $data
+     * @return CreditTokenResponse
+     */
     protected abstract function execute(\SoapClient $txClient, array $data);
 
 
@@ -134,4 +147,3 @@ abstract class AbstractMercRequest {
         return $this;
     }
 }
-?>

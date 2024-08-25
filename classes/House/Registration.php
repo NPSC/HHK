@@ -2,7 +2,7 @@
 
 namespace HHK\House;
 
-use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
+use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus, ItemPriceCode};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
@@ -10,7 +10,6 @@ use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
-use HHK\House\Reservation\Reservation_1;
 
 /**
  * Registration.php
@@ -143,8 +142,7 @@ where
      * @param int $idVisit
      * @return float
      */
-    public static function loadLodgingBalance(\PDO $dbh, $idRegistration, $idVisit = 0)
-    {
+    public static function loadLodgingBalance(\PDO $dbh, $idRegistration, $idVisit = 0) {
         $lodgingBalance = 0.0;
         $where = '';
 
@@ -153,9 +151,9 @@ where
             if ($idg < 1) {
                 return $lodgingBalance;
             }
-            $where = " and i.idGroup = " . $idg;
+            $where = " and i.idGroup = $idg";
         } else {
-            $where = " and i.Order_Number = " . $idVisit;
+            $where = " and i.Order_Number = $idVisit";
         }
 
 
@@ -659,32 +657,34 @@ where
             . HTMLTable::makeTd(HTMLInput::generateMarkup('', $emAttrs))
             );
 
+        if($uS->RoomPriceModel != ItemPriceCode::None){
 
-        // Key Deposit
-        if ($uS->KeyDeposit) {
-            $kdBal = $this->getDepositBalance($dbh);
+            // Key Deposit
+            if ($uS->KeyDeposit) {
+                $kdBal = $this->getDepositBalance($dbh);
 
+                $tbl->addBodyTr(
+                    HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'), array('style'=>'text-align:right;'))
+                    .HTMLTable::makeTd('$' . number_format($kdBal, 2), array('style'=>'text-align:left;')));
+            }
+
+            // Lodging MOA
             $tbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'), array('style'=>'text-align:right;'))
-                .HTMLTable::makeTd('$' . number_format($kdBal, 2), array('style'=>'text-align:left;')));
+                HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'), ['style' => 'text-align:right;'])
+                .HTMLTable::makeTd('$' . number_format(max($this->getLodgingMOA($dbh) - $this->getPrePayments($dbh), 0), 2), ['style' => 'text-align:left;']));
+
+            // Pre-Payments
+            if ($uS->AcceptResvPaymt) {
+                $tbl->addBodyTr(
+                    HTMLTable::makeTh($labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Pre-Payments', ['style' => 'text-align:right;'])
+                    .HTMLTable::makeTd('$' . number_format($this->getPrePayments($dbh), 2), ['style' => 'text-align:left;']));
+            }
+
+            // Donations
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Donations', array('style'=>'text-align:right;'))
+                .HTMLTable::makeTd('$' . number_format($this->getDonations($dbh), 2), array('style'=>'text-align:left;')));
         }
-
-        // Lodging MOA
-        $tbl->addBodyTr(
-            HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'), array('style'=>'text-align:right;'))
-            .HTMLTable::makeTd('$' . number_format($this->getLodgingMOA($dbh), 2), array('style'=>'text-align:left;')));
-
-//         // Pre-Payments
-//         if ($uS->AcceptResvPaymt) {
-//             $tbl->addBodyTr(
-//                 HTMLTable::makeTh($labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Pre-Payments', array('style'=>'text-align:right;'))
-//                 .HTMLTable::makeTd('$' . number_format($this->getPrePayments($dbh), 2), array('style'=>'text-align:left;')));
-//         }
-
-        // Donations
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Donations', array('style'=>'text-align:right;'))
-            .HTMLTable::makeTd('$' . number_format($this->getDonations($dbh), 2), array('style'=>'text-align:left;')));
 
         return $tbl->generateMarkup();
 

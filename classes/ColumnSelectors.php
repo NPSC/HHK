@@ -96,10 +96,13 @@ class ColumnSelectors {
 
         foreach ($this->cols as $c) {
 
-            if (is_array($c[1])) {
+            if (is_array($c[1]) && isset($c["selOptionTitle"])){
+                $attrs = array('value'=>$c[1][0]);
+                $val = $c["selOptionTitle"];
+            }else if (is_array($c[1])) {
                 $attrs = array('value'=>$c[1][0]);
                 $val = $c[0][0];
-            } else {
+            } else{
                 $attrs = array('value'=>$c[1]);
                 $val = $c[0];
             }

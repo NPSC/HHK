@@ -77,7 +77,7 @@ class EmailReportJob extends AbstractJob implements JobInterface{
 
 
             if($report instanceof ReportInterface){
-                $result = $report->sendEmail($emailAddress, $subject, $this->dryRun);
+                $result = $report->sendEmail($this->dbh, $emailAddress, $subject, $this->dryRun);
             }
 
         }else{

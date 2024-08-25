@@ -241,7 +241,7 @@ class Address extends AbstractContactPoint{
         $zipAttr = array(
             'id'=>$idPrefix.'adrzip'.$addrIndex,
             'name'=>$idPrefix.'adr['.$addrIndex.'][zip]',
-            'type'=>'text',
+            'type'=>'search',
             'size'=>'10',
             'class'=>'ckzip hhk-zipsearch ' . $class,
             'title'=>'Enter Postal Code',

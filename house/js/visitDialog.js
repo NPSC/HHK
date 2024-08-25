@@ -276,7 +276,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
         // clear it and append the new contents thoughtfully provided by the server.
         $diagbox.children().remove();
-        $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
+        $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em; width:100%"/>').append($(data.success)));
 
         $diagbox.find('.ckdate').datepicker({
             yearRange: '-07:+01',
@@ -628,6 +628,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             $('#btnAddGuest').button();
             $('#btnAddGuest').click(function () {
                 window.location.assign('CheckingIn.php?vid=' + $(this).data('vid') + '&span=' + $(this).data('span') + '&rid=' + $(this).data('rid') + '&vstatus=' + $(this).data('vstatus'));
+            });
+        }
+
+        if ($(".viewMsgs").length > 0) {
+            $(".viewMsgs").button().smsDialog({
+                visitId: idVisit,
+                spanId: visitSpan
             });
         }
 

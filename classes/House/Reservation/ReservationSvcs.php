@@ -7,6 +7,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\House\Report\ActivityReport;
 use HHK\Member\Role\Guest;
 use HHK\Note\{LinkNote, Note};
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Purchase\FinAssistance;
 use HHK\SysConst\{DefaultSettings, GLTableNames, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
@@ -165,7 +166,7 @@ class ReservationSvcs
             if ($emailAddr != '') {
 
                 try{
-                    $mail = prepareEmail();
+                    $mail = new HHKMailer($dbh);
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
@@ -195,7 +196,18 @@ class ReservationSvcs
                     $mail->send();
 
                     // Make a note in the reservation.
-                    $noteText = (isset($docs[$docCode]['tabTitle']) ? $docs[$docCode]['tabTitle'] . ' ' : '') . 'Confirmation Email sent to ' . $emailAddr .  " with subject: " . $docs[$docCode]["subjectLine"];
+                    $noteText = (isset($docs[$docCode]['tabTitle']) ? $docs[$docCode]['tabTitle'] . ' ' : '') . 'Confirmation Email';
+
+                    try {
+                        $arrive = (new \DateTime($reserv->getArrival()))->format("M d, Y");
+                        $depart = (new \DateTime($reserv->getDeparture()))->format("M d, Y");
+
+                        $noteText .= " for " . $arrive . " to " . $depart;
+                    }catch(\Exception $e){
+
+                    }
+                    
+                    $noteText .= ' sent to ' . $emailAddr .  " with subject: " . $docs[$docCode]["subjectLine"];
                     if($ccEmailAddr != '' && count($ccs) > 0){
                         $noteText .= '; CC\'d to ';
                         foreach ($ccs as $cc){
@@ -240,7 +252,7 @@ class ReservationSvcs
         $return = array("docs"=>[]);
         $docs = array();
 
-        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
+        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc`, d.idDocument as `docId` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
         $docRows = $stmt->fetchAll();
 
         if ($uS->RegForm == 1) {
@@ -284,7 +296,7 @@ class ReservationSvcs
 
                     $docs[] = array(
                         'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d),
-                        'style' => CustomRegisterForm::getStyling(),
+                        'style' => '',
                         'tabIndex' => $d['Code'],
                         'tabTitle' => $d['Description'],
                         'pageTitle' => $regForm->getPageTitle(),
@@ -298,7 +310,7 @@ class ReservationSvcs
 
                 $docs[] = array(
                     'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
-                    'style' => CustomRegisterForm::getStyling(),
+                    'style' => '',
                     'tabIndex' => 'en',
                     'tabTitle' => 'English'
                 );

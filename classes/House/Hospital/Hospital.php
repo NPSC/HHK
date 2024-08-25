@@ -7,7 +7,7 @@ use HHK\Member\Role\{Agent, Doctor};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\sec\Labels;
 use HHK\sec\Session;
-use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose, VolMemberType};
+use HHK\SysConst\{GLTableNames, HospitalType, MemStatus, PhonePurpose, VolMemberType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\HospitalRS;
 use HHK\Exception\RuntimeException;
@@ -59,9 +59,9 @@ class Hospital {
         $assocNoneId = 0;
 
         foreach ($hospList as $h) {
-            if ($h[2] == 'h' && ($h[3] == 'a' || $h[0] == $hstay->getHospitalId())) {
+            if ($h[2] == HospitalType::Hospital && ($h[3] == 'a' || $h[0] == $hstay->getHospitalId())) {
                 $hList[] = array($h[0], $h[1]);
-            } else if ($h[2] == 'a' && ($h[3] == 'a' || $h[0] == $hstay->getAssociationId())) {
+            } else if ($h[2] == HospitalType::Association && ($h[3] == 'a' || $h[0] == $hstay->getAssociationId())) {
 
                 if ($h[1] == '(None)') {
                     $assocNoneId = $h[0];
@@ -686,5 +686,42 @@ $(document).ready(function () {
         return $hstay->save($dbh, $psg, $hstay->getAgentId(), $uS->username, $idResv);
 
     }
+
+    /**
+     * Check if a given hospital/association is attached to reservations or visits
+     * @param \PDO $dbh
+     * @param int $idHosp
+     * @return bool
+     */
+    public static function isHospitalInUse(\PDO $dbh, int $idHosp){
+        $totalRecords = 0;
+
+        $resvQuery = "select count(hs.idHospital_stay) from hospital_stay hs
+        join reservation r on hs.idHospital_stay = r.idHospital_Stay where hs.idHospital = :idH or hs.idAssociation = :idA;";
+
+        $visitQuery = "select count(hs.idHospital_stay) from hospital_stay hs
+        join visit v on hs.idHospital_stay = v.idHospital_Stay where hs.idHospital = :idH or hs.idAssociation = :idA;";
+
+        $resvStmt = $dbh->prepare($resvQuery);
+        $resvStmt->execute([":idH" => $idHosp, ":idA"=>$idHosp]);
+        $resvRows = $resvStmt->fetchAll(\PDO::FETCH_NUM);
+        if(isset($resvRows[0][0])){
+            $totalRecords += $resvRows[0][0];
+        }else{
+            //something's wrong, abort
+            return true;
+        }
+
+        $visitStmt = $dbh->prepare($visitQuery);
+        $visitStmt->execute([":idH" => $idHosp, ":idA"=>$idHosp]);
+        $visitRows = $visitStmt->fetchAll(\PDO::FETCH_NUM);
+        if(isset($visitRows[0][0])){
+            $totalRecords += $visitRows[0][0];
+        }else{
+            //something's wrong, abort
+            return true;
+        }
+
+        return ($totalRecords > 0);
+    }
 }
-?>

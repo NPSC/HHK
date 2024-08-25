@@ -370,3 +370,11 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 #searchSel div label {
     margin-left: 0.25em;
 }
+
+#duplicatesReadme * {
+    padding: revert;
+}
+
+#divaddrTabs button.btnTextGuest {
+	display: none;
+}

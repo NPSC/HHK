@@ -1160,11 +1160,11 @@ where r.idRegistration =" . $idReg);
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Password', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '80')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtpwd', 'size' => '80')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('SSO Password', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name' => $indx . '_txtsk', 'size' => '80')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->security_Key->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtsk', 'size' => '80')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('SSO Alias', array('class' => 'tdlabel'))
@@ -1259,7 +1259,7 @@ where r.idRegistration =" . $idReg);
 
                 $pw = filter_var($post[$indx . '_txtsk'], FILTER_UNSAFE_RAW);
 
-                if ($pw != '' && $ccRs->security_Key->getStoredVal() != $pw) {
+                if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
                     $ccRs->security_Key->setNewVal(encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->security_Key->setNewVal('');
@@ -1269,7 +1269,7 @@ where r.idRegistration =" . $idReg);
 
                 $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
-                if ($pw != '' && $ccRs->password->getStoredVal() != $pw) {
+                if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
                     $ccRs->password->setNewVal(encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->password->setNewVal('');

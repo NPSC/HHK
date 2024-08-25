@@ -22,11 +22,20 @@ define('CONF_PATH', P_ROOT . 'conf' . DS);
 define('ciCFG_FILE', 'site.cfg');
 date_default_timezone_set('America/Chicago');
 
-require ('vendor/autoload.php');
+if (file_exists('vendor/autoload.php')) {
+    require('vendor/autoload.php');
+} else {
+    exit("Unable to laod dependancies, be sure to run 'composer install'");
+}
+
 require ('functions' . DS . 'commonFunc.php');
 
-$dbh = Login::initHhkSession(CONF_PATH, ciCFG_FILE);
-$uS = Session::getInstance();
+try {
+    $dbh = Login::initHhkSession(CONF_PATH, ciCFG_FILE);
+    $uS = Session::getInstance();
+}catch (\Exception $e){
+    exit($e->getMessage());
+}
 
 try {
     $page = new ScriptAuthClass($dbh);

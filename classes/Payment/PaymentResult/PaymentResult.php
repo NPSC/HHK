@@ -4,6 +4,7 @@ namespace HHK\Payment\PaymentResult;
 
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Receipt;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
@@ -141,7 +142,7 @@ class PaymentResult {
         }
 
 
-        $query = "SELECT ne.Email, n.Name_Full FROM
+        $query = "SELECT IFNULL(ne.Email, '') as 'Email', n.Name_Full FROM
     `registration` r,
     `name` n
         LEFT JOIN
@@ -171,7 +172,7 @@ WHERE r.Email_Receipt = 1 and
 
 
         try{
-            $mail = prepareEmail();
+            $mail = new HHKMailer($dbh);
 
             $mail->From = $fromAddr;
             $mail->addReplyTo($uS->ReplyTo);
@@ -303,5 +304,3 @@ WHERE r.Email_Receipt = 1 and
     }
 
 }
-
-?>

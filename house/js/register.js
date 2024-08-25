@@ -694,7 +694,15 @@ $(document).ready(function () {
 
 		if(showCurrentGuestPhotos){
 			cgCols.unshift({data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px"});
-		}
+    }
+    
+    $("#btnTextCurGuests").button().smsDialog({ "campaign": "checked_in"});
+
+    $("#btnTextConfResvGuests").button().smsDialog({ "campaign": "confirmed_reservation" });
+
+    $("#btnTextUnConfResvGuests").button().smsDialog({ "campaign": "unconfirmed_reservation" });
+
+    $("#btnTextWaitlistGuests").button().smsDialog({ "campaign": "waitlist" });
 
     // Reservations
     let rvCols = [
@@ -1240,22 +1248,23 @@ $(document).ready(function () {
         },
 
         eventContent: function (info) {
+            let titleEl = document.createElement('span');
+            titleEl.appendChild(document.createTextNode(info.event.title));
+            titleEl.classList.add("ml-1");
 
 			if (info.event.extendedProps.idReservation !== undefined) {
-
-				let titleEl = document.createElement('span');
-				titleEl.appendChild(document.createTextNode(info.event.title));
 
 				let chooserEl = document.createElement('Span');
 				chooserEl.classList.add("hhk-schrm", "ui-icon", "ui-icon-arrowthick-2-n-s");
 				chooserEl.style.backgroundColor = '#fff';
 				chooserEl.style.border = '0px solid black';
-				chooserEl.style.marginRight = '.3em';
 				chooserEl.id = info.event.extendedProps.idResc
 
 				let arrayOfNodes = [chooserEl, titleEl];
 				return { domNodes: arrayOfNodes }
-			}
+            } else {
+                return { domNodes: [titleEl] };
+            }
 		},
 
         eventDidMount: function (info) {
@@ -1263,6 +1272,11 @@ $(document).ready(function () {
             if (hindx === undefined || hindx === 0 || info.event.extendedProps.idHosp === undefined || info.event.extendedProps.idAssoc == hindx || info.event.extendedProps.idHosp == hindx) {
 
                 let resource = calendar.getResourceById("id-" + info.event.extendedProps.idResc);
+
+                //set arrow color
+                if (!info.textColor || (typeof info.textColor === 'string' && (info.textColor.toLowerCase() == "white" || info.textColor.toLowerCase() == "#ffffff"))) {
+                    info.el.classList.add("hhk-event-light");
+                }
 
                 // Reservations
                 if (info.event.extendedProps.idReservation !== undefined) {
@@ -1619,6 +1633,11 @@ $(document).ready(function () {
            			$("#curres .gmenu").not(this).menu("collapseAll", null, true);
            		}
            });
+
+           $("#curres .btnShowVisitMsgs").off('click');
+            $("#curres .btnShowVisitMsgs").each(function () {
+                $(this).smsDialog({ "visitId": $(this).data('vid'), "spanId": $(this).data("span") });
+            });
        },
        columns: cgCols,
        "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY")),
@@ -1639,6 +1658,11 @@ $(document).ready(function () {
            			$("#reservs .gmenu").not(this).menu("collapseAll", null, true);
            		}
            });
+
+           $("#reservs .btnShowResvMsgs").off('click');
+           $("#reservs .btnShowResvMsgs").each(function () {
+            $(this).smsDialog({ "resvId": $(this).data('rid') });
+        });
        },
        columns: rvCols,
        "buttons": getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
@@ -1657,7 +1681,12 @@ $(document).ready(function () {
            			focus:function(e, ui){
            				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
            			}
-           		});
+                });
+               
+               $("#unreserv .btnShowResvMsgs").off('click');
+                $("#unreserv .btnShowResvMsgs").each(function () {
+                    $(this).smsDialog({ "resvId": $(this).data('rid') });
+                });
            },
            columns: rvCols,
            "buttons": getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
@@ -1677,6 +1706,11 @@ $(document).ready(function () {
            		focus:function(e, ui){
            			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);
            		}
+            });
+           
+           $("#waitlist .btnShowResvMsgs").off('click');
+           $("#waitlist .btnShowResvMsgs").each(function () {
+               $(this).smsDialog({ "resvId": $(this).data('rid') });
            });
        },
        columns: wlCols,

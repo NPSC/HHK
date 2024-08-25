@@ -1,5 +1,5 @@
 <?php
-namespace HHK\CrmExport\OAuth;
+namespace HHK\OAuth;
 
 use GuzzleHttp\{Client, RequestOptions};
 use HHK\Exception\RuntimeException;

@@ -499,7 +499,7 @@
                     mywindow.document.write('<html><head><title>' + document.title + '</title>');
                     mywindow.document.write('<link href="css/house.css" rel="stylesheet" type="text/css">');
                     mywindow.document.write('<link href="css/incidentReports.css" rel="stylesheet" type="text/css">');
-                    mywindow.document.write('</head><body class="PrintArea hhk-visitdialog hhk-tdbox">');
+                    mywindow.document.write('</head><body id="incidentReport" class="PrintArea hhk-visitdialog hhk-tdbox">');
                     mywindow.document.write('<h2>' + document.title + ' - Incident Report</h2>');
                     mywindow.document.write(body);
                     mywindow.document.write('</body></html>');

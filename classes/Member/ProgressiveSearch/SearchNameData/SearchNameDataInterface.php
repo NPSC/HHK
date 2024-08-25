@@ -98,6 +98,11 @@ interface SearchNameDataInterface
      */
     public function getPhone();
 
+    /**
+     * @return string
+     */
+    public function getSMS_Status();
+
     public function getAddressStreet();
 
     /**

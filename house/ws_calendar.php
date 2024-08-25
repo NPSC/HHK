@@ -1,8 +1,8 @@
 <?php
 use HHK\Exception\InvalidArgumentException;
-use HHK\SysConst\WebPageCode;
-use HHK\sec\WebInit;
 use HHK\House\GuestRegister;
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
 
 /**
  * ws_calendar.php
@@ -87,13 +87,13 @@ try {
             break;
 
         default:
-            $events = array("error" => "Bad Command: \"" . $c . "\"");
+            $events = ["error" => "Bad Command: \"" . $c . "\""];
     }
 
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 } catch (Exception $ex) {
-    $events = array("error" => "Web Server Error: " . $ex->getMessage());
+    $events = ["error" => "Web Server Error: " . $ex->getMessage()];
 }
 
 
@@ -105,7 +105,7 @@ if (is_array($events)) {
     if ($json !== FALSE) {
         echo ($json);
     } else {
-        $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+        $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);
     }
 
@@ -114,4 +114,3 @@ if (is_array($events)) {
 }
 
 exit();
-?>

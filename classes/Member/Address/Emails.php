@@ -3,7 +3,10 @@
 namespace HHK\Member\Address;
 
 use HHK\AuditLog\NameLog;
+use HHK\Exception\RuntimeException;
+use HHK\Exception\ValidationException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\SysConst\EmailPurpose;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameEmailRS;
 
@@ -121,7 +124,7 @@ class Emails extends AbstractContactPoint {
 
         $adrRS = $this->get_recordSet($code);
 
-        if (is_null($adrRS) || $adrRS->Email->getStoredVal() == '') {
+        if (is_null($adrRS) || ($code !== EmailPurpose::NoEmail && $adrRS->Email->getStoredVal() == '')) {
             return FALSE;
         } else {
             return TRUE;
@@ -141,7 +144,7 @@ class Emails extends AbstractContactPoint {
 
         foreach ($this->codes as $p) {
 
-            $trContents = HTMLTable::makeTd($this->createEmailMarkup($p, $inputClass, $idPrefix));
+            $trContents = $this->createEmailMarkup($p, $inputClass, $idPrefix);
             // Wrapup this TR
             $table->addBodyTr($trContents);
 
@@ -165,11 +168,7 @@ class Emails extends AbstractContactPoint {
      */
     public function createEmailMarkup($p, $inputClass = '', $idPrefix = "", $showPrefCheckbox = TRUE) {
 
-        $table = new HTMLTable();
-
         // Preferred Radio button
-        //$tdContents = HTMLContainer::generateMarkup('label', $p[1], array('for'=>$idPrefix.'em'.$p[0]));
-
         $prefAttr = array();
         $prefAttr['id'] = $idPrefix.'em' . $p[0];
         $prefAttr['name'] = $idPrefix.'rbEmPref';
@@ -188,30 +187,30 @@ class Emails extends AbstractContactPoint {
             $prefAttr['style'] = 'display:none;';
             $em = ' Email:';
         }
-        //$tdContents .= HTMLInput::generateMarkup($p[0], $prefAttr);
         // The row
         $trContents = HTMLContainer::generateMarkup('td',
                 HTMLContainer::generateMarkup('label', $p[1].$em, array('for'=>$idPrefix.'em'.$p[0]))
                 .' ' .HTMLInput::generateMarkup($p[0], $prefAttr)
-                , array('class'=>$p[2]));
-        // Wrapup this TR
-        $table->addBodyTr($trContents);
+                , array('class'=>"tdlabel " .$p[2]));
 
+        if ($p[0] == EmailPurpose::NoEmail) {
+            $tdContents = '';
+        } else {
+            // email address
+            $attr = array();
+            $attr['id'] = $idPrefix . 'txtEmail' . $p[0];
+            $attr['name'] = $idPrefix . 'txtEmail[' . $p[0] . ']';
+            $attr['title'] = 'Enter an email address';
+            $attr['class'] = 'hhk-emailInput ' . $inputClass;
+            $attr['size'] = '26';
 
-        // email address
-        $attr = array();
-        $attr['id'] = $idPrefix.'txtEmail' . $p[0];
-        $attr['name'] = $idPrefix.'txtEmail[' . $p[0] . ']';
-        $attr['title'] = 'Enter an email address';
-        $attr['class'] = 'hhk-emailInput ' . $inputClass;
-        $attr['size'] = '26';
+            $tdContents = HTMLInput::generateMarkup($this->rSs[$p[0]]->Email->getStoredVal(), $attr);
+        }
 
-        //$tdContents = HTMLInput::generateMarkup($this->rSs[$p[0]]->Email->getStoredVal(), $attr);
-
-        // Wrapup the this tr
-        $table->addBodyTr(HTMLContainer::generateMarkup('td', HTMLInput::generateMarkup($this->rSs[$p[0]]->Email->getStoredVal(), $attr), array('class'=>$p[2])));
-
-        return $table->generateMarkup();
+        //add input td
+        $trContents .= HTMLContainer::generateMarkup('td', $tdContents, array('class' => $p[2]));
+        
+        return $trContents;
     }
 
 
@@ -227,6 +226,7 @@ class Emails extends AbstractContactPoint {
 
         $message = '';
         $id = $this->name->get_idName();
+        $prefEmail = "";
 
         if ($id < 1) {
             return "Bad member Id.  ";
@@ -238,8 +238,12 @@ class Emails extends AbstractContactPoint {
 
         foreach ($this->codes as $purpose) {
 
+            $postedEmail = "";
+
             // Is the element even present?
-            if (isset($post[$idPrefix.'txtEmail'][$purpose[0]])) {
+            if (isset($post[$idPrefix . 'txtEmail'][$purpose[0]])) {
+                $postedEmail = trim($post[$idPrefix . 'txtEmail'][$purpose[0]]);
+
                 // Set some convenience vars.
                 $a = $this->rSs[$purpose[0]];
 
@@ -247,7 +251,7 @@ class Emails extends AbstractContactPoint {
                 if ($a->idName->getStoredVal() > 0) {
                     // Email Address exists in the DB
 
-                    if ($post[$idPrefix.'txtEmail'][$purpose[0]] == '') {
+                    if ($postedEmail == '') {
 
                         // Delete the Email Address record
                         if (EditRS::delete($dbh, $a, array($a->idName, $a->Purpose)) === FALSE) {
@@ -272,7 +276,7 @@ class Emails extends AbstractContactPoint {
                 } else {
                     // Email Address does not exist inthe DB.
                     // Did the user fill in this Email Address panel?
-                    if ($post[$idPrefix.'txtEmail'][$purpose[0]] != '') {
+                    if ($postedEmail != '') {
 
                         // Insert a new Email Address
                         $this->loadPostData($a, $post, $purpose[0], $user, $idPrefix);
@@ -291,6 +295,7 @@ class Emails extends AbstractContactPoint {
                 EditRS::updateStoredVals($a);
             }
         }
+
         $message .= $this->name->verifyPreferredAddress($dbh, $this, $user);
 
         return $message;
@@ -307,8 +312,21 @@ class Emails extends AbstractContactPoint {
      * @return void
      */
     private function loadPostData(NameEmailRS $a, array $p, $typeCode, $uname, $idPrefix = "") {
+        //if ($typeCode !== EmailPurpose::NoEmail) {
+            //$email = filter_var(filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL), FILTER_VALIDATE_EMAIL);
+            //if($email == false){
+            //    throw new ValidationException("Email field must be a valid Email address");
+            //}
+        //}else{
+        //    $email = "";
+        //}
 
-        $a->Email->setNewVal(strtolower(trim(filter_var($p[$idPrefix.'txtEmail'][$typeCode], FILTER_SANITIZE_EMAIL))));
+        $email = "";
+        if (isset($p[$idPrefix . 'txtEmail'][$typeCode])) {
+            $email = filter_var($p[$idPrefix . 'txtEmail'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        $a->Email->setNewVal(strtolower(trim($email)));
         $a->Status->setNewVal("a");
         $a->Updated_By->setNewVal($uname);
         $a->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -316,4 +334,3 @@ class Emails extends AbstractContactPoint {
     }
 
 }
-?>

@@ -1,5 +1,6 @@
 <?php
 
+use HHK\sec\Login;
 use HHK\Update\SiteConfig;
 use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Session;
@@ -32,9 +33,15 @@ use HHK\SysConst\CodeVersion;
 
 define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS);
+define('CONF_PATH',  P_ROOT . 'conf' . DS);
 define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
 
-require('vendor/autoload.php');
+if (file_exists('vendor/autoload.php')) {
+    require('vendor/autoload.php');
+} else {
+    exit("Unable to laod dependancies, be sure to run 'composer install'");
+}
+
 require ('functions' . DS . 'commonFunc.php');
 
 function testdb($ssn) {
@@ -63,20 +70,17 @@ function testdb($ssn) {
 }
 
 // Get the site configuration object
-$config = new Config_Lite(ciCFG_FILE);
+$config = parse_ini_file(ciCFG_FILE, true);
 
 // get session instance
 $ssn = Session::getInstance();
-$secureComp = new SecurityComponent(TRUE);
+$secureComp = new SecurityComponent();
 
-try {
-
-    $dbConfig = $config->getSection('db');
-
-} catch (Exception $e) {
-
+if(isset($config['db'])){
+    $dbConfig = $config['db'];
+}else{
     $ssn->destroy();
-    exit("Database configuration section (db) is missing: " . $e->getMessage());
+    exit("Database configuration section (db) is missing");
 }
 
 
@@ -124,13 +128,11 @@ if (isset($_GET['r'])) {
     $result = filter_var($_GET['r'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
-$pageTitle = $ssn->siteName;
+$pageTitle = ($ssn->siteName ? $ssn->siteName : "Hospitality Housekeeper");
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 $copyYear = date('Y');
 
-
-$tbl = SiteConfig::createCliteMarkup($config, new Config_Lite('conf' . DS . 'siteTitles.cfg'), 'db');
-
+$tbl = SiteConfig::createCliteMarkup($dbConfig);
 ?>
 <!DOCTYPE html>
 <html>
@@ -138,32 +140,30 @@ $tbl = SiteConfig::createCliteMarkup($config, new Config_Lite('conf' . DS . 'sit
         <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <link rel="icon" type="image/png" href="images/hhkIcon.png" />
-        <link href='root.css' rel='stylesheet' type='text/css' />
+        <link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />
+        <link href='css/root.css' rel='stylesheet' type='text/css' />
     </head>
     <body>
         <div id="page">
-            <div class="topNavigation"></div>
-            <div>
-                <h2 class="hhk-title">
+            <div class='pageHeader'>
+                <h2 class="px-3 py-2">
                     <?php echo $pageTitle; ?>
                 </h2>
-            </div><div class='pageSpacer'></div>
-            <div style="float:right;font-size: .6em;margin-right:2px;"><?php echo $build; ?></div>
-            <div id="content" style="clear:both; margin-left: 100px;margin-top:10px;">
+            </div>
+            <div class="build"><?php echo $build; ?></div>
+            <div id="content" class="container mt-5">
 
-                <div style="margin: auto; float:left;">
+                <div class="row justify-content-md-center mb-3">
 
-                <form method="post" action="reset.php" name="form1" id="form1">
-                    <h2>Set up database connection credentials</h2>
-                    <?php echo $tbl->generateMarkup(array('class'=>'hhk-tdbox')); ?>
+                    <form method="post" action="reset.php" name="form1" id="form1">
+                        <h2>Set up database connection credentials</h2>
+                        <?php echo $tbl->generateMarkup(array('class'=>'hhk-tdbox')); ?>
 
-                    <input type="submit" name="btnSave" id="btnSave" value="Save" style="margin-left:700px;margin-top:20px;"/>
-                </form>
-                <p style="color:red;margin:10px;"><?php echo $result; ?></p>
-                <div style="margin-top:20px;"><a href ="http://nonprofitsoftwarecorp.org" class="nplogo" ></a></div>
-                <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software</div>
-
+                        <input type="submit" name="btnSave" id="btnSave" value="Save" style="margin-left:700px;margin-top:20px;"/>
+                    </form>
+                    <p style="color:red;margin:10px;"><?php echo $result; ?></p>
                 </div>
+                <?php echo Login::getFooterMarkup(); ?>
             </div>
         </div>
     </body>

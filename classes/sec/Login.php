@@ -3,6 +3,7 @@ namespace HHK\sec;
 
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Exception\AuthException;
 use HHK\Exception\CsrfException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
@@ -84,13 +85,8 @@ class Login {
         	$ssn->rolecode = WebRole::Guest;
         }
 
-        SysConfig::getCategory($dbh, $ssn, "'a'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'f'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'es'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'ga'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'pr'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'ha'", WebInit::SYS_CONFIG);
-
+        SysConfig::getCategory($dbh, $ssn, ["a", "f", "es", "ga", "pr", "ha", "sms"], WebInit::SYS_CONFIG);
+        
         return $dbh;
     }
 
@@ -190,11 +186,14 @@ class Login {
                     $pge = $u->getDefaultPage();
                 }
 
-                if (SecurityComponent::is_Authorized($pge)) {
-                    $events['page'] = $pge;
-                } else {
-
-                    $this->validateMsg .= "Unauthorized for page: " . $pge;
+                try {
+                    if (SecurityComponent::is_Authorized($pge, true)) {
+                        $events['page'] = $pge;
+                    } else {
+                        $this->validateMsg .= "Unauthorized for page: " . $pge;
+                    }
+                }catch(AuthException $e){
+                    $this->validateMsg .= $e->getMessage();
                 }
             }
 
@@ -448,4 +447,3 @@ class Login {
 
 
 }
-?>

@@ -24,7 +24,7 @@ class SysConfig {
      *
      * @param \PDO $dbh
      * @param Session $uS
-     * @param string $category
+     * @param string|array $category
      * @param string $tableName
      * @param bool $returnArray
      * @throws RuntimeException
@@ -37,8 +37,23 @@ class SysConfig {
             throw new RuntimeException('System Configuration database table name or category not specified.  ');
         }
 
-        $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        if(is_array($category)){
+            foreach($category as $key=>$cat){
+                $category[$key] = "'" . $cat . "'";
+            }
+            $category = implode(",", $category);
+        }else{
+            $category = "'" . $category . "'";
+        }
+
+        try {
+            $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\PDOException $e){
+            if($e->getCode() === "42S02"){ //table doesn't exist
+                throw new RuntimeException("Error: " . $e->errorInfo[2] . ": It looks like HHK isn't installed properly. Try running the installer.");
+            }
+        }
 
         foreach ($rows as $r) {
 
@@ -107,9 +122,7 @@ class SysConfig {
 
         if (count($rows) == 1) {
 
-            $keyrow = $rows[0];
-            //$keyrow['Value'] = self::getTypedVal($rows[0]['Type'], $rows[0]['Value']);
-            return $keyrow;
+            return $rows[0];
 
         }else{
             throw new RuntimeException('System Configuration key not found: ' . $key);
@@ -237,4 +250,3 @@ class SysConfig {
         return $val;
     }
 }
-?>

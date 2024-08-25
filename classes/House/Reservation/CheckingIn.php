@@ -12,6 +12,7 @@ use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\HouseServices;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Payment\PaymentResult\PaymentResult;
@@ -140,12 +141,18 @@ FROM reservation r
         // Staying resv - add guests
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
             $rData->setInsistCkinDemog($uS->InsistCkinDemog);
+            $rData->setInsistCkinPhone($uS->InsistCkinPhone);
+            $rData->setInsistCkinEmail($uS->InsistCkinEmail);
+            $rData->setInsistCkinAddress($uS->InsistCkinAddress);
             return new StayingReservation($rData, $rRs, new FamilyAddGuest($dbh, $rData, TRUE));
         }
 
         // Otherwise we can check in.
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal(), $reservStatuses)) {
             $rData->setInsistCkinDemog($uS->InsistCkinDemog);
+            $rData->setInsistCkinPhone($uS->InsistCkinPhone);
+            $rData->setInsistCkinEmail($uS->InsistCkinEmail);
+            $rData->setInsistCkinAddress($uS->InsistCkinAddress);
             return new CheckingIn($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
 
@@ -512,7 +519,7 @@ FROM reservation r
 
             try {
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
@@ -619,4 +626,3 @@ FROM reservation r
     }
 
 }
-?>

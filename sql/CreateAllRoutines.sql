@@ -411,7 +411,7 @@ BEGIN
 	select count(*) into @numMembers from tids;
 
 	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd join tids n on nd.idName = n.idName);
-    delete na from volunteer_hours na join tids n on na.idName = n.idName;
+    -- delete na from volunteer_hours na join tids n on na.idName = n.idName;
 	update donations d join tids n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0;
 	update donations d join tids n on d.Assoc_Id = n.idName set d.Assoc_Id = 0;
 	delete r from relationship r join tids n on (r.idName = n.idName or r.Target_Id = n.idName);

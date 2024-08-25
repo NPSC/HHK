@@ -2,9 +2,11 @@
 
 namespace HHK\Member;
 
+use HHK\Checklist;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Member\Relation\{Children, Company, Parents, Partner};
 use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, MemStatus, RelLinkType};
+use HHK\SysConst\ChecklistType;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{Name_InsuranceRS, Name_LanguageRS};
 use HHK\sec\Session;
@@ -307,9 +309,9 @@ class IndivMember extends AbstractMember {
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Birth Date:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup(($this->get_birthDate() == '' ? '' : date('M j, Y', strtotime($this->get_birthDate()))), array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate'))
-                , array('style'=>'display:table-cell;'))
-                );
+                        HTMLInput::generateMarkup(($this->get_birthDate() == '' ? '' : date('M j, Y', strtotime($this->get_birthDate()))), ['name' => $idPrefix . 'txtBirthDate', 'class' => 'ckbdate'])
+                , ['style' => 'display:table-cell;'])
+            );
 
         }
 
@@ -1150,4 +1152,3 @@ ORDER BY `List_Order`");
     }
 
 }
-?>

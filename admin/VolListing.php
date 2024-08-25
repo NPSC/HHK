@@ -1,6 +1,6 @@
 <?php
 
-use HHK\sec\{Session, UserClass, WebInit};
+use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
 
 /**
  * VolListing.php
@@ -84,30 +84,32 @@ if (count($rows) > 0) {
     // peruse the rows
     foreach ($clnRows as $rw) {
 
-        $markup .= "<tr class='trClass" . $rw['Id'] . "' >";
-        // peruse the fields in each row
-        foreach ($rw as $k => $r) {
+        if ($rw["Id"] > 0 || SecurityComponent::is_TheAdmin()) { //hide Admin user unless logged in as Admin
 
+            $markup .= "<tr class='trClass" . $rw['Id'] . "' >";
+            // peruse the fields in each row
+            foreach ($rw as $k => $r) {
 
-            if ($k == 'Id') {
-                
-                if($uS->rolecode == '10'){
-                    $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
-                }
-                
-                if ($r < 1) {
-                    $markup .= "<td>" . $r . "</td>";
+                if ($k == 'Id') {
+
+                    if ($uS->rolecode == '10') {
+                        $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
+                    }
+
+                    if ($r < 1) {
+                        $markup .= "<td>" . $r . "</td>";
+                    } else {
+                        $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
+                    }
+
+                } else if ($k == 'Last Login' || $k == 'Password Changed') {
+                    $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
                 } else {
-                    $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
+                    $markup .= "<td>" . $r . "</td>";
                 }
-                
-            } else if ($k == 'Last Login' || $k == 'Password Changed') {
-                $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
-            } else {
-                $markup .= "<td>" . $r . "</td>";
             }
+            $markup .= "</tr>";
         }
-        $markup .= "</tr>";
     }
     $markup .= "</tbody>";
 } else {

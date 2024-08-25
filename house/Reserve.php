@@ -14,6 +14,7 @@ use HHK\Payment\PaymentSvcs;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
 use HHK\SysConst\RoomRateCategories;
+use HHK\TableLog\HouseLog;
 
 /**
  * Reserve.php
@@ -66,6 +67,16 @@ try {
         }
     }
 
+    //make receipt copy
+    if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+        $receiptMarkup = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+            .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+            ,
+            ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+    }
+
+
 
 } catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
@@ -94,6 +105,8 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
 
     try {
         $confirmForm = new ConfirmationForm($dbh, $docId);
+
+        HouseLog::logDownload($dbh, "Confirmation Form", "Word", "Confirmation Form Word Doc for reservation $idReserv downloaded", $uS->username);
 
         $formNotes = $confirmForm->createNotes($notes, FALSE, '');
         $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($dbh, $resv, $guest, $amt, $formNotes));
@@ -218,12 +231,8 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
-
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo FAVICON; ?>
-<!--        Fix the ugly checkboxes-->
-        <style>
-            .ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
-        </style>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -241,12 +250,14 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
         ?>
@@ -317,7 +328,7 @@ $resvObjEncoded = json_encode($resvAr);
 
         </div>
         <form name="xform" id="xform" method="post"></form>
-        <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
+        <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size: 0.9em;">
             <form id="frmConfirm" action="Reserve.php" method="post"></form>
         </div>
         <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate"/>

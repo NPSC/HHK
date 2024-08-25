@@ -51,10 +51,10 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr, selCallback, csrfToken) 
     });
 }
 
-function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL, $basisCtrl) {
-    "use strict";
+function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL, $basisCtrl, shoBlank = false) {
+    
     var cache = {};
-    var _source = function (request, response, cache, shoNew, inputParms, $basisCtrl, minChars, searchURL) {
+    var _source = function (request, response, cache, shoNew, inputParms, $basisCtrl, minChars, searchURL, shoBlank) {
     
         var term = request.term.substr(0,minChars);
         if ( term in cache ) {
@@ -104,7 +104,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
             inputParms.letters = term //request.term;
 
             // Get basis from active control
-            if ($basisCtrl !== undefined && $basisCtrl.length > 0) {
+            if ($basisCtrl !== undefined && $basisCtrl !== null && $basisCtrl.length > 0) {
                 inputParms.basis = $basisCtrl.val();
             }
 
@@ -115,7 +115,10 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
                     window.open(data.gotopage);
                 }
 
-                cache[ term ] = data;
+                cache[term] = data;
+                if (shoBlank) {
+                    data.unshift({ 'id': 0, 'value': "Unassigned"});
+                }
                 response( data );
             });
         }
@@ -131,7 +134,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
     
     txtCtrl.autocomplete({
         source: function(request, response) {
-            _source(request, response, cache, shoNew, inputParms, $basisCtrl, minChars, searchURL);
+            _source(request, response, cache, shoNew, inputParms, $basisCtrl, minChars, searchURL, shoBlank);
         },
         position: { my: "left top", at: "left bottom", collision: "flip" },
         minLength: minChars, 

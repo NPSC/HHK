@@ -29,7 +29,7 @@ if (is_null($transfer = AbstractExportManager::factory($dbh, $uS->ContactManager
     throw new UnexpectedValueException('A Contact Manager is not defined');
 }
 
-$events = array();
+$events = [];
 
 if (filter_has_var(INPUT_GET,"cmd")) {
     $c = filter_input(INPUT_GET, "cmd", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -45,12 +45,12 @@ try {
 
         case 'upsert':
 
-            $rags = array(
-                'ids' => array(
+            $rags = [
+                'ids' => [
                     'filter' => FILTER_SANITIZE_NUMBER_INT,
                     'flags' => FILTER_FORCE_ARRAY,
-                ),
-            );
+                ],
+            ];
             $post = filter_input_array(INPUT_POST, $rags);
 
             if (isset($post['ids']) && count($post['ids']) > 0) {
@@ -59,23 +59,23 @@ try {
                     $events = $transfer->upsertMembers($dbh, $post['ids']);
 
                 } catch (Exception $ex) {
-                    $events = array("error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex));
+                    $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
                 }
 
             } else {
-                $events = array("error" => "There are no ids to pass.");
+                $events = ["error" => "There are no ids to pass."];
             }
 
             break;
 
         case 'members':
 
-            $rags = array(
-                'ids' => array(
-                            'filter' => FILTER_SANITIZE_NUMBER_INT,
-                            'flags'  => FILTER_FORCE_ARRAY,
-                ),
-            );
+            $rags = [
+                'ids' => [
+                    'filter' => FILTER_SANITIZE_NUMBER_INT,
+                    'flags' => FILTER_FORCE_ARRAY,
+                ],
+            ];
             $post = filter_input_array(INPUT_POST, $rags);
 
             if (isset($post['ids']) && count($post['ids']) > 0) {
@@ -83,20 +83,20 @@ try {
                 try {
                     $events['members'] = $transfer->exportMembers($dbh, $post['ids']);
                 } catch (Exception $ex) {
-                    $events = array("error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex));
+                    $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
                 }
 
             } else {
-                $events = array("error" => "There are no ids to pass.");
+                $events = ["error" => "There are no ids to pass."];
             }
             break;
 
         case 'payments':
 
-            $arguments = array(
+            $arguments = [
                 'st' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'en' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            );
+            ];
 
             $post = filter_input_array(INPUT_POST, $arguments);
 
@@ -112,13 +112,13 @@ try {
 
         case 'visits':
 
-            $arguments = array(
+            $arguments = [
                 'psgId' => FILTER_SANITIZE_NUMBER_INT,
-                'rels' => array(
-                            'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                            'flags'  => FILTER_FORCE_ARRAY,
-                           ),
-            );
+                'rels' => [
+                    'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                    'flags' => FILTER_FORCE_ARRAY,
+                ],
+            ];
 
             $post = filter_input_array(INPUT_POST, $arguments);
 
@@ -144,12 +144,12 @@ try {
 
         case 'excludes':
 
-            $arguments = array(
-                'psgIds' => array(
+            $arguments = [
+                'psgIds' => [
                     'filter' => FILTER_SANITIZE_NUMBER_INT,
                     'flags' => FILTER_FORCE_ARRAY
-                    )
-            );
+                ]
+            ];
 
             $post = filter_input_array(INPUT_POST, $arguments);
 
@@ -160,28 +160,28 @@ try {
 
         case 'sch':
 
-            $arguments = array(
+            $arguments = [
                 'letters' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'mode' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            );
+            ];
 
             $post = filter_input_array(INPUT_GET, $arguments);
 
             try {
                 $events = $transfer->searchMembers($post);
             } catch (Exception $ex) {
-                $events = array("error" => "Search Error: " . $ex->getMessage());
+                $events = ["error" => "Search Error: " . $ex->getMessage()];
             }
 
             break;
 
         case 'soql':
 
-            $arguments = array(
+            $arguments = [
                 's' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'f' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'w' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            );
+            ];
 
             $post = filter_input_array(INPUT_POST, $arguments);
 
@@ -210,20 +210,20 @@ try {
                 }
 
                 $tbl->addHeader($th);
-                $events = array('data' => $tbl->generateMarkup());
+                $events = ['data' => $tbl->generateMarkup()];
             } catch (RuntimeException $ex) {
-                $events = array("error" => "Transfer Error: " . $ex->getMessage());
+                $events = ["error" => "Transfer Error: " . $ex->getMessage()];
             }
 
             break;
 
         case 'getAcct':
 
-            $arguments = array(
+            $arguments = [
                 'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'src' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'url' => FILTER_SANITIZE_URL
-            );
+            ];
 
             $post = filter_input_array(INPUT_POST, $arguments);
 
@@ -234,9 +234,9 @@ try {
 
         case 'getRelat':
 
-            $arguments = array(
+            $arguments = [
                 'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            );
+            ];
 
             $post = filter_input_array(INPUT_POST, $arguments);
 
@@ -246,10 +246,10 @@ try {
 
         case 'update':
 
-            $arguments = array(
+            $arguments = [
                 'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'id' => FILTER_SANITIZE_NUMBER_INT,
-            );
+            ];
 
             $filtered = filter_input_array(INPUT_POST, $arguments);
 
@@ -265,39 +265,39 @@ try {
                         $updateResult = $e->getMessage();
                     }
 
-                    $events = array('result' => $updateResult);
+                    $events = ['result' => $updateResult];
                 } else {
-                    $events = array('warning' => 'Both the account id and the HHK id must be present.  Remote Account Id=' . $filtered['accountId'] . ', HHK Id =' . $filtered['id']);
+                    $events = ['warning' => 'Both the account id and the HHK id must be present.  Remote Account Id=' . $filtered['accountId'] . ', HHK Id =' . $filtered['id']];
                 }
             } catch (RuntimeException $hex) {
-                $events = array('warning' => $hex->getMessage());
+                $events = ['warning' => $hex->getMessage()];
             }
 
             break;
 
         case 'rmvAcctId':
 
-            $arguments = array(
+            $arguments = [
                 'id' => FILTER_SANITIZE_NUMBER_INT,
-            );
+            ];
 
             $filtered = filter_input_array(INPUT_POST, $arguments);
 
             $num = $transfer->setExcludeMembers($dbh, $filtered['id']);
 
-            $events = array('result' => $num . ' records updated.');
+            $events = ['result' => $num . ' records updated.'];
 
             break;
 
         default:
-            $events = array("error" => "Bad Command");
+            $events = ["error" => "Bad Command"];
     }
 } catch (PDOException $ex) {
 
-    $events = array("error" => "Database Error: " . $ex->getMessage());
+    $events = ["error" => "Database Error: " . $ex->getMessage()];
 } catch (Exception $ex) {
 
-    $events = array("error" => "HouseKeeper Error: " . $ex->getMessage());
+    $events = ["error" => "HouseKeeper Error: " . $ex->getMessage()];
 }
 
 
@@ -309,4 +309,3 @@ if (is_array($events)) {
 }
 
 exit();
-?>

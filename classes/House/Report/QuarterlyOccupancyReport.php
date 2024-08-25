@@ -197,5 +197,3 @@ group by `Category` order by `count` desc;';
     }
 
 }
-
-?>

@@ -69,6 +69,10 @@ class SearchResults extends SearchNameData
         return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->phone);
     }
 
+    public function getSMS_Status() {
+        return $this->sms_status;
+    }
+
     public function getRelationship() {
 
         $uS = Session::getInstance();

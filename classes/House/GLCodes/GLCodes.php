@@ -54,7 +54,7 @@ class GLCodes {
 
 		$this->stopAtInvoice = '';
 
-		$this->loadDbRecords($dbh);
+		$this->loadDbRecords($dbh);  // creates $this->records
 
 		$this->lines = array();
 
@@ -130,6 +130,7 @@ class GLCodes {
 		$invLines = array();
 		$hasWaive = FALSE;
 		$hasMOA = FALSE;
+		$invNumber = $r['i']['iNumber'];
 
 		// Check dates
 		if ($p['pTimestamp'] != '') {
@@ -161,12 +162,12 @@ class GLCodes {
 
 		// Special handling for waived payments.
 		if ($hasWaive) {
-			$invLines = $this->mapWaivePayments($invLines);
+			$invLines = $this->mapWaivePayments($invLines, $invNumber);
 		}
 
 		// Special handling for MOA.
 		if ($hasMOA) {
-			$invLines = $this->mapMoaPayments($invLines);
+			$invLines = $this->mapMoaPayments($invLines, $invNumber);
 		}
 
 		// payment type sets glCode.
@@ -196,10 +197,10 @@ class GLCodes {
 				// It is a return in this period.
 
 				// Special handling for county payments
-				$this->mapCountyPayments($glCode, TRUE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $pUpDate);
+				$this->mapCountyPayments($glCode, TRUE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $pUpDate, $invNumber);
 
 				if ($p['pAmount'] != 0) {
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
+				    $this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat())];
 				}
 
 				foreach($invLines as $l) {
@@ -209,7 +210,7 @@ class GLCodes {
 					}
 
 					// map gl code
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
+					$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat())];
 				}
 
 			}
@@ -220,10 +221,10 @@ class GLCodes {
 
 
 				// Special handling for county payments
-				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
+				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate, $invNumber);
 
 				if ($p['pAmount'] != 0) {
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+				    $this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat())];
 				}
 
 				foreach($invLines as $l) {
@@ -232,7 +233,7 @@ class GLCodes {
 						continue;
 					}
 
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+					$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat())];
 				}
 			}
 
@@ -255,10 +256,10 @@ class GLCodes {
 			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 
 			    // Special handling for county payments; May edit $p['pAmount']
-				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
+				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate, $invNumber);
 
 				if ($p['pAmount'] != 0) {
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+				    $this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat())];
 				}
 
 				foreach($invLines as $l) {
@@ -267,7 +268,7 @@ class GLCodes {
 						continue;
 					}
 
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+					$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat())];
 				}
 			}
 
@@ -275,10 +276,10 @@ class GLCodes {
 			// Status = refund amount
 
 			// Special handling for county payments
-			$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
+			$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate, $invNumber);
 
 			if ($p['pAmount'] != 0) {
-			    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat());
+			    $this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat())];
 			}
 
 			foreach($invLines as $l) {
@@ -288,7 +289,7 @@ class GLCodes {
 				}
 
 				// map gl code
-				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate, $this->glParm->getJournalCat());
+				$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate, $this->glParm->getJournalCat())];
 			}
 
 		} else {
@@ -296,13 +297,13 @@ class GLCodes {
 		}
 	}
 
-	protected function mapCountyPayments($glCode, $isReturn, array $invLines, array &$p, $rate, $pDate) {
+	protected function mapCountyPayments($glCode, $isReturn, array $invLines, array &$p, $rate, $pDate, $invNumber) {
 
 		if ($glCode != $this->glParm->getCountyLiability()) {
 			return;
 		}
 
-		$lodgingCharge = 0;
+		$lodgingCharge = 0.0;
 
 		foreach ($invLines as $l) {
 
@@ -312,10 +313,13 @@ class GLCodes {
 
 		}
 
+		// round the float
+		$lodgingCharge = round($lodgingCharge,2);
+
 		if ($rate != 0 && $lodgingCharge != 0) {
 
 
-		    if ($lodgingCharge > 0 && $p['pAmount'] >= $lodgingCharge) {
+		    if ($lodgingCharge > 0 && $p['pAmount'] > $lodgingCharge) {
 
 				// Reduce original payment line by the above amount.
 		        $p['pAmount'] -= $lodgingCharge;
@@ -323,23 +327,23 @@ class GLCodes {
 				if ($isReturn) {
 
 					// make a debit line for hte difference
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, (0 - $lodgingCharge), 0, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, (0 - $lodgingCharge), 0, $pDate, $this->glParm->getJournalCat())];
 
 				} else {
 
 				    // Intermediate transaction for counties
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, 0, $lodgingCharge, $pDate, $this->glParm->getJournalCat());
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $this->payTypeGlCodes[PayType::Cash], $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, 0, $lodgingCharge, $pDate, $this->glParm->getJournalCat())];
+				    $this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $this->payTypeGlCodes[PayType::Cash], $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat())];
 
 					// make a debit line for hte difference
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat())];
 
 				}
 			}
 		}
 	}
 
-	protected function mapMoaPayments(array $invLines) {
+	protected function mapMoaPayments(array $invLines, $invNumber) {
 
 		$remainingItems = array();
 
@@ -349,11 +353,11 @@ class GLCodes {
 
 				if ($l['il_Amount'] > 0) {
 
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+					$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat())];
 
 				} else {
 
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate, $this->glParm->getJournalCat());
+					$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate, $this->glParm->getJournalCat())];
 
 				}
 
@@ -365,7 +369,7 @@ class GLCodes {
 		return $remainingItems;
 	}
 
-	protected function mapWaivePayments(array $invLines) {
+	protected function mapWaivePayments(array $invLines, $invNumber) {
 
 		// add up waiveable items
 		$waiveAmt = 0;
@@ -383,10 +387,10 @@ class GLCodes {
 		if ($waiveAmt > 0) {
 
 			// credit the waive gl code
-			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $waiveGlCode, 0, $waiveAmt, $this->paymentDate, $this->glParm->getJournalCat());
+			$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $waiveGlCode, 0, $waiveAmt, $this->paymentDate, $this->glParm->getJournalCat())];
 
 			// debit the foundation donation
-			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $this->glParm->getFoundation(), $waiveAmt, 0, $this->paymentDate, $this->glParm->getJournalCat());
+			$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $this->glParm->getFoundation(), $waiveAmt, 0, $this->paymentDate, $this->glParm->getJournalCat())];
 
 		}
 
@@ -433,6 +437,16 @@ class GLCodes {
     	$stmt = $dbh->query($query);
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$stmt->nextRowset();
+
+// Testing data
+// 		$rows = [
+// ['idInvoice'=>24704, 'Order_Number'=>20938, 'Suborder_Number'=>0, 'iAmount'=>649.92, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25697, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47507, 'il_Amount'=>577.07, 'il_Item_Id'=>1, 'il_Type_Id'=>1, 'idPayment'=>24500, 'pAmount'=>649.92, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>3614, 'pTimestamp'=>'4/15/2024 15:01', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-1007582-500014-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24704, 'Order_Number'=>20938, 'Suborder_Number'=>0, 'iAmount'=>649.92, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25697, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47508, 'il_Amount'=>28.85, 'il_Item_Id'=>12, 'il_Type_Id'=>2, 'idPayment'=>24500, 'pAmount'=>649.92, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>3614, 'pTimestamp'=>'4/15/2024 15:01', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-0000000-210115-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24704, 'Order_Number'=>20938, 'Suborder_Number'=>0, 'iAmount'=>649.92, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25697, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47509, 'il_Amount'=>44, 'il_Item_Id'=>13, 'il_Type_Id'=>2, 'idPayment'=>24500, 'pAmount'=>649.92, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>3614, 'pTimestamp'=>'4/15/2024 15:01', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-0000000-210100-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24865, 'Order_Number'=>21106, 'Suborder_Number'=>0, 'iAmount'=>99.99, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25858, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47954, 'il_Amount'=>88.78, 'il_Item_Id'=>1, 'il_Type_Id'=>1, 'idPayment'=>24456, 'pAmount'=>99.99, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>5123, 'pTimestamp'=>'4/9/2024 11:18', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-1007582-500014-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24865, 'Order_Number'=>21106, 'Suborder_Number'=>0, 'iAmount'=>99.99, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25858, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47955, 'il_Amount'=>4.44, 'il_Item_Id'=>12, 'il_Type_Id'=>2, 'idPayment'=>24456, 'pAmount'=>99.99, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>5123, 'pTimestamp'=>'4/9/2024 11:18', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-0000000-210115-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000'],
+// ['idInvoice'=>24865, 'Order_Number'=>21106, 'Suborder_Number'=>0, 'iAmount'=>99.99, 'iBalance'=>0, 'iStatus'=>'p', 'icAmount'=>0, 'iNumber'=>25858, 'Delegated_Id'=>0, 'iDeleted'=>0, 'Pledged_Rate'=>0, 'Expected_Rate'=>0, 'idRoom_Rate'=>9, 'Rate'=>44.39, 'il_Id'=>47956, 'il_Amount'=>6.77, 'il_Item_Id'=>13, 'il_Type_Id'=>2, 'idPayment'=>24456, 'pAmount'=>99.99, 'pMethod'=>3, 'pStatus'=>'s', 'pUpdated'=>'', 'Is_Refund'=>0, 'idPayor'=>5123, 'pTimestamp'=>'4/9/2024 11:18', 'PayMethod_Gl_Code'=>'200-0000000-140007-00-000', 'Item_Gl_Code'=>'200-0000000-210100-00-000', 'ba_Gl_Debit'=>'200-0000000-140521-00-000', 'ba_Gl_Credit'=>'200-1007582-500014-00-000']
+// 		];
 
     	foreach ($rows as $p) {
 
@@ -541,7 +555,7 @@ class GLCodes {
 		}
 
 		foreach ($this->lines as $l) {
-			$data .= implode(',', $l) . "\r\n";
+			$data .= implode(',', $l['l']) . "\r\n";
 		}
 
 		$this->recordError($this->fileId . '.csv');

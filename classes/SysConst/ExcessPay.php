@@ -15,5 +15,6 @@ class ExcessPay {
     const Hold = 'e';
     const Ignore = 'i';
     const Refund = 'r';
+    const MoveToResv = 'm';
 }
 ?>

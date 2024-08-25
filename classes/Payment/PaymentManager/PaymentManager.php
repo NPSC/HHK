@@ -314,7 +314,7 @@ class PaymentManager {
                             $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                             $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
 
-                            $roomTax += $t->getDecimalTax();
+                            $roomTax += round($roomChargesTaxable * $t->getDecimalTax(), 2);
                         }
                     }
                 }
@@ -386,7 +386,7 @@ class PaymentManager {
                     $remainingMOA = $this->moaRefundAmt - $payAmt;
 
                     $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
-                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $remainingMOA), 1, $notes);
+                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $remainingMOA), 1, 'Balance');
 
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                     $this->invoice->addLine($dbh, $invLine, $uS->username);

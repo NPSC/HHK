@@ -7,6 +7,7 @@ use HHK\ColumnSelectors;
 use HHK\SysConst\GLTableNames;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\TableLog\HouseLog;
 
 /**
  *
@@ -192,6 +193,7 @@ class NewGuest
             return $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
 
         } else {
+            HouseLog::logDownload($dbh, 'New Guest Report', "Excel", "New Guests Report for " . $this->getStartDT()->format("Y-m-d") . " - " . $this->getEndDT()->format("Y-m-d") . " downloaded", $uS->username);
             $writer->download();
         }
     }
@@ -218,8 +220,8 @@ class NewGuest
     IFNULL(na.State_Province, '') AS `State_Province`,
     IFNULL(na.Postal_Code, '') AS `Postal_Code`,
     IFNULL(na.Country_Code, '') AS `Country`,
-	CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone' ELSE IFNULL(np.Phone_Num, '') END AS `Phone`,
-	IFNULL(ne.Email, '') AS `Email`,
+	CASE WHEN (n.Preferred_Phone = 'no') THEN 'No Phone' ELSE IFNULL(np.Phone_Num, '') END AS `Phone`,
+	CASE WHEN (n.Preferred_Email = 'no') THEN 'No Email' ELSE IFNULL(ne.Email, '') END AS `Email`,
     IFNULL(g3.Description, '') AS `Relationship`,
     IFNULL(ng.idPsg, 0) as `idPsg`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,

@@ -10,18 +10,16 @@
 
 use HHK\sec\Session;
 use HHK\sec\WebInit;
-use HHK\AlertControl\AlertMessage;
 use HHK\sec\SecurityComponent;
 use HHK\SysConst\VolMemberType;
 use HHK\SysConst\ReservationStatus;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\CreateMarkupFromDB;
-use HHK\SysConst\GLTableNames;
-use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
+use HHK\TableLog\HouseLog;
 
 require ("homeIncludes.php");
 
@@ -188,6 +186,8 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
 
     } else {
+        $uS = Session::getInstance();
+        HouseLog::logDownload($dbh, 'Doctor/Hospital Report', "Excel", "Doctor/Hospital Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
         $writer->download();
     }
 

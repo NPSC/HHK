@@ -4,6 +4,7 @@ namespace HHK\Cron;
 
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\sec\SysConfig;
@@ -54,7 +55,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
         ],
     ];
 
-    public function __construct(\PDO $dbh, int $idJob, array $params=[], bool $dryRun=false){
+    public function __construct(PDO $dbh, int $idJob, array $params=[], bool $dryRun=false){
         $uS = Session::getInstance();
         $this->paramTemplate["solicitBuffer"]["defaultVal"] = $uS->SolicitBuffer;
         $this->paramTemplate["EmailTemplate"]["values"] = $this->getSurveyDocList($dbh);
@@ -101,7 +102,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
         $paramList[":delayDays"] = $delayDays;
 
-        if(!empty($this->params["after"]) && $this->params["after"] == "checkin"){
+        if(!empty($this->params["after"]) && $this->params["after"] == "checkin"){ //post check in
             $stmt = $this->dbh->prepare("SELECT
                 n.Name_First,
                 n.Name_Last,
@@ -118,6 +119,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
             	JOIN
                 `name` n ON s.idName = n.idName
             		AND n.Member_Status != 'd'
+                    AND n.Exclude_Email = 0
                     JOIN
                 `name_email` ne ON n.idName = ne.idName
                     AND n.Preferred_Email = ne.Purpose
@@ -126,7 +128,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
                     AND v.`Status` = 'a'
                     and DateDiff(DATE(NOW()), DATE(v.Arrival_Date)) = :delayDays
             GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-        }else{
+        }else{ //post checkout
             $stmt = $this->dbh->prepare("SELECT
                 n.Name_First,
                 n.Name_Last,
@@ -142,8 +144,9 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
                 visit v ON v.idVisit = s.idVisit
                     AND v.Span = s.Visit_Span
             	JOIN
-                `name` n ON s.idName = n.idName
+                `name` n ON v.idPrimaryGuest = n.idName
             		AND n.Member_Status != 'd'
+                    AND n.Exclude_Email = 0
                     JOIN
                 `name_email` ne ON n.idName = ne.idName
                     AND n.Preferred_Email = ne.Purpose
@@ -152,7 +155,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
                     AND v.`Status` = 'co'
                     AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date) and
                     DateDiff(DATE(NOW()), DATE(v.Actual_Departure)) = :delayDays
-            GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+            GROUP BY v.idPrimaryGuest;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         }
 
         $stmt->execute($paramList);
@@ -164,7 +167,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
             throw new RuntimeException("The number of email recipients, " . $stmt->rowCount() . " is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
         }
 
-        $mail = prepareEmail();
+        $mail = new HHKMailer($this->dbh);
 
         $mail->From = $from;
         $mail->addReplyTo($from);
@@ -263,9 +266,9 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
     }
 
-    protected function getSurveyDocList(\PDO $dbh){
+    protected function getSurveyDocList(PDO $dbh){
         $stmt = $dbh->query("Select d.`idDocument`,concat(d.`Title`, ': ', g.`Description`) as `Title` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 's' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
-        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
         $result = [];
         foreach($rows as $row){
@@ -276,4 +279,3 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
     }
 
 }
-?>

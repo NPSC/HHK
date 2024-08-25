@@ -38,7 +38,7 @@ class OperatingHours {
         $dow = $date->format('w');
 
         // EKC 9/18/2023 Check for null.
-        if ( ! is_string($this->currentHours[$dow]["Start_Date"]) || $this->currentHours[$dow]["Start_Date"] = '') {
+        if ( ! is_string($this->currentHours[$dow]["Start_Date"]) || $this->currentHours[$dow]["Start_Date"] == '') {
             return false;  // bypass operating hours.
         }
 

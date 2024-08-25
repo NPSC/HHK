@@ -379,13 +379,13 @@ class SiteConfig {
         return $resultMsg;
     }
 
-    public static function createCliteMarkup() {
+    public static function createCliteMarkup(array $dbParams) {
 
         $tbl = new HTMLTable();
 
-        $tbl->addBodyTr(HTMLTable::makeTd(ucfirst("Environment Variables"), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+        $tbl->addBodyTr(HTMLTable::makeTd(ucfirst("Database Connection"), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
 
-        foreach ($_ENV as $key=>$val) {
+        foreach ($dbParams as $key=>$val) {
 
             if ($key == 'Password' || $key == 'sitePepper' || $key == 'ReadonlyPassword' || $key == 'BackupPassword') {
 
@@ -404,7 +404,6 @@ class SiteConfig {
             );
         }
 
-        //$tbl->addFooterTr(HTMLTable::makeTd('', array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
         return $tbl;
     }
 
@@ -538,9 +537,10 @@ class SiteConfig {
 
         }
 
-        if(SecurityComponent::is_TheAdmin() && $category == NULL){
+        $config = parse_ini_file(CONF_PATH . ciCFG_FILE, true);
+        if(SecurityComponent::is_TheAdmin() && $category == NULL && isset($config['db'])){
             // site.cfg entries
-            $tblMkup = self::createCliteMarkup()->generateMarkup();
+            $tblMkup = self::createCliteMarkup($config['db'])->generateMarkup();
         }else{
             $tblMkup = '';
         }

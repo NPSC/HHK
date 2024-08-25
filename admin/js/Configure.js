@@ -830,6 +830,72 @@ $(document).on('change', "#numAddrCalc", function(){
         }
     ];
 
+    var dtNotificationLogCols = [
+        {
+            "targets": [0],
+            "title": "Type",
+            "searchable": false,
+            "sortable": false,
+            "data": "Log_Type",
+        },
+        {
+            "targets": [1],
+            "title": "Sub Type",
+            "searchable": false,
+            "sortable": true,
+            "data": "Sub_Type",
+        },
+        {
+            "targets": [2],
+            "title": "User",
+            "searchable": true,
+            "sortable": true,
+            "data": "username",
+        },
+        {
+            "targets": [3],
+            "title": "To",
+            "searchable": true,
+            "sortable": true,
+            "data": "To",
+        },
+        {
+            "targets": [4],
+            "title": "From",
+            "searchable": true,
+            "sortable": true,
+            "data": "From",
+        },
+        {
+            "targets": [5],
+            "title": "Log Text",
+            "searchable": true,
+            "sortable": true,
+            "data": "Log_Text"
+        },
+        {
+            "targets": [6],
+            "title": "Details",
+            'data': 'Log_Details',
+            render: function (data, type) {
+                var json = JSON.parse(data);
+                var detailStr = "";
+                $.each(json, function (k, v) {
+                    detailStr += "<div><strong>" + k + ":</strong>" + v + "</div>";
+                });
+                return detailStr;
+            }
+        },
+        {
+            "targets": [7],
+            "title": "Timestamp",
+            'data': 'Timestamp',
+            render: function (data, type) {
+                return dateRender(data, type, dateFormat);
+            }
+        }
+    ];
+
     $('#logsTabDiv').tabs({
 
         beforeActivate: function (event, ui) {
@@ -838,24 +904,47 @@ $(document).on('change', "#numAddrCalc", function(){
             if (!logTable[pid]) {
                 logTable[pid] = 1;
 
-                $('#table' + pid).dataTable({
-                    "columnDefs": dtCols,
-                    "serverSide": true,
-                    "processing": true,
-                    //"deferRender": true,
-                    "language": {"sSearch": "Search Log:"},
-                    "sorting": [[7, 'desc']],
-                    "displayLength": 25,
-                    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
-                    ajax: {
-                        url: 'ws_gen.php',
-                        data: {
-                            'cmd': 'showLog',
-                            'logId': pid
+                //notification log
+                if (pid == "linl") {
+
+                    $('#table' + pid).dataTable({
+                        "columnDefs": dtNotificationLogCols,
+                        "serverSide": true,
+                        "processing": true,
+                        //"deferRender": true,
+                        "language": { "sSearch": "Search Log:" },
+                        "sorting": [[7, 'desc']],
+                        "displayLength": 25,
+                        "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
+                        ajax: {
+                            url: 'ws_gen.php',
+                            data: {
+                                'cmd': 'showNotificationLog'
+                            }
                         }
-                    }
-                });
+                    });
+                } else {
+
+                    $('#table' + pid).dataTable({
+                        "columnDefs": dtCols,
+                        "serverSide": true,
+                        "processing": true,
+                        //"deferRender": true,
+                        "language": { "sSearch": "Search Log:" },
+                        "sorting": [[7, 'desc']],
+                        "displayLength": 25,
+                        "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
+                        ajax: {
+                            url: 'ws_gen.php',
+                            data: {
+                                'cmd': 'showLog',
+                                'logId': pid
+                            }
+                        }
+                    });
+                }
             }
         }
     });

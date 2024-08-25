@@ -1,0 +1,101 @@
+/* Style Definitions */
+
+* {
+    line-height:1.5em;
+}
+
+.header * {
+    line-height: 1.1em;
+}
+
+.agreement * {
+    line-height: 1em;
+}
+
+h2 {
+    line-height: 1.1em;
+}
+
+h2:not(.title):not(.agreement h2) {
+    border-bottom:1.5pt solid #98C723;
+}
+
+.title {
+    padding-left: 0;
+}
+
+.row {
+    page-break-inside: avoid;
+}
+
+.agreement .btnSign, .agreement .btnInitial {
+    padding: .4em 1em;
+}
+
+.agreement .textboxWrapper .regFormInput {
+    width: 100%;
+    border: 0;
+    padding: 0.5rem;
+}
+
+.agreement .textboxWrapper {
+    align-items: center;
+    width: 100%
+}
+
+.agreement .textboxWrapper .regFormInput:disabled {
+    background: none;
+    color: #000;
+}
+
+.agreement .textboxWrapper textarea {
+    resize: none;
+}
+
+.hhk-line {
+    border-bottom: 1px solid black;
+}
+
+h2.sectionHeader {
+    border-bottom: 1.5pt solid #98C723; line-height: 1.1em; padding: 3px 5px;
+}
+
+span.checkboxWrapper {
+    font-size: 1.2em;
+    background: #fbec88;
+    cursor: pointer;
+}
+
+@media screen {
+    footer {
+        display: none !important;
+    }
+}
+
+@media print {
+    footer {
+        position: fixed;
+        bottom: 0;
+    }
+
+    button.btnSign {
+        display:none;
+    }
+
+    button.btnInitial {
+        display: none;
+    }
+
+    .container {
+        max-width: 100% !important;
+    }
+
+    .agreementContainer p {
+        page-break-inside: always;
+    }
+
+    .agreementContainer li {
+        page-break-inside: always;
+    }
+
+}

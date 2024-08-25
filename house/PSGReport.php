@@ -12,6 +12,7 @@ use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
 use HHK\House\Distance\DistanceFactory;
+use HHK\TableLog\HouseLog;
 
 /**
  * PSG_Report.php
@@ -62,7 +63,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $totalDistance = 0;
 
     if($showUnique){
-        $spanDates = ""; //" MIN(s.Span_Start_Date) as `First Arrival`, CASE WHEN count(s.Span_End_Date)=sum(1) then max(s.Span_End_Date) else null end as `Last Departure`, ";
+        $spanDates = " ifnull(max(s.Span_End_Date), '') as `Last Departure`, ";
         $docSql = " group_concat(DISTINCT n.Name_Full SEPARATOR ', ') as `Doctor`, ";
         $hospAssocSql = "group_concat(DISTINCT h.Title SEPARATOR ', ') as `Hospital`, group_concat(DISTINCT a.Title SEPARATOR ', ') as `Association`, ";
         $agentSql = "group_concat(DISTINCT nr.Name_Full SEPARATOR', ') as `$agentTitle` ";
@@ -82,7 +83,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     if ($showAddr && $showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, " . ($showUnique ? "" : "v.idReservation as `Resv ID`, ")
-            . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
+            . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', ifnull(vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
                 . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, vn.Phone, vn.Email, "
                     . ($showUnique ? "" : $queryStatus  . "r.title as `Room`,")
@@ -95,7 +96,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     } else if ($showAddr && !$showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code,
-            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, `nd`.`No_Return`, "
+            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, `nd`.`No_Return`, "
             . ($showUnique ? "" : $queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . $hospAssocSql
@@ -104,7 +105,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else if (!$showAddr && $showFullName) {
 
-        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `$guestFirst`, vn.Middle, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `$guestFirst`, vn.Middle, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . ($showUnique ? "" :$queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
@@ -112,7 +113,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else {
 
-        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . ($showUnique ? "" : $queryStatus . "r.title as `Room`, ") . $spanDates
                 . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
                 . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
@@ -189,7 +190,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
         if(isset($r["Distance (miles)"]) && $r["Distance (miles)"] > 0){
             $r["Distance (miles)"] = $distanceCalculator->meters2miles($r["Distance (miles)"]);
             $totalDistance += $r["Distance (miles)"];
-        }else{
+        }else if(isset($r["Distance (miles)"])){
             $r["Distance (miles)"] = '';
         }
 
@@ -311,6 +312,9 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
                 $r['Birth Date'] = date('n/d/Y', strtotime($r['Birth Date']));
             }
+            if (isset($r['Deceased Date']) && $r['Deceased Date'] != '' && $r['Deceased Date'] != "Deceased") {
+                $r['Deceased Date'] = date('n/d/Y', strtotime($r['Deceased Date']));
+            }
             if (isset($r['Arrival']) && $r['Arrival'] != '') {
                 $r['Arrival'] = date('n/d/Y', strtotime($r['Arrival']));
             }
@@ -387,6 +391,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
 
 
     } else {
+        HouseLog::logDownload($dbh, 'People Report', "Excel", "People Report for " . $start . " - " . $end . " downloaded", $uS->username);
         $writer->download();
     }
 }
@@ -605,18 +610,17 @@ order by ng.idPsg, `ispat`, `Id`";
 	     }
  	}
 
- if ($local) {
+    if ($local) {
 
-     $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblroom', $separatorClassIndicator);
+        $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblroom', $separatorClassIndicator);
 
-     return array('table'=>$dataTable, 'rows'=>$rowCount, 'psgs'=>$numberPSGs);
+        return array('table'=>$dataTable, 'rows'=>$rowCount, 'psgs'=>$numberPSGs);
 
-
- } else {
-
-     $writer->download();
-
- }
+    } else {
+        $uS = Session::getInstance();
+        HouseLog::logDownload($dbh, 'PSG Report', "Excel", "PSG Report for " . $start . " - " . $end . " downloaded", $uS->username);
+        $writer->download();
+    }
 
 }
 
@@ -675,7 +679,8 @@ function getNoReturn(\PDO $dbh, $local){
 
             $writer->writeSheetRow("Sheet1", $row);
         }
-
+        $uS = Session::getInstance();
+        HouseLog::logDownload($dbh, 'No-Return Guest Report', "Excel", "No-Return Guest Report downloaded", $uS->username);
         $writer->download();
 
     }
@@ -785,6 +790,8 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 			$writer->writeSheetRow("Sheet1", $row);
 		}
 
+        $uS = Session::getInstance();
+        HouseLog::logDownload($dbh, 'Incidents Report', "Excel", "Incidents Report downloaded", $uS->username);
 		$writer->download();
 	}
 
@@ -1255,9 +1262,6 @@ if ($uS->UseIncidentReports) {
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-
-        <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>
-
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
@@ -1347,11 +1351,11 @@ if ($uS->UseIncidentReports) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         	<div class="title mb-3">
-            	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">This report shows people who stayed in the time frame selected below</span>
+            	<h2 class="d-inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">This report shows people who stayed in the time frame selected below</span>
             </div>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog p-2" style="font-size:0.9em; max-width:1280px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog p-2" style="font-size:0.9em; max-width:fit-content;">
                 <form id="fcat" action="PSGReport.php" method="post">
-                    <fieldset class="hhk-panel" style="margin-bottom: 15px;"><legend style='font-weight:bold;'>Report Type</legend>
+                    <fieldset class="hhk-panel mb-3"><legend style='font-weight:bold;'>Report Type</legend>
                      <table style="width:100%">
                         <tr>
                             <th><label for='rbpsg'><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></label><input type="radio" id='rbpsg' name="rbReport" value="psg" style='margin-left:.5em;' <?php if ($rptSetting == 'psg') {echo 'checked="checked"';} ?>/></th>
@@ -1362,7 +1366,7 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     </fieldset>
-                    <table class="hhk-IncdtRpt" style="clear:left;float:left;display:none;">
+                    <table class="hhk-IncdtRpt" style="display:none;">
                         <tr>
                             <th > Incident Reports Status</th>
                         </tr>
@@ -1406,8 +1410,8 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     </div>
-					<div style="display: flex">
-                    <table style="display:none; margin-top: 10px;" class="showStateCountry">
+					<div class="hhk-flex">
+                    <table style="display:none;" class="showStateCountry mt-3">
                         <tr>
                             <th>Country</th>
                             <th>State</th>
@@ -1428,7 +1432,7 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     </div>
-                    <table style="width:100%; margin-top: 15px;">
+                    <table class="mt-3" style="width:100%;">
                         <tr>
                             <td class="checkboxesShow"><input type="checkbox" name="cbAddr" class="psgsel" id="cbAddr" <?php echo $showAddressSelection; ?>/><label for="cbAddr" class="psgsel"> Show Address</label></td>
                             <td class="checkboxesShow"><input type="checkbox" name="cbFullName" class="psgsel" id="cbFullName" <?php echo $showFullNameSelection; ?>/><label for="cbFullName" class="psgsel"> Show Full Name</label></td>
@@ -1440,9 +1444,9 @@ if ($uS->UseIncidentReports) {
                     </table>
                 </form>
             </div>
-            <div id="divPrintButton" style="display:none; margin: 10px 0;"><input id="printButton" value="Print" type="button" /></div>
+            <div id="divPrintButton" class="my-3" style="display:none;"><input id="printButton" value="Print" type="button" /></div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog ui-corner-all p-2 pb-3 hhk-overflow-x" style="display:none; font-size: .8em; max-width:fit-content">
-                <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
+                <div class="mb-2"><?php echo $settingstable; ?></div>
                 <form autocomplete="off">
                 <?php echo $dataTable; ?>
                 </form>

@@ -294,7 +294,7 @@ class RepeatReservations {
       * @param mixed $guests
       * @return mixed
       */
-    protected function makeNewReservation(\PDO $dbh, Reservation_1 $protoResv, $ckinDT, $ckoutDT, $idResource, $status, $guests) {
+    public static function makeNewReservation(\PDO $dbh, Reservation_1 $protoResv, $ckinDT, $ckoutDT, $idResource, $status, $guests) {
 
 	    $uS = Session::getInstance();
 

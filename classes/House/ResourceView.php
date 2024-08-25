@@ -1258,6 +1258,54 @@ ORDER BY $orderBy;");
 
         }
 
+        //reservations
+        $uS = Session::getInstance();
+        if($uS->showResvHousekeeping){
+            $stmt = $dbh->query("select
+            r.idRoom,
+            r.`Title`,
+            ifnull(n.Name_Full, '') as `Name`,
+            resv.Expected_Arrival as `Arrival_Date`,
+            DATE(resv.Expected_Departure) as `Departure_Date`,
+            l.`Title` as `Status`,
+            r.`Last_Cleaned`,
+            ifnull(r.`Notes`, '') as `Notes`
+        from
+            room r
+                left join
+            resource_room rr ON r.idRoom = rr.idRoom
+                join
+            reservation resv ON rr.idResource = resv.idResource and resv.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "')
+                left join
+            name n ON resv.idGuest = n.idName
+                left join
+            lookups l on l.Category = 'ReservStatus' and l.Code = resv.`Status`
+        where DATE(resv.Expected_Departure) between Date('$startCoDate') and Date('$endCoDate');");
+
+
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            // reverse output
+            $lines = explode("\n", $r['Notes']);
+            $reverse = "";
+
+            for ($i = (count($lines) - 1); $i >= 0; $i--) {
+                $reverse .= $lines[$i] . "<br/>";
+            }
+
+
+            $returnRows[] = array(
+                'Room' => $r['Title'],
+                'Visit Status' => $r['Status'],
+                'Primary Guest' => $r['Name'],
+                'Arrival Date' => $r['Arrival_Date'] == '' ? '' : $r['Arrival_Date'],
+                'Expected Checkout' => $r['Departure_Date'] == '' ? '' : $r['Departure_Date'],
+                'Notes' => $reverse
+            );
+
+            }
+        }
+
         return $returnRows;
     }
 

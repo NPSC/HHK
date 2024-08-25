@@ -1,5 +1,5 @@
 <?php
-namespace HHK\CrmExport\OAuth;
+namespace HHK\OAuth;
 
 /**
  * Fill in OAuth credentials to be passed to OAuth object

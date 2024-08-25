@@ -437,7 +437,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         // Card reader?
         if ($this->usePOS && ! $this->manualKey) {
-            $pay->setCardEntryMethod('swipe')
+            $pay->setCardEntryMethod('Swipe')
             		->setPaymentPageCode('CheckoutPOS_Url');
         } else {
         	$pay->setPaymentPageCode('Checkout_Url');
@@ -910,7 +910,7 @@ class VantivGateway extends AbstractPaymentGateway {
             );
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Password:', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
             );
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Credit URL:', array('class' => 'tdlabel'))
@@ -938,7 +938,7 @@ class VantivGateway extends AbstractPaymentGateway {
        		);
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Manual Password:', array('class' => 'tdlabel'))
-                		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Manual_Password->getStoredVal(), array('name' => $indx . '_txtManMerchPW', 'size' => '90')). ' (Obfuscated)')
+                		. HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Manual_Password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtManMerchPW', 'size' => '90')). ' (Obfuscated)')
             );
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Use AVS:', array('class' => 'tdlabel'))
@@ -1096,7 +1096,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
             	$pw = filter_var($post[$indx . '_txtManMerchPW'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            	if ($pw != '' && $ccRs->Manual_Password->getStoredVal() != $pw) {
+            	if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
             		$ccRs->Manual_Password->setNewVal(encryptMessage($pw));
             	} else if ($pw == '') {
             		$ccRs->Manual_Password->setNewVal('');
@@ -1123,7 +1123,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
                 $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
-                if ($pw != '' && $ccRs->Password->getStoredVal() != $pw) {
+                if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
                     $ccRs->Password->setNewVal(encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->Password->setNewVal('');

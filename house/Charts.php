@@ -101,6 +101,8 @@ function todData(\PDO $dbh) {
  */
 function rmNiteData(\PDO $dbh, $year) {
 
+    $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+
     $y = intval($year, 10);
     if ($y < 1990) {
         return [];
@@ -118,7 +120,7 @@ function rmNiteData(\PDO $dbh, $year) {
 
     foreach ($period as $periodDT) {
 
-        $roomReport->collectUtilizationData($dbh, $periodDT->format('Y-m-01'), $periodDT->add($interval)->format('Y-m-d'));
+        $roomReport->collectUtilizationData($dbh, $periodDT->format('Y-m-01'), $periodDT->add($interval)->format('Y-m-d'), $rescStatuses);
 
         $sum = getSum($roomReport->getTotals());
 
@@ -136,7 +138,7 @@ function rmNiteData(\PDO $dbh, $year) {
 
     foreach ($period as $periodDT) {
 
-        $roomReport->collectUtilizationData($dbh, $periodDT->format('Y-m-01'), $periodDT->add($interval)->format('Y-m-d'));
+        $roomReport->collectUtilizationData($dbh, $periodDT->format('Y-m-01'), $periodDT->add($interval)->format('Y-m-d'), $rescStatuses);
         $sum = getSum($roomReport->getTotals());
         $data[] = [$periodDT->format('M'), (isset($y1[$periodDT->format('M')]) ? $y1[$periodDT->format('M')] : 0), (isset($sum['nits']) ? $sum['nits'] : 0)];
     }

@@ -245,7 +245,7 @@ $(document).ready(function () {
 	});
 
     var tabIndex = parseInt($('#tabIndex').val());
-    $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
+    $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, #btnTaxSave, .reNewBtn').button();
 
     $('#txtFaIncome, #txtFaSize').change(function () {
         var inc = $('#txtFaIncome').val().replace(',', ''),
@@ -444,7 +444,7 @@ $(document).ready(function () {
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });
 
-    $('.hhk-selLookup').change(function () {
+    $("#mainTabs").on('change', '.hhk-selLookup', function () {
         let $sel = $(this),
             table = $(this).find("option:selected").text(),
             type = $(this).val();
@@ -460,14 +460,14 @@ $(document).ready(function () {
         	type = $sel.val();
         }
 
-        $sel.closest('form').children('div').empty().text('Loading...');
+        $sel.closest('form').children('div.lookupDetailTbl').empty().text('Loading...');
         $sel.prop('disabled', true);
 
         $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
                 function (data) {
                     $sel.prop('disabled', false);
                     if (data) {
-                        $sel.closest('form').children('div').empty().append(data).find(".sortable tbody")
+                        $sel.closest('form').children('div.lookupDetailTbl').empty().append(data).find(".sortable tbody")
                         	.sortable({
                         		items: "tr:not(.no-sort)",
                         		handle: ".sort-handle",
@@ -477,10 +477,14 @@ $(document).ready(function () {
                         			});
                         		}
                         	});
+                    } else {
+                        $sel.closest('form').children('div.lookupDetailTbl').empty();
                     }
                 });
     });
-    $('.hhk-saveLookup').click(function () {
+
+    
+    $("#mainTabs").on('click', '.hhk-saveLookup', function () {
         let $frm = $(this).closest('form');
         let sel = $frm.find('select.hhk-selLookup');
         let table = sel.find('option:selected').text(),
@@ -499,25 +503,33 @@ $(document).ready(function () {
         $btn.val('Saving...');
 
         var lookupData = $frm.serializeJSON();
-
-        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify(lookupData) + '&cmd=save' + '&table=' + table + '&tp=' + type,
-            function(data) {
+        
+        $.ajax({
+            url: "ResourceBuilder.php",
+            type: "POST",
+            data: {
+                lookups: JSON.stringify(lookupData),
+                cmd: "save",
+                table: table,
+                tp: type
+            },
+            success: function (data) {
                 $btn.val('Save');
                 if (data) {
-                    $frm.children('div').empty().append(data).find(".sortable tbody")
-                        	.sortable({
-                        		items: "tr:not(.no-sort)",
-                        		handle: ".sort-handle",
-                        		update: function (e, ui) {
-                        			$(this).find("tr").each(function(i){
-                        				$(this).find("td:first input").val(i);
-                        			});
-                        		}
-                        	});
-
+                    $frm.children('div.lookupDetailTbl').empty().append(data).find(".sortable tbody")
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
                 }
-            });
-    }).button();
+            }
+        });
+    });
 
     //sortable demo categories
     $("#formdemo .sortable tbody")
@@ -531,40 +543,72 @@ $(document).ready(function () {
             }
         });
 
+    // Save Demo categories.
     $('#btndemoSave').click(function () {
         var $frm = $(this).closest('form');
+        var $btn = $(this);
+        $btn.val('Saving...');
 
         $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
-            function(data) {
+            function (data) {
                 if (data) {
-                    $frm.children('div').children().remove().end().append(data).find(".sortable tbody")
-                        	.sortable({
-                        		items: "tr:not(.no-sort)",
-                        		handle: ".sort-handle",
-                        		update: function (e, ui) {
-                        			$(this).find("tr").each(function(i){
-                        				$(this).find("td:first input").val(i);
-                        			});
-                        		}
-                        	});
+                    $btn.val('Save');
+                    $frm.children('div.lookupTbl').children().remove().end().append(data).find(".sortable tbody")
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
                 }
             });
     }).button();
+
+    // Save PSG checkbox list.
+    $("#checklistSection").on('click', '#btncblistSave', function () {
+        var $frm = $(this).closest('form');
+        var $btn = $(this);
+        $btn.val('Saving...');
+
+        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Checklist' + '&tp=' + 'm',
+            function (data) {
+                if (data) {
+                    $btn.val('Save');
+                    $("#checklistSection").empty().append(data).find(".sortable tbody")
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
+                    
+                        $("#checklistSection").find(".hhk-saveLookup, .hhk-saveccblist").button();
+                }
+            });
+    })
 
     $(document).on("click", "#btnInsSave", function (e) {
         var $frm = $(this).closest('form');
 
         $.post('ResourceBuilder.php', $frm.serialize(),
-            function(data) {
-            	if(data.success){
-            		flagAlertMessage(data.success, false);
-            	}else if(data.error){
-            		flagAlertMessage(data.error, true);
-            	}
+            function (data) {
+                if (data.success) {
+                    flagAlertMessage(data.success, false);
+                } else if (data.error) {
+                    flagAlertMessage(data.error, true);
+                }
                 $("#selInsLookup").trigger("change");
             },
             "json");
-    })
+    });
+
+    $("#mainTabs .hhk-saveLookup, #mainTabs .hhk-saveccblist").button();
 
     // Add diagnosis and locations
     if ($('#btnAddDiags').length > 0) {

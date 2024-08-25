@@ -15,5 +15,5 @@ class EmailPurpose {
     const Work = '2';
     const Alt = '3';
     const Office = '4';
+    const NoEmail = 'no';
 }
-?>

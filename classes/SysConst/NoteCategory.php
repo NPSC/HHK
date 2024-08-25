@@ -17,4 +17,3 @@ class NoteCategory {
     const Visit = 'ncv';
     const Patient = 'ncp';
 }
-?>

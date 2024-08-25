@@ -72,7 +72,7 @@ from
     constraint_attribute ar ON a.idAttribute = ar.idAttribute and ar.idConstraint = :id
 where
      a.`Status` = 'a'
-ORDER by a.idAttribute");
+ORDER by a.Type, a.idAttribute");
 
             $rmAtrStmt->execute(array(':id'=>$this->constraint->getId()));
             while ($a = $rmAtrStmt->fetch(\PDO::FETCH_ASSOC)) {

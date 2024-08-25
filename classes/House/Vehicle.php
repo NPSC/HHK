@@ -193,12 +193,12 @@ WHERE
             }
 
             $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($refVehicle['make'], array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($refVehicle['model'], array('name'=>"txtVehModel[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($refVehicle['color'], array('name'=>"txtVehColor[$i]", 'class'=>'hhk-vehicle', 'size'=>'7')))
+                HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['make']) ? $refVehicle['make']: ""), array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['model']) ? $refVehicle['model'] : ""), array('name'=>"txtVehModel[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['color']) ? $refVehicle['color']: ""), array('name'=>"txtVehColor[$i]", 'class'=>'hhk-vehicle', 'size'=>'7')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup($opts, array('name'=>"selVehLicense[$i]", 'class'=>'hhk-vehicle hhk-US-States')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($refVehicle['license'], array('name'=>"txtVehLic[$i]", 'class'=>'hhk-vehicle', 'size'=>'8')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehNote[$i]", 'class'=>'hhk-vehicle')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['license']) ? $refVehicle['license']: ""), array('name'=>"txtVehLic[$i]", 'class'=>'hhk-vehicle', 'size'=>'8')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['note']) ? $refVehicle['note']: ""), array('name'=>"txtVehNote[$i]", 'class'=>'hhk-vehicle')))
                 .HTMLTable::makeTd('(Referral)')
                 , array('id'=>"trVeh$x"));
 

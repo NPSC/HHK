@@ -189,7 +189,7 @@ class HouseServices {
         // Show fees if not hf = hide fees.
         if ($action != 'hf') {
         	$mkup .= HTMLContainer::generateMarkup('div',
-                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
+                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('class' => 'hhk-flex'));
         }
 
 
@@ -765,6 +765,7 @@ class HouseServices {
 
         $uS = Session::getInstance();
         $payResult = NULL;
+        $invoice = NULL;
 
         if (is_null($paymentManager->pmp)) {
             return $payResult;
@@ -787,8 +788,10 @@ class HouseServices {
             $idPayor = $paymentManager->pmp->getIdInvoicePayor();
         }
 
-        // Create Invoice.
-        $invoice = $paymentManager->createInvoice($dbh, $visit, $idPayor, $paymentManager->pmp->getInvoiceNotes());
+        if($paymentManager->pmp->getBalWith() != ExcessPay::MoveToResv){
+            // Create Invoice.
+            $invoice = $paymentManager->createInvoice($dbh, $visit, $idPayor, $paymentManager->pmp->getInvoiceNotes());
+        }
 
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 
@@ -1602,4 +1605,3 @@ class HouseServices {
     }
 
 }
-?>

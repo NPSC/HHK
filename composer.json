@@ -28,7 +28,8 @@
 		"onelogin/php-saml" : "~4.0",
 		"cerdic/css-tidy" : "~2.0",
 		"peppeocchi/php-cron-scheduler" : "~4.0",
-		"guzzlehttp/guzzle" : "~7.5"
+		"guzzlehttp/guzzle" : "~7.5",
+		"mpdf/mpdf": "^8.2"
 
 	},
 	"scripts" : {

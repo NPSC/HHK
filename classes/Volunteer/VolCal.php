@@ -6,6 +6,7 @@ use HHK\sec\{Session, SecurityComponent};
 use HHK\SysConst\{VolCalendarStatus, VolRank, WebRole};
 use HHK\Tables\EditRS;
 use HHK\Tables\VolCalendar\{McalendarRS, Volunteer_HoursRS};
+use HHK\Notification\Mail\HHKMailer;
 
 /**
  * VolCal.php
@@ -177,7 +178,7 @@ class VolCal {
 
                         // email the admin?
                         if ($sendemail != 0 || $evt->get_showEmailDelete() == 1) {
-                            self::emailAdmin($evt, $ar);
+                            self::emailAdmin($dbh, $evt, $ar);
                         }
 
                     } else {
@@ -1151,7 +1152,7 @@ class VolCal {
 
     }
 
-    public static function emailAdmin(cEventClass $evt, $numEvents) {
+    public static function emailAdmin(\PDO $dbh, cEventClass $evt, $numEvents) {
 
         $uS = Session::getInstance();
 
@@ -1160,7 +1161,7 @@ class VolCal {
         }
 
         try{
-           $mail = prepareEmail();
+           $mail = new HHKMailer($dbh);
     
            $mail->From = $uS->ReturnAddress;
            $mail->addReplyTo($uS->ReturnAddress);

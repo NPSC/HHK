@@ -11,6 +11,7 @@ use HHK\sec\Session;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
+use HHK\Member\Address\Address;
 
 class GoogleDistance extends AbstractDistance {
 
@@ -111,7 +112,7 @@ class GoogleDistance extends AbstractDistance {
     }
 
     public function getUncalculatedAddresses(\PDO $dbh){
-        $stmt = $dbh->query("select na.idName_Address, na.idName, n.Name_Full, na.Address_1, na.Address_2, na.City, na.State_Province, na.Postal_Code from name_address na join name n on na.idName = n.idName where Meters_From_House is null and Address_1 != '' and City != '' and State_province != '' and Postal_Code != '' order by na.Timestamp desc;");
+        $stmt = $dbh->query("select na.idName_Address, na.idName, n.Name_Full, na.Address_1 as 'address1', na.Address_2 as 'address2', na.City as 'city', na.State_Province as 'state', na.Postal_Code as 'zip' from name_address na join name n on na.idName = n.idName where Meters_From_House is null and Address_1 != '' and City != '' and State_province != '' and Postal_Code != '' order by na.Timestamp desc;");
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -132,7 +133,7 @@ class GoogleDistance extends AbstractDistance {
      * @return array
      */
     public function calcDistanceArray(\PDO $dbh, array $UncalculatedAddresses, int $numCalls = -1){
-        $destAddress = array();
+        $destAddress = Address::getHouseAddress($dbh);
         $callCounter = 0;
         $uS = Session::getInstance();
 
@@ -150,7 +151,7 @@ class GoogleDistance extends AbstractDistance {
                 $rows = EditRS::select($dbh, $nameAddressRS, array($nameAddressRS->idName_Address));
                 if(count($rows) == 1){
                     EditRS::loadRow($rows[0], $nameAddressRS);
-                    $nameAddressRS->Meters_From_House = $distanceArr["value"];
+                    $nameAddressRS->Meters_From_House->setNewVal($distanceArr["value"]);
                     EditRS::update($dbh,$nameAddressRS, array($nameAddressRS->idName_Address));
                     NameLog::writeUpdate($dbh, $nameAddressRS, $nameAddressRS->idName->getStoredVal(), $uS->username);
                     $callCounter++;

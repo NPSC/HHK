@@ -132,15 +132,19 @@ class CurrentAccount {
 
     // Pending amounts
     /**
-     * Summary of amtPending
+     * Third party pending (up) amounts only
      * @var float
      */
-    protected $amtPending = 0;
+    protected $amtPending3P = 0;
+    protected $amtPending1P = 0;
     /**
      * Summary of dueToday
      * @var float
      */
     protected $dueToday = 0;
+
+    protected $idVisit;
+    protected $visitSpan;
 
     /**
      * Summary of __construct
@@ -150,7 +154,6 @@ class CurrentAccount {
      * @param bool $showGuestNights
      */
     public function __construct($visitStatus, $showVisitFee = FALSE, $showRoomFees = FALSE, $showGuestNights = FALSE) {
-
 
         $this->visitStatus = $visitStatus;
         $this->showRoomFees = $showRoomFees === FALSE ? FALSE : TRUE;
@@ -167,6 +170,9 @@ class CurrentAccount {
      * @return void
      */
     public function load(VisitCharges $visitCharge, ValueAddedTax $vat) {
+
+        $this->idVisit = $visitCharge->getIdVisit();
+        $this->visitSpan = $visitCharge->getSpan();
 
         $this->numberNitesStayed = $visitCharge->getNightsStayed();
 
@@ -237,7 +243,7 @@ class CurrentAccount {
                 + $visitCharge->getItemInvPayments('tax'));
 
         // Pending amounts
-        $this->setAmtPending($visitCharge->get3pRoomFeesPending()
+        $this->setAmtPending3P($visitCharge->get3pRoomFeesPending()
                 + $visitCharge->get3pVisitFeesPending()
                 + $visitCharge->get3rdPartyPending(ItemId::AddnlCharge)
                 + $visitCharge->get3rdPartyPending(ItemId::LodgingMOA)
@@ -353,8 +359,8 @@ class CurrentAccount {
      * Summary of getAmtPending
      * @return int|mixed
      */
-    public function getAmtPending() {
-        return $this->amtPending;
+    public function getAmtPending3P() {
+        return $this->amtPending3P;
     }
 
     /**
@@ -537,7 +543,7 @@ class CurrentAccount {
      */
     public function setDueToday() {
 
-        $this->dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending(), 2);
+        $this->dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending3P(), 2);
 
     }
 
@@ -664,13 +670,27 @@ class CurrentAccount {
 
     /**
      * Summary of setAmtPending
-     * @param mixed $amtPending
+     * @param mixed $amtPending3P
      * @return static
      */
-    public function setAmtPending($amtPending) {
-        $this->amtPending = $amtPending;
+    public function setAmtPending3P($amtPending) {
+        $this->amtPending3P = $amtPending;
         return $this;
     }
 
+	/**
+	 * @return int
+	 */
+	public function getIdVisit() {
+		return $this->idVisit;
+	}
+
+
+	/**
+	 * @return int
+	 */
+	public function getSpan() {
+		return $this->visitSpan;
+	}
 
 }

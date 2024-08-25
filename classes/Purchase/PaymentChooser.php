@@ -485,7 +485,7 @@ class PaymentChooser {
 
         return HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Paying Today', array('style'=>'font-weight:bold;'))
-                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
+                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel hhk-flex', 'style'=>'width: fit-content;max-width: 100%;'));
 
     }
 
@@ -533,7 +533,7 @@ class PaymentChooser {
 
         // Show the prepayment input box.
         $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), ($uS->HideRoomFeeCalc ? ['class'=>"d-none"] : ['style'=>'text-align:center;'])), ['style'=>'text-align: center;min-width: 62px;'])
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
             , array('class'=>'hhk-RoomFees'));
 
@@ -551,6 +551,13 @@ class PaymentChooser {
 
         $excessPays = readGenLookupsPDO($dbh, 'ExcessPays');
 
+        unset($excessPays[ExcessPay::Hold]);
+        unset($excessPays[ExcessPay::Ignore]);
+        
+        if($uS->UseRebook){
+            $excessPays[ExcessPay::MoveToResv] = array(ExcessPay::MoveToResv, 'Next Reservation');
+        }
+
         // Extra payment & distribution Selector
         if (count($excessPays) > 0) {
 
@@ -559,7 +566,7 @@ class PaymentChooser {
                     , array('style'=>'text-align:right;'))
                 , array('class'=>'hhk-Overpayment'));
 
-            $sattrs = array('name'=>'selexcpay', 'style'=>'margin-left:3px;', 'class'=>'hhk-feeskeys');
+            $sattrs = array('name'=>'selexcpay', 'style'=>'margin-left:3px; width: 100%;', 'class'=>'hhk-feeskeys');
 
             $feesTbl->addBodyTr(HTMLTable::makeTd('Apply to:', array('class'=>'tdlabel', 'colspan'=>'2'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($excessPays, '', TRUE), $sattrs))
@@ -1020,19 +1027,20 @@ ORDER BY v.idVisit , v.Span;");
 
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
+            $uS = Session::getInstance();
 
             // Make middle column td.
-            $td = HTMLContainer::generateMarkup('button',
+            $td = HTMLContainer::generateMarkup('span', HTMLContainer::generateMarkup('button',
+                    HTMLContainer::generateMarkup('span', '$', ['class'=>'px-2']).
                     HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'readonly'=>'readonly', 'size' => '7', 'style'=>'padding:0; border:none; margin:0;'])
                     . HTMLContainer::generateMarkup('label',  HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-arrowthick-1-e']), ['for'=>'feesCharges'])
                     , ['id'=>'feesChargesContr', 'class'=>'ui-button ui-widget ui-corner-all hhk-RoomCharge', 'style'=>'min-width:fit-content; padding:0;'])
                 .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']
-            );
-
+            ), ($uS->HideRoomFeeCalc ? ['class'=>"d-none"] : []) );
 
         	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', ['class'=>'tdlabel'])
-                .HTMLTable::makeTd('$'. $td, ['style'=>'text-align:center;'])
-                .HTMLTable::makeTd(
+                .HTMLTable::makeTd($td, ["style"=>"text-align: center;min-width: 62px;"])
+                .HTMLTable::makeTd('$'.
                     HTMLInput::generateMarkup('', ['name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;'])
                     , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay']
                 )

@@ -142,7 +142,34 @@ $filterCBs = HTMLContainer::generateMarkup("div",
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <form id="searchSel" class="ui-widget ui-widget-content ui-corner-all p-3 hhk-flex"><span>Search for: </span><?php echo $mtypeSel; ?> <span>with matching</span> <?php echo $filterCBs; ?></form>
-			<div class="hhk-flex mb-3">
+			<div style="place-content: center;" class="hhk-flex">
+                <div id="duplicatesReadme" class="ui-widget ui-widget-content hhk-widget-content ui-corner-all col-md-4">
+                    <h3 style="text-align: center;">About this Tool</h3>
+                    <p>This tool can find and merge potential duplicate records based on search criteria.</p>
+                    <p>It can merge the following information:</p>
+                    <ul>
+                        <li>PSGs</li>
+                        <li>Visits</li>
+                        <li>Reservations</li>
+                        <li>Payments</li>
+                        <li>Documents</li>
+                        <li>Incidents</li>
+                    </ul>
+
+                    <h4 class="mt-3">Limitations</h4>
+                    <p>This tool CANNOT merge:</p>
+                    <ul>
+                        <li>Addresses</li>
+                        <li>Email Addresses</li>
+                        <li>Phone Numbers</li>
+                        <li>Demographics</li>
+                        <li>Insurance information</li>
+                    </ul>
+                    <p>If you wish to keep the above information, you must copy the information to the ID you wish to keep.</p>
+
+                </div>
+            </div>
+            <div class="hhk-flex mb-3">
             	<div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mr-3" style="display: none; font-size:.85em;"></div>
             	<div id="divExpansion" style="display:none;font-size:.85em;text-align:center;" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content"></div>
         	</div>
