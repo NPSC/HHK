@@ -381,9 +381,9 @@ class HouseServices {
 
                         $extContrl = '';
 
-                        if (isset($post['rbOlpicker-ext'])) {
+                        if (isset($post['rbOlpicker']) && $post['rbOlpicker'] == 'ext') {
                             $extContrl = 'extend';
-                        } else if (isset($post['rbOlpicker-rtDate'])) {
+                        } else if (isset($post['rbOlpicker']) && $post['rbOlpicker'] == 'rtDate') {
                             $extContrl = 'return';
                         }
 
