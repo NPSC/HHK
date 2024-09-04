@@ -228,6 +228,12 @@ Order by `t`.`List_Order`;");
                 }
             }
 
+            $txtDiagAttrs = ['name' => 'txtDiag[' . $d[0] . ']', 'title' => (isset($descriptions[$d[0]]) ? $descriptions[$d[0]] : '')];
+
+            if($tableName == "Calendar_Status_Colors"){
+                $txtDiagAttrs["readonly"] = "readonly";
+                $txtDiagAttrs["size"] = "30";
+            }
             $tbl->addBodyTr(
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(
@@ -237,7 +243,7 @@ Order by `t`.`List_Order`;");
                         ["class" => "sort-handle", "title" => "Drag to sort"]
                     ) : '') .
                 HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($d[1], ['name' => 'txtDiag[' . $d[0] . ']', 'title' => (isset($descriptions[$d[0]]) ? $descriptions[$d[0]] : '')])
+                    HTMLInput::generateMarkup($d[1], $txtDiagAttrs)
                 ) .
                 ($tableName == DIAGNOSIS_TABLE_NAME ?
                     HTMLTable::makeTd(

@@ -1126,3 +1126,8 @@ textarea.hhk-fluidheight {
 	background: transparent !important;
 	box-shadow: none !important;
 }
+
+.hhk-divLk input[type=text]:read-only {
+	border:none;
+	outline: none;
+}
