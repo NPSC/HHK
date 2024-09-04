@@ -998,16 +998,16 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                     $departureDiffDays = (integer) $departureDiff->format("%R%a");
                 }
 
-                if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0){ //checking out today
+                if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0){ //checking out today
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutToday]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutToday]['t'];
-                } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0){ //checked in past expected departure
+                } else if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0){ //checked in past expected departure
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedInPastExpectedDepart]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedInPastExpectedDepart]['t'];
-                }else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1){ //checking out tomorrow
+                }else if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1){ //checking out tomorrow
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutTomorrow]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutTomorrow]['t'];
-                } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut){ //checked in
+                } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] == VisitStatus::CheckedIn){ //checked in
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedIn]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedIn]['t'];
                 } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 0){ //arriving today
@@ -1028,7 +1028,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 }else if(isset($r["Status"]) && $r["Status"] == 'uc'){
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::Unconfirmed]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::Unconfirmed]['t'];
-                } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == 'co') { //checked out
+                } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan])) { //checked out
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedOut]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedOut]['t'];
                 }
@@ -1067,13 +1067,13 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                     $departureDiffDays = (integer)$departureDiff->format( "%R%a" );
                 }
 
-                if (isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0) { //checking out today
+                if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0) { //checking out today
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingOutToday];
-                }else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0){ //checked in past expected departure
+                }else if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0){ //checked in past expected departure
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckedInPastExpectedDepart];
-                }else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1){ //checking out tomorrow
+                }else if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1){ //checking out tomorrow
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingOutTomorrow];
-                } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] != VisitStatus::CheckedOut){ //checked in
+                } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] == VisitStatus::CheckedIn){ //checked in
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckedIn];
                 } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 0){ //arriving today
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingInToday];
@@ -1087,7 +1087,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::Waitlist];
                 }else if(isset($r["Status"]) && $r["Status"] == 'uc'){
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::Unconfirmed];
-                } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == 'co') { //checked out
+                } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan])) { //checked out
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckedOut];
                 }
             }
