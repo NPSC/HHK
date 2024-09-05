@@ -158,7 +158,7 @@
             var $row = $(this).closest('tr');
             let rowdata = $table.row($row).data();
             $row.find('.docTitle').html('<input type="text" size="' + rowdata.Title.length + '" id="editDocTitle" value="' + rowdata.Title + '" class="p-1">');
-            $row.find('.docGuest').html('<input type="text" size="' + rowdata.Guest.length + '" id="editDocGuest" value="' + rowdata.Guest + '" data-idguest="" class="p-1" readonly>');
+            $row.find('.docGuest').html('<input type="text" size="' + rowdata.Guest.length + '" id="editDocGuest" value="' + rowdata.Guest + '" data-idguest="' + rowdata.Guest_Id + '" class="p-1" readonly>');
             
             let selectGuest = function (item) {
                 $row.find("#editDocGuest").attr("data-idguest", item.id).blur();
