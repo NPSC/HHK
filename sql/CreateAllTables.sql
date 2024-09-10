@@ -1921,7 +1921,7 @@ CREATE TABLE if not exists `secondary_unit_desig` (
 -- -----------------------------------------------------
 -- Table `sf_type_map`
 -- -----------------------------------------------------
-CREATE TABLE `sf_type_map` (
+CREATE TABLE if not exists `sf_type_map` (
   `idSf_type_map` INT NOT NULL AUTO_INCREMENT,
   `List_Name` VARCHAR(45) NOT NULL DEFAULT '',
   `SF_Type_Code` VARCHAR(45) NULL DEFAULT '',

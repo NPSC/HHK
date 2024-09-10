@@ -1346,68 +1346,73 @@ class SalesforceManager extends AbstractExportManager {
         $stmtList = $dbh->query("Select * from sf_type_map where List_Name = 'relationTypes';");
         $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
 
-        $mappedItems = array();
+        $mappedItems = [];
         foreach ($items as $i) {
             $mappedItems[$i['SF_Type_Code']] = $i;
         }
 
-        $postedNames = filter_input_array(INPUT_POST, array('selrelationTypes' => array('filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY)));
+        $postedNames = filter_input_array(INPUT_POST, ['selrelationTypes' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY]]);
         $matchedNames = $postedNames['selrelationTypes'];
-
-        $usedHhkTypes = [];
-        foreach ($matchedNames as $n) {
-            if ($n != '') {
-                $usedHhkTypes[$n] = $n;
-            }
-        }
 
         $updateCount = 0;
         $insertCount = 0;
 
-        foreach ($uS->crmItems as $n => $k) {
+        // Check input for relationship types selector
+        if (is_array($matchedNames)) {
 
-            if (isset($matchedNames[$n])) {
+            $usedHhkTypes = [];
+            foreach ($matchedNames as $n) {
+                if ($n != '') {
+                    $usedHhkTypes[$n] = $n;
+                }
+            }
 
-                if ($matchedNames[$n] == '') {
-                    // delete if previously set
-                    foreach ($mappedItems as $i) {
-                        if ($i['SF_Type_Code'] == $k && $i['HHK_Type_Code'] != '') {
-                            $dbh->exec("delete from sf_type_map  where idSf_type_map = " . $i['idSf_type_map']);
-                            break;
+            foreach ($uS->crmItems as $n => $k) {
+
+                if (isset($matchedNames[$n])) {
+
+                    if ($matchedNames[$n] == '') {
+                        // delete if previously set
+                        foreach ($mappedItems as $i) {
+                            if ($i['SF_Type_Code'] == $k && $i['HHK_Type_Code'] != '') {
+                                $dbh->exec("delete from sf_type_map  where idSf_type_map = " . $i['idSf_type_map']);
+                                break;
+                            }
                         }
+
+                        continue;
+
+                    } else if (isset($hhkLookup[$matchedNames[$n]]) === FALSE) {
+                        continue;
                     }
 
-                    continue;
+                    if (isset($mappedItems[$k])) {
+                        // Update
+                        $updateCount += $dbh->exec("update sf_type_map set SF_Type_Code = '$k', SF_Type_name = '$k' where HHK_Type_Code = '$matchedNames[$n]' and List_Name = 'relationTypes';");
 
-                } else if (isset($hhkLookup[$matchedNames[$n]]) === FALSE) {
-                    continue;
-                }
-
-                if (isset($mappedItems[$k])) {
-                    // Update
-                    $updateCount += $dbh->exec("update sf_type_map set SF_Type_Code = '$k', SF_Type_name = '$k' where HHK_Type_Code = '$matchedNames[$n]' and List_Name = 'relationTypes';");
-
-                } else {
-
-                    if (isset($usedHhkTypes[$matchedNames[$n]]) === FALSE) {
-                        // Insert
-                        $idTypeMap = $dbh->exec("Insert into sf_type_map (List_Name, SF_Type_Code, SF_Type_Name, HHK_Type_Code) "
-                            . "values ('relationTypes', '" . $k . "', '" . $k . "', '" . $matchedNames[$n] . "' );");
-
-                        if ($idTypeMap > 0) {
-                            $insertCount++;
-                            $usedHhkTypes[$matchedNames[$n]] = $matchedNames[$n];
-                        }
                     } else {
-                        $result .= 'HHK Relationship type already used: ' . $hhkLookup[$matchedNames[$n]][1] . '.  ';
+
+                        if (isset($usedHhkTypes[$matchedNames[$n]]) === FALSE) {
+                            // Insert
+                            $idTypeMap = $dbh->exec("Insert into sf_type_map (List_Name, SF_Type_Code, SF_Type_Name, HHK_Type_Code) "
+                                . "values ('relationTypes', '" . $k . "', '" . $k . "', '" . $matchedNames[$n] . "' );");
+
+                            if ($idTypeMap > 0) {
+                                $insertCount++;
+                                $usedHhkTypes[$matchedNames[$n]] = $matchedNames[$n];
+                            }
+                        } else {
+                            $result .= 'HHK Relationship type already used: ' . $hhkLookup[$matchedNames[$n]][1] . '.  ';
+                        }
                     }
                 }
             }
+
         }
 
         unset($uS->crmItems);
 
-        return $result . ($updateCount > 0 ? $updateCount.' types updated.  ' : '') . ($insertCount > 0 ? $insertCount . 'new types inserted' : '');
+        return $result . ($updateCount > 0 ? "{$updateCount} types updated.  " : '') . ($insertCount > 0 ? "{$insertCount} new types inserted" : '');
     }
 
     /**
