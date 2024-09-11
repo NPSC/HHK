@@ -173,3 +173,5 @@ ALTER TABLE `gen_lookups`
 ADD COLUMN IF NOT EXISTS `Attributes` JSON NOT NULL DEFAULT '{}' AFTER `Substitute`;
 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('CurGuestDemogIcon','ADA','lu','h','Show this Demographic category on the Current Guests tab as an icon','Demographics',1);
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('RibbonColors', 'ADA', 'ADA', '100');
