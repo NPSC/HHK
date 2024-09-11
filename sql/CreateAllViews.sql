@@ -489,16 +489,13 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
         IFNULL(`hs`.`idPsg`, 0) AS `idPsg`,
         IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
         IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
-        IFNULL(`nd`.`ADA`, '') AS `ADA`,
-        IFNULL(`di`.`Substitute`, '') AS `demogIcon`
+        IFNULL(`m`.`Gender`, "") AS `Gender`
     FROM
         `stays` `s`
         LEFT JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit`
             AND `s`.`Visit_Span` = `v`.`Span`
         LEFT JOIN `name` `m` ON `s`.`idName` = `m`.`idName`
         LEFT JOIN `name_phone` `np` ON `np`.`idName` = `m`.`idName` and `np`.`Phone_Code` = `m`.`Preferred_Phone`
-        LEFT JOIN `name_demog` `nd` on `nd`.`idName` = `m`.`idName`
-        LEFT JOIN `gen_lookups` `di` on `di`.`Table_Name` = 'ADA' and `di`.`Code` = `nd`.`ADA`
         LEFT JOIN `room` `r` ON `s`.`idRoom` = `r`.`idRoom`
         LEFT JOIN `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
         LEFT JOIN `name` `mp` ON `hs`.`idPatient` = `mp`.`idName`

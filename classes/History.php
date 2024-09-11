@@ -504,7 +504,16 @@ class History {
 
         unset($cleanCodes);
 
-        $query = "select * from vcurrent_residents order by `Room`;";
+        $query = "select v.*,
+                IFNULL(`di`.`Description`, '') AS `demogTitle`,
+                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` from vcurrent_residents v" . 
+                ($uS->CurGuestDemogIcon != "Gender" ? 
+                    " LEFT JOIN `Name_Demog` nd on v.Id = nd.idName 
+                      LEFT JOIN `Gen_Lookups` di on nd.".$uS->CurGuestDemogIcon . " = di.Code and di.Table_Name = '" . $uS->CurGuestDemogIcon . "'" : "") .
+                ($uS->CurGuestDemogIcon == "Gender" ?
+                    " LEFT JOIN `Gen_Lookups` di on v.Gender = di.Code and di.Table_Name = 'Gender'" : ""
+                ) . 
+                " order by `Room`;";
         $stmt = $dbh->query($query);
 
         $returnRows = array();
@@ -550,7 +559,7 @@ class History {
             }
 
             // Guest first name
-            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>$r["demogIcon"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
+            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>$r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
             
             /*
             if (isset($r['ADA']) && $r['ADA'] == 'im') {

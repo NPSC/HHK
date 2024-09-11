@@ -586,6 +586,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('CoTod','false','b','hf','','Edit the time of day of a checkout','',1),
 ('county','true','b','h','','Include the County for addresses','',1),
 ('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', '', 'CSS validator service', '',0),
+('CurGuestDemogIcon','ADA','lu','h','','Show this Demographic category on the Current Guests tab as an icon','Demographics',1),
 ('DefaultCalEventColor', '', 's', 'c', '', 'Default event ribbon color for the calendar', '',1),
 ('DefaultDays','21','i','h','','The Default number of following days for date range control','',1),
 ('DefaultPayType','cc','s','f','','Use the Resource Builder','',0),

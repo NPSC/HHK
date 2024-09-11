@@ -421,7 +421,7 @@ function readGenLookups($con, $tbl, $orderBy = "Code")
 function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code")
 {
     $safeTbl = str_replace("'", '', $tbl);
-    $query = "SELECT `Code`, `Description`, `Substitute`, `Type`, `Order` FROM `gen_lookups` WHERE `Table_Name` = '$safeTbl' order by `$orderBy`;";
+    $query = "SELECT `Code`, `Description`, `Substitute`, `Type`, `Order`, `Attributes` FROM `gen_lookups` WHERE `Table_Name` = '$safeTbl' order by `$orderBy`;";
     $stmt = $dbh->query($query);
 
     $genArray = array();
@@ -570,7 +570,7 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, ?array $del, a
  * @param mixed $replaceWith
  * @return float|int
  */
-function replaceGenLk(\PDO $dbh, $tblName, $desc, $subt, $order, $del, $replace, $replaceWith)
+function replaceGenLk(\PDO $dbh, $tblName, $desc, $subt, $attributes, $order, $del, $replace, $replaceWith)
 {
     $rowsAffected = 0;
 
@@ -629,6 +629,11 @@ function replaceGenLk(\PDO $dbh, $tblName, $desc, $subt, $order, $del, $replace,
                         } else {
                             $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                         }
+                    }
+
+                    if (isset($attributes[$code])) {
+                        $attributes[$code] = json_encode($attributes[$code]);
+                        $glRs->Attributes->setNewVal($attributes[$code]);
                     }
 
                     if (isset($order[$code])) {
