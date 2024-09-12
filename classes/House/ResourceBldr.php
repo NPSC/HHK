@@ -186,7 +186,7 @@ Order by `t`.`List_Order`;");
                . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
                 . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
                  . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
-                 . ($type == GlTypeCodes::Demographics ? HTMLTable::makeTh('Icon <a href="https://icons.getbootstrap.com/" target="_blank" class="ml-2"><i class="bi bi-info-circle-fill"></i></a>') : '')
+                 . ($type == GlTypeCodes::Demographics ? HTMLTable::makeTh('Icon <a href="https://icons.getbootstrap.com/" target="_blank" class="ml-2" title="More Info"><i class="bi bi-info-circle-fill"></i></a>') : '')
                   . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
         $tbl->addHeaderTr($hdrTr);
