@@ -877,16 +877,20 @@ where
 		return $mkup;
 	}
 
-	public static function makeEmailTbl($emSubject = "", $emAddrs = "", $emBody = "", $invNum = null){
+	public static function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = "", $emBody = "", $invNum = null){
         $emtableMarkup = "";
         $emTbl = new HTMLTable();
 
         $emTbl->addBodyTr(
+			HTMLTable::makeTd('From', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd($emFrom)
+		);
+		$emTbl->addBodyTr(
 			HTMLTable::makeTd('Subject', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
 			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject')))
 		);
         $emTbl->addBodyTr(
-			HTMLTable::makeTd('Email', ['class'=>"tdlabel"]) . 
+			HTMLTable::makeTd('To', ['class'=>"tdlabel"]) . 
             HTMLTable::makeTd(HTMLInput::generateMarkup(implode(", ", $emAddrs), array('name' => 'txtEmail'))
             . ($invNum !== null ? HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')): ""))
 		);

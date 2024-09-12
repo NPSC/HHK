@@ -9,6 +9,7 @@ use HHK\sec\Session;
 use HHK\SysConst\{InvoiceLineType, InvoiceStatus, ItemId, PaymentMethod, PaymentStatusCode, GLTableNames};
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\House\Registration;
+use Mpdf\Mpdf;
 
 /**
  *
@@ -1280,7 +1281,58 @@ WHERE
         return $hdrTbl->generateMarkup(array("id"=>"stmtHeader", "class" => "mb-3 fullWidth"));
     }
 
-    public static function makeEmailTbl($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
+    public static function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
+        $emtableMarkup = "";
+        $emTbl = new HTMLTable();
+
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('From', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd($emFrom)
+		);
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Subject', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject')))
+		);
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('To', ['class'=>"tdlabel"]) . 
+            HTMLTable::makeTd(HTMLInput::generateMarkup($emAddrs, array('name' => 'txtEmail')))
+		);
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('Body', ['class'=>"tdlabel"]) . 
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize')))
+		);
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
+			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Statement.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowStatement.php?vid=' . $idVisit . '&reg=' . $idRegistration . '&pdfDownload', 'class' => 'hhk-autosize')))
+		);
+
+        $emtableMarkup .= HTMLContainer::generateMarkup("div", 
+			$emTbl->generateMarkup(array("class"=>"emTbl mb-2"), 'Email '.Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement') . 
+			HTMLInput::generateMarkup('Send Email', array('class'=> 'ui-button ui-corner-all ui-widget', 'name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit)), ["class"=>"hhk-panel hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-all"]);
+
+        $emtableMarkup .= HTMLContainer::generateMarkup("div",
+			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"]) . 
+        	HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"]),
+		["class"=>'mb-3']);
+
+        return $emtableMarkup;
+    }
+
+    public static function makePDF($stmtMarkup = "", bool $download = false)
+	{
+
+		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
+		$mpdf->showImageErrors = true;
+		$mpdf->WriteHTML('<html><head>' . HOUSE_CSS . STATEMENT_CSS . '</head><body><div class="PrintArea">' . $stmtMarkup . '</div></body></html>');
+
+		if($download == true){
+			$mpdf->OutputHttpDownload("Statement.pdf");
+		} else {
+			return $mpdf->Output('', 'S');
+		}
+	}
+
+    public static function makeEmailTblOLD($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
         // create send email table
         $emTbl = new HTMLTable();
         $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'class'=>'ignrSave ml-2')), array("class"=>"hhk-flex")));

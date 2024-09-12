@@ -410,8 +410,7 @@ textarea {
     padding: 2px 3px;
 }
 td.hhk-tdTotals {
-    border-top-color: #333;
-    border-top-width: 2px;
+    border-top: 2px solid #333;
 }
 input.ro {
     background-color: transparent;

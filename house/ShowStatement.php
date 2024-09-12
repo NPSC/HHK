@@ -12,6 +12,7 @@ use HHK\Note\Note;
 use HHK\Note\LinkNote;
 use HHK\House\Registration;
 use HHK\TableLog\HouseLog;
+use PHPMailer\PHPMailer\PHPMailer;
 
 /**
  * ShowStatement.php
@@ -183,8 +184,11 @@ if (is_null($guest) === FALSE && $emAddr == '') {
 }
 //echo Statement::createEmailStmtWrapper($stmtMarkup);
 //exit;
-$emtableMarkup = Statement::makeEmailTbl($emSubject, $emAddr, $emBody, $idRegistration, $idVisit);
+$emtableMarkup = Statement::makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>",$emSubject, $emAddr, $emBody, $idRegistration, $idVisit);
 
+if(isset($_GET['pdfDownload']) && $stmtMarkup != ''){
+    Statement::makePDF($stmtMarkup, true);
+}
 
 if (isset($_REQUEST['cmd'])) {
 
@@ -200,6 +204,13 @@ if (isset($_REQUEST['cmd'])) {
 
         if (isset($_POST['txtSubject'])) {
             $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        if (isset($_POST['txtBody'])) {
+            $emBody = str_replace(["\r\n", "\r", "\n"], "<br/>", filter_var($_POST['txtBody'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            if ($emBody == '') {
+                $msg .= "The email Body is required.  ";
+            }
         }
 
         if ($emAddr == '' || $emSubject == '') {
@@ -225,7 +236,9 @@ if (isset($_REQUEST['cmd'])) {
                 }
 
                 $mail->Subject = htmlspecialchars_decode($emSubject, ENT_QUOTES);
-                $mail->msgHTML(Statement::createEmailStmtWrapper($stmtMarkup));
+                //$mail->msgHTML(Statement::createEmailStmtWrapper($stmtMarkup));
+                $mail->msgHTML($emBody);
+                $mail->addStringAttachment(Statement::makePDF($stmtMarkup), "Statement.pdf", PHPMailer::ENCODING_BASE64, 'application/pdf');
 
                 $mail->send();
                 $return["msg"] = "Email sent.";
@@ -276,6 +289,7 @@ if ($msg != '') {
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo STATEMENT_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -336,9 +350,11 @@ $(document).ready(function() {
     </head>
     <body>
         <div id="contentDiv">
-            <div id="stmtDiv">
+            <div id="stmtDiv" class="mt-3">
                 <?php echo $msg; ?>
-                <?php echo $emtableMarkup; ?>
+                <form id="formEm" name="formEm" method="POST" action="ShowStatement.php">
+                    <?php echo $emtableMarkup; ?>
+                </form>
                 <?php echo $stmtMarkup; ?>
             </div>
         </div>
