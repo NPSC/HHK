@@ -121,7 +121,7 @@ class DeluxeGateway extends AbstractPaymentGateway
      * @param mixed $payNotes
      */
     public function getPaymentResponseObj(\HHK\Payment\GatewayResponse\GatewayResponseInterface $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
-        return new PaymentCreditResponse($vcr, $idPayor, $idGroup, $payNotes);
+        return new PaymentCreditResponse($vcr, $idToken, $idPayor, $idGroup, $payNotes);
     }
 
     protected function loadGateway(\PDO $dbh) {
@@ -374,7 +374,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $gatewayResponse = $paymentRequest->submit($invoice, $tokenRS);
 
-                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getPayNotes());
+                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $tokenRS->idGuest_token->getStoredVal(), $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getPayNotes());
 
                 // Record transaction
                 try {
@@ -411,7 +411,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $gatewayResponse = $paymentRequest->submit($invoice, $newTokenRS);
 
-                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getPayNotes());
+                $paymentResponse = new PaymentCreditResponse($gatewayResponse, $newTokenRS->idGuest_token->getStoredVal(), $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getPayNotes());
 
                 // Record transaction
                 try {

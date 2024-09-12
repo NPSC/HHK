@@ -24,11 +24,12 @@ class PaymentCreditResponse extends AbstractCreditResponse {
     public $idToken;
 
 
-    function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup, $payNotes = "") {
+    function __construct(GatewayResponseInterface $vcr, $idGuestToken, $idPayor, $idGroup, $payNotes = "") {
         $this->response = $vcr;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->idToken = $vcr->getToken();
+        $this->idGuestToken = $idGuestToken;
         $this->amount = $vcr->getAuthorizedAmount();
         $this->invoiceNumber = $vcr->getInvoiceNumber();
         $this->payNotes = $payNotes;
