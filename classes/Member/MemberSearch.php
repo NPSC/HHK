@@ -191,7 +191,7 @@ class MemberSearch {
         // Referral Agent & Doctor
         } else if ($basis == VolMemberType::ReferralAgent || $basis == VolMemberType::Doctor) {
 
-                $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(nw.Phone_Num, '') as `WorkPhone`, ifnull(nc.Phone_Num, '') as `CellPhone`, ifnull(ne.Email, '') as `Email`
+                $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(nw.Phone_Num, '') as `WorkPhone`, ifnull(nw.Phone_Extension, '') as `WorkExt`, ifnull(nc.Phone_Num, '') as `CellPhone`, ifnull(ne.Email, '') as `Email`
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
 left join name_phone nw on n.idName = nw.idName and nw.Phone_Code = '" . PhonePurpose::Work . "'
 left join name_phone nc on n.idName = nc.idName and nc.Phone_Code = '" . PhonePurpose::Cell . "'
@@ -224,22 +224,23 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                         $r["Name_Nickname"]
                 );
 
-                $events[] = array(
+                $events[] = [
                     'id' => $r["idName"],
-                    'value' => $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : '' ),
-                    'first' => ($nickName != '' ? $nickName : $firstName ),
+                    'value' => $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : ''),
+                    'first' => ($nickName != '' ? $nickName : $firstName),
                     'last' => $lastName,
                     'wphone' => $r["WorkPhone"],
+                    'wext' => $r['WorkExt'],
                     'cphone' => $r["CellPhone"],
                     'email' => $r['Email']
-                );
+                ];
             }
 
             $labels = Labels::getLabels();
 
 
             // Add new entry option.
-            $events[] = array('id' => 0, 'value' => ($basis == VolMemberType::Doctor ? 'New Doctor' : 'New ' . $labels->getString('hospital', 'referralAgent', 'Referral Agent')));
+            $events[] = ['id' => 0, 'value' => ($basis == VolMemberType::Doctor ? 'New Doctor' : 'New ' . $labels->getString('hospital', 'referralAgent', 'Referral Agent'))];
 
 
 
