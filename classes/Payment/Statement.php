@@ -1306,13 +1306,16 @@ WHERE
 			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Statement.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowStatement.php?vid=' . $idVisit . '&reg=' . $idRegistration . '&pdfDownload', 'class' => 'hhk-autosize')))
 		);
 
+        $emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email ' . Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
+        
         $emtableMarkup .= HTMLContainer::generateMarkup("div", 
-			$emTbl->generateMarkup(array("class"=>"emTbl mb-2"), 'Email '.Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement') . 
-			HTMLInput::generateMarkup('Send Email', array('class'=> 'ui-button ui-corner-all ui-widget', 'name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit)), ["class"=>"hhk-panel hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-all"]);
+			$emTbl->generateMarkup(array("class"=>"emTbl mb-2"), ) . 
+			HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('button', '&nbsp;<span>Send</span> <i class="ml-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'type'=>"button", "id"=>"btnEmail", 'class'=> 'ui-button ui-corner-all ui-widget', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit)), ["class"=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div",
-			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"]) . 
-        	HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"]),
+			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"])
+            //. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"])
+            ,
 		["class"=>'mb-3']);
 
         return $emtableMarkup;
@@ -1323,7 +1326,7 @@ WHERE
 
 		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
 		$mpdf->showImageErrors = true;
-		$mpdf->WriteHTML('<html><head>' . HOUSE_CSS . STATEMENT_CSS . '</head><body><div class="PrintArea">' . $stmtMarkup . '</div></body></html>');
+		$mpdf->WriteHTML('<html><head>' . HOUSE_CSS . GRID_CSS . STATEMENT_CSS . '</head><body style="font-size: 0.9em"><div class="PrintArea">' . $stmtMarkup . '</div></body></html>');
 
 		if($download == true){
 			$mpdf->OutputHttpDownload("Statement.pdf");
@@ -1405,6 +1408,10 @@ WHERE
 
         $sTbl = new HTMLTable();
 
+        $sTbl->addHeaderTr(
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("strong", "Statement Summary"), ["class"=>"border-none align-center", "colspan"=>"2"])
+        );
+
         $sTbl->addBodyTr(
             HTMLTable::makeTd('Total Nights:', array('class'=>'tdlabel'))
             . HTMLTable::makeTd(number_format($totalNights, 0), array('class'=>'align-center')),
@@ -1456,10 +1463,10 @@ WHERE
         $bodyTbl->addBodyTr(
             HTMLTable::makeTd(
                 HTMLContainer::generateMarkup("strong", 'Prepared '.date('M jS, Y')) .
-                $tbl->generateMarkup()) .
+                $tbl->generateMarkup(), ['class'=>'border-none']) .
             HTMLTable::makeTd(
-                $sTbl->generateMarkup(["class"=>"tblStmtSummary"], HTMLContainer::generateMarkup("strong", 'Statement Summary'))
-            , array("class"=>"align-center"))
+                $sTbl->generateMarkup(["class"=>"tblStmtSummary"])
+            , array("class"=>"align-right border-none"))
         );
 
         return $bodyTbl->generateMarkup(array("id"=>"stmtSummary", "class" => "mb-3 fullWidth"));

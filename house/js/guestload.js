@@ -326,6 +326,9 @@ $(document).ready(function () {
             if (ui.tab.prop('id') === 'pmtsTable') {
                 paymentsTable('feesTable', 'rptfeediv', paymentRefresh);
             }
+            if (ui.tab.prop('id') === 'stmtTab') {
+                $("#stmtDiv textarea.hhk-autosize").trigger("input");
+            }
         }
     });
 

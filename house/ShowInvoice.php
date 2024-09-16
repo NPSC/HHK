@@ -150,10 +150,7 @@ try {
 
         $emSubject = $wInit->siteName . " Invoice";
 
-        $emBody = "Hello,\n" . 
-        "Your invoice from " . $uS->siteName . " is attached.\n\r" . 
-        "Thank You,\n" . 
-        $uS->siteName;
+        $emBody = $uS->InvoiceEmailBody;
 
         // create send email table
         if ($invoice->isDeleted() === FALSE) {

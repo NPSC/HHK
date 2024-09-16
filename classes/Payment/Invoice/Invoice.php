@@ -903,13 +903,17 @@ where
 			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Invoice.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowInvoice.php?invnum='.$invNum.'&pdfDownload', 'class' => 'hhk-autosize')))
 		);
 
+		$emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email Invoice'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
+
         $emtableMarkup .= HTMLContainer::generateMarkup("div", 
-			$emTbl->generateMarkup(array("class"=>"emTbl mb-2"), 'Email Invoice') . 
-			HTMLInput::generateMarkup('Send Email', array('class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit')), ["class"=>"hhk-panel hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-all"]);
+			$emTbl->generateMarkup(array("class"=>"emTbl mb-2")) . 
+			HTMLContainer::generateMarkup("div", 
+				HTMLContainer::generateMarkup('button', 'Send <i class="ml-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit')), ['class'=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div",
-			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"]) . 
-        	HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"]),
+			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"])
+        	//. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"])
+			,
 		["class"=>'mb-3']);
 
         return $emtableMarkup;

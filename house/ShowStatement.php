@@ -50,7 +50,7 @@ $includeLogo = TRUE;
 function createScript($guestLabel) {
     return "
     $('#btnPrint, #btnEmail, #btnWord').button();
-    $('#btnEmail').click(function () {
+    $(document).on('click', '#btnEmail', function () {
         if ($('#btnEmail').val() == 'Sending...') {
             return;
         }
@@ -173,10 +173,7 @@ if (isset($_POST['btnWord'])) {
 
 $emSubject = $wInit->siteName .' '. $labels->getString('MemberType', 'visitor', 'Guest')." Statement";
 
-$emBody = "Hello,\n" . 
-        "Your Statement from " . $uS->siteName . " is attached.\n\r" . 
-        "Thank You,\n" . 
-        $uS->siteName;
+$emBody = $uS->StatementEmailBody;
 
 if (is_null($guest) === FALSE && $emAddr == '') {
     $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
@@ -184,7 +181,9 @@ if (is_null($guest) === FALSE && $emAddr == '') {
 }
 //echo Statement::createEmailStmtWrapper($stmtMarkup);
 //exit;
-$emtableMarkup = Statement::makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>",$emSubject, $emAddr, $emBody, $idRegistration, $idVisit);
+$emtableMarkup = HTMLContainer::generateMarkup("form", 
+    Statement::makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>",$emSubject, $emAddr, $emBody, $idRegistration, $idVisit)
+, ['id' => 'formEm', 'name' => 'formEm', 'method' => "POST", 'action' => 'ShowStatement.php', 'class' => 'hhk-noprint']);
 
 if(isset($_GET['pdfDownload']) && $stmtMarkup != ''){
     Statement::makePDF($stmtMarkup, true);
@@ -263,7 +262,9 @@ if (isset($_REQUEST['cmd'])) {
         echo json_encode($return);
 
     } else {
-        echo "<div id='stmtDiv'><script type='text/javascript'>" . createScript($labels->getString('Member', 'guest', 'Guest')) . "</script>" . $emtableMarkup . $stmtMarkup . "</div>";
+        echo HTMLContainer::generateMarkup("div",
+        $emtableMarkup . $stmtMarkup
+        , ['id'=>"stmtDiv"]);
     }
 
     exit();
@@ -352,9 +353,7 @@ $(document).ready(function() {
         <div id="contentDiv">
             <div id="stmtDiv" class="mt-3">
                 <?php echo $msg; ?>
-                <form id="formEm" name="formEm" method="POST" action="ShowStatement.php">
-                    <?php echo $emtableMarkup; ?>
-                </form>
+                <?php echo $emtableMarkup; ?>
                 <?php echo $stmtMarkup; ?>
             </div>
         </div>
