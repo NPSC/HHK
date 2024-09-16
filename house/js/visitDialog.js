@@ -56,7 +56,7 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
         	$hsDialog.append($(data.success));
         	$hsDialog.dialog({
                 autoOpen: true,
-                width: getDialogWidth(1000),
+                width: getDialogWidth(1050),
                 resizable: true,
                 modal: true,
                 title: (data.title ? data.title : 'Hospital Details'),
