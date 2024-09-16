@@ -484,7 +484,7 @@ $ckdate";
         $tbl->addHeaderTr(HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital').'s', array('colspan'=>'2')));
 
         if (count($this->aList) > 1) {
-            $tbl->addHeaderTr(HTMLTable::makeTh('Associations') . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital').'s'));
+            $tbl->addHeaderTr(HTMLTable::makeTh($labels->getString('hospital', 'association', 'Association')) . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital').'s'));
             $tr .= HTMLTable::makeTd($assocs, array('style'=>'vertical-align: top;'));
         }
 

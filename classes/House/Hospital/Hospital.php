@@ -78,7 +78,7 @@ class Hospital {
         $mrn = $labels->getString('hospital', 'MRN', '');
 
         $table->addHeaderTr(
-                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh('Association') : '')
+                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh($labels->getString('hospital', 'association', 'Association')) : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
                 .($mrn == '' ? '' : HTMLTable::makeTh($mrn))

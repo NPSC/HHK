@@ -107,7 +107,7 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
             $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
 
             if (count($this->filter->getAList()) > 0) {
-                $cFields[] = array("Association", 'Assoc', 'checked', '', 'string', '20');
+                $cFields[] = array($labels->getString('hospital', 'association', 'Association'), 'Assoc', 'checked', '', 'string', '20');
             }
         }
 

@@ -770,6 +770,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('diagnosisDetail','Diagnosis Details','s','h','','Default: Diagnosis Details'),
 ('location','Unit','s','h','','Default: Unit'),
 ('hospital','Hospital','s','h','','Default: Hospital'),
+('association','Association','s','h','','Default: Hospital'),
 ('treatmentStart','Treatment Start','s','h','','Default: Treatment Start'),
 ('treatmentEnd','Treatment End','s','h','','Default: Treatment End'),
 ('roomNumber','Room','s','h','','Default: Room'),
