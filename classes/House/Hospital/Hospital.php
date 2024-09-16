@@ -657,7 +657,7 @@ $(document).ready(function () {
         }
 
         if (isset($post['txtDiagnosis'])) {
-            $hstay->setDiagnosis2(filter_var($post['txtDiagnosis'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $hstay->setDiagnosis2(filter_var(base64_decode($post['txtDiagnosis']), FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['selLocation'])) {
