@@ -122,7 +122,8 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
                 ne.Email,
                 r.idReservation,
                 r.idGuest,
-            	r.Expected_Arrival
+            	r.Expected_Arrival,
+                r.Expected_Departure
             FROM
                 reservation r
                 JOIN
@@ -168,12 +169,10 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
         }
 
         $badAddresses = 0;
-        $deparatureDT = new \DateTime();
-        $deparatureDT->add(new \DateInterval('P' . $delayDays . 'D'));
+        $ArrivalDT = new \DateTime();
+        $ArrivalDT->add(new \DateInterval('P' . $delayDays . 'D'));
 
         foreach ($recipients as $r) {
-
-            //$deparatureDT = new \DateTime($r['Actual_Departure']);
 
             if (isset($r['Email']) && $r['Email'] != '') {
                 // Verify Email Address
@@ -211,8 +210,21 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
 
                 $this->logMsg .= "Email Address: " . $r['Email'] . ',  Reservation Id: ' . $r['idReservation'] . ', PrimaryGuest Id: ' . $r['idGuest'] . "<br>";
 
-                //Add Visit note
-                $noteText = "Email sent to " . $r['Email'] . " with subject: " . $subjectLine;
+                //build note text
+                $noteText = ($sForm->getDocTitle() != '' ? $sForm->getDocTitle() . ' ' : '') . 'Confirmation Email';
+
+                try {
+                    $arrive = (new \DateTime($resv->getArrival()))->format("M d, Y");
+                    $depart = (new \DateTime($resv->getDeparture()))->format("M d, Y");
+
+                    $noteText .= " for " . $arrive . " to " . $depart;
+                }catch(\Exception $e){
+
+                }
+                
+                $noteText .= ' sent to ' . $r['Email'] .  " with subject: " . htmlspecialchars_decode($subjectLine, ENT_QUOTES);
+
+                //Save note
                 LinkNote::save($this->dbh, $noteText, $r['idReservation'], Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
 
             } else {
@@ -227,10 +239,10 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
             if($copyEmail && $copyEmail != ''){
                 $mail->clearAddresses();
                 $mail->addAddress($copyEmail);
-                $mail->Subject = "Auto Confirmation Email Results for ".$labels->getString('MemberType', 'visitor', 'Guest') . "s arriving " . $deparatureDT->format('M j, Y');
+                $mail->Subject = "Auto Confirmation Email Results for ".$labels->getString('MemberType', 'visitor', 'Guest') . "s arriving " . $ArrivalDT->format('M j, Y');
 
                 $messg = "<p><strong>Today's date:</strong> " . date('M j, Y');
-                $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s arriving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
+                $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s arriving " . $ArrivalDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
                 $messg .= "<p><strong>Subject Line:</strong> " . $subjectLine . "</p>";
                 $messg .= "<p><strong>Template Text:</strong> </p>" . $sForm->template . "<br/>";
                 $messg .= "<p><strong>Results:</strong></p>" . $this->logMsg;
@@ -241,12 +253,12 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
             }
 
             $this->logMsg .= "<hr/>Auto Email Results: " . $numRecipients . " messages were sent";
-            $this->logMsg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s arriving " . $deparatureDT->format('M j, Y');
+            $this->logMsg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s arriving " . $ArrivalDT->format('M j, Y');
             $this->logMsg .= "<br/> Subject Line: " . $subjectLine;
 
         } else if (!$sendEmail) {
             $this->logMsg .= "<hr/>Auto Email Results: " . $numRecipients . " messages would be sent. Bad addresses: ".$badAddresses;
-            $this->logMsg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s arriving " . $deparatureDT->format('M j, Y');
+            $this->logMsg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s arriving " . $ArrivalDT->format('M j, Y');
             $this->logMsg .= "<br/> Subject Line: " . $subjectLine;
         }
 
@@ -265,7 +277,7 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
         return $result;
     }
 
-    protected function getResvStatusList(PDO $dbh){
+    public static function getResvStatusList(PDO $dbh){
         $stmt = $dbh->query("select `Code`, `Title` from `lookups` where `Category` = 'ReservStatus' and `Show` = 'y' order by `Type` asc;");
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
