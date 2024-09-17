@@ -65,7 +65,7 @@ $catVolStatus->set_value(TRUE, 'a');
 if (filter_has_var(INPUT_POST, "btnCat") || filter_has_var(INPUT_POST, "btnCatDL") || filter_has_var(INPUT_POST, "btnCSVEmail")) {
     $makeTable = 1;
 
-    ini_set('memory_limit', "128M");
+//    ini_set('memory_limit', "128M");
 
     require("functions" . DS . "CategoryReportMgr.php");
 

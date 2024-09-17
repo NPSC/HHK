@@ -405,4 +405,3 @@ vm.Id AS Id,
 
     return $query;
 }
-?>
