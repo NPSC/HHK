@@ -2074,33 +2074,33 @@ group by concat(`ml`.`adr_frag`, `fm`);
 -- -----------------------------------------------------
 -- View `vmember_categories`
 -- -----------------------------------------------------
--- CREATE or replace VIEW `vmember_categories` AS
--- select
---     nv.idName AS `idName`,
---     nv.Vol_Code AS `Vol_Code`,
---     nv.Vol_Category AS `Vol_Category`,
---     c.Vol_Category_Title AS `Vol_Category_Title`,
---     c.Vol_Code_Title AS `Vol_Code_Title`,
---     c.Colors AS `Colors`,
---     nv.Vol_Status AS `Vol_Status`,
---     d.Begin_Active AS `Dormant_Begin_Active`,
---     d.End_Active AS `Dormant_End_Active`,
---     ifnull(d.Title,'') as `Dormant_Title`,
---     ifnull(nv.Vol_Notes, '') AS `Vol_Notes`,
---     nv.Vol_Begin AS `Vol_Begin`,
---     nv.Vol_End AS `Vol_End`,
---     nv.Vol_Check_Date AS `Vol_Check_Date`,
---     nv.Vol_Rank AS `Vol_Rank`,
---     ifnull(gr.Description, '') as `Vol_Rank_Title`,
---     ifnull(gstat.Description, '') as `Vol_Status_Title`
--- from
---     name_volunteer2 nv
---     left join vcategory_listing c ON nv.Vol_Category = c.Vol_Category and nv.Vol_Code = c.Vol_Code
---     left join dormant_schedules d ON nv.Dormant_Code = d.Code and d.Status = 'a'
---     left join gen_lookups gr ON gr.Table_Name = 'Vol_Rank' and gr.Code = nv.Vol_Rank
---     left join gen_lookups gstat ON gstat.Table_Name = 'Vol_Status' and gstat.Code = nv.Vol_Status
---     left join name on nv.idName = name.idName
---     where name.Member_Status = 'a';
+CREATE or replace VIEW `vmember_categories` AS
+select
+    nv.idName AS `idName`,
+    nv.Vol_Code AS `Vol_Code`,
+    nv.Vol_Category AS `Vol_Category`,
+    c.Vol_Category_Title AS `Vol_Category_Title`,
+    c.Vol_Code_Title AS `Vol_Code_Title`,
+    c.Colors AS `Colors`,
+    nv.Vol_Status AS `Vol_Status`,
+    d.Begin_Active AS `Dormant_Begin_Active`,
+    d.End_Active AS `Dormant_End_Active`,
+    ifnull(d.Title,'') as `Dormant_Title`,
+    ifnull(nv.Vol_Notes, '') AS `Vol_Notes`,
+    nv.Vol_Begin AS `Vol_Begin`,
+    nv.Vol_End AS `Vol_End`,
+    nv.Vol_Check_Date AS `Vol_Check_Date`,
+    nv.Vol_Rank AS `Vol_Rank`,
+    ifnull(gr.Description, '') as `Vol_Rank_Title`,
+    ifnull(gstat.Description, '') as `Vol_Status_Title`
+from
+    name_volunteer2 nv
+    left join vcategory_listing c ON nv.Vol_Category = c.Vol_Category and nv.Vol_Code = c.Vol_Code
+    left join dormant_schedules d ON nv.Dormant_Code = d.Code and d.Status = 'a'
+    left join gen_lookups gr ON gr.Table_Name = 'Vol_Rank' and gr.Code = nv.Vol_Rank
+    left join gen_lookups gstat ON gstat.Table_Name = 'Vol_Status' and gstat.Code = nv.Vol_Status
+    left join name on nv.idName = name.idName
+    where name.Member_Status = 'a';
 
 
 
@@ -3102,38 +3102,38 @@ WHERE v.`Status` <> 'c';
 -- -----------------------------------------------------
 -- View `vvol_categories2`
 -- -----------------------------------------------------
--- CREATE or replace VIEW `vvol_categories2` AS
--- select `vm`.`Id` AS `Id`,
--- (case when (`vm`.`MemberRecord` = 1) then `vm`.`Name_Last` else `vm`.`Company` end) AS `Name_Last`,
--- (case when (`vm`.`MemberRecord` = 1) then `vm`.`Name_First` else '' end) AS `Name_First`,
--- `nv`.`Vol_Code` AS `Vol_Code`,
--- `gc`.`Description` AS `Category`,
--- `nv`.`Vol_Category` AS `Category_Code`,
--- (case when (ifnull(`g`.`Code`,'') <> '') then ifnull(`g`.`Description`,'') end) AS `Description`,
--- `nv`.`Vol_Status` AS `Vol_Status`,
--- (case when (`vm`.`Member_Type` = 'ai') then `vm`.`Fullname` when (`vm`.`Member_Type` <> 'ai') then `vm`.`Company` else '' end) AS `Name_Full`,
--- `vm`.`Preferred_Phone` AS `PreferredPhone`,
--- `vm`.`Preferred_Email` AS `PreferredEmail`,
--- concat_ws(' ',`vm`.`Address_1`,`vm`.`Address_2`,`vm`.`City`,`vm`.`StateProvince`,`vm`.`PostalCode`) AS `Full_Address`,
--- concat_ws(' ',`vm`.`Address_1`,`vm`.`Address_2`) AS `Address`,
--- `vm`.`City` AS `City`,
--- `vm`.`StateProvince` AS `State`,
--- `vm`.`PostalCode` AS `Zip`,
--- ifnull(`d`.`Title`,'') AS `Title`,
--- cast(`d`.`Begin_Active` as date) AS `Begin_Active`,
--- cast(`d`.`End_Active` as date) AS `End_Active`,
--- ifnull(`nv`.`Vol_Notes`,'') AS `Vol_Notes`,
--- `vm`.`Member_Type` AS `Member_Type`,
--- `nv`.`Vol_Begin` AS `Vol_Begin`,
--- `nv`.`Vol_End` AS `Vol_End`,
--- ifnull(`gr`.`Description`,'') AS `Vol_Rank`,
--- `nv`.`Vol_Check_Date` AS `Check_Date`,
--- `nv`.`Vol_Rank` AS `Vol_Rank_Code`
--- from (((((`vmember_listing` `vm` join `name_volunteer2` `nv` on(((`vm`.`Id` = `nv`.`idName`) and (`vm`.`MemberStatus` = 'a'))))
--- left join `dormant_schedules` `d` on(((`nv`.`Dormant_Code` = `d`.`Code`) and (`d`.`Status` = 'a'))))
--- left join `gen_lookups` `g` on(((`nv`.`Vol_Code` = `g`.`Code`) and (`g`.`Table_Name` = `nv`.`Vol_Category`))))
--- left join `gen_lookups` `gr` on(((`nv`.`Vol_Rank` = `gr`.`Code`) and (`gr`.`Table_Name` = 'Vol_Rank'))))
--- left join `gen_lookups` `gc` on(((`nv`.`Vol_Category` = `gc`.`Code`) and (`gc`.`Table_Name` = 'Vol_Category'))));
+CREATE or replace VIEW `vvol_categories2` AS
+select `vm`.`Id` AS `Id`,
+(case when (`vm`.`MemberRecord` = 1) then `vm`.`Name_Last` else `vm`.`Company` end) AS `Name_Last`,
+(case when (`vm`.`MemberRecord` = 1) then `vm`.`Name_First` else '' end) AS `Name_First`,
+`nv`.`Vol_Code` AS `Vol_Code`,
+`gc`.`Description` AS `Category`,
+`nv`.`Vol_Category` AS `Category_Code`,
+(case when (ifnull(`g`.`Code`,'') <> '') then ifnull(`g`.`Description`,'') end) AS `Description`,
+`nv`.`Vol_Status` AS `Vol_Status`,
+(case when (`vm`.`Member_Type` = 'ai') then `vm`.`Fullname` when (`vm`.`Member_Type` <> 'ai') then `vm`.`Company` else '' end) AS `Name_Full`,
+`vm`.`Preferred_Phone` AS `PreferredPhone`,
+`vm`.`Preferred_Email` AS `PreferredEmail`,
+concat_ws(' ',`vm`.`Address_1`,`vm`.`Address_2`,`vm`.`City`,`vm`.`StateProvince`,`vm`.`PostalCode`) AS `Full_Address`,
+concat_ws(' ',`vm`.`Address_1`,`vm`.`Address_2`) AS `Address`,
+`vm`.`City` AS `City`,
+`vm`.`StateProvince` AS `State`,
+`vm`.`PostalCode` AS `Zip`,
+ifnull(`d`.`Title`,'') AS `Title`,
+cast(`d`.`Begin_Active` as date) AS `Begin_Active`,
+cast(`d`.`End_Active` as date) AS `End_Active`,
+ifnull(`nv`.`Vol_Notes`,'') AS `Vol_Notes`,
+`vm`.`Member_Type` AS `Member_Type`,
+`nv`.`Vol_Begin` AS `Vol_Begin`,
+`nv`.`Vol_End` AS `Vol_End`,
+ifnull(`gr`.`Description`,'') AS `Vol_Rank`,
+`nv`.`Vol_Check_Date` AS `Check_Date`,
+`nv`.`Vol_Rank` AS `Vol_Rank_Code`
+from (((((`vmember_listing` `vm` join `name_volunteer2` `nv` on(((`vm`.`Id` = `nv`.`idName`) and (`vm`.`MemberStatus` = 'a'))))
+left join `dormant_schedules` `d` on(((`nv`.`Dormant_Code` = `d`.`Code`) and (`d`.`Status` = 'a'))))
+left join `gen_lookups` `g` on(((`nv`.`Vol_Code` = `g`.`Code`) and (`g`.`Table_Name` = `nv`.`Vol_Category`))))
+left join `gen_lookups` `gr` on(((`nv`.`Vol_Rank` = `gr`.`Code`) and (`gr`.`Table_Name` = 'Vol_Rank'))))
+left join `gen_lookups` `gc` on(((`nv`.`Vol_Category` = `gc`.`Code`) and (`gc`.`Table_Name` = 'Vol_Category'))));
 
 
 
