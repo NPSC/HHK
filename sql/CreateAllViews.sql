@@ -2083,9 +2083,9 @@ select
     c.Vol_Code_Title AS `Vol_Code_Title`,
     c.Colors AS `Colors`,
     nv.Vol_Status AS `Vol_Status`,
-    d.Begin_Active AS `Dormant_Begin_Active`,
-    d.End_Active AS `Dormant_End_Active`,
-    ifnull(d.Title,'') as `Dormant_Title`,
+    '' AS `Dormant_Begin_Active`,
+    '' AS `Dormant_End_Active`,
+    '' as `Dormant_Title`,
     ifnull(nv.Vol_Notes, '') AS `Vol_Notes`,
     nv.Vol_Begin AS `Vol_Begin`,
     nv.Vol_End AS `Vol_End`,
@@ -2096,7 +2096,7 @@ select
 from
     name_volunteer2 nv
     left join vcategory_listing c ON nv.Vol_Category = c.Vol_Category and nv.Vol_Code = c.Vol_Code
-    left join dormant_schedules d ON nv.Dormant_Code = d.Code and d.Status = 'a'
+    -- left join dormant_schedules d ON nv.Dormant_Code = d.Code and d.Status = 'a'
     left join gen_lookups gr ON gr.Table_Name = 'Vol_Rank' and gr.Code = nv.Vol_Rank
     left join gen_lookups gstat ON gstat.Table_Name = 'Vol_Status' and gstat.Code = nv.Vol_Status
     left join name on nv.idName = name.idName
@@ -3119,9 +3119,9 @@ concat_ws(' ',`vm`.`Address_1`,`vm`.`Address_2`) AS `Address`,
 `vm`.`City` AS `City`,
 `vm`.`StateProvince` AS `State`,
 `vm`.`PostalCode` AS `Zip`,
-ifnull(`d`.`Title`,'') AS `Title`,
-cast(`d`.`Begin_Active` as date) AS `Begin_Active`,
-cast(`d`.`End_Active` as date) AS `End_Active`,
+'' AS `Title`,
+'' AS `Begin_Active`,
+'' AS `End_Active`,
 ifnull(`nv`.`Vol_Notes`,'') AS `Vol_Notes`,
 `vm`.`Member_Type` AS `Member_Type`,
 `nv`.`Vol_Begin` AS `Vol_Begin`,
@@ -3129,11 +3129,11 @@ ifnull(`nv`.`Vol_Notes`,'') AS `Vol_Notes`,
 ifnull(`gr`.`Description`,'') AS `Vol_Rank`,
 `nv`.`Vol_Check_Date` AS `Check_Date`,
 `nv`.`Vol_Rank` AS `Vol_Rank_Code`
-from (((((`vmember_listing` `vm` join `name_volunteer2` `nv` on(((`vm`.`Id` = `nv`.`idName`) and (`vm`.`MemberStatus` = 'a'))))
-left join `dormant_schedules` `d` on(((`nv`.`Dormant_Code` = `d`.`Code`) and (`d`.`Status` = 'a'))))
-left join `gen_lookups` `g` on(((`nv`.`Vol_Code` = `g`.`Code`) and (`g`.`Table_Name` = `nv`.`Vol_Category`))))
-left join `gen_lookups` `gr` on(((`nv`.`Vol_Rank` = `gr`.`Code`) and (`gr`.`Table_Name` = 'Vol_Rank'))))
-left join `gen_lookups` `gc` on(((`nv`.`Vol_Category` = `gc`.`Code`) and (`gc`.`Table_Name` = 'Vol_Category'))));
+from `vmember_listing` `vm` join `name_volunteer2` `nv` on `vm`.`Id` = `nv`.`idName` and `vm`.`MemberStatus` = 'a'
+-- left join `dormant_schedules` `d` on(((`nv`.`Dormant_Code` = `d`.`Code`) and (`d`.`Status` = 'a'))))
+left join `gen_lookups` `g` on `nv`.`Vol_Code` = `g`.`Code` and `g`.`Table_Name` = `nv`.`Vol_Category`
+left join `gen_lookups` `gr` on `nv`.`Vol_Rank` = `gr`.`Code` and `gr`.`Table_Name` = 'Vol_Rank'
+left join `gen_lookups` `gc` on `nv`.`Vol_Category` = `gc`.`Code` and `gc`.`Table_Name` = 'Vol_Category';
 
 
 
