@@ -1331,7 +1331,7 @@ WHERE
 
         // Show diagnosis
         if ($uS->ShowDiagOnStmt && count($diags) > 0 && $diags[1] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($diags[1]));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($diags[1]));
 
             if (count($diags) > 1 && $diags[2] != '') {
                 $tbl->addBodyTr(HTMLTable::makeTd('2nd '.$labels->getString('statement', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($diags[2]));
