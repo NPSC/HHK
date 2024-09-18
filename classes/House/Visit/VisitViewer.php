@@ -355,10 +355,11 @@ class VisitViewer {
 
         } else if ($r['Status'] == VisitStatus::NewSpan) {
 
-            $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Room Change', array('for'=>'undoRmChg'))
-                    . HTMLInput::generateMarkup('', array('id'=>'undoRmChg', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'));
+            // Make undo Room Change button
+            $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Room Change', ['for' => 'undoRmChg'])
+                    . HTMLInput::generateMarkup('', ['id' => 'undoRmChg', 'type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.3em;margin-left:0.3em;']);
 
-            $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0.1em;', 'title'=>'Undo Room Change'));
+            $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, ['style' => 'margin:0.1em;', 'title' => 'Undo Room Change']);
         }
 
 

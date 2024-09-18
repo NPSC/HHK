@@ -678,6 +678,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     let ckoutlist = [];
     let removeList = [];
     let undoCheckout = false;
+    let undoRoomChg = false;
     let parms = {
         cmd: 'saveFees',
         idGuest: idGuest,
@@ -708,8 +709,13 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         undoCheckout = true;
     }
 
+    // Undo Room Change
+    if ($('#undoRmChg').length > 0 && $('#undoRmChg').prop('checked')) {
+        undoRoomChg = true;
+    }
+
     // Overpayment disposition
-    if (isCheckedOut && verifyBalDisp() === false && undoCheckout === false) {
+    if (isCheckedOut && verifyBalDisp() === false && undoCheckout === false && undoRoomChg === false) {
         return;
     }
 

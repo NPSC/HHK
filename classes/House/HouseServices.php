@@ -1078,7 +1078,7 @@ class HouseServices {
 
         // Next visit must be the last.
         if ($nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedIn && $nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedOut) {
-            return 'Next Visit Span must be Checked-in or Checked-out.  ';
+            return 'Cannot Undo this room change. Next Visit Span must be Checked-in or Checked-out.  ';
         }
 
         // Dates
@@ -1106,10 +1106,10 @@ class HouseServices {
         // Load this visit's stays that were still checked in.
         $stays = Visit::loadStaysStatic($dbh, $visit->getIdVisit(), $visit->getSpan(), VisitStatus::NewSpan);
 
-        $numOccupants = max( array(count($nextStays), count($visit->stays)) );
+        $numOccupants = max([count($nextStays), count($visit->stays)] );
 
         // Check room availability
-        if ($resv->isResourceOpen($dbh, $visit->getidResource(), $startDt, $expDepDT->format('Y-m-d 01:00:00'), $numOccupants, array('room', 'rmtroom', 'part'), TRUE, TRUE) === FALSE) {
+        if ($resv->isResourceOpen($dbh, $visit->getidResource(), $startDt, $expDepDT->format('Y-m-d 01:00:00'), $numOccupants, ['room', 'rmtroom', 'part'], TRUE, TRUE) === FALSE) {
             return 'The room is unavailable. ';
         }
 
@@ -1136,7 +1136,7 @@ class HouseServices {
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
         // remove the next visit
-        EditRS::delete($dbh, $nextVisitRs, array($nextVisitRs->idVisit, $nextVisitRs->Span));
+        EditRS::delete($dbh, $nextVisitRs, [$nextVisitRs->idVisit, $nextVisitRs->Span]);
         $logDelText = VisitLog::getDeleteText($nextVisitRs, $nextVisitRs->idVisit->getStoredVal());
         VisitLog::logVisit($dbh, $nextVisitRs->idVisit->getStoredVal(), $nextVisitRs->Span->getStoredVal(), $nextVisitRs->idResource->getStoredVal(), $nextVisitRs->idRegistration->getStoredVal(), $logDelText, "delete", $uname);
 
@@ -1180,7 +1180,7 @@ class HouseServices {
                 if ($s->idName->getStoredVal() == $ns->idName->getStoredVal()
                         && date('Y-m-d', strtotime($s->Span_End_Date->getStoredVal())) == date('Y-m-d', strtotime($ns->Span_Start_Date->getStoredVal()))) {
 
-                    EditRS::delete($dbh, $ns, array($ns->idStays));
+                    EditRS::delete($dbh, $ns, [$ns->idStays]);
                     continue 2;
                 }
             }
