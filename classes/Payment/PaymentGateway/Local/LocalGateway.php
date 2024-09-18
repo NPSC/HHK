@@ -308,7 +308,7 @@ class LocalGateway extends AbstractPaymentGateway {
 				$uS->username );
 
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $rtnTokenId, PaymentStatusCode::Paid );
-		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
+		$vr->setPaymentDate ($invoice->getDate() );  // Use invoice date instead of today.  9/18/24 EKC
 		$vr->setPaymentNotes ( $paymentNotes );
 		$vr->setRefund(TRUE);
 
