@@ -142,6 +142,9 @@ try {
 
                         $mail->send();
                         $msg .= "Email sent to " . $emAddr . ".  ";
+
+                        //update invoice EmailDate
+                        $invoice->setEmailDate($dbh, new DateTime(), $uS->username);
                     } catch (\Exception $e) {
                         $msg .= "Email failed!  " . $e->getMessage() . $mail->ErrorInfo;
                     }

@@ -170,3 +170,7 @@ INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES (
 
 
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('association','Association','s','h','','Default: Hospital');
+
+
+ALTER TABLE `invoice` 
+ADD COLUMN IF NOT EXISTS `EmailDate` DATETIME NULL DEFAULT NULL AFTER `BillDate`;

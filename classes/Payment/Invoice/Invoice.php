@@ -1193,6 +1193,34 @@ where
 
 		return FALSE;
 	}
+
+	/**
+	 * Summary of setEmailDate
+	 * @param \PDO $dbh
+	 * @param mixed $billDT
+	 * @param mixed $user
+	 * @return bool
+	 */
+	public function setEmailDate(\PDO $dbh, \DateTimeInterface $emailDT, $user) {
+		$this->invRs->EmailDate->setNewVal ( $emailDT->format ( 'Y-m-d' ) );
+
+		if ($this->idInvoice > 0) {
+
+			$this->invRs->Last_Updated->setNewVal ( date ( 'Y-m-d H:i:s' ) );
+			$this->invRs->Updated_By->setNewVal ( $user );
+
+			EditRS::update ( $dbh, $this->invRs, array (
+					$this->invRs->Invoice_Number
+			) );
+
+			EditRS::updateStoredVals ( $this->invRs );
+
+			return TRUE;
+		}
+
+		return FALSE;
+	}
+	
 	/**
 	 * Summary of setAmountToPay
 	 * @param mixed $amt
