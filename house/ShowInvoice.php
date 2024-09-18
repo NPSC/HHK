@@ -157,7 +157,7 @@ try {
 
         // create send email table
         if ($invoice->isDeleted() === FALSE) {
-            $emtableMarkup = Invoice::makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>", $emSubject, $emAddrs, $emBody, $invNum);
+            $emtableMarkup = $invoice->makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>", $emSubject, $emAddrs, $emBody, $invNum);
         }
     } else {
         $msg .= 'Invoice not found.';

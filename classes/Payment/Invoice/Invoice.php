@@ -877,7 +877,7 @@ where
 		return $mkup;
 	}
 
-	public static function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = "", $emBody = "", $invNum = null){
+	public function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = "", $emBody = "", $invNum = null){
         $emtableMarkup = "";
         $emTbl = new HTMLTable();
 
@@ -902,6 +902,14 @@ where
 			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
 			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Invoice.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowInvoice.php?invnum='.$invNum.'&pdfDownload', 'class' => 'hhk-autosize')))
 		);
+
+		if($this->invRs->EmailDate->getStoredVal()){
+			$emailDT = new \DateTime($this->invRs->EmailDate->getStoredVal());
+			$emTbl->addBodyTr(
+				HTMLTable::makeTd('Last Sent', ['class'=>"tdlabel"]) . 
+				HTMLTable::makeTd($emailDT->format("M j, Y g:i a"))
+			);
+		}
 
 		$emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email Invoice'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
 
@@ -1246,7 +1254,7 @@ where
 	 * @return bool
 	 */
 	public function setEmailDate(\PDO $dbh, \DateTimeInterface $emailDT, $user) {
-		$this->invRs->EmailDate->setNewVal ( $emailDT->format ( 'Y-m-d' ) );
+		$this->invRs->EmailDate->setNewVal ( $emailDT->format ( 'Y-m-d H:i:s' ) );
 
 		if ($this->idInvoice > 0) {
 
