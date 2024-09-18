@@ -169,6 +169,7 @@ INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES (
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES ('c', 'Guest Name Suffix', '${GuestNameSuffix}');
 
 
+
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`, `Show`) VALUES ('InvoiceEmailBody','Hello, 
 Your invoice from (house name) is attached. 
 
@@ -179,3 +180,9 @@ Your statement from (house name) is attached.
 
 Thank you 
 (house name)','t','f','','Default email body for Statements','',1);
+
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('association','Association','s','h','','Default: Hospital');
+
+
+ALTER TABLE `invoice` 
+ADD COLUMN IF NOT EXISTS `EmailDate` DATETIME NULL DEFAULT NULL AFTER `BillDate`;

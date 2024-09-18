@@ -78,7 +78,7 @@ class Hospital {
         $mrn = $labels->getString('hospital', 'MRN', '');
 
         $table->addHeaderTr(
-                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh('Association') : '')
+                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh($labels->getString('hospital', 'association', 'Association')) : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
                 .($mrn == '' ? '' : HTMLTable::makeTh($mrn))
@@ -196,9 +196,10 @@ class Hospital {
 
 
             $wPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Work)["Phone_Num"];
+            $wExt = $agent->getPhonesObj()->get_Data(PhonePurpose::Work)["Phone_Extension"];
             $cPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Cell)["Phone_Num"];
             $email = $agent->getEmailsObj()->get_Data()['Email'];
-            $name = array('first'=>$agent->getRoleMember()->get_firstName(), 'last'=>$agent->getRoleMember()->get_lastName());
+            $name = ['first' => $agent->getRoleMember()->get_firstName(), 'last' => $agent->getRoleMember()->get_lastName()];
             $idName = $agent->getIdName();
             $guestSubmittedAgent = '';
 
@@ -215,8 +216,8 @@ class Hospital {
 
                             // No, The guest's agent name is different than the one saved.
                             $guestSubmittedAgent = HTMLContainer::generateMarkup('span', 'Different Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
-                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ', ' .$referralHospitalData['referralAgent']['email'],
-                            array('class'=>'ui-state-highlight'));
+                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ($referralHospitalData['referralAgent']['extension']== '' ? '' :'x' . $referralHospitalData['referralAgent']['extension']) . ', ' .$referralHospitalData['referralAgent']['email'],
+                            ['class' => 'ui-state-highlight']);
 
                     }
 
@@ -231,6 +232,7 @@ class Hospital {
                         // Agent exists, assign agent
 
                         $wPhone = $results[0]['wphone'];
+                        $wExt = $results[0]['wext'];
                         $cPhone = $results[0]['cphone'];
                         $email = $results[0]['email'];
                         $name = array('first'=>$results[0]['first'], 'last'=>$results[0]['last']);
@@ -264,53 +266,62 @@ class Hospital {
             $ratbl->addBodyTr(
                 HTMLTable::makeTh(HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'referralAgent', 'Referral Agent')).
                         HTMLContainer::generateMarkup('span', '', array('name'=>'agentSearch', 'class'=>'hhk-agentSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'margin-left:1.3em;'))
-                        . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'txtAgentSch', 'class'=>'ignrSave', 'size'=>'16', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'margin-left:0.3em;'))
-                        , array('colspan'=>'3', 'id'=>'a_titleTh'))
-                .HTMLTable::makeTd($guestSubmittedAgent, array('colspan'=>'3'))
+                        . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', ['id' => 'txtAgentSch', 'class' => 'ignrSave', 'size' => '16', 'title' => 'Type 3 characters to start the search.']), ['title' => 'Search', 'style' => 'margin-left:0.3em;'])
+                        ,
+                    ['colspan' => '3', 'id' => 'a_titleTh'])
+                .HTMLTable::makeTd($guestSubmittedAgent, ['colspan' => '3'])
             );
 
             $ratbl->addBodyTr(
                 HTMLTable::makeTh("x", array('class'=>'a_actions')) .
                 HTMLTable::makeTh('First')
                 .HTMLTable::makeTh('Last')
-                .HTMLTable::makeTh('Phone', array('class'=>'hhk-agentInfo', 'colspan'=>'2', 'style'=>'min-width:362px'))
-                .HTMLTable::makeTh('Email', array('style'=>'vertical-align:bottom;', 'class'=>'hhk-agentInfo'))
-                , array('class'=>'hhk-agentInfo'));
+                .HTMLTable::makeTh('Phone', ['class' => 'hhk-agentInfo', 'colspan' => '2', 'style' => 'min-width:362px'])
+                .HTMLTable::makeTh('Email', ['style' => 'vertical-align:bottom;', 'class' => 'hhk-agentInfo'])
+                ,
+                ['class' => 'hhk-agentInfo']);
 
             $ratbl->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash')), array('class'=>'ui-corner-all ui-state-default ui-button ui-widget', 'style'=>'padding: 0.2em 0.4em;', 'id'=>'a_delete', 'type'=>'button')), array('class'=>'a_actions')) .
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-trash']), ['class' => 'ui-corner-all ui-state-default ui-button ui-widget', 'style' => 'padding: 0.2em 0.4em;', 'id' => 'a_delete', 'type' => 'button']), ['class' => 'a_actions']) .
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $name['first'],
                                 array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay name'))
-                    .HTMLInput::generateMarkup($idName, array('name'=>'a_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
+                    .HTMLInput::generateMarkup($idName, ['name' => 'a_idName', 'type' => 'hidden', 'class' => 'hospital-stay'])
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $name['last'],
-                                array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay name'))
+                        ['name' => 'a_txtLastName', 'size' => '17', 'class' => 'hhk-agentInfo hospital-stay name'])
                         )
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ' .
                         HTMLInput::generateMarkup(
                                 $cPhone,
-                                array('id'=>'a_txtPhone'.PhonePurpose::Cell, 'name'=>'a_txtPhone[' .PhonePurpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
-                        , array('style'=>'text-align:right;')
-                        )
+                        ['id' => 'a_txtPhone' . PhonePurpose::Cell, 'name' => 'a_txtPhone[' . PhonePurpose::Cell . ']', 'size' => '16', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
+                        ,
+                    ['style' => 'text-align:right;']
+                )
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
                     HTMLInput::generateMarkup(
                         $wPhone,
-                        array('id'=>'a_txtPhone'.PhonePurpose::Work, 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
-                    , array('style'=>'text-align:right;')
-                    )
+                        ['id' => 'a_txtPhone' . PhonePurpose::Work, 'name' => 'a_txtPhone[' . PhonePurpose::Work . ']', 'size' => '16', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
+                    . ' x: '
+                    . HTMLInput::generateMarkup(
+                        $wExt,
+                        ['id' => 'a_txtExtn' . PhonePurpose::Work, 'name' => 'a_txtExtn[' . PhonePurpose::Work . ']', 'size' => '6', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
+                    ,
+                    ['style' => 'text-align:right;']
+                )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $email,
-                                array('id'=>'a_txtEmail1', 'name'=>'a_txtEmail[1]', 'size'=>'24', 'class'=>'hhk-emailInput hhk-agentInfo hospital-stay'))
-                        .HTMLContainer::generateMarkup('span', '', array('class'=>'hhk-send-email'))
+                        ['id' => 'a_txtEmail1', 'name' => 'a_txtEmail[1]', 'size' => '24', 'class' => 'hhk-emailInput hhk-agentInfo hospital-stay'])
+                        .HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-send-email'])
                         )
-                , array('class'=>'hhk-agentInfo'));
+                ,
+                ['class' => 'hhk-agentInfo']);
 
-            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(array('style'=>'margin-top:.5em;'));
+            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(['style' => 'margin-top:.5em;']);
 
 
         }

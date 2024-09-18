@@ -662,6 +662,7 @@ CREATE TABLE if not exists `invoice` (
   `In_Process_Payment` tinyint(4) NOT NULL DEFAULT '0',
   `BillStatus` VARCHAR(5) NOT NULL DEFAULT '',
   `BillDate` DATE NULL,
+  `EmailDate` DATETIME NULL,
   `Last_Reminder` DATETIME,
   `Overdue_Step` INTEGER NOT NULL DEFAULT '0',
   `Description` varchar(45) NOT NULL DEFAULT '',
