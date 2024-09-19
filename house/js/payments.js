@@ -1604,19 +1604,19 @@ function setupCOF($chgExpand, idx) {
 
         $(document).find('input[name=rbUseCard' + idx + ']').on('change', function () {
             if ($(this).val() == 0 || ($(this).prop('checked') === true && $(this).prop('type') === 'checkbox')) {
-                $chgExpand.show();
+                $chgExpand.show("fade");
             } else {
-                $chgExpand.hide();
+                $chgExpand.hide("fade");
                 $('#btnvrKeyNumber' + idx).prop('checked', false).change();
                 $('#txtvdNewCardName' + idx).val('');
             }
 
-            $('#tdChargeMsg' + idx).text('').hide();
+            $('#tdChargeMsg' + idx).text('').hide("fade");
             $('#selccgw' + idx).removeClass('ui-state-highlight');
         });
 
         if ($(document).find('input[name=rbUseCard' + idx + ']:checked').val() > 0 || ($(document).find('input[name=rbUseCard' + idx + ']').prop('checked') === false && $(document).find('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
-            $chgExpand.hide();
+            $chgExpand.hide("fade");
         }
 
         $(document).find('input[name=rbUseCard' + idx + ']').trigger('change');
@@ -1624,11 +1624,11 @@ function setupCOF($chgExpand, idx) {
         // Instamed-specific controls
         if ($('#btnvrKeyNumber' + idx).length > 0) {
             $('#btnvrKeyNumber' + idx).change(function () {
-
-                if ($('input[name=rbUseCard' + idx + ']:checked').val() == 0 || ($('input[name=rbUseCard' + idx + ']').prop('checked') === true && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
-                    $('#txtvdNewCardName' + idx).show();
+                
+                if (($('input[name=rbUseCard' + idx + ']:checked').val() == 0 && $('#btnvrKeyNumber' + idx).prop("checked") == true) || ($('input[name=rbUseCard' + idx + ']').prop('checked') === true && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
+                    $('#trvdCHName' + idx).show("fade");
                 } else {
-                    $('#txtvdNewCardName' + idx).hide();
+                    $('#trvdCHName' + idx).hide("fade");
                     $('#txtvdNewCardName' + idx).val('');
                 }
             });

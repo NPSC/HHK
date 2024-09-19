@@ -59,6 +59,9 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $idRegistration = $payResult->getIdRegistration();
+        $idPayment = $payResult->getIdPayment();
+        $invoiceNumber = $payResult->getInvoiceNumber();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {

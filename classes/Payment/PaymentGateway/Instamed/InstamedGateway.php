@@ -1138,9 +1138,9 @@ where r.idRegistration =" . $idReg);
             ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
         
             $payTbl->addBodyTr(
-                HTMLTable::makeTd("Cardholder Name", array('class'=>'tdlabel hhkvrKeyNumber'.$index, 'colspan'=>'2'))
+                HTMLTable::makeTh("Cardholder Name", array('class'=>'tdlabel hhkvrKeyNumber'.$index))
         		.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index)), array('colspan'=>'2', 'style'=>'min-width:140px'))
-        		, array('id'=>'trvdCHName'.$index));
+        		, ['id'=>'trvdCHName'.$index]);
 
         
 
