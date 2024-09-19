@@ -1269,10 +1269,10 @@ WHERE
 
             $header .= HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth, "class"=>"mr-5")),
-            array("style"=>"width: " . $uS->statementLogoWidth ."px"));
+            array("style"=>"vertical-align: middle; width: " . $uS->statementLogoWidth ."px"));
         }
 
-        $header .= HTMLTable::makeTd(Receipt::getAddressTable($dbh, $uS->sId));
+        $header .= HTMLTable::makeTd(Receipt::getAddressTable($dbh, $uS->sId), ['style'=>'vertical-align: middle;']);
 
         $hdrTbl = new HTMLTable();
 
