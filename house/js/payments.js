@@ -724,12 +724,14 @@ function doHouseWaive(p, a,) {
         if (p.houseWaiveCb.prop('checked')) {
             // Manage House Waive of underpaid amount
 
+            const updateFeeTaxes = new UpdateTaxes(p.taxingItems);
             let houseWaive = Math.max((a.roomBalDue - a.feePayPreTax), 0) + a.invAmt + a.vfee - a.totReturns;
             let underPayAmt = 0 - a.overPayAmt;
 
             if (houseWaive > 0) {
                 p.hsDiscAmt.val(houseWaive.toFixed(2).toString());
                 a.totPay = (Math.max(a.totCharges - houseWaive, 0) - a.totReturns) - a.roomBalTaxDue;
+                a.totPay += updateFeeTaxes.calcTax(a.feePayPreTax);
             } else if (a.overPayAmt < 0) {
                 p.hsDiscAmt.val(underPayAmt.toFixed(2).toString());
                 a.totPay -= underPayAmt;

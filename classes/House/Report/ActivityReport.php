@@ -762,17 +762,17 @@ where `lp`.`idPayment` > 0
                 $tbl->addBodyTr(
                     HTMLTable::makeTd($r['Room'])
                     . HTMLTable::makeTd($uS->siteName)
-                    .HTMLTable::makeTd($invoiceMkup)
-                    .HTMLTable::makeTd($h['Desc'])
-                    .HTMLTable::makeTd('')
-                    .HTMLTable::makeTd('')
-                    .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), ['style' => 'text-align:right;color:gray;'])
-                    .HTMLTable::makeTd($houseAction)
-                    .HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
-                    .HTMLTable::makeTd('')
-                    .HTMLTable::makeTd($r['Invoice_Updated_By'])
-                    .($showExternlId ? HTMLTable::makeTd('') : '')
-                    .HTMLTable::makeTd('')
+                    . HTMLTable::makeTd($invoiceMkup)
+                    . HTMLTable::makeTd(str_replace(';', '', $h['Desc']))
+                    . HTMLTable::makeTd('')
+                    . HTMLTable::makeTd('')
+                    . HTMLTable::makeTd(number_format(abs($h['Amount']), 2), ['style' => 'text-align:right;color:gray;'])
+                    . HTMLTable::makeTd($houseAction)
+                    . HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
+                    . HTMLTable::makeTd('')
+                    . HTMLTable::makeTd($r['Invoice_Updated_By'])
+                    . ($showExternlId ? HTMLTable::makeTd('') : '')
+                    . HTMLTable::makeTd('')
                 );
             }
         }
