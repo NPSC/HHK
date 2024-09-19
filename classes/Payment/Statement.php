@@ -108,11 +108,11 @@ class Statement {
         $idPayment = 0;
         $idPA = 0;
 
-        $invoices = array();
-        $invoice = array();
-        $payments = array();
-        $paymtAuths = array();
-        $houseWaives = array();
+        $invoices = [];
+        $invoice = [];
+        $payments = [];
+        $paymtAuths = [];
+        $houseWaives = [];
 
         // Organize the data
         while ($p = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -129,32 +129,32 @@ class Statement {
 
                 if ($idInvoice > 0) {
                     // close last invoice
-                    $invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'h'=>$houseWaives);
-                    $houseWaives = array();
+                    $invoices[$idInvoice] = ['i' => $invoice, 'p' => $payments, 'h' => $houseWaives];
+                    $houseWaives = [];
                 }
 
                 $idInvoice = $p['idInvoice'];
 
                 // new invoice
-                $invoice = array(
-                    'idInvoice'=>$p['idInvoice'],
-                    'Invoice_Number'=>$p['Invoice_Number'],
-                    'Invoice_Amount'=>$p['Invoice_Amount'],
-                    'Sold_To_Id'=>$p['Sold_To_Id'],
-                    'Bill_Agent'=>$p['Bill_Agent'],
-                    'idGroup'=>$p['idGroup'],
-                    'Order_Number'=>$p['Order_Number'],
-                    'Suborder_Number'=>$p['Suborder_Number'],
-                    'Invoice_Date'=>$p['Invoice_Date'],
-                    'Invoice_Status'=>$p['Invoice_Status'],
-                    'Invoice_Status_Title'=>$p['Invoice_Status_Title'],
-                    'Carried_Amount'=>$p['Carried_Amount'],
-                    'Invoice_Description'=>$p['Notes'],
-                    'Invoice_Balance'=>$p['Invoice_Balance'],
-                    'Delegated_Invoice_Id'=>$p['Delegated_Invoice_Id'],
-                    'Invoice_Deleted'=>$p['Deleted'],
-                    'Invoice_Updated_By'=>$p['Invoice_Updated_By'],
-                );
+                $invoice = [
+                    'idInvoice' => $p['idInvoice'],
+                    'Invoice_Number' => $p['Invoice_Number'],
+                    'Invoice_Amount' => $p['Invoice_Amount'],
+                    'Sold_To_Id' => $p['Sold_To_Id'],
+                    'Bill_Agent' => $p['Bill_Agent'],
+                    'idGroup' => $p['idGroup'],
+                    'Order_Number' => $p['Order_Number'],
+                    'Suborder_Number' => $p['Suborder_Number'],
+                    'Invoice_Date' => $p['Invoice_Date'],
+                    'Invoice_Status' => $p['Invoice_Status'],
+                    'Invoice_Status_Title' => $p['Invoice_Status_Title'],
+                    'Carried_Amount' => $p['Carried_Amount'],
+                    'Invoice_Description' => $p['Notes'],
+                    'Invoice_Balance' => $p['Invoice_Balance'],
+                    'Delegated_Invoice_Id' => $p['Delegated_Invoice_Id'],
+                    'Invoice_Deleted' => $p['Deleted'],
+                    'Invoice_Updated_By' => $p['Invoice_Updated_By'],
+                ];
 
                 // add extra columns
                 foreach ($extraCols as $e) {
@@ -166,8 +166,8 @@ class Statement {
 
                 $idPayment = 0;
                 $idPA = 0;
-                $payments = array();
-                $paymtAuths = array();
+                $payments = [];
+                $paymtAuths = [];
             }
 
             if ($p['idPayment'] != 0) {
@@ -186,26 +186,27 @@ class Statement {
 
                     $idPayment = $p['idPayment'];
 
-                    $payments[$idPayment] = array('idPayment'=>$p['idPayment'],
-                        'Payment_Amount'=>$p['Payment_Amount'],
-                        'idPayment_Method'=>$p['idPayment_Method'],
-                        'Payment_Method_Title'=>$p['Payment_Method_Title'],
-                        'Payment_Status'=>$p['Payment_Status'],
-                        'Payment_Status_Title'=>$p['Payment_Status_Title'],
-                        'Payment_Date'=>$p['Payment_Date'],
-                        'Payment_Timestamp'=>$p['Payment_Timestamp'],
-                        'Is_Refund'=>$p['Is_Refund'],
-                        'Payment_idPayor'=>$p['Payment_idPayor'],
-                        'Payment_Updated_By'=>$p['Payment_Updated_By'],
-                        'Last_Updated'=>$p['Payment_Last_Updated'],
-                        'Payment_Created_By'=>$p['Payment_Created_By'],
-                        'Check_Number'=>$p['Check_Number'],
-                        'Payment_External_Id'=>$p['Payment_External_Id'],
-                        'Payment_Note'=>$p['Payment_Note']
-                    );
+                    $payments[$idPayment] = [
+                        'idPayment' => $p['idPayment'],
+                        'Payment_Amount' => $p['Payment_Amount'],
+                        'idPayment_Method' => $p['idPayment_Method'],
+                        'Payment_Method_Title' => $p['Payment_Method_Title'],
+                        'Payment_Status' => $p['Payment_Status'],
+                        'Payment_Status_Title' => $p['Payment_Status_Title'],
+                        'Payment_Date' => $p['Payment_Date'],
+                        'Payment_Timestamp' => $p['Payment_Timestamp'],
+                        'Is_Refund' => $p['Is_Refund'],
+                        'Payment_idPayor' => $p['Payment_idPayor'],
+                        'Payment_Updated_By' => $p['Payment_Updated_By'],
+                        'Last_Updated' => $p['Payment_Last_Updated'],
+                        'Payment_Created_By' => $p['Payment_Created_By'],
+                        'Check_Number' => $p['Check_Number'],
+                        'Payment_External_Id' => $p['Payment_External_Id'],
+                        'Payment_Note' => $p['Payment_Note']
+                    ];
 
                     $idPA = 0;
-                    $paymtAuths = array();
+                    $paymtAuths = [];
                 }
 
                 // Payment_Auths
@@ -214,7 +215,7 @@ class Statement {
 
                     $idPA = $p['idPayment_auth'];
 
-                    $paymtAuths[$idPA] = array(
+                    $paymtAuths[$idPA] = [
                         'idPayment_auth' => $p['idPayment_auth'],
                         'Charge_Customer_Id' => $p['Charge_Customer_Id'],
                         'Masked_Account' => $p['Masked_Account'],
@@ -223,17 +224,17 @@ class Statement {
                         'Approval_Code' => $p['Approval_Code'],
                         'Auth_Last_Updated' => $p['Auth_Last_Updated'],
                         'Merchant' => $p['Merchant']
-                    );
+                    ];
                 }
             }
 
             // House Waive
             if ($p['il_Id'] > 0 && isset($houseWaives[$p['il_Id']]) === FALSE) {
-                $houseWaives[$p['il_Id']] = array(
+                $houseWaives[$p['il_Id']] = [
                     'id' => $p['il_Id'],
                     'Amount' => $p['il_Amount'],
                     'Desc' => $p['il_Description']
-                );
+                ];
             }
         }
 
@@ -249,7 +250,7 @@ class Statement {
 
         if ($idInvoice > 0) {
             // close last invoice
-            $invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'h'=>$houseWaives);
+            $invoices[$idInvoice] = ['i' => $invoice, 'p' => $payments, 'h' => $houseWaives];
         }
 
         return $invoices;

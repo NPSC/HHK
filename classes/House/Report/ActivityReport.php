@@ -450,18 +450,21 @@ class ActivityReport {
         $whType = '';
         $whId = '';
         $whDates = '';
-        $totals = array();
+        $totals = [];
         $payStatusText = '';
-        $payTypeTotals = array();
+        $payTypeTotals = [];
         $payTypeText = '';
         $showExternlId = FALSE;
 
         $labels = Labels::getLabels();
-        $config = $_ENV;
 
-        if(!empty($config['Service_Name'])) {
-            $showExternlId = TRUE;
-        }
+        // The following section doesnt make sense.
+        // $config = $_ENV;
+
+        // // Show the external payment ID for houses with CMS integration
+        // if(!empty($config['Service_Name'])) {
+        //     $showExternlId = TRUE;
+        // }
 
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
 
@@ -482,7 +485,7 @@ class ActivityReport {
         }
 
         foreach (readGenLookupsPDO($dbh, 'Payment_Status') as $s) {
-            $totals[$s[0]] = array('amount' => 0.00, 'count' => 0, 'title' => $s[1], 'active' => $active);
+            $totals[$s[0]] = ['amount' => 0.00, 'count' => 0, 'title' => $s[1], 'active' => $active];
         }
 
         $rtnIncluded = FALSE;
@@ -533,7 +536,7 @@ class ActivityReport {
         $stmtp = $dbh->query("select * from payment_method");
         while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
             if ($t[0] > 0 && strtolower($t[1]) != 'chgascash') {
-                $payTypeTotals[$t[0]] = array('amount' => 0.00, 'count' => 0, 'title' => $t[1], 'active' => $active);
+                $payTypeTotals[$t[0]] = ['amount' => 0.00, 'count' => 0, 'title' => $t[1], 'active' => $active];
             }
         }
 
@@ -545,7 +548,7 @@ class ActivityReport {
                 if ($whType == '') {
                     $whType = $s;
                 } else {
-                    $whType .= "," . $s;
+                    $whType .= ",$s";
                 }
 
                 $payTypeTotals[$s]['active'] = 'y';
@@ -558,7 +561,7 @@ class ActivityReport {
         }
 
         if ($whType != '') {
-            $whType = " and `lp`.`idPayment_Method` in (" . $whType . ") ";
+            $whType = " and `lp`.`idPayment_Method` in ($whType) ";
         }
 
         // Guest id selector
@@ -591,22 +594,22 @@ where `lp`.`idPayment` > 0
  $whDates $whStatus $whType $whId Order By lp.idInvoice;";
 
         $stmt = $dbh->query($query);
-        $invoices = Statement::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idPsg'));
+        $invoices = Statement::processPayments($stmt, ['First', 'Last', 'Company', 'Room', 'idPsg']);
 
         $rowCount = $stmt->rowCount();
 
         // Create header
         $hdrTbl = new HTMLTable();
-        $hdrTbl->addBodyTr(HTMLTable::makeTh('Records:', array('style' => 'text-align:right;')) . HTMLTable::makeTd($rowCount));
+        $hdrTbl->addBodyTr(HTMLTable::makeTh('Records:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($rowCount));
 
         if ($startDT != NULL && $endDT != NULL) {
-            $hdrTbl->addBodyTr(HTMLTable::makeTh('Dates:', array('style' => 'text-align:right;')) . HTMLTable::makeTd($startDT->format('M j, Y') . ' to ' . $endDT->format('M j, Y')));
+            $hdrTbl->addBodyTr(HTMLTable::makeTh('Dates:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($startDT->format('M j, Y') . ' to ' . $endDT->format('M j, Y')));
         }
 
-        $hdrTbl->addBodyTr(HTMLTable::makeTh('Payment Statuses:', array('style' => 'text-align:right;')) . HTMLTable::makeTd($payStatusText == '' ? 'All' : $payStatusText));
-        $hdrTbl->addBodyTr(HTMLTable::makeTh('Payment Types:', array('style' => 'text-align:right;')) . HTMLTable::makeTd($payTypeText == '' ? 'All' : $payTypeText));
+        $hdrTbl->addBodyTr(HTMLTable::makeTh('Payment Statuses:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($payStatusText == '' ? 'All' : $payStatusText));
+        $hdrTbl->addBodyTr(HTMLTable::makeTh('Payment Types:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($payTypeText == '' ? 'All' : $payTypeText));
 
-        $header = HTMLContainer::generateMarkup('h2', $title, array('class' => 'ui-widget-header')) . $hdrTbl->generateMarkup(array('style' => 'margin-bottom:10px;float:left; '));
+        $header = HTMLContainer::generateMarkup('h2', $title, ['class' => 'ui-widget-header']) . $hdrTbl->generateMarkup(['style' => 'margin-bottom:10px;float:left; ']);
 
         // Main fees listing table
         $tbl = new HTMLTable();
@@ -635,7 +638,7 @@ where `lp`.`idPayment` > 0
             // Invoice number
             if ($invNumber != '') {
 
-                $iAttr = array('href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank');
+                $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank'];
 
                 if ($r['Invoice_Deleted'] > 0) {
                     $iAttr['style'] = 'color:red;';
@@ -648,10 +651,10 @@ where `lp`.`idPayment` > 0
                 }
 
                 $invNumber = HTMLContainer::generateMarkup('a', $invNumber, $iAttr)
-                        . HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'style' => 'cursor:pointer;', 'title' => 'View Items'));
+                        . HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'style' => 'cursor:pointer;', 'title' => 'View Items']);
             }
 
-            $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style" => 'white-space:nowrap'));
+            $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, ["style" => 'white-space:nowrap']);
 
             // Set up actions
             foreach ($i['p'] as $p) {
@@ -754,7 +757,7 @@ where `lp`.`idPayment` > 0
             // Add House payments
             foreach ($i['h'] as $h) {
 
-                $houseAction = HTMLInput::generateMarkup('Delete', array('type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive','style' => 'font-size: 0.8em', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']));
+                $houseAction = HTMLInput::generateMarkup('Delete', ['type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive', 'style' => 'font-size: 0.8em', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']]);
 
                 $tbl->addBodyTr(
                     HTMLTable::makeTd($r['Room'])
@@ -763,7 +766,7 @@ where `lp`.`idPayment` > 0
                     .HTMLTable::makeTd($h['Desc'])
                     .HTMLTable::makeTd('')
                     .HTMLTable::makeTd('')
-                    .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), array('style'=>'text-align:right;color:gray;'))
+                    .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), ['style' => 'text-align:right;color:gray;'])
                     .HTMLTable::makeTd($houseAction)
                     .HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
                     .HTMLTable::makeTd('')
@@ -774,14 +777,14 @@ where `lp`.`idPayment` > 0
             }
         }
 
-        $listing = $tbl->generateMarkup(array('id' => 'feesTable', 'style' => 'margin-top:10px;'));
+        $listing = $tbl->generateMarkup(['id' => 'feesTable', 'style' => 'margin-top:10px;']);
 
         $summary = '';
 
         if ($rowCount > 0) {
 
             $summ = new HTMLTable();
-            $summ->addBodyTr(HTMLTable::makeTh('Payment Status', array('colspan' => '3')));
+            $summ->addBodyTr(HTMLTable::makeTh('Payment Status', ['colspan' => '3']));
 
             foreach ($totals as $t) {
 
@@ -789,30 +792,30 @@ where `lp`.`idPayment` > 0
                     continue;
                 }
 
-                $summ->addBodyTr(HTMLTable::makeTd($t['title']) . HTMLTable::makeTd($t['count']) . HTMLTable::makeTd(number_format($t['amount'], 2), array('style' => 'text-align:right;')));
+                $summ->addBodyTr(HTMLTable::makeTd($t['title']) . HTMLTable::makeTd($t['count']) . HTMLTable::makeTd(number_format($t['amount'], 2), ['style' => 'text-align:right;']));
             }
 
+            // Payment type block list
             $pType = new HTMLTable();
-            $pType->addBodyTr(HTMLTable::makeTh('Payment Type', array('colspan' => '3')));
+            $pType->addBodyTr(HTMLTable::makeTh('Payment Type', ['colspan' => '3']));
 
+            // Payment type totals
             foreach ($payTypeTotals as $pt) {
 
-                if ($pt['active'] != 'y') {
-                    continue;
+                if ($pt['active'] == 'y') {
+                    $pType->addBodyTr(HTMLTable::makeTd($pt['title']) . HTMLTable::makeTd($pt['count']) . HTMLTable::makeTd(number_format($pt['amount'], 2), ['style' => 'text-align:right;']));
                 }
 
-
-                $pType->addBodyTr(HTMLTable::makeTd($pt['title']) . HTMLTable::makeTd($pt['count']) . HTMLTable::makeTd(number_format($pt['amount'], 2), array('style' => 'text-align:right;')));
             }
 
 
-            $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), array('style' => 'float:left; margin-left:.8em;'));
-            $summary .= HTMLContainer::generateMarkup('div', $pType->generateMarkup(), array('style' => 'float:left; margin-left:.8em;'));
+            $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), ['style' => 'float:left; margin-left:.8em;']);
+            $summary .= HTMLContainer::generateMarkup('div', $pType->generateMarkup(), ['style' => 'float:left; margin-left:.8em;']);
         }
 
-        $refresh = HTMLInput::generateMarkup("Refresh", array('type'=>'button', 'id'=>'btnPayHistRef', 'style'=>'float:right; margin-right:0.8em;margin-top:1em;'));
+        $refresh = HTMLInput::generateMarkup("Refresh", ['type' => 'button', 'id' => 'btnPayHistRef', 'style' => 'float:right; margin-right:0.8em;margin-top:1em;']);
 
-        return HTMLContainer::generateMarkup('div', $header . $summary . $refresh . $listing, array('style' => 'min-width:900px;'));
+        return HTMLContainer::generateMarkup('div', "$header$summary$refresh$listing", ['style' => 'min-width:900px;']);
     }
 
     /**
