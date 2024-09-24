@@ -279,7 +279,7 @@ class LocalGateway extends AbstractPaymentGateway {
   * @param string $paymentNotes
   * @return ReturnResult
   */
-	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnTokenId, $paymentNotes) {
+	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnTokenId, $paymentNotes, $resvId = 0) {
 
 		$uS = Session::getInstance ();
 

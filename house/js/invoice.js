@@ -16,20 +16,21 @@ function invPay(id, pbp, dialg) {
         } else if ($(this).hasClass('ckdate')) {
             var tdate = $(this).datepicker('getDate');
             if (tdate) {
-                parms[$(this).attr('id')] = tdate.toJSON();
+                parms[$(this).attr('id')] = $(this).val();
             } else {
                  parms[$(this).attr('id')] = '';
             }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
-                parms[$(this).attr('id')] = this.value;
+                parms[$(this).attr('name')] = $(this).val();
             }
         } else{
-            parms[$(this).attr('id')] = this.value;
+            parms[$(this).attr('id')] = $(this).val();
             parms[$(this).attr('name')] = $(this).val();
         }
     });
-    dialg.dialog("close");
+    //dialg.dialog("close");
+    $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
     $.post('ws_ckin.php', parms,
         function(data) {
@@ -45,10 +46,12 @@ function invPay(id, pbp, dialg) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-
+                $('#keysfees').dialog("close");
             }
 
             paymentRedirect(data, $('#xform'));
+
+            $('#keysfees').dialog("close");
 
             if (data.success && data.success !== '') {
                 flagAlertMessage(data.success, 'success');

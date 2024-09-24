@@ -2,16 +2,20 @@
 
 use HHK\Exception\RuntimeException;
 use HHK\History;
+use HHK\House\GuestRegister;
 use HHK\House\OperatingHours;
 use HHK\House\Report\PaymentReport;
 use HHK\House\Report\RoomReport;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\sec\Labels;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\ItemPriceCode;
+use HHK\SysConst\Mode;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\RoomRateCategories;
 use HHK\US_Holidays;
@@ -39,6 +43,7 @@ $labels = Labels::getLabels();
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $paymentMarkup = '';
+$paymentStatus = '';
 $receiptMarkup = '';
 $statusSelector = '';
 $payTypeSelector = '';
@@ -74,12 +79,24 @@ try {
 
         // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
-            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+            //$paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+            $paymentMarkup = $payResult->getDisplayMessage();
+            $paymentStatus = ($payResult->wasError() ? "error" : "success");
+        }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
         }
     }
 
 } catch (RuntimeException $ex) {
-    $paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 
@@ -370,6 +387,15 @@ if($uS->useOnlineReferral){
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 
         <style>
             .hhk-justify-r {
@@ -548,6 +574,7 @@ if($uS->useOnlineReferral){
 
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+        <input  type="hidden" id="pmtStatus" value='<?php echo $paymentStatus; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
@@ -584,6 +611,8 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
         <input type="hidden" id="closedDays" value='<?php echo json_encode($closedDays); ?>' />
 		<input  type="hidden" id="showCurrentGuestPhotos" value='<?php echo ($uS->showCurrentGuestPhotos && $uS->ShowGuestPhoto); ?>' />
+
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>

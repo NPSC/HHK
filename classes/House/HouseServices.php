@@ -381,9 +381,9 @@ class HouseServices {
 
                         $extContrl = '';
 
-                        if (isset($post['rbOlpicker-ext'])) {
+                        if (isset($post['rbOlpicker']) && $post['rbOlpicker'] == 'ext') {
                             $extContrl = 'extend';
-                        } else if (isset($post['rbOlpicker-rtDate'])) {
+                        } else if (isset($post['rbOlpicker']) && $post['rbOlpicker'] == 'rtDate') {
                             $extContrl = 'return';
                         }
 
@@ -482,7 +482,11 @@ class HouseServices {
 
             if (is_null($payResult) === FALSE) {
 
-                $reply .= $payResult->getReplyMessage();
+                if($payResult->wasError()){
+                    $dataArray["error"] = $payResult->getReplyMessage();
+                }else{
+                    $reply .= $payResult->getReplyMessage();
+                }
 
                 if ($payResult->getStatus() == PaymentResult::FORWARDED) {
                     $creditCheckOut = $payResult->getForwardHostedPayment();
@@ -513,7 +517,11 @@ class HouseServices {
 
         // divert to credit payment site.
         if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
+            if(isset($creditCheckOut['hpfToken'])){ // if deluxe, don't forward
+                $dataArray['deluxehpf'] = $creditCheckOut;
+            }else{
+                return $creditCheckOut;
+            }
         }
 
         // Return checked in guests markup?
@@ -610,7 +618,11 @@ class HouseServices {
 
         // divert to credit payment site.
         if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
+            if(isset($creditCheckOut['hpfToken'])){ //if deluxe, don't forward
+                $dataArray['deluxehpf'] = $creditCheckOut;
+            }else{
+                return $creditCheckOut;
+            }
         }
 
         $dataArray['success'] = $reply;
@@ -793,6 +805,9 @@ class HouseServices {
             $invoice = $paymentManager->createInvoice($dbh, $visit, $idPayor, $paymentManager->pmp->getInvoiceNotes());
         }
 
+        //get resvId
+        $resvId = ($visit instanceof Reservation_1 ? $visit->getIdReservation():0);
+
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 
             if ($invoice->getAmountToPay() >= 0) {
@@ -801,7 +816,7 @@ class HouseServices {
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
-                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
+                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate(), $resvId);
             }
         }
 
@@ -1343,6 +1358,9 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
+        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
+        $merchants = $gateway->getMerchants($dbh);
+
         $tbl = new HTMLTable();
 
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
@@ -1353,7 +1371,7 @@ class HouseServices {
         foreach ($tkRsArray as $tkRs) {
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (strtolower($tkRs->Merchant->getStoredVal()) == 'local' || $tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production') {
+            if (count($merchants) == 1) {
                 $merchant = '';
             }
 
@@ -1366,8 +1384,6 @@ class HouseServices {
         }
 
         // New card.
-        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
-
         if ($gateway->hasCofService()) {
 
         	$attr = array('type'=>'checkbox', 'name'=>'rbUseCard'.$index);
@@ -1390,7 +1406,9 @@ class HouseServices {
 	        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(array('style'=>'width:100%;')), array('colspan'=>'4', 'style'=>'padding:0;')));
         }
 
-        return $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
+        $mkup = $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
+
+        return $mkup;
 
     }
 

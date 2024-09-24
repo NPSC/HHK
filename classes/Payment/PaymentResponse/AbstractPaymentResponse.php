@@ -135,7 +135,7 @@ abstract class AbstractPaymentResponse {
      * @param int $attempts
      * @return void
      */
-    public function recordPayment(\PDO $dbh, $username, $attempts = 1) {
+    public function recordPayment(\PDO $dbh, $username, $attempts = 1, $parentPaymentId = 0) {
 
         $payRs = new PaymentRS();
         $payRs->Amount->setNewVal($this->getAmount());
@@ -150,6 +150,7 @@ abstract class AbstractPaymentResponse {
         $payRs->Created_By->setNewVal($username);
         $payRs->Notes->setNewVal($this->getPaymentNotes());
         $payRs->Is_Refund->setNewVal($this->isRefund());
+        $payRs->parent_idPayment->setNewVal($parentPaymentId);
 
         $this->setIdPayment(EditRS::insert($dbh, $payRs));
 

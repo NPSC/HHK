@@ -635,8 +635,9 @@ function getDtBtns(title, stripHtml = true, className = ""){
     	];
     }
 
-    var hindx = 0,
+var hindx = 0,
     pmtMkup = $('#pmtMkup').val(),
+    pmtStatus = $('#pmtStatus').val(),
     rctMkup = $('#rctMkup').val(),
     defaultTab = $('#defaultTab').val(),
     resourceGroupBy = $('#resourceGroupBy').val(),
@@ -795,8 +796,9 @@ $(document).ready(function () {
             dailyCols.push({data: 'Notes', title: 'Room Notes', sortable: false});
 
     // Show payment message
-    if (pmtMkup !== '') {
-        $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+    if (pmtMkup !== '' && pmtStatus !== '') {
+        //$('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+        flagAlertMessage(pmtMkup, pmtStatus);
     }
 
     $('input[type="button"], input[type="submit"]').button();

@@ -1,6 +1,9 @@
 <?php
 
 
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Deluxe\Request\Reports\CcReconciliationReport;
+use HHK\Payment\PaymentGateway\Deluxe\Request\Reports\CcTransactionReport;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\ColumnSelectors;
@@ -15,6 +18,7 @@ use HHK\Payment\CreditToken;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
 use HHK\TableLog\HouseLog;
+
 
 /**
  * PaymentReport.php
@@ -79,9 +83,40 @@ if (isset($_POST['cmd'])) {
 	$dataArray = array();
 	$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-	if ($cmd == 'cof') {
-		$dataArray['coflist'] = CreditToken::getCardsOnFile($dbh, 'GuestEdit.php?id=');
-	}
+    switch($cmd){
+        case 'cof':
+            $dataArray['coflist'] = CreditToken::getCardsOnFile($dbh, 'GuestEdit.php?id=');
+            break;
+        case 'ccReconciliation':
+            $start = filter_input(INPUT_POST, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $end = filter_input(INPUT_POST, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            try{
+                $report = new CcReconciliationReport($dbh, new DeluxeGateway($dbh, 'wireland'));
+                $start = new DateTime($start);
+                $end = new DateTime($end);
+                $data = $report->submit($start, $end);
+                $dataArray["ccReconciliation"] = $data["data"];
+            }catch(\Exception $e){
+
+            }
+            
+            break;
+        case 'ccTransaction':
+            $start = filter_input(INPUT_POST, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $end = filter_input(INPUT_POST, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            try{
+                $report = new CcTransactionReport($dbh, new DeluxeGateway($dbh, 'wireland'));
+                $start = new DateTime($start);
+                $end = new DateTime($end);
+                $data = $report->submit($start, $end);
+                $dataArray["ccTransaction"] = $data["data"];
+            }catch(\Exception $e){
+
+            }
+            break;
+        default:
+            $dataArray["error"] = "Unknown Command";
+    }
 
 	echo json_encode($dataArray);
 	exit();

@@ -948,6 +948,62 @@ where
 	}
 
 	/**
+	 * Get billTo info from `name` table
+	 * @param \PDO $dbh
+	 * @return array
+	 */
+	public function getBillTo(\PDO $dbh):array{
+		$idName = $this->getSoldToId();
+		if ($idName > 0) {
+
+			$stmt = $dbh->query("select n.*, ifnull(e.Email, '') from name n left join name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose where n.idName = $idName");
+
+			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
+
+			if (count($rows) == 1) {
+				return $rows[0];
+			}
+		};
+		return [];
+	}
+
+	/**
+	 * get name, phone and email of billing contact
+	 * @param \PDO $dbh
+	 * @param int $idName
+	 * @return array
+	 */
+	public static function getBillToName(\PDO $dbh, int $idName){
+		if ($idName > 0) {
+
+			$stmt = $dbh->query("select
+    ifnull(n.Company,'') as Company,
+    ifnull(p.Phone_Num,'') as Phone_Num,
+    ifnull(e.Email,'') as Email,
+	n1.Name_First,
+	n1.Name_Last,
+	n1.Company as Company_Name
+from
+	name n1 left join
+    name n on n1.Company_Id = n.idName
+        left join
+    name_phone p ON n1.idName = p.idName and n1.Preferred_Phone = p.Phone_Code
+        left join
+    name_email e ON n1.idName = e.idName and n1.Preferred_Email = e.Purpose
+where
+    n1.idName = $idName");
+
+			$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+			if (count($rows) == 1) {
+
+				return $rows[0];
+			}
+		}
+		return [];
+	}
+
+	/**
 	 * Summary of getBillToAddress
 	 * @param \PDO $dbh
 	 * @param mixed $idName

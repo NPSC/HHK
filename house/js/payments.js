@@ -924,7 +924,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     "use strict";
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
-    var $chrgExpand = $('#trvdCHName');
+    var $chrgExpand = $('.tblCreditExpand');//$('#trvdCHName');
     var p = new PayCtrls();
 
     if (chg.length === 0) {
@@ -932,7 +932,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     }
 
     if (ptsel.length > 0) {
-        ptsel.change(function () {
+        ptsel.on('change', function () {
             $('.hhk-cashTndrd').hide();
             $('.hhk-cknum').hide();
             $('#tblInvoice').hide();
@@ -946,9 +946,13 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
 
             if ($(this).val() === 'cc') {
                 chg.show('fade');
-                if ($('input[name=rbUseCard]:checked').val() == 0) {
-                    $chrgExpand.show();
+                if ($(document).find('input[name=rbUseCard]:checked').val() == 0) {
+                    $chrgExpand.show('fade');
+                } else {
+                    $chrgExpand.hide('fade');
                 }
+                $(document).find('input[name=rbUseCard]:checked').trigger('change');
+
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
             } else if ($(this).val() === 'in') {
@@ -1412,10 +1416,10 @@ function reprintReceipt(pid, idDialg) {
 
 }
 
-function paymentRedirect(data, $xferForm) {
+function paymentRedirect(data, $xferForm, initialParams) {
     "use strict";
     if (data) {
-
+console.log("redirect called");
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
 
@@ -1447,6 +1451,140 @@ function paymentRedirect(data, $xferForm) {
 
             // openiframe(data.inctx, 600, 400, "Add New Card On File");
 
+        } else if (data.deluxehpf) {
+            //var height = (data.useSwipe ? 200 : 400);
+            //var width = (data.useSwipe ? 400 : 650);
+            var height = 650;
+            var width = 650;
+
+            var title = (data.deluxehpf.cmd == "payment" ? "Enter Payment Details" : "Add New Card On File");
+            var deluxeSmtBtnTxt = (data.deluxehpf.cmd == "payment" ? "Submit Payment" : "Save Card On File");
+
+            if (initialParams && initialParams.idVisit != undefined && initialParams.span != undefined) {
+                title += " for Visit " + initialParams.idVisit + "-" + initialParams.span;
+            }else if (initialParams && initialParams.resvId != undefined) {
+                title += " for Reservation " + initialParams.resvId;
+            }
+
+
+            var $deluxeDialog = $("#deluxeDialog");
+            $deluxeDialog.html("");
+
+            if (data.deluxehpf.cmd == "payment" && data.deluxehpf.payAmount > 0) {
+                $deluxeDialog.html('<div class="row justify-content-center mt-3" id="deluxePayInfo"><div class="col" style="text-align: center;"><label class="mx-1">Payment Amount</label><input class="mx-1" size="10" disabled="" value="$ ' + data.deluxehpf.payAmount.toFixed(2) + '" id="deluxePayAmount" type="text"></div></div>');
+            }
+
+            $deluxeDialog.append('<div class="row justify-content-center mt-3"><div class="col" style="text-align: center;"><label class="mx-1">Cardholder Name</label><input class="mx-1" id="deluxeCardHolderName" type="text" size="30"></div></div>');
+
+            $deluxeDialog.attr("style", "overflow-y: hidden;").dialog({
+                modal: true,
+                width: getDialogWidth(650),
+                height: 450,
+                autoOpen: true,
+                title: title,
+                open: function (event, ui) {
+                    var options = {
+                        containerId: "deluxeDialog",
+                        xtoken: data.deluxehpf.hpfToken,
+                        xrtype: "Generate Token",
+                        xbtntext: deluxeSmtBtnTxt,
+                        xmsrattached: data.deluxehpf.useSwipe,
+                        xswptext: "Please Swipe Card now...",
+                        xPM:1,
+
+                    };
+
+                    HostedForm.init(options, {
+                        onSuccess: (hpfData) => {
+                            let submitData = {
+                                hpfData: hpfData,
+                                token: hpfData.data.token,
+                                nameOnCard: hpfData.data.nameOnCard,
+                                expDate: hpfData.data.expDate,
+                                cardType: hpfData.data.cardType,
+                                maskedPan: hpfData.data.maskedPan,
+                                cmd: data.deluxehpf.cmd,
+                                pbp: data.deluxehpf.pbp
+                            }
+
+                            let cardholderName = $deluxeDialog.find("#deluxeCardHolderName").val();
+                            if (submitData.nameOnCard == "CardHolder" && cardholderName.length > 0) {
+                                submitData.nameOnCard = cardholderName;
+                            }
+
+                            if (data.deluxehpf.idGroup) {
+                                submitData.psg = data.deluxehpf.idGroup;
+                            }
+                            if (data.deluxehpf.idPayor) {
+                                submitData.id = data.deluxehpf.idPayor;
+                            }
+                            if(data.deluxehpf.invoiceNum) {
+                                submitData.invoiceNum = data.deluxehpf.invoiceNum;
+                            }
+
+                            $deluxeDialog.empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
+
+                            $.post(encodeURI(data.deluxehpf.pbp),
+                                submitData,
+                                function (data) {
+                                    if (data) {
+                                        try {
+                                            data = $.parseJSON(data);
+                                        } catch (e) {
+                                            alert("Parser error - " + e.message);
+                                            return;
+                                        }
+                    
+                                        if (data.error) {
+                                            if (data.gotopage) {
+                                                window.location.assign(data.gotopage);
+                                            }
+                                            flagAlertMessage(data.error, 'error');
+                    
+                                        }
+                    
+                                        if (data.COFmkup) {
+                                            $('#tblupCredit' + data.idx).remove();
+                                            $('#upCreditfs').prepend($(data.COFmkup));
+                                            setupCOF($('.tblCreditExpand' + data.idx), data.idx);
+                                        }
+                                        
+                                        if (initialParams !== undefined && initialParams.resvId !== undefined) {
+                                            $("#btnDone").click();
+                                        }
+                                        
+                                        if (data.gotopage) {
+                                            window.location.assign(data.gotopage);
+                                        }
+
+                                        if (data.success && data.success !== '') {
+                                            flagAlertMessage(data.success, 'success');
+                                        }
+                            
+                                        if (data.warning && data.warning !== '') {
+                                            flagAlertMessage(data.warning, 'error');
+                                        }
+                            
+                                        if (data.receipt && data.receipt !== '') {
+                                            showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                                        }
+
+                                        $deluxeDialog.dialog("close");
+                                    }
+                                });
+
+                        },
+                        onFailure: (data) => { console.log(JSON.stringify(data)); },
+                        onInvalid: (data) => { console.log(JSON.stringify(data)); }
+                    }).then((instance) => { instance.renderHpf(); });
+                },
+                close: function (event, ui) {
+                    //HostedForm.destroy();
+                    $(this).find("iframe").remove();
+                    $(this).dialog('destroy').empty();
+                }
+
+            });
         }
     }
 }
@@ -1466,31 +1604,33 @@ function setupCOF($chgExpand, idx) {
     // Card on file Cardholder name.
     if ($chgExpand.length > 0) {
 
-        $('input[name=rbUseCard' + idx + ']').on('change', function () {
+        $(document).find('input[name=rbUseCard' + idx + ']').on('change', function () {
             if ($(this).val() == 0 || ($(this).prop('checked') === true && $(this).prop('type') === 'checkbox')) {
-                $chgExpand.show();
+                $chgExpand.show("fade");
             } else {
-                $chgExpand.hide();
+                $chgExpand.hide("fade");
                 $('#btnvrKeyNumber' + idx).prop('checked', false).change();
                 $('#txtvdNewCardName' + idx).val('');
             }
 
-            $('#tdChargeMsg' + idx).text('').hide();
+            $('#tdChargeMsg' + idx).text('').hide("fade");
             $('#selccgw' + idx).removeClass('ui-state-highlight');
         });
 
-        if ($('input[name=rbUseCard' + idx + ']:checked').val() > 0 || ($('input[name=rbUseCard' + idx + ']').prop('checked') === false && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
-            $chgExpand.hide();
+        if ($(document).find('input[name=rbUseCard' + idx + ']:checked').val() > 0 || ($(document).find('input[name=rbUseCard' + idx + ']').prop('checked') === false && $(document).find('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
+            $chgExpand.hide("fade");
         }
+
+        $(document).find('input[name=rbUseCard' + idx + ']').trigger('change');
 
         // Instamed-specific controls
         if ($('#btnvrKeyNumber' + idx).length > 0) {
             $('#btnvrKeyNumber' + idx).change(function () {
-
-                if ($('input[name=rbUseCard' + idx + ']:checked').val() == 0 || ($('input[name=rbUseCard' + idx + ']').prop('checked') === true && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
-                    $('#txtvdNewCardName' + idx).show();
+                
+                if (($('input[name=rbUseCard' + idx + ']:checked').val() == 0 && $('#btnvrKeyNumber' + idx).prop("checked") == true) || ($('input[name=rbUseCard' + idx + ']').prop('checked') === true && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
+                    $('#trvdCHName' + idx).show("fade");
                 } else {
-                    $('#txtvdNewCardName' + idx).hide();
+                    $('#trvdCHName' + idx).hide("fade");
                     $('#txtvdNewCardName' + idx).val('');
                 }
             });
@@ -1526,7 +1666,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
 
         $('#selccgw' + idx).removeClass('ui-state-highlight');
 
-        if ($('#selccgw' + idx + ' option:selected').length === 0) {
+        if ($('#selccgw' + idx).val().length === 0) {
             $('#tdChargeMsg' + idx).text('Select a location.').show('fade');
             $('#selccgw' + idx).addClass('ui-state-highlight');
             return false;
@@ -1591,7 +1731,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
                     if (data.COFmkup && data.COFmkup !== '') {
                         $('#tblupCredit' + idx).remove();
                         $('#upCreditfs').prepend($(data.COFmkup));
-                        setupCOF($('#trvdCHName' + idx), idx);
+                        setupCOF($('.tblCreditExpand' + idx), idx);
                     }
                 }
             });

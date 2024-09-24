@@ -380,7 +380,11 @@ class ActiveReservation extends Reservation {
 
                 // Credit payment?
                 if (count($creditCheckOut) > 0) {
-                    return $creditCheckOut;
+                    if(isset($creditCheckOut['hpfToken'])){
+                        $dataArray['deluxehpf'] = $creditCheckOut;
+                    }else{
+                        return $creditCheckOut;
+                    }
                 }
 
             } else {
@@ -453,19 +457,23 @@ class ActiveReservation extends Reservation {
 
             $creditCheckOut = [];
 
-            if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
+            $this->gotoCheckingIn = 'no';
+            $dataArray = $this->createMarkup($dbh);
 
+            if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
+                
                 $creditCheckOut = $this->payResult->getForwardHostedPayment();
 
                 // Credit payment?
                 if (count($creditCheckOut) > 0) {
-                    return $creditCheckOut;
+                    if(isset($creditCheckOut['hpfToken'])){
+                        $dataArray['deluxehpf'] = $creditCheckOut;
+                    }else{
+                        return $creditCheckOut;
+                    }
                 }
 
             } else {
-
-                $this->gotoCheckingIn = 'no';
-                $dataArray = $this->createMarkup($dbh);
 
                 if ($this->payResult->getReceiptMarkup() == '') {
 
@@ -474,7 +482,6 @@ class ActiveReservation extends Reservation {
 
                     $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
                 }
-
             }
 
         } else {

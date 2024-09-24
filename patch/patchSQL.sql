@@ -1,3 +1,4 @@
+
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES ('c', 'Guest First Name', '${GuestFirstName}');
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES ('c', 'Guest Last Name', '${GuestLastName}');
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES ('c', 'Guest Name Prefix', '${GuestNamePrefix}');
@@ -29,3 +30,13 @@ ADD COLUMN IF NOT EXISTS `Attributes` JSON NOT NULL DEFAULT '{}' AFTER `Substitu
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('CurGuestDemogIcon','ADA','lu','h','Show this Demographic category on the Current Guests tab as an icon','Demographics',1);
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('RibbonColors', 'ADA', 'ADA', '100');
+
+-- add Deluxe Gateway
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`) VALUES("Pay_Gateway_Name", "deluxe", "Deluxe");
+
+
+ALTER TABLE `trans` 
+CHANGE COLUMN `RefNo` `RefNo` VARCHAR(50) NOT NULL DEFAULT '' ;
+
+ALTER TABLE `payment` 
+ADD COLUMN IF NOT EXISTS `parent_idPayment` INT(11) NOT NULL DEFAULT 0 AFTER `Is_Refund`;

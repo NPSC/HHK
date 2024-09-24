@@ -20,12 +20,12 @@ define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' typ
 define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 /* common mins */
-define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
-define('PAYMENT_JS', "js/payments-min.js" . JSV);
-define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
+define('RESV_MANAGER_JS', 'js/resvManager.js' . JSV);
+define('PAYMENT_JS', "js/payments.js" . JSV);
+define('VISIT_DIALOG_JS', "js/visitDialog.js" . JSV);
 define('SMS_DIALOG_JS', "js/smsDialog-min.js" . JSV);
 define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
-define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
+define('GUESTLOAD_JS', 'js/guestload.js' . JSV);
 define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
 define('REGISTER_JS', 'js/register-min.js' . JSV);
 define('FULLCALENDAR_JS', "../js/fullcalendar6.1.min.js" . JSV);
@@ -48,6 +48,8 @@ define('GUESTTRANSFER_JS', 'js/guestTransfer.js' . JSV);
 // define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
 // Javascript file Embed.js moved to new server.  7/26/2024
 define('INS_EMBED_JS', '<script src="https://cdn.instamed.com/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
+define('DELUXE_SANDBOX_EMBED_JS', '<script src="https://hostedform2.deluxe.com/V2/deluxe.js"></script>');
+define('DELUXE_EMBED_JS', '<script src="https://hostedpaymentform.deluxe.com/v2/deluxe.js"></script>');
 define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js' . JSV. '"></script>');
 define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js' . JSV);
 define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);

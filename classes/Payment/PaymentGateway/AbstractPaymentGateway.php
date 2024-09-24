@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway;
 
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
@@ -29,6 +30,7 @@ abstract class AbstractPaymentGateway {
 
     const VANTIV = 'vantiv';
     const INSTAMED = 'instamed';
+    const DELUXE = 'deluxe';
     const LOCAL = '';
     const PW_PLACEHOLDER = '**********';
 
@@ -116,7 +118,7 @@ abstract class AbstractPaymentGateway {
         return array('warning' => '_returnPayment is not implemented. ');
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes, $resvId = 0) {
         return array('warning' => 'Return Amount is not implemented. ');
     }
 
@@ -153,6 +155,10 @@ abstract class AbstractPaymentGateway {
 
                 return InstamedGateway::_createEditMarkup($dbh, $gatewayName);
 
+            case AbstractPaymentGateway::DELUXE:
+
+                return DeluxeGateway::_createEditMarkup($dbh, $gatewayName, $resultMsg);
+                
             default:
 
                 return LocalGateway::_createEditMarkup($dbh, $gatewayName);
@@ -171,6 +177,10 @@ abstract class AbstractPaymentGateway {
 
                 return InstamedGateway::_saveEditMarkup($dbh, $gatewayName, $post);
 
+            case AbstractPaymentGateway::DELUXE:
+
+                return DeluxeGateway::_saveEditMarkup($dbh, $gatewayName, $post);
+                
             default:
 
                 return LocalGateway::_saveEditMarkup($dbh, $gatewayName, $post);
@@ -201,6 +211,10 @@ abstract class AbstractPaymentGateway {
 
                 return new InstamedGateway($dbh, $gwType);
 
+            case AbstractPaymentGateway::DELUXE:
+
+                return new DeluxeGateway($dbh, $gwType, $tokenId);
+            
             default:
 
                 return new LocalGateway($dbh, $gwType);
@@ -248,6 +262,16 @@ abstract class AbstractPaymentGateway {
         }
 
         return strtolower($myType);
+    }
+
+    /**
+     * List available merchants for gateway
+     * @param \PDO $dbh
+     * @return array
+     */
+    public function getMerchants(\PDO $dbh){
+        $stmt = $dbh->query("SELECT * FROM cc_hosted_gateway where Gateway_Name = '" . $this->getGatewayName() . "';");
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public function getResponseErrors() {

@@ -1135,3 +1135,88 @@ textarea.hhk-fluidheight {
 	border:none;
 	outline: none;
 }
+
+/* toggle switch */
+.hhk-switch {
+  display: inline-block;
+  height: 18px;
+  position: relative;
+  width: 45px;
+}
+
+.hhk-switch input {
+  display:none;
+}
+
+.hhk-slider {
+  background-color: #2E99DD;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.hhk-slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 10px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 10px;
+}
+
+input:checked + .hhk-slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .hhk-slider:before {
+  transform: translateX(26px);
+}
+
+.hhk-slider.round {
+  border-radius: 34px;
+}
+
+.hhk-slider.round:before {
+  border-radius: 50%;
+}
+
+#deluxeDialog {
+	font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    color: #212529;
+    font-size: 90%;
+}
+
+#deluxeDialog input {
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+#deluxeDialog input:focus {
+	color: #212529;
+    background-color: #fff;
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+}
+
+#deluxeDialog input:disabled{
+	background-color: #e9ecef;
+    opacity: 1;
+}

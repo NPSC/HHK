@@ -828,7 +828,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
-                parms[$(this).attr('id')] = $(this).val();
+                parms[$(this).attr('name')] = $(this).val();
             }
         } else{
             parms[$(this).attr('id')] = $(this).val();
@@ -856,13 +856,13 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
+                $('#keysfees').dialog("close");
                 return;
             }
 
+            paymentRedirect(data, $('#xform'), parms);
+
             $('#keysfees').dialog("close");
-
-
-            paymentRedirect(data, $('#xform'));
 
             if (typeof refreshdTables !== 'undefined') {
                 refreshdTables(data);

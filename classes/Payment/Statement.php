@@ -187,23 +187,25 @@ class Statement {
 
                     $idPayment = $p['idPayment'];
 
+
                     $payments[$idPayment] = [
-                        'idPayment' => $p['idPayment'],
-                        'Payment_Amount' => $p['Payment_Amount'],
-                        'idPayment_Method' => $p['idPayment_Method'],
-                        'Payment_Method_Title' => $p['Payment_Method_Title'],
-                        'Payment_Status' => $p['Payment_Status'],
-                        'Payment_Status_Title' => $p['Payment_Status_Title'],
-                        'Payment_Date' => $p['Payment_Date'],
-                        'Payment_Timestamp' => $p['Payment_Timestamp'],
-                        'Is_Refund' => $p['Is_Refund'],
-                        'Payment_idPayor' => $p['Payment_idPayor'],
-                        'Payment_Updated_By' => $p['Payment_Updated_By'],
-                        'Last_Updated' => $p['Payment_Last_Updated'],
-                        'Payment_Created_By' => $p['Payment_Created_By'],
-                        'Check_Number' => $p['Check_Number'],
-                        'Payment_External_Id' => $p['Payment_External_Id'],
-                        'Payment_Note' => $p['Payment_Note']
+						'idPayment'=>$p['idPayment'],
+                        'Payment_Amount'=>$p['Payment_Amount'],
+                        'idPayment_Method'=>$p['idPayment_Method'],
+                        'Payment_Method_Title'=>$p['Payment_Method_Title'],
+                        'Payment_Status'=>$p['Payment_Status'],
+                        'Payment_Status_Title'=>$p['Payment_Status_Title'],
+                        'Payment_Date'=>$p['Payment_Date'],
+                        'Payment_Timestamp'=>$p['Payment_Timestamp'],
+                        'Is_Refund'=>$p['Is_Refund'],
+                        'Has_ReturnPayment'=>$p['Has_ReturnPayment'],
+                        'Payment_idPayor'=>$p['Payment_idPayor'],
+                        'Payment_Updated_By'=>$p['Payment_Updated_By'],
+                        'Last_Updated'=>$p['Payment_Last_Updated'],
+                        'Payment_Created_By'=>$p['Payment_Created_By'],
+                        'Check_Number'=>$p['Check_Number'],
+                        'Payment_External_Id'=>$p['Payment_External_Id'],
+                        'Payment_Note'=>$p['Payment_Note']
                     ];
 
                     $idPA = 0;

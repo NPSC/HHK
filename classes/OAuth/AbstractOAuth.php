@@ -11,7 +11,7 @@ use GuzzleHttp\Exception\BadResponseException;
  * @author wireland
  *
  */
-class OAuth{
+abstract class AbstractOAuth{
 
     protected Credentials $credentials;
     protected $accessToken;
@@ -28,22 +28,13 @@ class OAuth{
      */
     public function login():bool{
         $tokenResponse = $this->requestToken();
-        return $this->validateTokenRepsonse($tokenResponse);
+        return $this->validateTokenResponse($tokenResponse);
     }
 
-    private function requestToken(){
-
+    protected function sendTokenRequest(array $requestOptions){
         $client = new Client(['base_uri' => $this->credentials->getBaseURI()]);
         try {
-            $response = $client->post($this->credentials->getTokenURI(), [
-                RequestOptions::FORM_PARAMS => [
-                    'grant_type' => 'password',
-                    'client_id' => $this->credentials->getClientId(),
-                    'client_secret' => $this->credentials->getClientSecret(),
-                    'username' => $this->credentials->getUsername(),
-                    'password' => $this->credentials->getPassword() . $this->credentials->getSecurityToken(),
-                ]
-            ]);
+            $response = $client->post($this->credentials->getTokenURI(), $requestOptions);
 
             return json_decode($response->getBody());
 
@@ -58,21 +49,6 @@ class OAuth{
         }
     }
 
-    private function validateTokenRepsonse($data){
-        $hash = hash_hmac(
-            'sha256',
-            $data->id . $data->issued_at,
-            $this->credentials->getClientSecret(),
-            true
-            );
-        if (base64_encode($hash) !== $data->signature) {
-            throw new RuntimeException('OAuth access token is invalid');
-        }
-        $this->accessToken = $data->access_token; // Valid access token
-        $this->instanceURL = $data->instance_url;  //
-        return true;
-    }
-
     /**
      * Get current OAuth Bearer token requested via $this->login()
      *
@@ -85,4 +61,3 @@ class OAuth{
         return $this->instanceURL;
     }
 }
-?>

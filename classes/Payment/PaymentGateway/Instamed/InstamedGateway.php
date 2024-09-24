@@ -498,7 +498,7 @@ class InstamedGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
-    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
+    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0) {
 
         $uS = Session::getInstance();
 
@@ -1120,13 +1120,29 @@ where r.idRegistration =" . $idReg);
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
+        $keyCb = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", "Swipe") .
+            HTMLContainer::generateMarkup(
+                'label',
+                HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index, 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) .
+                HTMLContainer::generateMarkup("div", "", ['class' => 'hhk-slider round'])
+                ,
+                ['for' => 'btnvrKeyNumber' . $index, 'title' => 'Check to Key in credit account number', 'class' => 'hhk-switch mx-2']
+            ) .
+            HTMLContainer::generateMarkup("span", "Type")
+            , ["class"=>"hhk-flex"]);
+
+            
         $payTbl->addBodyTr(
-                HTMLTable::makeTd(
-                		HTMLContainer::generateMarkup('label', 'Key Account:', array('for'=>'btnvrKeyNumber'.$index, 'class'=>'hhkvrKeyNumber'.$index, 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
-                		. HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index, 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number'))
-                		, array('class'=>'tdlabel hhkvrKeyNumber'.$index, 'colspan'=>'2'))
+                HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
+                .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
+            ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
+        
+            $payTbl->addBodyTr(
+                HTMLTable::makeTh("Cardholder Name", array('class'=>'tdlabel hhkvrKeyNumber'.$index))
         		.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index)), array('colspan'=>'2', 'style'=>'min-width:140px'))
-        		, array('id'=>'trvdCHName'.$index));
+        		, ['id'=>'trvdCHName'.$index]);
+
+        
 
     }
 
