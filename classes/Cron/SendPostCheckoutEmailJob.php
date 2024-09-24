@@ -8,6 +8,7 @@ use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\sec\SysConfig;
+use HHK\SysConst\VisitStatus;
 use PDO;
 use HHK\House\TemplateForm\SurveyForm;
 use HHK\Exception\RuntimeException;
@@ -31,17 +32,18 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
     public array $paramTemplate = [
         "after"=>[
-            "label"=>"Send After",
+            "label"=>"Send",
             "type"=>"select",
             "values"=>[
-                "checkin"=>["checkin","Check In"],
-                "checkout"=>["checkout","Check Out"]
+                "checkin"=>["checkin","After Check In"],
+                "checkout"=>["checkout","After Check Out"],
+                "beforecheckout"=>["beforecheckout", "Before Check Out"]
             ],
             "defaultVal"=>"checkout",
             "required"=>true
         ],
         "solicitBuffer"=>[
-            "label"=>"SolicitBuffer (days)",
+            "label"=>"Days",
             "type"=>"number",
             "defaultVal" =>"",
             "min"=>1,
@@ -99,68 +101,112 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
         }
 
         // Load guests
+        if (isset($this->params["after"])) {
+            switch ($this->params["after"]) {
 
-        $paramList[":delayDays"] = $delayDays;
+                case "checkin": //post checkin
+                    $paramList[":delayDays"] = $delayDays;
 
-        if(!empty($this->params["after"]) && $this->params["after"] == "checkin"){ //post check in
-            $stmt = $this->dbh->prepare("SELECT
-                n.Name_First,
-                n.Name_Last,
-                n.Name_Suffix,
-                n.Name_Prefix,
-                ne.Email,
-                v.idVisit,
-                v.idPrimaryGuest
-            FROM
-                stays s
-                    JOIN
-                visit v ON v.idVisit = s.idVisit
-                    AND v.Span = s.Visit_Span
-            	JOIN
-                `name` n ON s.idName = n.idName
-            		AND n.Member_Status != 'd'
-                    AND n.Exclude_Email = 0
-                    JOIN
-                `name_email` ne ON n.idName = ne.idName
-                    AND n.Preferred_Email = ne.Purpose
-            WHERE
-                n.Member_Status != 'd'
-                    AND v.`Status` = 'a'
-                    and DateDiff(DATE(NOW()), DATE(v.Arrival_Date)) = :delayDays
-            GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-        }else{ //post checkout
-            $stmt = $this->dbh->prepare("SELECT
-                n.Name_First,
-                n.Name_Last,
-                n.Name_Suffix,
-                n.Name_Prefix,
-                ne.Email,
-                v.idVisit,
-                v.idPrimaryGuest,
-            	v.Actual_Departure
-            FROM
-                stays s
-                    JOIN
-                visit v ON v.idVisit = s.idVisit
-                    AND v.Span = s.Visit_Span
-            	JOIN
-                `name` n ON v.idPrimaryGuest = n.idName
-            		AND n.Member_Status != 'd'
-                    AND n.Exclude_Email = 0
-                    JOIN
-                `name_email` ne ON n.idName = ne.idName
-                    AND n.Preferred_Email = ne.Purpose
-            WHERE
-                n.Member_Status != 'd'
-                    AND v.`Status` = 'co'
-                    AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date) and
-                    DateDiff(DATE(NOW()), DATE(v.Actual_Departure)) = :delayDays
-            GROUP BY v.idPrimaryGuest;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                    $stmt = $this->dbh->prepare("SELECT
+                        n.Name_First,
+                        n.Name_Last,
+                        n.Name_Suffix,
+                        n.Name_Prefix,
+                        ne.Email,
+                        v.idVisit,
+                        v.idPrimaryGuest
+                    FROM
+                        stays s
+                            JOIN
+                        visit v ON v.idVisit = s.idVisit
+                            AND v.Span = s.Visit_Span
+                        JOIN
+                        `name` n ON s.idName = n.idName
+                            AND n.Member_Status != 'd'
+                            AND n.Exclude_Email = 0
+                            JOIN
+                        `name_email` ne ON n.idName = ne.idName
+                            AND n.Preferred_Email = ne.Purpose
+                    WHERE
+                        n.Member_Status != 'd'
+                            AND v.`Status` = 'a'
+                            and DateDiff(DATE(NOW()), DATE(v.Arrival_Date)) = :delayDays
+                    GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                    break;
+
+                case "checkout": //post checkout
+                    $paramList[":delayDays"] = $delayDays;
+                    $stmt = $this->dbh->prepare("SELECT
+                        n.Name_First,
+                        n.Name_Last,
+                        n.Name_Suffix,
+                        n.Name_Prefix,
+                        ne.Email,
+                        v.idVisit,
+                        v.idPrimaryGuest,
+                        v.Actual_Departure
+                    FROM
+                        stays s
+                            JOIN
+                        visit v ON v.idVisit = s.idVisit
+                            AND v.Span = s.Visit_Span
+                        JOIN
+                        `name` n ON v.idPrimaryGuest = n.idName
+                            AND n.Member_Status != 'd'
+                            AND n.Exclude_Email = 0
+                            JOIN
+                        `name_email` ne ON n.idName = ne.idName
+                            AND n.Preferred_Email = ne.Purpose
+                    WHERE
+                        n.Member_Status != 'd'
+                            AND v.`Status` = 'co'
+                            AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date) and
+                            DateDiff(DATE(NOW()), DATE(v.Actual_Departure)) = :delayDays
+                    GROUP BY v.idPrimaryGuest;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+
+                    break;
+
+                case "beforecheckout": //pre checkout
+                    $paramList[":delayDays"] = 0 - $delayDays; //set delayDays negative
+                    $stmt = $this->dbh->prepare("SELECT
+                        n.Name_First,
+                        n.Name_Last,
+                        n.Name_Suffix,
+                        n.Name_Prefix,
+                        ne.Email,
+                        v.idVisit,
+                        v.idPrimaryGuest,
+                        v.Actual_Departure
+                    FROM
+                        stays s
+                            JOIN
+                        visit v ON v.idVisit = s.idVisit
+                            AND v.Span = s.Visit_Span
+                        JOIN
+                        `name` n ON v.idPrimaryGuest = n.idName
+                            AND n.Member_Status != 'd'
+                            AND n.Exclude_Email = 0
+                            JOIN
+                        `name_email` ne ON n.idName = ne.idName
+                            AND n.Preferred_Email = ne.Purpose
+                    WHERE
+                        n.Member_Status != 'd'
+                            AND v.`Status` in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::ChangeRate . "', '" . VisitStatus::NewSpan . "', '" . VisitStatus::OnLeave . "') AND
+                            DateDiff(DATE(NOW()), DATE(v.Expected_Departure)) = :delayDays
+                    GROUP BY v.idPrimaryGuest;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+
+                    break;
+
+                default:
+                    throw new RuntimeException("the 'Send' parameter is invalid");
+            }
+
+            $stmt->execute($paramList);
+            $numRecipients = $stmt->rowCount();
+            $recipients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }else{
+            throw new RuntimeException("The 'Send' parameter cannot be empty");
         }
-
-        $stmt->execute($paramList);
-        $numRecipients = $stmt->rowCount();
-        $recipients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if ($numRecipients > $maxAutoEmail) {
             // to many recipients.
@@ -188,7 +234,12 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
         $badAddresses = 0;
         $deparatureDT = new \DateTime();
-        $deparatureDT->sub(new \DateInterval('P' . $delayDays . 'D'));
+        
+        if($this->params["after"] == "beforecheckout"){
+            $deparatureDT->add(new \DateInterval('P' . $delayDays . 'D'));
+        } else {
+            $deparatureDT->sub(new \DateInterval('P' . $delayDays . 'D'));
+        }
 
         foreach ($recipients as $r) {
 

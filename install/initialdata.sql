@@ -74,6 +74,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Constraint_Type', 'v', 'Visit', '','',0),
 
 ('cronJobTypes', 'SendPostCheckoutEmailJob', 'Send Post Check In/Out Email', '','', 0),
+('cronJobTypes', 'SendConfirmationEmailJob', 'Send Confirmation Email', '','', 0),
 ('cronJobTypes', 'EmailReportJob', 'Send Report Email', '','', 0),
 
 ('dayIncrements', '', 'Never', '','', '6'),

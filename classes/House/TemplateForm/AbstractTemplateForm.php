@@ -20,6 +20,7 @@ namespace HHK\House\TemplateForm;
 abstract class AbstractTemplateForm {
 
     public $docId;
+    public $docTitle;
     public $template;
     public $replacedTemplate;
     public $subjectLine;
@@ -30,14 +31,16 @@ abstract class AbstractTemplateForm {
     */
    function __construct(\PDO $dbh, $docId){
 
+        $this->docTitle = "";
         $this->template = "";
         $this->subjectLine = "";
 
        if(intval($docId) > 0 && $dbh){
-           $stmt = $dbh->query("Select `Doc`,`Abstract` from `document` where `idDocument` = $docId");
+           $stmt = $dbh->query("Select ifnull(`g`.`Description`, '') as 'docTitle', `Doc`,`Abstract` from `document` d left join gen_lookups g on d.idDocument = g.`Substitute` where `idDocument` = $docId");
            $docRow = $stmt->fetch(\PDO::FETCH_ASSOC);
 
            $this->template = (isset($docRow['Doc']) ? $docRow['Doc']: '');
+           $this->docTitle = $docRow["docTitle"];
 
            try{
                 if (isset($docRow['Abstract'])) {
@@ -67,6 +70,10 @@ abstract class AbstractTemplateForm {
 
     public function getSubjectLine(){
         return $this->subjectLine;
+    }
+
+    public function getDocTitle(){
+        return $this->docTitle;
     }
 
     protected function setValue($search, $replace) {
