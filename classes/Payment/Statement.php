@@ -9,6 +9,7 @@ use HHK\sec\Session;
 use HHK\SysConst\{InvoiceLineType, InvoiceStatus, ItemId, PaymentMethod, PaymentStatusCode, GLTableNames};
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\House\Registration;
+use Mpdf\Mpdf;
 
 /**
  *
@@ -1269,10 +1270,10 @@ WHERE
 
             $header .= HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth, "class"=>"mr-5")),
-            array("style"=>"width: " . $uS->statementLogoWidth ."px"));
+            array("style"=>"vertical-align: middle; width: " . $uS->statementLogoWidth ."px"));
         }
 
-        $header .= HTMLTable::makeTd(Receipt::getAddressTable($dbh, $uS->sId));
+        $header .= HTMLTable::makeTd(Receipt::getAddressTable($dbh, $uS->sId), ['style'=>'vertical-align: middle;']);
 
         $hdrTbl = new HTMLTable();
 
@@ -1281,7 +1282,61 @@ WHERE
         return $hdrTbl->generateMarkup(array("id"=>"stmtHeader", "class" => "mb-3 fullWidth"));
     }
 
-    public static function makeEmailTbl($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
+    public static function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
+        $emtableMarkup = "";
+        $emTbl = new HTMLTable();
+
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('From', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd($emFrom)
+		);
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Subject', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject')))
+		);
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('To', ['class'=>"tdlabel"]) . 
+            HTMLTable::makeTd(HTMLInput::generateMarkup($emAddrs, array('name' => 'txtEmail')))
+		);
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('Body', ['class'=>"tdlabel"]) . 
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize')))
+		);
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
+			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Statement.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowStatement.php?vid=' . $idVisit . '&reg=' . $idRegistration . '&pdfDownload', 'class' => 'hhk-autosize')))
+		);
+
+        $emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email ' . Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
+        
+        $emtableMarkup .= HTMLContainer::generateMarkup("div", 
+			$emTbl->generateMarkup(array("class"=>"emTbl mb-2"), ) . 
+			HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('button', '&nbsp;<span>Send</span> <i class="ml-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'type'=>"button", "id"=>"btnEmail", 'class'=> 'ui-button ui-corner-all ui-widget', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit)), ["class"=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
+
+        $emtableMarkup .= HTMLContainer::generateMarkup("div",
+			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"])
+            //. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"])
+            ,
+		["class"=>'mb-3']);
+
+        return $emtableMarkup;
+    }
+
+    public static function makePDF($stmtMarkup = "", bool $download = false)
+	{
+
+		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
+		$mpdf->showImageErrors = true;
+		$mpdf->WriteHTML('<html><head>' . HOUSE_CSS . GRID_CSS . STATEMENT_CSS . '</head><body style="font-size: 0.9em"><div class="PrintArea">' . $stmtMarkup . '</div></body></html>');
+
+		if($download == true){
+			$mpdf->OutputHttpDownload("Statement.pdf");
+		} else {
+			return $mpdf->Output('', 'S');
+		}
+	}
+
+    public static function makeEmailTblOLD($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
         // create send email table
         $emTbl = new HTMLTable();
         $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'class'=>'ignrSave ml-2')), array("class"=>"hhk-flex")));
@@ -1354,6 +1409,10 @@ WHERE
 
         $sTbl = new HTMLTable();
 
+        $sTbl->addHeaderTr(
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("strong", "Statement Summary"), ["class"=>"border-none align-center", "colspan"=>"2"])
+        );
+
         $sTbl->addBodyTr(
             HTMLTable::makeTd('Total Nights:', array('class'=>'tdlabel'))
             . HTMLTable::makeTd(number_format($totalNights, 0), array('class'=>'align-center')),
@@ -1405,10 +1464,10 @@ WHERE
         $bodyTbl->addBodyTr(
             HTMLTable::makeTd(
                 HTMLContainer::generateMarkup("strong", 'Prepared '.date('M jS, Y')) .
-                $tbl->generateMarkup()) .
+                $tbl->generateMarkup(), ['class'=>'border-none']) .
             HTMLTable::makeTd(
-                $sTbl->generateMarkup(["class"=>"tblStmtSummary"], HTMLContainer::generateMarkup("strong", 'Statement Summary'))
-            , array("class"=>"align-center"))
+                $sTbl->generateMarkup(["class"=>"tblStmtSummary"])
+            , array("class"=>"align-right border-none"))
         );
 
         return $bodyTbl->generateMarkup(array("id"=>"stmtSummary", "class" => "mb-3 fullWidth"));

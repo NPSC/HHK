@@ -14,17 +14,21 @@
     vertical-align: top;
 }
 
-#divStmt .hhk-tdbox tr.stmtHead {
+#divStmt .hhk-tdbox tr.stmtHead, #divStmt .hhk-tdbox tr.stmtHead td {
     border-top: 2px solid #2E99DD !important;
 }
 
-#divStmt #stmtSummary tr.sumDivider {
+#divStmt #stmtSummary tr.sumDivider, #divStmt #stmtSummary tr.sumDivider td {
     border-bottom: 2px solid #2E99DD !important;
 }
 
-#divStmt #stmtSummary .balanceLine {
+#divStmt #stmtSummary .balanceLine td {
     font-weight:bold;
     font-size:1.2em;
+}
+
+#divStmt td.hhk-tdTotals {
+    border-top: 2px solid #333 !important;
 }
 
 #divStmt.PrintArea {
@@ -64,12 +68,12 @@
     max-width:600px;
 }
 
-#divStmt #stmtHeader * {
+#divStmt #stmtHeader td {
     border: none;
     padding: 0;
 }
 
-#divStmt #stmtSummary > tbody > tr > td {
+#divStmt #stmtSummary .border-none {
     border: none;
 }
 
@@ -78,9 +82,13 @@
 }
 
 #divStmt table.tblStmtSummary {
-    margin-left: auto;
+    display: inline-block;
 }
 
+#divStmt table.tblStmtSummary caption {
+    text-align: center !important;
+    display: block !important;
+}
 
 #emailStmtDiv #divStmt {
     max-width: 800px;
@@ -91,5 +99,22 @@
     #emailStmtDiv #divStmt {
         max-width: none !important;
     }
+
+        body {
+            margin:0; 
+            padding:0; 
+            line-height: 1.4em; 
+            word-spacing:1px; 
+            letter-spacing:0.2px; 
+            font: 13px Arial, Helvetica,"Lucida Grande", serif; 
+            color: #000;
+        }
+        .hhk-noprint {
+            display:none;
+        }
+    
+        .PrintArea {
+            border: none !important;
+        }
 }
 

@@ -853,6 +853,7 @@ ifnull(hs.idPatient, 0) as `idPatient`,
 `i`.`Payment_Attempts`,
 i.BillStatus,
 i.BillDate,
+i.EmailDate,
 i.Notes,
 `i`.`Status`,
 `i`.`Updated_By`,
@@ -871,6 +872,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
             . HTMLTable::makeTh('Date')
             . HTMLTable::makeTh('Status')
             . HTMLTable::makeTh('Bill Date')
+            . HTMLTable::makeTh('Email Date')
             . HTMLTable::makeTh('Payor')
             . HTMLTable::makeTh('Room')
             . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
@@ -949,6 +951,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
             $dateDT = new \DateTime($r['Invoice_Date']);
 
             $billDate = ($r['BillDate'] == '' ? '' : date('c', strtotime($r['BillDate'])));
+            $emailDate = ($r['EmailDate'] == '' ? '' : (new \DateTime($r["EmailDate"]))->format('M j, Y'));
 
             $actionTd = '';
 
@@ -972,6 +975,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
                     . HTMLTable::makeTd($dateDT->format('c'))
                     . HTMLTable::makeTd($statusTxt)
                     . HTMLTable::makeTd($billDate, array('id' => 'trBillDate' . $r['Invoice_Number']))
+                    . HTMLTable::makeTd($emailDate)
                     . HTMLTable::makeTd($payor)
                     . HTMLTable::makeTd($r['Title'], ['style' => 'text-align:center;'])
                     . HTMLTable::makeTd($hospital)

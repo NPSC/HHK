@@ -32,6 +32,7 @@ class InvoiceRS extends AbstractTableRS {
     public $Billing_Process_Id;
     public $BillStatus;  // VARCHAR(5) NOT NULL DEFAULT '',
     public $BillDate;  // DATE NULL,
+    public $EmailDate; //DATETIME NULL,
     public $Description;  // varchar(45) DEFAULT NULL,
     public $Notes;  // varchar(450) DEFAULT NULL,
     public $tax_exempt; // tinyint default 0,
@@ -60,6 +61,7 @@ class InvoiceRS extends AbstractTableRS {
         $this->tax_exempt = new DB_Field('tax_exempt', 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->BillStatus = new DB_Field('BillStatus', "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->BillDate = new DB_Field("BillDate", '',  new DbDateSanitizer("Y-m-d"), TRUE, TRUE);
+        $this->EmailDate = new DB_Field("EmailDate", '',  new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         
         $this->Updated_By = new DB_Field("Updated_By", '', new DbStrSanitizer(45), TRUE, True);
         $this->Last_Updated = new DB_Field("Last_Updated", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

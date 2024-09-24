@@ -118,6 +118,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         . HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-calendar invSetBill', 'data-name' => $g['Payor'], 'data-inb' => $r['Invoice_Number'], 'style' => 'cursor:pointer;margin-left:5px;', 'title' => 'Set Billing Date']),
         ["class"=>"hhk-flex", "style"=>"justify-content: space-between; align-items: end;"]);
 
+    $g['emailed'] = ($r["EmailDate"] == '' ? '' : (new DateTime($r["EmailDate"]))->format("M j, Y"));
 
     $g['Amount'] = number_format($r['Amount'], 2);
 
@@ -255,6 +256,7 @@ $cFields[] = array("Date", 'date', 'checked', '', 'MM/DD/YYYY', '15', array(), '
 $cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
 $cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
 $cFields[] = array("Billed", 'billed', 'checked', '', 'string', '20', array());
+$cFields[] = array("Emailed", 'emailed', 'checked', '', 'string', '20', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
 $cFields[] = array("Visit Arrival", 'Arrival', '', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Visit Departure", 'Departure', '', '', 'MM/DD/YYYY', '15', array(), 'date');
@@ -467,6 +469,7 @@ ifnull(hs.idPatient, 0) as `idPatient`,
 `i`.`Invoice_Date`,
 i.BillStatus,
 i.BillDate,
+i.EmailDate,
 `i`.`Payment_Attempts`,
 `i`.`Status`,
 `i`.`Updated_By`,

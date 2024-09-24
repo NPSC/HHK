@@ -704,7 +704,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($d
 
 // Save guest Id.
 $uS->guestId = $id;
-
+//remove download word
+//add default email text in site config
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -750,6 +751,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="js/statement.js"></script>
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
@@ -898,7 +900,7 @@ $uS->guestId = $id;
                             <?php } if ($showCharges) {  ?>
                             <li id="pmtsTable"><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
                             <?php } ?>
-                            <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
+                            <li id="stmtTab"><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
                             <?php if ($uS->TrackAuto) { ?>
                             <li><a href="#vvehicle">Vehicles</a></li>
                             <?php } ?>

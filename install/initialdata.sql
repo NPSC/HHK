@@ -645,6 +645,16 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('PatientAsGuest','true','b','p','','House allows patients to stay as guests','',1),
 ('PayAtCkin','true','b','h','','Allow/Disallow payments at check-in time','',1),
 ('PaymentDisclaimer','The amount of your donation that is deductible for Federal tax purposes is limited to the excess of the amount of your donation over the value of the goods and services provided to you by (House Name).  Because the estimated value of the goods and services provided to you by (House Name) exceeds the value of your donation, no part of your donation is deductible for Federal tax purposes.','t','f','','Shows on receipts and statements','',1),
+('InvoiceEmailBody','Hello,
+Your invoice from (house name) is attached.
+
+Thank you
+(house name)','t','f','','Default email body for Invoices','',1),
+('StatementEmailBody','Hello,
+Your statement from (house name) is attached.
+
+Thank you
+(house name)','t','f','','Default email body for Statements','',1),
 ('PaymentGateway','','lu','fg','','Credit Payment Gateway','Pay_Gateway_Name',0),
 ('PayVFeeFirst','true','b','h','','Default check the visit fees payment checkbox','',1),
 ('PreviousNights','0','i','c','','Previous (to HHK) nights to add to nights counter','',1),

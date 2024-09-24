@@ -410,8 +410,7 @@ textarea {
     padding: 2px 3px;
 }
 td.hhk-tdTotals {
-    border-top-color: #333;
-    border-top-width: 2px;
+    border-top: 2px solid #333;
 }
 input.ro {
     background-color: transparent;
@@ -956,12 +955,12 @@ table.dataTable tbody td {
 	padding: 1em;
 }
 
-#viewMsgsDialog.loading, #viewMsgsDialog .loading {
+#viewMsgsDialog.loading, #viewMsgsDialog .loading, #stmtDiv .loading {
 	background: url(../../images/ui-anim_basic_16x16.gif);
 	background-repeat: no-repeat;
 	background-position: center;
 }
-#viewMsgsDialog.loading *, #viewMsgsDialog .loading *{
+#viewMsgsDialog.loading *, #viewMsgsDialog .loading *, #stmtDiv .loading * {
 	display: none !important;
 }
 

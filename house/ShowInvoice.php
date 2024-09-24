@@ -114,6 +114,10 @@ try {
             }
         }
 
+        if(isset($_GET['pdfDownload']) && $stmtMarkup != ''){
+            $invoice->makePDF($dbh, true);
+        }
+
         if (isset($_POST['btnEmail']) && count($emAddrs) > 0 && $emSubject != '' && $emBody && $stmtMarkup != '') {
 
             foreach ($emAddrs as $emAddr) {
@@ -131,17 +135,15 @@ try {
                         $mail->Subject = htmlspecialchars_decode($emSubject, ENT_QUOTES);
                         //$mail->msgHTML($stmtMarkup);
                         $mail->msgHTML($emBody);
-                        $mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
-                        $mpdf->showImageErrors = true;
-                        $mpdf->WriteHTML(
-                            '<html><head>' . HOUSE_CSS . INVOICE_CSS . '</head><body><div class="PrintArea">' . $stmtMarkup . '</div></body></html>'
-                        );
 
-                        $pdfContent = $mpdf->Output('', 'S');
+                        $pdfContent = $invoice->makePDF($dbh);
                         $mail->addStringAttachment($pdfContent, 'Invoice.pdf', PHPMailer::ENCODING_BASE64, 'application/pdf');
 
                         $mail->send();
                         $msg .= "Email sent to " . $emAddr . ".  ";
+
+                        //update invoice EmailDate
+                        $invoice->setEmailDate($dbh, new DateTime(), $uS->username);
                     } catch (\Exception $e) {
                         $msg .= "Email failed!  " . $e->getMessage() . $mail->ErrorInfo;
                     }
@@ -151,14 +153,11 @@ try {
 
         $emSubject = $wInit->siteName . " Invoice";
 
-        $emBody = "Hello,\n" . 
-        "Your invoice from " . $uS->siteName . " is attached.\n\r" . 
-        "Thank You,\n" . 
-        $uS->siteName;
+        $emBody = $uS->InvoiceEmailBody;
 
         // create send email table
         if ($invoice->isDeleted() === FALSE) {
-            $emtableMarkup = Invoice::makeEmailTbl($emSubject, $emAddrs, $emBody, $invNum);
+            $emtableMarkup = $invoice->makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>", $emSubject, $emAddrs, $emBody, $invNum);
         }
     } else {
         $msg .= 'Invoice not found.';
@@ -183,6 +182,7 @@ if ($msg != '') {
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -213,7 +213,7 @@ if ($msg != '') {
             </div>
             <?php if($stmtMarkup != '') { ?>
             <div class="mt-3 invPage">
-                <div class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox mb-3'>
+                <div class='hhk-noprint'>
                     <form class="formEm" name="formEm" method="POST" action="ShowInvoice.php">
                         <?php echo $emtableMarkup; ?>
                         
