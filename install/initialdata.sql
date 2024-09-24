@@ -326,6 +326,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Pay_Gateway_Name', 'instamed', 'Instamed','','',0),
 ('Pay_Gateway_Name', 'vantiv', 'Worldpay','','',0),
+('Pay_Gateway_Name', 'deluxe', 'Deluxe','','',0),
 
 
 ('Pay_Status', 'c', 'Cleared', '','',0),

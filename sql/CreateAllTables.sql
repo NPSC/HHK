@@ -463,7 +463,7 @@ CREATE TABLE if not exists `gen_lookups` (
   `Code` varchar(65) NOT NULL,
   `Description` varchar(255) NOT NULL DEFAULT '',
   `Substitute` varchar(255) NOT NULL DEFAULT '',
-  `Attributes` JSON NULL DEFAULT '[]',
+  `Attributes` JSON NULL DEFAULT '{}',
   `Type` varchar(4) NOT NULL DEFAULT '',
   `Order` INT NOT NULL DEFAULT 0,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
