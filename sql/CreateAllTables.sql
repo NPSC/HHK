@@ -2423,6 +2423,7 @@ ALTER TABLE `name_guest`
 CREATE INDEX  IF NOT EXISTS `INDEX_PHONE_SEARCH` ON name_phone(`Phone_Search`);
 
 CREATE INDEX IF NOT EXISTS `INDEX_USERNAME` ON `note`(`User_Name` ASC);
+CREATE INDEX IF NOT EXISTS `INDEX_CATEGORY` ON `note`(`Category` ASC);
 
 ALTER TABLE `payment`
     ADD INDEX IF NOT EXISTS `Index_Date` (`Payment_Date` ASC);
