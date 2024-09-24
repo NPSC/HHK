@@ -2009,9 +2009,9 @@ if ($uS->CoTod) {
         <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate" />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
-        <input type="hidden" id="startYear" value= '<?php echo $uS->startYear; ?>' />
-        <input type="hidden" id="dateFormat" value='<?php echo $dateFormat; ?>' />;
-        <input type="hidden" id="makeTable" value='<?php echo $mkTable; ?>' />;
+        <input type="hidden" id="startYear" value= '<?php echo $uS->StartYear; ?>' />
+        <input type="hidden" id="dateFormat" value='<?php echo $dateFormat; ?>' />
+        <input type="hidden" id="makeTable" value='<?php echo $mkTable; ?>' />
         <input type="hidden" id="columnDefs" value='<?php echo json_encode($colSelector->getColumnDefs()); ?>' />
         <input type="hidden" id="defaultFields" value='<?php echo json_encode($defaultFields); ?>' />
         <div id="keysfees" style="font-size: .9em;"></div>
