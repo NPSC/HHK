@@ -2461,6 +2461,8 @@ ALTER TABLE `reservation`
     ADD INDEX IF NOT EXISTS `Index_idHosptial_Stay` (`idHospital_Stay` ASC);
 ALTER TABLE `reservation`
     ADD INDEX IF NOT EXISTS `Index_idReferral_Doc` (`idReferralDoc` ASC);
+ALTER TABLE `reservation`
+    ADD INDEX IF NOT EXISTS `Index_Status` (`Status` ASC);
 
 ALTER TABLE `reservation_multiple`
   ADD INDEX IF NOT EXISTS `host_id_index` (`Host_Id` ASC);
@@ -2507,6 +2509,9 @@ ALTER TABLE `visit`
     ADD INDEX IF NOT EXISTS `Index_Arrival_Date` (`Arrival_Date` ASC);
 ALTER TABLE `visit`
     ADD INDEX IF NOT EXISTS `Index_idReservation` (`idReservation` ASC);
+
+ALTER TABLE `document`
+    ADD INDEX IF NOT EXISTS `Indx_Status` (`Status` ASC);
 
 ALTER TABLE `name_log`
     ADD INDEX IF NOT EXISTS `INDEX_IDNAME` (`idName` ASC);
