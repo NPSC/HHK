@@ -56,7 +56,7 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
         	$hsDialog.append($(data.success));
         	$hsDialog.dialog({
                 autoOpen: true,
-                width: getDialogWidth(1000),
+                width: getDialogWidth(1050),
                 resizable: true,
                 modal: true,
                 title: (data.title ? data.title : 'Hospital Details'),
@@ -187,7 +187,11 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
 
 function saveHospitalStay(idHs, idVisit) {
 	var parms = [{'name':'cmd', 'value': 'saveHS'},{'name': 'idhs', 'value': idHs}, {'name': 'idv', 'value': idVisit}];
-	var parms = parms.concat($('.hospital-stay').serializeArray());
+    var parms = parms.concat($('.hospital-stay:not(#txtDiagnosis)').serializeArray());
+
+    //diagnosis
+    let base64diag = buffer.Buffer.from($('#txtDiagnosis').val()).toString("base64");
+    parms.push({ 'name': 'txtDiagnosis', 'value': base64diag });
 
 	$.post('ws_resv.php', parms, function (data) {
         if (!data) {

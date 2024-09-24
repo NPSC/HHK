@@ -294,23 +294,24 @@ class Hospital {
                                 $name['last'],
                         ['name' => 'a_txtLastName', 'size' => '17', 'class' => 'hhk-agentInfo hospital-stay name'])
                         )
-                . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ' .
+                . HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup("div", 
+                        HTMLContainer::generateMarkup("span", $uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ', ["class"=>"mr-1"]) .
                         HTMLInput::generateMarkup(
                                 $cPhone,
                         ['id' => 'a_txtPhone' . PhonePurpose::Cell, 'name' => 'a_txtPhone[' . PhonePurpose::Cell . ']', 'size' => '16', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
-                        ,
-                    ['style' => 'text-align:right;']
+                        ,['class'=>'hhk-flex align-items-center'])
                 )
-                . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup("div",
+                    HTMLContainer::generateMarkup("span", $uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ', ["class"=>"mr-1"]) .
                     HTMLInput::generateMarkup(
                         $wPhone,
                         ['id' => 'a_txtPhone' . PhonePurpose::Work, 'name' => 'a_txtPhone[' . PhonePurpose::Work . ']', 'size' => '16', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
-                    . ' x: '
+                    . HTMLContainer::generateMarkup("span", 'x:', ["class"=>"mx-1"])
                     . HTMLInput::generateMarkup(
                         $wExt,
                         ['id' => 'a_txtExtn' . PhonePurpose::Work, 'name' => 'a_txtExtn[' . PhonePurpose::Work . ']', 'size' => '6', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
-                    ,
-                    ['style' => 'text-align:right;']
+                    ,['class'=>'hhk-flex align-items-center'])
                 )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
@@ -321,7 +322,7 @@ class Hospital {
                 ,
                 ['class' => 'hhk-agentInfo']);
 
-            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(['style' => 'margin-top:.5em;']);
+            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(['class' => 'mt-3']);
 
 
         }
@@ -451,7 +452,7 @@ class Hospital {
                         )
                 , array('class'=>'hhk-docInfo'));
 
-            $doctorMarkup = $docErrorMsg . $dtbl->generateMarkup(array('style'=>'display:inline-table; vertical-align: top;'));
+            $doctorMarkup = $docErrorMsg . $dtbl->generateMarkup(array('class'=>'mt-3'));
         }
 
         // Diagnosis
@@ -523,7 +524,7 @@ class Hospital {
                 }
             }
 
-            $diagMarkup = $diagtbl->generateMarkup(array('style'=>'display:inline-table; vertical-align: top;'));
+            $diagMarkup = $diagtbl->generateMarkup(array('class'=>'mt-3'));
 
         } else {
             $diagMarkup = '';
@@ -546,13 +547,13 @@ class Hospital {
                 )
             );
 
-            $locMarkup = $diagtbl->generateMarkup(array('style'=>'display:inline-table; vertical-align: top;'));
+            $locMarkup = $diagtbl->generateMarkup(array('class'=>'mt-3'));
 
         } else {
             $locMarkup = '';
         }
 
-        $docRowMkup = HTMLContainer::generateMarkup('div', $doctorMarkup . $diagMarkup . $locMarkup, array('style'=>'margin-top: .5em;', 'id'=>'docRow'));
+        $docRowMkup = $doctorMarkup . $diagMarkup . $locMarkup;
 
         // Hospital stay log
         if ($hstay->getIdPsg() > 0) {
@@ -656,7 +657,7 @@ $(document).ready(function () {
         }
 
         if (isset($post['txtDiagnosis'])) {
-            $hstay->setDiagnosis2(filter_var($post['txtDiagnosis'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $hstay->setDiagnosis2(filter_var(base64_decode($post['txtDiagnosis']), FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['selLocation'])) {
