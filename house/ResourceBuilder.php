@@ -2262,6 +2262,7 @@ $formBuilderOptions = [
     <?php echo HOUSE_CSS; ?>
     <?php echo NOTY_CSS; ?>
     <?php echo GRID_CSS; ?>
+    <?php echo BOOTSTRAP_ICONS_CSS; ?>
     <?php echo FAVICON; ?>
     <?php echo NAVBAR_CSS; ?>
     <?php echo CSSVARS; ?>
@@ -2279,6 +2280,7 @@ $formBuilderOptions = [
     <script type="text/javascript" src="<?php echo SERIALIZEJSON; ?>"></script>
     <script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
     <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+    <script type="text/javascript" src="js/bootstrap-icons.js"></script>
 </head>
 <body <?php if ($wInit->testVersion) {
     echo "class='testbody'";
@@ -2545,6 +2547,7 @@ $formBuilderOptions = [
         <input type="hidden" id="labels" value='<?php echo json_encode($formBuilderLabels); ?>' />
         <input type="hidden" id="frmOptions" value='<?php echo json_encode($formBuilderOptions); ?>' />
     </div>
+
     <!-- div id="contentDiv"-->
 </body>
 

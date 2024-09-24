@@ -489,6 +489,11 @@ div#global-title {
 	}
 }
 
+.hhk-strip-links td a {
+	text-decoration: none;
+	color: black;
+}
+
 .user-agent-spacing * {
 	padding: revert;
 	margin: revert;

@@ -600,7 +600,7 @@ function refreshPayments() {
 	$('#btnFeesGo').click();
 }
 
-function getDtBtns(title){
+function getDtBtns(title, stripHtml = true, className = ""){
 		return [
             {
                 extend: "print",
@@ -608,6 +608,7 @@ function getDtBtns(title){
                 autoPrint: true,
                 paperSize: "letter",
                 exportOptions: {
+                    stripHtml: stripHtml,
                 	columns: ":not('.noPrint')",
                 },
                 title: function(){
@@ -620,6 +621,11 @@ function getDtBtns(title){
                 customize: function (win) {
                     $(win.document.body)
                         .css("font-size", "0.9em");
+                    
+                    if (className.length > 0) {
+                        $(win.document.body)
+                            .addClass(className);
+                    }
 
                     $(win.document.body).find("table")
                         //.addClass("compact")
@@ -1640,7 +1646,7 @@ $(document).ready(function () {
             });
        },
        columns: cgCols,
-       "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY")),
+       "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY"), false, "hhk-strip-links"),
        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
        autoWidth:false,
     });

@@ -886,8 +886,12 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         } else if ($uS->RibbonColor != '') {
 
             foreach ($demogs as $d) {
-
-                if ($d[2] != '') {
+                if ($d["Attributes"] && $attributes = json_decode($d["Attributes"], true)){
+                    $this->ribbonColors[$d[0]] = array(
+                        't' => isset($attributes["textColor"]) ? trim(strtolower($attributes["textColor"])) : "#ffffff",
+                        'b' => isset($attributes["backgroundColor"]) ? trim(strtolower($attributes["backgroundColor"])) : 'transparent'
+                    );
+                }else if ($d[2] != '') {
 
                     // Split colors out of CDL
                     $splits = explode(',', $d[2]);
