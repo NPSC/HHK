@@ -11,6 +11,7 @@ use HHK\Member\Role\AbstractRole;
 use HHK\Member\Role\Guest;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{Session, WebInit};
@@ -332,6 +333,7 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
             <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
+            <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) { echo InstamedGateway::getIframeMkup(); } ?>
             <div id="ecSearch" style="display:none;">
                 <table>
                     <tr>

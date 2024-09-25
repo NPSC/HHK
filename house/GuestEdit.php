@@ -20,6 +20,7 @@ use HHK\Member\EmergencyContact\EmergencyContact;
 use HHK\Member\RoleMember\GuestMember;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\Purchase\FinAssistance;
@@ -1017,6 +1018,7 @@ $uS->guestId = $id;
         <form name="xform" id="xform" method="post"></form>
         <table id="feesTable" style="display:none;"></table>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup();} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) { echo InstamedGateway::getIframeMkup(); } ?>
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);

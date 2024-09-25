@@ -5,6 +5,7 @@ use HHK\House\ReserveData\ReserveData;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\Labels;
@@ -298,6 +299,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) { echo InstamedGateway::getIframeMkup(); } ?>
 
         <script type="text/javascript" src='<?php echo CHECKINGIN_JS; ?>'></script>
 

@@ -1,6 +1,7 @@
 <?php
 
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
@@ -639,6 +640,7 @@ var pmtMkup,
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
 		<?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
+		<?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) { echo InstamedGateway::getIframeMkup(); } ?>
 
     </body>
 </html>

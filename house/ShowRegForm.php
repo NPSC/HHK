@@ -298,6 +298,11 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 let idPrimaryGuest = '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>';
                 let idPsg = '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>';
                 let signatures = <?php echo json_encode($signatures); ?>;
+                let paymentMarkup = '<?php echo $paymentMarkup; ?>';
+
+                if(paymentMarkup.length > 0){
+                    flagAlertMessage(paymentMarkup, 'info');
+                }
 
                 setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
                 setupEsign();

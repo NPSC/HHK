@@ -1445,11 +1445,21 @@ console.log("redirect called");
 
         } else if (data.inctx) {
 
-            $('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
-            InstaMed.launch(data.inctx);
-            $('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
+            //$('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
+            $("#instamedDialog").dialog({
+                modal: true,
+                width: getDialogWidth(800),
+                height: 450,
+                autoOpen: true,
+                title: data.dialogTitle,
+                open: function (event, ui) {
+                    InstaMed.launch(data.inctx);
+                }
+            });
+            //InstaMed.launch(data.inctx);
+            //$('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
 
-            // openiframe(data.inctx, 600, 400, "Add New Card On File");
+            //openiframe(data.inctx, 600, 400, "Add New Card On File");
 
         } else if (data.deluxehpf) {
             //var height = (data.useSwipe ? 200 : 400);
@@ -1627,7 +1637,7 @@ function setupCOF($chgExpand, idx) {
         if ($('#btnvrKeyNumber' + idx).length > 0) {
             $('#btnvrKeyNumber' + idx).change(function () {
                 
-                if (($('input[name=rbUseCard' + idx + ']:checked').val() == 0 && $('#btnvrKeyNumber' + idx).prop("checked") == true) || ($('input[name=rbUseCard' + idx + ']').prop('checked') === true && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox')) {
+                if ($('#btnvrKeyNumber' + idx).prop("checked") == true && ($('input[name=rbUseCard' + idx + ']:checked').val() == 0 || ($('input[name=rbUseCard' + idx + ']').prop('checked') === true && $('input[name=rbUseCard' + idx + ']').prop('type') === 'checkbox'))) {
                     $('#trvdCHName' + idx).show("fade");
                 } else {
                     $('#trvdCHName' + idx).hide("fade");

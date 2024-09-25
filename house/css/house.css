@@ -175,7 +175,7 @@ body {
 }
   
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
-.hhk-loading { background: white url('../../images/ui-anim_basic_16x16.gif') left center no-repeat; }
+.hhk-loading { background: white url('../../images/ui-anim_basic_16x16.gif') center no-repeat !important; }
 .hhk-loading-btn { background: transparent url('../../images/ui-anim_basic_16x16.gif') center center no-repeat; width: 16px; height: 16px;}
 .hhk-icon-redLight {
     width: 16px;
@@ -1219,4 +1219,8 @@ input:checked + .hhk-slider:before {
 #deluxeDialog input:disabled{
 	background-color: #e9ecef;
     opacity: 1;
+}
+
+.IM-Gradient {
+	display: none !important;
 }

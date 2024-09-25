@@ -307,7 +307,7 @@ class InstamedGateway extends AbstractPaymentGateway {
             $uS->paymentIds = $payIds;
             $uS->ccgw = $this->getMerchant();
 
-            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken());
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken(), "dialogTitle"=>"Make a Payment");
         } else {
 
             // The initialization failed.
@@ -372,7 +372,7 @@ class InstamedGateway extends AbstractPaymentGateway {
             $uS->cardHolderName = $cardHolderName;
             $uS->ccgw = $this->getMerchant();
 
-            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken());
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken(), 'dialogTitle'=>"Add new card on file");
         } else {
 
             // The initialization failed.
@@ -1123,7 +1123,7 @@ where r.idRegistration =" . $idReg);
         $keyCb = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", "Swipe") .
             HTMLContainer::generateMarkup(
                 'label',
-                HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index, 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) .
+                HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index, 'title'=>'Key in credit account number')) .
                 HTMLContainer::generateMarkup("div", "", ['class' => 'hhk-slider round'])
                 ,
                 ['for' => 'btnvrKeyNumber' . $index, 'title' => 'Check to Key in credit account number', 'class' => 'hhk-switch mx-2']
@@ -1313,5 +1313,9 @@ where r.idRegistration =" . $idReg);
         return $msg;
     }
 
+
+    public static function getIframeMkup(){
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("iframe", '', ["id"=>"instamed", "style"=>"width: 100%; height: 98%; overflow: hidden; border: none;"]), ["id"=>"instamedDialog", "style"=>"display:none; padding: 0;", "class"=>"hhk-loading"]);
+    }
+
 }
-?>
