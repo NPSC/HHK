@@ -1220,7 +1220,3 @@ input:checked + .hhk-slider:before {
 	background-color: #e9ecef;
     opacity: 1;
 }
-
-.IM-Gradient {
-	display: none !important;
-}
