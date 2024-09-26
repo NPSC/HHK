@@ -2406,8 +2406,9 @@ ALTER TABLE `invoice_line`
 ALTER TABLE `labels`
 	ADD UNIQUE INDEX IF NOT EXISTS `Unique_Key_Categeory` (`Key` ASC, `Category` ASC);
 
-ALTER TABLE `link_doc`
-ADD INDEX IF NOT EXISTS `indx_linkDoc` (`idDocument` ASC, `idGuest` ASC, `idPSG` ASC);
+CREATE INDEX IF NOT EXISTS `indx_idDocument` ON `link_doc` (`idDocument` ASC);
+CREATE INDEX IF NOT EXISTS `indx_idGuest` ON `link_doc` (`idGuest` ASC);
+CREATE INDEX IF NOT EXISTS `indx_idPsg` ON `link_doc` (`idPSG` ASC);
 
 ALTER TABLE `name`
     ADD INDEX IF NOT EXISTS `Index_Name` (`Name_Last` ASC, `Name_First` ASC);

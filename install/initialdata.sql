@@ -770,6 +770,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('reservationChooserTitle','Reservation Chooser','s','rf','','Default: Reservation Chooser'),
 ('newButtonLabel','New Reservation','s','rf','','Default: New Reservation'),
 ('licensePlate','License Plate','s','rf','','Default: License Plate'),
+('vehicleNotes', 'Notes', 's', 'rf','','Default: Notes'),
 ('agreementTitle','Agreement','s','rf','','Default: Agreement'),
 ('Survey_Subject','Checkout Survey','s','rf','','Default: Checkout Survey'),
 ('VisitFeeConfirmLabel','Cleaning Fee:','s','rf','','Default: Cleaning Fee:'),
