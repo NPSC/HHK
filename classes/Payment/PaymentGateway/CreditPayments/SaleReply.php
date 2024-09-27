@@ -21,6 +21,16 @@ use HHK\Exception\PaymentException;
 
 class SaleReply extends AbstractCreditPayments {
 
+    /**
+     * Summary of caseApproved
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractCreditResponse $pr
+     * @param string $username
+     * @param mixed $pRs
+     * @param int $attempts
+     * @throws \HHK\Exception\PaymentException
+     * @return AbstractCreditResponse
+     */
     protected static function caseApproved(\PDO $dbh, AbstractCreditResponse $pr, $username, $pRs = NULL, $attempts = 1) {
 
         $uS = Session::getInstance();

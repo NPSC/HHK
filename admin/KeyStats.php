@@ -134,8 +134,8 @@ $query = "select  (
 $rw = $rows[0];
 
 
-$DonorVolunteers = number_format($rw[0], 2);
-$volunteer = number_format(100 - $rw[0], 2);
+$DonorVolunteers = number_format((is_null($rw[0]) ? 0 : $rw[0]), 2);
+$volunteer = number_format(100 - (is_null($rw[0]) ? 0 : $rw[0]), 2);
 
 
 // members not in the name_volunteer file

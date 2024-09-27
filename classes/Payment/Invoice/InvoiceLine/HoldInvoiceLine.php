@@ -21,6 +21,10 @@ use HHK\SysConst\InvoiceLineType;
 
 class HoldInvoiceLine extends AbstractInvoiceLine {
 
+    /**
+     * Summary of __construct
+     * @param mixed $useDetail
+     */
     public function __construct($useDetail = TRUE) {
         parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Hold);

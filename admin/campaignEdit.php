@@ -42,7 +42,7 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
 
     // Title
     if (isset($post['txtTitle']) && $post['txtTitle'] != '') {
-        $campRS->Title->setNewVal(filter_var($post['txtTitle'], FILTER_SANITIZE_STRING));
+        $campRS->Title->setNewVal(filter_var($post['txtTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     } else {
         return "The title must be specified.";
     }
@@ -50,8 +50,8 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
     // Start and end dates
     if (isset($post['sdate']) && isset($post['edate'])) {
 
-        $stDateStr = filter_var($post["sdate"], FILTER_SANITIZE_STRING);
-        $enDateStr = filter_var($post["edate"], FILTER_SANITIZE_STRING);
+        $stDateStr = filter_var($post["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $enDateStr = filter_var($post["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($stDateStr == '' || $enDateStr == '') {
             return "Start and End dates must be specified.";
@@ -99,16 +99,16 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
     }
 
     if (isset($post['selStatus'])) {
-        $campRS->Status->setNewVal(filter_var($post['selStatus'], FILTER_SANITIZE_STRING));
+        $campRS->Status->setNewVal(filter_var($post['selStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     }
     if (isset($post['txtCat'])) {
-        $campRS->Category->setNewVal(filter_var($post['txtCat'], FILTER_SANITIZE_STRING));
+        $campRS->Category->setNewVal(filter_var($post['txtCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     }
     if (isset($post['txtMergeCode'])) {
-        $campRS->Campaign_Merge_Code->setNewVal(filter_var($post['txtMergeCode'], FILTER_SANITIZE_STRING));
+        $campRS->Campaign_Merge_Code->setNewVal(filter_var($post['txtMergeCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     }
     if (isset($post['txtDesc'])) {
-        $campRS->Description->setNewVal(filter_var($post['txtDesc'], FILTER_SANITIZE_STRING));
+        $campRS->Description->setNewVal(filter_var($post['txtDesc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     }
 
     // if a new code
@@ -152,8 +152,7 @@ $campCode = "";
 
 //Check GET
 if (isset($_GET["cp"])) {
-     addslashesextended($_GET);
-    $campCode = filter_var($_GET["cp"], FILTER_SANITIZE_STRING);
+    $campCode = filter_var($_GET["cp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 }
 
@@ -164,16 +163,15 @@ $resultMessage = "";
 
 
 // form1 save button:
-if (isset($_POST["bttncamp"])) {
-     addslashesextended($_POST);
+if (filter_has_var(INPUT_POST, "bttncamp")) {
     // validate and if okay, save data
     // if not okay, redisplay form with errors marked.
     $campAlert = new AlertMessage("campAlert");
 
     $selType->setReturnValues($_POST[$selType->get_htmlNameBase()]);
-    $type = filter_var($_POST[$selType->get_htmlNameBase()], FILTER_SANITIZE_STRING);
+    $type = filter_var($_POST[$selType->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    $campCode = filter_var($_POST['selCamp'], FILTER_SANITIZE_STRING);
+    $campCode = filter_var($_POST['selCamp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $mes = saveCampaign($dbh, $campCode, $type, $_POST);
 
@@ -197,15 +195,15 @@ $stDate = "";
 $enDate = "";
 $lastDate = "";
 
-if ($campaign->get_startdate() != null)
+if ($campaign->get_startdate() != null){
     $stDate = date("m/d/Y", strtotime($campaign->get_startdate()));
-
-if ($campaign->get_enddate() != null)
+}
+if ($campaign->get_enddate() != null){
     $enDate = date("m/d/Y", strtotime($campaign->get_enddate()));
-
-if ($campaign->get_lastupdated() != null)
+}
+if ($campaign->get_lastupdated() != null){
     $lastDate = date("m/d/Y", strtotime($campaign->get_lastupdated()));
-
+}
 $selType->set_value(TRUE, $campaign->get_type());
 
 ?>

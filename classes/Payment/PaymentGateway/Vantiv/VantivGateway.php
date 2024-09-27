@@ -19,6 +19,10 @@ use HHK\sec\{SecurityComponent, Session, SysConfig};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
+use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
+use HHK\Tables\House\LocationRS;
+use HHK\TableLog\AbstractTableLog;
+use HHK\TableLog\HouseLog;
 
 /**
  * VantivGateway.php
@@ -44,6 +48,21 @@ class VantivGateway extends AbstractPaymentGateway {
     protected $paymentPageLogoUrl = '';
     protected $manualKey = FALSE;
 
+    public function __construct(\PDO $dbh, $gwType = '', $tokenId = 0) {
+
+        // Glean gwType if not there.
+        if ($gwType == '' && $tokenId > 0) {
+
+            // Find merchant (gwType) from the token.
+            $tknRs = CreditToken::getTokenRsFromId($dbh, $tokenId);
+
+            if (CreditToken::hasToken($tknRs)) {
+                $gwType = $tknRs->Merchant->getStoredVal();
+            }
+        }
+
+        parent::__construct($dbh, $gwType);
+    }
 
     public static function getPaymentMethod() {
         return PaymentMethod::Charge;
@@ -52,6 +71,15 @@ class VantivGateway extends AbstractPaymentGateway {
     public function getGatewayName() {
         return AbstractPaymentGateway::VANTIV;
     }
+
+    public function hasUndoReturnPmt() {
+    	return False;
+    }
+
+    public function hasUndoReturnAmt() {
+    	return False;
+    }
+
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 
@@ -135,11 +163,11 @@ class VantivGateway extends AbstractPaymentGateway {
         // Set up request
         $revRequest = new CreditVoidReturnTokenRequest();
         $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
+            ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
             ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
             ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
             ->setInvoice($invoice->getInvoiceNumber())
             ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-            ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
             ->setToken($tknRs->Token->getStoredVal())
             ->setTokenId($tknRs->idGuest_token->getStoredVal())
             ->setTitle('CreditVoidReturnToken');
@@ -202,13 +230,13 @@ class VantivGateway extends AbstractPaymentGateway {
             // Set up request
             $revRequest = new CreditReversalTokenRequest();
             $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
+                    ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
+                    ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
+                    ->setProcessData($pAuthRs->ProcessData->getStoredVal())
                     ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
                     ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
                     ->setInvoice($invoice->getInvoiceNumber())
                     ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-                    ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
-                    ->setProcessData($pAuthRs->ProcessData->getStoredVal())
-                    ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
                     ->setToken($tknRs->Token->getStoredVal())
                     ->setTokenId($tknRs->idGuest_token->getStoredVal())
                     ->setTitle('CreditReversalToken');
@@ -302,8 +330,6 @@ class VantivGateway extends AbstractPaymentGateway {
 
                     return array('warning' => $csResp->response->getMessage(), 'bid' => $bid);
 
-                    break;
-
                 default:
 
                     return array('warning' => '** Return Invalid or Error. **  ', 'bid' => $bid);
@@ -317,7 +343,7 @@ class VantivGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes, $resvId = 0) {
 
         $uS = Session::getInstance();
         $rtnResult = NULL;
@@ -411,7 +437,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         // Card reader?
         if ($this->usePOS && ! $this->manualKey) {
-            $pay->setCardEntryMethod('swipe')
+            $pay->setCardEntryMethod('Swipe')
             		->setPaymentPageCode('CheckoutPOS_Url');
         } else {
         	$pay->setPaymentPageCode('Checkout_Url');
@@ -504,7 +530,7 @@ class VantivGateway extends AbstractPaymentGateway {
         }
 
         if (isset($post['ReturnMessage'])) {
-            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_STRING);
+            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // THis eventually selects the merchant id
@@ -515,7 +541,7 @@ class VantivGateway extends AbstractPaymentGateway {
 
         if (isset($post[VantivGateway::PAYMENT_ID])) {
 
-            $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
+            $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
 
@@ -735,7 +761,8 @@ class VantivGateway extends AbstractPaymentGateway {
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) < 1) {
-            $rows[0] = array();
+            $rows[0] = [];
+            //throw new PaymentException('Payment Gateway Merchant "' . $this->getGatewayType() . '" is not found for '.$this->getGatewayName());
         }
 
         $gwRs = new CC_Hosted_GatewayRS();
@@ -790,29 +817,34 @@ class VantivGateway extends AbstractPaymentGateway {
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
-    	$selArray = array('name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'width:min-content;', 'title'=>'Select the Location');
-    	$manualArray =  array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'title'=>'Check to Key in credit account number');
+    	$selArray = ['name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'width:min-content;', 'title'=>'Select the Location'];
+    	$manualArray =  ['type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'title'=>'Check to Key in credit account number'];
 
         // Precheck the manual account number entry checkbox?
         if ($this->checkManualEntryCheckbox) {
         	$manualArray['checked'] = 'checked';
         }
 
-        $keyCb = HTMLContainer::generateMarkup('span',
-        		HTMLContainer::generateMarkup('label', 'Type: ', array('for'=>'btnvrKeyNumber'.$index, 'title'=>'Check to Key in credit account number')) .HTMLInput::generateMarkup('', $manualArray)
-        , array('style'=>'float:right; margin-top:2px;'));
+        $keyCb = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", "Swipe") .
+            HTMLContainer::generateMarkup(
+                'label',
+                HTMLInput::generateMarkup('', $manualArray) .
+                HTMLContainer::generateMarkup("div", "", ['class' => 'hhk-slider round'])
+                ,
+                ['for' => 'btnvrKeyNumber' . $index, 'title' => 'Check to Key in credit account number', 'class' => 'hhk-switch mx-2']
+            ) .
+            HTMLContainer::generateMarkup("span", "Type")
+            , ["class"=>"hhk-flex"]);
 
         if ($this->getGatewayType() != '') {
         	// A location is already selected.
 
-            $sel = HTMLSelector::doOptionsMkup(array(0=>array(0=>$this->getGatewayType(), 1=> ucfirst($this->getGatewayType()))), $this->getGatewayType(), FALSE);
+            $sel = HTMLSelector::doOptionsMkup([0=>[0=>$this->getGatewayType(), 1=> ucfirst($this->getGatewayType())]], $this->getGatewayType(), FALSE);
 
             $payTbl->addBodyTr(
-                    HTMLTable::makeTh('Selected Location:', array('style'=>'text-align:right;'))
-            		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray)
-            				. $keyCb
-            				, array('colspan'=>'2'))
-            		, array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
+                    HTMLTable::makeTh('Selected Location:', ['style'=>'text-align:right;'])
+            		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), ['colspan'=>'2'])
+            	, ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
             );
 
         } else {
@@ -831,15 +863,17 @@ class VantivGateway extends AbstractPaymentGateway {
             }
 
             $payTbl->addBodyTr(
-            		HTMLTable::makeTh('Select a Location:', array('style'=>'text-align:right; width:130px;'))
-                    .HTMLTable::makeTd(
-                    		HTMLSelector::generateMarkup($sel, $selArray)
-                    		. $keyCb
-                    		, array('colspan'=>'2'))
-                    , array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
+            		HTMLTable::makeTh('Select a Location:', ['style'=>'text-align:right; width:130px;'])
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), ['colspan'=>'2'])
+                , ['id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index]
             );
 
         }
+
+        $payTbl->addBodyTr(
+            HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
+            .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
+        ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
 
     }
 
@@ -856,146 +890,219 @@ class VantivGateway extends AbstractPaymentGateway {
 
         $tbl = new HTMLTable();
 
-        // Spacer
-        $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
+        if ($resultMessage != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'class' => 'ui-state-highlight')));
+        }
 
         foreach ($rows as $r) {
+
+            $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')), array('style'=>'border-top: solid 1px black;'));
 
             $gwRs = new CC_Hosted_GatewayRS();
             EditRS::loadRow($r, $gwRs);
 
             $indx = $gwRs->idcc_gateway->getStoredVal();
+            $title = ucfirst($gwRs->cc_name->getStoredVal());
+
+            // Nerchant name
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Merchant Name:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd($title)
+            );
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Merchant Name', array('style' => 'border-top:2px solid black;'))
-                    . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
-            );
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTh('Merchant Id', array())
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
+                HTMLTable::makeTh('Merchant Id:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Password', array())
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
+                HTMLTable::makeTh('Password:', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Credit URL', array())
+                HTMLTable::makeTh('Credit URL:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Credit_Url->getStoredVal(), array('name' => $indx . '_txtcrdurl', 'size' => '90')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Token Trans URL', array())
+                HTMLTable::makeTh('Token Trans URL:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Trans_Url->getStoredVal(), array('name' => $indx . '_txttransurl', 'size' => '90')))
             );
 
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('CheckoutPOS URL', array())
+                HTMLTable::makeTh('CheckoutPOS URL:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CheckoutPOS_Url->getStoredVal(), array('name' => $indx . '_txtcoposurl', 'size' => '90')))
             );
 
             $tbl->addBodyTr(
-                        HTMLTable::makeTh('Checkout URL', array())
+                HTMLTable::makeTh('Checkout URL:', array('class' => 'tdlabel'))
                         . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Checkout_Url->getStoredVal(), array('name' => $indx . '_txtckouturl', 'size' => '90')))
             );
 
             $tbl->addBodyTr(
-                		HTMLTable::makeTh('Manual Merchant Id', array())
+                HTMLTable::makeTh('Manual Merchant Id:', array('class' => 'tdlabel'))
                 		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Manual_MerchantId->getStoredVal(), array('name' => $indx . '_txtManMerchId', 'size' => '90')))
        		);
             $tbl->addBodyTr(
-                		HTMLTable::makeTh('Manual Password', array())
-                		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Manual_Password->getStoredVal(), array('name' => $indx . '_txtManMerchPW', 'size' => '90')). ' (Obfuscated)')
+                HTMLTable::makeTh('Manual Password:', array('class' => 'tdlabel'))
+                		. HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->Manual_Password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtManMerchPW', 'size' => '90')). ' (Obfuscated)')
             );
             $tbl->addBodyTr(
-            		HTMLTable::makeTh('Use AVS', array())
+                HTMLTable::makeTh('Use AVS:', array('class' => 'tdlabel'))
             		.HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_AVS_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseAVS')))
             		);
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Use CCV', array())
+                HTMLTable::makeTh('Use CCV:', array('class' => 'tdlabel'))
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_Ccv_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseCVV')))
             );
 
             $tbl->addBodyTr(
-            		HTMLTable::makeTh('Use Card Swiper', array())
+                HTMLTable::makeTh('Use Card Swiper:', array('class' => 'tdlabel'))
             		.HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Retry_Count->getStoredVal(), FALSE), array('name' => $indx . '_txtuseSwipe')))
             		);
 
             $tbl->addBodyTr(
-            		HTMLTable::makeTh('Payment Page Logo URL', array())
+                HTMLTable::makeTh('Payment Page Logo URL:', array('class' => 'tdlabel'))
             		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Page_Header_URL->getStoredVal(), array('name' => $indx . '_txtpageLogourl', 'size' => '90')))
             		);
+
+
+            // Set my rooms
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Set '.$title.' Rooms:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbSetRooms', 'class'=>'hhk-setMerchantRooms', 'data-merchant'=>$title, 'type'=>'checkbox')))
+                );
+
+            // Delete me
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Delete ' . $title . ':', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbdelMerchant', 'class'=>'hhk-delMerchant', 'data-merchant'=>$title, 'type'=>'checkbox')))
+                );
         }
 
 
-        if ($resultMessage != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
-        }
+        // New location
+        $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')), array('style'=>'border-top: solid 1px black;'));
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Add a new merchant', array('class' => 'tdlabel'))
+            .HTMLTable::makeTd('New Merchant Name: '.HTMLInput::generateMarkup('', array('name' => 'txtnewMerchant', 'size' => '50')))
+
+        );
 
         return $tbl->generateMarkup();
     }
 
     protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
+        $uS = Session::getInstance();
+
         $msg = '';
+
         $ccRs = new CC_Hosted_GatewayRS();
         $ccRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
-        // Use POS
-        if (isset($post['selCardSwipe'])) {
-            SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
-        }
+        // Add new merchant
+        if (isset($post['txtnewMerchant'])) {
+            // Add a new default row
 
+            $merchantName = strtolower(filter_var($post['txtnewMerchant'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+
+            if ( ! empty($merchantName)) {
+
+                $isThere = FALSE;
+
+                // Compare with previous merchant names
+                foreach ($rows as $r) {
+
+                    $ccRs = new CC_Hosted_GatewayRS();
+                    EditRS::loadRow($r, $ccRs);
+
+                    if ($ccRs->cc_name->getStoredVal() == $merchantName) {
+                        $isThere = TRUE;
+                        break;
+                    }
+                }
+
+                reset($rows);
+
+                // Don't let them make a new merchant with the same name.
+                if ($isThere) {
+                    $msg .= HTMLContainer::generateMarkup('p', 'Merchant name ' . $merchantName . ' already exists.');
+                } else {
+                    //Insert new gateway record
+                    $num = self::insertGwRecord($dbh, $gatewayName, $merchantName, new CC_Hosted_GatewayRS());
+                    self::checkLocationTable($dbh, $merchantName);
+
+                    // Retrieve the new record.
+                    $ccRs = new CC_Hosted_GatewayRS();
+                    $ccRs->Gateway_Name->setStoredVal($gatewayName);
+                    $ccRs->cc_name->setStoredVal($merchantName);
+                    $newrows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->cc_name));
+
+                    $rows[] = $newrows[0];
+                }
+            }
+        }
 
         foreach ($rows as $r) {
 
+            $ccRs = new CC_Hosted_GatewayRS();
             EditRS::loadRow($r, $ccRs);
 
             $indx = $ccRs->idcc_gateway->getStoredVal();
+            $merchantName = $ccRs->cc_name->getStoredVal();
+
+            // Delete Merchant
+            if (isset($post[$indx . '_cbdelMerchant']) && $ccRs->cc_name->getStoredVal() != '') {
+
+                $result = self::deleteMerchant($dbh, $ccRs);
+                $msg .= HTMLContainer::generateMarkup('p', $result);
+
+                continue;
+            }
 
             // Merchant Id
             if (isset($post[$indx . '_txtuid'])) {
-                $ccRs->Merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_STRING));
+                $ccRs->Merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Credit URL
             if (isset($post[$indx . '_txtcrdurl'])) {
-                $ccRs->Credit_Url->setNewVal(filter_var($post[$indx . '_txtcrdurl'], FILTER_SANITIZE_STRING));
+                $ccRs->Credit_Url->setNewVal(filter_var($post[$indx . '_txtcrdurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Transaction URL
             if (isset($post[$indx . '_txttransurl'])) {
-                $ccRs->Trans_Url->setNewVal(filter_var($post[$indx . '_txttransurl'], FILTER_SANITIZE_STRING));
+                $ccRs->Trans_Url->setNewVal(filter_var($post[$indx . '_txttransurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Checkout URL
             if (isset($post[$indx . '_txtckouturl'])) {
-                $ccRs->Checkout_Url->setNewVal(filter_var($post[$indx . '_txtckouturl'], FILTER_SANITIZE_STRING));
+                $ccRs->Checkout_Url->setNewVal(filter_var($post[$indx . '_txtckouturl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Chekout POS URL
             if (isset($post[$indx . '_txtcoposurl'])) {
-            	$ccRs->CheckoutPOS_Url->setNewVal(filter_var($post[$indx . '_txtcoposurl'], FILTER_SANITIZE_STRING));
+            	$ccRs->CheckoutPOS_Url->setNewVal(filter_var($post[$indx . '_txtcoposurl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Payment Page Logo URL
             if (isset($post[$indx . '_txtpageLogourl'])) {
-            	$ccRs->Page_Header_URL->setNewVal(filter_var($post[$indx . '_txtpageLogourl'], FILTER_SANITIZE_STRING));
+            	$ccRs->Page_Header_URL->setNewVal(filter_var($post[$indx . '_txtpageLogourl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Manual Merchant Id
             if (isset($post[$indx . '_txtManMerchId'])) {
-            	$ccRs->Manual_MerchantId->setNewVal(filter_var($post[$indx . '_txtManMerchId'], FILTER_SANITIZE_STRING));
+            	$ccRs->Manual_MerchantId->setNewVal(filter_var($post[$indx . '_txtManMerchId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Manual Merchant PW
             if (isset($post[$indx . '_txtManMerchPW'])) {
 
-            	$pw = filter_var($post[$indx . '_txtManMerchPW'], FILTER_SANITIZE_STRING);
+            	$pw = filter_var($post[$indx . '_txtManMerchPW'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            	if ($pw != '' && $ccRs->Manual_Password->getStoredVal() != $pw) {
+            	if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
             		$ccRs->Manual_Password->setNewVal(encryptMessage($pw));
             	} else if ($pw == '') {
             		$ccRs->Manual_Password->setNewVal('');
@@ -1004,37 +1111,68 @@ class VantivGateway extends AbstractPaymentGateway {
 
             // Use AVS
             if (isset($post[$indx . '_txtuseAVS'])) {
-                $ccRs->Use_AVS_Flag->setNewVal(filter_var($post[$indx . '_txtuseAVS'], FILTER_SANITIZE_STRING));
+                $ccRs->Use_AVS_Flag->setNewVal(filter_var($post[$indx . '_txtuseAVS'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Use CCV
             if (isset($post[$indx . '_txtuseCVV'])) {
-            	$ccRs->Use_Ccv_Flag->setNewVal(filter_var($post[$indx . '_txtuseCVV'], FILTER_SANITIZE_STRING));
+            	$ccRs->Use_Ccv_Flag->setNewVal(filter_var($post[$indx . '_txtuseCVV'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Use Card swipe
             if (isset($post[$indx . '_txtuseSwipe'])) {
-            	$ccRs->Retry_Count->setNewVal(filter_var($post[$indx . '_txtuseSwipe'], FILTER_SANITIZE_STRING));
+            	$ccRs->Retry_Count->setNewVal(filter_var($post[$indx . '_txtuseSwipe'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             // Password
             if (isset($post[$indx . '_txtpwd'])) {
 
-                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_SANITIZE_STRING);
+                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
-                if ($pw != '' && $ccRs->Password->getStoredVal() != $pw) {
+                if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
                     $ccRs->Password->setNewVal(encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->Password->setNewVal('');
                 }
             }
 
+            $num = 0;
 
             // Save record.
-            $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
+            if ($merchantName != '') {
+                //Update
 
-            if ($num > 0) {
-                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
+                $ccRs->Updated_By->setNewVal($uS->username);
+                $ccRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
+
+                if ($num > 0) {
+
+                    $logText = AbstractTableLog::getUpdateText($ccRs);
+                    HouseLog::logGeneral($dbh, 'CC Gateway', $ccRs->idcc_gateway->getStoredVal(), $logText, $uS->username, 'update');
+
+                    self::checkLocationTable($dbh, $merchantName);
+                }
+
+            } else if (empty($merchantName)) {
+                $num = 'Merchant name is missing.';
+            }
+
+            // Set Merchant Rooms
+            if (isset($post[$indx . '_cbSetRooms']) && $ccRs->cc_name->getStoredVal() != '') {
+
+                $rooms = self::setMerchantRooms($dbh, $ccRs);
+
+                if ($rooms > 0) {
+                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - " . $rooms . " rooms set to $merchantName");
+                }
+
+            }
+
+            if (intval($num, 10) == 0 && $num !== 0) {
+                $msg .= HTMLContainer::generateMarkup('p', $num);
+            } else if ($num > 0) {
+                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $merchantName . " - Payment Credentials Updated.  ");
             } else {
                 $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
             }
@@ -1043,5 +1181,144 @@ class VantivGateway extends AbstractPaymentGateway {
         return $msg;
     }
 
+    private static function insertGwRecord(\PDO $dbh, $gatewayName, $merchantName, CC_Hosted_GatewayRS $ccRs) {
+
+        $uS = Session::getInstance();
+
+        // Check for previous entry
+        $rs = new CC_Hosted_GatewayRS();
+        $rs->Gateway_Name->setStoredVal($gatewayName);
+        $rs->cc_name->setStoredVal($merchantName);
+        $rows = EditRS::select($dbh, $rs, array($rs->Gateway_Name, $rs->cc_name));
+
+        if (count($rows) > 0) {
+            return 'Merchant ' . $merchantName . ' already exists for gateway ' .$gatewayName;
+        }
+
+        //Insert gateway record
+        $ccRs->Gateway_Name->setNewVal($gatewayName);
+        $ccRs->cc_name->setNewVal($merchantName);
+        $ccRs->Updated_By->setNewVal($uS->username);
+        $ccRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+        $num = EditRS::insert($dbh, $ccRs);
+
+        if ($num > 0) {
+            $logText = AbstractTableLog::getInsertText($ccRs);
+            HouseLog::logGeneral($dbh, 'CC Gateway', $num, $logText, $uS->username, 'insert');
+        }
+
+        return $num;
+    }
+
+    private static function setMerchantRooms(\PDO $dbh, CC_Hosted_GatewayRS $ccRs) {
+
+        $idLocation = 0;
+        $num = 0;
+
+        $locRs = new LocationRS();
+        $locRs->Merchant->setStoredVal($ccRs->cc_name->getStoredVal());
+        $r = EditRS::select($dbh, $locRs, array($locRs->Merchant));
+
+        if (count($r) > 0) {
+            EditRS::loadRow($r[0], $locRs);
+            $idLocation = $locRs->idLocation->getStoredVal();
+
+            $num = $dbh->exec("update room set idLocation = $idLocation");
+        }
+
+        return $num;
+    }
+
+    private static function deleteMerchant(\PDO $dbh, CC_Hosted_GatewayRS $ccRs) {
+
+        $uS = Session::getInstance();
+        $num = '';
+        $merchantName = $ccRs->cc_name->getStoredVal();
+
+        //
+        $result = EditRS::delete($dbh, $ccRs, array($ccRs->idcc_gateway));
+
+        if ($result) {
+
+            $logText = AbstractTableLog::getDeleteText($ccRs, $ccRs->idcc_gateway->getStoredVal());
+            HouseLog::logGeneral($dbh, 'CC Gateway', $ccRs->idcc_gateway->getStoredVal(), $logText, $uS->username, 'delete');
+
+            $num = 'Merchant ' . $merchantName . ' is deleted. ';
+
+        } else {
+            $num = 'Merchant ' . $merchantName . ' was not found! ';
+        }
+
+        // Deal with location table
+        $locRs = new LocationRS();
+        $locRs->Merchant->setStoredVal($merchantName);
+        $r = EditRS::select($dbh, $locRs, array($locRs->Merchant));
+
+        if (count($r) > 0) {
+
+            EditRS::loadRow($r[0], $locRs);
+
+            $result = EditRS::delete($dbh, $locRs, array($locRs->idLocation));
+
+            if ($result) {
+                $logText = AbstractTableLog::getDeleteText($locRs, $locRs->idLocation->getStoredVal());
+                HouseLog::logGeneral($dbh, 'Location', $locRs->idLocation->getStoredVal(), $logText, $uS->username, 'delete');
+                $num .= 'Location ' . $merchantName . ' is deleted. ';
+            }
+
+        } else {
+            $num .= 'Location ' . $merchantName . ' was not found! ';
+        }
+
+        return $num;
+    }
+
+    private static function checkLocationTable(\PDO $dbh, $merchantName) {
+
+        $uS = Session::getInstance();
+        $num = 0;
+
+        $locRs = new LocationRS();
+        $locRs->Merchant->setStoredVal($merchantName);
+        $locRows = EditRS::select($dbh, $locRs, array($locRs->Merchant));
+
+        if (count($locRows) == 0) {
+            // Insert
+
+            $locRs = new LocationRS();
+            $locRs->Merchant->setNewVal($merchantName);
+            $locRs->Title->setNewVal(ucfirst($merchantName));
+            $locRs->Status->setNewVal('a');
+            $locRs->Updated_By->setNewVal($uS->username);
+            $locRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+            $num = EditRS::insert($dbh, $locRs);
+
+            if ($num > 0) {
+                $logText = AbstractTableLog::getInsertText($locRs);
+                HouseLog::logGeneral($dbh, 'Location', $num, $logText, $uS->username, 'insert');
+            }
+
+        } else {
+            // Update
+            EditRS::loadRow($locRows[0], $locRs);
+
+            $locRs->Merchant->setNewVal($merchantName);
+            $locRs->Title->setNewVal(ucfirst($merchantName));
+            $locRs->Status->setNewVal('a');
+            $locRs->Updated_By->setNewVal($uS->username);
+            $locRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+            $num = EditRS::update($dbh, $locRs, array($locRs->idLocation));
+
+            if ($num > 0) {
+                $logText = AbstractTableLog::getUpdateText($locRs);
+                HouseLog::logGeneral($dbh, 'Location', $locRs->idLocation->getStoredVal(), $logText, $uS->username, 'update');
+            }
+        }
+
+        return $num;
+    }
 }
+
 ?>

@@ -1,28 +1,27 @@
 <?php
-use HHK\SysConst\WebPageCode;
-use HHK\sec\WebInit;
-use HHK\sec\Session;
-use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
-use HHK\HTMLControls\HTMLContainer;
-use HHK\SysConst\InvoiceStatus;
-use HHK\SysConst\ItemId;
-use HHK\HTMLControls\HTMLTable;
-use HHK\Payment\PaymentSvcs;
-use HHK\Exception\RuntimeException;
-use HHK\SysConst\GLTableNames;
-use HHK\SysConst\VolMemberType;
-use HHK\SysConst\ItemPriceCode;
 use HHK\ColumnSelectors;
-use HHK\House\GLCodes\GLParameters;
-use HHK\House\GLCodes\GLCodes;
-use HHK\HTMLControls\HTMLSelector;
-use HHK\House\GLCodes\GLTemplateRecord;
-use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
-use HHK\sec\Labels;
+use HHK\Exception\RuntimeException;
+use HHK\House\GLCodes\GLCodes;
+use HHK\House\GLCodes\GLParameters;
+use HHK\House\GLCodes\GLTemplateRecord;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Payment\PaymentResult\PaymentResult;
+use HHK\Payment\PaymentSvcs;
+use HHK\sec\Labels;
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\InvoiceStatus;
+use HHK\SysConst\ItemId;
+use HHK\SysConst\VolMemberType;
+use HHK\SysConst\WebPageCode;
+use HHK\TableLog\HouseLog;
 
 /**
  * InvoiceReport.php
@@ -73,18 +72,18 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
 
     $g['Patient'] = $r['Patient_Name'];
     if ($r['idPatient'] > 0) {
-        $g['Patient'] = HTMLContainer::generateMarkup('a', $g['Patient'], array('href'=>'GuestEdit.php?id='.$r['idPatient']));
+        $g['Patient'] = HTMLContainer::generateMarkup('a', $g['Patient'], ['href' => 'GuestEdit.php?id=' . $r['idPatient']]);
     }
 
-    $g['payments'] = HTMLContainer::generateMarkup('span', number_format(($r['Amount'] - $r['Balance']), 2), array('style'=>'float:right;'));
+    $g['payments'] = HTMLContainer::generateMarkup('span', number_format(($r['Amount'] - $r['Balance']), 2), ['style' => 'float:right;']);
     if (($r['Amount'] - $r['Balance']) != 0 && $r['Sold_To_Id'] != $subsidyId) {
-        $g['payments'] .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'vwpmt'.$r['idInvoice'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'vpmt', 'style'=>'cursor:pointer;', 'title'=>'View Payments'));
+        $g['payments'] .= HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'vwpmt' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'vpmt', 'style' => 'cursor:pointer;', 'title' => 'View Payments']);
     }
 
     $invoiceNumber = $r['Invoice_Number'];
     if ($invoiceNumber != '') {
 
-        $invAttr = array('href'=>'ShowInvoice.php?invnum='.$r['Invoice_Number'], 'style'=>'float:left;', 'target'=>'_blank');
+        $invAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'target' => '_blank'];
 
         if ($r['Balance'] != 0 && $r['Balance'] != $r['Amount']) {
             $invoiceNumber .= HTMLContainer::generateMarkup('sup', '-p');
@@ -92,22 +91,23 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         }
 
         $invoiceNumber = HTMLContainer::generateMarkup('a', $invoiceNumber, $invAttr)
-            .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$r['idInvoice'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'view', 'style'=>'cursor:pointer;', 'title'=>'View Items'));
+            .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction ml-2', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items']);
     }
 
-    $g['invoiceMkup'] = HTMLContainer::generateMarkup('span', $invoiceNumber, array("style"=>'white-space:nowrap;'));
+    //$g['invoiceMkup'] = HTMLContainer::generateMarkup('span', $invoiceNumber, ["style" => 'white-space:nowrap;']);
+    $g['invoiceMkup'] = $invoiceNumber;
 
     if ($r['Status'] == InvoiceStatus::Carried && $r['Deleted'] == 0) {
 
         $r['Balance'] = 0;
 
         $g['Status'] = HTMLContainer::generateMarkup('span',
-                HTMLContainer::generateMarkup('span', $statusTxt . ' by ' . HTMLContainer::generateMarkup('a', $r['Delegated_Invoice_Number'], array('href'=>'ShowInvoice.php?invnum='.$r['Delegated_Invoice_Number'], 'target'=>'_blank')), array('style'=>'float:left;'))
-                .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicond'.$r['Delegated_Invoice_Id'], 'data-iid'=>$r['Delegated_Invoice_Id'], 'data-stat'=>'view', 'style'=>'cursor:pointer;', 'title'=>'View Items'))
+                HTMLContainer::generateMarkup('span', $statusTxt . ' by ' . HTMLContainer::generateMarkup('a', $r['Delegated_Invoice_Number'], ['href' => 'ShowInvoice.php?invnum=' . $r['Delegated_Invoice_Number'], 'target' => '_blank']))
+                .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicond' . $r['Delegated_Invoice_Id'], 'data-iid' => $r['Delegated_Invoice_Id'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items'])
                 , array("style"=>'white-space:nowrap;'));
     } else {
 
-        $g['Status']= HTMLContainer::generateMarkup('span', $statusTxt, array("style"=>'white-space:nowrap;'));
+        $g['Status']= HTMLContainer::generateMarkup('span', $statusTxt, ["style" => 'white-space:nowrap;']);
     }
 
     $dateDT = new DateTime($r['Invoice_Date']);
@@ -115,23 +115,27 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
 
     $billDateStr = ($r['BillDate'] == '' ? '' : date('M j, Y', strtotime($r['BillDate'])));
 
-    $g['billed'] = HTMLContainer::generateMarkup('span', $billDateStr, array('id'=>'trBillDate' . $r['Invoice_Number']))
-        . HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-calendar invSetBill', 'data-name'=>$g['Payor'], 'data-inb'=>$r['Invoice_Number'], 'style'=>'float:right;cursor:pointer;margin-left:5px;', 'title'=>'Set Billing Date'));
+    $g['billed'] = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('span', $billDateStr, ['id' => 'trBillDate' . $r['Invoice_Number']])
+        . HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-calendar invSetBill', 'data-name' => $g['Payor'], 'data-inb' => $r['Invoice_Number'], 'style' => 'cursor:pointer;margin-left:5px;', 'title' => 'Set Billing Date']),
+        ["class"=>"hhk-flex", "style"=>"justify-content: space-between; align-items: end;"]);
 
+    $g['emailed'] = ($r["EmailDate"] == '' ? '' : (new DateTime($r["EmailDate"]))->format("M j, Y"));
 
     $g['Amount'] = number_format($r['Amount'], 2);
 
     // Show Delete Icon?
     if (($r['Amount'] == 0 || $r['Item_Id'] == ItemId::Discount) && $r['Deleted'] != 1) {
-        $g['Amount'] .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$r['idInvoice'], 'data-inv'=>$r['Invoice_Number'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'del', 'style'=>'cursor:pointer;float:left;', 'title'=>'Delete This Invoice'));
+        $g['Amount'] .= HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-trash invAction', 'id' => 'invdel' . $r['idInvoice'], 'data-inv' => $r['Invoice_Number'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'del', 'style' => 'cursor:pointer;', 'title' => 'Delete This Invoice']);
     }
 
     $g['County'] = $r['County'];
     $g['Zip'] = $r['Zip'];
     $g['Title'] = $r['Title'];
+    $g['Arrival'] = $r['Arrival'];
+    $g['Departure'] = $r['Departure'];
     $g['hospital'] = $hospital;
     $g['Balance'] = number_format($r['Balance'], 2);
-    $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], array('id'=>'divInvNotes' . $r['Invoice_Number'], 'style'=>'max-width:190px;'));
+    $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], ['id' => 'divInvNotes' . $r['Invoice_Number'], 'style' => 'max-width:190px;']);
 
 
     if ($isLocal) {
@@ -201,13 +205,33 @@ try {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
 
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+        }
+
+        // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
         }
     }
 
 } catch (RuntimeException $ex) {
-    $paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 
@@ -222,9 +246,9 @@ $invoiceStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
 // Billing agent.
 $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .
         " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
-        " where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First");
+        " where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First, n.Company");
 
-$bagnts = array();
+$bagnts = [];
 
 while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -248,12 +272,15 @@ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms, DT Type
-$cFields[] = array('Inv #', 'invoiceMkup', 'checked', '', 'string', '20', array('style'=>'text-align:center;'));
+$cFields[] = ['Inv #', 'invoiceMkup', 'checked', '', 'string', '20', array('style' => 'text-align:center;')];
 $cFields[] = array("Date", 'date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
 $cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
 $cFields[] = array("Billed", 'billed', 'checked', '', 'string', '20', array());
+$cFields[] = array("Emailed", 'emailed', 'checked', '', 'string', '20', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
+$cFields[] = array("Visit Arrival", 'Arrival', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Visit Departure", 'Departure', '', '', 'MM/DD/YYYY', '15', array(), 'date');
 
 if ((count($hospList)) > 1) {
     $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospital', 'checked', '', 'string', '20', array());
@@ -285,13 +312,13 @@ foreach($cFields as $field){
 }
 
 $invNum = '';
-if (isset($_REQUEST['invNum'])) {
+if (filter_has_var(INPUT_POST, 'invNum')) {
 
-    $invNum = filter_var($_REQUEST['invNum'], FILTER_SANITIZE_NUMBER_INT);
+    $invNum = filter_var($_POST['invNum'], FILTER_SANITIZE_NUMBER_INT);
 }
 
 
-if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
+if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExcel') || $invNum != '') {
 
     $headerTable = new HTMLTable();
     $headerTable->addBodyTr(HTMLTable::makeTd('Report Generated: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y')));
@@ -315,14 +342,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
     if (isset($_POST['selInvStatus'])) {
         $reqs = $_POST['selInvStatus'];
         if (is_array($reqs)) {
-            $invStatus = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $invStatus = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
     if (isset($_POST['selbillagent'])) {
         $reqs = $_POST['selbillagent'];
         if (is_array($reqs)) {
-            $baSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $baSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
@@ -454,6 +481,8 @@ ifnull(np.Name_Full, '') as Patient_Name,
 ifnull(nap.County, '') as `County`,
 ifnull(nap.Postal_Code, '') as `Zip`,
 ifnull(re.Title, '') as `Title`,
+ifnull(v.Arrival_Date, '') as `Arrival`,
+ifnull(v.Actual_Departure, '') as `Departure`,
 ifnull(hs.idHospital, 0) as `idHospital`,
 ifnull(hs.idAssociation, 0) as `idAssociation`,
 ifnull(hs.idPatient, 0) as `idPatient`,
@@ -461,6 +490,7 @@ ifnull(hs.idPatient, 0) as `idPatient`,
 `i`.`Invoice_Date`,
 i.BillStatus,
 i.BillDate,
+i.EmailDate,
 `i`.`Payment_Attempts`,
 `i`.`Status`,
 `i`.`Updated_By`,
@@ -580,7 +610,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     // Finalize and print.
     if ($local) {
 
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display', 'style'=>'font-size:.8em;width:100%'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display', 'style'=>'font-size:.9em;width:100%'));
         $mkTable = 1;
 
         $totTable = new HTMLTable();
@@ -602,6 +632,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     } else {
+        HouseLog::logDownload($dbh, 'Invoice Report', "Excel", "Invoice Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
         $writer->download();
     }
 
@@ -630,7 +661,7 @@ if ($useGlReport) {
 	$glMonth = date('m');
 
 	// Output report
-	if (isset($_POST['btnGlGo']) || isset($_POST['btnGlTx']) || isset($_POST['btnGlcsv'])) {
+	if (filter_has_var(INPUT_POST, 'btnGlGo') || filter_has_var(INPUT_POST, 'btnGlTx') || filter_has_var(INPUT_POST, 'btnGlcsv')) {
 
 		$tabReturn = 2;
 
@@ -668,7 +699,7 @@ if ($useGlReport) {
 
 			foreach ($glCodes->getLines() as $l) {
 
-				$glInvoices .= implode(',', $l) . "\r\n";
+				$glInvoices .= implode(',', $l['l']) . "\r\n";
 
 			}
 
@@ -776,7 +807,7 @@ if ($useGlReport) {
 
 			foreach ($glCodes->getLines() as $l) {
 
-				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
+				$tbl->addBodyTr(HTMLTable::makeTd($l['in'], array('style' => 'font-size:0.8em')) . HTMLTable::makeTd(implode(',', $l['l']), array('style'=>'font-size:0.8em')));
 
 			}
 
@@ -852,6 +883,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -993,7 +1025,7 @@ $(document).ready(function() {
                     } else if (data.success) {
 
                         $('#rptInvdiv').remove();
-                        $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success))));
+                        $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" class="hhk-visitdialog"/>').append($(data.success))));
                         $('#rptInvdiv .gmenu').menu();
 
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
@@ -1013,7 +1045,8 @@ $(document).ready(function() {
                             $(".hhk-alert").hide();
 
                             if ($(this).data('stat') == 'del') {
-                                if (!confirm('Delete this Invoice?')) {
+                                if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
+                                //if (!confirm('Delete this Invoice?')) {
                                     return;
                                 }
                             }
@@ -1024,7 +1057,7 @@ $(document).ready(function() {
                                     return;
                             }
 
-                            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id);
+                            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id, '', true);
                             $('#rptInvdiv .gmenu').menu("collapse");
                         });
 
@@ -1035,7 +1068,7 @@ $(document).ready(function() {
                                  'render': function ( data, type, row ) {return dateRender(data, type);}
                                 }
                              ],
-                            "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                            "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
                             "displayLength": 50,
                             "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
                             "order": [[ 1, 'asc' ]]
@@ -1065,7 +1098,7 @@ $(document).ready(function() {
                  ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+            "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
         });
 
         $('#printButton').button().click(function() {
@@ -1086,8 +1119,6 @@ $(document).ready(function() {
 
     }
 
-    $('#mainTabs').addClass('d-inline-block');
-
     $('#includeFields').fieldSets({'reportName': 'invoice', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
 });
  </script>
@@ -1098,7 +1129,7 @@ $(document).ready(function() {
         <h2><?php echo $wInit->pageHeading; ?></h2>
         <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
 
-        <div id="mainTabs" style="font-size:.9em;display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
+        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
             <ul>
                 <li><a href="#invr">All Invoices</a></li>
                 <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
@@ -1108,36 +1139,38 @@ $(document).ready(function() {
             </ul>
             <div id="invr" >
                 <form id="fcat" action="InvoiceReport.php" method="post">
-                	<div style="display: inline-block; vertical-align: top;">
-                    	<?php echo $timePeriodMarkup; ?>
-                    	<table style="width: 100%;">
-                    		<tr>
-                    			<td style="border-top: 0px;"><?php echo $useVisitDatesCb; ?></td>
-                    		</tr>
-                    	</table>
+                    <div class="hhk-flex hhk-flex-wrap" id="filterSelectors">
+                        <div>
+                            <?php echo $timePeriodMarkup; ?>
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td style="border-top: 0px;"><?php echo $useVisitDatesCb; ?></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <?php echo $hospitalMarkup; ?>
+                        <table>
+                            <tr>
+                                <th>Status</th>
+                            </tr>
+
+                            <tr>
+                                <td><?php echo $invStatusSelector; ?></td>
+                            </tr>
+                        </table>
+                        <?php if ($baSelector != '') { ?>
+                        <table>
+                            <tr>
+                                <th>Billing Agent</th>
+                            </tr>
+
+                            <tr>
+                                <td><?php echo $baSelector; ?></td>
+                            </tr>
+                        </table>
+                        <?php } ?>
+                        <?php echo $columSelector; ?>
                     </div>
-                    <?php echo $hospitalMarkup; ?>
-                    <table style="display: inline-block; vertical-align: top;">
-                        <tr>
-                            <th>Status</th>
-                        </tr>
-
-                        <tr>
-                            <td><?php echo $invStatusSelector; ?></td>
-                        </tr>
-                    </table>
-                    <?php if ($baSelector != '') { ?>
-                    <table style="display: inline-block; vertical-align:top;">
-                        <tr>
-                            <th>Billing Agent</th>
-                        </tr>
-
-                        <tr>
-                            <td><?php echo $baSelector; ?></td>
-                        </tr>
-                    </table>
-                    <?php } ?>
-                    <?php echo $columSelector; ?>
                     <table style="width:100%; margin: 10px 0px;">
                         <tr>
                             <td><?php echo $shoDeletedCb; ?></td>
@@ -1158,7 +1191,7 @@ $(document).ready(function() {
                     </form>
                 </div>
             </div>
-            <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
+            <div id="vInv" style="display:none;">
                 <input type="button" id="btnInvGo" value="Refresh"/>
 
                   <div id="rptInvdiv" class="hhk-visitdialog"></div>

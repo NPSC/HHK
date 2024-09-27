@@ -18,14 +18,24 @@ use HHK\SysConst\Mode;
  */
 define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS);
-define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
+define('CONF_PATH', P_ROOT . 'conf' . DS);
+define('ciCFG_FILE', 'site.cfg');
 date_default_timezone_set('America/Chicago');
 
-require ('vendor/autoload.php');
+if (file_exists('vendor/autoload.php')) {
+    require('vendor/autoload.php');
+} else {
+    exit("Unable to laod dependancies, be sure to run 'composer install'");
+}
+
 require ('functions' . DS . 'commonFunc.php');
 
-$dbh = Login::initHhkSession(ciCFG_FILE);
-$uS = Session::getInstance();
+try {
+    $dbh = Login::initHhkSession(CONF_PATH, ciCFG_FILE);
+    $uS = Session::getInstance();
+}catch (\Exception $e){
+    exit($e->getMessage());
+}
 
 try {
     $page = new ScriptAuthClass($dbh);
@@ -59,13 +69,13 @@ $linkMkup = Login::getLinksMarkup($uS, $dbh);
 $newsletterMkup = Login::getNewsletterMarkup();
 $row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
 $footerMkup = Login::getFooterMarkup();
-$secureComp = new SecurityComponent(TRUE);
+$secureComp = new SecurityComponent();
 
-$cspURL = $page->getHostName() . " nonprofitsoftwarecorp.org";
+$cspURL = $page->getHostName() . " manage.hospitalityhousekeeper.net nonprofitsoftwarecorp.org";
 
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com 'unsafe-inline';"); // IE 10+
+header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.us18.list-manage.com 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.us18.list-manage.com 'unsafe-inline';"); // IE 10+
 
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
@@ -83,7 +93,7 @@ if (SecurityComponent::isHTTPS()) {
         <link href='css/root.css' rel='stylesheet' type='text/css' />
         <script type="text/javascript" src="js/jquery-min.js"></script>
         <script type="text/javascript" src="js/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="js/login.js"></script>
+        <script type="text/javascript" src="js/login.js?eG=94"></script>
 
     </head>
     <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >

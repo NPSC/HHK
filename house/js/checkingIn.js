@@ -11,8 +11,8 @@ function ckedIn(data) {
         flagAlertMessage(data.warning, 'warning');
     }
 
-    if (data.xfer || data.inctx) {
-        paymentRedirect (data, $('#xform'));
+    if (data.xfer || data.inctx || data.deluxehpf) {
+        paymentRedirect(data, $('#xform'));
         return;
     }
     
@@ -135,6 +135,10 @@ $(document).ready(function() {
 
     $('#btnShowReg').click(function () {
         window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
+    });
+
+    $('#form1').on('submit', function(e){
+        e.preventDefault();
     });
 
     $('#btnDone').click(function () {

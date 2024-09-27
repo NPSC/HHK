@@ -37,22 +37,14 @@ $uS = Session::getInstance();
 
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
-$events = array();
+$events = [];
 try {
 
 
 switch ($c) {
-
-    case "visitlog" :
-
-        $id = filter_var(urldecode($_REQUEST["uid"]), FILTER_VALIDATE_INT);
-        $idPsg = filter_var(urldecode($_REQUEST["psg"]), FILTER_VALIDATE_INT);
-
-        $events = visitLog($dbh, $id, $idPsg, $_GET);
-        break;
 
     case "delRel":
 
@@ -67,7 +59,7 @@ switch ($c) {
         }
 
         if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = deleteRelationLink($dbh, $id, $rId, $rc);
@@ -86,7 +78,7 @@ switch ($c) {
         }
 
         if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = newRelationLink($dbh, $id, $rId, $rc);
@@ -105,7 +97,7 @@ switch ($c) {
         }
 
         if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, TRUE);
@@ -124,7 +116,7 @@ switch ($c) {
         }
 
         if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, FALSE);
@@ -133,24 +125,25 @@ switch ($c) {
     case 'srchName':
 
         if (isset($_POST['md'])) {
-            $md = filter_var($_POST['md'], FILTER_SANITIZE_STRING);
-            $nameLast = (isset($_POST['nl']) ? filter_var($_POST['nl'], FILTER_SANITIZE_STRING) : '');
-            $nameFirst = (isset($_POST['nf']) ? filter_var($_POST['nf'], FILTER_SANITIZE_STRING) : '');
-            $email = (isset($_POST['em']) ? filter_var($_POST['em'], FILTER_SANITIZE_STRING) : '');
-            $indx = (isset($_POST['indx']) ? filter_var($_POST['indx'], FILTER_SANITIZE_STRING) : '');
+            $md = filter_var($_POST['md'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $nameLast = (isset($_POST['nl']) ? filter_var($_POST['nl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $nameFirst = (isset($_POST['nf']) ? filter_var($_POST['nf'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $email = (isset($_POST['em']) ? filter_var($_POST['em'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $indx = (isset($_POST['indx']) ? filter_var($_POST['indx'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
 
             // Check for duplicate member records
             $dups = MemberSearch::searchName($dbh, $md, $nameLast, $nameFirst, $email);
 
             if (count($dups) > 0) {
-                $events = array(
-                    'success'=>'Returned '. count($dups) . ' duplicates',
-                    'dups' => MemberSearch::createDuplicatesDiv($dups),
-                    'indx' => $indx);
+                $events = [
+                        'success' => 'Returned ' . count($dups) . ' duplicates',
+                        'dups' => MemberSearch::createDuplicatesDiv($dups),
+                        'indx' => $indx
+                    ];
             }
 
         } else {
-            $events = array('error' => 'Search Names: must supply a member designation.  ');
+            $events = ['error' => 'Search Names: must supply a member designation.  '];
         }
 
         break;
@@ -166,54 +159,16 @@ switch ($c) {
     case 'getcounties':
 
         if(isset($_GET['state'])) {
-            $state = filter_var($_GET['state'], FILTER_SANITIZE_STRING);
+            $state = filter_var($_GET['state'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $events = getCounties($dbh, $state);
         }
         break;
 
     case "chgpw":
 
-        $oldPw = ''; $newPw = '';
+        $input = filter_input_array(INPUT_POST, ["old" => FILTER_UNSAFE_RAW, "newer" => FILTER_SANITIZE_ADD_SLASHES]);
 
-        if (isset($_POST["old"])) {
-            $oldPw = filter_var($_POST["old"], FILTER_SANITIZE_STRING);
-        }
-        if (isset($_POST["newer"])) {
-            $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_STRING);
-        }
-
-        $events = changePW($dbh, $oldPw, $newPw, $uS->username, $uS->uid);
-
-        break;
-
-    case "chgquestions":
-        $questions = array();
-
-        if (isset($_POST["q1"]) && isset($_POST["a1"]) && isset($_POST["aid1"])) {
-            $questions[] = [
-                'idQuestion'=>filter_var($_POST["q1"], FILTER_SANITIZE_STRING),
-                'idAnswer'=>filter_var($_POST["aid1"], FILTER_SANITIZE_STRING),
-                'Answer'=>filter_var($_POST["a1"], FILTER_SANITIZE_STRING)
-            ];
-        }
-
-        if (isset($_POST["q2"]) && isset($_POST["a2"]) && isset($_POST["aid2"])) {
-            $questions[] = [
-                'idQuestion'=>filter_var($_POST["q2"], FILTER_SANITIZE_STRING),
-                'idAnswer'=>filter_var($_POST["aid2"], FILTER_SANITIZE_STRING),
-                'Answer'=>filter_var($_POST["a2"], FILTER_SANITIZE_STRING)
-            ];
-        }
-
-        if (isset($_POST["q3"]) && isset($_POST["a3"]) && isset($_POST["aid3"])) {
-            $questions[] = [
-                'idQuestion'=>filter_var($_POST["q3"], FILTER_SANITIZE_STRING),
-                'idAnswer'=>filter_var($_POST["aid3"], FILTER_SANITIZE_STRING),
-                'Answer'=>filter_var($_POST["a3"], FILTER_SANITIZE_STRING)
-            ];
-        }
-
-        $events = changeQuestions($dbh, $questions);
+        $events = changePW($dbh, $input['old'], $input['newer'], $uS->username, $uS->uid);
 
         break;
 
@@ -221,7 +176,7 @@ switch ($c) {
 
         $method = '';
         if(isset($_POST['method'])){
-            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = generateTwoFA($dbh, $uS->username, $method, $_POST);
@@ -235,17 +190,17 @@ switch ($c) {
 
         $method = '';
         if(isset($_POST['method'])){
-            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $secret = '';
         if (isset($_POST["secret"])) {
-            $secret = filter_var($_POST["secret"], FILTER_SANITIZE_STRING);
+            $secret = filter_var($_POST["secret"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $otp = '';
         if (isset($_POST["otp"])) {
-            $otp = filter_var($_POST["otp"], FILTER_SANITIZE_STRING);
+            $otp = filter_var($_POST["otp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = saveTwoFA($dbh, $secret, $otp, $method);
@@ -254,7 +209,7 @@ switch ($c) {
     case "disable2fa":
         $method = '';
         if(isset($_POST['method'])){
-            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $userAr = UserClass::getUserCredentials($dbh, $uS->username);
@@ -271,28 +226,34 @@ switch ($c) {
 
         if(isset($mfa)){
             $success = $mfa->disable($dbh);
-            $events = array("success"=>$success, "mkup"=>$mfa->getEditMarkup($dbh));
+            $events = ["success" => $success, "mkup" => $mfa->getEditMarkup($dbh)];
         }else{
-            $events = array("error"=>"Invalid method");
+            $events = ["error" => "Invalid method"];
         }
         break;
 
     case "clear2faTokens" :
         $userAr = UserClass::getUserCredentials($dbh, $uS->username);
         $remember = new Remember($userAr);
-        $events = array("success"=>$remember->deleteTokens($dbh, TRUE));
+        $events = ["success" => $remember->deleteTokens($dbh, TRUE)];
+        break;
+    case "reportError" :
+        $message = filter_input(INPUT_POST, "message", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $info = json_decode(base64_decode($_POST['info']), true);
+        $info = filter_var_array($info, FILTER_SANITIZE_ADD_SLASHES);
+        reportError($message, $info);
         break;
     default:
-        $events = array("error" => "Bad Command");
+        $events = ["error" => "Bad Command"];
 }
 
 } catch (PDOException $ex) {
 
-    $events = array("error" => "Database Error" . $ex->getMessage());
+    $events = ["error" => "Database Error" . $ex->getMessage()];
 
 } catch (Exception $ex) {
 
-    $events = array("error" => "HouseKeeper Error" . $ex->getMessage());
+    $events = ["error" => "HouseKeeper Error" . $ex->getMessage()];
 }
 
 
@@ -310,12 +271,12 @@ function searchZip(PDO $dbh, $zip) {
 
     $query = "select * from postal_codes where Zip_Code like :zip LIMIT 10";
     $stmt = $dbh->prepare($query);
-    $stmt->execute(array(':zip'=>$zip . "%"));
+    $stmt->execute([':zip' => $zip . "%"]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $events = array();
+    $events = [];
     foreach ($rows as $r) {
-        $ent = array();
+        $ent = [];
 
         $ent['value'] = $r['Zip_Code'];
         $ent['label'] = $r['City'] . ', ' . $r['State'] . ', ' . $r['Zip_Code'];
@@ -332,7 +293,7 @@ function searchZip(PDO $dbh, $zip) {
 function getCounties(PDO $dbh, $state) {
     $query = "select `County`, `State` from `postal_codes` where `State` = :state and  `County` != '' group by `County`";
     $stmt = $dbh->prepare($query);
-    $stmt->execute(array(':state'=>strtoupper($state)));
+    $stmt->execute([':state' => strtoupper($state)]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $events = ['success'=>$rows];
@@ -350,9 +311,9 @@ function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
         $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
-        return array('success'=>$msh, 'rc'=>$relCode, 'markup'=>$rel->createMarkup());
+        return ['success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup()];
     }
-    return array('error'=>'Relationship is Undefined.');
+    return ['error' => 'Relationship is Undefined.'];
 
 }
 
@@ -366,9 +327,9 @@ function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
         $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
-        return array('success'=>$msh, 'rc'=>$relCode, 'markup'=>$rel->createMarkup());
+        return ['success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup()];
     }
-    return array('error'=>'Relationship is Undefined.');
+    return ['error' => 'Relationship is Undefined.'];
 
 }
 
@@ -382,60 +343,52 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
         $msh = $rel->addRelationship($dbh, $rId, $uS->username);
 
         $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
-        return array('success'=>$msh, 'rc'=>$relCode, 'markup'=>$rel->createMarkup());
+        return ['success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup()];
     }
 
-    return array('error'=>'Relationship is Undefined.');
+    return ['error' => 'Relationship is Undefined.'];
 
 }
 
 
 function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
 
-    $event = array();
+    $event = [];
 
     $u = new UserClass();
 
-    if ($u->updateDbPassword($dbh, $id, $oldPw, $newPw, $uname) === TRUE) {
-        $event = array('success'=>'User Password updated.');
-    } else {
-        $event = array('warning'=>$u->logMessage);
-    }
+    $event = ($u->updateDbPassword($dbh, $id, $oldPw, $newPw, $uname) === TRUE) ? ['success' => 'User Password updated.'] : ['warning' => $u->logMessage];
 
     return $event;
 }
 
 function changeQuestions(\PDO $dbh, array $questions) {
 
-    $event = array();
+    $event = [];
 
     $u = new UserClass();
 
-    if ($u->updateSecurityQuestions($dbh, $questions) === TRUE) {
-        $event = array('success'=>'User Security Questions Updated.');
-    } else {
-        $event = array('warning'=>$u->logMessage);
-    }
+    $event = ($u->updateSecurityQuestions($dbh, $questions) === TRUE) ? ['success' => 'User Security Questions Updated.'] : ['warning' => $u->logMessage];
 
     return $event;
 }
 
-function generateTwoFA($dbh, $uname, string $method, array $post = array()){
+function generateTwoFA($dbh, $uname, string $method, array $post = []){
 
     $uS = Session::getInstance();
 
     switch ($method) {
         case "authenticator":
             try{
-                $ga = new GoogleAuthenticator(array('User_Name'=>$uname, 'totpSecret'=>''));
+                $ga = new GoogleAuthenticator(['User_Name' => $uname, 'totpSecret' => '']);
                 $uS = Session::getInstance();
 
                 $ga->createSecret();
                 $qrCodeUrl = $ga->getQRCodeImage("HHK - " . $uS->siteName);
 
-                $event = array('success'=>true, 'secret'=>$ga->getSecret(), 'url'=> $qrCodeUrl);
+                $event = ['success' => true, 'secret' => $ga->getSecret(), 'url' => $qrCodeUrl];
             }catch(Exception $e){
-                $event = array('error'=>$e->getMessage());
+                $event = ['error' => $e->getMessage()];
             }
             break;
         case "email":
@@ -451,9 +404,9 @@ function generateTwoFA($dbh, $uname, string $method, array $post = array()){
                 $email = new Email($userAr);
                 $email->createSecret();
                 $email->sendCode($dbh);
-                $event = array('success'=>true, 'secret'=>$email->getSecret());
+                $event = ['success' => true, 'secret' => $email->getSecret()];
             }catch(Exception $e){
-                $event = array('error'=>$e->getMessage());
+                $event = ['error' => $e->getMessage()];
             }
     }
 
@@ -469,31 +422,31 @@ function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
         case "authenticator":
             try{
 
-                $ga = new GoogleAuthenticator(array('User_Name'=>$uS->username, 'totpSecret'=>$secret));
-                $backup = new Backup(array('idName'=>$uS->uid, 'User_Name'=>$uS->username, 'backupSecret'=>''));
+                $ga = new GoogleAuthenticator(['User_Name' => $uS->username, 'totpSecret' => $secret]);
+                $backup = new Backup(['idName' => $uS->uid, 'User_Name' => $uS->username, 'backupSecret' => '']);
                 $backup->createSecret();
 
                 if($ga->verifyCode($dbh, $OTP) == false){
-                    $events = array('error'=>"One Time Code is invalid");
+                    $events = ['error' => "One Time Code is invalid"];
                 }elseif($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
-                    $events = array('success'=>'Two Factor Authentication enabled', 'backupCodes'=>$backup->getCode());
+                    $events = ['success' => 'Two Factor Authentication enabled', 'backupCodes' => $backup->getCode()];
                 }else{
-                    $events = array('error'=>"Unable to enable Two factor Authentication");
+                    $events = ['error' => "Unable to enable Two factor Authentication"];
                 }
             }catch(Exception $e){
-                $events = array('error'=>'Error: ' . $e->getMessage());
+                $events = ['error' => 'Error: ' . $e->getMessage()];
             }
             break;
         case "email":
 
-            $email = new Email(array('User_Name'=>$uS->username, 'emailSecret'=>$secret));
+            $email = new Email(['User_Name' => $uS->username, 'emailSecret' => $secret]);
 
             if($email->verifyCode($dbh, $OTP) == false){
-                $events = array('error'=>"One Time Code is invalid");
+                $events = ['error' => "One Time Code is invalid"];
             }elseif($email->saveSecret($dbh)){
-                $events = array('success'=>'Two Factor Authentication enabled');
+                $events = ['success' => 'Two Factor Authentication enabled'];
             }else{
-                $events = array('error'=>"Unable to enable Two factor Authentication");
+                $events = ['error' => "Unable to enable Two factor Authentication"];
             }
             break;
     }
@@ -509,9 +462,24 @@ function getTwoFA(\PDO $dbh, $username){
     if($user['totpSecret'] != ''){
         $ga = new GoogleAuthenticator($user);
         $qrCodeUrl = $ga->getQRCodeImage("HHK - " . $uS->siteName);
-        $event = array('success'=>true, 'url'=>$qrCodeUrl);
+        $event = ['success' => true, 'url' => $qrCodeUrl];
     }else{
-        $event = array('error'=>'Two Factor authentication not configured');
+        $event = ['error' => 'Two Factor authentication not configured'];
     }
     return $event;
+}
+
+function reportError(string $message, array $info){
+    $uS = Session::getInstance();
+
+    $body = "New bug report received from " . getSiteName() . "\r\n\r\n";
+    $body .= "Request Type: AJAX\r\n\r\n";
+    $body .= "Details: \r\n\r\n";
+    $body .= "Message: " . $message . "\r\n\r\n";
+    $body .= "User: " . (isset($uS->username) ? $uS->username : "unknown") . "\r\n\r\n";
+    foreach($info as $k=>$v){
+        $body .= $k . ": " . $v . "\r\n\r\n";
+    }
+
+    sendMail($body);
 }

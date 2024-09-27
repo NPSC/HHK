@@ -42,6 +42,12 @@ use HHK\Exception\PaymentException;
 // Credit Payment Hosted transactions
 class InitCkOutRequest extends AbstractMercRequest {
 
+    /**
+     * Summary of __construct
+     * @param mixed $pageTitle
+     * @param mixed $displayStyle
+     * @param mixed $title
+     */
     function __construct($pageTitle = '', $displayStyle = '', $title = '') {
 
         if ($pageTitle != '') {
@@ -55,6 +61,13 @@ class InitCkOutRequest extends AbstractMercRequest {
         $this->title = $title;
     }
 
+    /**
+     * Summary of execute
+     * @param \SoapClient $txClient
+     * @param mixed $data
+     * @throws \HHK\Exception\PaymentException
+     * @return InitCkOutResponse
+     */
     protected function execute(\SoapClient $txClient, array $data) {
         if ($this->getPaymentPageCode() == '') {
             throw new PaymentException('Mercury Payment Page is not set.  ');

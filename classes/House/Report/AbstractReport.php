@@ -5,16 +5,18 @@ namespace HHK\House\Report;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\HTMLInput;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\TableLog\HouseLog;
 
 /**
  * AbtractReport.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
- * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -80,7 +82,7 @@ abstract class AbstractReport {
         }
 
         //register actions
-        $this->actions($request);
+        $this->actions($dbh, $request);
     }
 
     /**
@@ -88,7 +90,7 @@ abstract class AbstractReport {
      *
      * @return string
      */
-    public function generateFilterMarkup(){
+    public function generateFilterMarkup(bool $excelDownload = true){
         $this->makeFilterMkup();
         $this->makeFilterOptsMkup();
         $filterOptsMkup = "";
@@ -106,7 +108,7 @@ abstract class AbstractReport {
         $btnMkup = HTMLContainer::generateMarkup("div",
             $filterOptsMkup .
             HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) .
-            HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget"))
+            ($excelDownload ? HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) : '')
         , array("id"=>"filterBtns", "class"=>"mt-3"));
 
         $emDialog = $this->generateEmailDialog();
@@ -192,7 +194,8 @@ abstract class AbstractReport {
         return '
         $("#' . $this->inputSetReportName . '-includeFields").fieldSets({"reportName": "' . $this->inputSetReportName .  '", "defaultFields": ' . json_encode($this->getDefaultFields()) . '});' .
 
-        ($this->rendered ? '$("#tbl' . $this->inputSetReportName . 'rpt").dataTable({
+        ($this->rendered ? '
+        var dtOptions = {
             "columnDefs": [
             {"targets": ' . $jsonColumnDefs . ',
             "type": "date",
@@ -201,7 +204,7 @@ abstract class AbstractReport {
             ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bilf><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
+            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bif><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
             "buttons": [
             {
                 extend: "print",
@@ -236,12 +239,18 @@ abstract class AbstractReport {
                 }
             },
             ],
-        });
+        }
+
+        if(typeof drawCallback === "function"){
+            dtOptions["drawCallback"] = drawCallback;
+        }
+
+        $("#tbl' . $this->inputSetReportName . 'rpt").dataTable(dtOptions);
 
         $("#em' . $this->inputSetReportName . 'RptDialog").dialog({
             autoOpen:false,
             modal:true,
-            title: "Email ' . $this->reportTitle . '",
+            title: "Email ' . html_entity_decode($this->reportTitle) . '",
             width: "auto",
             buttons: {
                 "Send":function(){
@@ -309,7 +318,7 @@ abstract class AbstractReport {
         border-bottom: 2px solid #111
     }
 
-</style
+</style>
 
 ';
     }
@@ -349,6 +358,8 @@ abstract class AbstractReport {
             $writer->writeSheetRow("Sheet1", $row);
         }
 
+        HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);
+
         $writer->download();
     }
 
@@ -360,7 +371,7 @@ abstract class AbstractReport {
         return HTMLContainer::generateMarkup("div", $emTbl->generateMarkup(), array("id"=>"em" . $this->inputSetReportName . "RptDialog", "class"=>"emRptDialog", "style"=>"display:none;"));
     }
 
-    public function sendEmail(string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
+    public function sendEmail(\PDO $dbh, string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
         $uS = Session::getInstance();
 
         $errors = array();
@@ -394,10 +405,10 @@ abstract class AbstractReport {
         if(count($errors) == 0 && $body !=''){
 
             try{
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 
                 foreach ($addresses as $t) {
                     $mail->addAddress($t);
@@ -422,7 +433,7 @@ abstract class AbstractReport {
         }
     }
 
-    protected function actions(array $request):void{
+    protected function actions(\PDO $dbh, array $request):void{
         $result = array();
 
         if (isset($this->request['btn' . $this->inputSetReportName . 'Email']) && $this->request['btn' . $this->inputSetReportName . 'Email'] == 'true') {
@@ -431,14 +442,14 @@ abstract class AbstractReport {
             $subject = '';
 
             if (isset($this->request['txtEmail'])) {
-                $emailAddress = filter_var($_POST['txtEmail'], FILTER_SANITIZE_STRING);
+                $emailAddress = filter_input(INPUT_POST, 'txtEmail', FILTER_SANITIZE_EMAIL);
             }
 
             if (isset($this->request['txtSubject'])) {
-                $subject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
+                $subject = filter_input(INPUT_POST, 'txtSubject', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $result = $this->sendEmail($emailAddress, $subject);
+            $result = $this->sendEmail($dbh, $emailAddress, $subject);
         }
 
         if(count($result) > 0){
@@ -447,6 +458,14 @@ abstract class AbstractReport {
         }
 
     }
+
+    public abstract function makeFilterMkup();
+
+    public abstract function makeSummaryMkup();
+
+    public abstract function makeCFields();
+
+    public abstract function makeQuery();
 
     public function getDefaultFields(){
         return $this->defaultFields;
@@ -465,4 +484,3 @@ abstract class AbstractReport {
     }
 
 }
-?>

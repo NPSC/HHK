@@ -6,22 +6,24 @@ use HHK\AuditLog\NameLog;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Family\{Family, FamilyAddGuest};
-use HHK\House\HouseServices;
 use HHK\House\Registration;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
+use HHK\House\Resource\AbstractResource;
+use HHK\House\HouseServices;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
-use HHK\Payment\PaymentManager\PaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentManager\PaymentManager;
 use HHK\Purchase\{CheckinCharges, PaymentChooser, RateChooser};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\ReservationRS;
 use HHK\Exception\NotFoundException;
-use HHK\Neon\TransferMembers;
+use HHK\CrmExport\AbstractExportManager;
 use HHK\Tables\Name\NameRS;
 
 /**
@@ -32,13 +34,34 @@ use HHK\Tables\Name\NameRS;
 
 class CheckingIn extends ActiveReservation {
 
+    /**
+     * Summary of visit
+     * @var Visit
+     */
     protected $visit;
+
+    /**
+     * Summary of resc
+     * @var AbstractResource
+     */
     protected $resc;
+
+    /**
+     * Summary of errors
+     * @var array
+     */
     protected $errors;
 
-    public static function reservationFactoy(\PDO $dbh, $post) {
+    /**
+     * Summary of reservationFactoy
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @throws \HHK\Exception\RuntimeException
+     * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
+     */
+    public static function reservationFactoy(\PDO $dbh) {
 
-        $rData = new ReserveData($post, 'Check-in');
+        $rData = new ReserveData('Check-in');
 
         if ($rData->getIdResv() > 0) {
             $rData->setSaveButtonLabel('Check-in');
@@ -49,6 +72,13 @@ class CheckingIn extends ActiveReservation {
 
     }
 
+    /**
+     * Summary of loadReservation
+     * @param \PDO $dbh
+     * @param \HHK\House\ReserveData\ReserveData $rData
+     * @throws \HHK\Exception\NotFoundException
+     * @return ActiveReservation|CheckedoutReservation|CheckingIn|DeletedReservation|StaticReservation|StayingReservation
+     */
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
         $uS = Session::getInstance();
@@ -65,7 +95,17 @@ FROM reservation r
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) != 1) {
-            throw new NotFoundException("Reservation not found.  ");
+            // Deleted?
+            $stmt = $dbh->query("Select max(idReservation) from reservation;");
+            $rows = $stmt->FetchAll(\PDO::FETCH_NUM);
+
+            if ($rData->getIdResv() > 0 && count($rows) > 0 && $rows[0][0] > $rData->getIdResv()) {
+                // Reserv has been deleted.
+                return new DeletedReservation($rData, NULL, NULL);
+            } else {
+                // Something else borke.
+                throw new NotFoundException("Reservation not found.  ");
+            }
         }
 
         $rRs = new ReservationRS();
@@ -73,10 +113,17 @@ FROM reservation r
 
         $rData->setIdPsg($rows[0]['idPsg']);
         $rData->setIdVisit($rows[0]['idVisit'])
-        ->setSpanStatus($rows[0]['SpanStatus'])
-        ->setSpanStartDT($rows[0]['SpanStart'])
-        ->setSpanEndDT($rows[0]['SpanEnd'])
-        ->setResvStatusCode($rows[0]['Status']);
+            ->setSpanStatus($rows[0]['SpanStatus'])
+            ->setSpanStartDT($rows[0]['SpanStart'])
+            ->setSpanEndDT($rows[0]['SpanEnd'])
+            ->setResvStatusCode($rows[0]['Status']);
+
+        // Get Resv status codes
+        $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
+
+        if (isset($reservStatuses[$rData->getResvStatusCode()])) {
+            $rData->setResvStatusType($reservStatuses[$rData->getResvStatusCode()]['Type']);
+        }
 
         // Reservation status determines which class to use.
 
@@ -94,12 +141,18 @@ FROM reservation r
         // Staying resv - add guests
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
             $rData->setInsistCkinDemog($uS->InsistCkinDemog);
+            $rData->setInsistCkinPhone($uS->InsistCkinPhone);
+            $rData->setInsistCkinEmail($uS->InsistCkinEmail);
+            $rData->setInsistCkinAddress($uS->InsistCkinAddress);
             return new StayingReservation($rData, $rRs, new FamilyAddGuest($dbh, $rData, TRUE));
         }
 
         // Otherwise we can check in.
-        if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
+        if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal(), $reservStatuses)) {
             $rData->setInsistCkinDemog($uS->InsistCkinDemog);
+            $rData->setInsistCkinPhone($uS->InsistCkinPhone);
+            $rData->setInsistCkinEmail($uS->InsistCkinEmail);
+            $rData->setInsistCkinAddress($uS->InsistCkinAddress);
             return new CheckingIn($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
 
@@ -108,6 +161,11 @@ FROM reservation r
 
     }
 
+    /**
+     * Summary of createMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     public function createMarkup(\PDO $dbh) {
 
     	$lastVisitMU = $this->findLastVisit($dbh);
@@ -123,6 +181,12 @@ FROM reservation r
 
     }
 
+    /**
+     * Summary of createCheckinMarkup
+     * @param \PDO $dbh
+     * @param string $lastVisitMU
+     * @return array
+     */
     protected function createCheckinMarkup(\PDO $dbh, $lastVisitMU) {
 
         $uS = Session::getInstance();
@@ -183,7 +247,7 @@ FROM reservation r
                 $paymentGateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
 
                 $dataArray['pay'] = HTMLContainer::generateMarkup('div',
-                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
+                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $resv->getIdReservation(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), FALSE, $reg->getPreferredTokenId())
                     , array('style'=>'flex-basis: 100%'));
 
             }
@@ -217,6 +281,12 @@ FROM reservation r
             HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
             , array('id'=>'hhk-noteViewer', 'style'=>'width: 100%; font-size: 0.9em;', 'class'=>'hhk-panel'));
 
+        if ($uS->UseDocumentUpload) {
+            // Reservation Docs
+            $dataArray['docViewer'] = HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', "Documents", array('style'=>'font-weight:bold;'))
+                , array('id'=>'vDocs', 'style'=>'width: 100%; font-size:0.9em;', 'class'=>'hhk-panel'));
+        }
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
@@ -228,20 +298,31 @@ FROM reservation r
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-    public function save(\PDO $dbh, $post) {
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @return CheckingIn
+     */
+    public function save(\PDO $dbh) {
 
         // Save family, rate, hospital, room.
-        parent::saveResv($dbh, $post);
+        parent::saveResv($dbh);
 
         if ($this->reserveData->hasError() === FALSE) {
-            $this->saveCheckIn($dbh, $post);
+            $this->saveCheckIn($dbh);
         }
 
         return $this;
 
     }
 
-    protected function saveCheckIn(\PDO $dbh, $post) {
+    /**
+     * Summary of saveCheckIn
+     * @param \PDO $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
+    protected function saveCheckIn(\PDO $dbh) {
 
         $uS = Session::getInstance();
 
@@ -283,6 +364,7 @@ FROM reservation r
             return;
         }
 
+        // Maximum Occupancy
         if (count($this->getStayingMembers()) > $resc->getMaxOccupants()) {
             $this->reserveData->addError("The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
             return;
@@ -306,6 +388,7 @@ FROM reservation r
         $visit->setRateCategory($resv->getRoomRateCategory());
         $visit->setIdRoomRate($resv->getIdRoomRate());
         $visit->setRateAdjust($resv->getRateAdjust());
+        $visit->setIdRateAdjust($resv->getIdRateAdjust());
         $visit->setPledgedRate($resv->getFixedRoomRate());
 
         // Rate Glide
@@ -321,7 +404,7 @@ FROM reservation r
         $visit->setIdHospital_stay($resv->getIdHospitalStay());
 
         // copy ribbon note
-        $visit->setNotes($resv->getNotes(), $uS->username);
+        $visit->setNotes($resv->getNotes());
 
         //
         // Checkin  Saves visit
@@ -341,7 +424,7 @@ FROM reservation r
         if ($uS->ContactManager != '') {
             // Remove Exclude status when an excluded member checks in.
             $stmt = $dbh->query("select DISTINCT n.idName from `name` n join name_guest ng on n.idName = ng.idName
-                where n.External_Id = '" . TransferMembers::EXCLUDE_TERM . "' AND ng.idPsg = " . $this->reserveData->getIdPsg() );
+                where n.External_Id = '" . AbstractExportManager::EXCLUDE_TERM . "' AND ng.idPsg = " . $this->reserveData->getIdPsg() );
 
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -353,7 +436,7 @@ FROM reservation r
                 $names = EditRS::select($dbh, $n, array($n->idName));
                 EditRS::loadRow($names[0], $n);
 
-                if ($n->External_Id->getStoredVal() == TransferMembers::EXCLUDE_TERM) {
+                if ($n->External_Id->getStoredVal() == AbstractExportManager::EXCLUDE_TERM) {
 
                     $n->External_Id->setNewVal('');
                     $numRows = EditRS::update($dbh, $n, array($n->idName));
@@ -370,36 +453,7 @@ FROM reservation r
         //
         // Payment
         //
-        $pmp = PaymentChooser::readPostedPayment($dbh, $post);
-
-        // Check for key deposit
-        if ($uS->KeyDeposit && is_null($pmp) === FALSE) {
-
-            $reg = new Registration($dbh, 0, $resv->getIdRegistration());
-
-            $depCharge = $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]);
-            $depBalance = $reg->getDepositBalance($dbh);
-
-            if ($depCharge > 0 && $pmp->getKeyDepositPayment() == 0 && $depBalance > 0) {
-
-                // Pay deposit with registration balance
-                if ($depCharge <= $depBalance) {
-                    $pmp->setKeyDepositPayment($depCharge);
-                } else {
-                    $pmp->setKeyDepositPayment($depBalance);
-                }
-
-            } else if ($pmp->getKeyDepositPayment() > 0) {
-
-                $visit->visitRS->DepositPayType->setNewVal($pmp->getPayType());
-            }
-
-            // Update Pay type.
-            $visit->updateVisitRecord($dbh, $uS->username);
-        }
-
-        $paymentManager = new PaymentManager($pmp);
-        $this->payResult = HouseServices::processPayments($dbh, $paymentManager, $visit, 'ShowRegForm.php?vid='.$visit->getIdVisit(), $visit->getPrimaryGuestId());
+        $this->savePayment($dbh, $visit, $resc, $resv->getIdRegistration());
 
         $this->resc = $resc;
         $this->visit = $visit;
@@ -407,10 +461,15 @@ FROM reservation r
         return;
     }
 
+    /**
+     * Summary of checkedinMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     public function checkedinMarkup(\PDO $dbh) {
 
-        $creditCheckOut = array();
-        $dataArray = array();
+        $creditCheckOut = [];
+        $dataArray = [];
 
         if ($this->reserveData->hasError()) {
             return $this->createMarkup($dbh);
@@ -418,7 +477,7 @@ FROM reservation r
 
         // Checking In?
         if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
-            return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
+            return ['gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv()];
         }
 
         $uS = Session::getInstance();
@@ -460,10 +519,10 @@ FROM reservation r
 
             try {
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 
                 $tos = explode(',', $uS->Guest_Track_Address);
                 foreach ($tos as $t) {
@@ -489,7 +548,11 @@ FROM reservation r
 
         // Credit payment?
         if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
+            if(isset($creditCheckOut['hpfToken'])){
+                $dataArray['deluxehpf'] = $creditCheckOut;
+            }else{
+                return $creditCheckOut;
+            }
         }
 
         $dataArray['payId'] = $payId;
@@ -502,5 +565,68 @@ FROM reservation r
 
     }
 
+    /**
+     * Summary of savePayment
+     * @param \PDO $dbh
+     * @param \HHK\House\Visit\Visit $visit
+     * @param AbstractResource $resc
+     * @param mixed $idRegistration
+     * @return void
+     */
+    protected function savePayment(\PDO $dbh, Visit $visit, $resc, $idRegistration) {
+
+        $uS = Session::getInstance();
+
+        $pmp = PaymentChooser::readPostedPayment($dbh);
+
+        // Check for key deposit
+        if ($uS->KeyDeposit && is_null($pmp) === FALSE) {
+
+            $reg = new Registration($dbh, 0, $idRegistration);
+
+            $depCharge = $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]);
+            $depBalance = $reg->getDepositBalance($dbh);
+
+            if ($depCharge > 0 && $pmp->getKeyDepositPayment() == 0 && $depBalance > 0) {
+
+                // Pay deposit with registration balance
+                if ($depCharge <= $depBalance) {
+                    $pmp->setKeyDepositPayment($depCharge);
+                } else {
+                    $pmp->setKeyDepositPayment($depBalance);
+                }
+
+            } else if ($pmp->getKeyDepositPayment() > 0) {
+
+                $visit->visitRS->DepositPayType->setNewVal($pmp->getPayType());
+            }
+
+            // Update Pay type.
+            $visit->updateVisitRecord($dbh, $uS->username);
+        }
+
+        $paymentManager = new PaymentManager($pmp);
+        $this->payResult = HouseServices::processPayments($dbh, $paymentManager, $visit, 'ShowRegForm.php?vid='.$visit->getIdVisit(), $visit->getPrimaryGuestId());
+
+        // Reservation prepayments
+        if ($uS->AcceptResvPaymt) {
+
+            // Add Order_Number to reservation pre-payment invoices.
+            $numRows = $dbh->exec("
+            UPDATE invoice i
+                    JOIN
+                reservation_invoice ri ON ri.Invoice_Id = i.idInvoice
+            SET
+                i.Order_Number = ".$visit->getIdVisit()."
+            WHERE
+                ri.Reservation_Id = " . $visit->getIdReservation());
+
+            // Relate Invoice to Reservation
+            if ($numRows > 1 && ! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $this->reserveData->getIdResv() > 0) {
+                $dbh->exec("insert ignore into `reservation_invoice` Values(".$this->reserveData->getIdResv()."," .$this->payResult->getIdInvoice() . ")");
+            }
+
+        }
+    }
+
 }
-?>

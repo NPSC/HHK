@@ -17,10 +17,20 @@ use HHK\HTMLControls\HTMLTable;
 class TransferResponse extends CheckResponse {
 
 
+    /**
+     * Summary of getPaymentMethod
+     * @return int
+     */
     public function getPaymentMethod() {
         return PaymentMethod::Transfer;
     }
 
+    /**
+     * Summary of receiptMarkup
+     * @param \PDO $dbh
+     * @param mixed $tbl
+     * @return void
+     */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Transfer:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));

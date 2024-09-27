@@ -17,7 +17,8 @@ define('P_ROOT', dirname(__FILE__) . DS );
 
 define('REL_BASE_DIR', ".." . DS);
 define('REL_BASE_SITE', "../");
-define('ciCFG_FILE', REL_BASE_DIR . 'conf' . DS . 'site.cfg' );
+define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
+define('ciCFG_FILE', 'site.cfg' );
 define('CLASSES', REL_BASE_DIR . 'classes' . DS);
 define('DB_TABLES', CLASSES . 'tables' . DS);
 define('MEMBER', CLASSES . 'member' . DS);
@@ -34,17 +35,11 @@ date_default_timezone_set('America/Chicago');
 /*
  * includes
  */
-require (REL_BASE_SITE . 'vendor/autoload.php');
-//require (CLASSES . 'Exception_hk' . DS . 'Hk_Exception.php');
+
+if (file_exists(REL_BASE_SITE . 'vendor/autoload.php')) {
+    require(REL_BASE_SITE . 'vendor/autoload.php');
+} else {
+    exit("Unable to laod dependancies, be sure to run 'composer install'");
+}
 
 require (FUNCTIONS . 'commonFunc.php');
-/* require (SEC . 'sessionClass.php');
-require (CLASSES . 'alertMessage.php');
-require (CLASSES . 'config'. DS . 'Lite.php');
-require (SEC . 'SecurityComponent.php');
-require (SEC . 'ScriptAuthClass.php');
-require (CLASSES . 'SysConst.php');
-require (SEC . 'webInit.php');
-require (CLASSES . 'HTML_Controls.php');
-
- */

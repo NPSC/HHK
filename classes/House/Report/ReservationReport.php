@@ -2,11 +2,15 @@
 
 namespace HHK\House\Report;
 
+use HHK\Checklist;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\HTMLControls\HTMLTable;
+use HHK\SysConst\{ReservationStatus, ItemId};
+use HHK\SysConst\ChecklistType;
+use HHK\SysConst\InvoiceStatus;
 
 
 /**
@@ -30,6 +34,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     public array $diags;
     public array $resvStatuses;
     public array $selectedResvStatuses;
+    public array $checklistItems;
+    public array $checklistTypes;
 
 
     public function __construct(\PDO $dbh, array $request = []){
@@ -41,8 +47,11 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
         $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
 
-        if (isset($_POST['selResvStatus'])) {
-            $this->selectedResvStatuses = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
+        $this->checklistItems = readGenLookupsPDO($dbh, ChecklistType::PSG);
+        $this->checklistTypes = readGenLookupsPDO($dbh, Checklist::ChecklistRootTablename);
+
+        if (filter_has_var(INPUT_POST, 'selResvStatus')) {
+            $this->selectedResvStatuses = filter_input(INPUT_POST, 'selResvStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
         }else{
             $this->selectedResvStatuses = [];
         }
@@ -51,7 +60,9 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     }
 
     public function makeQuery(): void{
-        $whDates = " r.Expected_Arrival <= '" . $this->filter->getReportEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $this->filter->getReportStart() . "' ";
+        $uS = Session::getInstance();
+
+        $whDates = " date(ifnull(r.Actual_Arrival, r.Expected_Arrival)) <= '" . $this->filter->getReportEnd() . "' and date(ifnull(r.Actual_Departure, r.Expected_Departure)) >= '" . $this->filter->getReportStart() . "' ";
 
         // Hospitals
         $whHosp = implode(",", $this->filter->getSelectedHosptials());
@@ -72,7 +83,43 @@ class ReservationReport extends AbstractReport implements ReportInterface {
             $whStatus = "and r.Status in (" . $whStatus . ") ";
         }
 
-        $groupBy = " and rg.Primary_Guest = 1 Group By rg.idReservation";
+        // Reservation Prepayments
+        $prePayQuery = '';
+
+        if ($uS->AcceptResvPaymt) {
+            $prePayQuery = "  case when s.Value = 'true' AND r.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "') THEN
+                ifnull(
+	        (select sum(invoice_line.Amount)
+			from
+	        invoice_line
+	            join
+	        invoice ON invoice_line.Invoice_Id = invoice.idInvoice
+			        AND invoice_line.Item_Id = " . ItemId::LodgingMOA . "
+			        AND invoice_line.Deleted = 0
+	            join
+	    	reservation_invoice ON invoice.idInvoice = reservation_invoice.Invoice_Id
+		    where
+		        invoice.Deleted = 0
+		        AND invoice.Order_Number = 0
+                AND reservation_invoice.Reservation_Id = r.idReservation
+		        AND invoice.`Status` = '" .InvoiceStatus::Paid . "'), 0)
+            ELSE 0 END  as `PrePaymt`, ";
+
+        }
+
+        
+        //checklist items
+        $checklistJoin = "";
+        $checklistFields = "";
+        if ($uS->useChecklists) {
+            foreach ($this->checklistItems as $item) {
+                $checklistJoin .= " left join gen_lookups g" . $item[0] . " on g" . $item[0] . ".Code = '" . $item[0] . "' and g" . $item[0] . ".Table_Name = '" . ChecklistType::PSG . "'" .
+                    " left join checklist_item ci" . $item[0] . " on hs.idPsg = ci" . $item[0] . ".Entity_Id and ci" . $item[0] . ".GL_TableName = '" . ChecklistType::PSG . "' and ci" . $item[0] . ".GL_Code = '" . $item[0] . "'";
+                $checklistFields .= " ifnull(ci" . $item[0] . ".Value_Date, '') as `" . $item[1] . "`,";
+            }
+        }
+
+        $groupBy = " Group By r.idReservation";
 
         $this->query = "select
     r.idReservation,
@@ -83,8 +130,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     ifnull(na.State_Province, '') as gState,
     ifnull(na.Country_Code, '') as gCountry,
     ifnull(na.Postal_Code, '') as gZip,
-    CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' ELSE np.Phone_Num END as Phone_Num,
-    ne.Email,
+    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone_Num,
+    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ifnull(ne.Email, '') END as Email,
     rm.Phone,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
     ifnull(r.Actual_Departure, r.Expected_Departure) as `Departure`,
@@ -112,14 +159,14 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     hs.Diagnosis2,
     ifnull(g2.`Description`, '') as `Location`,
+    $checklistFields
     r.`Timestamp` as `Created_Date`,
-    r.Last_Updated " .
-	//CASE WHEN r.Status not in ('s','co','im') THEN count(rg.idReservation) ELSE '' END as `numGuests`
-
-"from
+    $prePayQuery
+    r.Last_Updated
+from
     reservation r
         left join
-	reservation_guest rg on r.idReservation = rg.idReservation
+	reservation_guest rg on r.idReservation = rg.idReservation and rg.Primary_Guest = 1
 		left join
     resource re ON re.idResource = r.idResource
         left join
@@ -151,7 +198,9 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         and g2.`Code` = hs.`Location`
     LEFT JOIN hospital h on hs.idHospital = h.idHospital and h.Type = 'h'
     LEFT JOIN hospital a on hs.idAssociation = a.idHospital and a.Type = 'a'
-where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.idRegistration";
+    $checklistJoin
+    , sys_config s
+where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.idRegistration";
     }
 
     public function makeFilterMkup():void{
@@ -201,7 +250,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.id
             $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
 
             if (count($this->filter->getAList()) > 0) {
-                $cFields[] = array("Association", 'Assoc', 'checked', '', 'string', '20');
+                $cFields[] = array($labels->getString('hospital', 'association', 'Association'), 'Assoc', 'checked', '', 'string', '20');
             }
         }
 
@@ -227,12 +276,12 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.id
             $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
         }
 
-        $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
-        $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " First", 'Name_First', 'checked', '', 'string', '20');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " Last", 'Name_Last', 'checked', '', 'string', '20');
 
         // Address.
         $pFields = array('gAddr', 'gCity');
-        $pTitles = array('Address', 'City');
+        $pTitles = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . ' Address', 'City');
 
         if ($uS->county) {
             $pFields[] = 'gCounty';
@@ -245,15 +294,33 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.id
         $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
         $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
-        $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
-        $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
-        $cFields[] = array("Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
+        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
         $cFields[] = array("Days", 'Days', '', '', 'integer', '10');
         $cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
-        //$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
+
+        // Reservation pre-payment
+        if ($uS->AcceptResvPaymt) {
+            $cFields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)');
+        }
+
+        if ($uS->useChecklists) {
+            //checklist items
+            $ciFields = [];
+            $ciTitles = [];
+
+            foreach ($this->checklistItems as $item) {
+                $ciFields[] = $item[1];
+                $ciTitles[] = $item[1];
+            }
+
+            $cFields[] = array($ciTitles, $ciFields, '', '', 'MM/DD/YYYY', '15', array(), 'date', 'selOptionTitle' => (isset($this->checklistTypes[ChecklistType::PSG]["Description"]) ? $this->checklistTypes[ChecklistType::PSG]["Description"] . " Checklist" : "PSG Checklist"));
+        }
+        
         $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
         $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');
@@ -318,12 +385,12 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.id
         $this->getResultSet();
         $uS = Session::getInstance();
 
-        foreach($this->resultSet as $k=>$r) {
-            $this->resultSet[$k]['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
-            $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+        foreach($this->resultSet as &$r) {
+            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
+            $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+            if($uS->AcceptResvPaymt){ $r['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0)); }
         }
 
         return parent::generateMarkup($outputType);
     }
 }
-?>

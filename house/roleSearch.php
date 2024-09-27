@@ -15,12 +15,12 @@ use HHK\Member\MemberSearch;
 
 require ("homeIncludes.php");
 
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 } else {
     exit();
 }
@@ -32,10 +32,10 @@ switch ($c) {
     case "srrel":
 
         //get the q parameter from URL
-        $letters = filter_var(urldecode($_REQUEST["letters"]), FILTER_SANITIZE_STRING);
+        $letters = filter_var(urldecode($_REQUEST["letters"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         // get basis
-        $basis = filter_var(urldecode($_REQUEST["basis"]), FILTER_SANITIZE_STRING);
+        $basis = filter_var(urldecode($_REQUEST["basis"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         // get id
         $id = 0;
@@ -61,28 +61,33 @@ switch ($c) {
         //get the q parameter from URL
         $letters = '';
         if (isset($_GET['letters'])) {
-            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // get basis
         $basis = '';
         if (isset($_GET['basis'])) {
-            $basis = filter_var(urldecode($_GET['basis']), FILTER_SANITIZE_STRING);
+            $basis = filter_var(urldecode($_GET['basis']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $fltr = "";
         if (isset($_REQUEST["filter"])) {
-            $fltr = filter_var(urldecode($_REQUEST["filter"]), FILTER_SANITIZE_STRING);
+            $fltr = filter_var(urldecode($_REQUEST["filter"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $additional = "";
         if (isset($_REQUEST["add"])) {
-            $additional = filter_var(urldecode($_REQUEST["add"]), FILTER_SANITIZE_STRING);
+            $additional = filter_var(urldecode($_REQUEST["add"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        $psg = "";
+        if (isset($_REQUEST["psg"])) {
+            $psg = filter_var(urldecode($_REQUEST["psg"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $memberSearch = new MemberSearch($letters);
 
-        $events = $memberSearch->volunteerCmteFilter($dbh, $basis, $fltr, $additional);
+        $events = $memberSearch->volunteerCmteFilter($dbh, $basis, $fltr, $additional, $psg);
 
         break;
 
@@ -90,11 +95,11 @@ switch ($c) {
 
         $letters = '';
         if (isset($_GET['letters'])) {
-            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
         $mode = '';
         if (isset($_GET['mode'])) {
-            $mode = filter_var(urldecode($_GET['mode']), FILTER_SANITIZE_STRING);
+            $mode = filter_var(urldecode($_GET['mode']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
         $gp = FALSE;
         if (isset($_GET['gp']) && $_GET['gp'] == '1') {
@@ -108,6 +113,54 @@ switch ($c) {
 
         $memberSearch = new MemberSearch($letters);
         $events = $memberSearch->roleSearch($dbh, $mode, $gp, $mrn);
+
+        break;
+
+    case 'guest':
+
+        $letters = '';
+        if (isset($_GET['letters'])) {
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        $memberSearch = new MemberSearch($letters);
+        $events = $memberSearch->guestSearch($dbh);
+
+        break;
+
+    case 'mrn':
+
+        $letters = '';
+        if (isset($_GET['letters'])) {
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        $memberSearch = new MemberSearch($letters);
+        $events = $memberSearch->MRNSearch($dbh);
+
+        break;
+
+    case 'phone':
+
+        $letters = '';
+        if (isset($_GET['letters'])) {
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        $memberSearch = new MemberSearch($letters);
+        $events = $memberSearch->phoneSearch($dbh);
+
+        break;
+
+    case 'diagnosis':
+
+        $letters = '';
+        if (isset($_GET['letters'])) {
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        $memberSearch = new MemberSearch($letters);
+        $events = $memberSearch->diagnosisSearch($dbh);
 
         break;
 

@@ -2,6 +2,7 @@
 namespace HHK\sec;
 
 use HHK\Exception\RuntimeException;
+use GuzzleHttp\Client;
 
 /**
  * Recaptcha.php
@@ -49,44 +50,25 @@ class Recaptcha {
      */
     public function verify(string $token, $acceptedscore = '0.5', string $action = 'submit'){
 
-        $uS = Session::getInstance();
-
-        $apiKey = decryptMessage($uS->recaptchaApiKey);
-        $projectID = $uS->googleProjectID;
-        $siteKey = $uS->recaptchaSiteKey;
-
-
         try{
-
-            $ch = curl_init();
-
             $data = [
                 "event"=>[
                     "token"=>$token,
-                    "siteKey"=>$siteKey,
+                    "siteKey"=>$this->siteKey,
                     "expectedAction"=>$action
                 ]
             ];
 
-            curl_setopt($ch, CURLOPT_URL,"https://recaptchaenterprise.googleapis.com/v1beta1/projects/" . $projectID . "/assessments?key=" . $apiKey);
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+            $client = new Client();
 
-            // Receive server response ...
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $response = $client->post("https://recaptchaenterprise.googleapis.com/v1/projects/" . $this->projectID . "/assessments?key=" . $this->apiKey, [
+                    'json'=>$data
+                ]);
 
-            $server_output = curl_exec($ch);
+            $body = json_decode($response->getBody());
 
-            curl_close ($ch);
-
-
-            $response = json_decode($server_output);
-
-            //return $response;
-
-            if($response->tokenProperties->valid && $response->tokenProperties->action == 'submit' && $response->score >= $acceptedscore){
-                return $response->score;
+            if($body->tokenProperties->valid && $body->tokenProperties->action == 'submit'){
+                return $body->riskAnalysis->score;
             }else{
                 return false;
             }

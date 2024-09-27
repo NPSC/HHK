@@ -3,6 +3,7 @@
 namespace HHK\Document;
 
 use HHK\DataTableServer\SSP;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 
@@ -37,12 +38,13 @@ class FormDocument {
 
         if($totalsOnly){
             //sync referral/resv statuses
-            $dbh->exec('CALL sync_referral_resv_status()');
+            //$dbh->exec('CALL sync_referral_resv_status()');  // takes too long.
 
-            $query = 'select g.Code as "idStatus", g.Description as "Status", g.Substitute as "icon", count(v.idDocument) as "count" from `gen_lookups` g
-left join `vform_listing` v on g.Code = v.`status ID`
-where g.Table_Name = "Referral_Form_Status"
-group by g.Code order by g.Order';
+            $query = "SELECT g.Code AS 'idStatus', g.Description AS 'Status', g.Substitute AS 'icon', COUNT(d.idDocument) AS 'count' FROM gen_lookups g
+			left join document d on g.Code = d.Status and `d`.`Type` = 'json' and `d`.`Category` = 'form'
+		where g.Table_Name = 'Referral_Form_Status'
+        group by g.Code;";
+
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $totals = [];
@@ -105,7 +107,7 @@ group by g.Code order by g.Order';
      * @param string $json
      * @return array[]|string[]|string[]
      */
-    public function saveNew(\PDO $dbh, $json, $templateId = 0){
+    public function saveNew(\PDO $dbh, array $fields, $templateId = 0){
 
         $this->formTemplate = new FormTemplate();
         $this->formTemplate->loadTemplate($dbh, $templateId);
@@ -114,17 +116,18 @@ group by g.Code order by g.Order';
 
         $abstractJson = json_encode(["enableReservation"=>$templateSettings['enableReservation']]);
 
-        $validatedDoc = $this->validateFields($json);
+        $validatedDoc = $this->validateFields($fields);
 
         if(count($validatedDoc['errors']) > 0){
             return array('errors'=>$validatedDoc['errors']);
         }
 
         $validatedFields = json_encode($validatedDoc['fields']);
-        $sanitizedDoc = json_encode($validatedDoc['sanitizedDoc']);
+        $sanitizedDoc = base64_encode(json_encode($validatedDoc['sanitizedDoc']));
 
         $this->doc = new Document();
         $this->doc->setType(self::JsonType);
+        $this->doc->setMimeType("base64:text/json");
         $this->doc->setCategory(self::formCat);
         $this->doc->setTitle($templateName);
         $this->doc->setUserData($validatedFields);
@@ -137,7 +140,7 @@ group by g.Code order by g.Order';
 
         if($this->doc->getIdDocument() > 0){
             //$this->sendPatientEmail();
-            $this->sendNotifyEmail();
+            $this->sendNotifyEmail($dbh);
             return array("status"=>"success");
         }else{
             return array("status"=>"error");
@@ -150,24 +153,25 @@ group by g.Code order by g.Order';
      *
      * @return boolean
      */
-    private function sendNotifyEmail(){
+    private function sendNotifyEmail(\PDO $dbh){
         $uS = Session::getInstance();
         $to = filter_var(trim($uS->referralFormEmail), FILTER_SANITIZE_EMAIL);
 
         try{
             if ($to !== FALSE && $to != '') {
-//                $userData = $this->getUserData();
+                $formSettings = $this->formTemplate->getSettings();
+
                 $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ". <br><br><a href='" . $uS->resourceURL . "house/register.php' target='_blank'>Click here to log into HHK and take action.</a><br>" . PHP_EOL;
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = ($uS->NoReplyAddr ? $uS->NoReplyAddr : "no_reply@nonprofitsoftwarecorp.org");
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                 $mail->addAddress($to);
 
                 $mail->isHTML(true);
 
-                $mail->Subject = "New " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " submitted";
+                $mail->Subject = (isset($formSettings["notifySubject"]) && $formSettings["notifySubject"] != "" ? $formSettings["notifySubject"] : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted");
                 $mail->msgHTML($content);
 
                 if ($mail->send() === FALSE) {
@@ -182,7 +186,7 @@ group by g.Code order by g.Order';
         return false;
     }
 
-    private function sendPatientEmail(){
+/*     private function sendPatientEmail(){
         $templateSettings = $this->formTemplate->getSettings();
         $userData = json_decode($this->doc->getUserData(), true);
         $patientEmailAddress = (isset($userData['patient']['email']) ? $userData['patient']['email'] : '');
@@ -191,10 +195,10 @@ group by g.Code order by g.Order';
         if($this->doc->getIdDocument() > 0 && $templateSettings['emailPatient'] == true && $patientEmailAddress != '' && $templateSettings['notifySubject'] !='' && $templateSettings['notifyContent'] != ''){
             //send email
 
-            $mail = prepareEmail();
+            $mail = new HHKMailer();
 
             $mail->From = $uS->NoReplyAddr;
-            $mail->FromName = $uS->siteName;
+            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
             $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
             $to = filter_var(trim($patientEmailAddress), FILTER_SANITIZE_EMAIL);
@@ -215,7 +219,7 @@ group by g.Code order by g.Order';
 
         }
 
-    }
+    } */
 
     public function updateStatus(\PDO $dbh, $status){
         if($this->getStatus() == 'd' && $status == 'd'){
@@ -233,10 +237,9 @@ group by g.Code order by g.Order';
         return $this->doc->getStatus();
     }
 
-    public function validateFields($doc){
+    public function validateFields(array $fields){
         $response = ["fields"=>[], "errors"=>[]];
 
-        $fields = json_decode($doc);
         $fieldData = [];
 
         foreach($fields as $key=>$field){
@@ -252,10 +255,13 @@ group by g.Code order by g.Order';
                     }
 
                     $today = new \DateTime();
+                    $dateLimit = new \DateTime('1900-01-01');
                     if(isset($field->validation) && $field->validation == 'lessThanToday' && $date->format('Y-m-d') > $today->format('Y-m-d')){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the past.'];
                     }else if(isset($field->validation) && $field->validation == 'greaterThanToday' && $date->format('Y-m-d') < $today->format('Y-m-d')){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the future.'];
+                    }else if($date->format("Y-m-d") < $dateLimit->format("Y-m-d")){
+                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be at least January 1, 1900'];
                     }
 
                     //save dates in correct format
@@ -266,11 +272,11 @@ group by g.Code order by g.Order';
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid Email address.'];
                     }
                 }elseif($field->type == "text" && $field->subtype == "tel" && $field->userData[0] != ''){ //if phone field and not empty
-                    if(!filter_var($field->userData[0], FILTER_SANITIZE_STRING) || !preg_match('/^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/', $field->userData[0])){
+                    if(!filter_var($field->userData[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS) || !preg_match('/^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/', $field->userData[0])){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be formatted as: (###) ###-####'];
                     }
-                }elseif($field->type == "text" && $field->userData[0] != ''){
-                    $sanitized = filter_var($field->userData[0], FILTER_SANITIZE_STRING);
+                }elseif(($field->type == "text" || $field->type == "textarea") && $field->userData[0] != ''){
+                    $sanitized = filter_var($field->userData[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                     $field->userData[0] = $sanitized;
                 }
 
@@ -307,7 +313,11 @@ group by g.Code order by g.Order';
     }
 
     public function getDoc(){
-        return $this->doc->getDoc();
+        if(str_starts_with($this->doc->getMimeType(), "base64:")){
+            return base64_decode($this->doc->getDoc());
+        }else{
+            return $this->doc->getDoc();
+        }
     }
 
     public function getUserData(){

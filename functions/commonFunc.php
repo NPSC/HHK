@@ -4,7 +4,6 @@ use HHK\Exception\RuntimeException;
 use HHK\sec\Session;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{WebRole};
-use HHK\Config_Lite\Config_Lite;
 use PHPMailer\PHPMailer\PHPMailer;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\SysConst\PaymentMethod;
@@ -12,6 +11,8 @@ use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
 use HHK\TableLog\HouseLog;
 use HHK\ExcelHelper;
 use HHK\sec\{SecurityComponent, SysConfig};
+use HHK\House\Reservation\Reservation_1;
+use HHK\SysConst\ReservationStatus;
 
 /**
  * commonFunc.php
@@ -21,7 +22,16 @@ use HHK\sec\{SecurityComponent, SysConfig};
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-function initPDO($override = FALSE)
+
+
+ /**
+  * Initialize DB connection
+  *
+  * @param bool $override
+  * @throws Exception
+  * @return PDO|void
+  */
+function initPDO(bool $override = FALSE)
 {
     $ssn = Session::getInstance();
     $roleCode = $ssn->rolecode;
@@ -38,14 +48,14 @@ function initPDO($override = FALSE)
     if ($roleCode >= WebRole::Guest && $override === FALSE) {
         // Get the site configuration object
         try {
-            $config = new Config_Lite(ciCFG_FILE);
+            $config = parse_ini_file(ciCFG_FILE, true);
         } catch (Exception $ex) {
             $ssn->destroy();
             throw new RuntimeException("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
         }
 
-        $dbuName = $config->getString('db', 'ReadonlyUser', '');
-        $dbPw = decryptMessage($config->getString('db', 'ReadonlyPassword', ''));
+        $dbuName = (!empty($config['db'][ 'ReadonlyUser']) ? $config['db'][ 'ReadonlyUser'] : '');
+        $dbPw = decryptMessage((!empty($config['db']['ReadonlyPassword']) ? $config['db']['ReadonlyPassword'] : ''));
     }
 
     try {
@@ -53,7 +63,7 @@ function initPDO($override = FALSE)
     	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
     	$options = [
     			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    			PDO::ATTR_EMULATE_PREPARES   => TRUE,
+    			PDO::ATTR_EMULATE_PREPARES   => FALSE,
     	];
 
     	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);
@@ -98,9 +108,9 @@ function syncTimeZone(\PDO $dbh)
 /**
  * Return a date with time = 0
  *
- * @param unknown $dateTime
+ * @param DateTimeInterface|string $dateTime
  * @throws Exception
- * @return \DateTime|\DateTimeImmutable
+ * @return DateTimeInterface
  */
 function justDate($dateTime) {
 
@@ -118,12 +128,14 @@ function justDate($dateTime) {
     return $dateTime;
 }
 
-function stripslashes_gpc(&$value)
-{
-    $value = stripslashes($value);
-}
-
-function doExcelDownLoad($rows, $fileName)
+/**
+ * Generate and download Excel file from multidimentional array
+ *
+ * @param array $rows
+ * @param string $fileName
+ * @return void
+ */
+function doExcelDownLoad(array $rows, string $fileName):void
 {
     if (count($rows) === 0) {
         return;
@@ -155,54 +167,6 @@ function doExcelDownLoad($rows, $fileName)
         $writer->writeSheetRow("Sheet1", $row);
     }
     $writer->download();
-}
-
-function prepareEmail()
-{
-
-    $uS = Session::getInstance();
-
-    $mail = new PHPMailer(true);
-
-    if($uS->DKIMdomain && @file_get_contents($uS->keyPath . '/dkim/dkimPrivateKey.pem')){
-        $mail->DKIM_domain = $uS->DKIMdomain;
-        $mail->DKIM_private = $uS->keyPath . '/dkim/dkimPrivateKey.pem';
-        $mail->DKIM_selector = "hhk";
-        $mail->DKIM_identity = $mail->From;
-    }
-
-    switch (strtolower($uS->EmailType)) {
-
-        case 'smtp':
-
-            $mail->isSMTP();
-
-            $mail->Host = $uS->SMTP_Host;
-            $mail->SMTPAuth = $uS->SMTP_Auth_Required;
-            $mail->Username = $uS->SMTP_Username;
-
-            if ($uS->SMTP_Password != '') {
-                $mail->Password = decryptMessage($uS->SMTP_Password);
-            }
-
-            if ($uS->SMTP_Port != '') {
-                $mail->Port = $uS->SMTP_Port;
-            }
-
-            if ($uS->SMTP_Secure != '') {
-                $mail->SMTPSecure = $uS->SMTP_Secure;
-            }
-
-            $mail->SMTPDebug = $uS->SMTP_Debug;
-
-            break;
-
-        case 'mail':
-            $mail->isMail();
-            break;
-    }
-
-    return $mail;
 }
 
 function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
@@ -252,22 +216,6 @@ function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
 	}
 
 	return $tbl->generateMarkup();
-}
-
-
-// This is named backwards. I'll start the new name, but it may take a while for all the code to comply
-function addslashesextended(&$arr_r)
-{
-/*     if (get_magic_quotes_gpc()) {
-        array_walk_recursive($arr_r, 'stripslashes_gpc');
-    } */
-}
-
-function stripSlashesExtended(&$arr_r)
-{
-/*     if (get_magic_quotes_gpc()) {
-        array_walk_recursive($arr_r, 'stripslashes_gpc');
-    } */
 }
 
 function newDateWithTz($strDate, $strTz)
@@ -473,7 +421,7 @@ function readGenLookups($con, $tbl, $orderBy = "Code")
 function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code")
 {
     $safeTbl = str_replace("'", '', $tbl);
-    $query = "SELECT `Code`, `Description`, `Substitute`, `Type`, `Order` FROM `gen_lookups` WHERE `Table_Name` = '$safeTbl' order by `$orderBy`;";
+    $query = "SELECT `Code`, `Description`, `Substitute`, `Type`, `Order`, `Attributes` FROM `gen_lookups` WHERE `Table_Name` = '$safeTbl' order by `$orderBy`;";
     $stmt = $dbh->query($query);
 
     $genArray = array();
@@ -485,7 +433,7 @@ function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code")
     return $genArray;
 }
 
-function readLookups(\PDO $dbh, $tbl, $orderBy = "Code", $includeUnused = false)
+function readLookups(\PDO $dbh, $category, $orderBy = "Code", $includeUnused = false)
 {
     if ($includeUnused) {
         $where = "";
@@ -493,12 +441,12 @@ function readLookups(\PDO $dbh, $tbl, $orderBy = "Code", $includeUnused = false)
         $where = "and `Use` = 'y'";
     }
 
-    $query = "SELECT `Code`, `Title`, `Use`, `Other` as 'Icon' FROM `lookups` WHERE `Category` = '$tbl' $where order by `$orderBy`;";
+    $query = "SELECT `Code`, `Title`, `Use`, `Show`, `Type`, `Other` as 'Icon' FROM `lookups` WHERE `Category` = '$category' $where order by `$orderBy`;";
     $stmt = $dbh->query($query);
     $genArray = array();
 
     while ($row = $stmt->fetch(\PDO::FETCH_BOTH)) {
-        $genArray[$row["Code"]] = $row;
+        $genArray[$row['Code']] = $row;
     }
 
     return $genArray;
@@ -529,7 +477,7 @@ function doOptionsMkup($gArray, $sel, $offerBlank = true, $placeholder = "")
 
 function DoLookups($con, $tbl, $sel, $offerBlank = true)
 {
-    $g = readGenLookups($con, $tbl);
+    $g = readGenLookupsPDO($con, $tbl);
 
     return doOptionsMkup($g, $sel, $offerBlank);
 }
@@ -548,13 +496,13 @@ function removeOptionGroups($gArray)
     return $clean;
 }
 
-function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = array())
+function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, ?array $del, array $type = array())
 {
     if (isset($desc)) {
 
         foreach ($desc as $k => $r) {
 
-            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+            $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
             if ($code == '') {
                 continue;
@@ -586,7 +534,7 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
                 } else {
                     // update
                     if (isset($desc[$code]) && $desc[$code] != '') {
-                        $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_STRING));
+                        $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     }
                     if (isset($subt[$code])) {
                         $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
@@ -601,7 +549,7 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
                     ));
 
                     if ($ctr > 0) {
-                        $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
+                        $logText = HouseLog::getUpdateText($glRs);
                         HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
                     }
                 }
@@ -610,7 +558,19 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
     }
 }
 
-function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $order, $del, $replace, array $replaceWith)
+/**
+ * Summary of replaceGenLk
+ * @param PDO $dbh
+ * @param string $tblName
+ * @param mixed $desc
+ * @param mixed $subt
+ * @param mixed $order
+ * @param mixed $del
+ * @param mixed $replace
+ * @param mixed $replaceWith
+ * @return float|int
+ */
+function replaceGenLk(\PDO $dbh, $tblName, $desc, $subt, $attributes, $order, $del, $replace, $replaceWith)
 {
     $rowsAffected = 0;
 
@@ -618,7 +578,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
 
         foreach ($desc as $k => $r) {
 
-            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+            $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
             if ($code == '') {
                 continue;
@@ -659,7 +619,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
                 } else {
                     // update
                     if (isset($desc[$code]) && $desc[$code] != '') {
-                        $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_STRING));
+                        $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     }
 
                     if (isset($subt[$code])) {
@@ -667,8 +627,13 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
                         if (is_numeric($subt[$code])) {
                             $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
                         } else {
-                            $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_STRING));
+                            $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                         }
+                    }
+
+                    if (isset($attributes[$code])) {
+                        $attributes[$code] = json_encode($attributes[$code]);
+                        $glRs->Attributes->setNewVal($attributes[$code]);
                     }
 
                     if (isset($order[$code])) {
@@ -682,7 +647,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
                     ));
 
                     if ($ctr > 0) {
-                        $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
+                        $logText = HouseLog::getUpdateText($glRs);
                         HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
                     }
                 }
@@ -695,13 +660,16 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
 
 function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 {
+    $uS = Session::getInstance();
     $rowsAffected = 0;
 
     if (isset($title)) {
 
+        $reserveStatuses = readLookups($dbh, "ReservStatus", "Code", true);
+
         foreach ($title as $k => $r) {
 
-            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+            $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
             if ($code == '') {
                 continue;
@@ -717,16 +685,15 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
             ));
 
             if (count($rates) == 1) {
-                $uS = Session::getInstance();
 
                 EditRS::loadRow($rates[0], $lookRs);
 
-                if ($code == "c1" || $code == "c2" || $code == "c3" || $code == "c4") {
+                if (Reservation_1::isRemovedStatus($code, $reserveStatuses)) {
                     if (isset($use[$code])) {
                         // activate
                         $lookRs->Use->setNewVal("y");
                         $lookRs->Show->setNewVal("y");
-                    } else {
+                    } else if ($code != ReservationStatus::Canceled) {  // Make sure at least one code is available
                         $lookRs->Use->setNewVal("n");
                         $lookRs->Show->setNewVal("n");
                     }
@@ -734,7 +701,7 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 
                 // update
                 if (isset($title[$code]) && $title[$code] != '') {
-                    $lookRs->Title->setNewVal(filter_var($title[$code], FILTER_SANITIZE_STRING));
+                    $lookRs->Title->setNewVal(filter_var($title[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 }
 
                 $ctr = EditRS::update($dbh, $lookRs, array(
@@ -743,7 +710,7 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
                 ));
 
                 if ($ctr > 0) {
-                    $logText = HouseLog::getUpdateText($lookRs, $category . $code);
+                    $logText = HouseLog::getUpdateText($lookRs);
                     HouseLog::logGenLookups($dbh, $category, $code, $logText, 'update', $uS->username);
                 }
             }
@@ -764,15 +731,14 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 function showGuestPicture ($idGuest, $widthPx) {
 
     return HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('img ', '', array('id'=>'guestPhoto', 'src'=>"ws_resc.php?cmd=getguestphoto&guestId=$idGuest", 'width'=>$widthPx)) .
         HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
-        , array("class"=>"ui-button ui-corner-all ui-widget upload-guest-photo", 'style'=>'padding: .3em; margin-right:0.3em;')) . HTMLContainer::generateMarkup('div',
+        , array("class"=>"ui-button ui-corner-all ui-widget upload-guest-photo", 'style'=>'padding: .3em;')) . HTMLContainer::generateMarkup('div',
         htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
         , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
-        , array('style'=>"position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;", 'id'=>'hhk-guest-photo-actions'))
-        ,array('class'=>'hhk-panel', 'style'=>'display: inline-block; position:relative', 'id'=>'hhk-guest-photo'));
+        , array('style'=>"display:none;", 'id'=>'hhk-guest-photo-actions'))
+        ,array("class"=>"ui-widget ui-widget-content ui-corner-all", "style"=>"width:" . $widthPx . "px; height:" . $widthPx . "px; min-width:" . $widthPx . "px; background-image: url(../house/ws_resc.php?cmd=getguestphoto&guestId=$idGuest);", 'id'=>'hhk-guest-photo'));
 }
 
 /**
@@ -781,7 +747,7 @@ function showGuestPicture ($idGuest, $widthPx) {
  * @param $_FILES['photo'] $photo
  * @param int $newwidth
  * @param int $newheight
- * @return object photo data
+ * @return string|bool
  */
 function makeThumbnail($photo, $newwidth, $newheight)
 {
@@ -811,7 +777,7 @@ function makeThumbnail($photo, $newwidth, $newheight)
 
             default:
                 throw new Exception("File Type not supported");
-                break;
+                //break;
         }
 
         $thumbnailData = ob_get_contents(); // send object buffer/image data to variable

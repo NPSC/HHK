@@ -27,6 +27,14 @@ use HHK\Exception\PaymentException;
 
 class TransferTX {
 
+    /**
+     * Summary of sale
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\TransferResponse $pr
+     * @param mixed $username
+     * @param mixed $paymentDate
+     * @return void
+     */
     public static function sale(\PDO $dbh, TransferResponse &$pr, $username, $paymentDate) {
 
         // Record transaction
@@ -43,6 +51,14 @@ class TransferTX {
 
     }
 
+    /**
+     * Summary of returnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\TransferResponse $pr
+     * @param mixed $username
+     * @param mixed $paymentDate
+     * @return void
+     */
     public static function returnAmount(\PDO $dbh, TransferResponse &$pr, $username, $paymentDate) {
 
         // Record transaction
@@ -61,6 +77,15 @@ class TransferTX {
 
     }
 
+    /**
+     * Summary of transferReturn
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\TransferResponse $pr
+     * @param mixed $username
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @throws \HHK\Exception\PaymentException
+     * @return void
+     */
     public static function transferReturn(\PDO $dbh, TransferResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
@@ -84,6 +109,15 @@ class TransferTX {
 
     }
 
+    /**
+     * Summary of undoTransferReturn
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\TransferResponse $pr
+     * @param mixed $username
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @throws \HHK\Exception\PaymentException
+     * @return void
+     */
     public static function undoTransferReturn(\PDO $dbh, TransferResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
@@ -107,7 +141,14 @@ class TransferTX {
 
     }
 
-    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+    /**
+     * Summary of undoReturnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\TransferResponse $pr
+     * @param mixed $idPayment
+     * @return void
+     */
+    public static function undoReturnAmount(\PDO $dbh, TransferResponse &$pr, $idPayment) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);

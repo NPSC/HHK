@@ -37,9 +37,25 @@ class RateChooser {
      * @var bool
      */
     protected $incomeRated;
+    /**
+     * Summary of isAllowed
+     * @var bool
+     */
     protected $isAllowed;
+    /**
+     * Summary of payVisitFee
+     * @var mixed
+     */
     protected $payVisitFee;
+    /**
+     * Summary of openCheckin
+     * @var bool
+     */
     protected $openCheckin;
+    /**
+     * Summary of rateGlideExtend
+     * @var mixed
+     */
     protected $rateGlideExtend;
 
     /**
@@ -47,11 +63,13 @@ class RateChooser {
      * @var AbstractPriceModel
      */
     protected $priceModel;
+
+
+
     /**
-     * @var array
+     * Summary of __construct
+     * @param \PDO $dbh
      */
-
-
     public function __construct(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -71,6 +89,11 @@ class RateChooser {
 
     }
 
+    /**
+     * Summary of validateCategory
+     * @param string $category
+     * @return bool
+     */
     public function validateCategory($category) {
 
         $isValid = FALSE;
@@ -86,10 +109,20 @@ class RateChooser {
         return $isValid;
     }
 
+    /**
+     * Summary of getPriceModel
+     * @return AbstractPriceModel|PriceModel\Price3Steps|PriceModel\PriceBasic|PriceModel\PriceDaily|PriceModel\PriceGuestDay|PriceModel\PriceNdayBlock|PriceModel\PriceNone|PriceModel\PricePerpetualSteps
+     */
     public function getPriceModel() {
         return $this->priceModel;
     }
 
+    /**
+     * Summary of createChangeRateMarkup
+     * @param \PDO $dbh
+     * @param \HHK\Tables\Visit\VisitRS $vRs
+     * @return HTMLTable
+     */
     public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs) {
 
         $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
@@ -111,7 +144,7 @@ class RateChooser {
 
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $vRs->idRoom_rate->getStoredVal());
 
-        $adjSel = $this->makeRateAdjustSel();
+        $adjSel = $this->makeRateAdjustSel($vRs->idRateAdjust->getStoredVal());
 
         if ($this->isAllowed) {
             // add change rate selector
@@ -148,6 +181,13 @@ class RateChooser {
         return $rateTbl;
     }
 
+    /**
+     * Summary of changeRoomRate
+     * @param \PDO $dbh
+     * @param \HHK\House\Visit\Visit $visit
+     * @param mixed $post
+     * @return string
+     */
     public function changeRoomRate(\PDO $dbh, Visit $visit, $post) {
 
         $uS = Session::getInstance();
@@ -163,6 +203,7 @@ class RateChooser {
         $departDT = null;
         $rateCategory = '';
         $rateAdj = 0;
+        $adjAmtSelection = '0';
         $assignedRate = 0;
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
@@ -171,7 +212,7 @@ class RateChooser {
         $min = $now->format('m');
 
         if (isset($post['rbReplaceRate'])) {
-            $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_STRING);
+            $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else {
             return 'Replacement Mode not set.  ';
         }
@@ -181,7 +222,7 @@ class RateChooser {
 
             if (isset($post['chgRateDate']) && $post['chgRateDate'] != '') {
 
-                $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_STRING));
+                $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $chRateDT = new \DateTime($chDT->format('Y-m-d'));
                 $chDT->setTime($hr, $min, 0);
 
@@ -238,15 +279,19 @@ class RateChooser {
 
         // Check rate change inputs
         if (isset($post['selRateCategory'])) {
-            $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
+            $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if ($rateCategory == '') {
             return "The new rate category is not set.  ";
         }
 
-        if (isset($post['seladjAmount']) && isset($uS->guestLookups['Room_Rate_Adjustment'][$post['seladjAmount']])) {
-            $rateAdj = $uS->guestLookups['Room_Rate_Adjustment'][$post['seladjAmount']][2];
+        if (isset($post['seladjAmount'])) {
+            $adjAmtSelection = filter_var($post['seladjAmount'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+            if (isset($uS->guestLookups['Room_Rate_Adjustment'][$adjAmtSelection])) {
+                $rateAdj = $uS->guestLookups['Room_Rate_Adjustment'][$adjAmtSelection][2];
+            }
         }
 
         if ($rateCategory == RoomRateCategories::Fixed_Rate_Category) {
@@ -260,8 +305,10 @@ class RateChooser {
 
         // Rates Changed?
         if ($visitRs->Rate_Category->getStoredVal() === $rateCategory) {
+
             // return if either amounts are set
             if ($rateCategory == RoomRateCategories::Fixed_Rate_Category) {
+
                 if ($visitRs->Pledged_Rate->getStoredVal() == $assignedRate) {
                     return '';
                 }
@@ -275,12 +322,12 @@ class RateChooser {
         if ($replaceMode == 'rpl' || $chRateDT == $SpanStartDT) {
 
             // Replace this span's rate - and any further spans not change rate themselves.
-            $reply .= Visit::replaceRoomRate($dbh, $visitRs, $rateCategory, $assignedRate, $rateAdj, $uS->username);
+            $reply .= Visit::replaceRoomRate($dbh, $visitRs, $rateCategory, $assignedRate, $rateAdj, $adjAmtSelection, $uS->username);
 
         } else if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
             // Add a new rate span to the end this visit
-            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT);
+            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $adjAmtSelection, $chDT);
 
         } else {
 
@@ -288,7 +335,7 @@ class RateChooser {
                 return 'We cannot change the room rate on the last day of the visit span as there are no nights left for which to charge the new rate.';
             }
             // Split existing visit span into two
-            $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT);
+            $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $adjAmtSelection, $uS->username, $chDT);
 
         }
 
@@ -296,7 +343,18 @@ class RateChooser {
 
     }
 
-    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $uname, \DateTime $changeDT) {
+    /**
+     * Summary of splitVisitSpan
+     * @param \PDO $dbh
+     * @param \HHK\House\Visit\Visit $visit
+     * @param string $rateCategory
+     * @param float|int $assignedRate
+     * @param float|int $rateAdj
+     * @param string $uname
+     * @param \DateTime $changeDT
+     * @return string
+     */
+    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $idRateAdjust, $uname, \DateTimeInterface $changeDT) {
 
         $reply = '';
         $idVisit = $visit->getIdVisit();
@@ -346,11 +404,19 @@ class RateChooser {
         }
 
         // split the given span
-        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uname, $changeDT);
+        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $idRateAdjust, $changeDT);
 
         return $reply;
     }
 
+    /**
+     * Summary of createCheckinMarkup
+     * @param \PDO $dbh
+     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param int $numNights
+     * @param string $visitFeeTitle
+     * @return string
+     */
     public function createCheckinMarkup(\PDO $dbh, Reservation_1 $resv, $numNights, $visitFeeTitle) {
 
         $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $resv->getIdRegistration());
@@ -365,9 +431,21 @@ class RateChooser {
 
     }
 
+    /**
+     * Summary of createResvMarkup
+     * @param \PDO $dbh
+     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param int $numNights
+     * @param string $visitFeeTitle
+     * @param int $idRegistration
+     * @return string
+     */
     public function createResvMarkup(\PDO $dbh, Reservation_1 $resv, $numNights, $visitFeeTitle, $idRegistration) {
 
-        if ($resv->isActive()) {
+        // Get Resv status codes
+        $reservStatuses = readLookups($dbh, "ReservStatus", "Code", TRUE);
+
+        if ($resv->isActive($reservStatuses)) {
 
             $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $idRegistration);
 
@@ -385,6 +463,13 @@ class RateChooser {
 
     }
 
+    /**
+     * Summary of createStaticMarkup
+     * @param \PDO $dbh
+     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param string $visitFeeTitle
+     * @return string
+     */
     protected function createStaticMarkup(\PDO $dbh, Reservation_1 $resv, $visitFeeTitle) {
 
         $uS = Session::getInstance();
@@ -443,6 +528,15 @@ class RateChooser {
 
     }
 
+    /**
+     * Summary of makeRateArray
+     * @param \PDO $dbh
+     * @param int $numNights
+     * @param int $idRegistration
+     * @param float|int $pledgedRate
+     * @param int $guestNites
+     * @return array<float>
+     */
     public function makeRateArray(\PDO $dbh, $numNights, $idRegistration, $pledgedRate = 0, $guestNites = 0) {
         // category, rate
 
@@ -460,6 +554,12 @@ class RateChooser {
         return $catAmounts;
     }
 
+    /**
+     * Summary of makeVisitFeeArray
+     * @param \PDO $dbh
+     * @param float|int $visitFeeCharged
+     * @return array
+     */
     public function makeVisitFeeArray(\PDO $dbh, $visitFeeCharged = 0) {
 
         $codes = array();
@@ -474,6 +574,14 @@ class RateChooser {
         return $codes;
     }
 
+    /**
+     * Summary of makeVisitFeeSelector
+     * @param array $vFeesArray
+     * @param float|int $visitFeeCharged
+     * @param string $class
+     * @param string $name
+     * @return string
+     */
     public function makeVisitFeeSelector($vFeesArray, $visitFeeCharged, $class = '', $name = 'selVisitFee') {
 
         $uS = Session::getInstance();
@@ -482,7 +590,7 @@ class RateChooser {
         $selectedVfeeOption = $uS->DefaultVisitFee;
 
         foreach ($vFeesArray as $r) {
-            $vFeeOpts[$r[0]] = array(0=>$r[0], 1=>$r[1] . ($r[2] == 0 ? '' :  ': $' . number_format($r[2], 0)));
+            $vFeeOpts[$r[0]] = array(0=>$r[0], 1=>$r[1] . ($r[2] == 0 ? '' :  ': $' . ($r[2] == '' ? '0' : number_format($r[2], 0))));
             if ($visitFeeCharged == $r[2]) {
                 $selectedVfeeOption = $r[0];
             }
@@ -491,6 +599,13 @@ class RateChooser {
         return HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($vFeeOpts, $selectedVfeeOption, FALSE), array('name'=>$name, 'class'=>$class));
     }
 
+    /**
+     * Summary of setRateGlideDays
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @param mixed $rateGlideExtend
+     * @return int
+     */
     public static function setRateGlideDays(\PDO $dbh, $idRegistration, $rateGlideExtend) {
 
         $dayCredit = 0;
@@ -526,6 +641,15 @@ class RateChooser {
 
     }
 
+    /**
+     * Summary of createBasicChooserMarkup
+     * @param \PDO $dbh
+     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param int $nites
+     * @param string $visitFeeTitle
+     * @param int $idRegistration
+     * @return string
+     */
     protected function createBasicChooserMarkup(\PDO $dbh, Reservation_1 $resv, $nites, $visitFeeTitle, $idRegistration) {
 
         $uS = Session::getInstance();
@@ -556,6 +680,7 @@ class RateChooser {
         }
 
         $attrFixed = array('class'=>'hhk-fxFixed');
+        $attrFixedInput = array("name"=>"txtFixedRate", "size"=>"4");
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj = array('style'=>'display:none;');
         }else{
@@ -589,6 +714,8 @@ class RateChooser {
 
         if ($this->isAllowed === FALSE) {
             $rateSelectorAttrs['disabled'] = 'disabled';
+            $attrAdj['disabled'] = 'disabled';
+            $attrFixedInput['disabled'] = 'disabled';
         }
 
         // Get taxed items
@@ -609,7 +736,7 @@ class RateChooser {
 
         $rateSel = $this->makeRateSelControl(
                 HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
-                HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed));
+                HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, $attrFixedInput), $attrFixed));
 
         $adjSel = $this->makeRateAdjustSel($resv->getIdRateAdjust(), $resv->getRateAdjust());
 
@@ -627,6 +754,12 @@ class RateChooser {
 
     }
 
+    /**
+     * Summary of makeRateSelControl
+     * @param string $selector
+     * @param string $fixed
+     * @return string
+     */
     protected function makeRateSelControl($selector, $fixed) {
 
         $tbl = new HTMLTable();
@@ -638,6 +771,12 @@ class RateChooser {
         return $tbl->generateMarkup(array('style'=>'border-style:none;padding:0;'));
     }
 
+    /**
+     * Summary of makeRateAdjustSel
+     * @param string $sel
+     * @param float|int $amt
+     * @return string
+     */
     protected function makeRateAdjustSel($sel = '', $amt = 0){
         $uS = Session::getInstance();
         $adjustments = (isset($uS->guestLookups['Room_Rate_Adjustment']) ? $uS->guestLookups['Room_Rate_Adjustment'] : array());
@@ -659,7 +798,7 @@ class RateChooser {
             }
         }
 
-        return HTMLSelector::generateMarkup($options, array('id'=>'seladjAmount', 'name'=>'seladjAmount'));
+        return HTMLSelector::generateMarkup($options, array('id'=>'seladjAmount', 'name'=>'seladjAmount', 'class'=>'hhk-feeskeys'));
     }
 
 }

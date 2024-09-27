@@ -9,7 +9,6 @@ use HHK\SysConst\{GLTableNames, RelLinkType, VolMemberType, VolRank, VolStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{NameRS, NameVolunteerRS};
 use HHK\sec\Session;
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Labels;
 
 /**
@@ -30,9 +29,25 @@ use HHK\sec\Labels;
 
 abstract class AbstractRoleMember extends IndivMember {
 
+    /**
+     * Summary of showBirthDate
+     * @var bool
+     */
     protected $showBirthDate;
+
+    /**
+     * Summary of patientRelCode
+     * @var string
+     */
     protected $patientRelCode;
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param string $defaultMemberBasis
+     * @param int $nid
+     * @param \HHK\Tables\Name\NameRS|null $nRS
+     */
     public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS $nRS = NULL) {
 
         parent::__construct($dbh, $defaultMemberBasis, $nid, $nRS);
@@ -51,6 +66,11 @@ abstract class AbstractRoleMember extends IndivMember {
 
     }
 
+    /**
+     * Summary of translatePatRelTypes
+     * @param array $patientRelationCodes
+     * @return array
+     */
     protected function translatePatRelTypes($patientRelationCodes) {
 
     	$labels = Labels::getLabels();
@@ -69,8 +89,20 @@ abstract class AbstractRoleMember extends IndivMember {
     	return $relTypes;
     }
 
+    /**
+     * Summary of getMyMemberType
+     * @return string
+     */
     protected abstract function getMyMemberType();
 
+    /**
+     * Summary of createThinMarkupHdr
+     * @param mixed $labels
+     * @param bool $hideRelChooser
+     * @param bool $showBirthDate
+     * @param bool $showCopyDown
+     * @return string
+     */
     public static function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE, $showBirthDate = TRUE, $showCopyDown = TRUE) {
 
         $lnCopyDownIcon = 'Last Name';
@@ -85,12 +117,12 @@ abstract class AbstractRoleMember extends IndivMember {
         }
 
         $tr =
-        HTMLTable::makeTh(Labels::getString("MemberType", "namePrefix", "Prefixe"))
+        HTMLTable::makeTh(Labels::getString("MemberType", "namePrefix", "Prefix"))
             . HTMLTable::makeTh('First Name')
             . HTMLTable::makeTh('Middle')
             . HTMLTable::makeTh($lnCopyDownIcon)
             .HTMLTable::makeTh('Suffix')
-            . HTMLTable::makeTh('Nickname')
+            . HTMLTable::makeTh(Labels::getString("MemberType", "nickname", 'Nickname'))
             . ($showBirthDate ? HTMLTable::makeTh('Birth Date') : '');
 
 
@@ -100,8 +132,6 @@ abstract class AbstractRoleMember extends IndivMember {
 
             if (is_string($labels)) {
                 $patTitle = $labels;
-            } else if ($labels instanceof Config_Lite) {
-                $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
             }
 
             $tr .= HTMLTable::makeTh('Relationship to ' . $patTitle, array('style'=>'font-size:.9em;'));
@@ -110,12 +140,25 @@ abstract class AbstractRoleMember extends IndivMember {
         return $tr;
     }
 
+    /**
+     * Summary of createMarkupHdr
+     * @param mixed $labels
+     * @param bool $hideRelChooser
+     * @return string
+     */
     public function createMarkupHdr($labels = NULL, $hideRelChooser = TRUE) {
 
         return HTMLTable::makeTh('Id') . $this->createThinMarkupHdr($labels, $hideRelChooser, $this->showBirthDate, FALSE);
 
     }
 
+    /**
+     * Summary of createMarkupRow
+     * @param mixed $patientRelationship
+     * @param bool $hideRelChooser
+     * @param bool $lockRelChooser
+     * @return string
+     */
     public function createMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
 
         $uS = Session::getInstance();
@@ -172,7 +215,9 @@ abstract class AbstractRoleMember extends IndivMember {
 
             $bd = '';
 
-            if ($this->nameRS->BirthDate->getStoredVal() != '') {
+            if ($uS->RegNoMinorSigLines && $this->get_demogRS()->Is_Minor->getStoredVal() > 0) {
+                $bd = 'Minor';
+            } else if ($this->nameRS->BirthDate->getStoredVal() != '') {
                 $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
             }
 
@@ -216,7 +261,14 @@ abstract class AbstractRoleMember extends IndivMember {
         return $tr;
     }
 
-    public function createThinMarkupRow() {
+    /**
+     * Summary of createThinMarkupRow
+     * @param mixed $patientRelationship
+     * @param bool $hideRelChooser
+     * @param bool $lockRelChooser
+     * @return string
+     */
+    public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = FALSE, $lockRelChooser = FALSE) {
 
         $uS = Session::getInstance();
 
@@ -268,7 +320,9 @@ abstract class AbstractRoleMember extends IndivMember {
 
             $bd = '';
 
-            if ($this->nameRS->BirthDate->getStoredVal() != '') {
+            if ($uS->RegNoMinorSigLines && $this->get_demogRS()->Is_Minor->getStoredVal() > 0) {
+                $bd = 'Minor';
+            } else if ($this->nameRS->BirthDate->getStoredVal() != '') {
                 $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
             }
 
@@ -279,6 +333,12 @@ abstract class AbstractRoleMember extends IndivMember {
         return $tr;
     }
 
+    /**
+     * Summary of saveChanges
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @return string
+     */
     public function saveChanges(\PDO $dbh, array $post) {
 
         $msg = '';
@@ -353,10 +413,19 @@ abstract class AbstractRoleMember extends IndivMember {
         return TRUE;
     }
 
+    /**
+     * Summary of setPatientRelCode
+     * @param mixed $v
+     * @return void
+     */
     public function setPatientRelCode($v) {
         $this->patientRelCode = $v;
     }
 
+    /**
+     * Summary of getPatientRelCode
+     * @return mixed
+     */
     public function getPatientRelCode() {
         return $this->patientRelCode;
     }

@@ -1,7 +1,5 @@
 <?php
-
 namespace HHK\Member\Relation;
-
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\Member\AbstractMember;
 use HHK\SysConst\{MemStatus, RelLinkType};
@@ -31,8 +29,20 @@ abstract class AbstractRelation {
     /** @var RelationCode  */
     protected $relCode;
 
+    /**
+     * Trashcan Icon
+     * @var string
+     */
     protected $trash;
+    /**
+     * Summary of careof
+     * @var string
+     */
     protected $careof;
+    /**
+     * Summary of addCareof
+     * @var string
+     */
     protected $addCareof;
 
     /**
@@ -54,38 +64,45 @@ abstract class AbstractRelation {
 
     }
 
+    /**
+     * Summary of instantiateRelation
+     * @param \PDO $dbh
+     * @param mixed $relCode
+     * @param mixed $idName
+     * @return Children|Company|Employees|Parents|Partner|Relatives|Siblings|null
+     */
     public static function instantiateRelation(\PDO $dbh, $relCode, $idName) {
 
         switch ($relCode) {
             case RelLinkType::Child:
                 return new Children($dbh, $idName);
-                break;
+                //break;
 
             case RelLinkType::Parnt:
                 return new Parents($dbh, $idName);
-                break;
+                //break;
 
             case RelLinkType::Sibling:
                 return new Siblings($dbh, $idName);
-                break;
+                //break;
 
             case RelLinkType::Relative:
                 return new Relatives($dbh, $idName);
-                break;
+                //break;
 
             case RelLinkType::Spouse:
                 return new Partner($dbh, $idName);
-                break;
+                //break;
 
                 // Individuals link to one organization.
             case RelLinkType::Company:
                 return new Company($dbh, $idName);
-                break;
+                //break;
 
                 // Organizations link to employees.
             case RelLinkType::Employee:
                 return new Employees($dbh, $idName);
-                break;
+                //break;
 
             default:
                 break;
@@ -94,16 +111,24 @@ abstract class AbstractRelation {
         return null;
     }
 
+    /**
+     * Summary of getRelNames
+     * @return RelationsRS|array
+     */
     public function getRelNames() {
         return $this->relNames;
     }
 
+    /**
+     * Summary of loadRelCode
+     * @return RelationCode
+     */
     protected abstract function loadRelCode();
 
     /**
      *
      * @param \PDO $dbh
-     * @return relationsRS
+     * @return [relationsRS]
      */
     protected function loadRecords(\PDO $dbh) {
         $rels = array();
@@ -124,53 +149,91 @@ abstract class AbstractRelation {
         return $rels;
     }
 
+    /**
+     * Summary of getPdoStmt
+     * @param \PDO $dbh
+     * @return \PDOStatement
+     */
     protected abstract function getPdoStmt(\PDO $dbh);
 
+    /**
+     * Summary of getHtmlId
+     * @return string
+     */
     protected abstract function getHtmlId();
 
-    public function savePost(\PDO $dbh, array $post, $user) {
+    /**
+     * Summary of savePost
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $user
+     * @return void
+     */
+    // public function savePost(\PDO $dbh, array $post, $user) {
 
-        if (isset($post["sel" . $this->relCode->getCode()])) {
+    //     if (isset($post["sel" . $this->relCode->getCode()])) {
 
-            $item = $post["sel" . $this->relCode->getCode()];
+    //         $item = $post["sel" . $this->relCode->getCode()];
 
-            // Add any relations
-            if (substr($item, 0, 2) == "n_") {
+    //         // Add any relations
+    //         if (substr($item, 0, 2) == "n_") {
 
-                // caught a new ID
-                $rId = intval(filter_var(substr($item, 2), FILTER_SANITIZE_NUMBER_INT));
+    //             // caught a new ID
+    //             $rId = intval(filter_var(substr($item, 2), FILTER_SANITIZE_NUMBER_INT));
 
-                if ($rId > 0 && $rId <> $this->name->get_idName()) {
-                    // Ok, record new relationship
-                    $this->addRelationship($dbh, $this->name->get_idName(), $rId, $user);
-                }
-            }
+    //             if ($rId > 0 && $rId <> $this->name->get_idName()) {
+    //                 // Ok, record new relationship
+    //                 $this->addRelationship($dbh, $rId, $user);
+    //             }
+    //         }
 
 
-            // Delete any relations?
-            if (isset($post["x" . $this->relCode->getCode()])) {
-                $dRel = filter_var($post["x" . $this->relCode->getCode()], FILTER_VALIDATE_BOOLEAN);
-                if ($dRel) {
-                    // One of the delete checkboxes are checked
-                    $rId = intval(filter_var($item, FILTER_SANITIZE_NUMBER_INT));
+    //         // Delete any relations?
+    //         if (isset($post["x" . $this->relCode->getCode()])) {
+    //             $dRel = filter_var($post["x" . $this->relCode->getCode()], FILTER_VALIDATE_BOOLEAN);
+    //             if ($dRel) {
+    //                 // One of the delete checkboxes are checked
+    //                 $rId = intval(filter_var($item, FILTER_SANITIZE_NUMBER_INT));
 
-                    if ($rId > 0) {
-                        // Delete a relationship
-                        $this->removeRelationship($dbh, $this->name->get_idName(), $rId);
-                    }
-                }
-            }
-        }
-    }
+    //                 if ($rId > 0) {
+    //                     // Delete a relationship
+    //                     $this->removeRelationship($dbh, $rId);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
+    /**
+     * Summary of addRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @param string $user
+     * @return string
+     */
     public abstract function addRelationship(\PDO $dbh, $rId, $user);
 
+    /**
+     * Summary of removeRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @return string
+     */
     public abstract function removeRelationship(\PDO $dbh, $rId);
 
+    /**
+     * Summary of getIdName
+     * @return int
+     */
     public function getIdName() {
         return $this->id;
     }
 
+    /**
+     * Summary of createMarkup
+     * @param string $page
+     * @return string
+     */
     public function createMarkup($page = 'NameEdit.php') {
 
         $table = new HTMLTable();
@@ -196,6 +259,10 @@ abstract class AbstractRelation {
         return HTMLContainer::generateMarkup('div', $table->generateMarkup(), array('id'=>'acm'.$this->relCode->getCode(), 'name'=>$this->relCode->getCode(), 'class'=>'hhk-relations'));
     }
 
+    /**
+     * Summary of createNewEntry
+     * @return string
+     */
     protected abstract function createNewEntry();
 
 }

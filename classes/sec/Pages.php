@@ -1,7 +1,7 @@
 <?php
 namespace HHK\sec;
 
-use HHK\Exception\RuntimeException;
+use HHK\Exception\{RuntimeException, DuplicateException};
 use HHK\SysConst\WebPageCode;
 use HHK\Tables\EditRS;
 use HHK\Tables\WebSec\{PageRS, Page_SecurityGroupRS, Web_SitesRS};
@@ -23,7 +23,48 @@ use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
  */
 class Pages {
 
-    public static function editPages(\PDO $dbh, $post) {
+    protected string $pageErrors = '';
+
+    public function editPages(\PDO $dbh) {
+
+        $args = [
+            'hdnWebSite' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'hdnloginPageId' => FILTER_SANITIZE_NUMBER_INT,
+            'txtIdPage' => [
+                'filter'=> FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags'=> FILTER_REQUIRE_ARRAY
+            ],
+            'selPageType' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+            'txtFileName' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+            'txtPageTitle' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+            'cbHide' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+            'selParentId' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+            'txtParentPosition' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+            "selSecCode" => [
+                'filter'=> FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags'=> FILTER_REQUIRE_ARRAY
+            ],
+        ];
+
+        $post = filter_input_array(INPUT_POST, $args);
 
         $uS = Session::getInstance();
         $website = '';
@@ -39,7 +80,7 @@ class Pages {
         $siteList = $uS->siteList;
 
         if (isset($post['hdnWebSite'])) {
-            $website = filter_var($post['hdnWebSite'], FILTER_SANITIZE_STRING);
+            $website = $post['hdnWebSite'];
         }
 
         if (isset($siteList[$website]) === FALSE) {
@@ -47,7 +88,7 @@ class Pages {
         }
 
         if (isset($post['hdnloginPageId'])) {
-            $loginPageId = intval(filter_var($post['hdnloginPageId'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $loginPageId = intval($post['hdnloginPageId'], 10);
         }
 
         if ($loginPageId < 1) {
@@ -55,10 +96,12 @@ class Pages {
         }
 
         $pageTypes = readGenLookupsPDO($dbh, 'Page_Type');
+        $positionMenus = [];
+
 
         foreach ($post['txtIdPage'] as $k => $v) {
 
-            $pageId = intval(filter_var($k, FILTER_SANITIZE_STRING), 10);
+            $pageId = intval($k, 10);
             $newGroupCodes = array();
 
             if ($pageId < 0) {
@@ -68,6 +111,7 @@ class Pages {
             $pageRs = new PageRS();
 
             if ($pageId > 0) {
+                // Existing page
                 $pageRs->idPage->setStoredVal($pageId);
                 $rows = EditRS::select($dbh, $pageRs, array($pageRs->idPage));
 
@@ -84,7 +128,7 @@ class Pages {
 
                 // Page type
                 if (isset($post['selPageType'][$pageId])) {
-                    $pgType = filter_var($post['selPageType'][$pageId], FILTER_SANITIZE_STRING);
+                    $pgType = $post['selPageType'][$pageId];
                 }
 
                 if (isset($pageTypes[$pgType])) {
@@ -101,9 +145,8 @@ class Pages {
                 }
 
                 // File Name
-                if (isset($post['txtFileName'][$pageId]) && $post['txtFileName'][$pageId] != '') {
-                    // TODO Does the file exists?
-                    $pageRs->File_Name->setNewVal(filter_var($post['txtFileName'][$pageId], FILTER_SANITIZE_STRING));
+                if (isset($post['txtFileName'][$pageId]) && $post['txtFileName'][$pageId] != '' && file_exists($post['txtFileName'][$pageId])) {
+                    $pageRs->File_Name->setNewVal($post['txtFileName'][$pageId]);
                 } else {
                     continue;
                 }
@@ -111,7 +154,7 @@ class Pages {
 
             // Title
             if (isset($post['txtPageTitle'][$pageId])) {
-                $pageRs->Title->setNewVal(filter_var($post['txtPageTitle'][$pageId], FILTER_SANITIZE_STRING));
+                $pageRs->Title->setNewVal($post['txtPageTitle'][$pageId]);
             }
 
             // Hidden page
@@ -123,14 +166,32 @@ class Pages {
 
             // menu parent/ menu position
             if (isset($post['selParentId'][$pageId])) {
-                $pageRs->Menu_Parent->setNewVal(filter_var($post['selParentId'][$pageId], FILTER_SANITIZE_STRING));
-            }
-            if (isset($post['txtParentPosition'][$pageId])) {
-                $pageRs->Menu_Position->setNewVal(filter_var($post['txtParentPosition'][$pageId], FILTER_SANITIZE_STRING));
+
+                $pageRs->Menu_Parent->setNewVal($post['selParentId'][$pageId]);
+
+                $menuParent = $post['selParentId'][$pageId];
+
+                // Menu Position
+                if (isset($post['txtParentPosition'][$pageId])) {
+
+                    $menuPosition = $post['txtParentPosition'][$pageId];
+
+                    if ($menuParent > 0) {
+                        if (isset($positionMenus[$menuParent][$menuPosition])) {
+                            // double on same position
+                            $pageErrors .= "Page Menu Position (" . $menuPosition . ") is already used, id= " . $pageId;
+
+                        } else {
+                            $positionMenus[$menuParent][$menuPosition] = 1;
+                        }
+                    }
+
+                    $pageRs->Menu_Position->setNewVal($menuPosition);
+                }
             }
 
             if (isset($post["selSecCode"][$pageId])) {
-                $newGroupCodes = filter_var_array($post["selSecCode"][$pageId], FILTER_SANITIZE_STRING);
+                $newGroupCodes = $post["selSecCode"][$pageId];
             }
 
 
@@ -192,7 +253,7 @@ class Pages {
 
     }
 
-    public static function getPages(\PDO $dbh, $site) {
+    public function getPages(\PDO $dbh, $site) {
 
         $uS = Session::getInstance();
         $indexPageId = 0;
@@ -225,6 +286,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         $stmt->execute(array(':site' => $site));
         $pageRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $parentMenus = array();
+        $positionMenus = [];
 
         // collect menu parents
         foreach ($pageRows as $r) {
@@ -235,6 +297,11 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
             if ($r['File_Name'] == 'index.php') {
                 $indexPageId = $r['idPage'];
+            }
+
+            // Save position value for each menu parent.
+            if ($r['Menu_Parent'] > 0 && !isset($positionMenus[$r['Menu_Parent']][$r["Menu_Position"]])) {
+                $positionMenus[$r['Menu_Parent']][$r["Menu_Position"]] = $r['idPage'];
             }
         }
 
@@ -247,7 +314,6 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
                 HTMLTable::makeTh('Page Id')
                 .HTMLTable::makeTh('Page Type')
                 .HTMLTable::makeTh('File Name')
-
                 .HTMLTable::makeTh('Title')
                 .HTMLTable::makeTh('Hide')
                 .HTMLTable::makeTh('Menu Parent')
@@ -298,8 +364,18 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
                     $lastRow .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Title"], array('name'=>'txtPageTitle[' . $pageId . ']', 'size'=>'20')))
                         .HTMLTable::makeTd(HTMLInput::generateMarkup('', $hideAttr))
-                        .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($parentMenus, $rw["Menu_Parent"], FALSE), array('name'=>'selParentId[' . $pageId . ']', 'class'=>'hhk-selmenu')))
-                        .HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Menu_Position"], array('name'=>'txtParentPosition[' . $pageId . ']', 'size'=>'2')));
+                        .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($parentMenus, $rw["Menu_Parent"], FALSE), array('name'=>'selParentId[' . $pageId . ']', 'class'=>'hhk-selmenu')));
+
+
+                    $parray = array('name'=>'txtParentPosition[' . $pageId . ']', 'size'=>'2');
+
+                    if (isset($positionMenus[$rw["Menu_Parent"]][$rw["Menu_Position"]]) && $positionMenus[$rw["Menu_Parent"]][$rw["Menu_Position"]] != $pageId) {
+                        // Seen this menu position before
+                        $parray['class'] = 'ui-state-error';
+                        $parray['title'] = 'Already used by page id ' . $positionMenus[$rw["Menu_Parent"]][$rw["Menu_Position"]];
+                    }
+
+                    $lastRow .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Menu_Position"], $parray));
 
                 } else {
 
@@ -354,7 +430,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         $siteCode = '';
 
         if (isset($fields["inSiteCode"])) {
-            $siteCode = filter_var($fields["inSiteCode"], FILTER_SANITIZE_STRING);
+            $siteCode = filter_var($fields["inSiteCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         } else {
             return array("error" => "Bad Site Code. ");
         }
@@ -370,36 +446,36 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         EditRS::loadRow($siteRows[0], $siteRs);
 
         if (isset($fields["inDescription"])) {
-            $siteRs->Description->setNewVal(filter_var($fields["inDescription"], FILTER_SANITIZE_STRING));
+            $siteRs->Description->setNewVal(filter_var($fields["inDescription"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inHostAddr"])) {
-            $siteRs->HTTP_Host->setNewVal(filter_var($fields["inHostAddr"], FILTER_SANITIZE_STRING));
+            $siteRs->HTTP_Host->setNewVal(filter_var($fields["inHostAddr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inRelAddr"])) {
-            $siteRs->Relative_Address->setNewVal(filter_var($fields["inRelAddr"], FILTER_SANITIZE_STRING));
+            $siteRs->Relative_Address->setNewVal(filter_var($fields["inRelAddr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inCss"])) {
-            $siteRs->Path_To_CSS->setNewVal(filter_var($fields["inCss"], FILTER_SANITIZE_STRING));
+            $siteRs->Path_To_CSS->setNewVal(filter_var($fields["inCss"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inJs"])) {
-            $siteRs->Path_To_JS->setNewVal(filter_var($fields["inJs"], FILTER_SANITIZE_STRING));
+            $siteRs->Path_To_JS->setNewVal(filter_var($fields["inJs"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inDefault"])) {
-            $siteRs->Default_Page->setNewVal(filter_var($fields["inDefault"], FILTER_SANITIZE_STRING));
+            $siteRs->Default_Page->setNewVal(filter_var($fields["inDefault"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
 
         if (isset($fields["inIndex"])) {
-            $siteRs->Index_Page->setNewVal(filter_var($fields["inIndex"], FILTER_SANITIZE_STRING));
+            $siteRs->Index_Page->setNewVal(filter_var($fields["inIndex"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["siteSecCode"])) {
-            $codes = filter_var_array($fields["siteSecCode"], FILTER_SANITIZE_STRING);
+            $codes = filter_var_array($fields["siteSecCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $codeCDS = '';
             foreach ($codes as $c) {
                 if ($codeCDS == '') {
@@ -413,11 +489,14 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
         EditRS::update($dbh, $siteRs, array($siteRs->Site_Code));
 
-        $events = array("success" => "Updated Site Code = " . $siteCode);
+        $events = array("success" => "Updated Site: " . $siteRs->Description->getStoredVal());
 
 
         return $events;
     }
 
+    public function getPageErrors() {
+        return $this->pageErrors;
+    }
 }
 ?>

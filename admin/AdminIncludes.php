@@ -8,16 +8,9 @@
 -- @link      https://github.com/NPSC/HHK
  */
 
-define('JSV', '?eG=94');
+require ('../functions/commonDefines.php');
 
 define('DEFAULT_CSS', '<link href="css/default.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
-define('GRID_CSS', "<link href='css/bootstrap-grid.min.css'" . JSV . " rel='stylesheet' type='text/css' />");
+define('GRID_CSS', "<link href='css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
-
-/*
- * includes
- */
-require ('../functions/commonDefines.php');
-require (THIRD_PARTY . '/autoload.php');
-require (FUNCTIONS . 'commonFunc.php');

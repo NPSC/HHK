@@ -9,7 +9,7 @@ use HHK\Donation\Campaign;
  * donationReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -22,8 +22,6 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
-
- addslashesextended($_POST);
 
 $makeTable = 0;
 $donmarkup = "<thead><tr><td></td></tr></thead><tbody><tr><td></td></tr></tbody>";
@@ -52,7 +50,7 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 
 #--------------------------------------------------------------
 // form1 save button:
-if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
+if (filter_has_var(INPUT_POST, "btnDonors") || filter_has_var(INPUT_POST, "btnDonDL") || filter_has_var(INPUT_POST, "btnstreamlined")) {
 #--------------------------------------------------------------
     require_once("functions" . DS . "donorReportManager.php");
 
@@ -62,10 +60,10 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
     // collect the parameters
     $maxMkup = filter_var($_POST["txtmax"], FILTER_SANITIZE_NUMBER_INT);
     $minMkup = filter_var($_POST["txtmin"], FILTER_SANITIZE_NUMBER_INT);
-    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_STRING);
-    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_STRING);
+    $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_STRING);
+    $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     $letterSalSelector->setReturnValues($_POST[$letterSalSelector->get_htmlNameBase()]);
     $envSalSelector->setReturnValues($_POST[$envSalSelector->get_htmlNameBase()]);
@@ -89,7 +87,7 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
 
 
     // Do the report
-    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_STRING), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_STRING), TRUE);
+    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), TRUE);
 
     if ($voldCat->get_andOr() == "or") {
         $anddChecked = "";
@@ -276,6 +274,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                     </table>
                     <div class="hhk-flex mt-3" style="justify-content: space-evenly;">
 						<input name="btnDonors" type="submit" value="Run Report" />
+						<input name="btnstreamlined" type="submit" value="Run Streamlined Report" />
                         <input name="btnDonDL" type="submit" value="Download File" />
                     </div>
                 </form>

@@ -92,7 +92,7 @@ class Price3Steps extends AbstractPriceModel {
         return $amount;
     }
 
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
 
         $rp = readGenLookupsPDO($dbh, Price3Steps::TABLE_NAME);
 
@@ -114,7 +114,7 @@ class Price3Steps extends AbstractPriceModel {
                 continue;
             }
 
-            $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $attrs = array('type'=>'radio', 'name'=>'rrdefault', 'id'=>false);
             $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
             $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
             $rr2Attrs = array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');

@@ -5,6 +5,7 @@ namespace HHK\Document;
 use HHK\House\Hospital\Hospital;
 use HHK\sec\Session;
 use HHK\sec\Recaptcha;
+use HHK\sec\Labels;
 /**
  * FormTemplate.php
  *
@@ -25,6 +26,12 @@ class FormTemplate {
     const TemplateCat = "tmpt";
     const JsonType = "json";
 
+    const MAX_GUESTS = 20;
+
+    /**
+     *
+     * @var Document
+     */
     protected $doc;
 
     public function __construct() {
@@ -49,7 +56,7 @@ class FormTemplate {
         return $rows;
     }
 
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -75,23 +82,23 @@ class FormTemplate {
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
-        if($emailPatient && $notifySubject == '' && $notifyContent == ''){
-            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
+        if($notifySubject == ''){
+            $validationErrors['notifySubject'] = "The Email Subject field is required";
         }
 
-        if($initialGuests > 20){
-            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20";
+        if($initialGuests > self::MAX_GUESTS){
+            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than " . self::MAX_GUESTS;
         }
 
-        if($maxGuests > 20){
-            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20";
+        if($maxGuests > self::MAX_GUESTS){
+            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than " . self::MAX_GUESTS;
         }
 
         if($initialGuests > $maxGuests){
             $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
         }
 
-        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
+        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
 
         if(count($validationErrors) == 0){
 
@@ -99,6 +106,7 @@ class FormTemplate {
             $this->doc->setTitle($title);
             $this->doc->setType(self::JsonType);
             $this->doc->setCategory(self::TemplateCat);
+            $this->doc->setMimeType("base64:text/json");
             $this->doc->setDoc($doc);
             $this->doc->setStyle($style);
             $this->doc->setAbstract($abstractJson);
@@ -118,7 +126,7 @@ class FormTemplate {
         }
     }
 
-    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -146,26 +154,26 @@ class FormTemplate {
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
-        if($emailPatient && $notifySubject == '' && $notifyContent == ''){
-            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
+        if($notifySubject == ''){
+            $validationErrors['notifySubject'] = "The Email Subject field is required";
         }
 
         if($initialGuests > 20){
-            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20";
+            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20 people.";
         }
 
         if($maxGuests > 20){
-            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20";
+            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20 people.";
         }
 
         if($initialGuests > $maxGuests){
-            $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
+            $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests.";
         }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
-
-            $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, $username);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
+            
+            $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, "base64:text/json", $username);
             if($count == 1){
                 return array('status'=>'success', 'msg'=>"Form updated successfully");
             }else{
@@ -215,7 +223,11 @@ class FormTemplate {
     }
 
     public function getTemplate(){
-        return $this->doc->getDoc();
+        if(str_starts_with($this->doc->getMimeType(), "base64:")){
+            return base64_decode($this->doc->getDoc());
+        }else{
+            return $this->doc->getDoc();
+        }
     }
 
     public function getStyle() {
@@ -233,13 +245,11 @@ class FormTemplate {
 
         return [
             'formStyle'=>$this->getStyle(),
-            'successTitle'=>$abstract->successTitle,
-            'successContent'=>htmlspecialchars_decode($abstract->successContent, ENT_QUOTES),
+            'successTitle'=>(isset($abstract->successTitle) ? $abstract->successTitle : ""),
+            'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
-            'emailPatient'=>(isset($abstract->emailPatient) ? $abstract->emailPatient : false),
-            'notifySubject'=>(isset($abstract->notifySubject) ? $abstract->notifySubject : ''),
-            'notifyContent'=>(isset($abstract->notifyContent) ? htmlspecialchars_decode($abstract->notifyContent, ENT_QUOTES) : ''),
+            'notifySubject'=>(isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted"),
             'recaptchaScript'=>$recaptcha->getScriptTag(),
             'maxGuests'=>(isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
             'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1),
@@ -254,15 +264,21 @@ class FormTemplate {
 
         foreach ($demos as $d) {
             $lookups[$d[0]] = readGenLookupsPDO($dbh, $d[0], 'Order');
+
+            if($d[0] == 'Gender'){
+                unset($lookups['Gender']['z']);
+            }
+
+            $lookups[$d[0]] = FormTemplate::rekeyLookups($lookups[$d[0]]);
         }
 
-        unset($lookups['Gender']['z']);
         $lookups['patientRelation'] = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Description');
         unset($lookups['patientRelation']['slf']);
-        $lookups['namePrefix'] = readGenLookupsPDO($dbh, 'Name_Prefix', 'Description');
-        $lookups['nameSuffix'] = readGenLookupsPDO($dbh, 'Name_Suffix', 'Description');
-        $lookups['diagnosis'] = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-        $lookups['location'] = readGenLookupsPDO($dbh, 'Location', 'Description');
+        FormTemplate::rekeyLookups($lookups['patientRelation']);
+        $lookups['namePrefix'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Name_Prefix', 'Description'));
+        $lookups['nameSuffix'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Name_Suffix', 'Description'));
+        $lookups['diagnosis'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Diagnosis', 'Description'));
+        $lookups['location'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Location', 'Description'));
 
         //backwards compatibility
         $lookups['genders'] = $lookups['Gender'];
@@ -291,6 +307,20 @@ class FormTemplate {
         $lookups['vehicleStates'] = $formattedStates;
 
         return $lookups;
+    }
+
+    /**
+     * Rekey genlookups array to maintain correct ordering in JS
+     *
+     * @param array $lookups
+     * @return array[]
+     */
+    private static function rekeyLookups(array $lookups){
+        $newArray = array();
+        foreach($lookups as $lookup){
+            $newArray[] = $lookup;
+        }
+        return $newArray;
     }
 
 }

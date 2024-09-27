@@ -498,7 +498,7 @@ class InstamedGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
-    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
+    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0) {
 
         $uS = Session::getInstance();
 
@@ -507,12 +507,12 @@ class InstamedGateway extends AbstractPaymentGateway {
         $amount = abs($invoice->getAmount());
         $idToken = intval($rtnToken, 10);
 
-        $stmt = $dbh->query("select pa.AcqRefData
+        $stmt = $dbh->query("select sum(CASE WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData
 from payment p join payment_auth pa on p.idPayment = pa.idPayment
-	join payment_invoice pi on p.idPayment = pi.Payment_Id
+    join payment_invoice pi on p.idPayment = pi.Payment_Id
     join invoice i on pi.Invoice_Id = i.idInvoice
-where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idGroup = $idGroup and pa.Approved_Amount > $amount"
-                . " order by pa.Approved_Amount");
+where p.idToken = $idToken and i.idGroup = $idGroup
+group by pa.Approved_Amount having `Total` >= $amount;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -565,7 +565,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
     /**
      *
      * @param \PDO $dbh
-     * @param PaymentRS $payRs
+     * @param PaymentRS|null $payRs
      * @param string $paymentTransId
      * @param Invoice $invoice
      * @param float $returnAmt
@@ -634,7 +634,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         $payResult = NULL;
 
         if (isset($post[InstamedGateway::INSTAMED_TRANS_VAR])) {
-            $transType = filter_var($post[InstamedGateway::INSTAMED_TRANS_VAR], FILTER_SANITIZE_STRING);
+            $transType = filter_var($post[InstamedGateway::INSTAMED_TRANS_VAR], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Not a payment return so get out.
@@ -643,7 +643,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         }
 
         if (isset($post[InstamedGateway::INSTAMED_RESULT_VAR])) {
-            $transResult = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
+            $transResult = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
@@ -684,6 +684,14 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         return $payResult;
     }
 
+    /**
+     * Summary of processWebhook
+     * @param \PDO $dbh
+     * @param mixed $data
+     * @param mixed $payNotes
+     * @param mixed $userName
+     * @return bool
+     */
     public function processWebhook(\PDO $dbh, $data, $payNotes, $userName) {
 
         $webhookResp = new WebhookResponse($data);
@@ -1090,6 +1098,7 @@ where r.idRegistration =" . $idReg);
 
             if (count($tokenRow) > 0 && $tokenRow[0]['State'] != WebHookStatus::Init) {
 
+                // Jump out
                 $slept = $delaySeconds + 2;
 
             } else {
@@ -1111,13 +1120,29 @@ where r.idRegistration =" . $idReg);
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
+        $keyCb = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", "Swipe") .
+            HTMLContainer::generateMarkup(
+                'label',
+                HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index, 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) .
+                HTMLContainer::generateMarkup("div", "", ['class' => 'hhk-slider round'])
+                ,
+                ['for' => 'btnvrKeyNumber' . $index, 'title' => 'Check to Key in credit account number', 'class' => 'hhk-switch mx-2']
+            ) .
+            HTMLContainer::generateMarkup("span", "Type")
+            , ["class"=>"hhk-flex"]);
+
+            
         $payTbl->addBodyTr(
-                HTMLTable::makeTd(
-                		HTMLContainer::generateMarkup('label', 'Key Account:', array('for'=>'btnvrKeyNumber'.$index, 'class'=>'hhkvrKeyNumber'.$index, 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
-                		. HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index, 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number'))
-                		, array('class'=>'tdlabel hhkvrKeyNumber'.$index, 'colspan'=>'2'))
+                HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
+                .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
+            ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
+        
+            $payTbl->addBodyTr(
+                HTMLTable::makeTh("Cardholder Name", array('class'=>'tdlabel hhkvrKeyNumber'.$index))
         		.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index)), array('colspan'=>'2', 'style'=>'min-width:140px'))
-        		, array('id'=>'trvdCHName'.$index));
+        		, ['id'=>'trvdCHName'.$index]);
+
+        
 
     }
 
@@ -1151,11 +1176,11 @@ where r.idRegistration =" . $idReg);
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Password', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '80')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtpwd', 'size' => '80')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('SSO Password', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name' => $indx . '_txtsk', 'size' => '80')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->security_Key->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtsk', 'size' => '80')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('SSO Alias', array('class' => 'tdlabel'))
@@ -1211,46 +1236,46 @@ where r.idRegistration =" . $idReg);
 
 
             if (isset($post[$indx . '_txtmerch'])) {
-            	$ccRs->cc_name->setNewVal(filter_var($post[$indx . '_txtmerch'], FILTER_SANITIZE_STRING));
+            	$ccRs->cc_name->setNewVal(filter_var($post[$indx . '_txtmerch'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtaid'])) {
-            	$ccRs->account_Id->setNewVal(filter_var($post[$indx . '_txtaid'], FILTER_SANITIZE_STRING));
+            	$ccRs->account_Id->setNewVal(filter_var($post[$indx . '_txtaid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtsalias'])) {
-                $ccRs->sso_Alias->setNewVal(filter_var($post[$indx . '_txtsalias'], FILTER_SANITIZE_STRING));
+                $ccRs->sso_Alias->setNewVal(filter_var($post[$indx . '_txtsalias'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtuid'])) {
-                $ccRs->merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_STRING));
+                $ccRs->merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtuname'])) {
-                $ccRs->store_Id->setNewVal(filter_var($post[$indx . '_txtuname'], FILTER_SANITIZE_STRING));
+                $ccRs->store_Id->setNewVal(filter_var($post[$indx . '_txtuname'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txttremId'])) {
-                $ccRs->terminal_Id->setNewVal(filter_var($post[$indx . '_txttremId'], FILTER_SANITIZE_STRING));
+                $ccRs->terminal_Id->setNewVal(filter_var($post[$indx . '_txttremId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtwsId'])) {
-                $ccRs->WorkStation_Id->setNewVal(filter_var($post[$indx . '_txtwsId'], FILTER_SANITIZE_STRING));
+                $ccRs->WorkStation_Id->setNewVal(filter_var($post[$indx . '_txtwsId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if (isset($post[$indx . '_txtpurl'])) {
-                $ccRs->providersSso_Url->setNewVal(filter_var($post[$indx . '_txtpurl'], FILTER_SANITIZE_STRING));
+                $ccRs->providersSso_Url->setNewVal(filter_var($post[$indx . '_txtpurl'], FILTER_SANITIZE_URL));
             }
 
             if (isset($post[$indx . '_txtnvpurl'])) {
-                $ccRs->nvp_Url->setNewVal(filter_var($post[$indx . '_txtnvpurl'], FILTER_SANITIZE_STRING));
+                $ccRs->nvp_Url->setNewVal(filter_var($post[$indx . '_txtnvpurl'], FILTER_SANITIZE_URL));
             }
 
             if (isset($post[$indx . '_txtsk'])) {
 
-                $pw = filter_var($post[$indx . '_txtsk'], FILTER_SANITIZE_STRING);
+                $pw = filter_var($post[$indx . '_txtsk'], FILTER_UNSAFE_RAW);
 
-                if ($pw != '' && $ccRs->security_Key->getStoredVal() != $pw) {
+                if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
                     $ccRs->security_Key->setNewVal(encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->security_Key->setNewVal('');
@@ -1258,9 +1283,9 @@ where r.idRegistration =" . $idReg);
             }
             if (isset($post[$indx . '_txtpwd'])) {
 
-                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_SANITIZE_STRING);
+                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
-                if ($pw != '' && $ccRs->password->getStoredVal() != $pw) {
+                if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
                     $ccRs->password->setNewVal(encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->password->setNewVal('');

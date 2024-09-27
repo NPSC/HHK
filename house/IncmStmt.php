@@ -1,7 +1,10 @@
 <?php
 
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
+use HHK\SysConst\Mode;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
@@ -86,7 +89,7 @@ function saveBa(\PDO $dbh, $post) {
 			if (isset($parts[1]) && $parts[1] > 0) {
 
 				$id = intval($parts[1]);
-				$gl = filter_var($v, FILTER_SANITIZE_STRING);
+				$gl = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 				$dbh->exec("Update name_demog set Gl_Code_Debit = '$gl' where idName = $id");
 			}
@@ -99,7 +102,7 @@ function saveBa(\PDO $dbh, $post) {
 // 			if (isset($parts[1]) && $parts[1] > 0) {
 
 // 				$id = intval($parts[1]);
-// 				$gl = filter_var($v, FILTER_SANITIZE_STRING);
+// 				$gl = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 // 				$dbh->exec("Update name_demog set Gl_Code_Credit = '$gl' where idName = $id");
 // 			}
@@ -126,17 +129,37 @@ $paymentMarkup = '';
 // Hosted payment return
 try {
 
-	if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
-		$receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptMarkup = $payResult->getReceiptMarkup();
 
-		if ($payResult->getDisplayMessage() != '') {
-			$paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
-		}
-	}
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+        }
+
+        // Display a status message.
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
+        }
+    }
 
 } catch (RuntimeException $ex) {
-	$paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 
@@ -418,6 +441,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+		<?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -429,6 +453,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -437,6 +462,15 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+		<?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 
 <script type="text/javascript">
 function displayVids(vids) {
@@ -571,9 +605,9 @@ var pmtMkup,
                 	<table style="float:left;">
                 	<tr><th>Month</th><th>Year</th><th>3rd Party Payers</th>
                 	<tr>
-                	<td><?php echo $glMonthSelr; ?></td>
+                	<td style="vertical-align: top;"><?php echo $glMonthSelr; ?></td>
                     <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
-                    <td><?php echo $glBa; ?></td>
+                    <td style="vertical-align: top;"><?php echo $glBa; ?></td>
                 	</tr>
                     </table>
 
@@ -604,6 +638,7 @@ var pmtMkup,
 		<input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
+		<?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
     </body>
 </html>

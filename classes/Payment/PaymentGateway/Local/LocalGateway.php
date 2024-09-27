@@ -20,30 +20,6 @@ use HHK\House\HouseServices;
 use HHK\Exception\PaymentException;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 
-/*
- * The MIT License
- *
- * Copyright 2019 Non-Profit Software Corporation.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
 /**
  * Description of LocalGateway
  *
@@ -81,10 +57,18 @@ class LocalGateway extends AbstractPaymentGateway {
 	protected function setCredentials($credentials) {
 		$this->credentials = $credentials;
 	}
+	/**
+	 * Summary of creditSale
+	 * @param \PDO $dbh
+	 * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
+	 * @param \HHK\Payment\Invoice\Invoice $invoice
+	 * @param mixed $postbackUrl
+	 * @return PaymentResult
+	 */
 	public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 		$uS = Session::getInstance ();
 
-		// Lookup the charge card
+		// Lookup the charge card types
 		$chgTypes = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 		if (isset ( $chgTypes [$pmp->getChargeCard ()] )) {
 			$pmp->setChargeCard ( $chgTypes [$pmp->getChargeCard ()] [1] );
@@ -126,7 +110,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$vr->setPaymentNotes ( $pmp->getPayNotes () );
 
 		// New Token?
-		if ($vr->getIdToken () != '') {
+		if ($vr->getIdToken () != 0) {
 
 			$guestTokenRs = CreditToken::getTokenRsFromId ( $dbh, $vr->getIdToken () );
 
@@ -172,7 +156,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$vr = new LocalResponse ( $gwResp, $idGuest, $idGroup, 0, PaymentStatusCode::Paid );
 
 		try {
-			$vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
+			$vr->idGuestToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
 		} catch(\Exception $ex) {
 			return array('error'=> $ex->getMessage());
 		}
@@ -287,11 +271,19 @@ class LocalGateway extends AbstractPaymentGateway {
 		return $dataArray;
 	}
 
-	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
+ /**
+  * Summary of returnAmount
+  * @param \PDO $dbh
+  * @param \HHK\Payment\Invoice\Invoice $invoice
+  * @param mixed $rtnTokenId
+  * @param string $paymentNotes
+  * @return ReturnResult
+  */
+	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnTokenId, $paymentNotes, $resvId = 0) {
 
 		$uS = Session::getInstance ();
 
-		$tokenRS = CreditToken::getTokenRsFromId ( $dbh, $rtnToken );
+		$tokenRS = CreditToken::getTokenRsFromId ( $dbh, $rtnTokenId );
 		$amount = abs ( $invoice->getAmount () );
 		$cardHolderName = $tokenRS->CardHolderName->getStoredVal();
 
@@ -312,11 +304,11 @@ class LocalGateway extends AbstractPaymentGateway {
 				$tokenRS->CardType->getStoredVal (),
 				$tokenRS->MaskedAccount->getStoredVal (),
 				$cardHolderName,
-				MpTranType::Sale,
+				MpTranType::ReturnAmt,
 				$uS->username );
 
-		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $rtnToken, PaymentStatusCode::Paid );
-		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
+		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $rtnTokenId, PaymentStatusCode::Paid );
+		$vr->setPaymentDate ($invoice->getDate() );  // Use invoice date instead of today.  9/18/24 EKC
 		$vr->setPaymentNotes ( $paymentNotes );
 		$vr->setRefund(TRUE);
 

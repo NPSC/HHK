@@ -12,18 +12,28 @@ use HHK\AuditLog\NameLog;
 
 /**
  * Employees.php
+ * extends AbstractRelation
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017, 2018-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 class Employees extends AbstractRelation {
 
+    /**
+     * Summary of loadRelCode
+     * @return RelationCode
+     */
     protected function loadRelCode() {
         return new RelationCode(array('Code'=>RelLinkType::Employee, 'Description'=>'Employee'));
     }
 
+    /**
+     * Summary of getPdoStmt
+     * @param \PDO $dbh
+     * @return \PDOStatement|bool
+     */
     protected function getPdoStmt(\PDO $dbh) {
         $query = "Select v.Id as `Id`, concat(v.Name_First, ' ', v.Name_Last) as `Name`, v.MemberStatus as `MemStatus`, v.Company_CareOf
 from vmember_listing v join vmember_listing c on v.Company_Id = c.Id
@@ -36,6 +46,11 @@ where c.Id = :id;";
         return $stmt;
     }
 
+    /**
+     * Summary of loadRecords
+     * @param \PDO $dbh
+     * @return [relationsRS]
+     */
     protected function loadRecords(\PDO $dbh) {
         $rels = array();
 
@@ -57,14 +72,27 @@ where c.Id = :id;";
     }
 
 
+    /**
+     * Summary of getHtmlId
+     * @return string
+     */
     protected function getHtmlId() {
         return "Employee";
     }
 
+    /**
+     * Summary of createNewEntry
+     * @return string
+     */
     protected function createNewEntry() {
         return HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('New Employee', array('class'=>'hhk-newlink', 'title'=>'Link a new '.$this->relCode->getTitle(), 'colspan'=>'3', 'style'=>'text-align: center;')));
     }
 
+    /**
+     * Summary of createMarkup
+     * @param string $page
+     * @return string
+     */
     public function createMarkup($page = 'NameEdit.php') {
 
         $table = new HTMLTable();
@@ -103,6 +131,13 @@ where c.Id = :id;";
 
 
 
+    /**
+     * Summary of addRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @param string $user
+     * @return string
+     */
     public function addRelationship(\PDO $dbh, $rId, $user) {
 
         $rId = intval($rId);
@@ -125,6 +160,12 @@ where c.Id = :id;";
 
     }
 
+    /**
+     * Summary of removeRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @return string
+     */
     public function removeRelationship(\PDO $dbh, $rId) {
 
         $uS = Session::getInstance();
@@ -143,6 +184,14 @@ where c.Id = :id;";
         return "Employee removed.";
     }
 
+    /**
+     * Summary of setCareOf
+     * @param \PDO $dbh
+     * @param mixed $rId
+     * @param mixed $flag
+     * @param mixed $user
+     * @return string
+     */
     public function setCareOf(\PDO $dbh, $rId, $flag, $user) {
 
        $rId = intval($rId);

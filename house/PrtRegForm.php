@@ -30,11 +30,11 @@ $sty = '';
 $checkinDate = '';
 
 if (isset($_GET['d'])) {
-    $checkinDate = filter_var($_GET['d'], FILTER_SANITIZE_STRING);
+    $checkinDate = filter_var($_GET['d'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 if (isset($_POST['regckindate'])) {
-    $checkinDate = filter_var($_POST['regckindate'], FILTER_SANITIZE_STRING);
+    $checkinDate = filter_var($_POST['regckindate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 if ($checkinDate == '') {
@@ -52,31 +52,35 @@ if ($checkinDate == '') {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (count($rows) == 0) {
-        $regForm = '<h2 style="margin-top:20px;">No registrations found for ' . $ckinDT->format('M j, Y') . '</h2>';
+        $regForm = '<h2 style="margin-top:20px;">No reservation found for ' . $ckinDT->format('M j, Y') . '</h2>';
     }
 
-    foreach ($rows as $r) {
+    foreach ($rows as $index=>$r) {
 
         $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, 0, $wInit->resourceURL . '../conf/registrationLogo.png');
-        //$sty = $reservArray['style'];
 
-        $regForm .= $reservArray['docs'][0]['doc'] . HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));
-
+        $sty = $reservArray['docs'][0]['style'];
+        
+        $regForm .= HTMLContainer::generateMarkup('div', $reservArray['docs'][0]['doc'], array('class'=>'regFormContainer pagebreak'));
     }
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" moznomarginboxes>
+<html lang="en">
     <head>
         <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
+        <?php echo CSSVARS; ?>
+        
         <?php echo $sty; ?>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+
         <script type="text/javascript">
     $(document).ready(function () {
     "use strict";
@@ -89,6 +93,7 @@ if ($checkinDate == '') {
         <form action="#" method="post" name="form1">
             <?php echo $queryForm; ?>
         </form>
-<?php echo $regForm; ?>
+        <div class="PrintArea"><?php echo $regForm; ?></div>
+
     </body>
 </html>

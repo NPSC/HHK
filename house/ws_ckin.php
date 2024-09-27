@@ -17,6 +17,7 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\House\PSG;
 use HHK\House\Room\RoomChooser;
 use HHK\sec\Labels;
+use HHK\Document\Document;
 
 /**
  * ws_ckin.php
@@ -45,21 +46,21 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = htmlspecialchars($_REQUEST["cmd"]);
 }
 
 $idGuest = 0;
 if (isset($_REQUEST["idGuest"])) {
-    $idGuest = intval(filter_var($_REQUEST["idGuest"], FILTER_SANITIZE_STRING), 10);
+    $idGuest = intval(filter_var($_REQUEST["idGuest"], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
 $idVisit = 0;
 if (isset($_REQUEST["idVisit"])) {
-    $idVisit = intval(filter_var($_REQUEST["idVisit"], FILTER_SANITIZE_STRING), 10);
+    $idVisit = intval(filter_var($_REQUEST["idVisit"], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
 
-$events = array();
+$events = [];
 
 
 try {
@@ -75,7 +76,7 @@ try {
 
             $x = 0;
             if (isset($_POST['x'])) {
-                $x = filter_var($_POST['x'], FILTER_SANITIZE_STRING);
+                $x = filter_var($_POST['x'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($idResv > 0) {
@@ -84,7 +85,7 @@ try {
                 $events = ReservationSvcs::getRoomList($dbh, $resv, $x, $guestAdmin);
 
             } else {
-                $events =  array('error'=>'Reservation Id is not set.');
+                $events = ['error' => 'Reservation Id is not set.'];
             }
 
             break;
@@ -93,7 +94,7 @@ try {
 
             $changeDate = '';
             if (isset($_POST['chgDate'])) {
-                $changeDate = filter_var($_POST['chgDate'], FILTER_SANITIZE_STRING);
+                $changeDate = filter_var($_POST['chgDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $rescId = 0;
@@ -140,12 +141,12 @@ try {
 
             $changeDate = '';
             if (isset($_POST['changeDate'])) {
-                $changeDate = filter_var($_POST['changeDate'], FILTER_SANITIZE_STRING);
+                $changeDate = filter_var($_POST['changeDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $replaceRoom = '';
             if (isset($_POST['replaceRoom'])) {
-                $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_STRING);
+                $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = HouseServices::changeRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $useDefaultRate, $changeDate);
@@ -171,12 +172,12 @@ try {
 
             $expArr = '';
             if (isset($_POST['expArr'])) {
-                $expArr = filter_var($_POST['expArr'], FILTER_SANITIZE_STRING);
+                $expArr = filter_var($_POST['expArr'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $expDep = '';
             if (isset($_POST['expDep'])) {
-                $expDep = filter_var($_POST['expDep'], FILTER_SANITIZE_STRING);
+                $expDep = filter_var($_POST['expDep'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $cbs = '';
@@ -214,7 +215,7 @@ try {
 
             $notes = '';
             if (isset($_POST['notes'])) {
-                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
+                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
 
@@ -228,20 +229,67 @@ try {
 
             $eaddr = '';
             if (isset($_POST['eaddr'])) {
-                $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
+                $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $ccAddr = '';
             if (isset($_POST['ccAddr'])) {
-                $ccAddr = filter_var($_POST['ccAddr'], FILTER_SANITIZE_STRING);
+                $ccAddr = filter_var($_POST['ccAddr'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $tabIndex = false;
             if (isset($_POST['tabIndex'])) {
-                $tabIndex = filter_var($_POST['tabIndex'], FILTER_SANITIZE_STRING);
+                $tabIndex = filter_var($_POST['tabIndex'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex,$ccAddr);
+            break;
+
+        case 'saveRegForm':
+
+            $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+            $psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
+            $idVisit = intval(filter_input(INPUT_POST, 'idVisit', FILTER_SANITIZE_NUMBER_INT), 10);
+            $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT), 10);
+            $docSignatures = json_decode(filter_input(INPUT_POST, "docSignatures", FILTER_UNSAFE_RAW), true);
+            $uuid = filter_input(INPUT_POST, "uuid", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $formCode = filter_input(INPUT_POST, "formCode", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+            $docTitle = ($idVisit > 0 ? "Visit " . $idVisit : Labels::getString("GuestEdit", "reservationTitle", "Reservation") . " " . $idResv) . " Registration Form";
+
+            $regForms = $uS->regFormObjs;
+
+            if(isset($uS->regFormObjs[$uuid]) && !is_null($uS->regFormObjs[$uuid])){
+                //find this form
+                foreach($uS->regFormObjs[$uuid] as $doc){
+                    if($doc["tabIndex"] === $formCode){
+                        $docContents = HTMLContainer::generateMarkup('div', $doc['doc'], ['class' => 'PrintArea']);
+                        break;
+                    }
+                }
+
+                if(isset($docContents)){
+                    $document = Document::createNew($docTitle, "text/html", $docContents, $uS->username, "reg");
+
+                    $document->setAbstract(json_encode(['idVisit'=>$idVisit, 'idResv'=>$idResv]));
+                    $document->setUserData(json_encode($docSignatures));
+
+                    $document->saveNew($dbh);
+
+                    if($document->linkNew($dbh, $guestId, $psgId) > 0){
+                        $regformObjs = $uS->regformObjs;
+                        unset($regformObjs[$uuid]);
+                        $uS->regformObjs = $regformObjs;
+                        $events = ["idDoc"=> $document->getIdDocument()];
+                    }else{
+                        $events = ["error" => "Unable to save Registration Form"];
+                    }
+                }else{
+                    $events = ['error'=>'Unable to save Registration Form: Document not found'];
+                }
+            }else{
+                $events = ['error' =>'Unable to save Registration Form: Document UUID does not match, please reload the page and try again.'];
+            }
             break;
 
         case 'void':
@@ -253,7 +301,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::voidFees($dbh, $idPayment, $bid);
@@ -269,7 +317,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::reversalFees($dbh, $idPayment, $bid);
@@ -285,7 +333,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::returnPayment($dbh, $idPayment, $bid);
@@ -301,7 +349,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::undoReturnFees($dbh, $idPayment, $bid);
@@ -317,7 +365,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = PaymentSvcs::voidReturnFees($dbh, $idPayment, $bid);
@@ -338,7 +386,7 @@ try {
 
             $bid = '';
             if (isset($_POST['bid'])) {
-                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($idInvoice > 0 && $idLine > 0) {
@@ -346,8 +394,8 @@ try {
                 $invoice = new Invoice($dbh);
                 $invoice->loadInvoice($dbh, $idInvoice);
 
-                if ($invoice->deleteLine($dbh, $idLine, $bid, $uS->username)) {
-                    $events = array('bid' => $bid, 'success' => 'House Payment Deleted.  ');
+                if ($invoice->deleteLine($dbh, $idLine, $uS->username)) {
+                    $events = ['bid' => $bid, 'success' => 'House Payment Deleted.  '];
                 }
             }
 
@@ -357,15 +405,15 @@ try {
 
         $idRegistration = 0;
         if (isset($_REQUEST["reg"])) {
-            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_STRING), 10);
+            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         if ($idRegistration > 0) {
             $reg = new Registration($dbh, 0, $idRegistration);
-            $mkup = HTMLContainer::generateMarkup('div', $reg->createRegMarkup($dbh, FALSE), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"));
-            $events = array('success'=>$mkup);
+            $mkup = HTMLContainer::generateMarkup('div', $reg->createRegMarkup($dbh, FALSE), ['class'=>"ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"]);
+            $events = ['success'=>$mkup];
         } else {
-            $events = array('error'=>'Bad PSG Id.');
+            $events = ['error'=>'Bad PSG Id.'];
         }
 
         break;
@@ -374,25 +422,19 @@ try {
 
         $idRegistration = 0;
         if (isset($_REQUEST["reg"])) {
-            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $params = array();
-        if (isset($_REQUEST['parm'])) {
-            $params = $_REQUEST['parm'];
+            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         if ($idRegistration > 0) {
 
             $reg = new Registration($dbh, 0, $idRegistration);
+            $reg->extractDialog();
 
-            $reg->extractRegistration($dbh, $params);
             $reg->saveRegistrationRs($dbh, 0, $uS->username);
-            $events = array('success'=>'Registration info saved.');
+            $events = ['success'=>'Registration info saved.'];
         } else {
-            $events = array('error'=>'Bad Registration Id.');
+            $events = ['error'=>'Bad Registration Id.'];
         }
-
 
         break;
 
@@ -433,13 +475,13 @@ try {
     case "visitFees":
         $s = 'n';
         if (isset($_POST['action'])) {
-            $s = filter_var($_POST['action'], FILTER_SANITIZE_STRING);
+            $s = htmlspecialchars($_POST['action']);
         }
 
         $cod = [];
         if (isset($_POST['ckoutdt'])) {
 
-        	$cod = filter_var_array($_POST['ckoutdt'], FILTER_SANITIZE_STRING);
+        	$cod = filter_var_array($_POST['ckoutdt'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $span = 0;
@@ -456,20 +498,21 @@ try {
 
         $id = 0;
         if (isset($_POST["id"])) {
-            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
+            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $idVisit = 0;
         if (isset($_POST["vid"])) {
-            $idVisit = intval(filter_var($_POST["vid"], FILTER_SANITIZE_STRING), 10);
+            $idVisit = intval(filter_var($_POST["vid"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $visitSpan = 0;
         if (isset($_POST["span"])) {
-            $visitSpan = intval(filter_var($_POST["span"], FILTER_SANITIZE_STRING), 10);
+            $visitSpan = intval(filter_var($_POST["span"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
-        $events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
+        //$events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
+        $events = ['error'=>'HouseServices::addVisitStay is Deprecated'];
         break;
 
     case "getincmdiag":
@@ -489,7 +532,7 @@ try {
 
     case "savefap":
 
-        $post = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+        $post = filter_var_array($_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $events = ReservationSvcs::saveFinApp($dbh, $post);
 
         break;
@@ -516,7 +559,7 @@ try {
             $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $data = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+        $data = filter_var_array($_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $events = HouseServices::payInvoice($dbh, $id, $data);
 
         break;
@@ -530,10 +573,10 @@ try {
 
         $postbackPage = '';
         if (isset($_POST['pbp'])) {
-            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $events = HouseServices::saveFees($dbh, $idVisit, $span, $guestAdmin, $_REQUEST, $postbackPage);
+        $events = HouseServices::saveFees($dbh, $idVisit, $span, $_POST, $postbackPage);
 
         break;
 
@@ -569,7 +612,7 @@ try {
             }
 
             if (isset($_POST['arrDate'])) {
-                $arrDate = filter_var($_POST['arrDate'],FILTER_SANITIZE_STRING);
+                $arrDate = filter_var($_POST['arrDate'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $vat = new ValueAddedTax($dbh);
@@ -577,7 +620,7 @@ try {
             $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, $vat->getTaxedItemSums($ordNum, 0), $arrDate);
 
         } else {
-            $events = array('error'=>'Visit Id is missing.  ');
+            $events = ['error' => 'Visit Id is missing.  '];
         }
 
         break;
@@ -587,7 +630,7 @@ try {
 
         $ord = 0;
         if (isset($_POST["ord"])) {
-            $ord = intval(filter_var($_POST["ord"], FILTER_SANITIZE_STRING), 10);
+            $ord = intval(filter_var($_POST["ord"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $amt = 0;
@@ -602,22 +645,22 @@ try {
 
         $discount = '';
         if (isset($_POST['dsc'])) {
-            $discount = filter_var($_POST['dsc'], FILTER_SANITIZE_STRING);
+            $discount = filter_var($_POST['dsc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $addnlCharge = '';
         if (isset($_POST['chg'])) {
-            $addnlCharge = filter_var($_POST['chg'], FILTER_SANITIZE_STRING);
+            $addnlCharge = filter_var($_POST['chg'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $adjDate = '';
         if (isset($_POST['adjDate'])) {
-            $adjDate = filter_var($_POST['adjDate'], FILTER_SANITIZE_STRING);
+            $adjDate = filter_var($_POST['adjDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $notes = '';
         if (isset($_POST['notes'])) {
-            $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
+            $notes = filter_var($_POST['notes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes);
@@ -631,10 +674,10 @@ try {
         if (isset($_POST['psg'])) {
             $idPsg = intval(filter_var($_POST['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $psg = new PSG($dbh, $idPsg);
-            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], new Labels()));
+            $events = ['markup' => $psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], new Labels())];
 
         } else {
-            $events = array('error'=>'PSG ID is missing.');
+            $events = ['error' => 'PSG ID is missing.'];
         }
 
         break;
@@ -645,17 +688,17 @@ try {
 
         $postbackPage = '';
         if (isset($_POST['pbp'])) {
-            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $index = '';
         if (isset($_POST['index'])) {
-            $index = filter_var($_POST['index'], FILTER_SANITIZE_STRING);
+            $index = filter_var($_POST['index'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $idGroup = 0;
         if (isset($_POST['idGrp'])) {
-            $idGroup = intval(filter_var($_POST['idGrp'], FILTER_SANITIZE_STRING), 10);
+            $idGroup = intval(filter_var($_POST['idGrp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $events = HouseServices::cardOnFile($dbh, $idGuest, $idGroup, $_POST, $postbackPage, $index);
@@ -672,10 +715,10 @@ try {
 
         $pbp = '';
         if (isset($_POST['pbp'])) {
-            $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+            $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
+        //$events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
 
         break;
 
@@ -688,7 +731,7 @@ try {
 
         $status = '';
         if (isset($_POST['stat'])) {
-            $status = filter_var($_POST['stat'], FILTER_SANITIZE_STRING);
+            $status = filter_var($_POST['stat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = ReservationSvcs::changeReservStatus($dbh, $idReservation, $status);
@@ -698,7 +741,7 @@ try {
 
         $nd = '';
         if (isset($_POST['nd'])) {
-            $nd = filter_var($_POST['nd'], FILTER_SANITIZE_STRING);
+            $nd = filter_var($_POST['nd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $events = HouseServices::changeExpectedDepartureDate($dbh, $idGuest, $idVisit, $nd);
@@ -708,7 +751,7 @@ try {
 
         $wlid = 0;
         if (isset($_REQUEST["idReg"])) {
-            $wlid = intval(filter_var($_REQUEST["idReg"], FILTER_SANITIZE_STRING), 10);
+            $wlid = intval(filter_var($_REQUEST["idReg"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
         }
 
         $events = HouseServices::visitChangeLogMarkup($dbh, $wlid);
@@ -736,11 +779,12 @@ try {
 
         $newAmt = 0.00;
         if (isset($_POST['amt'])) {
-            $newAmt = floatval(filter_var($_POST['amt'], FILTER_SANITIZE_STRING));
+            $newAmt = floatval(filter_var($_POST['amt'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if ($guestAdmin) {
-            $events = HouseServices::changePaymentAmount($dbh, $pid, $newAmt);
+            //$events = HouseServices::changePaymentAmount($dbh, $pid, $newAmt);
+            $events = ['error' => 'HouseServices::changePaymentAmount is Deprecated'];
         }
 
         break;
@@ -751,33 +795,23 @@ try {
         $events = RoomChooser::roomAmtCalculation($dbh, $_POST);
         break;
 
-    case 'delResv':
-
-        $rid = 0;
-        if (isset($_POST['rid'])) {
-            $rid = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $events = ReservationSvcs::deleteReservation($dbh, $rid);
-
-        break;
-
     default:
-        $events = array("error" => "Bad Command: \"" . $c . "\"");
+        $events = ["error" => "Bad Command: \"" . $c . "\""];
 }
 
 //make receipt copy
 if(isset($events['receipt']) && $uS->merchantReceipt == true){
     $events['receipt'] = HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Customer Copy', array('style'=>'text-align:center;')), array('style'=>'margin-right: 15px; width: 100%;'))
-        . HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style'=> 'text-align: center')), array('style'=>'margin-left: 15px; width: 100%;'))
-        , array('style'=>'display: flex; min-width: 100%;', 'data-merchCopy'=>'1'));
+        HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+        . HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+        ,
+            ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
 }
 
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 } catch (Exception $ex) {
-    $events = array("error" => "Web Server Error: " . $ex->getMessage());
+    $events = ["error" => "Web Server Error: " . $ex->getMessage()];
 }
 
 
@@ -789,7 +823,7 @@ if (is_array($events)) {
     if ($json !== FALSE) {
         echo ($json);
     } else {
-        $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+        $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);
     }
 
@@ -798,4 +832,4 @@ if (is_array($events)) {
 }
 
 exit();
-?>
+

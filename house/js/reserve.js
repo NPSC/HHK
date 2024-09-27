@@ -3,6 +3,7 @@ var payFailPage;
 var dateFormat;
 var paymentMarkup;
 var pageManager;
+var receiptMarkup;
 
 $(document).ready(function() {
     "use strict";
@@ -11,20 +12,12 @@ $(document).ready(function() {
     var resv = $.parseJSON($('#resv').val());
     var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
     var pageManager = t.pageManager;
+    let isRepeatReservHost = $('#isRepeatReservHost').val();
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
     dateFormat = $('#dateFormat').val();
     paymentMarkup = $('#paymentMarkup').val();
-
-    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-        _resizeMenu: function() {
-            var ul = this.menu.element;
-            ul.outerWidth( Math.max(
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-            ) * 1.1 );
-        }
-    });
+    receiptMarkup = $('#receiptMarkup').val();
 
 // Dialog Boxes
     $("#resDialog").dialog({
@@ -42,13 +35,13 @@ $(document).ready(function() {
         title: 'Confirmation Form',
         close: function () {$('div#submitButtons').show(); $("#frmConfirm").children().remove();},
         buttons: {
-            'Download MS Word': function () {
+            'Download to MS Word': function () {
                 var $confForm = $("form#frmConfirm");
                 var $hdnCfmRid = $confForm.find('input[name="hdnCfmRid"]');
                 var $hdnCfmDocCode = $confForm.find('input[name="hdnCfmDocCode"]');
                 var $hdnCfmAmt = $confForm.find('input[name="hdnCfmAmt"]');
                 var $hdnTabIndex = $confForm.find('input[name="hdnTabIndex"]');
-                
+
                 if($hdnCfmRid.length > 0){
                 	$hdnCfmRid.val($('#btnShowCnfrm').data('rid'));
                 }else{
@@ -78,7 +71,7 @@ $(document).ready(function() {
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
-                    
+
                     if(data.status == 'success'){
                     	flagAlertMessage(data.mesg, false);
                     }else{
@@ -89,7 +82,7 @@ $(document).ready(function() {
             },
             "Cancel": function() {
                 $(this).dialog("close");
-                
+
             }
         }
     });
@@ -133,7 +126,7 @@ $(document).ready(function() {
         modal: true,
         title: 'Payment Receipt'
     });
-    
+
     $("#ecSearch").dialog({
         autoOpen: false,
         resizable: false,
@@ -151,24 +144,23 @@ $(document).ready(function() {
         $('#paymentMessage').show();
     }
 
+    if (receiptMarkup !== '') {
+        showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt');
+    }
+
+
     pageManager = new resvManager(resv, pageManagerOptions);
 
-    // hide the alert on mousedown
     $(document).mousedown(function (event) {
-
-        if (isIE()) {
-            var target = $(event.target[0]);
-
-            if (target.id && target.id !== undefined && target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
-                $('#divSelAddr').remove();
-            }
-
-        } else {
-
-            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
-                $('#divSelAddr').remove();
-            }
+    	// hide the alert on mousedown
+        if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
+            $('#divSelAddr').remove();
         }
+		// Hide invoice view box.
+        if (event.target.id && event.target.id !== undefined && event.target.id !== 'pudiv') {
+            $('div#pudiv').remove();
+        }
+
     });
 
 // Buttons
@@ -182,9 +174,55 @@ $(document).ready(function() {
 
         if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
 
+            if (pageManager.deleteReserve() === false) {
+				$(this).val('Final Delete');
+				$('#btnDone').hide();
+				$('#btnCheckinNow').hide();
+				$('#btnShowReg').hide();
+				return;
+			}
+
             $(this).val('Deleting >>>>');
 
-            pageManager.deleteReserve(pageManager.getIdResv(), 'form#form1', $(this));
+			 $.post(
+				'ws_resv.php',
+                $('#form1').serialize() + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                 function(datas) {
+                    let data;
+                    try {
+                        data = $.parseJSON(datas);
+                    } catch (err) {
+                        flagAlertMessage(err.message, 'error');
+                        $(idForm).remove();
+                    }
+
+                    if (data.error) {
+                        flagAlertMessage(data.error, 'error');
+                        $('#btnDelete').val('Delete').show();
+                    }
+
+				    if (data.warning) {
+				        flagAlertMessage(data.warning, 'warning');
+				    }
+
+                    if (data.receiptMarkup && data.receiptMarkup != '') {
+						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+					}
+
+					if (data.deleted) {
+						$('#form1').remove();
+						$('#contentDiv').append('<p>' + data.deleted + '</p>');
+
+						$('#spnStatus').text('Deleted');
+                    }
+                     
+                    if (data.xfer || data.inctx || data.deluxehpf) {
+				        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
+				        //return;
+				    }
+
+                }
+        	);
         }
     });
 
@@ -208,10 +246,11 @@ $(document).ready(function() {
         if (pageManager.verifyInput() === true) {
 
             $(this).val('Saving >>>>');
-            
+
+
             $.post(
                 'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
                     try {
                         data = $.parseJSON(data);
@@ -229,14 +268,31 @@ $(document).ready(function() {
                         $('#btnDone').val('Save').show();
                     }
 
+                    if (data.xfer || data.inctx || data.deluxehpf) {
+                        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
+                        //return;
+                    }
+
+                    if (data.redirTo) {
+                       location.replace(data.redirTo);
+                    }
+
                     pageManager.loadResv(data);
+
+                    if (data.receiptMarkup && data.receiptMarkup != '') {
+						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+					}
 
                     if (data.resv !== undefined) {
                         if (data.warning === undefined) {
                             flagAlertMessage(data.resvTitle + ' Saved. ' + (data.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + data.resv.rdiv.rStatTitle), 'success');
                         }
                     } else {
-                        flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved.', 'success');
+                        flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved. ', 'success');
+                    }
+
+                    if(data.info){
+                        flagAlertMessage(data.info, 'info');
                     }
                 }
             );
@@ -246,8 +302,8 @@ $(document).ready(function() {
 
     function getGuest(item) {
 
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
+        if (item.noReturn !== undefined && item.noReturn !== '') {
+            flagAlertMessage('This person is set for No Return: ' + item.noReturn + '.', 'alert');
             return;
         }
 
@@ -261,6 +317,7 @@ $(document).ready(function() {
 
         resv.fullName = item.fullName;
         resv.cmd = 'getResv';
+        resv.guestSearchTerm = $guestSearch.val();
 
         pageManager.getReserve(resv);
 
@@ -278,22 +335,21 @@ $(document).ready(function() {
 
     } else {
 
-        createAutoComplete($guestSearch, 3, {cmd: 'role', gp:'1'}, getGuest);
+    	createRoleAutoComplete($guestSearch, 3, {cmd: 'guest'}, getGuest);
 
         // MRN search
-        createAutoComplete($('#gstMRNSearch'), 3, {cmd: 'role', gp:'1', mrn:'1'}, getGuest);
-        
-        // Phone number search
-        createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
+        createRoleAutoComplete($('#gstMRNSearch'), 3, {cmd: 'mrn'}, getGuest);
 
-        $guestSearch.keypress(function(event) {
+        // Phone number search
+	    createRoleAutoComplete($('#gstphSearch'), 5, {cmd: 'phone'}, getGuest);
+
+        $guestSearch.keypress(function() {
             $(this).removeClass('ui-state-highlight');
         });
 
         $guestSearch.focus();
     }
-    
-    
+
 });
 
 

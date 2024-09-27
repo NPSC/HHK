@@ -9,7 +9,7 @@ use HHK\HTMLControls\HTMLSelector;
  * AbstractJob.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
- * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -143,5 +143,16 @@ abstract class AbstractJob implements JobInterface {
         }
     }
 
+    public function getStatus() {
+        return $this->status;
+    }
+
+    public function getLogMsg() {
+        return $this->logMsg;
+    }
+
+    public function getParamTemplate() {
+        return $this->paramTemplate;
+    }
 }
 ?>

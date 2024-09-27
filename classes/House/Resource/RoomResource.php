@@ -21,6 +21,12 @@ use HHK\House\Room\Room;
 
 class RoomResource extends AbstractResource {
 
+    /**
+     * Summary of testAllocateRoom
+     * @param int $numGuests
+     * @throws \HHK\Exception\RuntimeException
+     * @return bool
+     */
     public function testAllocateRoom($numGuests) {
 
         if ($this->isNewResource()) {
@@ -42,6 +48,13 @@ class RoomResource extends AbstractResource {
         return FALSE;
     }
 
+    /**
+     * Summary of allocateRoom
+     * @param int $numGuests
+     * @param bool $overRideMax
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     public function allocateRoom($numGuests, $overRideMax = FALSE) {
 
         if ($this->isNewResource()) {

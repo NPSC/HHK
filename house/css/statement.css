@@ -1,0 +1,120 @@
+.emTbl, .emTbl input[type=text], .emTbl textarea{
+    width: 100%;
+}
+
+#formEm input[type=submit], #formEm input[type=button], #formWord input[type=submit], #formWord input[type=button] {
+    font-size: 0.9em;
+}
+
+#stmtDiv {
+    max-width: 800px;
+}
+
+#divStmt > table > tbody > tr > td {
+    vertical-align: top;
+}
+
+#divStmt .hhk-tdbox tr.stmtHead, #divStmt .hhk-tdbox tr.stmtHead td {
+    border-top: 2px solid #2E99DD !important;
+}
+
+#divStmt #stmtSummary tr.sumDivider, #divStmt #stmtSummary tr.sumDivider td {
+    border-bottom: 2px solid #2E99DD !important;
+}
+
+#divStmt #stmtSummary .balanceLine td {
+    font-weight:bold;
+    font-size:1.2em;
+}
+
+#divStmt td.hhk-tdTotals {
+    border-top: 2px solid #333 !important;
+}
+
+#divStmt.PrintArea {
+    font-family: Arial, Helvetica,"Lucida Grande", serif; 
+    color: #000;
+}
+
+@media print {
+    #divStmt.PrintArea {
+        border: none !important;
+    }
+}
+
+@page {
+    margin: 1cm;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.align-center {
+    text-align: center;
+}
+
+.align-right {
+    text-align: right;
+}
+
+.hhk-tdTotals {
+    font-weight: bold;
+}
+
+.pmtDisclaimer {
+    font-size:0.6em;
+    text-align:justify;
+    max-width:600px;
+}
+
+#divStmt #stmtHeader td {
+    border: none;
+    padding: 0;
+}
+
+#divStmt #stmtSummary .border-none {
+    border: none;
+}
+
+#divStmt {
+    font-size: 0.9em;
+}
+
+#divStmt table.tblStmtSummary {
+    display: inline-block;
+}
+
+#divStmt table.tblStmtSummary caption {
+    text-align: center !important;
+    display: block !important;
+}
+
+#emailStmtDiv #divStmt {
+    max-width: 800px;
+    border: none;
+}
+
+@media print {
+    #emailStmtDiv #divStmt {
+        max-width: none !important;
+    }
+
+        body {
+            margin:0; 
+            padding:0; 
+            line-height: 1.4em; 
+            word-spacing:1px; 
+            letter-spacing:0.2px; 
+            font: 13px Arial, Helvetica,"Lucida Grande", serif; 
+            color: #000;
+        }
+        .hhk-noprint {
+            display:none;
+        }
+    
+        .PrintArea {
+            border: none !important;
+        }
+}
+

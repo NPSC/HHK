@@ -42,17 +42,66 @@ class Note {
 
 
     // Note record field vars
+    /**
+     * Summary of idNote
+     * @var int
+     */
     protected $idNote = 0;
+    /**
+     * Summary of text
+     * @var string
+     */
     protected $text = '';
+    /**
+     * Summary of title
+     * @var string
+     */
     protected $title = '';
+    /**
+     * Summary of type
+     * @var string
+     */
     protected $type = '';
+    /**
+     * Summary of flag
+     * @var
+     */
     protected $flag = false;
+    /**
+     * Summary of category
+     * @var string
+     */
+    protected $category = '';
+    /**
+     * Summary of userName
+     * @var string
+     */
     protected $userName = '';
+    /**
+     * Summary of status
+     * @var string
+     */
     protected $status = '';
+    /**
+     * Summary of createdOn
+     * @var
+     */
     protected $createdOn = null;
+    /**
+     * Summary of lastUpdated
+     * @var
+     */
     protected $lastUpdated = null;
+    /**
+     * Summary of updatedBy
+     * @var string
+     */
     protected $updatedBy = '';
 
+    /**
+     * Summary of noteRS
+     * @var
+     */
     private $noteRS;
 
     /**
@@ -90,6 +139,7 @@ class Note {
                 $this->setTitle($noteRS->Title->getStoredVal());
                 $this->setType($noteRS->Note_Type->getStoredVal());
                 $this->setFlag($noteRS->Flag->getStoredVal());
+                $this->setCategory($noteRS->Category->getStoredVal());
                 $this->setUserName($noteRS->User_Name->getStoredVal());
                 $this->setUpdatedBy($noteRS->Updated_By->getstoredVal());
                 $this->setLastUpdated($noteRS->Last_Updated->getStoredVal());
@@ -111,7 +161,7 @@ class Note {
      * @param string $noteType
      * @param string $noteTitle
      */
-    public static function createNew($noteText, $userName, $noteType = self::TextType, $noteTitle = '', $noteStatus = Note::ActiveStatus ) {
+    public static function createNew($noteText, $userName, $noteCategory = '', $noteType = self::TextType, $noteTitle = '', $noteStatus = Note::ActiveStatus ) {
 
         if ($noteText != '' && $userName != '') {
 
@@ -120,6 +170,7 @@ class Note {
             $note->setText($noteText);
             $note->setType($noteType);
             $note->setFlag(0);
+            $note->setCategory($noteCategory);
             $note->setTitle($noteTitle);
             $note->setUserName($userName);
             $note->setStatus($noteStatus);
@@ -132,11 +183,12 @@ class Note {
         return $note;
     }
 
+    /**
+     * Summary of saveNew
+     * @param \PDO $dbh
+     *
+     */
     public function saveNew(\PDO $dbh) {
-
-        if ($this->isValid() === FALSE) {
-            return FALSE;
-        }
 
         // Insert
         $noteRS = new NoteRs();
@@ -144,6 +196,7 @@ class Note {
         $noteRS->Note_Text->setNewVal($this->getNoteText());
         $noteRS->Note_Type->setNewVal($this->getNoteType());
         $noteRS->Flag->setNewVal($this->getFlag());
+        $noteRS->Category->setNewVal($this->getCategory());
         $noteRS->Title->setNewVal($this->getNoteTitle());
         $noteRS->Status->setNewVal($this->getStatus());
         $noteRS->Last_Updated->setNewVal($this->getLastUpdated());
@@ -164,13 +217,14 @@ class Note {
      * @param string $updatedBy
      * @return int the number of records updated.
      */
-    public function updateContents(\PDO $dbh, $noteText, $updatedBy) {
+    public function updateContents(\PDO $dbh, $noteText, $noteCategory, $updatedBy) {
 
         $counter = 0;
 
         if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
 
             $this->noteRS->Note_Text->setNewVal($noteText);
+            $this->noteRS->Category->setNewVal($noteCategory);
             $this->noteRS->Status->setNewVal(self::ActiveStatus);
             $this->noteRS->Updated_By->setNewVal($updatedBy);
             $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
@@ -182,7 +236,13 @@ class Note {
         return $counter;
     }
 
-    public function saveTitle(\PDO $dbh, $title) {
+    /**
+     * Summary of saveTitle
+     * @param \PDO $dbh
+     * @param string $title
+     * @return int
+     */
+    public function saveTitle(\PDO $dbh, string $title) {
 
         $counter = 0;
 
@@ -196,6 +256,7 @@ class Note {
 
         return $counter;
     }
+
 
     /**
      *
@@ -273,85 +334,179 @@ class Note {
         return $counter;
     }
 
-    protected function isValid() {
 
-        return TRUE;
-    }
-
+    /**
+     * Summary of getIdNote
+     * @return int
+     */
     public function getIdNote() {
         return $this->idNote;
     }
 
+    /**
+     * Summary of getNoteText
+     * @return mixed
+     */
     public function getNoteText() {
         return $this->text;
     }
 
+    /**
+     * Summary of getNoteType
+     * @return mixed
+     */
     public function getNoteType() {
         return $this->type;
     }
 
+    /**
+     * Summary of getFlag
+     * @return mixed
+     */
     public function getFlag() {
         return $this->flag;
     }
 
+    /**
+     * Summary of getCategory
+     * @return mixed
+     */
+    public function getCategory(){
+        return $this->category;
+    }
+
+    /**
+     * Summary of getNoteTitle
+     * @return mixed
+     */
     public function getNoteTitle() {
         return $this->title;
     }
 
+    /**
+     * Summary of getUserName
+     * @return mixed
+     */
     public function getUserName() {
         return $this->userName;
     }
 
+    /**
+     * Summary of getLastUpdated
+     * @return mixed
+     */
     public function getLastUpdated() {
         return $this->lastUpdated;
     }
 
+    /**
+     * Summary of getUpdatedBy
+     * @return mixed
+     */
     public function getUpdatedBy() {
         return $this->updatedBy;
     }
 
+    /**
+     * Summary of getStatus
+     * @return mixed
+     */
     public function getStatus() {
         return $this->status;
     }
 
+    /**
+     * Summary of getCreatedOn
+     * @return mixed
+     */
     public function getCreatedOn() {
         return $this->createdOn;
     }
 
+    /**
+     * Summary of setText
+     * @param mixed $text
+     * @return void
+     */
     public function setText($text) {
         $this->text = $text;
     }
 
+    /**
+     * Summary of setTitle
+     * @param mixed $title
+     * @return static
+     */
     public function setTitle($title) {
         $this->title = $title;
         return $this;
     }
 
+    /**
+     * Summary of setType
+     * @param mixed $type
+     * @return static
+     */
     public function setType($type) {
         $this->type = $type;
         return $this;
     }
 
+    /**
+     * Summary of setFlag
+     * @param mixed $flag
+     * @return static
+     */
     public function setFlag($flag) {
         $this->flag = $flag;
         return $this;
     }
 
+    /**
+     * Summary of setCategory
+     * @param mixed $category
+     * @return static
+     */
+    public function setCategory($category) {
+        $this->category = $category;
+        return $this;
+    }
+
+    /**
+     * Summary of setUserName
+     * @param mixed $userName
+     * @return static
+     */
     public function setUserName($userName) {
         $this->userName = $userName;
         return $this;
     }
 
+    /**
+     * Summary of setStatus
+     * @param mixed $status
+     * @return static
+     */
     public function setStatus($status) {
         $this->status = $status;
         return $this;
     }
 
+    /**
+     * Summary of setLastUpdated
+     * @param mixed $lastUpdated
+     * @return static
+     */
     public function setLastUpdated($lastUpdated) {
         $this->lastUpdated = $lastUpdated;
         return $this;
     }
 
+    /**
+     * Summary of setUpdatedBy
+     * @param mixed $updatedBy
+     * @return static
+     */
     public function setUpdatedBy($updatedBy) {
         $this->updatedBy = $updatedBy;
         return $this;

@@ -35,7 +35,7 @@ class SearchFor extends SearchNameData
 
         if ($this->birthDate != '' && $include) {
             $bDay = new \DateTime($this->birthDate);
-            $this->whereClause .= " AND (DATE(n.BirthDate) = DATE('" . $bDay->format('Y-m-d') . "') OR n.BirthDate is NULL OR n.BirthDate = '') ";
+            //$this->whereClause .= " AND (DATE(n.BirthDate) = DATE('" . $bDay->format('Y-m-d') . "') OR n.BirthDate is NULL OR n.BirthDate = '') ";
         }
 
         return $this;
@@ -64,6 +64,16 @@ class SearchFor extends SearchNameData
         if ($this->phone != '' && $include) {
             $this->whereClause .= " OR np.Phone_Search = '" . $this->phone . "' ";
         }
+        return $this;
+    }
+
+    /**
+     * @param string $phone
+     */
+    public function setSMS_Status($status, $include = TRUE) {
+
+        parent::setSMS_Status($status);
+
         return $this;
     }
 

@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\House\OperatingHours;
 use HHK\Notes;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
@@ -20,7 +21,7 @@ use HHK\sec\Session;
  * RoomReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -31,6 +32,19 @@ use HHK\sec\Session;
  */
 class RoomReport {
 
+    /**
+     * Summary of roomNightsbyMonth
+     * @var array
+     */
+    protected $roomNights = [];
+
+    /**
+     * Summary of getGlobalNightsCount
+     * @param \PDO $dbh
+     * @param mixed $year
+     * @param mixed $fyDiffMonths
+     * @return mixed
+     */
     protected static function getGlobalNightsCount(\PDO $dbh, $year = '', $fyDiffMonths = 0) {
 
         $niteCount = 0;
@@ -62,6 +76,13 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $niteCount;
     }
 
+    /**
+     * Summary of getGlobalStaysCount
+     * @param \PDO $dbh
+     * @param mixed $year
+     * @param mixed $fiscalYearMonths
+     * @return mixed
+     */
     protected static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths = 0) {
 
         $whClause = '';
@@ -79,6 +100,12 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         }
     }
 
+    /**
+     * Summary of getGlobalNightsCounter
+     * @param \PDO $dbh
+     * @param mixed $previousCount
+     * @return string
+     */
     public static function getGlobalNightsCounter(\PDO $dbh, $previousCount = 0) {
 
         $uS = Session::getInstance();
@@ -101,8 +128,17 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
                 $now = new \DateTime();
                 $year = $now->format('Y');
 
-            }
+                //fix fiscal year inconsistancy
+                if ($uS->fy_diff_Months !== 0){
+                    $fiscalMonthShift = new \DateInterval('P' . $uS->fy_diff_Months . 'M');
+                    $fiscalYearEnd = (new \DateTime($year .'-12-31'))->sub($fiscalMonthShift);
+                    if($fiscalYearEnd < $now){
+                        $year++; //if fiscal year has ended, assume next year
+                    }
+                }
 
+            }
+            
             $uS->gnc = intval((self::getGlobalNightsCount($dbh, $year, $uS->fy_diff_Months) + $previousCount) / 10);
         }
 
@@ -111,6 +147,12 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $span;
     }
 
+    /**
+     * Summary of getGlobalStaysCounter
+     * @param \PDO $dbh
+     * @param mixed $previousCount
+     * @return string
+     */
     public static function getGlobalStaysCounter(\PDO $dbh, $previousCount = 0) {
 
         $uS = Session::getInstance();
@@ -136,7 +178,18 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
             if ($uS->NightsCounter != '') {
                 $now = new \DateTime();
                 $year = $now->format('Y');
+
+                //fix fiscal year inconsistancy
+                if ($uS->fy_diff_Months !== 0){
+                    $fiscalMonthShift = new \DateInterval('P' . $uS->fy_diff_Months . 'M');
+                    $fiscalYearEnd = (new \DateTime($year .'-12-31'))->sub($fiscalMonthShift);
+                    if($fiscalYearEnd < $now){
+                        $year++; //if fiscal year has ended, assume next year
+                    }
+                }
             }
+
+
 
             $uS->gsc = intval((self::getGlobalStaysCount($dbh, $year, $uS->fy_diff_Months) + $previousCount), 10);
         }
@@ -146,6 +199,46 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $span;
     }
 
+    /**
+     * Summary of getGlobalRoomOccupancy
+     * @param \PDO $dbh
+     * @return string
+     */
+    public static function getGlobalRoomOccupancy(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+
+        if (!$uS->ShowRoomOcc) {
+            return '';
+        }
+
+        $whereGroupSql = "";
+        if($uS->RoomOccCat && $uS->RoomOccCat != 'none'){
+            $whereGroupSql = " and rm.Category = '" . $uS->RoomOccCat . "'";
+        }
+        $query = "select round(sum(if(`idVisit` > 0, 1, 0))/count(r.idResource)*100) as 'Occupancy', g.Description as 'Category' from `resource` r
+left join visit v on r.idResource = v.idResource and v.Status = 'a'
+left join resource_use ru on r.idResource = ru.idResource and date(ru.Start_Date) <= date(now()) and date(ru.End_Date) > date(now())
+left join resource_room rr on r.idResource = rr.idResource
+left join room rm on rr.idRoom = rm.idRoom
+left join gen_lookups g on rm.Category = g.Code and g.Table_Name = 'Room_Category'
+where ru.idResource is null" . $whereGroupSql . ";";
+        $stmt = $dbh->query($query);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if(isset($row['Occupancy'])){
+            $span = HTMLContainer::generateMarkup('span', '<strong>' . $row['Occupancy'] . '% </strong>' . ($uS->RoomOccCat != 'none' ? $row['Category'] : 'Total') . ' Occupancy.', array('style'=>'margin-left:10px;font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));
+        }else{
+            $span = "";
+        }
+        return $span;
+    }
+
+    /**
+     * Summary of dailyReport
+     * @param \PDO $dbh
+     * @return array
+     */
     public static function dailyReport(\PDO $dbh) {
 
         $roomsOOS = array();
@@ -289,6 +382,17 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
         return $tableRows;
     }
 
+    /**
+     * Summary of doDailyMarkup
+     * @param \PDO $dbh
+     * @param mixed $r
+     * @param mixed $guests
+     * @param mixed $roomsOOS
+     * @param mixed $notes
+     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param mixed $roomStatuses
+     * @return array
+     */
     protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, $notes, AbstractPriceModel $priceModel, $roomStatuses) {
 
         $fixed = array();
@@ -389,12 +493,21 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
     }
 
 
+    /**
+     * Summary of roomNOR
+     * @param \PDO $dbh
+     * @param mixed $startDate
+     * @param mixed $endDate
+     * @param mixed $whHosp
+     * @param mixed $roomGroup
+     * @return string
+     */
     public static function roomNOR(\PDO $dbh, $startDate, $endDate, $whHosp, $roomGroup) {
 
         $oneDay = new \DateInterval('P1D');
 
         if ($startDate == '') {
-            return;
+            return '';
         }
 
         if ($endDate == '') {
@@ -406,7 +519,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
 
 
         if ($stDT === FALSE || $endDT === FALSE) {
-            return;
+            return '';
         }
 
         $query = "SELECT
@@ -548,7 +661,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
             $td .= HTMLTable::makeTd($totals[$idRm]);
 
             if ($rooms[$idRm]['Title'] != 'Total') {
-                $f = ($daysOccupied / count($rdateArray) * 100);
+                $f = ($daysOccupied / (count($rdateArray)) * 100);
                 $td .= HTMLTable::makeTd(number_format($f, 0) . "%");
             }
 
@@ -563,7 +676,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         }
 
         $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'3')));
-        $tbl->addHeaderTr(HTMLTable::makeTh('Room (' . (count($days)-1) . ')') . $th . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Total') . HTMLTable::makeTh('Occupied'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Room (' . (count($days) > 0 ? count($days)-1 : 0) . ')') . $th . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Total') . HTMLTable::makeTh('Occupied'));
 
         $mkup = $tbl->generateMarkup(array("class"=>"mt-2 mb-2"));
 
@@ -596,15 +709,130 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         return $mkup;
     }
 
-    public static function rescUtilization(\PDO $dbh, $startDate, $endDate) {
+    protected $summary;
+    private $th;
+    private $daysInMonths;
+    protected $rescs;
+    protected $totals;
+    protected $days;
+
+    /**
+     * Summary of rescUtilization
+     * @param \PDO $dbh
+     * @param string $startDate
+     * @param string $endDate
+     * @return string
+     */
+    public function rescUtilization(\PDO $dbh, $startDate, $endDate) {
+
+        $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+        
+        $this->collectUtilizationData($dbh, $startDate, $endDate, $rescStatuses);
+
+        // Rooms report
+        $tbl = new HTMLTable();
+        $thMonth = '';
+
+        // Month headers
+        foreach ($this->daysInMonths as $m => $c) {
+            $thMonth .= HTMLTable::makeTh($m, array('colspan'=>$c));
+        }
+
+        $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'6')));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Room ('.count($this->rescs).')') . $this->th);
+
+        foreach ($this->days as $idRm => $rdateArray) {
+
+            $tds = HTMLTable::makeTd($this->rescs[$idRm]['Title']);
+
+            $daysOccupied['n'] = 0;
+            $daysOccupied['o'] = 0;
+            $daysOccupied['t'] = 0;
+            $daysOccupied['u'] = 0;
+            $daysOccupied['c'] = 0;
+
+            foreach($rdateArray as $day => $numbers) {
+
+                if ($numbers['n'] > 0 ) {
+                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:lightgreen;'));
+                     $daysOccupied['n']++;
+
+                } else if ($numbers['o'] > 0 ) {
+                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:gray;'));
+                     $daysOccupied['o']++;
+
+                } else if ($numbers['u'] > 0 ) {
+                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:black;'));
+                     $daysOccupied['u']++;
+
+                } else if ($numbers['t'] > 0 ) {
+                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:brown;'));
+                     $daysOccupied['t']++;
+
+                } else if ($numbers['c'] > 0) {
+                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:lightgray;'));
+                    $daysOccupied['c']++;
+                } else {
+                    $tds .= HTMLTable::makeTd(' ');
+                }
+
+            }
+
+            $tds .= HTMLTable::makeTd($this->rescs[$idRm]['Title']);
+
+            foreach ($daysOccupied as $k=>$d) {
+                if ((isset($rescStatuses[ResourceStatus::OutOfService]) && $k == "o") ||
+                    (isset($rescStatuses[ResourceStatus::Delayed]) && $k == "t") ||
+                    (isset($rescStatuses[ResourceStatus::Unavailable]) && $k == "u") ||
+                    $k == "n" || $k == "c")
+                {
+                    $tds .= HTMLTable::makeTd($d, array('style'=>'text-align:right;'));
+                }
+            }
+
+            $tbl->addBodyTr($tds);
+        }
+
+        $ctr = 1;
+
+        foreach ($this->totals as $idRm => $rdateArray) {
+
+            $tds = HTMLTable::makeTd($this->summary[$idRm]);
+
+            $daysOccupied = 0;
+
+            foreach($rdateArray as $day => $numbers) {
+
+                $tds .= HTMLTable::makeTd($numbers);
+                $daysOccupied += $numbers;
+            }
+
+            $tds .= HTMLTable::makeTd($this->summary[$idRm]);
+
+            for ($i = 1; $i < $ctr; $i++) {
+                $tds .= HTMLTable::makeTd('');
+            }
+            $tds .= HTMLTable::makeTd($daysOccupied, array('style'=>'text-align:right;'));
+
+            $tbl->addBodyTr($tds);
+            $ctr++;
+        }
+
+
+        return $tbl->generateMarkup();
+    }
+
+    public function collectUtilizationData(\PDO $dbh, $startDate, $endDate, array $rescStatuses) {
 
         if ($startDate == '') {
-            return;
+            return '';
         }
 
         if ($endDate == '') {
             $endDate = date('Y-m-d');
         }
+
+        $operatingHours = new OperatingHours($dbh);
 
         $oneDay = new \DateInterval('P1D');
         $dateFormat = 'Y-m-d';
@@ -616,7 +844,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
 
 
         if ($stDT === FALSE || $endDT === FALSE) {
-            return;
+            return '';
         }
 
         // Counting start date
@@ -629,28 +857,39 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
                 . " from resource r left join
 resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= '" . $stDT->format('Y-m-d') . "' and DATE(ru.End_Date) >= '" . $endDT->format('Y-m-d') . "'"
                 . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
+                . " and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')"
                 . " order by r.Title;");
 
         $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);
 
-        $rescs = array();
-        $totals = array();
+        $this->rescs = array();
+        $this->totals = array();
 
         foreach ($stRows as $r) {
 
-            $rescs[$r['idResource']] = array(
+            $this->rescs[$r['idResource']] = array(
                 'Title'=>$r['Title']);
 
         }
         unset($stRows);
 
-        $summary = array('nits'=>'Nights', 'oos'=>'OOS', 'to'=>'Delayed', 'un'=>'Unavailable');
+        $this->summary = array('nits'=>'Nights');
+        if(isset($rescStatuses[ResourceStatus::OutOfService])){
+            $this->summary['oos'] = "OOS";
+        }
+        if (isset($rescStatuses[ResourceStatus::Delayed])) {
+            $this->summary['to'] = 'Delayed';
+        }
+        if (isset($rescStatuses[ResourceStatus::Unavailable])) {
+            $this->summary['un'] = 'Unavailable';
+        }
+        $this->summary['c'] = 'Closed';
 
 
-        $days = array();
+        $this->days = array();
 
-        $th = '';
-        $daysInMonths = array();
+        $this->th = '';
+        $this->daysInMonths = array();
 
 
 
@@ -658,42 +897,49 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         while ($countgDT < $endDT) {
 
             $thisDay = $countgDT->format($dateFormat);
-            $th .= HTMLTable::makeTh($countgDT->format($dateTitle));
+            $this->th .= HTMLTable::makeTh($countgDT->format($dateTitle));
 
             $thisMonth = $countgDT->format('M, Y');
 
-            if (isset($daysInMonths[$thisMonth])) {
-                $daysInMonths[$thisMonth]++;
+            $daysClosed = 0;
+
+            if (isset($this->daysInMonths[$thisMonth])) {
+                $this->daysInMonths[$thisMonth]++;
             } else {
-                $daysInMonths[$thisMonth] = 1;
+                $this->daysInMonths[$thisMonth] = 1;
             }
 
-            foreach ($rescs as $idResc => $r) {
+            foreach ($this->rescs as $idResc => $r) {
 
-                $days[$idResc][$thisDay]['n'] = 0;
-                $days[$idResc][$thisDay]['o'] = 0;
-                $days[$idResc][$thisDay]['t'] = 0;
-                $days[$idResc][$thisDay]['u'] = 0;
-
+                $this->days[$idResc][$thisDay]['n'] = 0;
+                $this->days[$idResc][$thisDay]['o'] = 0;
+                $this->days[$idResc][$thisDay]['t'] = 0;
+                $this->days[$idResc][$thisDay]['u'] = 0;
+                
+                if($operatingHours->isHouseClosed($countgDT)){
+                    $this->days[$idResc][$thisDay]['c'] = 1;
+                    $daysClosed++;
+                }else{
+                    $this->days[$idResc][$thisDay]['c'] = 0;
+                }
             }
 
-            foreach ($summary as $s => $title) {
+            foreach ($this->summary as $s => $title) {
 
-                $totals[$s][$thisDay] = 0;
+                $this->totals[$s][$thisDay] = 0;
 
             }
-
 
             $countgDT->add($oneDay);
 
         }
 
-        $th .= HTMLTable::makeTh('Room');
-        $th .= HTMLTable::makeTh('Nights');
-        $th .= HTMLTable::makeTh('OOS');
-        $th .= HTMLTable::makeTh('Delayed');
-        $th .= HTMLTable::makeTh('Unavailable');
-
+        $this->th .= HTMLTable::makeTh('Room') .
+        HTMLTable::makeTh('Nights') . 
+        (isset($rescStatuses[ResourceStatus::OutOfService]) ? HTMLTable::makeTh('OOS') :'') . 
+        (isset($rescStatuses[ResourceStatus::Delayed]) ? HTMLTable::makeTh('Delayed') :'') . 
+        (isset($rescStatuses[ResourceStatus::Unavailable]) ? HTMLTable::makeTh('Unavailable') :'') . 
+        HTMLTable::makeTh('Closed');
 
 
         // Collect visit records
@@ -717,10 +963,11 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
             for ($j = 0; $j < $numNights; $j++) {
                 $rmDate = $rmStartDate->format($dateFormat);
 
-                if (isset($days[$r['idResource']][$rmDate])) {
+                if (isset($this->days[$r['idResource']][$rmDate])) {
 
-                    $days[$r['idResource']][$rmDate]['n']++;
-                    $totals['nits'][$rmDate]++;
+                    $this->days[$r['idResource']][$rmDate]['n']++;
+                    $this->days[$r['idResource']][$rmDate]['c'] = 0; //room not closed if someone is staying
+                    $this->totals['nits'][$rmDate]++;
 
 
                 }
@@ -751,25 +998,27 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
 
                 $rmDate = $rmStartDate->format($dateFormat);
 
-                if (isset($days[$r['idResource']][$rmDate])) {
+                if (isset($this->days[$r['idResource']][$rmDate])) {
 
                     if ($r['Status'] == ResourceStatus::Delayed) {
 
-                        $days[$r['idResource']][$rmDate]['t']++;
-                        $totals['to'][$rmDate]++;
+                        $this->days[$r['idResource']][$rmDate]['t']++;
+                        $this->totals['to'][$rmDate]++;
 
                     } else if ($r['Status'] == ResourceStatus::OutOfService) {
 
-                        $days[$r['idResource']][$rmDate]['o']++;
-                        $totals['oos'][$rmDate]++;
+                        $this->days[$r['idResource']][$rmDate]['o']++;
+                        $this->totals['oos'][$rmDate]++;
 
 
                     } else if ($r['Status'] == ResourceStatus::Unavailable) {
 
-                        $days[$r['idResource']][$rmDate]['u']++;
-                        $totals['un'][$rmDate]++;
+                        $this->days[$r['idResource']][$rmDate]['u']++;
+                        $this->totals['un'][$rmDate]++;
 
                     }
+
+                    $this->days[$r['idResource']][$rmDate]['c'] = 0; //room not closed if there's a resource use record
                 }
 
                 if ($rmStartDate > $endDT) {
@@ -779,89 +1028,68 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
             }
         }
 
-        // Rooms report
-        $tbl = new HTMLTable();
-        $thMonth = '';
+        // Collect retired rooms
+        $rstmt = $dbh->query("Select idResource, `Retired_At`"
+                . " from resource where date(`Retired_At`) < '" . $endDT->format('Y-m-d') . "' and date(`Retired_At`) >= '" . $stDT->format('Y-m-d') ."' order by idResource");
 
-        // Month headers
-        foreach ($daysInMonths as $m => $c) {
-            $thMonth .= HTMLTable::makeTh($m, array('colspan'=>$c));
-        }
+        while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
-        $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'6')));
-        $tbl->addHeaderTr(HTMLTable::makeTh('Room ('.count($rescs).')') . $th);
+            $rmStartDate = new \DateTime($r['Retired_At']);
+            $numNights = $rmStartDate->diff($endDT, true)->format('d');
 
-        foreach ($days as $idRm => $rdateArray) {
+            // Collect single day events
+            if ($numNights == 0) {
+                $numNights++;
+            }
 
-            $tds = HTMLTable::makeTd($rescs[$idRm]['Title']);
+            for ($j = 0; $j < $numNights; $j++) {
 
-            $daysOccupied['n'] = 0;
-            $daysOccupied['o'] = 0;
-            $daysOccupied['t'] = 0;
-            $daysOccupied['u'] = 0;
+                $rmDate = $rmStartDate->format($dateFormat);
 
-            foreach($rdateArray as $day => $numbers) {
-
-                if ($numbers['n'] > 0 ) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:lightgreen;'));
-                     $daysOccupied['n']++;
-
-                } else if ($numbers['o'] > 0 ) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:gray;'));
-                     $daysOccupied['o']++;
-
-                } else if ($numbers['u'] > 0 ) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:black;'));
-                     $daysOccupied['u']++;
-
-                } else if ($numbers['t'] > 0 ) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:brown;'));
-                     $daysOccupied['t']++;
-
-                } else {
-                    $tds .= HTMLTable::makeTd(' ');
+                if (isset($this->days[$r['idResource']][$rmDate])) {
+                    $this->days[$r['idResource']][$rmDate]['u']++;
+                    $this->totals['un'][$rmDate]++;
+                    $this->days[$r['idResource']][$rmDate]['c'] = 0; //room not closed if it's retired
                 }
 
+                if ($rmStartDate > $endDT) {
+                    break;
+                }
+                $rmStartDate->add($oneDay);
             }
-
-            $tds .= HTMLTable::makeTd($rescs[$idRm]['Title'], array('style'=>'font-family: \"Times New Roman\", Times, serif;'));
-
-            foreach ($daysOccupied as $d) {
-                $tds .= HTMLTable::makeTd($d, array('style'=>'text-align:right;'));
-            }
-
-            $tbl->addBodyTr($tds);
         }
 
-        $ctr = 1;
-
-        foreach ($totals as $idRm => $rdateArray) {
-
-            $tds = HTMLTable::makeTd($summary[$idRm]);
-
-            $daysOccupied = 0;
-
-            foreach($rdateArray as $day => $numbers) {
-
-                $tds .= HTMLTable::makeTd($numbers);
-                $daysOccupied += $numbers;
+        //count up closed days
+        foreach($this->days as $idResc=>$dates){
+            foreach($dates as $date=>$numbers){
+                if($numbers['c'] > 0){
+                    $this->totals['c'][$date]++;
+                }
             }
-
-            $tds .= HTMLTable::makeTd($summary[$idRm]);
-
-            for ($i = 1; $i < $ctr; $i++) {
-                $tds .= HTMLTable::makeTd('');
-            }
-            $tds .= HTMLTable::makeTd($daysOccupied, array('style'=>'text-align:right;'));
-
-
-            $tbl->addBodyTr($tds);
-            $ctr++;
         }
 
-
-        return $tbl->generateMarkup();
     }
 
+
+	/**
+	 * @return array
+	 */
+	public function getTotals() {
+		return $this->totals;
+	}
+
+    /**
+	 * @return array
+	 */
+    public function getDays() {
+		return $this->days;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getRescs() {
+		return $this->rescs;
+	}
 }
 ?>

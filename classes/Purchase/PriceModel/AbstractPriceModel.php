@@ -8,36 +8,77 @@ use HHK\Tables\EditRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\HTMLControls\{HTMLTable, HTMLInput};
 use HHK\Exception\RuntimeException;
+use HHK\sec\Labels;
 
 /**
  * AbstractPriceModel.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
-/**
- * Description of AbstractPriceModel
- *
- * @author Eric
- */
 abstract class AbstractPriceModel {
 
+    /**
+     * Summary of creditDays
+     * @var int
+     */
     protected $creditDays = 0;
+
+    /**
+     * Summary of glideApplied
+     * @var bool
+     */
     protected $glideApplied = FALSE;
+
+    /**
+     * Summary of roomRates
+     * @var array
+     */
     protected $roomRates;
+
+    /**
+     * Summary of activeRoomRates
+     * @var array
+     */
     protected $activeRoomRates;
-    protected $remainderAmt = 0;
+
+    /**
+     * Summary of remainderAmt
+     * @var float|int
+     */
+    protected $remainderAmt = 0.0;
+
+    /**
+     * Summary of visitStatus
+     * @var string
+     */
     protected $visitStatus = '';
+
+    /**
+     * Summary of priceModelCode
+     * @var string
+     */
     protected $priceModelCode = '';
 
+    /**
+     * Summary of hasPerGuestCharge
+     * @var bool
+     */
+    public $hasPerGuestCharge = FALSE;
 
+
+    /**
+     * Summary of __construct
+     * @param mixed $roomRates
+     */
     public function __construct(array $roomRates) {
 
         $this->roomRates = $roomRates;
         $this->activeRoomRates = array();
+
 
         foreach($roomRates as $rs) {
 
@@ -47,7 +88,14 @@ abstract class AbstractPriceModel {
         }
     }
 
-    public function loadVisitNights(\PDO $dbh, $idVisit) {
+    /**
+     * Summary of loadVisitNights
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @param \DateTime|null $depDT  Used by PriceGuestDay.
+     * @return array
+     */
+    public function loadVisitNights(\PDO $dbh, $idVisit, $depDT = null) {
 
         // Get current nights .
         $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = $idVisit and `Status` != 'p' order by `Span`");
@@ -55,6 +103,12 @@ abstract class AbstractPriceModel {
         return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Summary of loadRegistrationNights
+     * @param \PDO $dbh
+     * @param int $idRegistration
+     * @return array
+     */
     public function loadRegistrationNights(\PDO $dbh, $idRegistration) {
 
         // Get current nights .
@@ -63,8 +117,27 @@ abstract class AbstractPriceModel {
         return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Summary of amountCalculator
+     * @param int $nites
+     * @param int $idRoomRate
+     * @param string $rateCatetgory
+     * @param float|int $pledgedRate
+     * @param int $guestDays
+     * @return float
+     */
     public abstract function amountCalculator($nites, $idRoomRate, $rateCatetgory = '', $pledgedRate = 0, $guestDays = 0);
 
+    /**
+     * Summary of daysPaidCalculator
+     * @param mixed $amount
+     * @param mixed $idRoomRate
+     * @param mixed $rateCategory
+     * @param mixed $pledgedRate
+     * @param mixed $rateAdjust
+     * @param mixed $aveGuestPerDay
+     * @return float|int
+     */
     public function daysPaidCalculator($amount, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $aveGuestPerDay = 1) {
 
         $this->remainderAmt = 0;
@@ -128,6 +201,13 @@ abstract class AbstractPriceModel {
         return $nights;
     }
 
+    /**
+     * Summary of getCategoryRateRs
+     * @param int $idRoomRate
+     * @param string $category
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     public function getCategoryRateRs($idRoomRate = 0, $category = '') {
 
     	if ($idRoomRate > 0 && isset($this->roomRates[$idRoomRate])) {
@@ -153,6 +233,16 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of tiersCalculation
+     * @param int $days
+     * @param int $idRoomRate
+     * @param string $rateCategory
+     * @param float|int $pledgedRate
+     * @param float|int $rateAdjust
+     * @param int $guestDays
+     * @return array<array>
+     */
     public function tiersCalculation($days, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $guestDays = 0) {
 
         $tiers = array();
@@ -173,6 +263,17 @@ abstract class AbstractPriceModel {
         return $tiers;
     }
 
+    /**
+     * Summary of tiersMarkup
+     * @param mixed $r
+     * @param float|int $totalAmt
+     * @param HTMLTable $tbl
+     * @param mixed $tiers
+     * @param \DateTime $startDT
+     * @param string $separator
+     * @param int $totalGuestNites
+     * @return float|int
+     */
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $roomCharge = 0;
@@ -183,14 +284,14 @@ abstract class AbstractPriceModel {
             $roomCharge += $t['amt'];
 
             $tbl->addBodyTr(
-                 HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
-                .HTMLTable::makeTd($r['title'], array('style'=>$separator))
-                .HTMLTable::makeTd($startDT->format('M j, Y'), array('style'=>$separator))
-                .HTMLTable::makeTd($startDT->add(new \DateInterval('P' . $t['days'] . 'D'))->format('M j, Y'), array('style'=>$separator))
-                .HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
-                .HTMLTable::makeTd($t['days'], array('style'=>'text-align:center;' . $separator))
-                .HTMLTable::makeTd(number_format($t['amt'], 2), array('style'=>'text-align:right;' . $separator))
-            );
+                 HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('class'=>"align-center"))
+                .HTMLTable::makeTd($r['title'])
+                .HTMLTable::makeTd($startDT->format('M j, Y'))
+                .HTMLTable::makeTd($startDT->add(new \DateInterval('P' . $t['days'] . 'D'))->format('M j, Y'))
+                .HTMLTable::makeTd(number_format($t['rate'], 2), array('class'=>'align-right'))
+                .HTMLTable::makeTd($t['days'], array('class'=>'align-center'))
+                .HTMLTable::makeTd(number_format($t['amt'], 2), array('class'=>'align-right'))
+            , ["class"=>$separator]);
 
             $separator = '';
 
@@ -199,6 +300,16 @@ abstract class AbstractPriceModel {
         return $roomCharge;
     }
 
+    /**
+     * Summary of tiersDetailMarkup
+     * @param mixed $r
+     * @param HTMLTable $tbl
+     * @param mixed $tiers
+     * @param \DateTimeInterface $startDT
+     * @param string $separator
+     * @param int $totalGuestNites
+     * @return void
+     */
     public function tiersDetailMarkup($r, &$tbl, $tiers, $startDT, $separator, $totalGuestNites) {
 
     	$sDate = new \DateTime($startDT->format('Y-m-d'));
@@ -209,11 +320,11 @@ abstract class AbstractPriceModel {
 
     		while ($days > 0) {
 	    		$tbl->addBodyTr(
-	    				HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
-	    				.HTMLTable::makeTd($r['title'], array('style'=>$separator))
-	    				.HTMLTable::makeTd($sDate->format('M j, Y'), array('style'=>$separator))
-	    				.HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
-	    				);
+	    				HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('class'=>'align-center'))
+	    				.HTMLTable::makeTd($r['title'])
+	    				.HTMLTable::makeTd($sDate->format('M j, Y'))
+	    				.HTMLTable::makeTd(number_format($t['rate'], 2), array('class'=>'align-right'))
+	    				, ["class"=>$separator]);
 
 	    		$separator = '';
 	    		$sDate->add(new \DateInterval('P1D'));
@@ -225,27 +336,45 @@ abstract class AbstractPriceModel {
     	return;
     }
 
+    /**
+     * Summary of itemDetailMarkup
+     * @param mixed $r
+     * @param HTMLTable $tbl
+     * @return void
+     */
     public function itemDetailMarkup($r, &$tbl) {
 
     	$tbl->addBodyTr(
-    			HTMLTable::makeTd($r['orderNum'], array('style'=>'text-align:center;'))
-    			.HTMLTable::makeTd($r['desc'], array('style'=>'text-align:right;'))
+    			HTMLTable::makeTd($r['orderNum'], array('class'=>'align-center'))
+    			.HTMLTable::makeTd($r['desc'], array('class'=>'align-right'))
     			.HTMLTable::makeTd($r['date'])
-    			.HTMLTable::makeTd($r['amt'], array('style'=>'text-align:right;')));
+    			.HTMLTable::makeTd($r['amt'], array('class'=>'align-right')));
 
     }
 
+    /**
+     * Summary of itemMarkup
+     * @param mixed $r
+     * @param HTMLTable $tbl
+     * @return void
+     */
     public function itemMarkup($r, &$tbl) {
 
         $tbl->addBodyTr(
-            HTMLTable::makeTd($r['orderNum'], array('style'=>'text-align:center;'))
+            HTMLTable::makeTd($r['orderNum'], array('class'=>'align-center'))
             .HTMLTable::makeTd('')
             .HTMLTable::makeTd($r['date'])
-            .HTMLTable::makeTd($r['desc'], array('colspan'=>'3', 'style'=>'text-align:right;'))
-            .HTMLTable::makeTd($r['amt'], array('style'=>'text-align:right;')));
+            .HTMLTable::makeTd($r['desc'], array('colspan'=>'3', 'class'=>'align-right'))
+            .HTMLTable::makeTd($r['amt'], array('class'=>'align-right')));
 
     }
 
+    /**
+     * Summary of rateHeaderMarkup
+     * @param HTMLTable $tbl
+     * @param Labels $labels
+     * @return void
+     */
     public function rateHeaderMarkup(&$tbl, $labels) {
     	$tbl->addHeaderTr(
     			HTMLTable::makeTh('Visit Id')
@@ -258,6 +387,12 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of rateDetailHeaderMarkup
+     * @param mixed $tbl
+     * @param mixed $labels
+     * @return void
+     */
     public function rateDetailHeaderMarkup(&$tbl, $labels) {
     	$tbl->addHeaderTr(
     			HTMLTable::makeTh('Visit Id')
@@ -267,6 +402,15 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of rateTotalMarkup
+     * @param mixed $tbl
+     * @param mixed $label
+     * @param mixed $numberNites
+     * @param mixed $totalAmt
+     * @param mixed $guestNites
+     * @return void
+     */
     public function rateTotalMarkup(&$tbl, $label, $numberNites, $totalAmt, $guestNites) {
 
         // Room Fee totals
@@ -276,6 +420,13 @@ abstract class AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of priceModelFactory
+     * @param \PDO $dbh
+     * @param mixed $modelCode
+     * @throws \HHK\Exception\RuntimeException
+     * @return Price3Steps|PriceBasic|PriceDaily|PriceGuestDay|PriceNdayBlock|PriceNone|PricePerpetualSteps
+     */
     public static function priceModelFactory(\PDO $dbh, $modelCode) {
 
         switch ($modelCode) {
@@ -343,15 +494,18 @@ abstract class AbstractPriceModel {
         }
     }
 
+    /**
+     * Summary of getModelRoomRates
+     * @param \PDO $dbh
+     * @param mixed $priceModelCode
+     * @return array<Room_RateRS>
+     */
     protected static function getModelRoomRates(\PDO $dbh, $priceModelCode) {
 
         // Room rates
-        $stmt = $dbh->query("SELECT `idRoom_rate`,`Title`, `Description`, `FA_Category`, `Rate_Breakpoint_Category`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`
+        $stmt = $dbh->query("SELECT `idRoom_rate`,`Title`, `Description`, `FA_Category`, `Rate_Breakpoint_Category`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`, IF(`Rate_Breakpoint_Category` != '', 1,0) as 'breakpointOrder'
 FROM `room_rate`
-where PriceModel = '$priceModelCode' and Rate_Breakpoint_Category != ''
-union
-SELECT `idRoom_rate`,`Title`, `Description`, `FA_Category`, `Rate_Breakpoint_Category`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`
-FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Category = '';");
+where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Category asc;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $rrates = array();
@@ -366,16 +520,28 @@ FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Catego
         return $rrates;
     }
 
+    /**
+     * Summary of getActiveModelRoomRates
+     * @return array
+     */
     public function getActiveModelRoomRates() {
-        //Return them all
         return $this->activeRoomRates;
     }
 
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
+    /**
+     * Summary of getEditMarkup
+     * @param \PDO $dbh
+     * @param mixed $defaultRoomRate
+     * @param mixed $financialAssistance
+     * @return HTMLTable
+     */
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = FALSE) {
+
 
         $fTbl = new HTMLTable();
         $fTbl->addHeaderTr(
-            HTMLTable::makeTh('Title')
+            ($financialAssistance ? HTMLTable::makeTh('BP', array('style'=>'width:30px;', 'title'=>'Financial Assistance Breakpoint Category')) : '')
+            .HTMLTable::makeTh('Title')
             .HTMLTable::makeTh('Default')
             .HTMLTable::makeTh('Rate')
             .HTMLTable::makeTh('Retire')
@@ -389,7 +555,7 @@ FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Catego
                 continue;
             }
 
-            $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $attrs = array('type'=>'radio', 'name'=>'rrdefault', 'id'=>false);
             $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
             $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
 
@@ -400,7 +566,7 @@ FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Catego
             }
 
             $cbRetire = '';
-            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate && $r->Rate_Breakpoint_Category->getStoredVal() == '') {  //RoomRateCategories::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategories::FlatRateCategory) {
+            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate && $r->Rate_Breakpoint_Category->getStoredVal() == '') {
 
                 $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
 
@@ -417,31 +583,46 @@ FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Catego
             }
 
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs))
+                ($financialAssistance ? HTMLTable::makeTd(strtoupper($r->Rate_Breakpoint_Category->getStoredVal()), array('style'=>'text-align:center')) : '')
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs), array('style'=>'text-align:center'))
                 .($r->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
                 .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
         }
 
         // New rate
-        $this->newRateMarkup($fTbl);
+        $this->newRateMarkup($fTbl, $financialAssistance);
 
         return $fTbl;
     }
 
-    protected function newRateMarkup(&$fTbl) {
+    /**
+     * Summary of newRateMarkup
+     * @param HTMLTable $fTbl
+     * @param mixed $financialAssistance
+     * @return void
+     */
+    protected function newRateMarkup(&$fTbl, $financialAssistance = FALSE) {
 
         // New rate
         $fTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
-            .HTMLTable::makeTd('(New)')
+            ($financialAssistance ? HTMLTable::makeTd('', array('style'=>'width:30px;')) : '')
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
+            .HTMLTable::makeTd('(New)', array('style'=>'text-align:center'))
             .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
             .HTMLTable::makeTd('')
         );
 
     }
 
+    /**
+     * Summary of saveEditMarkup
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $username
+     * @return mixed
+     */
     public function saveEditMarkup(\PDO $dbh, $post, $username) {
 
         $defaultRate = RoomRateCategories::Fixed_Rate_Category;
@@ -449,7 +630,7 @@ FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Catego
         if (isset($post['ratetitle'])) {
 
             $rr1s = filter_var_array($post['rr1'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
-            $titles = filter_var_array($post['ratetitle'], FILTER_SANITIZE_STRING);
+            $titles = filter_var_array($post['ratetitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $rr2s = array();
             $rr3s = array();
             $mins = array();
@@ -465,11 +646,11 @@ FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Catego
             }
 
             if (isset($post['rrdefault'])) {
-                $defaultRate = filter_var($post['rrdefault'], FILTER_SANITIZE_STRING);
+                $defaultRate = filter_var($post['rrdefault'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if (isset($post['cbRetire'])) {
-                $retires = filter_var_array($post['cbRetire'], FILTER_SANITIZE_STRING);
+                $retires = filter_var_array($post['cbRetire'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             foreach ($this->roomRates as $oldRs) {
@@ -625,6 +806,11 @@ FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Catego
         return $defaultRate;
     }
 
+    /**
+     * Summary of getNewRateCategory
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     public function getNewRateCategory() {
 
         $newCats = array('ra','rb','rc','rd','re','rf','rg','rh','ri','rj','rk','rl','rm','rn','ro','rp','rq','rr','rs','rt','ru','rv','rw','rx','ry','rz');
@@ -645,41 +831,79 @@ FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Catego
         }
     }
 
+    /**
+     * Summary of getPriceModelCode
+     * @return string
+     */
     public function getPriceModelCode() {
         return $this->priceModelCode;
     }
 
+    /**
+     * Summary of setCreditDays
+     * @param mixed $days
+     * @return void
+     */
     public function setCreditDays($days) {
         $this->creditDays = intval($days, 10);
     }
 
+    /**
+     * Summary of getGlideApplied
+     * @return bool
+     */
     public function getGlideApplied() {
         return $this->glideApplied;
     }
 
+    /**
+     * Summary of getRemainderAmt
+     * @return float|int
+     */
     public function getRemainderAmt() {
         return $this->remainderAmt;
     }
 
+    /**
+     * Summary of hasRateCalculator
+     * @return bool
+     */
     public function hasRateCalculator() {
         return TRUE;
     }
 
+    /**
+     * Summary of getVisitStatus
+     * @return mixed|string
+     */
     public function getVisitStatus() {
         return $this->visitStatus;
     }
 
+    /**
+     * Summary of setVisitStatus
+     * @param mixed $visitStatus
+     * @return AbstractPriceModel
+     */
     public function setVisitStatus($visitStatus) {
         $this->visitStatus = $visitStatus;
         return $this;
     }
 
+    /**
+     * Summary of installRates
+     * @param \PDO $dbh
+     * @param mixed $modelCode
+     * @param mixed $incomeRated
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
     public static function installRates(\PDO $dbh, $modelCode, $incomeRated) {
 
         switch ($modelCode) {
 
             case ItemPriceCode::Basic:
-            	PriceBasic::InstallRate($dbh, $incomeRated);
+            	PriceBasic::InstallRate($dbh);
                 break;
 
             case ItemPriceCode::Dailey;

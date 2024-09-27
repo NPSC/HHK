@@ -7,7 +7,6 @@ use HHK\Tables\EditRS;
 use HHK\Tables\PaymentGW\Guest_TokenRS;
 use HHK\Exception\RuntimeException;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
-use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\Labels;
@@ -30,6 +29,15 @@ use HHK\sec\Labels;
  */
 class CreditToken {
 
+    /**
+     * Summary of storeToken
+     * @param \PDO $dbh
+     * @param int $idRegistration
+     * @param int $idPayor
+     * @param \HHK\Payment\GatewayResponse\GatewayResponseInterface $vr
+     * @param int $idToken
+     * @return int
+     */
     public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, GatewayResponseInterface $vr, $idToken = 0) {
 
         if ($vr->saveCardonFile() === FALSE || $vr->getToken() == '') {
@@ -80,7 +88,7 @@ class CreditToken {
         // Write
         if ($gtRs->idGuest_token->getStoredVal() > 0) {
             // Update
-        	$gtRs->Last_Updated->resetNewVal(date('Y-m-d'));
+        	$gtRs->Last_Updated->resetNewVal();
         	EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
             $idToken = $gtRs->idGuest_token->getStoredVal();
         } else {
@@ -91,6 +99,13 @@ class CreditToken {
         return $idToken;
     }
 
+    /**
+     * Summary of calculateRunningTotal
+     * @param mixed $runTot
+     * @param mixed $rawAmount
+     * @param mixed $tranType
+     * @return mixed
+     */
     protected static function calculateRunningTotal($runTot, $rawAmount, $tranType) {
 
         $total = 0;
@@ -123,33 +138,39 @@ class CreditToken {
     }
 
 
-    public static function updateToken(\PDO $dbh, AbstractPaymentResponse $vr) {
+    // public static function updateToken(\PDO $dbh, GatewayResponseInterface $vr) {
 
-        $gtRs = new Guest_TokenRS();
-        $gtRs->idGuest_token->setStoredVal($vr->idToken);
-        $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest_token));
+    //     $gtRs = new Guest_TokenRS();
+    //     $gtRs->idGuest_token->setStoredVal($vr->getIdToken());
+    //     $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest_token));
 
-        if (count($rows) == 1) {
+    //     if (count($rows) == 1) {
 
-            EditRS::loadRow($rows[0], $gtRs);
+    //         EditRS::loadRow($rows[0], $gtRs);
 
-            // Load new values
-            $gtRs->Token->setNewVal($vr->response->getToken());
-            $gtRs->Response_Code->setNewVal($vr->response->getResponseCode());
-            $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
-            $gtRs->Status->setNewVal($vr->response->getStatus());
-            $gtRs->StatusMessage->setNewVal($vr->response->getResponseMessage());
+    //         // Load new values
+    //         $gtRs->Token->setNewVal($vr->response->getToken());
+    //         $gtRs->Response_Code->setNewVal($vr->response->getResponseCode());
+    //         $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
+    //         $gtRs->Status->setNewVal($vr->response->getStatus());
+    //         $gtRs->StatusMessage->setNewVal($vr->response->getResponseMessage());
 
-            $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAmount(), $vr->response->getTranType());
-            $gtRs->Running_Total->setNewVal($runTot);
+    //         $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAmount(), $vr->response->getTranType());
+    //         $gtRs->Running_Total->setNewVal($runTot);
 
-            EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
-            EditRS::updateStoredVals($gtRs);
+    //         EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
+    //         EditRS::updateStoredVals($gtRs);
 
-        }
-        return $gtRs;
-    }
+    //     }
+    //     return $gtRs;
+    // }
 
+    /**
+     * Summary of getGuestTokenRSs
+     * @param \PDO $dbh
+     * @param mixed $idGuest
+     * @return array<Guest_TokenRS>
+     */
     public static function getGuestTokenRSs(\PDO $dbh, $idGuest) {
 
         $rsRows = array();
@@ -173,6 +194,14 @@ class CreditToken {
         return $rsRows;
     }
 
+    /**
+     * Summary of getRegTokenRSs
+     * @param \PDO $dbh
+     * @param int $idRegistration
+     * @param mixed $merchant
+     * @param int $idGuest
+     * @return array<Guest_TokenRS>
+     */
     public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $merchant, $idGuest = 0) {
 
         $rsRows = array();
@@ -208,7 +237,11 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
             $gtRs = new Guest_TokenRS();
             $gtRs->idGuest->setStoredVal($idGst);
             $gtRs->Merchant->setStoredVal($merchant);
-            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->Merchant));
+            $searchAr = array($gtRs->idGuest);
+            if($merchant != ""){
+                $searchAr[] = $gtRs->Merchant;
+            }
+            $rows = EditRS::select($dbh, $gtRs, $searchAr);
 
             if (count($rows) > 0) {
 
@@ -227,6 +260,17 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
         return $rsRows;
     }
 
+    /**
+     * Summary of findTokenRS
+     * @param \PDO $dbh
+     * @param int $gid
+     * @param string $cardHolderName
+     * @param string $cardType
+     * @param string $maskedAccount
+     * @param mixed $merchant
+     * @throws \HHK\Exception\RuntimeException
+     * @return Guest_TokenRS
+     */
     public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount, $merchant) {
 
         $gtRs = new Guest_TokenRS();
@@ -245,7 +289,7 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
 
             EditRS::loadRow($rows[0], $gtRs);
 
-        } else if (count($rows) == 0) {
+        } else if (count($rows) == 0 || $merchant == '') {  // fix for local gateway
 
             $gtRs = New Guest_TokenRS();
 
@@ -257,6 +301,12 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
         return $gtRs;
     }
 
+    /**
+     * Summary of getTokenRsFromId
+     * @param \PDO $dbh
+     * @param int $idToken
+     * @return Guest_TokenRS
+     */
     public static function getTokenRsFromId(\PDO $dbh, $idToken) {
 
         $gtRs = new Guest_TokenRS();
@@ -276,6 +326,11 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
         return $gtRs;
     }
 
+    /**
+     * Summary of hasToken
+     * @param \HHK\Tables\PaymentGW\Guest_TokenRS $tokenRs
+     * @return bool
+     */
     public static function hasToken(Guest_TokenRS $tokenRs) {
 
         if ($tokenRs->idGuest_token->getStoredVal() > 0 && $tokenRs->Token->getStoredVal() != '') {
@@ -311,6 +366,12 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
         return FALSE;
     }
 
+    /**
+     * Summary of deleteToken
+     * @param \PDO $dbh
+     * @param int $guestTokenId
+     * @return bool
+     */
     public static function deleteToken(\PDO $dbh, $guestTokenId) {
 
     	$gtRs = new Guest_TokenRS();
@@ -324,6 +385,12 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
     	return FALSE;
     }
 
+    /**
+     * Summary of getCardsOnFile
+     * @param \PDO $dbh
+     * @param mixed $page
+     * @return string HTML table
+     */
     public static function getCardsOnFile(\PDO $dbh, $page) {
 
     	$tbl = new HTMLTable();

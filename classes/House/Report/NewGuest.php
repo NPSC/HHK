@@ -7,6 +7,7 @@ use HHK\ColumnSelectors;
 use HHK\SysConst\GLTableNames;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\TableLog\HouseLog;
 
 /**
  *
@@ -28,14 +29,38 @@ class NewGuest
      */
     protected $endDT;
 
-    protected $numberNewGuests;
-    protected $numberReturnGuests;
+    /**
+     * Summary of numberNewGuests
+     * @var
+     */
+    protected int $numberNewGuests;
+    /**
+     * Summary of numberReturnGuests
+     * @var
+     */
+    protected int $numberReturnGuests;
 
-    protected $numberNewPSGs;
-    protected $numberReturnPSGs;
+    /**
+     * Summary of numberNewPSGs
+     * @var
+     */
+    protected int $numberNewPSGs;
+    /**
+     * Summary of numberReturnPSGs
+     * @var
+     */
+    protected int $numberReturnPSGs;
 
-    protected $newGuestIds;
-    protected $newPSGIds;
+    /**
+     * Summary of newGuestIds
+     * @var
+     */
+    protected array $newGuestIds;
+    /**
+     * Summary of newPSGIds
+     * @var
+     */
+    protected array $newPSGIds;
 
 
     /**
@@ -52,6 +77,15 @@ class NewGuest
         $this->newPSGIds = [];
     }
 
+    /**
+     * Summary of doNewGuestReport
+     * @param \PDO $dbh
+     * @param \HHK\ColumnSelectors $colSelector
+     * @param mixed $whereStr
+     * @param mixed $local
+     * @param \HHK\sec\Labels $labels
+     * @return string|void
+     */
     public function doNewGuestReport(\PDO $dbh, ColumnSelectors $colSelector, $whereStr, $local, Labels $labels) {
 
         // get session instance
@@ -159,10 +193,17 @@ class NewGuest
             return $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
 
         } else {
+            HouseLog::logDownload($dbh, 'New Guest Report', "Excel", "New Guests Report for " . $this->getStartDT()->format("Y-m-d") . " - " . $this->getEndDT()->format("Y-m-d") . " downloaded", $uS->username);
             $writer->download();
         }
     }
 
+    /**
+     * Summary of queryNewGuests
+     * @param mixed $pgTitle
+     * @param mixed $whereStr
+     * @return string
+     */
     protected function queryNewGuests($pgTitle, $whereStr = '') {
 
         return "SELECT
@@ -179,8 +220,8 @@ class NewGuest
     IFNULL(na.State_Province, '') AS `State_Province`,
     IFNULL(na.Postal_Code, '') AS `Postal_Code`,
     IFNULL(na.Country_Code, '') AS `Country`,
-	CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone' ELSE IFNULL(np.Phone_Num, '') END AS `Phone`,
-	IFNULL(ne.Email, '') AS `Email`,
+	CASE WHEN (n.Preferred_Phone = 'no') THEN 'No Phone' ELSE IFNULL(np.Phone_Num, '') END AS `Phone`,
+	CASE WHEN (n.Preferred_Email = 'no') THEN 'No Email' ELSE IFNULL(ne.Email, '') END AS `Email`,
     IFNULL(g3.Description, '') AS `Relationship`,
     IFNULL(ng.idPsg, 0) as `idPsg`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,
@@ -216,6 +257,7 @@ FROM
 WHERE
     n.Member_Status != 'TBD'
         AND n.Record_Member = 1
+        AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
         $whereStr
 GROUP BY s.idName
 HAVING DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')
@@ -224,6 +266,12 @@ ORDER BY `First Stay`";
 
     }
 
+    /**
+     * Summary of doReturningGuests
+     * @param \PDO $dbh
+     * @param mixed $whereStr
+     * @return void
+     */
     public function doReturningGuests(\PDO $dbh, $whereStr = '') {
 
         // Returning stays in period with first stay start date less tham start date.
@@ -243,6 +291,7 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
+                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
                 AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
                 AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
 
@@ -257,6 +306,12 @@ ORDER BY `First Stay`";
 
     }
 
+    /**
+     * Summary of doReturningPSGs
+     * @param \PDO $dbh
+     * @param mixed $whereStr
+     * @return void
+     */
     public function doReturningPSGs(\PDO $dbh, $whereStr = '') {
 
         // Returning stays in period with first stay start date less tham start date.
@@ -275,6 +330,7 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
+                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
                 AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
                 AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
 
@@ -290,6 +346,12 @@ ORDER BY `First Stay`";
 
     }
 
+    /**
+     * Summary of doNewPSGs
+     * @param \PDO $dbh
+     * @param mixed $whereStr
+     * @return void
+     */
     public function doNewPSGs(\PDO $dbh, $whereStr = '') {
 
         // Returning stays in period with first stay start date less tham start date.
@@ -308,6 +370,7 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
+                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
             GROUP BY hs.idPsg
                 HAVING  DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "') AND DATE(`First Stay`) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
             ORDER BY `First Stay`;";
@@ -323,7 +386,7 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @return number
+     * @return int
      */
     public function getNumberNewGuests()
     {
@@ -331,7 +394,7 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @return number
+     * @return int
      */
     public function getNumberReturnGuests()
     {
@@ -339,7 +402,7 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @return number
+     * @return int
      */
     public function getNumberNewPSGs()
     {
@@ -347,7 +410,7 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @return number
+     * @return int
      */
     public function getNumberReturnPSGs()
     {

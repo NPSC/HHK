@@ -16,7 +16,7 @@ use HHK\House\Reservation\Reservation_1;
  * History.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -29,11 +29,34 @@ use HHK\House\Reservation\Reservation_1;
 
 class History {
 
+    /**
+     * Summary of resvEvents
+     * @var array
+     */
     protected $resvEvents;
+    /**
+     * Summary of roomRates
+     * @var array
+     */
     protected $roomRates;
+    /**
+     * Summary of locations
+     * @var array
+     */
     protected $locations;
+    /**
+     * Summary of diags
+     * @var array
+     */
     protected $diags;
 
+    /**
+     * Summary of addToGuestHistoryList
+     * @param \PDO $dbh
+     * @param int $id
+     * @param int $role
+     * @return void
+     */
     public static function addToGuestHistoryList(\PDO $dbh, $id, $role) {
         if ($id > 0 && $role < WebRole::Guest) {
             $query = "INSERT INTO member_history (idName, Guest_Access_Date) VALUES ($id, now())
@@ -44,6 +67,13 @@ class History {
         }
     }
 
+    /**
+     * Summary of addToMemberHistoryList
+     * @param \PDO $dbh
+     * @param int $id
+     * @param int $role
+     * @return void
+     */
     public static function addToMemberHistoryList(\PDO $dbh, $id, $role) {
         if ($id > 0 && $role < WebRole::Guest) {
             $query = "INSERT INTO member_history (idName, Admin_Access_Date) VALUES ($id, now())
@@ -54,6 +84,14 @@ class History {
         }
     }
 
+    /**
+     * Summary of getHistoryMarkup
+     * @param \PDO $dbh
+     * @param string $view
+     * @param string $page
+     * @throws \HHK\Exception\InvalidArgumentException
+     * @return string
+     */
     public static function getHistoryMarkup(\PDO $dbh, $view, $page) {
 
         if ($view == "") {
@@ -118,14 +156,38 @@ class History {
         return HTMLContainer::generateMarkup("div", $table->generateMarkup(), array('class'=>'hhk-history-list'));
     }
 
+    /**
+     * Summary of getGuestHistoryMarkup
+     * @param \PDO $dbh
+     * @param string $page
+     * @return string
+     */
     public static function getGuestHistoryMarkup(\PDO $dbh, $page = "GuestEdit.php") {
         return self::getHistoryMarkup($dbh, "vguest_history_records", $page);
     }
+
+    /**
+     * Summary of getMemberHistoryMarkup
+     * @param \PDO $dbh
+     * @param string $page
+     * @return string
+     */
     public static function getMemberHistoryMarkup(\PDO $dbh, $page = "NameEdit.php") {
         return self::getHistoryMarkup($dbh, "vadmin_history_records", $page);
     }
 
 
+    /**
+     * Summary of getReservedGuestsMarkup
+     * @param \PDO $dbh
+     * @param string $status
+     * @param bool $includeAction
+     * @param string $start
+     * @param int $days
+     * @param bool $static
+     * @param string $orderBy
+     * @return array<array>
+     */
     public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $includeAction = TRUE, $start = '', $days = 1, $static = FALSE, $orderBy = '') {
 
         if (is_null($this->roomRates)) {
@@ -139,10 +201,10 @@ class History {
 
         if ($start != '') {
             try {
-                $startDT = new \DateTime(filter_var($start, FILTER_SANITIZE_STRING));
+                $startDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $days = intval($days);
 
-                $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_STRING));
+                $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $endDT->add(new \DateInterval('P' . $days . 'D'));
 
                 $whDate = " and DATE(Expected_Arrival) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Expected_Arrival) <= DATE('" . $endDT->format('Y-m-d') . "') ";
@@ -154,21 +216,29 @@ class History {
 
         if (is_null($this->resvEvents)) {
 
-            $query = "select * from vreservation_events where Status = '$status' $whDate $orderBy";
+            $query = "select * from vreservation_events where `Status` = '$status' $whDate $orderBy";
             $stmt = $dbh->query($query);
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
-        return $this->createMarkup($status, $page, $includeAction, $static);
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+
+        return $this->createMarkup($status, $page, $includeAction, $reservStatuses, $static);
     }
 
+    /**
+     * Summary of makeResvCanceledStatuses
+     * @param array $resvStatuses
+     * @param int $idResv
+     * @return string
+     */
     protected function makeResvCanceledStatuses($resvStatuses, $idResv) {
 
         $markup = HTMLContainer::generateMarkup('li', '-------');
 
         foreach ($resvStatuses as $s) {
 
-            if (Reservation_1::isRemovedStatus($s[0])) {
+            if (Reservation_1::isRemovedStatus($s[0], $resvStatuses)) {
                 $markup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $s[1], array('class'=>'resvStat', 'data-stat'=>$s[0], 'data-rid'=>$idResv)));
             }
         }
@@ -177,12 +247,36 @@ class History {
 
     }
 
-    protected function createMarkup($status, $page, $includeAction, $static = FALSE) {
+    /**
+     * Summary of createMarkup
+     * @param string $status
+     * @param string $page
+     * @param bool $includeAction
+     * @param array $reservStatuses
+     * @param bool $static
+     * @return array<array>
+     */
+    protected function createMarkup($status, $page, $includeAction, $reservStatuses, $static = FALSE) {
 
         $uS = Session::getInstance();
         // Get labels
-
         $labels = Labels::getLabels();
+        $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
+
+        // make incomplete address icon
+        $addr_icon = HTMLContainer::generateMarkup('ul'
+            , HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-mail-closed'))
+                , array('class'=>'ui-state-highlight ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Incomplete Address"))
+            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+
+
+        $patientStayingIcon = HTMLContainer::generateMarkup('ul'
+            , HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
+                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle Planning to stay"))
+            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {
@@ -191,23 +285,30 @@ class History {
 
             // Action
             if ($includeAction && !$static) {
+
                 $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none; display:block;')))
-                           . $this->makeResvCanceledStatuses($uS->guestLookups['ReservStatus'], $r['idReservation'])
-                           . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
-                           . ($includeAction && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
-                           . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
-                          . ($uS->ccgw != '' ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['idGuest'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest Name']))) : '')
+                            . ($uS->smsProvider ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Text Guests', array("class"=>"btnShowResvMsgs", 'data-rid'=>$r['idReservation']))) : "")
+                            . ($r['PrePaymt'] > 0 ? '' : $this->makeResvCanceledStatuses($reservStatuses, $r['idReservation']))
+                            . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
                     )), array('class' => 'gmenu'));
             }
 
             $fixedRows['Guest First'] = $r['Guest First'];
 
-            // Build the page anchor
+            // Build a page anchor - last name
             if ($page != '' && !$static) {
+
                 $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?rid=" . $r["idReservation"]));
+
+                if ($r['Incomplete_Address'] == 1) {
+                    $fixedRows['Guest Last'] = HTMLContainer::generateMarkup("div", $fixedRows['Guest Last'] . $addr_icon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
+                }
+
             } else {
                 $fixedRows['Guest Last'] = $r['Guest Last'];
             }
@@ -283,13 +384,24 @@ class History {
             // Number of guests
             $fixedRows["Occupants"] = $r["Number_Guests"];
 
-            $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
+
+            // Pre-payments
+            if ($uS->AcceptResvPaymt && isset($r['PrePaymt'])) {
+                if ($r['PrePaymt'] == 0) {
+                    $fixedRows['PrePaymt'] = '';
+                } else {
+                    $fixedRows['PrePaymt'] = '$' . number_format($r['PrePaymt'], 2);
+                }
+            }
+
+
 
             // Patient Name
+
             $fixedRows['Patient'] = $r['Patient Name'];
 
-            if ($r['Patient_Staying'] > 0 && !$static) {
-                $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
+            if ($r['Patient_Staying'] > 0 && ! $static) {
+                $fixedRows['Patient'] = HTMLContainer::generateMarkup("div", $fixedRows['Patient'] . $patientStayingIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between")); //HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
             }
 
 
@@ -335,6 +447,16 @@ class History {
 
     }
 
+    /**
+     * Summary of getCheckedInGuestMarkup
+     * @param \PDO $dbh
+     * @param string $page
+     * @param bool $includeAction
+     * @param bool $static
+     * @param string $patientColName
+     * @param string $hospColName
+     * @return array
+     */
     public static function getCheckedInGuestMarkup(\PDO $dbh, $page = "GuestEdit.php", $includeAction = TRUE, $static = FALSE, $patientColName = 'Patient', $hospColName = 'Hospital') {
 
         $uS = Session::getInstance();
@@ -344,10 +466,21 @@ class History {
             $hospList = $uS->guestLookups[GLTableNames::Hospital];
         }
 
-        return self::getCheckedInMarkup($dbh, $uS->PaymentGateway, $hospList, $page, $includeAction, $static, $patientColName, $hospColName);
+        return self::getCheckedInMarkup($dbh, $hospList, $page, $includeAction, $static, $patientColName, $hospColName);
     }
 
-    public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE, $static = FALSE, $patientColName = 'Patient', $hospColName = 'Hospital') {
+    /**
+     * Summary of getCheckedInMarkup
+     * @param \PDO $dbh
+     * @param array $hospitals
+     * @param string $page
+     * @param bool $includeAction
+     * @param bool $static
+     * @param string $patientColName
+     * @param string $hospColName
+     * @return array
+     */
+    public static function getCheckedInMarkup(\PDO $dbh, $hospitals, $page, $includeAction = TRUE, $static = FALSE, $patientColName = 'Patient', $hospColName = 'Hospital') {
 
         $uS = Session::getInstance();
 
@@ -371,7 +504,16 @@ class History {
 
         unset($cleanCodes);
 
-        $query = "select * from vcurrent_residents order by `Room`;";
+        $query = "select v.*,
+                IFNULL(`di`.`Description`, '') AS `demogTitle`,
+                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` from vcurrent_residents v" . 
+                ($uS->CurGuestDemogIcon != "Gender" ? 
+                    " LEFT JOIN `Name_Demog` nd on v.Id = nd.idName 
+                      LEFT JOIN `Gen_Lookups` di on nd.".$uS->CurGuestDemogIcon . " = di.Code and di.Table_Name = '" . $uS->CurGuestDemogIcon . "'" : "") .
+                ($uS->CurGuestDemogIcon == "Gender" ?
+                    " LEFT JOIN `Gen_Lookups` di on v.Gender = di.Code and di.Table_Name = 'Gender'" : ""
+                ) . 
+                " order by `Room`;";
         $stmt = $dbh->query($query);
 
         $returnRows = array();
@@ -380,29 +522,54 @@ class History {
         $hdArry = readGenLookupsPDO($dbh, "House_Discount");
         $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
+        $immobilityIcon = HTMLContainer::generateMarkup('ul'
+            , HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whlchr.jpg');"))
+                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Immobile"))
+            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+
+        $blindIcon = HTMLContainer::generateMarkup('ul'
+            , HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whtcne.jpg');"))
+                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Vision Impaired"))
+            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+
+
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $fixedRows = array();
 
             // Action
-            if ($includeAction && !$static) {
-                if (isset($r['Action'])) {
-                    $fixedRows['Action'] =  HTMLContainer::generateMarkup(
-                        'ul', HTMLContainer::generateMarkup('li', 'Action' .
-                                HTMLContainer::generateMarkup('ul',
-                                HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Edit Visit', array('class'=>'stvisit', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
-                              . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Check Out', array('class'=>'stckout', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
-                              . HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Dirty][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>RoomState::Dirty)) : HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Clean][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>  RoomState::Clean))))
-                              . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Change Rooms', array('class'=>'stchgrooms', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
-                              . (SecurityComponent::is_Authorized('guestadmin') === FALSE || count($hdArry) == 0 ? '' : HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Apply Discount', array('class'=>'applyDisc', 'data-vid'=>$r['idVisit']))))
-                        )), array('class' => 'gmenu'));
+            if ($includeAction && !$static && isset($r['Action'])) {
+                $fixedRows['Action'] =  HTMLContainer::generateMarkup(
+                    'ul', HTMLContainer::generateMarkup('li', 'Action' .
+                            HTMLContainer::generateMarkup('ul',
+                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Edit Visit', array('class'=>'stvisit', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn'=>$r['Span'])))
+                            . ($uS->smsProvider ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Text Guests', array("class"=>"btnShowVisitMsgs", 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']))) : "")
+                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Check Out', array('class'=>'stckout', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn'=>$r['Span'])))
+                          . HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Dirty][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>RoomState::Dirty)) : HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Clean][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>  RoomState::Clean))))
+                          . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Change Rooms', array('class'=>'stchgrooms', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn'=>$r['Span'])))
+                          . (SecurityComponent::is_Authorized('guestadmin') === FALSE || count($hdArry) == 0 ? '' : HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Apply Discount', array('class'=>'applyDisc', 'data-vid'=>$r['idVisit']))))
+                    )), array('class' => 'gmenu'));
+            }
 
-                }
+            if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos && $includeAction && !$static){
+                $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
             }
 
             // Guest first name
-            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
+            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>"ml-3 " . $r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
+            
+            /*
+            if (isset($r['ADA']) && $r['ADA'] == 'im') {
+                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $immobilityIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
+            } else if (isset($r['ADA']) && $r['ADA'] == 'b') {
+                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $blindIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
+            } else {
+                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
+            }*/
+
 
             // Guest last name
             if ($page != '') {
@@ -537,7 +704,13 @@ class History {
     }
 
 
-    public static function getVolEventsMarkup(\PDO $dbh, \DateTime $startDate) {
+    /**
+     * Summary of getVolEventsMarkup
+     * @param \PDO $dbh
+     * @param \DateTime $startDate
+     * @return array
+     */
+    public static function getVolEventsMarkup(\PDO $dbh, \DateTimeInterface $startDate) {
 
         $query = "select * from vrecent_calevents where `Last Updated` > '" .$startDate->format('Y-m-d'). "' order by Category, `Last Updated`;";
         $stmt = $dbh->query($query);
@@ -563,4 +736,3 @@ class History {
     }
 
 }
-?>

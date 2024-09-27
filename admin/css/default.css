@@ -163,6 +163,10 @@ div.hhk-recent {
     border: 1px solid;
     padding-bottom: 3px;
     padding-left: 2px;
+    overflow-x: auto;
+}
+div.hhk-recent table {
+    margin-bottom: 5px;
 }
 li.menuspacer {
     background-color: #C8DFB5;
@@ -211,7 +215,7 @@ table
     border-style: none !important;
 }
 span.hhk-recent-tablenames {
-    font-size: small;
+    font-weight: bold;
 }
 span.costDeduct {
     color: red;
@@ -329,4 +333,48 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 		display: none!important;
 	}
 	
+}
+
+#hhk-guest-photo-actions {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: space-evenly;
+}
+
+#hhk-guest-photo {
+	background-size: cover;
+}
+
+
+.actionBtns .hhk-ui-icons li {
+    margin: 2px;
+    position: relative;
+    padding: 4px;
+    cursor: pointer;
+    float: left;
+    list-style: none;
+}
+
+#searchSel {
+    margin: 1em 0; 
+    font-size:.85em; 
+    align-items: center;
+}
+
+#searchSel div, #searchSel select, #searchSel span {
+    margin-right: 1em;
+}
+
+#searchSel div label {
+    margin-left: 0.25em;
+}
+
+#duplicatesReadme * {
+    padding: revert;
+}
+
+#divaddrTabs button.btnTextGuest {
+	display: none;
 }

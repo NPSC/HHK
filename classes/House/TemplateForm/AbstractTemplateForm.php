@@ -20,6 +20,7 @@ namespace HHK\House\TemplateForm;
 abstract class AbstractTemplateForm {
 
     public $docId;
+    public $docTitle;
     public $template;
     public $replacedTemplate;
     public $subjectLine;
@@ -29,27 +30,27 @@ abstract class AbstractTemplateForm {
     * @param integer $docId
     */
    function __construct(\PDO $dbh, $docId){
+
+        $this->docTitle = "";
+        $this->template = "";
+        $this->subjectLine = "";
+
        if(intval($docId) > 0 && $dbh){
-           $stmt = $dbh->query("Select `Doc`,`Abstract` from `document` where `idDocument` = $docId");
+           $stmt = $dbh->query("Select ifnull(`g`.`Description`, '') as 'docTitle', `Doc`,`Abstract` from `document` d left join gen_lookups g on d.idDocument = g.`Substitute` where `idDocument` = $docId");
            $docRow = $stmt->fetch(\PDO::FETCH_ASSOC);
-           if(isset($docRow['Doc'])){
-               $this->template = $docRow['Doc'];
-           }else{
-               $this->template = "";
-           }
+
+           $this->template = (isset($docRow['Doc']) ? $docRow['Doc']: '');
+           $this->docTitle = $docRow["docTitle"];
 
            try{
-                $abstract = json_decode($docRow['Abstract'], true);
-                $this->subjectLine = (isset($abstract["subjectLine"]) ? $abstract["subjectLine"] : "");
+                if (isset($docRow['Abstract'])) {
+                    $abstract = json_decode($docRow['Abstract'], true);
+                    $this->subjectLine = (isset($abstract["subjectLine"]) ? $abstract["subjectLine"] : "");
+                }
            }catch(\Exception $e){
                $this->subjectLine = "";
            }
-
-       }else{
-           $this->template = "";
-           $this->subjectLine = "";
        }
-
    }
 
     public function createForm($replacements) {
@@ -69,6 +70,10 @@ abstract class AbstractTemplateForm {
 
     public function getSubjectLine(){
         return $this->subjectLine;
+    }
+
+    public function getDocTitle(){
+        return $this->docTitle;
     }
 
     protected function setValue($search, $replace) {

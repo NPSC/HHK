@@ -26,7 +26,20 @@ class StandInGwResponse implements GatewayResponseInterface {
     protected $processor;
     protected $merchant;
     protected $status;
+    protected $Approved;
 
+
+    /**
+     * Summary of __construct
+     * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
+     * @param mixed $operatorId
+     * @param mixed $cardholderName
+     * @param mixed $expDate
+     * @param mixed $token
+     * @param mixed $invoiceNumber
+     * @param mixed $amount
+     * @param mixed $status
+     */
     public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount, $status = MpStatusValues::Approved) {
 
         $this->pAuthRs = $pAuthRs;

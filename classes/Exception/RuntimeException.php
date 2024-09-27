@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * RuntimeException.php
  *
@@ -15,8 +18,6 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class RuntimeException
-              extends \RuntimeException {
-}
+class RuntimeException extends \RuntimeException {
 
-?>
+}

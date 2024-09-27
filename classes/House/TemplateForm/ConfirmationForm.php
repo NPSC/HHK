@@ -37,7 +37,7 @@ class ConfirmationForm extends AbstractTemplateForm {
 		$visitFeeNotice = "";
 
 		//populate visitFeeNotice
-		if($reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()) > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0){
+		if($reserv->getExpectedDays() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0){
                     if ($reserv->getVisitFee() > 0) {
 			$visitFeeNotice = $labels->getString('referral', 'VisitFeeConfirmLabel', '') . " $" . number_format($reserv->getVisitFee(), 2) . ".";
                     }
@@ -69,6 +69,10 @@ class ConfirmationForm extends AbstractTemplateForm {
 
         return array(
             'GuestName' => $guest->getRoleMember()->get_fullName(),
+            'GuestFirstName' => $guest->getRoleMember()->get_firstName(),
+            'GuestLastName' => $guest->getRoleMember()->get_lastName(),
+            'GuestNameSuffix' => $guest->getRoleMember()->get_suffix(),
+            'GuestNamePrefix' => $guest->getRoleMember()->get_prefix(),
             'GuestAddr1' => $guest->getAddrObj()->get_Data()['Address_1'],
             'GuestAddr2' => $guest->getAddrObj()->get_Data()['Address_2'],
             'GuestCity' => $guest->getAddrObj()->get_Data()['City'],
@@ -82,7 +86,7 @@ class ConfirmationForm extends AbstractTemplateForm {
             'ExpectedArrival' => date('M j, Y', strtotime($reserv->getExpectedArrival())),
             'ExpectedDeparture' => date('M j, Y', strtotime($reserv->getExpectedDeparture())),
             'DateToday' => date('M j, Y'),
-            'Nites' => $reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()),
+            'Nites' => $reserv->getExpectedDays(),
             'RoomRateTitle' =>$roomRateTitle,
             'RoomRateAmount' =>$roomRateAmount,
             'RateAdjust' =>($rateAdjust < 0 ? number_format(abs($rateAdjust),0): '0'),
@@ -100,10 +104,10 @@ class ConfirmationForm extends AbstractTemplateForm {
         $notesText = '';
 
         if ($editable) {
-            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')));
+            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', Labels::getString("Referral", "specialNoteConfEmail", "Special Note"), array('style'=>'font-weight:bold;')));
             $notesText .= HTMLContainer::generateMarkup('textarea', '', array('id'=>'tbCfmNotes'. $tabIndex, 'name'=>'tbCfmNotes'.$tabIndex, 'rows'=>'3', 'cols'=>'80'));
-        } else if (strlen($text) > 5) {
-            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')) . "<br/>" . nl2br($text));
+        } else if (strlen($text) > 0) {
+            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', Labels::getString("Referral", "specialNoteConfEmail", "Special Note"), array('style'=>'font-weight:bold;')) . "<br/>" . nl2br($text));
             $notesText .= '<br />';
         }
 
@@ -111,4 +115,3 @@ class ConfirmationForm extends AbstractTemplateForm {
     }
 
 }
-?>

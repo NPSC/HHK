@@ -62,7 +62,7 @@ abstract class AbstractConstraintsEntity {
      * @param int $idEntity
      * @param string $type
      * @param int $idCopyEntity
-     * @return ConstraintsReservation|ConstraintsHospital|ConstraintsVisit
+     * @return ConstraintsReservation|ConstraintsHospital|ConstraintsVisit|null
      */
     public static function constructByType(\PDO $dbh, $idEntity, $type, $idCopyEntity = 0) {
 
@@ -78,8 +78,15 @@ abstract class AbstractConstraintsEntity {
                 return new ConstraintsVisit($dbh, $idEntity, $idCopyEntity);
 
         }
+
+        return null;
     }
 
+    /**
+     * Summary of loadConstraints
+     * @param \PDO $dbh
+     * @return array
+     */
     protected function loadConstraints(\PDO $dbh) {
 
         $cArray = array();
@@ -103,14 +110,26 @@ where c.Status = 'a' and c.Type = :tpe");
         return $cArray;
     }
 
+    /**
+     * Summary of getIdEntity
+     * @return int
+     */
     protected function getIdEntity() {
         return $this->idEntity;
     }
 
+    /**
+     * Summary of getConstraints
+     * @return array
+     */
     public function getConstraints() {
         return $this->constraints;
     }
 
+    /**
+     * Summary of getActiveConstraintsArray
+     * @return array
+     */
     public function getActiveConstraintsArray() {
 
         $rConsts = array();
@@ -125,8 +144,18 @@ where c.Status = 'a' and c.Type = :tpe");
         return $rConsts;
     }
 
+    /**
+     * Summary of getConstraintType
+     * @return void|mixed
+     */
     protected abstract function getConstraintType();
 
+    /**
+     * Summary of saveConstraints
+     * @param \PDO $dbh
+     * @param mixed $capturedConstraints
+     * @return void
+     */
     public function saveConstraints(\PDO $dbh, $capturedConstraints) {
 
         if ($this->getIdEntity() == 0) {

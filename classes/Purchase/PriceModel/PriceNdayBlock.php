@@ -21,9 +21,32 @@ use HHK\HTMLControls\{HTMLTable, HTMLInput};
  */
 class PriceNdayBlock extends AbstractPriceModel {
 
+    /**
+     * Summary of blockTitle
+     * @var string
+     */
     protected $blockTitle = '';
+    /**
+     * Summary of blocks
+     * @var int
+     */
     protected $blocks = 0;
 
+    /**
+     * Summary of daysAccumulator
+     * @var
+     */
+    protected $daysAccumulator;
+
+    /**
+     * Summary of amountCalculator
+     * @param int $nites
+     * @param int $idRoomRate
+     * @param string $rateCategory
+     * @param mixed $pledgedRate
+     * @param int $guestDays
+     * @return float
+     */
     public function amountCalculator($nites, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {
 
         if ($nites == 0) {
@@ -68,7 +91,14 @@ class PriceNdayBlock extends AbstractPriceModel {
         return $amount;
     }
 
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
+    /**
+     * Summary of getEditMarkup
+     * @param \PDO $dbh
+     * @param string $defaultRoomRate
+     * @param bool $financialAssistance
+     * @return HTMLTable
+     */
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
 
 
         $fTbl = new HTMLTable();
@@ -88,7 +118,7 @@ class PriceNdayBlock extends AbstractPriceModel {
                 continue;
             }
 
-            $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $attrs = array('type'=>'radio', 'name'=>'rrdefault', 'id'=>false);
             $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
             $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
             $rr2Attrs = array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
@@ -145,6 +175,16 @@ class PriceNdayBlock extends AbstractPriceModel {
 
     }
 
+    /**
+     * Summary of tiersCalculation
+     * @param int $days
+     * @param int $idRoomRate
+     * @param string $rateCategory
+     * @param float|int $pledgedRate
+     * @param float|int $rateAdjust
+     * @param int $guestDays
+     * @return array
+     */
     public function tiersCalculation($days, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $guestDays = 0) {
 
         $tiers = array();
@@ -200,6 +240,17 @@ class PriceNdayBlock extends AbstractPriceModel {
         return $tiers;
     }
 
+    /**
+     * Summary of tiersMarkup
+     * @param mixed $r
+     * @param float|int $totalAmt
+     * @param HTMLTable $tbl
+     * @param mixed $tiers
+     * @param mixed $startDT
+     * @param string $separator
+     * @param int $totalGuestNites
+     * @return float|int
+     */
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $roomCharge = 0;
@@ -226,6 +277,12 @@ class PriceNdayBlock extends AbstractPriceModel {
         return $roomCharge;
     }
 
+    /**
+     * Summary of installRate
+     * @param \PDO $dbh
+     * @param bool $incomeRated
+     * @return void
+     */
     protected static function installRate(\PDO $dbh, $incomeRated) {
 
         $modelCode = ItemPriceCode::NdayBlock;

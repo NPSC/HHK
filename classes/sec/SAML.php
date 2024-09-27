@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Exception\AuthException;
 use OneLogin\Saml2\Auth;
 use OneLogin\Saml2\Error;
 use OneLogin\Saml2\IdPMetadataParser;
@@ -86,7 +87,7 @@ class SAML {
      *
      * Handles the SAML Response from the IdP
      *
-     * @return array;
+     * 
      */
     public function acs(){
         $uS = Session::getInstance();
@@ -121,22 +122,26 @@ class SAML {
             }
 
             if($u->doLogin($this->dbh, $userAr)){
-                $pge = $uS->webSite['Default_Page'];
+                $pge = (!empty($uS->webSite['Default_Page']) ? $uS->webSite['Default_Page'] : "");
                 if ($u->getDefaultPage() != '') {
                     $pge = $u->getDefaultPage();
                 }
 
-                if (SecurityComponent::is_Authorized($pge)) {
-                    header('location:../' . $uS->webSite['Relative_Address'].$pge);
-                } else {
-                    $error = "Unauthorized for page: " . $pge;
+                try {
+                    if (SecurityComponent::is_Authorized($pge, true)) {
+                        header('location:../' . (!empty($uS->webSite['Relative_Address']) ? $uS->webSite['Relative_Address'] : "") . $pge);
+                    } else {
+                        $error = "Unauthorized for page: " . $pge;
+                    }
+                }catch(AuthException $e){
+                    $error = $e->getMessage();
                 }
             }
         }
 
         if($error){
             $uS->ssoLoginError = $error;
-            header('location:../' . $uS->webSite['Relative_Address']);
+            header('location:../' . (!empty($uS->webSite['Relative_Address']) ? $uS->webSite['Relative_Address'] : ''));
         }
 
     }
@@ -211,7 +216,7 @@ class SAML {
 
             if(!isset($user['Role_Id']) || (isset($user['idIdp']) && $user['idIdp'] != $this->IdpId)){
                 //register Web User
-                $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', 'v', 0, " . $this->IdpId . ");";
+                $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', '', 0, " . $this->IdpId . ");";
                 if($this->dbh->exec($query) === false){
                     $err = $this->dbh->errorInfo();
                     return array("error"=>$err[0] . "; " . $err[2]);
@@ -261,12 +266,13 @@ class SAML {
                     $selSecurityGroups = $this->IdpConfig['defaultGroups'];
                 }
                 foreach($allSecurityGroups as $secGroup){
-                    if(in_array($secGroup["Title"], $selSecurityGroups)){
+                    if(in_array($secGroup["Title"], $selSecurityGroups) || in_array($secGroup["Code"], $selSecurityGroups)){
                         $parms["grpSec_" . $secGroup["Code"]] = "checked";
                     }else{
                         $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
                     }
                 }
+                
                 //update security groups
                 WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, $this->auditUser);
             }
@@ -293,13 +299,15 @@ class SAML {
         //Search by exact email address, if no results, search by first and last name, else return 0
         $firstName = (isset($this->auth->getAttribute("FirstName")[0]) ? $this->auth->getAttribute("FirstName")[0] : "");
         $lastName = (isset($this->auth->getAttribute("LastName")[0]) ? $this->auth->getAttribute("LastName")[0] : "");
-        $email = (isset($this->auth->getAttribute("Email")[0]) ? $this->auth->getAttribute("Email")[0] : "");
+        $email = (isset($this->auth->getAttribute("Email")[0]) ? $this->auth->getAttribute("Email")[0] : false);
 
-        $emailSearch = new MemberSearch($email);
-        $result = $emailSearch->searchLinks($this->dbh, "e", 0, true);
+        if($email){
+            $emailSearch = new MemberSearch($email);
+            $result = $emailSearch->searchLinks($this->dbh, "e", 0, true);
 
-        if(count($result) > 0 && $result[0]["id"] > 0){
-            return $result[0]["id"];
+            if(count($result) > 0 && $result[0]["id"] > 0){
+                return $result[0]["id"];
+            }
         }
 
         $nameSearch = new MemberSearch($firstName . " " . $lastName);
@@ -631,7 +639,7 @@ class SAML {
             $certData = $certStr;
         }
 
-        $certInfo = openssl_x509_parse($certData);
+        $certInfo = (!empty($certData) ? openssl_x509_parse($certData):false);
         if($certInfo){
             $validFromDate = date_create_from_format('ymdHise',$certInfo["validFrom"]);
             $validToDate = date_create_from_format('ymdHise', $certInfo["validTo"]);
@@ -1004,13 +1012,13 @@ class SAML {
             $defaultSecurityGroups = array();
 
             if(isset($post['idpConfig'][$this->IdpId]['name']) && $post['idpConfig'][$this->IdpId]['name'] != ''){
-                $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_STRING);
+                $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }else{
                 $errorMsg .= "<br>Name is required";
             }
 
             if(isset($post['idpConfig'][$this->IdpId]['LogoPath'])){
-                $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_STRING);
+                $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if(!isset($post['idpConfig']['new'])){
@@ -1034,19 +1042,19 @@ class SAML {
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpSigningCert'])){
-                        $idpConfig['idpSigningCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpSigningCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert'], FILTER_SANITIZE_ADD_SLASHES);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpSigningCert2'])){
-                        $idpConfig['idpSigningCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert2'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpSigningCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert2'], FILTER_SANITIZE_ADD_SLASHES);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert'])){
-                        $idpConfig['idpEncryptionCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpEncryptionCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert'], FILTER_SANITIZE_ADD_SLASHES);
                     }
 
                     if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'])){
-                        $idpConfig['idpEncryptionCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'], FILTER_SANITIZE_STRING);
+                        $idpConfig['idpEncryptionCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'], FILTER_SANITIZE_ADD_SLASHES);
                     }
                 }
 
@@ -1221,7 +1229,7 @@ class SAML {
         $rows = EditRS::select($this->dbh, $secRS, array($secRS->idIdp));
 
         foreach ($rows as $r) {
-            $sArray[$r['Group_Code']]["exist"] = "t";
+            $sArray[$r['idSecGroup']]["exist"] = "t";
         }
 
         $updtd = FALSE;

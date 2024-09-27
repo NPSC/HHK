@@ -46,6 +46,7 @@ class VisitRS extends AbstractTableRS {
     public $Amount_Per_Guest;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $idRoom_rate;  // int(11) NOT NULL DEFAULT '0',
     public $Rate_Category;  // varchar(5) NOT NULL DEFAULT '',
+    public $idRateAdjust; // varchar(5) NULL DEFAULT '0',
     public $Rate_Glide_Credit;  // int(11) not null default '0',
     public $Notes;   // TEXT NULL DEFAULT NULL ,
     public $Status;   // VARCHAR(5) NOT NULL DEFAULT '' ,
@@ -71,6 +72,7 @@ class VisitRS extends AbstractTableRS {
         $this->idRoom_rate = new DB_Field('idRoom_Rate', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Expected_Departure = new DB_Field("Expected_Departure", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Rate_Category = new DB_Field("Rate_Category", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->idRateAdjust = new DB_Field("idRateAdjust", '0', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Rate_Glide_Credit = new DB_Field("Rate_Glide_Credit", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->OverRideMaxOcc = new DB_Field("OverRideMaxOcc", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Actual_Departure = new DB_Field("Actual_Departure", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);

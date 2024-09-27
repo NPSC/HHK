@@ -29,7 +29,7 @@ if (isset($_GET['cmd'])) {
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
 } catch (Exception $ex) {
 
@@ -44,18 +44,18 @@ switch ($cmd){
         if(isset($uS->timeout_idle)){
             $expiresIn = $uS->timeout_idle - time();
         }
-        
+
         $events = array('ExpiresIn'=>$expiresIn);
         break;
     case "extend":
         try{
             new WebInit();
-            
+
             $expiresIn = false;
             if(isset($uS->timeout_idle)){
                 $expiresIn = $uS->timeout_idle - time();
             }
-            
+
             $events = array('ExpiresIn'=>$expiresIn);
         }catch(\Exception $e){
             $events = array('error'=>$e->getMessage());

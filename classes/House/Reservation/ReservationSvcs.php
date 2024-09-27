@@ -7,6 +7,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\House\Report\ActivityReport;
 use HHK\Member\Role\Guest;
 use HHK\Note\{LinkNote, Note};
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Purchase\FinAssistance;
 use HHK\SysConst\{DefaultSettings, GLTableNames, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
@@ -15,11 +16,12 @@ use HHK\sec\{SecurityComponent, Session};
 use HHK\Tables\PaymentGW\Guest_TokenRS;
 use HHK\House\Room\RoomChooser;
 use HHK\SysConst\RoomRateCategories;
-use HHK\House\RegisterForm;
-use HHK\House\RegistrationForm;
+use HHK\House\RegistrationForm\RegisterForm;
+use HHK\House\RegistrationForm\RegistrationForm;
 use HHK\House\TemplateForm\ConfirmationForm;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Member\Role\Agent;
+use HHK\House\RegistrationForm\CustomRegisterForm;
 
 /**
  * ReservationSvcs.php
@@ -51,23 +53,25 @@ class ReservationSvcs
         );
     }
 
-    public static function getCurrentReservations(\PDO $dbh, $idResv, $id, $idPsg, \DateTime $startDT, \DateTime $endDT)
+    public static function getCurrentReservations(\PDO $dbh, $idResv, $id, $idPsg, \DateTimeInterface $startDT, \DateTimeInterface $endDT)
     {
         $rows = array();
 
         if ($idPsg > 0 && $id > 0) {
             // look for both
-            $stmt = $dbh->query("select * from vresv_guest " . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests " . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } else if ($idPsg > 0) {
 
-            $stmt = $dbh->query("select * from vresv_guest where idPsg = $idPsg and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests where idPsg = $idPsg and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } else if ($id > 0) {
 
-            $stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            // EKC 9/15/2023; changed all three to vfind_guests from vresv_guests.
+            //$stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
@@ -88,6 +92,8 @@ class ReservationSvcs
         $li = '';
         $tabContent = '';
         $dataArray = array();
+        $cronJobs = array();
+        $reservStatuses = array();
 
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
 
@@ -102,6 +108,18 @@ class ReservationSvcs
 
         if (count($docRows) > 0) {
 
+            //get cron jobs
+            $stmt = $dbh->query("select * from cronjobs where `Code` = 'SendConfirmationEmailJob' and `Status` = 'a'");
+            $jobs = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach($jobs as $job){
+                $params = json_decode($job["Params"], true);
+                if(isset($params["EmailTemplate"]) && $params["EmailTemplate"] > 0){
+                    $job["Params"] = $params;
+                    $cronJobs[$params["EmailTemplate"]][$job["idJob"]] = $job;
+                }
+            }
+            $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+
             foreach ($docRows as $d) {
 
                 $confirmForm = new ConfirmationForm($dbh, $d['idDocument']);
@@ -115,6 +133,12 @@ class ReservationSvcs
                     'tabTitle' => $d['Description'],
                     'docId' => $d['idDocument']
                 );
+                
+                if(isset($cronJobs[$d['idDocument']])){
+                    $docs[$d['Code']]["cronJobs"] = $cronJobs[$d['idDocument']];
+                }else{
+                    $docs[$d['Code']]["cronJobs"] = [];
+                }
             }
         } else {
 
@@ -124,17 +148,28 @@ class ReservationSvcs
                 'style' => RegisterForm::getStyling(),
                 'tabIndex' => 'en',
                 'tabTitle' => 'English',
-                'docId' => false
+                'docId' => false,
+                'cronJobs'=>[]
             );
         }
 
         foreach ($docs as $r) {
+            $cronAlert = "";
 
             $li .= HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
+                HTMLContainer::generateMarkup('a', $r['tabTitle'] . ($r["cronJobs"] ? '<i class="ml-2 bi bi-watch"></i>':'') , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
 
+            if(count($r["cronJobs"]) > 0){
+                foreach($r["cronJobs"] as $job){
+                    $jobTime = new \DateTime($reserv->getExpectedArrival());
+                    $jobTime->sub(new \DateInterval("P" . $job["Params"]["solicitBuffer"] . "D"));
+                    $jobTime->setTime($job["Hour"], $job["Minute"]);
+                    $cronAlert .= "This email is sent automatically at " . $jobTime->format("g:i a") . " <strong>" . $job["Params"]["solicitBuffer"] . " days before</strong> (" . $jobTime->format("M j, Y") . ") the expected arrival date " . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? "of <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : ""); 
+                }
+                $cronAlert = HTMLContainer::generateMarkup("div", '<i class="mr-3 bi bi-info-circle-fill"></i>' . $cronAlert, ['class' => 'mb-4 p-2 ui-corner-all ui-state-highlight']);
+            }
 
-            $tabContent .= HTMLContainer::generateMarkup('div',
+            $tabContent .= HTMLContainer::generateMarkup('div', $cronAlert .
                 HTMLContainer::generateMarkup('div', ($r['doc'] != '' ? $r['doc']: '<div class="ui-state-error">The confirmation document is empty</div>'), array('id'=>'PrintArea'.$r['tabIndex'])),
                 array('id'=>$r['tabIndex']));
 
@@ -162,9 +197,9 @@ class ReservationSvcs
             if ($emailAddr != '') {
 
                 try{
-                    $mail = prepareEmail();
+                    $mail = new HHKMailer($dbh);
                     $mail->From = $uS->FromAddress;
-                    $mail->FromName = $uS->siteName;
+                    $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
 
                     $ccs = explode(',', $ccEmailAddr);
@@ -178,6 +213,7 @@ class ReservationSvcs
 
                     $bccs = explode(',', $uS->BccAddress);
                     foreach ($bccs as $bcc) {
+                        $bcc = trim($bcc);
                         if ($bcc != '') {
                             $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));
                         }
@@ -185,13 +221,24 @@ class ReservationSvcs
 
                     $mail->isHTML(true);
 
-                    $mail->Subject = $docs[$docCode]['subjectLine'];
+                    $mail->Subject = htmlspecialchars_decode($docs[$docCode]['subjectLine'], ENT_QUOTES);
                     $mail->msgHTML($docs[$docCode]['doc']);
 
                     $mail->send();
 
                     // Make a note in the reservation.
-                    $noteText = (isset($docs[$docCode]['tabTitle']) ? $docs[$docCode]['tabTitle'] . ' ' : '') . 'Confirmation Email sent to ' . $emailAddr .  " with subject: " . $docs[$docCode]["subjectLine"];
+                    $noteText = (isset($docs[$docCode]['tabTitle']) ? $docs[$docCode]['tabTitle'] . ' ' : '') . 'Confirmation Email';
+
+                    try {
+                        $arrive = (new \DateTime($reserv->getArrival()))->format("M d, Y");
+                        $depart = (new \DateTime($reserv->getDeparture()))->format("M d, Y");
+
+                        $noteText .= " for " . $arrive . " to " . $depart;
+                    }catch(\Exception $e){
+
+                    }
+                    
+                    $noteText .= ' sent to ' . $emailAddr .  " with subject: " . $docs[$docCode]["subjectLine"];
                     if($ccEmailAddr != '' && count($ccs) > 0){
                         $noteText .= '; CC\'d to ';
                         foreach ($ccs as $cc){
@@ -201,9 +248,9 @@ class ReservationSvcs
                         }
                     }
                     if ($notes != '') { // add special note if any are present
-                        $noteText .= ' with the following as a special note: ' . str_replace('\n', ' ', $notes);
+                        $noteText .= ' with a ' . Labels::getString("Referral", "specialNoteConfEmail", "Special Note") . ': ' . str_replace('\n', ' ', $notes);
                     }
-                    LinkNote::save($dbh, $noteText, $reserv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+                    LinkNote::save($dbh, $noteText, $reserv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
 
                     $reserv->saveReservation($dbh, $reserv->getIdRegistration(), $uS->username);
 
@@ -233,9 +280,10 @@ class ReservationSvcs
     public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '')
     {
         $uS = Session::getInstance();
+        $return = array("docs"=>[]);
         $docs = array();
 
-        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
+        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc`, d.idDocument as `docId` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
         $docRows = $stmt->fetchAll();
 
         if ($uS->RegForm == 1) {
@@ -262,6 +310,73 @@ class ReservationSvcs
                     'tabTitle' => 'English'
                 );
             }
+
+
+        } else if($uS->RegForm == 3){
+
+            if (count($docRows) > 0) {
+
+                foreach ($docRows as $d) {
+
+                    $regSettings = [];
+                    if(!empty($d['Abstract']) && @json_decode($d['Abstract'], true)){
+                        $regSettings = json_decode($d['Abstract'], true);
+                    }
+
+                    $regForm = new CustomRegisterForm($d["Code"], $regSettings);
+
+                    $docs[] = array(
+                        'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d),
+                        'style' => '',
+                        'tabIndex' => $d['Code'],
+                        'tabTitle' => $d['Description'],
+                        'pageTitle' => $regForm->getPageTitle(),
+                        'allowSave' => (!empty($regForm->settings["Signatures"]["eSign"]) && ($regForm->settings["Signatures"]["eSign"] == 'jSign' || $regForm->settings["Signatures"]["eSign"] == 'topaz')),
+                        'signType' => (!empty($regForm->settings["Signatures"]["eSign"]) ? $regForm->settings["Signatures"]["eSign"] : '')
+                    );
+                }
+            } else {
+
+                $regForm = new CustomRegisterForm();
+
+                $docs[] = array(
+                    'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
+                    'style' => '',
+                    'tabIndex' => 'en',
+                    'tabTitle' => 'English'
+                );
+            }
+
+            //get primary guest
+            if ($idVisit > 0) {
+
+                $stmtv = $dbh->prepare("Select v.idPrimaryGuest, v.idRegistration, r.idPsg, v.idReservation from visit v join registration r on v.idRegistration = r.idRegistration where idVisit = :idv and span = :span");
+                $stmtv->execute(array(
+                    ':idv' => $idVisit,
+                    ':span' => $span
+                ));
+                $rows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
+
+                if(count($rows) == 1){
+                    $return["idPrimaryGuest"] = $rows[0]["idPrimaryGuest"];
+                    $return["idPsg"] = $rows[0]["idPsg"];
+                    $return["idReservation"] = $rows[0]["idReservation"];
+                }
+
+            }else if($idReservation > 0){
+                $stmtr = $dbh->prepare("Select rg.idGuest, reg.idPsg from reservation r join reservation_guest rg on r.idReservation = rg.idReservation join registration reg on r.idRegistration = reg.idRegistration where rg.idReservation = :idr and `Primary_Guest` = '1'");
+                $stmtr->execute(array(
+                    ':idr' => $idReservation
+                ));
+                $rows = $stmtr->fetchAll(\PDO::FETCH_ASSOC);
+
+                if(count($rows) == 1){
+                    $return["idPrimaryGuest"] = $rows[0]["idGuest"];
+                    $return["idPsg"] = $rows[0]["idPsg"];
+                }
+
+            }
+
         } else if ($uS->RegForm == 2) {
 
             // IMD
@@ -440,7 +555,7 @@ class ReservationSvcs
             }
 
             $regdoc = new RegistrationForm();
-            $logoWidth = 114;
+            $logoWidth = $uS->statementLogoWidth;
 
             if (count($docRows) > 0) {
                 foreach ($docRows as $d) {
@@ -463,14 +578,51 @@ class ReservationSvcs
             }
         } else {
             return array(
-                'docs' => 'Error - Registration Form is not defined in the system configuration.',
+                'docs' => [],
+                'error' => 'Error - Registration Form is not defined in the system configuration.',
                 'style' => ' '
             );
         }
 
-        return array(
-            'docs' => $docs
-        );
+        $return["docs"] = $docs;
+        return $return;
+    }
+
+    /**
+     * Get signed reg forms HTML
+     *
+     * @param \PDO $dbh
+     * @param number $idPsg
+     * @param number $idReservation
+     * @param number $idVisit
+     * @param number $span
+     *
+     * @return array
+     */
+    public static function getSignedCkinDocs(\PDO $dbh, $idPsg = 0, $idReservation = 0, $idVisit = 0, $span = 0){
+        $sql = 'select * from v_signed_reg_forms where PSG_Id = :idPsg';
+        $params = array(':idPsg'=>$idPsg);
+
+        if($idReservation > 0 || $idVisit > 0){
+            $sql .= " AND (";
+            if($idReservation > 0){
+                $sql .= ' Resv_Id = :idResv';
+                $params[':idResv'] = $idReservation;
+            }
+            if($idReservation > 0 && $idVisit > 0){
+                $sql .= " OR ";
+            }
+            if($idVisit > 0){
+                $sql .= '  Visit_Id = :idVisit';
+                $params[':idVisit'] = $idVisit;
+            }
+            $sql .= ")";
+        }
+
+        $stmt = $dbh->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public static function getReservGuests(\PDO $dbh, $idReservation)
@@ -487,7 +639,7 @@ class ReservationSvcs
         return $ids;
     }
 
-    public static function moveResvAway(\PDO $dbh, \DateTime $firstArrival, \DateTime $lastDepart, $idResource, $uname)
+    public static function moveResvAway(\PDO $dbh, \DateTimeInterface $firstArrival, \DateTimeInterface $lastDepart, $idResource, $uname)
     {
 
     	$uS = Session::getInstance();
@@ -566,9 +718,12 @@ class ReservationSvcs
             } else if ($reserv->getStatus() == ReservationStatus::Waitlist) {
                 $dataArray['waitlist'] = 'y';
             }
+            $dataArray["success"] = $reply;
+        }else{
+            return ["error"=>$reply];
         }
 
-        $dataArray["success"] = $reply;
+
         return $dataArray;
     }
 
@@ -642,26 +797,26 @@ class ReservationSvcs
 
         // FA Category
         if (isset($post['hdnRateCat'])) {
-            $faCategory = filter_var($post['hdnRateCat'], FILTER_SANITIZE_STRING);
+            $faCategory = filter_var($post['hdnRateCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($post['SelFaStatus']) && $post['SelFaStatus'] != '') {
-            $faStat = filter_var($post['SelFaStatus'], FILTER_SANITIZE_STRING);
+            $faStat = filter_var($post['SelFaStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($post['txtFaStatusDate']) && $post['txtFaStatusDate'] != '') {
-            $faDT = setTimeZone($uS, filter_var($post['txtFaStatusDate'], FILTER_SANITIZE_STRING));
+            $faDT = setTimeZone($uS, filter_var($post['txtFaStatusDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $faStatDate = $faDT->format('Y-m-d');
         }
 
         // Reason text
         if (isset($post['txtFaReason'])) {
-            $reason = filter_var($post['txtFaReason'], FILTER_SANITIZE_STRING);
+            $reason = filter_var($post['txtFaReason'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Notes
         if (isset($post['txtFaNotes'])) {
-            $notes = filter_var($post['txtFaNotes'], FILTER_SANITIZE_STRING);
+            $notes = filter_var($post['txtFaNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Save Fin App dialog.
@@ -738,6 +893,15 @@ class ReservationSvcs
         return $dataArray;
     }
 
+    /**
+     * Summary of getRoomList
+     * @param \PDO $dbh
+     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param string $eid
+     * @param bool $isAuthorized
+     * @param int $numGuests
+     * @return array
+     */
     public static function getRoomList(\PDO $dbh, Reservation_1 $resv, $eid, $isAuthorized, $numGuests = 0)
     {
         if ($numGuests <= 0) {
@@ -847,30 +1011,4 @@ class ReservationSvcs
         );
     }
 
-    public static function deleteReservation(\PDO $dbh, $rid)
-    {
-
-        // Get labels
-        $labels = Labels::getLabels();
-        $uS = Session::getInstance();
-
-        if ($rid > 0) {
-
-            $resv = Reservation_1::instantiateFromIdReserv($dbh, $rid);
-
-            if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
-
-                $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' status "' . $resv->getStatusTitle($dbh) . '" cannot be deleted';
-            } else {
-                // Okay to delete
-                $resv->deleteMe($dbh, $uS->username);
-
-                $dataArray['result'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Deleted.';
-            }
-        } else {
-            $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Id is not valid.  ';
-        }
-
-        return $dataArray;
-    }
 }

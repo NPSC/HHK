@@ -9,6 +9,7 @@ use HHK\Member\EmergencyContact\EmergencyContact;
 use HHK\Member\RoleMember\AbstractRoleMember;
 use HHK\SysConst\{AddressPurpose, GLTableNames, MemStatus, RelLinkType, VisitStatus, VolMemberType};
 use HHK\sec\Session;
+use HHK\sec\Labels;
 
 /**
  * AbstractRole.php
@@ -50,7 +51,15 @@ abstract class AbstractRole {
      */
     protected $emails;
 
+    /**
+     * Summary of incompleteAddress
+     * @var bool
+     */
     protected $incompleteAddress = FALSE;
+    /**
+     * Summary of useHousePhone
+     * @var bool
+     */
     protected $useHousePhone = FALSE;
     /**
      *
@@ -58,14 +67,50 @@ abstract class AbstractRole {
      */
     protected $emergContact;
 
+    /**
+     * Summary of patientPsg
+     * @var int
+     */
     protected $patientPsg;
+    /**
+     * Summary of idVisit
+     * @var int
+     */
     protected $idVisit;
+    /**
+     * Summary of title
+     * @var string
+     */
     protected $title;
+    /**
+     * Summary of currentlyStaying
+     * @var bool
+     */
     protected $currentlyStaying;
+    /**
+     * Summary of status
+     * @var string
+     */
     public $status = '';
+    /**
+     * Summary of checkinDate
+     * @var
+     */
     protected $checkinDate;
+    /**
+     * Summary of expectedCheckOut
+     * @var
+     */
     protected $expectedCheckOut;
+    /**
+     * Summary of incompleteEmergContact
+     * @var bool
+     */
     protected $incompleteEmergContact = FALSE;
+    /**
+     * Summary of patientRelationshipCode
+     * @var string
+     */
     protected $patientRelationshipCode = '';
 
 
@@ -81,18 +126,20 @@ abstract class AbstractRole {
         $MRNSearchMkup = '';
 
         $outerwidth = "col-xl-8";
-        $gstwidth = "col-lg-7";
+        $gstwidth = "col-lg";
+        $phoneWidth = "col-lg-5";
+
+        if ($showMRNSearch) {
+            $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', Labels::getString("hospital", "MRN", "MRN") . ' Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>"min-width: fit-content", "class"=>"mr-2"))
+                .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
+            $outerwidth = 'col-xl-10';
+            $gstwidth = 'col-lg-6';
+            $phoneWidth = "col-lg";
+        }
 
         if ($showPhoneSearch) {
             $phoneSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', "style"=>"min-width: fit-content", "class"=>"mr-2"))
-                    .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'14', 'title'=>'Enter at least 5 numbers to invoke search', "style"=>"width:100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
-        }
-
-        if ($showMRNSearch) {
-            $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'MRN Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>"min-width: fit-content", "class"=>"mr-2"))
-            .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
-            $outerwidth = 'col-xl-10';
-            $gstwidth = 'col-lg-6';
+                .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'20', 'title'=>'Enter at least 5 numbers to invoke search', "style"=>"width:100%")), array("class"=>"col-12 mb-2 mb-lg-0 hhk-flex " . $phoneWidth));
         }
 
         $gstSearch = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('label', $title, array('for'=>$prefix.'Search', 'style'=>"min-width:fit-content", "class"=>"mr-2"))
@@ -101,11 +148,18 @@ abstract class AbstractRole {
         $full = HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));
 
         $rtn = array();
-        $rtn['hdr'] = HTMLContainer::generateMarkup('div', $gstSearch . $MRNSearchMkup . $phoneSearchMkup . $full, array('id'=>'h2srch'.$prefix, 'style'=>"padding:4px;max-width:100%;", 'class'=>$prefix.'Slot ui-widget ui-widget-header ui-state-default ui-corner-all row col-12 ' . $outerwidth));
+        $rtn['hdr'] = HTMLContainer::generateMarkup('form', $gstSearch . $MRNSearchMkup . $phoneSearchMkup . $full, array('id'=>'h2srch'.$prefix, 'style'=>"padding:4px;max-width:100%;", 'autocomplete'=>"off", 'class'=>$prefix.'Slot ui-widget ui-widget-header ui-state-default ui-corner-all row col-12 ' . $outerwidth));
         $rtn['idPrefix'] = $prefix;
         return  $rtn;
     }
 
+    /**
+     * Summary of createMailAddrMU
+     * @param mixed $class
+     * @param mixed $useCopyIcon
+     * @param mixed $includeCounty
+     * @return string
+     */
     protected function createMailAddrMU($class = "", $useCopyIcon = TRUE, $includeCounty = FALSE) {
 
         $idPrefix = $this->getRoleMember()->getIdPrefix();
@@ -155,6 +209,11 @@ abstract class AbstractRole {
 
     }
 
+    /**
+     * Summary of createPhoneEmailMU
+     * @param mixed $idPrefix
+     * @return string
+     */
     protected function createPhoneEmailMU($idPrefix = '') {
         // Phone & email
         $ul = HTMLContainer::generateMarkup('ul',
@@ -173,6 +232,12 @@ abstract class AbstractRole {
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>$idPrefix.'phEmlTabs', 'class'=>'hhk-phemtabs', 'style'=>'font-size:.9em;')), array('style'=>'float:left;margin-top:5px;margin-right:5px;', 'class'=>'hhk-tdbox'));
     }
 
+    /**
+     * Summary of createThinMarkup
+     * @param \HHK\House\ReserveData\PSGMember\PSGMember $mem
+     * @param mixed $lockRelChooser
+     * @return string
+     */
     public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         // Staying button
@@ -185,6 +250,11 @@ abstract class AbstractRole {
 
     }
 
+    /**
+     * Summary of createStayMarkup
+     * @param \HHK\House\ReserveData\PSGMember\PSGMember $stay
+     * @return string
+     */
     public function createStayMarkup(PSGMember $stay) {
 
         $td = '';
@@ -211,6 +281,10 @@ abstract class AbstractRole {
 
 
         // Address, email and Phone
+    /**
+     * Summary of createAddsBLock
+     * @return string
+     */
     public function createAddsBLock() {
 
         $mkup = '';
@@ -276,7 +350,7 @@ abstract class AbstractRole {
 
         // Update local Patient relationship
         if (isset($post[$idPrefix.'selPatRel'])) {
-            $this->patientRelationshipCode = filter_var($post[$idPrefix.'selPatRel'], FILTER_SANITIZE_STRING);
+            $this->patientRelationshipCode = filter_var($post[$idPrefix.'selPatRel'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Also set patient member type if guest is the patient.
@@ -301,10 +375,10 @@ abstract class AbstractRole {
         return $message;
     }
 
-        /**
+    /**
      *
      * @param \PDO $dbh
-     * @return boolean
+     * @return int
      */
     protected static function checkCurrentStay(\PDO $dbh, $idName) {
 
@@ -325,6 +399,14 @@ abstract class AbstractRole {
         return $idVisit;
     }
 
+    /**
+     * Summary of checkPsgStays
+     * @param \PDO $dbh
+     * @param mixed $idName
+     * @param mixed $PSG_Id
+     * @param mixed $ignoreZeroDayStays
+     * @return bool
+     */
     public static function checkPsgStays(\PDO $dbh, $idName, $PSG_Id, $ignoreZeroDayStays = FALSE) {
 
         $id = intval($idName, 10);
@@ -352,6 +434,10 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return FALSE;
     }
 
+    /**
+     * Summary of getNoReturn
+     * @return mixed
+     */
     public function getNoReturn() {
         $uS = Session::getInstance();
 
@@ -362,6 +448,11 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return '';
     }
 
+    /**
+     * Summary of setIncompleteAddr
+     * @param mixed $TorF
+     * @return void
+     */
     public function setIncompleteAddr($TorF) {
 
         if ($TorF === TRUE) {
@@ -371,6 +462,11 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         }
     }
 
+    /**
+     * Summary of isCurrentlyStaying
+     * @param \PDO $dbh
+     * @return bool
+     */
     public function isCurrentlyStaying(\PDO $dbh) {
 
         if (is_null($this->currentlyStaying)) {
@@ -380,6 +476,11 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->currentlyStaying;
     }
 
+    /**
+     * Summary of setCurrentIdVisit
+     * @param mixed $idVisit
+     * @return void
+     */
     protected function setCurrentIdVisit($idVisit) {
 
         $idv = intval($idVisit, 10);
@@ -390,9 +491,13 @@ where r.idPsg = $idPsg and s.idName = " . $id;
             $this->currentlyStaying = FALSE;
             $this->idVisit = 0;
         }
-
     }
 
+    /**
+     * Summary of getEmergContactObj
+     * @param \PDO $dbh
+     * @return EmergencyContact
+     */
     public function getEmergContactObj(\PDO $dbh) {
 
         if (is_null($this->emergContact)) {
@@ -402,18 +507,34 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->emergContact;
     }
 
+    /**
+     * Summary of getIncompleteEmContact
+     * @return bool
+     */
     public function getIncompleteEmContact() {
         return $this->incompleteEmergContact;
     }
 
+    /**
+     * Summary of getIdName
+     * @return mixed
+     */
     public function getIdName() {
         return $this->roleMember->get_idName();
     }
 
+    /**
+     * Summary of getRoleMember
+     * @return AbstractRoleMember
+     */
     public function getRoleMember() {
         return $this->roleMember;
     }
 
+    /**
+     * Summary of getAddrObj
+     * @return Address
+     */
     public function getAddrObj() {
 
         if (is_null($this->addr)) {
@@ -424,6 +545,10 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->addr;
     }
 
+    /**
+     * Summary of getPhonesObj
+     * @return Phones
+     */
     public function getPhonesObj() {
         if (is_null($this->phones)) {
             $dbh = initPDO();
@@ -433,6 +558,10 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->phones;
     }
 
+    /**
+     * Summary of getEmailsObj
+     * @return Emails
+     */
     public function getEmailsObj() {
         if (is_null($this->emails)) {
             $dbh = initPDO();
@@ -442,18 +571,35 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->emails;
     }
 
+    /**
+     * Summary of isNew
+     * @return bool
+     */
     public function isNew() {
         return $this->roleMember->isNew();
     }
 
+    /**
+     * Summary of getHousePhone
+     * @return mixed
+     */
     public function getHousePhone() {
         return $this->useHousePhone;
     }
 
+    /**
+     * Summary of getPatientRelationshipCode
+     * @return mixed
+     */
     public function getPatientRelationshipCode() {
         return $this->patientRelationshipCode;
     }
 
+    /**
+     * Summary of setPatientRelationshipCode
+     * @param mixed $v
+     * @return void
+     */
     public function setPatientRelationshipCode($v) {
         $this->patientRelationshipCode = $v;
     }

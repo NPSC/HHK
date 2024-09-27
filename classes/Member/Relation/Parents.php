@@ -11,19 +11,28 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable};
  * Parents.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017, 2018-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 class Parents extends AbstractRelation {
 
+    /**
+     * Summary of loadRelCode
+     * @return RelationCode
+     */
     protected function loadRelCode() {
 
         return new RelationCode(array('Code'=>RelLinkType::Parnt, 'Description'=>'Parent'));
 
     }
 
+    /**
+     * Summary of getPdoStmt
+     * @param \PDO $dbh
+     * @return \PDOStatement|bool
+     */
     protected function getPdoStmt(\PDO $dbh) {
 
         $query = "Select v.Id, concat(v.Name_First, ' ', v.Name_Last) as `Name`, v.MemberStatus as `MemStatus`, r.*
@@ -37,10 +46,18 @@ where r.Relation_Type='". RelLinkType::Parnt ."' and r.Status='a' and r.idName =
         return $stmt;
     }
 
+    /**
+     * Summary of getHtmlId
+     * @return string
+     */
     protected function getHtmlId() {
         return "Parent";
     }
 
+    /**
+     * Summary of createNewEntry
+     * @return string
+     */
     protected function createNewEntry() {
         if (count($this->relNames)  < 2) {
             return HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('New Parent', array('class'=>'hhk-newlink', 'title'=>'Link a new '.$this->relCode->getTitle(), 'colspan'=>'2', 'style'=>'text-align: center;')));
@@ -48,6 +65,10 @@ where r.Relation_Type='". RelLinkType::Parnt ."' and r.Status='a' and r.idName =
             return "";
     }
 
+    /**
+     * Summary of getSelectLinkOption
+     * @return string
+     */
     public function getSelectLinkOption() {
         if (count($this->relNames) <= 2) {
             return HTMLContainer::generateMarkup('option', $this->relCode->getTitle(), array('value' => $this->relCode->getCode()));
@@ -56,6 +77,13 @@ where r.Relation_Type='". RelLinkType::Parnt ."' and r.Status='a' and r.idName =
         }
     }
 
+    /**
+     * Summary of addRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @param string $user
+     * @return string
+     */
     public function addRelationship(\PDO $dbh, $rId, $user) {
 
         $id = $this->getIdName();
@@ -109,6 +137,12 @@ where r.Relation_Type='". RelLinkType::Parnt ."' and r.Status='a' and r.idName =
         return $message;
     }
 
+    /**
+     * Summary of removeRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @return string
+     */
     public function removeRelationship(\PDO $dbh, $rId) {
         $qq = "Delete from relationship where Relation_Type='". $this->relCode->getCode() ."' and (idName=:id or Target_Id=:id2 ) and (idName=:rId or Target_Id=:rId2 )";
         $stmt = $dbh->prepare($qq);

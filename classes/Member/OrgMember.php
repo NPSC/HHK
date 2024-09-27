@@ -28,21 +28,33 @@ use HHK\Member\Relation\Employees;
  */
 class OrgMember extends AbstractMember {
 
+    /**
+     * Summary of employees
+     * @var array
+     */
     protected $employees = array();
 
 
+    /**
+     * Summary of getDefaultMemBasis
+     * @return string
+     */
     protected function getDefaultMemBasis() {
         return MemBasis::Company;
     }
 
     /**
      *
-     * @return MemDesignation
+     * @return string
      */
     public function getMemberDesignation() {
         return MemDesignation::Organization;
     }
 
+    /**
+     * Summary of getMemberName
+     * @return mixed
+     */
     public function getMemberName() {
         return $this->get_company();
     }
@@ -101,6 +113,11 @@ class OrgMember extends AbstractMember {
         return $table->generateMarkup();
     }
 
+    /**
+     * Summary of createMiscTabsMarkup
+     * @param \PDO $dbh
+     * @return string
+     */
     public function createMiscTabsMarkup(\PDO $dbh) {
 
         $panels = "";
@@ -112,7 +129,7 @@ class OrgMember extends AbstractMember {
                 $this->createAdminPanel(),
                 $attrs);
 
-        $excl = $this->createExcludesPanel();
+        $excl = $this->createExcludesPanel($dbh);
         $attrs['id'] = 'excludesTab';
         $panels .= HTMLContainer::generateMarkup(
                 'div',
@@ -134,10 +151,21 @@ class OrgMember extends AbstractMember {
 
     }
 
+    /**
+     * Summary of createDemographicsPanel
+     * @param \PDO $dbh
+     * @return string
+     */
     public function createDemographicsPanel(\PDO $dbh) {
         return '';
     }
 
+    /**
+     * Summary of createRelationsTabs
+     * @param array $rel
+     * @param mixed $page
+     * @return string
+     */
     public function createRelationsTabs(array $rel, $page = "NameEdit.php") {
 
 
@@ -153,6 +181,11 @@ class OrgMember extends AbstractMember {
     }
 
 
+    /**
+     * Summary of loadRealtionships
+     * @param \PDO $dbh
+     * @return array
+     */
     public function loadRealtionships(\PDO $dbh) {
 
        return array(
@@ -172,21 +205,30 @@ class OrgMember extends AbstractMember {
         $n = $this->nameRS;
 
         if (isset($post['txtCoName'])) {
-            $n->Company->setNewVal(trim(filter_var($post['txtCoName'], FILTER_SANITIZE_STRING)));
+            $n->Company->setNewVal(trim(filter_var($post['txtCoName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         }
 
         if (isset($post['txtWebSite'])) {
-            $n->Web_Site->setNewVal(trim(filter_var($post['txtWebSite'], FILTER_SANITIZE_STRING)));
+            $n->Web_Site->setNewVal(trim(filter_var($post['txtWebSite'], FILTER_SANITIZE_URL)));
         }
 
 
 
     }
 
+    /**
+     * Summary of getAssocDonorLabel
+     * @return string
+     */
     public function getAssocDonorLabel() {
         return "Employee";
     }
 
+    /**
+     * Summary of getAssocDonorList
+     * @param array $rel
+     * @return array
+     */
     public function getAssocDonorList(array $rel) {
         $rA = array();
         $emps = $rel[RelLinkType::Employee];
@@ -200,104 +242,228 @@ class OrgMember extends AbstractMember {
     //
     // over rides of params
     //
+    /**
+     * Summary of set_memberRcrd
+     * @param mixed $v
+     * @throws \HHK\Exception\InvalidArgumentException
+     * @return void
+     */
     public function set_memberRcrd($v) {
         if ($v == 1 || $v == TRUE) {
             throw new InvalidArgumentException("Organization Member Record cannot be set to Individual.");
         }
     }
 
+    /**
+     * Summary of set_firstName
+     * @param mixed $firstName
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_firstName($firstName) {
         throw new RuntimeException("Not Supported.");
     }
 
+    /**
+     * Summary of get_firstName
+     * @return string
+     */
     public function get_firstName() {
         return '';
     }
 
+    /**
+     * Summary of set_middleName
+     * @param mixed $middleName
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_middleName($middleName) {
         throw new RuntimeException("Not Supported.");
     }
 
+    /**
+     * Summary of get_middleName
+     * @return string
+     */
     public function get_middleName() {
         return '';
     }
 
+    /**
+     * Summary of set_lastName
+     * @param mixed $lastName
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_lastName($lastName) {
         throw new RuntimeException("Not Supported.");
     }
 
+    /**
+     * Summary of get_lastName
+     * @return string
+     */
     public function get_lastName() {
         return '';
     }
 
+    /**
+     * Summary of set_lastFirst
+     * @param mixed $lastFirst
+     * @return void
+     */
     public function set_lastFirst($lastFirst) {
 
     }
 
+    /**
+     * Summary of get_lastFirst
+     * @return mixed
+     */
     public function get_lastFirst() {
         return $this->nameRS->Company->getStoredVal();
     }
 
+    /**
+     * Summary of set_nickName
+     * @param mixed $nickName
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_nickName($nickName) {
         throw new RuntimeException("Not Supported.");
     }
 
+    /**
+     * Summary of get_nickName
+     * @return string
+     */
     public function get_nickName() {
         return '';
     }
 
+    /**
+     * Summary of set_fullName
+     * @param mixed $fullName
+     * @return void
+     */
     public function set_fullName($fullName) {
 
     }
 
+    /**
+     * Summary of get_fullName
+     * @return mixed
+     */
     public function get_fullName() {
         return $this->nameRS->Company->getStoredVal();
     }
 
+    /**
+     * Summary of set_previousName
+     * @param mixed $previousName
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_previousName($previousName) {
         throw new RuntimeException("Not Supported.");
     }
 
+    /**
+     * Summary of get_previousName
+     * @return string
+     */
     public function get_previousName() {
         return '';
     }
 
+    /**
+     * Summary of set_sex
+     * @param mixed $sex
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_sex($sex) {
         throw new RuntimeException("Not Supported.");
     }
 
+    /**
+     * Summary of get_sex
+     * @return string
+     */
     public function get_sex() {
         return '';
     }
 
+    /**
+     * Summary of set_suffix
+     * @param mixed $suffix
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_suffix($suffix) {
         throw new RuntimeException("Not Supported.");
     }
 
+    /**
+     * Summary of get_suffix
+     * @return string
+     */
     public function get_suffix() {
         return '';
     }
 
+    /**
+     * Summary of set_prefix
+     * @param mixed $prefix
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_prefix($prefix) {
         throw new RuntimeException("Not Supported.");
     }
 
+    /**
+     * Summary of get_prefix
+     * @return string
+     */
     public function get_prefix() {
         return '';
     }
 
+    /**
+     * Summary of set_companyId
+     * @param mixed $companyId
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_companyId($companyId) {
         throw new RuntimeException("Company_Id is Not Supported.");
     }
 
+    /**
+     * Summary of get_companyId
+     * @return string
+     */
     public function get_companyId() {
         return '';
     }
 
+    /**
+     * Summary of set_companyCareOf
+     * @param mixed $v
+     * @throws \HHK\Exception\RuntimeException
+     * @return never
+     */
     public function set_companyCareOf($v) {
         throw new RuntimeException("Company Care/Of is Not Supported.");
     }
 
+    /**
+     * Summary of get_companyCareOf
+     * @return string
+     */
     public function get_companyCareOf() {
         return '';
     }

@@ -42,6 +42,7 @@ $labels = Labels::getLabels();
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
 		<script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
@@ -54,6 +55,7 @@ $labels = Labels::getLabels();
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>

@@ -1,6 +1,6 @@
 <?php
 
-use HHK\sec\{Session, UserClass, WebInit};
+use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
 
 /**
  * VolListing.php
@@ -31,7 +31,7 @@ if ($stmt->rowCount() > 0) {
 }
 
 // Create volunteer report
-$query = "SELECT * FROM vweb_users where Id > 0 order by Id;";
+$query = "SELECT * FROM vweb_users order by Id;";
 $stmt = $dbh->query($query);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -84,23 +84,32 @@ if (count($rows) > 0) {
     // peruse the rows
     foreach ($clnRows as $rw) {
 
-        $markup .= "<tr class='trClass" . $rw['Id'] . "' >";
-        // peruse the fields in each row
-        foreach ($rw as $k => $r) {
+        if ($rw["Id"] > 0 || SecurityComponent::is_TheAdmin()) { //hide Admin user unless logged in as Admin
 
+            $markup .= "<tr class='trClass" . $rw['Id'] . "' >";
+            // peruse the fields in each row
+            foreach ($rw as $k => $r) {
 
-            if ($k == 'Id') {
-                if($uS->rolecode == '10'){
-                    $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
+                if ($k == 'Id') {
+
+                    if ($uS->rolecode == '10') {
+                        $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
+                    }
+
+                    if ($r < 1) {
+                        $markup .= "<td>" . $r . "</td>";
+                    } else {
+                        $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
+                    }
+
+                } else if ($k == 'Last Login' || $k == 'Password Changed') {
+                    $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
+                } else {
+                    $markup .= "<td>" . $r . "</td>";
                 }
-                $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
-            } else if ($k == 'Last Login' || $k == 'Password Changed') {
-                $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
-            } else {
-                $markup .= "<td>" . $r . "</td>";
             }
+            $markup .= "</tr>";
         }
-        $markup .= "</tr>";
     }
     $markup .= "</tbody>";
 } else {
@@ -108,7 +117,7 @@ if (count($rows) > 0) {
 }
 $volReport = $markup;
 ?>
-<!DOCTYPE html >
+<!DOCTYPE html>
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -137,7 +146,7 @@ $volReport = $markup;
         $('#dataTbl').dataTable({
             "displayLength": 25,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf><"hhk-overflow-x"rt><"bottom"ip>'
+            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
         });
         $('div#vollisting').on('change', 'input.delCkBox', function() {
             if ($(this).prop('checked')) {
@@ -187,9 +196,11 @@ $volReport = $markup;
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="vollisting" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content">
                 <?php echo $noReport ?>
+                <form autocomplete="off">
                 <table id="dataTbl" class="display">
-					<?php echo $volReport ?>
+                    <?php echo $volReport ?>
                 </table>
+                </form>
             </div>
         </div>
 

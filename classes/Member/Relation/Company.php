@@ -12,19 +12,29 @@ use HHK\AuditLog\NameLog;
  * Company.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @author    William Ireland <wireland@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017, 2018-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 class Company extends AbstractRelation {
 
-    protected function loadRelCode() {
+    /**
+     * Summary of loadRelCode
+     * @return RelationCode
+     */
+    protected function loadRelCode():RelationCode {
 
         return new RelationCode(array('Code'=>RelLinkType::Company, 'Description'=>'Company'));
 
     }
 
-    protected function getPdoStmt(\PDO $dbh) {
+    /**
+     * Summary of getPdoStmt
+     * @param \PDO $dbh
+     * @return \PDOStatement|bool
+     */
+    protected function getPdoStmt(\PDO $dbh){
 
         $query = "Select v.Company_Id as `Id`, v.Company as `Name`, v.MemberStatus as `MemStatus` from vmember_listing v where v.Id = :id and v.Company_Id > 0;";
 
@@ -35,11 +45,19 @@ class Company extends AbstractRelation {
         return $stmt;
     }
 
-    protected function getHtmlId() {
+    /**
+     * Summary of getHtmlId
+     * @return string
+     */
+    protected function getHtmlId():string {
         return "Company";
     }
 
-    protected function createNewEntry() {
+    /**
+     * Summary of createNewEntry
+     * @return string
+     */
+    protected function createNewEntry():string {
         if (count($this->relNames)  == 0) {
             return HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('New Company', array('class'=>'hhk-newlink', 'title'=>'Link a new '.$this->relCode->getTitle(), 'colspan'=>'2', 'style'=>'text-align: center;')));
         } else {
@@ -48,7 +66,14 @@ class Company extends AbstractRelation {
     }
 
 
-    public function addRelationship(\PDO $dbh, $rId, $user) {
+    /**
+     * Summary of addRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @param string $user
+     * @return string
+     */
+    public function addRelationship(\PDO $dbh, $rId, $user):string {
 
         $empId = intval($this->getIdName());
 
@@ -70,7 +95,13 @@ class Company extends AbstractRelation {
         return '';
     }
 
-    public function removeRelationship(\PDO $dbh, $rId) {
+    /**
+     * Summary of removeRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @return string
+     */
+    public function removeRelationship(\PDO $dbh, $rId):string {
 
         $uS = Session::getInstance();
 

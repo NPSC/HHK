@@ -44,6 +44,7 @@ class ProgressiveSearch {
     n.`Gender`,
     nd.`Ethnicity`,
     IFNULL(np.Phone_Num, '') AS `Phone_Num`,
+    IFNULL(np.SMS_Status, '') AS `SMS_Status`,
     IFNULL(ne.Email, '') as `Email`,
     IFNULL(na.Address_1, '') as `Address1`,
     IFNULL(na.Address_2, '') as `Address2`,
@@ -78,11 +79,13 @@ WHERE n.idName = $id ";
 
         $selRel = '';
         $joinRel = '';
+        $where = $searchFor->getWhereClause();
 
         if ($searchFor->getPsgId() > 0) {
 
             $selRel = " IFNULL(ng.Relationship_Code, '') as Relationship, ";
             $joinRel = " LEFT JOIN name_guest ng on n.idName = ng.idName and ng.idPsg = " . $searchFor->getPsgId() . " ";
+            $where .= " and not ng.Relationship_Code <=> 'slf'"; // exclude patient when searching for guests
         }else{
             $selRel = " '' as Relationship, ";
         }
@@ -99,6 +102,7 @@ WHERE n.idName = $id ";
     n.`Gender`,
     nd.`Ethnicity`,
     IFNULL(np.Phone_Num, '') AS `Phone_Num`,
+    IFNULL(np.SMS_Status, '') AS `SMS_Status`,
     IFNULL(ne.Email, '') as `Email`,
     IFNULL(na.Address_1, '') as `Address1`,
     IFNULL(na.Address_2, '') as `Address2`,
@@ -126,9 +130,9 @@ FROM
         LEFT JOIN
     gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
         AND gr.Code = nd.No_Return
-WHERE n.idName > 0 and n.Record_Member = 1 and n.Member_Status ='a' and n.Name_Last = '" . $searchFor->getNameLast() . "'
-    AND (n.Name_First = '" . $searchFor->getNameFirst() . "' OR n.Name_Nickname = '" . $searchFor->getNameFirst() . "') "
-    .  $searchFor->getWhereClause();
+WHERE n.idName > 0 and n.Record_Member = 1 and n.Member_Status ='a' and n.Name_Last LIKE '%" . $searchFor->getNameLast() . "%'
+    AND (n.Name_First like '%" . $searchFor->getNameFirst() . "%' OR n.Name_Nickname = '%" . $searchFor->getNameFirst() . "%') "
+    .  $where;
 
 	}
 

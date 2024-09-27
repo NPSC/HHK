@@ -22,6 +22,7 @@ class Visit_onLeaveRS extends AbstractTableRS {
     public $idRoom_rate;  // int(11) not null default 0,
     public $Rate_Glide_Credit;  // int(11) NOT NULL DEFAULT '0',
     public $Rate_Adjust;  // decimal(10,4) NOT NULL DEFAULT '0.0000',
+    public $idRateAdjust; // varchar(5) NULL DEFAULT '0',
     public $Timestamp;  // timestamp NULL DEFAULT NULL,
     
     function __construct($TableName = 'visit_onleave') {
@@ -32,6 +33,7 @@ class Visit_onLeaveRS extends AbstractTableRS {
         $this->idRoom_rate = new DB_Field('idRoom_rate', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Rate_Glide_Credit = new DB_Field('Rate_Glide_Credit', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Rate_Adjust = new DB_Field('Rate_Adjust', "0.00", new DbDecimalSanitizer(), TRUE, TRUE);
+        $this->idRateAdjust = new DB_Field('idRateAdjust', '0', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Pledged_Rate = new DB_Field('Pledged_Rate', "0.00", new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Timestamp = new DB_Field('Timestamp', NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         parent::__construct($TableName);

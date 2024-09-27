@@ -3,7 +3,7 @@
 namespace HHK\House\ReserveData;
 
 use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay};
-use HHK\SysConst\VolMemberType;
+use HHK\SysConst\{VolMemberType, ReservationStatusType};
 use HHK\sec\Labels;
 use HHK\sec\Session;
 
@@ -33,6 +33,8 @@ class ReserveData {
     const FULL_NAME = 'fullName';
     const ADD_PERSON = 'addPerson';
     const WARNING = 'warning';
+    const SUCCESS = 'success';
+    const INFO = 'info';
 
     const ROLE = 'role';
     const PREF = 'pref';
@@ -93,59 +95,114 @@ class ReserveData {
     protected $concurrentRooms = 0;
     protected $psgMembers;
     protected $errors;
+    protected $msgs;
     protected $resvPrompt;
     protected $insistCkinDemog;
+    protected $insistCkinPhone;
+    protected $insistCkinEmail;
+    protected $insistCkinAddress;
     protected $searchTerm;
     protected $resvStatusCode;
+    protected $resvStatusType;
+    protected $hasMOA;
+    protected $prePayment = 0;
+    protected $deleteChildReservations = FALSE;
+    protected $intervalRepeatResv = 0;
+    protected $numberRepeatResv = 0;
 
-    function __construct($post, $reservationTitle = '') {
+    /**
+     * Summary of __construct
+     * @param string $reservationTitle
+     */
+    function __construct($reservationTitle = '') {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
         $this->psgMembers = array();
 
-        if (isset($post['rid'])) {
-            $this->setIdResv(intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10));
+        $args = [
+            'rid' => FILTER_SANITIZE_NUMBER_INT,
+            'vid' => FILTER_SANITIZE_NUMBER_INT,
+            'span' => FILTER_SANITIZE_NUMBER_INT,
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'idPsg' => FILTER_SANITIZE_NUMBER_INT,
+            'vstatus' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'fullName' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'gstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'gstCoDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'schTerm' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'prePayment' => FILTER_SANITIZE_NUMBER_FLOAT,
+            'deleteChilden' => FILTER_VALIDATE_BOOLEAN,
+            'mem' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+
+            'mrInterval' => [
+                'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'flags' => FILTER_REQUIRE_ARRAY
+            ],
+            'mrnumresv' => FILTER_SANITIZE_NUMBER_INT,
+        ];
+
+        $inputs = filter_input_array(INPUT_POST, $args);
+
+
+        if (isset($inputs['rid'])) {
+            $this->setIdResv(intval($inputs['rid'], 10));
         }
 
-        if (isset($post['vid'])) {
-            $this->setIdVisit(intval(filter_var($post['vid'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['vid'])) {
+            $this->setIdVisit(intval($inputs['vid'], 10));
         }
 
-        if (isset($post['span'])) {
-            $this->setSpan(intval(filter_var($post['span'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['span'])) {
+            $this->setSpan(intval($inputs['span'], 10));
         }
 
-        if (isset($post['vstatus'])) {
-            $this->setSpanStatus(filter_var($post['vstatus'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['vstatus'])) {
+            $this->setSpanStatus($inputs['vstatus']);
         }
 
-        if (isset($post['id'])) {
-            $this->setId(intval(filter_var($post['id'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['id'])) {
+            $this->setId(intval($inputs['id'], 10));
         }
 
-        if (isset($post['idPsg'])) {
-            $this->setIdPsg(intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['idPsg'])) {
+            $this->setIdPsg(intval($inputs['idPsg'], 10));
         }
 
-        if (isset($post['fullName'])) {
-            $this->fullName = filter_var($post['fullName'], FILTER_SANITIZE_STRING);
+        if (isset($inputs['fullName'])) {
+            $this->fullName = $inputs['fullName'];
         }
 
-        if (isset($post['gstDate'])) {
-            $this->setArrivalDateStr(filter_var($post['gstDate'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['gstDate'])) {
+            $this->setArrivalDateStr($inputs['gstDate']);
         }
 
-        if (isset($post['gstCoDate'])) {
-        	$this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['gstCoDate'])) {
+        	$this->setDepartureDateStr($inputs['gstCoDate']);
         }
 
-        if (isset($post['schTerm'])) {
-        	$this->setSearchTerm(filter_var($post['schTerm'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['schTerm'])) {
+        	$this->setSearchTerm($inputs['schTerm']);
         }
 
-        if (isset($post['mem'])) {
-            $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['mem'])) {
+            $this->setMembersFromPost($inputs['mem']);
+        }
+
+        if (isset($inputs['prePayment'])) {
+            $this->setPrePayment($inputs['prePayment']);
+        }
+
+        if (isset($inputs['deleteChilden'])) {
+            $this->setDeleteChildReservations($inputs['deleteChilden']);
+        }
+
+        if (isset($inputs['mrnumresv']) && isset($inputs['mrInterval'])) {
+            $this->numberRepeatResv = intval($inputs['mrnumresv'], 10);
+            $this->intervalRepeatResv = $inputs['mrInterval'];
         }
 
         $this->saveButtonLabel = 'Save ';
@@ -156,6 +213,9 @@ class ReserveData {
         $this->showBirthDate = $uS->ShowBirthDate;
         $this->useRepeatingResv = $uS->UseRepeatResv;
         $this->insistCkinDemog = FALSE;
+        $this->insistCkinPhone = FALSE;
+        $this->insistCkinEmail = FALSE;
+        $this->insistCkinAddress = FALSE;
         $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->guestLabel = $labels->getString('MemberType', 'guest', 'Guest');
@@ -170,15 +230,23 @@ class ReserveData {
         $this->expectedDatesSection = '';
         $this->hospitalSection = '';
         $this->reservationSection = '';
-        $this->checkingInSection = '';
+        $this->checkinSection = '';
         $this->paymentSection = '';
         $this->errors = '';
+        $this->msgs = '';
         $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
         $this->resvStatusCode = '';
+        $this->hasMOA = FALSE;
+
 
     }
 
+    /**
+     * Summary of setMembersFromPost
+     * @param array $postMems
+     * @return void
+     */
     protected function setMembersFromPost($postMems) {
 
         foreach ($postMems as $prefix => $memArray) {
@@ -221,6 +289,10 @@ class ReserveData {
         }
     }
 
+    /**
+     * Summary of getMembersArray
+     * @return array
+     */
     public function getMembersArray() {
 
         $memArray = array();
@@ -232,6 +304,10 @@ class ReserveData {
         return $memArray;
     }
 
+    /**
+     * Summary of toArray
+     * @return array
+     */
     public function toArray() {
 
         $rtnData =  array(
@@ -248,6 +324,9 @@ class ReserveData {
             'saveButtonLabel' => $this->saveButtonLabel,
         	'insistCkinDemog' => $this->insistCkinDemog,
             'resvStatusCode' => $this->getResvStatusCode(),
+            'resvStatusType' => $this->getResvStatusType(),
+            'hasMOA' => $this->getHasMOA(),
+            'prePayment' => $this->getPrePayment(),
         );
 
         if ($this->resvChooser != '') {
@@ -288,6 +367,10 @@ class ReserveData {
 
         if ($this->errors != '') {
             $rtnData[ReserveData::WARNING] = $this->errors;
+        }
+
+        if ($this->msgs != '') {
+            $rtnData[ReserveData::INFO] = $this->msgs;
         }
 
         return $rtnData;
@@ -375,6 +458,10 @@ class ReserveData {
         return $this->resvStatusCode;
     }
 
+    public function getResvStatusType() {
+        return $this->resvStatusType;
+    }
+
     public function getWlNotesLabel() {
         return $this->wlNotesLabel;
     }
@@ -403,6 +490,10 @@ class ReserveData {
         return $this->addrPurpose;
     }
 
+    /**
+     * Summary of getArrivalDT
+     * @return \DateTime
+     */
     public function getArrivalDT() {
         return $this->arrivalDT;
     }
@@ -416,6 +507,10 @@ class ReserveData {
         return '';
     }
 
+    /**
+     * Summary of getDepartureDT
+     * @return \DateTime
+     */
     public function getDepartureDT() {
         return $this->departureDT;
     }
@@ -443,7 +538,21 @@ class ReserveData {
     }
 
     public function getFullName() {
-    	return $this->fullName;
+        return $this->fullName;
+    }
+
+    public function getPrePayment()
+    {
+        return $this->prePayment;
+    }
+
+    public function getDeleteChildReservations()
+    {
+        return $this->deleteChildReservations;
+    }
+
+    public function getHasMOA() {
+        return $this->hasMOA;
     }
 
     public function findMemberById($val) {
@@ -480,6 +589,18 @@ class ReserveData {
 
         // No one defined
         return NULL;
+    }
+
+    public function setDeleteChildReservations($v) {
+        $this->deleteChildReservations = ($v === true) ? true : false;
+        return $this;
+    }
+
+
+
+    public function setPrePayment($prepayment) {
+        $this->prePayment = $prepayment;
+        return $this;
     }
 
     public function setMember(PSGMember $mem) {
@@ -538,6 +659,11 @@ class ReserveData {
         return $this;
     }
 
+    public function setResvStatusType($resvStatusType) {
+        $this->resvStatusType = $resvStatusType;
+        return $this;
+    }
+
     public function setResvStatusCode($resvStatusCode) {
         $this->resvStatusCode = $resvStatusCode;
         return $this;
@@ -549,8 +675,28 @@ class ReserveData {
     }
 
     public function setInsistCkinDemog($id) {
-    	$this->insistCkinDemog = $id;
-    	return $this;
+        $this->insistCkinDemog = $id;
+        return $this;
+    }
+    
+    public function setInsistCkinPhone($id) {
+        $this->insistCkinPhone = $id;
+        return $this;
+    }
+    
+    public function setInsistCkinEmail($id) {
+        $this->insistCkinEmail = $id;
+        return $this;
+    }
+    
+    public function setInsistCkinAddress($id) {
+        $this->insistCkinAddress = $id;
+        return $this;
+    }
+
+    public function setHasMOA($bol) {
+        $this->hasMOA = $bol;
+        return $this;
     }
 
     public function setSpanStartDT($strDate) {
@@ -673,5 +819,21 @@ class ReserveData {
         return $this->errors;
     }
 
+    public function addMsg($e) {
+        $this->msgs .= $e;
+    }
+
+    public function hasMsg() {
+
+        if ($this->msgs != '') {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+    public function getMsgs() {
+        return $this->msgs;
+    }
+
 }
-?>

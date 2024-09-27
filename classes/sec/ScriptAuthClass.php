@@ -18,20 +18,30 @@ use HHK\SysConst\{WebSiteCode, Mode};
 class ScriptAuthClass extends SecurityComponent {
 
     private $siteCode = "";
+
     private $indexPage = "";
+
     private $pageCodes = array();
+
     private $pageTitle = "";
+
     private $loginPage = "";
+
     private $defaultPage = "";
+
     private $pageType = "";
 
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     */
     function __construct(\PDO $dbh) {
 
         parent::__construct();
         $uS = Session::getInstance();
 
-        SysConfig::getCategory($dbh, $uS, "'a'", 'sys_config');
+        SysConfig::getCategory($dbh, $uS, "a", WebInit::SYS_CONFIG);
 
 
         // try reading the web site table
@@ -64,13 +74,19 @@ class ScriptAuthClass extends SecurityComponent {
                 $this->pageType = $page["Type"];
 
             } else {
-                exit('Page file name not found in database. ');
+                exit('The webpage filename was not found in our database. ');
             }
         } else {
             exit('Web Site Code or page file name not defined. ');
         }
     }
 
+    /**
+     * Summary of loadWebSite
+     * @param \PDO $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     protected function loadWebSite(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -214,6 +230,10 @@ class ScriptAuthClass extends SecurityComponent {
     }
 
 
+    /**
+     * Summary of Authorize_Or_Die
+     * @return void
+     */
     public function Authorize_Or_Die() {
 
         $this->die_if_not_Logged_In($this->get_Page_Type(), $this->get_Login_Page());
@@ -223,13 +243,17 @@ class ScriptAuthClass extends SecurityComponent {
 
             if (self::does_User_Code_Match($this->pageCodes) === FALSE) {
 
+                $dbh = initPDO(true);
+                $uS = Session::getInstance();
+                UserClass::insertUserLog($dbh, "Unauthorized for page: " . $this->get_Page_Title(), ($uS->username != "" ? $uS->username : "<empty>"));
+
                 if ($this->get_Page_Type() == "p") {
 
                     echo("Unauthorized");
 
                 } else if ($this->get_Page_Type() == "s") {
 
-                    $rtn = array("error" => "Unauthorized-");
+                    $rtn = ["error" => "Unauthorized-"];
                     $uS = Session::getInstance();
                     $uS->destroy(TRUE);
                     echo json_encode($rtn);
@@ -243,6 +267,10 @@ class ScriptAuthClass extends SecurityComponent {
         }
     }
 
+    /**
+     * Summary of get_Login_Page
+     * @return mixed|string
+     */
     public function get_Login_Page() {
         if ($this->loginPage != '') {
             return $this->loginPage;
@@ -251,31 +279,53 @@ class ScriptAuthClass extends SecurityComponent {
         }
     }
 
+    /**
+     * Summary of get_Default_Page
+     * @return mixed|string
+     */
     public function get_Default_Page() {
         return $this->defaultPage;
     }
 
+    /**
+     * Summary of get_Site_Code
+     * @return mixed|string
+     */
     public function get_Site_Code() {
         return $this->siteCode;
     }
 
+    /**
+     * Summary of get_Page_Title
+     * @return mixed|string
+     */
     public function get_Page_Title() {
         return $this->pageTitle;
     }
 
+    /**
+     * Summary of get_Page_Type
+     * @return mixed|string
+     */
     public function get_Page_Type() {
         return $this->pageType;
     }
 
+    /**
+     * Summary of generateMenu
+     * @param string $pageHeader
+     * @param \PDO $dbh
+     * @return string
+     */
     public function generateMenu($pageHeader, $dbh = false) {
         // only generate menu for pages, not services or components
         if ($this->get_Page_Type() != WebPageCode::Page) {
             return '';
         }
 
-        $menu = array();
+        $menu = [];
         $uS = Session::getInstance();
-        $pageAnchors = array();
+        $pageAnchors = [];
 
         foreach ($uS->webPages as $fn => $r) {
 
@@ -364,6 +414,11 @@ class ScriptAuthClass extends SecurityComponent {
         return $markup;
     }
 
+    /**
+     * Summary of getSiteIcons
+     * @param array $siteList
+     * @return string
+     */
     protected function getSiteIcons($siteList) {
 
         $mu = "<ul id='ulIcons' class='ui-widget hhk-ui-icons'>";
@@ -413,4 +468,3 @@ class ScriptAuthClass extends SecurityComponent {
     }
 
 }
-?>

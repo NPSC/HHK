@@ -31,7 +31,7 @@ $dbh = $wInit->dbh;
 $demographics = readGenLookupsPDO($dbh, 'Demographics');
 
 if(isset($_GET['cmd'])){
-    $cmd = filter_var($_GET['cmd'],FILTER_SANITIZE_STRING);
+    $cmd = filter_var($_GET['cmd'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     if($cmd == 'getDailyWaitlist'){
         $columns = array(
             array( 'db' => 'MRN',  'dt' => 'MRN' ),
@@ -72,6 +72,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

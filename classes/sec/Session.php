@@ -1,8 +1,6 @@
 <?php
 namespace HHK\sec;
 
-use HHK\Config_Lite\Config_Lite;
-
 /**
  * session.php
  *
@@ -38,14 +36,14 @@ class Session
     *
     *    @return    object
     **/
-    public static function getInstance($configFileName = ciCFG_FILE)
+    public static function getInstance($confPath = CONF_PATH, $confFile = ciCFG_FILE)
     {
         if (!isset(self::$instance))
         {
             self::$instance = new self;
         }
 
-        self::$instance->startSession($configFileName);
+        self::$instance->startSession($confPath, $confFile);
 
         return self::$instance;
     }
@@ -57,12 +55,12 @@ class Session
     *    @return    bool    TRUE if the session has been initialized, else FALSE.
     **/
 
-    public function startSession($configFileName = '')
+    public function startSession(string $confPath = '', string $confFile = '')
     {
         if ( $this->sessionState == self::SESSION_NOT_STARTED || session_status() !== PHP_SESSION_ACTIVE)
         {
             ini_set( 'session.cookie_httponly', 1 );
-            session_name($this->getSessionName($configFileName));
+            session_name($this->getSessionName($confPath, $confFile));
             $this->sessionState = session_start();
         }
 
@@ -83,8 +81,8 @@ class Session
     *    Stores datas in the session.
     *    Example: $instance->foo = 'bar';
     *
-    *    @param    name    Name of the data.
-    *    @param    value    Your data.
+    *    @param    $name    Name of the data.
+    *    @param    $value    Your data.
     *    @return    void
     **/
 
@@ -98,7 +96,7 @@ class Session
     *    Gets datas from the session.
     *    Example: echo $instance->foo;
     *
-    *    @param    name    Name of the data to get.
+    *    @param    $name    Name of the data to get.
     *    @return    mixed    Data stored in session.
     **/
 
@@ -124,11 +122,10 @@ class Session
 
 
     /**
-    *    Destroys the current session.
-    *
-    *    @return    bool    TRUE is session has been deleted, else FALSE.
-    **/
-
+     * Summary of destroy
+     * @param bool $delCookie
+     * @return void
+     */
     public function destroy($delCookie = FALSE)
     {
         if ( $this->sessionState == self::SESSION_STARTED ) {
@@ -150,16 +147,22 @@ class Session
         }
     }
 
-    private function getSessionName($configFileName = '')
+    /**
+     * Summary of getSessionName
+     * @param mixed $confPath
+     * @param mixed $confFile
+     * @return string
+     */
+    private function getSessionName(string $confPath, string $confFile)
     {
-        try{
-        	if ($configFileName != '') {
-        		$config = new Config_Lite($configFileName);
-            	return strtoupper($config->getString('db', 'Schema', '')) . 'HHKSESSION';
-        	} else {
-        		return 'HHKSESSION';
-        	}
-        }catch(\Exception $ex){
+        if(!empty($confPath) && !empty($confFile)){
+            try{
+                $config = parse_ini_file($confPath . $confFile, true);
+                return strtoupper((isset($config["db"]["Schema"])? $config["db"]["Schema"]: '')) . 'HHKSESSION';
+            }catch(\Exception $ex){
+                return 'HHKSESSION';
+            }
+        }else{
             return 'HHKSESSION';
         }
     }

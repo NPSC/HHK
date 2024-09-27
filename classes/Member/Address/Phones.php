@@ -4,6 +4,8 @@ namespace HHK\Member\Address;
 
 use HHK\AuditLog\NameLog;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\HTMLControls\HTMLSelector;
+use HHK\sec\Session;
 use HHK\SysConst\PhonePurpose;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NamePhoneRS;
@@ -24,6 +26,11 @@ use HHK\Tables\Name\NamePhoneRS;
 class Phones extends AbstractContactPoint {
 
 
+    /**
+     * Summary of loadRecords
+     * @param \PDO $dbh
+     * @return array<NamePhoneRS>
+     */
     protected function loadRecords(\PDO $dbh) {
 
         $id = $this->name->get_idName();
@@ -54,14 +61,27 @@ class Phones extends AbstractContactPoint {
         return $rsArray;
     }
 
+    /**
+     * Summary of get_preferredCode
+     * @return mixed
+     */
     public function get_preferredCode() {
         return $this->name->get_preferredPhone();
     }
 
+    /**
+     * Summary of getTitle
+     * @return string
+     */
     public function getTitle() {
         return "Phone Number";
     }
 
+    /**
+     * Summary of setPreferredCode
+     * @param mixed $code
+     * @return void
+     */
     public function setPreferredCode($code) {
 
         if ($code == "" || isset($this->codes[$code])) {
@@ -69,6 +89,11 @@ class Phones extends AbstractContactPoint {
         }
     }
 
+    /**
+     * Summary of get_Data
+     * @param mixed $code
+     * @return array
+     */
     public function get_Data($code = "") {
 
         // Cheap way to get around not putting a var into the signature.
@@ -83,17 +108,24 @@ class Phones extends AbstractContactPoint {
 
             $data["Phone_Num"] = $this->rSs[$code]->Phone_Num->getStoredVal();
             $data["Phone_Extension"] = $this->rSs[$code]->Phone_Extension->getStoredVal();
+            $data["Unformatted_Phone"] = $this->rSs[$code]->Phone_Search->getStoredVal();
 
         } else {
 
             $data["Phone_Num"] = "";
             $data["Phone_Extension"] = "";
+            $data["Unformatted_Phone"] = "";
 
         }
 
         return $data;
     }
 
+    /**
+     * Summary of isRecordSetDefined
+     * @param mixed $code
+     * @return bool
+     */
     public function isRecordSetDefined($code) {
 
         $adrRS = $this->get_recordSet($code);
@@ -106,6 +138,14 @@ class Phones extends AbstractContactPoint {
 
     }
 
+    /**
+     * Summary of createMarkup
+     * @param mixed $inputClass
+     * @param mixed $idPrefix
+     * @param mixed $room
+     * @param mixed $roomPhoneCkd
+     * @return string
+     */
     public function createMarkup($inputClass = '', $idPrefix = "", $room = FALSE, $roomPhoneCkd = FALSE) {
 
         $table = new HTMLTable();
@@ -124,8 +164,16 @@ class Phones extends AbstractContactPoint {
         return $table->generateMarkup();
     }
 
+    /**
+     * Summary of createPhoneMarkup
+     * @param mixed $p
+     * @param mixed $inputClass
+     * @param mixed $idPrefix
+     * @param mixed $showPrefCheckbox
+     * @return string
+     */
     public function createPhoneMarkup($p, $inputClass = '', $idPrefix = "", $showPrefCheckbox = TRUE) {
-
+        $uS = Session::getInstance();
         // Preferred Radio button
         $tdContents = HTMLContainer::generateMarkup('label', $p[1], array('for'=>$idPrefix.'ph'.$p[0], 'style'=>'margin-right:6px;'));
 
@@ -175,6 +223,11 @@ class Phones extends AbstractContactPoint {
                     unset($attr['class']);
                 }
                 $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
+            } else if ($uS->smsProvider && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
+                $smsOptions = [[" ",""],["opt_in", "Opt In"],["opt_out", "Opt Out"]];
+                $smsOptInMkup = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($smsOptions, $this->rSs[$p[0]]->SMS_status->getStoredVal(), true, "SMS?"), ["name" => $idPrefix . 'selSMS[' . $p[0] . ']', 'id' => $idPrefix . 'selSMS' . $p[0], "class" => "ml-2 mr-1"]);
+                
+                $tdContents .= $smsOptInMkup;
             }
         }
 
@@ -183,6 +236,13 @@ class Phones extends AbstractContactPoint {
         return $trContents;
     }
 
+    /**
+     * Summary of createHousePhoneMarkup
+     * @param mixed $prefCode
+     * @param mixed $idPrefix
+     * @param mixed $roomPhoneCkd
+     * @return string
+     */
     protected function createHousePhoneMarkup($prefCode, $idPrefix = "", $roomPhoneCkd = FALSE) {
 
         // Preferred Radio button
@@ -210,6 +270,14 @@ class Phones extends AbstractContactPoint {
         return $trContents;
     }
 
+    /**
+     * Summary of savePost
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $user
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function savePost(\PDO $dbh, array $post, $user, $idPrefix = '') {
 
         $message = '';
@@ -229,84 +297,111 @@ class Phones extends AbstractContactPoint {
         return $message;
     }
 
+    /**
+     * Summary of SavePhoneNumber
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $purpose
+     * @param mixed $user
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function SavePhoneNumber(\PDO $dbh, $post, $purpose, $user, $idPrefix = "") {
 
-        $postedPhone = '';
-
-        if (isset($post[$idPrefix.'txtPhone'][$purpose[0]])) {
-            $postedPhone = $post[$idPrefix.'txtPhone'][$purpose[0]];
-        }
-
-        $id = $this->name->get_idName();
-        // Set some convenience vars.
-        $a = $this->rSs[$purpose[0]];
         $message = "";
 
-        // Phone Number exists in DB?
-        if ($a->idName->getStoredVal() > 0) {
-            // Phone Number exists in the DB
+        if (isset($post[$idPrefix . 'txtPhone'][$purpose[0]])) {
+            $postedPhone = $post[$idPrefix . 'txtPhone'][$purpose[0]];
 
-            if ($postedPhone == '' && $purpose[0] !== PhonePurpose::NoPhone) {
+            $id = $this->name->get_idName();
+            // Set some convenience vars.
+            $a = $this->rSs[$purpose[0]];
 
-                // Delete the Phone Number record
-                if (EditRS::delete($dbh, $a, array($a->idName, $a->Phone_Code)) === FALSE) {
-                    $message .= 'Problem with deleting this phone number.  ';
+
+            // Phone Number exists in DB?
+            if ($a->idName->getStoredVal() > 0) {
+                // Phone Number exists in the DB
+
+                if ($postedPhone == '') {
+
+                    // Delete the Phone Number record
+                    if (EditRS::delete($dbh, $a, array($a->idName, $a->Phone_Code)) === FALSE) {
+                        $message .= 'Problem with deleting this phone number.  ';
+                    } else {
+                        NameLog::writeDelete($dbh, $a, $id, $user, $purpose[1]);
+                        $this->rSs[$purpose[0]] = new NamePhoneRS();
+                        $message .= 'Phone Number deleted.  ';
+                    }
+
                 } else {
-                    NameLog::writeDelete($dbh, $a, $id, $user, $purpose[1]);
-                    $this->rSs[$purpose[0]] = new NamePhoneRS();
-                    $message .= 'Phone Number deleted.  ';
+
+                    // Update the Phone Number
+                    $this->loadPostData($a, $post, $purpose[0], $user, $idPrefix);
+                    $numRows = EditRS::update($dbh, $a, array($a->idName, $a->Phone_Code));
+                    if ($numRows > 0) {
+                        NameLog::writeUpdate($dbh, $a, $id, $user, $purpose[1]);
+                        $message .= 'Phone Number Updated.  ';
+                    }
                 }
 
             } else {
+                // Phone Number does not exist inthe DB.
+                // Did the user fill in this Phone Number panel?
+                if ($postedPhone != '') {
 
-                // Update the Phone Number
-                $this->loadPostData($a, $post, $purpose[0], $user, $idPrefix);
-                $numRows = EditRS::update($dbh, $a, array($a->idName, $a->Phone_Code));
-                if ($numRows > 0) {
-                    NameLog::writeUpdate($dbh, $a, $id, $user, $purpose[1]);
-                    $message .= 'Phone Number Updated.  ';
+                    // Insert a new Phone Number
+                    $this->loadPostData($a, $post, $purpose[0], $user, $idPrefix);
+
+                    $a->idName->setNewVal($id);
+                    $a->Phone_Code->setNewVal($purpose[0]);
+                    EditRS::insert($dbh, $a);
+
+                    NameLog::writeInsert($dbh, $a, $id, $user, $purpose[1]);
+                    $message .= 'Phone Number Inserted.  ';
+
                 }
             }
 
-        } else {
-            // Phone Number does not exist inthe DB.
-            // Did the user fill in this Phone Number panel?
-            if ($postedPhone != '' || $purpose[0] === PhonePurpose::NoPhone) {
-
-                // Insert a new Phone Number
-                $this->loadPostData($a, $post, $purpose[0], $user, $idPrefix);
-
-                $a->idName->setNewVal($id);
-                $a->Phone_Code->setNewVal($purpose[0]);
-                EditRS::insert($dbh, $a);
-
-                NameLog::writeInsert($dbh, $a, $id, $user, $purpose[1]);
-                $message .= 'Phone Number Inserted.  ';
-
-            }
+            // update the recordset
+            EditRS::updateStoredVals($a);
         }
 
-        // update the recordset
-        EditRS::updateStoredVals($a);
         return $message;
     }
 
+    /**
+     * Summary of loadPostData
+     * @param \HHK\Tables\Name\NamePhoneRS $a
+     * @param mixed $p
+     * @param mixed $typeCode
+     * @param mixed $uname
+     * @param mixed $idPrefix
+     * @return void
+     */
     private function loadPostData(NamePhoneRS $a, array $p, $typeCode, $uname, $idPrefix = '') {
 
         $ph = '';
         $extn = '';
+        $smsOptIn = "";
 
         if (isset($p[$idPrefix.'txtPhone'][$typeCode])) {
-            $ph = trim(filter_var($p[$idPrefix.'txtPhone'][$typeCode], FILTER_SANITIZE_STRING));
+            $ph = trim(filter_var($p[$idPrefix.'txtPhone'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         $a->Phone_Num->setNewVal($ph);
 
         if (isset($p[$idPrefix.'txtExtn'][$typeCode])) {
-            $extn = trim(filter_var($p[$idPrefix.'txtExtn'][$typeCode], FILTER_SANITIZE_STRING));
+            $extn = trim(filter_var($p[$idPrefix.'txtExtn'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         $a->Phone_Extension->setNewVal($extn);
+        
+        if (isset($p[$idPrefix.'selSMS'][$typeCode])) {
+            $smsOptIn = filter_var($p[$idPrefix.'selSMS'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        $a->SMS_status->setNewVal($smsOptIn);
+
 
         // phone search - use only the numberals for efficient phone number search
         $ary = array('+', '-');
@@ -318,4 +413,3 @@ class Phones extends AbstractContactPoint {
     }
 
 }
-?>

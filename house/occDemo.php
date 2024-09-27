@@ -2,6 +2,7 @@
 
 use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Member\Address\Address;
 use HHK\sec\{Session, WebInit};
 use HHK\House\Report\ReportFilter;
 use HHK\House\Report\GuestDemogReport;
@@ -27,7 +28,8 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
-$zip = $uS->Zip_Code;
+$houseAddr = Address::getHouseAddress($dbh);
+$zip = (!empty($houseAddr['zip']) ? $houseAddr['zip'] : $uS->Zip_Code);
 
 
 $report = "";
@@ -42,6 +44,7 @@ $hospitalSelections = array('');
 $assocSelections = array('');
 $calSelection = '22';
 $whichGuests = 'new';
+$guestsvspatients = 'guestsandpatients';
 $title = '';
 
 $year = date('Y');
@@ -57,17 +60,24 @@ $dateInterval = new DateInterval('P1M');
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months, array(ReportFilter::DATES));
 $filter->createHospitals();
+$filter->createResourceGroups($dbh);
+$filter->createDiagnoses($dbh);
 
 if (isset($_POST['rbAllGuests'])) {
-    $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_STRING);
+    $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
-$filterBtnMkup = GuestDemogReport::generateFilterBtnMarkup($whichGuests);
+if (isset($_POST['rbGuestsPatients'])) {
+    $guestsvspatients = filter_var($_POST['rbGuestsPatients'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+}
+$filterBtnMkup = GuestDemogReport::generateFilterBtnMarkup($whichGuests, $guestsvspatients);
 
 // Run Selected year Report?
 if (isset($_POST['btnSmt'])) {
 
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
+    $filter->loadSelectedResourceGroups();
+    $filter->loadSelectedDiagnoses();
 
     // Hospitals
     $whHosp = '';
@@ -103,8 +113,30 @@ if (isset($_POST['btnSmt'])) {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
+    $roomGroupBy = $filter->getSelectedResourceGroups();
 
-    $report = GuestDemogReport::demogReport($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $whichGuests, $zip);
+    $whDiags = '';
+    foreach($filter->getSelectedDiagnoses() as $d){
+        if ($d != '') {
+            if ($whDiags == '') {
+                $whDiags .= "'".$d."'";
+            } else {
+                $whDiags .= ",'". $d."'";
+            }
+        }
+    }
+
+    if ($whDiags != '') {
+        $whDiags = " and hs.Diagnosis in (".$whDiags.") ";
+    }
+
+    $whPatient = "";
+    if($guestsvspatients == "patients"){
+        $whPatient = "and hs.idPatient = s.idName";
+    }
+
+
+    $report = GuestDemogReport::demogReport($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $whDiags, $whichGuests, $whPatient, $zip, $roomGroupBy);
 
     $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' ' . $labels->getString('MemberType', 'visitor', 'Guest'). ' Demographics compiled on ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
     $title .= HTMLContainer::generateMarkup('p', 'Report Interval: ' . date('M j, Y', strtotime($filter->getReportStart())) . ' Thru ' . date('M j, Y', strtotime($filter->getReportEnd())));
@@ -114,6 +146,8 @@ if (isset($_POST['btnSmt'])) {
 // Setups for the page.
 $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
+$roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup();
+$diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
 
 ?>
 <!DOCTYPE html>
@@ -126,6 +160,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
         <?php echo HOUSE_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
         <style>
             .hhk-tdTitle {
                 background-color: #F2F2F2;
@@ -167,10 +202,55 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
                     $('#zipDistAnswer').text('Zip Code not found.').closest('tr').show();
                     return;
                 } else if (data.success) {
-                    $('#zipDistAnswer').text(data.success + ' miles').closest('tr').show();
+                    $('#zipDistAnswer').text(data.success + ' nautical miles').closest('tr').show();
                 }
             });
         });
+
+        // disappear the pop-up nameDetails.
+        $(document).mousedown(function (event) {
+            var target = $(event.target);
+            if ($('div#nameDetails').length > 0 && target[0].id !== 'nameDetails' && target.parents("#" + 'nameDetails').length === 0) {
+                $('div#nameDetails').remove();
+            }
+        });
+
+        $('.getNameDetails').click(function(){
+            var detailsbtn = $(this);
+            let idNames = $(this).data('idnames');
+            let title = $(this).data('title');
+            $.ajax({
+                url: 'ws_resc.php',
+                method: 'post',
+                data: {
+                    cmd: "getNameDetails",
+                    idNames: idNames,
+                    title: title
+                },
+                dataType: "json",
+                success: function(data){
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.location.assign(data.gotopage);
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        return;
+                    }
+                    if(data.resultMkup){
+                        var contr = $(data.resultMkup).addClass('nameDetails');
+
+                        $('body').append(contr);
+                        contr.position({
+                            my: 'left top',
+                            at: 'left bottom',
+                            of: detailsbtn
+                        });
+                    }
+                }
+
+            });
+        });
+
         <?php echo $filter->getTimePeriodScript(); ?>;
     });
         </script>
@@ -188,10 +268,16 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
                             if (count($filter->getHospitals()) > 1) {
                                 echo $hospitalMarkup;
                             }
+
+                            if(count($filter->getDiagnoses()) > 1) {
+                                echo $diagnosisMarkup;
+                            }
+
+                            echo $roomGroupMarkup;
                         ?>
 
                         <div style="margin-left:130px;">
-                            <fieldset class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"><legend>Distance Calculator</legend>
+                            <fieldset class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"><legend>Nautical Distance Calculator</legend>
                             <table>
                             <tr><th>From</th><th>To</th></tr>
                             <tr><td><input type="text" id="txtZipFrom" value="<?php echo $zip ?>" size="5"/></td><td><input type="text" id="txtZipTo" value="" size="5"/></td></tr>

@@ -145,10 +145,27 @@ $(document).ready(function () {
     });
     
     //welcome widget
-    $('#welcomeWidget').on('load', function(){
-        $(this).removeClass("d-none");
-        $("#hhk-loading-spinner").hide();
-    });
+    $.ajax({
+		method: 'get',
+		url: $("#welcomeWidget").data('url'),
+		success: function(data){
+			if(data.content && data.bgcolor && data.textcolor){
+				$("#welcomeWidget .welcomeContent").html(data.content);
+				$("#welcomeWidget").css({"background":data.bgcolor, 'color':data.textcolor}).removeClass('d-none');
+				$("#hhk-loading-spinner").addClass('d-none');
+			}else{
+				$("#welcomeWidget .welcomeContent").html("<h3>Did you know?</h3><br><p>Questions can be emailed to support@nonprofitsoftwarecorp.org</p>");
+				$("#welcomeWidget").css({"background":'#c4e7d4', 'color':'#000000'}).removeClass('d-none');
+				$("#hhk-loading-spinner").addClass('d-none');
+			}
+		},
+		error: function(){
+			$("#welcomeWidget .welcomeContent").html("<h3>Did you know?</h3><br><p>Questions can be emailed to support@nonprofitsoftwarecorp.org</p>");
+			$("#welcomeWidget").css({"background":'#c4e7d4', 'color':'#000000'}).removeClass('d-none');
+			$("#hhk-loading-spinner").addClass('d-none');
+		}
+		
+	});
 
 	$('.hhk-tooltip').tooltip({
 		classes : {
@@ -205,14 +222,15 @@ $(document).ready(function () {
 	
 	$("button, input[type=submit]").button();
 	
-	$(document).on('mousedown', '.showPw', function(e) {
+	$(document).on('click', '.showPw', function(e) {
 		var input = $(this).parent().find("input");
-		input.prop("type", "text");
-	});
-	
-	$(document).on('mouseup', '.showPw', function() {
-		var input = $(this).parent().find("input");
-		input.prop("type", "password");
+		if(input.prop("type") == "password"){
+			input.prop("type", "text");
+			$(this).text("Hide");
+		}else{
+			input.prop("type", "password");
+			$(this).text("Show");
+		}
 	});
 
 });

@@ -30,6 +30,7 @@
                     data: "Action",
                     sortable: false,
                     searchable: false,
+                    width: "50px",
                     render: function (data, type, row) {
                         return createActions(data, row);
                     }
@@ -38,6 +39,7 @@
                     "targets": [1],
                     title: "Date",
                     data: 'Date',
+                    width: "70px",
                     render: function (data, type) {
                         return dateRender(data, type, dateFormat);
                     }
@@ -47,7 +49,9 @@
                     title: settings.visitorLabel,
                     searchable: true,
                     sortable: true,
-                    data: "Guest"
+                    className: 'docGuest',
+                    data: "Guest",
+                    width: "150px"
                 },
                 {
                     "targets": [3],
@@ -63,7 +67,8 @@
                     sortable: false,
                     searchable: false,
                     visible: true,
-                    data: "User"
+                    data: "User",
+                    width: "100px"
                 },
                 {
                     "targets": [5],
@@ -71,6 +76,7 @@
                     data: "View Doc",
                     sortable: false,
                     searchable: false,
+                    width: "50px",
                     render: function (data, type, row) {
                         return createDownload(data, row);
                     }
@@ -80,6 +86,7 @@
         var $wrapper = $(this);
         $wrapper.uploader = uploader;
 
+		reinitialize($wrapper, settings);
         createViewer($wrapper, settings);
 
         return this;
@@ -92,11 +99,11 @@
     function createActions(docId, row) {
         
         var $ul, $li;
-        
-        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons');
+
+        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons hhk-flex');
         
         // Edit icon
-        $li = $('<li title="Edit Doc" data-docid="' + docId + '" data-docTitle="' + row.Title + '" />').addClass('hhk-doc-button doc-edit ui-corner-all ui-state-default');
+        $li = $('<li title="Edit Doc" />').addClass('hhk-doc-button doc-edit ui-corner-all ui-state-default');
         $li.append($('<span class="ui-icon ui-icon-pencil" />'));
         
         $ul.append($li);
@@ -108,7 +115,7 @@
         $ul.append($li);
         
         // Cancel Edit Icon
-        $li = $('<li title="Cancel" data-titletext="' + row.Title + '" />').addClass('hhk-doc-button doc-cancel doc-action ui-corner-all ui-state-default').hide();
+        $li = $('<li title="Cancel" />').addClass('hhk-doc-button doc-cancel doc-action ui-corner-all ui-state-default').hide();
         $li.append($('<span class="ui-icon ui-icon-cancel" />'));
         
         $ul.append($li);
@@ -148,7 +155,30 @@
         //Show Edit mode
         $wrapper.on('click', '.doc-edit', function(e){
             e.preventDefault();
-            $(this).closest('tr').find('.docTitle').html('<input type="text" style="width: 100%; height: ' + $(this).closest('tr').find('.docTitle').height() +'px;" id="editDocTitle" value="' + $(this).data('doctitle') + '">');
+            var $row = $(this).closest('tr');
+            let rowdata = $table.row($row).data();
+            $row.find('.docTitle').html('<input type="text" size="' + rowdata.Title.length + '" id="editDocTitle" value="' + rowdata.Title + '" class="p-1">');
+            $row.find('.docGuest').html('<input type="text" size="' + rowdata.Guest.length + '" id="editDocGuest" value="' + rowdata.Guest + '" data-idguest="' + rowdata.Guest_Id + '" class="p-1" readonly>');
+            
+            let selectGuest = function (item) {
+                $row.find("#editDocGuest").attr("data-idguest", item.id).blur();
+
+            }
+
+            let inputParms = {
+                cmd: "filter",
+                psg: settings.psgId,
+                basis: "psg"
+            };
+
+            
+            // change attached guest
+            createAutoComplete($row.find('#editDocGuest'), 0, inputParms, selectGuest, false, null, null, true);
+
+            $row.on("focus", "#editDocGuest", function () {
+                $(this).autocomplete("search", "");
+            });
+
             $(this).closest('td').find('.doc-action').show();
             $(this).closest('td').find('.doc-delete').hide();
             $(this).hide();
@@ -159,25 +189,25 @@
         $wrapper.on('click', '.doc-done', function(e){
             e.preventDefault();
             var row = $(this).closest('tr');
+            var rowdata = $table.row(row).data();
             var docTitle = row.find('#editDocTitle').val();
-            var docId = $(this).closest('td').find('.doc-edit').data('docid');
+            var docGuestId = row.find('#editDocGuest').data('idguest');
+            var docId = rowdata.DocId;
 
-            if(docTitle != ""){
+            if(docTitle != "" || docGuestId != ""){
                 $.ajax({
                     url: settings.serviceURL,
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                            cmd: 'updatedoctitle',
-                            docId: docId,
-                            docTitle: docTitle
+                        cmd: 'updatedoc',
+                        docId: docId,
+                        docTitle: docTitle,
+                        docGuestId: docGuestId
                     },
                     success: function( data ){
                         if(data.idDoc > 0){
-                            //$table.ajax.reload();
-                            var rowdata = $table.row(row).data();
-                            rowdata["Title"] = docTitle;
-							$table.row(row).data(rowdata);
+                            $table.ajax.reload(null, false);
                         }else{
                             if(data.error){
                                 settings.alertMessage(data.error, 'error');
@@ -194,11 +224,7 @@
         //Cancel Doc
         $wrapper.on('click', '.doc-cancel', function(e){
             e.preventDefault();
-            var docTitle = $(this).closest('tr').find('#editDocTitle').val();
-            $(this).closest('tr').find('.docTitle').html(docTitle);
-            $(this).closest('td').find('.doc-action').hide();
-            $(this).closest('td').find('.doc-edit').show();
-            $(this).closest('td').find('.doc-delete').show();
+            $table.ajax.reload(null, false);
 
         });
         //End Cancel Doc
@@ -308,7 +334,7 @@
             var filename = '';
             var docTitle = '';
             var DocUppload = window.uploader;
-            $(document).on('click', '#docUploadBtn', function(){
+            $wrapper.on('click', '#docUploadBtn', function(){
             	$(DocUppload.container).removeClass().addClass('uppload-container');
             	DocUppload.updatePlugins(plugins => []);
             	DocUppload.updateSettings({
@@ -345,16 +371,10 @@
 			                    	} else {
 			                        	if (data.error) {
 			                            	reject(data.error);
-			                            	new Noty({
-			                            		type: "error",
-			                            		text: "Error: " + data.error
-			                            	}).show();
+			                            	flagAlertMessage("Error: " + data.error, true);
 			                        	} else {
 			                            	reject('An unknown error occurred.');
-			                            	new Noty({
-			                            		type: "error",
-			                            		text: "Error: " + data.error
-			                            	}).show();
+			                            	flagAlertMessage("Error: " + data.error, true);
 			                        	}
 			                    	}
 			                	},
@@ -390,10 +410,19 @@
             		//include docTitle and helptext
             		docTitle = '';
             		//add docTitle
-            		$(DocUppload.container).find(".uppload-service--local").prepend("<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>");
+            		if($(DocUppload.container).find("#docFields").length == 0){
+                        var docFields = ""+
+                        "<div class='hhk-flex' id='docFields'>"+
+                            "<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>" +
+                        "</div>";
+
+                        $(DocUppload.container).find(".uppload-service--local").prepend(docFields);
+
+            		}
             		//add helptext
-            		$(DocUppload.container).find(".drop-area").append('<p>Allowed filetypes: pdf, doc, docx, jpeg, png<br>Maximum File Size: 5MB</p>');
-            	
+            		if($(DocUppload.container).find("#docUploadHelp").length == 0){
+            			$(DocUppload.container).find(".drop-area").append('<p id="docUploadHelp">Allowed filetypes: pdf, doc, docx, jpeg, png<br>Maximum File Size: 5MB</p>');
+            		}
             		//hide effects if only one
             		if(DocUppload.effects.length == 1) {
             			$(DocUppload.container).find(".effects-tabs").hide();
@@ -405,5 +434,9 @@
             
         }
     }
+    
+    function reinitialize($wrapper, settings){
+		$wrapper.off('click', '*');
+	}
 
 }(jQuery));

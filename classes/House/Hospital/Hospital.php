@@ -7,7 +7,7 @@ use HHK\Member\Role\{Agent, Doctor};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\sec\Labels;
 use HHK\sec\Session;
-use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose, VolMemberType};
+use HHK\SysConst\{GLTableNames, HospitalType, MemStatus, PhonePurpose, VolMemberType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\HospitalRS;
 use HHK\Exception\RuntimeException;
@@ -29,13 +29,25 @@ use HHK\Member\MemberSearch;
  */
 class Hospital {
 
+    /**
+     * Summary of loadHospitals
+     * @param \PDO $dbh
+     * @return array
+     */
     public static function loadHospitals(\PDO $dbh) {
 
         $hospRs = new HospitalRS();
-        return EditRS::select($dbh, $hospRs, array());
+        return EditRS::select($dbh, $hospRs, array(), 'and', array($hospRs->Title));
 
     }
 
+    /**
+     * Summary of justHospitalMarkup
+     * @param \HHK\House\Hospital\HospitalStay $hstay
+     * @param mixed $offerBlank
+     * @param array $referralHospitalData
+     * @return string
+     */
     protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE, array $referralHospitalData = []) {
 
         $uS = Session::getInstance();
@@ -47,9 +59,9 @@ class Hospital {
         $assocNoneId = 0;
 
         foreach ($hospList as $h) {
-            if ($h[2] == 'h' && ($h[3] == 'a' || $h[0] == $hstay->getHospitalId())) {
+            if ($h[2] == HospitalType::Hospital && ($h[3] == 'a' || $h[0] == $hstay->getHospitalId())) {
                 $hList[] = array($h[0], $h[1]);
-            } else if ($h[2] == 'a') {
+            } else if ($h[2] == HospitalType::Association && ($h[3] == 'a' || $h[0] == $hstay->getAssociationId())) {
 
                 if ($h[1] == '(None)') {
                     $assocNoneId = $h[0];
@@ -66,14 +78,14 @@ class Hospital {
         $mrn = $labels->getString('hospital', 'MRN', '');
 
         $table->addHeaderTr(
-                (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
+                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh($labels->getString('hospital', 'association', 'Association')) : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
                 .($mrn == '' ? '' : HTMLTable::makeTh($mrn))
             );
 
         $table->addBodyTr(
-                (count($aList) > 0 ? HTMLTable::makeTd(
+                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup(removeOptionGroups($aList), ($hstay->getAssociationId() == 0 ? $assocNoneId : $hstay->getAssociationId()), FALSE),
                                 array('name'=>'selAssoc', 'class'=>'ignrSave hospital-stay')
@@ -149,6 +161,14 @@ class Hospital {
 
     }
 
+    /**
+     * Summary of createReferralMarkup
+     * @param \PDO $dbh
+     * @param \HHK\House\Hospital\HospitalStay $hstay
+     * @param mixed $offerBlankHosp
+     * @param array $referralHospitalData
+     * @return array
+     */
     public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, array $referralHospitalData = []) {
 
         $uS = Session::getInstance();
@@ -176,9 +196,10 @@ class Hospital {
 
 
             $wPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Work)["Phone_Num"];
+            $wExt = $agent->getPhonesObj()->get_Data(PhonePurpose::Work)["Phone_Extension"];
             $cPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Cell)["Phone_Num"];
             $email = $agent->getEmailsObj()->get_Data()['Email'];
-            $name = array('first'=>$agent->getRoleMember()->get_firstName(), 'last'=>$agent->getRoleMember()->get_lastName());
+            $name = ['first' => $agent->getRoleMember()->get_firstName(), 'last' => $agent->getRoleMember()->get_lastName()];
             $idName = $agent->getIdName();
             $guestSubmittedAgent = '';
 
@@ -195,8 +216,8 @@ class Hospital {
 
                             // No, The guest's agent name is different than the one saved.
                             $guestSubmittedAgent = HTMLContainer::generateMarkup('span', 'Different Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
-                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ', ' .$referralHospitalData['referralAgent']['email'],
-                            array('class'=>'ui-state-highlight'));
+                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ($referralHospitalData['referralAgent']['extension']== '' ? '' :'x' . $referralHospitalData['referralAgent']['extension']) . ', ' .$referralHospitalData['referralAgent']['email'],
+                            ['class' => 'ui-state-highlight']);
 
                     }
 
@@ -211,6 +232,7 @@ class Hospital {
                         // Agent exists, assign agent
 
                         $wPhone = $results[0]['wphone'];
+                        $wExt = $results[0]['wext'];
                         $cPhone = $results[0]['cphone'];
                         $email = $results[0]['email'];
                         $name = array('first'=>$results[0]['first'], 'last'=>$results[0]['last']);
@@ -244,53 +266,63 @@ class Hospital {
             $ratbl->addBodyTr(
                 HTMLTable::makeTh(HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'referralAgent', 'Referral Agent')).
                         HTMLContainer::generateMarkup('span', '', array('name'=>'agentSearch', 'class'=>'hhk-agentSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'margin-left:1.3em;'))
-                        . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'txtAgentSch', 'class'=>'ignrSave', 'size'=>'16', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'margin-left:0.3em;'))
-                        , array('colspan'=>'3', 'id'=>'a_titleTh'))
-                .HTMLTable::makeTd($guestSubmittedAgent, array('colspan'=>'3'))
+                        . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', ['id' => 'txtAgentSch', 'class' => 'ignrSave', 'size' => '16', 'title' => 'Type 3 characters to start the search.']), ['title' => 'Search', 'style' => 'margin-left:0.3em;'])
+                        ,
+                    ['colspan' => '3', 'id' => 'a_titleTh'])
+                .HTMLTable::makeTd($guestSubmittedAgent, ['colspan' => '3'])
             );
 
             $ratbl->addBodyTr(
                 HTMLTable::makeTh("x", array('class'=>'a_actions')) .
                 HTMLTable::makeTh('First')
                 .HTMLTable::makeTh('Last')
-                .HTMLTable::makeTh('Phone', array('class'=>'hhk-agentInfo', 'colspan'=>'2', 'style'=>'min-width:362px'))
-                .HTMLTable::makeTh('Email', array('style'=>'vertical-align:bottom;', 'class'=>'hhk-agentInfo'))
-                , array('class'=>'hhk-agentInfo'));
+                .HTMLTable::makeTh('Phone', ['class' => 'hhk-agentInfo', 'colspan' => '2', 'style' => 'min-width:362px'])
+                .HTMLTable::makeTh('Email', ['style' => 'vertical-align:bottom;', 'class' => 'hhk-agentInfo'])
+                ,
+                ['class' => 'hhk-agentInfo']);
 
             $ratbl->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash')), array('class'=>'ui-corner-all ui-state-default ui-button ui-widget', 'style'=>'padding: 0.2em 0.4em;', 'id'=>'a_delete', 'type'=>'button')), array('class'=>'a_actions')) .
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-trash']), ['class' => 'ui-corner-all ui-state-default ui-button ui-widget', 'style' => 'padding: 0.2em 0.4em;', 'id' => 'a_delete', 'type' => 'button']), ['class' => 'a_actions']) .
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $name['first'],
                                 array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay name'))
-                    .HTMLInput::generateMarkup($idName, array('name'=>'a_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
+                    .HTMLInput::generateMarkup($idName, ['name' => 'a_idName', 'type' => 'hidden', 'class' => 'hospital-stay'])
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $name['last'],
-                                array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay name'))
+                        ['name' => 'a_txtLastName', 'size' => '17', 'class' => 'hhk-agentInfo hospital-stay name'])
                         )
-                . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ' .
+                . HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup("div", 
+                        HTMLContainer::generateMarkup("span", $uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ', ["class"=>"mr-1"]) .
                         HTMLInput::generateMarkup(
                                 $cPhone,
-                                array('id'=>'a_txtPhone'.PhonePurpose::Cell, 'name'=>'a_txtPhone[' .PhonePurpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
-                        , array('style'=>'text-align:right;')
-                        )
-                . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
+                        ['id' => 'a_txtPhone' . PhonePurpose::Cell, 'name' => 'a_txtPhone[' . PhonePurpose::Cell . ']', 'size' => '16', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
+                        ,['class'=>'hhk-flex align-items-center'])
+                )
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup("div",
+                    HTMLContainer::generateMarkup("span", $uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ', ["class"=>"mr-1"]) .
                     HTMLInput::generateMarkup(
                         $wPhone,
-                        array('id'=>'a_txtPhone'.PhonePurpose::Work, 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
-                    , array('style'=>'text-align:right;')
-                    )
+                        ['id' => 'a_txtPhone' . PhonePurpose::Work, 'name' => 'a_txtPhone[' . PhonePurpose::Work . ']', 'size' => '16', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
+                    . HTMLContainer::generateMarkup("span", 'x:', ["class"=>"mx-1"])
+                    . HTMLInput::generateMarkup(
+                        $wExt,
+                        ['id' => 'a_txtExtn' . PhonePurpose::Work, 'name' => 'a_txtExtn[' . PhonePurpose::Work . ']', 'size' => '6', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay'])
+                    ,['class'=>'hhk-flex align-items-center'])
+                )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $email,
-                                array('id'=>'a_txtEmail1', 'name'=>'a_txtEmail[1]', 'size'=>'24', 'class'=>'hhk-emailInput hhk-agentInfo hospital-stay'))
-                        .HTMLContainer::generateMarkup('span', '', array('class'=>'hhk-send-email'))
+                        ['id' => 'a_txtEmail1', 'name' => 'a_txtEmail[1]', 'size' => '24', 'class' => 'hhk-emailInput hhk-agentInfo hospital-stay'])
+                        .HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-send-email'])
                         )
-                , array('class'=>'hhk-agentInfo'));
+                ,
+                ['class' => 'hhk-agentInfo']);
 
-            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(array('style'=>'margin-top:.5em;'));
+            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(['class' => 'mt-3']);
 
 
         }
@@ -420,44 +452,79 @@ class Hospital {
                         )
                 , array('class'=>'hhk-docInfo'));
 
-            $doctorMarkup = $docErrorMsg . $dtbl->generateMarkup(array('style'=>'display:inline-table; vertical-align: top;'));
+            $doctorMarkup = $docErrorMsg . $dtbl->generateMarkup(array('class'=>'mt-3'));
         }
 
         // Diagnosis
         $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 
         if (count($diags) > 0) {
 
             $diagtbl = new HTMLTable();
-            $diagtbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis'))
-            );
 
             $myDiagnosis = (isset($referralHospitalData['diagnosis']) && $referralHospitalData['diagnosis'] != '' ? $referralHospitalData['diagnosis'] : $hstay->getDiagnosisCode());
+            $diagnosisDetails = (isset($referralHospitalData['diagnosisDetails']) && $referralHospitalData['diagnosisDetails'] != '' ? $referralHospitalData['diagnosisDetails']: $hstay->getDiagnosis2());
 
-            $diagtbl->addBodyTr(HTMLTable::makeTd(
-                HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
-                    array('name'=>'selDiagnosis', 'class'=>'hospital-stay', 'style'=>'width: 100%'))
-            ));
+            $diagId = (isset($diags[$myDiagnosis]) ? $myDiagnosis : '');
+            $diagCat = (!empty($diagId) && isset($diagCats[$diags[$diagId]['Substitute']]) ? $diagCats[$diags[$diagId]['Substitute']][1] . ": " : '');
+
+            if ($uS->UseDiagSearch){
+                $diagtbl->addBodyTr(
+                    HTMLTable::makeTh(
+                        HTMLContainer::generateMarkup("span", $labels->getString('hospital', 'diagnosis', 'Diagnosis'))
+                      . HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-search", "style"=>"margin-left:1.3em; margin-right:0.3em;"))
+                      . HTMLInput::generateMarkup("", array('id'=>'diagSearch', 'type'=>'search'))
+                        . HTMLInput::generateMarkup($diagId, array("type"=>"hidden", "name"=>"selDiagnosis", 'class'=>'hospital-stay')), array("colspan"=>"2"))
+                );
+
+                $selectedClass = "";
+                $selectedDiag = "";
+                if(empty($diagId)){
+                   $selectedClass = "d-none";
+                }else{
+                    $selectedDiag = $diagCat . $diags[$myDiagnosis][1];
+                }
+
+                $diagtbl->addBodyTr(
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-trash")), array("class"=>"ui-corner-all ui-state-default ui-button ui-widget", "style"=>"padding: 0.2em 0.4em;", "id"=>"delDiagnosis"))) .
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup("strong", $labels->getString('hospital', 'diagnosis', 'Diagnosis') . ": ") . HTMLContainer::generateMarkup("span", $selectedDiag, array("id"=>"selectedDiag")))
+                    , array("class"=>$selectedClass));
+
+            }else{
+                //prepare diag categories for doOptionsMkup
+                foreach($diags as $key=>$diag){
+                    if(!empty($diag['Substitute'])){
+                        $diags[$key][2] = $diagCats[$diag['Substitute']][1];
+                    }
+                }
+
+                $diagtbl->addBodyTr(
+                    HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis'))
+                );
+                $diagtbl->addBodyTr(HTMLTable::makeTd(
+                    HTMLSelector::generateMarkup(
+                        HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
+                        array('name'=>'selDiagnosis', 'class'=>'hospital-stay', 'style'=>'width: 100%'))
+                ));
+            }
 
             // Use Diagnosis as a text box?
             if ($uS->ShowDiagTB) {
                 if ($myDiagnosis != '' && isset($diags[$myDiagnosis]) === FALSE) {
 
                     $diagtbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay'))));
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', "style"=>"width:100%")), array("colspan"=>"2")));
 
                     $myDiagnosis = '';
                 }else{
                     $diagtbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis2(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details')))));
-
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($diagnosisDetails, array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details'),  "style"=>"width:100%")), array("colspan"=>"2")));
+                    $diagnosisDetails = '';
                 }
             }
 
-
-            $diagMarkup = $diagtbl->generateMarkup(array('style'=>'display:inline-table; vertical-align: top;'));
+            $diagMarkup = $diagtbl->generateMarkup(array('class'=>'mt-3'));
 
         } else {
             $diagMarkup = '';
@@ -480,13 +547,13 @@ class Hospital {
                 )
             );
 
-            $locMarkup = $diagtbl->generateMarkup(array('style'=>'display:inline-table; vertical-align: top;'));
+            $locMarkup = $diagtbl->generateMarkup(array('class'=>'mt-3'));
 
         } else {
             $locMarkup = '';
         }
 
-        $docRowMkup = HTMLContainer::generateMarkup('div', $doctorMarkup . $diagMarkup . $locMarkup, array('style'=>'margin-top: .5em;', 'id'=>'docRow'));
+        $docRowMkup = $doctorMarkup . $diagMarkup . $locMarkup;
 
         // Hospital stay log
         if ($hstay->getIdPsg() > 0) {
@@ -545,52 +612,56 @@ $(document).ready(function () {
         $uS = Session::getInstance();
 
         if (isset($post['selAssoc'])) {
-            $hstay->setAssociationId(filter_var($post['selAssoc'], FILTER_SANITIZE_STRING));
+            $hstay->setAssociationId(filter_var($post['selAssoc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['selHospital'])) {
-            $hstay->setHospitalId(filter_var($post['selHospital'], FILTER_SANITIZE_STRING));
+            $hstay->setHospitalId(filter_var($post['selHospital'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['psgRoom'])) {
-        	$hstay->setRoom(filter_var($post['psgRoom'], FILTER_SANITIZE_STRING));
+        	$hstay->setRoom(filter_var($post['psgRoom'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['psgMrn'])) {
-            $MRN = filter_var($post['psgMrn'], FILTER_SANITIZE_STRING);
+            $MRN = filter_var($post['psgMrn'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $MRN = str_replace(["/", "-","_"], "", trim($MRN));
             $hstay->setMrn($MRN);
         }
         if (isset($post['txtEntryDate'])) {
-            $dateStr = filter_var($post['txtEntryDate'], FILTER_SANITIZE_STRING);
+            $dateStr = filter_var($post['txtEntryDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($dateStr != '') {
                 $enDT = new \DateTime($dateStr);
                 $enDT->setTimezone(new \DateTimeZone($uS->tz));
                 $hstay->setArrivalDate($enDT->format('Y-m-d H:i:s'));
+            }else{
+                $hstay->setArrivalDate("");
             }
         }
 
        if (isset($post['txtExitDate'])) {
-            $dateStr = filter_var($post['txtExitDate'], FILTER_SANITIZE_STRING);
+            $dateStr = filter_var($post['txtExitDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($dateStr != '') {
                 $enDT = new \DateTime($dateStr);
                 $enDT->setTimezone(new \DateTimeZone($uS->tz));
                 $hstay->setExpectedDepartureDate($enDT->format('Y-m-d H:i:s'));
+            }else{
+                $hstay->setExpectedDepartureDate("");
             }
         }
 
         if (isset($post['selDiagnosis'])) {
 
-            $myDiagnosis = filter_var($post['selDiagnosis'], FILTER_SANITIZE_STRING);
+            $myDiagnosis = filter_var($post['selDiagnosis'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $hstay->setDiagnosisCode($myDiagnosis);
         }
 
         if (isset($post['txtDiagnosis'])) {
-            $hstay->setDiagnosis2(filter_var($post['txtDiagnosis'], FILTER_SANITIZE_STRING));
+            $hstay->setDiagnosis2(filter_var(base64_decode($post['txtDiagnosis']), FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['selLocation'])) {
-            $hstay->setLocationCode(filter_var($post['selLocation'], FILTER_SANITIZE_STRING));
+            $hstay->setLocationCode(filter_var($post['selLocation'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Doctor
@@ -627,5 +698,42 @@ $(document).ready(function () {
         return $hstay->save($dbh, $psg, $hstay->getAgentId(), $uS->username, $idResv);
 
     }
+
+    /**
+     * Check if a given hospital/association is attached to reservations or visits
+     * @param \PDO $dbh
+     * @param int $idHosp
+     * @return bool
+     */
+    public static function isHospitalInUse(\PDO $dbh, int $idHosp){
+        $totalRecords = 0;
+
+        $resvQuery = "select count(hs.idHospital_stay) from hospital_stay hs
+        join reservation r on hs.idHospital_stay = r.idHospital_Stay where hs.idHospital = :idH or hs.idAssociation = :idA;";
+
+        $visitQuery = "select count(hs.idHospital_stay) from hospital_stay hs
+        join visit v on hs.idHospital_stay = v.idHospital_Stay where hs.idHospital = :idH or hs.idAssociation = :idA;";
+
+        $resvStmt = $dbh->prepare($resvQuery);
+        $resvStmt->execute([":idH" => $idHosp, ":idA"=>$idHosp]);
+        $resvRows = $resvStmt->fetchAll(\PDO::FETCH_NUM);
+        if(isset($resvRows[0][0])){
+            $totalRecords += $resvRows[0][0];
+        }else{
+            //something's wrong, abort
+            return true;
+        }
+
+        $visitStmt = $dbh->prepare($visitQuery);
+        $visitStmt->execute([":idH" => $idHosp, ":idA"=>$idHosp]);
+        $visitRows = $visitStmt->fetchAll(\PDO::FETCH_NUM);
+        if(isset($visitRows[0][0])){
+            $totalRecords += $visitRows[0][0];
+        }else{
+            //something's wrong, abort
+            return true;
+        }
+
+        return ($totalRecords > 0);
+    }
 }
-?>

@@ -65,16 +65,16 @@ $events = array('init'=>'Im here');
 
 
 // Check input
-if (isset($_POST['cd'])) {
+if (filter_has_var(INPUT_POST, 'cd')) {
     $cd = filter_input(INPUT_POST, 'cd');
 }
-if (isset($_POST['so'])) {
-    $so = filter_input(INPUT_POST, 'so', FILTER_SANITIZE_STRING);
+if (filter_has_var(INPUT_POST, 'so')) {
+    $so = filter_input(INPUT_POST, 'so');
 }
-if (isset($_POST['un'])) {
+if (filter_has_var(INPUT_POST, 'un')) {
     $un = filter_input(INPUT_POST, 'un');
 }
-if (isset($_POST['ck'])) {
+if (filter_has_var(INPUT_POST, 'ck')) {
     $ck = filter_input(INPUT_POST, 'ck');
 }
 
@@ -87,7 +87,7 @@ if ($cd == '' || $so == '' || $un == '') {
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
     // Load the page information
     $page = new ScriptAuthClass($dbh);

@@ -14,4 +14,3 @@ class DefaultSettings {
     const Rate_Category = 'e';
     const Fixed_Rate_Category = 'f';
 }
-?>

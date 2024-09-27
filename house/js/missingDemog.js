@@ -64,7 +64,9 @@ $(document).ready(function () {
 		}
 	});
     
-    var missingDemogTable = $('#dataTbl').dataTable({
+    var filterData = [];
+    
+    var missingDemogTable = $('#dataTbl').DataTable({
         "columnDefs": dtCols,
         "serverSide": true,
         "processing": true,
@@ -75,7 +77,14 @@ $(document).ready(function () {
         "lengthMenu": [[10, 25, 50], [10, 25, 50]],
         "dom": '<"top fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-tl ui-corner-tr"lf><"hhk-overflow-x"rt><"bottom fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
         ajax: {
-            url: "GuestDemog.php?cmd=getMissingDemog"
+            url: "GuestDemog.php",
+            type: "post",
+            data: function(d){
+            	d.cmd = "getMissingDemog";
+            	$.each(filterData, function(k,v){
+            		d[v.name] = v.value;
+            	});
+            }
         },
         /* "fixedHeader": {
         	headerOffset: 38,
@@ -188,10 +197,12 @@ $(document).ready(function () {
     });
     
     $(document).on("click", ".savebtns #dt-cancel", function(e){
-    	$('#dataTbl').DataTable().ajax.reload(null, false);
+    	e.preventDefault();
+    	missingDemogTable.ajax.reload(null, false);
     });
     
     $(document).on("click", ".savebtns #dt-save", function(e){
+    	e.preventDefault();
     	var data = $("#dataTbl select").serializeArray();
     	data.push({name: "cmd", value: "save"});
     	$.ajax({
@@ -208,7 +219,20 @@ $(document).ready(function () {
                     datatype: "json"
                 });
     	
-    	$('#dataTbl').DataTable().ajax.reload(null, false);
+    	missingDemogTable.ajax.reload(null, false);
+    });
+    
+    $(document).on('click', "#fcat #btnHere", function(e){
+    	e.preventDefault();
+    	filterData = $('#fcat').serializeArray();
+    	filterData.push({name: "btnHere", value: "true"});
+    	missingDemogTable.ajax.reload();
+    });
+    
+    $(document).on('click', "#fcat #btnReset", function(e){
+    	e.preventDefault();
+    	filterData = [];
+    	missingDemogTable.ajax.reload();
     });
     
     $(window).on('beforeunload', function(){

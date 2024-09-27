@@ -1,8 +1,6 @@
 <?php
 use HHK\sec\WebInit;
 use HHK\sec\Session;
-use HHK\Config_Lite\Config_Lite;
-use HHK\AlertControl\AlertMessage;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLTable;
@@ -15,6 +13,7 @@ use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
+use HHK\TableLog\HouseLog;
 
 /**
  * ItemReport.php
@@ -63,7 +62,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         if ($r['Invoice_Deleted'] > 0) {
             $iAttr['style'] .= 'color:red;';
             $iAttr['title'] = 'Invoice is Deleted.';
-        } else if ($r['Balance'] != 0) {
+        } else if ($r['Balance'] != 0 && $r['Balance'] != $r['Invoice_Amount']) {
 
             $iAttr['title'] = 'Partial payment.';
             $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
@@ -112,8 +111,20 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         'Diagnosis' => (isset($diagnoses[$r['Diagnosis']]) ? $diagnoses[$r['Diagnosis']][1] : ''),
         'Location' => (isset($locations[$r['Location']]) ? $locations[$r['Location']][1] : ''),
         'Description' => $r['Description'],
+        'Invoice_Notes' => $r["Invoice_Notes"],
+        'Payment_Notes' => $r["Payment_Notes"],
+        'Patient_Id' => $r['Patient_Id'],
+        'Patient_Name_Last' => $r['Patient_Name_Last'],
+        'Patient_Name_First' => $r['Patient_Name_First'],
+        'Patient_Address' =>$r['Patient_Address'],
+        'Patient_City'=>$r['Patient_City'],
+        'Patient_County'=>$r['Patient_County'],
+        'Patient_State_Province'=>$r['Patient_State_Province'],
+        'Patient_Postal_Code'=>$r['Patient_Postal_Code'],
+        'Patient_Country'=>$r['Patient_Country'],
         'Invoice_Number' => $r['Invoice_Number'],
         'Amount' => $amt,
+        'Updated_By'=>$r["Updated_By"],
     );
 
     $total += $amt;
@@ -176,34 +187,57 @@ $statusList = readGenLookupsPDO($dbh, 'Invoice_Status');
 // array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms
 $cFields[] = array('Visit Id', 'vid', 'checked', '', 'string', '15', array());
 $cFields[] = array("Organization", 'Company', 'checked', '', 'string', '20', array());
-$cFields[] = array('Last', 'Last', 'checked', '', 'string', '20', array());
-$cFields[] = array("First", 'First', 'checked', '', 'string', '20', array());
+$cFields[] = array($labels->getString('memberType', 'guest', 'Guest') . ' Last', 'Last', 'checked', '', 'string', '20', array());
+$cFields[] = array($labels->getString('memberType', 'guest', 'Guest') . " First", 'First', 'checked', '', 'string', '20', array());
 $pFields = array('Address', 'City');
-$pTitles = array('Address', 'City');
+$pTitles = array($labels->getString('memberType', 'guest', 'Guest') . ' Address', 'City');
+$paFields = array('Patient_Address', 'Patient_City');
+$paTitles = array($labels->getString('memberType', 'patient', 'Patient') . ' Address', $labels->getString('memberType', 'patient', 'Patient') . ' City');
 
 if ($uS->county) {
     $pFields[] = 'County';
-    $pTitles[] = 'County';
+    $pTitles[] = $labels->getString('memberType', 'guest', 'Guest') . ' County';
+    $paFields[] = 'Patient_County';
+    $paTitles[] = $labels->getString('memberType', 'patient', 'Patient') . ' County';
 }
 
 $pFields = array_merge($pFields, array('State_Province', 'Postal_Code', 'Country'));
 $pTitles = array_merge($pTitles, array('State', 'Zip', 'Country'));
+$paFields = array_merge($paFields, array("Patient_State_Province", "Patient_Postal_Code", "Patient_Country"));
+$paTitles = array_merge($paTitles, array($labels->getString('memberType', 'patient', 'Patient') . " State", $labels->getString('memberType', 'patient', 'Patient') . " Zip", $labels->getString('memberType', 'patient', 'Patient') . " Country"));
 
 $cFields[] = array($pTitles, $pFields, '', '', 'string', '20', array());
 $cFields[] = array("Date", 'Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15', array());
 $cFields[] = array("Description", 'Description', 'checked', '', 'string', '20', array());
+$cFields[] = array("Invoice Notes", 'Invoice_Notes', '', '', 'string', '20', array());
+$cFields[] = array("Payment Notes", 'Payment_Notes', '', '', 'string', '20', array());
+$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Id", 'Patient_Id', '', '', 'string', '20', array());
+$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Last", 'Patient_Name_Last', '', '', 'string', '20', array());
+$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " First", 'Patient_Name_First', '', '', 'string', '20', array());
+$cFields[] = array($paTitles, $paFields, '', '', 'string', '20', array());
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
-    $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', '', '', 'string', '20', array());
+    $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', '', '', 'string', '20', array());
 }
 
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+// Diagnosis
+$diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+$diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+//prepare diag categories for doOptionsMkup
+foreach($diags as $key=>$diag){
+    if(!empty($diag['Substitute'])){
+        $diags[$key][2] = $diagCats[$diag['Substitute']][1];
+        $diags[$key][1] = $diagCats[$diag['Substitute']][1] . ": " . $diags[$key][1];
+    }
+}
+
 if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 'string', '20', array());
 }
 
+$cFields[] = array("Updated By", 'Updated_By', '', '', 'string', '15', array());
 $cFields[] = array("Status", 'Status', 'checked', '', 'string', '15', array());
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 
@@ -284,21 +318,21 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $reqs = $_POST['selDiag'];
 
         if (is_array($reqs)) {
-            $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
     if (isset($_POST['selPayStatus'])) {
         $reqs = $_POST['selPayStatus'];
         if (is_array($reqs)) {
-            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
     if (isset($_POST['selItems'])) {
         $reqs = $_POST['selItems'];
         if (is_array($reqs)) {
-            $itemSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+            $itemSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
     }
 
@@ -410,6 +444,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     i.Carried_Amount,
     i.`Balance`,
     i.`Deleted` as `Invoice_Deleted`,
+    i.`Updated_By`,
+    i.`Notes` as `Invoice_Notes`,
+    ifnull(p.`Notes`, '') as `Payment_Notes`,
     il.`Price`,
     il.`Amount`,
     il.`Quantity`,
@@ -418,8 +455,17 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     il.Period_Start,
     il.Period_End,
     il.`Deleted` as `Line_Deleted`,
+    ifnull(pn.Name_Last, '') as `Patient_Name_Last`,
+    ifnull(pn.Name_First, '') as `Patient_Name_First`,
+    ifnull(pn.idName, '') as `Patient_Id`,
     ifnull(hs.Diagnosis, '') as `Diagnosis`,
     ifnull(hs.Location, '') as `Location`,
+    CASE when IFNULL(pa.Address_2, '') = '' THEN IFNULL(pa.Address_1, '') ELSE CONCAT(IFNULL(pa.Address_1, ''), ' ', IFNULL(pa.Address_2, '')) END AS `Patient_Address`,
+    IFNULL(pa.City, '') AS `Patient_City`,
+    IFNULL(pa.County, '') AS `Patient_County`,
+    IFNULL(pa.State_Province, '') AS `Patient_State_Province`,
+    IFNULL(pa.Postal_Code, '') AS `Patient_Postal_Code`,
+    IFNULL(pa.Country_Code, '') AS `Patient_Country`,
     ifnull(n.Name_Last, '') as `Name_Last`,
     ifnull(n.Name_First, '') as `Name_First`,
     CASE when IFNULL(na.Address_2, '') = '' THEN IFNULL(na.Address_1, '') ELSE CONCAT(IFNULL(na.Address_1, ''), ' ', IFNULL(na.Address_2, '')) END AS `Address`,
@@ -432,12 +478,16 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(nv.Vol_Code, '') as `Billing_Agent`
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
+    left join `payment_invoice` pi on i.idInvoice = pi.Invoice_Id
+    left join `payment` p on pi.Payment_Id = p.idPayment
     left join `name` n on i.Sold_To_Id = n.idName
     left join `name_address` na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
     left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
     left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
+    left join `name` pn on hs.idPatient = pn.idName
+    left join `name_address` pa on pn.idName = pa.idName
     left join name_volunteer2 nv on nv.idName = n.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
-where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags order by i.idInvoice, il.idInvoice_Line";
+where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags group by il.idInvoice_Line order by i.idInvoice, il.idInvoice_Line";
 
 
     $tbl = null;
@@ -523,6 +573,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
         $headerTableMu = $headerTable->generateMarkup();
 
     } else {
+        HouseLog::logDownload($dbh, 'Item Report', "Excel", "Item Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
         $writer->download();
     }
 
@@ -574,6 +625,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

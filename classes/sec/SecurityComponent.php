@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Exception\AuthException;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\WebPageCode;
 
@@ -15,19 +16,35 @@ use HHK\SysConst\WebPageCode;
 class SecurityComponent {
 
     private $fileName = '';
+
     private $path = '';
+
     private $hostName = '';
+
     private $siteURL = '';
+
     private $rootURL = '';
+
     private $hhkSiteDir = '';
+
     private $rootPath = '';
 
 
+    /**
+     * Summary of __construct
+     */
     public function __construct() {
         $this->defineThisURL();
     }
 
-    public static function is_Authorized($name) {
+    /**
+     * Summary of is_Authorized
+     * @param mixed $name
+     * @param bool $isLogin write log and throw exception if user flow is login
+     * @return bool
+     * @throws AuthException
+     */
+    public static function is_Authorized($name, $isLogin = false) {
 
         if (self::is_Admin()) {
             return TRUE;
@@ -35,6 +52,12 @@ class SecurityComponent {
 
         $uS = Session::getInstance();
         $pageCode = array();
+
+        //parse url before checking authorization
+        $parsedName = parse_url($name);
+        if($parsedName !== FALSE && isset($parsedName["path"]) && $parsedName["path"] != ''){
+            $name = $parsedName["path"];
+        }
 
         // try reading the page table
         if ($name != "" && isset($uS->webPages[$name])) {
@@ -48,21 +71,50 @@ class SecurityComponent {
         }
 
         // check authorization codes.
-        return self::does_User_Code_Match($pageCode);
+        $isAuthorized = self::does_User_Code_Match($pageCode);
+        $isIpRestricted = self::does_User_Code_Match($pageCode, true);
+
+        if($isAuthorized){
+            return true;
+        }else if ($isIpRestricted){
+            $errorMsg = "Unauthorized for page:" . $name . " at this location";
+
+            if($isLogin){
+                $dbh = initPDO(true);
+                UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
+                throw new AuthException($errorMsg);
+            }
+            return false;
+        }else{
+            $errorMsg = "Unauthorized for page: " . $name;
+
+            if($isLogin){
+                $dbh = initPDO(true);
+                UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
+                throw new AuthException($errorMsg);
+            }
+            return false;
+        }
 
     }
 
+    /**
+     * Summary of rerouteIfNotLoggedIn
+     * @param mixed $pageType
+     * @param mixed $loginPage
+     * @return void
+     */
     public function rerouteIfNotLoggedIn($pageType, $loginPage) {
 
         $ssn = Session::getInstance();
 
-        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE) {
+        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE || (isset($ssn->userAgent) && $ssn->userAgent != filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS) )) {
 
             $ssn->destroy(TRUE);
 
             if ($pageType != WebPageCode::Page) {
 
-                echo json_encode(array("error" => "Unauthorized.", 'gotopage' => $loginPage));
+                echo json_encode(["error" => "Unauthorized.", 'gotopage' => $loginPage]);
 
             } else {
 
@@ -79,6 +131,12 @@ class SecurityComponent {
         }
     }
 
+    /**
+     * Summary of die_if_not_Logged_In
+     * @param string $pageType
+     * @param mixed $loginPage
+     * @return void
+     */
     public function die_if_not_Logged_In($pageType, $loginPage) {
         $ssn = Session::getInstance();
 
@@ -89,7 +147,7 @@ class SecurityComponent {
             exit();
         }
 
-        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE) {
+        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE || (isset($ssn->userAgent) && $ssn->userAgent != filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS) )) {
 
             $ssn->destroy(TRUE);
 
@@ -100,7 +158,12 @@ class SecurityComponent {
             } else {
 
                 if ($this->fileName != '') {
-                    header("Location: " . $loginPage . "?xf=" . $this->fileName);
+                    //build redirect path
+                    $xf = $this->fileName;
+                    if(count($_GET) > 0){
+                        $xf .= "?" . http_build_query($_GET);
+                    }
+                    header("Location: " . $loginPage . "?xf=" . urlencode($xf));
                 } else {
                     header("Location: " . $loginPage);
                 }
@@ -110,10 +173,21 @@ class SecurityComponent {
         }
     }
 
-    protected static function does_User_Code_Match(array $pageCodes) {
+    /**
+     * Check if user is authorized for a set of page codes or if the user is IP Restricted
+     * @param array $pageCodes
+     * @param bool $isIpRestricted causes function to return true if the user is IP restricted for the given page(s)
+     * @return bool
+     */
+    public static function does_User_Code_Match(array $pageCodes, bool $isIpRestricted = false) {
 
         $ssn = Session::getInstance();
-        $userCodes = $ssn->groupcodes;
+
+        if($isIpRestricted){
+            $userCodes = $ssn->groupcodesIpRestricted;
+        } else {
+            $userCodes = $ssn->groupcodes;
+        }
 
         foreach ($pageCodes as $pageCode) {
             // allow access to public pages.
@@ -132,17 +206,16 @@ class SecurityComponent {
                 }
             }
         }
-
         return FALSE;
     }
 
+    /**
+     * Summary of isHTTPS
+     * @return bool
+     */
     public static function isHTTPS() {
 
-        $serverHTTPS = '';
-
-        if (isset($_SERVER["HTTPS"])) {
-            $serverHTTPS = filter_var($_SERVER["HTTPS"], FILTER_SANITIZE_STRING);
-        }
+        $serverHTTPS = (isset($_SERVER["HTTPS"]) ? $_SERVER["HTTPS"] : '');
 
         if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
             return FALSE;
@@ -151,9 +224,14 @@ class SecurityComponent {
         return TRUE;
     }
 
+    /**
+     * Summary of defineThisURL
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
     private function defineThisURL() {
 
-        $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_SANITIZE_STRING);
+        $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $serverName = filter_var((isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"]: false), FILTER_SANITIZE_URL);
 
         if (is_null($scriptName) || $scriptName === FALSE) {
@@ -221,18 +299,10 @@ class SecurityComponent {
 
     }
 
-    public function setResourceURL(\PDO $dbh){
-        try{
-            $resourceURL = SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL');
-            if($resourceURL == '' || $resourceURL == "http://./"){
-                SysConfig::saveKeyValue($dbh, "sys_config", "resourceURL", $this->getRootURL());
-            }
-            return SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL', '');
-        }catch(\Exception $e){
-            return $this->getRootURL();
-        }
-    }
-
+    /**
+     * Summary of is_Admin
+     * @return bool
+     */
     public static function is_Admin() {
         $tokn = false;
         $ssn = Session::getInstance();
@@ -257,6 +327,10 @@ class SecurityComponent {
     }
 
     // Checks for THE admin account.
+    /**
+     * Summary of is_TheAdmin
+     * @return bool
+     */
     public static function is_TheAdmin() {
         $tokn = false;
         $ssn = Session::getInstance();

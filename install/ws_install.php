@@ -14,11 +14,9 @@ use HHK\sec\UserClass;
 
 require_once ("InstallIncludes.php");
 
-addslashesextended($_POST);
-
 //Check request
-if (isset($_POST['cmd'])) {
-    $c = filter_var($_POST['cmd'], FILTER_SANITIZE_STRING);
+if (filter_has_var(INPUT_POST, 'cmd')) {
+    $c = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $events = array();
@@ -63,15 +61,28 @@ if ($c == "testdb") {
         }
 
         // Update admin password
-        if (isset($_POST['new'])) {
+        if (filter_has_var(INPUT_POST, 'adminpw')) {
 
-            $newPw = filter_var($_POST['new'], FILTER_SANITIZE_STRING);
+            $adminPw = filter_input(INPUT_POST, 'adminpw', FILTER_UNSAFE_RAW);
 
             $uclass = new UserClass();
-            if ($uclass->setPassword($dbh, -1, $newPw)) {
+            if ($uclass->setPassword($dbh, -1, $adminPw)) {
                 $events['result'] = "Admin Password set.  ";
             } else {
                 $errorMsg .= "Admin Password set.  ";
+            }
+        }
+
+        // Update npscuser password
+        if (filter_has_var(INPUT_POST, 'npscuserpw')) {
+
+            $npscuserPw = filter_input(INPUT_POST, 'npscuserpw', FILTER_UNSAFE_RAW);
+
+            $uclass = new UserClass();
+            if ($uclass->setPassword($dbh, 10, $npscuserPw)) {
+                $events['result'] .= "npscuser Password set.  ";
+            } else {
+                $errorMsg .= "npscuser Password set.  ";
             }
         }
 
@@ -98,43 +109,25 @@ function testdb($post) {
     $dbName = '';
 
     if (isset($post['dbms'])) {
-        $dbms = filter_var($post['dbms'], FILTER_SANITIZE_STRING);
+        $dbms = filter_var($post['dbms'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($post['dburl'])) {
-        $dbURL = filter_var($post['dburl'], FILTER_SANITIZE_STRING);
+        $dbURL = filter_var($post['dburl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($post['dbuser'])) {
-        $dbUser = filter_var($post['dbuser'], FILTER_SANITIZE_STRING);
+        $dbUser = filter_var($post['dbuser'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($post['dbPW'])) {
-        $pw = decryptMessage(filter_var($post['dbPW'], FILTER_SANITIZE_STRING));
+        $pw = decryptMessage(filter_var($post['dbPW'], FILTER_UNSAFE_RAW));
     }
     if (isset($post['dbSchema'])) {
-        $dbName = filter_var($post['dbSchema'], FILTER_SANITIZE_STRING);
+        $dbName = filter_var($post['dbSchema'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
 
     try {
 
-        switch ($dbms) {
-
-            case 'MS_SQL':
-                $dbh = initMS_SQL($dbURL, $dbName, $dbUser, $pw);
-                break;
-
-            case 'MYSQL':
-                $dbh = initMY_SQL($dbURL, $dbName, $dbUser, $pw);
-                break;
-
-            case 'ODBC':
-                $dbh = initODBC($dbURL, $dbName, $dbUser, $pw);
-                return array('success'=>'Good!');
-
-
-            default:
-                return array("error" => "Bad DBMS: " . $dbms . "<br/>");
-
-        }
+        $dbh = initPDO();
 
         $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $serverInfo = $dbh->getAttribute(\PDO::ATTR_SERVER_VERSION);

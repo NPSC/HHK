@@ -4,7 +4,9 @@ namespace HHK\Purchase;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Registration;
 use HHK\Payment\CreditToken;
+use HHK\House\Reservation\Reservation_1;
 use HHK\Payment\Invoice\Invoice;
+use HHK\Purchase\ValueAddedTax;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\SysConst\{ExcessPay, GLTableNames, InvoiceStatus, ItemId, ItemPriceCode, PayType, ReturnIndex};
@@ -31,17 +33,103 @@ class PaymentChooser {
     /**
      *
      * @param \PDO $dbh
-     * @param array $post
      * @param string $rtnIndex
-     * @return PaymentManagerPayment
+     * @return PaymentManagerPayment|null
      */
-    public static function readPostedPayment(\PDO $dbh, $post, $rtnIndex = ReturnIndex::ReturnIndex) {
+    public static function readPostedPayment(\PDO $dbh, $rtnIndex = ReturnIndex::ReturnIndex) {
+
+        $args = [
+            'txtInvId' => FILTER_SANITIZE_NUMBER_INT,
+            'rbUseCard' . $rtnIndex => FILTER_SANITIZE_NUMBER_INT,
+            'rbUseCard' => FILTER_SANITIZE_NUMBER_INT,
+            'PayTypeSel' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'rtnTypeSel' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'paymentDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtvdNewCardName' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtInvNotes' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtCheckNum' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRtnCheckNum' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtTransferAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRtnTransferAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selChargeType' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selRtnChargeType' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtPayNotes' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRtnNotes' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtChargeAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'txtRtnChargeAcct' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selexcpay' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'selccgw' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+
+            'txtCashTendered' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'visitFeeAmt' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'keyDepAmt' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'heldAmount' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'DepRefundAmount' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'feesPayment' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'feesTax' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'feesCharges' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'guestCredit' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'HsDiscAmount' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'totalCharges' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'txtOverPayAmt' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'txtRtnAmount' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'totalPayment' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION
+            ],
+            'invPayAmt' => [
+                'filter' => FILTER_SANITIZE_NUMBER_FLOAT,
+                'flags' => FILTER_FLAG_ALLOW_FRACTION | FILTER_REQUIRE_ARRAY
+            ],
+
+        ];
+
+        $inputs = filter_input_array(INPUT_POST, $args);
 
         // Payment Type
-        if (isset($post['PayTypeSel'])) {
-            $payType = filter_var($post['PayTypeSel'], FILTER_SANITIZE_STRING);
-        } else if (isset($post['rtnTypeSel'])) {
-            $payType = filter_var($post['rtnTypeSel'], FILTER_SANITIZE_STRING);
+        if (isset($inputs['PayTypeSel'])) {
+            $payType = $inputs['PayTypeSel'];
+        } else if (isset($inputs['rtnTypeSel'])) {
+            $payType = $inputs['rtnTypeSel'];
         } else {
             return NULL;
         }
@@ -49,215 +137,218 @@ class PaymentChooser {
 
         $pmp = new PaymentManagerPayment($payType);
 
-        // Return payment type
-        if (isset($post['rtnTypeSel'])) {
-            $pmp->setRtnPayType(filter_var($post['rtnTypeSel'], FILTER_SANITIZE_STRING));
+        // Return-payment type
+        if (isset($inputs['rtnTypeSel'])) {
+            $pmp->setRtnPayType($inputs['rtnTypeSel']);
         }
 
         // Payment Date
-        if (isset($post['paymentDate']) && $post['paymentDate'] != '') {
-            $pmp->setPayDate(filter_var($post['paymentDate'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['paymentDate']) && $inputs['paymentDate'] != '') {
+            $pmp->setPayDate($inputs['paymentDate']);
         } else {
             $pmp->setPayDate(date('Y-m-d H:i:s'));
         }
 
         // Credit token
-        if (isset($post['rbUseCard'])) {
-            $pmp->setIdToken(intval(filter_var($post['rbUseCard'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['rbUseCard'])) {
+            $pmp->setIdToken(intval($inputs['rbUseCard'], 10));
         }
 
-        if (isset($post['rbUseCard' . $rtnIndex])) {
-        	$pmp->setRtnIdToken(intval(filter_var($post['rbUseCard' . $rtnIndex], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['rbUseCard' . $rtnIndex])) {
+        	$pmp->setRtnIdToken(intval($inputs['rbUseCard' . $rtnIndex], 10));
         }
 
         // Merchant
-        if (isset($post['selccgw'])) {
-            $pmp->setMerchant(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['selccgw'])) {
+            $pmp->setMerchant($inputs['selccgw']);
         }
 
         // Manual Key check box
-        if (isset($post['btnvrKeyNumber'])) {
+        if (isset($_POST['btnvrKeyNumber'])) {
             $pmp->setManualKeyEntry(TRUE);
         } else {
             $pmp->setManualKeyEntry(FALSE);
         }
 
         // Manual cardholder name
-        if (isset($post['txtvdNewCardName'])) {
-            $pmp->setCardHolderName(strtoupper(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_STRING)));
+        if (isset($inputs['txtvdNewCardName'])) {
+            $pmp->setCardHolderName(strtoupper($inputs['txtvdNewCardName']));
         }
 
         // Use new CC
-        if (isset($post['cbNewCard'])) {
+        if (isset($_POST['cbNewCard'])) {
             $pmp->setNewCardOnFile(TRUE);
         } else {
             $pmp->setNewCardOnFile(FALSE);
         }
 
         // Invoice payor
-        if (isset($post['txtInvId'])) {
-            $pmp->setIdInvoicePayor(intval(filter_var($post['txtInvId'], FILTER_SANITIZE_NUMBER_INT), 10));
+        if (isset($inputs['txtInvId'])) {
+            $pmp->setIdInvoicePayor(intval($inputs['txtInvId'], 10));
         }
 
         // Invoice notes
-        if (isset($post['txtInvNotes'])) {
-            $pmp->setInvoiceNotes(filter_var($post['txtInvNotes'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['txtInvNotes'])) {
+            $pmp->setInvoiceNotes($inputs['txtInvNotes']);
         }
 
         // Check number
-        if (isset($post['txtCheckNum'])) {
-            $pmp->setCheckNumber(filter_var($post['txtCheckNum'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['txtCheckNum'])) {
+            $pmp->setCheckNumber($inputs['txtCheckNum']);
         }
 
         // Return Check number
-        if (isset($post['txtRtnCheckNum'])) {
-            $pmp->setRtnCheckNumber(filter_var($post['txtRtnCheckNum'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['txtRtnCheckNum'])) {
+            $pmp->setRtnCheckNumber($inputs['txtRtnCheckNum']);
         }
 
         // Transfer Account
-        if (isset($post['txtTransferAcct'])) {
-            $pmp->setTransferAcct(filter_var($post['txtTransferAcct'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['txtTransferAcct'])) {
+            $pmp->setTransferAcct($inputs['txtTransferAcct']);
         }
 
         // Return transfer acct
-        if (isset($post['txtRtnTransferAcct'])) {
-            $pmp->setRtnTransferAcct(filter_var($post['txtRtnTransferAcct'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['txtRtnTransferAcct'])) {
+            $pmp->setRtnTransferAcct($inputs['txtRtnTransferAcct']);
         }
 
         // Charge Card - External Swipe
-        if (isset($post['selChargeType'])) {
-            $pmp->setChargeCard(filter_var($post['selChargeType'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['selChargeType'])) {
+            $pmp->setChargeCard($inputs['selChargeType']);
         }
-        if (isset($post['selRtnChargeType'])) {
-            $pmp->setRtnChargeCard(filter_var($post['selRtnChargeType'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['selRtnChargeType'])) {
+            $pmp->setRtnChargeCard($inputs['selRtnChargeType']);
         }
 
         // Payment Notes.
-        if (isset($post['txtPayNotes'])) {
+        if (isset($inputs['txtPayNotes'])) {
 
-            $payNotes = filter_var($post['txtPayNotes'], FILTER_SANITIZE_STRING);
 
-            if ($payNotes != '') {
+            if ($inputs['txtPayNotes'] != '') {
 
-                $pmp->setPayNotes($payNotes);
+                $pmp->setPayNotes($inputs['txtPayNotes']);
 
             } else {
 
                 // Return Payment Notes.
-                if (isset($post['txtRtnNotes'])) {
-                    $pmp->setPayNotes(filter_var($post['txtRtnNotes'], FILTER_SANITIZE_STRING));
+                if (isset($inputs['txtRtnNotes'])) {
+                    $pmp->setPayNotes($inputs['txtRtnNotes']);
                 }
             }
         }
 
         // Charge Acct - External Swipe
-        if (isset($post['txtChargeAcct'])) {
-            $pmp->setChargeAcct(filter_var($post['txtChargeAcct'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['txtChargeAcct'])) {
+            $pmp->setChargeAcct($inputs['txtChargeAcct']);
         }
-        if (isset($post['txtRtnChargeAcct'])) {
-            $pmp->setRtnChargeAcct(filter_var($post['txtRtnChargeAcct'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['txtRtnChargeAcct'])) {
+            $pmp->setRtnChargeAcct($inputs['txtRtnChargeAcct']);
         }
 
         // cash tendered
-        if (isset($post['txtCashTendered'])) {
-            $pmp->setCashTendered(floatval(filter_var($post['txtCashTendered'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs['txtCashTendered'])) {
+            $pmp->setCashTendered(floatval($inputs['txtCashTendered']));
         }
 
         //  Visit fees
-        if (isset($post['visitFeeCb']) && isset($post['visitFeeAmt'])) {
-            $pmp->setVisitFeePayment(floatval(filter_var($post['visitFeeAmt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($_POST['visitFeeCb']) && isset($inputs['visitFeeAmt'])) {
+            $pmp->setVisitFeePayment(floatval($inputs['visitFeeAmt']));
         }
 
         // Room/Key deposit
-        if (isset($post["keyDepRx"]) && isset($post["keyDepAmt"])) {
-            $pmp->setKeyDepositPayment(floatval(filter_var($post["keyDepAmt"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($_POST["keyDepRx"]) && isset($inputs["keyDepAmt"])) {
+            $pmp->setKeyDepositPayment(floatval($inputs["keyDepAmt"]));
         }
 
         // Retained Amount payment
-        if (isset($post["cbHeld"]) && isset($post["heldAmount"])) {
-            $pmp->setRetainedAmtPayment(floatval(filter_var($post["heldAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($_POST["cbHeld"]) && isset($inputs["heldAmount"])) {
+            $pmp->setRetainedAmtPayment(floatval($inputs["heldAmount"]));
         }
 
         // Deposit Refund.
-        if (isset($post["DepRefundAmount"])) {
-            $pmp->setDepositRefundAmt(floatval(filter_var($post["DepRefundAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["DepRefundAmount"])) {
+            $pmp->setDepositRefundAmt(floatval($inputs["DepRefundAmount"]));
         }
 
         // Room fees.
-        if (isset($post["feesPayment"])) {
-            $pmp->setRatePayment(floatval(filter_var($post["feesPayment"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["feesPayment"])) {
+            $pmp->setRatePayment(floatval($inputs["feesPayment"]));
         }
 
         // Room fee taxes.
-        if (isset($post["feesTax"])) {
-            $pmp->setRateTax(floatval(filter_var($post["feesTax"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["feesTax"])) {
+            $pmp->setRateTax(floatval($inputs["feesTax"]));
         }
 
         // Total Room Charge.
-        if (isset($post["feesCharges"])) {
-            $pmp->setTotalRoomChg(floatval(filter_var($post["feesCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["feesCharges"])) {
+            $pmp->setTotalRoomChg(floatval($inputs["feesCharges"]));
         }
 
         // Guest Credit
-        if (isset($post['guestCredit'])) {
-            $pmp->setGuestCredit(floatval(filter_var($post["guestCredit"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs['guestCredit'])) {
+            $pmp->setGuestCredit(floatval($inputs['guestCredit']));
         }
 
         // Reimburse Taxes.
-        if (isset($post["cbReimburseVAT"])) {
+        if (isset($_POST["cbReimburseVAT"])) {
             $pmp->setReimburseTaxCb(TRUE);
         }   else {
             $pmp->setReimburseTaxCb(FALSE);
         }
 
         // Total Charges.
-        if (isset($post["totalCharges"])) {
-            $pmp->setTotalCharges(floatval(filter_var($post["totalCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["totalCharges"])) {
+            $pmp->setTotalCharges(floatval($inputs["totalCharges"]));
         }
 
         // House waive
-        if (isset($post['cbFinalPayment'])) {
+        if (isset($_POST['houseWaiveCb'])) {
             $pmp->setFinalPaymentFlag(TRUE);
         } else {
             $pmp->setFinalPaymentFlag(FALSE);
         }
 
         // House Discount amount
-        if (isset($post['cbFinalPayment']) && isset($post['HsDiscAmount'])) {
-            $pmp->setHouseDiscPayment(floatval(filter_var($post["HsDiscAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($_POST['houseWaiveCb']) && isset($inputs['HsDiscAmount'])) {
+            $pmp->setHouseDiscPayment(floatval($inputs['HsDiscAmount']));
         }
 
         // OverPay amount
-        if (isset($post['txtOverPayAmt'])) {
-            $pmp->setOverPayment(floatval(filter_var($post["txtOverPayAmt"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs['txtOverPayAmt'])) {
+            $pmp->setOverPayment(floatval($inputs['txtOverPayAmt']));
         }
 
         // Refund amount
-        if (isset($post['txtRtnAmount'])) {
-            $pmp->setRefundAmount(floatval(filter_var($post["txtRtnAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs['txtRtnAmount'])) {
+            $pmp->setRefundAmount(floatval($inputs['txtRtnAmount']));
         }
 
         // Total payment.
-        if (isset($post["totalPayment"])) {
-            $pmp->setTotalPayment(floatval(filter_var($post["totalPayment"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        if (isset($inputs["totalPayment"])) {
+            $pmp->setTotalPayment(floatval($inputs["totalPayment"]));
         }
 
         // unpaid invoices
-        foreach ($post as $key => $p) {
-            if (($num = strstr($key, 'unpaidCb', TRUE)) !== FALSE) {
-                $num = filter_var($num, FILTER_SANITIZE_STRING);
-                $amt = floatval(filter_var($post[$num . 'invPayAmt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-                $pmp->addInvoiceByNumber($dbh, $num, $amt);
+        if (isset($inputs['invPayAmt'])) {
+
+            foreach ($inputs['invPayAmt'] as $key => $amt) {
+
+                $num = filter_var($key, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+                if (isset($_POST['unpaidCb'][$num])) {
+                    $pmp->addInvoiceByNumber($dbh, $num, $amt);
+                }
             }
         }
 
         // balance with
-        if (isset($post['selexcpay'])) {
-            $pmp->setBalWith(filter_var($post['selexcpay'], FILTER_SANITIZE_STRING));
+        if (isset($inputs['selexcpay'])) {
+            $pmp->setBalWith($inputs['selexcpay']);
         }
 
         // Reimburse Taxes
-        if (isset($post['cbReimburseVAT'])) {
+        if (isset($_POST['cbReimburseVAT'])) {
             $pmp->setReimburseTaxCb(TRUE);
         } else {
             $pmp->setReimburseTaxCb(FALSE);
@@ -266,17 +357,45 @@ class PaymentChooser {
         return $pmp;
     }
 
-
-    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
+    /**
+     *
+     * @param \PDO $dbh
+     * @param int $idGuest
+     * @param int $idRegistration
+     * @param VisitCharges $visitCharge
+     * @param AbstractPaymentGateway $paymentGateway
+     * @param string $defaultPayType
+     * @param bool $useDeposit
+     * @param boolean $showFinalPayment
+     * @param boolean $payVFeeFirst
+     * @param number $prefTokenId
+     * @param boolean $useVisitFee
+     * @return string
+     */
+    public static function createMarkup(
+        \PDO $dbh
+        , $idGuest
+        , $idResv
+        , $idRegistration
+        , VisitCharges $visitCharge
+        , AbstractPaymentGateway $paymentGateway
+        , $defaultPayType
+        , $showFinalPayment = FALSE
+        , $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
+        /**
+         * if $us->DefaultPayType is empty, the pay controls for selecting
+         * payment type will be blank, forcing the user to set it every payment time.
+         */
         if ($defaultPayType == '') {
             $defaultPayType = $uS->DefaultPayType;
         }
 
-        $unpaidInvoices = Invoice::load1stPartyUnpaidInvoices($dbh, $visitCharge->getIdVisit(), $uS->returnId);
-
+        /**
+         * ItemPriceCode::None short-circuits all amount calculations to 0 and may not show Price & Pay UI on Edit Visit dialog box
+         */
         $showRoomFees = TRUE;
         if ($uS->RoomPriceModel == ItemPriceCode::None) {
             $showRoomFees = FALSE;
@@ -288,30 +407,44 @@ class PaymentChooser {
         // Get taxed items
         $vat = new ValueAddedTax($dbh);
 
-        $useVisitFee = FALSE;
-        if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '')){
-                $useVisitFee = TRUE;
+        if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $uS->VisitFeeDelayDays == 0)){
+            $useVisitFee = TRUE;
+        } else {
+            $useVisitFee = FALSE;
+        }
+
+        // Resrvation Check-in
+        if ($uS->AcceptResvPaymt && $idResv > 0) {
+            $heldAmount = Reservation_1::getPrePayment($dbh, $idResv);
+            $chkingIn = TRUE;
+        } else {
+            $heldAmount = Registration::loadLodgingBalance($dbh, $idRegistration);
+            $otherPrepayments = Registration::loadPrepayments($dbh, $idRegistration);
+            // Remove other reservations' prepayments.
+            $heldAmount = max(0, ($heldAmount - $otherPrepayments));
+            $chkingIn = FALSE;
         }
 
         $mkup = HTMLContainer::generateMarkup('div',
-                self::createPaymentMarkup(
-                    $showRoomFees,
-                    $useDeposit,
-                    $visitCharge,
-                    $useVisitFee,
-                    Registration::loadLodgingBalance($dbh, $idRegistration),
-                    $payVFeeFirst,
-                    $showFinalPayment,
-                    $unpaidInvoices,
-                    $labels,
-                    $vat,
-                    $visitCharge->getIdVisit(),
-                    readGenLookupsPDO($dbh, 'ExcessPays'),
-                    $uS->VisitExcessPaid,
-                    $uS->UseHouseWaive
-                )
-                , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
-                );
+            self::createPaymentMarkup(
+                $showRoomFees,
+                $uS->KeyDeposit,
+                $visitCharge,
+                $useVisitFee,
+                $heldAmount,
+                $uS->PayVFeeFirst,
+                $showFinalPayment,
+                Invoice::load1stPartyUnpaidInvoices($dbh, $visitCharge->getIdVisit(), $uS->returnId),
+                $labels,
+                $vat,
+                $visitCharge->getIdVisit(),
+                readGenLookupsPDO($dbh, 'ExcessPays'),
+                $uS->VisitExcessPaid,
+                $uS->UseHouseWaive,
+                $chkingIn
+            )
+            , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
+        );
 
         $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
 
@@ -338,17 +471,12 @@ class PaymentChooser {
 
         // Collect panels for Returns
         unset($payTypes[PayType::Invoice]);
-        $rtninvoiceBlock = '';
-
-        if (isset($uS->nameLookups[GLTableNames::PayType][PayType::Invoice])) {
-        	$rtninvoiceBlock = self::invoiceBlock('r');
-        }
 
         $rtnMkup = HTMLContainer::generateMarkup('div', self::showReturnSelection($dbh,
                 $defaultPayType,
                 $payTypes,
                 $paymentGateway,
-        		$idGuest, $idRegistration, $prefTokenId, $rtninvoiceBlock),
+        		$idGuest, $idRegistration, $prefTokenId),
                 array('id'=>'divReturnPay', 'style'=>'float:left; display:none;'));
 
         if ($rtnMkup != '') {
@@ -357,110 +485,205 @@ class PaymentChooser {
 
         return HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Paying Today', array('style'=>'font-weight:bold;'))
-                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
+                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel hhk-flex', 'style'=>'width: fit-content;max-width: 100%;'));
 
     }
 
-    public static function createUnpaidInvoiceMarkup($unpaidInvoices) {
+    /**
+     *
+     * @param \PDO $dbh
+     * @param int $idGuest
+     * @param int $idResv
+     * @param int $idRegistration
+     * @param VisitCharges $visitCharge
+     * @param AbstractPaymentGateway $paymentGateway
+     * @param string $defaultPayType
+     * @param number $prefTokenId
+     * @return string
+     */
+    public static function createPrePaymentMarkup(\PDO $dbh, $idGuest, $idResv, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $heldAmount, $prefTokenId) {
+
+        $uS = Session::getInstance();
+
+        if ($defaultPayType == '') {
+            $defaultPayType = $uS->DefaultPayType;
+        }
+
+        // Get labels
+        $labels = Labels::getLabels();
+
+        $feesTbl = new HTMLTable();
+
+        // Get any Unpaid invoices
+        $trs = self::createUnpaidInvoiceMarkup(Invoice::loadPrePayUnpaidInvoices($dbh, $idResv, $uS->returnId));
+        // Add them to the table
+        foreach ($trs as $t) {
+            $feesTbl->addBodyTr($t);
+        }
+
+
+        if ($heldAmount > 0) {
+            // Show only the prepayment amount already entered.
+            $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Pre-Payment Balance:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '$' . number_format($heldAmount, 2) : ''), array('id'=>'spnHeldAmt'))
+                    .HTMLInput::generateMarkup('', array('id'=>'cbHeld', 'type'=>'checkbox', 'style'=>'display:none;', 'data-prepay'=>'1', 'data-amt'=> number_format($heldAmount, 2, '.',''))))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+        }
+
+        // Show the prepayment input box.
+        $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), ($uS->HideRoomFeeCalc ? ['class'=>"d-none"] : ['style'=>'text-align:center;'])), ['style'=>'text-align: center;min-width: 62px;'])
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+            , array('class'=>'hhk-RoomFees'));
+
+        // Amount to pay
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', array('id'=>'spnPayTitle')), array('colspan'=>'2', 'class'=>'tdlabel'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalPayment', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly'))
+                , array('style'=>'text-align:right;border-top:2px solid #2E99DD;border-bottom:2px solid #2E99DD;')));
+
+
+        // Payment Date
+        $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Date:', array('colspan'=>'2', 'class'=>'tdlabel'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y'), array('name'=>'paymentDate', 'readonly'=>'readonly', 'class'=>'hhk-feeskeys ckdate')))
+            , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
+
+        $excessPays = readGenLookupsPDO($dbh, 'ExcessPays');
+
+        unset($excessPays[ExcessPay::Hold]);
+        unset($excessPays[ExcessPay::Ignore]);
+        
+        if($uS->UseRebook){
+            $excessPays[ExcessPay::MoveToResv] = array(ExcessPay::MoveToResv, 'Next Reservation');
+        }
+
+        // Extra payment & distribution Selector
+        if (count($excessPays) > 0) {
+
+            $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', array('class'=>'tdlabel', 'colspan'=>'2'))
+                .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'))
+                    , array('style'=>'text-align:right;'))
+                , array('class'=>'hhk-Overpayment'));
+
+            $sattrs = array('name'=>'selexcpay', 'style'=>'margin-left:3px; width: 100%;', 'class'=>'hhk-feeskeys');
+
+            $feesTbl->addBodyTr(HTMLTable::makeTd('Apply to:', array('class'=>'tdlabel', 'colspan'=>'2'))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($excessPays, '', TRUE), $sattrs))
+                , array('class'=>'hhk-Overpayment'));
+
+        }
+
+        // Invoice Notes
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTh('Invoice Notes (Public)', array('colspan'=>'3', 'style'=>'text-align:left;'))
+            , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
+
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'txtInvNotes', 'rows'=>1, 'style'=>'width:100%;', 'class'=>'hhk-feeskeys')), array('colspan'=>'3'))
+            , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
+
+        // Error message
+        $mess = HTMLContainer::generateMarkup('div','', array('id'=>'payChooserMsg', 'style'=>'clear:left;color:red;margin:5px;display:none'));
+
+        $mkup =  $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
+
+        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+
+        unset($payTypes[PayType::Invoice]);
+
+        if ($uS->ShowTxPayType == FALSE) {
+            unset($payTypes[PayType::Transfer]);
+        }
+
+        // Collect panels for payments
+        $panelMkup = self::showPaySelection($dbh,
+            $defaultPayType,
+            $payTypes,
+            $labels,
+            $paymentGateway,
+            $idGuest, $idRegistration, $prefTokenId);
+
+        $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
+
+        // Collect panels for Returns
+        $rtnMkup = HTMLContainer::generateMarkup('div', self::showReturnSelection($dbh,
+            $defaultPayType,
+            $payTypes,
+            $paymentGateway,
+            $idGuest, $idRegistration, $prefTokenId),
+            array('id'=>'divReturnPay', 'style'=>'float:left; display:none;'));
+
+        $mkup .= HTMLContainer::generateMarkup('div', $rtnMkup, array('style'=>'float:left;'));
+
+        return HTMLContainer::generateMarkup('fieldset',
+            HTMLContainer::generateMarkup('legend', 'Pre-Payments', array('style'=>'font-weight:bold;'))
+            . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
+
+    }
+
+    /**
+     * Summary of createUnpaidInvoiceMarkup
+     * @param array $unpaidInvoices
+     * @return array<string>
+     */
+    protected static function createUnpaidInvoiceMarkup($unpaidInvoices) {
 
         $trs = array();
 
-        if (count($unpaidInvoices) > 0) {
+        foreach ($unpaidInvoices as $i) {
 
-            foreach ($unpaidInvoices as $i) {
+            $trashIcon = '';
 
-                $trashIcon = '';
+            $invNumber = $i['Invoice_Number'];
+            $invAttr = ['href'=>'ShowInvoice.php?invnum='.$i['Invoice_Number'], 'target'=>'_blank', 'style'=>'float:left;'];
 
-                $invNumber = $i['Invoice_Number'];
-                $invAttr = array('href'=>'ShowInvoice.php?invnum='.$i['Invoice_Number'], 'target'=>'_blank', 'style'=>'float:left;');
-
-                // Additional information
-                $addnl = '';
-                if (isset($i['Guest Name']) && $i['Guest Name'] != '') {
-                    $addnl = HTMLContainer::generateMarkup('span', $i['Guest Name'], array('style'=>'margin: 0 5px;'));
-                }
-
-                if ($i['Amount'] - $i['Balance'] != 0) {
-                    $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
-                    $invAttr['title'] = 'Partially Paid';
-                } else {
-                    $trashIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'del', 'style'=>'float:right;cursor:pointer;', 'title'=>'Delete'));
-                }
-
-                $unpaid = HTMLTable::makeTd(HTMLContainer::generateMarkup('span',
-                        HTMLContainer::generateMarkup('a', 'Invoice ' . $invNumber, $invAttr)
-                        . HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'view', 'style'=>'float:left;cursor:pointer;', 'title'=>'View Items'))
-                        . $trashIcon
-                        , array("style"=>'white-space:nowrap'))
-                        .$addnl, array('class'=>'tdlabel'));
-
-
-                $unpaid .= HTMLTable::makeTd(
-                        HTMLContainer::generateMarkup('label', 'Pay', array('for'=>$i['Invoice_Number'].'unpaidCb', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>$i['Invoice_Number'].'unpaidCb', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'))
-                        .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', array('style'=>'font-style: italic;')))
-                    .HTMLTable::makeTd('$'. HTMLInput::generateMarkup('', array('name'=>$i['Invoice_Number'].'invPayAmt', 'size'=>'8', 'class'=>'hhk-feeskeys hhk-payInvAmt','style'=>'text-align:right;')), array('style'=>'text-align:right;'));
-
-                $trs[] = $unpaid;
+            // Additional information
+            $addnl = '';
+            if (isset($i['Guest Name']) && $i['Guest Name'] != '') {
+                $addnl = HTMLContainer::generateMarkup('span', $i['Guest Name'], ['style'=>'margin: 0 5px;']);
             }
+
+            // Partially paid, or can we trash it.
+            if ($i['Amount'] - $i['Balance'] != 0) {
+                $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
+                $invAttr['title'] = 'Partially Paid';
+            } else {
+                $trashIcon = HTMLContainer::generateMarkup('span','', ['class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-inb' => $i['Invoice_Number'], 'data-payor' => (isset($i['Payor']) ? $i['Payor'] : ''), 'data-stat'=>'del', 'style'=>'float:right;cursor:pointer;', 'title'=>'Delete']);
+            }
+
+            $unpaid = HTMLTable::makeTd(HTMLContainer::generateMarkup('span',
+                    HTMLContainer::generateMarkup('a', 'Invoice ' . $invNumber, $invAttr)
+                    . (isset($i['doNotView']) ? '' : HTMLContainer::generateMarkup('span','', ['class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$i['idInvoice'], 'data-iid'=>$i['idInvoice'], 'data-stat'=>'view', 'style'=>'float:left;cursor:pointer;', 'title'=>'View Items']))
+                    . $trashIcon
+                    , ["style"=>'white-space:nowrap'])
+                    .$addnl, ['class'=>'tdlabel']);
+
+
+            $unpaid .= HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup('label', 'Pay', ['for'=>$i['Invoice_Number'].'unpaidCb', 'style'=>'margin-left:5px;margin-right:3px;'])
+                    .HTMLInput::generateMarkup('',
+                        ['id'=> $i['Invoice_Number']. 'unpaidCb', 'name'=>'unpaidCb['.$i['Invoice_Number'].']', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'])
+                    .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', ['style'=>'font-style: italic;']))
+                .HTMLTable::makeTd('$'.
+                    HTMLInput::generateMarkup('', ['id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'size'=>'8', 'class'=>'hhk-feeskeys hhk-payInvAmt','style'=>'text-align:right;']), ['style'=>'text-align:right;']);
+
+            $trs[] = $unpaid;
         }
 
         return $trs;
     }
 
-    public static function createChangeRoomMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $prefTokenId = 0) {
 
-        $uS = Session::getInstance();
-
-        if ($uS->KeyDeposit === FALSE) {
-            return '';
-        }
-
-        // no invoices
-        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
-        unset($payTypes[PayType::Invoice]);
-
-        $labels = Labels::getLabels();
-
-        $mkup = HTMLContainer::generateMarkup(
-            'div',
-            self::createPaymentMarkup(
-                FALSE,
-                $uS->KeyDeposit,
-                $visitCharge,
-                FALSE,
-                0,
-                FALSE,
-                FALSE,
-                array(),
-                $labels,
-                new ValueAddedTax($dbh),
-                $visitCharge->getIdVisit(),
-                array(),
-                '',
-                FALSE
-            )
-            , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
-        );
-
-
-        // payment types panel
-        $panelMkup = self::showPaySelection(
-                $dbh,
-                $uS->DefaultPayType,
-                $payTypes,
-                $labels,
-                $paymentGateway,
-                $idGuest, $idRegistration, $prefTokenId);
-
-        $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
-
-
-        return HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Paying Today', array('style'=>'font-weight:bold;'))
-                . $mkup, array('class'=>'hhk-panel', 'style'=>'float:left;'));
-    }
-
+    /**
+     * Summary of createHousePaymentMarkup
+     * @param mixed $discounts
+     * @param mixed $addnls
+     * @param int $idVisit
+     * @param mixed $itemTaxSums
+     * @param mixed $arrivalDate
+     * @return string
+     */
     public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $itemTaxSums, $arrivalDate = '') {
 
         if (count($discounts) < 1 && count($addnls) < 1) {
@@ -540,6 +763,15 @@ dateFormat: "M d, yy" ';
 
     }
 
+    /**
+     * Summary of createPayInvMarkup
+     * Called from register page Unpaid invoices tab.
+     * @param \PDO $dbh
+     * @param int $id
+     * @param int $invoiceId
+     * @param int $prefTokenId
+     * @return string
+     */
     public static function createPayInvMarkup(\PDO $dbh, $id, $invoiceId, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
@@ -555,6 +787,7 @@ dateFormat: "M d, yy" ';
     i.`Balance`,
     i.`Amount`,
     n.Name_Full,
+    IFNULL(n.Name_Full, '') as `Payor`,
     n.Company,
     ng.Name_Last AS `Guest Name`,
     v.idVisit,
@@ -585,6 +818,9 @@ ORDER BY v.idVisit , v.Span;");
                     $name = $unpaidInvoices[0]['Name_Full'];
                 }
 
+                // Turn off view icon.
+                $unpaidInvoices[0]['doNotView'] = 1;
+
                 $labels = Labels::getLabels();
 
                 $mkup = HTMLContainer::generateMarkup('div',
@@ -611,7 +847,7 @@ ORDER BY v.idVisit , v.Span;");
                         $payTypes,
                         $labels,
                         AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
-                        $id, 0, $prefTokenId, '');
+                        $id, 0, $prefTokenId);
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
 
@@ -620,11 +856,30 @@ ORDER BY v.idVisit , v.Span;");
             }
         }
 
-        return HTMLContainer('h3', "No unpaid invoices found.");
+        return HTMLContainer::generateMarkup('h3', "No unpaid invoices found.");
     }
 
+    /**
+     * Summary of createPaymentMarkup
+     * @param bool $showRoomFees
+     * @param bool $useKeyDeposit
+     * @param VisitCharges|null $visitCharge
+     * @param bool $useVisitFee
+     * @param float|int $heldAmount
+     * @param bool $payVFeeFirst
+     * @param bool $showFinalPayment
+     * @param array $unpaidInvoices
+     * @param Labels $labels
+     * @param ValueAddedTax|null $vat
+     * @param int $idVisit
+     * @param mixed $excessPays
+     * @param string $defaultExcessPays
+     * @param bool $useHouseWaive
+     * @param bool $chkingIn
+     * @return string
+     */
     protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $visitCharge, $useVisitFee, $heldAmount, $payVFeeFirst,
-            $showFinalPaymentCB, array $unpaidInvoices, $labels, $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
+            $showFinalPayment, array $unpaidInvoices, $labels, $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE, $chkingIn = FALSE) {
 
         $feesTbl = new HTMLTable();
 
@@ -635,19 +890,28 @@ ORDER BY v.idVisit , v.Span;");
             $feesTbl->addBodyTr($t);
         }
 
+        // Find any taxed items.  If the return is an empty array, then no taxes.
+        if($vat instanceof ValueAddedTax){
+            $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
+        }else{
+            $taxedItems = array();
+        }
+
+
         if ($useKeyDeposit && is_null($visitCharge) === FALSE) {
 
             $depositLabel = $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit');
 
             $keyDeposit = HTMLTable::makeTd($depositLabel . ':', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(
-                     HTMLContainer::generateMarkup('label', "Pay", array('for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'))
-                    .HTMLInput::generateMarkup('', array('name'=>'keyDepRx', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;', 'title'=>'Check if ' . $depositLabel . ' Received.'))
-                    .HTMLContainer::generateMarkup('span', ($visitCharge->getDepositCharged() > 0 ? '($' . $visitCharge->getDepositCharged() . ')' : ''), array('id'=>'spnDepAmt'))
-                    .HTMLInput::generateMarkup($visitCharge->getDepositCharged(), array('id'=>'hdnKeyDepAmt', 'type'=>'hidden')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($visitCharge->getDepositCharged(), array('name'=>'keyDepAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'title'=>$depositLabel . ' Amount')), array('style'=>'text-align:right;'));
+                     HTMLContainer::generateMarkup('label', "Pay", ['for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'])
+                    .HTMLInput::generateMarkup('', ['name'=>'keyDepRx', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;', 'title'=>'Check if ' . $depositLabel . ' Received.'])
+                    .HTMLContainer::generateMarkup('span', ($visitCharge->getDepositCharged() > 0 ? '($' . $visitCharge->getDepositCharged() . ')' : ''), ['id'=>'spnDepAmt'])
+                    .HTMLInput::generateMarkup($visitCharge->getDepositCharged(), ['id'=>'hdnKeyDepAmt', 'type'=>'hidden']))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'keyDepAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'title'=>$depositLabel . ' Amount'])
+                    , ['style'=>'text-align:right;']);
 
-            $attrs = array('class'=>'hhk-kdrow', 'style'=>'display:none;');
+            $attrs = ['class'=>'hhk-kdrow', 'style'=>'display:none;'];
 
             if ($visitCharge->getDepositCharged() > 0) {
                 unset($attrs['style']);
@@ -665,29 +929,21 @@ ORDER BY v.idVisit , v.Span;");
             $visitFeeAmt = $visitCharge->getVisitFeeCharged();
             $visitFeePaid = $visitCharge->getVisitFeesPaid() + $visitCharge->getVisitFeesPending();
 
-            if ($visitFeeAmt == 0) {
+            if ($visitFeeAmt == 0 || ($visitFeePaid > 0 && $visitFeePaid >= $visitFeeAmt)) {
 
-                $visitFee = '';  // .= HTMLTable::makeTd('No Charge', array('colspan'=>'2'));
-
-            } else if ($visitFeePaid > 0 && $visitFeePaid >= $visitFeeAmt) {
-
-                $visitFee = '';  // .= HTMLTable::makeTd('Paid', array('colspan'=>'2'));
+                $visitFee = '';
 
             } else {
 
-                $vfAttr = array('name'=>'visitFeeCb', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;', 'title'=>'Check if '.$vFeeTitle.' was received.');
+                $vfAttr = ['name'=>'visitFeeCb', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;', 'title'=>'Check if '.$vFeeTitle.' was received.'];
 
                 if ($payVFeeFirst) {
                     $vfAttr['checked'] = 'checked';
                 }
 
-                $visitFee .= HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Pay", array('for'=>'visitFeeCb', 'style'=>'margin-left:5px;margin-right:3px;'))
-                    .HTMLInput::generateMarkup('', $vfAttr) . HTMLContainer::generateMarkup('span', ($visitFeeAmt > 0 ? '($' . $visitFeeAmt . ')' : ''), array('id'=>'spnvfeeAmt', 'data-amt'=>$visitFeeAmt)))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($visitFeeAmt, array('name'=>'visitFeeAmt', 'size'=>'8', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'title'=>$vFeeTitle.' amount')), array('style'=>'text-align:right;'));
-            }
-
-
-            if ($visitFee != '') {
+                $visitFee .= HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Pay", ['for'=>'visitFeeCb', 'style'=>'margin-left:5px;margin-right:3px;'])
+                    .HTMLInput::generateMarkup('', $vfAttr) . HTMLContainer::generateMarkup('span', ($visitFeeAmt > 0 ? '($' . $visitFeeAmt . ')' : ''), ['id'=>'spnvfeeAmt', 'data-amt'=>$visitFeeAmt]))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup($visitFeeAmt, ['name'=>'visitFeeAmt', 'size'=>'8', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'title'=>$vFeeTitle.' amount']), ['style'=>'text-align:right;']);
 
                 $attrs = array('class'=>'hhk-vfrow', 'style'=>'display:none;');
                 if ($visitFeeAmt > 0) {
@@ -697,56 +953,58 @@ ORDER BY v.idVisit , v.Span;");
             }
         }
 
-        // Fee Charges
-        if ($showFinalPaymentCB && is_null($visitCharge) === FALSE) {
-
-            // Any remaining room charges
-            $feesTbl->addBodyTr(
-            		HTMLTable::makeTd($labels->getString('PaymentChooser', 'RoomCharges', 'Room Charges').':', array('colspan'=>'2', 'class'=>'tdlabel'))
-                    .HTMLTable::makeTd(
-                          HTMLInput::generateMarkup('',
-                                  array(
-                                      'name'=>'feesCharges',
-                                      'size'=>'8',
-                                      'class'=>'hhk-feeskeys',
-                                      'style'=>'border:none;text-align:right;',
-                                      'readonly'=>'readonly'))
-                          , array('style'=>'text-align:right;'))
-                , array('style'=>'display:none;', 'class'=>'hhk-RoomCharge'));
+        if ($showFinalPayment && is_null($visitCharge) === FALSE) {
 
             // Any remaining guest credits
             $feesTbl->addBodyTr(
-                HTMLTable::makeTd($labels->getString('PaymentChooser', 'Credit', 'Guest Credit').':', array('colspan'=>'2', 'class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'guestCredit', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;'))
-                , array('style'=>'display:none;', 'class'=>'hhk-GuestCredit'));
-
+                HTMLTable::makeTd($labels->getString('PaymentChooser', 'Credit', 'Guest Credit').':', ['colspan'=>'2', 'class'=>'tdlabel'])
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'guestCredit', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly']), ['style'=>'text-align:right;'])
+                , ['style'=>'display:none;', 'class'=>'hhk-GuestCredit']);
 
             // Deposit Return Amount
-            $keyDepPaid = $visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid();
-            if ($keyDepPaid > 0) {
+            if (($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) > 0) {
                 $feesTbl->addBodyTr(
-                    HTMLTable::makeTd($labels->getString('PaymentChooser', 'rtnDeposit', 'Deposit Refund') . ':', array('class'=>'tdlabel'))
+                    HTMLTable::makeTd($labels->getString('PaymentChooser', 'rtnDeposit', 'Deposit Refund') . ':', ['class'=>'tdlabel'])
                     .HTMLTable::makeTd(
-                            HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbDepRefundApply', 'style'=>'margin-left:5px;margin-right:3px;'))
-                            .HTMLInput::generateMarkup('', array('name'=>'cbDepRefundApply', 'class'=>'hhk-feeskeys', 'checked'=>'checked', 'type'=>'checkbox', 'style'=>'margin-right:.4em;')))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'data-amt'=> number_format($keyDepPaid, 2)))
-                            , array('style'=>'text-align:right;')), array('class'=>'hhk-refundDeposit'));
+                            HTMLContainer::generateMarkup('label', "Apply", ['for'=>'cbDepRefundApply', 'style'=>'margin-left:5px;margin-right:3px;'])
+                            .HTMLInput::generateMarkup('', ['name'=>'cbDepRefundApply', 'class'=>'hhk-feeskeys', 'checked'=>'checked', 'type'=>'checkbox', 'style'=>'margin-right:.4em;']))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'data-amt'=> number_format(($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()), 2)])
+                            , ['style'=>'text-align:right;']), ['class'=>'hhk-refundDeposit']);
             }
         }
 
         // MOA money on account - held amount.
         if ($heldAmount > 0) {
 
-            $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Retained Amount:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
-                . HTMLTable::makeTd(
-                        HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2, '.','')))
-                    .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+            if ($chkingIn === FALSE) {
+                // Regular MOA
+                $feesTbl->addBodyTr(
+                    HTMLTable::makeTd('MOA Balance:', ['class'=>'tdlabel', 'title'=>'Money on Account (MOA)'])
+                    . HTMLTable::makeTd(
+                        HTMLContainer::generateMarkup('label', "Apply", ['for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'])
+                        .HTMLInput::generateMarkup('', ['name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-prepay'=>'0', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>0])
+                        .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), ['id'=>'spnHeldAmt']))
+                    .HTMLTable::makeTd(
+                        HTMLInput::generateMarkup('', ['name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'])
+                        , ['style'=>'text-align:right;'])
+                    );
+
+            } else {
+                // Reservation Pre-Pay
+                $feesTbl->addBodyTr(
+                    HTMLTable::makeTd('Pre-Payment:', ['class'=>'tdlabel', 'title'=>'Reservation Pre-Payment'])
+                    . HTMLTable::makeTd(
+                        HTMLContainer::generateMarkup('label', "Apply", ['for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'])
+                        .HTMLInput::generateMarkup('', ['name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'margin-right:.4em;', 'data-prepay'=>'1', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>1])
+                        .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), ['id'=>'spnHeldAmt']))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'])
+                        , ['style'=>'text-align:right;'])
+                );
+
+            }
         }
 
-        // Reimburse VAT.
+        // Reimburse VAT for timed out items.
         if (is_null($visitCharge) === FALSE && $visitCharge->getNightsStayed() > 0) {
 
             foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $idVisit, $visitCharge->getNightsStayed()) as $t) {
@@ -755,85 +1013,126 @@ ORDER BY v.idVisit , v.Span;");
 
                 if ($reimburseTax > 0) {
                     $feesTbl->addBodyTr(
-                        HTMLTable::makeTd('Tax Reimbusement:', array('class'=>'tdlabel', 'title'=>'Reimbursed taxes'))
+                        HTMLTable::makeTd('Tax Reimbusement:', ['class'=>'tdlabel', 'title'=>'Reimbursed taxes'])
                         .HTMLTable::makeTd(
-                                HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbReimburseVAT', 'style'=>'margin-left:5px;margin-right:3px;'))
-                                .HTMLInput::generateMarkup('', array('name'=>'cbReimburseVAT', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($reimburseTax, 2)))
-                            .HTMLContainer::generateMarkup('span', '($' . number_format($reimburseTax, 2) . ')', array('id'=>'spnHeldAmt')))
-                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'reimburseVat', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+                                HTMLContainer::generateMarkup('label', "Apply", ['for'=>'cbReimburseVAT', 'style'=>'margin-left:5px;margin-right:3px;'])
+                                .HTMLInput::generateMarkup('', ['name'=>'cbReimburseVAT', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($reimburseTax, 2)])
+                            .HTMLContainer::generateMarkup('span', '($' . number_format($reimburseTax, 2) . ')', ['id'=>'spnHeldAmt']))
+                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'reimburseVat', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'])
+                        , ['style'=>'text-align:right;'])
+                    );
                 }
             }
         }
 
-        // Total Charges
-        $feesTbl->addBodyTr(
-                HTMLTable::makeTh('Total Charges:', array('colspan'=>'2', 'class'=>'tdlabel', 'style'=>'border-bottom:2px solid #2E99DD;'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'totalCharges', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly')), array('style'=>'text-align:right;border-bottom:2px solid #2E99DD;border-top:2px solid #2E99DD;'))
-                , array('style'=>'display:none;', 'class'=>'hhk-finalPayment'));
-
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
+            $uS = Session::getInstance();
 
-        	$feesTbl->addBodyTr(HTMLTable::makeTd( $labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
-                , array('class'=>'hhk-RoomFees'));
+            // Make middle column td.
+            $td = HTMLContainer::generateMarkup('span', HTMLContainer::generateMarkup('button',
+                    HTMLContainer::generateMarkup('span', '$', ['class'=>'px-2']).
+                    HTMLInput::generateMarkup('', ['id'=>'feesCharges', 'readonly'=>'readonly', 'size' => '7', 'style'=>'padding:0; border:none; margin:0;'])
+                    . HTMLContainer::generateMarkup('label',  HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-arrowthick-1-e']), ['for'=>'feesCharges'])
+                    , ['id'=>'feesChargesContr', 'class'=>'ui-button ui-widget ui-corner-all hhk-RoomCharge', 'style'=>'min-width:fit-content; padding:0;'])
+                .HTMLInput::generateMarkup('', ['id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;']
+            ), ($uS->HideRoomFeeCalc ? ['class'=>"d-none"] : []) );
 
-            $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
+        	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', ['class'=>'tdlabel'])
+                .HTMLTable::makeTd($td, ["style"=>"text-align: center;min-width: 62px;"])
+                .HTMLTable::makeTd('$'.
+                    HTMLInput::generateMarkup('', ['name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;'])
+                    , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay']
+                )
+                , ['class'=>'hhk-RoomFees']
+            );
+
             if (count($taxedItems) > 0) {
 
                 foreach ($taxedItems as $t) {
                     // show tax line
-                    $feesTbl->addBodyTr(HTMLTable::makeTd($t->getTaxingItemDesc() . ' ('. $t->getTextPercentTax().' ):', array('class'=>'tdlabel', 'colspan'=>'2'))
-                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax'.$t->getIdTaxingItem(), 'data-taxrate'=>$t->getDecimalTax(), 'size'=>'6', 'class'=>'hhk-feeskeys  hhk-TaxingItem hhk-applyTax', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
-                        , array('class'=>'hhk-RoomFees'));
+                    $feesTbl->addBodyTr(HTMLTable::makeTd($t->getTaxingItemDesc() . ' ('. $t->getTextPercentTax().' ):', ['class'=>'tdlabel', 'colspan'=>'2'])
+                        .HTMLTable::makeTd(
+                            HTMLInput::generateMarkup('', ['name'=>'feesTax'.$t->getIdTaxingItem(), 'data-taxrate'=>$t->getDecimalTax(), 'size'=>'6', 'class'=>'hhk-feeskeys  hhk-TaxingItem hhk-applyTax', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly'])
+                            , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay'])
+                        , ['class'=>'hhk-RoomFees']);
                 }
             }
+
+            // Extra payments - only if checking out and room overpaid.
+            $feesTbl->addBodyTr(
+                HTMLTable::makeTd($labels->getString('PaymentChooser', 'ExtraPayment', 'Extra Payment') . ':', ['class' => 'tdlabel', 'colspan'=>'2'])
+                . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup('', ['name' => 'extraPay', 'size' => '8', 'class' => 'hhk-feeskeys', 'style' => 'text-align:right;'])
+                    , ['style' => 'text-align:right;']
+                )
+                ,
+                ['style' => 'display:none;', 'class' => 'hhk-extraPayTr']
+            );
+
         }
 
-       // House Discount Amount
-        if ($showFinalPaymentCB && $showRoomFees) {
 
-            $attrs = array('name'=>'cbFinalPayment', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;');
+
+
+        // House Discount Amount
+        if ($showFinalPayment && $showRoomFees) {
+
+            $attrs = ['name' => 'houseWaiveCb', 'type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.4em;'];
 
             $feesTbl->addBodyTr(
-                HTMLTable::makeTd('House Waive:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbFinalPayment', 'style'=>'margin-left:5px;margin-right:3px;'))
-                    .HTMLInput::generateMarkup('', $attrs))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'HsDiscAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
-                    , array('style'=>'text-align:right;')), array('style'=>'display:none;', 'class'=>($useHouseWaive ? 'hhk-HouseDiscount' : '')));
+                HTMLTable::makeTd('House Waive:', ['class' => 'tdlabel'])
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Apply", ['for' => 'houseWaiveCb', 'style' => 'margin-left:5px;margin-right:3px;'])
+                    . HTMLInput::generateMarkup('', $attrs))
+                . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup('', ['name' => 'HsDiscAmount', 'size' => '8', 'class' => 'hhk-feeskeys', 'readonly' => 'readonly', 'style' => 'border:none;text-align:right;'])
+                    ,
+                    ['style' => 'text-align:right;']
+                ),
+                ['style' => 'display:none;', 'class' => ($useHouseWaive ? 'hhk-HouseDiscount' : '')]
+            );
 
         }
 
 
         // Amount to pay
         $feesTbl->addBodyTr(
-            HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', array('id'=>'spnPayTitle')), array('colspan'=>'2', 'class'=>'tdlabel'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalPayment', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly'))
-                    , array('style'=>'text-align:right;border-top:2px solid #2E99DD;border-bottom:2px solid #2E99DD;')));
+            HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', ['id' => 'spnPayTitle']), array('colspan' => '2', 'class' => 'tdlabel'))
+            . HTMLTable::makeTd(
+                '$' . HTMLInput::generateMarkup('', ['name' => 'totalPayment', 'size' => '8', 'class' => 'hhk-feeskeys', 'style' => 'border:none;text-align:right;font-weight:bold;', 'readonly' => 'readonly'])
+                ,
+                ['style' => 'text-align:right;border:2px solid #2E99DD;']
+            )
+            ,
+            ['class' => 'totalPaymentTr']
+        );
 
 
-       // Payment Date
-        $feesTbl->addBodyTr(HTMLTable::makeTd('Pay Date:', array('colspan'=>'2', 'class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y'), array('name'=>'paymentDate', 'readonly'=>'readonly', 'class'=>'hhk-feeskeys ckdate')))
-                , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
-
-
-         // Extra payment & distribution Selector
+        // Extra payment & distribution Selector
         if (count($excessPays) > 0) {
 
-            $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', array('class'=>'tdlabel', 'colspan'=>'2'))
-                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'))
-                            , array('style'=>'text-align:right;'))
-                    , array('class'=>'hhk-Overpayment'));
+            $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', ['class'=>'tdlabel', 'colspan'=>'2'])
+                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', ['name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'])
+                            , ['style'=>'text-align:right;'])
+                    , ['class'=>'hhk-Overpayment']);
 
-            $sattrs = array('id'=>'selexcpay', 'style'=>'margin-left:3px;', 'class'=>'hhk-feeskeys');
+            $sattrs = ['id'=>'selexcpay', 'style'=>'margin-left:3px;', 'class'=>'hhk-feeskeys'];
 
-            $feesTbl->addBodyTr(HTMLTable::makeTd('Apply to:', array('class'=>'tdlabel', 'colspan'=>'2'))
+            $feesTbl->addBodyTr(HTMLTable::makeTd('Apply to:', ['class'=>'tdlabel', 'colspan'=>'2'])
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($excessPays, '', TRUE), $sattrs))
-                    , array('class'=>'hhk-Overpayment'));
+                    , ['class'=>'hhk-Overpayment']);
 
         }
+
+        // Payment Date
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTd('Pay Date:', array('colspan' => '2', 'class' => 'tdlabel'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y'), array('name' => 'paymentDate', 'readonly' => 'readonly', 'class' => 'hhk-feeskeys ckdate')))
+            ,
+            ['style' => 'display:none;', 'class' => 'hhk-minPayment']
+        );
+
+
 
         // Invoice Notes
         $feesTbl->addBodyTr(
@@ -847,46 +1146,61 @@ ORDER BY v.idVisit , v.Span;");
         // Error message
         $mess = HTMLContainer::generateMarkup('div','', array('id'=>'payChooserMsg', 'style'=>'clear:left;color:red;margin:5px;display:none'));
 
-        return $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
+        return $mess . $feesTbl->generateMarkup(['id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;']);
     }
 
+    /**
+     * Summary of showPaySelection
+     * @param \PDO $dbh
+     * @param mixed $defaultPayType
+     * @param array $payTypes
+     * @param Labels $labels
+     * @param \HHK\Payment\PaymentGateway\AbstractPaymentGateway $paymentGateway
+     * @param int $idPrimaryGuest
+     * @param int $idReg
+     * @param int $prefTokenId
+     * @return string
+     */
     protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $labels, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
 
         // Payment Amount
-        $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', array('colspan'=>'2', 'class'=>'tdlabel', 'style'=>'font-weight:bold;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('style'=>'font-weight:bold;')));
+        $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', ['colspan'=>'2', 'class'=>'tdlabel', 'style'=>'font-weight:bold;'])
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['id'=>'spnPayAmount'])
+                , ['style'=>'font-weight:bold;']));
 
         // Payment Types
-        $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'))
-                    , array('colspan'=>'2')));
+        $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', ['class'=>'tdlabel'])
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), ['name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'])
+                    , ['colspan'=>'2']));
 
         // Cash Amt Tendered
         $payTbl->addBodyTr(
-             HTMLTable::makeTd($labels->getString('PaymentChooser', 'amtTenderedPrompt', 'Amount Tendered') . ': ', array('colspan'=>'2', 'style'=>'text-align:right;', 'class'=>'tdlabel'))
-                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtCashTendered', 'size'=>'6', 'style'=>'margin-right:.4em;text-align:right;', 'class'=>'hhk-feeskeys')), array('style'=>'text-align:right;'))
-                     , array('style'=>'display:none;', 'class'=>'hhk-cashTndrd'));
+             HTMLTable::makeTd($labels->getString('PaymentChooser', 'amtTenderedPrompt', 'Amount Tendered') . ': ', ['colspan'=>'2', 'style'=>'text-align:right;', 'class'=>'tdlabel'])
+                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'txtCashTendered', 'size'=>'6', 'style'=>'margin-right:.4em;text-align:right;', 'class'=>'hhk-feeskeys']), array('style'=>'text-align:right;'))
+                     , ['style'=>'display:none;', 'class'=>'hhk-cashTndrd']);
+
         $payTbl->addBodyTr(
-             HTMLTable::makeTd('', array('id'=>'tdCashMsg', 'colspan'=>'3', 'style'=>'color:red;'))
-                     , array('style'=>'display:none;', 'class'=>'hhk-cashTndrd'));
+             HTMLTable::makeTd('', ['id'=>'tdCashMsg', 'colspan'=>'3', 'style'=>'color:red;'])
+                     , ['style'=>'display:none;', 'class'=>'hhk-cashTndrd']);
+
         $payTbl->addBodyTr(
-                HTMLTable::makeTd('Change: ' , array('colspan'=>'2', 'style'=>'text-align:right;', 'class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'txtCashChange', 'style'=>'min-width:3em;')), array('style'=>'text-align:right;'))
-                , array('style'=>'display:none;', 'class'=>'hhk-cashTndrd'));
+                HTMLTable::makeTd('Change: ' , ['colspan'=>'2', 'style'=>'text-align:right;', 'class'=>'tdlabel'])
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', ['id'=>'txtCashChange', 'style'=>'min-width:3em;']), ['style'=>'text-align:right;'])
+                , ['style'=>'display:none;', 'class'=>'hhk-cashTndrd']);
 
         // Check number
         $payTbl->addBodyTr(
-             HTMLTable::makeTd('Check Number: ', array('colspan'=>'2', 'class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtCheckNum', 'size'=>'10', 'class'=>'hhk-feeskeys')))
-                , array('style'=>'display:none;', 'class'=>'hhk-cknum'));
+             HTMLTable::makeTd('Check Number: ', ['colspan'=>'2', 'class'=>'tdlabel'])
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'txtCheckNum', 'size'=>'10', 'class'=>'hhk-feeskeys']))
+                , ['style'=>'display:none;', 'class'=>'hhk-cknum']);
 
         // Transfer account
         $payTbl->addBodyTr(
-                HTMLTable::makeTd('Transfer Acct:', array('colspan'=>'2', 'class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtTransferAcct', 'size'=>'10', 'class'=>'hhk-feeskeys')))
-                , array('style'=>'display:none;', 'class'=>'hhk-transfer'));
+                HTMLTable::makeTd('Transfer Acct:', ['colspan'=>'2', 'class'=>'tdlabel'])
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'txtTransferAcct', 'size'=>'10', 'class'=>'hhk-feeskeys']))
+                , ['style'=>'display:none;', 'class'=>'hhk-transfer']);
 
         // credit info
         if (isset($payTypes[PayType::Charge])) {
@@ -897,16 +1211,27 @@ ORDER BY v.idVisit , v.Span;");
         }
 
         // Payment notes
-        $payTbl->addBodyTr(HTMLTable::makeTh('Payment Notes (Private)', array('style'=>'text-align:left;min-width:250px;', 'colspan'=>'3')), array('class'=>'paySelectNotes'));
+        $payTbl->addBodyTr(HTMLTable::makeTh('Payment Notes (Private)', ['style'=>'text-align:left;min-width:250px;', 'colspan'=>'3']), ['class'=>'paySelectNotes']);
         $payTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'txtPayNotes', 'rows'=>1, 'style'=>'width:100%;', 'class'=>'hhk-feeskeys')), array('colspan'=>'3'))
-            , array('class'=>'paySelectNotes'));
+            HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', ['name'=>'txtPayNotes', 'rows'=>1, 'style'=>'width:100%;', 'class'=>'hhk-feeskeys']), ['colspan'=>'3'])
+            , ['class'=>'paySelectNotes']);
 
 
         return $payTbl->generateMarkup(array('id' => 'tblPaySelect'));
     }
 
-    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId, $invBlock) {
+    /**
+     * Summary of showReturnSelection
+     * @param \PDO $dbh
+     * @param string $defaultPayType
+     * @param array $payTypes
+     * @param \HHK\Payment\PaymentGateway\AbstractPaymentGateway $paymentGateway
+     * @param int $idPrimaryGuest
+     * @param int $idReg
+     * @param int $prefTokenId
+     * @return string
+     */
+    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId) {
 
         $payTbl = new HTMLTable();
 
@@ -930,14 +1255,6 @@ ORDER BY v.idVisit , v.Span;");
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtRtnTransferAcct', 'size'=>'10', 'class'=>'hhk-feeskeys')))
                 , array('style'=>'display:none;', 'class'=>'hhk-transferr'));
 
-
-//         // Invoice
-//         $payTbl->addBodyTr(
-//         		HTMLTable::makeTd($invBlock, array('colspan'=>'4'))
-//         		, array('style'=>'display:none;', 'class'=>'hhk-rtn-invoice'));
-
-
-
         // credit info
         if (isset($payTypes[PayType::Charge])) {
 
@@ -956,7 +1273,20 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblRtnSelect'));
     }
 
+    /**
+     * Summary of CreditBlock
+     * @param \PDO $dbh
+     * @param HTMLTable $tbl
+     * @param array $tkRsArray
+     * @param \HHK\Payment\PaymentGateway\AbstractPaymentGateway $paymentGateway
+     * @param int $prefTokenId
+     * @param string $index
+     * @param string $display
+     * @return void
+     */
     public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, AbstractPaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;') {
+
+        $merchants = $paymentGateway->getMerchants($dbh);
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
             // Cannot return to a new card...
@@ -968,8 +1298,8 @@ ORDER BY v.idVisit , v.Span;");
         $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use")
                 , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
-        //
-        if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
+        // Pick a preferred token if one is not specified.
+        if ($prefTokenId < 1 && count($tkRsArray) > 0) {
             $keys = array_keys($tkRsArray);
             $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
         }
@@ -989,15 +1319,17 @@ ORDER BY v.idVisit , v.Span;");
                 unset($attr['checked']);
             }
 
-            if ($tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+            if (count($merchants) == 1) {
                 $merchant = '';
             } else {
                 $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
             }
 
+            $attr['id'] = "rbUseCard" . $tkRs->idGuest_token->getStoredVal();
+
             $tbl->addBodyTr(
-                    HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
-                    . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup("label", $tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant, ["for"=>"rbUseCard" . $tkRs->idGuest_token->getStoredVal()]))
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("label", $tkRs->CardHolderName->getStoredVal(), ["for"=>"rbUseCard" . $tkRs->idGuest_token->getStoredVal()]))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
                 , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
@@ -1012,7 +1344,9 @@ ORDER BY v.idVisit , v.Span;");
                 unset($attr['checked']);
             }
 
-            $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
+            $attr['id'] = "rbUseCard0";
+
+            $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup("label", 'New', ["for"=>'rbUseCard0']), array('style'=>'text-align:right;', 'colspan'=> '2'))
                 .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
                     , array('style'=>$display, 'class'=>'tblCredit' . $index));
             $tbl->addBodyTr(
@@ -1025,6 +1359,11 @@ ORDER BY v.idVisit , v.Span;");
 
     }
 
+    /**
+     * Summary of invoiceBlock
+     * @param mixed $index
+     * @return string
+     */
     public static function invoiceBlock($index = '') {
 
         $tblInvoice = new HTMLTable();

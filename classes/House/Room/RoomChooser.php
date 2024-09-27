@@ -20,7 +20,7 @@ use HHK\sec\Labels;
  * RoomChooser.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -152,7 +152,7 @@ class RoomChooser {
 
     public function createCheckinMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $omitSelf = TRUE, $overrideMaxOcc = 0) {
 
-        if ($this->resv->getStatus() === ReservationStatus::Committed || $this->resv->getStatus() === ReservationStatus::Imediate || $this->resv->getStatus() === ReservationStatus::Waitlist) {
+        if ($this->resv->getStatus() === ReservationStatus::Committed || $this->resv->getStatus() === ReservationStatus::Waitlist) {
 
             $rescs = $this->findResources($dbh, $isAuthorized, $omitSelf, $overrideMaxOcc);
 
@@ -620,7 +620,7 @@ class RoomChooser {
         }
 
         if (isset($post['rcat'])) {
-            $cat = filter_var($post['rcat'],FILTER_SANITIZE_STRING);
+            $cat = filter_var($post['rcat'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($post['fxd'])) {
@@ -706,7 +706,9 @@ class RoomChooser {
             $cat = DefaultSettings::Rate_Category;
         }
 
-        $amt = ($priceModel->amountCalculator($nites, $idRoomRate, $cat, $fixedRate, $guestNites) * (1 + ($rateAdjust / 100)));
+        $adnlGuestNites = ($numberGuests > 1 ? $guestNites - $nites : 0); //WI 10/18/2023 - amountCalculator expects Additional guest nights, NOT total guest nights
+
+        $amt = ($priceModel->amountCalculator($nites, $idRoomRate, $cat, $fixedRate, $adnlGuestNites) * (1 + ($rateAdjust / 100)));
 
         foreach ($priceModel->getActiveModelRoomRates() as $rs) {
 

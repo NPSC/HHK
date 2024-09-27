@@ -42,8 +42,18 @@ use HHK\Exception\PaymentException;
 
 class InitCkOutResponse extends AbstractMercResponse {
 
+    /**
+     * Summary of checkoutURL
+     * @var string
+     */
     private $checkoutURL = '';  //Checkout_Url
 
+    /**
+     * Summary of __construct
+     * @param mixed $response
+     * @param mixed $checkoutURL
+     * @throws \HHK\Exception\PaymentException
+     */
     function __construct($response, $checkoutURL) {
         parent::__construct($response);
         $this->checkoutURL = $checkoutURL;
@@ -55,6 +65,10 @@ class InitCkOutResponse extends AbstractMercResponse {
         }
     }
 
+    /**
+     * Summary of getMessage
+     * @return mixed
+     */
     public function getMessage() {
         if (isset($this->result->Message)) {
             return $this->result->Message;
@@ -62,6 +76,10 @@ class InitCkOutResponse extends AbstractMercResponse {
         return '';
     }
 
+    /**
+     * Summary of getPaymentId
+     * @return mixed
+     */
     public function getPaymentId() {
         if (isset($this->result->PaymentID)) {
             return $this->result->PaymentID;
@@ -69,6 +87,10 @@ class InitCkOutResponse extends AbstractMercResponse {
         return '';
     }
 
+    /**
+     * Summary of getCheckoutUrl
+     * @return mixed|string
+     */
     public function getCheckoutUrl() {
         return $this->checkoutURL;
     }

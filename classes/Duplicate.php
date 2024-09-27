@@ -2,9 +2,12 @@
 
 namespace HHK;
 
+use HHK\House\PSG;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
+use HHK\sec\SecurityComponent;
+use HHK\sec\Session;
 use HHK\SysConst\MemStatus;
 use HHK\SysConst\RelLinkType;
 use HHK\SysConst\VolMemberType;
@@ -26,15 +29,18 @@ use HHK\SysConst\VolMemberType;
 
 class Duplicate {
 
-    protected static function getNameDuplicates(\PDO $dbh, $mType) {
+    protected static function getNameDuplicates(\PDO $dbh, $mType, array $filters) {
 
         $rows = array();
+
+        $groupByStr = self::buildGroupBy($filters);
+        $whereStr = self::buildWhere($filters);
 
         if ($mType == VolMemberType::ReferralAgent || $mType == VolMemberType::Doctor) {
 
             // get duplicate names
             $stmt = $dbh->query("select
-    Name_Full, count(n.idName) as `dups`
+    Name_Full, count(n.idName) as `dups`, group_concat(n.idName) as `idNames`
 from
     `name` n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '$mType'
 where
@@ -46,59 +52,55 @@ group by n.Name_Full having count(n.idName) > 1;");
         } else if ($mType == VolMemberType::Patient) {
 
             $stmt = $dbh->query("select
-    n.Name_Full, count(n.idName) as `dups`
+    n.Name_Full, count(n.idName) as `dups`, group_concat(n.idName) as `idNames`
 from
     `name` n join name_guest ng on n.idName = ng.idName and ng.Relationship_Code = 'slf'
+    left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+    left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
+    left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 where
-    n.Member_Status in ('a','d') and n.Record_Member = 1
-group by LOWER(n.Name_Full)
-having count(n.idName) > 1
-order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
-
-            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-                //$name = $r['Name_Full'];
-
-//                $stmt2 = $dbh->query("select
-//        n.idName as `Id`,
-//        n.Name_Full as `Name`,
-//        concat(na.City, na.State_Province) as `adr`
-//    from
-//        `name` n
-//            left join
-//        name_address na ON n.idName = na.idName
-//            and n.Preferred_Mail_Address = na.Purpose
-//            left join
-//        name_guest ng ON n.idName = ng.idName
-//    where
-//        ng.Status = 'a' and LOWER(n.Name_Full) = '" . strtolower($name) . "' and ng.idName is not null and n.Member_Status = 'a'
-//    group by LOWER(adr)
-//    having count(n.idName) > 1");
-//
-//                $pats = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-//
-//                if (count($pats) > 0) {
-                    $rows[] = $r;
-//                }
-
-            }
-
-        } else if ($mType == VolMemberType::Guest) {
-
-            $stmt = $dbh->query("select
-    n.Name_Full, count(n.idName) as `dups`
-from
-    `name` n join name_guest ng on n.idName = ng.idName
-where
-    n.Member_Status in ('a','d') and n.Record_Member = 1
-group by LOWER(n.Name_Full), ng.idPsg
+    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
+group by LOWER(n.Name_Full)" . $groupByStr . "
 having count(n.idName) > 1
 order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        }
+        } else if ($mType == VolMemberType::Guest) {
 
+            $stmt = $dbh->query("select
+    n.Name_Full, count(n.idName) as `dups`, group_concat(n.idName) as `idNames`
+from
+    `name` n join name_guest ng on n.idName = ng.idName
+    left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+    left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
+    left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+where
+    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
+group by LOWER(n.Name_Full), ng.idPsg" . $groupByStr . "
+having count(n.idName) > 1
+order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
+
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        }else if($mType == VolMemberType::Patient.VolMemberType::Guest){
+
+            $stmt = $dbh->query("select
+    n.Name_Full, count(distinct n.idName) as `dups`, group_concat(distinct n.idName) as `idNames`
+from
+    `name` n join name_guest ng on n.idName = ng.idName
+    left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+    left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
+    left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+where
+    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
+group by LOWER(n.Name_Full)" . $groupByStr . "
+having count(distinct n.idName) > 1
+order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
+
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+        }
 
         return $rows;
 
@@ -108,6 +110,11 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
     public static function expand(\PDO $dbh, $fullName, $post, $relLinkTypes) {
 
         $markup = '';
+
+        $idNamesStr = (isset($post['idnames']) ? filter_var($post['idnames'], FILTER_SANITIZE_SPECIAL_CHARS) : "");
+        $idNamesAr = explode(",", $idNamesStr);
+        $sanitizedIdNames = (is_array($idNamesAr) && count($idNamesAr) > 0 ? filter_var_array($idNamesAr, FILTER_SANITIZE_NUMBER_INT) : []);
+        $sanitizedIdNameStr = implode(",", $sanitizedIdNames);
 
         if ($post['mType'] == VolMemberType::ReferralAgent) {
 
@@ -120,7 +127,7 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
         } else if ($post['mType'] == VolMemberType::Patient) {
 
             // Expand this selection
-            $expansion = Duplicate::expandPatient($dbh, $fullName);
+            $expansion = Duplicate::expandPatient($dbh, $fullName, $sanitizedIdNameStr);
             $data = array();
             $idPsgs = array();
 
@@ -179,10 +186,10 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
                             , array('style'=>'margin:5px;'));
             }
 
-        }else {
+        }else if($post['mType'] == VolMemberType::Guest || $post['mType'] == VolMemberType::Patient.VolMemberType::Guest) {
 
             // Expand this selection
-            $expansion = Duplicate::expandGuest($dbh, $fullName);
+            $expansion = Duplicate::expandGuest($dbh, $fullName, $sanitizedIdNameStr);
             $data = array();
 
             $idPsgs = array();
@@ -195,17 +202,17 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
                 $idPsgs[$d['idPsg']] = $d['idPsg'];
 
                 $d['Id'] = HTMLContainer::generateMarkup('a', $d['Id'], array('href'=>'NameEdit.php?id=' . $d['Id']));
-                $d['P id'] = HTMLContainer::generateMarkup('a', $d['P id'], array('href'=>'NameEdit.php?id=' . $d['P id']));
+                $d['Patient ID'] = HTMLContainer::generateMarkup('a', $d['Patient ID'], array('href'=>'NameEdit.php?id=' . $d['Patient ID']));
 
                 $d['Save'] = HTMLInput::generateMarkup($id, array('type'=>'radio', 'name'=>'rbsave', 'id'=>'s'.$id));
 
-                if ($d['Rel'] == RelLinkType::Self) {
+                if ($d['Patient Relation'] == RelLinkType::Self) {
                     $d['Remove'] = '-';
                 } else {
                     $d['Remove'] = HTMLInput::generateMarkup($id, array('type'=>'radio', 'name'=>'rbremove', 'id'=>'r'.$id));
                 }
 
-                $d['Rel'] = $relLinkTypes[$d['Rel']][1];
+                $d['Patient Relation'] = (isset($relLinkTypes[$d['Patient Relation']][1]) ? $relLinkTypes[$d['Patient Relation']][1] : '');
 
                 $data[] = $d;
             }
@@ -213,7 +220,12 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 
 
             $markup = CreateMarkupFromDB::generateHTML_Table($data, 'pickId');
-            $markup .= HTMLInput::generateMarkup('Combine Id\'s', array('id'=>'btnCombId', 'type'=>'button', 'style'=>'margin: 10px 0 5px 0;'));
+            //if(SecurityComponent::is_TheAdmin() || $post['mType'] != VolMemberType::Patient.VolMemberType::Guest ){
+                $markup .= HTMLInput::generateMarkup('Combine Id\'s', array('id'=>'btnCombId', 'type'=>'button', 'style'=>'margin: 10px 0 5px 0;'));
+            //}else{
+            //    $uS = Session::getInstance();
+            //    $markup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", "Merging Patients and Guests is not currently available, please contact NPSC at " . $uS->Error_Report_Email . " if you would like to merge Patients and Guests", array("class"=>'ui-widget ui-widget-content ui-corner-all mt-3 p-2 d-inline-block', "style"=>"max-width: 400px;")));
+            //}
 
             $markup .= HTMLContainer::generateMarkup('div', '', array('id'=>'spnAlert', 'style'=>'color:red; margin-left:10px;'));
 
@@ -225,18 +237,26 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
                     continue;
                 }
 
+                $psg = new PSG($dbh, $idPsg);
+
+                $psgStmt = $dbh->query("select ng.idName as `ID`, n.Name_Full as `Name`, rc.Description as `Patient Relationship`
+                from name_guest ng
+                    left join name n on ng.idName = n.idName
+                    left join gen_lookups rc on ng.Relationship_Code = rc.Code and rc.Table_Name = 'Patient_Rel_Type'
+                where ng.idPsg = " . $idPsg);
+
+            $psgMembers = $psgStmt->fetchAll(\PDO::FETCH_ASSOC);
+
                 $stmt = $dbh->query("select
             rg.idPsg,
-        n.idName,
-            n.Name_Full,
-            DATE(ifnull(s.Span_Start_Date, '')) as `start`,
-            DATE(ifnull(s.Span_End_Date, '')) as `end`,
-        ifnull(s.idStays, 0) as idStays,
-        ifnull(s.idVisit, 0) as idVisit,
-        ifnull(s.Visit_Span, 0) as Visit_Span,
-        ifnull(s.idRoom, 0) as idRoom,
-        ifnull(s.`Status`, '') as `Status`,
-        ifnull(v.idReservation, 0) as idReservation
+            concat(ifnull(s.idVisit, ''), '-', ifnull(s.Visit_Span, '')) as `Visit ID`,
+            ifnull(v.idReservation, '') as `Reservation ID`,
+            n.idName,
+            n.Name_Full as `Name`,
+            ifnull(date_format(DATE(s.Span_Start_Date), '%b %e, %Y'), '') as `Span Start`,
+            ifnull(date_format(DATE(s.Span_End_Date), '%b %e, %Y'), '') as `Span End`,
+        ifnull(resc.Title, ifnull(s.idRoom, '')) as Room,
+        ifnull(vstat.Description, ifnull(s.`Status`, '')) as `Status`
     from
             registration rg
                     left join
@@ -245,21 +265,34 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
         stays s ON v.idVisit = s.idVisit and v.Span = s.Visit_Span
                     left join
             `name` n on s.idName = n.idName
+            left join
+                resource resc on s.idRoom = resc.idResource
+            left join
+                gen_lookups vstat on vstat.Table_Name = 'Visit_Status' and vstat.Code = s.Status
     where
         rg.idPsg = $idPsg
     order by idStays;");
 
-                $markup .= HTMLContainer::generateMarkup('div',
-                            CreateMarkupFromDB::generateHTML_Table($stmt->fetchAll(\PDO::FETCH_ASSOC), 'idPsg')
-                            , array('style'=>'margin:5px;'));
+                $markup .= HTMLContainer::generateMarkup('h3', 'Patient ID: ' . $psg->getIdPatient() . ' ' . $psg->getPatientName($dbh), array("class"=>' ui-widget-header ui-corner-top ui-state-default mt-3', 'style'=>"text-align: left;")) . 
+                        HTMLContainer::generateMarkup('div',
+                            HTMLContainer::generateMarkup("div",
+                                HTMLContainer::generateMarkup("h4", "PSG Members", array('class'=>'pb-2')).
+                                CreateMarkupFromDB::generateHTML_Table($psgMembers, 'psgMembers')
+                            , array('class'=>'ui-widget ui-widget-content ui-corner-all p-2 mr-3')) .
+                            HTMLContainer::generateMarkup("div",
+                                HTMLContainer::generateMarkup("h4", "Stays", array('class'=>'pb-2')).
+                                CreateMarkupFromDB::generateHTML_Table($stmt->fetchAll(\PDO::FETCH_ASSOC), 'idPsg')
+                            , array('class'=>'ui-widget ui-widget-content ui-corner-all p-2'))
+                        , array('class'=>'ui-widget ui-widget-content ui-corner-bottom p-2 hhk-flex'));
             }
 
         }
-
+        
         return $markup;
     }
 
-    protected static function expandPatient(\PDO $dbh, $name) {
+    protected static function expandPatient(\PDO $dbh, $name, string $idNamesStr = "") {
+
 
         $stmt = $dbh->prepare("select
     n.idName as `Id`,
@@ -270,7 +303,7 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
     concat(na.Address_1, na.Address_2) as `Address`,
     na.City,
     na.State_Province as `St`,
-    np.Phone_Num as Phone,
+    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone,
     ms.Description as `Status`,
     ng.Relationship_Code as `Rel`,
     n2.idName as `P id`,
@@ -299,14 +332,14 @@ from
         left join
     gen_lookups ms ON n.Member_Status = ms.Code and ms.Table_Name = 'mem_status'
 where
-    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status in('a', 'd')");
+    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status in('a', 'd') and ng.Relationship_Code = '" . RelLinkType::Self . "' " . ($idNamesStr != "" ? " and n.idName IN (" . $idNamesStr . ")" : ""));
 
         $stmt->execute(array(':name'=>  strtolower($name)));
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public static function expandGuest(\PDO $dbh, $name) {
+    public static function expandGuest(\PDO $dbh, $name, string $idNamesStr = "") {
 
         $stmt = $dbh->prepare("select
     n.idName as `Id`,
@@ -316,11 +349,13 @@ where
     concat(na.Address_1, na.Address_2) as `Address`,
     na.City,
     na.State_Province as `St`,
-    np.Phone_Num as Phone,
+    date_format(n.BirthDate, '%b %e, %Y') as `Birth Date`,
+    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone,
+    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ifnull(ne.Email, '') END as Email,
     ms.Description as `Status`,
     ng.idPsg,
-    ng.Relationship_Code as `Rel`,
-    n2.idName as `P id`,
+    ng.Relationship_Code as `Patient Relation`,
+    n2.idName as `Patient ID`,
     n2.Name_Full as `Patient`,
     (select count(*) from visit where idRegistration = r.idregistration) as `visits`,
     (select count(*) from stays where idName = n.idName) as `stays`,
@@ -336,6 +371,9 @@ from
     name_phone np ON n.idName = np.idName
         and n.Preferred_Phone = np.Phone_Code
         left join
+    name_email ne ON n.idName = ne.idName
+        and n.Preferred_Email = ne.Purpose
+        left join
     name_guest ng ON n.idName = ng.idName
         left join
     psg ON ng.idPsg = psg.idPsg
@@ -346,7 +384,8 @@ from
         left join
     gen_lookups ms ON n.Member_Status = ms.Code and ms.Table_Name = 'mem_status'
 where
-    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status in ('a', 'd')");
+    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status in ('a', 'd')" . ($idNamesStr != "" ? " and n.idName IN (" . $idNamesStr . ")" : "")
+);
 
         $stmt->execute(array(':name'=>  strtolower($name)));
 
@@ -357,7 +396,9 @@ where
     public static function expandOther(\PDO $dbh, $nameLastFirst, $mType) {
 
         $stmt = $dbh->query("SELECT
-    n.idName, n.Name_Full, np.Phone_Num, ne.Email
+    n.idName, n.Name_Full, 
+    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone_Num, 
+    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ifnull(ne.Email, '') END as Email
 FROM
     name n
         LEFT JOIN
@@ -387,9 +428,9 @@ WHERE
         return $tbl->generateMarkup() . HTMLInput::generateMarkup('Combine', array('id'=>'btnCombine', 'type'=>'button', 'data-type'=> $mType, 'style'=>'margin-top: 10px'));
     }
 
-    public static function listNames(\PDO $dbh, $mType) {
+    public static function listNames(\PDO $dbh, $mType, array $filters) {
 
-        $msg = self::getNameDuplicates($dbh, $mType);
+        $msg = self::getNameDuplicates($dbh, $mType, $filters);
 
         if (count($msg) > 0) {
 
@@ -397,7 +438,7 @@ WHERE
 
             foreach ($msg as $d) {
 
-                $data[] = array('Name' => HTMLInput::generateMarkup($d['Name_Full'], array('type' => 'button', 'data-type' => $mType, 'data-fn' => $d['Name_Full'], 'class' => 'hhk-expand', 'title' => 'Click to expand')), 'Count' => $d['dups']);
+                $data[] = array('Name' => HTMLInput::generateMarkup($d['Name_Full'], array('type' => 'button', 'data-type' => $mType, 'data-fn' => $d['Name_Full'], 'data-idnames'=> $d['idNames'], 'class' => 'hhk-expand', 'title' => 'Click to expand')), 'Count' => $d['dups']);
             }
 
             $markup = HTMLContainer::generateMarkup('p', count($msg) . ' records');
@@ -519,11 +560,71 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
             return array('error'=>'Save and Remove are the same.  No action.');
         }
 
+        //check if deleteId is patient
+        $query = "select idName from name_guest where idName = :idName and Relationship_Code = '" . RelLinkType::Self . "';";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([":idName"=>$dPsgId]);
+        if($stmt->rowCount() > 0){
+            return array('error'=>'Cannot remove ID ' . $dPsgId . " because they are a patient. Try removing the duplicate guest instead, or search for duplicate patients first");
+        }
+
         $stmt = $dbh->query("call remove_dup_guest($sPsgId, $dPsgId);");
         $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
 
+    }
+
+    /**
+     * Create a query string of group by's given an array of filter checkboxes
+     * 
+     * @param array $filters
+     * @return string
+     */
+    protected static function buildGroupBy(array $filters){
+        $groupBy = [];
+        foreach($filters as $filter){
+            switch($filter){
+                case "birthdate":
+                    $groupBy[] = "n.BirthDate";
+                    break;
+                case "phone":
+                    $groupBy[] = "np.Phone_Search";
+                    break;
+                case "email":
+                    $groupBy[] = "LOWER(ne.Email)";
+                    break;
+                case "address":
+                    $groupBy[] = "LOWER(concat(na.Address_1, na.Address_2, na.City, na.State_province, na.Postal_Code))";
+                    break;
+                default:
+            }
+        }
+
+        return (count($groupBy) > 0 ? "," . implode(",", $groupBy) : "");
+    }
+
+    protected static function buildWhere(array $filters){
+        $where = [];
+        foreach($filters as $filter){
+            switch($filter){
+                case "birthdate":
+                    $where[] = "n.BirthDate != ''";
+                    break;
+                case "phone":
+                    $where[] = "np.Phone_Search != ''";
+                    break;
+                case "email":
+                    $where[] = "LOWER(ne.Email) != ''";
+                    break;
+                case "address":
+                    $where[] = "LOWER(concat(na.Address_1, na.Address_2, na.City, na.State_province, na.Postal_Code)) != ''";
+                    break;
+                default:
+            }
+        }
+
+        return (count($where) > 0 ? " AND " . implode(" AND ", $where) : "");
     }
 
 }

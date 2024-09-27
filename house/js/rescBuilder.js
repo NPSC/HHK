@@ -100,7 +100,7 @@ function getResource(idResc, type, trow) {
             }
             if (data.row) {
                 savedRow = trow.children();
-                trow.children().remove().end().append($(data.row));
+                trow.children().remove().end().append($(data.row)).find('.ckdate').datepicker({dateFormat: 'M d, yy'});
                 $('#savebtn').button().click(function () {
                     var btn = $(this);
                     saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));
@@ -224,7 +224,7 @@ function saveResource(idresc, type, clas) {
                 $('#tblresc').dataTable({
                     "dom": '<"top"if>rt<"bottom"lp><"clear">',
                     "displayLength": 50,
-                    "order": [[1, 'asc']],
+                    "order": [[6, 'asc'], [1, 'asc']],
                     "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
                 });
             } else if (data.constList) {
@@ -238,8 +238,14 @@ function saveResource(idresc, type, clas) {
 $(document).ready(function () {
     "use strict";
 
+	$('#formBuilder').hhkFormBuilder({
+		labels: $.parseJSON($("#labels").val()),
+		fieldOptions:$.parseJSON($("#frmOptions").val()),
+		demogs: $.parseJSON($('#frmDemog').val())
+	});
+
     var tabIndex = parseInt($('#tabIndex').val());
-    $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
+    $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, #btnTaxSave, .reNewBtn').button();
 
     $('#txtFaIncome, #txtFaSize').change(function () {
         var inc = $('#txtFaIncome').val().replace(',', ''),
@@ -284,7 +290,7 @@ $(document).ready(function () {
     $('#statEvents').dialog({
         autoOpen: false,
         resizable: true,
-        width: getDialogWidth(800),
+        width: getDialogWidth(1000),
         modal: true,
         title: 'Manage Status Events'
     });
@@ -322,16 +328,16 @@ $(document).ready(function () {
     	$('#divNewForm').dialog('open');
     });
     $('#selFormUpload').change(function (e, changeEventData) {
-		
+
         $('#hdnFormType').val('');
-        
+
         if ($(this).val() == '') {
         	$('#divUploadForm').empty();
         	$('#btnNewForm').hide()
         	return;
         }
         $('#spnFrmLoading').show();
-        
+
         $.post('ResourceBuilder.php', {'ldfm': $(this).val()},
             function (data) {
                 $('#spnFrmLoading').hide();
@@ -356,13 +362,13 @@ $(document).ready(function () {
                           $('#regTabDiv').tabs( "refresh" );
 
                           var order = $('#regTabDiv .ui-tabs-nav').sortable('toArray', {'attribute': 'data-code'});
-                          
+
 						  data = {
 								  'cmd':'reorderfm',
 								  'formDef':$(document).find('#regTabDiv').data('formdef'),
 								  'order':order
 								  };
-						  
+
                           $.ajax({
                        		url: 'ResourceBuilder.php',
                         	type: "POST",
@@ -382,8 +388,7 @@ $(document).ready(function () {
                     $('#divUploadForm button').button();
                     $('#divUploadForm input[type=submit]').button();
                     if(changeEventData && changeEventData.docCode){
-                    	console.log('#docTab-' + changeEventData.docCode);
-                    	$('#regTabDiv').find('#docTab-' + changeEventData.docCode).click();
+                    	$('#regTabDiv').find('li.ui-tab[aria-selected=false] #docTab-' + changeEventData.docCode).click();
                     }
                 }
             });
@@ -393,7 +398,7 @@ $(document).ready(function () {
 	$(document).on("click", ".uploadFormDiv form #docDelFm", function(e){
 		$(".uploadFormDiv form input[name=docAction]").val("docDelete");
 	});
-	
+
 	$(document).on("click", ".uploadFormDiv form #docSaveFm", function(e){
 		$(".uploadFormDiv form input[name=docAction]").val("docUpload");
 	});
@@ -401,7 +406,7 @@ $(document).ready(function () {
 	$(document).on("submit", ".uploadFormDiv form, #formFormNew", function(e) {
 	    e.preventDefault();
 	    var formData = new FormData(this);
-	
+
 		$.ajax({
 	        url: $(this).attr("action"),
 	        type: 'POST',
@@ -425,14 +430,22 @@ $(document).ready(function () {
 	    });
 	});
 
-    $('#tblroom, #tblresc').dataTable({
+    $('#tblresc').dataTable({
+        "dom": '<"top"if>rt<"bottom"lp><"clear">',
+        "displayLength": 50,
+        "order": [[6, 'asc'], [1, 'asc']],
+        "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
+    });
+
+    $('#tblroom').dataTable({
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
         "displayLength": 50,
         "order": [[1, 'asc']],
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });
-    $('.hhk-selLookup').change(function () {
-        var $sel = $(this),
+
+    $("#mainTabs").on('change', '.hhk-selLookup', function () {
+        let $sel = $(this),
             table = $(this).find("option:selected").text(),
             type = $(this).val();
 
@@ -447,14 +460,14 @@ $(document).ready(function () {
         	type = $sel.val();
         }
 
-        $sel.closest('form').children('div').empty().text('Loading...');
+        $sel.closest('form').children('div.lookupDetailTbl').empty().text('Loading...');
         $sel.prop('disabled', true);
 
         $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
                 function (data) {
                     $sel.prop('disabled', false);
                     if (data) {
-                        $sel.closest('form').children('div').empty().append(data).find(".sortable tbody")
+                        $sel.closest('form').children('div.lookupDetailTbl').empty().append(data).find(".sortable tbody")
                         	.sortable({
                         		items: "tr:not(.no-sort)",
                         		handle: ".sort-handle",
@@ -463,14 +476,19 @@ $(document).ready(function () {
                         				$(this).find("td:first input").val(i);
                         			});
                         		}
-                        	});
+                            });
+                        bsIconAutocomplete($sel.closest('form').children('div.lookupDetailTbl'));
+                    } else {
+                        $sel.closest('form').children('div.lookupDetailTbl').empty();
                     }
                 });
     });
-    $('.hhk-saveLookup').click(function () {
-        var $frm = $(this).closest('form');
-        var sel = $frm.find('select.hhk-selLookup');
-        var table = sel.find('option:selected').text(),
+
+    
+    $("#mainTabs").on('click', '.hhk-saveLookup', function () {
+        let $frm = $(this).closest('form');
+        let sel = $frm.find('select.hhk-selLookup');
+        let table = sel.find('option:selected').text(),
             type = $frm.find('select').val(),
             $btn = $(this);
 
@@ -485,40 +503,113 @@ $(document).ready(function () {
 
         $btn.val('Saving...');
 
-        $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
-            function(data) {
+        var lookupData = $frm.serializeJSON();
+        
+        $.ajax({
+            url: "ResourceBuilder.php",
+            type: "POST",
+            data: {
+                lookups: JSON.stringify(lookupData),
+                cmd: "save",
+                table: table,
+                tp: type
+            },
+            success: function (data) {
                 $btn.val('Save');
                 if (data) {
-                    $frm.children('div').empty().append(data);
+                    $frm.children('div.lookupDetailTbl').empty().append(data).find(".sortable tbody")
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
                 }
-            });
-    }).button();
+            }
+        });
+    });
 
+    //sortable demo categories
+    $("#formdemo .sortable tbody")
+        .sortable({
+            items: "tr:not(.no-sort)",
+            handle: ".sort-handle",
+            update: function (e, ui) {
+                $(this).find("tr").each(function(i){
+                    $(this).find("td:first input").val(i);
+                });
+            }
+        });
+
+    // Save Demo categories.
     $('#btndemoSave').click(function () {
         var $frm = $(this).closest('form');
+        var $btn = $(this);
+        $btn.val('Saving...');
 
-        $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
-            function(data) {
+        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
+            function (data) {
                 if (data) {
-                    $frm.children('div').children().remove().end().append(data);
+                    $btn.val('Save');
+                    $frm.children('div.lookupTbl').children().remove().end().append(data).find(".sortable tbody")
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
                 }
             });
     }).button();
-    
+
+    // Save PSG checkbox list.
+    $("#checklistSection").on('click', '#btncblistSave', function () {
+        var $frm = $(this).closest('form');
+        var $btn = $(this);
+        $btn.val('Saving...');
+
+        $.post('ResourceBuilder.php', "lookups=" + JSON.stringify($frm.serializeJSON()) + '&cmd=save' + '&table=' + 'Checklist' + '&tp=' + 'm',
+            function (data) {
+                if (data) {
+                    $btn.val('Save');
+                    $("#checklistSection").empty().append(data).find(".sortable tbody")
+                        .sortable({
+                            items: "tr:not(.no-sort)",
+                            handle: ".sort-handle",
+                            update: function (e, ui) {
+                                $(this).find("tr").each(function (i) {
+                                    $(this).find("td:first input").val(i);
+                                });
+                            }
+                        });
+                    
+                        $("#checklistSection").find(".hhk-saveLookup, .hhk-saveccblist").button();
+                }
+            });
+    })
+
     $(document).on("click", "#btnInsSave", function (e) {
         var $frm = $(this).closest('form');
 
         $.post('ResourceBuilder.php', $frm.serialize(),
-            function(data) {
-            	if(data.success){
-            		flagAlertMessage(data.success, false);
-            	}else if(data.error){
-            		flagAlertMessage(data.error, true);
-            	}
+            function (data) {
+                if (data.success) {
+                    flagAlertMessage(data.success, false);
+                } else if (data.error) {
+                    flagAlertMessage(data.error, true);
+                }
                 $("#selInsLookup").trigger("change");
             },
             "json");
-    })
+    });
+
+    $("#mainTabs .hhk-saveLookup, #mainTabs .hhk-saveccblist").button();
 
     // Add diagnosis and locations
     if ($('#btnAddDiags').length > 0) {
@@ -551,6 +642,30 @@ $(document).ready(function () {
 			form.find('input[type=file]').val('');
         }
 		form.toggle();
-		
+
     });
+
 });
+
+function bsIconAutocomplete(container) {
+    container.find("input.bs-icon").each(
+        function (i,v) {
+            $(v).autocomplete({
+                source: bsIconList,
+                position: { my: "left top", at: "left bottom", collision: "flip" },
+                minLength: 3,
+                select: function (event, ui) {
+                    if (ui.item) {
+                        $(this).val(ui.item.value);
+                        $(this).data("icon-value", ui.item.value);
+                        $(this).closest("td").find(".demogIconPreview").attr("class", "demogIconPreview mx-2 " + ui.item.value);
+                        return false;
+                    }
+                }
+            }).autocomplete("instance")._renderItem = function (ul, item) {
+                return $( "<li>" )
+                .append( '<div><i style="font-size: 1.1em" class="mr-2 '+ item.value + '"></i>' + item.label + "</div>" )
+                .appendTo( ul );
+            };
+        });
+}

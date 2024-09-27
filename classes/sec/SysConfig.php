@@ -24,7 +24,7 @@ class SysConfig {
      *
      * @param \PDO $dbh
      * @param Session $uS
-     * @param string $category
+     * @param string|array $category
      * @param string $tableName
      * @param bool $returnArray
      * @throws RuntimeException
@@ -37,8 +37,23 @@ class SysConfig {
             throw new RuntimeException('System Configuration database table name or category not specified.  ');
         }
 
-        $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        if(is_array($category)){
+            foreach($category as $key=>$cat){
+                $category[$key] = "'" . $cat . "'";
+            }
+            $category = implode(",", $category);
+        }else{
+            $category = "'" . $category . "'";
+        }
+
+        try {
+            $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\PDOException $e){
+            if($e->getCode() === "42S02"){ //table doesn't exist
+                throw new RuntimeException("Error: " . $e->errorInfo[2] . ": It looks like HHK isn't installed properly. Try running the installer.");
+            }
+        }
 
         foreach ($rows as $r) {
 
@@ -52,6 +67,15 @@ class SysConfig {
 
     }
 
+    /**
+     * Summary of getKeyValue
+     * @param \PDO $dbh
+     * @param string $tableName
+     * @param string $key
+     * @param mixed $default
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
     public static function getKeyValue(\PDO $dbh, $tableName, $key, $default = null) {
 
         if ($tableName == '' || $key == '') {
@@ -75,6 +99,49 @@ class SysConfig {
 
     }
 
+    /**
+     * Summary of getKeyRecord
+     * @param \PDO $dbh
+     * @param string $tableName
+     * @param string $key
+     * @throws \HHK\Exception\RuntimeException
+     * @return mixed
+     */
+    public static function getKeyRecord(\PDO $dbh, $tableName, $key) {
+
+        if ($tableName == '' || $key == '') {
+            throw new RuntimeException('System Configuration database table name or key not specified.  ');
+        }
+
+        try{
+            $stmt = $dbh->query("select * from `" . $tableName . "` where `Key` = '$key' ");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){
+            $rows = array();
+        }
+
+        if (count($rows) == 1) {
+
+            return $rows[0];
+
+        }else{
+            throw new RuntimeException('System Configuration key not found: ' . $key);
+        }
+
+    }
+
+
+
+    /**
+     * Summary of saveKeyValue
+     * @param \PDO $dbh
+     * @param string $tableName
+     * @param string $key
+     * @param mixed $value
+     * @param string $category
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
     public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value, $category = null) {
 
         if ($tableName == '' || $key == '') {
@@ -128,6 +195,12 @@ class SysConfig {
         }
     }
 
+    /**
+     * Summary of getTypedVal
+     * @param string $type
+     * @param mixed $value
+     * @return mixed
+     */
     public static function getTypedVal($type, $value) {
 
         switch ($type) {
@@ -147,6 +220,12 @@ class SysConfig {
         return $val;
     }
 
+    /**
+     * Summary of setValueByType
+     * @param int $value
+     * @param string $type
+     * @return mixed
+     */
     public static function setValueByType($value, $type) {
 
         switch ($type) {
@@ -171,4 +250,3 @@ class SysConfig {
         return $val;
     }
 }
-?>

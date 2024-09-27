@@ -14,15 +14,6 @@
 $(document).ready(function() {
     "use strict";
     var dateFormat = $('dateFormat').val();
-    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-        _resizeMenu: function() {
-            var ul = this.menu.element;
-            ul.outerWidth( Math.max(
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-            ) * 1.1 );
-        }
-    });
     $('input[type="button"]').button();
     $.extend($.fn.dataTable.defaults, {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
@@ -50,17 +41,24 @@ $(document).ready(function() {
     $('#hhk-wListResvHdr').click(function () {
         $('#hhk-wListResv').toggle('blind');
     });
-    createAutoComplete($('#Search'), 3, {cmd: 'role', gp:'1'}, function (item) {
+    createRoleAutoComplete($('#Search'), 3, {cmd: 'guest'}, function (item) {
+
+        if(item.id == 0){
+            let searchTerm = $('#Search').val();
+            window.open('Reserve.php?id=' + item.id + '&title=c&guestSearchTerm=' + searchTerm, '_self');
+        }else{
+            window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
+        }
+    }, true);
+    createRoleAutoComplete($('#phSearch'), 5, {cmd: 'phone'}, function (item) {
         window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
-    });
-    createAutoComplete($('#phSearch'), 5, {cmd: 'role', gp:'1'}, function (item) {
+    }, true);
+    createRoleAutoComplete($('#MRNSearch'), 3, {cmd: 'mrn'}, function (item) {
         window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
-    });
-    createAutoComplete($('#MRNSearch'), 3, {cmd: 'role', gp:'1', mrn:'1'}, function (item) {
-        window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
-    });
-    $('#Search').keypress(function(event) {
+    }, true);
+
+    $('#Search').keypress(function() {
         $(this).removeClass('ui-state-highlight');
     });
-    $('#guestSearchWrapper').show();
+
 });

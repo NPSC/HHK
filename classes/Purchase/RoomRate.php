@@ -24,6 +24,12 @@ use HHK\sec\Session;
  */
 class RoomRate {
 
+    /**
+     * Summary of makeSelectorOptions
+     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param int $idRoomRate
+     * @return array<array>
+     */
     public static function makeSelectorOptions(AbstractPriceModel $priceModel, $idRoomRate = 0) {
         // Room Rate
         $rateCategories = array();
@@ -62,6 +68,11 @@ class RoomRate {
         return $rateCategories;
     }
 
+    /**
+     * Summary of makeDescriptions
+     * @param \PDO $dbh
+     * @return array
+     */
     public static function makeDescriptions(\PDO $dbh) {
 
         $rateRs = new Room_RateRS();
@@ -77,7 +88,14 @@ class RoomRate {
         return $titles;
     }
 
-    public static function getRateDescription(\PDO $dbh, $idRoomRate, $RateCategory) {
+    /**
+     * Summary of getRateDescription
+     * @param \PDO $dbh
+     * @param int $idRoomRate
+     * @param string $RateCategory
+     * @return mixed
+     */
+    public static function getRateDescription(\PDO $dbh, $idRoomRate, $RateCategory, $rateAdjust = 0) {
 
         //RoomRateDefault
         $uS = Session::getInstance();
@@ -95,19 +113,32 @@ class RoomRate {
         if(isset($rows[0])) {
 
             $r = $rows[0];
-            return self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1']));
+            return self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1']), $rateAdjust);
         }
 
         return 'Undefined';
 
     }
 
-    protected static function titleAddAmount($title, $faCategory, $amt) {
+    /**
+     * Summary of titleAddAmount
+     * @param string $title
+     * @param string $faCategory
+     * @param string $amt
+     * @return mixed
+     */
+    protected static function titleAddAmount($title, $faCategory, $amt, $rateAdjust = 0) {
 
         if ($faCategory != RoomRateCategories::Fixed_Rate_Category) {
-            return $title . ': $' .$amt;
-        } else {
-            return $title;
+            $title .= ': $' .$amt;
+
+            if($rateAdjust != 0){
+                $adjustedAmt = round($amt * (1 + $rateAdjust/100), 2);
+                $title .= " (Adjusted: $" . $adjustedAmt . ")";
+            }
+            
         }
+
+        return $title;
     }
 }

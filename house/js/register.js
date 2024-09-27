@@ -1,16 +1,16 @@
-/* global pmtMkup, rvCols, wlCols, roomCnt, viewDays, rctMkup, defaultTab, isGuestAdmin */
+/* global pmtMkup, rvCols, wlCols, roomCnt, viewDays, rctMkup, defaultTab, isGuestAdmin, moment, FullCalendar */
 
 /**
  * register.js
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 /**
- * 
+ *
  * @param {mixed} n
  * @returns {Boolean}
  */
@@ -18,7 +18,15 @@ function isNumber(n) {
     "use strict";
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+
 // Change reservation room.
+
+/**
+ *
+ * @param {int} idResv
+ * @param {int} idResc
+ * @returns {Boolean}
+ */
 function setRoomTo(idResv, idResc) {
 
     $.post('ws_resv.php', {cmd: 'moveResvRoom', rid: idResv, idResc: idResc}, function(data) {
@@ -36,14 +44,18 @@ function setRoomTo(idResv, idResc) {
             return false;
         }
         if (data.warning && data.warning !== '') {
-            flagAlertMessage(data.warning, 'alert');
+            flagAlertMessage(data.warning, 'warning');
             return false;
         }
         if (data.msg && data.msg !== '') {
             flagAlertMessage(data.msg, 'info');
         }
+        if (data.success && data.success !== '') {
+            flagAlertMessage(data.msg, 'success');
+        }
         calendar.refetchEvents();
         refreshdTables(data);
+        return true;
     });
 }
 
@@ -55,22 +67,22 @@ function refreshdTables(data) {
         let tbl = $('#curres').DataTable();
         tbl.ajax.reload();
     }
-    
+
     if (data.reservs && $('div#vresvs').length > 0) {
         let tbl = $('#reservs').DataTable();
         tbl.ajax.reload();
     }
-    
+
     if (data.waitlist && $('div#vwls').length > 0) {
         let tbl = $('#waitlist').DataTable();
         tbl.ajax.reload();
     }
-    
+
     if (data.unreserv && $('div#vuncon').length > 0) {
         let tbl = $('#unreserv').DataTable();
         tbl.ajax.reload();
     }
-    
+
     if ($('#daily').length > 0 && $dailyTbl) {
         $dailyTbl.ajax.reload();
     }
@@ -78,7 +90,7 @@ function refreshdTables(data) {
 }
 
 /**
- * 
+ *
  * @param {int} rid
  * @param {string} status
  * @returns {undefined}
@@ -129,9 +141,9 @@ function chgRoomCleanStatus(idRoom, statusCode) {
                     flagAlertMessage("Server error - " + data.error, 'error');
                     return;
                 }
-                
+
                 refreshdTables(data);
-                
+
                 if (data.msg && data.msg != '') {
                     flagAlertMessage(data.msg, 'info');
                 }
@@ -143,9 +155,6 @@ function chgRoomCleanStatus(idRoom, statusCode) {
 
 function editPSG(psg) {
     var buttons = {
-//        "Save PSG": function() {
-//            saveFees(id, idVisit, span, false, 'register.php');
-//        },
         "Close": function() {
             $(this).dialog("close");
         }
@@ -180,13 +189,13 @@ function editPSG(psg) {
         }
     });
 }
-function ckOut(gname, id, idVisit, span) {
+function ckOut(gname, id, idReserv, idVisit, span) {
     var buttons = {
         "Show Statement": function() {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + span, '_blank');
+            window.open('ShowRegForm.php?rid=' + idReserv, '_blank');
         },
         "Check Out": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -197,13 +206,13 @@ function ckOut(gname, id, idVisit, span) {
     };
     viewVisit(id, idVisit, buttons, 'Check Out ' + gname, 'co', span);
 }
-function editVisit(gname, id, idVisit, span) {
+function editVisit(gname, id, idReserv, idVisit, span) {
     var buttons = {
         "Show Statement": function() {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + span, '_blank');
+            window.open('ShowRegForm.php?rid=' + idReserv, '_blank');
         },
         "Save": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -229,16 +238,16 @@ function getStatusEvent(idResc, type, title) {
                 alert("Parser error - " + err.message);
                 return;
             }
-            
+
             if (data.error) {
-                
+
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 alert("Server error - " + data.error);
-                
+
             } else if (data.tbl) {
-                
+
                 $('#statEvents').children().remove().end().append($(data.tbl));
                 $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy',
                 	beforeShow: function(el,ui){
@@ -287,7 +296,7 @@ function saveStatusEvent(idResc, type) {
                 calendar.refetchResources();
                 calendar.refetchEvents();
             }
-            
+
             if (data.msg && data.msg != '') {
                 flagAlertMessage(data.msg, 'info');
             }
@@ -299,9 +308,9 @@ function saveStatusEvent(idResc, type) {
 // Change Visit's' Room
 function showChangeRoom(gname, id, idVisit, span) {
 	// Get the change rooms dialog box
-	
+
     this.rooms = {};
-    
+
     $.post('ws_ckin.php',
         {
             cmd: 'showChangeRooms',
@@ -327,19 +336,19 @@ function showChangeRoom(gname, id, idVisit, span) {
                 return;
 
             }
-            
+
             let sDate = new Date(data.start)
 
             let $diagbox = $('#chgRoomDialog');
 
             $diagbox.children().remove();
             $diagbox.append($('<div class="hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
-            
+
 			let $selResource = $diagbox.find('#selResource');
             let $changeDate = $('#resvChangeDate');
             let $replaceRoom = $('input[name=rbReplaceRoom]');
             let $cbUseDefaultRate = $('#cbUseDefaultRate');
-            
+
             $changeDate.datepicker({
                 yearRange: '-05:+00',
                 changeMonth: true,
@@ -350,9 +359,9 @@ function showChangeRoom(gname, id, idVisit, span) {
                 minDate: sDate,
                 dateFormat: 'M d, yy'
             });
-            
+
             $changeDate.datepicker('setDate', new Date());
-            
+
             // room changer radiobutton
             $replaceRoom.change(function () {
 				if($(this).val() == 'new' && $changeDate.val() !== '') {
@@ -361,7 +370,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 					getVisitRoomList(idVisit, span, sDate, $selResource);
 				}
 			});
-            
+
             // Date Control
             $changeDate.change(function (){
 				$('input[name=rbReplaceRoomnew]').prop('checked', true);
@@ -374,7 +383,7 @@ function showChangeRoom(gname, id, idVisit, span) {
             }else{
             	rooms = {};
             }
-            
+
 			// Room selector
             $selResource.change( function(){
             	let selResource = $(this).val();
@@ -384,20 +393,20 @@ function showChangeRoom(gname, id, idVisit, span) {
             	}else{
             		$diagbox.find('#rmDepMessage').empty().hide();
             	}
-            	
+
             	// Room default rate message.
             	if ((data.curResc.defaultRateCat == '' && rooms[selResource].defaultRateCat != '')
             		|| (data.curResc.defaultRateCat != ''  && rooms[selResource].defaultRateCat != '' && data.curResc.defaultRateCat != rooms[selResource].defaultRateCat)) {
-	
+
 					$diagbox.find('#trUseDefaultRate').show();
-	
+
 				} else {
 					$diagbox.find('#trUseDefaultRate').hide();
 				}
             });
-            
+
             $selResource.change();
-            
+
 			// Define dialog box buttons.
 		    let buttons = {
 		        "Change Rooms": function() {
@@ -412,22 +421,22 @@ function showChangeRoom(gname, id, idVisit, span) {
 		            $(this).dialog("close");
 		        }
 		    };
-		    
+
             $diagbox.dialog('option', 'title', 'Change Rooms for ' + gname);
             $diagbox.dialog('option', 'width', '400px');
             $diagbox.dialog('option', 'buttons', buttons);
             $diagbox.dialog('open');
-            
+
         }
     });
-    
+
 	function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate) {
-		
+
 		let parms = {cmd: 'doChangeRooms', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate};
-		
-		$.post('ws_ckin.php', parms, 
+
+		$.post('ws_ckin.php', parms,
 			function (data) {
-			
+
 	            try {
 	                data = $.parseJSON(data);
 	            } catch (err) {
@@ -441,12 +450,12 @@ function showChangeRoom(gname, id, idVisit, span) {
 	                flagAlertMessage(data.error, 'error');
 	                return;
 	            }
-	            
+
 	            // Open visit edit window?
 	            if (data.openvisitviewer) {
 					editVisit('', 0, idVisit, data.openvisitviewer);
 				}
-				
+
 	            if (data.msg && data.msg != '') {
 	                flagAlertMessage(data.msg, 'info');
 	            }
@@ -455,27 +464,27 @@ function showChangeRoom(gname, id, idVisit, span) {
 	            refreshdTables(data);
 
 		});
-	
+
 	}
 
     function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
-    
+
 	    $rescSelector.prop('disabled', true);
 	    $('#hhk-roomChsrtitle').addClass('hhk-loading');
 	    $('#rmDepMessage').text('').hide();
-	    
+
 	    d = new Date();
-	    
-	     
+
+
 	    let parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate.toDateString(), selRescId:$rescSelector.val()};
-	    
+
 	    $.post('ws_ckin.php', parms,
 	        function (data) {
 	            let newSel;
-	
+
 	            $rescSelector.prop('disabled', false);
 	            $('#hhk-roomChsrtitle').removeClass('hhk-loading');
-	            
+
 	            try {
 	                data = $.parseJSON(data);
 	            } catch (err) {
@@ -489,16 +498,16 @@ function showChangeRoom(gname, id, idVisit, span) {
 	                flagAlertMessage(data.error, 'error');
 	                return;
 	            }
-	            
+
 	            if (data.sel) {
 	                newSel = $(data.sel);
 	                $rescSelector.children().remove();
-	
+
 	                newSel.children().appendTo($rescSelector);
 	                $rescSelector.val(data.idResc).change();
-	                
+
 	            }
-	            
+
 	            if (data.rooms) {
 	                rooms = data.rooms;
 	            }else{
@@ -527,19 +536,19 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
                 alert("Parser error - " + err.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-                
+
             } else if (data.success) {
                 flagAlertMessage(data.success, 'success');
-                if (updateCal === undefined || updateCal === true) {
-                	calendar.refetchEvents();
-                	refreshdTables(data);
-                }
+            }
+            if (updateCal === undefined || updateCal === true) {
+                calendar.refetchEvents();
+                refreshdTables(data);
             }
         }
     });
@@ -571,12 +580,12 @@ function getRoomList(idResv, eid, targetEl) {
                     of: targetEl
                 });
                 $('#selRoom').change(function () {
-                    
+
                     if ($('#selRoom').val() == '') {
                         contr.remove();
                         return;
                     }
-                    
+
                     if (confirm('Change room to ' + $('#selRoom option:selected').text() + '?')) {
                         setRoomTo(data.rid, $('#selRoom').val());
                     }
@@ -591,84 +600,86 @@ function refreshPayments() {
 	$('#btnFeesGo').click();
 }
 
-var isGuestAdmin,
-    pmtMkup,
-    rctMkup,
-    defaultTab,
-    resourceGroupBy,
-    resourceColumnWidth,
-    patientLabel,
-    guestLabel,
-    visitorLabel,
-    referralFormTitleLabel,
-    reservationLabel,
-    challVar,
-    defaultView,
-    defaultEventColor,
-    defCalEventTextColor,
-    calDateIncrement,
-    dateFormat,
-    fixedRate,
-    resvPageName,
-    showCreatedDate,
-    expandResources,
-    shoHospitalName,
-    showRateCol,
-    hospTitle,
-    showDiags,
-    showLocs,
-    locationTitle,
-    diagnosisTitle,
-    showWlNotes,
-    showCharges,
-    wlTitle,
-    cgCols,
-    rvCols,
-    wlCols,
-    dailyCols,
-    calendar,
-    calStartDate;
+function getDtBtns(title, stripHtml = true, className = ""){
+		return [
+            {
+                extend: "print",
+                className: "ui-corner-all",
+                autoPrint: true,
+                paperSize: "letter",
+                exportOptions: {
+                    stripHtml: stripHtml,
+                	columns: ":not('.noPrint')",
+                },
+                title: function(){
+                    return title;
+                },
+                messageBottom: function(){
+                	var now = moment().format("MMM D, YYYY") + " at " + moment().format("h:mm a");
+                	return '<div style="padding-top: 10px; position: fixed; bottom: 0; right: 0">Printed on '+now+'</div>';
+                },
+                customize: function (win) {
+                    $(win.document.body)
+                        .css("font-size", "0.9em");
+                    
+                    if (className.length > 0) {
+                        $(win.document.body)
+                            .addClass(className);
+                    }
+
+                    $(win.document.body).find("table")
+                        //.addClass("compact")
+                        .css("font-size", "inherit");
+                }
+            }
+    	];
+    }
+
+var hindx = 0,
+    pmtMkup = $('#pmtMkup').val(),
+    pmtStatus = $('#pmtStatus').val(),
+    rctMkup = $('#rctMkup').val(),
+    defaultTab = $('#defaultTab').val(),
+    resourceGroupBy = $('#resourceGroupBy').val(),
+    resourceColumnWidth = $('#resourceColumnWidth').val(),
+    patientLabel = $('#patientLabel').val(),
+    visitorLabel = $('#visitorLabel').val(),
+    referralFormTitleLabel = $('#referralFormTitleLabel').val(),
+    reservationLabel = $('#reservationLabel').val(),
+    reservationTabLabel = $('#reservationTabLabel').val(),
+    unconfirmedResvTabLabel = $('#unconfirmedResvTabLabel').val(),
+    defaultView = $('#defaultView').val(),
+    defaultEventColor = $('#defaultEventColor').val(),
+    defCalEventTextColor = $('#defCalEventTextColor').val(),
+    calDateIncrement = $('#calDateIncrement').val(),
+    dateFormat = $('#dateFormat').val(),
+    fixedRate = $('#fixedRate').val(),
+    resvPageName = $('#resvPageName').val(),
+    showCreatedDate = $('#showCreatedDate').val(),
+    expandResources = $('#expandResources').val(),
+    shoHospitalName = $('#shoHospitalName').val(),
+    showRateCol = $('#showRateCol').val(),
+    hospTitle = $('#hospTitle').val(),
+    showDiags = $('#showDiags').val(),
+    showLocs = $('#showLocs').val(),
+    locationTitle = $('#locationTitle').val(),
+    diagnosisTitle = $('#diagnosisTitle').val(),
+    showWlNotes = $('#showWlNotes').val(),
+    wlTitle = $('#wlTitle').val(),
+    showCharges = $('#showCharges').val(),
+	acceptResvPay = $('#acceptResvPay').val(),
+	holidays = $.parseJSON($('#holidays').val()),
+    closedDays = $.parseJSON($('#closedDays').val()),
+	showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val(),
+    useOnlineReferral = $('#useOnlineReferral').val(),
+    calendar;
 
 $(document).ready(function () {
     "use strict";
-    var hindx = 0;
-    calStartDate = new moment();
-    isGuestAdmin = $('#isGuestAdmin').val();
-    pmtMkup = $('#pmtMkup').val();
-    rctMkup = $('#rctMkup').val();
-    defaultTab = $('#defaultTab').val();
-    resourceGroupBy = $('#resourceGroupBy').val();
-    resourceColumnWidth = $('#resourceColumnWidth').val();
-    patientLabel = $('#patientLabel').val();
-    visitorLabel = $('#visitorLabel').val();
-    guestLabel = $('#guestLabel').val();
-    referralFormTitleLabel = $('#referralFormTitleLabel').val();
-    reservationLabel = $('#reservationLabel').val();
-    challVar = $('#challVar').val();
-    defaultView = $('#defaultView').val();
-    defaultEventColor = $('#defaultEventColor').val();
-    defCalEventTextColor = $('#defCalEventTextColor').val();
-    calDateIncrement = $('#calDateIncrement').val();
-    dateFormat = $('#dateFormat').val();
-    fixedRate = $('#fixedRate').val();
-    resvPageName = $('#resvPageName').val();
-    showCreatedDate = $('#showCreatedDate').val();
-    expandResources = $('#expandResources').val();
-    shoHospitalName = $('#shoHospitalName').val();
-    showRateCol = $('#showRateCol').val();
-    hospTitle = $('#hospTitle').val();
-    showDiags = $('#showDiags').val();
-    showLocs = $('#showLocs').val();
-    locationTitle = $('#locationTitle').val();
-    diagnosisTitle = $('#diagnosisTitle').val();
-    showWlNotes = $('#showWlNotes').val();
-    wlTitle = $('#wlTitle').val();
-    showCharges = $('#showCharges').val();
-
 
     // Current Guests
-    cgCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+    let cgCols = [
+            {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
             {data: visitorLabel+' First', title: visitorLabel+' First'},
             {data: visitorLabel+' Last', title: visitorLabel+' Last'},
             {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -688,9 +699,21 @@ $(document).ready(function () {
 
         cgCols.push({data: 'Patient', title: patientLabel});
 
+		if(showCurrentGuestPhotos){
+			cgCols.unshift({data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px"});
+    }
+    
+    $("#btnTextCurGuests").button().smsDialog({ "campaign": "checked_in"});
+
+    $("#btnTextConfResvGuests").button().smsDialog({ "campaign": "confirmed_reservation" });
+
+    $("#btnTextUnConfResvGuests").button().smsDialog({ "campaign": "unconfirmed_reservation" });
+
+    $("#btnTextWaitlistGuests").button().smsDialog({ "campaign": "waitlist" });
+
     // Reservations
-    rvCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+    let rvCols = [
+            {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'},
             {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -703,6 +726,10 @@ $(document).ready(function () {
             }
 
             rvCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+
+            if (acceptResvPay) {
+				rvCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
+			}
 
             if(shoHospitalName) {
                 rvCols.push({data: 'Hospital', title: hospTitle});
@@ -718,8 +745,8 @@ $(document).ready(function () {
             rvCols.push({data: 'Patient', title: patientLabel});
 
     //Waitlist
-    wlCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+    let wlCols = [
+            {data: 'Action', title: 'Action', sortable: false, searchable:false, "className": "noPrint"},
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'}];
 
@@ -732,6 +759,10 @@ $(document).ready(function () {
             wlCols.push({data: 'Nights', title: 'Nights', className: 'hhk-justify-c'});
             wlCols.push({data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}});
             wlCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+
+            if (acceptResvPay) {
+				wlCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
+			}
 
             if(shoHospitalName) {
                 wlCols.push({data: 'Hospital', title: hospTitle});
@@ -751,36 +782,25 @@ $(document).ready(function () {
             }
 
     // Dailey Report
-    dailyCols = [
+    let dailyCols = [
             {data: 'titleSort', 'visible': false },
             {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
             {data: 'Status', title: 'Status', searchable:false},
             {data: 'Guests', title: visitorLabel+'s'},
             {data: 'Patient_Name', title: patientLabel}];
-        
+
             if (showCharges) {
                 dailyCols.push({data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'});
             }
             dailyCols.push({data: 'Visit_Notes', title: 'Last Visit Note', sortable: false});
             dailyCols.push({data: 'Notes', title: 'Room Notes', sortable: false});
 
-
-
-
-    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-        _resizeMenu: function() {
-            let ul = this.menu.element;
-            ul.outerWidth( Math.max(
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-            ) * 1.1 );
-        }
-    });
-    
-    if (pmtMkup !== '') {
-        $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+    // Show payment message
+    if (pmtMkup !== '' && pmtStatus !== '') {
+        //$('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+        flagAlertMessage(pmtMkup, pmtStatus);
     }
-    
+
     $('input[type="button"], input[type="submit"]').button();
 
     $.datepicker.setDefaults({
@@ -808,12 +828,12 @@ $(document).ready(function () {
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
-        ckOut($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
+        ckOut($(this).data('name'), $(this).data('id'), $(this).data('rid'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.stvisit', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
-        editVisit($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
+        editVisit($(this).data('name'), $(this).data('id'), $(this).data('rid'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.hhk-getPSGDialog', function (event) {
         event.preventDefault();
@@ -842,11 +862,11 @@ $(document).ready(function () {
     $('#statEvents').dialog({
         autoOpen: false,
         resizable: true,
-        width: getDialogWidth(830),
+        width: getDialogWidth(1000),
         modal: true,
         title: 'Manage Status Events'
     });
-    
+
     //turn off autofocus
     $("#statEvents").data("uiDialog")._focusTabbable = function(){};
 
@@ -855,19 +875,22 @@ $(document).ready(function () {
         resizable: true,
         modal: true,
         close: function (event, ui) {
-            $('div#submitButtons').show();
+            $('div#submitButtons').show();  // Page submit buttons, hide when dialog is open, show when closed.
         },
         open: function (event, ui) {
             $('div#submitButtons').hide();
         }
     });
 
-	// remove room chooser
-    $(document).mousedown(function (event) {
-        let target = $(event.target);
-        if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
-            $('div#pudiv').remove();
+
+    $(document).mousedown(function (e) {
+        var roomChooser = $('div#pudiv');
+
+        // remove room chooser
+        if (!roomChooser.is(e.target) && roomChooser.has(e.target).length === 0) {
+            roomChooser.remove();
         }
+
     });
 
     $("#faDialog").dialog({
@@ -883,7 +906,7 @@ $(document).ready(function () {
         modal: true,
         title: 'Set Invoice Billing Date'
     });
-    
+
     $('#chgRoomDialog').dialog({
         autoOpen: false,
         resizable: true,
@@ -907,7 +930,7 @@ $(document).ready(function () {
         nowdt.setTime(nowdt.getTime() - (3 * 86400000));
         $('#txtfeestart').datepicker('setDate', nowdt);
     }
-    
+
     // Member search letter input box
     $('#txtsearch').keypress(function (event) {
         let mm = $(this).val();
@@ -924,15 +947,14 @@ $(document).ready(function () {
         }
     });
 
-    createAutoComplete($('#txtsearch'), 3, {cmd: "role",  mode: 'mo', gp:'1'}, 
-        function(item) { 
-            let cid = item.id;
-            if (cid > 0) {
-                window.location.assign("GuestEdit.php?id=" + cid);
+	// Name Search
+    createRoleAutoComplete($('#txtsearch'), 3, {cmd: 'guest'},
+        function (item) {
+            if (item.id > 0) {
+                window.location.assign("GuestEdit.php?id=" + item.id);
             }
         },
-        false
-    );
+        false);
 
     let dateIncrementObj = null;
 
@@ -947,14 +969,15 @@ $(document).ready(function () {
 	//change default view on mobile + tablet
 	if(window.innerWidth < 576){ //mobile
 		defaultView = 'timeline4days';
+		dateIncrementObj = {days: 4};
 	}else if(window.innerWidth <= 768){ //tablet
 		defaultView = 'timeline1weeks';
 	}
 
 	let calendarEl = document.getElementById('calendar');
-	
-    calendar = new FullCalendar.Calendar(calendarEl, { 
-	
+
+    calendar = new FullCalendar.Calendar(calendarEl, {
+
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
         height: winHieght - 187,
 
@@ -963,17 +986,18 @@ $(document).ready(function () {
         nextDayThreshold: '13:00',
         eventColor: defaultEventColor,
         eventTextColor: defCalEventTextColor,
+        eventOrder: "start, id, title",
 		eventResizableFromStart: false,
         initialView: defaultView,
         editable: true,
         resourcesInitiallyExpanded: expandResources,
 		resourceAreaHeaderContent: 'Rooms',
-        
+
 		nowIndicator: false,
         resourceAreaWidth: resourceColumnWidth,
         refetchResourcesOnNavigate: true,
         resourceGroupField: resourceGroupBy,
-        
+
         customButtons: {
             refresh: {
               text: 'Refresh',
@@ -993,7 +1017,7 @@ $(document).ready(function () {
               }
             }
         },
-        
+
         buttonIcons: {
 			nextMonth: 'chevrons-right',
 			prevMonth: 'chevrons-left'
@@ -1038,7 +1062,7 @@ $(document).ready(function () {
                 duration: {weeks: 26 },
                 buttonText: '26'
             }
-        },        
+        },
 
         headerToolbar: {
             left: 'title',
@@ -1047,9 +1071,19 @@ $(document).ready(function () {
         },
 
         slotLabelClassNames: 'hhk-fc-slot-title',
+
 		slotLaneClassNames: function (info) {
 			if (info.isToday) {
 				return 'hhk-fcslot-today';
+			} else {
+				let strDay = info.date.getFullYear() + '-' + (info.date.getMonth() + 1) + '-' + info.date.getDate();
+
+				if (holidays.includes(strDay)) {
+					return 'hhk-fcslot-holiday';
+				}
+                if(closedDays.includes(info.date.getDay())){
+                    return 'fc-cell-shaded';
+                }
 			}
 		},
 
@@ -1073,7 +1107,7 @@ $(document).ready(function () {
         },
 
         resourceLabelDidMount: function(info) {
-			
+
             info.el.style.background = info.resource.extendedProps.bgColor;
             info.el.style.color = info.resource.extendedProps.textColor;
 
@@ -1105,7 +1139,7 @@ $(document).ready(function () {
                 $('#pCalError').text('Error getting events!').show();
             }
         },
-        
+
         eventDrop: function (info) {
 
             $(".hhk-alert").hide();
@@ -1128,13 +1162,13 @@ $(document).ready(function () {
 
                 // move by date?
                 if (info.delta.days !== 0 && resource.extendedProps.idResc === event.extendedProps.idResc) {
-	
+
                     if (confirm('Move Reservation to a new start date?')) {
                         moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days);
                         return;
                     }
                 } else if (info.delta.days !== 0) {
-					
+
                     if (confirm('Move Reservation to a new start date?')) {
                         moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, false);
                     }
@@ -1207,7 +1241,7 @@ $(document).ready(function () {
                         window.open('ShowStatement.php?vid=' + info.event.extendedProps.idVisit, '_blank');
                     },
                     "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?vid=' + info.event.extendedProps.idVisit + '&span=' + info.event.extendedProps.Span, '_blank');
+                        window.open('ShowRegForm.php?rid=' + info.event.extendedProps.idResv , '_blank');
                     },
                     "Save": function () {
                         saveFees(0, info.event.extendedProps.idVisit, info.event.extendedProps.Span, true, 'register.php');
@@ -1218,25 +1252,27 @@ $(document).ready(function () {
                 };
                 viewVisit(0, info.event.extendedProps.idVisit, buttons, 'Edit Visit #' + info.event.extendedProps.idVisit + '-' + info.event.extendedProps.Span, '', info.event.extendedProps.Span);
             }
+
         },
 
         eventContent: function (info) {
+            let titleEl = document.createElement('span');
+            titleEl.appendChild(document.createTextNode(info.event.title));
+            titleEl.classList.add("ml-1");
 
 			if (info.event.extendedProps.idReservation !== undefined) {
-
-				let titleEl = document.createElement('span');
-				titleEl.appendChild(document.createTextNode(info.event.title));
 
 				let chooserEl = document.createElement('Span');
 				chooserEl.classList.add("hhk-schrm", "ui-icon", "ui-icon-arrowthick-2-n-s");
 				chooserEl.style.backgroundColor = '#fff';
 				chooserEl.style.border = '0px solid black';
-				chooserEl.style.marginRight = '.3em';
 				chooserEl.id = info.event.extendedProps.idResc
 
 				let arrayOfNodes = [chooserEl, titleEl];
 				return { domNodes: arrayOfNodes }
-			}
+            } else {
+                return { domNodes: [titleEl] };
+            }
 		},
 
         eventDidMount: function (info) {
@@ -1244,6 +1280,11 @@ $(document).ready(function () {
             if (hindx === undefined || hindx === 0 || info.event.extendedProps.idHosp === undefined || info.event.extendedProps.idAssoc == hindx || info.event.extendedProps.idHosp == hindx) {
 
                 let resource = calendar.getResourceById("id-" + info.event.extendedProps.idResc);
+
+                //set arrow color
+                if (!info.textColor || (typeof info.textColor === 'string' && (info.textColor.toLowerCase() == "white" || info.textColor.toLowerCase() == "#ffffff"))) {
+                    info.el.classList.add("hhk-event-light");
+                }
 
                 // Reservations
                 if (info.event.extendedProps.idReservation !== undefined) {
@@ -1261,27 +1302,27 @@ $(document).ready(function () {
 
                     //2nd ribbon color
                     if (info.event.extendedProps.backBorderColor != '') {
-                    	
+
                     	info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
-                    	
+
                     }
-                    
+
                 // visits
                 } else if (info.event.extendedProps.idVisit !== undefined) {
-                    
+
                     if (info.event.extendedProps.vStatusCode == 'a') {
                     	info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + ', ' + info.event.extendedProps.guests + (info.event.extendedProps.guests > 1 ? ' ' + visitorLabel + 's': ' '+ visitorLabel) + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
 					} else {
                     	info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
                     }
-                    
+
                     if (info.event.extendedProps.extended !== undefined && info.event.extendedProps.extended) {
                     	info.el.classList.remove('fc-event-end'); //trick fc into adding right arrow
                     }
-                    
+
                     //2nd ribbon color
                     if (info.event.extendedProps.backBorderColor != '') {
-                    	
+
                     	info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
                     }
 
@@ -1296,23 +1337,15 @@ $(document).ready(function () {
             }
         }
     });
-    
+
     calendar.render();
-    
+
     //redraw calendar after finishing window resize
 	var resizeTimer;
 	window.onresize = function(){
 	  clearTimeout(resizeTimer);
 	  resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 187), 100);
 	};
-
-    // disappear the pop-up rescouce groups.
-    $(document).mousedown(function (event) {
-        var target = $(event.target);
-        if (target[0].id !== 'divRoomGrouping' && target[0].id !== 'selRoomGroupScheme') {
-            $('#divRoomGrouping').hide();
-        }
-    });
 
     if ($('.btnHosp').length > 0) {
         $('.btnHosp').click(function (e) {
@@ -1326,7 +1359,7 @@ $(document).ready(function () {
             calendar.refetchEvents();
             //$(this).css('border', 'solid 3px black').css('font-size', '120%');
         });
-    }    
+    }
 
     $('#btnFeesGo').click(function () {
         $(".hhk-alert").hide();
@@ -1352,11 +1385,11 @@ $(document).ready(function () {
             st: statuses,
             pt: ptypes
         };
-        
+
         if ($('#fcbdinv').prop('checked') !== false) {
             parms['sdinv'] = 'on';
         }
-        
+
         $('#rptFeeLoading').show();
 
         parms.fee = 'on';
@@ -1377,13 +1410,13 @@ $(document).ready(function () {
                     flagAlertMessage(data.error, 'error');
 
                 } else if (data.success) {
-                    
+
                     $('#rptfeediv').remove();
                     $('#vfees').append($('<div id="rptfeediv"/>').append($(data.success)));
 
                     // Set up controls for table.
                     paymentsTable('feesTable', 'rptfeediv', refreshPayments);
-                    
+
                     // Hide refresh button.
                     $('#btnPayHistRef').hide();
 
@@ -1391,7 +1424,7 @@ $(document).ready(function () {
             }
         });
     });
-    
+
     $('#btnInvGo').click(function () {
         let statuses = ['up'];
         let parms = {
@@ -1399,68 +1432,75 @@ $(document).ready(function () {
             st: statuses,
             inv: 'on'
         };
-        
+
         $.post('ws_resc.php', parms,
             function (data) {
-                
+
                 if (data) {
-                    
+
                     try {
                         data = $.parseJSON(data);
                     } catch (err) {
                         alert("Parser error - " + err.message);
                         return;
                     }
-                    
+
                     if (data.error) {
-                        
+
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
                         flagAlertMessage(data.error, 'error');
 
                     } else if (data.success) {
-                        
+
                         $('#rptInvdiv').remove();
-                        $('#vInv').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success)));
+                        $('#vInv').append($('<div id="rptInvdiv"/>').append($(data.success)));
                         $('#rptInvdiv .gmenu').menu({
            					focus:function(e, ui){
            						$("#rptInvdiv .gmenu").not(this).menu("collapseAll", null, true);
            					}
            				});
-                        
+
+                        // Bring up payment box
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
                             event.preventDefault();
                             $("#divAlert1, #paymentMessage").hide();
                             invLoadPc($(this).data('name'), $(this).data('id'), $(this).data('iid'));
                         });
-                        
+
+                        // Set the billing date
                         $('#rptInvdiv').on('click', '.invSetBill', function (event) {
                             event.preventDefault();
                             $(".hhk-alert").hide();
                             invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
                         });
-                        
+
+                        // Handles several actions
                         $('#rptInvdiv').on('click', '.invAction', function (event) {
                             event.preventDefault();
+                            let invContainer = '#rptInvdiv';
+
                             $(".hhk-alert").hide();
-                            
+
+                            // Delete invoice
                             if ($(this).data('stat') == 'del') {
-                                if (!confirm('Delete this Invoice?')) {
+                                if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
                                     return;
                                 }
+                                invContainer = '';
                             }
-                            
+
                             // Check for email
                             if ($(this).data('stat') === 'vem') {
                                     window.open('ShowInvoice.php?invnum=' + $(this).data('inb'));
                                     return;
                             }
-   
-                            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id);
+
+                            invoiceAction($(this).data('iid'), $(this).data('stat'), $(this).prop('id'), invContainer, true);
                             $('#rptInvdiv .gmenu').menu("collapse");
                         });
-                        
+
                         $('#InvTable').dataTable({
                             'columnDefs': [
                                 {'targets': [2,4],
@@ -1531,6 +1571,8 @@ $(document).ready(function () {
                 });
             }
             if(ui.newTab.prop('id') === 'liStaffNotes'){
+            	var staffNoteCats = JSON.parse($('#staffNoteCats').val());
+
             	$('.staffNotesDiv').empty().notesViewer({
 					linkType: 'staff',
 					newNoteAttrs: {id:'staffNewNote', name:'staffNewNote'},
@@ -1539,22 +1581,23 @@ $(document).ready(function () {
 					defaultLengthMenu: [[5,10,25,50],["5","10","25","50"]],
 					alertMessage: function(text, type) {
 					    flagAlertMessage(text, type);
-					}
+					},
+					staffNoteCats: staffNoteCats,
 			    });
             }
-            
+
             if(ui.newTab.prop('id') === 'liCal'){
             	calendar.refetchEvents();
             }
         },
-        
+
         active: defaultTab
     });
-    
+
 
     // Calendar date goto button.
     $('#calendar .fc-header-toolbar .fc-toolbar-chunk:nth-child(2)').html($('#divGoto').show());
-    
+
     //hide week buttons on mobile
     $('#calendar .fc-header-toolbar .fc-toolbar-chunk:nth-child(3) .fc-button-group:nth-child(1)').addClass('hideMobile');
 
@@ -1562,7 +1605,8 @@ $(document).ready(function () {
 	$('#mainTabs').show();
 
 	//referralViewer
-	$.ajax({
+    if (useOnlineReferral) {
+	    $.ajax({
             url: 'ws_resc.php',
             dataType: 'JSON',
             type: 'get',
@@ -1574,12 +1618,11 @@ $(document).ready(function () {
                 if(data.totals){
                     $('#vreferrals').referralViewer({statuses: data.totals, labels: {patient: patientLabel, referralFormTitle: referralFormTitleLabel, reservation: reservationLabel}});
                     $("#spnNumReferral").text(data.totals.n.count);
-                    
+
                 }
             }
         });
-	
-
+    }
 
     $('#curres').DataTable({
        ajax: {
@@ -1587,18 +1630,30 @@ $(document).ready(function () {
            dataSrc: 'curres'
        },
        drawCallback: function (settings) {
+           let ncur = this.api().rows().data().length;
            $('#spnNumCurrent').text(this.api().rows().data().length);
+           $('#spnCurrentS').text('s');
+           if (ncur == 1) {
+               $('#spnCurrentS').text('');
+           }
            $('#curres .gmenu').menu({
            		focus:function(e, ui){
            			$("#curres .gmenu").not(this).menu("collapseAll", null, true);
            		}
            });
+
+           $("#curres .btnShowVisitMsgs").off('click');
+            $("#curres .btnShowVisitMsgs").each(function () {
+                $(this).smsDialog({ "visitId": $(this).data('vid'), "spanId": $(this).data("span") });
+            });
        },
        columns: cgCols,
-       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY"), false, "hhk-strip-links"),
+       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       autoWidth:false,
     });
-    
-    
+
+
     $('#reservs').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=reservs',
@@ -1611,11 +1666,17 @@ $(document).ready(function () {
            			$("#reservs .gmenu").not(this).menu("collapseAll", null, true);
            		}
            });
+
+           $("#reservs .btnShowResvMsgs").off('click');
+           $("#reservs .btnShowResvMsgs").each(function () {
+            $(this).smsDialog({ "resvId": $(this).data('rid') });
+        });
        },
        columns: rvCols,
-       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "buttons": getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
+       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
-    
+
     if ($('#unreserv').length > 0) {
         $('#unreserv').DataTable({
            ajax: {
@@ -1628,13 +1689,19 @@ $(document).ready(function () {
            			focus:function(e, ui){
            				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
            			}
-           		});
+                });
+               
+               $("#unreserv .btnShowResvMsgs").off('click');
+                $("#unreserv .btnShowResvMsgs").each(function () {
+                    $(this).smsDialog({ "resvId": $(this).data('rid') });
+                });
            },
            columns: rvCols,
-       		"dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+           "buttons": getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
+       		"dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
         });
     }
-    
+
     $('#waitlist').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
@@ -1647,10 +1714,20 @@ $(document).ready(function () {
            		focus:function(e, ui){
            			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);
            		}
+            });
+           
+           $("#waitlist .btnShowResvMsgs").off('click');
+           $("#waitlist .btnShowResvMsgs").each(function () {
+               $(this).smsDialog({ "resvId": $(this).data('rid') });
            });
        },
        columns: wlCols,
-       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "buttons": getDtBtns("Waitlist - " + moment().format("MMM D, YYYY")),
+       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
 
+    //move datatable buttons to title row
+    $("#vstays, #vresvs, #vuncon, #vdaily, #vwls").each(function(){
+    	$(this).find('h3 span:first').after($(this).find(".dt-buttons button").css("font-size", "0.9em").addClass("ml-5"));
+	});
 });

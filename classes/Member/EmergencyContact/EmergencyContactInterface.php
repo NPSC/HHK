@@ -13,10 +13,30 @@ namespace HHK\Member\EmergencyContact;
 
 
 interface EmergencyContactInterface {
+    /**
+     * Summary of getEcNameFirst
+
+     */
     public function getEcNameFirst();
+    /**
+     * Summary of getEcNameLast
+
+     */
     public function getEcNameLast();
+    /**
+     * Summary of getEcPhone
+
+     */
     public function getEcPhone();
+    /**
+     * Summary of getEcAltPhone
+
+     */
     public function getEcAltPhone();
+    /**
+     * Summary of getEcRelationship
+
+     */
     public function getEcRelationship();
 }
 ?>

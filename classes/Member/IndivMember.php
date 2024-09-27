@@ -2,9 +2,11 @@
 
 namespace HHK\Member;
 
+use HHK\Checklist;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Member\Relation\{Children, Company, Parents, Partner};
 use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, MemStatus, RelLinkType};
+use HHK\SysConst\ChecklistType;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{Name_InsuranceRS, Name_LanguageRS};
 use HHK\sec\Session;
@@ -14,6 +16,7 @@ use HHK\Exception\InvalidArgumentException;
 use HHK\Member\Relation\Siblings;
 use HHK\Member\Relation\Relatives;
 use HHK\sec\Labels;
+use HHK\CrmExport\AbstractExportManager;
 
 /**
  * IndivMember.php
@@ -43,13 +46,17 @@ class IndivMember extends AbstractMember {
     protected $insuranceRSs = array();
 
 
+    /**
+     * Summary of getDefaultMemBasis
+     * @return string
+     */
     protected function getDefaultMemBasis() {
         return MemBasis::Indivual;
     }
 
     /**
      *
-     * @return MemDesignation
+     * @return string
      */
     public function getMemberDesignation(){
         return MemDesignation::Individual;
@@ -73,6 +80,10 @@ class IndivMember extends AbstractMember {
         return $this->get_firstName() . " " . $this->get_lastName();
     }
 
+    /**
+     * Summary of getMemberFullName
+     * @return string
+     */
     public function getMemberFullName() {
         return $this->get_fullName();
     }
@@ -90,6 +101,11 @@ class IndivMember extends AbstractMember {
         $uS = Session::getInstance();
         $idPrefix = $this->getIdPrefix();
 
+        $memPhotoMarkup = "";
+        if($uS->ShowGuestPhoto){
+            $memPhotoMarkup = HTMLContainer::generateMarkup("div", showGuestPicture($this->get_idName(), $uS->MemberImageSizePx), array("class"=>"mr-2"));
+        }
+
         $table = new HTMLTable();
         $table->addHeaderTr(
                 HTMLContainer::generateMarkup('th', 'Id')
@@ -98,7 +114,7 @@ class IndivMember extends AbstractMember {
                 . HTMLContainer::generateMarkup('th', 'Middle')
                 . HTMLContainer::generateMarkup('th', 'Last Name')
                 . HTMLContainer::generateMarkup('th', 'Suffix')
-                . HTMLContainer::generateMarkup('th', 'Nickname')
+                . HTMLContainer::generateMarkup('th', Labels::getString("MemberType", "nickname", "Nickname"))
                 . HTMLContainer::generateMarkup('th', 'Status')
                 . HTMLContainer::generateMarkup('th', 'Basis')
                 );
@@ -154,7 +170,7 @@ class IndivMember extends AbstractMember {
                 );
 
         $table->addBodyTr($tr);
-        return $table->generateMarkup();
+        return $memPhotoMarkup . $table->generateMarkup();
     }
 
 
@@ -176,7 +192,7 @@ class IndivMember extends AbstractMember {
                 $this->createAdminPanel(),
                 $attrs);
 
-        $excl = $this->createExcludesPanel();
+        $excl = $this->createExcludesPanel($dbh);
         $attrs['id'] = 'excludesTab';
         $panels .= HTMLContainer::generateMarkup(
                 'div',
@@ -208,6 +224,10 @@ class IndivMember extends AbstractMember {
 
     }
 
+    /**
+     * Summary of createAdminPanel
+     * @return string
+     */
     public function createAdminPanel() {
 
         $table = new HTMLTable();
@@ -289,14 +309,10 @@ class IndivMember extends AbstractMember {
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Birth Date:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup(($this->get_birthDate() == '' ? '' : date('M j, Y', strtotime($this->get_birthDate()))), array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate'))
-                , array('style'=>'display:table-cell;'))
-                );
+                        HTMLInput::generateMarkup(($this->get_birthDate() == '' ? '' : date('M j, Y', strtotime($this->get_birthDate()))), ['name' => $idPrefix . 'txtBirthDate', 'class' => 'ckbdate'])
+                , ['style' => 'display:table-cell;'])
+            );
 
-//           $tbl2->addBodyTr(
-//                HTMLTable::makeTd('Birth Month:', array('class'=>'tdlabel'))
-//                . HTMLTable::makeTd($this->prepBirthMonthMarkup($this->get_bmonth()), array('style'=>'display:table-cell;'))
-//                );
         }
 
         // Deceased checkbox and date
@@ -382,10 +398,34 @@ class IndivMember extends AbstractMember {
                 'Date: ' . HTMLInput::generateMarkup(($this->get_DateBackgroundCheck() == '' ? '' : date('M j, Y', strtotime($this->get_DateBackgroundCheck()))), array('name'=>$idPrefix.'txtBackgroundCheckDate', 'class'=>'ckbdate')), $bcdateAttr))
             );
 
+        //CRM External Id
+        if ($uS->ContactManager != '') {
+
+            $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            $tbl2->addBodyTr(
+                HTMLTable::makeTd($CmsManager->getServiceTitle() . ' Id:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup(
+                        $this->nameRS->External_Id,
+                        array('name' => $idPrefix . 'txtExternalId', 'style' => 'width: 222px')
+                    )
+                    ,
+                    array('style' => 'display:table-cell;')
+                )
+            );
+         }
+
         return HTMLContainer::generateMarkup("div", $table->generateMarkup(array('style'=>'margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'margin-right:10px;')) . $insuranceMarkup, array("class"=>"hhk-flex hhk-flex-wrap"));
 
     }
 
+    /**
+     * Summary of createInsurancePanel
+     * @param \PDO $dbh
+     * @param mixed $idPrefix
+     * @return string
+     */
     public function createInsurancePanel(\PDO $dbh, $idPrefix) {
 
         $uS = Session::getInstance();
@@ -493,6 +533,11 @@ ORDER BY `List_Order`");
         return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs'));
     }
 
+    /**
+     * Summary of createInsuranceSummaryPanel
+     * @param \PDO $dbh
+     * @return string
+     */
     public function createInsuranceSummaryPanel(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -616,6 +661,11 @@ ORDER BY `List_Order`");
     }
 
 
+    /**
+     * Summary of loadRealtionships
+     * @param \PDO $dbh
+     * @return array
+     */
     public function loadRealtionships(\PDO $dbh) {
 
        return array(
@@ -628,28 +678,19 @@ ORDER BY `List_Order`");
             );
     }
 
-
-    private function prepBirthMonthMarkup($month) {
-
-        $numMonth = intval($month, 10);
-
-        $markup = "<select name='selBirthMonth' id='selBirthMonth'>";
-        $monthList = array(0 => "", 1 => "(1) Jan", 2 => "(2) Feb", 3 => "(3) Mar", 4 => "(4) Apr", 5 => "(5) May", 6 => "(6) Jun", 7 => "(7) Jul", 8 => "(8) Aug", 9 => "(9) Spt", 10 => "(10) Oct", 11 => "(11) Nov", 12 => "(12) Dec");
-        for ($i = 0; $i < 13; $i++) {
-            if ($i === $numMonth) {
-                $markup .= "<option value='$i' selected='selected'>" . $monthList[$i] . "</option>";
-            } else {
-                $markup .= "<option value='$i'>" . $monthList[$i] . "</option>";
-            }
-        }
-        $markup .= "</select>";
-        return $markup;
-    }
-
+    /**
+     * Summary of getAssocDonorLabel
+     * @return string
+     */
     public function getAssocDonorLabel() {
         return "Associate";
     }
 
+    /**
+     * Summary of getAssocDonorList
+     * @param array $rel
+     * @return array
+     */
     public function getAssocDonorList(array $rel) {
         $rA = array();
         $partner = $rel[RelLinkType::Spouse];
@@ -661,6 +702,11 @@ ORDER BY `List_Order`");
         return $rA;
     }
 
+    /**
+     * Summary of getDefaultDonor
+     * @param array $rel
+     * @return mixed
+     */
     public function getDefaultDonor(array $rel) {
 
         $partner = $rel[RelLinkType::Spouse];
@@ -689,7 +735,7 @@ ORDER BY `List_Order`");
         //  Name
         $last = trim($n->Name_Last->getStoredVal());
         if (isset($post[$idPrefix.'txtLastName'])) {
-            $last = ucfirst(trim(filter_var($post[$idPrefix.'txtLastName'], FILTER_SANITIZE_STRING)));
+            $last = ucfirst(trim(filter_var($post[$idPrefix.'txtLastName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
             $n->Name_Last->setNewVal($last);
         }
 
@@ -701,13 +747,13 @@ ORDER BY `List_Order`");
 
         $first = $n->Name_First->getStoredVal();
         if (isset($post[$idPrefix.'txtFirstName'])) {
-            $n->Name_First->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtFirstName'], FILTER_SANITIZE_STRING))));
+            $n->Name_First->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtFirstName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
             $first = $n->Name_First->getNewVal();
         }
 
         $middle = $n->Name_Middle->getStoredVal();
         if (isset($post[$idPrefix.'txtMiddleName'])) {
-            $n->Name_Middle->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtMiddleName'], FILTER_SANITIZE_STRING))));
+            $n->Name_Middle->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtMiddleName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
             $middle = $n->Name_Middle->getNewVal();
         }
 
@@ -720,7 +766,7 @@ ORDER BY `List_Order`");
         }
         if (isset($post[$idPrefix.'selPrefix'])) {
             // Check new value
-            $pre = filter_var($post[$idPrefix.'selPrefix'], FILTER_SANITIZE_STRING);
+            $pre = filter_var($post[$idPrefix.'selPrefix'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (isset($uS->nameLookups[GLTableNames::NamePrefix][$pre])) {
                 $prefix = $pre;
@@ -740,7 +786,7 @@ ORDER BY `List_Order`");
         }
         if (isset($post[$idPrefix.'selSuffix'])) {
             // Check new value
-            $suf = filter_var($post[$idPrefix.'selSuffix'], FILTER_SANITIZE_STRING);
+            $suf = filter_var($post[$idPrefix.'selSuffix'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (isset($uS->nameLookups[GLTableNames::NameSuffix][$suf])) {
                 $suffix = $suf;
@@ -781,17 +827,17 @@ ORDER BY `List_Order`");
 
         //  Title
         if (isset($post[$idPrefix.'txtTitle'])) {
-            $n->Title->setNewVal(filter_var($post[$idPrefix.'txtTitle'], FILTER_SANITIZE_STRING));
+            $n->Title->setNewVal(filter_var($post[$idPrefix.'txtTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         //  Previous Name
         if (isset($post[$idPrefix.'txtPreviousName'])) {
-            $n->Name_Previous->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtPreviousName'], FILTER_SANITIZE_STRING))));
+            $n->Name_Previous->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtPreviousName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
         }
 
         //  Nickname
         if (isset($post[$idPrefix.'txtNickname'])) {
-            $n->Name_Nickname->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtNickname'], FILTER_SANITIZE_STRING))));
+            $n->Name_Nickname->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtNickname'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
         }
 
 
@@ -802,12 +848,19 @@ ORDER BY `List_Order`");
 
         //  Birth Date
         if (isset($post[$idPrefix.'txtBirthDate'])) {
-            $bd = filter_var($post[$idPrefix.'txtBirthDate'], FILTER_SANITIZE_STRING);
-            if ($bd != '') {
+            $bd = filter_var($post[$idPrefix.'txtBirthDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+            if (strtolower($bd) == 'minor' && $uS->RegNoMinorSigLines) {
+                // set demographic  #816, EKC, 5/23/2023
+                $this->demogRS->Is_Minor->setNewVal(1);
+                $n->BirthDate->setNewVal('');
+            } else if ($bd != '') {
                 $n->BirthDate->setNewVal(date('Y-m-d H:i:s', strtotime($bd)));
                 $n->Birth_Month->setNewVal(date('m', strtotime($bd)));
+                $this->demogRS->Is_Minor->setNewVal(0);
             } else {
                 $n->BirthDate->setNewVal('');
+                $this->demogRS->Is_Minor->setNewVal(0);
             }
         }
 
@@ -821,7 +874,7 @@ ORDER BY `List_Order`");
                 $field = $this->getDemographicField($d[0]);
 
                 if (is_null($field) === FALSE) {
-                    $field->setNewVal(filter_var($post[$idPrefix.'sel_' . $d[0]], FILTER_SANITIZE_STRING));
+                    $field->setNewVal(filter_var($post[$idPrefix.'sel_' . $d[0]], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 }
             }
         }
@@ -830,7 +883,7 @@ ORDER BY `List_Order`");
         //  No Return
         if (isset($post[$idPrefix.'selnoReturn'])) {
 
-            $reason = filter_var($post[$idPrefix.'selnoReturn'], FILTER_SANITIZE_STRING);
+            $reason = filter_var($post[$idPrefix.'selnoReturn'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (isset($uS->nameLookups['NoReturnReason'][$reason])) {
                 $this->demogRS->No_Return->setNewVal($reason);
@@ -840,8 +893,19 @@ ORDER BY `List_Order`");
 
         }
 
+        //CRM External Id
+        if ($uS->ContactManager != '' && isset($post[$idPrefix . 'txtExternalId'])) {
+            $n->External_Id->setNewVal(filter_var($post[$idPrefix.'txtExternalId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        }
+
     }
 
+    /**
+     * Summary of getLanguages
+     * @param \PDO $dbh
+     * @param mixed $nid
+     * @return void
+     */
     protected function getLanguages(\PDO $dbh, $nid) {
 
         $nlangRs = new Name_LanguageRS();
@@ -856,6 +920,12 @@ ORDER BY `List_Order`");
         }
     }
 
+    /**
+     * Summary of getInsurance
+     * @param \PDO $dbh
+     * @param mixed $nid
+     * @return void
+     */
     protected function getInsurance(\PDO $dbh, $nid) {
 
         $nInsRs = new Name_InsuranceRS();
@@ -870,6 +940,14 @@ ORDER BY `List_Order`");
         }
     }
 
+    /**
+     * Summary of saveLanguages
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $idPrefix
+     * @param string $username
+     * @return void
+     */
     protected function saveLanguages(\PDO $dbh, $post, $idPrefix, $username) {
 
         if ($this->get_idName() > 0) {
@@ -933,12 +1011,20 @@ ORDER BY `List_Order`");
         }
     }
 
+    /**
+     * Summary of saveInsurance
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $idPrefix
+     * @param mixed $username
+     * @return void
+     */
     protected function saveInsurance(\PDO $dbh, $post, $idPrefix, $username) {
 
         $uS = Session::getInstance();
 
         if (!$uS->InsuranceChooser) {
-            return '';
+            return;
         }
 
         $myInss = array();
@@ -976,11 +1062,11 @@ ORDER BY `List_Order`");
                 $insId = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['insuranceId'], FILTER_SANITIZE_NUMBER_INT);
                 $groupNum = '';
                 if(isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'])){
-                    $groupNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'], FILTER_SANITIZE_STRING);
+                    $groupNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
                 $memNum = '';
                 if(isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'])){
-                    $memNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'], FILTER_SANITIZE_STRING);
+                    $memNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
                 $ins = ["id"=>$insId, "groupNum"=>$groupNum, "memNum"=>$memNum];
                 $inss2[$insId] = $ins;
@@ -990,7 +1076,7 @@ ORDER BY `List_Order`");
 
                     if (!isset($inss2[$insRs->Insurance_Id->getStoredVal()])) {
 
-                        if ($insCos[$insRs->Insurance_Id->getStoredVal()]['idInsuranceType'] == $i['idInsurance_type']) {
+                        if (isset($insCos[$insRs->Insurance_Id->getStoredVal()]['idInsuranceType']) && $insCos[$insRs->Insurance_Id->getStoredVal()]['idInsuranceType'] == $i['idInsurance_type']) {
                             // remove recordset
                             $numRecords = EditRS::delete($dbh, $insRs, array($insRs->Insurance_Id, $insRs->idName));
 
@@ -1057,9 +1143,12 @@ ORDER BY `List_Order`");
         }
     }
 
+    /**
+     * Summary of getNoReturnDemog
+     * @return mixed
+     */
     public function getNoReturnDemog() {
         return $this->demogRS->No_Return->getStoredVal();
     }
 
 }
-?>

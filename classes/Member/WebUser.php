@@ -26,6 +26,12 @@ use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
  */
 class WebUser {
 
+    /**
+     * Summary of loadWebUserRS
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @return W_usersRS
+     */
     public static function loadWebUserRS(\PDO $dbh, $id) {
         $wUserRS = new W_usersRS();
 
@@ -44,6 +50,14 @@ class WebUser {
         return $wUserRS;
     }
 
+    /**
+     * Summary of getWebUserMarkup
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @param mixed $maintFlag
+     * @param mixed $wUserRS
+     * @return string
+     */
     public static function getWebUserMarkup(\PDO $dbh, $id, $maintFlag, $wUserRS = NULL) {
         $uS = Session::getInstance();
 
@@ -156,6 +170,13 @@ class WebUser {
     }
 
 
+    /**
+     * Summary of getSecurityGroupMarkup
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @param mixed $allowFlag
+     * @return string
+     */
     public static function getSecurityGroupMarkup(\PDO $dbh, $id, $allowFlag) {
 
         $stmt = $dbh->query("select `Group_Code` as `Code`, `Title` as `Description` from w_groups");
@@ -202,6 +223,12 @@ class WebUser {
 
     }
 
+    /**
+     * Summary of getSSOMsg
+     * @param \PDO $dbh
+     * @param mixed $id
+     * @return string
+     */
     public static function getSSOMsg(\PDO $dbh, $id){
         $wUserRS = self::loadWebUserRs($dbh, $id);
         $uS = Session::getInstance();
@@ -223,6 +250,14 @@ class WebUser {
     }
 
 
+    /**
+     * Summary of saveUname
+     * @param \PDO $dbh
+     * @param mixed $admin
+     * @param mixed $parms
+     * @param mixed $maintFlag
+     * @return array
+     */
     public static function saveUname(\PDO $dbh, $admin, $parms, $maintFlag) {
 
         $reply = array();
@@ -245,12 +280,12 @@ class WebUser {
 
         $status = '';
         if (isset($parms["status"])) {
-            $status = filter_var($parms["status"], FILTER_SANITIZE_STRING);
+            $status = filter_var($parms["status"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $defaultPage = '';
         if (isset($parms["defaultPage"])) {
-            $defaultPage = filter_var($parms["defaultPage"], FILTER_SANITIZE_STRING);
+            $defaultPage = filter_var($parms["defaultPage"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $wUserName = "";
@@ -260,7 +295,7 @@ class WebUser {
                 return array("error"=>"User name can only contain lowercase letters, uppercase letters, numbers, '@', or '.' and must be 6-35 characters");
             }
 
-            $wUserName = filter_var($parms["wuname"], FILTER_SANITIZE_STRING);
+            $wUserName = filter_var($parms["wuname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if (strtolower($wUserName) == 'admin') {
                 return array("error"=>"'Admin' cannot be used as a user name.");
@@ -331,8 +366,8 @@ class WebUser {
                 $pwHash = md5($wUserPw);
             }
 
-            // Register the user as a Volunteer (Group_Code = v)(Verify_address = y)
-            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$pwHash', 'v', 1, 0);";
+            // Register the user
+            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$pwHash', '', 1, 0);";
 
             try{
                 $dbh->exec($query);
@@ -392,14 +427,22 @@ class WebUser {
         return $reply;
     }
 
+    /**
+     * Summary of updateSecurityGroups
+     * @param \PDO $dbh
+     * @param int $id
+     * @param array $parms
+     * @param mixed $updatedBy
+     * @return bool
+     */
     public static function updateSecurityGroups(\PDO $dbh, int $id, array $parms, $updatedBy){
         // Group Code security table
-        //$sArray = readGenLookups($dbh, "Group_Code");
-        $stmt = $dbh->query("select Group_Code as Code, Description from w_groups");
+        $sArray = array();
+        $stmt = $dbh->query("select `Group_Code` as 'Code', `Description` from `w_groups`;");
         $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        foreach ($groups as $g) {
-            $sArray[$g['Code']] = $g;
+        foreach ($groups as $group) {
+            $sArray[$group['Code']] = $group;
         }
 
 
@@ -414,27 +457,27 @@ class WebUser {
 
         $updtd = FALSE;
 
-        foreach ($sArray as $g) {
+        foreach ($sArray as $code=>$g) {
 
-            if (isset($parms["grpSec_" . $g["Code"]])) {
+            if (isset($parms["grpSec_" . $code])) {
 
-                if (!isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] == "checked") {
+                if (!isset($g["exist"]) && $parms["grpSec_" . $code] == "checked") {
 
                     // new group code to put into the database
                     $secRS = new Id_SecurityGroupRS();
                     $secRS->idName->setNewVal($id);
-                    $secRS->Group_Code->setNewVal($g["Code"]);
+                    $secRS->Group_Code->setNewVal($code);
                     $n = EditRS::insert($dbh, $secRS);
 
                     NameLog::writeInsert($dbh, $secRS, $id, $updatedBy);
                     $updtd = TRUE;
 
-                } else if (isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] != "checked") {
+                } else if (isset($g["exist"]) && $parms["grpSec_" . $code] != "checked") {
 
                     // group code to delete from the database.
                     $secRS = new Id_SecurityGroupRS();
                     $secRS->idName->setStoredVal($id);
-                    $secRS->Group_Code->setStoredVal($g["Code"]);
+                    $secRS->Group_Code->setStoredVal($code);
                     $n = EditRS::delete($dbh, $secRS, array($secRS->idName, $secRS->Group_Code));
 
                     if ($n == 1) {

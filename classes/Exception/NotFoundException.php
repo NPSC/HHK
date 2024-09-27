@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * NotFoundException.php
  *
@@ -16,7 +19,6 @@ namespace HHK\Exception;
  */
 
 class NotFoundException extends \UnexpectedValueException {
-
 }
 
 ?>

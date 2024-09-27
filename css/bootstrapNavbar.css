@@ -878,7 +878,7 @@
   background-color: var(--nav-active-color);
 }
 .dropdown-item.active, .dropdown-item:active {
-  color: var(--nav-text-color)
+  color: var(--nav-text-color);
   text-decoration: none;
   background-color: var(--nav-active-color);
 }

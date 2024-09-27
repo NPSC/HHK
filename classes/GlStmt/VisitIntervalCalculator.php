@@ -4,21 +4,21 @@ namespace HHK\GlStmt;
 use HHK\SysConst\RoomRateCategories;
 
 class VisitIntervalCalculator {
-	
-	
+
+
 	protected $intervalCharge = 0;
 	protected $preIntervalCharge = 0;
 	protected $fullIntervalCharge = 0;
 	protected $subsidyCharge = 0;
-	
+
 	protected $intervalPay = 0;
 	protected $preIntervalPay = 0;  // ForwardPay
 	protected $intervalWaiveAmt = 0;
 	protected $preIntervalWaiveAmt = 0;
-	
+
 	protected $preIntervalDiscount = 0;
 	protected $intervalDiscount = 0;
-	
+
 	protected $paymentFromPast = 0;
 	protected $pastPaymentsToNow = 0;
 	protected $paymentToPast = 0;
@@ -27,9 +27,9 @@ class VisitIntervalCalculator {
 	protected $unallocatedPayments = 0;
 	protected $unpaidCharges = 0;
 
-	
+
 	public function closeInterval($hasFutureNights) {
-		
+
 		// pre-Discounts diminish pre-lodging charge amounts, already paid by house.
 		if ($this->preIntervalCharge >= abs($this->preIntervalDiscount)) {
 			$this->preIntervalCharge += $this->preIntervalDiscount;
@@ -38,7 +38,7 @@ class VisitIntervalCalculator {
 			$this->intervalCharge += $this->preIntervalDiscount + $this->preIntervalCharge;
 			$this->preIntervalCharge = 0;
 		}
-		
+
 		// Deal with pre-interval waive amounts
 		if ($this->preIntervalCharge >= abs($this->preIntervalWaiveAmt)) {
 			$this->preIntervalCharge += $this->preIntervalWaiveAmt;  // Reduce Charge to guest
@@ -46,7 +46,7 @@ class VisitIntervalCalculator {
 		} else {
 			// Waive bleed over to this month
 			$this->intervalCharge += $this->preIntervalWaiveAmt + $this->preIntervalCharge;  // Waive forwarded to next month
-			
+
 			$this->preIntervalPay += $this->preIntervalWaiveAmt;  // remove "fake" payment
 			$this->preIntervalCharge = 0;  // Reduce Charge to guest
 		}
@@ -60,12 +60,12 @@ class VisitIntervalCalculator {
 
 			// Discounts meant for the past?
 			$unpaidPreCharges = $this->preIntervalCharge - $this->preIntervalPay;
-			
+
 			if ($unpaidPreCharges > 0 && $unpaidPreCharges >= abs($this->intervalDiscount)) {
 				// All interval waives goes to preinterval.
 				$this->preIntervalCharge += $this->intervalDiscount;
 				$this->intervalDiscount = 0;
-				
+
 			} else if ($unpaidPreCharges > 0) {
 				// interval waive amount split between pre and now interval charges.
 				$this->intervalDiscount += $unpaidPreCharges;
@@ -110,7 +110,7 @@ class VisitIntervalCalculator {
 		$pptn = 0;	// prepayment to now
 		$cfp = 0;	// charge from past
 		$ptp = 0;	// Paymemt to past
-		
+
 		if ($this->preIntervalPay - $this->preIntervalCharge >= 0) {
 			// leftover Payments from past
 			$pfp = $this->preIntervalPay - $this->preIntervalCharge;
@@ -125,7 +125,7 @@ class VisitIntervalCalculator {
 		} else {
 			// leftover charge after previous payments
 			$cfp = $this->preIntervalCharge - $this->preIntervalPay;
-			
+
 			if($this->intervalPay >= $cfp) {
 				$ptp = $cfp;
 			} else {
@@ -141,7 +141,7 @@ class VisitIntervalCalculator {
 		// Payments to now
 		$ptn = 0;
 		if ($cfp <= $this->intervalPay) {
-			
+
 			if ($this->intervalPay - $cfp >= $this->intervalCharge - $pptn) {	// fix the $130
 				$ptn = $this->intervalCharge - $pptn;
 			} else {
@@ -169,105 +169,105 @@ class VisitIntervalCalculator {
 		$this->paymentToPast = $ptp;
 		$this->paymentToNow = $ptn;
 		$this->paymentToFuture = $ptf;
-		
+
 		return $this;
 	}
 
 
-	
+
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getPaymentFromPast() {
 		return $this->paymentFromPast;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getPaymentToPast() {
 		return $this->paymentToPast;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getPaymentToNow() {
 		return $this->paymentToNow;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getPaymentToFuture() {
 		return $this->paymentToFuture;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getUnallocatedPayments() {
 		return $this->unallocatedPayments;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getUnpaidCharges() {
 		return $this->unpaidCharges;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getPastPaymentsToNow() {
 		return $this->pastPaymentsToNow;
 	}
-	
+
 		/**
-	 * @return number
+	 * @return float
 	 */
 	public function getIntervalCharge() {
 		return $this->intervalCharge;
 	}
 
 /**
-	 * @return number
+	 * @return float
 	 */
 	public function getPreIntervalCharge() {
 		return $this->preIntervalCharge;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getFullIntervalCharge() {
 		return $this->fullIntervalCharge;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getSubsidyCharge() {
 		return $this->subsidyCharge;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getIntervalPay() {
 		return $this->intervalPay;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getPreIntervalPay() {
 		return $this->preIntervalPay;
 	}
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getIntervalWaiveAmt() {
 		return $this->intervalWaiveAmt;
@@ -275,7 +275,7 @@ class VisitIntervalCalculator {
 
 
 	/**
-	 * @return number
+	 * @return float
 	 */
 	public function getIntervalDiscount() {
 		return $this->intervalDiscount;
@@ -283,15 +283,15 @@ class VisitIntervalCalculator {
 
 	/**
 	 *
-	 * @param number $charge
-	 * @param number $fullCharge
-	 * @param number $adjRatio
+	 * @param float $charge
+	 * @param float $fullCharge
+	 * @param float $adjRatio
 	 * @param string $rateCategory
 	 */
 	public function updateIntervalCharge($charge, $fullCharge, $rateCategory) {
-		
+
 		$this->intervalCharge += $charge;
-		
+
 		$this->fullIntervalCharge += $fullCharge;
 
 		// Subsidy
@@ -299,34 +299,34 @@ class VisitIntervalCalculator {
 			$this->subsidyCharge += $fullCharge - $charge;
 		}
 	}
-	
+
 	public function updatePreIntervalCharge($v) {
 		$this->preIntervalCharge += $v;
 	}
-		
+
 	public function updateIntervalPay($v) {
 		$this->intervalPay += $v;
 	}
-	
+
 	public function updatePreIntervalPay($v) {
 		$this->preIntervalPay += $v;
 	}
-	
+
 	public function updateIntervalWaiveAmt($v) {
 		$this->intervalWaiveAmt += $v;
 	}
-	
+
 	public function updatePreIntervalWaiveAmt($v) {
 		$this->preIntervalWaiveAmt += $v;
 	}
-	
+
 	public function updateIntervalDiscount($v) {
 		$this->intervalDiscount += $v;
 	}
-	
+
 	public function updatePreIntervalDiscount($v) {
 		$this->preIntervalDiscount += $v;
 	}
-	
-	
+
+
 }

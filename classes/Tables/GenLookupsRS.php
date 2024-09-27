@@ -1,7 +1,7 @@
 <?php
 namespace HHK\Tables;
 
-use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer};
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbJsonSanitizer};
 
 /**
  * GenLookupsRS.php
@@ -23,6 +23,7 @@ class GenLookupsRS extends AbstractTableRS {
     public $Code;   // varchar(65) NOT NULL DEFAULT '',
     public $Description;   // varchar(255) NOT NULL DEFAULT '',
     public $Substitute;   // varchar(255) NOT NULL DEFAULT '',
+    public $Attributes; //JSON NOT NULL DEFAULT '[]',
     public $Type;  // varchar(4) NOT NULL DEFAULT '',
     public $Order;  // INT NOT NULL DEFAULT 0
     public $Timestamp;   // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -34,6 +35,7 @@ class GenLookupsRS extends AbstractTableRS {
         $this->Code = new DB_Field("Code", "", new DbStrSanitizer(65), TRUE, TRUE);
         $this->Description = new DB_Field("Description", "", new DbStrSanitizer(255), TRUE, TRUE);
         $this->Substitute = new DB_Field("Substitute", "", new DbStrSanitizer(255), TRUE, TRUE);
+        $this->Attributes = new DB_Field("Attributes", "[]", new DbJsonSanitizer(), TRUE, TRUE);
         $this->Type = new DB_Field("Type", "", new DbStrSanitizer(255), TRUE, TRUE);
         $this->Order = new DB_Field("Order", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

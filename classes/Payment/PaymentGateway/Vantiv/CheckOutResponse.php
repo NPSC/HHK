@@ -18,6 +18,15 @@ use HHK\SysConst\{MpStatusValues, PayType, PaymentMethod, PaymentStatusCode};
 
 class CheckOutResponse extends AbstractCreditResponse {
 
+    /**
+     * Summary of __construct
+     * @param mixed $verifyCkOutResponse
+     * @param int $idPayor
+     * @param int $idGroup
+     * @param string $invoiceNumber
+     * @param string $payNotes
+     * @param string $payDate
+     */
     function __construct($verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate) {
         $this->response = $verifyCkOutResponse;
         $this->paymentType = PayType::Charge;
@@ -33,10 +42,18 @@ class CheckOutResponse extends AbstractCreditResponse {
         $this->setPaymentDate($payDate);
     }
 
+    /**
+     * Summary of getPaymentMethod
+     * @return int
+     */
     public function getPaymentMethod() {
         return PaymentMethod::Charge;
     }
 
+    /**
+     * Summary of getStatus
+     * @return string
+     */
     public function getStatus() {
 
         switch ($this->response->getStatus()) {
@@ -56,6 +73,12 @@ class CheckOutResponse extends AbstractCreditResponse {
         return $pr;
     }
 
+    /**
+     * Summary of receiptMarkup
+     * @param \PDO $dbh
+     * @param mixed $tbl
+     * @return void
+     */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));

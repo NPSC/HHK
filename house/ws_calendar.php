@@ -1,8 +1,8 @@
 <?php
 use HHK\Exception\InvalidArgumentException;
-use HHK\SysConst\WebPageCode;
-use HHK\sec\WebInit;
 use HHK\House\GuestRegister;
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
 
 /**
  * ws_calendar.php
@@ -32,7 +32,7 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = htmlspecialchars($_REQUEST["cmd"]);
 }
 
 
@@ -48,18 +48,18 @@ try {
             $groupBy = 'Type';
 
             if (isset($_REQUEST["start"])) {
-                $start = filter_var(urldecode($_REQUEST["start"]), FILTER_SANITIZE_STRING);
+                $start = htmlspecialchars(urldecode($_REQUEST["start"]));
             }
             if (isset($_REQUEST["end"])) {
-                $end = filter_var(urldecode($_REQUEST["end"]), FILTER_SANITIZE_STRING);
+                $end = htmlspecialchars(urldecode($_REQUEST["end"]));
             }
 
             if (isset($_REQUEST["gpby"])) {
-            	$groupBy = filter_var(urldecode($_REQUEST["gpby"]), FILTER_SANITIZE_STRING);
+                $groupBy = htmlspecialchars(urldecode($_REQUEST["gpby"]));
             }
 
             if (isset($_REQUEST["timezone"])) {
-                $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
+                $timezone = htmlspecialchars(urldecode($_REQUEST["timezone"]));
             }
 
             $events = GuestRegister::getCalendarRescs($dbh, $start, $end, $timezone, $groupBy);
@@ -72,14 +72,14 @@ try {
             $timezone = NULL;
 
             if (isset($_REQUEST["start"])) {
-                $start = filter_var(urldecode($_REQUEST["start"]), FILTER_SANITIZE_STRING);
+                $start = htmlspecialchars(urldecode($_REQUEST["start"]));
             }
             if (isset($_REQUEST["end"])) {
-                $end = filter_var(urldecode($_REQUEST["end"]), FILTER_SANITIZE_STRING);
+                $end = htmlspecialchars(urldecode($_REQUEST["end"]));
             }
 
             if (isset($_REQUEST["timezone"])) {
-                $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
+                $timezone = htmlspecialchars(urldecode($_REQUEST["timezone"]));
             }
 
             $guestRegister = new GuestRegister();
@@ -87,13 +87,13 @@ try {
             break;
 
         default:
-            $events = array("error" => "Bad Command: \"" . $c . "\"");
+            $events = ["error" => "Bad Command: \"" . $c . "\""];
     }
 
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 } catch (Exception $ex) {
-    $events = array("error" => "Web Server Error: " . $ex->getMessage());
+    $events = ["error" => "Web Server Error: " . $ex->getMessage()];
 }
 
 
@@ -105,7 +105,7 @@ if (is_array($events)) {
     if ($json !== FALSE) {
         echo ($json);
     } else {
-        $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+        $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);
     }
 
@@ -114,4 +114,3 @@ if (is_array($events)) {
 }
 
 exit();
-?>

@@ -33,9 +33,28 @@ namespace HHK;
  */
 class Photo {
 
+    /**
+     * Summary of image
+     * @var string
+     */
     protected $image;
+
+    /**
+     * Summary of imageId
+     * @var int
+     */
     protected $imageId;
+
+    /**
+     * Summary of imageType
+     * @var string
+     */
     protected $imageType;
+
+    /**
+     * Summary of imageSizePx
+     * @var int
+     */
     protected $imageSizePx;
 
     public function __construct() {
@@ -44,6 +63,11 @@ class Photo {
 
     }
 
+    /**
+     * Summary of convertToSquareThumbnail
+     * @param mixed $imageFile
+     * @return void
+     */
     protected function convertToSquareThumbnail($imageFile) {
 
         if ($this->getImageSizePx() > 0) {
@@ -69,15 +93,25 @@ class Photo {
             $this->setImageId($results[0]['idPhoto']);
 
         } else {
-
-            if (file_exists($defaultPhotoFilePath)) {
-                $this->setImage(file_get_contents(realpath($defaultPhotoFilePath)));
-                $this->setImageType('image/png');
-            }
+            $this->setImage('<svg xmlns="http://www.w3.org/2000/svg" width="' . $this->getImageSizePx() . '" height="' . $this->getImageSizePx() . '" fill="#8bbcdc" class="bi bi-person-fill" viewBox="0 0 16 16">
+                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+              </svg>');
+            
+              $this->setImageType('image/svg+xml');
         }
 
     }
 
+    /**
+     * Summary of saveGuestPhoto
+     * @param \PDO $dbh
+     * @param int $idGuest
+     * @param string $imageFile
+     * @param int $imageSizePx
+     * @param string $userName
+     * @param int $defaultSizePx
+     * @return void
+     */
     public function saveGuestPhoto(\PDO $dbh, $idGuest, $imageFile, $imageSizePx, $userName, $defaultSizePx = 100) {
 
         $id = intval($idGuest, 10);
@@ -87,11 +121,11 @@ class Photo {
 
         $this->setImageSizePx($imageSizePx, $defaultSizePx);
         if(isset($results[0]['Guest_Photo_Id'])){
-            $this->setImageId(intval($results[0]['Guest_Photo_Id']) , 10);
+            $this->setImageId(intval($results[0]['Guest_Photo_Id'] , 10));
         }else{
             $this->setImageId(0);
         }
-        
+
         $this->setImageType($imageFile['type']);
 
         $this->convertToSquareThumbnail($imageFile);

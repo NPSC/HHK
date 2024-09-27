@@ -18,6 +18,7 @@ class SearchNameData implements SearchNameDataInterface {
     protected $relationship = '';
     protected $email = '';
     protected $phone = '';
+    protected $sms_status = '';
     protected $addressStreet1 = '';
     protected $addressStreet2 = '';
     protected $addressCity = '';
@@ -136,6 +137,14 @@ class SearchNameData implements SearchNameDataInterface {
     public function setPhone($phone) {
         $ary = array('+', '-');
         $this->phone = str_replace($ary, '', filter_var($phone, FILTER_SANITIZE_NUMBER_INT));
+        return $this;
+    }
+
+    /**
+     * @param string $sms
+     */
+    public function setSMS_Status($sms) {
+        $this->sms_status = trim($sms);
         return $this;
     }
 
@@ -321,6 +330,14 @@ class SearchNameData implements SearchNameDataInterface {
     }
 
     /**
+     * @return mixed
+     */
+    public function getSMS_Status()
+    {
+        return $this->sms_status;
+    }
+
+    /**
      * @return string
      */
     public function getAddressStreet1()
@@ -385,7 +402,7 @@ class SearchNameData implements SearchNameDataInterface {
             $this->addressStreet1 = trim($addressStreet);
         } else {
 
-            $addrs = $cleanAddress->cleanAddr(trim(filter_var($addressStreet, FILTER_SANITIZE_STRING)));
+            $addrs = $cleanAddress->cleanAddr(trim(filter_var($addressStreet, FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
             $this->addressStreet1 = $addrs[0];
             $this->addressStreet2 =  $addrs[1];
@@ -441,6 +458,7 @@ class SearchNameData implements SearchNameDataInterface {
             ->setEthnicity($this->setIfNew($r["Ethnicity"], ''))
             ->setBirthDate($this->setIfNew($r["Birthdate"], $formData->getBirthDate()))
             ->setPhone($this->setIfNew($r["Phone_Num"], $formData->getPhone()))
+            ->setSMS_Status($this->setIfNew($r["SMS_Status"], $formData->getSMS_Status()))
             ->setEmail($this->setIfNew($r["Email"], $formData->getEmail()))
             ->setAddressStreet1($this->setIfNew($r["Address1"], $formData->getAddressStreet1()))
             ->setAddressStreet2($this->setIfNew($r["Address2"], $formData->getAddressStreet2()))
@@ -452,6 +470,10 @@ class SearchNameData implements SearchNameDataInterface {
 
         if (isset($r["Relationship"])) {
             $this->setRelationship($this->setIfNew($r["Relationship"], $formData->getRelationship()));
+        }
+
+        if (isset($r["County"])){
+            $this->setAddressCounty($this->setIfNew($r["County"], $formData->getAddressCounty()));
         }
 
     }

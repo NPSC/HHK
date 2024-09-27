@@ -39,7 +39,8 @@ class Document {
         'image/png' => 'png',
         'application/pdf' => 'pdf',
         'application/msword' => 'doc',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+        'text/html'=>'html',
     ];
 
     // Document record field vars
@@ -59,7 +60,7 @@ class Document {
     protected $createdBy = '';
     protected $lastUpdated = null;
     protected $updatedBy = '';
-    protected $cretedOn = '';
+    protected $createdOn = '';
     private $documentRS;
 
     /**
@@ -177,6 +178,10 @@ class Document {
         EditRS::updateStoredVals($documentRS);
 
         $this->documentRS = $documentRS;
+
+        if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
+            $this->savePDFTitle($dbh);
+        }
     }
 
     /**
@@ -211,9 +216,51 @@ class Document {
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
             EditRS::updateStoredVals($this->documentRS);
+
+            if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
+                $this->savePDFTitle($dbh);
+            }
         }
 
         return $counter;
+    }
+
+    public function saveGuest(\PDO $dbh, $guestId) {
+
+        $counter = 0;
+
+        if ($this->idDocument > 0 && $guestId >= 0) {
+            $query = 'update `link_doc` set idGuest = "' . intval($guestId) . '" where idDocument = "' . $this->idDocument . '";';
+            $stmt = $dbh->prepare($query);
+            $stmt->execute();
+            return $dbh->lastInsertId();
+        }
+
+        return $counter;
+    }
+
+    public function savePDFTitle(\PDO $dbh) {
+
+        $counter = 0;
+
+        if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
+
+            if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
+                $title = $this->documentRS->Title->getStoredVal();
+
+                $doc = $this->documentRS->Doc->getStoredVal();
+                $doc = preg_replace('/\/Title \(.*\)/', '/Title (' . $title . ')', $doc);
+
+                $this->documentRS->Doc->setNewVal($doc);
+
+                $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+                EditRS::updateStoredVals($this->documentRS);
+
+            }
+        }
+
+
+
     }
 
     /**
@@ -270,7 +317,7 @@ class Document {
      * @param string $username
      * @return int the number of records updated.
      */
-    public function save(\PDO $dbh, $title, $doc, $style, $abstract, $username) {
+    public function save(\PDO $dbh, $title, $doc, $style, $abstract, $mimeType, $username) {
 
         $counter = 0;
 
@@ -278,6 +325,7 @@ class Document {
 
             $this->documentRS->Title->setNewVal($title);
             $this->documentRS->Doc->setNewVal($doc);
+            $this->documentRS->Mime_Type->setNewVal($mimeType);
             $this->documentRS->Style->setNewVal($style);
             $this->documentRS->Abstract->setNewVal($abstract);
             $this->documentRS->Updated_By->setNewVal($username);

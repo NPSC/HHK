@@ -3,10 +3,11 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
-use HHK\Payment\Receipt;
+use HHK\Payment\Statement;
 use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
 use HHK\sec\Session;
 use HHK\ExcelHelper;
+
 
 /*
  * PaymentReport.php
@@ -35,7 +36,7 @@ class PaymentReport {
         $payTypeSelections = array();
 
         if (isset($post['stDate'])) {
-            $txtStart = filter_var($post['stDate'], FILTER_SANITIZE_STRING);
+            $txtStart = filter_var($post['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($txtStart == '') {
                 $txtStart = date('Y-m-d');
@@ -43,7 +44,7 @@ class PaymentReport {
         }
 
         if (isset($post['enDate'])) {
-            $txtEnd = filter_var($post['enDate'], FILTER_SANITIZE_STRING);
+            $txtEnd = filter_var($post['enDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($txtEnd == '') {
                 $txtEnd = date('Y-m-d');
@@ -53,14 +54,14 @@ class PaymentReport {
         if (isset($post['selPayStatus'])) {
             $reqs = $post['selPayStatus'];
             if (is_array($reqs)) {
-                $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+                $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
 
         if (isset($post['selPayType'])) {
             $reqs = $post['selPayType'];
             if (is_array($reqs)) {
-                $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+                $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
 
@@ -143,7 +144,7 @@ class PaymentReport {
       $whDates $whStatus $whType ";
 
         $stmt = $dbh->query($query);
-        $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room'));
+        $invoices = Statement::processPayments($stmt, array('First', 'Last', 'Company', 'Room'));
 
 
         $reportRows = 1;
@@ -291,6 +292,8 @@ class PaymentReport {
 
     public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
 
+        $uS = Session::getInstance();
+
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
         $payDetail = '';
@@ -305,10 +308,7 @@ class PaymentReport {
         }
 
         // Use timestamp for time of day.
-        $timeDT = new \DateTime($p['Payment_Timestamp']);
-        $dbmsDt = new \DateTime('', new \DateTimeZone('America/Los_Angeles'));
-        $offset = abs(($dbmsDt->getOffset() - $timeDT->getOffset()) / 3600);
-        $timeDT->add(new \DateInterval('PT' . $offset ."H"));
+        $timeDT = new \DateTime($p['Payment_Timestamp'], new \DateTimeZone($uS->tz));
 
         $payType = $p['Payment_Method_Title'];
         $statusAttr = array();

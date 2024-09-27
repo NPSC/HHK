@@ -3,7 +3,7 @@ namespace HHK\sec;
 
 
 use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
+use HHK\Exception\AuthException;
 use HHK\Exception\CsrfException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
@@ -31,36 +31,35 @@ class Login {
     protected $validateMsg = '';
 
 
-    public static function initHhkSession($configFileName) {
+    public static function initHhkSession(string $confPath = '', string $confFile = '') {
 
         // get session instance
-    	$ssn = Session::getInstance($configFileName);
-        // Preset the timezone to suppress errors on hte subject.
-        //date_default_timezone_set('America/Chicago');
+    	$ssn = Session::getInstance($confPath, $confFile);
 
         // Get the site configuration object
         try {
-            $config = new Config_Lite($configFileName);
+            $config = parse_ini_file($confPath . $confFile, true);
         } catch (\Exception $ex) {
             $ssn->destroy();
-            throw new RuntimeException("Configurtion file is missing, path=".$configFileName, 999, $ex);
+            throw new RuntimeException("Configurtion file is missing, path=".$confFile, 999, $ex);
         }
 
-        $ssn->sitePepper = $config->getString('site', 'sitePepper', false);
+        $ssn->sitePepper = (isset($config["site"]["sitePepper"]) ? $config["site"]["sitePepper"]:'');
 
         try {
-        	self::dbParmsToSession($config);
+            self::dbParmsToSession($confPath, $confFile);
         	$dbh = initPDO(TRUE);
         } catch (RuntimeException $hex) {
         	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
         }
 
+        // Deprecated 7/23 EKC.
          // Check site maintenance
-        $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance', false);
-
-        if ($ssn->Site_Maintenance === TRUE) {
-             exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
-        }
+//        $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance', false);
+//
+//        if ($ssn->Site_Maintenance === TRUE) {
+//             exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
+//        }
 
 
 		// Check SsL
@@ -78,7 +77,7 @@ class Login {
 
         $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'mode', 'demo'));
         $ssn->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test', false);
-        $ssn->resourceURL = $secureComp->setResourceURL($dbh);
+        $ssn->resourceURL = $secureComp->getRootURL();
         $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
         // Initialize role code
@@ -86,33 +85,31 @@ class Login {
         	$ssn->rolecode = WebRole::Guest;
         }
 
-        SysConfig::getCategory($dbh, $ssn, "'a'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'es'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'ga'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'pr'", WebInit::SYS_CONFIG);
-        SysConfig::getCategory($dbh, $ssn, "'ha'", WebInit::SYS_CONFIG);
-
+        SysConfig::getCategory($dbh, $ssn, ["a", "f", "es", "ga", "pr", "ha", "sms"], WebInit::SYS_CONFIG);
+        
         return $dbh;
     }
 
-    public static function dbParmsToSession(Config_Lite $config) {
+    public static function dbParmsToSession(string $confPath, string $confFile) {
 
         // get session instance
         $ssn = Session::getInstance();
 
-        try {
-            $dbConfig = $config->getSection('db');
-        } catch (\Exception $e) {
-            $ssn->destroy();
-            throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
+        if(!isset($config["db"]["URL"])){
+            try {
+                $config = parse_ini_file($confPath . $confFile, true);
+            } catch (\Exception $e) {
+                $ssn->destroy();
+                throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
+            }
         }
 
-        if (is_array($dbConfig)) {
-            $ssn->databaseURL = $dbConfig['URL'];
-            $ssn->databaseUName = $dbConfig['User'];
-            $ssn->databasePWord = decryptMessage($dbConfig['Password']);
-            $ssn->databaseName = $dbConfig['Schema'];
-            $ssn->dbms = $dbConfig['DBMS'];
+        if (isset($config["db"]["URL"]) && isset($config["db"]["User"]) && isset($config["db"]["Password"]) && isset($config["db"]["Schema"]) && isset($config["db"]["DBMS"])) {
+            $ssn->databaseURL = $config["db"]['URL'];
+            $ssn->databaseUName = $config["db"]['User'];
+            $ssn->databasePWord = decryptMessage($config["db"]['Password']);
+            $ssn->databaseName = $config["db"]['Schema'];
+            $ssn->dbms = $config["db"]['DBMS'];
         } else {
             $ssn->destroy();
             throw new RuntimeException("Bad Database Configuration");
@@ -132,7 +129,7 @@ class Login {
 
         // Get next page address
         if (isset($_POST["xf"]) && $_POST["xf"] != '') {
-            $pge = filter_var(urldecode($_POST["xf"]), FILTER_SANITIZE_STRING);
+            $pge = urldecode($_POST["xf"]);
         } else {
             $pge = $defaultPage;
         }
@@ -140,18 +137,18 @@ class Login {
 
         if (isset($post["txtUname"]) && isset($post["txtPass"])) {
 
-            $this->userName = strtolower(substr(filter_var($post["txtUname"], FILTER_SANITIZE_STRING), 0, 100));
+            $this->userName = strtolower(substr(filter_var($post["txtUname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 100));
 
-            $password = filter_var($post["txtPass"], FILTER_SANITIZE_STRING);
+            $password = filter_var($post["txtPass"], FILTER_UNSAFE_RAW);
 
             $otp = '';
             if(isset($post["otp"])){
-                $otp = filter_var($post["otp"], FILTER_SANITIZE_STRING);
+                $otp = filter_var($post["otp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $otpMethod = false;
             if(isset($post["otpMethod"])){
-                $otpMethod = filter_var($post['otpMethod'], FILTER_SANITIZE_STRING);
+                $otpMethod = filter_var($post['otpMethod'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $showMethodMkup = false;
@@ -185,15 +182,18 @@ class Login {
 
                 WebInit::resetSessionIdle(); //extend idle session to prevent double login
 
-                if ($u->getDefaultPage() != '') {
+                if ($pge == $defaultPage && $u->getDefaultPage() != '') {
                     $pge = $u->getDefaultPage();
                 }
 
-                if (SecurityComponent::is_Authorized($pge)) {
-                    $events['page'] = $pge;
-                } else {
-
-                    $this->validateMsg .= "Unauthorized for page: " . $pge;
+                try {
+                    if (SecurityComponent::is_Authorized($pge, true)) {
+                        $events['page'] = $pge;
+                    } else {
+                        $this->validateMsg .= "Unauthorized for page: " . $pge;
+                    }
+                }catch(AuthException $e){
+                    $this->validateMsg .= $e->getMessage();
                 }
             }
 
@@ -342,7 +342,8 @@ class Login {
         $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
 
         $content = '<div id="hhk-loading-spinner" class="center p-3 ui-widget-content ui-corner-bottom"><img src="' . $rootURL . '/images/ui-anim_basic_16x16.gif"></div>';
-        $content .= '<iframe src="' . $uS->loginFeedURL . '" width="100%" height="320px" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" id="welcomeWidget" class="d-none ui-widget-content ui-corner-bottom"></iframe>';
+        $content .= HTMLContainer::generateMarkup("div",HTMLContainer::generateMarkup("div", '', ['class'=>'welcomeContent']), ['id'=>'welcomeWidget', 'class'=>'d-none ui-widget-content ui-corner-bottom', 'data-url'=>$uS->loginFeedURL]);
+        //$content .= '<iframe src="' . $uS->loginFeedURL . '" width="100%" height="320px" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" id="welcomeWidget" class="d-none ui-widget-content ui-corner-bottom"></iframe>';
 
         return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . $content, array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 welcomeWidgetContainer"));
 
@@ -446,4 +447,3 @@ class Login {
 
 
 }
-?>

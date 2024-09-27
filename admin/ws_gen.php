@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Cron\SendConfirmationEmailJob;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
@@ -18,6 +19,8 @@ use HHK\Tables\CronRS;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\EmptyJob;
 use HHK\Cron\EmailReportJob;
+use HHK\CrmExport\AbstractExportManager;
+use HHK\House\Distance\ZipDistance;
 
 /**
  * ws_gen.php
@@ -40,7 +43,7 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
 
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 } else {
     $c = 'bad command';
 }
@@ -61,26 +64,27 @@ try {
             }
 
             try{
-                $events['success'] = number_format(GuestDemogReport::calcZipDistance($dbh, $zipf, $zipt), 0);
+                $distanceCalculator = new ZipDistance();
+                $events['success'] = number_format($distanceCalculator->getDistance($dbh, ['zip'=>$zipf], ['zip'=>$zipt], 'miles'), 0);
             } catch (RuntimeException $hex) {
-                $events['error'] = "Zip code not found.  ";
+                $events['error'] = "Zip code not found. " . $hex->getMessage();
             }
 
             break;
 
-    case 'schzip':
+        case 'schzip':
 
-        if (isset($_GET['zip'])) {
-            $zip = filter_var($_GET['zip'], FILTER_SANITIZE_NUMBER_INT);
-            $events = searchZip($dbh, $zip);
-        }
-        break;
+            if (isset($_GET['zip'])) {
+                $zip = filter_var($_GET['zip'], FILTER_SANITIZE_NUMBER_INT);
+                $events = searchZip($dbh, $zip);
+            }
+            break;
 
         case "save":
 
             $parms = array();
             if (isset($_POST["parms"])) {
-                $parms = filter_var_array($_POST["parms"], FILTER_SANITIZE_STRING);
+                $parms = filter_var_array($_POST["parms"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = WebUser::saveUname($dbh, $uS->username, $parms, $maintFlag);
@@ -89,10 +93,11 @@ try {
 
         case "gpage":
 
-            $site = filter_var($_REQUEST["page"], FILTER_SANITIZE_STRING);
+            $site = filter_var($_REQUEST["page"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             if ($maintFlag) {
-                $events = Pages::getPages($dbh, $site);
+                $pages = new Pages();
+                $events = $pages->getPages($dbh, $site);
             } else {
                 $events = array("error" => "Unauthorized");
             }
@@ -106,7 +111,8 @@ try {
             if (($parms = filter_var_array($parms)) === false) {
                 $events = array("error" => "Bad input");
             } else if (SecurityComponent::is_TheAdmin()) {
-                $events = Pages::editSite($dbh, $parms);
+                $pages = new Pages();
+                $events = $pages->editSite($dbh, $parms);
             } else {
                 $events = array("error" => "Sites Access denied");
             }
@@ -116,7 +122,7 @@ try {
 
         case "recent":
 
-            $events = recentReport($dbh, $_POST["parms"], $donationsFlag);
+            $events = recentReport($dbh, $_POST, $donationsFlag);
             break;
 
         case "chglog" :
@@ -144,12 +150,12 @@ try {
                 array( 'db' => 'Str1', 'dt' => 'Str1'),
                 array( 'db' => 'Str2', 'dt' => 'Str2'),
                 array( 'db' => 'Log_Text', 'dt' => 'Log_Text'),
-                array( 'db' => 'Timestamp', 'dt' => 'Ts'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
 
             );
 
             if (isset($_REQUEST['logId'])) {
-                $logSel = filter_var($_REQUEST['logId'], FILTER_SANITIZE_STRING);
+                $logSel = filter_var($_REQUEST['logId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($logSel == 'liss') {
@@ -162,6 +168,22 @@ try {
 
             $events = SSP::complex ( $_GET, $dbh, $dbView, $priKey, $columns, null, $where );
 
+            break;
+
+        case "showNotificationLog":
+
+            $columns = array(
+                array( 'db' => 'Log_Type',  'dt' => 'Log_Type' ),
+                array( 'db' => 'Sub_Type',   'dt' => 'Sub_Type' ),
+                array( 'db' => 'username', 'dt' => 'username'),
+                array( 'db' => 'To', 'dt' => 'To'),
+                array( 'db' => 'From', 'dt' => 'From'),
+                array( 'db' => 'Log_Text', 'dt' => 'Log_Text'),
+                array( 'db' => 'Log_Details', 'dt' => 'Log_Details'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
+                );
+            $events = SSP::complex ( $_GET, $dbh, "notification_log", "idLog", $columns, null, null );
+    
             break;
 
         case "showCron":
@@ -208,7 +230,7 @@ try {
 
             $job = JobFactory::make($dbh, $idJob, $dryRun);
             $job->run();
-            $events = ["idJob"=>$idJob, 'status'=>$job->status, 'logMsg'=>($dryRun ? "<strong>Dry Run: </strong>": "") . $job->logMsg];
+            $events = ["idJob"=>$idJob, 'status'=>$job->getStatus(), 'logMsg'=>($dryRun ? "<strong>Dry Run: </strong>": "") . $job->getLogMsg()];
 
             break;
 
@@ -220,39 +242,41 @@ try {
 
             $jobType = '';
             if (isset($_REQUEST['jobType'])) {
-                $jobType = filter_var($_REQUEST['jobType'], FILTER_SANITIZE_STRING);
+                $jobType = filter_var($_REQUEST['jobType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $job = JobFactory::make($dbh, $idJob, false, $jobType);
             $events = ["idJob"=>$idJob, "paramMkup"=>$job->getParamEditMkup()];
             break;
 
-        case "getInputSetTitle":
-            $idInputSet = 0;
-            if(isset($_REQUEST["inputSet"])){
-                $idInputSet = intval(filter_var($_REQUEST['inputSet'], FILTER_SANITIZE_NUMBER_INT),10);
+        case "getCronLookups":
+            $events = ["inputSets"=>[], "docs"=>[], "resvStatus"=>""];
+
+            //input sets
+            $query = "select `idFieldSet`, `Title` from `report_field_sets`";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach($rows as $row){
+                $events["inputSets"][$row["idFieldSet"]] = $row;
             }
 
-            $query = "select `idFieldSet`, `Title` from `report_field_sets` where `idFieldSet` = :idfieldset limit 1";
+            //docs
+            $query = "Select d.`idDocument`,concat(d.`Title`, ': ', g.`Description`) as `Title` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Table_Name` = 'Form_Upload'";
             $stmt = $dbh->prepare($query);
-            $stmt->execute([":idfieldset"=>$idInputSet]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $events = $row;
-            break;
-
-        case "getDocTitle":
-            $idDoc = 0;
-            if(isset($_REQUEST["idDoc"])){
-                $idDoc = intval(filter_var($_REQUEST['idDoc'], FILTER_SANITIZE_NUMBER_INT),10);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            foreach($rows as $row){
+                $events["docs"][$row["idDocument"]] = $row;
             }
 
-            $query = "Select d.`idDocument`,concat(d.`Title`, ': ', g.`Description`) as `Title` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where d.`idDocument` = :idDoc AND fu.`Table_Name` = 'Form_Upload' limit 1";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute([":idDoc"=>$idDoc]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $events = $row;
-            break;
+            //resv Status
+            $events["resvStatus"] = SendConfirmationEmailJob::getResvStatusList($dbh);
 
+            break;
+        
         case "updateCronJob":
             $idJob = 0;
             if (isset($_REQUEST['idJob'])) {
@@ -261,49 +285,49 @@ try {
 
             $title = "";
             if (isset($_REQUEST['title'])) {
-                $title = substr(filter_var($_REQUEST['title'], FILTER_SANITIZE_STRING), 0, 45);
+                $title = substr(filter_var($_REQUEST['title'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
             }
 
             $jobType = "";
             if (isset($_REQUEST['jobType'])) {
-                $jobType = substr(filter_var($_REQUEST['jobType'], FILTER_SANITIZE_STRING), 0, 45);
+                $jobType = substr(filter_var($_REQUEST['jobType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
             }
 
             $params = array();
             if (isset($_REQUEST['params']) && is_array($_REQUEST['params'])) {
                 foreach($_REQUEST['params'] as $key=>$val){
-                    $params[$key] = filter_var($val, FILTER_SANITIZE_STRING);
+                    $params[$key] = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
             }
 
             $interval = '';
             if (isset($_REQUEST['interval'])) {
-                $interval = filter_var($_REQUEST['interval'], FILTER_SANITIZE_STRING);
+                $interval = filter_var($_REQUEST['interval'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $day = '';
             if (isset($_REQUEST['day'])) {
-                $day = filter_var($_REQUEST['day'], FILTER_SANITIZE_STRING);
+                $day = filter_var($_REQUEST['day'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $weekday = '';
             if (isset($_REQUEST['weekday'])) {
-                $weekday = filter_var($_REQUEST['weekday'], FILTER_SANITIZE_STRING);
+                $weekday = filter_var($_REQUEST['weekday'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $hour = '';
             if (isset($_REQUEST['hour'])) {
-                $hour = filter_var($_REQUEST['hour'], FILTER_SANITIZE_STRING);
+                $hour = filter_var($_REQUEST['hour'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $minute = '';
             if (isset($_REQUEST['minute'])) {
-                $minute = filter_var($_REQUEST['minute'], FILTER_SANITIZE_STRING);
+                $minute = filter_var($_REQUEST['minute'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $status = '';
             if (isset($_REQUEST['status'])) {
-                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = updateCronJob($dbh, $idJob, $title, $jobType, $params, $interval, $day, $weekday, $hour, $minute, $status);
@@ -322,7 +346,7 @@ try {
             }
 
             if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = deleteRelationLink($dbh, $id, $rId, $rc);
@@ -341,7 +365,7 @@ try {
             }
 
             if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = newRelationLink($dbh, $id, $rId, $rc);
@@ -360,7 +384,7 @@ try {
             }
 
             if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = changeCareOfFlag($dbh, $id, $rId, $rc, TRUE);
@@ -379,7 +403,7 @@ try {
             }
 
             if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_STRING);
+                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = changeCareOfFlag($dbh, $id, $rId, $rc, FALSE);
@@ -390,7 +414,7 @@ try {
             $uid = 0;
 
             if (isset($_POST["adpw"])) {
-                $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_STRING);
+                $adPw = filter_var($_POST["adpw"], FILTER_UNSAFE_RAW);
             }
 
             if (isset($_POST['uid'])) {
@@ -398,7 +422,7 @@ try {
             }
 
             if (isset($_POST["uname"])) {
-                $uname = filter_var($_POST["uname"], FILTER_SANITIZE_STRING);
+                $uname = filter_var($_POST["uname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $events = adminChangePW($dbh, $adPw, $uid, $uname);
@@ -410,19 +434,15 @@ try {
 
             break;
 
-        case 'shoConfNeon':
+        case 'shoCmConf':
 
-            $enFile = '';
-            if (isset($_POST["servFile"])) {
-                $enFile = filter_var($_POST["servFile"], FILTER_SANITIZE_STRING);
+            $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            if ($exportManager !== NULL) {
+
+                $events = $exportManager->showConfig($dbh);
             }
 
-            $servFile = decryptMessage($enFile);
-
-            if ($servFile !== '') {
-                $confNeon = new ConfigureNeon($servFile);
-                $events = $confNeon->showConfig($dbh);
-            }
             break;
 
         default:
@@ -549,7 +569,7 @@ function changeLog(PDO $dbh, $id, $get) {
     $view = 'vaudit_log';
 
     if (isset($get['vw'])) {
-        $view = filter_var($get['vw'], FILTER_SANITIZE_STRING);
+        $view = filter_var($get['vw'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     $columns = array(
@@ -570,13 +590,13 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
 
     // exit on bad dates
     if (isset($parms["sdate"]) === FALSE || $parms["sdate"] == "") {
-        return array("success" => "Fill in Start Date");
+        return array("error" => "Fill in Start Date");
     }
 
-    $dStart = date("Y-m-d", strtotime(filter_var($parms["sdate"], FILTER_SANITIZE_STRING)));
+    $dStart = date("Y-m-d", strtotime(filter_var($parms["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
     if (isset($parms["edate"]) && $parms["edate"] != '') {
-        $dEnd = date("Y-m-d 23:59:59", strtotime(filter_var($parms["edate"], FILTER_SANITIZE_STRING)));
+        $dEnd = date("Y-m-d 23:59:59", strtotime(filter_var($parms["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
     } else {
         $dEnd = date("Y-m-d 23:59:59");
     }
@@ -585,17 +605,12 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
     $incUpd = false;
     $sParms = array();
 
-    if (isset($parms["incnew"])) {
-        $incNew = filter_var($parms["incnew"], FILTER_VALIDATE_BOOLEAN);
-    }
-
-    if (isset($parms["incupd"])) {
-        $incUpd = filter_var($parms["incupd"], FILTER_VALIDATE_BOOLEAN);
-    }
+    $incNew = filter_has_var(INPUT_POST, "incnew");
+    $incUpd = filter_has_var(INPUT_POST, "incupd");
 
     // exit if neither is checked
     if (!$incUpd && !$incNew) {
-        return array("success" => "Check 'Include Updates to Existing Members' or 'New'");
+        return array("error" => "Check 'Include Updates to Existing Members' or 'New'");
     }
 
 //    $members = array();
@@ -645,23 +660,32 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
 
 
     // Create an array to store data in order to orient data to names instead of tables.
-    $tableNames = array("[name]", "[address]", "[phone]", "[email]", "[volunteer]", "[web]", "[calendar]", "[donations]");
-    $controlNames = array("cbname", "cbaddr", "cbphone", "cbemail", "cbvol", "cbweb", "cbevents", "cbdonations");
-    $tables = array("vdump_name", "vdump_address", "vdump_phone", "vdump_email", "vdump_volunteer", "vdump_webuser", "vdump_events", "vdump_donations");
+    $tableNames = array(
+        'name'=>["title"=>'Name',"view"=>"vdump_name"],
+        'addr'=>["title"=>'Address', "view"=>"vdump_address"],
+        'phone'=>["title"=>"Phone", "view"=>"vdump_phone"],
+        'email'=>["title"=>"Email", "view"=>"vdump_email"],
+        'vol'=>["title"=>"Volunteer", "view"=>"vdump_volunteer"],
+        'web'=>["title"=>"Web", "view"=>"vdump_webuser"],
+        'events'=>["title"=>"Calendar", "view"=>"vdump_events"],
+        'donations'=>["title"=>"Donations", "view"=>"vdump_donations"]
+    );
     $names = array();
 
-    // run through checkboxes
-    for ($i = 0; $i < count($tableNames); $i++) {
+    $includeTbls = filter_input(INPUT_POST, "includeTbl", FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
 
-        if (isset($parms[$controlNames[$i]]) && filter_var($parms[$controlNames[$i]], FILTER_VALIDATE_BOOLEAN) === TRUE) {
-            if ($tableNames[$i] == "[donations]" && !$donationsFlag) {
+    // run through checkboxes
+    foreach($includeTbls as $tbl) {
+
+        if (isset($tableNames[$tbl])) {
+            if ($tbl == "donations" && !$donationsFlag) {
                 continue;
             }
-            $query = "select * from " . $tables[$i] . " where $whereClause;";
+            $query = "select * from " . $tableNames[$tbl]["view"] . " where $whereClause;";
             $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $stmt->execute($sParms);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $names = makeTable($rows, $tableNames[$i]);
+            $names = makeTable($names, $rows, $tableNames[$tbl]["title"]);
         }
     }
 
@@ -669,9 +693,7 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
     return array("success" => $markup);
 }
 
-function makeTable($rows, $tableName) {
-
-    $names = array();
+function makeTable(array $names, array $rows, string $tableName) {
 
     foreach ($rows as $rw) {
 
@@ -689,7 +711,7 @@ function createRecentReportMU(PDO $dbh, $names) {
     }
 
     // header
-    $markup .= "<p>" . count($names) . " Members Listed</p><br/>";
+    //$markup .= "<p>" . count($names) . " Members Listed</p><br/>";
 
     foreach ($names as $id => $data) {
         // get member name
@@ -705,7 +727,7 @@ function createRecentReportMU(PDO $dbh, $names) {
         }
 
         // member id and name
-        $markup .= "<a style='text-decoration:none;' href='NameEdit.php?id=$id'>$id: $nameStr</a><div class='hhk-recent'>";
+        $markup .= "<a style='display:block; background-color: #459e00; color: white; padding:5px;' class='ui-corner-top' href='NameEdit.php?id=$id'>$id: $nameStr</a><div class='hhk-recent ui-corner-bottom'>";
 
 
         foreach ($data as $tname => $rows) {
@@ -717,10 +739,10 @@ function createRecentReportMU(PDO $dbh, $names) {
             // make the column titles
             $markup .= "<tr>";
             foreach ($rows[0] as $title => $val) {
-                if ($val != "") {
-                    $markup .= "<th>" . $title . "</td>";
+                if ($title != "") {
+                    $markup .= "<th>" . $title . "</th>";
                 } else {
-                    $markup .= "<th></td>";
+                    //$markup .= "<th></td>";
                 }
             }
 
@@ -729,7 +751,9 @@ function createRecentReportMU(PDO $dbh, $names) {
 
                 $markup .= "<tr>";
                 foreach ($row as $title => $val) {
-                    $markup .= "<td>" . $val . "</td>";
+                    if($title != ""){
+                        $markup .= "<td>" . $val . "</td>";
+                    }
                 }
                 $markup .= "</tr>";
             }
@@ -741,7 +765,7 @@ function createRecentReportMU(PDO $dbh, $names) {
     return $markup;
 }
 
-function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $parms, $maintFlag) {
+/* function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $parms, $maintFlag) {
 
     $reply = array();
 
@@ -862,7 +886,7 @@ function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $pa
     }
     return $reply;
 }
-
+ */
 function AccessLog(\PDO $dbh, $get) {
 
     $columns = array(
@@ -896,7 +920,7 @@ function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interva
     if(count($params) > 0){
         try{
             $job = JobFactory::make($dbh, $idJob, true, $type);
-            $paramTemplate = $job->paramTemplate;
+            $paramTemplate = $job->getParamTemplate();
 
             foreach($params as $k=>$v){
                 if(isset($paramTemplate[$k])){

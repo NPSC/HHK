@@ -23,9 +23,9 @@ class ExcelHelper extends \XLSXWriter{
      *
      * Extends mk-j\XLSXWriter
      *
-     * @param String $filename
+     * @param string $filename
      */
-    public function __construct(String $filename){
+    public function __construct($filename){
         $this->filename = $filename;
         parent::__construct();
     }

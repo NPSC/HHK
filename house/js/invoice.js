@@ -3,31 +3,35 @@ function invPay(id, pbp, dialg) {
     if (verifyAmtTendrd() === false) {
         return;
     }
+
     var parms = {cmd: 'payInv', pbp: pbp, id: id};
-    
+
     // Fees and Keys
     $('.hhk-feeskeys').each(function() {
         if ($(this).attr('type') === 'checkbox') {
             if (this.checked !== false) {
                 parms[$(this).attr('id')] = 'on';
+                parms[$(this).attr('name')] = 'on';
             }
         } else if ($(this).hasClass('ckdate')) {
             var tdate = $(this).datepicker('getDate');
             if (tdate) {
-                parms[$(this).attr('id')] = tdate.toJSON();
+                parms[$(this).attr('id')] = $(this).val();
             } else {
                  parms[$(this).attr('id')] = '';
             }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
-                parms[$(this).attr('id')] = this.value;
+                parms[$(this).attr('name')] = $(this).val();
             }
         } else{
-            parms[$(this).attr('id')] = this.value;
+            parms[$(this).attr('id')] = $(this).val();
+            parms[$(this).attr('name')] = $(this).val();
         }
     });
-    dialg.dialog("close");
-    
+    //dialg.dialog("close");
+    $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
+
     $.post('ws_ckin.php', parms,
         function(data) {
             try {
@@ -36,16 +40,18 @@ function invPay(id, pbp, dialg) {
                 alert("Parser error - " + err.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-                
+                $('#keysfees').dialog("close");
             }
-            
+
             paymentRedirect(data, $('#xform'));
+
+            $('#keysfees').dialog("close");
 
             if (data.success && data.success !== '') {
                 flagAlertMessage(data.success, 'success');
@@ -54,13 +60,14 @@ function invPay(id, pbp, dialg) {
             if (data.receipt && data.receipt !== '') {
                 showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
             }
-            
+
             $('#btnInvGo').click();
     });
 }
 
+// Load the Invoice Payment dialog
 function invLoadPc(nme, id, iid) {
-"use strict";    
+"use strict";
     var buttons = {
         "Pay Fees": function() {
             invPay(id, 'register.php', $('div#keysfees'));
@@ -69,14 +76,14 @@ function invLoadPc(nme, id, iid) {
             $(this).dialog("close");
         }
     };
-    
+
     $.post('ws_ckin.php',
         {
             cmd: 'showPayInv',
             id: id,
             iid: iid
         },
-        
+
         function(data) {
         "use strict";
         if (data) {
@@ -86,15 +93,15 @@ function invLoadPc(nme, id, iid) {
                 alert("Parser error - " + err.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-                
+
             } else if (data.mkup) {
-                
+
                 $('div#keysfees').children().remove();
                 $('div#keysfees').append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.mkup)));
                 $('div#keysfees .ckdate').datepicker({
@@ -105,10 +112,10 @@ function invLoadPc(nme, id, iid) {
                     numberOfMonths: 1,
                     dateFormat: 'M d, yy'
                 });
-                
+
                 isCheckedOut = false;
                 setupPayments(data.resc, '', '', 0, $('#pmtRcpt'));
-                
+
                 $('#keysfees').dialog('option', 'buttons', buttons);
                 $('#keysfees').dialog('option', 'title', 'Pay Invoice');
                 $('#keysfees').dialog('option', 'width', 800);
@@ -126,9 +133,9 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
 
             var dt;
             var nt = dialg.find('#taBillNotes').val();
-            
-            if (dialg.find('#txtBillDate').val() != '') {
-                dt = dialg.find('#txtBillDate').datepicker('getDate').toJSON();
+
+            if (dialg.find('#txtBillDate').val() != '' && dialg.find('#txtBillDate').datepicker('getDate')) {
+                dt = dialg.find('#txtBillDate').val();
             }
 
             $.post('ws_resc.php', {cmd: 'invSetBill', inb:inb, date:dt, ele: idElement, nts: nt, ntele: notesElement},
@@ -146,21 +153,21 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
                         if (data.gotopage) {
                             window.location.assign(data.gotopage);
                         }
-                        
+
                         flagAlertMessage(data.error, 'error');
-                        
+
                     } else if (data.success) {
 
                         if (data.elemt && data.strDate) {
                             $(data.elemt).text(data.strDate);
-                            
+
                         }
 
                         if (data.notesElemt && data.notes) {
                             $(data.notesElemt).text(data.notes);
-                            
+
                         }
-                        
+
                         flagAlertMessage(data.success, 'info');
                     }
                 }
@@ -187,7 +194,7 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
 
 function invoiceAction(idInvoice, action, eid, container, show) {
     "use strict";
-    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},
+    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, 'container':container, action: action, 'sbt':show},
       function(data) {
         if (data) {
             try {
@@ -196,6 +203,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 alert("Parser error - " + err.message);
                 return;
             }
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
@@ -206,17 +214,29 @@ function invoiceAction(idInvoice, action, eid, container, show) {
 
             if (data.delete) {
 
-                if (data.eid == '0') {
+                if (!data.eid || data.eid == '0' || !container || container == '') {
+                    // Register page or InvoiceReport -> unpaid invoices tab delete action
                     flagAlertMessage(data.delete, 'success');
-                    $('#btnInvGo').click();
+                    $('#btnInvGo').click();  // repaint unpaid invoices tab
                 } else {
-                    $('#' + data.eid).parents('tr').first().remove();
-                    amtPaid();
+                    // Paying today section, unpaid invoices listing delete icon.
+                    //
+                    if ($('#' + data.eid).parentsUntil('.keysfees', '.hhk-payInvoice').length > 0) {
+                        // called from pay invoices dialog
+                        $('#' + data.eid).parents('tr').first().remove();
+                        amtPaid();
+                        $('#btnInvGo').click();  // repaint unpaid invoices tab
+                    } else {
+                        // called from visit viewer.
+                        $('#keysfees').dialog("close");
+                    }
                 }
 
             }
             if (data.markup) {
-                var contr = $(data.markup);
+                let contr = $(data.markup);
+                let myOf = $("#" + data.eid);
+
                 if (container != undefined && container != '') {
                     $(container).append(contr);
                 } else {
@@ -225,10 +245,12 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 contr.position({
                     my: 'left top',
                     at: 'left bottom',
-                    of: "#" + data.eid
+                    of: myOf
                 });
             }
         }
     });
 }
 
+// ,
+// of: $("#" + data.eid)

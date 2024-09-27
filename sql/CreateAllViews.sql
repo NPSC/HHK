@@ -26,7 +26,7 @@ ifnull(`g2`.`Description`,'') AS `Name_Suffix`,
 (case when (`n`.`Exclude_Mail` = 1) then '' else ifnull(`na`.`Country`,'') end) AS `Country`,
 (case when (`n`.`Exclude_Mail` = 1) then '' else ifnull(`na`.`Country_Code`,'') end) AS `Country_Code`,
 ifnull(`na`.`Bad_Address`,'') AS `Bad_Address`,
-(case when (`n`.`Exclude_Email` = 1) then '' else ifnull(`ne`.`Email`,'') end) AS `Preferred_Email`,
+(case when (`n`.`Exclude_Email` = 1) then '' else (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) end) AS `Preferred_Email`,
 `n`.`Member_Status` AS `MemberStatus`,
 `n`.`Gender` AS `Gender`,
 `n`.`Birth_Month` AS `Birth_Month`,
@@ -95,7 +95,7 @@ ifnull(`g2`.`Description`,'') AS `Name_Suffix`,
 (case when (`n`.`Exclude_Mail` = 1 && n.Company_CareOf <> 'y') then '' else ifnull(`na`.`Country`,'') end) AS `Country`,
 (case when (`n`.`Exclude_Mail` = 1 && n.Company_CareOf <> 'y') then '' else ifnull(`na`.`Country_Code`,'') end) AS `Country_Code`,
 ifnull(`na`.`Bad_Address`,'') AS `Bad_Address`,
-ifnull(`ne`.`Email`,'') AS `Preferred_Email`,
+(case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Preferred_Email`,
 `n`.`Member_Status` AS `MemberStatus`,
 `n`.`Gender` AS `Gender`,
 `n`.`Birth_Month` AS `Birth_Month`,
@@ -157,6 +157,7 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
         n.idNote AS `Action`,
         n.flag,
         n.User_Name,
+        n.Category,
         n.Title,
         n.Note_Text,
         n.`Timestamp`
@@ -166,7 +167,29 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
         staff_note sn ON n.idNote = sn.Note_Id
     WHERE
         n.`Status` = 'a';
-        
+
+
+-- -----------------------------------------------------
+-- View `vmem_notes`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vmem_notes` AS
+    SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        mn.idName,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        member_note mn ON n.idNote = mn.Note_Id
+    WHERE
+        n.`Status` = 'a';
+
+
 -- -----------------------------------------------------
 -- View `vadditional_guests`
 -- -----------------------------------------------------
@@ -345,50 +368,6 @@ from
 
 
 -- -----------------------------------------------------
--- View `vcategory_events`
--- -----------------------------------------------------
-CREATE OR replace VIEW `vcategory_events` AS
-select
-    m.idmcalendar AS idmcalendar,
-    m.idName AS idName,
-    m.idName2 AS idName2,
-    m.idName as idVolunteer,
-    m.E_Title AS E_Title,
-    m.E_Start AS E_Start,
-    m.E_End AS E_End,
-    m.E_URL AS E_URL,
-    m.E_ClassName AS E_ClassName,
-    m.E_Editable AS E_Editable,
-    m.E_Description AS E_Description,
-    m.E_AllDay AS E_AllDay,
-    m.E_Vol_Category AS E_Vol_Category,
-    m.E_Vol_Code AS E_Vol_Code,
-    m.E_Status AS E_Status,
-    m.E_Take_Overable AS E_Take_Overable,
-    m.E_Fixed_In_Time AS E_Fixed_In_Time,
-    m.E_Shell AS E_Shell,
-    m.E_Locked AS E_Locked,
-    m.E_Shell_Id AS E_Shell_Id,
-    m.E_Rpt_Id AS E_Rpt_Id,
-    m.E_Show_All AS E_Show_All,
-    ifnull(v.Name_First, '') AS First,
-    ifnull(v.Name_Last, '') AS Last,
-    ifnull(v2.Name_First, '') AS First2,
-    ifnull(v2.Name_Last, '') AS Last2,
-    c.Vol_Code_Title AS Vol_Description,
-    c.Show_Email_Delete AS Show_Email_Delete,
-    c.Hide_Add_Members AS Hide_Add_Members,
-    c.Show_AllCategory AS Show_AllCategory,
-    c.Cal_House
-from
-    mcalendar m
-    left join name v ON m.idName = v.idName and v.Member_Status = 'a'
-    left join name v2 ON m.idName2 = v2.idName and v2.Member_Status = 'a'
-    left join vcategory_listing c ON c.Vol_Category = m.E_Vol_Category and c.Vol_Code = m.E_Vol_Code;
-
-
-
--- -----------------------------------------------------
 -- View `vcleaning_log`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vcleaning_log` AS
@@ -455,6 +434,7 @@ CREATE OR REPLACE VIEW `vcron_log` AS
 		`cron_log` l
 	LEFT JOIN `cronjobs` `c` ON `l`.`idJob` = `c`.`idJob`;
 
+
 -- -----------------------------------------------------
 -- View `vcurrent_residents`
 -- -----------------------------------------------------
@@ -508,7 +488,8 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
         `v`.`Amount_Per_Guest` AS `Amount_Per_Guest`,
         IFNULL(`hs`.`idPsg`, 0) AS `idPsg`,
         IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
-        IFNULL(`hs`.`idHospital`, 0) AS `idHospital`
+        IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+        IFNULL(`m`.`Gender`, "") AS `Gender`
     FROM
         `stays` `s`
         LEFT JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit`
@@ -519,7 +500,7 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
         LEFT JOIN `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
         LEFT JOIN `name` `mp` ON `hs`.`idPatient` = `mp`.`idName`
         LEFT JOIN `resource` `re` ON `re`.`idResource` = `v`.`idResource`
-        LEFT JOIN gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = `m`.`Name_Suffix`
+        LEFT JOIN `gen_lookups` `g` on `g`.`Table_Name` = 'Name_Suffix' and `g`.`Code` = `m`.`Name_Suffix`
     WHERE
         (`s`.`Status` = 'a')
     ORDER BY `v`.`idVisit`;
@@ -530,24 +511,50 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
 -- -----------------------------------------------------
 
 CREATE or replace VIEW `v_docs`
-AS SELECT
+AS SELECT distinct
    `d`.`Timestamp` AS `Timestamp`,
    `d`.`Created_By` AS `Created_By`,
    `d`.`Title` AS `Title`,
    `d`.`idDocument` AS `Doc_Id`,
    `d`.`idDocument` AS `Action`,
    `d`.`idDocument` AS `ViewDoc`,
-   `n`.`Name_Full` AS `Guest`,
+   ifnull(`n`.`Name_Full`, '') AS `Guest`,
    `ld`.`idGuest` AS `Guest_Id`,
    `ld`.`idPSG` AS `PSG_Id`
 FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocument`))) left join `name` `n` on((`ld`.`idGuest` = `n`.`idName`))) where (`d`.`Status` not in ('d'));
+
+-- -----------------------------------------------------
+-- View `v_signed_reg_forms`
+-- -----------------------------------------------------
+
+CREATE OR REPLACE VIEW `v_signed_reg_forms` AS
+    SELECT 
+        `d`.`idDocument` AS `Doc_Id`,
+        `d`.`Mime_Type` AS `Mime_Type`,
+        `d`.`Doc` AS `Doc`,
+        `d`.`userData` AS `Signatures`,
+        JSON_VALUE(`d`.`Abstract`, '$.idResv') AS `Resv_Id`,
+        JSON_VALUE(`d`.`Abstract`, '$.idVisit') AS `Visit_Id`,
+        `ld`.`idGuest` AS `Guest_Id`,
+        `ld`.`idPSG` AS `PSG_Id`,
+        `d`.`Timestamp` AS `timestamp`
+    FROM
+        `document` `d`
+        JOIN `link_doc` `ld` on `d`.`idDocument` = `ld`.`idDocument`
+        LEFT JOIN `name` `n` ON `ld`.`idGuest` = `n`.`idName`
+    WHERE
+        `d`.`Status` <> 'd'
+            AND `d`.`Type` = 'reg'
+            AND `d`.`Abstract` <> ''
+  ORDER BY `d`.`idDocument` DESC;
+
 
 -- -----------------------------------------------------
 -- View `vdaily_waitlist`
 -- -----------------------------------------------------
 
 CREATE or replace VIEW `vdaily_waitlist` AS
-select 
+select
 	`r`.`idReservation`,
     `hs`.`MRN`,
     `p`.`Name_First` as "Patient First",
@@ -742,27 +749,6 @@ where (`e`.`idName` > 0) order by `e`.`idName`;
 
 
 -- -----------------------------------------------------
--- View `vdump_events`
--- -----------------------------------------------------
-CREATE or replace VIEW `vdump_events` AS
-select `m`.`idName` AS `Id`,
-`m`.`E_Title` AS `Title`,
-`m`.`E_Start` AS `Start Time`,
-`m`.`E_End` AS `End Time`,
-`m`.`E_Description` AS `Description`,
-ifnull(`gcat`.`Description`,'') AS `Vol Category`,
-ifnull(`gcod`.`Description`,'') AS `Vol Code`,
-`m`.`E_Status` AS `Status`,
-`m`.`Updated_By` AS `Updated By`,
-`m`.`Last_Updated` AS `Last_Updated`,
-`m`.`Timestamp` AS `Created On`
-from ((`mcalendar` `m` left join `gen_lookups` `gcat` on(((`m`.`E_Vol_Category` = `gcat`.`Code`) and (`gcat`.`Table_Name` = 'Vol_Category'))))
-left join `gen_lookups` `gcod` on(((`m`.`E_Vol_Code` = `gcod`.`Code`) and (`gcod`.`Table_Name` = `m`.`E_Vol_Category`))))
-where (`m`.`idName` > 0) order by `m`.`idName`;
-
-
-
--- -----------------------------------------------------
 -- View `vdump_name`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vdump_name` AS
@@ -818,25 +804,25 @@ where (`p`.`idName` > 0) order by `p`.`idName`;
 -- -----------------------------------------------------
 -- View `vdump_volunteer`
 -- -----------------------------------------------------
-CREATE or replace VIEW `vdump_volunteer` AS
-select `v`.`idName` AS `Id`,
-`g`.`Description` AS `Category`,
-`g2`.`Description` AS `Code`,
-`v`.`Vol_Status` AS `Status`,
-ifnull(`v`.`Vol_Notes`,'') AS `Notes`,
-ifnull(`v`.`Vol_Begin`,'') AS `Begin`,
-ifnull(`v`.`Vol_End`,'') AS `End`,
-ifnull(`v`.`Vol_Check_Date`,'') AS `Check Date`,
-ifnull(`gdor`.`Description`,'') AS `Dormancy`,
-ifnull(`g3`.`Description`,'') AS `Rank`,
-`v`.`Updated_By` AS `Updated By`,
-`v`.`Last_Updated` AS `Last_Updated`,
-`v`.`Timestamp` AS `Created on`
-from ((((`name_volunteer2` `v` left join `gen_lookups` `g` on(((`v`.`Vol_Category` = `g`.`Code`) and (`g`.`Table_Name` = 'Vol_Category'))))
-left join `gen_lookups` `g2` on(((`v`.`Vol_Code` = `g2`.`Code`) and (`g2`.`Table_Name` = `v`.`Vol_Category`))))
-left join `gen_lookups` `g3` on(((`g3`.`Code` = `v`.`Vol_Rank`) and (`g3`.`Table_Name` = 'Vol_Rank'))))
-left join `dormant_schedules` `gdor` on((`gdor`.`Code` = `v`.`Dormant_Code`)))
-where (`v`.`idName` > 0) order by `v`.`idName`,`g`.`Description`,`g2`.`Description`;
+-- CREATE or replace VIEW `vdump_volunteer` AS
+-- select `v`.`idName` AS `Id`,
+-- `g`.`Description` AS `Category`,
+-- `g2`.`Description` AS `Code`,
+-- `v`.`Vol_Status` AS `Status`,
+-- ifnull(`v`.`Vol_Notes`,'') AS `Notes`,
+-- ifnull(`v`.`Vol_Begin`,'') AS `Begin`,
+-- ifnull(`v`.`Vol_End`,'') AS `End`,
+-- ifnull(`v`.`Vol_Check_Date`,'') AS `Check Date`,
+-- ifnull(`gdor`.`Description`,'') AS `Dormancy`,
+-- ifnull(`g3`.`Description`,'') AS `Rank`,
+-- `v`.`Updated_By` AS `Updated By`,
+-- `v`.`Last_Updated` AS `Last_Updated`,
+-- `v`.`Timestamp` AS `Created on`
+-- from ((((`name_volunteer2` `v` left join `gen_lookups` `g` on(((`v`.`Vol_Category` = `g`.`Code`) and (`g`.`Table_Name` = 'Vol_Category'))))
+-- left join `gen_lookups` `g2` on(((`v`.`Vol_Code` = `g2`.`Code`) and (`g2`.`Table_Name` = `v`.`Vol_Category`))))
+-- left join `gen_lookups` `g3` on(((`g3`.`Code` = `v`.`Vol_Rank`) and (`g3`.`Table_Name` = 'Vol_Rank'))))
+-- left join `dormant_schedules` `gdor` on((`gdor`.`Code` = `v`.`Dormant_Code`)))
+-- where (`v`.`idName` > 0) order by `v`.`idName`,`g`.`Description`,`g2`.`Description`;
 
 
 
@@ -875,6 +861,45 @@ CREATE or replace VIEW `vemail_directory` AS
             and (`n`.`Exclude_Email` = 0)
             and (`ne`.`Email` <> ''));
 
+
+-- -----------------------------------------------------
+-- View `vfind_guests`
+-- -----------------------------------------------------
+CREATE  OR REPLACE VIEW `vfind_guests` AS
+    SELECT
+        `hs`.`idPsg` AS `idPsg`,
+        `rg`.`idGuest` AS `idGuest`,
+        `rg`.`idReservation` AS `idReservation`,
+        IFNULL(`r`.`Actual_Arrival`, `r`.`Expected_Arrival`) AS `Arrival_Date`,
+        IFNULL(`r`.`Actual_Departure`, `r`.`Expected_Departure`) AS `Departure_Date`,
+        `r`.`Status` AS `Status`,
+        `r`.`idResource` AS `idResource`,
+        'r' AS `Source`
+    FROM
+        ((`reservation_guest` `rg`
+        LEFT JOIN `reservation` `r` ON (`rg`.`idReservation` = `r`.`idReservation`))
+        LEFT JOIN `hospital_stay` `hs` ON (`r`.`idHospital_Stay` = `hs`.`idHospital_stay`))
+    WHERE
+        `r`.`Status` IN ('a' , 'uc', 'w', 's', 'co')
+    UNION SELECT
+        `hs`.`idPsg` AS `idPsg`,
+        `s`.`idName` AS `idGuest`,
+        `v`.`idReservation` AS `idReservation`,
+        `s`.`Span_Start_Date` AS `Arrival_Date`,
+        IFNULL(`s`.`Span_End_Date`, DATEDEFAULTNOW(`s`.`Expected_Co_Date`)) AS `Departure_Date`,
+        's' AS `Status`,
+        `v`.`idResource` AS `idResource`,
+        'v' AS `Source`
+    FROM
+        ((`stays` `s`
+        LEFT JOIN `visit` `v` ON (`s`.`idVisit` = `v`.`idVisit`
+            AND `s`.`Visit_Span` = `v`.`Span`))
+        LEFT JOIN `hospital_stay` `hs` ON (`v`.`idHospital_stay` = `hs`.`idHospital_stay`))
+    WHERE
+        `s`.`Status` IN ('a' , 'co', 'n', 'cp', '1');
+
+
+
 -- -----------------------------------------------------
 -- View `vform_listing`
 -- -----------------------------------------------------
@@ -909,7 +934,6 @@ CREATE OR REPLACE VIEW `vform_listing` AS
 -- -----------------------------------------------------
 -- View `vgetIncidentlisting`
 -- -----------------------------------------------------
-
 CREATE or replace VIEW `vgetIncidentlisting`
 AS SELECT
    `r`.`idReport` AS `idReport`,
@@ -922,7 +946,14 @@ AS SELECT
    `r`.`Timestamp` AS `Timestamp`,
    `r`.`Guest_Id` AS `Guest_Id`,
    `r`.`Psg_Id` AS `Psg_Id`
-FROM ((`report` `r` left join `name_guest` `ng` on((`r`.`Guest_Id` = `ng`.`idName`))) left join `name` `n` on((`ng`.`idName` = `n`.`idName`))) where ((`r`.`idReport` > 0) and (`r`.`Status` in ('a','r','h'))) group by `r`.`idReport`;
+FROM
+        ((`report` `r`
+        LEFT JOIN `name_guest` `ng` ON (`r`.`Guest_Id` = `ng`.`idName`
+            AND `r`.`Psg_Id` = `ng`.`idPsg`))
+        LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`))
+    WHERE
+        `r`.`idReport` > 0
+            AND `r`.`Status` IN ('a' , 'r', 'h');
 
 
 
@@ -939,7 +970,7 @@ CREATE OR REPLACE VIEW `vguest_audit_log` AS
         `Log_Text` AS `LogText`
     FROM
         `name_log`
-    UNION SELECT
+    UNION ALL SELECT
         `Timestamp` AS `LogDate`,
         `Log_Type` AS `LogType`,
         `Sub_Type` AS `Subtype`,
@@ -972,8 +1003,8 @@ Select
     ifnull(rv.Expected_Departure, '') as `Expected_Departure`,
     ifnull(rv.Actual_Arrival, '') as `Actual_Arrival`,
     IFNULL(rv.Actual_Departure, '') as `Actual_Departure`,
-    ifnull(ne.Email, '') as `Email`,
-    ifnull(np.Phone_Num, '') as `Phone`
+    case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end as `Email`,
+    case when (`n`.`Preferred_Phone` = 'no') then 'No Phone' else ifnull(`np`.`Phone_Num`, '') end as `Phone`
 from
     name_guest ng
             left join
@@ -1054,13 +1085,13 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
         `n`.`Name_Middle` AS `Middle`,
         `n`.`Name_Last` AS `Last`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
-        (CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' 
+        (CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone'
             WHEN (IFNULL(`np`.`Phone_Extension`, '') = '') THEN IFNULL(`np`.`Phone_Num`, '')
             ELSE CONCAT_WS('x',
                     `np`.`Phone_Num`,
                     `np`.`Phone_Extension`)
         END) AS `Phone`,
-        IFNULL(`ne`.`Email`, '') AS `Email`,
+        (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Email`,
         (CASE
             WHEN (IFNULL(`na`.`Address_2`, '') = '') THEN IFNULL(`na`.`Address_1`, '')
             ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),
@@ -1099,6 +1130,145 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
             AND (`n`.`Record_Member` = 1)
             AND (`n`.`Member_Status` IN ('a' , 'd', 'in')));
 
+
+-- -----------------------------------------------------
+-- View `vguest_search_sf`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_search_sf` AS
+    SELECT
+        `n`.`idName` AS `HHK_idName__c`,
+        `n`.`External_Id` AS `Id`,
+        `n`.`Name_First` AS `FirstName`,
+        `n`.`Name_Middle` AS `Middle_Name__c`,
+        `n`.`Name_Last` AS `LastName`,
+        IFNULL(`g2`.`Description`, '') AS `Suffix__c`,
+        n.Name_Nickname AS `Nickname__c`,
+        IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'),
+                '') AS `Birthdate`,
+        IFNULL(`ne`.`Email`, '') AS `Email`,
+        IFNULL(np.Phone_Num, '') AS `HomePhone`,
+        TRIM(CONCAT_WS(" ", IFNULL(na.Address_1, ''), IFNULL(na.Address_2, ''))) as `MailingStreet`,
+        IFNULL(`na`.`City`, '') AS `MailingCity`,
+        IFNULL(`na`.`State_Province`, '') AS `MailingState`,
+        IFNULL(`na`.`Postal_Code`, '') AS `MailingPostalCode`,
+        IFNULL(`na`.`Last_Updated`, '') AS `Addr_Updated`,
+        IFNULL(`na`.`Last_Verified`, '') AS `Addr_Verified`
+    FROM
+        `name` `n`
+        LEFT JOIN `name_address` `na` ON (`n`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`)
+        LEFT JOIN `name_email` `ne` ON (`n`.`idName` = `ne`.`idName`
+            AND `n`.`Preferred_Email` = `ne`.`Purpose`)
+        LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`)
+        LEFT JOIN `gen_lookups` `g2` ON (`n`.`Name_Suffix` = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix')
+    WHERE
+        `n`.`idName` > 0
+            AND `n`.`idName` IN (SELECT
+                `name_guest`.`idName`
+            FROM
+                `name_guest`)
+            AND `n`.`Record_Member` = 1
+            AND `n`.`Member_Status` IN ('a' , 'd', 'in');
+
+
+-- -----------------------------------------------------
+-- View `vguest_data_sf`
+-- -----------------------------------------------------
+CREATE  OR REPLACE VIEW `vguest_data_sf` AS
+     SELECT
+        `n`.`idName` AS `HHK_idName__c`,
+        `n`.`External_Id` AS `Id`,
+        IFNULL(`g1`.`Description`, '') AS `Salutation`,
+        `n`.`Name_First` AS `FirstName`,
+        `n`.`Name_Last` AS `LastName`,
+        `n`.`Name_Middle` AS `Middle_Name__c`,
+        IFNULL(`g2`.`Description`, '') AS `Suffix__c`,
+        `n`.`Name_Nickname` AS `Nickname__c`,
+        IFNULL(`g3`.`Description`, '')  AS `Gender__c`,
+        IFNULL(`ne`.`Email`, '') AS `Email`,
+        IFNULL(np.Phone_Num, '') AS `HomePhone`,
+        IFNULL(concat_ws(' ', na.Address_1, na.Address_2), '')  as `MailingStreet`,
+        IFNULL(`na`.`City`, '') AS `MailingCity`,
+        IFNULL(`na`.`State_Province`, '') AS `MailingState`,
+        IFNULL(`na`.`Postal_Code`, '') AS `MailingPostalCode`,
+        IFNULL(`cc`.`Country_Name`, '') AS `MailingCountry`,
+        IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'), '') as `Birthdate`,
+        CASE WHEN IFNULL(`ng1`.`Relationship_Code`, '') = '' THEN 'Family Member' ELSE 'Patient' END AS `Contact_Type__c`,
+        CASE WHEN IFNULL(`n`.`Date_Deceased`, '') = '' THEN 'false' ELSE 'true' END AS `Deceased__c`
+    FROM
+        `name` `n`
+        LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+        LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
+            AND `n`.`Preferred_Email` = `ne`.`Purpose`
+        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
+            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix'
+        LEFT JOIN `gen_lookups` `g3` ON `n`.`Gender` = `g3`.`Code`
+            AND `g3`.`Table_Name` = 'Gender'
+        LEFT JOIN `country_code` `cc` on `na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`
+        LEFT JOIN `name_guest` `ng1` ON `n`.`idName` = `ng1`.idName
+            AND `ng1`.`Relationship_Code` = 'slf'
+    WHERE
+        `n`.`idName` > 0
+            AND `n`.`idName` IN (SELECT
+                `name_guest`.`idName`
+            FROM
+                `name_guest`)
+            AND `n`.`Record_Member` = 1
+            AND `n`.`Member_Status` IN ('a' , 'd', 'in');
+
+-- CREATE  OR REPLACE VIEW `vguest_data_sf` AS
+--     SELECT
+--         `n`.`idName` AS `HHK_idName__c`,
+--         `n`.`External_Id` AS `Id`,
+--         IFNULL(`g1`.`Description`, '') AS `Salutation`,
+--         `n`.`Name_First` AS `FirstName`,
+--         `n`.`Name_Last` AS `LastName`,
+--         `n`.`Name_Middle` AS `Middle_Name__c`,
+--         IFNULL(`g2`.`Description`, '') AS `Suffix__c`,
+--         `n`.`Name_Nickname` AS `Nickname__c`,
+--         IFNULL(`g3`.`Description`, '') AS `Gender__c`,
+--         IFNULL(`ne`.`Email`, '') AS `Email`,
+--         IFNULL(`np`.`Phone_Num`, '') AS `HomePhone`,
+--         IFNULL(CONCAT_WS(' ', `na`.`Address_1`, `na`.`Address_2`), '') AS `MailingStreet`,
+--         IFNULL(`na`.`City`, '') AS `MailingCity`,
+--         IFNULL(`na`.`State_Province`, '') AS `MailingState`,
+--         IFNULL(`na`.`Postal_Code`, '') AS `MailingPostalCode`,
+--         IFNULL(`cc`.`Country_Name`, '') AS `MailingCountry`,
+--         IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'), '') AS `Birthdate`,
+--         CASE
+--             WHEN `n`.`Member_Status` = 'd' THEN 'true'
+--             ELSE 'false'
+--         END AS `Deceased__c`,
+--         `ng`.`Relationship_Code`,
+--         `p`.`idPatient` AS `PatientId`
+--     FROM
+-- 		`name_guest` ng
+-- 		JOIN `name` `n` ON `n`.`idName` = `ng`.`idName`
+--         LEFT JOIN `name_address` `na` ON (`n`.`idName` = `na`.`idName`
+--             AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`)
+--         LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
+--             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`)
+--         LEFT JOIN `name_email` `ne` ON (`n`.`idName` = `ne`.`idName`
+--             AND `n`.`Preferred_Email` = `ne`.`Purpose`)
+--         LEFT JOIN `gen_lookups` `g1` ON (`n`.`Name_Prefix` = `g1`.`Code`
+--             AND `g1`.`Table_Name` = 'Name_Prefix')
+--         LEFT JOIN `gen_lookups` `g2` ON (`n`.`Name_Suffix` = `g2`.`Code`
+--             AND `g2`.`Table_Name` = 'Name_Suffix')
+--         LEFT JOIN `gen_lookups` `g3` ON (`n`.`Gender` = `g3`.`Code`
+--             AND `g3`.`Table_Name` = 'Gender')
+--         LEFT JOIN `country_code` `cc` ON (`na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`)
+--         LEFT JOIN `psg` `p` ON `p`.`idPsg` = `ng`.`idPsg`
+--     WHERE
+--         `n`.`idName` > 0
+-- 		AND `n`.`Record_Member` = 1
+-- 		AND `n`.`Member_Status` IN ('a' , 'd', 'in');
 
 
 -- -----------------------------------------------------
@@ -1340,12 +1510,87 @@ WHERE
         AND p.idPayment_Method IN (1 , 2, 3, 4);
 
 
+-- -----------------------------------------------------
+-- View `vguest_transfer`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_transfer` AS
+    SELECT
+        `n`.`External_Id` AS `External Id`,
+        `n`.`idName` AS `HHK Id`,
+        CASE
+            WHEN `ng`.`Relationship_Code` = 'slf' THEN 'Yes'
+            ELSE ''
+        END AS `Patient`,
+        TRIM(CONCAT_WS(' ',
+                    IFNULL(`g1`.`Description`, ''),
+                    `n`.`Name_First`,
+                    `n`.`Name_Middle`,
+                    `n`.`Name_Last`,
+                    IFNULL(`g2`.`Description`, ''))) AS `Name`,
+        CASE
+            WHEN IFNULL(`na`.`Address_1`, '') = '' THEN ''
+            WHEN IFNULL(`na`.`Bad_Address`, '') <> '' THEN 'Bad Address'
+            ELSE TRIM(CONCAT_WS(', ',
+                        CASE
+                            WHEN IFNULL(`na`.`Address_2`, '') = '' THEN IFNULL(`na`.`Address_1`, '')
+                            ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),
+                                    ', ',
+                                    `na`.`Address_2`)
+                        END,
+                        IFNULL(`na`.`City`, ''),
+                        IFNULL(`na`.`State_Province`, ''),
+                        IFNULL(`na`.`Postal_Code`, ''),
+                        IFNULL(`na`.`Country_Code`, '')))
+        END AS `Address`,
+        CASE
+            WHEN IFNULL(`np`.`Phone_Extension`, '') = '' THEN IFNULL(`np`.`Phone_Num`, '')
+            ELSE CONCAT_WS('x',
+                    `np`.`Phone_Num`,
+                    `np`.`Phone_Extension`)
+        END AS `Phone`,
+        IFNULL(`ne`.`Email`, '') AS `Email`,
+        IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%m-%d-%Y'),
+                '') AS `Birthdate`,
+        IFNULL(`gn`.`Description`, '') AS `No Return`,
+        MAX(IFNULL(`s`.`Span_Start_Date`, '')) AS `Arrival`,
+        IFNULL(`s`.`Span_End_Date`, '') AS `Departure`,
+        IFNULL(`na`.`Bad_Address`, '') AS `Bad Addr`
+    FROM
+        `stays` `s`
+        JOIN `visit` `v` ON (`s`.`idVisit` = `v`.`idVisit`
+            AND `s`.`Visit_Span` = `v`.`Span`)
+        JOIN `name_guest` `ng` ON (`s`.`idName` = `ng`.`idName`)
+        LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`)
+        LEFT JOIN `name_address` `na` ON (`ng`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`)
+        LEFT JOIN `name_email` `ne` ON (`ng`.`idName` = `ne`.`idName`
+            AND `n`.`Preferred_Email` = `ne`.`Purpose`)
+        LEFT JOIN `name_phone` `np` ON (`ng`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`)
+        LEFT JOIN `name_demog` `nd` ON (`ng`.`idName` = `nd`.`idName`)
+        LEFT JOIN `gen_lookups` `g1` ON (`n`.`Name_Prefix` = `g1`.`Code`
+            AND `g1`.`Table_Name` = 'Name_Prefix')
+        LEFT JOIN `gen_lookups` `g2` ON (`n`.`Name_Suffix` = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix')
+        LEFT JOIN `gen_lookups` `g3` ON (`g3`.`Table_Name` = 'Patient_Rel_Type'
+            AND `g3`.`Code` = `ng`.`Relationship_Code`)
+		LEFT JOIN `gen_lookups` `gn` ON `gn`.`Table_Name` = 'NoReturnReason'
+			AND `gn`.`Code` = `nd`.`No_Return`
+
+    WHERE
+        `ng`.`idName` > 0
+            AND `n`.`Record_Member` = 1
+            AND `n`.`Member_Status` IN ('a' , 'd', 'in')
+    GROUP BY `s`.`idName`
+    ORDER BY `ng`.`idPsg`;
+
 
 -- -----------------------------------------------------
 -- View `vguest_view`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_view` AS
-    SELECT 
+    SELECT
+		 `s`.`idName`,
         IFNULL(CASE
                     WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
                     ELSE CONCAT(`n`.`Name_Last`, ' ', `g`.`Description`)
@@ -1353,7 +1598,10 @@ CREATE OR REPLACE VIEW `vguest_view` AS
                 '') AS `Last Name`,
         IFNULL(`n`.`Name_First`, '') AS `First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
-        CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' else IFNULL(`np`.`Phone_Num`, '') END AS `Phone`,
+        CASE
+            WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone'
+            ELSE IFNULL(`np`.`Phone_Num`, '')
+        END AS `Phone`,
         `s`.`Checkin_Date` AS `Arrival`,
         CASE
             WHEN `s`.`Expected_Co_Date` < CURRENT_TIMESTAMP() THEN CURRENT_TIMESTAMP()
@@ -1362,9 +1610,11 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         `s`.`On_Leave` AS `On_Leave`,
         TO_DAYS(CURRENT_TIMESTAMP()) - TO_DAYS(`s`.`Checkin_Date`) AS `Nights`,
         `hosp`.`Title` AS `Hospital`,
-		`diag`.`Description` as `Diagnosis`,
-        `loc`.`Description` as `Location`,
-        CONCAT(IFNULL(`ec`.`Name_First`, ''), " ", IFNULL(`ec`.`Name_Last`, '')) AS `EC Name`,
+        `diag`.`Description` AS `Diagnosis`,
+        `loc`.`Description` AS `Location`,
+        CONCAT(IFNULL(`ec`.`Name_First`, ''),
+                ' ',
+                IFNULL(`ec`.`Name_Last`, '')) AS `EC Name`,
         IFNULL(`ec`.`Phone_Home`, '') AS `EC Phone Home`,
         IFNULL(`ec`.`Phone_Alternate`, '') AS `EC Phone Alternate`,
         IFNULL(`v`.`Make`, '') AS `Make`,
@@ -1374,7 +1624,7 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         IFNULL(`v`.`License_Number`, '') AS `License Plate`,
         IFNULL(`v`.`Note`, '') AS `Note`
     FROM
-        (((((((((`stays` `s`
+        (((((((((((`stays` `s`
         LEFT JOIN `name` `n` ON (`n`.`idName` = `s`.`idName`))
         LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
@@ -1382,8 +1632,10 @@ CREATE OR REPLACE VIEW `vguest_view` AS
             AND `s`.`Visit_Span` = `vs`.`Span`))
         LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`))
         LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))
-        LEFT JOIN `gen_lookups` `diag` on (`diag`.`Table_Name` = 'Diagnosis' AND `diag`.`Code` = `hs`.`Diagnosis`)
-        LEFT JOIN `gen_lookups` `loc` on (`loc`.`Table_Name` = 'Location' AND `loc`.`Code` = `hs`.`Location`)
+        LEFT JOIN `gen_lookups` `diag` ON (`diag`.`Table_Name` = 'Diagnosis'
+            AND `diag`.`Code` = `hs`.`Diagnosis`))
+        LEFT JOIN `gen_lookups` `loc` ON (`loc`.`Table_Name` = 'Location'
+            AND `loc`.`Code` = `hs`.`Location`))
         LEFT JOIN `vehicle` `v` ON (`vs`.`idRegistration` = `v`.`idRegistration`))
         LEFT JOIN `emergency_contact` `ec` ON (`n`.`idName` = `ec`.`idName`))
         LEFT JOIN `room` `rm` ON (`s`.`idRoom` = `rm`.`idRoom`))
@@ -1641,6 +1893,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`p`.`Payment_Date`, 0) AS `Payment_Date`,
         IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+        IF(`rp`.`idPayment` > 0, 1, 0) AS `Has_ReturnPayment`,
         IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
         IFNULL(`p`.`Updated_By`, '') AS `Payment_Updated_By`,
         IFNULL(`p`.`Created_By`, '') AS `Payment_Created_By`,
@@ -1663,6 +1916,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         LEFT JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Item_Id` = 11 and `il`.`Deleted` < 1
         LEFT JOIN `payment_invoice` `pi` ON `i`.`idInvoice` = `pi`.`Invoice_Id`
         LEFT JOIN `payment` `p` ON `pi`.`Payment_Id` = `p`.`idPayment`
+        LEFT JOIN `payment` `rp` ON `p`.`idPayment` = `rp`.`parent_idPayment` and `rp`.`Is_Refund` > 0
         LEFT JOIN `payment_auth` `pa` ON `pi`.`Payment_Id` = `pa`.`idPayment`
         LEFT JOIN `payment_info_check` `pc` ON `pi`.`Payment_Id` = `pc`.`idPayment`
         LEFT JOIN `payment_method` `pm` ON `p`.`idPayment_Method` = `pm`.`idPayment_method`
@@ -1711,6 +1965,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`p`.`Payment_Date`, '') AS `Payment_Date`,
         IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+        IF(`rp`.`idPayment` > 0, 1, 0) AS `Has_ReturnPayment`,
         IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
         IFNULL(`p`.`Updated_By`, '') AS `Payment_Updated_By`,
         IFNULL(`p`.`Created_By`, '') AS `Payment_Created_By`,
@@ -1730,6 +1985,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`pc`.`Check_Number`, '') AS `Check_Number`
     FROM
         `payment` `p`
+        LEFT JOIN `payment` `rp` ON `p`.`idPayment` = `rp`.`parent_idPayment` and `rp`.`Is_Refund` > 0
         LEFT JOIN `payment_auth` `pa` ON `p`.`idPayment` = `pa`.`idPayment`
         LEFT JOIN `payment_info_check` `pc` ON `p`.`idPayment` = `pc`.`idPayment`
         LEFT JOIN `payment_method` `pm` ON `p`.`idPayment_Method` = `pm`.`idPayment_method`
@@ -1745,6 +2001,15 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
             AND (`g1`.`Table_Name` = 'Invoice_Status')
     ORDER BY i.idInvoice, p.idPayment, pa.idPayment_auth;
 
+
+-- -----------------------------------------------------
+-- View `vlist_first_visit`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vlist_first_visit` AS
+select v.* from visit v
+join registration reg on v.idRegistration = reg.idRegistration
+
+where v.Status in ("a", "co") and v.Arrival_Date = (select min(vv.Arrival_Date) from visit vv join registration reg2 on vv.idRegistration = reg2.idRegistration where reg.idPsg = reg2.idPsg and not date(vv.Arrival_Date) <=> date(vv.Actual_Departure));
 
 
 -- -----------------------------------------------------
@@ -1821,9 +2086,9 @@ select
     c.Vol_Code_Title AS `Vol_Code_Title`,
     c.Colors AS `Colors`,
     nv.Vol_Status AS `Vol_Status`,
-    d.Begin_Active AS `Dormant_Begin_Active`,
-    d.End_Active AS `Dormant_End_Active`,
-    ifnull(d.Title,'') as `Dormant_Title`,
+    '' AS `Dormant_Begin_Active`,
+    '' AS `Dormant_End_Active`,
+    '' as `Dormant_Title`,
     ifnull(nv.Vol_Notes, '') AS `Vol_Notes`,
     nv.Vol_Begin AS `Vol_Begin`,
     nv.Vol_End AS `Vol_End`,
@@ -1834,7 +2099,7 @@ select
 from
     name_volunteer2 nv
     left join vcategory_listing c ON nv.Vol_Category = c.Vol_Category and nv.Vol_Code = c.Vol_Code
-    left join dormant_schedules d ON nv.Dormant_Code = d.Code and d.Status = 'a'
+    -- left join dormant_schedules d ON nv.Dormant_Code = d.Code and d.Status = 'a'
     left join gen_lookups gr ON gr.Table_Name = 'Vol_Rank' and gr.Code = nv.Vol_Rank
     left join gen_lookups gstat ON gstat.Table_Name = 'Vol_Status' and gstat.Code = nv.Vol_Status
     left join name on nv.idName = name.idName
@@ -1889,51 +2154,6 @@ CREATE or replace VIEW `vmember_directory` AS
 
 
 -- -----------------------------------------------------
--- View `vmy_events`
--- -----------------------------------------------------
-CREATE OR replace VIEW `vmy_events` AS
-select
-    m.idmcalendar AS idmcalendar,
-    m.idName AS idName,
-    m.idName2 AS idName2,
-
-    m.E_Title AS E_Title,
-    m.E_Start AS E_Start,
-    m.E_End AS E_End,
-    m.E_URL AS E_URL,
-    m.E_ClassName AS E_ClassName,
-    m.E_Editable AS E_Editable,
-    m.E_Description AS E_Description,
-    m.E_AllDay AS E_AllDay,
-    m.E_Vol_Category AS E_Vol_Category,
-    m.E_Vol_Code AS E_Vol_Code,
-    m.E_Status AS E_Status,
-    m.E_Take_Overable AS E_Take_Overable,
-    m.E_Fixed_In_Time AS E_Fixed_In_Time,
-    m.E_Shell AS E_Shell,
-    m.E_Locked AS E_Locked,
-    m.E_Shell_Id AS E_Shell_Id,
-    m.E_Rpt_Id AS E_Rpt_Id,
-    m.E_Show_All AS E_Show_All,
-    ifnull(v.Name_First, '') AS First,
-    ifnull(v.Name_Last, '') AS Last,
-    ifnull(v2.Name_First, '') AS First2,
-    ifnull(v2.Name_Last, '') AS Last2,
-    c.Vol_Code_Title AS Vol_Description,
-    c.Show_Email_Delete AS Show_Email_Delete,
-    c.Hide_Add_Members AS Hide_Add_Members,
-    c.Show_AllCategory AS Show_AllCategory,
-    c.Cal_House
-from
-    mcalendar m
-
-    left join name v ON m.idName = v.idName and v.Member_Status = 'a'
-    left join name v2 ON m.idName2 = v2.idName and v2.Member_Status = 'a'
-    left join vcategory_listing c ON c.Vol_Category = m.E_Vol_Category and c.Vol_Code = m.E_Vol_Code;
-
-
-
--- -----------------------------------------------------
 -- View `vname_list`
 -- -----------------------------------------------------
 create or replace view `vname_list` as
@@ -1944,13 +2164,13 @@ create or replace view `vname_list` as
         `n`.`Name_Middle` AS `Middle`,
         `n`.`Name_Last` AS `Last`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
-        (CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone'
+        (CASE WHEN (`n`.`Preferred_Phone` = 'no') THEN 'No Phone'
             WHEN (IFNULL(`np`.`Phone_Extension`, '') = '') THEN IFNULL(`np`.`Phone_Num`, '')
             ELSE CONCAT_WS('x',
                     `np`.`Phone_Num`,
                     `np`.`Phone_Extension`)
         END) AS `Phone`,
-        IFNULL(`ne`.`Email`, '') AS `Email`,
+        (case when (`n`.`Preferred_Email` = 'no') then 'No Email' else ifnull(`ne`.`Email`,'') end) AS `Email`,
         (CASE
             WHEN (IFNULL(`na`.`Address_2`, '') = '') THEN IFNULL(`na`.`Address_1`, '')
             ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),
@@ -1962,7 +2182,11 @@ create or replace view `vname_list` as
         IFNULL(`na`.`State_Province`, '') AS `State`,
         IFNULL(`na`.`Postal_Code`, '') AS `Zip`,
         IFNULL(`na`.`Country_Code`, '') AS `Country`,
+        IFNULL(`na`.`Meters_From_House`, '') AS `Meters_From_House`,
+        IFNULL(`na`.`Bad_Address`, '') AS `Bad_Address`,
         IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
+        IFNULL(`n`.`Date_Deceased`, '') AS `Date_Deceased`,
+        `n`.`Member_Status` AS `Member_Status`,
         IFNULL(`n`.`External_Id`, '') AS `External_Id`
     FROM
         `name` `n`
@@ -2025,34 +2249,14 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         n.`Timestamp`
     FROM
         note n
-            JOIN
+    JOIN
         reservation_note rn ON n.idNote = rn.Note_Id
-			JOIN
-		reservation r ON rn.Reservation_Id = r.idReservation
-			JOIN
-		registration reg on r.idRegistration = reg.idRegistration
+    JOIN
+        reservation r ON rn.Reservation_Id = r.idReservation
+    JOIN
+	registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0'
-	UNION SELECT
-        n.idNote AS `Note_Id`,
-        n.idNote AS `Action`,
-        n.flag,
-        n.User_Name,
-        n.Title,
-        n.Note_Text,
-        "",
-        reg.idPsg,
-        n.`Timestamp`
-    FROM
-        note n
-            JOIN
-        reservation_note rn ON n.idNote = rn.Note_Id
-			join
-		reservation r ON rn.Reservation_Id = r.idReservation
-			join
-		registration reg on r.idRegistration = reg.idRegistration
-    WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1';
+        rn.Reservation_Id > 0 && n.`Status` = 'a';
 
 
 -- -----------------------------------------------------
@@ -2193,78 +2397,48 @@ from
 
 
 -- -----------------------------------------------------
--- View `vrecent_calevents`
--- -----------------------------------------------------
-CREATE or replace VIEW `vrecent_calevents` AS
-    select
-	m.Last_Updated as `Last Updated`,
-        `m`.`E_Title` AS `Title`,
-        `c`.`Vol_Code_Title` AS `Category`,
-	ifnull(g.Description, '') as `Status`,
-        `m`.`E_Start` AS `Start`,
-        `m`.`E_End` AS `End`,
-        ifnull(`v`.`Name_First`, '') AS `First`,
-        ifnull((case when v.Name_Suffix = '' then v.Name_Last else concat(v.Name_Last, ' ', gs.Description) end), '') AS `Last`,
-	m.Updated_By as `Updated By`
-    from
-        `mcalendar` `m`
-        left join `name` `v` ON `m`.`idName` = `v`.`idName`
-            and `v`.`Member_Status` = 'a'
-        left join `vcategory_listing` `c` ON `c`.`Vol_Category` = `m`.`E_Vol_Category`
-            and `c`.`Vol_Code` = `m`.`E_Vol_Code`
-	left join gen_lookups g on g.Table_Name = 'Cal_Event_Status' and g.Code = m.E_Status
-	left join gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = v.Name_Suffix;
-
-
-
-
--- -----------------------------------------------------
 -- View `vregister`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vregister` AS
-select
-        concat(`v`.`idVisit`, v.Span) AS `id`,
-        v.idVisit as idVisit,
-        v.Span as `Span`,
-        `v`.`idRegistration`,
-        `v`.`idResource`,
+   SELECT
+        CONCAT(`v`.`idVisit`, `v`.`Span`) AS `id`,
+        `v`.`idVisit` AS `idVisit`,
+        `v`.`Span` AS `Span`,
+        `v`.`idRegistration` AS `idRegistration`,
+        `v`.`idResource` AS `idResource`,
+        `v`.`idReservation` AS `idReservation`,
         `v`.`Status` AS `Visit_Status`,
-        `v`.`Span_Start`,
-        `v`.`Expected_Departure`,
-        `v`.`Span_End`,
+        `v`.`Span_Start` AS `Span_Start`,
+        `v`.`Expected_Departure` AS `Expected_Departure`,
+        `v`.`Span_End` AS `Span_End`,
         `v`.`Notes` AS `Ribbon_Note`,
-        gv.Description as `Status_Text`,
-        ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
-        ifnull(hs.idAssociation, 0) as `idAssociation`,
-        ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') as `Guest Last`,
-        n.Name_Full,
-        n.Gender,
-        nd.Newsletter,
-        nd.Photo_Permission,
-        nd.Media_Source,
-        nd.Ethnicity,
-        nd.Income_Bracket,
-        nd.Age_Bracket,
-        nd.Education_Level,
-        nd.Special_Needs,
-        s.On_Leave,
-        count(s.idName) as `Guest_Count`
-    from
-        `visit` `v`
-            left join
-        hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-            left join
-        `name` n on v.idPrimaryGuest = n.idName
-            left join
-	`name_demog` nd on v.idPrimaryGuest = nd.idName
-            left join
-	stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and v.`Status` = s.`Status`
-            left join
-        gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix
-            left join
-        gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status
-    group by v.idVisit, v.Span
-    order by v.idVisit, v.Span;
+        `gv`.`Description` AS `Status_Text`,
+        IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+        IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
+        IFNULL(CASE
+                    WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
+                    ELSE CONCAT(`n`.`Name_Last`, ' ', `gs`.`Description`)
+                END,
+                '') AS `Guest Last`,
+        `n`.`Name_Full` AS `Name_Full`,
+        `n`.`Gender` AS `Gender`,
+        `nd`.`Newsletter` AS `Newsletter`,
+        `nd`.`Photo_Permission` AS `Photo_Permission`,
+        `nd`.`Media_Source` AS `Media_Source`,
+        `nd`.`Ethnicity` AS `Ethnicity`,
+        `nd`.`Income_Bracket` AS `Income_Bracket`,
+        `nd`.`Age_Bracket` AS `Age_Bracket`,
+        `nd`.`Education_Level` AS `Education_Level`,
+        `nd`.`Special_Needs` AS `Special_Needs`
+    FROM
+        (((((`visit` `v`
+        LEFT JOIN `hospital_stay` `hs` ON (`v`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `name` `n` ON (`v`.`idPrimaryGuest` = `n`.`idName`))
+        LEFT JOIN `name_demog` `nd` ON (`v`.`idPrimaryGuest` = `nd`.`idName`))
+        LEFT JOIN `gen_lookups` `gs` ON (`gs`.`Table_Name` = 'Name_Suffix'
+            AND `gs`.`Code` = `n`.`Name_Suffix`))
+        LEFT JOIN `gen_lookups` `gv` ON (`gv`.`Table_Name` = 'Visit_Status'
+            AND `gv`.`Code` = `v`.`Status`));
 
 
 
@@ -2360,8 +2534,8 @@ CREATE or Replace VIEW `vreservation_events` AS
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end
          as `idAssociation`,
-	ifnull(gl.Description, '') as `Location`,
-	ifnull(gd.Description, '') as `Diagnosis`,
+		ifnull(gl.Description, '') as `Location`,
+		ifnull(gd.Description, '') as `Diagnosis`,
         ifnull(`re`.`Title`, '') AS `Room Title`,
         r.idRegistration,
         r.Confirmation,
@@ -2370,7 +2544,24 @@ CREATE or Replace VIEW `vreservation_events` AS
         r.`Updated_By`,
         r.`Checkin_Notes`,
         ifnull(hs.idPsg, 0) as `idPsg`,
-        ifnull(rg.idGuest, 0) as `Patient_Staying`
+        ifnull(rg.idGuest, 0) as `Patient_Staying`,
+        CASE WHEN s.Value = 'true' AND r.`Status` in ('a', 'uc',  'w') THEN ifnull(
+	        (select sum(invoice_line.Amount)
+			from
+	        invoice_line
+	            join
+	        invoice ON invoice_line.Invoice_Id = invoice.idInvoice
+			        AND invoice_line.Item_Id = 10
+			        AND invoice_line.Deleted = 0
+	            join
+	    	reservation_invoice ON invoice.idInvoice = reservation_invoice.Invoice_Id
+		    where
+		        invoice.Deleted = 0
+		        AND invoice.Order_Number = 0
+		        AND reservation_invoice.Reservation_Id = r.idReservation
+		        AND invoice.`Status` = 'p'), 0)
+		ELSE 0 END as `PrePaymt`,
+		ifnull(na.Set_Incomplete, 0) as `Incomplete_Address`
     from
         `reservation` `r`
             left join
@@ -2384,8 +2575,10 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
-	`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+		`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
             left join
+        `name_address` na on n.idName = na.idName and na.Purpose = 1
+        	left join
         `name` n2 ON hs.idPatient = n2.idName
             left join
         gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix
@@ -2394,7 +2587,10 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join
         gen_lookups gl on gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
             left join
-        gen_lookups gd on gd.`Table_Name` = 'Diagnosis' and gd.`Code` = hs.Diagnosis;
+        gen_lookups gd on gd.`Table_Name` = 'Diagnosis' and gd.`Code` = hs.Diagnosis
+        , sys_config s
+	where
+		s.Key = 'AcceptResvPaymt';
 
 
 
@@ -2440,7 +2636,7 @@ where s.`Status` = 'a';
 -- View `vreservation_guests`
 -- -----------------------------------------------------
 create or replace view `vreservation_guests` as
-SELECT 
+SELECT
     r.idReservation,
     r.idGuest,
     ng.idPsg,
@@ -2587,8 +2783,6 @@ CREATE or replace VIEW `vresources_ready` AS
     order by `re`.`Type` desc , `re`.`Util_Priority`;
 
 
-
-
 -- -----------------------------------------------------
 -- View `vresv_patient`
 -- -----------------------------------------------------
@@ -2626,13 +2820,28 @@ CREATE or replace VIEW `vresv_patient` AS
         ifnull(`h`.`idPsg`, 0) AS `idPsg`,
         ifnull(v.idVisit, 0) as idVisit,
         ifnull(v.Span, 0) as Span,
-        ifnull(v.Status, '') as Visit_Status
+        ifnull(v.Status, '') as Visit_Status,
+        CASE WHEN s.Value = 'true' and r.`Status` in ('a', 'uc', 'w')
+          THEN ifnull((select sum(il.Amount)
+			from
+			    invoice_line il
+			        join
+			    invoice i ON il.Invoice_Id = i.idInvoice  and i.Deleted = 0 and i.Status = 'p'
+					join
+				reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
+			where
+			    il.Item_Id = 10
+					AND i.Order_Number = 0
+			        and il.Deleted = 0
+                    AND `ri`.`Reservation_Id` = `r`.`idReservation`), 0)
+		  ELSE 0 END as `PrePaymt`
     from
         `reservation` `r`
         left join visit v on r.idReservation = v.idReservation and v.Status = 'a'
         left join `hospital_stay` `h` ON `r`.`idHospital_Stay` = `h`.`idHospital_stay`
         left join resource re on r.idResource = re.idResource
-        left join `name` `n` ON `h`.`idPatient` = `n`.`idName`;
+        left join `name` `n` ON `h`.`idPatient` = `n`.`idName`
+        left join `sys_config` `s` ON `s`.`Key` = 'AcceptResvPaymt';
 
 
 
@@ -2717,6 +2926,7 @@ CREATE or replace VIEW `vspan_listing` AS
         `v`.`Pledged_Rate`,
         `v`.`Rate_Category`,
         v.idRoom_Rate,
+        v.idRateAdjust,
         v.Rate_Glide_Credit,
         case when ifnull(hs.MRN, '') = '' then ifnull(n.Name_Full, '') else concat( ifnull(n.Name_Full, '') ,' (' , ifnull(hs.MRN, '') , ')') end
          as `Patient_Name`,
@@ -2912,9 +3122,9 @@ concat_ws(' ',`vm`.`Address_1`,`vm`.`Address_2`) AS `Address`,
 `vm`.`City` AS `City`,
 `vm`.`StateProvince` AS `State`,
 `vm`.`PostalCode` AS `Zip`,
-ifnull(`d`.`Title`,'') AS `Title`,
-cast(`d`.`Begin_Active` as date) AS `Begin_Active`,
-cast(`d`.`End_Active` as date) AS `End_Active`,
+'' AS `Title`,
+'' AS `Begin_Active`,
+'' AS `End_Active`,
 ifnull(`nv`.`Vol_Notes`,'') AS `Vol_Notes`,
 `vm`.`Member_Type` AS `Member_Type`,
 `nv`.`Vol_Begin` AS `Vol_Begin`,
@@ -2922,49 +3132,11 @@ ifnull(`nv`.`Vol_Notes`,'') AS `Vol_Notes`,
 ifnull(`gr`.`Description`,'') AS `Vol_Rank`,
 `nv`.`Vol_Check_Date` AS `Check_Date`,
 `nv`.`Vol_Rank` AS `Vol_Rank_Code`
-from (((((`vmember_listing` `vm` join `name_volunteer2` `nv` on(((`vm`.`Id` = `nv`.`idName`) and (`vm`.`MemberStatus` = 'a'))))
-left join `dormant_schedules` `d` on(((`nv`.`Dormant_Code` = `d`.`Code`) and (`d`.`Status` = 'a'))))
-left join `gen_lookups` `g` on(((`nv`.`Vol_Code` = `g`.`Code`) and (`g`.`Table_Name` = `nv`.`Vol_Category`))))
-left join `gen_lookups` `gr` on(((`nv`.`Vol_Rank` = `gr`.`Code`) and (`gr`.`Table_Name` = 'Vol_Rank'))))
-left join `gen_lookups` `gc` on(((`nv`.`Vol_Category` = `gc`.`Code`) and (`gc`.`Table_Name` = 'Vol_Category'))));
-
-
-
-
--- -----------------------------------------------------
--- View `vvol_checkdates`
--- -----------------------------------------------------
-CREATE or replace VIEW `vvol_checkdates` AS
-select `vc`.`Id` AS `Id`,
-`vc`.`Check_Date` AS `Check Date`,
-`vc`.`Category` AS `Category`,
-`vc`.`Description` AS `Description`,
-`vc`.`Vol_Notes` AS `Notes`,
-`vc`.`Name_Last` AS `Last Name`,
-`vc`.`Name_First` AS `First Name`,
-`vc`.`PreferredPhone` AS `Phone`,
-`vc`.`Address` AS `Address`,
-`vc`.`City` AS `City`,
-`vc`.`State` AS `State`,
-`vc`.`Zip` AS `Zip`,
-`vc`.`PreferredEmail` AS `Email`
-from `vvol_categories2` `vc`
-where ((`vc`.`Vol_Status` = 'a') and (`vc`.`Check_Date` is not null))
-union select `vd`.`Id` AS `Id`,
-`nd`.`Contact_Date` AS `Check Date`,
-'General' AS `Category`,
-'General Notes' AS `Description`,
-ifnull(`nd`.`Gen_Notes`,'') AS `Notes`,
-(case when (`vd`.`MemberRecord` = 1) then `vd`.`Name_Last` else `vd`.`Company` end) AS `Last Name`,
-(case when (`vd`.`MemberRecord` = 1) then `vd`.`Name_First` else '' end) AS `First Name`,
-`vd`.`Preferred_Phone` AS `Phone`,
-concat_ws(' ',`vd`.`Address_1`,`vd`.`Address_2`) AS `Address`,
-`vd`.`City` AS `City`,
-`vd`.`StateProvince` AS `State`,
-`vd`.`PostalCode` AS `Zip`,
-`vd`.`Preferred_Email` AS `Email`
-from (`name_demog` `nd` join `vmember_listing` `vd` on(((`nd`.`idName` = `vd`.`Id`) and (`nd`.`Contact_Date` is not null))));
-
+from `vmember_listing` `vm` join `name_volunteer2` `nv` on `vm`.`Id` = `nv`.`idName` and `vm`.`MemberStatus` = 'a'
+-- left join `dormant_schedules` `d` on(((`nv`.`Dormant_Code` = `d`.`Code`) and (`d`.`Status` = 'a'))))
+left join `gen_lookups` `g` on `nv`.`Vol_Code` = `g`.`Code` and `g`.`Table_Name` = `nv`.`Vol_Category`
+left join `gen_lookups` `gr` on `nv`.`Vol_Rank` = `gr`.`Code` and `gr`.`Table_Name` = 'Vol_Rank'
+left join `gen_lookups` `gc` on `nv`.`Vol_Category` = `gc`.`Code` and `gc`.`Table_Name` = 'Vol_Category';
 
 
 
@@ -2973,7 +3145,7 @@ from (`name_demog` `nd` join `vmember_listing` `vd` on(((`nd`.`idName` = `vd`.`I
 -- -----------------------------------------------------
 CREATE or replace VIEW `vweb_users` AS
 select
-    v.Id AS Id,
+    v.idName AS Id,
     concat_ws(' ', v.Name_First, v.Name_Last) AS Name,
     u.User_Name AS Username,
     ifnull(i.Name, "Local") as "Type",
@@ -2984,7 +3156,7 @@ select
     u.Last_Login AS `Last Login`,
     IF(`u`.`idIdp` > 0, '', `u`.`PW_Change_Date`) AS `Password Changed`,
     CASE
-		WHEN `u`.`idIdp` > 0 THEN CONCAT('Managed by ', `i`.`Name`)
+        WHEN `u`.`idIdp` > 0 THEN CONCAT('Managed by ', `i`.`Name`)
         WHEN `u`.`Chg_PW` THEN 'Next Login'
         WHEN (`u`.`pass_rules` = 0 || `sc`.`Value` = 0) THEN 'Never'
         WHEN `u`.`PW_Change_Date`
@@ -3002,38 +3174,15 @@ select
     DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
 from
     ((((w_users u
-    left join vmember_listing v ON ((u.idName = v.Id)))
+    left join `name` v ON ((u.idName = v.idName)))
     left join w_auth a ON ((u.idName = a.idName)))
 	left join id_securitygroup s on s.idName = u.idName
 	left join w_groups wg on s.Group_Code = wg.Group_Code
     left join gen_lookups gr ON (((a.Role_Id = gr.Code) and (gr.Table_Name = 'Role_Codes'))))
     left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status')))
     left join sys_config sc ON (sc.Key = 'passResetDays')
-    left join w_idp i ON (u.idIdp = i.idIdp));
+    left join w_idp i on (u.idIdp = i.idIdp));
 
 
-
-
--- -----------------------------------------------------
--- View `vweb_volunteers`
--- -----------------------------------------------------
-CREATE or replace VIEW `vweb_volunteers` AS
-select `u`.`idName` AS `Id`,
-(case when isnull(`n`.`Name_First`) then `f`.`fb_First_Name` else `n`.`Name_First` end) AS `First`,
-(case when isnull(`n`.`Name_Last`) then `f`.`fb_Last_Name` else `n`.`Name_Last` end) AS `Last`,
-`f`.`PIFH_Username` AS `Username`,
-`gf`.`Description` AS `Status`,
-(case when (`f`.`Access_Code` = 'web') then 'Web' else 'Facebook' end) AS `Access`,
-`gr`.`Description` AS `Role`,
-`f`.`fb_Phone` AS `Phone`,
-`f`.`fb_Email` AS `Email`,
-`u`.`Last_Login` AS `Last Login`,
-`u`.`Updated_By` AS `Updated By`,
-`u`.`Last_Updated` AS `Last Updated`
-from ((((((`fbx` `f` left join `w_users` `u` on((`f`.`idName` = `u`.`idName`)))
-left join `name` `n` on((`f`.`idName` = `n`.`idName`)))
-left join `w_auth` `a` on((`f`.`idName` = `a`.`idName`)))
-left join `gen_lookups` `gr` on(((`a`.`Role_Id` = `gr`.`Code`) and (`gr`.`Table_Name` = 'Role_Codes'))))
-left join `gen_lookups` `gs` on(((`u`.`Status` = `gs`.`Code`) and (`gs`.`Table_Name` = 'Web_User_Status'))))
-left join `gen_lookups` `gf` on(((`f`.`Status` = `gf`.`Code`) and (`gf`.`Table_Name` = 'FB_Status'))))
-where (`n`.`idName` > 0);
+CREATE OR REPLACE VIEW `vcurrent_operating_hours` AS
+select * from operating_schedules where End_Date is null group by Day having max(idDay);

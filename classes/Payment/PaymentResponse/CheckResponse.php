@@ -19,10 +19,26 @@ use HHK\Tables\EditRS;
 
 class CheckResponse extends AbstractPaymentResponse {
 
+    /**
+     * Summary of idInfoCheck
+     * @var mixed
+     */
     public $idInfoCheck;
 
+    /**
+     * Summary of checkNumber
+     * @var string
+     */
     protected $checkNumber;
 
+    /**
+     * Summary of __construct
+     * @param float $amount
+     * @param int $idPayor
+     * @param string $invoiceNumber
+     * @param string $checkNumber
+     * @param string $payNotes
+     */
     function __construct($amount, $idPayor, $invoiceNumber, $checkNumber = '', $payNotes = '') {
 
         $this->paymentType = PayType::Check;
@@ -42,12 +58,23 @@ class CheckResponse extends AbstractPaymentResponse {
         return AbstractCreditPayments::STATUS_APPROVED;
     }
 
+    /**
+     * Summary of receiptMarkup
+     * @param \PDO $dbh
+     * @param mixed $tbl
+     * @return void
+     */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Check:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
         $tbl->addBodyTr(HTMLTable::makeTd('Check Number:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
     }
 
+    /**
+     * Summary of recordInfoCheck
+     * @param \PDO $dbh
+     * @return void
+     */
     public function recordInfoCheck(\PDO $dbh) {
 
         if ($this->getIdPayment() > 0) {
@@ -63,6 +90,10 @@ class CheckResponse extends AbstractPaymentResponse {
 
     }
 
+    /**
+     * Summary of getCheckNumber
+     * @return mixed
+     */
     public function getCheckNumber() {
         return $this->checkNumber;
     }

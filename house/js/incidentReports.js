@@ -173,7 +173,7 @@
 
         var $ul, $li;
 
-        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons');
+        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons hhk-flex');
 
         // Edit icon
         $li = $('<li title="Edit Incident" data-incidentid="' + reportId + '" />').addClass('hhk-report-button incident-edit ui-corner-all ui-state-default');
@@ -218,7 +218,7 @@
         }
 
         if (error == true) {
-            settings.alertMessage("Incident not saved. Check fields in red.", 'alert');
+            settings.alertMessage("Incident not saved. Check fields in red.", 'error');
         } else {
             var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
             var data = $wrapper.incidentdialog.find("form").serialize();
@@ -239,10 +239,12 @@
                     if (data.idReport > 0) {
                         if (print) {
                             Print($wrapper, settings, data.idReport);
+                            
+                        }else{
+                            $wrapper.incidentdialog.dialog("close");
+                            clearform($wrapper);
                         }
                         $table.ajax.reload();
-                        $wrapper.incidentdialog.dialog("close");
-                        clearform($wrapper);
                     } else {
                         if (data.error) {
                             settings.alertMessage(data.error, 'alert');
@@ -443,12 +445,6 @@
                             '</td>' +
                             '</tr>' +
                             '<tr>' +
-                            '<td class="tdlabel">Author</td>' +
-                            '<td>' +
-                            data.createdBy +
-                            '</td>' +
-                            '</tr>' +
-                            '<tr>' +
                             '<td class="tdlabel">Description</td>' +
                             '<td>' +
                             data.description +
@@ -492,7 +488,7 @@
                         body += '<tr>' +
                                 '<td class="tdlabel">Updated</td>' +
                                 '<td>' +
-                                data.updatedBy + ' - ' + data.updatedAt +
+                                data.updatedAt +
                                 '</td>' +
                                 '</tr>';
                     }
@@ -503,7 +499,7 @@
                     mywindow.document.write('<html><head><title>' + document.title + '</title>');
                     mywindow.document.write('<link href="css/house.css" rel="stylesheet" type="text/css">');
                     mywindow.document.write('<link href="css/incidentReports.css" rel="stylesheet" type="text/css">');
-                    mywindow.document.write('</head><body class="PrintArea hhk-visitdialog hhk-tdbox">');
+                    mywindow.document.write('</head><body id="incidentReport" class="PrintArea hhk-visitdialog hhk-tdbox">');
                     mywindow.document.write('<h2>' + document.title + ' - Incident Report</h2>');
                     mywindow.document.write(body);
                     mywindow.document.write('</body></html>');
@@ -511,8 +507,8 @@
                     mywindow.document.close(); // necessary for IE >= 10
                     mywindow.focus(); // necessary for IE >= 10*/
 
-                    mywindow.print();
-                    //mywindow.close();
+                    mywindow.addEventListener('load', function(){mywindow.print();}, true);
+                    mywindow.addEventListener('afterprint', function(){mywindow.close(); $wrapper.incidentdialog.dialog("close");}, true);
 
                 } else {
 
@@ -593,6 +589,12 @@
                 autoOpen: false,
                 modal: true,
                 width: getDialogWidth(800),
+                open: function(event, ui){
+                    $(document).find(".ui-widget-overlay").addClass("hhk-private-dialog");
+                },
+                close: function(event, ui){
+                    $(document).find(".ui-widget-overlay").removeClass("hhk-private-dialog");
+                },
                 buttons: {
                     Cancel: function () {
                         $wrapper.incidentdialog.dialog("close");

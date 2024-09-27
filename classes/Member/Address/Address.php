@@ -3,17 +3,26 @@
 namespace HHK\Member\Address;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\Member\AbstractMember;
+use HHK\Member\RoleMember\GuestMember;
+use HHK\Member\RoleMember\PatientMember;
+use HHK\sec\Labels;
+use HHK\sec\Session;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\MemDesignation;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
 use HHK\AuditLog\NameLog;
 use HHK\Exception\{InvalidArgumentException, RuntimeException};
 use HHK\Tables\TableRSInterface;
+use HHK\House\Distance\DistanceFactory;
 
 /**
  * Address.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017, 2018-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -29,6 +38,11 @@ class Address extends AbstractContactPoint{
      */
     public $cleanAddress;
 
+    /**
+     * Summary of loadRecords
+     * @param \PDO $dbh
+     * @return array
+     */
     protected function loadRecords(\PDO $dbh) {
 
         $adRS = new NameAddressRS();
@@ -59,14 +73,26 @@ class Address extends AbstractContactPoint{
     }
 
 
+    /**
+     * Summary of get_preferredCode
+     * @return mixed
+     */
     public function get_preferredCode() {
         return $this->name->get_preferredMailAddr();
     }
 
+    /**
+     * Summary of getTitle
+     * @return string
+     */
     public function getTitle() {
         return "Street Address";
     }
 
+    /**
+     * Summary of setPreferredCode
+     * @param mixed $code
+     */
     public function setPreferredCode($code) {
 
         if ($code == "" || isset($this->codes[$code])) {
@@ -74,6 +100,11 @@ class Address extends AbstractContactPoint{
         }
     }
 
+    /**
+     * Summary of getSet_Incomplete
+     * @param mixed $code
+     * @return bool
+     */
     public function getSet_Incomplete($code) {
 
         if ($this->rSs[$code]->Set_Incomplete->getStoredVal() == 1) {
@@ -210,7 +241,7 @@ class Address extends AbstractContactPoint{
         $zipAttr = array(
             'id'=>$idPrefix.'adrzip'.$addrIndex,
             'name'=>$idPrefix.'adr['.$addrIndex.'][zip]',
-            'type'=>'text',
+            'type'=>'search',
             'size'=>'10',
             'class'=>'ckzip hhk-zipsearch ' . $class,
             'title'=>'Enter Postal Code',
@@ -275,13 +306,21 @@ class Address extends AbstractContactPoint{
             . $badAddrMarkup
             ));
 
+        $distanceCalculator = DistanceFactory::make();
+        $distance = $adrRow->Meters_From_House->getStoredVal();
+        $distCalcTypeStr = (!empty($adrRow->DistCalcType->getStoredVal()) ? " (" . $adrRow->DistCalcType->getStoredVal() . ")" : "");
+
+        if($distance > 0){
+            $table->addBodyTr(HTMLTable::makeTd(Labels::getString("Referral", "drivingdistancePrompt", "Distance"), array('class'=>'tdlabel', 'title'=>Labels::getString("Referral", "drivingdistancePrompt", "Distance")))
+                . HTMLTable::makeTd("<b>" . $distanceCalculator->meters2miles($distance) . "</b> miles away" . $distCalcTypeStr));
+        }
 
         return $table->generateMarkup(array('class'=>$badAddrClass)) . $lastUpdated;
     }
 
 
     /**
-      Builds the tab control containing each address type.
+     * Builds the tab control containing each address type.
      *
      * @param string $inputClass
      * @param bool $showBadAddrCkBox
@@ -366,20 +405,40 @@ class Address extends AbstractContactPoint{
     }
 
 
+    /**
+     * Summary of savePanel
+     * @param \PDO $dbh
+     * @param mixed $purpose
+     * @param mixed $post
+     * @param mixed $user
+     * @param mixed $idPrefix
+     * @param mixed $incomplete
+     * @return string
+     */
     public function savePanel(\PDO $dbh, $purpose, $post, $user, $idPrefix = '', $incomplete = FALSE) {
 
         $indx = $idPrefix.'adr';
         if (isset($post[$indx][$purpose[0]]) === FALSE) {
-            return;
+            return '';
         }
 
         return $this->saveAddress($dbh, $post[$idPrefix.'adr'][$purpose[0]], $purpose, $incomplete, $user);
     }
 
 
+    /**
+     * Summary of saveAddress
+     * @param \PDO $dbh
+     * @param mixed $p
+     * @param mixed $purpose
+     * @param mixed $incomplete
+     * @param mixed $user
+     * @return string
+     */
     public function saveAddress(\PDO $dbh, array $p, $purpose, $incomplete, $user) {
 
         $message = '';
+        $uS = Session::getInstance();
         // Set some convenience vars.
         $a = $this->rSs[$purpose[0]];
         $id = $this->name->get_idName();
@@ -410,8 +469,25 @@ class Address extends AbstractContactPoint{
                 // Update the address
                 $adrComplete = $this->loadPostData($a, $p);
 
-                if ($adrComplete === TRUE) {
+                if ($adrComplete === TRUE ) {
                     $a->Set_Incomplete->setNewVal(0);
+
+
+                    $distanceCalculator = DistanceFactory::make();
+                    if(EditRS::isChanged($a) || !$a->Meters_From_House->getStoredVal() > 0 || ($a->Meters_From_House->getStoredVal() > 0 && $a->DistCalcType->getStoredVal() !== $distanceCalculator->getType())){ //if address has changed and is complete, or distance hasn't been calculated, or the calculation type is different than the current one
+                        if($this->name instanceof GuestMember || $this->name instanceof PatientMember){
+                            //calculate distance
+                            $distance = $distanceCalculator->getDistance($dbh, $p, self::getHouseAddress($dbh), 'meters');
+                            $a->Meters_From_House->setNewVal($distance);
+                            $a->DistCalcType->setNewVal($distanceCalculator->getType());
+                        }else{
+                            $a->Meters_From_House->setNewVal(null);
+                            $a->DistCalcType->setNewVal(null);
+                        }
+                    }
+                }else{
+                    $a->Meters_From_House->setNewVal(null);
+                    $a->DistCalcType->setNewVal(null);
                 }
 
                 $numRows = EditRS::update($dbh, $a, array($a->idName_Address));
@@ -425,6 +501,14 @@ class Address extends AbstractContactPoint{
             // Address does not exist inthe DB.
             // Did the user fill in this address panel?
             $adrComplete = $this->loadPostData($a, $p);
+
+            if($adrComplete && ($this->name instanceof GuestMember || $this->name instanceof PatientMember)){
+                //calculate distance
+                $distanceCalculator = DistanceFactory::make();
+                $distance = $distanceCalculator->getDistance($dbh, ['address1'=>$a->Address_1->getNewVal(), 'city'=>$a->City->getNewVal(), 'state'=>$a->State_Province->getNewVal(), 'zip'=>$a->Postal_Code->getNewVal()], self::getHouseAddress($dbh), 'meters');
+                $a->Meters_From_House->setNewVal($distance);
+                $a->DistCalcType->setNewVal($distanceCalculator->getType());
+            }
 
             if ($incomplete || $adrComplete) {
 
@@ -449,11 +533,11 @@ class Address extends AbstractContactPoint{
 
     /**
      *
-     * @param TableRSInterface $a
+     * @param NameAddressRS $a
      * @param array $p
      * @throws RuntimeException
      */
-    protected function loadPostData(TableRSInterface $a, array $p) {
+    protected function loadPostData(NameAddressRS $a, array $p) {
 
         $addrComplete = TRUE;
 
@@ -464,11 +548,11 @@ class Address extends AbstractContactPoint{
         // Clean the street address
         if (isset($p["address1"])) {
 
-            $addrs = $this->cleanAddress->cleanAddr(trim(filter_var($p["address1"], FILTER_SANITIZE_STRING)));
+            $addrs = $this->cleanAddress->cleanAddr(trim(filter_var($p["address1"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
             $street2 = '';
             if (isset($p['address2'])) {
-                $street2 = trim(filter_var($p['address2'], FILTER_SANITIZE_STRING));
+                $street2 = trim(filter_var($p['address2'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             }
 
             if ($street2 != "") {
@@ -488,7 +572,7 @@ class Address extends AbstractContactPoint{
         // Country
         $country = '';
         if (isset($p['country'])) {
-            $country = trim(filter_var($p['country'], FILTER_SANITIZE_STRING));
+            $country = trim(filter_var($p['country'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if ($country == '' || strtoupper($country) == 'USA') {
@@ -498,26 +582,26 @@ class Address extends AbstractContactPoint{
         $a->Country_Code->setNewVal($country);
 
         if (isset($p['county'])) {
-            $a->County->setNewVal(trim(filter_var($p['county'], FILTER_SANITIZE_STRING)));
+            $a->County->setNewVal(trim(filter_var($p['county'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         }
 
         // zip code, city and state
         if (isset($p['city'])) {
-            $a->City->setNewVal(trim(filter_var($p['city'], FILTER_SANITIZE_STRING)));
+            $a->City->setNewVal(trim(filter_var($p['city'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
             if ($p['city'] == '') {
                 $addrComplete = FALSE;
             }
         }
         if (isset($p['state'])) {
-            $a->State_Province->setNewVal(trim(filter_var($p['state'], FILTER_SANITIZE_STRING)));
+            $a->State_Province->setNewVal(trim(filter_var($p['state'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
             if ($p['state'] == '') {
                 $addrComplete = FALSE;
             }
         }
         if (isset($p['zip'])) {
-            $a->Postal_Code->setNewVal(strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_STRING))));
+            $a->Postal_Code->setNewVal(strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_FULL_SPECIAL_CHARS))));
 
             if ($p['zip'] == '') {
                 $addrComplete = FALSE;
@@ -536,11 +620,18 @@ class Address extends AbstractContactPoint{
 
     }
 
-    public function checkZip(\PDO $dbh, TableRSInterface $a, array $p) {
+    /**
+     * Summary of checkZip
+     * @param \PDO $dbh
+     * @param NameAddressRS $a
+     * @param mixed $p
+     * @return mixed
+     */
+    public function checkZip(\PDO $dbh, NameAddressRS $a, array $p) {
         // zip code, city and state
-        $zip = strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_STRING)));
-        $city = trim(filter_var($p['city'], FILTER_SANITIZE_STRING));
-        $state = trim(filter_var($p['state'], FILTER_SANITIZE_STRING));
+        $zip = strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $city = trim(filter_var($p['city'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        $state = trim(filter_var($p['state'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         $country = $a->Country_Code->getStoredVal();
 
         if (($country == 'US' || $country == '') && $a->Postal_Code->getStoredVal() != $zip) {
@@ -586,6 +677,34 @@ class Address extends AbstractContactPoint{
 
         }
 
+    }
+
+    /**
+     * Summary of getHouseAddress
+     * @param \PDO $dbh
+     * @return array|null
+     */
+    public static function getHouseAddress(\PDO $dbh){
+        try{
+            //get house address
+            $uS = Session::getInstance();
+            $house = AbstractMember::GetDesignatedMember($dbh, $uS->sId, MemBasis::NonProfit);
+            $address = new Address($dbh, $house, $uS->nameLookups[GLTableNames::AddrPurpose]);
+            if($address->isRecordSetDefined($address->get_preferredCode())){
+                $addressData = $address->get_Data($address->get_preferredCode());
+                return [
+                    'address1'=>$addressData['Address_1'],
+                    'address2'=>$addressData['Address_2'],
+                    'city'=>$addressData['City'],
+                    'state'=>$addressData['State_Province'],
+                    'zip'=>$addressData['Postal_Code']
+                ];
+            }else{
+                return null;
+            }
+        }catch(\Exception $e){
+            return null;
+        }
     }
 
 }

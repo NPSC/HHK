@@ -64,10 +64,7 @@
 	        				}
 	        				
 	        			}else if(data.error){
-	        				new Noty({
-								type : "error",
-								text : data.error
-							}).show();
+							flagAlertMessage(data.error, true);
 	        			}
 	    			},
 				});
@@ -114,15 +111,9 @@
 			var success = function(data, textStatus, jqXHR)
 	    			{
 	    				if(data.error){
-	    					new Noty({
-								type : "error",
-								text : "Error: " + data.error
-							}).show();
+							flagAlertMessage("Error: " + data.error, true);
 	    				}else if(data.success){
-	    					new Noty({
-								type : "success",
-								text : data.success
-							}).show();
+							flagAlertMessage(data.success, false);
 	    				}
 	    			};
 			switch(id){
@@ -141,10 +132,7 @@
 	    					$wrapper.find("#divFieldsetError #alrMessage").html(data.error);
 	    					$wrapper.find("#divFieldsetError").css('margin-top', '1em').show();
 	    				}else if(data.success){
-	    					new Noty({
-								type : "success",
-								text : data.success
-							}).show();
+							flagAlertMessage(data.success, false);
 							
 							if(data.fieldSet){
 								if($wrapper.find("#fieldset optgroup[label='" + data.fieldSet.optGroup + "']").length == 0){
@@ -175,10 +163,7 @@
 	    					$wrapper.find("#divFieldsetError #alrMessage").html(data.error);
 	    					$wrapper.find("#divFieldsetError").css('margin-top', '1em').show();
 	    				}else if(data.success){
-	    					new Noty({
-								type : "success",
-								text : data.success
-							}).show();
+							flagAlertMessage(data.success, false);
 							
 							if(data.fieldSet){
 								if($wrapper.find("#fieldset optgroup[label='" + data.fieldSet.optGroup + "']").length == 0){
@@ -205,15 +190,9 @@
 					success = function(data, textStatus, jqXHR)
 	    			{
 	    				if(data.error){
-	    					new Noty({
-								type : "error",
-								text : "Error: " + data.error
-							}).show();
+							flagAlertMessage("Error: " + data.error, true);
 	    				}else if(data.success){
-	    					new Noty({
-								type : "success",
-								text : data.success
-							}).show();
+							flagAlertMessage(data.success, false);
 							
 							$wrapper.find("#fieldset option[value=" + data.fieldSet.idFieldSet + "]").text(data.fieldSet.title);
 							$wrapper.find("#fieldset").trigger("change");
@@ -234,15 +213,9 @@
 						success = function(data, textStatus, jqXHR)
 		    			{
 		    				if(data.error){
-		    					new Noty({
-									type : "error",
-									text : "Error: " + data.error
-								}).show();
+								flagAlertMessage("Error: " + data.error, true);
 		    				}else if(data.success){
-		    					new Noty({
-									type : "success",
-									text : data.success
-								}).show();
+								flagAlertMessage(data.success, false);
 								
 								$wrapper.find("#fieldset option[value=" + data.idFieldSet + "]").remove();
 								$wrapper.find("#fieldset").val("").trigger("change");

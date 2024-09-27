@@ -42,7 +42,7 @@ $wInit->sessionLoadGuestLkUps();
 $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
 
 // Maintainence component - and role = admin is also required.
-if (SecurityComponent::is_Admin($uS->rolecode, $uS->username)) {
+if (SecurityComponent::is_Admin()) {
     $maintFlag = SecurityComponent::is_Authorized("NameEdit_Maint");
 
 } else {
@@ -55,8 +55,6 @@ if (SecurityComponent::is_Admin($uS->rolecode, $uS->username)) {
 $resultMessage = "";
 $id = 0;
 $uname = $uS->username;
-
-addslashesextended($_GET);
 
 // User data object
 $userData = array();
@@ -81,7 +79,7 @@ if (is_null($idRaw) === FALSE) {
  *
  */
 $setForOrg = false;
-$cmd = filter_input(INPUT_GET, 'cmd', FILTER_SANITIZE_STRING);
+$cmd = filter_input(INPUT_GET, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if (is_null($cmd) === FALSE) {
     $id = 0;
     if ($cmd == "neworg") {
@@ -111,7 +109,7 @@ if ($id < 0) {
 
 
 // If posting a new member, check the member basis
-$mbasis = filter_input(INPUT_POST, 'selMbrType', FILTER_SANITIZE_STRING);
+$mbasis = filter_input(INPUT_POST, 'selMbrType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if (is_null($mbasis) === FALSE) {
 
     if (isset($uS->nameLookups[GLTableNames::MemberBasis][$mbasis])) {
@@ -155,13 +153,19 @@ try {
 
     $rel = $name->loadRealtionships($dbh);
 
-
     // Volunteers
     $vols = array();
-    foreach ($volLkups["Vol_Category"] as $purpose) {
+    if(isset($volLkups["Vol_Category"]["Vol_Type"]) && ($setForOrg || $name->getMemberDesignation() != MemDesignation::Individual)){ //orgs only need member type vol_category
+        $purpose = $volLkups["Vol_Category"]["Vol_Type"];
         $volunteer = new VolunteerCategory($purpose[0], $purpose[1], $purpose[2]);
         $volunteer->set_rankOptions($volLkups["Vol_Rank"]);
         $vols[$purpose[0]] = $volunteer;
+    }else{
+        foreach ($volLkups["Vol_Category"] as $purpose) {
+            $volunteer = new VolunteerCategory($purpose[0], $purpose[1], $purpose[2]);
+            $volunteer->set_rankOptions($volLkups["Vol_Rank"]);
+            $vols[$purpose[0]] = $volunteer;
+        }
     }
 
 
@@ -178,11 +182,8 @@ try {
  * This is the main SAVE submit button.  It checks for a change in any data field
  * and updates the database accordingly.
  */
-if (isset($_POST["btnSubmit"])) {
+if(filter_has_var(INPUT_POST, "btnSubmit")){
     $msg = "";
-
-    // Strip slashes
-    addslashesextended($_POST);
 
     try {
 
@@ -201,7 +202,9 @@ if (isset($_POST["btnSubmit"])) {
 
         // Volunteers
         foreach ($vols as $v) {
-            $msg .= $v->saveVolCategory($dbh, $id, $_POST[$v->getCategoryCode()], $uname);
+            if(filter_has_var(INPUT_POST, $v->getCategoryCode())){
+                $msg .= $v->saveVolCategory($dbh, $id, $_POST[$v->getCategoryCode()], $uname);
+            }
         }
 
         // kludge for Billing agents
@@ -251,7 +254,7 @@ if ($name->isNew()) {
 
 //
 // Name Edit Row
-$nameMarkup = $name->createMarkupTable($dbh);
+$nameMarkup = $name->createMarkupTable();
 
 
 // Excludes, Demographics and admin tabs
@@ -413,6 +416,7 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo MULTISELECT_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo UPPLOAD_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -430,6 +434,8 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="js/genfunc.js"></script>
 
     </head>
@@ -453,7 +459,7 @@ $alertMessage = $alertMsg->createMarkup();
             </div>
             <?php echo $resultMessage; ?> <?php echo $alertMessage; ?>
             <form action="NameEdit.php" method="post" id="form1" name="form1" >
-                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2" style="font-size:0.95em;padding: 0.7em 1.0em;">
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2 hhk-flex" style="font-size:0.95em;padding: 0.7em 1.0em;">
                     <?php echo $nameMarkup; ?>
                 </div>
                 <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2" style="font-size:0.95em;padding: 0.7em 1.0em;">
@@ -488,8 +494,8 @@ $alertMessage = $alertMsg->createMarkup();
                         <li><a href="#vhistory">History</a></li>
                         <?php echo $volTabNames; ?>
                         <?php if ($donationsFlag) { echo "<li id='donblank'><a href='#vdonblank'>Donations...</a></li>\n"; } ?>
-                        <li><a href="#vnotes">Notes</a></li>
-                        <li id="wbuser"><a href="#vwuser">Web Account...</a></li>
+                        <li id="notes"><a href="#vnotes">Notes</a></li>
+                        <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? "<li id='wbuser'><a href='#vwuser'>Web Account...</a></li>": ''); ?>
                         <li id="changelog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="vhistory" style="background:#EFDBC2;">
@@ -500,6 +506,7 @@ $alertMessage = $alertMsg->createMarkup();
                     </div>
                     <div id="vnotes" >
                         <?php echo $notesMarkup; ?>
+                        <div id="vmemnotes"></div>
                     </div>
                     <div id="vchangelog" class="ignrSave">
                       <table style="width:100%;" class="display ignrSave" id="dataTbl"></table>
@@ -559,6 +566,15 @@ $alertMessage = $alertMsg->createMarkup();
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->
+        <?php if ($uS->ShowGuestPhoto) {
+            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
+        ?>
+        	<script>
+        		$(document).ready(function(){
+        			window.uploader = new Upploader.Uppload({lang: Upploader.en});
+        		});
+        	</script>
+        <?php } ?>
         <script type="text/javascript"><?php include_once("js/nameEd.js") ?></script>
     </body>
 </html>

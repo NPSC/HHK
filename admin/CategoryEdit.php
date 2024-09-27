@@ -20,19 +20,15 @@ require ("AdminIncludes.php");
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 
-
-addslashesextended($_POST);
-
-
 // catch service call
-$tableName = filter_input(INPUT_POST, 'ql', FILTER_SANITIZE_STRING);
+$tableName = filter_input(INPUT_POST, 'ql', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($tableName != '') {
 
     $rows = array();
     $volArray = $wInit->reloadSessionVolLkUps();
 
     if (isset($volArray['Vol_Category'][$tableName])) {
-        $rows = readGenLookups($dbh, $tableName);
+        $rows = readGenLookupsPDO($dbh, $tableName);
     }
 
     echo json_encode($rows);
@@ -143,7 +139,7 @@ $resMessage = "";
 
 
 
-if (isset($_POST["btnvType"])) {
+if (filter_has_var(INPUT_POST, "btnvType")) {
 
     $volAlert = new AlertMessage("volAlert");
     $volAlert->set_Context(AlertMessage::Alert);
@@ -154,21 +150,21 @@ if (isset($_POST["btnvType"])) {
 
     if ($del === TRUE) {
         $action = "del";
-        $repl = filter_input(INPUT_POST, "vTypeRepl", FILTER_SANITIZE_STRING);
+        $repl = filter_input(INPUT_POST, "vTypeRepl", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
-    $tbl = filter_input(INPUT_POST, "selVol", FILTER_SANITIZE_STRING);
-    $cde = filter_input(INPUT_POST, "vTypeCode", FILTER_SANITIZE_STRING);
-    $desc = filter_input(INPUT_POST, "vTypeDesc", FILTER_SANITIZE_STRING);
-    $fill = filter_input(INPUT_POST, "vTypeFill", FILTER_SANITIZE_STRING);
-    $text = filter_input(INPUT_POST, "vTypeText", FILTER_SANITIZE_STRING);
+    $tbl = filter_input(INPUT_POST, "selVol", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $cde = filter_input(INPUT_POST, "vTypeCode", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $desc = filter_input(INPUT_POST, "vTypeDesc", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $fill = filter_input(INPUT_POST, "vTypeFill", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $text = filter_input(INPUT_POST, "vTypeText", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $colr = $fill . "," . $text;
 
     if (is_null($tbl) || $tbl == "") {
         $volAlert->set_Text("The Category is missing.");
     } else if (($fill != "" && $text == "") || ($fill == "" && $text != "")) {
         $volAlert->set_Text(" Need a color for both Fill and Text, or leave both blank.");
-    } else if ($desc != null && $desc != "" && strlen($desc) < 255) {
+    } else if (!empty($desc) && strlen($desc) < 255) {
 
         processAction($dbh, $tbl, $cde, $colr, $desc, $repl, $action, $volAlert);
     } else {

@@ -21,7 +21,7 @@ class chkBoxCtrl {
     protected $class = "";
 
     function __Construct($con, $genLkupTabelName, $title, $htmlNameBase, $defaultVal, $sort = "Code") {
-        $this->genRcrds = readGenLookups($con, $genLkupTabelName, $sort);
+        $this->genRcrds = readGenLookupsPDO($con, $genLkupTabelName, $sort);
         $this->rows = count($this->genRcrds);
         $this->htmlNameBase = $htmlNameBase;
         $this->title = $title;

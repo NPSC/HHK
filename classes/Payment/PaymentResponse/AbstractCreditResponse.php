@@ -16,9 +16,47 @@ use HHK\Tables\EditRS;
 
 abstract class AbstractCreditResponse extends AbstractPaymentResponse {
 
+    /**
+     * Summary of response
+     * @var
+     */
     public $response;
+    /**
+     * Summary of idPaymentAuth
+     * @var int
+     */
     public $idPaymentAuth;
+    /**
+     * Summary of cardType
+     * @var string
+     */
+    public $cardType;
+    /**
+     * Summary of expDate
+     * @var string
+     */
+    public $expDate;
 
+    /**
+     * Summary of cardNum: account number
+     * @var string
+     */
+    public $cardNum;
+    /**
+     * Summary of cardName: Cardholder name
+     * @var string
+     */
+    public $cardName;
+
+    public $parentIdPayment = 0;
+
+    /**
+     * Summary of recordPaymentAuth
+     * @param \PDO $dbh
+     * @param string $paymentGatewayName
+     * @param mixed $username
+     * @return void
+     */
     public function recordPaymentAuth(\PDO $dbh, $paymentGatewayName, $username) {
 
         if ($this->idPayment > 0) {
@@ -65,10 +103,19 @@ abstract class AbstractCreditResponse extends AbstractPaymentResponse {
 
     }
 
+    /**
+     * Summary of isPartialPayment
+     * @return bool
+     */
     public function isPartialPayment() {
         return $this->partialPaymentFlag;
     }
 
+    /**
+     * Summary of setPartialPayment
+     * @param mixed $v
+     * @return void
+     */
     public function setPartialPayment($v) {
         if ($v) {
             $this->partialPaymentFlag = TRUE;
@@ -77,8 +124,20 @@ abstract class AbstractCreditResponse extends AbstractPaymentResponse {
         }
     }
 
+    /**
+     * Summary of getIdPaymentAuth
+     * @return int
+     */
     public function getIdPaymentAuth() {
         return $this->idPaymentAuth;
+    }
+
+    public function getParentIdPayment(){
+        return $this->parentIdPayment;
+    }
+
+    public function setParentIdPayment($v){
+        $this->parentIdPayment = $v;
     }
 
 }

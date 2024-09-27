@@ -20,6 +20,7 @@ function fatal_handler() {
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == "XMLHttpRequest") {
             returnJSON($error);
         } else {
+            returnJSON($error, "Page"); //send bug report regardless of whether user submits it
             buildPage($error);
         }
 
@@ -72,11 +73,11 @@ function sendMail($message) {
     }
 }
 
-function returnJSON($error) {
+function returnJSON($error, $type = "AJAX") {
 
 
     $message = "New bug report received from " . getSiteName() . "\r\n\r\n";
-    $message .= "Request Type: AJAX\r\n\r\n";
+    $message .= "Request Type: $type\r\n\r\n";
     $message .= "File: " . $error["file"] . " line " . $error["line"] . "\r\n\r\n";
     $message .= "Error: " . $error["message"];
 
@@ -93,9 +94,8 @@ function buildPage($error, $success = false) {
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>HHK - Error</title>
             <meta http-equiv="x-ua-compatible" content="IE=edge">
-    <?php echo JQ_UI_CSS; ?>
+            <?php echo JQ_UI_CSS; ?>
             <?php echo MULTISELECT_CSS; ?>
-            <?php echo HOUSE_CSS; ?>
             <?php echo JQ_DT_CSS; ?>
             <?php echo NOTY_CSS; ?>
             <?php echo FAVICON; ?>
@@ -163,7 +163,6 @@ function buildPage($error, $success = false) {
                 <h1>Uh oh, something's not right!</h1>
                 <div class="container">
                     <div class="col-6" style="text-align: center;">
-                        <img src="//training.hospitalityhousekeeper.net/images/hhkLogo.png">
                         <div class="logo-text">
                             <p>Sometimes errors happen, help us stop them in their digital tracks by submitting a bug report.</p>
                         </div>
@@ -175,7 +174,6 @@ function buildPage($error, $success = false) {
                         <div class="ui-widget-content ui-corner-bottom hhk-tdbox">
     <?php if ($success) { ?>
                                 <h4>Thanks for submitting!</h4>
-                                <a href="<?php echo $sec->getRootURL(); ?>" class="ui-button ui-corner-all ui-widget">Go Home</a>
     <?php } else { ?>
                                 <form action="#" method="POST">
                                     <div class="form-input">

@@ -20,14 +20,12 @@ require ("AdminIncludes.php");
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
-addslashesextended($_GET);
-
 // get session instance
 $uS = Session::getInstance();
 
 
 if (isset($_GET['cmd'])) {
-    $c = filter_var($_GET['cmd'], FILTER_SANITIZE_STRING);
+    $c = filter_var($_GET['cmd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 } else {
     exit();
 }
@@ -42,13 +40,13 @@ switch ($c) {
         //get the q parameter from URL
         $letters = '';
         if (isset($_GET['letters'])) {
-            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // get basis
         $basis = '';
         if (isset($_GET['basis'])) {
-            $basis = filter_var(urldecode($_GET['basis']), FILTER_SANITIZE_STRING);
+            $basis = filter_var(urldecode($_GET['basis']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // get id
@@ -74,18 +72,18 @@ switch ($c) {
         //get the q parameter from URL
         $letters = '';
         if (isset($_GET['letters'])) {
-            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // get basis
         $basis = '';
         if (isset($_GET['basis'])) {
-            $basis = filter_var(urldecode($_GET['basis']), FILTER_SANITIZE_STRING);
+            $basis = filter_var(urldecode($_GET['basis']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $fltr = '';
         if (isset($_GET['filter'])) {
-            $fltr = filter_var(urldecode($_GET['filter']), FILTER_SANITIZE_STRING);
+            $fltr = filter_var(urldecode($_GET['filter']), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $memberSearch = new MemberSearch($letters);
@@ -95,11 +93,11 @@ switch ($c) {
 
     case 'srchName':
 
-        if (isset($_POST['md'])) {
-            $md = filter_var($_POST['md'], FILTER_SANITIZE_STRING);
-            $nameLast = (isset($_POST['nl']) ? filter_var($_POST['nl'], FILTER_SANITIZE_STRING) : '');
-            $nameFirst = (isset($_POST['nf']) ? filter_var($_POST['nf'], FILTER_SANITIZE_STRING) : '');
-            $email = (isset($_POST['em']) ? filter_var($_POST['em'], FILTER_SANITIZE_STRING) : '');
+        if (filter_has_var(INPUT_POST, 'md')) {
+            $md = filter_input(INPUT_POST, 'md', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $nameLast = (filter_has_var(INPUT_POST, 'nl') ? filter_input(INPUT_POST, 'nl', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $nameFirst = (filter_has_var(INPUT_POST, 'nf') ? filter_input(INPUT_POST, 'nf', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
+            $email = (filter_has_var(INPUT_POST, 'em') ? filter_input(INPUT_POST, 'em', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '');
 
             // Check for duplicate member records
             $dups = MemberSearch::searchName($dbh, $md, $nameLast, $nameFirst, $email);
@@ -118,7 +116,7 @@ switch ($c) {
 
     case "delwu":
 
-        $usr = addslashes(filter_var(urldecode($_GET["id"]), FILTER_SANITIZE_STRING));
+        $usr = addslashes(filter_var(urldecode($_GET["id"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
         if ($usr != "") {
             $events = deleteWuRow($dbh, $uS->username, $usr);
@@ -132,7 +130,7 @@ switch ($c) {
 
         $fid = '';
         if (isset($_GET["fid"])) {
-            $fid = filter_var(urldecode($_GET["fid"]), FILTER_SANITIZE_STRING);
+            $fid = filter_var(urldecode($_GET["fid"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         //require_once (CLASSES . 'PDOdata.php');
@@ -186,4 +184,3 @@ function deleteFBRow(PDO $dbh, $fbid) {
 
     return $events;
 }
-?>

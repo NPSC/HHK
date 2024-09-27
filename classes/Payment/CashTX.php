@@ -24,6 +24,14 @@ use HHK\Exception\PaymentException;
  */
 class CashTX {
 
+    /**
+     * Summary of cashSale
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\CashResponse $pr
+     * @param mixed $username
+     * @param mixed $paymentDate
+     * @return void
+     */
     public static function cashSale(\PDO $dbh, CashResponse &$pr, $username, $paymentDate) {
 
         // Record transaction
@@ -93,6 +101,14 @@ class CashTX {
 
     }
 
+    /**
+     * Summary of undoReturnPayment
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\CashResponse $pr
+     * @param mixed $username
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @return void
+     */
     public static function undoReturnPayment(\PDO $dbh, CashResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
@@ -111,6 +127,13 @@ class CashTX {
 
     }
 
+    /**
+     * Summary of undoReturnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\CashResponse $pr
+     * @param mixed $idPayment
+     * @return void
+     */
     public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
 
         // Record transaction

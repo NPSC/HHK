@@ -81,6 +81,8 @@ interface SearchNameDataInterface
      */
     public function getGender();
 
+    public function getEthnicity();
+
     /**
      * @return string
      */
@@ -95,6 +97,11 @@ interface SearchNameDataInterface
      * @return mixed
      */
     public function getPhone();
+
+    /**
+     * @return string
+     */
+    public function getSMS_Status();
 
     public function getAddressStreet();
 
@@ -139,6 +146,6 @@ interface SearchNameDataInterface
     public function getEmrgRelation();
 
 
-    public function loadMeFrom(array $r);
+    public function loadMeFrom(array $r, SearchNameDataInterface $formData = null);
 }
 

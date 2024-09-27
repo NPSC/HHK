@@ -117,7 +117,7 @@ if ($idDoc > 0) {
         	    $idPatient = $patient->getIdName();
 
         	    // Search guests and present results to UI
-        	    $guests = $refForm->searchGuests($dbh);
+        	    $guests = $refForm->searchGuests($dbh, $patient);
 
         	    // Any guests to search for?
         	    if (count($guests) > 0) {
@@ -177,6 +177,7 @@ if ($idDoc > 0) {
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>

@@ -72,14 +72,14 @@ function dirReport(\PDO $dbh, chkBoxCtrl $cbBasisDir, chkBoxCtrl $cbRelationDir,
 
     // Form returned to generate directory
     $dlFlag = false;
-    if (isset($_POST["btnExcel"])) {
+    if (filter_has_var(INPUT_POST, "btnExcel")) {
         $dlFlag = true;
 
     }
 
     $emlFlag = false;
 
-    if (isset($_POST[$selDirType->get_htmlNameBase()])) {
+    if (filter_has_var(INPUT_POST, $selDirType->get_htmlNameBase())) {
         $selDirType->setReturnValues($_POST[$selDirType->get_htmlNameBase()]);
     }
     $dordr = $selDirType->getCvsCode();
@@ -89,7 +89,7 @@ function dirReport(\PDO $dbh, chkBoxCtrl $cbBasisDir, chkBoxCtrl $cbRelationDir,
 
     $wClause = "";
 
-    if (isset($_POST[$cbBasisDir->get_htmlNameBase()])) {
+    if (filter_has_var(INPUT_POST, $cbBasisDir->get_htmlNameBase())) {
         $cbBasisDir->setReturnValues($_POST[$cbBasisDir->get_htmlNameBase()]);
     }
     $incBasis = $cbBasisDir->setCsvLabel();
@@ -103,11 +103,11 @@ function dirReport(\PDO $dbh, chkBoxCtrl $cbBasisDir, chkBoxCtrl $cbRelationDir,
         $wClause .= " and vm2.Member_Type in ($mTypeList) ";
     }
 
-    if (isset($_POST[$cbRelationDir->get_htmlNameBase()])) {
+    if (filter_has_var(INPUT_POST, $cbRelationDir->get_htmlNameBase())) {
         $cbRelationDir->setReturnValues($_POST[$cbRelationDir->get_htmlNameBase()]);
     }
     $rTypeList = $cbRelationDir->setCsvLabel();
-    if (isset($_POST["cbEmployee"])) {
+    if (filter_has_var(INPUT_POST, "cbEmployee")) {
         if ($rTypeList == "") {
             $rTypeList = "Employee";
         } else {

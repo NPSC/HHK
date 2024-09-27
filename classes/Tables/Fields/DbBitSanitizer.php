@@ -19,7 +19,7 @@ class DbBitSanitizer implements DbFieldSanitizerInterface {
      * @return int
      */
     public function sanitize($val) {
-        if ($val == '1' || $val === TRUE || ord($val) == 1) {
+        if ($val == '1' || $val === TRUE || ord((string) $val) == 1) {
             $val = 1;
         } else {
             $val = 0;

@@ -10,19 +10,16 @@
 
 use HHK\sec\Session;
 use HHK\sec\WebInit;
-use HHK\AlertControl\AlertMessage;
 use HHK\sec\SecurityComponent;
-use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\VolMemberType;
 use HHK\SysConst\ReservationStatus;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\CreateMarkupFromDB;
-use HHK\SysConst\GLTableNames;
-use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
+use HHK\TableLog\HouseLog;
 
 require ("homeIncludes.php");
 
@@ -189,6 +186,8 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
 
     } else {
+        $uS = Session::getInstance();
+        HouseLog::logDownload($dbh, 'Doctor/Hospital Report', "Excel", "Doctor/Hospital Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
         $writer->download();
     }
 
@@ -229,10 +228,6 @@ where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '"
 
         $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
-        if (isset($hospitals[$r[$hospitalCol]])) {
-            $r[$hospitalCol] = $hospitals[$r[$hospitalCol]][1];
-        }
-
         unset($r['idPsg']);
 
         $rows[] = $r;
@@ -264,10 +259,10 @@ if ($uS->Doctor) {
     $rptSetting = 'r';
 }
 
-if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
+if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExcel')) {
 
     $local = TRUE;
-    if (isset($_POST['btnExcel'])) {
+    if (filter_has_var(INPUT_POST, 'btnExcel')) {
         $local = FALSE;
     }
 
@@ -308,7 +303,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $whHosp .= $whAssoc;
 
-    if (isset($_POST['rbReport'])) {
+    if (filter_has_var(INPUT_POST, 'rbReport')) {
 
 
         // Create settings markup
@@ -317,9 +312,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $colTitle = '';
         $blanksOnly = FALSE;
 
-        $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_STRING);
+        $rptSetting = filter_input(INPUT_POST, 'rbReport', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        if (isset($_POST['cbBlanksOnly'])) {
+        if (filter_has_var(INPUT_POST, 'cbBlanksOnly')) {
             $blanksOnly = TRUE;
             $cbBlank = "checked";
         }
@@ -380,6 +375,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'disp
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

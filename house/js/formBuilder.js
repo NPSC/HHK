@@ -45,6 +45,16 @@
     			"multiple": false,
     			"values": []
   			},
+  			... (options.fieldOptions.diagnosisDetails ?
+  				[{
+				"type": "text",
+				"required": false,
+    			"label": (options.labels.diagnosis || 'Diagnosis') + " Details",
+    			"placeholder": (options.labels.diagnosis || 'Diagnosis') + " Details",
+    			"className": "form-control",
+    			"name": "hospital.diagnosisDetails",
+    			"width": "col-md-3"
+  			}]:[]),
   			{
     			"type": "select",
     			"label": (options.labels.location || 'Unit'),
@@ -68,7 +78,14 @@
     			"multiple": false,
     			"values": []
   			}]:[]),
-    		{
+			  {
+    			label: "Notes",
+    			type: "textarea",
+				className: "form-control",
+				width: "col-md-12",
+    			name: "resvNotes",
+    		},
+			{
     			label: "Submit",
     			type: "button",
     			subtype: "submit",
@@ -92,10 +109,11 @@
         		fields: [
 				{
     				"type": "select",
-    				"label": "Prefix",
-    				"placeholder": "Prefix",
+    				"label": (options.labels.namePrefix || 'Prefix'),
+    				"placeholder": (options.labels.namePrefix || 'Prefix'),
     				"className": "form-select",
-    				"name": "patient.prefix",
+					"name": "patient.prefix",
+					"hhkField": (options.labels.patient || 'Patient') + " " + (options.labels.namePrefix || 'Prefix'),
     				"width": "col-md-3",
     				"dataSource":"namePrefix",
     				"multiple": false,
@@ -107,7 +125,8 @@
     				"label": (options.labels.patient || 'Patient') + " First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "patient.firstName",
+						"name": "patient.firstName",
+					"hhkField": (options.labels.patient || 'Patient') + " First Name",
     				"width": "col-md-3"
   				},
   				{
@@ -116,7 +135,8 @@
     				"label": (options.labels.patient || 'Patient') + " Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "patient.lastName",
+						"name": "patient.lastName",
+						"hhkField": (options.labels.patient || 'Patient') + " Last Name",
     				"width": "col-md-3"
   				},
   				{
@@ -124,7 +144,8 @@
     				"label": "Suffix",
     				"placeholder": "Suffix",
     				"className": "form-select",
-    				"name": "patient.suffix",
+						"name": "patient.suffix",
+					"hhkField": (options.labels.patient || 'Patient') + " Suffix",
     				"width": "col-md-3",
     				"dataSource":"nameSuffix",
     				"multiple": false,
@@ -136,16 +157,18 @@
     				"label": (options.labels.patient || 'Patient') + " Middle Name",
     				"placeholder": "Middle Name",
     				"className": "form-control",
-    				"name": "patient.middleName",
+						"name": "patient.middleName",
+						"hhkField": (options.labels.patient || 'Patient') + " Middle Name",
     				"width": "col-md-3"
   				},
   				{
   					"type": "text",
   					"required": false,
-    				"label": "Nickname",
-    				"placeholder": "Nickname",
+    				"label": (options.labels.nickname || 'Nickname'),
+    				"placeholder": (options.labels.nickname || 'Nickname'),
     				"className": "form-control",
-    				"name": "patient.nickname",
+						"name": "patient.nickname",
+						"hhkField": (options.labels.patient || 'Patient') + " " + (options.labels.nickname || 'Nickname'),
     				"width": "col-md-4"
   				},
   				{
@@ -153,7 +176,8 @@
     				"label": (options.labels.patient || 'Patient') + " Birthdate",
     				"placeholder": "Patient Birthdate",
     				"className": "form-control",
-    				"name": "patient.birthdate",
+						"name": "patient.birthdate",
+						"hhkField": (options.labels.patient || 'Patient') + " Birthdate",
     				"width": "col-md-4",
     				"validation": "lessThanToday"
   				},
@@ -164,22 +188,51 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control hhk-phoneInput",
-    				"name": "patient.phone",
+					"name": "patient.phone",
+					"hhkField": (options.labels.patient || 'Patient') + " Phone",
     				"width": "col-md-6"
-    			},
+					},
+					{
+						"type": "select",
+						"label": "SMS Opt In",
+						"placeholder": "Opt in to receive text messages",
+						"className": "form-select",
+						"name": "patient.sms_status",
+						"hhkField": (options.labels.patient || 'Patient') + " SMS Opt In",
+						"width": "col-md-3",
+						"multiple": false,
+						"values": [
+						  {
+							"label": "",
+							"value": "",
+							"selected": true
+							},
+							{
+							  "label": "Opt In",
+							  "value": "opt_in",
+							  "selected": false
+							},
+							{
+							  "label": "Opt Out",
+							  "value": "opt_out",
+							  "selected": false
+							}
+						]
+					  },
     			{
     				"type": "text",
     				"subtype": "email",
     				"label": "Email",
     				"placeholder": "Email",
     				"className": "form-control",
-    				"name": "patient.email",
+					"name": "patient.email",
+					"hhkField": (options.labels.patient || 'Patient') + " Email",
     				"width": "col-md-6"
     			}
   				]
   			},
   			{
-        		label: 'Patient Emergency Contact',
+        		label: (options.labels.patient || 'Patient') + ' Emergency Contact',
         		name: 'emergency-contact',
         		showHeader: true,
         		fields: [
@@ -188,7 +241,8 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "patient.emerg.firstName",
+						"name": "patient.emerg.firstName",
+					"hhkField": (options.labels.patient || 'Patient') + " Emergency Contact First Name",
     				"width": "col-md-3"
   				},
   				{
@@ -196,7 +250,8 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "patient.emerg.lastName",
+						"name": "patient.emerg.lastName",
+					"hhkField": (options.labels.patient || 'Patient') + " Emergency Contact Last Name",
     				"width": "col-md-3"
   				},
   				{
@@ -205,7 +260,8 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control hhk-phoneInput",
-    				"name": "patient.emerg.phone",
+						"name": "patient.emerg.phone",
+					"hhkField": (options.labels.patient || 'Patient') + " Emergency Contact Phone",
     				"width": "col-md-2"
   				},
   				{
@@ -214,7 +270,8 @@
     				"label": "Alternate Phone",
     				"placeholder": "Alternate Phone",
     				"className": "form-control hhk-phoneInput",
-    				"name": "patient.emerg.altphone",
+						"name": "patient.emerg.altphone",
+					"hhkField": (options.labels.patient || 'Patient') + " Emergency Contact Alternate Phone",
     				"width": "col-md-2"
   				},
   				{
@@ -222,7 +279,8 @@
     				"label": "Relationship to " + (options.labels.patient || 'Patient'),
     				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
     				"className": "form-select",
-    				"name": "patient.emerg.relation",
+						"name": "patient.emerg.relation",
+					"hhkField": "Emergency Contact Relationship to " + (options.labels.patient || 'Patient'),
     				"width": "col-md-2",
     				"dataSource":"patientRelation",
     				"multiple": false,
@@ -246,7 +304,8 @@
     				"label": "Make",
     				"placeholder": "Make",
     				"className": "form-control",
-    				"name": "vehicle.make",
+						"name": "vehicle.make",
+					"hhkField": "Vehicle Make",
     				"width": "col-md-3"
   				},
   				{
@@ -254,7 +313,8 @@
     				"label": "Model",
     				"placeholder": "Model",
     				"className": "form-control",
-    				"name": "vehicle.model",
+						"name": "vehicle.model",
+					"hhkField": "Vehicle Model",
     				"width": "col-md-3"
   				},
   				{
@@ -262,7 +322,8 @@
     				"label": "Color",
     				"placeholder": "Color",
     				"className": "form-control",
-    				"name": "vehicle.color",
+						"name": "vehicle.color",
+					"hhkField": "Vehicle Color",
     				"width": "col-md-2"
   				},
   				{
@@ -270,7 +331,8 @@
     				"label": "State",
     				"placeholder": "State",
     				"className": "form-select",
-    				"name": "vehicle.state",
+						"name": "vehicle.state",
+						"hhkField": "Vehicle State",
     				"width": "col-md-2",
     				"dataSource":"vehicleStates",
     				"multiple": false,
@@ -287,13 +349,23 @@
     				"label": "License Plate",
     				"placeholder": "License Plate",
     				"className": "form-control",
-    				"name": "vehicle.license",
+						"name": "vehicle.license",
+					"hhkField": "Vehicle License Plate",
     				"width": "col-md-2"
-  				},
+					},
+					{
+						"type": "text",
+						"label": "Notes",
+						"placeholder": "Notes",
+						"className": "form-control",
+						"name": "vehicle.note",
+						"hhkField": "Vehicle Notes",
+						"width": "col-md-2"
+					  },
   				]
   			},
   			{
-        		label: 'Patient Address',
+        		label: (options.labels.patient || 'Patient') + ' Address',
         		name: 'pat-address',
         		showHeader: true,
         		fields: [
@@ -302,7 +374,8 @@
     				"label": "Street",
     				"placeholder": "Street",
     				"className": "form-control",
-    				"name": "patient.address.street",
+						"name": "patient.address.street",
+					"hhkField": (options.labels.patient || 'Patient') + " Street",
     				"width": "col-md-12"
   				},
   				{
@@ -310,7 +383,8 @@
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
     				"className": "form-control address ckzip hhk-zipsearch ui-autocomplete-input",
-    				"name": "patient.address.adrzip",
+						"name": "patient.address.adrzip",
+					"hhkField": (options.labels.patient || 'Patient') + " Zip Code",
     				"width": "col-md-2"
     			},
   				{
@@ -318,7 +392,8 @@
     				"label": "City",
     				"placeholder": "City",
     				"className": "form-control address",
-    				"name": "patient.address.adrcity",
+						"name": "patient.address.adrcity",
+					"hhkField": (options.labels.patient || 'Patient') + " City",
     				"width": "col-md-5"
   				},
   				... (options.fieldOptions.county ?
@@ -327,7 +402,8 @@
     				"label": "County",
     				"placeholder": "County",
     				"className": "form-control address",
-    				"name": "patient.address.adrcounty",
+						"name": "patient.address.adrcounty",
+					"hhkField": (options.labels.patient || 'Patient') + " County",
     				"width": "col-md-5"
   				}]:[]),
   				{
@@ -335,7 +411,8 @@
     				"label": "State",
     				"placeholder": "State",
     				"className": "form-select bfh-states address",
-    				"name": "patient.address.adrstate",
+						"name": "patient.address.adrstate",
+					"hhkField": (options.labels.patient || 'Patient') + " State",
     				"width": "col-md-2",
     				"values":[]
   				},
@@ -344,7 +421,8 @@
     				"label": "Country",
     				"placeholder": "Country",
     				"className": "form-select bfh-countries address",
-    				"name": "patient.address.adrcountry",
+					"name": "patient.address.adrcountry",
+					"hhkField": (options.labels.patient || 'Patient') + " Country",
     				"width": "col-md-3",
     				"values":[]
     			}
@@ -358,16 +436,44 @@
         		{
         			"type": "header",
         			"subtype": "h3",
-        			"label": "Guest ${guestNum}",
+        			"label": "Guest:",
         			"group": "guest",
+        			"width": "col-md-2",
         			"className": "guestHeader"
     			},
+    			{
+  					"type": "button",
+  					"name": 'removeGuest',
+  					"label": "Remove " + (options.labels.guest || 'Guest'),
+  					"width": "col-md-10",
+  					"group":"guest",
+  					"style":"danger"
+  				},
+  				{
+  					"type": "paragraph",
+  					"label": "&nbsp;",
+  					"group": "guest"
+  				},
+    			{
+    				"type": "select",
+    				"label": (options.labels.namePrefix || 'Prefix'),
+    				"placeholder": (options.labels.namePrefix || 'Prefix'),
+    				"className": "form-select",
+					"name": "guests.g0.prefix",
+					"hhkField": (options.labels.guest || 'Guest') + " " + (options.labels.namePrefix || 'Prefix'),
+    				"width": "col-md-3",
+    				"dataSource":"namePrefix",
+    				"multiple": false,
+    				"values": [],
+    				"group": "guest"
+  				},
 				{
 					"type": "text",
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "guests.g0.firstName",
+					"name": "guests.g0.firstName",
+					"hhkField": (options.labels.guest || 'Guest') + " First Name",
     				"width": "col-md-3",
     				"group": "guest"
   				},
@@ -376,8 +482,20 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "guests.g0.lastName",
+						"name": "guests.g0.lastName",
+					"hhkField": (options.labels.guest || 'Guest') + " Last Name",
     				"width": "col-md-3",
+    				"group": "guest"
+  				},
+  				{
+    				"type": "date",
+    				"label": "Birthdate",
+    				"placeholder": "Birthdate",
+    				"className": "form-control",
+						"name": "guests.g0.birthdate",
+					"hhkField": (options.labels.guest || 'Guest') + " Birthdate",
+    				"width": "col-md-4",
+    				"validation": "lessThanToday",
     				"group": "guest"
   				},
   				{
@@ -386,17 +504,47 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control hhk-phoneInput",
-    				"name": "guests.g0.phone",
+						"name": "guests.g0.phone",
+					"hhkField": (options.labels.guest || 'Guest') + " Phone",
     				"width": "col-md-3",
     				"group": "guest"
-    			},
+					},
+					{
+					  "type": "select",
+					  "label": "SMS Opt In",
+					  "placeholder": "Opt in to receive text messages",
+					  "className": "form-select",
+						"name": "guests.g0.sms_status",
+					  "hhkField": (options.labels.guest || 'Guest') + " SMS Opt In",
+					  "width": "col-md-3",
+					  "group": "guest",
+					  "multiple": false,
+					  "values": [
+						{
+						  "label": "",
+						  "value": "",
+						  "selected": true
+						  },
+						  {
+							"label": "Opt In",
+							"value": "opt_in",
+							"selected": false
+						  },
+						  {
+							"label": "Opt Out",
+							"value": "opt_out",
+							"selected": false
+						  }
+					  ]
+					},
     			{
     				"type": "text",
     				"subtype": "email",
     				"label": "Email",
     				"placeholder": "Email",
     				"className": "form-control",
-    				"name": "guests.g0.email",
+					"name": "guests.g0.email",
+					"hhkField": (options.labels.guest || 'Guest') + " Email",
     				"width": "col-md-3",
     				"group": "guest"
     			},
@@ -406,7 +554,8 @@
     				"label": "Relationship to " + (options.labels.patient || 'Patient'),
     				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
     				"className": "form-select",
-    				"name": "guests.g0.relationship",
+					"name": "guests.g0.relationship",
+					"hhkField": (options.labels.guest || 'Guest') + " Relationship to " + (options.labels.patient || 'Patient'),
     				"width": "col-md-3",
     				"group": "guest",
     				"dataSource":"patientRelation",
@@ -427,7 +576,8 @@
   				{
   					"type": "button",
   					"name": 'addGuest',
-  					"label": "Add " + (options.labels.guest || 'Guest')
+  					"label": "Add " + (options.labels.guest || 'Guest'),
+  					"style":"success"
   				}
   				]
   			},
@@ -441,7 +591,8 @@
     				"label": "Street",
     				"placeholder": "Street",
     				"className": "form-control",
-    				"name": "guests.g0.address.street",
+						"name": "guests.g0.address.street",
+					"hhkField": (options.labels.guest || 'Guest') + " Street",
     				"width": "col-md-12",
     				"group": "guest"
     				
@@ -451,7 +602,8 @@
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
     				"className": "form-control address ckzip hhk-zipsearch ui-autocomplete-input",
-    				"name": "guests.g0.address.adrzip",
+						"name": "guests.g0.address.adrzip",
+					"hhkField": (options.labels.guest || 'Guest') + " Zip Code",
     				"width": "col-md-2",
     				"group": "guest"
     			},
@@ -460,7 +612,8 @@
     				"label": "City",
     				"placeholder": "City",
     				"className": "form-control address",
-    				"name": "guests.g0.address.adrcity",
+						"name": "guests.g0.address.adrcity",
+					"hhkField": (options.labels.guest || 'Guest') + " City",
     				"width": "col-md-5",
     				"group": "guest"
   				},
@@ -470,7 +623,8 @@
     				"label": "County",
     				"placeholder": "County",
     				"className": "form-control address",
-    				"name": "guests.g0.address.adrcounty",
+						"name": "guests.g0.address.adrcounty",
+					"hhkField": (options.labels.guest || 'Guest') + " County",
     				"width": "col-md-5",
     				"group": "guest"
   				}]:[]),
@@ -479,7 +633,8 @@
     				"label": "State",
     				"placeholder": "State",
     				"className": "form-select bfh-states address",
-    				"name": "guests.g0.address.adrstate",
+						"name": "guests.g0.address.adrstate",
+					"hhkField": (options.labels.guest || 'Guest') + " State",
     				"width": "col-md-2",
     				"values":[],
     				"group": "guest"
@@ -489,7 +644,8 @@
     				"label": "Country",
     				"placeholder": "Country",
     				"className": "form-select bfh-countries address",
-    				"name": "guests.g0.address.adrcountry",
+					"name": "guests.g0.address.adrcountry",
+					"hhkField": (options.labels.guest || 'Guest') + " Country",
     				"width": "col-md-3",
     				"values":[],
     				"group": "guest"
@@ -507,7 +663,8 @@
     				"label": "Checkin Date",
 					"placeholder": "Checkin Date",
     				"className": "form-control",
-    				"name": "checkindate",
+						"name": "checkindate",
+						"hhkField": "Checkin Date",
     				"width": "col-md-6"
   				},
   				{
@@ -516,7 +673,8 @@
     				"label": "Checkout Date",
 					"placeholder": "Checkout Date",
     				"className": "form-control",
-    				"name": "checkoutdate",
+						"name": "checkoutdate",
+					"hhkField": "Expected Checkout Date",
     				"width": "col-md-6"
   				}
   				]
@@ -532,7 +690,8 @@
     				"label": (options.labels.hospital || 'Hospital'),
     				"placeholder": (options.labels.hospital || 'Hospital'),
     				"className": "form-select",
-    				"name": "hospital.idHospital",
+						"name": "hospital.idHospital",
+					"hhkField": (options.labels.hospital || 'Hospital'),
     				"width": "col-md-3",
     				"dataSource":"hospitals",
     				"multiple": false,
@@ -549,7 +708,8 @@
     				"label": (options.labels.mrn || 'MRN'),
     				"placeholder": (options.labels.mrn || 'MRN'),
     				"className": "form-control",
-    				"name": "hospital.mrn",
+						"name": "hospital.mrn",
+					"hhkField": (options.labels.patient || 'Patient') + " " + (options.labels.mrn || 'MRN'),
     				"width": "col-md-3",
   				},
   				... (options.fieldOptions.doctor ?
@@ -558,7 +718,8 @@
     				"label": "Doctor",
     				"placeholder": "Doctor",
     				"className": "form-control",
-    				"name": "hospital.doctor",
+						"name": "hospital.doctor",
+						"hhkField": (options.labels.patient || 'Patient') + " Doctor",
     				"width": "col-md-3",
   				}]:[]),
   				{
@@ -566,7 +727,8 @@
     				"label": (options.labels.treatmentStart || 'Treatment Start'),
     				"placeholder": (options.labels.treatmentStart || 'Treatment Start'),
     				"className": "form-control",
-    				"name": "hospital.treatmentStart",
+						"name": "hospital.treatmentStart",
+					"hhkField": (options.labels.patient || 'Patient') + " " + (options.labels.treatmentStart || 'Treatment Start'),
     				"width": "col-md-3",
   				},
   				{
@@ -574,7 +736,8 @@
     				"label": (options.labels.treatmentEnd || 'Treatment End'),
     				"placeholder": (options.labels.treatmentEnd || 'Treatment End'),
     				"className": "form-control",
-    				"name": "hospital.treatmentEnd",
+						"name": "hospital.treatmentEnd",
+					"hhkField": (options.labels.patient || 'Patient') + " " + (options.labels.treatmentEnd || 'Treatment End'),
     				"width": "col-md-3",
   				}
   				]
@@ -590,7 +753,8 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "hospital.referralAgent.firstName",
+						"name": "hospital.referralAgent.firstName",
+					"hhkField": "Referral Agent First Name",
     				"width": "col-md-3",
   				},
   				{
@@ -598,7 +762,8 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "hospital.referralAgent.lastName",
+						"name": "hospital.referralAgent.lastName",
+					"hhkField": "Referral Agent Last Name",
     				"width": "col-md-3",
   				},
   				{
@@ -607,7 +772,8 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control hhk-phoneInput",
-    				"name": "hospital.referralAgent.phone",
+						"name": "hospital.referralAgent.phone",
+					"hhkField": "Referral Agent Phone",
     				"width": "col-md-3",
   				},
   				{
@@ -615,7 +781,8 @@
     				"label": "Email",
     				"placeholder": "Email",
     				"className": "form-control",
-    				"name": "hospital.referralAgent.email",
+						"name": "hospital.referralAgent.email",
+					"hhkField": "Referral Agent Email",
     				"width": "col-md-3",
   				},
   				]
@@ -648,14 +815,14 @@
     			type: 'button',
     			events: {
     				click: function() {
-    					var formData = settings.formBuilder.actions.getData();
+    					var formData = btoa(JSON.stringify(settings.formBuilder.actions.getData()));
     					
     					var f = $("<form target='formPreviewIframe' method='POST' style='display:none;'></form>").attr({
         					action: settings.previewURL
     					}).appendTo(document.body);
     					
     					f.append('<input type="hidden" name="cmd" value="preview">');
-    					f.append('<textarea name="formData" style="display:none">' + JSON.stringify(formData) + '</textarea>');
+    					f.append('<textarea name="formData" style="display:none">' + formData + '</textarea>');
     					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea#formStyle").val() + '">');
     					f.append('<input type="hidden" name="initialGuests" value="' + settingsDialog.find("input[name=initialGuests]").val() + '">');
     					f.append('<input type="hidden" name="maxGuests" value="' + settingsDialog.find("input[name=maxGuests]").val() + '">');
@@ -679,8 +846,56 @@
   			}
   			],
   			disabledAttrs: ['access', 'name'],
-  			typeUserAttrs: {
+			typeUserAttrs: {
   				header: {
+					width: {
+      					label: 'Field Width',
+      					multiple: false,
+      					options: {
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
+      					},
+							value: 'col-md-12'
+    				},
+  					group: {
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+					},	
+  				},
+  				button: {
+					width: {
+      					label: 'Field Width',
+      					multiple: false,
+      					options: {
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
+      					},
+      					value: 'col-md-12'
+    				},
   					group: {
   						label: 'Group',
   						multiple: false,
@@ -695,18 +910,18 @@
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns (100%)',
-        					'col-md-11': '11 Columns (91%)',
-        					'col-md-10': '10 Columns (83%)',
-        					'col-md-9': '9 Columns (75%)',
-        					'col-md-8': '8 Columns (66%)',
-        					'col-md-7': '7 Columns (58%)',
-        					'col-md-6': '6 Columns (50%)',
-        					'col-md-5': '5 Columns (41%)',
-        					'col-md-4': '4 Columns (33%)',
-        					'col-md-3': '3 Columns (25%)',
-        					'col-md-2': '2 Columns (16%)',
-        					'col-md-1': '1 Column (8%)',
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
@@ -717,25 +932,32 @@
   							'': '',
   							'guest': 'Guest (used with Add Guest button)'
   						}
-  					}
+						},
+						hhkField: {
+							label: "HHK Field",
+							className: 'hhk-formbuilder-readonly',
+							value: "",
+							readonly: "readonly",
+							description: "Data entered into this field correspond to this field in HHK"
+						}
     			},
   				number: {
     				width: {
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns (100%)',
-        					'col-md-11': '11 Columns (91%)',
-        					'col-md-10': '10 Columns (83%)',
-        					'col-md-9': '9 Columns (75%)',
-        					'col-md-8': '8 Columns (66%)',
-        					'col-md-7': '7 Columns (58%)',
-        					'col-md-6': '6 Columns (50%)',
-        					'col-md-5': '5 Columns (41%)',
-        					'col-md-4': '4 Columns (33%)',
-        					'col-md-3': '3 Columns (25%)',
-        					'col-md-2': '2 Columns (16%)',
-        					'col-md-1': '1 Column (8%)',
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
@@ -746,25 +968,32 @@
   							'': '',
   							'guest': 'Guest (used with Add Guest button)'
   						}
-  					}
+						},
+						hhkField: {
+							label: "HHK Field",
+							className: 'hhk-formbuilder-readonly',
+							value: "",
+							readonly: "readonly",
+							description: "Data entered into this field correspond to this field in HHK"
+						}
     			},
   				select: {
     				width: {
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns (100%)',
-        					'col-md-11': '11 Columns (91%)',
-        					'col-md-10': '10 Columns (83%)',
-        					'col-md-9': '9 Columns (75%)',
-        					'col-md-8': '8 Columns (66%)',
-        					'col-md-7': '7 Columns (58%)',
-        					'col-md-6': '6 Columns (50%)',
-        					'col-md-5': '5 Columns (41%)',
-        					'col-md-4': '4 Columns (33%)',
-        					'col-md-3': '3 Columns (25%)',
-        					'col-md-2': '2 Columns (16%)',
-        					'col-md-1': '1 Column (8%)',
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
@@ -780,25 +1009,32 @@
   							'': '',
   							'guest': 'Guest (used with Add Guest button)'
   						}
-  					}
+					},
+					hhkField: {
+						label: "HHK Field",
+						className: 'hhk-formbuilder-readonly',
+						value: "",
+						readonly: "readonly",
+						description: "Data entered into this field correspond to this field in HHK"
+					}
   				},
   				date: {
     				width: {
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns',
-        					'col-md-11': '11 Columns',
-        					'col-md-10': '10 Columns',
-        					'col-md-9': '9 Columns',
-        					'col-md-8': '8 Columns',
-        					'col-md-7': '7 Columns',
-        					'col-md-6': '6 Columns',
-        					'col-md-5': '5 Columns',
-        					'col-md-4': '4 Columns',
-        					'col-md-3': '3 Columns',
-        					'col-md-2': '2 Columns',
-        					'col-md-1': '1 Column',
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
@@ -818,25 +1054,32 @@
     						'lessThanToday': "Date must be in the past",
     						'greaterThanToday': "Date must be in the future"
     					}
-    				}
+						},
+						hhkField: {
+							label: "HHK Field",
+							className: 'hhk-formbuilder-readonly',
+							value: "",
+							readonly: "readonly",
+							description: "Data entered into this field correspond to this field in HHK"
+						}
   				},
   				paragraph: {
     				width: {
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns (100%)',
-        					'col-md-11': '11 Columns (91%)',
-        					'col-md-10': '10 Columns (83%)',
-        					'col-md-9': '9 Columns (75%)',
-        					'col-md-8': '8 Columns (66%)',
-        					'col-md-7': '7 Columns (58%)',
-        					'col-md-6': '6 Columns (50%)',
-        					'col-md-5': '5 Columns (41%)',
-        					'col-md-4': '4 Columns (33%)',
-        					'col-md-3': '3 Columns (25%)',
-        					'col-md-2': '2 Columns (16%)',
-        					'col-md-1': '1 Column (8%)',
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
@@ -854,18 +1097,18 @@
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns (100%)',
-        					'col-md-11': '11 Columns (91%)',
-        					'col-md-10': '10 Columns (83%)',
-        					'col-md-9': '9 Columns (75%)',
-        					'col-md-8': '8 Columns (66%)',
-        					'col-md-7': '7 Columns (58%)',
-        					'col-md-6': '6 Columns (50%)',
-        					'col-md-5': '5 Columns (41%)',
-        					'col-md-4': '4 Columns (33%)',
-        					'col-md-3': '3 Columns (25%)',
-        					'col-md-2': '2 Columns (16%)',
-        					'col-md-1': '1 Column (8%)',
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
@@ -876,25 +1119,32 @@
   							'': '',
   							'guest': 'Guest (used with Add Guest button)'
   						}
-  					}
+						},
+						hhkField: {
+							label: "HHK Field",
+							className: 'hhk-formbuilder-readonly',
+							value: "",
+							readonly: "readonly",
+							description: "Data entered into this field correspond to this field in HHK"
+						}
   				},
   				"radio-group": {
     				width: {
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns (100%)',
-        					'col-md-11': '11 Columns (91%)',
-        					'col-md-10': '10 Columns (83%)',
-        					'col-md-9': '9 Columns (75%)',
-        					'col-md-8': '8 Columns (66%)',
-        					'col-md-7': '7 Columns (58%)',
-        					'col-md-6': '6 Columns (50%)',
-        					'col-md-5': '5 Columns (41%)',
-        					'col-md-4': '4 Columns (33%)',
-        					'col-md-3': '3 Columns (25%)',
-        					'col-md-2': '2 Columns (16%)',
-        					'col-md-1': '1 Column (8%)',
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
@@ -912,18 +1162,18 @@
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns (100%)',
-        					'col-md-11': '11 Columns (91%)',
-        					'col-md-10': '10 Columns (83%)',
-        					'col-md-9': '9 Columns (75%)',
-        					'col-md-8': '8 Columns (66%)',
-        					'col-md-7': '7 Columns (58%)',
-        					'col-md-6': '6 Columns (50%)',
-        					'col-md-5': '5 Columns (41%)',
-        					'col-md-4': '4 Columns (33%)',
-        					'col-md-3': '3 Columns (25%)',
-        					'col-md-2': '2 Columns (16%)',
-        					'col-md-1': '1 Column (8%)',
+        					'col-md-12': '12 of 12 Columns (100%)',
+        					'col-md-11': '11 of 12 Columns (91%)',
+        					'col-md-10': '10 of 12 Columns (83%)',
+        					'col-md-9': '9 of 12 Columns (75%)',
+        					'col-md-8': '8 of 12 Columns (66%)',
+        					'col-md-7': '7 of 12 Columns (58%)',
+        					'col-md-6': '6 of 12 Columns (50%)',
+        					'col-md-5': '5 of 12 Columns (41%)',
+        					'col-md-4': '4 of 12 Columns (33%)',
+        					'col-md-3': '3 of 12 Columns (25%)',
+        					'col-md-2': '2 of 12 Columns (16%)',
+        					'col-md-1': '1 of 12 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
@@ -953,6 +1203,16 @@
 			        bottom: 'auto',
 			        right: 'auto',
 			    },
+			},
+			defaultFormSettings: {
+				successTitle: "Referral Form Submitted",
+				successContent:
+`Thank you for submitting your referral form. Someone will be in touch shortly.
+
+Thank You,
+House Staff`,
+				initialGuests: 1,
+				maxGuests: 4
 			}
         };
 
@@ -1003,8 +1263,23 @@
         		}
       		}
     	});
+
+		var embedInfoDialog = $wrapper.find("#embedInfoDialog").dialog({
+			autoOpen: false,
+			height: 700,
+			width: getDialogWidth(900),
+			modal: true,
+			buttons: {
+        		Close: function(){
+        			embedInfoDialog.dialog( "close" );
+        		}
+      		},
+			create: function (event, ui) {
+				//$(event.target).find("#embedAccordion").accordion();
+			}
+		});
 	
-		actions($wrapper, settings, settingsDialog, formPreviewDialog);
+		actions($wrapper, settings, settingsDialog, formPreviewDialog, embedInfoDialog);
 		
 		return this;
 	}
@@ -1020,7 +1295,8 @@
 	    		"label": (options.labels.patient || 'Patient') + " " + (demog.Description || ''),
 	    		"placeholder": (options.labels.patient || 'Patient') + " " + (demog.Description || ''),
 	    		"className": "form-select",
-	    		"name": "patient.demographics." + index,
+				"name": "patient.demographics." + index,
+				"hhkField": (options.labels.patient || 'Patient') + " " + (demog.Description || ''),
 	    		"width": "col-md-3",
 	    		"dataSource":index,
 	  		});
@@ -1030,7 +1306,8 @@
 	    		"label": (options.labels.guest || 'Guest') + " " + (demog.Description || ''),
 	    		"placeholder": (options.labels.guest || 'Guest') + " " + (demog.Description || ''),
 	    		"className": "form-select",
-	    		"name": "guests.g0.demographics." + index,
+					"name": "guests.g0.demographics." + index,
+				"hhkField": (options.labels.guest || 'Guest') + " " + (demog.Description || ''),
 	    		"width": "col-md-3",
 	    		"group": "guest",
 	    		"dataSource":index,
@@ -1045,9 +1322,9 @@
 	function setUpDataSources(options){
 		var dataSources = {
     		'':'',
-    		'namePrefix': 'Name Prefix',
+    		'namePrefix': (options.labels.namePrefix || 'Prefix'),
     		'nameSuffix': 'Name Suffix',
-    		'patientRelation': 'Patient Relationship',
+    		'patientRelation': (options.labels.patient || 'Patient') + ' Relationship',
     		'vehicleStates': 'Vehicle States',
     		'hospitals': 'Hospital',
     		'diagnosis': 'Diagnosis',
@@ -1074,7 +1351,7 @@
 					<label for="formTitle">Form Title: </label>
 					<input typle="text" id="formTitle" placeholder="Form Title" style="padding:0.4em 0.5em;">
 				</span>
-				<button id="formiframebtn" style="margin-left: 0.5em; display: none;" title="Embed Code Copied">Copy Form Embed Code</button>
+				<button id="formiframebtn" style="margin-left: 0.5em; display: none;">Embed Instructions</button>
 				</form>
 			</div>
 			<div id="formBuilderContent" style="margin-top: 1em;"></div>
@@ -1083,7 +1360,7 @@
 				<div id="formSettingsTabs">
     				<ul>
         				<li><a href="#tabs-1">Success Message</a></li>
-        				<li class="d-none"><a href="#tabs-2">Notifications</a></li>
+        				<li><a href="#tabs-2">Notifications</a></li>
         				<li><a href="#tabs-3">Form Styles</a></li>
         				<li><a href="#tabs-5">Guests</a></li>
         				<li><a href="#tabs-4">Miscellaneous</a></li>
@@ -1101,21 +1378,12 @@
 						</div>
 				    </div>
 				    
-				    <div id="tabs-2" class="d-none">
+				    <div id="tabs-2">
 				        <div class="row">
 							<div class="col-12">
-								<p style="margin-bottom: 1em;">Notify patient by email after form submission</p>
-								<div class="mb-3">
-				        		<div>
-				        			<label for="emailPatient" style="margin-right: 0.5em;">Enable</label>
-				        			<input type="checkbox" name="emailPatient" id="emailPatient">
-				        		</div>
-				        		<small class="mb-3">Email will be sent to the email address from the Patient Details section</small>
-				        		</div>
+								<p style="margin-bottom: 1em;">Any addresses listed in "referralFormEmail" in Site Configuration will be notified by email when a form is submitted</p>
 								<label for="notifySubject" style="display:block">Email Subject</label>
 								<input type="text" id="notifySubject" name="notifySubject" placeholder="Email Subject" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
-								<label for="notifyContent" style="display:block">Email Content</label>
-								<textarea id="notifyContent" name="notifyContent" placeholder="Email Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
 							</div>
 						</div>
 				    </div>
@@ -1180,13 +1448,13 @@
 				    	<div class="row mb-3">
 				    		<div class="col-12">
 				    			<label for="initialGuests">Initial Guests:</label>
-				        		<input type="number" name="initialGuests" min="1" max="20" style="width: 5em;">
+				        		<input type="number" name="initialGuests" min="1" max="20" style="width: 5em;" id="initialGuests">
 				    		</div>
 				    	</div>
 				    	<div class="row mb-3">
 				    		<div class="col-12">
 				    			<label for="maxGuests">Max Guests:</label>
-				        		<input type="number" name="maxGuests" min="1" max="20" style="width: 5em;">
+				        		<input type="number" name="maxGuests" min="1" max="20" style="width: 5em;" id="maxGuests">
 				    		</div>
 				    	</div>
 				    	<div class="ui-state-highlight ui-corner-all p-1" id="guestErrorMsg" style="display:none;">
@@ -1199,6 +1467,28 @@
 			</div>
 			<div id="formPreviewDialog" title="Preview">
 				<iframe id="formPreviewIframe" name="formPreviewIframe" width="1024" height="768" style="border: 0"></iframe>
+			</div>
+			<div id="embedInfoDialog" title="Embed Instructions">
+				<p class="pb-2">To add this form to your website, you'll need to either add a code snippet, or use the Embed function of your Content Management System (Wordpress, Wix, Squarespace, etc)</p>
+
+				<div class="ui-widget hhk-visitdialog mb-3">
+					<h3 class="ui-widget-header ui-corner-top">Use a Code Snippet</h3>
+					<div class="ui-widget-content ui-corner-bottom p-3">
+						<p class="pb-2">If you are able to add code directly to your website, copy and paste the following Code Snippet into your website.</p>
+						<div class="my-3"><label for="changeHeight">Height: </label><input type="number" id="changeHeight" min="0" value="1000" class="mr-2" style="width: 75px;">px
+						<div style="font-size: 0.9em; color:#919191" class="mt-2">If you have a long form, you may need to increase this value to eliminate scrollbars on your website</div>
+						</div>
+						<pre id="embedCodeSnippet" class="ui-widget-content ui-corner-all p-3 hhk-overflow-x" style="white-space:pre-wrap;"></pre>
+					</div>
+				</div>
+				<div class="ui-widget hhk-visitdialog mb-3">
+					<h3 class="ui-widget-header ui-corner-top">Embedding in a CMS</h3>
+					<div class="ui-widget-content ui-corner-bottom p-3">
+						<p class="pb-2">When embedding into a CMS, look for a function called "Embed", "Embed a Website", "Embed an iFrame", "Add External Content", or something similar.</p>
+						<p class="pb-2">When asked what website you want to embed, copy and paste the following URL</p>
+						<pre id="embedURL" class="ui-widget-content ui-corner-all p-3 hhk-overflow-x" style="white-space:pre-wrap;"></pre>
+					</div>
+				</div>
 			</div>
 		`
 		);
@@ -1223,7 +1513,7 @@
 		
 	}
 	
-	function actions($wrapper, settings, settingsDialog, formPreviewDialog){
+	function actions($wrapper, settings, settingsDialog, formPreviewDialog, embedInfoDialog){
 	
 		$wrapper.on('click', '#newReferral', function(e){
 			e.preventDefault();
@@ -1239,12 +1529,17 @@
 				layoutTemplates: settings.layoutTemplates,
 				onSave: onSave,
 				onAddField:onAddField,
-				onCloseFieldEdit:onCloseFieldEdit,
+				//onCloseFieldEdit:onCloseFieldEdit,
 				stickyControls: settings.stickyControls,
 				"i18n":{
 					"location":"../js/formBuilder"
 				}
 			});
+
+			settingsDialog.find('input#formSuccessTitle').val(settings.defaultFormSettings.successTitle).data('oldVal', "");
+			settingsDialog.find('textarea#formSuccessContent').val(settings.defaultFormSettings.successContent).data('oldVal', "");
+			settingsDialog.find('input[name=initialGuests]').val(settings.defaultFormSettings.initialGuests).data('oldVal',"");
+			settingsDialog.find('input[name=maxGuests]').val(settings.defaultFormSettings.maxGuests).data('oldVal',"");
 		});
 		
 		$wrapper.on('change', '#selectform', function(){
@@ -1273,14 +1568,14 @@
 								layoutTemplates: settings.layoutTemplates,
 								onSave: onSave,
 								onAddField:onAddField,
-								onCloseFieldEdit:onCloseFieldEdit,
+								//onCloseFieldEdit:onCloseFieldEdit,
 								stickyControls: settings.stickyControls,
 								"i18n":{
 									"location":"../js/formBuilder"
 								}
 							});
 							
-							$wrapper.find('#formiframebtn').data('code', '<iframe src="' + data.formURL + '" width="100%" height="1000"></iframe>').show();
+							$wrapper.find('#formiframebtn').data('url', data.formURL).show();
 							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
 							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
 	    					settingsDialog.find('textarea#formStyle').val(data.formSettings.formStyle).data('oldVal', data.formSettings.formStyle);
@@ -1308,12 +1603,22 @@
 		
 		$wrapper.on('click', '#formiframebtn', function(e){
 			e.preventDefault();
-			var code = $(this).data('code');
-			navigator.clipboard.writeText(code)
-				.then(() => { alert("Embed Code Copied.") })
-				.catch((error) => { $(this).attr('title',`Copy failed! ${error}`).tooltip() })
+			let url = $(this).data("url");
+			embedInfoDialog.find("#embedURL").text(url);
+			embedInfoDialog.find("#embedCodeSnippet").text('<iframe src="' + url + '" width="100%" height="1000"></iframe>');
+			embedInfoDialog.dialog("open");
 		});
 		
+		embedInfoDialog.on('change', 'input#changeHeight', function(e){
+			let val = $(this).val();
+			let embedCode = embedInfoDialog.find("#embedCodeSnippet").text();
+			console.log(val);
+			console.log(embedCode);
+			embedCode = embedCode.replace(/(height=")([0-9]*)(")/gm, '$1' + val + '$3');
+			console.log(embedCode);
+			embedInfoDialog.find("#embedCodeSnippet").text(embedCode);
+		});
+
 		$wrapper.on('blur', '[contenteditable]', function(){
 			var val = $(this).html().replaceAll('"', "'");
 			$(this).html(val);
@@ -1359,10 +1664,10 @@
 		
 		var onCloseFieldEdit = function(editPanel){
 			var group = $(editPanel).find('select[name=group]').val();
-			var fieldName = $(editPanel).find('input[name=name]').val();
+                        var fieldType = $(editPanel).parent('li').prop('type');
 			
-			if(group == 'guest' && !fieldName.startsWith("guests.g")){
-				flagAlertMessage('The "Guest" group can only be used with Guest fields', true);
+			if(group === 'guest' && (fieldType === 'checkbox-group' || fieldType === 'radio-group' )){
+				flagAlertMessage('The "Guest" group does not support checkbox or radio buttons, the field has been removed from the "Guest" group', true);
 				$(editPanel).find('select[name=group]').val("");
 			}
 		};
@@ -1390,11 +1695,11 @@
 				var missingFields = [];
 				var emailErrorMsg = '';
 				
-				//check field group
-				formData.forEach(function(field){
-					if(field.group == 'guest' && field.name && !field.name.startsWith("guests.g")){
-						field.group = '';
-						flagAlertMessage('The "Guest" group can only be used with Guest fields, group has been removed', true);
+				//convert html entities
+				formData.forEach(function(field, i, formData){
+					if(field.label){
+						field.label = he.encode(field.label, {'allowUnsafeSymbols': true});
+						formData[i] = field;
 					}
 				});
 				
@@ -1419,7 +1724,7 @@
 				});
 				
 				//format font import
-				matches = fontImport.match(/@import url\('https:\/\/fonts.googleapis.com\/css2(\?.*)\'\);/);
+				matches = fontImport.match(/.*@import url\('https:\/\/fonts.googleapis.com\/css2(\?.*)\'\).*/);
 				if(Array.isArray(matches) && matches[1] != null){
 					queryString = matches[1];
 					urlparams = new URLSearchParams(queryString);
@@ -1436,7 +1741,7 @@
 		    				"cmd":"saveformtemplate",
 		    				"idDocument": idDocument,
 		    				"title": title,
-		    				"doc": JSON.stringify(formData),
+		    				"doc": btoa(JSON.stringify(formData)),
 		    				"style": style,
 		    				"successTitle": successTitle,
 		    				"successContent": successContent,

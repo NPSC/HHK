@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * MemberException.php
  *

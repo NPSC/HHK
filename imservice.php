@@ -18,17 +18,21 @@ use HHK\Payment\PaymentSvcs;
  */
 
 // Configuration filename and paths
-define('ciCFG_FILE', 'conf/site.cfg' );
+define('ciCFG_FILE', 'site.cfg' );
+define('CONF_PATH', 'conf/');
 
 require ('functions/commonFunc.php');
 
-require ('vendor/autoload.php');
-
+if (file_exists('vendor/autoload.php')) {
+    require('vendor/autoload.php');
+} else {
+    exit("Unable to laod dependancies, be sure to run 'composer install'");
+}
 $sequence = getRandomString();
 
 try {
     $login = new Login();
-    $login->initHhkSession('conf/site.cfg');
+    $login->initHhkSession('conf/', 'site.cfg');
 
 } catch (\Exception $ex) {
     session_unset();
@@ -45,13 +49,12 @@ try {
 }
 
 // Authenticate user
-$user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
-$pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+$user = (isset($_SERVER["PHP_AUTH_USER"]) ? filter_var($_SERVER['PHP_AUTH_USER'], FILTER_SANITIZE_FULL_SPECIAL_CHARS): null);
+$pass = (isset($_SERVER['PHP_AUTH_PW']) ? filter_var($_SERVER["PHP_AUTH_PW"], FILTER_UNSAFE_RAW): null);
 
 $u = new UserClass();
 
-
-if ($user == '' || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE, FALSE) === FALSE) {
+if (is_null($user) || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE, FALSE) === FALSE) {
 
     header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
     header('HTTP/1.0 401 Unauthorized');
@@ -125,4 +128,3 @@ if($error) {
 $uS->destroy(TRUE);
 
 exit();
-?>

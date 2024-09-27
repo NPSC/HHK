@@ -9,7 +9,7 @@ use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
  * CreditVoidTokenRequest.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -47,16 +47,32 @@ use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
 
 class CreditVoidReturnTokenRequest extends AbstractMercTokenRequest {
 
+    /**
+     * Summary of execute
+     * @param \SoapClient $txClient
+     * @param array $data
+     * @return CreditTokenResponse
+     */
     protected function execute(\SoapClient $txClient, array $data) {
         return new CreditTokenResponse($txClient->CreditVoidReturnToken($data), 'CreditVoidReturnTokenResult', MpTranType::VoidReturn);
     }
 
+    /**
+     * Summary of setPurchaseAmount
+     * @param mixed $v
+     * @return CreditVoidReturnTokenRequest
+     */
     public function setPurchaseAmount($v) {
         $amt = number_format($v, 2, '.', '');
         $this->fields["PurchaseAmount"] = $amt;
         return $this;
     }
 
+    /**
+     * Summary of setRefNo
+     * @param mixed $v
+     * @return CreditVoidReturnTokenRequest
+     */
     public function setRefNo($v) {
         if ($v != '') {
             $a = substr($v, 0, 16);
@@ -65,6 +81,11 @@ class CreditVoidReturnTokenRequest extends AbstractMercTokenRequest {
         return $this;
     }
 
+    /**
+     * Summary of setAuthCode
+     * @param mixed $v
+     * @return CreditVoidReturnTokenRequest
+     */
     public function setAuthCode($v) {
         if ($v != '') {
             $a = substr($v, 0, 16);

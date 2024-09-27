@@ -4,8 +4,13 @@ namespace HHK\House\Report;
 
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\Exception\RuntimeException;
+use HHK\Member\Address\Address;
 use HHK\sec\Labels;
 use HHK\sec\Session;
+use HHK\Exception\InvalidArgumentException;
+use HHK\SysConst\VisitStatus;
+use HHK\House\Distance\DistanceFactory;	
+use HHK\House\Distance\ZipDistance;
 
 /**
  * GuestReport.php
@@ -23,7 +28,7 @@ use HHK\sec\Session;
  */
 class GuestDemogReport {
 
-    public static function demogReport(\PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whichGuests, $sourceZip) {
+    public static function demogReport(\PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whDiags, $whichGuests, $whPatient, $sourceZip, $roomGroupBy) {
 
         if ($startDate == '') {
             return;
@@ -81,6 +86,26 @@ class GuestDemogReport {
             }
         }
 
+        //set up room grouping
+        $roomGroupingTitle = "";
+        $roomGroupings = readGenLookupsPDO($dbh, 'Room_Group', 'Order');
+        switch ($roomGroupBy){
+            case "Category":
+                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Category', 'Order');
+                $roomGroupingTitle = (isset($roomGroupings["Category"]["Description"]) ? $roomGroupings["Category"]["Description"]: "Room Category");
+                break;
+            case "Report_Category":
+                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Rpt_Cat', 'Order');
+                $roomGroupingTitle = (isset($roomGroupings["Report_Category"]["Description"]) ? $roomGroupings["Report_Category"]["Description"]: "Room Report Category");
+                break;
+            case "Type":
+                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Type', 'Order');
+                $roomGroupingTitle = (isset($roomGroupings["Type"]["Description"]) ? $roomGroupings["Type"]["Description"]: "Room Type");
+                break;
+            default:
+                $roomGrouping = [];
+        }
+
 
         // Set up the Months array
         $th = HTMLTable::makeTh('');
@@ -99,6 +124,9 @@ class GuestDemogReport {
                 } else if($whichGuests == 'allStayed'){
                     $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'Unique ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
                 }
+
+                //room grouping
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
 
                 // Demographics
                 foreach ($demoCategorys as $k => $d) {
@@ -123,6 +151,9 @@ class GuestDemogReport {
             $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'Unique ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
         }
 
+        //room grouping
+        $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
+
         // Totals
         foreach ($demoCategorys as $k => $d) {
             $accum['Total'][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
@@ -144,13 +175,24 @@ class GuestDemogReport {
             $query = "SELECT DISTINCT s.idName,";
         }
 
-        $query .= "na.Postal_Code,
+        $query .= "na.idName_Address,	
+        na.Purpose as `address_purpose`,	
+        na.Address_1 as `address1`,	
+        na.Address_2 as `address2`,	
+        na.City as `city`,	
+        na.State_Province as `state`,	
+        na.State_Province,	
+        na.Postal_Code as `zip`,	
+        na.Postal_Code,
         $fields
         na.County,
-        na.State_Province,
+        na.Meters_From_House,
         hs.idPsg,
         hs.idHospital,
-        hs.idAssociation
+        hs.idAssociation,
+        r.Category,
+        r.Report_Category,
+        r.Type
     FROM
         stays s
             LEFT JOIN
@@ -163,18 +205,23 @@ class GuestDemogReport {
             LEFT JOIN
         visit v ON s.idVisit = v.idVisit and s.Visit_Span = v.Span
             LEFT JOIN
-        hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        hospital_stay hs on v.idHospital_stay = hs.idHospital_stay $whPatient
+            LEFT JOIN
+        resource_room rr on v.idResource = rr.idResource
+            LEFT JOIN
+        room r on rr.idRoom = r.idRoom
     WHERE
-        n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc
-        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') ";
+        n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc $whDiags $whPatient
+        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0";
 
         if ($whichGuests == 'new') {
             $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";
         } else if($whichGuests == 'allStarted'){
-            $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "')";
+            $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "') and s.Status in ('" . VisitStatus::Active . "','" . VisitStatus::CheckedOut . "')";
         } else if($whichGuests == 'allStayed'){
             $query .= " AND DATE(ifnull(s.Span_End_Date, now())) > DATE('" . $stDT->format('Y-m-01') . "')";
         }
+        $query .= " ORDER BY s.idName";
 
         $currId = 0;
         $currPeriod = '';
@@ -203,6 +250,12 @@ class GuestDemogReport {
                 $accum['Total'][$d][$r[$d]]['cnt']++;
             }
 
+            //room grouping
+            if($whichGuests != 'allStayed'){
+                $accum[$startPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle][$r[$roomGroupBy]]['cnt']++;
+            }
+            $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle][$r[$roomGroupBy]]['cnt']++;
+
             if($whichGuests != 'allStayed'){
                 $accum[$startPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt']++;
             }
@@ -210,7 +263,20 @@ class GuestDemogReport {
 
 
             try {
-                $miles = self::calcZipDistance($dbh, $sourceZip, $r['Postal_Code']);
+
+                $distanceCalculator = DistanceFactory::make();	
+                if($r['Meters_From_House'] > 0){	
+                    $miles = $distanceCalculator->meters2miles($r['Meters_From_House']);	
+                }elseif ($uS->distCalculator == 'zip'){	
+                    $miles = $distanceCalculator->getDistance($dbh, ['zip'=>$r["zip"]], Address::getHouseAddress($dbh), "miles");	
+                }else{ //calculate zip distance    
+                    $zipDistance = new ZipDistance();
+                    $miles = $zipDistance->getDistance($dbh, ['zip'=>$r["zip"]], Address::getHouseAddress($dbh), "miles");
+                }
+
+                if($miles == -1){
+                    throw new RuntimeException("Can't calculate distance");
+                }
 
                 foreach ($accum[$startPeriod]['Distance'] as $d => $val) {
 
@@ -223,14 +289,15 @@ class GuestDemogReport {
                     }
                 }
 
-            } catch (RuntimeException $hex) {
+            } catch (\RuntimeException $hex) {
 
                 $badZipCodes[$r['Postal_Code']] = 'y';
                 if($whichGuests != 'allStayed'){
                     $accum[$startPeriod]['Distance']['']['cnt']++;
+                    $accum[$startPeriod]['Distance']['']['idNames'][] = $r['idName'];
                 }
                 $accum['Total']['Distance']['']['cnt']++;
-
+                $accum['Total']['Distance']['']['idNames'][] = $r['idName'];
             }
 
             if($uS->county){
@@ -241,16 +308,32 @@ class GuestDemogReport {
                     if(!isset($accum[$startPeriod]['County'][$countyKey])){
                         $accum[$startPeriod]['County'][$countyKey]['title'] = $countyTitle;
                         $accum[$startPeriod]['County'][$countyKey]['cnt'] = 1;
+                        if($countyKey == ''){
+                            $accum[$startPeriod]['County'][$countyKey]['idNames'] = [$r['idName']];
+                        }
                     }else{
                         $accum[$startPeriod]['County'][$countyKey]['cnt']++;
+                        if($countyKey == ''){
+                            $accum[$startPeriod]['County'][$countyKey]['idNames'][] = $r['idName'];
+                        }
                     }
                 }
 
                 if(!isset($accum['Total']['County'][$countyKey])){
                     $accum['Total']['County'][$countyKey]['title'] = $countyTitle;
                     $accum['Total']['County'][$countyKey]['cnt'] = 1;
+                    if($countyKey == ''){
+                        $accum['Total']['County'][$countyKey]['idNames'] = [$r['idName']];
+                    }
                 }else{
                     $accum['Total']['County'][$countyKey]['cnt']++;
+                    if($countyKey == ''){
+                        $accum['Total']['County'][$countyKey]['idNames'][] = $r['idName'];
+                    }
+                }
+
+                if($countyKey = ''){
+
                 }
             }
             //$totalPSGs[$r['idPsg']] = 'y';
@@ -297,14 +380,26 @@ class GuestDemogReport {
 
             $rowCount = 0;
 
-            foreach ($accum[$col] as $demog) {
+            foreach ($accum[$col] as $demogTitle=>$demog) {
 
                 if (isset($trs[$rowCount])) {
 
                     $trs[$rowCount++] .= HTMLTable::makeTd('', array('class' => 'hhk-tdTitle'));
 
                     foreach ($demog as $indx) {
-                        $trs[$rowCount++] .= HTMLTable::makeTd($indx['cnt'] > 0 ? $indx['cnt'] : '');
+                        $dataStr = HTMLContainer::generateMarkup('span', $indx['cnt'] > 0 ? $indx['cnt'] : '');
+
+                        if(isset($indx['idNames']) && count($indx['idNames']) > 0){
+                            
+                            try{
+                                $colDT = new \DateTime($col . '-01');
+                                $col = $colDT->format('M, Y');
+                            }catch(\Exception $e){
+
+                            }
+                            $dataStr.= HTMLContainer::generateMarkup('span', '', ['class'=>'getNameDetails hhk-btn ui-icon ui-icon-comment', 'data-idNames'=>json_encode($indx['idNames']), 'data-title'=>$col . " " . $demogTitle . ": " . $indx['title']]);
+                        }
+                        $trs[$rowCount++] .= HTMLTable::makeTd($dataStr);
                     }
                 }
             }
@@ -337,11 +432,13 @@ class GuestDemogReport {
         return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
     }
 
-    public static function generateFilterBtnMarkup(string $whichGuests = ""){
+    public static function generateFilterBtnMarkup(string $whichGuests = "", string $guestsvspatients = ""){
         $labels = Labels::getLabels();
         $newGuestsAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbnewG"];
         $allStartedAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbAllStartStay"];
         $allStayedAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbAllGStay"];
+        $guestsandPatientsAttrs = ["type"=>"radio", "name"=>"rbGuestsPatients", "id"=>"rbGandP"];
+        $justPatientsAttrs = ["type"=>"radio", "name"=>"rbGuestsPatients", "id"=>"rbP"];
 
         switch ($whichGuests){
             case "allStarted":
@@ -352,6 +449,12 @@ class GuestDemogReport {
                 break;
             default:
                 $newGuestsAttrs["checked"] = "checked";
+        }
+
+        if($guestsvspatients == "patients"){
+            $justPatientsAttrs["checked"] = "checked";
+        }else{
+            $guestsandPatientsAttrs["checked"] = "checked";
         }
 
         $filterOptsMkup = HTMLContainer::generateMarkup("div",
@@ -369,13 +472,29 @@ class GuestDemogReport {
             HTMLContainer::generateMarkup("label", "All " . $labels->getString('MemberType', 'visitor', 'Guest') . "s who stayed", ["for"=>"rbAllGStay"])
         );
 
+        $filterOptsMkup .= HTMLContainer::generateMarkup("div","", ["style"=>"background: #a6c9e2; width:1px; margin: 0 0.5em;"]);
+
+        $filterOptsMkup .= HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("guestsandpatients", $guestsandPatientsAttrs) .
+            HTMLContainer::generateMarkup("label", $labels->getString('MemberType', 'visitor', 'Guest') . "s & " . $labels->getString('MemberType', 'patient', 'Patient') . "s", ["for"=>"rbGandP"])
+        );
+
+        $filterOptsMkup .= HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("patients", $justPatientsAttrs) .
+            HTMLContainer::generateMarkup("label", $labels->getString('MemberType', 'patient', 'Patient') . "s", ["for"=>"rbP"])
+        );
+
         $btnSubmit = HTMLInput::generateMarkup("Run Report", ["type"=>"submit", "id"=>"btnSmt", "name"=>"btnSmt", "class"=>"ui-button ui-corner-all ui-widget"]);
 
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts")) . $btnSubmit, ["id"=>"filterBtns", "class"=>"mt-3"]);
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts", "style"=>"align-items: initial")) . $btnSubmit, ["id"=>"filterBtns", "class"=>"mt-3"]);
     }
 
     public static function calcZipDistance(\PDO $dbh, $sourceZip, $destZip) {
 
+        if(empty($destZip)){
+            throw new InvalidArgumentException("Destination ZIP code can't be empty");
+        }
+        
         if (strlen($destZip) > 5) {
             $destZip = substr($destZip, 0, 5);
         }
@@ -415,6 +534,7 @@ class GuestDemogReport {
         if ($includeBlank) {
             $age['']['cnt'] = 0;
             $age['']['title'] = 'Not Indicated';
+            $age['']['idNames'] = [];
         }
 
         return $age;

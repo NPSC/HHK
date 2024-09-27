@@ -11,6 +11,7 @@ class Remember
     protected $userAr;
     protected $defaultExpSeconds;
     protected $cookieName;
+    protected $token;
 
     public function __construct(array $userAr){
         $uS = Session::getInstance();

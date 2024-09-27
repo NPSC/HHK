@@ -226,17 +226,17 @@ class Constraints {
 
         $cat = '';
         if (isset($post['txtRsCat'])) {
-            $cat = filter_var($post['txtRsCat'], FILTER_SANITIZE_STRING);
+            $cat = filter_var($post['txtRsCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $title = '';
         if (isset($post['txtRsTitle'])) {
-            $title = filter_var($post['txtRsTitle'], FILTER_SANITIZE_STRING);
+            $title = filter_var($post['txtRsTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         $type = '';
         if (isset($post['selRsType'])) {
-            $type = filter_var($post['selRsType'], FILTER_SANITIZE_STRING);
+            $type = filter_var($post['selRsType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if ($type == '' || $title == '') {

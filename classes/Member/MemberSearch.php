@@ -26,18 +26,62 @@ use HHK\Exception\RuntimeException;
  */
 class MemberSearch {
 
+    /**
+     * Summary of Name_First
+     * @var
+     */
     protected $Name_First;
+    /**
+     * Summary of Name_Last
+     * @var
+     */
     protected $Name_Last;
+    /**
+     * Summary of Phone
+     * @var
+     */
     protected $Phone;
+    /**
+     * Summary of Company
+     * @var
+     */
     protected $Company;
+    /**
+     * Summary of MRN
+     * @var
+     */
     protected $MRN;
+    /**
+     * Summary of diag
+     * @var
+     */
+    protected $diag;
+    /**
+     * Summary of twoParts
+     * @var
+     */
     protected $twoParts;
+    /**
+     * Summary of letters
+     * @var
+     */
+    protected $letters;
 
+    /**
+     * Summary of __construct
+     * @param mixed $letters
+     */
     public function __construct($letters) {
 
+        $this->letters = $letters;
     	$this->prepareLetters($letters);
     }
 
+    /**
+     * Summary of prepareLetters
+     * @param mixed $letters
+     * @return void
+     */
     public function prepareLetters($letters) {
 
     	$parts = explode(' ', strtolower(trim($letters)));
@@ -63,13 +107,22 @@ class MemberSearch {
     		$this->Name_First = $parts[0] . '%';
     		$this->Name_Last = $parts[0] . '%';
     		$this->Company = $parts[0] . '%';
-    		$this->MRN = $parts[0] . '%';
+//    		$this->MRN = $parts[0] . '%';
     		$this->twoParts = FALSE;
     	}
 
     }
 
-    public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '') {
+    /**
+     * Summary of volunteerCmteFilter
+     * @param \PDO $dbh
+     * @param mixed $basis
+     * @param mixed $fltr
+     * @param mixed $additional
+     * @param mixed $psg
+     * @return array
+     */
+    public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '', $psg = '') {
         $events = array();
 
         $operation = 'OR';
@@ -138,7 +191,7 @@ class MemberSearch {
         // Referral Agent & Doctor
         } else if ($basis == VolMemberType::ReferralAgent || $basis == VolMemberType::Doctor) {
 
-                $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(nw.Phone_Num, '') as `WorkPhone`, ifnull(nc.Phone_Num, '') as `CellPhone`, ifnull(ne.Email, '') as `Email`
+                $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(nw.Phone_Num, '') as `WorkPhone`, ifnull(nw.Phone_Extension, '') as `WorkExt`, ifnull(nc.Phone_Num, '') as `CellPhone`, ifnull(ne.Email, '') as `Email`
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
 left join name_phone nw on n.idName = nw.idName and nw.Phone_Code = '" . PhonePurpose::Work . "'
 left join name_phone nc on n.idName = nc.idName and nc.Phone_Code = '" . PhonePurpose::Cell . "'
@@ -171,22 +224,23 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                         $r["Name_Nickname"]
                 );
 
-                $events[] = array(
+                $events[] = [
                     'id' => $r["idName"],
-                    'value' => $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : '' ),
-                    'first' => ($nickName != '' ? $nickName : $firstName ),
+                    'value' => $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : ''),
+                    'first' => ($nickName != '' ? $nickName : $firstName),
                     'last' => $lastName,
                     'wphone' => $r["WorkPhone"],
+                    'wext' => $r['WorkExt'],
                     'cphone' => $r["CellPhone"],
                     'email' => $r['Email']
-                );
+                ];
             }
 
             $labels = Labels::getLabels();
 
 
             // Add new entry option.
-            $events[] = array('id' => 0, 'value' => ($basis == VolMemberType::Doctor ? 'New Doctor' : 'New ' . $labels->getString('hospital', 'referralAgent', 'Referral Agent')));
+            $events[] = ['id' => 0, 'value' => ($basis == VolMemberType::Doctor ? 'New Doctor' : 'New ' . $labels->getString('hospital', 'referralAgent', 'Referral Agent'))];
 
 
 
@@ -309,9 +363,62 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
 
 
+        //search guests/patients based on PSG
+        } else if ($basis == 'psg') {
+
+            $andVc = " and nv.Vol_Code = '" . VolMemberType::Guest . "' ";
 
 
-        } else if ($basis == VolMemberType::Patient) {
+            $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(np.Phone_Num, '') as `Phone`
+            FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' $andVc
+            left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+            left join name_guest ng on n.idName = ng.idName
+            where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and idPsg = :idPsg and (LOWER(n.Name_Last) like :ltrln
+            $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
+
+            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+            $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':idPsg'=>$psg));
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            foreach ($rows as $r) {
+
+                $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $r["Name_First"]
+                    );
+                $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $r["Name_Last"]
+                    );
+                $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $r["Name_Nickname"]
+                    );
+
+                $events[] = array(
+                    'id' => $r["idName"],
+                    'value' => $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : '' ) . '  ' . $r['Phone'],
+                    'first' => ($nickName != '' ? $nickName : $firstName ),
+                    'last' => $lastName,
+                    'phone' => $r["Phone"],
+                );
+            }
+
+            if (count($events) == 0) {
+                $events[] = array("id" => 0, "value" => "Nothing Found");
+            }
+
+
+
+
+
+        }else if ($basis == VolMemberType::Patient) {
             // Search patient
 
             $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname
@@ -362,6 +469,14 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
+    /**
+     * Summary of searchLinks
+     * @param \PDO $dbh
+     * @param mixed $basis
+     * @param mixed $id
+     * @param mixed $namesOnly
+     * @return array
+     */
     public function searchLinks(\PDO $dbh, $basis, $id, $namesOnly = FALSE) {
         $events = array();
 
@@ -644,6 +759,298 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
+    /**
+     * Summary of MRNSearch
+     * @param \PDO $dbh
+     * @return array
+     */
+    public function MRNSearch(\PDO $dbh) {
+
+        $this->MRN = $this->letters . '%';
+
+        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
+            . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
+            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
+            . " from `name` n "
+            . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
+            . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
+            . " left join name_demog nd on n.idName = nd.idName"
+            . " left join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'"
+            . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = n.Name_Suffix"
+            . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
+            . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
+            . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
+            . " left join hospital_stay hs on n.idName = hs.idPatient"
+            . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
+            . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
+            . " and hs.MRN like '" . $this->MRN . "' "
+            . " group by n.idName order by hs.MRN";
+
+        $stmt = $dbh->query($query);
+
+        $events = array();
+
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $namArray = array();
+
+            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_First"]
+                );
+            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Last"]
+                );
+            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Nickname"]
+                );
+
+            $strBirthDate = '';
+            if ($row2['BirthDate'] != '') {
+                $birthDate = new \DateTime($row2['BirthDate']);
+                $strBirthDate = $birthDate->format ('m/d/Y');
+            }
+
+            $phone = htmlspecialchars_decode($row2['Phone']);
+
+            $namArray = [
+                'id' => $row2["idName"],
+                'fullName' => ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' ) . $firstName . ' ' . ($nickName != '' ? '(' . $nickName . ') ' : '' ) . $lastName . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' ),
+                'noReturn' => $row2['No_Return'],
+                'value' => $row2['MRN'],
+                'mrn' => $row2['MRN'],
+                'phone' => $phone,
+                'birthDate' => $strBirthDate,
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status'] : ''),
+                'city' => $row2['City'],
+                'state' => $row2['State'],
+            ];
+
+            $events[] = $namArray;
+        }
+
+        return $events;
+    }
+
+    /**
+     * Summary of phoneSearch
+     * @param \PDO $dbh
+     * @param mixed $guestPatient
+     * @return array
+     */
+    public function phoneSearch(\PDO $dbh, $guestPatient = TRUE) {
+
+        $filterGP = '';
+        if ($guestPatient) {
+            $filterGP = " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') ";
+        }
+
+
+        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
+            . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
+            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51) as `MRN`, np.Phone_Search "
+            . " from `name` n "
+            . " left join name_phone np on n.idName = np.idName AND n.Preferred_Phone = np.Phone_Code"
+            . " left join name_address na on n.idName = na.idName AND n.Preferred_Mail_Address = na.Purpose"
+            . " left join name_demog nd on n.idName = nd.idName"
+            . " left join name_volunteer2 nv on n.idName = nv.idName AND nv.Vol_Category = 'Vol_Type'"
+            . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' AND g.Code = n.Name_Suffix"
+            . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' AND gp.Code = n.Name_Prefix"
+            . " left join gen_lookups gs on gs.Table_Name = 'mem_status' AND gs.Code = n.Member_Status"
+            . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' AND gr.Code = nd.No_Return"
+            . " left join hospital_stay hs on n.idName = hs.idPatient"
+            . " where n.idName>0 AND n.Member_Status in ('a','d') AND n.Record_Member = 1 "
+            . $filterGP
+            . " AND np.Phone_Search LIKE '" . $this->Name_First . "' "
+            . " group by n.idName order by np.Phone_Search";
+
+        $stmt = $dbh->query($query);
+
+        $events = array();
+
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $namArray = array();
+
+            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_First"]
+                );
+            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Last"]
+                );
+            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Nickname"]
+                );
+
+            $strBirthDate = '';
+            if ($row2['BirthDate'] != '') {
+                $birthDate = new \DateTime($row2['BirthDate']);
+                $strBirthDate = $birthDate->format ('m/d/Y');
+            }
+
+            $namArray = [
+                'id' => $row2["idName"],
+                'fullName' => ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' ) . $firstName . ' ' . ($nickName != '' ? '(' . $nickName . ') ' : '' ) . $lastName . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' ),
+                'noReturn' => $row2['No_Return'],
+                'value' => $row2['Phone_Search'],
+                'phone' => htmlspecialchars_decode($row2['Phone']),
+                'birthDate' => $strBirthDate,
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status']: ''),
+                'city' => $row2['City'],
+                'state' => $row2['State'],
+            ];
+
+            $events[] = $namArray;
+        }
+
+        return $events;
+    }
+
+    /**
+     * Summary of diagnosisSearch
+     * @param \PDO $dbh
+     * @return array
+     */
+    public function diagnosisSearch(\PDO $dbh){
+
+        $this->diag = '%' . $this->letters . '%';
+
+        $query = "select d.Code as 'DiagCode', ifnull(cat.Description, '') as 'Category', d.Description as 'Diagnosis', concat(if(cat.Description is not null, concat(cat.Description, ': '), ''), d.Description) as `Title` from gen_lookups d
+	               left join gen_lookups cat on d.`Substitute` = cat.`Code` and cat.`Table_Name` = 'Diagnosis_Category'
+                where d.`Table_Name` = 'Diagnosis'
+                having `Title` like :search;";
+
+        $stmt = $dbh->prepare($query);
+
+        $stmt->execute([":search"=>$this->diag]);
+
+        $events = array();
+
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $diagAr = array();
+
+            $diagAr = [
+                'id' => $row2["DiagCode"],
+                'value' => htmlspecialchars_decode($row2['Title'], ENT_QUOTES),
+            ];
+
+            $events[] = $diagAr;
+        }
+
+        return $events;
+
+    }
+
+    /**
+     * Summary of guestSearch
+     * @param \PDO $dbh
+     * @return array
+     */
+    public function guestSearch(\PDO $dbh) {
+
+        $operation = 'OR';
+        if ($this->twoParts) {
+            $operation = 'AND';
+        }
+
+        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
+            . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
+            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
+            . " from `name` n "
+            . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
+            . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
+            . " left join name_demog nd on n.idName = nd.idName"
+            . " left join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'"
+            . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = n.Name_Suffix"
+            . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
+            . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
+            . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
+            . " left join hospital_stay hs on n.idName = hs.idPatient"
+            . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
+            . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
+            . " and (LOWER(n.Name_Last) like :nameLast "
+            . " $operation (LOWER(n.Name_First) like :nameFirst OR LOWER(n.Name_NickName) like :nameFirst2)) "
+            . " group by n.idName order by n.Name_Last, n.Name_First";
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([
+            ":nameFirst"=>$this->Name_First,
+            ":nameFirst2"=>$this->Name_First,
+            ":nameLast"=>$this->Name_Last
+        ]);
+
+        $events = array();
+
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $namArray = array();
+
+            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_First"]
+                );
+            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Last"]
+                );
+            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Nickname"]
+                );
+
+            $strBirthDate = '';
+            if ($row2['BirthDate'] != '') {
+                $birthDate = new \DateTime($row2['BirthDate']);
+                $strBirthDate = $birthDate->format ('m/d/Y');
+            }
+
+            $namArray = [
+                'id' => $row2["idName"],
+                'fullName' => ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' ) . $firstName . ' ' . ($nickName != '' ? '(' . $nickName . ') ' : '' ) . $lastName . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' ),
+                'noReturn' => $row2['No_Return'],
+                'value' => $firstName . ' ' . $lastName . ' ' . $nickName,
+                'phone' => htmlspecialchars_decode($row2['Phone']),
+                'birthDate' => $strBirthDate,
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status'] : ''),
+                'city' => $row2['City'],
+                'state' => $row2['State'],
+            ];
+
+            $events[] = $namArray;
+        }
+
+        return $events;
+    }
+
+
+    /**
+     * Summary of roleSearch
+     * @param \PDO $dbh
+     * @param mixed $mode
+     * @param mixed $guestPatient
+     * @param mixed $MRN
+     * @return array
+     */
     public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE, $MRN = FALSE) {
 
         $operation = 'OR';
@@ -817,6 +1224,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Summary of createDuplicatesDiv
+     * @param array $dups
+     * @return string
+     */
     public static function createDuplicatesDiv(array $dups) {
 
         if (count($dups) !== 0) {
@@ -836,20 +1248,38 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('id' => 'hhkPossibleDups'));
         }
+
+        return '';
     }
 
+    /**
+     * Summary of getName_First
+     * @return string
+     */
     public function getName_First() {
         return $this->Name_First;
     }
 
+    /**
+     * Summary of getName_Last
+     * @return string
+     */
     public function getName_Last() {
         return $this->Name_Last;
     }
 
+    /**
+     * Summary of getPhone
+     * @return mixed
+     */
     public function getPhone() {
         return $this->Phone;
     }
 
+    /**
+     * Summary of getCompany
+     * @return string
+     */
     public function getCompany() {
         return $this->Company;
     }

@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * UnexpectedValueException.php
  *
@@ -15,8 +18,7 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class UnexpectedValueException
-              extends \UnexpectedValueException {
+class UnexpectedValueException extends \UnexpectedValueException {
 
 }
 

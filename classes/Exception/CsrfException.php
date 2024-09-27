@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * CsrfException.php
  *
@@ -15,8 +18,7 @@ namespace HHK\Exception;
  * @author Will Ireland
  */
 
-class CsrfException
-        extends \Exception {
+class CsrfException extends \Exception {
 
 }
 ?>

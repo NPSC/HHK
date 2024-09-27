@@ -6,6 +6,7 @@ use HHK\Document\FormDocument;
 use HHK\HTMLControls\{HTMLContainer,HTMLTable};
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchFor};
+use HHK\Note\Note;
 use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, GLTableNames, RelLinkType, ReservationStatus};
 use HHK\Member\Address\CleanAddress;
 use HHK\HTMLControls\HTMLInput;
@@ -19,12 +20,15 @@ use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
 use HHK\SysConst\ReferralFormStatus;
 use HHK\Exception\RuntimeException;
+use HHK\Purchase\RateChooser;
+use HHK\SysConst\{ItemPriceCode, RoomRateCategories, DefaultSettings};
+use HHK\Note\LinkNote;
 
 /**
  * ReferralForm.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT, NCSA
  * @link      https://github.com/NPSC/HHK
  */
@@ -42,9 +46,19 @@ class ReferralForm {
 	 * @var array Form data
 	 */
 	protected $formUserData;
+
+ /**
+  * Summary of formDoc
+  * @var
+  */
 	protected $formDoc;
 
+	/**
+	 * Summary of patSearchFor
+	 * @var
+	 */
 	protected $patSearchFor;
+
 	protected $patResults;
 
 	protected $gstSearchFor = [];
@@ -145,6 +159,11 @@ class ReferralForm {
 	    // Phone
 	    if (isset($formUserData['phone']) && $formUserData['phone'] != '') {
 	        $searchFor->setPhone($formUserData['phone'], (isset($searchIncludes[self::HTML_Incl_Phone]) ? TRUE : FALSE));
+	    }
+
+		// Phone SMS
+	    if (isset($formUserData['sms_status']) && $formUserData['sms_status'] != '') {
+	        $searchFor->setSMS_Status($formUserData['sms_status']);
 	    }
 
 	    // email
@@ -248,10 +267,11 @@ class ReferralForm {
 	/**
 	 *
 	 * @param \PDO $dbh
+	 * @param Patient $patient
 	 * @param integer $maxGuests Defaults to const MAX_GUESTS.
 	 * @return array An array of SearchResults objects, one per guest searched.
 	 */
-	public function searchGuests(\PDO $dbh, $maxGuests = self::MAX_GUESTS) {
+	public function searchGuests(\PDO $dbh, $patient, $maxGuests = self::MAX_GUESTS) {
 
 	    $this->gstResults = [];
 
@@ -263,6 +283,12 @@ class ReferralForm {
 
     	        if (isset($this->formUserData['guests'][$gindx]['firstName']) && isset($this->formUserData['guests'][$gindx]['lastName'])
     	            && $this->formUserData['guests'][$gindx]['firstName'] != '' && $this->formUserData['guests'][$gindx]['lastName'] != '') {
+
+					// Is this a copy of the patient? #860, EKC, 5/23/2023
+					if ($this->formUserData['guests'][$gindx]['firstName'] == $patient->getRoleMember()->get_firstName()
+							&& $this->formUserData['guests'][$gindx]['lastName'] == $patient->getRoleMember()->get_lastName()) {
+						continue;
+					}
 
     	            $searchFor = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
     	            $searchFor->setPsgId($this->idPsg);
@@ -292,7 +318,7 @@ class ReferralForm {
 	 *
 	 * @param \PDO $dbh
 	 * @param integer $idPatient
-	 * @return boolean|NULL|\HHK\Member\Role\Patient
+	 * @return boolean|null|\HHK\Member\Role\Patient
 	 */
 	public function setPatient(\PDO $dbh, $idPatient) {
 
@@ -526,8 +552,25 @@ class ReferralForm {
 	        $this->CkoutDT = $this->CkinDT->add(new \DateInterval('P' . $uS->DefaultDays . 'D'));
 	    }
 
+	    // Room Rate
+	    $rateChooser = new RateChooser($dbh);
+
+	    // Default Room Rate category
+	    if ($uS->RoomPriceModel == ItemPriceCode::Basic) {
+	        $rateCategory = RoomRateCategories::Fixed_Rate_Category;
+	    } else if ($uS->RoomRateDefault != '') {
+	        $rateCategory = $uS->RoomRateDefault;
+	    } else {
+	        $rateCategory = DefaultSettings::Rate_Category;
+	    }
+
+	    $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
+
+
 	    $reg = new Registration($dbh, $psg->getIdPsg());
 	    $hospStay = new HospitalStay($dbh, $psg->getIdPatient());
+
+	    // Define the reservation.
         $resv = Reservation_1::instantiateFromIdReserv($dbh, 0);
 
         $resv->setExpectedArrival($this->CkinDT->format('Y-m-d'))
@@ -535,9 +578,10 @@ class ReferralForm {
             ->setIdGuest($psg->getIdPatient())
             ->setStatus(ReservationStatus::Waitlist)
             ->setIdHospitalStay($hospStay->getIdHospital_Stay())
-            ->setNumberGuests(count($guests))
+            ->setNumberGuests(count($guests)+1)
             ->setIdResource(0)
-            ->setRoomRateCategory($uS->RoomRateDefault)
+            ->setRoomRateCategory($rateCategory)
+            ->setIdRoomRate($rateRs->idRoom_rate->getStoredVal())
             ->setIdReferralDoc($this->referralDocId);
 
         $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
@@ -559,8 +603,31 @@ class ReferralForm {
             EditRS::insert($dbh, $rgRs);
         }
 
+		//add reservation notes
+		if(isset($this->formUserData['resvNotes']) && $this->formUserData['resvNotes'] != ''){
+			LinkNote::save($dbh, $this->formUserData['resvNotes'], $resv->getIdReservation(), Note::ResvLink, "", "Referral", $uS->ConcatVisitNotes);
+		}
+
+        $this->copyNotes($dbh, $resv->getIdReservation(), $this->referralDocId);
+
         return $resv->getIdReservation();
 
+	}
+
+	/**
+	 * Summary of copyNotes
+	 * @param \PDO $dbh
+	 * @param int $resvId
+	 * @param int $idDoc
+	 * @return void
+	 */
+	public function copyNotes(\PDO $dbh, $resvId, $idDoc){
+		$stmt = $dbh->prepare("select * from `doc_note` where `Doc_Id` = :docId");
+		$stmt->execute([":docId"=>$idDoc]);
+		$insertStmt = $dbh->prepare("INSERT INTO `reservation_note` (`Reservation_Id`, `Note_Id`) VALUES(:resvId, :noteId)");
+		foreach($stmt->fetchAll() as $row){
+			$insertStmt->execute([':resvId'=>$resvId, ':noteId'=>$row['Note_Id']]);
+		}
 	}
 
 	/**
@@ -900,7 +967,7 @@ class ReferralForm {
 	 * Builds an array to simulate a member save from a page.
 	 *
 	 * @param SearchNameDataInterface $data
-	 * @return string[]|mixed[][]|NULL[]|string[][]|string[][][]|NULL[][][]
+	 * @return array
 	 */
 	protected function memberDataPost(SearchNameDataInterface $data) {
 
@@ -929,8 +996,9 @@ class ReferralForm {
 
 	    $post['rbEmPref'] = ($data->getEmail() == '' ? '' : EmailPurpose::Home);
 	    $post['txtEmail'] = array(EmailPurpose::Home=>$data->getEmail());
-	    $post['rbPhPref'] = PhonePurpose::Home;
-	    $post['txtPhone'] = array(PhonePurpose::Home=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
+	    $post['rbPhPref'] = ($data->getPhone() == '' ? '' : PhonePurpose::Cell);
+	    $post['txtPhone'] = array(PhonePurpose::Cell=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
+		$post['selSMS'] = array(PhonePurpose::Cell => $data->getSMS_Status());
 
 	    $adr1 = array(AddressPurpose::Home => array(
 	        'address1' => $data->getAddressStreet1(),

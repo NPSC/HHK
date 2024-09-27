@@ -1,12 +1,11 @@
 <?php
-use HHK\sec\WebInit;
-use HHK\sec\Session;
-use HHK\Config_Lite\Config_Lite;
-use HHK\Member\Role\AbstractRole;
 use HHK\House\Reservation\Reservation_1;
-use HHK\SysConst\ReservationStatus;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Member\Role\AbstractRole;
 use HHK\sec\Labels;
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\SysConst\ReservationStatus;
 
 /**
  * CheckIn.php
@@ -46,31 +45,38 @@ if ($uS->OpenCheckin) {
 }
 
 // Load reservations
-$inside = Reservation_1::showListByStatus($dbh, 'Reserve.php', 'CheckingIn.php', ReservationStatus::Committed, TRUE, NULL, 2, TRUE);
+$inside = Reservation_1::showListByStatus($dbh, 'Reserve.php', 'CheckingIn.php', ReservationStatus::Committed, TRUE, NULL, ($uS->ResvEarlyArrDays >= 0 ? $uS->ResvEarlyArrDays : 2), TRUE);
 if ($inside == '') {
     $inside = "<p style='margin-left:60px;'>-None are imminent-</p>";
 }
 
 $committedMarkup = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'reservationTab', 'Confirmed Reservations')
-        . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')),
-        array('id'=>'hhk-confResvHdr', 'style'=>'margin-bottom:15px;padding:5px;background-color: #D3D3D3;', 'title'=>'Click to show or hide the '
-            . $labels->getString('register', 'reservationTab', 'Confirmed Reservations')))
-    . HTMLContainer::generateMarkup('div', $inside, array('id'=>'hhk-confResv', 'style'=>'margin-bottom:5px;'));
+        . HTMLContainer::generateMarkup('span', '', ['style' => 'float:right;', 'class' => 'ui-icon ui-icon-triangle-1-e']),
+    [
+        'id' => 'hhk-confResvHdr',
+        'style' => 'margin-bottom:15px;padding:5px;background-color: #D3D3D3;',
+        'title' => 'Click to show or hide the '
+            . $labels->getString('register', 'reservationTab', 'Confirmed Reservations')
+    ])
+    . HTMLContainer::generateMarkup('div', $inside, ['id' => 'hhk-confResv', 'style' => 'margin-bottom:5px;']);
 
 
 if ($uS->OpenCheckin) {
 
-    $inside = Reservation_1::showListByStatus($dbh, 'Reserve.php', 'CheckingIn.php', ReservationStatus::Waitlist, TRUE, NULL, 2, TRUE);
+    $inside = Reservation_1::showListByStatus($dbh, 'Reserve.php', 'CheckingIn.php', ReservationStatus::Waitlist, TRUE, NULL, ($uS->ResvEarlyArrDays >= 0 ? $uS->ResvEarlyArrDays : 2), TRUE);
 
     if ($inside != '') {
-        $wListMarkup = HTMLContainer::generateMarkup('h3', 'Wait List' . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')), array('id'=>'hhk-wListResvHdr'
-            , 'style'=>'margin-bottom:15px;padding:5px;background-color: #D3D3D3;', 'title'=>'Click to show or hide the wait list'))
-                . HTMLContainer::generateMarkup('div', $inside, array('id'=>'hhk-wListResv', 'style'=>'margin-bottom:5px;'));
+        $wListMarkup = HTMLContainer::generateMarkup('h3', 'Wait List' . HTMLContainer::generateMarkup('span', '', ['style' => 'float:right;', 'class' => 'ui-icon ui-icon-triangle-1-e']), [
+            'id' => 'hhk-wListResvHdr',
+            'style' => 'margin-bottom:15px;padding:5px;background-color: #D3D3D3;',
+            'title' => 'Click to show or hide the wait list'
+        ])
+                . HTMLContainer::generateMarkup('div', $inside, ['id' => 'hhk-wListResv', 'style' => 'margin-bottom:5px;']);
 
     }
 }
 
-$stayingMarkup = HTMLContainer::generateMarkup('div', Reservation_1::showListByStatus($dbh, 'GuestEdit.php', 'CheckingIn.php', ReservationStatus::Staying), array('id'=>'hhk-chkedIn'));
+$stayingMarkup = HTMLContainer::generateMarkup('div', Reservation_1::showListByStatus($dbh, 'GuestEdit.php', 'CheckingIn.php', ReservationStatus::Staying), ['id' => 'hhk-chkedIn']);
 if ($stayingMarkup == '') {
     $stayingMarkup = "<p style='margin-left:60px;'>-None-</p>";
 }
@@ -88,6 +94,7 @@ if ($stayingMarkup == '') {
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -105,21 +112,21 @@ if ($stayingMarkup == '') {
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div style="clear:both"></div>
-
+            <form autocomplete="off">
             <div id="divResvList" style="font-size:.7em;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 <?php echo $committedMarkup; ?>
                 <?php echo $wListMarkup; ?>
                 <h3 id="hhk-chkedInHdr" style='padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Checked-In <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s">Checked-In <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s
                     <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>
-                <?php echo $stayingMarkup; ?>
+
+                    <?php echo $stayingMarkup; ?>
+
             </div>
-            <form  action="CheckIn.php" method="post"  id="form1">
-                <div id="guestSearchWrapper" style="display: none;">
-                    <div id="guestSearch" style="margin-left:10px;margin-right:10px; <?php echo $gSearchDisplay; ?>" class="my-3 hhk-panel row">
-                        <?php echo $mk1; ?>
-                    </div>
-                </div>
             </form>
+            <div id="guestSearch" style="margin-left:10px;margin-right:10px; <?php echo $gSearchDisplay; ?>" class="mb-3 hhk-panel row">
+                <?php echo $mk1; ?>
+            </div>
+
 
             <input type="hidden" id="dateFormat" value ="<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM D YYYY"); ?>" />
         </div>  <!-- div id="contentDiv"-->

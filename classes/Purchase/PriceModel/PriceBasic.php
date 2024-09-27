@@ -31,7 +31,7 @@ class PriceBasic extends AbstractPriceModel {
         $this->remainderAmt = 0;
 
         if ($pledgedRate > 0) {
-            $this->remainderAmt = $amount % $pledgedRate;
+            $this->remainderAmt = $amount - floor($amount / $pledgedRate);
             return floor($amount / $pledgedRate);
         }
 
@@ -50,11 +50,11 @@ class PriceBasic extends AbstractPriceModel {
                 . "(6,'Assigned','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
-    protected function newRateMarkup(&$fTbl) {
+    protected function newRateMarkup(&$fTbl, $financialAssistance = false) {
 
         // New rate
         // No new rates are possible
-        return '';
+        return;
     }
 
     public function saveEditMarkup(\PDO $dbh, $post, $username) {

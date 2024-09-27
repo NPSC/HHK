@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * PaymentException.php
  *
@@ -15,7 +18,8 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class PaymentException
-              extends \RuntimeException {
+class PaymentException extends \RuntimeException {
+
+
 }
 ?>

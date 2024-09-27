@@ -417,16 +417,16 @@ class cEventClass {
     public function LoadFromGetString($getArray) {
 
         if (isset($getArray["title"])) {
-            $this->set_title(filter_var($getArray["title"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES));
+            $this->set_title(filter_var($getArray["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES));
         }
         if (isset($getArray["desc"])) {
-            $this->set_description(filter_var($getArray["desc"], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES));
+            $this->set_description(filter_var($getArray["desc"], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES));
         }
         if (isset($getArray["start"])) {
-            $this->set_start( filter_var($getArray["start"], FILTER_SANITIZE_STRING));
+            $this->set_start( filter_var($getArray["start"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["end"])) {
-            $this->set_end(filter_var($getArray["end"], FILTER_SANITIZE_STRING));
+            $this->set_end(filter_var($getArray["end"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["allDay"])) {
             $this->set_allDay( filter_var($getArray["allDay"], FILTER_VALIDATE_BOOLEAN));
@@ -449,7 +449,7 @@ class cEventClass {
             $this->set_relieve(filter_var($getArray["rlf"], FILTER_VALIDATE_BOOLEAN));
         }
         if (isset($getArray["id"])) {
-            $this->set_id( filter_var($getArray["id"], FILTER_SANITIZE_STRING));
+            $this->set_id( filter_var($getArray["id"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["nid"])) {
             $this->set_idname( filter_var($getArray["nid"], FILTER_SANITIZE_NUMBER_INT));
@@ -458,13 +458,13 @@ class cEventClass {
             $this->set_idname2( filter_var($getArray["nid2"], FILTER_SANITIZE_NUMBER_INT));
         }
         if (isset($getArray["className"])) {
-            $this->set_className( filter_var($getArray["className"], FILTER_SANITIZE_STRING));
+            $this->set_className( filter_var($getArray["className"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["URL"])) {
-            $this->set_url( filter_var($getArray["URL"], FILTER_SANITIZE_STRING));
+            $this->set_url( filter_var($getArray["URL"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["source"])) {
-            $this->set_source( filter_var($getArray["source"], FILTER_SANITIZE_STRING));
+            $this->set_source( filter_var($getArray["source"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["logtime"])) {
             $this->set_logTime(filter_var($getArray["logtime"], FILTER_VALIDATE_BOOLEAN));
@@ -491,7 +491,7 @@ class cEventClass {
             $this->set_reptWeek(filter_var($getArray["rptrweek"], FILTER_SANITIZE_NUMBER_INT));
         }
         if (isset($getArray["rptrUnit"])) {
-            $this->set_reptdUnits( filter_var($getArray["rptrUnit"], FILTER_SANITIZE_STRING));
+            $this->set_reptdUnits( filter_var($getArray["rptrUnit"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($getArray["fix"])) {
             $this->set_fixed(filter_var($getArray["fix"], FILTER_VALIDATE_BOOLEAN));

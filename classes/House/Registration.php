@@ -2,7 +2,7 @@
 
 namespace HHK\House;
 
-use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
+use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus, ItemPriceCode};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
@@ -21,12 +21,49 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
  */
 class Registration {
 
+    /**
+     * Summary of regRS
+     * @var
+     */
     protected $regRS;
+
+    /**
+     * Summary of isNew
+     * @var
+     */
     public $isNew;
+    /**
+     * Summary of depositBalance
+     * @var
+     */
     protected $depositBalance;
+    /**
+     * Summary of lodgingMOA
+     * @var
+     */
     protected $lodgingMOA;
+    /**
+     * Summary of prepaymentMOA
+     * @var
+     */
+    protected $prepaymentMOA;
+    /**
+     * Summary of donations
+     * @var
+     */
+    protected $donations;
+    /**
+     * Summary of rawRow
+     * @var
+     */
     protected $rawRow;
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param mixed $idPsg
+     * @param mixed $idRegistration
+     */
     public function __construct(\PDO $dbh, $idPsg, $idRegistration = 0) {
 
         $this->regRS = new RegistrationRs();
@@ -35,6 +72,7 @@ class Registration {
         $this->isNew = TRUE;
         $this->depositBalance = NULL;
         $this->lodgingMOA = NULL;
+        $this->prepaymentMOA = NULL;
 
         if ($idPsg > 0) {
             $this->regRS->idPsg->setStoredVal($idPsg);
@@ -53,13 +91,26 @@ class Registration {
         }
     }
 
-    public static function loadDepositBalance(\PDO $dbh, $idGroup) {
+    /**
+     * Summary of loadDepositBalance
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @param int $idVisit
+     * @return float
+     */
+    public static function loadDepositBalance(\PDO $dbh, $idRegistration, $idVisit = 0) {
 
         $depositBalance = 0.0;
-        $idg = intval($idGroup, 10);
+        $where = '';
 
-        if ($idg < 1) {
-            return $depositBalance;
+        if ($idVisit == 0) {
+            $idg = intval($idRegistration, 10);
+            $where = "and i.idGroup = " . $idg;
+            if ($idg < 1) {
+                return $depositBalance;
+            }
+        } else {
+            $where = " and i.Order_Number = " . $idVisit;
         }
 
         $query = "select
@@ -72,8 +123,7 @@ where
     il.Item_Id in (" . ItemId::DepositRefund . "  , " . ItemId::KeyDeposit . ")
         and i.Deleted = 0
         and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid . "'
-        and i.idGroup = " . $idg;
+        and i.Status = '" . InvoiceStatus::Paid ."' " . $where;
         $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -85,14 +135,27 @@ where
         return $depositBalance;
     }
 
-    public static function loadLodgingBalance(\PDO $dbh, $idGroup) {
-
+    /**
+     * Summary of loadLodgingBalance
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @param int $idVisit
+     * @return float
+     */
+    public static function loadLodgingBalance(\PDO $dbh, $idRegistration, $idVisit = 0) {
         $lodgingBalance = 0.0;
-        $idg = intval($idGroup, 10);
+        $where = '';
 
-        if ($idg < 1) {
-            return $lodgingBalance;
+        if ($idVisit == 0) {
+            $idg = intval($idRegistration, 10);
+            if ($idg < 1) {
+                return $lodgingBalance;
+            }
+            $where = " and i.idGroup = $idg";
+        } else {
+            $where = " and i.Order_Number = $idVisit";
         }
+
 
         $query = "select
     sum(il.Amount)
@@ -100,17 +163,11 @@ from
     invoice_line il
         join
     invoice i ON il.Invoice_Id = i.idInvoice
-        LEFT JOIN
-    name_volunteer2 nv ON i.Sold_To_Id = nv.idName
-        AND nv.Vol_Category = 'Vol_Type'
-        AND nv.Vol_Code = 'ba'
-
 where
     il.Item_Id = ". ItemId::LodgingMOA . "
         and i.Deleted = 0
         and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid . "'
-        and i.idGroup = " . $idg;
+        and i.Status = '" . InvoiceStatus::Paid . "' " . $where;
         $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -122,18 +179,108 @@ where
         return $lodgingBalance;
     }
 
+    /**
+     * Summary of loadDonationBalance
+     * @param \PDO $dbh
+     * @param mixed $idGroup
+     * @return float
+     */
+    public static function loadDonationBalance(\PDO $dbh, $idGroup) {
+
+        $DonBalance = 0.0;
+        $idg = intval($idGroup, 10);
+
+        if ($idg < 1) {
+            return $DonBalance;
+        }
+
+        $query = "select
+    sum(il.Amount)
+from
+    invoice_line il
+        join
+    invoice i ON il.Invoice_Id = i.idInvoice
+where
+    il.Item_Id = ". ItemId::LodgingDonate . "
+        and i.Deleted = 0
+        and il.Deleted = 0
+        and i.Status = '" . InvoiceStatus::Paid . "'
+        and i.idGroup = " . $idg;
+        $stmt = $dbh->query($query);
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($rows) == 1) {
+            $DonBalance = floatval($rows[0][0]);
+        }
+
+        return $DonBalance;
+    }
+
+    /**
+     * Summary of loadPrepayments
+     * @param \PDO $dbh
+     * @param mixed $idGroup
+     * @return float|int
+     */
+    public static function loadPrepayments(\PDO $dbh, $idGroup) {
+
+        $prePayment = 0;
+        $idg = intval($idGroup, 10);
+
+        if ($idg < 1) {
+            return $prePayment;
+        }
+
+        $query = "select
+        sum(il.Amount)
+    from
+        invoice_line il
+            join
+        invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = " . ItemId::LodgingMOA . " AND il.Deleted = 0
+            join
+    	reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
+    where
+        i.Deleted = 0
+        AND i.Order_Number = 0
+        AND i.`Status` = '" . InvoiceStatus::Paid . "'";
+
+        $stmt = $dbh->query($query);
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($rows) == 1) {
+            $prePayment = floatval($rows[0][0]);
+        }
+
+        return $prePayment;
+    }
+
+    /**
+     * Summary of updatePrefTokenId
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @param mixed $idToken
+     * @return bool|int
+     */
     public static function updatePrefTokenId(\PDO $dbh, $idRegistration, $idToken) {
 
         $tokenId = intval($idToken);
         $regId = intval($idRegistration);
 
         if ($tokenId < 1 || $regId < 1) {
-            return;
+            return false;
         }
 
         return $dbh->exec("update registration set Pref_Token_Id = $tokenId where idregistration = $regId and Pref_Token_Id != $tokenId");
     }
 
+    /**
+     * Summary of readPrefTokenId
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @return mixed
+     */
     public static function readPrefTokenId(\PDO $dbh, $idRegistration) {
 
         $tokenId = 0;
@@ -164,6 +311,11 @@ where
 
     }
 
+    /**
+     * Summary of getLodgingMOA
+     * @param \PDO $dbh
+     * @return float
+     */
     public function getLodgingMOA(\PDO $dbh) {
 
         if (is_null($this->lodgingMOA)) {
@@ -171,17 +323,56 @@ where
         }
 
         return $this->lodgingMOA;
-
     }
 
+    /**
+     * Summary of getPrePayments
+     * @param \PDO $dbh
+     * @return float|int
+     */
+    public function getPrePayments(\PDO $dbh) {
+
+        if (is_null($this->prepaymentMOA)) {
+            $this->prepaymentMOA = $this->loadPrepayments($dbh, $this->getIdRegistration());
+        }
+
+        return $this->prepaymentMOA;
+    }
+
+    /**
+     * Summary of getDonations
+     * @param \PDO $dbh
+     * @return float
+     */
+    public function getDonations(\PDO $dbh) {
+
+        if (is_null($this->donations)) {
+            $this->donations = $this->loadDonationBalance($dbh, $this->getIdRegistration());
+        }
+
+        return $this->donations;
+    }
+
+    /**
+     * Summary of getIdRegistration
+     * @return mixed
+     */
     public function getIdRegistration() {
         return $this->regRS->idRegistration->getStoredVal();
     }
 
+    /**
+     * Summary of getIdPsg
+     * @return mixed
+     */
     public function getIdPsg() {
         return $this->regRS->idPsg->getStoredVal();
     }
 
+    /**
+     * Summary of getEmailReceipt
+     * @return bool
+     */
     public function getEmailReceipt() {
         if ($this->regRS->Email_Receipt->getStoredVal() == 1) {
             return TRUE;
@@ -189,15 +380,28 @@ where
         return FALSE;
     }
 
+    /**
+     * Summary of getPreferredTokenId
+     * @return mixed
+     */
     public function getPreferredTokenId() {
         return $this->regRS->Pref_Token_Id->getStoredVal();
     }
 
 
+    /**
+     * Summary of getNoVehicle
+     * @return mixed
+     */
     public function getNoVehicle() {
         return $this->regRS->Vehicle->getStoredVal();
     }
 
+    /**
+     * Summary of setNoVehicle
+     * @param mixed $b
+     * @return void
+     */
     public function setNoVehicle($b) {
         if ($b) {
             $this->regRS->Vehicle->setNewVal('1');
@@ -206,6 +410,10 @@ where
         }
     }
 
+    /**
+     * Summary of isNew
+     * @return bool
+     */
     public function isNew() {
         if ($this->regRS->idRegistration->getStoredVal() == 0) {
             return TRUE;
@@ -214,27 +422,36 @@ where
         }
     }
 
+    /**
+     * Summary of getRegRS
+     * @return RegistrationRS
+     */
     public function getRegRS() {
         return $this->regRS;
     }
 
-    public function extractVehicleFlag($pData) {
+    /**
+     * Summary of extractVehicleFlag
+     * @return void
+     */
+    public function extractVehicleFlag() {
 
-        if (isset($pData["cbNoVehicle"])) {
-            if (strtolower($pData["cbNoVehicle"]) == 'on' || $pData["cbNoVehicle"] == '1') {
-                $this->regRS->Vehicle->setNewVal('1');
-            } else {
-                $this->regRS->Vehicle->setNewVal('0');
-            }
+        if (isset($_POST["cbNoVehicle"])) {
+            $this->regRS->Vehicle->setNewVal('1');
         } else {
             $this->regRS->Vehicle->setNewVal('0');
         }
 
     }
 
-    public function extractRegistration(\PDO $dbh, $pData) {
+    /**
+     * Summary of extractRegistration
 
-        if (isset($pData['regGuest_Ident'])) {
+     * @return void
+     */
+    public function extractRegistration() {
+
+        if (filter_has_var(INPUT_POST, 'regGuest_Ident')) {
             $this->regRS->Guest_Ident->setNewVal('1');
             $this->rawRow['Guest_Ident'] = '1';
         } else {
@@ -242,7 +459,7 @@ where
             $this->rawRow['Guest_Ident'] = '0';
         }
 
-        if (isset($pData['regPamphlet'])) {
+        if (filter_has_var(INPUT_POST, 'regPamphlet')) {
             $this->regRS->Pamphlet->setNewVal('1');
             $this->rawRow['Pamphlet'] = '1';
         } else {
@@ -250,7 +467,7 @@ where
             $this->rawRow['Pamphlet'] = '0';
         }
 
-        if (isset($pData['regReferral'])) {
+        if (filter_has_var(INPUT_POST, 'regReferral')) {
             $this->regRS->Referral->setNewVal('1');
             $this->rawRow['Referral'] = '1';
         } else {
@@ -258,7 +475,7 @@ where
             $this->rawRow['Referral'] = '0';
         }
 
-        if (isset($pData['regSig_Card'])) {
+        if (filter_has_var(INPUT_POST, 'regSig_Card')) {
             $this->regRS->Sig_Card->setNewVal('1');
             $this->rawRow['Sig_Card'] = '1';
         } else {
@@ -266,13 +483,74 @@ where
             $this->rawRow['Sig_Card'] = '0';
         }
 
-        if (isset($pData["cbEml"])) {
+        if (filter_has_var(INPUT_POST, "cbEml")) {
             $this->regRS->Email_Receipt->setNewVal('1');
         } else {
             $this->regRS->Email_Receipt->setNewVal('');
         }
     }
 
+    /**
+     * Summary of extractDialog
+     * @return void
+     */
+    public function extractDialog() {
+
+        $parms = [];
+
+        if (filter_has_var(INPUT_POST, 'parm')) {
+            $args = ['parm'=>['filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_REQUIRE_ARRAY]];
+            $parm = filter_input_array(INPUT_POST, $args);
+            $parms = $parm['parm'];
+        }
+
+        if (isset($parms['regGuest_Ident'])) {
+            $this->regRS->Guest_Ident->setNewVal('1');
+            $this->rawRow['Guest_Ident'] = '1';
+        } else {
+            $this->regRS->Guest_Ident->setNewVal('0');
+            $this->rawRow['Guest_Ident'] = '0';
+        }
+
+        if (isset($parms['regPamphlet'])) {
+            $this->regRS->Pamphlet->setNewVal('1');
+            $this->rawRow['Pamphlet'] = '1';
+        } else {
+            $this->regRS->Pamphlet->setNewVal('0');
+            $this->rawRow['Pamphlet'] = '0';
+        }
+
+        if (isset($parms['regReferral'])) {
+            $this->regRS->Referral->setNewVal('1');
+            $this->rawRow['Referral'] = '1';
+        } else {
+            $this->regRS->Referral->setNewVal('0');
+            $this->rawRow['Referral'] = '0';
+        }
+
+        if (isset($parms['regSig_Card'])) {
+            $this->regRS->Sig_Card->setNewVal('1');
+            $this->rawRow['Sig_Card'] = '1';
+        } else {
+            $this->regRS->Sig_Card->setNewVal('0');
+            $this->rawRow['Sig_Card'] = '0';
+        }
+
+        if (isset($parms['cbEml'])) {
+            $this->regRS->Email_Receipt->setNewVal('1');
+        } else {
+            $this->regRS->Email_Receipt->setNewVal('');
+        }
+    }
+
+    /**
+     * Summary of saveRegistrationRs
+     * @param \PDO $dbh
+     * @param int $idPsg
+     * @param string $uname
+     * @throws \HHK\Exception\RuntimeException
+     * @return string
+     */
     public function saveRegistrationRs(\PDO $dbh, $idPsg, $uname) {
 
         $msg = "";
@@ -320,6 +598,12 @@ where
         return $msg;
     }
 
+    /**
+     * Summary of createRegMarkup
+     * @param \PDO $dbh
+     * @param mixed $adminKey
+     * @return string
+     */
     public function createRegMarkup(\PDO $dbh, $adminKey) {
 
         // get session instance
@@ -328,7 +612,7 @@ where
         $tbl = new HTMLTable();
 
         // Date Registered
-        $tbl->addBodyTr(HTMLTable::makeTh('Date')
+        $tbl->addBodyTr(HTMLTable::makeTh('Date', array('style'=>'text-align:right;'))
                 . HTMLTable::makeTd(($this->regRS->Date_Registered->getStoredVal() == '' ? '' : date('M j, Y', strtotime($this->regRS->Date_Registered->getStoredVal())))));
 
         $regs = readGenLookupsPDO($dbh, 'registration', 'Order');
@@ -351,7 +635,7 @@ where
                 }
 
                 $tbl->addBodyTr(
-                        HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $r['Description'], array('for'=>'reg' . $r['Code'])))
+                    HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $r['Description'], array('for'=>'reg' . $r['Code'])), array('style'=>'text-align:right;'))
                         . HTMLTable::makeTd(HTMLInput::generateMarkup('', $attrs)));
             }
         }
@@ -369,25 +653,38 @@ where
 
         // Email receipt
         $tbl->addBodyTr(
-            HTMLTable::makeTh(HTMLContainer::generateMarkup('label', 'Email Receipt', array('for'=>'cbEml')))
+            HTMLTable::makeTh(HTMLContainer::generateMarkup('label', 'Email Receipt', array('for'=>'cbEml')), array('style'=>'text-align:right;'))
             . HTMLTable::makeTd(HTMLInput::generateMarkup('', $emAttrs))
             );
 
+        if($uS->RoomPriceModel != ItemPriceCode::None){
 
-        // Key Deposit
-        if ($uS->KeyDeposit) {
-            $kdBal = $this->getDepositBalance($dbh);
+            // Key Deposit
+            if ($uS->KeyDeposit) {
+                $kdBal = $this->getDepositBalance($dbh);
 
+                $tbl->addBodyTr(
+                    HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'), array('style'=>'text-align:right;'))
+                    .HTMLTable::makeTd('$' . number_format($kdBal, 2), array('style'=>'text-align:left;')));
+            }
+
+            // Lodging MOA
             $tbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'))
-                .HTMLTable::makeTd('$' . number_format($kdBal, 2)));
-            //$keyMkup = "</tr><tr><th class='tdlabel'>" . $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit') . "</td><td>$" . number_format($kdBal, 2) . "</td>";
-        }
+                HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'), ['style' => 'text-align:right;'])
+                .HTMLTable::makeTd('$' . number_format(max($this->getLodgingMOA($dbh) - $this->getPrePayments($dbh), 0), 2), ['style' => 'text-align:left;']));
 
-        // Lodging MOA
-        $tbl->addBodyTr(
-            HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'))
-            .HTMLTable::makeTd('$' . number_format($this->getLodgingMOA($dbh), 2)));
+            // Pre-Payments
+            if ($uS->AcceptResvPaymt) {
+                $tbl->addBodyTr(
+                    HTMLTable::makeTh($labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Pre-Payments', ['style' => 'text-align:right;'])
+                    .HTMLTable::makeTd('$' . number_format($this->getPrePayments($dbh), 2), ['style' => 'text-align:left;']));
+            }
+
+            // Donations
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Donations', array('style'=>'text-align:right;'))
+                .HTMLTable::makeTd('$' . number_format($this->getDonations($dbh), 2), array('style'=>'text-align:left;')));
+        }
 
         return $tbl->generateMarkup();
 

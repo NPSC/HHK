@@ -2,8 +2,8 @@
 
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\chkBoxCtrl;
-use HHK\AlertControl\AlertMessage;
 use HHK\ExcelHelper;
+use HHK\AlertControl\AlertMessage;
 
 /**
  * anomalies.php
@@ -16,7 +16,7 @@ use HHK\ExcelHelper;
 
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;
@@ -33,7 +33,7 @@ $cbMemStatus->set_cbValueArray(true, "a");
 $cbRptType = new chkBoxCtrl($dbh, "anomalyTypes", "Include", "cbRptType", true);
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $resultMessage = "";
 $divDisp = "none";
 $markup = "";
@@ -78,19 +78,19 @@ where
 /*
  *  Post-back
  */
-if (isset($_POST["btnRunHere"]) || isset($_POST["btnDlExcel"])) {
-     addslashesextended($_POST);
+if (filter_has_var(INPUT_POST, "btnRunHere") || filter_has_var(INPUT_POST, "btnDlExcel")) {
+    
     // set the return values into the controls
     $cbMemStatus->setReturnValues($_POST[$cbMemStatus->get_htmlNameBase()]);
     $cbRptType->setReturnValues($_POST[$cbRptType->get_htmlNameBase()]);
 
     $isExcel = false;
-    if (isset($_POST["btnDlExcel"])) {
+    if (filter_has_var(INPUT_POST, "btnDlExcel")) {
         $isExcel = true;
     }
 
     $prefOnly = false;
-    if (isset($_POST["cbPrefOnly"])) {
+    if (filter_has_var(INPUT_POST, "cbPrefOnly")) {
         $prefOnly = true;
         $checked = "checked='checked'";
     } else {
@@ -98,7 +98,7 @@ if (isset($_POST["btnRunHere"]) || isset($_POST["btnDlExcel"])) {
     }
 
     $includeBad = false;
-    if (isset($_POST["cbBad"])) {
+    if (filter_has_var(INPUT_POST, "cbBad")) {
         $includeBad = true;
         $bchecked = "checked='checked'";
     } else {

@@ -20,6 +20,15 @@ use HHK\DataTableServer\SSP;
  */
 class ListNotes {
 
+    /**
+     * Summary of loadList
+     * @param \PDO $dbh
+     * @param mixed $linkId
+     * @param mixed $linkType
+     * @param mixed $parms
+     * @param mixed $concatNotes
+     * @return array
+     */
     public static function loadList (\PDO $dbh, $linkId, $linkType, $parms, $concatNotes = FALSE) {
 
         $columns = array(
@@ -88,10 +97,13 @@ class ListNotes {
             case Note::StaffLink:
                 $dbView = 'vstaff_notes';
                 $whereClause = "";
+                $columns[] = array('db'=> 'Category', 'dt'=>'Category');
                 break;
             case Note::MemberLink:
-
-                //break;
+                $dbView = 'vmem_notes';
+                $whereField = 'idName';
+                $whereClause = "$whereField = $linkId";
+                break;
 
             case Note::RoomLink:
 

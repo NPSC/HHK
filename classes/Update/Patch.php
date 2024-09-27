@@ -1,5 +1,4 @@
 <?php
-
 namespace HHK\Update;
 
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
@@ -85,8 +84,10 @@ class Patch {
         }catch(\Exception $e){
 
             $msg[] = array('error'=>$e->getMessage(), 'errno'=>$e->getCode(), 'query'=>$q);
-
-            $dbh->rollBack();
+            
+            if($dbh->inTransaction()){
+                $dbh->rollBack();
+            }
 
         }
 

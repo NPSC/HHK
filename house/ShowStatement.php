@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\SysConst\WebPageCode;
 use HHK\Member\Role\Guest;
@@ -7,11 +8,11 @@ use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Payment\Statement;
 use HHK\House\Visit\Visit;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLTable;
-use HHK\HTMLControls\HTMLInput;
 use HHK\Note\Note;
 use HHK\Note\LinkNote;
 use HHK\House\Registration;
+use HHK\TableLog\HouseLog;
+use PHPMailer\PHPMailer\PHPMailer;
 
 /**
  * ShowStatement.php
@@ -49,7 +50,7 @@ $includeLogo = TRUE;
 function createScript($guestLabel) {
     return "
     $('#btnPrint, #btnEmail, #btnWord').button();
-    $('#btnEmail').click(function () {
+    $(document).on('click', '#btnEmail', function () {
         if ($('#btnEmail').val() == 'Sending...') {
             return;
         }
@@ -113,60 +114,42 @@ if (isset($_POST['hdnIdVisit'])) {
     $includeLogo = FALSE;
 }
 
-
+$statementTitle = "";
 if ($idRegistration > 0) {
     // Comprehensive Statement
 
-//     $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idRegistration` = $idRegistration order by `idVisit`, `Span`");
-//     $spans = $stmt1->fetchAll(PDO::FETCH_ASSOC);
-
-
-//         $stmt = $dbh->query("SELECT s.idVisit, s.Visit_Span, SUM(DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date)) AS GDays
-//      FROM stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-//      WHERE v.idRegistration = $idRegistration GROUP BY s.idVisit, s.Visit_Span");
-
-//         $stays = array();
-
-//         while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//             $stays[$r['idVisit']][$r['Visit_Span']] = $r['GDays'];
-//         }
-
-//         for ($n=0; $n<count($spans); $n++) {
-
-//             if (isset($stays[$spans[$n]['idVisit']][$spans[$n]['Span']])) {
-//                 $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['idVisit']][$spans[$n]['Span']];
-//             }
-
-//         }
-
-
-//         $guest = new Guest($dbh, '', $spans[(count($spans) - 1)]['idPrimaryGuest']);
-//         $name = $guest->getRoleMember();
-
-        $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-        $stmtMarkup = Statement::createComprehensiveStatements($dbh, $idRegistration, $includeLogo);
-
+    $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+    $stmtMarkup = Statement::createComprehensiveStatements($dbh, $idRegistration, $includeLogo);
+    $statementTitle = "Comprehensive Statement for PSG $idRegistration";
 
 } else if ($idVisit > 0) {
     // Visit Statement
 
-    $visit = new Visit($dbh, 0, $idVisit);
+    try {
+        $visit = new Visit($dbh, 0, $idVisit);
 
 
-    // Generate Statement
-    $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
-    $name = $guest->getRoleMember();
+        // Generate Statement
+        $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
+        $name = $guest->getRoleMember();
 
-    $stmtMarkup = Statement::createStatementMarkup($dbh, $idVisit, $name->get_fullName(), $includeLogo);
+        $stmtMarkup = Statement::createStatementMarkup($dbh, $idVisit, $name->get_fullName(), $includeLogo);
+    }catch(\Exception $e){
+        $msg = $e->getMessage();
+        $stmtMarkup = $e->getMessage();
+    }
+
+    $statementTitle = "Visit $idVisit";
 
 } else {
     $stmtMarkup = 'No Information.';
 }
 
-$stmtMarkup = HTMLContainer::generateMarkup('div', $stmtMarkup, array('id'=>'divStmt', 'style'=>'clear:left;max-width: 800px;font-size:.9em;', 'class'=>'PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'));
+$stmtMarkup = HTMLContainer::generateMarkup('div', $stmtMarkup, array('id'=>'divStmt', 'class'=>'PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog'));
 
 if (isset($_POST['btnWord'])) {
 
+    HouseLog::logDownload($dbh, "Statement", "Word", "Statement Word Doc for $statementTitle downloaded", $uS->username);
 
     $form = "<!DOCTYPE html>"
             . "<html>"
@@ -190,61 +173,57 @@ if (isset($_POST['btnWord'])) {
 
 $emSubject = $wInit->siteName .' '. $labels->getString('MemberType', 'visitor', 'Guest')." Statement";
 
+$emBody = $uS->StatementEmailBody;
+
 if (is_null($guest) === FALSE && $emAddr == '') {
     $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
     $emAddr = $email["Email"];
 }
+//echo Statement::createEmailStmtWrapper($stmtMarkup);
+//exit;
+$emtableMarkup = HTMLContainer::generateMarkup("form", 
+    Statement::makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>",$emSubject, $emAddr, $emBody, $idRegistration, $idVisit)
+, ['id' => 'formEm', 'name' => 'formEm', 'method' => "POST", 'action' => 'ShowStatement.php', 'class' => 'hhk-noprint']);
 
-
-// create send email table
-$emTbl = new HTMLTable();
-$emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'size'=>'70', 'class'=>'ignrSave'))));
-$emTbl->addBodyTr(HTMLTable::makeTd(
-        'Email: '
-        . HTMLInput::generateMarkup($emAddr, array('name'=>'txtEmail', 'size'=>'70', 'class'=>'ignrSave'))));
-$emTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'emMsg', 'style'=>'color:red;'))));
-$emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit))));
-
-$emtableMarkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('form',
-		$emTbl->generateMarkup(array(), 'Email '.$labels->getString('MemberType', 'visitor', 'Guest') . ' Statement'), array('id'=>'formEm'))
-
-        .HTMLContainer::generateMarkup('form',
-                HTMLInput::generateMarkup('Print', array('id'=>'btnPrint', 'style'=>'margin-right:1em;'))
-                .HTMLInput::generateMarkup('Download to MS Word', array('name'=>'btnWord', 'type'=>'submit'))
-                .HTMLInput::generateMarkup($idRegistration, array('name'=>'hdnIdReg', 'type'=>'hidden'))
-                .HTMLInput::generateMarkup($idVisit, array('name'=>'hdnIdVisit', 'type'=>'hidden'))
-                , array('name'=>'frmwrod','action'=>'ShowStatement.php', 'method'=>'post'))
-        ,array('style'=>'margin-left:100px;margin-bottom:10px; float:left;', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'));
-
+if(isset($_GET['pdfDownload']) && $stmtMarkup != ''){
+    Statement::makePDF($stmtMarkup, true);
+}
 
 if (isset($_REQUEST['cmd'])) {
 
-    $cmd = filter_var($_REQUEST['cmd'], FILTER_SANITIZE_STRING);
+    $cmd = filter_var($_REQUEST['cmd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     if ($cmd == 'email') {
 
-        $msg = '';
+        $return = [];
 
         if (isset($_POST['txtEmail'])) {
-            $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_EMAIL);
+            $emAddr = filter_var($_POST['txtEmail'], FILTER_VALIDATE_EMAIL);
         }
 
         if (isset($_POST['txtSubject'])) {
-            $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
+            $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
+        if (isset($_POST['txtBody'])) {
+            $emBody = str_replace(["\r\n", "\r", "\n"], "<br/>", filter_var($_POST['txtBody'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            if ($emBody == '') {
+                $msg .= "The email Body is required.  ";
+            }
         }
 
         if ($emAddr == '' || $emSubject == '') {
-            $msg .= "The Email Address and Subject are both required.  ";
+            $return["error"] = "Subject and Email must be present and valid.";
         } else if ($stmtMarkup == '') {
-            $msg .= "No Statement.  ";
+            $return["error"] = "No Statement.  ";
         } else {
 
             try{
 
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->FromAddress;
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                 $mail->addAddress($emAddr);     // Add a recipient
                 $mail->addReplyTo($uS->ReplyTo);
 
@@ -255,35 +234,37 @@ if (isset($_REQUEST['cmd'])) {
                     }
                 }
 
-                $mail->isHTML(true);
-
-                $mail->Subject = $emSubject;
-                $mail->msgHTML($stmtMarkup);
-
+                $mail->Subject = htmlspecialchars_decode($emSubject, ENT_QUOTES);
+                //$mail->msgHTML(Statement::createEmailStmtWrapper($stmtMarkup));
+                $mail->msgHTML($emBody);
+                $mail->addStringAttachment(Statement::makePDF($stmtMarkup), "Statement.pdf", PHPMailer::ENCODING_BASE64, 'application/pdf');
 
                 $mail->send();
-                $msg .= "Email sent.  ";
+                $return["msg"] = "Email sent.";
 
                 // Make a note in the visit or PSG
                 if($idVisit > 0){
                     $noteText = 'Visit Statement email sent to ' . $emAddr;
-                    LinkNote::save($dbh, $noteText, $idVisit, Note::VisitLink, $uS->username, $uS->ConcatVisitNotes);
+                    LinkNote::save($dbh, $noteText, $idVisit, Note::VisitLink, '', $uS->username, $uS->ConcatVisitNotes);
                 }elseif($idRegistration > 0){
                     $noteText = 'Comprehensive Statement email sent to ' . $emAddr;
                     $reg = new Registration($dbh, 0, $idRegistration);
                     $idPsg = $reg->getIdPsg();
-                    LinkNote::save($dbh, $noteText, $idRegistration, Note::PsgLink, $uS->username, $uS->ConcatVisitNotes);
+                    LinkNote::save($dbh, $noteText, $idRegistration, Note::PsgLink, '', $uS->username, $uS->ConcatVisitNotes);
                 }
             }catch (\Exception $e){
-                $msg .= "Email failed! " . $mail->ErrorInfo;
+                $return["error"] = "Email failed! " . $mail->ErrorInfo;
+                
             }
 
         }
 
-        echo (json_encode(array('msg'=>$msg)));
+        echo json_encode($return);
 
     } else {
-        echo "<script type='text/javascript'>" . createScript($labels->getString('Member', 'guest', 'Guest')) . "</script>" . $emtableMarkup . $stmtMarkup;
+        echo HTMLContainer::generateMarkup("div",
+        $emtableMarkup . $stmtMarkup
+        , ['id'=>"stmtDiv"]);
     }
 
     exit();
@@ -294,7 +275,7 @@ if (isset($_REQUEST['cmd'])) {
 
 
 if ($msg != '') {
-    $msg = HTMLContainer::generateMarkup('div', $msg, array('class'=>'ui-state-highlight', 'style'=>'font-size:14pt;'));
+    $msg = HTMLContainer::generateMarkup('div', $msg, array('class'=>'ui-state-highlight ui-corner-all', 'style'=>'font-size:14pt; padding:0.5em; margin-top: 0.5em'));
 }
 ?>
 <!DOCTYPE html>
@@ -305,13 +286,18 @@ if ($msg != '') {
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
-        <style type="text/css" media="print">
-            .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
-            @page { margin: 1cm; }
-        </style>
+        <?php echo CSSVARS; ?>
+        <?php echo NOTY_CSS; ?>
+        <?php echo GRID_CSS; ?>
+        <?php echo STATEMENT_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type='text/javascript'>
 $(document).ready(function() {
     "use strict";
@@ -320,13 +306,12 @@ $(document).ready(function() {
         if ($('#btnEmail').val() == 'Sending...') {
             return;
         }
-        $('#emMsg').text('');
         if ($('#txtEmail').val() === '') {
-            $('#emMsg').text('Enter an Email Address.  ').css('color', 'red');
+            flagAlertMessage('Enter an Email Address.', 'error');
             return;
         }
         if ($('#txtSubject').val() === '') {
-            $('#emMsg').text('Enter a Subject line.').css('color', 'red');
+            flagAlertMessage('Enter a Subject line', 'error');
             return;
         }
         $('#btnEmail').val('Sending...');
@@ -335,16 +320,17 @@ $(document).ready(function() {
             try {
                 data = $.parseJSON(data);
             } catch (err) {
-                alert('Bad JSON Encoding');
+                flagAlertMessage('Bad JSON Encoding', 'error');
                 return;
             }
             if (data.error) {
                 if (data.gotopage) {
                     window.open(data.gotopage, '_self');
                 }
+                flagAlertMessage(data.error, "error");
             }
             if (data.msg) {
-                $('#emMsg').text(data.msg).css('color', 'red');
+                flagAlertMessage(data.msg, 'success');
             }
         });
     });
@@ -365,11 +351,13 @@ $(document).ready(function() {
     </head>
     <body>
         <div id="contentDiv">
-            <?php echo $msg; ?>
-            <?php echo $emtableMarkup; ?>
-            <div class="hhk-tdbox hhk-visitdialog">
+            <div id="stmtDiv" class="mt-3">
+                <?php echo $msg; ?>
+                <?php echo $emtableMarkup; ?>
                 <?php echo $stmtMarkup; ?>
             </div>
         </div>
+
+        
     </body>
 </html>

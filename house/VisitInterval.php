@@ -1,5 +1,9 @@
 <?php
 
+use HHK\House\OperatingHours;
+use HHK\House\Report\RoomReport;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\House\Resource\ResourceTypes;
 use HHK\SysConst\{ResourceStatus, RoomRateCategories, GLTableNames, ItemPriceCode, InvoiceStatus, ItemType, ItemId, VolMemberType};
@@ -9,13 +13,15 @@ use HHK\ColumnSelectors;
 use HHK\Purchase\RoomRate;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Purchase\ValueAddedTax;
-use HHK\Config_Lite\Config_Lite;
 use HHK\Payment\PaymentSvcs;
 use HHK\Exception\RuntimeException;
 use HHK\House\Report\ReportFilter;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\ExcelHelper;
 use HHK\House\Report\ReportFieldSet;
+use HHK\SysConst\Mode;
+use HHK\SysConst\VisitStatus;
+use HHK\TableLog\HouseLog;
 
 
 /**
@@ -40,6 +46,15 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
+/**
+ * Summary of getGuestNights
+ * @param PDO $dbh
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $actual
+ * @param mixed $preInterval
+ * @return void
+ */
 function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
 
     $uS = Session::getInstance();
@@ -52,7 +67,6 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
     $stmt = $dbh->query("SELECT
     s.idVisit,
     s.Visit_Span,
-
     CASE
         WHEN
             DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
@@ -110,7 +124,186 @@ GROUP BY s.idVisit, s.Visit_Span");
     }
 
 }
+/**
+ * Summary of newStatsPanel
+ * @param PDO $dbh
+ * @param mixed $visitNites
+ * @param mixed $rates
+ * @param mixed $totalCatNites
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $categories
+ * @param mixed $avDailyFee
+ * @param mixed $medDailyFee
+ * @param mixed $rescGroup
+ * @param mixed $siteName
+ * @return string
+ */
+function newStatsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
 
+    // Stats panel
+    if (count($visitNites) < 1) {
+        return '';
+    }
+
+    $uS = Session::getInstance();
+
+    $totalVisitNites = 0;
+    $numCategoryRooms = array();
+
+    $oosNights = array();
+    $totalOOSNites = 0;
+
+    $stDT = new DateTime($start . ' 00:00:00');
+    $enDT = new DateTime($end . ' 00:00:00');
+    $numNights = $enDT->diff($stDT, TRUE)->days;
+
+    foreach ($visitNites as $v) {
+        $totalVisitNites += $v;
+    }
+
+    foreach ($categories as $cat) {
+        $numCategoryRooms[$cat[0]] = 0;
+        $oosNights[$cat[0]] = 0;
+    }
+
+
+
+    $qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, ifnull(r.Retired_At, '') as `Retired_At`
+        from resource r
+left join resource_room rr on r.idResource = rr.idResource
+left join room rm on rr.idRoom = rm.idRoom
+where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "') and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')
+order by r.idResource;";
+
+    $rstmt = $dbh->query($qu);
+
+    $rooms = array();
+
+    $roomReport = new RoomReport();
+    $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+    $roomReport->collectUtilizationData($dbh, $start, $end, $rescStatuses);
+    $daysAr = $roomReport->getDays();
+
+    // transform room report data for visit report
+    while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
+        if(isset($daysAr[$r['idResource']])){
+            $totals = array(ResourceStatus::Available=>0, ResourceStatus::OutOfService=>0, ResourceStatus::Delayed=>0, ResourceStatus::Unavailable=>0, ResourceStatus::Closed=>0);
+            foreach($daysAr[$r['idResource']] as $day){
+                $totals[ResourceStatus::Available]+= ($day['n']+$day['o']+$day['t']+$day['u']+$day['c'] == 0 ? 1:0);
+                $totals[ResourceStatus::OutOfService]+= $day['o'];
+                $totals[ResourceStatus::Delayed]+= $day['t'];
+                $totals[ResourceStatus::Unavailable]+= $day['u'];
+                $totals[ResourceStatus::Closed]+= $day['c'];
+            }
+            $rooms[$r['idResource']][$r[$rescGroup]] = $totals;
+        }
+    }
+
+    // Filter out unavailalbe rooms and add up the nights
+    $availableRooms = 0;
+    $unavailableRooms = 0;
+
+    foreach($rooms as $r) {
+
+        foreach ($r as $cId => $c) {
+
+            if (isset($c[ResourceStatus::Unavailable]) && $c[ResourceStatus::Unavailable] >= $numNights) {
+                $unavailableRooms++;
+                continue;
+            }
+
+            $numCategoryRooms[$cId]++;
+            $availableRooms++;
+
+            foreach ($c as $k => $v) {
+
+                if ($k != ResourceStatus::Available) {
+                    $oosNights[$cId] += $v;
+                    $totalOOSNites += $v;
+                }
+            }
+        }
+    }
+
+
+    $numRoomNights = $availableRooms * $numNights;
+    $numUsefulNights = $numRoomNights - $totalOOSNites;
+    $avStay = $totalVisitNites / count($visitNites);
+
+    // Median visit nights
+    array_multisort($visitNites);
+    $entries = count($visitNites);
+    $emod = $entries % 2;
+
+    if ($emod > 0) {
+        // odd number of entries
+        $median = $visitNites[(ceil($entries / 2) - 1)];
+    } else {
+        $median = ($visitNites[($entries / 2) - 1] + $visitNites[($entries / 2)]) / 2;
+    }
+
+
+    $trs[4] = HTMLTable::makeTd('Useful Nights (Room-Nights &ndash; Room-Nights OOS):', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($numRoomNights . ' &ndash; ' . $totalOOSNites . ' = '  . HTMLContainer::generateMarkup('span', $numUsefulNights, array('style'=>'font-weight:bold;')));
+
+    $trs[5] = HTMLTable::makeTd('Room Utilization (Nights &divide; Useful Nights):', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($totalVisitNites . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalVisitNites * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
+
+    $hdTr = HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All Rooms (' . $availableRooms . ')');
+
+    foreach ($categories as $c) {
+
+        if (!isset($numCategoryRooms[$c[0]]) || $numCategoryRooms[$c[0]] == 0){
+            continue;
+        }
+
+        $hdTr .= HTMLTable::makeTh($c[1] . ' (' . $numCategoryRooms[$c[0]] . ')');
+        $numRoomNights = $numCategoryRooms[$c[0]] * $numNights;
+        $numUsefulNights = $numRoomNights - $oosNights[$c[0]];
+
+        $trs[4] .= HTMLTable::makeTd($numRoomNights . ' &ndash; ' . $oosNights[$c[0]] . ' = '  . HTMLContainer::generateMarkup('span', $numUsefulNights, array('style'=>'font-weight:bold;')));
+        $trs[5] .= HTMLTable::makeTd($totalCatNites[$c[0]] . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalCatNites[$c[0]] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
+    }
+
+    $sTbl = new HTMLTable();
+
+    $sTbl->addHeaderTr($hdTr);
+
+    $sTbl->addBodyTr(HTMLTable::makeTd('Mean visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($avStay, 2)));
+    $sTbl->addBodyTr(HTMLTable::makeTd('Median visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($median,2)));
+
+    $sTbl->addBodyTr(HTMLTable::makeTd('Mean Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($avDailyFee,2)));
+
+    if($uS->RoomPriceModel == ItemPriceCode::Dailey){
+        $sTbl->addBodyTr(HTMLTable::makeTd('Median Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($medDailyFee,2)));
+    }
+
+    $sTbl->addBodyTr($trs[4]);
+
+    $sTbl->addBodyTr($trs[5]);
+
+    return HTMLContainer::generateMarkup('h3', $siteName . ' Visit Report Statistics')
+            . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
+            . $sTbl->generateMarkup();
+
+}
+
+/**
+ * Summary of statsPanel
+ * @param PDO $dbh
+ * @param mixed $visitNites
+ * @param mixed $rates
+ * @param mixed $totalCatNites
+ * @param mixed $start
+ * @param mixed $end
+ * @param mixed $categories
+ * @param mixed $avDailyFee
+ * @param mixed $medDailyFee
+ * @param mixed $rescGroup
+ * @param mixed $siteName
+ * @return string
+ */
 function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
@@ -141,17 +334,20 @@ function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end
 
 
 
-    $qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
+    $qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, ifnull(r.Retired_At, '') as `Retired_At`, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
         from resource r left join
 resource_use ru on r.idResource = ru.idResource and DATE(ru.Start_Date) < DATE('" . $enDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $stDT->format('Y-m-d') . "')
 left join resource_room rr on r.idResource = rr.idResource
 left join room rm on rr.idRoom = rm.idRoom
-where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "')
+where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "') and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')
 order by r.idResource;";
 
     $rstmt = $dbh->query($qu);
 
     $rooms = array();
+
+    $operatingHours = new OperatingHours($dbh);
+    $closedDates = $operatingHours->getClosedDatesInRange($stDT, $enDT);
 
     // Get rooms and oos days
     while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
@@ -179,6 +375,35 @@ order by r.idResource;";
             } else {
                 $nites = $departDT->diff($arriveDT, TRUE)->days;
             }
+
+            //subtract nights the house is closed
+            foreach($closedDates as $date){
+                if($date >= $arriveDT && $date < $departDT){
+                    $nites--;
+                }
+            }
+
+
+        }
+
+        //count retired room-nights
+        if($r['Retired_At'] != '' && isset($rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable]) === FALSE){
+            $retiredAt = new DateTime($r['Retired_At']);
+            if($retiredAt < $enDT){
+                $retiredNites = $enDT->diff($retiredAt, true)->days;
+            }else{
+                $retiredNites = 0;
+            }
+
+
+            //subtract nights the house is closed
+            foreach($closedDates as $date){
+                if($date >= $retiredAt && $date < $enDT){
+                    $retiredNites--;
+                }
+            }
+
+            $rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable] = $retiredNites;
         }
 
         if (isset($rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']]) === FALSE) {
@@ -187,6 +412,40 @@ order by r.idResource;";
             $rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']] += $nites;
         }
 
+    }
+
+    //get visits and check if house is closed during any visits
+    $query = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, DATE(r.`Span_Start`) as `Start`, DATE(ifnull(r.`Span_End`, now())) as `End` from vregister r
+        left join resource_room rr on r.idResource = rr.idResource
+        left join room rm on rr.idRoom = rm.idRoom
+        where Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
+            DATE(Span_Start) < DATE('" . $enDT->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$stDT->format('Y-m-d') . "');";
+    $stmtv = $dbh->query($query);
+    $rows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
+
+    foreach($rows as $r){
+        $startDT = new \DateTime($r['Start']);
+        $endDT = new \DateTime($r['End']);
+        foreach($closedDates as $closedDate){
+            if($closedDate >= $startDT && $closedDate < $endDT){ //if house is closed but there's a visit, subtract night from Unavailble
+                if (isset($rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable]) === FALSE) {
+                    $rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable] = -1;
+                } else {
+                    $rooms[$r['idResource']][$r[$rescGroup]][ResourceStatus::Unavailable]--;
+                }
+            }
+        }
+    }
+
+    //add closed nights
+    foreach($rooms as $idResc=>$r) {
+        foreach ($r as $cId => $c) {
+            if(isset($rooms[$idResc][$cId][ResourceStatus::Unavailable])){
+                $rooms[$idResc][$cId][ResourceStatus::Unavailable] += count($closedDates);
+            }else{
+                $rooms[$idResc][$cId][ResourceStatus::Unavailable] = count($closedDates);
+            }
+        }
     }
 
     // Filter out unavailalbe rooms and add up the nights
@@ -284,17 +543,17 @@ order by r.idResource;";
  * @param array $r  db record row
  * @param array $visit
  * @param float $unpaid
- * @param \DateTime $departureDT
+ * @param \DateTimeInterface $departureDT
  * @param HTMLTable $tbl
  * @param boolean $local  Flag for Excel output
- * @param PHPExcel $sml
- * @param Object $reportRows  PHPExecl object
+ * @param ExcelHelper $sml
+ * @param object $reportRows  PHPExecl object
  * @param array $rateTitles  Room rates
  * @param Session $uS
- * @param Boolean $visitFee  Flag to show/hide visit fees
+ * @param bool $visitFee  Flag to show/hide visit fees
 
  */
-function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departureDT, HTMLTable &$tbl, $local, &$sml, $header, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
+function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $departureDT, HTMLTable &$tbl, $local, &$sml, $header, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
 
     $arrivalDT = new DateTime($r['Arrival_Date']);
 
@@ -355,7 +614,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
     $r['hosp'] = $hosp;
 
     $r['nights'] = $visit['nit'];
-    $r['gnights'] = $visit['gnit'];
+    $r['gnights'] = max($visit['gnit'] - $visit['nit'], 0);
     $r['lodg'] = number_format($visit['chg'],2);
     $r['days'] = $visit['day'];
 
@@ -439,7 +698,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $expDepart = new DateTime($r['Expected_Departure']);
         $expDepart->setTime(0, 0, 0);
 
-        $r['Status'] = HTMLContainer::generateMarkup('span', $uS->guestLookups['Visit_Status'][$r['Status']][1], array('class'=>'hhk-getVDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']));
+        //$r['Status'] = HTMLContainer::generateMarkup('span', $uS->guestLookups['Visit_Status'][$r['Status']][1], array('class'=>'hhk-getVDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']));
 
         if ($visitFeePaid != '') {
             $r['visitFee'] = $visitFeePaid . $r['visitFee'];
@@ -515,7 +774,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
  * @param array $aList
  * @param boolean $local
  * @param boolean $visitFee  Flag to show/hide visit fees
- * @return array
+ * @return array|void
  */
 function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee, $statsOnly, $rescGroup, $labels) {
 
@@ -783,7 +1042,6 @@ where
     $totalCharged = 0;
     $totalVisitFee = 0;
     $totalLodgingCharge = 0;
-    //$totalFullCharge = 0;
     $totalAddnlCharged = 0;
 
     $totalAddnlTax = 0;
@@ -798,7 +1056,6 @@ where
     $totalthrdPaid = 0;
     $totalSubsidy = 0;
     $totalUnpaid = 0;
-    //$totalAddnlPaid = 0;
     $totalDonationPaid = 0;
 
     $totalNights = 0;
@@ -817,7 +1074,6 @@ where
     $rates = [];
     $chargesAr = [];
 
-    //$reportStartDT = new DateTime($start . ' 00:00:00');
     $reportEndDT = new \DateTime($end . ' 00:00:00');
     $now = new \DateTime();
     $now->setTime(0, 0, 0);
@@ -850,10 +1106,9 @@ where
                 }
 
                 $totalCharged += $visit['chg'];
-                //$totalFullCharge += $visit['fcg'];
                 $totalAmtPending += $visit['pndg'];
                 $totalNights += $visit['nit'];
-                $totalGuestNights += $visit['gnit'];
+                $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
 
                 // Set expected departure to now if earlier than "today"
                 $expDepDT = new \DateTime($savedr['Expected_Departure']);
@@ -940,7 +1195,6 @@ where
                 $totalHousePaid += $visit['hpd'];
                 $totalGuestPaid += $visit['gpd'];
                 $totalthrdPaid += $visit['thdpd'];
-                //$totalAddnlPaid += $visit['addpd'];
                 $totalDonationPaid += $visit['donpd'];
                 $totalUnpaid += $unpaid;
                 $totalSubsidy += ($visit['fcg'] - $visit['chg']);
@@ -1033,31 +1287,44 @@ where
         $visit['adj'] = $r['Expected_Rate'];
 
         $days = $r['Actual_Month_Nights'];
-        $gdays = isset($actualGuestNights[$r['idVisit']][$r['Span']]) ? $actualGuestNights[$r['idVisit']][$r['Span']] : 0;
+        $gdays = $actualGuestNights[$r['idVisit']][$r['Span']] ?? 0;
 
-        //$rates[] = $r['idRoom_Rate'];
+        $visit['gnit'] += $gdays;
+
+        // $gdays contains all the guests.
+        if ($gdays >= $days) {
+            $gdays -= $days;
+        }
+
         $visit['nit'] += $days;
         $totalCatNites[$r[$rescGroup[0]]] += $days;
-        $visit['gnit'] += $gdays;
-        $visit['pin'] += $r['Pre_Interval_Nights'];
-        $visit['gpin'] += isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0;
+
+        $piDays = $r['Pre_Interval_Nights'];
+        $piGdays = $piGuestNights[$r['idVisit']][$r['Span']] ?? 0;
+        $visit['pin'] += $piDays;
+        $visit['gpin'] += $piGdays;
+
+        if ($piGdays >= $piDays) {
+            $piGdays -= $piDays;
+        }
+
 
         //  Add up any pre-interval charges
-        if ($r['Pre_Interval_Nights'] > 0) {
+        if ($piDays > 0) {
 
             // collect all pre-charges
             $priceModel->setCreditDays($r['Rate_Glide_Credit']);
-            $visit['preCh'] += ($priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], (isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0)) * $adjRatio);
+            $visit['preCh'] += $priceModel->amountCalculator($piDays, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $piGdays) * $adjRatio;
 
         }
 
         if ($days > 0) {
 
-            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
-            $visit['chg'] += ($priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio);
+            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
+            $visit['chg'] += $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
             $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
 
-            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
+            $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
             $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
 
             if ($adjRatio > 0) {
@@ -1085,10 +1352,10 @@ where
         $totalAddnlCharged += ($visit['addch']);
         $totalVisitFee += $visit['vfa'];
         $totalCharged += $visit['chg'];
-        //$totalFullCharge += $visit['fcg'];
+
         $totalAmtPending += $visit['pndg'];
         $totalNights += $visit['nit'];
-        $totalGuestNights += $visit['gnit'];
+        $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
 
         $totalTaxCharged += $visit['taxcgd'];
         $totalAddnlTax += $visit['adjchtx'];
@@ -1182,7 +1449,6 @@ where
         $totalHousePaid += $visit['hpd'];
         $totalGuestPaid += $visit['gpd'];
         $totalthrdPaid += $visit['thdpd'];
-        //$totalAddnlPaid += $visit['addpd'];
         $totalDonationPaid += $visit['donpd'];
         $totalUnpaid += $unpaid;
         $totalSubsidy += ($visit['fcg'] - $visit['chg']);
@@ -1224,8 +1490,8 @@ where
             }
         }
 
-        if ($totalGuestNights > 0 && $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
-            $avGuestFee = $totalCharged / $totalGuestNights;
+        if (($totalNights + $totalGuestNights) > 0 && $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
+            $avGuestFee = $totalCharged / ($totalNights + $totalGuestNights); // $totalGuestNights is actually total additional nights: total guest nights = $toalNights + $totalGuestNights
         }
 
 
@@ -1342,11 +1608,13 @@ where
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact', 'style'=>'width:100%'));
 
         // Stats panel
-        $statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
+        $statsTable = newStatsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
+        //$statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
 
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
     } else {
+        HouseLog::logDownload($dbh, 'Visit Report', "Excel", "Visit Report for " . $start . " - " . $end . " downloaded", $uS->username);
         $writer->download();
 
     }
@@ -1370,13 +1638,33 @@ try {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
 
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+        }
+
+        // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
         }
     }
 
 } catch (RuntimeException $ex) {
-    $paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 
@@ -1397,7 +1685,7 @@ if ($taxItems[0][0] > 0) {
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
-$filter->createResoourceGroups($rescGroups, $uS->CalResourceGroupBy);
+$filter->createResourceGroups($dbh);
 
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
@@ -1490,7 +1778,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
 
     if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
 
-        $cFields[] = array($labels->getString('MemberType', 'guest', 'Guest')." Nights", 'gnights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
+        $cFields[] = array('Extra ' . $labels->getString('MemberType', 'guest', 'Guest').' Nights', 'gnights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
         $cFields[] = array("Rate Per ".$labels->getString('MemberType', 'guest', 'Guest'), 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
         $cFields[] = array("Mean Rate Per ".$labels->getString('MemberType', 'guest', 'Guest'), 'meanGstRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
@@ -1667,6 +1955,8 @@ if ($uS->CoTod) {
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -1675,6 +1965,7 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -1684,162 +1975,19 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_INTERVAL_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-
-<script type="text/javascript">
-    var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
-    var rctMkup, pmtMkup;
-    var dateFormat = '<?php echo $dateFormat; ?>';
-    $(document).ready(function() {
-        var makeTable = '<?php echo $mkTable; ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-		pmtMkup = $('#pmtMkup').val(),
-        rctMkup = $('#rctMkup').val();
-        <?php echo $filter->getTimePeriodScript(); ?>;
-
-        $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
-        $('#btnHere, #btnExcel').click(function () {
-            $('#paymentMessage').hide();
-        });
-        $('#cbColClearAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', false);
-            });
-        });
-        $('#cbColSelAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', true);
-            });
-        });
-        $('#keysfees').dialog({
-            autoOpen: false,
-            resizable: true,
-            modal: true,
-            close: function () {$('div#submitButtons').show();},
-            open: function () {$('div#submitButtons').hide();}
-        });
-        $('#pmtRcpt').dialog({
-            autoOpen: false,
-            resizable: true,
-            width: getDialogWidth(530),
-            modal: true,
-            title: 'Payment Receipt'
-        });
-        $("#faDialog").dialog({
-            autoOpen: false,
-            resizable: true,
-            width: getDialogWidth(650),
-            modal: true,
-            title: 'Income Chooser'
-        });
-
-        $('.hhk-viewVisit').button();
-        $('.hhk-viewVisit').click(function () {
-            var vid = $(this).data('vid');
-            var gid = $(this).data('gid');
-            var span = $(this).data('span');
-
-            var buttons = {
-                "Show Statement": function() {
-                    window.open('ShowStatement.php?vid=' + vid, '_blank');
-                },
-                "Show Registration Form": function() {
-                    window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
-                },
-                "Save": function() {
-                    saveFees(gid, vid, span, false, 'VisitInterval.php');
-                },
-                "Cancel": function() {
-                    $(this).dialog("close");
-                }
-            };
-             viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-        });
-
-        if (makeTable === '1') {
-            $('div#printArea, div#stats').css('display', 'block');
-
-            $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': columnDefs,
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                 ],
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><"hhk-overflow-x"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
-            });
-            $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
-            });
-        }
-        if (rctMkup !== '') {
-            showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
-        }
-    if (pmtMkup !== '') {
-        $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
-    }
-
-    $('#keysfees').mousedown(function (event) {
-        var target = $(event.target);
-        if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
-            $('div#pudiv').remove();
-        }
-    });
-
-	$('#includeFields').fieldSets({'reportName': 'visit', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
-
-	// disappear the pop-up room chooser.
-    $(document).mousedown(function (event) {
-        var target = $(event.target);
-        if ($('div#insDetailDiv').length > 0 && target[0].id !== 'insDetailDiv' && target.parents("#" + 'insDetailDiv').length === 0) {
-            $('div#insDetailDiv').remove();
-        }
-    });
-
-	var detailDiv = $("<div>").attr('id','insDetailDiv');
-	$("body").append(detailDiv);
-	$('#tblrpt').on('click', '.insAction', function (event) {
-        viewInsurance($(this).data('idname'), event.target.id, detailDiv);
-    });
-
-	function viewInsurance(idName, eventTarget) {
-        "use strict";
-        detailDiv.empty();
-        $.post('ws_resc.php', {cmd: 'viewInsurance', idName: idName},
-          function(data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.location.assign(data.gotopage);
-                    }
-                    flagAlertMessage(data.error, 'error');
-                    return;
-                }
-
-                if (data.markup) {
-                    var contr = $(data.markup);
-
-                    $('body').append(contr);
-                    contr.position({
-                        my: 'left top',
-                        at: 'left bottom',
-                        of: "#" + eventTarget
-                    });
+        <?php 
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
                 }
             }
-        });
-    }
+        ?>
 
-    });
- </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $wInit->generatePageMenu(); ?>
@@ -1882,12 +2030,19 @@ if ($uS->CoTod) {
                 </form>
             </div>
         </div>
+        <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate" />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+        <input type="hidden" id="startYear" value= '<?php echo $uS->StartYear; ?>' />
+        <input type="hidden" id="dateFormat" value='<?php echo $dateFormat; ?>' />
+        <input type="hidden" id="makeTable" value='<?php echo $mkTable; ?>' />
+        <input type="hidden" id="columnDefs" value='<?php echo json_encode($colSelector->getColumnDefs()); ?>' />
+        <input type="hidden" id="defaultFields" value='<?php echo json_encode($defaultFields); ?>' />
         <div id="keysfees" style="font-size: .9em;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup();} ?>
         <form name="xform" id="xform" method="post"></form>
     </body>
 </html>

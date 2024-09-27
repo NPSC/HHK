@@ -65,7 +65,9 @@ class ResourceView {
     ifnull(rm.Title, '') as `Room`,
     r.Util_Priority as `Priority`,
     r.Background_Color as `Bkgrd Color`,
-    r.Text_Color as `Text Color`
+    r.Text_Color as `Text Color`,
+    r.Retired_At as `Retired At`,
+    if(date(now()) >= date(r.Retired_At), 'hhk-retired', '') as `isRetired`
 from
     resource r
         left join
@@ -74,7 +76,7 @@ from
     resource_room rr on r.idResource = rr.idResource
         left join
     room rm on rr.idRoom = rm.idRoom
-order by r.Title;");
+order by r.Retired_At, r.Title;");
 
         $idResc = 0;
         $numResc = $stmt->rowCount();
@@ -82,6 +84,8 @@ order by r.Title;");
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($idResc != $r['Id']) {
+
+                $r["Retired At"] = (!empty($r["Retired At"]) ? (new \DateTime($r["Retired At"]))->format('M j, Y'): "");
 
                 $ra = array();
                 foreach ($roomAttrs as $ras) {
@@ -125,6 +129,7 @@ order by r.Title;");
             'Priority' => '',
             'Bkgrd Color' => '',
             'Text Color' => '',
+            'Retired_At' => '',
             'status' => ''
             );
 
@@ -136,7 +141,7 @@ order by r.Title;");
 
         $rooms[] = $newRow;
 
-        return HTMLContainer::generateMarkup('h3', 'Showing '.$numResc . ' Resources') . CreateMarkupFromDB::generateHTML_Table($rooms, 'tblresc');
+        return HTMLContainer::generateMarkup('h3', 'Showing '.$numResc . ' Resources') . CreateMarkupFromDB::generateHTML_Table($rooms, 'tblresc', 'isRetired');
 
     }
 
@@ -165,7 +170,7 @@ order by r.Title;");
 
 
         $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Report Category`, r.Max_Occupants as `Max`,
-r.Floor, r.Phone, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle` $depositCol
+r.Floor, r.Phone, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle`, if(count(rcr.idResource_room) = count(resc.idResource), 'hhk-retired', '') as `isRetired` $depositCol
 from room r
 left join gen_lookups g on g.`Table_Name`='Room_Type' and g.`Code` = r.`Type`
 left join gen_lookups g3 on g3.`Table_Name`='Room_Category' and g3.`Code`=r.Category
@@ -175,6 +180,9 @@ left join gen_lookups g6 on g6.`Table_Name` = 'Room_Cleaning_Days' and g6.`Code`
 left join gen_lookups g7 on g7.`Table_Name` = 'Room_Rpt_Cat' and g7.`Code` = r.Report_Category
 left join location l on r.idLocation = l.idLocation
 left join room_rate rr on r.Default_Rate_Category = rr.FA_Category and rr.`Status` = 'a'
+left join resource_room rcr on r.idRoom = rcr.idRoom
+left join resource resc on rcr.idResource = resc.idResource and date(now()) >= date(resc.Retired_At)
+group by r.idRoom
 order by r.Title;");
 
         $numResc = $stmt->rowCount();
@@ -231,7 +239,7 @@ order by r.Title;");
         $rooms[] = $newRow;  // array('Edit' => HTMLInput::generateMarkup('New', array('id'=>'0btnrmNew', 'name'=>'0', 'type'=>'button', 'data-enty'=>'room', 'class'=>'reNewBtn')));
 
 
-        return HTMLContainer::generateMarkup('h3', 'Showing '.$numResc . ' Rooms') . CreateMarkupFromDB::generateHTML_Table($rooms, 'tblroom');
+        return HTMLContainer::generateMarkup('h3', 'Showing '.$numResc . ' Rooms') . CreateMarkupFromDB::generateHTML_Table($rooms, 'tblroom', 'isRetired');
 
     }
 
@@ -289,6 +297,7 @@ order by r.Title;");
                 HTMLSelector::doOptionsMkup($rStts, '', TRUE), array('name'=>'selStatus[0]')))
             .HTMLTable::makeTd(HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($oosCodes, '', TRUE), array('name'=>'selOos[0]')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtNotes[0]')))
             .HTMLTable::makeTd('', array('colspan'=>'2')));
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -301,13 +310,14 @@ order by r.Title;");
                         HTMLSelector::doOptionsMkup($rStts, $r['Status'], FALSE), array('name'=>'selStatus[' . $r['idResource_use'] . ']')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($oosCodes, $r['OOS_Code'], TRUE), array('name'=>'selOos[' . $r['idResource_use'] . ']')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($r["Notes"], array('name'=>'txtNotes[' . $r['idResource_use'] . ']')))
                 .HTMLTable::makeTd($r['Updated_By'])
                 .HTMLTable::makeTd($r['Last_Updated'] == '' ? '' : date('M j, Y H:i', strtotime($r['Last_Updated'])))
                     );
         }
 
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('Delete').HTMLTable::makeTh('Start').HTMLTable::makeTh('End').HTMLTable::makeTh('Status').HTMLTable::makeTh('Reason').HTMLTable::makeTh('User').HTMLTable::makeTh('Last Updated'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Delete').HTMLTable::makeTh('Start').HTMLTable::makeTh('End').HTMLTable::makeTh('Status').HTMLTable::makeTh('Reason').HTMLTable::makeTh('Notes').HTMLTable::makeTh('User').HTMLTable::makeTh('Last Updated'));
 
         $mkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h3', $title) . HTMLContainer::generateMarkup('form', $tbl->generateMarkup(), array('name'=>'statForm')), array('style'=>'font-size:.9em; max-height: 450px; overflow: auto;'));
         return array('tbl'=>$mkup);
@@ -323,10 +333,11 @@ order by r.Title;");
 
         foreach ($post['selStatus'] as $k => $v) {
 
-            $startDate = filter_var($post['txtstart'][$k], FILTER_SANITIZE_STRING);
-            $endDate = filter_var($post['txtend'][$k], FILTER_SANITIZE_STRING);
-            $stat = filter_var($post['selStatus'][$k], FILTER_SANITIZE_STRING);
-            $oosCode = filter_var($post['selOos'][$k], FILTER_SANITIZE_STRING);
+            $startDate = filter_var($post['txtstart'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $endDate = filter_var($post['txtend'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $stat = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $oosCode = filter_var($post['selOos'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $notes = filter_var($post['txtNotes'][$k], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $idRescUse = intval($k, 10);
 
@@ -358,18 +369,46 @@ order by r.Title;");
             $enDT = new \DateTime($endDate);
 
             // Check for resource in use
-            $query = "select r.idResource from reservation r where r.Status in "
-                    . "('" .ReservationStatus::Checkedout . "','" .ReservationStatus::Staying . "')
-    and DATE(r.Actual_Arrival) < DATE(:dtend) and ifnull(DATE(r.Actual_Departure), DATE(r.Expected_Departure)) > DATE(:start)
-    union
-    select ru.idResource from resource_use ru where ru.idResource_use != :idRu and DATE(ru.Start_Date) < DATE(:ruend) and ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)";
+            $query = "SELECT
+    r.idResource
+FROM
+    reservation r
+WHERE
+case WHEN r.`Status` = '" .ReservationStatus::Staying . "' THEN
+		DATE(r.Actual_Arrival) < DATE(:rsend)
+                AND DATE(datedefaultnow(r.Expected_Departure)) > DATE(:dtstart)
+	WHEN r.`Status` = '" .ReservationStatus::Checkedout . "' THEN
+        DATE(r.Actual_Arrival) < DATE(:dtend)
+        AND DATE(r.Actual_Departure) > DATE(:start)
+        AND DATEDIFF(r.Actual_Departure, r.Actual_Arrival) > 0
+	ELSE 1=2
+END
+UNION
+SELECT
+    resc.idResource
+FROM resource resc
+WHERE
+    resc.Retired_At is not null
+    AND DATE(resc.Retired_At) <= DATE(:retend)
+UNION
+SELECT
+    ru.idResource
+FROM resource_use ru
+WHERE
+    ru.idResource_use != :idRu
+    AND DATE(ru.Start_Date) < DATE(:ruend)
+    AND ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)";
+
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':idRu'=>$idRescUse,
                 ':start'=>$stDT->format('Y-m-d'),
+                ':dtstart'=>$stDT->format('Y-m-d'),
                 ':dtend'=>$enDT->format('Y-m-d'),
+                ':rsend'=>$enDT->format('Y-m-d'),
                 ':rustart'=>$stDT->format('Y-m-d'),
-                ':ruend'=>$enDT->format('Y-m-d')));
+                ':ruend'=>$enDT->format('Y-m-d'),
+                ':retend'=>$enDT->format('Y-m-d')));
 
             $inUse = FALSE;
 
@@ -382,7 +421,7 @@ order by r.Title;");
             if ($inUse) {
 
                 if ($idRescUse == 0) {
-                    $reply .= 'An existing visit or status record conflicts with the dates entered.  ';
+                    $reply .= 'An existing reservation or room status record conflicts with the dates entered.  ';
                 }
                 continue;
             }
@@ -395,18 +434,11 @@ order by r.Title;");
                 $ruRs->idResource->setNewVal($id);
                 $ruRs->Status->setNewVal($stat);
                 $ruRs->OOS_Code->setNewVal($oosCode);
+                $ruRs->Notes->setNewVal($notes);
 
             } else if ($type == 'room') {
                 $reply .= 'Room status is unsupported.  ';
                 continue;
-
-//                $ruRs->idRoom->setNewVal($id);
-//
-//                if ($stat == RoomService::OutOfService) {
-//                    $ruRs->Room_State->setNewVal(RoomService::OutOfService);
-//                } else if ($stat == ResourceStatus::Unavailable) {
-//                    $ruRs->Room_Availability->setNewVal(ResourceStatus::Unavailable);
-//                }
             }
 
             $ruRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
@@ -495,7 +527,7 @@ order by r.Title;");
         $roomRs = $room->getRoomRS();
 
         if (isset($post['txtReTitle'])) {
-            $rTitle = filter_var($post['txtReTitle'], FILTER_SANITIZE_STRING);
+            $rTitle = filter_var($post['txtReTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $roomRs->Title->setNewVal($rTitle);
         }
 
@@ -505,15 +537,15 @@ order by r.Title;");
         }
 
         if (isset($post['txtPhone'])) {
-            $roomRs->Phone->setNewVal(filter_var($post['txtPhone'], FILTER_SANITIZE_STRING));
+            $roomRs->Phone->setNewVal(filter_var($post['txtPhone'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['txtFloor'])) {
-            $roomRs->Floor->setNewVal(filter_var($post['txtFloor'], FILTER_SANITIZE_STRING));
+            $roomRs->Floor->setNewVal(filter_var($post['txtFloor'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['txtRePriority'])) {
-            $roomRs->Util_Priority->setNewVal(filter_var($post['txtRePriority'], FILTER_SANITIZE_STRING));
+            $roomRs->Util_Priority->setNewVal(filter_var($post['txtRePriority'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['txtKing'])) {
@@ -537,25 +569,25 @@ order by r.Title;");
         }
 
         if (isset($post['selReType'])) {
-            $roomRs->Type->setNewVal(filter_var($post['selReType'], FILTER_SANITIZE_STRING));
+            $roomRs->Type->setNewVal(filter_var($post['selReType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['selReCategory'])) {
-            $roomRs->Category->setNewVal(filter_var($post['selReCategory'], FILTER_SANITIZE_STRING));
+            $roomRs->Category->setNewVal(filter_var($post['selReCategory'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($post['selRptCategory'])) {
-            $roomRs->Report_Category->setNewVal(filter_var($post['selRptCategory'], FILTER_SANITIZE_STRING));
+            $roomRs->Report_Category->setNewVal(filter_var($post['selRptCategory'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['selRateCode'])) {
-            $code = filter_var($post['selRateCode'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selRateCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Rate_Code->setNewVal($code);
 
         }
 
         if (isset($post['selRateCat'])) {
-            $code = filter_var($post['selRateCat'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selRateCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Default_Rate_Category->setNewVal($code);
 
@@ -567,28 +599,28 @@ order by r.Title;");
         }
 
         if (isset($post['selKeyCode'])) {
-            $code = filter_var($post['selKeyCode'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selKeyCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Key_Deposit_Code->setNewVal($code);
 
         }
 
         if (isset($post['selCleanCode'])) {
-            $code = filter_var($post['selCleanCode'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selCleanCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Cleaning_Cycle_Code->setNewVal($code);
 
         }
 
         if (isset($post['selVisitCode'])) {
-            $code = filter_var($post['selVisitCode'], FILTER_SANITIZE_STRING);
+            $code = filter_var($post['selVisitCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $roomRs->Visit_Fee_Code->setNewVal($code);
 
         }
 
         if (isset($post['selReClean'])) {
-            $room->setStatus(filter_var($post['selReClean'], FILTER_SANITIZE_STRING));
+            $room->setStatus(filter_var($post['selReClean'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         $room->saveRoom($dbh, $user);
@@ -619,7 +651,7 @@ order by r.Title;");
         $rTitle = '';
 
         if (isset($post["selReType"])) {
-            $rType = filter_var($post["selReType"], FILTER_SANITIZE_STRING);
+            $rType = filter_var($post["selReType"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         /* @var $resc AbstractResource */
@@ -630,28 +662,41 @@ order by r.Title;");
         }
 
         if (isset($post["txtReTitle"])) {
-            $rTitle = filter_var($post["txtReTitle"], FILTER_SANITIZE_STRING);
+            $rTitle = filter_var($post["txtReTitle"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $resc->resourceRS->Title->setNewVal($rTitle);
         }
 
         if ($rTitle == '') {
-            return array("rescList"=>self::resourceTable($dbh, $showPartitions));
+            return array("rescList"=>self::resourceTable($dbh));
         }
 
         if (isset($post["selReType"])) {
-            $resc->resourceRS->Type->setNewVal(filter_var($post["selReType"], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Type->setNewVal(filter_var($post["selReType"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post["txtRePriority"])) {
-            $resc->resourceRS->Util_Priority->setNewVal(filter_var($post["txtRePriority"], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Util_Priority->setNewVal(filter_var($post["txtRePriority"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['txtReBgc'])) {
-            $resc->resourceRS->Background_Color->setNewVal(filter_var($post['txtReBgc'], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Background_Color->setNewVal(filter_var($post['txtReBgc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['txtReBc'])) {
-            $resc->resourceRS->Border_Color->setNewVal(filter_var($post['txtReBc'], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Border_Color->setNewVal(filter_var($post['txtReBc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
         if (isset($post['txtReTc'])) {
-            $resc->resourceRS->Text_Color->setNewVal(filter_var($post['txtReTc'], FILTER_SANITIZE_STRING));
+            $resc->resourceRS->Text_Color->setNewVal(filter_var($post['txtReTc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        }
+        if (isset($post['txtRetired'])) {
+            $retiredAt = filter_var($post['txtRetired'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            if($retiredAt == ''){
+                $dbh->exec("UPDATE resource set `Retired_At` = null where idResource = '" . $resc->getIdResource() . "';");
+            }else{
+                try{
+                    $retiredDT = new \DateTime($retiredAt);
+                    $resc->resourceRS->Retired_At->setNewVal($retiredDT->format("Y-m-d H:i:s"));
+                }catch(\Exception $e){
+                    
+                }
+            }
         }
 
         $setUna = FALSE;
@@ -709,7 +754,7 @@ order by r.Title;");
 
         }
 
-        return array("rescList"=>self::resourceTable($dbh, $showPartitions));
+        return array("rescList"=>self::resourceTable($dbh));
 
     }
 
@@ -738,35 +783,35 @@ order by r.Title;");
 
         $cls = 'rmSave' . $room->getIdRoom();
 
-        $saveBtn = HTMLInput::generateMarkup('Save', array('id'=>'savebtn', 'data-id'=>$room->getIdRoom(), 'data-type'=>'room', 'data-cls'=>$cls, 'type'=>'button'));
+        $saveBtn = HTMLInput::generateMarkup('Save', array('id'=>'savebtn', 'class'=>'mr-2', 'data-id'=>$room->getIdRoom(), 'data-type'=>'room', 'data-cls'=>$cls, 'type'=>'button'));
         $saveBtn .= HTMLInput::generateMarkup('Cancel', array('id'=>'cancelbtn', 'style'=>'margin-top:.2em;', 'data-id'=>$room->getIdRoom(), 'data-type'=>'room', 'data-cls'=>$cls, 'type'=>'button'));
 
         $tr = HTMLTable::makeTd($saveBtn) . HTMLTable::makeTd($room->getIdRoom())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getTitle(), array('id'=>'txtReTitle', 'size'=>'12', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getTitle(), array('id'=>'txtReTitle', 'size'=>'12', 'class'=>$cls)))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($roomTypes, $room->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLSelector::doOptionsMkup($roomTypes, $room->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($roomCategories, $room->getRoomCategory(), TRUE), array('id'=>'selReCategory', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLSelector::doOptionsMkup($roomCategories, $room->getRoomCategory(), TRUE), array('id'=>'selReCategory', 'class'=>$cls)))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($reportCategories, $room->getReportCategory(), TRUE), array('id'=>'selRptCategory', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLSelector::doOptionsMkup($reportCategories, $room->getReportCategory(), TRUE), array('id'=>'selRptCategory', 'class'=>$cls)))
             // max occ
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getMaxOccupants(), array('id'=>'txtMax', 'class'=>$cls, 'size'=>'3')), array('style'=>'padding-right:0;padding-left:0;'))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Floor->getStoredVal(), array('id'=>'txtFloor', 'class'=>$cls, 'size'=>'4')), array('style'=>'padding-right:0;padding-left:0;'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getMaxOccupants(), array('id'=>'txtMax', 'class'=>$cls, 'size'=>'3')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Floor->getStoredVal(), array('id'=>'txtFloor', 'class'=>$cls, 'size'=>'4')))
             // phone
-        . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id'=>'txtPhone', 'name'=>'txtPhone', 'type'=>'text', 'autocomplete'=>"off", 'class'=>$cls . ' hhk-phoneInput', 'size'=>'10')), array('style'=>'padding-right:0;padding-left:0;'))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id'=>'txtPhone', 'name'=>'txtPhone', 'type'=>'text', 'autocomplete'=>"off", 'class'=>$cls . ' hhk-phoneInput', 'size'=>'10')))
             // Static rate
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($rateCodes), $room->getRateCode(), FALSE), array('id'=>'selRateCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLSelector::doOptionsMkup(removeOptionGroups($rateCodes), $room->getRateCode(), FALSE), array('id'=>'selRateCode', 'class'=>$cls)))
             // Default rate category
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $room->getDefaultRateCategory(), TRUE), array('id'=>'selRateCat', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $room->getDefaultRateCategory(), TRUE), array('id'=>'selRateCat', 'class'=>$cls)))
             // Cleaning days
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($cleaningCodes), $room->getCleaningCycleCode(), FALSE), array('id'=>'selCleanCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
+                    HTMLSelector::doOptionsMkup(removeOptionGroups($cleaningCodes), $room->getCleaningCycleCode(), FALSE), array('id'=>'selCleanCode', 'class'=>$cls)));
 
         if ($keyDeposit) {
             $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($keyDepositCodes), $room->getKeyDepositCode(), FALSE), array('id'=>'selKeyCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
+                    HTMLSelector::doOptionsMkup(removeOptionGroups($keyDepositCodes), $room->getKeyDepositCode(), FALSE), array('id'=>'selKeyCode', 'class'=>$cls)));
         }
 
         if ($uS->PaymentGateway != '') {
@@ -782,7 +827,7 @@ order by r.Title;");
             }
 
             $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($opts, $room->getIdLocation(), FALSE), array('id'=>'selLocId', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
+                    HTMLSelector::doOptionsMkup($opts, $room->getIdLocation(), FALSE), array('id'=>'selLocId', 'class'=>$cls)));
 
         }
 
@@ -812,11 +857,11 @@ order by r.Title;");
 
         $cls = 'reDiag' . $resc->getIdResource();
 
-        $saveBtn = HTMLInput::generateMarkup('Save', array('id'=>'savebtn', 'data-id'=>$resc->getIdResource(), 'data-type'=>'resc', 'data-cls'=>$cls, 'type'=>'button'));
+        $saveBtn = HTMLInput::generateMarkup('Save', array('id'=>'savebtn', 'class'=>'mr-2', 'data-id'=>$resc->getIdResource(), 'data-type'=>'resc', 'data-cls'=>$cls, 'type'=>'button'));
         $saveBtn .= HTMLInput::generateMarkup('Cancel', array('id'=>'cancelbtn', 'style'=>'margin-top:.2em;', 'type'=>'button'));
 
         // New Resource?
-        $stat = '';
+        $stat = HTMLTable::makeTd();
         if ($resc->isNewResource()) {
             $stat = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'cbSetUna', 'type'=>'checkbox', 'class'=>$cls, 'title'=>'Check to set room as unavailable from the beginning of time. '))
                 . HTMLContainer::generateMarkup('label', 'Set Unavailable', array('for'=>'cbSetUna', 'style'=>'margin-left:.3em;')));
@@ -842,16 +887,18 @@ order by r.Title;");
             $useRooms[] = $k;
         }
 
+        $retiredAt = ($resc->getRetiredAtDT() instanceof \DateTimeInterface ? $resc->getRetiredAtDT()->format("M j, Y"):'');
 
         $tr = HTMLTable::makeTd($saveBtn) . HTMLTable::makeTd($resc->getIdResource())
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getTitle(), array('id'=>'txtReTitle', 'size'=>'10', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($resourceTypes), $resc->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $useRooms, TRUE), array('id'=>'selRooms', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')), array('style'=>'padding-right:0;padding-left:0;'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getTitle(), array('id'=>'txtReTitle', 'size'=>'10', 'class'=>$cls)))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($resourceTypes), $resc->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $useRooms, TRUE), array('id'=>'selRooms', 'class'=>$cls)))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')))
                 . ($uS->Room_Colors == "room" ?
-                    HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
+                    HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')))
                 : '')
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($retiredAt, array('id'=>'txtRetired', 'size'=>'15', 'class'=>"ckdate " . $cls)))
                 . $partition . $stat;
 
         $rescAttr = new ResourceAttribute($dbh, $resc->getIdResource());
@@ -866,15 +913,20 @@ order by r.Title;");
                 $parms['checked'] = 'checked';
             }
 
-            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $parms), array('style'=>'text-align:center;padding-right:0;padding-left:0;'));
+            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $parms), array('style'=>'text-align:center;'));
         }
 
         return array('row'=>$tr);
     }
 
+    /**
+     * Summary of dirtyOccupiedRooms: Implements the automatic Cleaning Cycle for each occupied room
+     *
+     * @param \PDO $dbh
+     * @return void
+     */
     public static function dirtyOccupiedRooms(\PDO $dbh) {
 
-        $uS = Session::getInstance();
         $cleanDays = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         $today = new \DateTime();
@@ -911,6 +963,8 @@ from
                 if ($r['Last_Cleaned'] != '') {
                     $lastCleanedDT = new \DateTime($r['Last_Cleaned']);
                     $lastCleanedDT->setTime(0, 0, 0);
+                } else {
+                    $lastCleanedDT = $arrDT;
                 }
 
                 // Start from the visit date if cleaned earlier...
@@ -918,12 +972,12 @@ from
                     $lastCleanedDT = $arrDT;
                 }
 
-                $days = intval($cleanDays[$rm->getCleaningCycleCode()][2], 10);
+                $cycleDays = intval($cleanDays[$rm->getCleaningCycleCode()][2], 10);
 
-                if ($days > 0 && $today->diff($lastCleanedDT, TRUE)->days >= $days) {
+                if ($cycleDays > 0 && $today->diff($lastCleanedDT, TRUE)->days >= $cycleDays) {
                     // Set room dirty
                     $rm->putDirty();
-                    $rm->saveRoom($dbh, $uS->username, TRUE);
+                    $rm->saveRoom($dbh, 'CleanCycle', TRUE);
                 }
             }
         }
@@ -976,11 +1030,12 @@ from
     ifnull(g.Description, 'Unknown') as `Status_Text`,
     r.`Cleaning_Cycle_Code`,
     ifnull(n.Name_Full, '') as `Name`,
+    if(count(s.idName) > 0, count(s.idName), '') as `numGuests`,
     ifnull(v.Arrival_Date, '') as `Arrival`,
     ifnull(v.Expected_Departure, '') as `Expected_Departure`,
     r.Last_Cleaned,
     r.Last_Deep_Clean,
-    r.Notes
+    ifnull(r.Notes, '') as `Notes`
 from
     room r
         left join
@@ -992,6 +1047,8 @@ from
         left join
     name n ON v.idPrimaryGuest = n.idName
         left join
+    stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and s.Status = 'a'
+        left join
     gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = r.Status
         left join
     gen_lookups g3 on g3.Table_Name = 'Room_Cleaning_Days' and g3.`Code` = r.Cleaning_Cycle_Code
@@ -999,6 +1056,8 @@ from
     resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
     $genJoin
 where g3.Substitute > 0 and ru.idResource_use is null
+    and (re.Retired_At is null or re.Retired_At > date(now()))
+group by rr.idResource
 ORDER BY $orderBy;");
 
         // Loop rooms.
@@ -1066,6 +1125,7 @@ ORDER BY $orderBy;");
                 $expDeparture = $r['Expected_Departure'] == '' ? '' : date('M d, Y', strtotime($expDeparture));
                 $arrival = $r['Arrival'] == '' ? '' : date('M d, Y', strtotime($arrival));
                 $lastCleaned = $r['Last_Cleaned'] == '' ? '' : date('M d, Y', strtotime($r['Last_Cleaned']));
+                $lastDeepClean = $r['Last_Deep_Clean'] == '' ? '' : date('M d, Y', strtotime($r['Last_Deep_Clean']));
 
             } else {
                 $notes = Notes::markupShell($r['Notes'], $filter.'taNotes[' . $r['idRoom'] . ']');
@@ -1096,6 +1156,7 @@ ORDER BY $orderBy;");
             $fixedRows['Status'] = $stat;
             $fixedRows['Action'] = $action;
             $fixedRows['Occupant'] = $r['Name'];
+            $fixedRows['numGuests'] = $r['numGuests'];
             $fixedRows['Checked_In'] = $arrival;
             $fixedRows['Expected_Checkout'] = $expDeparture;
             $fixedRows['Last_Cleaned'] = $lastCleaned;
@@ -1144,6 +1205,7 @@ ORDER BY $orderBy;");
 	            'Room' => "",
 	            'Visit Status' => "",
 	            'Primary Guest' => "",
+	            'Guests' => "",
 	            'Arrival Date' => "",
 	            'Expected Checkout' => "",
 	            'Notes' => ""
@@ -1160,7 +1222,7 @@ ORDER BY $orderBy;");
         ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) as `Departure_Date`,
         g.`Description` as `Visit_Status`,
         r.`Last_Cleaned`,
-        r.`Notes`
+        ifnull(r.`Notes`, '') as `Notes`
     from
         room r
             left join
@@ -1194,6 +1256,54 @@ ORDER BY $orderBy;");
             'Notes' => $reverse
         );
 
+        }
+
+        //reservations
+        $uS = Session::getInstance();
+        if($uS->showResvHousekeeping){
+            $stmt = $dbh->query("select
+            r.idRoom,
+            r.`Title`,
+            ifnull(n.Name_Full, '') as `Name`,
+            resv.Expected_Arrival as `Arrival_Date`,
+            DATE(resv.Expected_Departure) as `Departure_Date`,
+            l.`Title` as `Status`,
+            r.`Last_Cleaned`,
+            ifnull(r.`Notes`, '') as `Notes`
+        from
+            room r
+                left join
+            resource_room rr ON r.idRoom = rr.idRoom
+                join
+            reservation resv ON rr.idResource = resv.idResource and resv.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "')
+                left join
+            name n ON resv.idGuest = n.idName
+                left join
+            lookups l on l.Category = 'ReservStatus' and l.Code = resv.`Status`
+        where DATE(resv.Expected_Departure) between Date('$startCoDate') and Date('$endCoDate');");
+
+
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            // reverse output
+            $lines = explode("\n", $r['Notes']);
+            $reverse = "";
+
+            for ($i = (count($lines) - 1); $i >= 0; $i--) {
+                $reverse .= $lines[$i] . "<br/>";
+            }
+
+
+            $returnRows[] = array(
+                'Room' => $r['Title'],
+                'Visit Status' => $r['Status'],
+                'Primary Guest' => $r['Name'],
+                'Arrival Date' => $r['Arrival_Date'] == '' ? '' : $r['Arrival_Date'],
+                'Expected Checkout' => $r['Departure_Date'] == '' ? '' : $r['Departure_Date'],
+                'Notes' => $reverse
+            );
+
+            }
         }
 
         return $returnRows;

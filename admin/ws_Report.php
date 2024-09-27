@@ -267,7 +267,7 @@ function campaignInKindReport(PDO $dbh, $rbsel, $yr, $fyMonthsAdjust) {
 
 $c = "";
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $events = array();
@@ -276,11 +276,11 @@ switch ($c) {
     case "fullcamp":
 
         //get
-        $rb = filter_var(urldecode($_REQUEST["calyear"]), FILTER_SANITIZE_STRING);
+        $rb = filter_var(urldecode($_REQUEST["calyear"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
+        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_STRING);
+        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $events = array('success' => campaignReport($dbh, $rb, $yr, $fyMonths) . campaignInKindReport($dbh, $rb, $yr, $fyMonths));
 
@@ -290,11 +290,11 @@ switch ($c) {
     case "roomrev":
 
         //get
-        $rb = filter_var(urldecode($_REQUEST["calyear"]), FILTER_SANITIZE_STRING);
+        $rb = filter_var(urldecode($_REQUEST["calyear"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
+        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_STRING);
+        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $events = array('success' => roomRevReport($dbh, $rb, $yr, $fyMonths));
 
@@ -303,7 +303,7 @@ switch ($c) {
 
     case "listcamp":
 
-        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
+        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $events = campaignList($dbh, $yr);
 
@@ -318,7 +318,7 @@ switch ($c) {
         $sourceZip = '';
 
         if (isset($_GET['intType'])) {
-            $intType = filter_var($_GET['intType'], FILTER_SANITIZE_STRING);
+            $intType = filter_var($_GET['intType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_GET['intVal'])) {
@@ -332,15 +332,15 @@ switch ($c) {
         }
 
         if (isset($_GET['stDate'])) {
-            $startDate = filter_var($_GET['stDate'], FILTER_SANITIZE_STRING);
+            $startDate = filter_var($_GET['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_GET['enDate'])) {
-            $endDate = filter_var($_GET['enDate'], FILTER_SANITIZE_STRING);
+            $endDate = filter_var($_GET['enDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_GET['szip'])) {
-            $sourceZip = filter_var($_GET['szip'], FILTER_SANITIZE_STRING);
+            $sourceZip = filter_var($_GET['szip'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         // Don't JSON encode this.

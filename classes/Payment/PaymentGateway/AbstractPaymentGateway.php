@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway;
 
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
@@ -29,8 +30,10 @@ abstract class AbstractPaymentGateway {
 
     const VANTIV = 'vantiv';
     const INSTAMED = 'instamed';
-    const CONVERGE = 'converge';
+    const DELUXE = 'deluxe';
     const LOCAL = '';
+    const PW_PLACEHOLDER = '**********';
+
 
     protected $gwType;
     protected $credentials;
@@ -41,7 +44,7 @@ abstract class AbstractPaymentGateway {
     protected $checkManualEntryCheckbox = FALSE;
 
 
-    public function __construct(\PDO $dbh, $gwType = '') {
+    public function __construct(\PDO $dbh, $gwType = '', $tokenId = 0) {
 
         $this->gwType = $gwType;
         $this->setCredentials($this->loadGateway($dbh));
@@ -98,6 +101,10 @@ abstract class AbstractPaymentGateway {
         return array('warning' => '_voidSale is not implemented. ');
     }
 
+    public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
+        return $this->voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+    }
+
     public function returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
@@ -111,38 +118,47 @@ abstract class AbstractPaymentGateway {
         return array('warning' => '_returnPayment is not implemented. ');
     }
 
-    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-        return array('warning' => 'Void Return is not Available.  ');
-    }
-
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes, $resvId = 0) {
         return array('warning' => 'Return Amount is not implemented. ');
     }
 
-    public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-        return $this->voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
+        return array('warning' => 'Void Return is not Available.  ');
     }
 
     public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
     	return array();
     }
 
+    /**
+     * Summary of processWebhook
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @param mixed $payNotes
+     * @param mixed $userName
+     * @throws \HHK\Exception\PaymentException
+     * @return never
+     */
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         throw new PaymentException('Webhook not implemeneted');
     }
 
-    public static function createEditMarkup(\PDO $dbh, $gatewayName) {
+    public static function createEditMarkup(\PDO $dbh, $gatewayName, $resultMsg = '') {
 
         switch (strtolower($gatewayName)) {
 
             case AbstractPaymentGateway::VANTIV:
 
-                return VantivGateway::_createEditMarkup($dbh, $gatewayName);
+                return VantivGateway::_createEditMarkup($dbh, $gatewayName, $resultMsg);
 
             case AbstractPaymentGateway::INSTAMED:
 
                 return InstamedGateway::_createEditMarkup($dbh, $gatewayName);
 
+            case AbstractPaymentGateway::DELUXE:
+
+                return DeluxeGateway::_createEditMarkup($dbh, $gatewayName, $resultMsg);
+                
             default:
 
                 return LocalGateway::_createEditMarkup($dbh, $gatewayName);
@@ -161,6 +177,10 @@ abstract class AbstractPaymentGateway {
 
                 return InstamedGateway::_saveEditMarkup($dbh, $gatewayName, $post);
 
+            case AbstractPaymentGateway::DELUXE:
+
+                return DeluxeGateway::_saveEditMarkup($dbh, $gatewayName, $post);
+                
             default:
 
                 return LocalGateway::_saveEditMarkup($dbh, $gatewayName, $post);
@@ -179,18 +199,22 @@ abstract class AbstractPaymentGateway {
         return EditRS::insert($dbh, $gwRs);
     }
 
-    public static function factory(\PDO $dbh, $gwName, $gwType) {
+    public static function factory(\PDO $dbh, $gwName, $gwType, $tokenId = 0) {
 
-        switch (strtolower($gwName)) {
+        switch (strtolower(strval($gwName))) {
 
             case AbstractPaymentGateway::VANTIV:
 
-                return new VantivGateway($dbh, $gwType);
+                return new VantivGateway($dbh, $gwType, $tokenId);
 
             case AbstractPaymentGateway::INSTAMED:
 
                 return new InstamedGateway($dbh, $gwType);
 
+            case AbstractPaymentGateway::DELUXE:
+
+                return new DeluxeGateway($dbh, $gwType, $tokenId);
+            
             default:
 
                 return new LocalGateway($dbh, $gwType);
@@ -238,6 +262,16 @@ abstract class AbstractPaymentGateway {
         }
 
         return strtolower($myType);
+    }
+
+    /**
+     * List available merchants for gateway
+     * @param \PDO $dbh
+     * @return array
+     */
+    public function getMerchants(\PDO $dbh){
+        $stmt = $dbh->query("SELECT * FROM cc_hosted_gateway where Gateway_Name = '" . $this->getGatewayName() . "';");
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public function getResponseErrors() {

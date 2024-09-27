@@ -38,6 +38,12 @@ class FinAssistance {
     protected $rrates;
 
 
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param int $idRegistration
+     * @param string $category
+     */
     function __construct(\PDO $dbh, $idRegistration, $category = '') {
 
         $uS = Session::getInstance();
@@ -310,9 +316,17 @@ class FinAssistance {
         return $this->finAppRs->FA_Applied_Date->getStoredVal();
     }
 
-    public function getEstAmount(\PDO $dbh, $days, $category, $pledgedRate = 0) {
-        return self::amountCalculator($dbh, $days, $category, $pledgedRate);
-    }
+    /**
+     * Summary of getEstAmount
+     * @param \PDO $dbh
+     * @param int $days
+     * @param string $category
+     * @param mixed $pledgedRate
+     * @return mixed
+     */
+//    public function getEstAmount(\PDO $dbh, $days, $category, $pledgedRate = 0) {
+//        return self::amountCalculator($dbh, $days, $category, $pledgedRate);
+//    }
 
     public function getIdRoomRate() {
         return $this->idRoomRate;

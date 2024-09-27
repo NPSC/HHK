@@ -35,7 +35,7 @@ require ("homeIncludes.php");
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
@@ -80,7 +80,7 @@ if(isset($_GET['template'])){
 }else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style'])){
     $cmd = 'previewform';
     $method = 'post';
-    $formData = json_decode($_POST['formData']);
+    $formData = json_decode(base64_decode($_POST['formData']));
     $style = $_POST['style'];
     $initialGuests = $_POST['initialGuests'];
     $maxGuests = $_POST['maxGuests'];
@@ -134,12 +134,14 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
 
         <script type='text/javascript'>
             $(document).ready(function() {
 
-            	var previewFormData = JSON.stringify(<?php echo json_encode($formData); ?>);
+            	var previewFormData = btoa(JSON.stringify(<?php echo json_encode($formData); ?>));
 
 				var guestGroup = [];
 				var addGuestPosition = 0;
@@ -192,8 +194,10 @@ if(isset($_GET['template'])){
                             			if(data.type == 'paragraph'){
                             				field = $(field).removeAttr('width');
                             				return $('<div/>').addClass(data.width + ' field-container').append(field);
+                            			}else if(data.type == 'button'){
+                            				return $('<div/>').addClass(data.width + ' mb-3 field-container').append(field);
                             			}else{
-                            				return $('<div/>').addClass('field-container').append(field);
+                            				return $('<div/>').addClass(data.width + ' field-container').append(field);
                             			}
                             		},
                           			default: function(field, label, help, data) {
@@ -302,6 +306,11 @@ if(isset($_GET['template'])){
                     			$(this).val(val);
                     		});
 
+							$renderedForm.find('input, textarea').each(function() {
+                                var val = he.decode($(this).val());
+                    			$(this).val(val);
+                            });
+
                     		$(document).on('submit', 'form#renderedForm', function(e){
                         		e.preventDefault();
                         		if(recaptchaEnabled){
@@ -314,8 +323,28 @@ if(isset($_GET['template'])){
                         	});
 
 							var guestIndex = 0;
+							var guestCount = 1;
+							var $addGuestBtn = $renderedForm.find('#addGuest');
+
                         	$renderedForm.on('click', '#addGuest', function(){
-                        		guestIndex++;
+                        		addGuest();
+            				});
+
+            				$renderedForm.on('click', '#removeGuest', function(){
+            					let index = $(this).attr("guest-index");
+                        		removeGuest(index);
+            				});
+
+							if($addGuestBtn.length > 0){
+    							while(guestCount < ajaxData.formSettings.initialGuests){
+    								addGuest();
+    							}
+    						}
+
+    						function addGuest(){
+								guestIndex++;
+								guestCount++;
+
                 				var userData = formRender.userData;
                 				var thisGuestGroup = [];
 
@@ -329,9 +358,10 @@ if(isset($_GET['template'])){
     								var newElement = JSON.parse(JSON.stringify(element)); //deep copy object (prevent reference/pointer issues)
     								if(newElement.name){
     									newElement.name = newElement.name.replace(/\.g([0-9]+)\./ig, ".g" + guestIndex + ".");
+                                                                        newElement.name = newElement.name.replace(/([a-z,-]+-[0-9]*-)([0-9]{1,2})$/ig, "$1" + guestIndex);
     								}
 
-    								if(newElement.className == "guestHeader"){
+    								if(newElement.className === "guestHeader"){
     									guestNum = guestIndex+1;
     									newElement.label = newElement.label.replace("${guestNum}", guestNum);
     								}
@@ -377,27 +407,68 @@ if(isset($_GET['template'])){
                         			$(this).val(val);
                         		});
 
-                            	if(guestIndex+1 >= ajaxData.formSettings.maxGuests){
+                            	if(guestCount >= ajaxData.formSettings.maxGuests){
                             		$renderedForm.find('#addGuest').attr('disabled','disabled').parents(".field-container").addClass("d-none");
                             	}
-            				});
+							}
 
-							while(guestIndex+1 < ajaxData.formSettings.initialGuests){
-								$renderedForm.find('#addGuest').trigger("click");
+    						function removeGuest(guestIndex){
+								guestCount--;
+
+                				var userData = formRender.userData;
+                				var thisGuestGroup = [];
+
+								userData = userData.filter(element=>!(element.group == 'guest' && element.guestIndex == guestIndex));
+
+    							//console.log(userData);
+
+                				$renderedForm.formRender('render', userData);
+
+                            	$renderedForm.find('.rendered-form').addClass('row');
+
+                            	//zip code search
+                            	$renderedForm.find('input.hhk-zipsearch').each(function() {
+                                    var lastXhr;
+                                    createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null);
+                                });
+
+                                $renderedForm.find('.address').prop('autocomplete', 'search');
+
+                                //phone format
+                                verifyAddrs($renderedForm);
+
+                        		$('input.form-control').blur(function(){
+                        			var val = $(this).val().replaceAll('"', "'");
+                        			$(this).val(val);
+                        		});
+
+                            	if(guestIndex+1 < ajaxData.formSettings.maxGuests){
+                            		$renderedForm.find('#addGuest').attr('disabled',false).parents(".field-container").removeClass("d-none");
+                            	}
+							}
+
+							function cleanString(input) {
+								var output = "";
+								for (var i=0; i<input.length; i++) {
+									if (input.charCodeAt(i) <= 127) {
+										output += input.charAt(i);
+									}
+								}
+								return output;
 							}
 
                         	function submitForm(token = ''){
                         		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
                         		$renderedForm.find('.submit-btn').prop('disabled','disabled').html(spinner).append(' Submitting...');
 
-                        		var formRenderData = formRender.userData;
+                        		var formRenderData = cleanString(JSON.stringify(formRender.userData));
 
                         		$.ajax({
                         	    	url : "ws_forms.php",
                         	   		type: "POST",
                         	    	data : {
                         	    		cmd: "submitform",
-                        	    		formRenderData: JSON.stringify(formRenderData),
+                        	    		formRenderData: btoa(formRenderData),
                         	    		recaptchaToken: token,
                         	    		template: <?php echo (isset($_GET['template']) ? $_GET['template'] : 0); ?>
                         	    	},
@@ -452,6 +523,11 @@ if(isset($_GET['template'])){
     										$('.errmsg .alert-heading').text('Server Error');
                         	    	    	$('.errmsg #errorcontent').text("We are unable to process your submission at this time due to a server error. We're hard at work fixing the issue. Please try again in a few minutes.");
                         	    	    	$('.errmsg').show();
+    									},
+										403: function() {
+    										$('.errmsg .alert-heading').text('Server Error');
+                        	    	    	$('.errmsg #errorcontent').text("We are unable to process your submission at this time due to a server error. We're hard at work fixing the issue. Please try again in a few minutes.");
+                        	    	    	$('.errmsg').show();
     									}
   									}
                         	    });
@@ -460,7 +536,20 @@ if(isset($_GET['template'])){
     					}else if(ajaxData.error){
     						$("#formError").text(ajaxData.error);
     					}
-                	}
+                	},
+					error: function(XHR, textStatus, errorText){
+                        $("#formError").text("Error " + XHR.status + ": " + errorText);
+                        if(typeof hhkReportError == "function"){
+                            var errorInfo = {
+                                responseCode: XHR.status,
+                                source:"<?php echo $cmd; ?>",
+                                docId: "<?php echo $id; ?>",
+                                formData: previewFormData
+                            }
+                            errorInfo = btoa(JSON.stringify(errorInfo));
+                            hhkReportError(errorText, errorInfo);
+                        }
+                    }
 				});
 
             });

@@ -62,7 +62,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
     $txtHeader = '';
 
     if (isset($_POST["rb_andOr"])) {
-        $andOr = filter_var($_POST["rb_andOr"], FILTER_SANITIZE_STRING);
+        $andOr = filter_var($_POST["rb_andOr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if ($andOr == "or") {
             $andOrTxt = "'Or'";
             $totalId = ", count(vm.Id) as total";
@@ -199,7 +199,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
             $writer = new ExcelHelper($fileName);
             $writer->setAuthor($uname);
             $writer->setTitle('Category Report');
-            
+
             // build header
             $hdr = array();
 
@@ -214,7 +214,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
             $hdr["Email"] = "string";
 
             $colWidths = array("10", "20", "20", "20", "20", "10", "10", "15", "35");
-            
+
             if ($showDetails) {
                 $hdr["Begin"] = "date";
                 $hdr['Retire'] = "date";
@@ -222,10 +222,10 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
                 $hdr["Description"] = "string";
                 $hdr["Role"] = "string";
                 $hdr["Notes"] = "string";
-                
+
                 $colWidths = array_merge($colWidths, array("15", "15", "15", "20", "20", "30"));
             }
-            
+
             $writer->writeSheetHeader('Worksheet', $hdr, $writer->getHdrStyle($colWidths));
 
             // create summary table
@@ -233,7 +233,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
             $sColWidths = array("50", "50");
             $sHdrStyle = $writer->getHdrStyle($sColWidths);
             $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
-            
+
             $flds = array();
             foreach ($sumaryRows as $key => $val) {
                 if ($key != "" && $val != "") {
@@ -269,7 +269,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
         $stmt = $dbh->query($query);
         //$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         //foreach ($rows as $rw) {
-        	
+
         while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
             if ($dlFlag) {

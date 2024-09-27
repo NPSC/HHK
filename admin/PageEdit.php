@@ -1,6 +1,7 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Exception\DuplicateException;
 use HHK\sec\Pages;
 use HHK\sec\{SecurityComponent, WebInit};
 use HHK\Exception\RuntimeException;
@@ -23,17 +24,14 @@ require ("AdminIncludes.php");
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
-
-$page = $wInit->page;
-
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
-
 $menuMarkup = $wInit->generatePageMenu();
-
 
 $siteMarkup = "";
 $webSite = '';
+$getSiteReplyMessage = '';
+
 
 // Instantiate the alert message control
 $alertMsg = new AlertMessage("divAlert1");
@@ -45,20 +43,26 @@ $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("uh-oh");
 
 // Edit pages
-if (isset($_POST["btnSubmit"])) {
+if (filter_has_var(INPUT_POST, "btnSubmit")) {
 
     if (SecurityComponent::is_TheAdmin()) {
 
         try {
 
-            $webSite = Pages::editPages($dbh, $_POST);
+            $pages = new Pages();
+            $webSite = $pages->editPages($dbh);
+
+            if ($pages->getPageErrors() != '') {
+                $alertMsg->set_Text("Error: " . $pages->getPageErrors());
+                $alertMsg->set_Context(AlertMessage::Alert);
+                $alertMsg->set_DisplayAttr("block");
+
+            }
 
         } catch (Exception $ex) {
-
             $alertMsg->set_Text("Error: " . $ex->getMessage());
             $alertMsg->set_Context(AlertMessage::Alert);
             $alertMsg->set_DisplayAttr("block");
-
         }
     } else {
 
@@ -73,16 +77,15 @@ $stmt = $dbh->query("Select * from web_sites");
 
 
 if ($stmt->rowCount() > 0) {
+
     foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
         $siteMarkup .= "<tr><td><input type='button' id='loadpages" . $r["Site_Code"] . "' name='" . $r["Site_Code"] . "' value='View Pages' class='loadPages'/></td>
             <td>" . $r["Description"] . "</td>
             <td><input type='button' id='editsite" . $r["Site_Code"] . "' name='" . $r["Site_Code"] . "' value='Edit' class='editSite'/></td>
-            <td>" . $r["Site_Code"] . "</td>
-            <td>" . $r["HTTP_Host"] . "</td>
+            <td style='text-align:center'>" . $r["Site_Code"] . "</td>
             <td>" . $r["Relative_Address"] . "</td>
             <td>" . $r["Required_Group_Code"] . "</td>
             <td>" . $r["Path_To_CSS"] . "</td>
-
             <td>" . $r["Default_Page"] . "</td>
             <td>" . $r["Index_Page"] . "</td>
             <td>" . $r["Updated_By"] . "</td>
@@ -90,21 +93,24 @@ if ($stmt->rowCount() > 0) {
             </tr>";
     }
 
- } else {
-     throw new RuntimeException("web_sites records not found.");
- }
-
-
-$siteMarkup = "<table><tr><th>View Pages</th><th>Site</th><th>Edit</th>
-    <th>Code</th><th>Host Address</th><th>Rel. Address</th><th>Authorization</th><th>CSS</th>
+    $siteMarkup = "<table><tr><th>View Pages</th><th>Site</th><th>Edit</th>
+    <th>Code</th><th>Rel. Address</th><th>Authorization</th><th>CSS</th>
     <th>Default Page</th><th>Index Page</th><th>Updated By</th><th>Last Updated</th></tr>" . $siteMarkup . "</table>";
 
-$stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
-$grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
-$securityCodes = doOptionsMkup($grps, 'xz');
+    $stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
+    $grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
+    $securityCodes = doOptionsMkup($grps, false, false);
+
+
+} else {
+    $alertMsg->set_Text("Error: web_sites records not found.");
+    $alertMsg->set_Context(AlertMessage::Alert);
+    $alertMsg->set_DisplayAttr("block");
+
+ }
 
 $resultMessage = $alertMsg->createMarkup();
-$getSiteReplyMessage = '';
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -132,6 +138,7 @@ $getSiteReplyMessage = '';
 
 
         <script type="text/javascript">
+
     function getPages(site) {
         "use strict";
 
@@ -151,17 +158,28 @@ $getSiteReplyMessage = '';
                 $('#sitepages').children().remove().end().append($(data.success));
                 $('#frmPages').show();
 
-                $('#tblPages').dataTable({
-                    "displayLength": 50,
-                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
-                    , "Dom": '<"top"ilf>rt<"bottom"ip>'
-                });
-
                 $('select.hhk-multisel').each( function () {
                     $(this).multiselect({
                         selectedList: 3
                     });
                 });
+
+                $('#tblPages').dataTable({
+                    columns: [
+                        { orderable: false },
+                        { orderable: true },
+                        { orderable: true },
+                        { orderable: false },
+                        { orderable: true },
+                        { orderable: false },
+                        { orderable: false },
+                        { orderable: false }
+                    ],
+                    "displayLength": 100,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
+                    , "Dom": '<"top"ilf>rt<"bottom"ip>'
+                });
+
             })
             .fail();
 
@@ -169,7 +187,7 @@ $getSiteReplyMessage = '';
     // Init j-query and the page blocker.
     $(document).ready(function() {
 
-        var website = '<?php echo $webSite; ?>';
+        let website = '<?php echo $webSite; ?>';
 
         $('.editSite, .loadPages, #btnReset, #btnSubmit').button();
 
@@ -180,6 +198,7 @@ $getSiteReplyMessage = '';
             modal: true,
             buttons: {
                 "Save Site": function() {
+                    var dialog = $(this);
                     var parms = new Object();
                     $('.spd').each(function(index) {
                         parms[$(this).attr("id")] = $(this).val();
@@ -187,16 +206,21 @@ $getSiteReplyMessage = '';
 
                     $.post("ws_gen.php", {cmd: 'edsite',parms: parms},
                         function (data) {
-
-                    });
+                            console.log(data);
+                            if(data.success){
+                                flagAlertMessage(data.success, false);
+                                dialog.dialog('close');
+                            } else if (data.error){
+                                flagAlertMessage(data.error, true);
+                            }
+                    }, "json");
                 },
                 "Exit": function() {
                     $('body').css('cursor', "auto");
                     $( "#siteContainer" ).hide();
                     $( this ).dialog( "close" );
                 }
-            },
-            close: function() {}
+            }
         });
 
         $('input.loadPages').click(function() {
@@ -214,18 +238,22 @@ $getSiteReplyMessage = '';
 
                     $('#inDescription').val(tds[1].innerHTML);
                     $('#inSiteCode').val(tds[3].innerHTML);
-                    $('#inHostAddr').val(tds[4].innerHTML);
-                    $('#inRelAddr').val(tds[5].innerHTML);
-                    $('#inCss').val(tds[7].innerHTML);
-                    $('#inJs').val(tds[8].innerHTML);
-                    $('#inDefault').val(tds[9].innerHTML);
-                    $('#inIndex').val(tds[10].innerHTML);
-                    $('#inUpBy').val(tds[11].innerHTML);
-                    //$('#inLastUp').val(tds[12].innerHTML);
+//                    $('#inHostAddr').val(tds[4].innerHTML);
+                    $('#inRelAddr').val(tds[4].innerHTML);
+                    $('#inCss').val(tds[6].innerHTML);
+                    //$('#inJs').val(tds[8].innerHTML);
+                    $('#inDefault').val(tds[7].innerHTML);
+                    $('#inIndex').val(tds[8].innerHTML);
+                    $('#inUpBy').val(tds[9].innerHTML);
+
                     // Security codes
+                    var selCodes = tds[5].innerHTML.split(",");
                     $('#siteSecCode option').each( function() {
-                        if ($(this).val() == tds[6].innerHTML)
+                        if (selCodes.includes($(this).val())){
                             $(this).attr('selected', 'selected');
+                        }else{
+                            $(this).removeAttr("selected");
+                        }
                     });
 
                     $('#siteDialog').dialog( "option", "title", "Edit Web Site: " +tds[1].innerHTML);
@@ -240,6 +268,7 @@ $getSiteReplyMessage = '';
                 text-align:right;
                 margin-right:1em;
                 bottom: 10px;
+            }
         </style>
     </head>
     <body <?php if ($testVersion) {echo "class='testbody'";} ?>>
@@ -269,10 +298,6 @@ $getSiteReplyMessage = '';
                     <td><input type="text" id="inSiteCode" class="spd" value="" readonly="readonly"/></td>
                 </tr>
                 <tr>
-                    <th>Host Address</th>
-                    <td><input type="text" id="inHostAddr" class="spd" value=""/></td>
-                </tr>
-                <tr>
                     <th>Relative Address</th>
                     <td><input type="text" id="inRelAddr" class="spd" value=""/></td>
                 </tr>
@@ -287,14 +312,6 @@ $getSiteReplyMessage = '';
                 <tr>
                     <th>Index Page</th>
                     <td><input type="text" id="inIndex" class="spd" value=""/></td>
-                </tr>
-                <tr>
-                    <th>Updated By</th>
-                    <td><input type="text" id="inUpBy" value="" readonly="readonly"/></td>
-                </tr>
-                <tr>
-                    <th>Last Updated</th>
-                    <td><input type="text" id="inLastUp" value="" readonly="readonly"/></td>
                 </tr>
                 <tr>
                     <th>Group Code</th>

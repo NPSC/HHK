@@ -14,7 +14,7 @@ use HHK\sec\Session;
  */
 require("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 $uS = Session::getInstance();
@@ -34,8 +34,6 @@ if ($donationsFlag || $donorFlag) {
     $showMemberTypes = true;
 }
 
-// Check strings for slashes, etc.
-addslashesextended($_POST);
 
 $catmarkup = "<thead><tr><td></td></tr></thead><tbody><tr><td></td></tr></tbody>";
 $andChecked = "";
@@ -47,7 +45,7 @@ $catSelTitleMarkup = "";
 $catagoryHeadertable = "";
 
 // Selector Controls for Category section
-$gSel = readGenLookups($dbh, "Vol_Category");
+$gSel = readGenLookupsPDO($dbh, "Vol_Category");
 $catSelCtrls = array();
 
 foreach ($gSel as $selData) {
@@ -64,7 +62,7 @@ $catVolStatus->set_value(TRUE, 'a');
 
 
 // Postback logic
-if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"]) || isset($_POST["btnCSVEmail"])) {
+if (filter_has_var(INPUT_POST, "btnCat") || filter_has_var(INPUT_POST, "btnCatDL") || filter_has_var(INPUT_POST, "btnCSVEmail")) {
     $makeTable = 1;
 
     ini_set('memory_limit', "128M");
@@ -151,7 +149,7 @@ foreach ($catSelCtrls as $sel) {
                 if (listTable) {
                     listTable.fnDestroy();
                 }
-                if (makeTable == 1) {
+                if (makeTable === 1) {
                     $('div#printArea').css('display', 'block');
                     try {
                         listTable = $('#tblCategory').dataTable({
@@ -171,7 +169,7 @@ foreach ($catSelCtrls as $sel) {
             });
         </script>
     </head>
-    <body <?php if ($testVersion) echo "class='testbody'"; ?> >
+    <body <?php if ($testVersion){ echo "class='testbody'";} ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         	<h2><?php echo $wInit->pageHeading; ?></h2>

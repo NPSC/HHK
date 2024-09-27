@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * UploadException.php
  *
@@ -15,6 +18,6 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class UploadException
-              extends \RuntimeException {
+class UploadException extends \RuntimeException {
+
 }

@@ -1,18 +1,32 @@
 <?php
-use HHK\sec\WebInit;
-use HHK\SysConst\WebPageCode;
-use HHK\sec\Session;
-use HHK\House\Reservation\Reservation;
-use HHK\House\Reservation\CheckingIn;
-use HHK\House\Reservation\ActiveReservation;
-use HHK\House\ReserveData\ReserveData;
+use HHK\Exception\NotFoundException;
+use HHK\Exception\SmsException;
+use HHK\Exception\ValidationException;
+use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\PSG;
-use HHK\Note\ListNotes;
-use HHK\Note\LinkNote;
-use HHK\Note\Note;
+use HHK\House\Reservation\ActiveReservation;
+use HHK\House\Reservation\CheckingIn;
+use HHK\House\Reservation\Reservation;
+use HHK\House\ReserveData\ReserveData;
 use HHK\Incident\ListReports;
 use HHK\Incident\Report;
-use HHK\House\Hospital\{Hospital, HospitalStay};
+use HHK\Member\Address\Phones;
+use HHK\Member\IndivMember;
+use HHK\Note\LinkNote;
+use HHK\Note\ListNotes;
+use HHK\Note\Note;
+use HHK\Notification\SMS\SimpleTexting\Campaign;
+use HHK\Notification\SMS\SimpleTexting\Contact;
+use HHK\Notification\SMS\SimpleTexting\Contacts;
+use HHK\Notification\SMS\SimpleTexting\Message;
+use HHK\Notification\SMS\SimpleTexting\Messages;
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\PhonePurpose;
+use HHK\SysConst\WebPageCode;
+use HHK\TableLog\NotificationLog;
 
 /**
  * ws_resv.php
@@ -39,11 +53,11 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = htmlspecialchars($_REQUEST["cmd"]);
 }
 
 
-$events = array();
+$events = [];
 
 
 try {
@@ -52,7 +66,7 @@ try {
 
     case "getResv":
 
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
+        $resv = Reservation::reservationFactoy($dbh);
 
         $events = $resv->createMarkup($dbh);
 
@@ -61,18 +75,18 @@ try {
 
     case "saveResv":
 
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
+        $resv = Reservation::reservationFactoy($dbh);
 
-        $newResv = $resv->save($dbh, $_POST);
+        $newResv = $resv->save($dbh);
 
-        $events = $newResv->createMarkup($dbh);
+        $events = $newResv->checkedinMarkup($dbh);
 
         break;
 
 
     case "getCkin":
 
-        $resv = CheckingIn::reservationFactoy($dbh, $_POST);
+        $resv = CheckingIn::reservationFactoy($dbh);
 
         $events = $resv->createMarkup($dbh);
 
@@ -81,11 +95,21 @@ try {
 
     case 'saveCheckin':
 
-        $resv = CheckingIn::reservationFactoy($dbh, $_POST);
+        $resv = CheckingIn::reservationFactoy($dbh);
 
-        $newResv = $resv->save($dbh, $_POST);
+        $newResv = $resv->save($dbh);
 
         $events = $newResv->checkedinMarkup($dbh);
+
+        break;
+
+
+    case 'delResv':
+
+
+        $resv = Reservation::reservationFactoy($dbh);
+
+        $events = $resv->delete($dbh);
 
         break;
 
@@ -99,9 +123,9 @@ try {
         }
 
         if ($isCheckin) {
-            $resv = CheckingIn::reservationFactoy($dbh, $_POST);
+            $resv = CheckingIn::reservationFactoy($dbh);
         } else {
-            $resv = Reservation::reservationFactoy($dbh, $_POST);
+            $resv = Reservation::reservationFactoy($dbh);
         }
 
         $events = $resv->addPerson($dbh);
@@ -117,10 +141,10 @@ try {
 
         $idResc = '';
         if (isset($_POST['idResc'])) {
-            $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_STRING);
+            $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $resv = new ActiveReservation(new ReserveData($_POST), null, null);
+        $resv = new ActiveReservation(new ReserveData(), null, null);
 
         $events = $resv->changeRoom($dbh, $idResv, $idResc);
 
@@ -135,7 +159,7 @@ try {
 
     	$hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, 0, $idHs), FALSE);
 
-    	$events = array('success'=>$hArray['div'], 'title'=>$hArray['title']);
+    	$events = ['success' => $hArray['div'], 'title' => $hArray['title']];
 
     	break;
 
@@ -152,7 +176,7 @@ try {
 
     	if ($idHs > 0 && $idVisit > 0) {
 
-    		$hstay = new HospitalStay($dbh, 0, $idHs, FALSE);
+    		$hstay = new HospitalStay($dbh, 0, $idHs);
 
     		$newHsId = Hospital::saveReferralMarkup($dbh, new PSG($dbh, 0, $hstay->getIdPatient()), $hstay, $_POST);
 
@@ -161,10 +185,10 @@ try {
     			$dbh->exec("call updt_visit_hospstay($idVisit, $newHsId);");
     		}
 
-    		$events = array('success'=>'Hospital Saved');
+    		$events = ['success' => 'Hospital Saved', 'newHsId' => $newHsId];
 
     	} else {
-    		$events = array('error'=>'Missing ids. ');
+    		$events = ['error' => 'Missing ids. '];
     	}
 
     	break;
@@ -175,7 +199,7 @@ try {
         $idLink = 0;
 
         if (isset($_GET['linkType'])) {
-            $linkType = filter_input(INPUT_GET, 'linkType', FILTER_SANITIZE_STRING);
+            $linkType = filter_input(INPUT_GET, 'linkType');
         }
 
         if (isset($_GET['linkId'])) {
@@ -190,22 +214,28 @@ try {
     case 'saveNote':
 
         $data = '';
+        $noteCategory = '';
         $linkType = '';
         $idLink = 0;
 
         if (isset($_POST['data'])) {
-            $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+            $data = base64_decode(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $data = filter_var($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS); //sanitize decoded data
+        }
+
+        if(isset($_POST['noteCategory'])){
+            $noteCategory = filter_input(INPUT_POST, 'noteCategory', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_POST['linkType'])) {
-            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
+            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_POST['linkId'])) {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username, $uS->ConcatVisitNotes));
+        $events = ['idNote' => LinkNote::save($dbh, $data, $idLink, $linkType, $noteCategory, $uS->username, $uS->ConcatVisitNotes)];
 
         break;
 
@@ -213,13 +243,19 @@ try {
     case 'updateNoteContent':
 
         $data = '';
+        $noteCategory = '';
         $noteId = 0;
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-	    $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
-            //$data = addcslashes(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING));
+	       $data = base64_decode(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+           $data = filter_var($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS); //sanitize decoded data
         }
+
+        if(isset($_POST['noteCategory'])){
+            $noteCategory = filter_input(INPUT_POST, 'noteCategory', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        }
+
         if (isset($_POST['idNote'])) {
             $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
         }
@@ -227,10 +263,10 @@ try {
         if ($noteId > 0 && $data != '') {
 
             $note = new Note($noteId);
-            $updateCount = $note->updateContents($dbh, $data, $uS->username);
+            $updateCount = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
         }
 
-        $events = array('update'=>$updateCount, 'idNote'=>$noteId);
+        $events = ['update' => $updateCount, 'idNote' => $noteId];
 
         break;
 
@@ -249,7 +285,7 @@ try {
             $deleteCount = $note->deleteNote($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+        $events = ['delete' => $deleteCount, 'idNote' => $noteId];
 
         break;
 
@@ -268,7 +304,7 @@ try {
             $deleteCount = $note->undoDeleteNote($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+        $events = ['delete' => $deleteCount, 'idNote' => $noteId];
 
         break;
 
@@ -290,7 +326,7 @@ try {
             $flagCount = $note->flagNote($dbh, $flag, $uS->userName);
         }
 
-        $events = array('update'=>$flagCount, 'idNote'=>$noteId, 'flag'=>$flag);
+        $events = ['update' => $flagCount, 'idNote' => $noteId, 'flag' => $flag];
 
         break;
 
@@ -305,14 +341,14 @@ try {
         }
 
         if (isset($_POST['linkType'])) {
-            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
+            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_POST['linkId'])) {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('warning'=>'Link Note is not implemented.  ');
+        $events = ['warning' => 'Link Note is not implemented.  '];
 
         break;
 
@@ -417,7 +453,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $report = Report::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $signature, $signatureDate, $guestId, $psgId);
 		$report->saveNew($dbh);
 
-        $events = array('status'=>'success', 'idReport'=>$report->getIdReport());
+        $events = ['status' => 'success', 'idReport' => $report->getIdReport()];
 
         break;
 
@@ -464,7 +500,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $report = new Report($repId);
         $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution,$signature, $signatureDate, $incidentStatus, $uS->username);
 
-        $events = array('status'=>'success', 'idReport'=>$report->getIdReport(), 'incidentTitle'=>$incidentTitle, 'incidentDate'=>$incidentDate, 'incidentStatus'=>$incidentStatus);
+        $events = ['status' => 'success', 'idReport' => $report->getIdReport(), 'incidentTitle' => $incidentTitle, 'incidentDate' => $incidentDate, 'incidentStatus' => $incidentStatus];
 
         break;
 
@@ -483,7 +519,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $deleteCount = $report->deleteReport($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idReport'=>$repId);
+        $events = ['delete' => $deleteCount, 'idReport' => $repId];
 
         break;
 
@@ -502,7 +538,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $deleteCount = $report->undoDeleteReport($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idReport'=>$repId);
+        $events = ['delete' => $deleteCount, 'idReport' => $repId];
 
         break;
 
@@ -512,17 +548,160 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $events = Reservation::updateAgenda($dbh, $_POST);
         break;
 
+    case 'getVisitMsgsDialog':
+
+        $idVisit = intval(filter_input(INPUT_GET, 'idVisit', FILTER_SANITIZE_NUMBER_INT));
+        $idSpan = intval(filter_input(INPUT_GET, 'idSpan', FILTER_SANITIZE_NUMBER_INT));
+
+        if($idVisit > 0 && $idSpan >= 0){
+            $messages = new Messages($dbh);
+
+            //$events = ['mkup' => $messages->getVisitMessagesMkup($idVisit, $idSpan)];
+            $events = $messages->getVisitGuestsData($idVisit, $idSpan);
+        }else{
+            throw new NotFoundException("Visit ID not found");
+        }
+
+        break;
+
+    case 'getResvMsgsDialog':
+
+        $idResv = intval(filter_input(INPUT_GET, 'idResv', FILTER_SANITIZE_NUMBER_INT));
+                
+        if($idResv > 0){
+            $messages = new Messages($dbh);
+    
+            $events = $messages->getResvGuestsData($idResv);
+        }else{
+            throw new NotFoundException("Reservation ID not found");
+        }
+
+        break;
+
+    case 'getCampaignMsgsDialog':
+        $status = filter_input(INPUT_GET, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $messages = new Messages($dbh);
+
+        $events = $messages->getCampaignGuestsData($status);
+
+        break;
+
+    case 'getGuestMsgsDialog':
+        $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
+    
+        $messages = new Messages($dbh);
+
+        $events = $messages->getGuestData($idName);
+    
+        break;
+
+    case 'loadMsgs':
+        $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
+
+        if($idName > 0){
+            $messages = new Messages($dbh);
+
+            $events = $messages->getMessages($idName);
+        }else{
+            throw new NotFoundException("idName not found");
+        }
+
+        break;
+
+    case 'sendMsg':
+        $idName = intval(filter_input(INPUT_POST, 'idName', FILTER_SANITIZE_NUMBER_INT));
+        $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        if ($idName > 0) {
+            $uS = Session::getInstance();
+            $name = new IndivMember($dbh, MemBasis::Indivual, $idName);
+            $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+            $cell = $phones->get_Data(PhonePurpose::Cell);
+
+            if (strlen($cell["Unformatted_Phone"]) <= 10) {
+                //upsert contact before send
+                $contact = new Contact($dbh, true);
+                $contact->upsert($cell["Unformatted_Phone"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
+                try {
+                    $msg = new Message($dbh, $cell["Unformatted_Phone"], $msgText);
+                    $events = $msg->sendMessage();
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
+                }catch(SmsException $e){
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
+                    throw $e;
+                }
+            }else{
+                throw new ValidationException("Cell Number Invalid");
+            }
+        }else{
+            throw new NotFoundException("idName not found");
+        }
+
+        break;
+
+    case 'sendVisitMsg':
+        $idVisit = intval(filter_input(INPUT_POST, 'idVisit', FILTER_SANITIZE_NUMBER_INT));
+        $idSpan = intval(filter_input(INPUT_POST, 'idSpan', FILTER_SANITIZE_NUMBER_INT));
+        $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $messages = new Messages($dbh, true);
+
+        $events = $messages->sendVisitMessage($idVisit, $idSpan, $msgText);
+
+        break;
+
+        case 'sendResvMsg':
+            $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT));
+            $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    
+            $messages = new Messages($dbh, true);
+
+            $events = $messages->sendResvMessage($idResv, $msgText);
+    
+            break;
+
+    case 'sendCampaign':
+        $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $campaign = new Campaign($dbh, $msgText, $msgText);
+        $events = $campaign->prepareAndSendCampaign($status);
+
+        break;
+    case 'loadContacts':
+
+        $status = filter_input(INPUT_GET, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $contacts = new Contacts($dbh);
+
+        if($status){
+            $events = $contacts->fetchContacts($status);
+        }else{
+            $events = $contacts->fetchContacts();
+        }
+        
+        break;
+
+    case 'syncContacts':
+        $status = filter_input(INPUT_GET, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $contacts = new Contacts($dbh, true);
+
+        $events = $contacts->syncContacts($status);
+
+        break;
 
     default:
-        $events = array("error" => "Bad Command: \"" . $c . "\"");
+        $events = ["error" => "Bad Command: \"" . $c . "\""];
 }
 
-} catch (NotFoundException $e){
-    $events = array("error" => $e->getMessage());
+} catch (NotFoundException | ValidationException | SmsException $e){
+    $events = ["error" => $e->getMessage()];
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 } catch (Exception $ex) {
-    $events = array("error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = ["error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 }
 
 
@@ -534,7 +713,7 @@ if (is_array($events)) {
     if ($json !== FALSE) {
         echo ($json);
     } else {
-        $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+        $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);
     }
 
@@ -543,4 +722,3 @@ if (is_array($events)) {
 }
 
 exit();
-?>

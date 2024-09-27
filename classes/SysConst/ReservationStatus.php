@@ -20,10 +20,10 @@ class ReservationStatus {
     const Canceled2 = 'c2';
     const Canceled3 = 'c3';
     const Canceled4 = 'c4';
-    const Pending = 'p';
+    const Canceled5 = 'c5';
+    const Canceled6 = 'c6';
     const Staying = 's';
     const Checkedout = 'co';
     const UnCommitted = 'uc';
-    const Imediate = 'im';
 }
 ?>

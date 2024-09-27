@@ -28,7 +28,7 @@ $uS = Session::getInstance();
 $checkinDate = '';
 
 if (isset($_GET['d'])) {
-    $checkinDate = filter_var($_GET['d'], FILTER_SANITIZE_STRING);
+    $checkinDate = filter_var($_GET['d'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 
@@ -51,6 +51,7 @@ $regForm = CreateMarkupFromDB::generateHTML_Table($rows, 'tbl');
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo CSSVARS; ?>
 
         <style type="text/css" media="print">
             body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}

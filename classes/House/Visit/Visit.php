@@ -3,6 +3,7 @@
 namespace HHK\House\Visit;
 
 use HHK\Exception\RuntimeException;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\SysConst\{RoomRateCategories, VisitStatus};
@@ -23,7 +24,7 @@ use HHK\Tables\Fields\DB_Field;
  * Visit.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -34,25 +35,61 @@ use HHK\Tables\Fields\DB_Field;
  */
 class Visit {
 
+    /**
+     * Summary of resource
+     * @var AbstractResource|null
+     */
     protected $resource = NULL;
+    /**
+     * Summary of visitRS
+     * @var VisitRS
+     */
     public $visitRS;
+    /**
+     * Summary of visitRSs
+     * @var array[VisitRS]
+     */
     protected $visitRSs = array();
+    /**
+     * Summary of newVisit
+     * @var bool
+     */
     private $newVisit = FALSE;
+    /**
+     * Summary of stays
+     * @var array
+     */
     public $stays = array();
+    /**
+     * Summary of overrideMaxOccupants
+     * @var bool
+     */
     protected $overrideMaxOccupants = FALSE;
+    /**
+     * Summary of infoMessage
+     * @var string
+     */
     protected $infoMessage = '';
+    /**
+     * Summary of errorMessage
+     * @var string
+     */
     protected $errorMessage = '';
 
     /**
-     *
+     * Summary of __construct
      * @param \PDO $dbh
-     * @param integer $idReg
-     * @param integer $idVisit
-
-     * @param Resource $resource
-     * @throws RuntimeException
+     * @param int $idReg
+     * @param int $idVisit
+     * @param \DateTime|null $arrivalDT
+     * @param \DateTime|null $departureDT
+     * @param \HHK\House\Resource\AbstractResource|null $resource
+     * @param string $userName
+     * @param int $span
+     * @param bool $forceNew
+     * @throws \HHK\Exception\RuntimeException
      */
-    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTime $arrivalDT = NULL, \DateTime $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
+    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
 
         $this->visitRSs = $this->loadVisits($dbh, $idReg, $idVisit, $span, $forceNew);
 
@@ -109,7 +146,7 @@ class Visit {
      * @param \PDO $dbh
      * @param int $idReg
      * @param int $idVisit
-     * @return VisitRs
+     * @return array
      * @throws RuntimeException
      */
     protected function loadVisits(\PDO $dbh, $idReg, $idVisit, $span = -1, $forceNew = FALSE) {
@@ -119,6 +156,7 @@ class Visit {
         $visits = array();
 
         if ($idVisit > 0) {
+            // Existing Visit
 
             if ($span >= 0) {
 
@@ -143,6 +181,7 @@ class Visit {
                 }
             }
         } else if ($idReg > 0 && $idVisit == 0) {
+            // New visit, existing Registration
 
             $visitRS->idRegistration->setStoredVal($idReg);
             $visitRS->Status->setStoredVal(VisitStatus::CheckedIn);
@@ -166,7 +205,7 @@ class Visit {
             }
 
         } else if ($idReg > 0 && $idVisit < 0) {
-            // add a room to this registration
+            // add another visit to this registration
             $visitRS = new VisitRs();
             $visitRS->idRegistration->setNewVal($idReg);
             $visitRS->Span->setNewVal(0);
@@ -179,11 +218,24 @@ class Visit {
         return $visits;
     }
 
+    /**
+     * Summary of updateVisitRecord
+     * @param \PDO $dbh
+     * @param string $uname
+     * @return int
+     */
     public function updateVisitRecord(\PDO $dbh, $uname = '') {
 
         return self::updateVisitRecordStatic($dbh, $this->visitRS, $uname);
     }
 
+    /**
+     * Summary of updateVisitRecordStatic
+     * @param \PDO $dbh
+     * @param \HHK\Tables\Visit\VisitRS $visitRS
+     * @param string $uname
+     * @return int
+     */
     public static function updateVisitRecordStatic(\PDO $dbh, VisitRs $visitRS, $uname = '') {
 
         $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -202,6 +254,17 @@ class Visit {
         return $upCtr;
     }
 
+    /**
+     * Summary of addGuestStay
+     * @param int $idGuest
+     * @param string $checkinDate
+     * @param string $stayStartDate
+     * @param string $expectedCO
+     * @param mixed $stayOnLeave
+     * @throws \HHK\Exception\RuntimeException
+     * @throws \HHK\Exception\UnexpectedValueException
+     * @return void
+     */
     public function addGuestStay($idGuest, $checkinDate, $stayStartDate, $expectedCO = '', $stayOnLeave = 0) {
 
         // If guest already has an active stay ...
@@ -265,6 +328,13 @@ class Visit {
 
     }
 
+    /**
+     * Summary of checkin
+     * @param \PDO $dbh
+     * @param string $username
+     * @throws \HHK\Exception\UnexpectedValueException
+     * @return bool
+     */
     public function checkin(\PDO $dbh, $username) {
 
         // Verify data
@@ -283,6 +353,12 @@ class Visit {
         return TRUE;
     }
 
+    /**
+     * Summary of saveNewStays
+     * @param \PDO $dbh
+     * @param string $username
+     * @return void
+     */
     protected function saveNewStays(\PDO $dbh, $username) {
 
         foreach ($this->stays as $stayRS) {
@@ -304,7 +380,18 @@ class Visit {
         }
     }
 
-    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTime $chgDT, $isAdmin, $newRateCategory = '') {
+    /**
+     * Summary of changeRooms
+     * @param \PDO $dbh
+     * @param \HHK\House\Resource\AbstractResource $resc
+     * @param string $uname
+     * @param \DateTime $chgDT
+     * @param bool $isAdmin
+     * @param string $newRateCategory
+     * @throws \HHK\Exception\RuntimeException
+     * @return string
+     */
+    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '') {
 
         $uS = Session::getInstance();
 
@@ -432,7 +519,7 @@ class Visit {
             }
 
             // Change rooms on date given.
-            $this->createNewSpan($dbh, $resc, VisitStatus::NewSpan, $rateCategory, $idRoomRate, $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $uname, $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
+            $this->cutInNewSpan($dbh, $resc, VisitStatus::NewSpan, $rateCategory, $idRoomRate, $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $this->visitRS->idRateAdjust->getStoredVal(), $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
             $rtnMessage .= 'Guests Changed Rooms.  ';
 
             // Change date today?
@@ -448,11 +535,11 @@ class Visit {
         if ($uS->NoReplyAddr != '' && ($uS->Guest_Track_Address != '' || $houseKeepingEmail != '')) {
 
             try {
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
-                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
+                $mail->addReplyTo($uS->NoReplyAddr, htmlspecialchars_decode($uS->siteName, ENT_QUOTES));
 
                 $tos = array_merge(explode(',', $uS->Guest_Track_Address), explode(',', $uS->HouseKeepingEmail));
 
@@ -478,7 +565,17 @@ class Visit {
         return $rtnMessage;
     }
 
-    public static function replaceRoomRate(\PDO $dbh, VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $uname) {
+    /**
+     * Summary of replaceRoomRate: change the rate for this span.
+     * @param \PDO $dbh
+     * @param \HHK\Tables\Visit\VisitRS $visitRs
+     * @param string $newRateCategory
+     * @param float $pledgedRate
+     * @param float $rateAdjust
+     * @param string $uname
+     * @return string
+     */
+    public static function replaceRoomRate(\PDO $dbh, VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $idRateAdjust, $uname) {
 
         $uS = Session::getInstance();
         $reply = "";
@@ -491,6 +588,7 @@ class Visit {
         $visitRs->Pledged_Rate->setNewVal($pledgedRate);
         $visitRs->Rate_Category->setNewVal($newRateCategory);
         $visitRs->Expected_Rate->setNewVal($rateAdjust);
+        $visitRs->idRateAdjust->setNewVal($idRateAdjust);
         $visitRs->idRoom_rate->setNewVal($rateRs->idRoom_rate->getStoredVal());
 
         $upCtr = self::updateVisitRecordStatic($dbh, $visitRs, $uname);
@@ -551,7 +649,19 @@ class Visit {
         return $reply;
     }
 
-    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $uname, $chgDT, $useRateGlide = FALSE, $stayOnLeave = 0) {
+    /**
+     * Summary of changePledgedRate:  Split the span into a new span at $chgDT
+     * @param \PDO $dbh
+     * @param string $newRateCategory
+     * @param float $pledgedRate
+     * @param float $rateAdjust
+     * @param string $uname
+     * @param \DateTimeInterface $chgDT
+     * @param mixed $useRateGlide
+     * @param mixed $stayOnLeave
+     * @return string
+     */
+    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $idRateAdjust, $chgDT, $stayOnLeave = 0) {
 
         $uS = Session::getInstance();
         $this->getResource($dbh);
@@ -564,7 +674,18 @@ class Visit {
         $tempOverrideMaxOcc = $this->overrideMaxOccupants;
         $this->overrideMaxOccupants = true;
 
-        $this->createNewSpan($dbh, $this->resource, VisitStatus::ChangeRate, $newRateCategory, $rateRs->idRoom_rate->getStoredVal(), $pledgedRate, $rateAdjust, $uname, $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1), $useRateGlide, $stayOnLeave);
+        $this->cutInNewSpan(
+            $dbh, $this->resource,
+            VisitStatus::ChangeRate,
+            $newRateCategory,
+            $rateRs->idRoom_rate->getStoredVal(),
+            $pledgedRate,
+            $rateAdjust,
+            $idRateAdjust,
+            $chgDT->format('Y-m-d H:i:s'),
+            (intval($this->visitRS->Span->getStoredVal(), 10) + 1),
+            $stayOnLeave);
+
         $this->overrideMaxOccupants = $tempOverrideMaxOcc;
 
 
@@ -577,7 +698,7 @@ class Visit {
             $resv->setRoomRateCategory($newRateCategory);
             $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
 
-            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
+            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
         }
 
         return "Room Rate Changed.  ";
@@ -585,50 +706,41 @@ class Visit {
     }
 
     /**
-     * Cloaes the old span with $visitStatus, and starts a new one with the same status as the replaced span.
+     * Closes the old span with $visitStatus, and starts a new one with the same status as the replaced span.
      *
      * @param \PDO $dbh
-     * @param Resource $resc
-     * @param string $visitStatus
+     * @param AbstractResource $resc
+     * @param string $visitStatus  use to close out old visit span
      * @param string $newRateCategory
      * @param integer $newRateId
      * @param float $pledgedRate
      * @param float $rateAdjust
      * @param string $uname
      * @param string $changeDate
-     * @param integer $newSpan
-     * @param boolean $useRateGlide
+     * @param integer $newSpan  span Id for new visit span.
      * @param integer $stayOnLeave
-     * @param integer $idRoomRate
      * @throws RuntimeException
      */
-    protected function createNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $newSpan, $useRateGlide = FALSE, $stayOnLeave = 0) {
+    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, $changeDate, $newSpan, $stayOnLeave = 0) {
 
+        $uS = Session::getInstance();
         $glideDays = 0;
         $this->stays = array();
 
         // Load all stays for this span
-        $stayRs = new StaysRS();
-        $stayRs->idVisit->setStoredVal($this->getIdVisit());
-        $stayRs->Visit_Span->setStoredVal($this->getSpan());
-        $stays = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
-
-        foreach ($stays as $s) {
-            $sRs = new StaysRS();
-            EditRS::loadRow($s, $sRs);
-            $this->stays[] = $sRs;
-        }
+        $this->loadStays($dbh, '');  // empty string triggers all stays of all statuses
 
         // End old span
         $newSpanStatus = $this->visitRS->Status->getStoredVal();
         $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
+
         $this->visitRS->Span_End->setNewVal($changeDate);
         $this->visitRS->Status->setNewVal($visitStatus);
 
-        $this->updateVisitRecord($dbh, $uname);
+        $this->updateVisitRecord($dbh, $uS->username);
 
 
-        // set all new values for visit rs
+        // copy old values for new visit rs
         foreach ($this->visitRS as $p) {
             if ($p instanceof DB_Field) {
                 $p->setNewVal($p->getStoredVal());
@@ -647,32 +759,44 @@ class Visit {
         $this->visitRS->Rate_Category->setNewVal($newRateCategory);
         $this->visitRS->idRoom_rate->setNewVal($newRateId);
         $this->visitRS->Expected_Rate->setNewVal($rateAdjust);
+        $this->visitRS->idRateAdjust->setNewVal($idRateAdjust);
         $this->visitRS->Rate_Glide_Credit->setNewVal($glideDays);
         $this->visitRS->Timestamp->setNewVal(date('Y-m-d H:i:s'));
 
         $idVisit = EditRS::insert($dbh, $this->visitRS);
 
         if ($idVisit == 0) {
-            throw new RuntimeException('Visit insert failed.   ');
+            throw new RuntimeException('[cutinNewSpan()] Visit insert failed.   ');
         }
 
         $logTexti = VisitLog::getInsertText($this->visitRS);
-        VisitLog::logVisit($dbh, $this->getIdVisit(), $newSpan, $resc->getIdResource(), $this->visitRS->idRegistration->getStoredVal(), $logTexti, "insert", '');
+        VisitLog::logVisit($dbh, $this->getIdVisit(), $newSpan, $resc->getIdResource(), $this->visitRS->idRegistration->getStoredVal(), $logTexti, "insert", $uS->username);
 
         EditRS::updateStoredVals($this->visitRS);
 
-        $this->replaceStays($dbh, $visitStatus, $newSpanStatus, $uname, $stayOnLeave);
+        $this->replaceStays($dbh, $visitStatus, $uS->username, $stayOnLeave);
 
     }
 
-    protected function replaceStays(\PDO $dbh, $oldStayStatus, $newSpanStatus, $uname, $stayOnLeave = 0) {
+    /**
+     * Summary of replaceStays: copies appropriate stays into a new visit span
+     * @param \PDO $dbh
+     * @param mixed $oldVisitStatus
+     * @param mixed $uname
+     * @param mixed $stayOnLeave
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
+    protected function replaceStays(\PDO $dbh, $oldVisitStatus, $uname, $stayOnLeave = 0) {
 
-        $oldStays = $this->stays;
+        $oldStays = $this->stays;  // contains all the stays.
         $this->stays = array();
 
         $this->getResource($dbh);
+
         $visitSpanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
         $visitSpanStartDT->setTime(0, 0, 0);
+
 
         foreach ($oldStays as $stayRS) {
 
@@ -685,14 +809,19 @@ class Visit {
                 $stayEndDT->setTime(0, 0, 0);
             }
 
-            if ($stayStartDT >= $visitSpanStartDT && $newSpanStatus = VisitStatus::Active) {
-                // Special case - just update the span id and status
+            $rm = $this->resource->allocateRoom(0, $this->overrideMaxOccupants); //get room object regardless of status
 
-                $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
+            if($stayRS->Status->getStoredVal() == VisitStatus::Active){
+                $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants); //only allocate a room if the stay is checked in
                 if (is_null($rm)) {
                     throw new RuntimeException('Room is full.  ');
                 }
+            }
 
+            if ($stayStartDT >= $visitSpanStartDT) {
+                // Just update the span id and status
+
+                // leave checked out spans alone.
                 if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedOut) {
                     $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
                 }
@@ -709,8 +838,13 @@ class Visit {
             } else if ($stayStartDT < $visitSpanStartDT && (is_null($stayEndDT) || $stayEndDT > $visitSpanStartDT)) {
                 // Split the stay
 
+                // save critical data
+                $oldStayStatus = $stayRS->Status->getStoredVal();
+                $oldCkOutDate = $stayRS->Span_End_Date->getStoredVal();
+
+
                 // Close old stay
-                $stayRS->Status->setNewVal($oldStayStatus);
+                $stayRS->Status->setNewVal($oldVisitStatus);
                 $stayRS->Span_End_Date->setNewVal($this->visitRS->Span_Start->getStoredVal());
                 $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
                 $stayRS->Updated_By->setNewVal($uname);
@@ -721,55 +855,52 @@ class Visit {
 
                 EditRS::updateStoredVals($stayRS);
 
-                // Make second half of the stay
-                $this->addStay($stayRS, $stayOnLeave, $this->visitRS->Span_Start->getStoredVal());
 
-            } else if ($stayStartDT > $visitSpanStartDT && count($oldStayStatus) > 1) {
+                // Create a new stay record
+                $newStayRS = new StaysRS();
 
-                // Remove stay from this span
-                EditRS::delete($dbh, $stayRS, array($stayRS->idStays));
+                // special handling for checked out stays
+                if ($oldStayStatus == VisitStatus::CheckedOut) {
 
-                // add stay at stay start date
-                $this->addStay($stayRS, $stayOnLeave, $stayRS->Span_Start_Date->getStoredVal());
+                    $newStayRS->Checkout_Date->setNewVal($oldCkOutDate);
+                    $newStayRS->Status->setNewVal($oldStayStatus);
 
+                } else {
+
+                    $newStayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
+                }
+
+                $newStayRS->idName->setNewVal($stayRS->idName->getStoredVal());
+                $newStayRS->idRoom->setNewVal($rm->getIdRoom());
+                $newStayRS->Checkin_Date->setNewVal($stayRS->Checkin_Date->getStoredVal());
+                $newStayRS->Span_End_Date->setNewVal($oldCkOutDate);
+                $newStayRS->Span_Start_Date->setNewVal($this->visitRS->Span_Start->getStoredVal());
+                $newStayRS->Expected_Co_Date->setNewVal($stayRS->Expected_Co_Date->getStoredVal());
+                $newStayRS->On_Leave->setNewVal($stayOnLeave);
+                $newStayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+
+                $this->stays[] = $newStayRS;
             }
         }
 
         $this->saveNewStays($dbh, $uname);
-
     }
 
-    protected function addStay(StaysRS $oldStay, $stayOnLeave, $spanStDate) {
 
-        $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
-
-        // Check room size
-        if (is_null($rm)) {
-            throw new RuntimeException('The room is full.  ');
-        }
-
-        // Create a new stay record
-        $stayRS = new StaysRS();
-
-        $stayRS->idName->setNewVal($oldStay->idName->getStoredVal());
-        $stayRS->idRoom->setNewVal($rm->getIdRoom());
-        $stayRS->Checkin_Date->setNewVal($oldStay->Checkin_Date->getStoredVal());
-        $stayRS->Checkout_Date->setNewVal($this->visitRS->Actual_Departure->getStoredVal());
-        $stayRS->Span_Start_Date->setNewVal($spanStDate);
-        $stayRS->Span_End_Date->setNewVal($this->visitRS->Span_End->getStoredVal());
-        $stayRS->Expected_Co_Date->setNewVal($oldStay->Expected_Co_Date->getStoredVal());
-        $stayRS->On_Leave->setNewVal($stayOnLeave);
-        $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
-        $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-
-        $this->stays[] = $stayRS;
-    }
-
+    /**
+     * Summary of checkOutGuest
+     * @param \PDO $dbh
+     * @param int $idGuest
+     * @param string $dateDeparted
+     * @param string $notes
+     * @param bool $sendEmail
+     * @return string
+     */
     public function checkOutGuest(\PDO $dbh, $idGuest, $dateDeparted = "", $notes = "", $sendEmail = TRUE) {
 
         $stayRS = NULL;
 
-        // Guest must be already checked in
+        // Guest must be checked in
         foreach ($this->stays as $sRS) {
 
             if ($sRS->Status->getStoredVal() == VisitStatus::CheckedIn && $sRS->idName->getStoredVal() == $idGuest) {
@@ -864,7 +995,7 @@ class Visit {
 	                    $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Guest Name') . HTMLTable::makeTh('Checked-In') . HTMLTable::makeTh('Checked-Out'));
 
 	                    foreach ($gsts as $g) {
-	                        $tbl->addBodyTr(HTMLTable::makeTd($idGuest) . HTMLTable::makeTd($guestName)
+	                        $tbl->addBodyTr(HTMLTable::makeTd($idGuest) . HTMLTable::makeTd($g[0])
 	                                . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkin_Date->getStoredVal())))
 	                                . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal()))));
 	                    }
@@ -880,10 +1011,10 @@ class Visit {
 	                $subj = "Check-Out from " . $roomTitle . " by " . $uS->username . ".";
 
 	                // Send email
-	                $mail = prepareEmail();
+	                $mail = new HHKMailer($dbh);
 
 	                $mail->From = $uS->NoReplyAddr;
-	                $mail->FromName = $uS->siteName;
+	                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 	                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
 	                $tos = explode(',', $uS->Guest_Track_Address);
@@ -896,7 +1027,7 @@ class Visit {
 
 	                $mail->isHTML(true);
 
-	                $mail->Subject = $subj;
+	                $mail->Subject = htmlspecialchars_decode($subj, ENT_QUOTES);
 	                $mail->msgHTML($gMarkup);
 	                $mail->send();
 	            }
@@ -908,11 +1039,17 @@ class Visit {
         return $guestName . " checked out on " . $dateDepartedDT->format('M j, Y');
     }
 
-    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, $sendEmail) {
+    /**
+     * Summary of checkStaysEndVisit
+     * @param \PDO $dbh
+     * @param mixed $username
+     * @param \DateTime $dateDeparted
+     * @param bool $sendEmail
+     * @return bool
+     */
+    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTimeInterface $dateDeparted, $sendEmail) {
 
         $uS = Session::getInstance();
-
-        //$this->loadStays($dbh, '');
 
         $allStays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');
 
@@ -934,10 +1071,23 @@ class Visit {
             }
         }
 
+        //
+        // Visit has ended.
+        //
 
-        // Visit is done
 
+        // Check for last span > 0 being 0 days long, i.e. checked out same day as change of room or rate.
+        if ($this->visitRS->Span->getStoredVal() > 0) {
 
+            $visitCkedIn = new \DateTime($this->visitRS->Span_Start->getStoredVal());
+            $visitCkedIn->setTime(0, 0);
+            $endDate = new \DateTime($dateDeparted->format('Y-m-d 0:0:0'));
+
+            if ($endDate == $visitCkedIn) {
+                // Delete this new span .
+                $this->removeSpanStub($dbh, $dateDeparted);
+            }
+        }
 
         // Update visit record
         $this->visitRS->Actual_Departure->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
@@ -945,7 +1095,6 @@ class Visit {
         $this->visitRS->Status->setNewVal(VisitStatus::CheckedOut);
 
         $this->updateVisitRecord($dbh, $username);
-
 
         // Update resource cleaning status
         $resc = AbstractResource::getResourceObj($dbh, $this->getidResource());
@@ -1016,10 +1165,10 @@ class Visit {
                 // Get the site configuration object
 
                 // Send email
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
+                $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
                 $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
                 $tos = array_merge(explode(',', $uS->Guest_Track_Address), explode(',', $uS->HouseKeepingEmail));
@@ -1033,7 +1182,7 @@ class Visit {
 
                 $mail->isHTML(true);
 
-                $mail->Subject = $subj;
+                $mail->Subject = htmlspecialchars_decode($subj, ENT_QUOTES);
 
                 $mail->msgHTML($gMarkup);
                 $mail->send();
@@ -1047,41 +1196,66 @@ class Visit {
         return TRUE;
     }
 
-    protected function checkOutVisit(\PDO $dbh, $dateDeparted = "", $sendEmail = TRUE) {
-        $msg = "";
+    /**
+     * Summary of removeSpanStub
+     * @param \PDO $dbh
+     * @param \DateTime $dateDepartedDT
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
+    protected function removeSpanStub(\PDO $dbh, \DateTimeInterface $dateDepartedDT){
 
-        // Check out date
-        if ($dateDeparted == "") {
-            $dateDepartedDT = new \DateTime();
-            $depDate = new \DateTime();
-            $depDate->setTime(0, 0, 0);
+        $uS = Session::getInstance();
+
+        // delete this visit span and all its stays
+        $rowsAffected = $dbh->exec("Delete from visit where idVisit = ". $this->getIdVisit()." and Span = ". $this->getSpan() .";");
+
+        if ($rowsAffected == 1){
+            // remove any onleave stuff.
+            $dbh->exec("Delete from visit_onleave where idVisit = ". $this->getIdVisit()." and Span = ". $this->getSpan() .";");
+
+            // Delete stays
+            $dbh->exec("Delete from stays where idVisit = ". $this->getIdVisit()." and Visit_Span = ". $this->getSpan() .";");
+
+            $logText = VisitLog::getDeleteText($this->visitRS, $this->getIdVisit());
+            VisitLog::logVisit($dbh, $this->visitRS->idVisit->getStoredVal(), $this->visitRS->Span->getStoredVal(), $this->visitRS->idResource->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
+
+            unset($this->visitRSs[$this->getSpan()]);
+            unset($this->stays);
+            $this->resource = NULL;
+
         } else {
-            $dateDepartedDT = new \DateTime($dateDeparted);
-            $depDate = new \DateTime($dateDeparted);
-            $depDate->setTime(0, 0, 0);
+            throw new RuntimeException("Remove stub: Visit record not found.");
         }
 
-        $nowDate = new \DateTime();
-        $nowDate->setTime(0, 0, 0);
+        // Load previous visit span
+        $visitRS = new VisitRS();
+        $visitRS->Span->setStoredVal(($this->getSpan() - 1));
+        $visitRS->idVisit->setStoredVal($this->getIdVisit());
+        $rows = EditRS::select($dbh, $visitRS, Array($visitRS->idVisit, $visitRS->Span));
 
-        if ($depDate > $nowDate) {
-            return "Checkout failed:  Cannot checkout in the future.";
+        if (count($rows) == 0) {
+            throw new RuntimeException("Remove stub: Previous Visit record not found.");
         }
 
-        // CO date validity
-        $stDate = new \DateTime($this->getArrivalDate());
+        // load visitRS
+        $this->visitRS = new VisitRs();
+        EditRS::loadRow($rows[0], $this->visitRS);
 
-        if ($dateDepartedDT < $stDate) {
-            return "But Checkout Failed: The checkout date is before the checkin date.  ";
+        // Load and update previous stays
+        $allStays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');
+        foreach ($allStays as $stayRs) {
+
+            $stayRs->Status->setNewVal(VisitStatus::CheckedOut);
+            $stayRs->Checkout_Date->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
+            $stayRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+            $stayRs->Updated_By->setNewVal($uS->username);
+            EditRS::update($dbh, $stayRs, array($stayRs->idStays));
+
+            $logText = VisitLog::getUpdateText($stayRs);
+            VisitLog::logStay($dbh, $this->getIdVisit(), $stayRs->Visit_Span->getStoredVal(), $stayRs->idRoom->getStoredVal(), $stayRs->idStays->getStoredVal(), $stayRs->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
         }
 
-        // Check out each stay
-        foreach ($this->stays as $stayRS) {
-            if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                $msg .= $this->checkOutGuest($dbh, $stayRS->idName->getStoredVal(), $dateDeparted, '', $sendEmail);
-            }
-        }
-        return $msg;
     }
 
     /**
@@ -1157,7 +1331,7 @@ class Visit {
                 continue;
             }
 
-            $newStayStart = filter_var($newStayStartDates[$stayRs->idStays->getStoredVal()], FILTER_SANITIZE_STRING);
+            $newStayStart = filter_var($newStayStartDates[$stayRs->idStays->getStoredVal()], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             // Cant do anything with a blank date
             if ($newStayStart == '') {
@@ -1363,9 +1537,8 @@ class Visit {
      * @param \PDO $dbh
      * @param array $guestDates String dates indexed by idGuest
      * @param int $maxExpected The administrative limit on the number of days forward
-     * @param \DateTimeZone $tz
      * @param string $uname
-     * @return string
+     * @return array
      */
     public function changeExpectedCheckoutDates(\PDO $dbh, array $guestDates, $maxExpected, $uname) {
 
@@ -1406,7 +1579,7 @@ class Visit {
             }
 
             // Get the new date
-            $coDate = filter_var($guestDates[$guestId], FILTER_SANITIZE_STRING);
+            $coDate = filter_var($guestDates[$guestId], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             // no value set?
             if ($coDate == '') {
@@ -1528,6 +1701,15 @@ class Visit {
         return array('message'=>$rtnMsg, 'isChanged' => $isChanged);
     }
 
+    /**
+     * Summary of onLeaveStays
+     * @param \PDO $dbh
+     * @param string $visitStatus
+     * @param mixed $changeDate
+     * @param string $uname
+     * @param mixed $stayOnLeave
+     * @return void
+     */
     protected function onLeaveStays(\PDO $dbh, $visitStatus, $changeDate, $uname, $stayOnLeave = 0) {
 
         $oldStays = $this->stays;
@@ -1559,6 +1741,12 @@ class Visit {
 
     }
 
+    /**
+     * Summary of endLeave
+     * @param \PDO $dbh
+     * @param string $returnDateStr
+     * @return string
+     */
     public function endLeave(\PDO $dbh, $returnDateStr) {
 
         $reply = '';
@@ -1585,6 +1773,9 @@ class Visit {
 
         } else {
 
+            /**
+             * @var \DateTimeImmutable $stayStartDT
+             */
             $stayStartDT = NULL;
 
             // Get extended stay start date.
@@ -1633,7 +1824,7 @@ class Visit {
                     if (is_null($volRS) === FALSE) {
 
                         // Rate was changed
-                        $reply .= $this->changePledgedRate($dbh, $volRS->Rate_Category->getStoredVal(), $volRS->Pledged_Rate->getStoredVal(), $volRS->Rate_Adjust->getStoredVal(), $uS->username, $returnDT, FALSE, FALSE);
+                        $reply .= $this->changePledgedRate($dbh, $volRS->Rate_Category->getStoredVal(), $volRS->Pledged_Rate->getStoredVal(), $volRS->Rate_Adjust->getStoredVal(), $volRS->idRateAdjust->getStoredVal(), $returnDT, FALSE);
                         $reply .= "Leave ended. ";
                     } else {
 
@@ -1649,6 +1840,12 @@ class Visit {
 
     }
 
+    /**
+     * Summary of extendLeave
+     * @param \PDO $dbh
+     * @param string $extendDateStr
+     * @return string
+     */
     public function extendLeave(\PDO $dbh, $extendDateStr) {
 
         $reply = '';
@@ -1717,6 +1914,14 @@ class Visit {
 
     }
 
+    /**
+     * Summary of beginLeave
+     * @param \PDO $dbh
+     * @param string $extendStartDate
+     * @param int $extDays
+     * @param bool $noCharge
+     * @return string
+     */
     public function beginLeave(\PDO $dbh, $extendStartDate, $extDays, $noCharge) {
         // Extend the visit
 
@@ -1726,7 +1931,7 @@ class Visit {
         $today->setTime(0, 0, 0);
 
         if ($extDays < 1 || $extDays > 60) {
-            return;
+            return '';
         }
 
         if ($extendStartDate != '') {
@@ -1798,7 +2003,7 @@ class Visit {
             }
 
             // Change rate and trigger OnLeave.
-            $reply .= $this->changePledgedRate($dbh, RoomRateCategories::Fixed_Rate_Category, 0, 0, $uS->username, $extndStartDT, FALSE, $extDays);
+            $reply .= $this->changePledgedRate($dbh, RoomRateCategories::Fixed_Rate_Category, 0, 0, 0, $extndStartDT, $extDays);
             $reply .= 'Guests on Leave.  ';
 
         } else {
@@ -1818,6 +2023,13 @@ class Visit {
 
     }
 
+    /**
+     * Summary of undoLeave
+     * @param \PDO $dbh
+     * @param \DateTimeInterface $returnDT
+     * @param mixed $volRS
+     * @return string
+     */
     protected function undoLeave(\PDO $dbh, $returnDT, $volRS) {
 
         $uS = Session::getInstance();
@@ -1833,7 +2045,7 @@ class Visit {
 
             if (count($prevStays) < 1) {
                 // Huh? no previous stays to reset.
-                return;
+                return '';
             }
 
             $changedStays = $this->resetStays($dbh, $prevStays, $returnDT);
@@ -1875,7 +2087,7 @@ class Visit {
 
             if (count($prevStays) < 1) {
                 // Huh? no previous stays to reset.
-                return;
+                return '';
             }
 
             $changedStays = $this->resetStays($dbh, $prevStays, $returnDT);
@@ -1896,10 +2108,21 @@ class Visit {
         return $reply;
     }
 
-    protected function resetStays(\PDO $dbh, $prevStays, $returnDT) {
+    /**
+     * Summary of resetStays
+     * @param \PDO $dbh
+     * @param array $prevStays
+     * @param \DateTime $returnDT
+     * @return int
+     */
+    protected function resetStays(\PDO $dbh, $prevStays, \DateTimeInterface $returnDT) {
 
         $uS = Session::getInstance();
-        $retDayDT = $returnDT->settime(0,0,0);
+
+        /**
+         * @var \DateTimeInterface $retDayDT
+         */
+        $retDayDT = $returnDT->setTime(0,0,0);
         $changedStays = 0;
 
         foreach ($prevStays as $stayRS) {
@@ -1926,6 +2149,14 @@ class Visit {
         return $changedStays;
     }
 
+    /**
+     * Summary of loadStaysStatic
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @param int $span
+     * @param string $statusFilter
+     * @return array<StaysRS>
+     */
     public static function loadStaysStatic(\PDO $dbh, $idVisit, $span, $statusFilter = VisitStatus::CheckedIn) {
 
         $stays = array();
@@ -1955,6 +2186,12 @@ class Visit {
         return $stays;
     }
 
+    /**
+     * Summary of loadStays
+     * @param \PDO $dbh
+     * @param string $statusFilter
+     * @return void
+     */
     public function loadStays(\PDO $dbh, $statusFilter = VisitStatus::CheckedIn) {
 
         unset($this->stays);
@@ -1962,22 +2199,44 @@ class Visit {
 
     }
 
+    /**
+     * Summary of getIdRegistration
+     * @return mixed
+     */
     public function getIdRegistration() {
         return $this->visitRS->idRegistration->getStoredVal();
     }
 
+    /**
+     * Summary of getRateGlideCredit
+     * @return mixed
+     */
     public function getRateGlideCredit() {
         return $this->visitRS->Rate_Glide_Credit->getStoredVal();
     }
 
+    /**
+     * Summary of setRateGlideCredit
+     * @param mixed $v
+     * @return void
+     */
     public function setRateGlideCredit($v) {
         $this->visitRS->Rate_Glide_Credit->setNewVal(intval($v, 10));
     }
 
+    /**
+     * Summary of isNew
+     * @return mixed
+     */
     public function isNew() {
         return $this->newVisit;
     }
 
+    /**
+     * Summary of setOverrideMaxOccupancy
+     * @param mixed $val
+     * @return void
+     */
     public function setOverrideMaxOccupancy($val) {
         if ($val === TRUE) {
             $this->overrideMaxOccupants = TRUE;
@@ -1986,6 +2245,11 @@ class Visit {
         }
     }
 
+    /**
+     * Summary of getResource
+     * @param mixed $dbh
+     * @return AbstractResource|\HHK\House\Resource\PartitionResource|\HHK\House\Resource\RemoteResource|\HHK\House\Resource\RoomResource|null
+     */
     public function getResource($dbh = null) {
 
         if (is_null($this->resource) || $this->resource instanceof AbstractResource === FALSE) {
@@ -1999,6 +2263,10 @@ class Visit {
         return null;
     }
 
+    /**
+     * Summary of getidResource
+     * @return int
+     */
     public function getidResource() {
         if (is_null($this->resource)) {
             return $this->visitRS->idResource->getStoredVal();
@@ -2007,66 +2275,135 @@ class Visit {
         }
     }
 
+    /**
+     * Summary of setIdResource
+     * @param int $v
+     * @return void
+     */
     public function setIdResource($v) {
         $this->visitRS->idResource->setNewVal($v);
     }
 
+    /**
+     * Summary of getIdVisit
+     * @return int
+     */
     public function getIdVisit() {
         return $this->visitRS->idVisit->getStoredVal();
     }
 
+    /**
+     * Summary of getSpan
+     * @return int
+     */
     public function getSpan() {
         return $this->visitRS->Span->getStoredVal();
     }
 
+    /**
+     * Summary of getidHospital_stay
+     * @return int
+     */
     public function getidHospital_stay() {
         return $this->visitRS->idHospital_stay->getStoredVal();
     }
 
+    /**
+     * Summary of getArrivalDate
+     * @return mixed
+     */
     public function getArrivalDate() {
         return $this->visitRS->Arrival_Date->getStoredVal();
     }
 
+    /**
+     * Summary of getSpanStart
+     * @return mixed
+     */
     public function getSpanStart() {
         return $this->visitRS->Span_Start->getStoredVal();
     }
 
+    /**
+     * Summary of getSpanEnd
+     * @return mixed
+     */
     public function getSpanEnd() {
         return $this->visitRS->Span_End->getStoredVal();
     }
 
+    /**
+     * Summary of getActualDeparture
+     * @return mixed
+     */
     public function getActualDeparture() {
         return $this->visitRS->Actual_Departure->getStoredVal();
     }
 
+    /**
+     * Summary of getExpectedDeparture
+     * @return mixed
+     */
     public function getExpectedDeparture() {
         return $this->visitRS->Expected_Departure->getStoredVal();
     }
 
+    /**
+     * Summary of getPledgedRate
+     * @return mixed
+     */
     public function getPledgedRate() {
         return $this->visitRS->Pledged_Rate->getStoredVal();
     }
 
+    /**
+     * Summary of setPledgedRate
+     * @param mixed $pledgedRate
+     * @return void
+     */
     public function setPledgedRate($pledgedRate) {
         $this->visitRS->Pledged_Rate->setNewVal($pledgedRate);
     }
 
+    /**
+     * Summary of getIdRoomRate
+     * @return mixed
+     */
     public function getIdRoomRate() {
         return $this->visitRS->idRoom_rate->getStoredVal();
     }
 
+    /**
+     * Summary of setIdRoomRate
+     * @param mixed $id
+     * @return void
+     */
     public function setIdRoomRate($id) {
         $this->visitRS->idRoom_rate->setNewVal($id);
     }
 
+    /**
+     * Summary of setRateCategory
+     * @param mixed $strCategory
+     * @return void
+     */
     public function setRateCategory($strCategory) {
         $this->visitRS->Rate_Category->setNewVal($strCategory);
     }
 
+    /**
+     * Summary of getRateCategory
+     * @return mixed
+     */
     public function getRateCategory() {
         return $this->visitRS->Rate_Category->getStoredVal();
     }
 
+    /**
+     * Summary of getRoomTitle
+     * @param \PDO $dbh
+     * @return string
+     */
     public function getRoomTitle(\PDO $dbh) {
 
         if ($this->getIdResource() > 0) {
@@ -2084,90 +2421,215 @@ class Visit {
         return '';
     }
 
+    /**
+     * Summary of getInfoMessage
+     * @return string
+     */
     public function getInfoMessage() {
     	return $this->infoMessage;
     }
 
+    /**
+     * Summary of getErrorMessage
+     * @return string
+     */
     public function getErrorMessage() {
     	return $this->errorMessage;
     }
 
+    /**
+     * Summary of setInfoMessage
+     * @param mixed $v
+     * @return void
+     */
     protected function setInfoMessage($v) {
     	$this->infoMessage .= $v;
     }
 
+    /**
+     * Summary of setErrorMessage
+     * @param mixed $v
+     * @return void
+     */
     protected function setErrorMessage($v) {
     	$this->errorMessage .= $v;
     }
 
-    public function setNotes($notes, $username, $roomTitle = '') {
+    /**
+     * Summary of setNotes
+     * @param mixed $notes
+     * @param mixed $username
+     * @param mixed $roomTitle
+     * @return void
+     */
+    public function setNotes($notes) {
         $this->visitRS->Notes->setNewVal($notes);
     }
 
+    /**
+     * Summary of getNotes
+     * @return string
+     */
     public function getNotes() {
         return is_null($this->visitRS->Notes->getStoredVal()) ? '' : $this->visitRS->Notes->getStoredVal();
     }
 
+    /**
+     * Summary of setNoticeToCheckout
+     * @param mixed $v
+     * @return void
+     */
     public function setNoticeToCheckout($v) {
         $this->visitRS->Notice_to_Checkout->setNewVal($v);
     }
 
+    /**
+     * Summary of getNoticeToCheckout
+     * @return mixed
+     */
     public function getNoticeToCheckout() {
         return $this->visitRS->Notice_to_Checkout->getStoredVal();
     }
 
+    /**
+     * Summary of setRateAdjust
+     * @param mixed $v
+     * @return void
+     */
     public function setRateAdjust($v) {
         $this->visitRS->Expected_Rate->setNewVal($v);
     }
 
+    /**
+     * Summary of getRateAdjust
+     * @return mixed
+     */
     public function getRateAdjust() {
         return $this->visitRS->Expected_Rate->getStoredVal();
     }
 
+    /**
+     * Summary of setIdRateAdjust
+     * @param mixed $v
+     * @return void
+     */
+    public function setIdRateAdjust($v) {
+        $this->visitRS->idRateAdjust->setNewVal($v);
+    }
+
+    /**
+     * Summary of getIdRateAdjust
+     * @return mixed
+     */
+    public function getIdRateAdjust() {
+        return $this->visitRS->idRateAdjust->getStoredVal();
+    }
+
+    /**
+     * Summary of setReturnDate
+     * @param mixed $v
+     * @return void
+     */
     public function setReturnDate($v) {
         $this->visitRS->Return_Date->setNewVal($v);
     }
 
+    /**
+     * Summary of getReturnDate
+     * @return mixed
+     */
     public function getReturnDate() {
         return $this->visitRS->Return_Date->getStoredVal();
     }
 
+    /**
+     * Summary of setPrimaryGuestId
+     * @param mixed $id
+     * @return void
+     */
     public function setPrimaryGuestId($id) {
         $this->visitRS->idPrimaryGuest->setNewVal($id);
     }
 
+    /**
+     * Summary of getIdReservation
+     * @return mixed
+     */
+    public function getIdReservation() {
+        return $this->visitRS->idReservation->getStoredVal();
+    }
+
+    /**
+     * Summary of getPrimaryGuestId
+     * @return mixed
+     */
     public function getPrimaryGuestId() {
         return $this->visitRS->idPrimaryGuest->getStoredVal();
     }
 
+    /**
+     * Summary of setReservationId
+     * @param mixed $id
+     * @return void
+     */
     public function setReservationId($id) {
         $this->visitRS->idReservation->setNewVal($id);
     }
 
+    /**
+     * Summary of setIdHospital_stay
+     * @param mixed $id
+     * @return void
+     */
     public function setIdHospital_stay($id) {
         $this->visitRS->idHospital_stay->setNewVal($id);
     }
 
+    /**
+     * Summary of getReservationId
+     * @return mixed
+     */
     public function getReservationId() {
         return $this->visitRS->idReservation->getStoredVal();
     }
 
+    /**
+     * Summary of getKeyDeposit
+     * @return mixed
+     */
     public function getKeyDeposit() {
         return $this->visitRS->Key_Deposit->getStoredVal();
     }
 
+    /**
+     * Summary of setKeyDeposit
+     * @param mixed $v
+     * @return void
+     */
     public function setKeyDeposit($v) {
         $this->visitRS->Key_Deposit->setNewVal($v);
     }
 
+    /**
+     * Summary of getVisitStatus
+     * @return mixed
+     */
     public function getVisitStatus() {
         return $this->visitRS->Status->getStoredVal();
     }
 
+    /**
+     * Summary of getExtPhoneInstalled
+     * @return mixed
+     */
     public function getExtPhoneInstalled() {
         return $this->visitRS->Ext_Phone_Installed->getStoredVal();
     }
 
+    /**
+     * Summary of setExtPhoneInstalled
+     * @return void
+     */
     public function setExtPhoneInstalled() {
         $this->visitRS->Ext_Phone_Installed->setNewVal(1);
     }

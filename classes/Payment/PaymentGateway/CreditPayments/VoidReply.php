@@ -20,6 +20,16 @@ use HHK\Exception\PaymentException;
 
 class VoidReply extends AbstractCreditPayments {
 
+    /**
+     * Summary of caseApproved
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractCreditResponse $pr
+     * @param mixed $username
+     * @param mixed $payRs
+     * @param mixed $attempts
+     * @throws \HHK\Exception\PaymentException
+     * @return AbstractCreditResponse
+     */
     protected static function caseApproved(\PDO $dbh, AbstractCreditResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         if (is_null($payRs) || $payRs->idPayment->getStoredVal() == 0) {
@@ -58,6 +68,15 @@ class VoidReply extends AbstractCreditPayments {
 
     }
 
+    /**
+     * Summary of caseDeclined
+     * @param \PDO $dbh
+     * @param \HHK\Payment\PaymentResponse\AbstractCreditResponse $pr
+     * @param mixed $username
+     * @param mixed $payRs
+     * @param mixed $attempts
+     * @return AbstractCreditResponse
+     */
     protected static function caseDeclined(\PDO $dbh, AbstractCreditResponse $pr, $username, $payRs = NULL, $attempts = 1) {
 
         if ($pr->response->getResponseMessage() == 'ITEM VOIDED') {

@@ -11,7 +11,7 @@ use HHK\Tables\Name\RelationsRS;
  * Children.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017, 2018-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -19,10 +19,19 @@ use HHK\Tables\Name\RelationsRS;
 class Children extends AbstractRelation {
 
 
+    /**
+     * Summary of loadRelCode
+     * @return RelationCode
+     */
     protected function loadRelCode() {
         return new RelationCode(array('Code'=>RelLinkType::Child, 'Description'=>'Child'));
     }
 
+    /**
+     * Summary of getPdoStmt
+     * @param \PDO $dbh
+     * @return \PDOStatement|bool
+     */
     protected function getPdoStmt(\PDO $dbh) {
 
         $query = "Select v.Id, concat(v.Name_First, ' ', v.Name_Last) as `Name`, v.MemberStatus as `MemStatus`, r.*
@@ -36,15 +45,30 @@ where r.Relation_Type='". RelLinkType::Parnt ."' and r.Status='a' and r.Target_I
         return $stmt;
     }
 
+    /**
+     * Summary of getHtmlId
+     * @return string
+     */
     protected function getHtmlId() {
         return "Child";
     }
 
-    protected function createNewEntry() {
+    /**
+     * Summary of createNewEntry
+     * @return string
+     */
+    protected function createNewEntry():string {
         return HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('New Child', array('class'=>'hhk-newlink', 'title'=>'Click to link a new '.$this->relCode->getTitle(), 'colspan'=>'2', 'style'=>'text-align: center;')));
     }
 
-    public function addRelationship(\PDO $dbh, $rId, $user) {
+    /**
+     * Summary of addRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @param string $user
+     * @return string
+     */
+    public function addRelationship(\PDO $dbh, $rId, $user):string {
 
         $id = $this->getIdName();
 
@@ -98,10 +122,17 @@ where r.Relation_Type='". RelLinkType::Parnt ."' and r.Status='a' and r.Target_I
 
     }
 
-    public function removeRelationship(\PDO $dbh, $rId) {
+    /**
+     * Summary of removeRelationship
+     * @param \PDO $dbh
+     * @param int $rId
+     * @return string
+     */
+    public function removeRelationship(\PDO $dbh, $rId):string {
         $qq = "Delete from relationship where Relation_Type=:rcode and (idName=:id or Target_Id=:id2 ) and (idName=:rId or Target_Id=:rId2 )";
         $stmt = $dbh->prepare($qq);
         $idw = $this->getIdName();
+
         $stmt->execute(array(':rcode'=>RelLinkType::Parnt, ':id'=>$idw, ':rId'=>$rId, ':id2'=>$idw, ':rId2'=>$rId));
 
         return "Child link removed.  ";

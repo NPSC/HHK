@@ -2,16 +2,18 @@
 
 namespace HHK\House;
 
+use HHK\Checklist;
+use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Member\Role\Guest;
+use HHK\sec\{Session, Labels};
 use HHK\SysConst\{NameGuestStatus, RelLinkType, VisitStatus};
+use HHK\SysConst\ChecklistType;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
-use HHK\Tables\Visit\Visit_LogRS;
 use HHK\Tables\Name\{Name_GuestRS, NameRS};
 use HHK\Tables\Registration\PSG_RS;
-use HHK\sec\{Session, Labels};
-use HHK\Exception\RuntimeException;
+use HHK\Tables\Visit\Visit_LogRS;
 
 /**
  * PSG.php
@@ -178,7 +180,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             ng.Relationship_Code,
             ng.Legal_Custody,
             IFNULL(n.Name_Full, '') AS `Name_Full`,
-            IFNULL(np.Phone_Num, '') AS `Preferred_Phone`
+            CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END AS `Preferred_Phone`
         FROM
             name_guest ng
                 JOIN
@@ -235,7 +237,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                         HTMLContainer::generateMarkup('legend','Members', array('style'=>'font-weight:bold;'))
                         . $mTable->generateMarkup(),
                         array('class'=>'hhk-panel')),
-                );
+                ["class"=>"mr-3 mb-3"]);
 
         $lastConfDate = $this->psgRS->Info_Last_Confirmed->getStoredVal();
         if ($lastConfDate != '') {
@@ -243,15 +245,25 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $lastConfDate = $lcdDT->format('M j, Y');
         }
 
-        $lastConfirmed =  HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('fieldset',
-                    HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group').' Info Last Confirmed', array('style'=>'font-weight:bold;'))
-                    . HTMLContainer::generateMarkup('label', 'Update:', array('for'=>'cbLastConfirmed'))
-                    . HTMLInput::generateMarkup('', array('name'=>'cbLastConfirmed', 'type'=>'checkbox','style'=>'margin-left:.3em;'))
-                    . HTMLInput::generateMarkup($lastConfDate, array('name'=>'txtLastConfirmed', 'class'=>'ckdate','style'=>'margin-left:1em;'))
-                    , array('class'=>'hhk-panel')),
-            );
+        $lastConfirmed = HTMLContainer::generateMarkup(
+                'fieldset',
+                HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group') . ' Info Last Confirmed', array('style' => 'font-weight:bold;'))
+                . HTMLContainer::generateMarkup('label', 'Update:', ['for' => 'cbLastConfirmed'])
+                . HTMLInput::generateMarkup('', ['name' => 'cbLastConfirmed', 'type' => 'checkbox', 'style' => 'margin-left:.3em;'])
+                . HTMLInput::generateMarkup($lastConfDate, ['name' => 'txtLastConfirmed', 'class' => 'ckdate', 'style' => 'margin-left:1em;'])
+                ,
+                ['class' => 'hhk-panel']
+        );
 
+        // Wrap last confirmed
+        $memMkup .= HTMLContainer::generateMarkup('div', $lastConfirmed, ["class"=>"mr-3 mb-3"]);
+
+        $uS = Session::getInstance();
+        if ($uS->useChecklists) {
+            // Checklist
+            $cheklistMkup = Checklist::createChecklistMkup($dbh, $this->getIdPsg(), ChecklistType::PSG);
+            $memMkup .= HTMLContainer::generateMarkup("div", $cheklistMkup, ["class" => "mr-3 mb-3"]);
+        }
 
         // Change log
         $c = '';
@@ -290,7 +302,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $v = HTMLContainer::generateMarkup('div', $lTable->generateMarkup(), array('id'=>'divPsgLog', 'style'=>'display:none; clear:left;'));
         }
 
-        $editDiv = HTMLContainer::generateMarkup("div", $memMkup . $lastConfirmed, array("class"=>"hhk-flex hhk-flex-wrap"))
+        $editDiv = HTMLContainer::generateMarkup("div", $memMkup, array("class"=>"hhk-flex hhk-flex-wrap"))
                 . $notesContainer //$nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))
                 . $c . $v;
 
@@ -371,6 +383,14 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         return;
     }
 
+    /**
+     * Summary of savePSG
+     * @param \PDO $dbh
+     * @param mixed $idPatient
+     * @param mixed $uname
+     * @param mixed $notes
+     * @return void
+     */
     public function savePSG(\PDO $dbh, $idPatient, $uname, $notes = '') {
 
         if ($idPatient < 1) {
@@ -379,7 +399,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         $this->verifyUniquePatient($dbh, $idPatient);
 
-        $sanNotes = filter_var($notes, FILTER_SANITIZE_STRING);
+        $sanNotes = filter_var($notes, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($sanNotes != '') {
             $oldNotes = (is_null($this->psgRS->Notes->getStoredVal()) ? '' : $this->psgRS->Notes->getStoredVal());
@@ -407,7 +427,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         } else {
 
-            EditRS::update($dbh, $this->psgRS, array($this->psgRS->idPsg));
+            EditRS::update($dbh, $this->psgRS, [$this->psgRS->idPsg]);
 
             $logText = VisitLog::getUpdateText($this->psgRS);
             VisitLog::logPsg($dbh, $this->psgRS->idPsg->getStoredVal(), $idPatient, $logText, "update", $uname);
@@ -455,7 +475,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         $this->psgRS->Primany_Language->setNewVal($languageId);
 
-        $sanNotes = filter_var($notes, FILTER_SANITIZE_STRING);
+        $sanNotes = filter_var($notes, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($uname != '') {
             $uname =  ', ' . $uname;
@@ -545,4 +565,3 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         return $nameRS->Member_Status->getStoredVal();
     }
 }
-?>

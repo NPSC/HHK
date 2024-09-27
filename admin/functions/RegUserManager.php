@@ -10,6 +10,7 @@
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Session;
 use HHK\Tables\WebSec\FbxRS;
 use HHK\Tables\EditRS;
@@ -29,7 +30,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
     $uS = Session::getInstance();
 
     if (isset($_POST["txtfb$n"])) {
-        $fbId = strtolower(filter_var($_POST["txtfb$n"], FILTER_SANITIZE_STRING));
+        $fbId = strtolower(filter_var($_POST["txtfb$n"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     } else {
         return array("error" => "Bad fb Id.");
     }
@@ -85,7 +86,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
             $regSubject = SysConfig::getKeyValue($dbh, 'sys_config', 'RegSubj');
 
             try{
-                $mail = prepareEmail();
+                $mail = new HHKMailer($dbh);
 
                 $mail->From = $uS->ReturnAddress;
                 $mail->addReplyTo($uS->ReturnAddress);

@@ -1,7 +1,6 @@
 <?php
 namespace HHK\devTools;
 
-use MatthiasMullie\Minify;
 use Composer\Script\Event;
 
 /**
@@ -17,7 +16,9 @@ class Build {
         ["in"=>"house/js/resvManager.js","out"=>"house/js/resvManager-min.js"]
     ];
 
-
+    /**
+     * @param Event $event - Composer Event
+     */
     public static function run(Event $event){
         self::minify($event);
     }
@@ -34,9 +35,6 @@ class Build {
                 switch($info['extension']){
                     case "js":
                         $minifier = new Minify\JS($file['in']);
-                        break;
-                    case "css":
-                        $minifier = new Minify\CSS($file['in']);
                         break;
                     default:
                         $minifier = false;

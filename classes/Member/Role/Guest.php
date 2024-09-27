@@ -48,6 +48,12 @@ class Guest extends AbstractRole {
 
     }
 
+    /**
+     * Summary of createThinMarkup
+     * @param \HHK\House\ReserveData\PSGMember\PSGMember $mem
+     * @param mixed $lockRelChooser
+     * @return string
+     */
     public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         $uS = Session::getInstance();
@@ -57,16 +63,16 @@ class Guest extends AbstractRole {
         if ($uS->GuestAddr) {
             // Address toggle comtrols
             $mu .= HTMLTable::makeTd(
-                    HTMLContainer::generateMarkup('ul'
-                            , HTMLContainer::generateMarkup('li',
-                                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check'))
-                                    , array('class'=>'ui-state-highlight ui-corner-all hhk-AddrFlag', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'liaddrflag'))
-                            . HTMLContainer::generateMarkup('li',
-                                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-n'))
-                                    , array('class'=>'ui-state-default ui-corner-all hhk-togAddr', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'toggleAddr'))
-                            , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'))
-                    , array('style'=>'text-align:center;min-width:50px;')
-                    );
+                HTMLContainer::generateMarkup('ul'
+                        , HTMLContainer::generateMarkup('li',
+                                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check'))
+                                , array('class'=>'ui-state-highlight ui-corner-all hhk-AddrFlag', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'liaddrflag'))
+                        . HTMLContainer::generateMarkup('li',
+                                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-n'))
+                                , array('class'=>'ui-state-default ui-corner-all hhk-togAddr', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'toggleAddr'))
+                        , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'))
+                , array('style'=>'text-align:center;min-width:50px;')
+                );
 
         } else {
             $mu .= HTMLTable::makeTd('');
@@ -88,27 +94,31 @@ class Guest extends AbstractRole {
         $idPrefix = $this->getRoleMember()->getIdPrefix();
 
         // Use House Phone?
-        if (isset($post[$idPrefix . 'rbPhPref']) && filter_var($post[$idPrefix . 'rbPhPref'], FILTER_SANITIZE_STRING) == 'yr') {
+        if (isset($post[$idPrefix . 'rbPhPref']) && filter_var($post[$idPrefix . 'rbPhPref'], FILTER_SANITIZE_FULL_SPECIAL_CHARS) == 'yr') {
             $this->useHousePhone = TRUE;
         }
 
         // Guest Checkin Date
         if (isset($post[$idPrefix.'gstDate'])) {
-            $this->setCheckinDate(filter_var($post[$idPrefix.'gstDate'], FILTER_SANITIZE_STRING));
+            $this->setCheckinDate(filter_var($post[$idPrefix.'gstDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         } else if (isset($post['gstDate'])) {
-            $this->setCheckinDate(filter_var($post['gstDate'], FILTER_SANITIZE_STRING));
+            $this->setCheckinDate(filter_var($post['gstDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         // Guest Checkout Date
         if (isset($post[$idPrefix.'gstCoDate'])) {
-            $this->setExpectedCheckOut(filter_var($post[$idPrefix.'gstCoDate'], FILTER_SANITIZE_STRING));
+            $this->setExpectedCheckOut(filter_var($post[$idPrefix.'gstCoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         } else if (isset($post['gstCoDate'])) {
-            $this->setExpectedCheckOut(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
+            $this->setExpectedCheckOut(filter_var($post['gstCoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         return $message;
     }
 
+   /**
+    * Summary of getCheckinDate
+    * @return string
+    */
    public function getCheckinDate() {
         if (is_null($this->checkinDate)) {
             return '';
@@ -116,6 +126,10 @@ class Guest extends AbstractRole {
         return $this->checkinDate->format('Y-m-d H:i:s');
     }
 
+    /**
+     * Summary of getExpectedCheckinDate
+     * @return string
+     */
     public function getExpectedCheckinDate() {
         if (is_null($this->checkinDate)) {
             return '';
@@ -123,10 +137,20 @@ class Guest extends AbstractRole {
         return $this->checkinDate->format('Y-m-d H:i:s');
     }
 
+    /**
+     * Summary of getCheckinDT
+     * @return \DateTime
+     */
     public function getCheckinDT() {
         return $this->checkinDate;
     }
 
+    /**
+     * Summary of setCheckinDate
+     * @param mixed $stringDate
+     * @param mixed $time
+     * @return void
+     */
     public function setCheckinDate($stringDate, $time = 'H:i:s') {
 
         if ($stringDate != '') {
@@ -142,6 +166,11 @@ class Guest extends AbstractRole {
         }
     }
 
+    /**
+     * Summary of setExpectedCheckinDate
+     * @param string $stringDate
+     * @return void
+     */
     public function setExpectedCheckinDate($stringDate) {
 
         if ($stringDate != '') {
@@ -157,6 +186,10 @@ class Guest extends AbstractRole {
 
     }
 
+    /**
+     * Summary of getExpectedCheckOut
+     * @return string
+     */
     public function getExpectedCheckOut() {
         if (is_null($this->expectedCheckOut)) {
             return '';
@@ -164,10 +197,19 @@ class Guest extends AbstractRole {
         return $this->expectedCheckOut->format('Y-m-d H:i:s');
     }
 
+    /**
+     * Summary of getExpectedCheckOutDT
+     * @return \DateTime
+     */
     public function getExpectedCheckOutDT() {
         return $this->expectedCheckOut;
     }
 
+    /**
+     * Summary of setExpectedCheckOut
+     * @param string $stringDate
+     * @return void
+     */
     public function setExpectedCheckOut($stringDate) {
 
         if ($stringDate != '') {
@@ -182,6 +224,11 @@ class Guest extends AbstractRole {
         }
     }
 
+    /**
+     * Summary of setTitle
+     * @param mixed $title
+     * @return void
+     */
     public function setTitle($title) {
         $this->title = $title;
     }

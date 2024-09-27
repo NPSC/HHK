@@ -1,10 +1,9 @@
 <?php
 
 use HHK\sec\{Session, Login, ScriptAuthClass, SecurityComponent};
-use HHK\Exception\{InvalidArgumentException, RuntimeException};
+use HHK\Exception\InvalidArgumentException;
 use HHK\SysConst\{Mode, CodeVersion};
 use HHK\HTMLControls\{HTMLContainer};
-use HHK\sec\SysConfig;
 use HHK\sec\SAML;
 
 /**
@@ -24,20 +23,17 @@ $uS = Session::getInstance();
 //$uS->destroy(TRUE);
 
 // Logout command?
-if (isset($_GET["log"])) {
-    $log = filter_var($_GET["log"], FILTER_SANITIZE_STRING);
-    if ($log == "lo") {
-
-        $uS->destroy(true);
-        header('location:index.php');
-        exit();
-    }
+$log = filter_input(INPUT_GET, 'log', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if ($log == "lo") {
+    $uS->destroy(true);
+    header('location:index.php');
+    exit();
 }
 
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
@@ -56,7 +52,7 @@ try {
 }
 
 
-if (isset($_POST['txtUname'])) {
+if (filter_has_var(INPUT_POST, 'txtUname')) {
     $events = $login->checkPost($dbh, $_POST, $page->get_Default_Page());
     echo json_encode($events);
     exit();
@@ -90,11 +86,11 @@ $row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div'
 
 $footerMkup = $login->getFooterMarkup();
 
-$cspURL = $page->getHostName() . " nonprofitsoftwarecorp.org";
+$cspURL = $page->getHostName() . " manage.hospitalityhousekeeper.net nonprofitsoftwarecorp.org";
 
 header('X-Frame-Options: SAMEORIGIN');
-header("Content-Security-Policy: default-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // IE 10+
+header("Content-Security-Policy: default-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // IE 10+
 
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
@@ -114,7 +110,6 @@ if (SecurityComponent::isHTTPS()) {
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="../js/rssWidget.js"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
     </head>
     <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >

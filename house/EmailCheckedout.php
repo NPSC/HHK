@@ -1,5 +1,6 @@
 <?php
 use HHK\Config_Lite\Config_Lite;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Login;
 use HHK\Exception\RuntimeException;
 use HHK\sec\UserClass;
@@ -22,13 +23,13 @@ require 'homeIncludes.php';
 
 
 try {
-	
+
 	$login = new Login();
 	$login->initHhkSession(ciCFG_FILE);
-	
+
 } catch (InvalidArgumentException $pex) {
 	exit ("Database Access Error.");
-	
+
 } catch (Exception $ex) {
 	exit ($ex->getMessage());
 }
@@ -51,20 +52,20 @@ if(!$u->isCron()){
     // Authenticate user
     $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
     $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-    
+
     if (($user == '' && $pass == '') || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
-        
+
         header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
         header('HTTP/1.0 401 Unauthorized');
         exit("Not authorized");
-        
+
     }
 }
 
 
 $sendEmail = TRUE;
 
-if (isset($_GET['sendemail']) && strtolower(filter_input(INPUT_GET, 'sendemail', FILTER_SANITIZE_STRING)) == 'no') {
+if (isset($_GET['sendemail']) && strtolower(filter_input(INPUT_GET, 'sendemail', FILTER_SANITIZE_FULL_SPECIAL_CHARS)) == 'no') {
     // Don't send email when run as a web page.
     $sendEmail = FALSE;
 
@@ -152,17 +153,17 @@ $recipients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 if ($numRecipients > $maxAutoEmail) {
     // to many recipients.
     $stmt = NULL;
-    exit("The number of email recipients, " . $stmt->rowCount() . " is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
+    exit("The number of email recipients, $$numRecipients is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
 }
 
-$mail = prepareEmail();
+$mail = new HHKMailer($dbh);
 
 $mail->From = $from;
 $mail->addReplyTo($from);
-$mail->FromName = $siteName;
+$mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 
 $mail->isHTML(true);
-$mail->Subject = $subjectLine;
+$mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
 
 $stmt = $dbh->query("Select d.`idDocument`, g.`Code`, g.`Description` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 's' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
 $docRow = $stmt->fetch();
@@ -201,7 +202,7 @@ foreach ($recipients as $r) {
         $mail->clearAddresses();
         $mail->addAddress($emailAddr);
 
-        $mail->Subject = $subjectLine;
+        $mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
         $mail->msgHTML($form);
 
         if ($mail->send() === FALSE) {
@@ -225,7 +226,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 
     $mail->clearAddresses();
     $mail->addAddress($copyEmail);
-    $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'MemberType', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
+    $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
 
     $messg = "<p>Today's date: " . date('M j, Y');
     $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";

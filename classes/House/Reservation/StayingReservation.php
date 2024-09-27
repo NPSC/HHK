@@ -25,6 +25,12 @@ use HHK\House\ReserveData\PSGMember\PSGMemVisit;
 
 class StayingReservation extends CheckingIn {
 
+    /**
+     * Summary of createMarkup
+     * @param \PDO $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return array
+     */
     public function createMarkup(\PDO $dbh) {
 
         if ($this->reserveData->getIdVisit() < 1 || $this->reserveData->getSpan() < 0) {
@@ -39,32 +45,43 @@ class StayingReservation extends CheckingIn {
 
     }
 
-    public function save(\PDO $dbh, $post) {
+    /**
+     * Summary of save
+     * @param \PDO $dbh
+     * @return ActiveReservation|StayingReservation
+     */
+    public function save(\PDO $dbh) {
 
         // Check for new room
-        if (isset($post['cbNewRoom'])) {
+        if (isset($_POST['cbNewRoom'])) {
             // New Room
             $this->reserveData->setIdResv(0);
             $this->reserveData->setIdVisit(0);
             $this->reserveData->setSpan(0);
-            $post['rid'] = 0;
-            $post['vid'] = 0;
-            $post['span'] = 0;
-            $post['rbPriGuest'] = 0;
-            $post['resvCkinNow'] = 'yes';
+            $_POST['rid'] = 0;
+            $_POST['vid'] = 0;
+            $_POST['span'] = 0;
+            $_POST['rbPriGuest'] = 0;
 
             $checkingIn = new ActiveReservation($this->reserveData, new ReservationRS(), new Family($dbh, $this->reserveData, TRUE));
-            $checkingIn->save($dbh, $post);
+            $checkingIn->save($dbh);
+            $checkingIn->setGotoCheckingIn('yes');
             return $checkingIn;
 
         } else {
             // Same room, just add the guests.
-            $this->addGuestStay($dbh, $post);
+            $this->addGuestStay($dbh);
         }
 
         return $this;
     }
 
+    /**
+     * Summary of getFamilyMarkup
+     * @param \PDO $dbh
+     * @param array $formUserData
+     * @return void
+     */
     protected function getFamilyMarkup(\PDO $dbh, array $formUserData = []) {
 
         $psgMembers = $this->reserveData->getPsgMembers();
@@ -78,6 +95,11 @@ class StayingReservation extends CheckingIn {
 
     }
 
+    /**
+     * Summary of createAddGuestMarkup
+     * @param \PDO $dbh
+     * @return array
+     */
     protected function createAddGuestMarkup(\PDO $dbh) {
 
         $uS = Session::getInstance();
@@ -123,7 +145,13 @@ class StayingReservation extends CheckingIn {
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-    protected function addGuestStay(\PDO $dbh, $post) {
+    /**
+     * Summary of addGuestStay
+     * @param \PDO $dbh
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
+    protected function addGuestStay(\PDO $dbh) {
 
         $uS = Session::getInstance();
         $visitRs = new VisitRs();
@@ -168,7 +196,7 @@ class StayingReservation extends CheckingIn {
         }
 
         // Save any new guests now.  (after error checking)
-        $this->initialSave($dbh, $post);
+        $this->initialSave($dbh);
 
         // open visit
         $visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
@@ -198,10 +226,19 @@ class StayingReservation extends CheckingIn {
         return;
     }
 
+    /**
+     * Summary of findCheckedInStays
+     * @param \PDO $dbh
+     * @param array $psgMembers
+     * @param mixed $idPsg
+     * @param mixed $idVisit
+     * @param mixed $idSpan
+     * @return int
+     */
     protected function findCheckedInStays(\PDO $dbh, array &$psgMembers, $idPsg, $idVisit = 0, $idSpan = -1) {
 
         $whStays = '';
-        $rooms = array();
+        $rooms = [];
 
         // Collect member ids
         foreach ($psgMembers as $m) {

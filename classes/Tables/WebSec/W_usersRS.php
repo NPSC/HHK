@@ -31,6 +31,7 @@ class W_usersRS extends AbstractTableRS {
     public $Default_Page;  // varchar(100) NOT NULL DEFAULT '',
     public $PW_Change_Date;  // DATETIME NULL
     public $PW_Updated_By;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public $Chg_PW; // bool
     public $Status;  // varchar(4) NOT NULL DEFAULT '',
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) DEFAULT '',
@@ -40,7 +41,7 @@ class W_usersRS extends AbstractTableRS {
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer());
         $this->User_Name = new DB_Field("User_Name", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->Enc_PW = new DB_Field("Enc_PW", "", new DbStrSanitizer(100), TRUE, TRUE);
-        $this->idIdp = new DB_Field("idIdp", 0, new DbIntSanitizer(11), TRUE, TRUE);
+        $this->idIdp = new DB_Field("idIdp", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->totpSecret = new DB_Field("totpSecret", '', new DbStrSanitizer(45), TRUE, TRUE);
         $this->emailSecret = new DB_Field("emailSecret", '', new DbStrSanitizer(45), TRUE, TRUE);
         $this->backupSecret = new DB_Field("backupSecret", '', new DbStrSanitizer(45), TRUE, TRUE);
@@ -51,7 +52,7 @@ class W_usersRS extends AbstractTableRS {
         $this->Last_Login = new DB_Field("Last_Login", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->PW_Change_Date = new DB_Field("PW_Change_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->PW_Updated_By = new DB_Field("PW_Updated_By", "", new DbStrSanitizer(45), FALSE);
-        $this->Chg_PW = new DB_Field("Chg_PW", '0', new DbIntSanitizer(1), TRUE, TRUE);
+        $this->Chg_PW = new DB_Field("Chg_PW", '0', new DbIntSanitizer(), TRUE, TRUE);
 
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

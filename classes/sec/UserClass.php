@@ -22,8 +22,16 @@ use HHK\sec\MFA\Remember;
 class UserClass
 {
 
+    /**
+     * Summary of logMessage
+     * @var string
+     */
     public $logMessage = '';
 
+    /**
+     * Summary of defaultPage
+     * @var string
+     */
     protected $defaultPage = '';
 
     const PW_Changed = 'PC';
@@ -39,7 +47,19 @@ class UserClass
     const Expired = 'E';
 
     const Login_Fail = 'LF';
+    const LogoutInactivity = "LOI";
 
+    /**
+     * Summary of _checkLogin
+     * @param \PDO $dbh
+     * @param string $username
+     * @param string $password
+     * @param bool $rememberMe
+     * @param bool $checkOTP
+     * @param string $otpMethod
+     * @param string $otp
+     * @return bool
+     */
     public function _checkLogin(\PDO $dbh, $username, $password, $rememberMe = FALSE, $checkOTP = true, $otpMethod = '', $otp = '')
     {
         $ssn = Session::getInstance();
@@ -61,11 +81,23 @@ class UserClass
             }
 
             //check PW
+            //TODO Update password logic for php8
             $match = false;
             //new method
-            if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
+            if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify(filter_var($password, FILTER_SANITIZE_ADD_SLASHES) . $ssn->sitePepper, $r['Enc_PW'])){
                 $match = true;
+            }else if ($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 ) {
+                //old sanitizer )o:
+                // Sanitize and try again - equivelant to FILTER_SANITIZE_STRING
+                $str = preg_replace('/\x00|<[^>]*>?/', '', $password);
+                $password = str_replace(["'", '"'], ['&#39;', '&#34;'], $str);
+
+                if(isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
+                    $this->forcePwReset($dbh, $r['idName']);
+                    $match = true;
+                }
             }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
+                $this->forcePwReset($dbh, $r['idName']);
                 $match = true;
             }
 
@@ -134,6 +166,32 @@ class UserClass
         return FALSE;
     }
 
+    /**
+     * Summary of forcePwReset
+     * @param \PDO $dbh
+     * @param string $userId
+     * @return void
+     */
+    protected function forcePwReset(\PDO $dbh, $userId) {
+
+        try {
+        $id = intval($userId, 10);
+
+        $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . date("Y-m-d H:i:s") . "' where idName = $id";
+
+        if ($dbh->exec($stmt) > 0) {
+            self::insertUserLog($dbh, UserClass::Expired, 'forcePwReset', date("Y-m-d H:i:s"));
+        }
+        } catch (\Exception $e) {}
+
+    }
+
+    /**
+     * Summary of doLogin
+     * @param \PDO $dbh
+     * @param mixed $r
+     * @return bool
+     */
     public function doLogin(\PDO $dbh, array $r){
         // Regenerate session ID to prevent session fixation attacks
         $ssn = Session::getInstance();
@@ -148,20 +206,27 @@ class UserClass
 
             $remoteIp = self::getRemoteIp();
 
-            if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
+            if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)) == $remoteIp . 'eric') {
                 $housePc = TRUE;
             }
         }
 
         $this->setSession($dbh, $ssn, $r);
 
-        $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+        $userCodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+        $ssn->groupcodes = $userCodes["authorized"];
+        $ssn->groupcodesIpRestricted = $userCodes["ip_restricted"];
 
         $this->defaultPage = $r['Default_Page'];
 
         return TRUE;
     }
 
+    /**
+     * Summary of getDefaultPage
+     * @param string $site
+     * @return mixed|string
+     */
     public function getDefaultPage($site = 'h')
     {
         if ($site == 'h') {
@@ -171,7 +236,13 @@ class UserClass
         return '';
     }
 
-    public static function setPCAccess($dbh, $pcName = null)
+    /**
+     * Summary of setPCAccess
+     * @param \PDO $dbh
+     * @param mixed $pcName
+     * @return string
+     */
+    public static function setPCAccess(\PDO $dbh, $pcName = null)
     {
         if (! self::checkPCAccess($dbh)) {
 
@@ -198,7 +269,13 @@ class UserClass
         }
     }
 
-    public static function revokePCAccess($dbh, $ipAddr)
+    /**
+     * Summary of revokePCAccess
+     * @param \PDO $dbh
+     * @param mixed $ipAddr
+     * @return string
+     */
+    public static function revokePCAccess(\PDO $dbh, $ipAddr)
     {
         if ($ipAddr) { // if $ipAddr exists
             $ipRS = new W_auth_ipRS();
@@ -232,7 +309,13 @@ class UserClass
 
     // return true if current IP is in IP list
     // if group code is present, check if current IP is authorized for that group
-    public static function checkPCAccess($dbh, $gc = false)
+    /**
+     * Summary of checkPCAccess
+     * @param \PDO $dbh
+     * @param mixed $gc
+     * @return bool
+     */
+    public static function checkPCAccess(\PDO $dbh, $gc = false)
     {
         $remoteIp = self::getRemoteIp();
         $query = "SELECT * from w_auth_ip waip";
@@ -276,6 +359,12 @@ class UserClass
         return (($ip_decimal & $netmask_decimal) == ($range_decimal & $netmask_decimal));
     }
 
+    /**
+     * Summary of updateSecurityQuestions
+     * @param \PDO $dbh
+     * @param mixed $questions
+     * @return bool
+     */
     public function updateSecurityQuestions(\PDO $dbh, array $questions)
     {
         $ssn = Session::getInstance();
@@ -324,6 +413,16 @@ class UserClass
         return FALSE;
     }
 
+    /**
+     * Summary of updateDbPassword
+     * @param \PDO $dbh
+     * @param int $id
+     * @param string $oldPw
+     * @param string $newPw
+     * @param string $uname
+     * @param mixed $resetNextLogin
+     * @return bool
+     */
     public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0)
     {
         $ssn = Session::getInstance();
@@ -337,7 +436,7 @@ class UserClass
         if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
             $newPwHash = password_hash($newPw . $ssn->sitePepper, PASSWORD_ARGON2ID);
         }else{
-            $newPwHash = md5($newPw);
+            $newPwHash = password_hash($newPw, PASSWORD_ARGON2ID);
         }
 
 
@@ -378,6 +477,12 @@ class UserClass
         return FALSE;
     }
 
+    /**
+     * Summary of isPasswordUsed
+     * @param \PDO $dbh
+     * @param string $newPw
+     * @return bool
+     */
     public function isPasswordUsed(\PDO $dbh, $newPw)
     {
         $uS = Session::getInstance();
@@ -396,6 +501,13 @@ class UserClass
         return false;
     }
 
+    /**
+     * Summary of setPassword
+     * @param \PDO $dbh
+     * @param int $id
+     * @param string $newPw
+     * @return bool
+     */
     public function setPassword(\PDO $dbh, $id, $newPw)
     {
         $uS = Session::getInstance();
@@ -419,6 +531,12 @@ class UserClass
         return FALSE;
     }
 
+    /**
+     * Summary of isUserNew
+     * @param \PDO $dbh
+     * @param mixed $uS
+     * @return bool
+     */
     public static function isUserNew(\PDO $dbh, $uS)
     {
         $query = "select idAnswer, idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
@@ -430,6 +548,12 @@ class UserClass
         return false;
     }
 
+    /**
+     * Summary of isPassExpired
+     * @param \PDO $dbh
+     * @param mixed $uS
+     * @return bool
+     */
     public static function isPassExpired(\PDO $dbh, $uS)
     {
         $u = self::getUserCredentials($dbh, $uS->username);
@@ -458,6 +582,12 @@ class UserClass
         return false;
     }
 
+    /**
+     * Summary of showDifferentMethodBtn
+     * @param \PDO $dbh
+     * @param string $username
+     * @return bool
+     */
     public static function showDifferentMethodBtn(\PDO $dbh, string $username) : bool
     {
         $u = self::getUserCredentials($dbh, $username);
@@ -477,6 +607,12 @@ class UserClass
         return ($numMethods > 1);
     }
 
+    /**
+     * Summary of getDefaultOtpMethod
+     * @param \PDO $dbh
+     * @param string $username
+     * @return bool|string
+     */
     public static function getDefaultOtpMethod(\PDO $dbh, $username)
     {
         $u = self::getUserCredentials($dbh, $username);
@@ -491,6 +627,13 @@ class UserClass
         return false;
     }
 
+    /**
+     * Summary of getAuthProvider
+     * @param \PDO $dbh
+     * @param Session $uS
+     * @param string $username
+     * @return mixed
+     */
     public static function getAuthProvider(\PDO $dbh, $uS, $username = false)
     {
         if($username === false){
@@ -500,6 +643,13 @@ class UserClass
         return (isset($u['authProvider']) ? $u['authProvider'] : "local");
     }
 
+    /**
+     * Summary of isLocalUser
+     * @param \PDO $dbh
+     * @param Session $uS
+     * @param string $username
+     * @return bool
+     */
     public static function isLocalUser(\PDO $dbh, $uS, $username = false)
     {
         if($username === false){
@@ -509,7 +659,14 @@ class UserClass
         return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
     }
 
+    /**
+     * Summary of setPassExpired
+     * @param \PDO $dbh
+     * @param array $user
+     * @return array
+     */
     public static function setPassExpired(\PDO $dbh, array $user){
+
         if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
             $date = false;
             //use creation date if never logged in
@@ -540,6 +697,13 @@ class UserClass
         return $user;
     }
 
+    /**
+     * Summary of getOtpMethodMarkup
+     * @param \PDO $dbh
+     * @param string $username
+     * @param string $hiddenMethod
+     * @return string
+     */
     public static function getOtpMethodMarkup(\PDO $dbh, $username, $hiddenMethod = ''){
         $userAr = UserClass::getUserCredentials($dbh, $username);
         $mkup = '';
@@ -559,6 +723,11 @@ class UserClass
         return $mkup;
     }
 
+    /**
+     * Summary of createUserSettingsMarkup
+     * @param \PDO $dbh
+     * @return string
+     */
     public static function createUserSettingsMarkup(\PDO $dbh)
     {
         $uS = Session::getInstance();
@@ -677,6 +846,10 @@ class UserClass
         return $mkup;
     }
 
+    /**
+     * Summary of getRemoteIp
+     * @return mixed
+     */
     public static function getRemoteIp()
     {
         if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
@@ -688,6 +861,15 @@ class UserClass
         return $remoteIp;
     }
 
+    /**
+     * Summary of insertUserLog
+     * @param \PDO $dbh
+     * @param string $action
+     * @param string $username
+     * @param mixed $date
+     * @param bool $fromHHK
+     * @return void
+     */
     public static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false, $fromHHK = false)
     {
         if (! $username) {
@@ -734,6 +916,12 @@ class UserClass
         }
     }
 
+    /**
+     * Summary of getUserCredentials
+     * @param \PDO $dbh
+     * @param string $username
+     * @return mixed
+     */
     public static function getUserCredentials(\PDO $dbh, $username)
     {
         $uS = Session::getInstance();
@@ -744,34 +932,28 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
-        $stmt = $dbh->query("select count(*) from information_schema.TABLES where (table_schema = '" . $uS->databaseName . "') and (table_name = 'w_idp')");
-
-        if ($stmt->rowCount() === 1) {
-            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-            if($rows[0][0] == 1){ //w_idp table exists
-                $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
+        $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
 left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
 WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = :uname");
-            }else{ //w_idp table does not exist
-                $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, 'Unknown Provider' as 'authProvider'
-FROM w_users u join w_auth a on u.idName = a.idName
-join `name` n on n.idName = u.idName
-WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = :uname");
-            }
 
-            $stmt->execute(array(':uname'=>$uname));
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $stmt->execute(array(':uname'=>$uname));
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            if (count($rows) == 1) {
-                return $rows[0];
-            }
+        if (count($rows) == 1) {
+            return $rows[0];
         }
 
         return NULL;
     }
 
+    /**
+     * Summary of disableInactiveUser
+     * @param \PDO $dbh
+     * @param array $user
+     * @return array
+     */
     public static function disableInactiveUser(\PDO $dbh, array $user)
     {
         if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
@@ -808,24 +990,42 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         return $user;
     }
 
+    /**
+     * Summary of setSecurityGroups
+     * @param \PDO $dbh
+     * @param int $idName
+     * @param mixed $housePc
+     * @return array
+     */
     protected static function setSecurityGroups(\PDO $dbh, $idName, $housePc = FALSE)
     {
         $id = intval($idName, 10);
 
-        $grpArray = array();
+        $grpArray = array("authorized"=>array(), "ip_restricted"=>array());
         $query = "SELECT s.Group_Code, case when w.IP_Restricted = 1 then '1' else '0' end as `IP_Restricted` FROM id_securitygroup s join w_groups w on s.Group_Code = w.Group_Code WHERE s.idName = $id";
         $stmt = $dbh->query($query);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            if ($r["Group_Code"] != "" && ($r['IP_Restricted'] == "0" || self::checkPCAccess($dbh, $r["Group_Code"]))) {
-                $grpArray[$r["Group_Code"]] = $r["Group_Code"];
+            $pcAuthorized = self::checkPCAccess($dbh, $r["Group_Code"]);
+            if ($r["Group_Code"] != "" && ($r['IP_Restricted'] == "0" || $pcAuthorized)) {
+                $grpArray['authorized'][$r["Group_Code"]] = $r["Group_Code"];
+            }else if($r['IP_Restricted'] == "1" && $pcAuthorized == false){
+                $grpArray['ip_restricted'][$r["Group_Code"]] = $r["Group_Code"];
             }
         }
 
         return $grpArray;
     }
 
+    /**
+     * Summary of setSession
+     * @param \PDO $dbh
+     * @param \HHK\sec\Session $ssn
+     * @param mixed $r
+     * @param mixed $init
+     * @return void
+     */
     public function setSession(\PDO $dbh, Session $ssn, $r, $init = true)
     {
         $ssn->uid = $r["idName"];
@@ -840,6 +1040,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         }
 
         $ssn->logged = true;
+        $ssn->userAgent = filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         unset($ssn->Challtries);
 
         if ($init) {
@@ -856,16 +1057,28 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         }
     }
 
+    /**
+     * Summary of isCron
+     * @return bool
+     */
     public static function isCron(){
         return (php_sapi_name() == 'cli')? true:false;
     }
 
+    /**
+     * Summary of _logout
+     * @return void
+     */
     public static function _logout()
     {
         $uS = Session::getInstance();
         $uS->destroy();
     }
 
+    /**
+     * Summary of incrementTries
+     * @return mixed
+     */
     private function incrementTries() {
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries) === FALSE) {
@@ -875,6 +1088,11 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         return $ssn->Challtries;
     }
 
+    /**
+     * Summary of testTries
+     * @param int $max
+     * @return bool
+     */
     private function testTries($max = 3) {
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries) && $ssn->Challtries > $max) {
@@ -883,6 +1101,10 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         return TRUE;
     }
 
+    /**
+     * Summary of resetTries
+     * @return void
+     */
     private function resetTries(){
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries)){
@@ -902,6 +1124,13 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
     // Note: the $add_dashes option will increase the length of the password by
     // floor(sqrt(N)) characters.
 
+    /**
+     * Summary of generateStrongPassword
+     * @param int $length
+     * @param bool $add_dashes
+     * @param string $available_sets
+     * @return string
+     */
     public function generateStrongPassword($length = 9, $add_dashes = false, $available_sets = 'luds')
     {
         $sets = array();
@@ -942,4 +1171,3 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
                                 return $dash_str;
     }
 }
-?>

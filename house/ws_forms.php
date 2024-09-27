@@ -47,11 +47,11 @@ require ("homeIncludes.php");
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
 	//$csrfToken = '';
 	//if(isset($_REQUEST['csrfToken'])){
-		//$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_STRING);
+		//$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 	//}
 	//$login->verifyCSRF($csrfToken);
 
@@ -72,12 +72,11 @@ try {
     exit('<h2>Page not in database.</h2>');
 }
 
-addslashesextended($_REQUEST);
 $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $uS = Session::getInstance();
@@ -139,8 +138,9 @@ try {
          case 'previewform':
 
              $style = "";
+             $formData = "";
              if(isset($_REQUEST['style'])){
-                 $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_STRING);
+                 $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
              }
              if(isset($_REQUEST['initialGuests'])){
                  $initialGuests = filter_var($_REQUEST['initialGuests'], FILTER_SANITIZE_NUMBER_INT);
@@ -148,11 +148,14 @@ try {
              if(isset($_REQUEST['maxGuests'])){
                  $maxGuests = filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT);
              }
+             if(isset($_REQUEST['formData'])){
+                $formData = filter_var($_REQUEST['formData'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+             }
 
              if(!$uS->logged){
                  $events['error'] = "Unauthorized for page: Please login";
              }else{
-                 $events['formData'] = $_REQUEST['formData'];
+                 $events['formData'] = base64_decode($formData);
                  $events['formSettings']['formStyle'] = $style;
                  $events['formSettings']['enableRecaptcha'] = false;
                  $events['formSettings']['initialGuests'] = $initialGuests;
@@ -165,24 +168,42 @@ try {
 
 			$recaptchaToken = '';
 			if(isset($_POST['recaptchaToken'])){
-				$recaptchaToken = filter_var($_POST['recaptchaToken'], FILTER_SANITIZE_STRING);
+				$recaptchaToken = filter_var($_POST['recaptchaToken'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 			}
 
 			$recaptcha = new Recaptcha();
-			if(($uS->mode == 'demo' || $uS->mode == 'prod') && $recaptchaToken != ''){
+			if(($uS->mode == 'demo' || $uS->mode == 'live') && $recaptchaToken != ''){
 			     $score = $recaptcha->verify($recaptchaToken);
 			}else{
 			    $score = 1.0;
 			}
 
-            $formRenderData = '';
+            $fields = array();
             if(isset($_POST['formRenderData'])){
                 try{
-                    json_decode($_REQUEST['formRenderData']);
-                    $formRenderData = $_REQUEST['formRenderData'];
-                }catch(\Exception $e){
+                    $jsonStr = base64_decode($_REQUEST['formRenderData']);
+                    $fields = json_decode($jsonStr);
+                    if(!is_array($fields)){
+                        try{
+                            $body = "New bug report received from " . getSiteName() . "\r\n\r\n";
+                            $body .= "Request Type: AJAX\r\n\r\n";
+                            $body .= "Details: \r\n\r\n";
+                            $body .= "Message: fields variable is null\r\n\r\n";
+                            $body .= "doc: " .$_POST['formRenderData'];
+            
+                            sendMail($body);
+                        }catch(\Exception $e){}
 
+                        $events = ['status'=>'error', 'errors'=>['server'=>'Unable to read form, check your submission for special characters and try again.']];
+                        break;
+                    }
+                }catch(\Exception $e){
+                    $events = ['status'=>'error', 'errors'=>['server'=>'Unable to read form, check your submission for special characters and try again.']];
+                    break;
                 }
+            }else{
+                $events = ['status'=>'error', 'errors'=>['server'=>'The form appears to be empty, please try again']];
+                break;
             }
 
             $templateId = '';
@@ -192,10 +213,10 @@ try {
 
 			if($score >= 0.5){
 				$formDocument = new FormDocument();
-				$events = $formDocument->saveNew($dbh, $formRenderData, $templateId);
+				$events = $formDocument->saveNew($dbh, $fields, $templateId);
 				$events['recaptchaScore'] = $score;
 			}else{
-				$events = ['status'=>'error', 'errors'=>['server'=>'Recaptcha failed with score of ' . $score]];
+				$events = ['status'=>'error', 'errors'=>['server'=>'Recaptcha spam check failed'], 'recaptchaScore'=>$score];
 			}
             break;
 

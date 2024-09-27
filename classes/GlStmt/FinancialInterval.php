@@ -8,7 +8,7 @@ use HHK\SysConst\ItemPriceCode;
 
 
 class FinancialInterval {
-	
+
 	protected $startDate;
 	protected $endDate;
 
@@ -16,161 +16,168 @@ class FinancialInterval {
 	protected $totalCatNites;
 	protected $categories;
 	protected $payAmounts;
-	
+
 	protected $baArray;
 	protected $errorMsg;
-	
 
-	public function __construct(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate) {
+
+	public function __construct(\DateTimeInterface $startDate, \DateTimeInterface $endDate) {
 		$this->startDate = $startDate;
 		$this->endDate = $endDate;
 	}
-	
+
+	/**
+	 * Summary of collectData
+	 * @param \PDO $dbh
+	 * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+	 * @param mixed $extraVisitsSQL
+	 * @return StmtCalc
+	 */
 	public function collectData (\PDO $dbh, AbstractPriceModel $priceModel, $extraVisitsSQL) {
-	
+
 		$uS = Session::getInstance();
 
 		$this->errorMsg = [];
 		$this->totalCatNites = [];
 		$this->totalItemPayment = [];
 		$this->baArray = [];
-		
+
 		// Category Nights Counter
 		$this->categories = readGenLookupsPDO($dbh, 'Room_Category');
 		$this->categories[] = array(0=>'', 1=>'(default)');
-		
+
 		foreach ($this->categories as $c) {
 			$this->totalCatNites[$c[0]] = 0;
 		}
-		
+
 		$this->totalCatNites['All'] = 0;
-		
+
 		// Payments by Item
 		$istmt = $dbh->query("select idItem from item");
 		while( $i = $istmt->fetch(\PDO::FETCH_NUM)) {
 			$this->totalItemPayment[$i[0]] = 0;
 		}
-		
+
 		// Third party
 		$this->baArray['']['paid'] = 0;
 		$this->baArray['']['pend'] = 0;
-		
-		
+
+
 		$stmtCalc = new StmtCalc();
 		$visitCalc = new VisitIntervalCalculator();
-		
-		
+
+
 		$this->payAmounts = array();
 		$serialId = 0;
 		$visitId = 0;
 		$record = NULL;
-		
-	
+
+
 		$stmt = $dbh->query($this->makeQuery($extraVisitsSQL));
 		while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-			
+
 			$serial = ($r['idVisit'] * 100) + $r['Span'];
-			
+
 			if ($serialId != $serial) {
 				// Span Change
-				
+
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
-					
+
 					$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $serialId);
-					
+
 					// Testing only
 					if ($stmtCalc->getIncome() != $stmtCalc->getFullIntervalCharge()) {
 						$this->errorMsg[] = 'Visit ' . $visitId . ' breaks the balance. Sold to '. $record['Sold_To_Id'] . '.  Income = '.$stmtCalc->getIncome()
 								. ' Full Charge = '.$stmtCalc->getFullIntervalCharge();
 					}
-					
+
 					// Reset for next visit
 					$visitCalc = new VisitIntervalCalculator();
 					$visitId = $r['idVisit'];
 				}
-				
+
 				$adjRatio = (1 + $r['Expected_Rate']/100);
-				
+
 				$this->totalCatNites[$r['Room_Category']] += $r['Actual_Interval_Nights'];
 				$this->totalCatNites['All'] += $r['Actual_Interval_Nights'];
-				
+
 				//  Add up any pre-interval charges
 				if ($r['Pre_Interval_Nights'] > 0) {
-					
+
 					// collect all pre-charges
 					$priceModel->setCreditDays(0);
 					$c = $priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['PI_Guest_Nights']);
 					$visitCalc->updatePreIntervalCharge($c * $adjRatio);
-					
+
 				}
-				
+
 				// Add up interval charges
 				if ($r['Actual_Interval_Nights'] > 0) {
-					
+
 					// Reated Charges
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
 					$charge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['Actual_Guest_Nights']) * $adjRatio;
-					
+
 					// Full charge
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
 					$fullCharge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
-					
+
 					$visitCalc->updateIntervalCharge($charge, $fullCharge, $r['Rate_Category']);
-					
+
 				}
 			}
-			
+
 			$serialId = $serial;
 			$visitId = $r['idVisit'];
 			$record = $r;
-			
+
 			// Unpaid invoices
 			$invDate = new \DateTime($r['Invoice_Date']);
 			if ($r['Invoice_Status'] == InvoiceStatus::Unpaid
 					&& $invDate >= $this->startDate && $invDate < $this->endDate) {
 				$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['pend'], $r['il_Amount']);
 			}
-			
+
 			if ($r['pStatus'] == PaymentStatusCode::Reverse || $r['pStatus'] == PaymentStatusCode::VoidSale || $r['pStatus'] == PaymentStatusCode::Declined) {
 				continue;
 			}
-			
+
 			// Payment dates
 			if ($r['pTimestamp'] != '') {
 				$paymentDate = new \DateTime($r['pTimestamp']);
 			} else {
 				$paymentDate = NULL;
 			}
-			
+
 			if ($r['pUpdated'] != '') {
 				$pUpDate = new \DateTime($r['pUpdated']);
 			} else {
 				$pUpDate = NULL;
 			}
-			
+
 			// Normalize amount
 			$ilAmt = round($r['il_Amount'], 2);
-			
+
 			// Multiple invoice lines for one payment...
 			if (isset($this->payAmounts[$r['idPayment']]) === FALSE) {
 				$this->payAmounts[$r['idPayment']] = $r['pAmount'];
 			}
-			
-			
+
+
 			// Sale
 			if (($r['pStatus'] == PaymentStatusCode::Paid || $r['pStatus'] == PaymentStatusCode::VoidReturn) && $r['Is_Refund'] == 0) {
-				
+
 				// un-returned payments are dated on the update.
 				if (is_null($pUpDate) === FALSE) {
 					$paymentDate = $pUpDate;
 				}
-				
+
 				$this->payAmounts[$r['idPayment']] -= $ilAmt;
-				
+
 				// Payment is in this period?
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
-					
+
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						// Lodging Amount
 						$visitCalc->updateIntervalPay($ilAmt);
@@ -178,76 +185,76 @@ class FinancialInterval {
 						// waive amount.
 						$visitCalc->updateIntervalWaiveAmt($ilAmt);
 					}
-					
+
 					$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
 					$this->totalItemPayment[$r['Item_Id']] += $ilAmt;
-					
+
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
-					
+
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$visitCalc->updatePreIntervalPay($ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// waive amount.
 						$visitCalc->updatePreIntervalWaiveAmt($ilAmt);
 					}
-					
+
 				}
-				
+
 			// Refunds
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
-				
+
 				// payment is positive in this case.
 				$this->payAmounts[$r['idPayment']] += $ilAmt;
-				
+
 				// Payment must be within the .
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
-					
+
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$visitCalc->updateIntervalPay($ilAmt);
 					}
-					
+
 					$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
 					$this->totalItemPayment[$r['Item_Id']] += $ilAmt;
-					
+
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
-					
+
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$visitCalc->updatePreIntervalPay($ilAmt);
 					}
-					
+
 				}
-				
+
 			//Returns
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
 				// The invoice line amount (ilAmt) is positive.
-				
+
 				if (is_null($pUpDate)) {
 					$this->recordError("Missing Last Updated. Payment Id = ". $r['idPayment']);
 					continue;
 				}
-				
+
 				$this->payAmounts[$r['idPayment']] -= $ilAmt;
-				
+
 				// Returned during this period?
 				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
 					// It is a return in this period.
-					
-					
+
+
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$visitCalc->updateIntervalPay(0 - $ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
 						$visitCalc->updateIntervalWaiveAmt(0 - $ilAmt);
 					}
-					
+
 					$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['paid'], (0 - $ilAmt));
 					$this->totalItemPayment[$r['Item_Id']] -= $ilAmt;
-					
+
 				} else if ($pUpDate < $this->startDate) {
 					// Pre return from before
-					
+
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$visitCalc->updatePreIntervalPay(0 - $ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
@@ -255,23 +262,23 @@ class FinancialInterval {
 						$visitCalc->updatePreIntervalWaiveAmt(0 - $ilAmt);
 					}
 				}
-				
+
 				// Paid during this period?
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
-					
+
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$visitCalc->updateIntervalPay($ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// waive amount.
 						$visitCalc->updateIntervalWaiveAmt($ilAmt);
 					}
-					
+
 					$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
 					$this->totalItemPayment[$r['Item_Id']] += $ilAmt;
-					
+
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
-					
+
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$visitCalc->updatePreIntervalPay($ilAmt);;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
@@ -279,39 +286,39 @@ class FinancialInterval {
 						$visitCalc->updatePreIntervalWaiveAmt($ilAmt);
 					}
 				}
-			
+
 			// Discounts
 			} else if ($r['idPayment'] == 0 && $r['Invoice_Status'] == InvoiceStatus::Paid
 					&& $r['Item_Id'] = ItemId::Discount) {
-				
+
 				$paymentDate = new \DateTime($r['Invoice_Date']);
-				
+
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
-					
+
 					// Discounts
 					$this->totalItemPayment[$r['Item_Id']] += abs($ilAmt);
-						
+
 					// Reduces the charges.
 					$visitCalc->updateIntervalDiscount($ilAmt);
-					
+
 				} else if ($paymentDate < $this->startDate) {
 					$visitCalc->updatePreIntervalDiscount($ilAmt);
 				}
 			}
 		}
-		
+
 		if ($record != NULL) {
 			$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $serialId);
 		}
-		
+
 		return $stmtCalc;
 	}
 
 	protected function makeQuery($extraVisitsSQL) {
-		
+
 		$start = $this->startDate->format('Y-m-d');
 		$end = $this->endDate->format('Y-m-d');
-		
+
 		$query = "select
 	v.idVisit,
 	v.Span,
@@ -415,7 +422,7 @@ from
 	`payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
 		LEFT JOIN
 	name_demog nd on i.Sold_To_Id = nd.idName
-	
+
 where
 	v.idVisit in
 		(select idVisit from visit
@@ -430,14 +437,14 @@ where
 		) " .
 		$extraVisitsSQL .
 		" order by v.idVisit, v.Span";
-		
+
 		return $query;
 	}
-	
+
 	protected function getGuestNightsSQL($start, $end) {
 
 		$uS = Session::getInstance();
-		
+
 		if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
 			return "CASE WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start') THEN 0
         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
@@ -453,40 +460,45 @@ where
       	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
         FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
 		}
-		
+
 		return " 0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`, ";
-		
+
 	}
-	
+
 	protected function arrayAdd(&$arrayMember, $amount) {
-		
+
 		if (isset($arrayMember)) {
 			$arrayMember += $amount;
 		} else {
 			$arrayMember = $amount;
 		}
-		
+
 	}
-	
+
 	public function getRoomCategories() {
 		return $this->categories;
 	}
-	
+
 	public function getPayAmounts() {
 		return $this->payAmounts;
 	}
-	
+
 	public function getBaArray() {
 		return $this->baArray;
 	}
-	
+
 	public function getTotalCatNites() {
 		return $this->totalCatNites;
 	}
-	
+
 	public function getTotalItemPayment() {
 		return $this->totalItemPayment;
 	}
+
+	protected function recordError($error) {
+		$this->errorMsg[] = $error;
+	}
+
 	public function getErrorArray() {
 		return $this->errorMsg;
 	}

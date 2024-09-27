@@ -7,13 +7,14 @@ use HHK\Payment\GatewayResponse\StandInGwResponse;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\{CashResponse, CheckResponse, TransferResponse};
-use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult};
+use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult, CofResult};
 use HHK\SysConst\{InvoiceStatus, PayType, PaymentStatusCode, PaymentMethod};
 use HHK\sec\Session;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS};
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\Exception\PaymentException;
+
 
 /**
  * PaymentSvcs.php
@@ -34,6 +35,14 @@ use HHK\Exception\PaymentException;
 class PaymentSvcs {
 
 
+    /**
+     * Summary of payAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
+     * @param string $postbackUrl
+     * @return PaymentResult|null
+     */
     public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -140,7 +149,6 @@ class PaymentSvcs {
 
     /**
      * Return an Amount directly from an invoice.  No payment record needed.
-     *
      * @param \PDO $dbh
      * @param Invoice $invoice
      * @param PaymentManagerPayment $pmp
@@ -148,7 +156,7 @@ class PaymentSvcs {
      * @param string $paymentDate
      * @return ReturnResult
      */
-    public static function returnAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $paymentDate = '') {
+    public static function returnAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $paymentDate = '', $resvId = 0) {
 
         $uS = Session::getInstance();
 
@@ -188,8 +196,8 @@ class PaymentSvcs {
             case PayType::Charge:
 
                 // Load gateway
-                $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant());
-                $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes());
+                $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant(), $pmp->getRtnIdToken());
+                $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes(), $resvId);
 
                 break;
 
@@ -233,6 +241,13 @@ class PaymentSvcs {
         return $rtnResult;
     }
 
+    /**
+     * Summary of voidFees
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @param string $bid  html id of the originating control
+     * @return array
+     */
     public static function voidFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
@@ -277,6 +292,13 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of reversalFees
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @param string $bid  html id of the originating control
+     * @return array
+     */
     public static function reversalFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
@@ -321,6 +343,14 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of returnPayment
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @param string $bid
+     * @throws \HHK\Exception\PaymentException
+     * @return array
+     */
     public static function returnPayment(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
@@ -340,6 +370,11 @@ class PaymentSvcs {
         // Already voided, or otherwise ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
             return array('warning' => 'This Payment is ineligable for return.  ', 'bid' => $bid);
+        }
+
+        // is already a refund?
+        if ($payRs->Is_Refund->getStoredVal() > 0) {
+            return array('error' => 'This is already a return.  ', 'bid' => $bid);
         }
 
 
@@ -443,7 +478,15 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function voidReturnFees(\PDO $dbh, $idPayment, $bid, $paymentDate = '') {
+    /**
+     * Both return payment and return (random) amount come here
+     *
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @param string $bid
+     * @return array
+     */
+    public static function voidReturnFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
         $dataArray = array('bid' => $bid);
@@ -453,19 +496,19 @@ class PaymentSvcs {
         $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
         if (count($pments) != 1) {
-            return array('warning' => 'Payment record not found.  Unable to Void this return.  ', 'bid' => $bid);
+            return array('warning' => 'Payment record not found. ', 'bid' => $bid);
         }
 
         EditRS::loadRow($pments[0], $payRs);
 
+        // only available to charge cards.
+        if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
+            return array('warning' => 'Void-Return is Not Available.  ', 'bid' => $bid);
+        }
+
         // Already voided, or otherwise ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Retrn && $payRs->Is_Refund->getStoredVal() === 0) {
             return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
-        }
-
-        // only available to charge cards.
-        if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
-            return array('warning' => 'Void Return is Not Available.  ', 'bid' => $bid);
         }
 
         // Find hte detail record.
@@ -479,10 +522,6 @@ class PaymentSvcs {
         $pAuthRs = new Payment_AuthRS();
         EditRS::loadRow(array_pop($arows), $pAuthRs);
 
-        if ($pAuthRs->Status_Code->getStoredVal() !== PaymentStatusCode::Retrn) {
-            return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
-        }
-
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
@@ -492,6 +531,14 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of undoReturnFees
+     * @param \PDO $dbh
+     * @param mixed $idPayment
+     * @param mixed $bid
+     * @throws \HHK\Exception\PaymentException
+     * @return array
+     */
     public static function undoReturnFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
@@ -507,6 +554,7 @@ class PaymentSvcs {
 
         EditRS::loadRow($pments[0], $payRs);
 
+        // Filter out return amounts here
         if ($payRs->Is_Refund->getStoredVal() > 0) {
             return self::undoReturnAmount($dbh, $idPayment, $payRs->idPayment_Method->getStoredVal(),$payRs->Amount->getStoredVal(), $bid);
         }
@@ -608,6 +656,16 @@ class PaymentSvcs {
         return $dataArray;
     }
 
+    /**
+     * Summary of undoReturnAmount
+     * @param \PDO $dbh
+     * @param mixed $idPayment
+     * @param mixed $idPaymentMethod
+     * @param mixed $paymentAmount
+     * @param mixed $bid
+     * @throws \HHK\Exception\PaymentException
+     * @return array
+     */
     protected static function undoReturnAmount(\PDO $dbh, $idPayment, $idPaymentMethod, $paymentAmount, $bid) {
 
         $uS = Session::getInstance();
@@ -636,11 +694,11 @@ class PaymentSvcs {
 
             case PaymentMethod::Transfer:
 
-                $ckResp = new TransferResponse($paymentAmount, $invoice->getSoldToId(), $invoice->getInvoiceNumber());
+                $txResp = new TransferResponse($paymentAmount, $invoice->getSoldToId(), $invoice->getInvoiceNumber());
 
-                TransferTX::undoReturnAmount($dbh, $ckResp, $idPayment);
+                TransferTX::undoReturnAmount($dbh, $txResp, $idPayment);
 
-                $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, $txResp->getAmount(), $uS->username);
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 
@@ -709,6 +767,12 @@ class PaymentSvcs {
         return $dataArray;
     }
 
+    /**
+     * Summary of processWebhook
+     * @param \PDO $dbh
+     * @param mixed $data
+     * @return bool
+     */
     public static function processWebhook(\PDO $dbh, $data) {
 
         $uS = Session::getInstance();
@@ -726,8 +790,16 @@ class PaymentSvcs {
 	        return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
         }
 
+        return FALSE;
+
     }
 
+    /**
+     * Summary of processSiteReturn
+     * @param \PDO $dbh
+     * @param mixed $post
+     * @return PaymentResult|PaymentResult|CofResult|null
+     */
     public static function processSiteReturn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
@@ -773,6 +845,12 @@ class PaymentSvcs {
 
     }
 
+    /**
+     * Summary of generateReceipt
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @return array<string>
+     */
     public static function generateReceipt(\PDO $dbh, $idPayment) {
 
         $uS = Session::getInstance();

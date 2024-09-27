@@ -57,7 +57,6 @@ class ValueAddedTax {
      * Get current taxes for a particular visit id.
      *
      * @param \PDO $dbh
-     * @param int $idVisit
      * @return []
      */
     protected function loadTaxedItemList(\PDO $dbh) {
@@ -73,6 +72,7 @@ class ValueAddedTax {
 
     /** Get sum of tax item percentage values connected to each taxable item.
      *
+     * @param int $idVisit
      * @param int $numDays
      * @return array of each taxed item containing the sum (float) of all connected taxes filtered by days.
      */
@@ -96,6 +96,7 @@ class ValueAddedTax {
      *  compared against $numDays.
      *
      * @param int $taxedItemId  the taxable item
+     * @param int $idVisit
      * @param int $numDays  the number of days under the tax
      * @return array tax item id's that have timed out.
      */

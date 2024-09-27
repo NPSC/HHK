@@ -4,6 +4,7 @@ namespace HHK\Payment\PaymentResult;
 
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Receipt;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
@@ -141,7 +142,7 @@ class PaymentResult {
         }
 
 
-        $query = "SELECT ne.Email, n.Name_Full FROM
+        $query = "SELECT IFNULL(ne.Email, '') as 'Email', n.Name_Full FROM
     `registration` r,
     `name` n
         LEFT JOIN
@@ -171,11 +172,11 @@ WHERE r.Email_Receipt = 1 and
 
 
         try{
-            $mail = prepareEmail();
+            $mail = new HHKMailer($dbh);
 
             $mail->From = $fromAddr;
             $mail->addReplyTo($uS->ReplyTo);
-            $mail->FromName = $uS->siteName;
+            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
 
             $mail->addAddress($toAddrSan);     // Add a recipient
 
@@ -193,7 +194,7 @@ WHERE r.Email_Receipt = 1 and
 
             $mail->isHTML(true);
 
-            $mail->Subject = $uS->siteName . ' Payment Receipt';
+            $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Payment Receipt';
             $mail->msgHTML($this->receiptMarkup);
 
             $mail->send();
@@ -209,7 +210,7 @@ WHERE r.Email_Receipt = 1 and
                 }
 
 
-                LinkNote::save($dbh, "Receipt" . ($invoiceNumber != '' ? " for invoice <a href='ShowInvoice.php?invnum=" . $invoiceNumber . "' target='_blank'>" . $invoiceNumber . "</a>" : '') . " emailed to " . $toAddrSan, $this->idRegistration, Note::PsgLink, $uS->username, $uS->ConcatVisitNotes);
+                LinkNote::save($dbh, "Receipt" . ($invoiceNumber != '' ? " for invoice <a href='ShowInvoice.php?invnum=" . $invoiceNumber . "' target='_blank'>" . $invoiceNumber . "</a>" : '') . " emailed to " . $toAddrSan, $this->idRegistration, Note::PsgLink, '', $uS->username, $uS->ConcatVisitNotes);
 
                 return "Email sent" . $guestName;
             }
@@ -223,7 +224,7 @@ WHERE r.Email_Receipt = 1 and
     }
 
     public function wasError() {
-        if ($this->getStatus() == self::ERROR) {
+        if ($this->getStatus() == self::ERROR || $this->getStatus() == self::DENIED) {
             return TRUE;
         }
         return FALSE;
@@ -267,6 +268,10 @@ WHERE r.Email_Receipt = 1 and
         return $this;
     }
 
+    /**
+     * Summary of getForwardHostedPayment
+     * @return array
+     */
     public function getForwardHostedPayment() {
         return $this->forwardHostedPayment;
     }
@@ -299,5 +304,3 @@ WHERE r.Email_Receipt = 1 and
     }
 
 }
-
-?>

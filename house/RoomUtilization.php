@@ -61,7 +61,7 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
 
     // Room Grouping
     if (isset($_POST['selGroup'])) {
-        $groupingSelection = filter_var($_POST['selGroup'], FILTER_SANITIZE_STRING);
+        $groupingSelection = filter_var($_POST['selGroup'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
 
@@ -101,7 +101,8 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
     if (isset($_POST['btnByGuest'])) {
         $output = RoomReport::roomNOR($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $roomGroups[$groupingSelection]);
     } else {
-        $output = RoomReport::rescUtilization($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $roomGroups[$groupingSelection]);
+        $roomReport = new RoomReport();
+        $output = $roomReport->rescUtilization($dbh, $filter->getReportStart(), $filter->getQueryEnd());
     }
 }
 
@@ -127,6 +128,7 @@ $roomGrouping = HTMLSelector::generateMarkup(
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

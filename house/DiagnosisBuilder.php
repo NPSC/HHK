@@ -134,7 +134,7 @@ if (isset($_POST['btnAddLocs'])) {
 // Lookups
 if (isset($_POST['table'])) {
 
-    $tableName = filter_var($_POST['table'], FILTER_SANITIZE_STRING);
+    $tableName = filter_var($_POST['table'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
     if ($tableName == '') {
         echo '';
@@ -146,11 +146,11 @@ if (isset($_POST['table'])) {
     $order = 0;
 
     if (isset($_POST['cmd'])) {
-        $cmd = filter_var($_POST['cmd'], FILTER_SANITIZE_STRING);
+        $cmd = filter_var($_POST['cmd'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     if (isset($_POST['tp'])) {
-        $type = filter_var($_POST['tp'], FILTER_SANITIZE_STRING);
+        $type = filter_var($_POST['tp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
     // Save
@@ -160,11 +160,11 @@ if (isset($_POST['table'])) {
         if (isset($_POST['txtDiag'][0]) && $_POST['txtDiag'][0] != '') {
 
             // new entry
-            $dText = filter_var($_POST['txtDiag'][0], FILTER_SANITIZE_STRING);
+            $dText = filter_var($_POST['txtDiag'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $aText = '';
 
             if (isset($_POST['txtDiagAmt'][0])) {
-                $aText = filter_var($_POST['txtDiagAmt'][0], FILTER_SANITIZE_STRING);
+                $aText = filter_var($_POST['txtDiagAmt'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $orderNumber = 0;
@@ -202,10 +202,12 @@ if (isset($_POST['table'])) {
 
         $amounts = array();
 
-        $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_STRING);
+        $attributes = [];
+
+        $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $orderNums = filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT);
 
-        replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
+        replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
 
     }
 
