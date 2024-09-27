@@ -347,6 +347,17 @@ CREATE TABLE if not exists `link_doc` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
+-- Table `link_note`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `link_note` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `idNote` int(11) NOT NULL,
+  `linkType` varchar(20) DEFAULT NULL,
+  `idLink` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
 -- Table `donations`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `donations` (
@@ -2409,6 +2420,10 @@ ALTER TABLE `labels`
 CREATE INDEX IF NOT EXISTS `indx_idDocument` ON `link_doc` (`idDocument` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idGuest` ON `link_doc` (`idGuest` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idPsg` ON `link_doc` (`idPSG` ASC);
+
+CREATE INDEX IF NOT EXISTS `indx_idNote` ON `link_note` (`idNote`);
+CREATE INDEX IF NOT EXISTS `indx_linkType` ON `link_note` (`linkType`);
+CREATE UNIQUE INDEX IF NOT EXISTS `unq_link` ON `link_note` (`idNote` ASC, `linkType` ASC, `idLink` ASC);
 
 ALTER TABLE `name`
     ADD INDEX IF NOT EXISTS `Index_Name` (`Name_Last` ASC, `Name_First` ASC);

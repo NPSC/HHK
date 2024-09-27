@@ -46,3 +46,14 @@ DROP INDEX IF EXISTS `indx_linkDoc`;
 
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
 ('vehicleNotes', 'Notes', 's', 'rf','','Default: Notes');
+
+-- Move note links
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "reservation" as 'linkType', `Reservation_Id` as 'idLink' from `reservation_note`;
+
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "psg" as 'linkType', `Psg_Id` as 'idLink' from `psg_note`;
+
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "document" as 'linkType', `Doc_Id` as 'idLink' from `doc_note`;
+
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "staff" as 'linkType', '0' as 'idLink' from `staff_note`;
+
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "member" as 'linkType', `idName` as 'idLink' from `member_note`;
