@@ -4,7 +4,7 @@
 use HHK\Exception\RuntimeException;
 use HHK\House\ReserveData\ReserveData;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLContainer;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\Labels;
@@ -12,7 +12,8 @@ use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\VisitStatus;
-use HHK\SysConst\VisitStatus;
+use HHK\SysConst\Mode;
+
 
 /**
  * CheckingIn.php

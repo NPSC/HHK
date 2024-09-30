@@ -11,14 +11,13 @@ use HHK\Member\Role\AbstractRole;
 use HHK\Member\Role\Guest;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
 use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
 use HHK\TableLog\HouseLog;
-use HHK\TableLog\HouseLog;
+
 
 /**
  * Reserve.php
