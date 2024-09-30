@@ -548,7 +548,11 @@ FROM reservation r
 
         // Credit payment?
         if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
+            if(isset($creditCheckOut['hpfToken'])){
+                $dataArray['deluxehpf'] = $creditCheckOut;
+            }else{
+                return $creditCheckOut;
+            }
         }
 
         $dataArray['payId'] = $payId;

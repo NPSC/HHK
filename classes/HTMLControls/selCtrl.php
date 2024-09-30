@@ -69,15 +69,19 @@ class selCtrl {
 
         $mkup = "<select id='".$this->htmlNameBase."' name='". $this->htmlNameBase . $multMarkup . $sizeMarkup . $classMkup.">";
 
-        foreach ($this->labelArray as $code => $val) {
+        if (is_null($this->labelArray)) {
+            $mkup .= "<option value=''>None</option>";
+        } else {
+            foreach ($this->labelArray as $code => $val) {
 
-            if ($this->valueArray[$code] === false)
-                $checked = "";
-            else
-                $checked = "selected='selected'";
+                if ($this->valueArray[$code] === false)
+                    $checked = "";
+                else
+                    $checked = "selected='selected'";
 
-            $mkup .= "<option value='$code' $checked>$val</option>";
+                $mkup .= "<option value='$code' $checked>$val</option>";
 
+            }
         }
         $mkup .= "</select>";
         return $mkup;

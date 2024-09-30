@@ -26,6 +26,7 @@ class PaymentRS extends AbstractTableRS {
     public $idTrans;  // int(11) NOT NULL DEFAULT '0',
     public $idToken;  // int(11) NOT NULL DEFAULT '0',
     public $Is_Refund;   // tinyint(4) DEFAULT NULL,
+    public $parent_idPayment;
     public $Is_Preauth;   // tinyint(4) DEFAULT NULL,
     public $Status_Code;   // varchar(5) NOT NULL DEFAULT ''
     public $Notes;  // TEXT NULL DEFAULT NULL,,
@@ -47,6 +48,7 @@ class PaymentRS extends AbstractTableRS {
         $this->idPayment_Method = new DB_Field("idPayment_Method", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idTrans = new DB_Field("idTrans", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Is_Refund = new DB_Field("Is_Refund", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->parent_idPayment = new DB_Field("parent_idPayment", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Is_Preauth = new DB_Field("Is_Preauth", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Status_Code = new DB_Field("Status_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->External_Id = new DB_Field("External_Id", "", new DbStrSanitizer(45), TRUE, TRUE);

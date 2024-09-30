@@ -11,6 +11,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -118,6 +119,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         . HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-calendar invSetBill', 'data-name' => $g['Payor'], 'data-inb' => $r['Invoice_Number'], 'style' => 'cursor:pointer;margin-left:5px;', 'title' => 'Set Billing Date']),
         ["class"=>"hhk-flex", "style"=>"justify-content: space-between; align-items: end;"]);
 
+    $g['emailed'] = ($r["EmailDate"] == '' ? '' : (new DateTime($r["EmailDate"]))->format("M j, Y"));
 
     $g['Amount'] = number_format($r['Amount'], 2);
 
@@ -203,13 +205,33 @@ try {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
 
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+        }
+
+        // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
         }
     }
 
 } catch (RuntimeException $ex) {
-    $paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 
@@ -255,6 +277,7 @@ $cFields[] = array("Date", 'date', 'checked', '', 'MM/DD/YYYY', '15', array(), '
 $cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
 $cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
 $cFields[] = array("Billed", 'billed', 'checked', '', 'string', '20', array());
+$cFields[] = array("Emailed", 'emailed', 'checked', '', 'string', '20', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
 $cFields[] = array("Visit Arrival", 'Arrival', '', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Visit Departure", 'Departure', '', '', 'MM/DD/YYYY', '15', array(), 'date');
@@ -467,6 +490,7 @@ ifnull(hs.idPatient, 0) as `idPatient`,
 `i`.`Invoice_Date`,
 i.BillStatus,
 i.BillDate,
+i.EmailDate,
 `i`.`Payment_Attempts`,
 `i`.`Status`,
 `i`.`Updated_By`,

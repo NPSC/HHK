@@ -190,6 +190,7 @@ class HouseServices {
         if ($action != 'hf') {
         	$mkup .= HTMLContainer::generateMarkup('div',
                 VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('class' => 'hhk-flex'));
+                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('class' => 'hhk-flex'));
         }
 
 
@@ -381,9 +382,9 @@ class HouseServices {
 
                         $extContrl = '';
 
-                        if (isset($post['rbOlpicker-ext'])) {
+                        if (isset($post['rbOlpicker']) && $post['rbOlpicker'] == 'ext') {
                             $extContrl = 'extend';
-                        } else if (isset($post['rbOlpicker-rtDate'])) {
+                        } else if (isset($post['rbOlpicker']) && $post['rbOlpicker'] == 'rtDate') {
                             $extContrl = 'return';
                         }
 
@@ -482,7 +483,11 @@ class HouseServices {
 
             if (is_null($payResult) === FALSE) {
 
-                $reply .= $payResult->getReplyMessage();
+                if($payResult->wasError()){
+                    $dataArray["error"] = $payResult->getReplyMessage();
+                }else{
+                    $reply .= $payResult->getReplyMessage();
+                }
 
                 if ($payResult->getStatus() == PaymentResult::FORWARDED) {
                     $creditCheckOut = $payResult->getForwardHostedPayment();
@@ -513,7 +518,11 @@ class HouseServices {
 
         // divert to credit payment site.
         if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
+            if(isset($creditCheckOut['hpfToken'])){ // if deluxe, don't forward
+                $dataArray['deluxehpf'] = $creditCheckOut;
+            }else{
+                return $creditCheckOut;
+            }
         }
 
         // Return checked in guests markup?
@@ -610,7 +619,11 @@ class HouseServices {
 
         // divert to credit payment site.
         if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
+            if(isset($creditCheckOut['hpfToken'])){ //if deluxe, don't forward
+                $dataArray['deluxehpf'] = $creditCheckOut;
+            }else{
+                return $creditCheckOut;
+            }
         }
 
         $dataArray['success'] = $reply;
@@ -766,6 +779,7 @@ class HouseServices {
         $uS = Session::getInstance();
         $payResult = NULL;
         $invoice = NULL;
+        $invoice = NULL;
 
         if (is_null($paymentManager->pmp)) {
             return $payResult;
@@ -801,7 +815,7 @@ class HouseServices {
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
-                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
+                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate(), $resvId);
             }
         }
 
@@ -1078,7 +1092,7 @@ class HouseServices {
 
         // Next visit must be the last.
         if ($nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedIn && $nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedOut) {
-            return 'Next Visit Span must be Checked-in or Checked-out.  ';
+            return 'Cannot Undo this room change. Next Visit Span must be Checked-in or Checked-out.  ';
         }
 
         // Dates
@@ -1106,10 +1120,10 @@ class HouseServices {
         // Load this visit's stays that were still checked in.
         $stays = Visit::loadStaysStatic($dbh, $visit->getIdVisit(), $visit->getSpan(), VisitStatus::NewSpan);
 
-        $numOccupants = max( array(count($nextStays), count($visit->stays)) );
+        $numOccupants = max([count($nextStays), count($visit->stays)] );
 
         // Check room availability
-        if ($resv->isResourceOpen($dbh, $visit->getidResource(), $startDt, $expDepDT->format('Y-m-d 01:00:00'), $numOccupants, array('room', 'rmtroom', 'part'), TRUE, TRUE) === FALSE) {
+        if ($resv->isResourceOpen($dbh, $visit->getidResource(), $startDt, $expDepDT->format('Y-m-d 01:00:00'), $numOccupants, ['room', 'rmtroom', 'part'], TRUE, TRUE) === FALSE) {
             return 'The room is unavailable. ';
         }
 
@@ -1136,7 +1150,7 @@ class HouseServices {
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
         // remove the next visit
-        EditRS::delete($dbh, $nextVisitRs, array($nextVisitRs->idVisit, $nextVisitRs->Span));
+        EditRS::delete($dbh, $nextVisitRs, [$nextVisitRs->idVisit, $nextVisitRs->Span]);
         $logDelText = VisitLog::getDeleteText($nextVisitRs, $nextVisitRs->idVisit->getStoredVal());
         VisitLog::logVisit($dbh, $nextVisitRs->idVisit->getStoredVal(), $nextVisitRs->Span->getStoredVal(), $nextVisitRs->idResource->getStoredVal(), $nextVisitRs->idRegistration->getStoredVal(), $logDelText, "delete", $uname);
 
@@ -1180,7 +1194,7 @@ class HouseServices {
                 if ($s->idName->getStoredVal() == $ns->idName->getStoredVal()
                         && date('Y-m-d', strtotime($s->Span_End_Date->getStoredVal())) == date('Y-m-d', strtotime($ns->Span_Start_Date->getStoredVal()))) {
 
-                    EditRS::delete($dbh, $ns, array($ns->idStays));
+                    EditRS::delete($dbh, $ns, [$ns->idStays]);
                     continue 2;
                 }
             }
@@ -1343,6 +1357,9 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
+        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
+        $merchants = $gateway->getMerchants($dbh);
+
         $tbl = new HTMLTable();
 
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
@@ -1353,7 +1370,7 @@ class HouseServices {
         foreach ($tkRsArray as $tkRs) {
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (strtolower($tkRs->Merchant->getStoredVal()) == 'local' || $tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production') {
+            if (count($merchants) == 1) {
                 $merchant = '';
             }
 
@@ -1366,8 +1383,6 @@ class HouseServices {
         }
 
         // New card.
-        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
-
         if ($gateway->hasCofService()) {
 
         	$attr = array('type'=>'checkbox', 'name'=>'rbUseCard'.$index);
@@ -1390,7 +1405,9 @@ class HouseServices {
 	        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(array('style'=>'width:100%;')), array('colspan'=>'4', 'style'=>'padding:0;')));
         }
 
-        return $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
+        $mkup = $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
+
+        return $mkup;
 
     }
 

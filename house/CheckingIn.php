@@ -1,7 +1,9 @@
 <?php
 
+
 use HHK\Exception\RuntimeException;
 use HHK\House\ReserveData\ReserveData;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentSvcs;
@@ -9,6 +11,7 @@ use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\RoomRateCategories;
+use HHK\SysConst\VisitStatus;
 use HHK\SysConst\VisitStatus;
 
 /**
@@ -65,10 +68,20 @@ try {
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
+        }
     }
 
 } catch (RuntimeException $ex) {
-    $paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 
@@ -139,6 +152,9 @@ $resvAr['isCheckin'] = TRUE;
 $resvAr['insistCkinEmail'] = $uS->insistCkinEmail;
 $resvAr['insistCkinPhone'] = $uS->insistCkinPhone;
 $resvAr['insistCkinAddress'] = $uS->insistCkinAddress;
+$resvAr['insistCkinEmail'] = $uS->insistCkinEmail;
+$resvAr['insistCkinPhone'] = $uS->insistCkinPhone;
+$resvAr['insistCkinAddress'] = $uS->insistCkinAddress;
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 $resvAr['datePickerButtons'] = $uS->RegNoMinorSigLines;
 
@@ -184,6 +200,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -207,13 +224,24 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 		<?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
         ?>
         	<script>
@@ -274,6 +302,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
         <script type="text/javascript" src='<?php echo CHECKINGIN_JS; ?>'></script>
 

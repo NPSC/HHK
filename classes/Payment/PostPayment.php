@@ -106,7 +106,7 @@ class PostPayment {
                     $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
                     $stat = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-check', 'style' => 'float:left;', 'title' => 'Paid'));
 
-                    if ($amt != 0) {
+                    if ($amt != 0 && $p["Has_ReturnPayment"] == 0) {
 
                         if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
                             $actionButtonArray['class'] = 'hhk-voidPmt';

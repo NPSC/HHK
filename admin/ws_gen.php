@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Cron\SendConfirmationEmailJob;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
@@ -248,32 +249,34 @@ try {
             $events = ["idJob"=>$idJob, "paramMkup"=>$job->getParamEditMkup()];
             break;
 
-        case "getInputSetTitle":
-            $idInputSet = 0;
-            if(isset($_REQUEST["inputSet"])){
-                $idInputSet = intval(filter_var($_REQUEST['inputSet'], FILTER_SANITIZE_NUMBER_INT),10);
+        case "getCronLookups":
+            $events = ["inputSets"=>[], "docs"=>[], "resvStatus"=>""];
+
+            //input sets
+            $query = "select `idFieldSet`, `Title` from `report_field_sets`";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach($rows as $row){
+                $events["inputSets"][$row["idFieldSet"]] = $row;
             }
 
-            $query = "select `idFieldSet`, `Title` from `report_field_sets` where `idFieldSet` = :idfieldset limit 1";
+            //docs
+            $query = "Select d.`idDocument`,concat(d.`Title`, ': ', g.`Description`) as `Title` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Table_Name` = 'Form_Upload'";
             $stmt = $dbh->prepare($query);
-            $stmt->execute([":idfieldset"=>$idInputSet]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $events = $row;
-            break;
-
-        case "getDocTitle":
-            $idDoc = 0;
-            if(isset($_REQUEST["idDoc"])){
-                $idDoc = intval(filter_var($_REQUEST['idDoc'], FILTER_SANITIZE_NUMBER_INT),10);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            foreach($rows as $row){
+                $events["docs"][$row["idDocument"]] = $row;
             }
 
-            $query = "Select d.`idDocument`,concat(d.`Title`, ': ', g.`Description`) as `Title` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where d.`idDocument` = :idDoc AND fu.`Table_Name` = 'Form_Upload' limit 1";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute([":idDoc"=>$idDoc]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $events = $row;
-            break;
+            //resv Status
+            $events["resvStatus"] = SendConfirmationEmailJob::getResvStatusList($dbh);
 
+            break;
+        
         case "updateCronJob":
             $idJob = 0;
             if (isset($_REQUEST['idJob'])) {

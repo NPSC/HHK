@@ -56,7 +56,7 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
         	$hsDialog.append($(data.success));
         	$hsDialog.dialog({
                 autoOpen: true,
-                width: getDialogWidth(1000),
+                width: getDialogWidth(1050),
                 resizable: true,
                 modal: true,
                 title: (data.title ? data.title : 'Hospital Details'),
@@ -187,7 +187,11 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
 
 function saveHospitalStay(idHs, idVisit) {
 	var parms = [{'name':'cmd', 'value': 'saveHS'},{'name': 'idhs', 'value': idHs}, {'name': 'idv', 'value': idVisit}];
-	var parms = parms.concat($('.hospital-stay').serializeArray());
+    var parms = parms.concat($('.hospital-stay:not(#txtDiagnosis)').serializeArray());
+
+    //diagnosis
+    let base64diag = buffer.Buffer.from($('#txtDiagnosis').val()).toString("base64");
+    parms.push({ 'name': 'txtDiagnosis', 'value': base64diag });
 
 	$.post('ws_resv.php', parms, function (data) {
         if (!data) {
@@ -678,6 +682,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     let ckoutlist = [];
     let removeList = [];
     let undoCheckout = false;
+    let undoRoomChg = false;
     let parms = {
         cmd: 'saveFees',
         idGuest: idGuest,
@@ -708,8 +713,13 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         undoCheckout = true;
     }
 
+    // Undo Room Change
+    if ($('#undoRmChg').length > 0 && $('#undoRmChg').prop('checked')) {
+        undoRoomChg = true;
+    }
+
     // Overpayment disposition
-    if (isCheckedOut && verifyBalDisp() === false && undoCheckout === false) {
+    if (isCheckedOut && verifyBalDisp() === false && undoCheckout === false && undoRoomChg === false) {
         return;
     }
 
@@ -818,7 +828,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
-                parms[$(this).attr('id')] = $(this).val();
+                parms[$(this).attr('name')] = $(this).val();
             }
         } else{
             parms[$(this).attr('id')] = $(this).val();
@@ -846,13 +856,13 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
+                $('#keysfees').dialog("close");
                 return;
             }
 
+            paymentRedirect(data, $('#xform'), parms);
+
             $('#keysfees').dialog("close");
-
-
-            paymentRedirect(data, $('#xform'));
 
             if (typeof refreshdTables !== 'undefined') {
                 refreshdTables(data);

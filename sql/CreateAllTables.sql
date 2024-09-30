@@ -463,6 +463,7 @@ CREATE TABLE if not exists `gen_lookups` (
   `Code` varchar(65) NOT NULL,
   `Description` varchar(255) NOT NULL DEFAULT '',
   `Substitute` varchar(255) NOT NULL DEFAULT '',
+  `Attributes` JSON NULL DEFAULT '{}',
   `Type` varchar(4) NOT NULL DEFAULT '',
   `Order` INT NOT NULL DEFAULT 0,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -662,6 +663,7 @@ CREATE TABLE if not exists `invoice` (
   `In_Process_Payment` tinyint(4) NOT NULL DEFAULT '0',
   `BillStatus` VARCHAR(5) NOT NULL DEFAULT '',
   `BillDate` DATE NULL,
+  `EmailDate` DATETIME NULL,
   `Last_Reminder` DATETIME,
   `Overdue_Step` INTEGER NOT NULL DEFAULT '0',
   `Description` varchar(45) NOT NULL DEFAULT '',
@@ -1390,6 +1392,7 @@ CREATE TABLE if not exists `payment` (
   `idTrans` int(11) NOT NULL DEFAULT '0',
   `idToken` int(11) NOT NULL DEFAULT '0',
   `Is_Refund` tinyint(4) NOT NULL DEFAULT '0',
+  `parent_idPayment` INT(11) NOT NULL DEFAULT '0',
   `Is_Preauth` tinyint(4) NOT NULL DEFAULT '0',
   `Status_Code` varchar(5) NOT NULL DEFAULT '',
   `Data1` varchar(15) NOT NULL DEFAULT '',
@@ -2054,7 +2057,7 @@ CREATE TABLE if not exists `trans` (
   `Card_Authorize` varchar(15) NOT NULL DEFAULT '',
   `Card_Name` varchar(45) NOT NULL DEFAULT '',
   `Auth_Code` varchar(45) NOT NULL DEFAULT '',
-  `RefNo` varchar(25) NOT NULL DEFAULT '',
+  `RefNo` varchar(50) NOT NULL DEFAULT '',
   `Process_Code` varchar(15) NOT NULL DEFAULT '',
   `Gateway_Ref` varchar(45) NOT NULL DEFAULT '',
   `Payment_Status` varchar(15) NOT NULL DEFAULT '',
@@ -2434,6 +2437,7 @@ ALTER TABLE `name_guest`
 CREATE INDEX  IF NOT EXISTS `INDEX_PHONE_SEARCH` ON name_phone(`Phone_Search`);
 
 CREATE INDEX IF NOT EXISTS `INDEX_USERNAME` ON `note`(`User_Name` ASC);
+CREATE INDEX IF NOT EXISTS `INDEX_CATEGORY` ON `note`(`Category` ASC);
 
 ALTER TABLE `payment`
     ADD INDEX IF NOT EXISTS `Index_Date` (`Payment_Date` ASC);
@@ -2472,6 +2476,8 @@ ALTER TABLE `reservation`
     ADD INDEX IF NOT EXISTS `Index_idHosptial_Stay` (`idHospital_Stay` ASC);
 ALTER TABLE `reservation`
     ADD INDEX IF NOT EXISTS `Index_idReferral_Doc` (`idReferralDoc` ASC);
+ALTER TABLE `reservation`
+    ADD INDEX IF NOT EXISTS `Index_Status` (`Status` ASC);
 
 ALTER TABLE `reservation_multiple`
   ADD INDEX IF NOT EXISTS `host_id_index` (`Host_Id` ASC);
@@ -2518,6 +2524,9 @@ ALTER TABLE `visit`
     ADD INDEX IF NOT EXISTS `Index_Arrival_Date` (`Arrival_Date` ASC);
 ALTER TABLE `visit`
     ADD INDEX IF NOT EXISTS `Index_idReservation` (`idReservation` ASC);
+
+ALTER TABLE `document`
+    ADD INDEX IF NOT EXISTS `Indx_Status` (`Status` ASC);
 
 ALTER TABLE `name_log`
     ADD INDEX IF NOT EXISTS `INDEX_IDNAME` (`idName` ASC);

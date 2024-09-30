@@ -202,10 +202,12 @@ if (isset($_POST['table'])) {
 
         $amounts = array();
 
+        $attributes = [];
+
         $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $orderNums = filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT);
 
-        replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
+        replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
 
     }
 

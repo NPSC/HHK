@@ -454,7 +454,7 @@ class SSP {
 	/**
 	 * Execute an SQL query on the database
 	 *
-	 * @param  resource $db  Database handler
+	 * @param  \PDO $db  Database handler
 	 * @param  array    $bindings Array of PDO binding values from bind() to be
 	 *   used for safely escaping strings. Note that this can be given as the
 	 *   SQL query string if no bindings are required.
@@ -483,7 +483,7 @@ class SSP {
 		try {
 			$stmt->execute();
 		}
-		catch (PDOException $e) {
+		catch (\PDOException $e) {
 			self::fatal( "An SQL error occurred: ".$e->getMessage() );
 		}
 

@@ -55,7 +55,7 @@ class TransRS extends AbstractTableRS {
         $this->Card_Authorize = new DB_Field("Card_Authorize", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Card_Name = new DB_Field("Card_Name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Auth_Code = new DB_Field("Auth_Code", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->RefNo = new DB_Field("RefNo", "", new DbStrSanitizer(25), TRUE, TRUE);
+        $this->RefNo = new DB_Field("RefNo", "", new DbStrSanitizer(50), TRUE, TRUE);
         $this->Process_Code = new DB_Field("Process_Code", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Gateway_Ref = new DB_Field("Gateway_Ref", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Payment_Status = new DB_Field("Payment_Status", "", new DbStrSanitizer(15), TRUE, TRUE);

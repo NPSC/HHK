@@ -50,6 +50,10 @@
     font-size: 1em;
 }
 
+.align-center {
+    text-align: center;
+}
+
 @media print {
     body {
         margin:0; 

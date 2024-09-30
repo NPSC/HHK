@@ -19,6 +19,8 @@ use HHK\Member\Address\Phones;
 use HHK\Member\EmergencyContact\EmergencyContact;
 use HHK\Member\RoleMember\GuestMember;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\Purchase\FinAssistance;
 use HHK\Purchase\RoomRate;
@@ -31,6 +33,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\MemBasis;
 use HHK\SysConst\MemStatus;
+use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\VolMemberType;
@@ -91,13 +94,24 @@ try {
                 ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
         }
 
+        // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            exit;
         }
     }
 
 } catch (RuntimeException $ex) {
-    $paymentMarkup = $ex->getMessage();
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
 }
 
 
@@ -704,7 +718,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($d
 
 // Save guest Id.
 $uS->guestId = $id;
-
+//remove download word
+//add default email text in site config
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -750,6 +765,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="js/statement.js"></script>
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
@@ -764,6 +780,15 @@ $uS->guestId = $id;
         }
 
         if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php
+            if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
+                if ($uS->mode == Mode::Live) {
+                    echo DELUXE_EMBED_JS;
+                }else{
+                    echo DELUXE_SANDBOX_EMBED_JS;
+                }
+            }
+        ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -898,7 +923,7 @@ $uS->guestId = $id;
                             <?php } if ($showCharges) {  ?>
                             <li id="pmtsTable"><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
                             <?php } ?>
-                            <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
+                            <li id="stmtTab"><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
                             <?php if ($uS->TrackAuto) { ?>
                             <li><a href="#vvehicle">Vehicles</a></li>
                             <?php } ?>
@@ -991,6 +1016,7 @@ $uS->guestId = $id;
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"></form>
         <table id="feesTable" style="display:none;"></table>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup();} ?>
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);

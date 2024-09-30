@@ -247,6 +247,16 @@ $(document).on('change', "#numAddrCalc", function(){
 
             if (ui.newTab.prop('id') === 'liCron') {
                 if (!cronLoaded) {
+                    $.ajax({
+                        url: 'ws_gen.php',
+                        async: false,
+                        dataType: 'json',
+                        data: {"cmd": "getCronLookups"},
+                        success: function (data) {
+                            cronLookups = data;
+                        }
+                    });
+
                     cronLoaded = true;
                     cronTable = $('table#cronJobs').DataTable({
                         "columnDefs": dtCronCols,
@@ -304,6 +314,7 @@ $(document).on('change', "#numAddrCalc", function(){
     });
 
     var jobWeekdays = new Array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+    var cronLookups = [];
     var dtCronCols = [
         {
             "targets": [0],
@@ -341,31 +352,17 @@ $(document).on('change', "#numAddrCalc", function(){
             render: function (data, type) {
                 data = JSON.parse(data);
                 var mkup = '';
-                var lookupFields = ["fieldSet", "EmailTemplate"];
-                var submitdata = {};
                 $.each(data, function (key, value) {
-                    if (lookupFields.includes(key) && value.length > 0) {
-                        if (key == "fieldSet") {
-                            submitdata = {"cmd": "getInputSetTitle", "inputSet": value};
-                        } else if (key == "EmailTemplate") {
-                            submitdata = {"cmd": "getDocTitle", "idDoc": value};
+                    if (value.length > 0) {
+                        if (key == "fieldSet" && cronLookups.inputSets[value] !== undefined) {
+                            value = cronLookups.inputSets[value].Title;
+                        } else if (key == "EmailTemplate" && cronLookups.docs[value] !== undefined) {
+                            value = cronLookups.docs[value].Title;
+                        } else if (key == "ResvStatus" && cronLookups.resvStatus[value] !== undefined) {
+                            value = cronLookups.resvStatus[value][1];
                         }
-
-                        $.ajax({
-                            url: 'ws_gen.php',
-                            async: false,
-                            dataType: 'json',
-                            data: submitdata,
-                            success: function (data) {
-                                if (data.Title) {
-                                    value = data.Title;
-                                }
-                                mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) + "</strong>: </span><span>" + value + "</span></div>";
-                            }
-                        });
-                    } else {
-                        mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) + "</strong>: </span><span>" + value + "</span></div>";
                     }
+                    mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) + "</strong>: </span><span>" + value + "</span></div>";
                 });
                 return mkup;
             }

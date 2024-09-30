@@ -516,7 +516,7 @@ Order by `t`.`List_Order`;");
                         $rep = function ($dbh, $newId, $oldId) {
                             return $dbh->exec("update checklist_item set `GL_Code` = '$newId' where `GL_Code` = '$oldId';");
                         };
-                        break; 
+                        break;
                 }
             }
 

@@ -92,6 +92,8 @@ class ReservationSvcs
         $li = '';
         $tabContent = '';
         $dataArray = array();
+        $cronJobs = array();
+        $reservStatuses = array();
 
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
 
@@ -106,6 +108,18 @@ class ReservationSvcs
 
         if (count($docRows) > 0) {
 
+            //get cron jobs
+            $stmt = $dbh->query("select * from cronjobs where `Code` = 'SendConfirmationEmailJob' and `Status` = 'a'");
+            $jobs = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach($jobs as $job){
+                $params = json_decode($job["Params"], true);
+                if(isset($params["EmailTemplate"]) && $params["EmailTemplate"] > 0){
+                    $job["Params"] = $params;
+                    $cronJobs[$params["EmailTemplate"]][$job["idJob"]] = $job;
+                }
+            }
+            $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+
             foreach ($docRows as $d) {
 
                 $confirmForm = new ConfirmationForm($dbh, $d['idDocument']);
@@ -119,6 +133,12 @@ class ReservationSvcs
                     'tabTitle' => $d['Description'],
                     'docId' => $d['idDocument']
                 );
+                
+                if(isset($cronJobs[$d['idDocument']])){
+                    $docs[$d['Code']]["cronJobs"] = $cronJobs[$d['idDocument']];
+                }else{
+                    $docs[$d['Code']]["cronJobs"] = [];
+                }
             }
         } else {
 
@@ -128,17 +148,28 @@ class ReservationSvcs
                 'style' => RegisterForm::getStyling(),
                 'tabIndex' => 'en',
                 'tabTitle' => 'English',
-                'docId' => false
+                'docId' => false,
+                'cronJobs'=>[]
             );
         }
 
         foreach ($docs as $r) {
+            $cronAlert = "";
 
             $li .= HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
+                HTMLContainer::generateMarkup('a', $r['tabTitle'] . ($r["cronJobs"] ? '<i class="ml-2 bi bi-watch"></i>':'') , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
 
+            if(count($r["cronJobs"]) > 0){
+                foreach($r["cronJobs"] as $job){
+                    $jobTime = new \DateTime($reserv->getExpectedArrival());
+                    $jobTime->sub(new \DateInterval("P" . $job["Params"]["solicitBuffer"] . "D"));
+                    $jobTime->setTime($job["Hour"], $job["Minute"]);
+                    $cronAlert .= "This email is sent automatically at " . $jobTime->format("g:i a") . " <strong>" . $job["Params"]["solicitBuffer"] . " days before</strong> (" . $jobTime->format("M j, Y") . ") the expected arrival date " . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? "of <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : ""); 
+                }
+                $cronAlert = HTMLContainer::generateMarkup("div", '<i class="mr-3 bi bi-info-circle-fill"></i>' . $cronAlert, ['class' => 'mb-4 p-2 ui-corner-all ui-state-highlight']);
+            }
 
-            $tabContent .= HTMLContainer::generateMarkup('div',
+            $tabContent .= HTMLContainer::generateMarkup('div', $cronAlert .
                 HTMLContainer::generateMarkup('div', ($r['doc'] != '' ? $r['doc']: '<div class="ui-state-error">The confirmation document is empty</div>'), array('id'=>'PrintArea'.$r['tabIndex'])),
                 array('id'=>$r['tabIndex']));
 

@@ -250,7 +250,7 @@ abstract class AbstractReport {
         $("#em' . $this->inputSetReportName . 'RptDialog").dialog({
             autoOpen:false,
             modal:true,
-            title: "Email ' . $this->reportTitle . '",
+            title: "Email ' . html_entity_decode($this->reportTitle) . '",
             width: "auto",
             buttons: {
                 "Send":function(){

@@ -9,6 +9,7 @@ use HHK\sec\Session;
 use HHK\SysConst\{InvoiceLineType, InvoiceStatus, ItemId, PaymentMethod, PaymentStatusCode, GLTableNames};
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\House\Registration;
+use Mpdf\Mpdf;
 
 /**
  *
@@ -108,11 +109,11 @@ class Statement {
         $idPayment = 0;
         $idPA = 0;
 
-        $invoices = array();
-        $invoice = array();
-        $payments = array();
-        $paymtAuths = array();
-        $houseWaives = array();
+        $invoices = [];
+        $invoice = [];
+        $payments = [];
+        $paymtAuths = [];
+        $houseWaives = [];
 
         // Organize the data
         while ($p = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -129,32 +130,32 @@ class Statement {
 
                 if ($idInvoice > 0) {
                     // close last invoice
-                    $invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'h'=>$houseWaives);
-                    $houseWaives = array();
+                    $invoices[$idInvoice] = ['i' => $invoice, 'p' => $payments, 'h' => $houseWaives];
+                    $houseWaives = [];
                 }
 
                 $idInvoice = $p['idInvoice'];
 
                 // new invoice
-                $invoice = array(
-                    'idInvoice'=>$p['idInvoice'],
-                    'Invoice_Number'=>$p['Invoice_Number'],
-                    'Invoice_Amount'=>$p['Invoice_Amount'],
-                    'Sold_To_Id'=>$p['Sold_To_Id'],
-                    'Bill_Agent'=>$p['Bill_Agent'],
-                    'idGroup'=>$p['idGroup'],
-                    'Order_Number'=>$p['Order_Number'],
-                    'Suborder_Number'=>$p['Suborder_Number'],
-                    'Invoice_Date'=>$p['Invoice_Date'],
-                    'Invoice_Status'=>$p['Invoice_Status'],
-                    'Invoice_Status_Title'=>$p['Invoice_Status_Title'],
-                    'Carried_Amount'=>$p['Carried_Amount'],
-                    'Invoice_Description'=>$p['Notes'],
-                    'Invoice_Balance'=>$p['Invoice_Balance'],
-                    'Delegated_Invoice_Id'=>$p['Delegated_Invoice_Id'],
-                    'Invoice_Deleted'=>$p['Deleted'],
-                    'Invoice_Updated_By'=>$p['Invoice_Updated_By'],
-                );
+                $invoice = [
+                    'idInvoice' => $p['idInvoice'],
+                    'Invoice_Number' => $p['Invoice_Number'],
+                    'Invoice_Amount' => $p['Invoice_Amount'],
+                    'Sold_To_Id' => $p['Sold_To_Id'],
+                    'Bill_Agent' => $p['Bill_Agent'],
+                    'idGroup' => $p['idGroup'],
+                    'Order_Number' => $p['Order_Number'],
+                    'Suborder_Number' => $p['Suborder_Number'],
+                    'Invoice_Date' => $p['Invoice_Date'],
+                    'Invoice_Status' => $p['Invoice_Status'],
+                    'Invoice_Status_Title' => $p['Invoice_Status_Title'],
+                    'Carried_Amount' => $p['Carried_Amount'],
+                    'Invoice_Description' => $p['Notes'],
+                    'Invoice_Balance' => $p['Invoice_Balance'],
+                    'Delegated_Invoice_Id' => $p['Delegated_Invoice_Id'],
+                    'Invoice_Deleted' => $p['Deleted'],
+                    'Invoice_Updated_By' => $p['Invoice_Updated_By'],
+                ];
 
                 // add extra columns
                 foreach ($extraCols as $e) {
@@ -166,8 +167,8 @@ class Statement {
 
                 $idPayment = 0;
                 $idPA = 0;
-                $payments = array();
-                $paymtAuths = array();
+                $payments = [];
+                $paymtAuths = [];
             }
 
             if ($p['idPayment'] != 0) {
@@ -186,7 +187,9 @@ class Statement {
 
                     $idPayment = $p['idPayment'];
 
-                    $payments[$idPayment] = array('idPayment'=>$p['idPayment'],
+
+                    $payments[$idPayment] = [
+						'idPayment'=>$p['idPayment'],
                         'Payment_Amount'=>$p['Payment_Amount'],
                         'idPayment_Method'=>$p['idPayment_Method'],
                         'Payment_Method_Title'=>$p['Payment_Method_Title'],
@@ -195,6 +198,7 @@ class Statement {
                         'Payment_Date'=>$p['Payment_Date'],
                         'Payment_Timestamp'=>$p['Payment_Timestamp'],
                         'Is_Refund'=>$p['Is_Refund'],
+                        'Has_ReturnPayment'=>$p['Has_ReturnPayment'],
                         'Payment_idPayor'=>$p['Payment_idPayor'],
                         'Payment_Updated_By'=>$p['Payment_Updated_By'],
                         'Last_Updated'=>$p['Payment_Last_Updated'],
@@ -202,10 +206,10 @@ class Statement {
                         'Check_Number'=>$p['Check_Number'],
                         'Payment_External_Id'=>$p['Payment_External_Id'],
                         'Payment_Note'=>$p['Payment_Note']
-                    );
+                    ];
 
                     $idPA = 0;
-                    $paymtAuths = array();
+                    $paymtAuths = [];
                 }
 
                 // Payment_Auths
@@ -214,7 +218,7 @@ class Statement {
 
                     $idPA = $p['idPayment_auth'];
 
-                    $paymtAuths[$idPA] = array(
+                    $paymtAuths[$idPA] = [
                         'idPayment_auth' => $p['idPayment_auth'],
                         'Charge_Customer_Id' => $p['Charge_Customer_Id'],
                         'Masked_Account' => $p['Masked_Account'],
@@ -223,17 +227,17 @@ class Statement {
                         'Approval_Code' => $p['Approval_Code'],
                         'Auth_Last_Updated' => $p['Auth_Last_Updated'],
                         'Merchant' => $p['Merchant']
-                    );
+                    ];
                 }
             }
 
             // House Waive
             if ($p['il_Id'] > 0 && isset($houseWaives[$p['il_Id']]) === FALSE) {
-                $houseWaives[$p['il_Id']] = array(
+                $houseWaives[$p['il_Id']] = [
                     'id' => $p['il_Id'],
                     'Amount' => $p['il_Amount'],
                     'Desc' => $p['il_Description']
-                );
+                ];
             }
         }
 
@@ -249,7 +253,7 @@ class Statement {
 
         if ($idInvoice > 0) {
             // close last invoice
-            $invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'h'=>$houseWaives);
+            $invoices[$idInvoice] = ['i' => $invoice, 'p' => $payments, 'h' => $houseWaives];
         }
 
         return $invoices;
@@ -1268,10 +1272,10 @@ WHERE
 
             $header .= HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth, "class"=>"mr-5")),
-            array("style"=>"width: " . $uS->statementLogoWidth ."px"));
+            array("style"=>"vertical-align: middle; width: " . $uS->statementLogoWidth ."px"));
         }
 
-        $header .= HTMLTable::makeTd(Receipt::getAddressTable($dbh, $uS->sId));
+        $header .= HTMLTable::makeTd(Receipt::getAddressTable($dbh, $uS->sId), ['style'=>'vertical-align: middle;']);
 
         $hdrTbl = new HTMLTable();
 
@@ -1280,7 +1284,61 @@ WHERE
         return $hdrTbl->generateMarkup(array("id"=>"stmtHeader", "class" => "mb-3 fullWidth"));
     }
 
-    public static function makeEmailTbl($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
+    public static function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
+        $emtableMarkup = "";
+        $emTbl = new HTMLTable();
+
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('From', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd($emFrom)
+		);
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Subject', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject')))
+		);
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('To', ['class'=>"tdlabel"]) . 
+            HTMLTable::makeTd(HTMLInput::generateMarkup($emAddrs, array('name' => 'txtEmail')))
+		);
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('Body', ['class'=>"tdlabel"]) . 
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize')))
+		);
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
+			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Statement.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowStatement.php?vid=' . $idVisit . '&reg=' . $idRegistration . '&pdfDownload', 'class' => 'hhk-autosize')))
+		);
+
+        $emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email ' . Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
+        
+        $emtableMarkup .= HTMLContainer::generateMarkup("div", 
+			$emTbl->generateMarkup(array("class"=>"emTbl mb-2"), ) . 
+			HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('button', '&nbsp;<span>Send</span> <i class="ml-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'type'=>"button", "id"=>"btnEmail", 'class'=> 'ui-button ui-corner-all ui-widget', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit)), ["class"=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
+
+        $emtableMarkup .= HTMLContainer::generateMarkup("div",
+			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"])
+            //. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"])
+            ,
+		["class"=>'mb-3']);
+
+        return $emtableMarkup;
+    }
+
+    public static function makePDF($stmtMarkup = "", bool $download = false)
+	{
+
+		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
+		$mpdf->showImageErrors = true;
+		$mpdf->WriteHTML('<html><head>' . HOUSE_CSS . GRID_CSS . STATEMENT_CSS . '</head><body style="font-size: 0.9em"><div class="PrintArea">' . $stmtMarkup . '</div></body></html>');
+
+		if($download == true){
+			$mpdf->OutputHttpDownload("Statement.pdf");
+		} else {
+			return $mpdf->Output('', 'S');
+		}
+	}
+
+    public static function makeEmailTblOLD($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
         // create send email table
         $emTbl = new HTMLTable();
         $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'class'=>'ignrSave ml-2')), array("class"=>"hhk-flex")));
@@ -1331,7 +1389,7 @@ WHERE
 
         // Show diagnosis
         if ($uS->ShowDiagOnStmt && count($diags) > 0 && $diags[1] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($diags[1]));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($diags[1]));
 
             if (count($diags) > 1 && $diags[2] != '') {
                 $tbl->addBodyTr(HTMLTable::makeTd('2nd '.$labels->getString('statement', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($diags[2]));
@@ -1352,6 +1410,10 @@ WHERE
         }
 
         $sTbl = new HTMLTable();
+
+        $sTbl->addHeaderTr(
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("strong", "Statement Summary"), ["class"=>"border-none align-center", "colspan"=>"2"])
+        );
 
         $sTbl->addBodyTr(
             HTMLTable::makeTd('Total Nights:', array('class'=>'tdlabel'))
@@ -1404,10 +1466,10 @@ WHERE
         $bodyTbl->addBodyTr(
             HTMLTable::makeTd(
                 HTMLContainer::generateMarkup("strong", 'Prepared '.date('M jS, Y')) .
-                $tbl->generateMarkup()) .
+                $tbl->generateMarkup(), ['class'=>'border-none']) .
             HTMLTable::makeTd(
-                $sTbl->generateMarkup(["class"=>"tblStmtSummary"], HTMLContainer::generateMarkup("strong", 'Statement Summary'))
-            , array("class"=>"align-center"))
+                $sTbl->generateMarkup(["class"=>"tblStmtSummary"])
+            , array("class"=>"align-right border-none"))
         );
 
         return $bodyTbl->generateMarkup(array("id"=>"stmtSummary", "class" => "mb-3 fullWidth"));

@@ -224,7 +224,7 @@ WHERE r.Email_Receipt = 1 and
     }
 
     public function wasError() {
-        if ($this->getStatus() == self::ERROR) {
+        if ($this->getStatus() == self::ERROR || $this->getStatus() == self::DENIED) {
             return TRUE;
         }
         return FALSE;

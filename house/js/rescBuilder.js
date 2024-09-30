@@ -476,7 +476,8 @@ $(document).ready(function () {
                         				$(this).find("td:first input").val(i);
                         			});
                         		}
-                        	});
+                            });
+                        bsIconAutocomplete($sel.closest('form').children('div.lookupDetailTbl'));
                     } else {
                         $sel.closest('form').children('div.lookupDetailTbl').empty();
                     }
@@ -643,4 +644,28 @@ $(document).ready(function () {
 		form.toggle();
 
     });
+
 });
+
+function bsIconAutocomplete(container) {
+    container.find("input.bs-icon").each(
+        function (i,v) {
+            $(v).autocomplete({
+                source: bsIconList,
+                position: { my: "left top", at: "left bottom", collision: "flip" },
+                minLength: 3,
+                select: function (event, ui) {
+                    if (ui.item) {
+                        $(this).val(ui.item.value);
+                        $(this).data("icon-value", ui.item.value);
+                        $(this).closest("td").find(".demogIconPreview").attr("class", "demogIconPreview mx-2 " + ui.item.value);
+                        return false;
+                    }
+                }
+            }).autocomplete("instance")._renderItem = function (ul, item) {
+                return $( "<li>" )
+                .append( '<div><i style="font-size: 1.1em" class="mr-2 '+ item.value + '"></i>' + item.label + "</div>" )
+                .appendTo( ul );
+            };
+        });
+}

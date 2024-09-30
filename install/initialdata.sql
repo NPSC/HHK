@@ -74,6 +74,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Constraint_Type', 'v', 'Visit', '','',0),
 
 ('cronJobTypes', 'SendPostCheckoutEmailJob', 'Send Post Check In/Out Email', '','', 0),
+('cronJobTypes', 'SendConfirmationEmailJob', 'Send Confirmation Email', '','', 0),
 ('cronJobTypes', 'EmailReportJob', 'Send Report Email', '','', 0),
 
 ('dayIncrements', '', 'Never', '','', '6'),
@@ -325,6 +326,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Pay_Gateway_Name', 'instamed', 'Instamed','','',0),
 ('Pay_Gateway_Name', 'vantiv', 'Worldpay','','',0),
+('Pay_Gateway_Name', 'deluxe', 'Deluxe','','',0),
 
 
 ('Pay_Status', 'c', 'Cleared', '','',0),
@@ -586,6 +588,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('CoTod','false','b','hf','','Edit the time of day of a checkout','',1),
 ('county','true','b','h','','Include the County for addresses','',1),
 ('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', '', 'CSS validator service', '',0),
+('CurGuestDemogIcon','ADA','lu','h','','Show this Demographic category on the Current Guests tab as an icon','Demographics',1),
 ('DefaultCalEventColor', '', 's', 'c', '', 'Default event ribbon color for the calendar', '',1),
 ('DefaultDays','21','i','h','','The Default number of following days for date range control','',1),
 ('DefaultPayType','cc','s','f','','Use the Resource Builder','',0),
@@ -610,7 +613,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('GuestAddr','true','b','g','','Enable guest address','',1),
 ('HouseKeepingEmail','','ea','ha','','This address receives all room turn-over notices','',1),
 ('HouseKeepingSteps','1','lu','hf','','Number of steps to cleaning/preparing rooms for new guests','HouseKpgSteps',1),
-('IncludeLastDay','false','b','h','','Include the departure day in room searches','',1),
+('IncludeLastDay','true','b','h','','Include the departure day in room searches','',1),
 ('IncomeRated','true','b','hf','','Enable guest income chooser rate assistance','',1),
 ('InitResvStatus','a','lu','h','','Initial reservation status setting, confirmed or unconfirmed','Init_Reserv_Status',1),
 ('insistCkinPhone', 'false', 'b', 'h', '', 'Insist phone for all guests be filled in on check in page', '', 1),
@@ -645,6 +648,16 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('PatientAsGuest','true','b','p','','House allows patients to stay as guests','',1),
 ('PayAtCkin','true','b','h','','Allow/Disallow payments at check-in time','',1),
 ('PaymentDisclaimer','The amount of your donation that is deductible for Federal tax purposes is limited to the excess of the amount of your donation over the value of the goods and services provided to you by (House Name).  Because the estimated value of the goods and services provided to you by (House Name) exceeds the value of your donation, no part of your donation is deductible for Federal tax purposes.','t','f','','Shows on receipts and statements','',1),
+('InvoiceEmailBody','Hello,
+Your invoice from (house name) is attached.
+
+Thank you
+(house name)','t','f','','Default email body for Invoices','',1),
+('StatementEmailBody','Hello,
+Your statement from (house name) is attached.
+
+Thank you
+(house name)','t','f','','Default email body for Statements','',1),
 ('PaymentGateway','','lu','fg','','Credit Payment Gateway','Pay_Gateway_Name',0),
 ('PayVFeeFirst','true','b','h','','Default check the visit fees payment checkbox','',1),
 ('PreviousNights','0','i','c','','Previous (to HHK) nights to add to nights counter','',1),
@@ -678,7 +691,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1'),
 ('ShowBirthDate','true','b','h','','Show birthdate for patients and guests','',1),
 ('ShowCreatedDate','true','b','h','','Show the Created Date in Register page tabs lists','',1),
-('ShowDemographics','false','b','h','','Show demographics selectors on Check in and Reservation pages','',1),
+('ShowDemographics','true','b','h','','Show demographics selectors on Check in and Reservation pages','',1),
 ('ShowDiagOnStmt', 'false', 'b', 'h', '', 'Show the patient diagnoses on the statements', '', '1'),
 ('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)','',1),
 ('showCurrentGuestPhotos', 'false', 'b', 'hf', '', 'Show Guest Photos on Current Guests tab', '', '1'),
@@ -770,6 +783,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('diagnosisDetail','Diagnosis Details','s','h','','Default: Diagnosis Details'),
 ('location','Unit','s','h','','Default: Unit'),
 ('hospital','Hospital','s','h','','Default: Hospital'),
+('association','Association','s','h','','Default: Hospital'),
 ('treatmentStart','Treatment Start','s','h','','Default: Treatment Start'),
 ('treatmentEnd','Treatment End','s','h','','Default: Treatment End'),
 ('roomNumber','Room','s','h','','Default: Room'),

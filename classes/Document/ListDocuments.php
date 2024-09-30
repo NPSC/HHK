@@ -29,7 +29,9 @@ class ListDocuments {
             array('db' => 'Doc_Id', 'dt' => 'DocId'),
             array('db' => 'Action', 'dt' => 'Action'),
             array('db' => 'ViewDoc', 'dt' => 'View Doc'),
-            array('db' => 'Guest', 'dt' => 'Guest')
+            array('db' => 'Guest', 'dt' => 'Guest'),
+            array('db' => 'Guest_Id', 'dt' => 'Guest_Id'),
+            array('db' => 'PSG_Id', 'dt' => 'PSG_Id')
         );
 
         $dbView = 'v_docs';

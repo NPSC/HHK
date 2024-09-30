@@ -14,6 +14,7 @@ use HHK\House\Registration;
 use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\sec\Session;
 use HHK\sec\Labels;
+use Mpdf\Mpdf;
 
 /**
  * Invoice.php
@@ -788,6 +789,29 @@ where
 	}
 
 	/**
+	 * Generate PDF of Invoice
+	 * @param \PDO $dbh
+	 * @param bool $download When true: initialize download; false: return string of pdf content
+	 * @return string|void
+	 */
+	public function makePDF(\PDO $dbh, bool $download = false)
+	{
+		$stmtMarkup = $this->createPDFMarkup($dbh);
+
+		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
+		$mpdf->showImageErrors = true;
+		$mpdf->WriteHTML(
+			'<html><head>' . HOUSE_CSS . INVOICE_CSS . '</head><body><div class="PrintArea">' . $stmtMarkup . '</div></body></html>'
+		);
+
+		if($download == true){
+			$mpdf->OutputHttpDownload("Invoice.pdf");
+		} else {
+			return $mpdf->Output('', 'S');
+		}
+	}
+
+	/**
 	 * Summary of getGuestAddress
 	 * @param \PDO $dbh
 	 * @param mixed $idName
@@ -853,24 +877,52 @@ where
 		return $mkup;
 	}
 
-	public static function makeEmailTbl($emSubject = "", $emAddrs = "", $emBody = "", $invNum = null){
+	public function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = "", $emBody = "", $invNum = null){
         $emtableMarkup = "";
         $emTbl = new HTMLTable();
 
-        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'class' => 'ml-2')), array("class"=>"hhk-flex")));
-        $emTbl->addBodyTr(HTMLTable::makeTd(
-            'Email: '
-            . HTMLInput::generateMarkup(implode(", ", $emAddrs), array('name' => 'txtEmail', 'class' => 'ml-2'))
-            . ($invNum !== null ? HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')): ""), array("class"=>"hhk-flex")));
-        $emTbl->addBodyTr(HTMLTable::makeTd(
-            'Body: '
-            . HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'ml-2 hhk-autosize')), array("class"=>"hhk-flex")));
-        $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit'))));
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('From', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd($emFrom)
+		);
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Subject', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
+			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject')))
+		);
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('To', ['class'=>"tdlabel"]) . 
+            HTMLTable::makeTd(HTMLInput::generateMarkup(implode(", ", $emAddrs), array('name' => 'txtEmail'))
+            . ($invNum !== null ? HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')): ""))
+		);
+        $emTbl->addBodyTr(
+			HTMLTable::makeTd('Body', ['class'=>"tdlabel"]) . 
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize')))
+		);
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
+			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Invoice.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowInvoice.php?invnum='.$invNum.'&pdfDownload', 'class' => 'hhk-autosize')))
+		);
 
-        $emtableMarkup .= $emTbl->generateMarkup(array("class"=>"emTbl"), 'Email Invoice');
+		if($this->invRs->EmailDate->getStoredVal()){
+			$emailDT = new \DateTime($this->invRs->EmailDate->getStoredVal());
+			$emTbl->addBodyTr(
+				HTMLTable::makeTd('Last Sent', ['class'=>"tdlabel"]) . 
+				HTMLTable::makeTd($emailDT->format("M j, Y g:i a"))
+			);
+		}
 
-        $emtableMarkup .= HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3 mt-2"]);
-        $emtableMarkup .= HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3 mt-2"]);
+		$emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email Invoice'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
+
+        $emtableMarkup .= HTMLContainer::generateMarkup("div", 
+			$emTbl->generateMarkup(array("class"=>"emTbl mb-2")) . 
+			HTMLContainer::generateMarkup("div", 
+				HTMLContainer::generateMarkup('button', 'Send <i class="ml-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit')), ['class'=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
+
+        $emtableMarkup .= HTMLContainer::generateMarkup("div",
+			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"])
+        	//. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"])
+			,
+		["class"=>'mb-3']);
 
         return $emtableMarkup;
     }
@@ -893,6 +945,62 @@ where
 			}
 		};
 		return "";
+	}
+
+	/**
+	 * Get billTo info from `name` table
+	 * @param \PDO $dbh
+	 * @return array
+	 */
+	public function getBillTo(\PDO $dbh):array{
+		$idName = $this->getSoldToId();
+		if ($idName > 0) {
+
+			$stmt = $dbh->query("select n.*, ifnull(e.Email, '') from name n left join name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose where n.idName = $idName");
+
+			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
+
+			if (count($rows) == 1) {
+				return $rows[0];
+			}
+		};
+		return [];
+	}
+
+	/**
+	 * get name, phone and email of billing contact
+	 * @param \PDO $dbh
+	 * @param int $idName
+	 * @return array
+	 */
+	public static function getBillToName(\PDO $dbh, int $idName){
+		if ($idName > 0) {
+
+			$stmt = $dbh->query("select
+    ifnull(n.Company,'') as Company,
+    ifnull(p.Phone_Num,'') as Phone_Num,
+    ifnull(e.Email,'') as Email,
+	n1.Name_First,
+	n1.Name_Last,
+	n1.Company as Company_Name
+from
+	name n1 left join
+    name n on n1.Company_Id = n.idName
+        left join
+    name_phone p ON n1.idName = p.idName and n1.Preferred_Phone = p.Phone_Code
+        left join
+    name_email e ON n1.idName = e.idName and n1.Preferred_Email = e.Purpose
+where
+    n1.idName = $idName");
+
+			$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+			if (count($rows) == 1) {
+
+				return $rows[0];
+			}
+		}
+		return [];
 	}
 
 	/**
@@ -1193,6 +1301,34 @@ where
 
 		return FALSE;
 	}
+
+	/**
+	 * Summary of setEmailDate
+	 * @param \PDO $dbh
+	 * @param mixed $billDT
+	 * @param mixed $user
+	 * @return bool
+	 */
+	public function setEmailDate(\PDO $dbh, \DateTimeInterface $emailDT, $user) {
+		$this->invRs->EmailDate->setNewVal ( $emailDT->format ( 'Y-m-d H:i:s' ) );
+
+		if ($this->idInvoice > 0) {
+
+			$this->invRs->Last_Updated->setNewVal ( date ( 'Y-m-d H:i:s' ) );
+			$this->invRs->Updated_By->setNewVal ( $user );
+
+			EditRS::update ( $dbh, $this->invRs, array (
+					$this->invRs->Invoice_Number
+			) );
+
+			EditRS::updateStoredVals ( $this->invRs );
+
+			return TRUE;
+		}
+
+		return FALSE;
+	}
+	
 	/**
 	 * Summary of setAmountToPay
 	 * @param mixed $amt

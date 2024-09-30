@@ -237,7 +237,11 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
             $gtRs = new Guest_TokenRS();
             $gtRs->idGuest->setStoredVal($idGst);
             $gtRs->Merchant->setStoredVal($merchant);
-            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->Merchant));
+            $searchAr = array($gtRs->idGuest);
+            if($merchant != ""){
+                $searchAr[] = $gtRs->Merchant;
+            }
+            $rows = EditRS::select($dbh, $gtRs, $searchAr);
 
             if (count($rows) > 0) {
 

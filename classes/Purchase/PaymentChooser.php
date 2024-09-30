@@ -1286,6 +1286,8 @@ ORDER BY v.idVisit , v.Span;");
      */
     public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, AbstractPaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;') {
 
+        $merchants = $paymentGateway->getMerchants($dbh);
+
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
             // Cannot return to a new card...
             $tbl->addBodyTr(HTMLTable::makeTh("No Cards on file", array('colspan'=>'3'))
@@ -1317,15 +1319,17 @@ ORDER BY v.idVisit , v.Span;");
                 unset($attr['checked']);
             }
 
-            if ($tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+            if (count($merchants) == 1) {
                 $merchant = '';
             } else {
                 $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
             }
 
+            $attr['id'] = "rbUseCard" . $tkRs->idGuest_token->getStoredVal();
+
             $tbl->addBodyTr(
-                    HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
-                    . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup("label", $tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant, ["for"=>"rbUseCard" . $tkRs->idGuest_token->getStoredVal()]))
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("label", $tkRs->CardHolderName->getStoredVal(), ["for"=>"rbUseCard" . $tkRs->idGuest_token->getStoredVal()]))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
                 , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
@@ -1340,7 +1344,9 @@ ORDER BY v.idVisit , v.Span;");
                 unset($attr['checked']);
             }
 
-            $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
+            $attr['id'] = "rbUseCard0";
+
+            $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup("label", 'New', ["for"=>'rbUseCard0']), array('style'=>'text-align:right;', 'colspan'=> '2'))
                 .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
                     , array('style'=>$display, 'class'=>'tblCredit' . $index));
             $tbl->addBodyTr(
