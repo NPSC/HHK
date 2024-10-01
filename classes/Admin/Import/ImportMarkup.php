@@ -13,11 +13,12 @@ class ImportMarkup {
     }
 
     public function generateMkup(bool $includeImportTbl = false){
-        $query = "select n.idName as `ExternalId`, i.* from `" . Upload::TBL_NAME . "` i left join `name` n on i.importId = n.External_Id group by i.importId order by `PatientId`, `PatientLast`, `PatientFirst`";
-        $stmt = $this->dbh->query($query);
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if($includeImportTbl){
+            $query = "select n.idName as `ExternalId`, i.* from `" . Upload::TBL_NAME . "` i left join `name` n on i.importId = n.External_Id group by i.importId order by `PatientId`, `PatientLast`, `PatientFirst`";
+            $stmt = $this->dbh->query($query);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
             $importTbl = CreateMarkupFromDB::generateHTML_Table($rows, Upload::TBL_NAME);
         }else{
             $importTbl = "";
@@ -27,7 +28,7 @@ class ImportMarkup {
 
     public function generateSummaryMkup(){
         return HTMLContainer::generateMarkup("h2", "Summary") . HTMLContainer::generateMarkup("div",
-            $this->getPeopleMkup() . $this->getStayMkup() . $this->getHospitalMkup(). $this->getRoomMkup() . $this->getDiagMkup()
+             $this->getStayMkup() . $this->getHospitalMkup() . $this->getDoctorMkup(). $this->getRoomMkup() . $this->getDiagMkup()
         , array("class"=>"hhk-flex mb-3"));
     }
 
@@ -43,16 +44,30 @@ class ImportMarkup {
     }
 
     public function getHospitalInfo(){
-        $query = "select h.idHospital, ifnull(h.Title, 'unknown') as 'HHK Hospital', `Hospital`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i left join hospital h on h.Title = i.Hospital group by `Hospital`;";
-        $stmt = $this->dbh->query($query);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        try{
+            $query = "select h.idHospital, ifnull(h.Title, 'unknown') as 'HHK Hospital', `Hospital`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i left join hospital h on h.Title = i.Hospital group by `Hospital`;";
+            $stmt = $this->dbh->query($query);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\PDOException $e){
+            return false;
+        }
+        
     }
 
     private function getHospitalMkup(){
-        $mkup = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("h3", "Hospitals" . HTMLContainer::generateMarkup("button", "Create Missing Hospitals", array("id"=>"makeHosps", "class"=>"ui-button ui-corner-all ml-2"))) .
-            CreateMarkupFromDB::generateHTML_Table($this->getHospitalInfo(), "hosp")
-            , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
+        $hospitalInfo = $this->getHospitalInfo();
+
+        if (is_array($hospitalInfo)) {
+            $mkup = HTMLContainer::generateMarkup(
+                "div",
+                HTMLContainer::generateMarkup("h3", "Hospitals" . HTMLContainer::generateMarkup("button", "Create Missing Hospitals", array("id" => "makeHosps", "class" => "ui-button ui-corner-all ml-2"))) .
+                CreateMarkupFromDB::generateHTML_Table($this->getHospitalInfo(), "hosp")
+                ,
+                array("class" => "ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2")
+            );
+        }else{
+            $mkup = '';
+        }
 
         return $mkup;
     }
@@ -97,9 +112,9 @@ class ImportMarkup {
 
     public function getDiagInfo(){
         try{
-        $query = "select d.`Code` as idDiagnosis, ifnull(d.`Description`, '') as `HHK Diagnosis`, i.`Diagnosis` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`Diagnosis` = d.`Description` and d.`Table_Name` = 'Diagnosis' where i.Diagnosis != '' group by i.`Diagnosis` order by d.Description, i.Diagnosis;";
-        $stmt = $this->dbh->query($query);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $query = "select d.`Code` as idDiagnosis, ifnull(d.`Description`, '') as `HHK Diagnosis`, i.`Diagnosis` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`Diagnosis` = d.`Description` and d.`Table_Name` = 'Diagnosis' where i.Diagnosis != '' group by i.`Diagnosis` order by d.Description, i.Diagnosis;";
+            $stmt = $this->dbh->query($query);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
             return false;
         }
@@ -112,6 +127,32 @@ class ImportMarkup {
             $mkup = HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("h3", "Diagnosis" . HTMLContainer::generateMarkup("button", "Create Missing Diagnoses", array("id"=>"makeDiags", "class"=>"ui-button ui-corner-all ml-2"))) .
                 CreateMarkupFromDB::generateHTML_Table($this->getDiagInfo(), "diag")
+                , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
+        }else{
+            $mkup = "";
+        }
+        return $mkup;
+    }
+
+    public function getDoctorInfo(){
+        try{
+            $query = "select n.`idName` as idDoctor, n.Name_Full as `HHK Doctor`, i.`docFirst`, i.`docLast` from `" . Upload::TBL_NAME . "` i 
+        left join `name` n on i.`docFirst` = n.`Name_First` and i.`docLast` = n.`Name_Last` group by i.`docFirst`, i.`docLast`;";
+        
+            $stmt = $this->dbh->query($query);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){    
+            return false;
+        }
+
+    }
+
+    private function getDoctorMkup(){
+        $doctorInfo = $this->getDoctorInfo();
+        if(is_array($doctorInfo)){
+            $mkup = HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("h3", "Doctors" . HTMLContainer::generateMarkup("button", "Create Missing Doctors", array("id"=>"makeDoctors", "class"=>"ui-button ui-corner-all ml-2"))) .
+                CreateMarkupFromDB::generateHTML_Table($doctorInfo, "docs")
                 , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
         }else{
             $mkup = "";

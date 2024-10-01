@@ -40,6 +40,7 @@ if(isset($_GET['includeTbl'])){
 }
 
 if(isset($_FILES['csvFile'])){
+
     try{
         $upload = new Upload($dbh, $_FILES['csvFile']);
 
@@ -81,6 +82,19 @@ if(isset($_POST["startImport"]) && isset($_POST["limit"])){
 if(isset($_POST['makeRooms'])){
     $import = new Import($dbh);
     $return = $import->makeMissingRooms();
+    if(is_array($return)){
+        echo json_encode($return);
+        exit;
+    }else{
+        echo json_encode(array("error"=>"Invalid Response"));
+        exit;
+    }
+}
+
+if(isset($_POST['makeDoctors'])){
+    $import = new Import($dbh);
+	$return = $import->makeMissingDoctors();
+
     if(is_array($return)){
         echo json_encode($return);
         exit;
@@ -258,6 +272,24 @@ if(isset($_POST['makeDiags'])){
     					method: "post",
     					data:{
     						makeDiags:true,
+    					},
+    					dataType:"json",
+    					success: function(data){
+        					if(data.success){
+								flagAlertMessage(data.success, false);
+        					}else if(data.error){
+        						flagAlertMessage(data.error, true);
+        					}
+        				}
+    				});
+				});
+
+				$(document).on("click", "#makeDoctors", function(){
+    				$.ajax({
+    					url: "Import.php",
+    					method: "post",
+    					data:{
+    						makeDoctors:true,
     					},
     					dataType:"json",
     					success: function(data){

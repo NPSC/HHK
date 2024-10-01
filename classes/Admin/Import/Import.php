@@ -2,6 +2,7 @@
 namespace HHK\Admin\Import;
 
 
+use HHK\Member\Role\Doctor;
 use HHK\Member\Role\Patient;
 use HHK\SysConst\RelLinkType;
 use HHK\sec\Session;
@@ -9,6 +10,7 @@ use HHK\House\PSG;
 use HHK\House\Registration;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Member\Role\Guest;
+use HHK\SysConst\VolMemberType;
 use HHK\Tables\Visit\VisitRS;
 use HHK\SysConst\VisitStatus;
 use HHK\Tables\EditRS;
@@ -89,7 +91,9 @@ class Import {
                 $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = 'yes' where `importId` = " . $r['importId']);
 
             }catch(\Exception $e){
-                $this->dbh->rollBack();
+                if($this->dbh->inTransaction()){
+                    $this->dbh->rollBack();
+                }
 
                 return array("error"=>$e->getMessage(), "ImportId"=>$r['importId'], "trace"=>$e->getTraceAsString());
             }
@@ -347,7 +351,9 @@ class Import {
                 }
             }
         }catch(\Exception $e){
-            $this->dbh->rollBack();
+            if($this->dbh->inTransaction()){
+                $this->dbh->rollBack();
+            }
             return array("error"=>$e->getMessage());
         }
         $this->dbh->commit();
@@ -374,7 +380,9 @@ class Import {
                 }
             }
         }catch (\Exception $e){
-            $this->dbh->rollBack();
+            if($this->dbh->inTransaction()){
+                $this->dbh->rollBack();
+            }
             return array("error"=>$e->getMessage());
         }
 
@@ -429,7 +437,9 @@ class Import {
             $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");
             $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = null");
         }catch(\Exception $e){
-            $this->dbh->rollBack();
+            if($this->dbh->inTransaction()){
+                $this->dbh->rollBack();
+            }
             return array("error"=>$e->getMessage());
         }
         $this->dbh->commit();
@@ -441,7 +451,7 @@ class Import {
      *
      * @param string $first
      * @param string $last
-     * @param string $memberType - "guest", "patient" or ""
+     * @param string $memberType - "guest", "patient" "doctor" or ""
      * @param bool $limit - limit to 1 record or multiple
      * @param string $phone
      * @param string $email
@@ -449,18 +459,27 @@ class Import {
      */
     private function findPerson(string $first, string $last, string $memberType, bool $limit = true, string $phone = '', string $email = ''){
 
-        $newFirst = trim(addslashes($first));
-        $newLast = trim(addslashes($last));
+        $newFirst = trim(htmlentities($first, ));
+        $newLast = trim(htmlentities($last));
         $phone = ($phone !='' ? $this->formatPhone($phone) : null);
         $email = ($email !='' ? trim($email) : null);
 
 
-        $query = "Select n.idName, ng.idPsg, ng.Relationship_Code from name n join name_guest ng on n.idName = ng.idName where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
-        if($memberType == "guest"){
-            $query .= " and ng.Relationship_Code != 'slf'";
-        }else if($memberType == "patient"){
-            $query .= " and ng.Relationship_Code = 'slf'";
+        if(in_array($memberType, ["guest", "patient"])){
+            $query = "Select n.idName, ng.idPsg, ng.Relationship_Code from name n join name_guest ng on n.idName = ng.idName where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
+            if($memberType == "guest"){
+                $query .= " and ng.Relationship_Code != 'slf'";
+            }else if($memberType == "patient"){
+                $query .= " and ng.Relationship_Code = 'slf'";
+            }
+        }else if($memberType == VolMemberType::Doctor){
+            $query = "SELECT distinct n.idName, n.Name_Last, n.Name_First
+FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::Doctor . "'
+WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
+        }else{
+            return 0;
         }
+        
 
         if($limit){
             $query .= " limit 1";
@@ -478,6 +497,30 @@ class Import {
             $id = $rowgs;
         }
         return $id;
+    }
+
+    public function makeMissingDoctors(){
+        $uS = Session::getInstance();
+        $insertCount = 0;
+
+        $uploadedDocs = (new ImportMarkup($this->dbh))->getDoctorInfo();
+
+        foreach ($uploadedDocs as $doc) {
+            $docId = $this->findPerson($doc["docFirst"], $doc["docLast"], VolMemberType::Doctor);
+
+            if (!$docId > 0) {
+                $hhkDoc = new Doctor($this->dbh, 'd_', 0);
+                $docFields = [
+                    'd_txtFirstName' => $doc["docFirst"],
+                    'd_txtLastName' => $doc["docLast"]
+                ];
+
+
+                $hhkDoc->save($this->dbh, $docFields, $uS->username);
+                $insertCount++;
+            }
+        }
+        return array("success"=>$insertCount . " doctors inserted");
     }
 
     private function formatPhone($phone){

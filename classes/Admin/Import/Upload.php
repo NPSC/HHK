@@ -28,12 +28,12 @@ class Upload {
                 //add fields
                 foreach($fields as $key=>$field){
                     if($key != 0){
-                        $fieldList .= ",";
-                        $insertList .= ",";
+                        $fieldList .= ", ";
+                        $insertList .= ", ";
                     }
 
-                    $fieldList .= "`" . $field . "`";
-                    $insertList .= ":" . $field;
+                    $fieldList .= $field;
+                    $insertList .= ":".$field;
                 }
                 $fieldList .= ")";
                 $insertList .= ");";
@@ -43,17 +43,24 @@ class Upload {
                 foreach($this->rawData as $line){
                     $data = array();
                     foreach ($line as $key=>$value){
-                        $data[":" . $key] = $value;
+                        $data[":" . $key] = htmlentities($value);
                     }
                     $stmt->execute($data);
                 }
-                $this->dbh->commit();
+
+                if($this->dbh->inTransaction()){
+                    $this->dbh->commit();
+                }
+                
                 return true;
             }else{
                 throw new \ErrorException("Failed to insert row: " . "No fields found in file.");
             }
         }catch (\Exception $e){
-            $this->dbh->rollBack();
+            if($this->dbh->inTransaction()){
+                $this->dbh->rollBack();
+            }
+            
             throw $e;
         }
     }
