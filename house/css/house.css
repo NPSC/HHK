@@ -149,7 +149,15 @@ body {
 	margin-top: 0.5em;
 }
 
-.ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteMRN {
+.ui-autocomplete .autocompleteRoom {
+	background-color: #5c9ccc;
+	border-radius: 0.25em;
+	color: white;
+	padding: 0 0.5em;
+	margin-left: 0.5em;
+}
+
+.ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteMRN, .ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteRoom {
 	background-color: white;
 	border-radius: 0.25em;
 	color: #5c9ccc;

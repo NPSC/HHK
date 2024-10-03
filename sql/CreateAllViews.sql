@@ -155,6 +155,10 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
     SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        ifnull(ng.idName, ifnull(np.idName, '')) AS `idGuest`,
+        ifnull(p.idPsg, '') AS `idPsg`,
+        ifnull(concat(ng.Name_First, " ", ng.Name_Last), ifnull(concat(np.Name_First, " ", np.Name_Last), '')) AS `PrimaryGuest`,
+        ifnull(re.Title, '') AS `room`,
         n.flag,
         n.User_Name,
         n.Category,
@@ -164,7 +168,19 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
     FROM
         note n
             JOIN
-        link_note sn ON n.idNote = sn.idNote and sn.linkType = "staff"
+        link_note sn ON n.idNote = sn.idNote and sn.linkType IN ("staff", "reservation", "psg")
+            LEFT JOIN
+        psg p ON sn.idLink = p.idPsg and sn.linkType = "psg"
+            LEFT JOIN
+        reservation_guest rg on sn.idLink = rg.idReservation and sn.linkType = "reservation" and rg.Primary_Guest = 1
+            LEFT JOIN
+        reservation r on rg.idReservation = r.idReservation
+            LEFT JOIN
+        resource re on r.idResource = re.idResource
+            LEFT JOIN 
+        name ng on rg.idGuest = ng.idName
+            LEFT JOIN 
+        name np on p.idPatient = np.idName
     WHERE
         n.`Status` = 'a';
 

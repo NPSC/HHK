@@ -102,7 +102,7 @@
         if(settings.linkType == 'staff'){
         	settings.dtCols.forEach(function(El, Index, array){
         		if(El.targets > 3){
-        			El.targets = El.targets + 1;
+        			El.targets = El.targets + 3;
         			settings.dtCols[Index] = El;
         		}
         	});
@@ -123,7 +123,39 @@
                             }
                             return data;
                         }
-                	});
+            });
+            
+            settings.dtCols.push({
+                "targets": 5,
+                    sortable: true,
+                    searchable: true,
+                    data: "Guest",
+                    title: "Guest",
+                    name: "Guest",
+                    width: "120px",
+                    render: function (data, type, row) {
+                        console.log(row);
+                        if (row.idGuest) {
+                            data = '<a href="GuestEdit.php?id=' + row.idGuest;
+                            if (row.idPsg) {
+                                data += '&psg=' + row.idPsg;
+                            }
+                            data+= '">' + row.Guest + '</a>';
+                        }
+                        return data;
+                    }
+            });
+
+            settings.dtCols.push({
+                "targets": 6,
+                    sortable: true,
+                    searchable: true,
+                    data: "room",
+                    title: "Room",
+                    name: "Room",
+                    width: "120px",
+            });
+            
         }
         
         //set uid

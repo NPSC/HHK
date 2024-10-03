@@ -244,6 +244,11 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 					item.noReturn = '';
 				} else if (item.noReturn != '') {
 					item.noReturn = "<span class='autocompleteNoReturn'>" + item.noReturn + "</span>";
+                }
+                if (item.room === undefined) {
+					item.room = '';
+				} else if (item.room != '') {
+					item.room = "<span class='autocompleteRoom'>Room " + item.room + "</span>";
 				}
 				if (item.fullName === undefined) {
 					item.fullName = ''
@@ -300,9 +305,10 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 					mrnRow = "<div class='autocompleteItemMRN'>" + item.mrn + "</div>";
 				}
 				
-				if(item.memberStatus != '' || item.noReturn != ''){
-					rightContent = "<div class='right'>" + item.memberStatus + item.noReturn + "</div>";
-				}
+				if(item.memberStatus != '' || item.noReturn != '' || item.room != ''){
+					rightContent = "<div class='right'>" + item.memberStatus + item.room + "</div>";
+                }
+                
 				
 			    return $( "<li>" )
 			        .append( "<div style='font-size:.85em;'><div class='hhk-flex'><div class='left'>" + firstRow + detailsRow + mrnRow + "</div>" + rightContent + "</div></div>" )

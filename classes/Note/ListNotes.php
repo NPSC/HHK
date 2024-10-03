@@ -98,6 +98,10 @@ class ListNotes {
                 $dbView = 'vstaff_notes';
                 $whereClause = "";
                 $columns[] = array('db'=> 'Category', 'dt'=>'Category');
+                $columns[] = array('db'=> 'PrimaryGuest', 'dt'=>'Guest');
+                $columns[] = array('db'=> 'idGuest', 'dt'=>'idGuest');
+                $columns[] = array('db'=> 'idPsg', 'dt'=>'idPsg');
+                $columns[] = array('db'=> 'room', 'dt'=>'room');
                 break;
             case Note::MemberLink:
                 $dbView = 'vmem_notes';
