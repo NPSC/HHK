@@ -492,7 +492,9 @@ class LocalGateway extends AbstractPaymentGateway {
 		$payTbl->addBodyTr ( HTMLTable::makeTd ( $tbl->generateMarkup (), array (
 				'colspan' => '5'
 		) ), array (
-				'id' => 'trvdCHName' . $index
+				'id' => 'trvdCHName' . $index,
+				'class' => 'tblCreditExpand' . $index,
+				'style' => 'display: none;'
 		) );
 	}
 }
