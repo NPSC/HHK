@@ -81,7 +81,7 @@ if ($uS->rolecode > WebRole::WebUser) {
     ));
 }
 
-$tabIndex = 0;
+$tabActive = "";
 
 $rteMsg = '';
 $rateTableErrorMessage = '';
@@ -97,23 +97,23 @@ $labels = Labels::getLabels();
 // Add diags and locations buttons
 if (isset($_POST['btnAddDiags'])) {
     $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Diagnosis', 'q9', 'New Entry', 'h', 10 )");
-    $tabIndex = 6;
+    $tabActive = "#lkTable";
 }
 
 if (isset($_POST['btnAddLocs'])) {
     $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Location', 'q9', 'New Entry', 'h', 10 )");
-    $tabIndex = 6;
+    $tabActive = "#lkTable";
 }
 
 // Add House Discounts and additional charges.
 if (isset($_POST['btnHouseDiscs'])) {
     $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('House_Discount', 'q9', 'New Entry', 'ca', 10 )");
-    $tabIndex = 6;
+    $tabActive = "#lkTable";
 }
 
 if (isset($_POST['btnAddnlCharge'])) {
     $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Addnl_Charge', 'q9', 'New Entry', 'ca', 10 )");
-    $tabIndex = 6;
+    $tabActive = "#lkTable";
 }
 
 // Lookups
@@ -123,7 +123,7 @@ if (isset($_POST['table'])) {
 
 if (isset($_POST['btnkfSave'])) {
 
-    $tabIndex = 2;
+    $tabActive = "#rateTable";
 
     // room pricing
     $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
@@ -496,7 +496,7 @@ if (isset($_POST['btnkfSave'])) {
 
 if (isset($_POST['btnhSave'])) {
 
-    $tabIndex = 3;
+    $tabActive = "#hospTable";
     $postedHosp = [];
     if (isset($_POST['hTitle'])) {
         $postedHosp = filter_var_array($_POST['hTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -628,7 +628,7 @@ if (isset($_POST['btnhSave'])) {
 
 if (isset($_POST['btnAttrSave'])) {
 
-    $tabIndex = 11;
+    $tabActive = "#attrTable";
     $postedAttr = [];
     if (isset($_POST['atTitle'])) {
         $postedAttr = filter_var_array($_POST['atTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -712,7 +712,7 @@ if (isset($_POST['btnAttrSave'])) {
 
 if (isset($_POST['btnItemSave'])) {
 
-    $tabIndex = 7;
+    $tabActive = "#itemTable";
 
     // item-item table
     $iistmt = $dbh->query("Select * from item_item");
@@ -767,7 +767,7 @@ if (isset($_POST['btnItemSave'])) {
 }
 
 if (isset($_POST['btnTaxSave'])) {
-    $tabIndex = 8;
+    $tabActive = "#taxTable";
 
     $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
         from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax);
@@ -994,7 +994,7 @@ if (isset($_POST['ldfm'])) {
 if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
 
     try {
-        $tabIndex = 8;
+        $tabActive = "#formUpload";
 
         $uName = $uS->username;
 
@@ -1085,7 +1085,7 @@ if (isset($_POST['docAction']) && $_POST['docAction'] == "docDelete" && isset($_
         $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $tabIndex = 8;
+        $tabActive = "#formUpload";
 
         $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
         $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
@@ -1128,7 +1128,7 @@ if (stripos($content_type, 'application/json') !== false) {
 
 if (isset($_POST['txtformLang'])) {
 
-    $tabIndex = 8;
+    $tabActive = "#formUpload";
     $lang = trim(filter_var($_POST['txtformLang'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $formDef = '';
     $formTitle = '';
@@ -2542,7 +2542,7 @@ $formBuilderOptions = [
         </div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;"></div>
         <input type="hidden" id='fixedRate' value="<?php echo (RoomRateCategories::Fixed_Rate_Category); ?>" />
-        <input type="hidden" id='tabIndex' value="<?php echo ($tabIndex); ?>" />
+        <input type="hidden" id='tabActive' value="<?php echo ($tabActive); ?>" />
         <input type="hidden" id='frmDemog' value='<?php echo json_encode($demogs); ?>' />
         <input type="hidden" id="labels" value='<?php echo json_encode($formBuilderLabels); ?>' />
         <input type="hidden" id="frmOptions" value='<?php echo json_encode($formBuilderOptions); ?>' />
