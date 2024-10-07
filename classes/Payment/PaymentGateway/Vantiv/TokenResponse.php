@@ -64,25 +64,24 @@ class TokenResponse extends AbstractCreditResponse {
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxx...". $this->response->getMaskedAccount()));
+        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", ['class' => 'tdlabel']) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', ['class' => 'tdlabel']) . HTMLTable::makeTd("xxx...". $this->response->getMaskedAccount()));
 
         if ($this->response->getCardHolderName() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getCardHolderName()));
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", ['class' => 'tdlabel']) . HTMLTable::makeTd($this->response->getCardHolderName()));
         }
 
         if ($this->response->getAuthCode() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode() . ' ('.ucfirst($this->response->getMerchant()). ')', array('style'=>'font-size:.8em;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", ['class' => 'tdlabel', 'style' => 'font-size:.8em;']) . HTMLTable::makeTd($this->response->getAuthCode() . ' ('.ucfirst($this->response->getMerchant()). ')', ['style' => 'font-size:.8em;']));
         }
 
         if ($this->response->getResponseMessage() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", ['class' => 'tdlabel', 'style' => 'font-size:.8em;']) . HTMLTable::makeTd($this->response->getMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), ['style' => 'font-size:.8em;']));
         }
 
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
+        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", ['class' => 'tdlabel']) . HTMLTable::makeTd('', ['style' => 'height:35px; width:250px; border: solid 1px gray;']));
 
     }
 
 }
-?>
