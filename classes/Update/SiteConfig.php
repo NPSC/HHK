@@ -586,6 +586,10 @@ class SiteConfig {
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
 
+            if(in_array($itemName, ["PaymentDisclaimer", "InvoiceEmailBody", "StatementEmailBody"])){
+                $val = base64_decode($val);
+            }
+
             $value = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $key = filter_var($itemName, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 

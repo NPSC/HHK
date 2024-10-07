@@ -933,6 +933,14 @@ $(document).on('change', "#numAddrCalc", function(){
     authTabs.tabs("option", "active", 0);
     $('#authTabs').show();
 
+    $(document).on("submit", "form#siteConfigForm", function (e) {
+        
+        $(this).find("textarea").each(function () {
+            let base64val = buffer.Buffer.from($(this).val()).toString("base64");
+            $(this).val(base64val);
+        });
+    });
+
     $(document).on("submit", "form.authForm", function (e) {
         e.preventDefault();
         $this = $(this);
