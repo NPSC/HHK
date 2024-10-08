@@ -927,6 +927,7 @@ $(document).on('change', "#numAddrCalc", function(){
 
     tbs.tabs("option", "active", tabIndex);
     $('#tabs').show();
+    $(document).find("textarea.hhk-autosize").trigger("input");
 
     //authentication tab
     authTabs = $('#authTabs').tabs();

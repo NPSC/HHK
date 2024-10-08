@@ -508,7 +508,7 @@ class SiteConfig {
             } else if ($r['Type'] == 't') {
                 // text area
 
-                $inpt = HTMLContainer::generateMarkup('textarea', $r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'rows'=>'2', 'cols'=>'38'));
+                $inpt = HTMLContainer::generateMarkup('textarea', $r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'rows'=>'2', 'cols'=>'42', 'style'=>"min-height: 3em;", 'class'=>'hhk-autosize'));
 
             } else if ($r['Type'] == 'i') {
                 // integer
@@ -723,4 +723,3 @@ class SiteConfig {
     }
 
 }
-?>

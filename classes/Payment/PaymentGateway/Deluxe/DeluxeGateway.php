@@ -1325,4 +1325,34 @@ order by pa.Timestamp desc");
     public static function getIframeMkup(){
         return HTMLContainer::generateMarkup("div", "", ["id"=>"deluxeDialog", "style"=>"display:none;"]);
     }
+
+    public static function logGwTx(\PDO $dbh, $status, $request, $response, $transType) {
+
+        try {
+            if (!is_array($request)) {
+                $request = json_decode($request, true);
+            }
+
+            if (!is_array($response)) {
+                $response = json_decode($response, true);
+            }
+
+            self::hideToken($request);
+            self::hideToken($response);
+        }catch(\Exception $e){
+
+        }
+        
+        parent::logGwTx($dbh, $status, json_encode($request), json_encode($response), $transType);
+    }
+
+    protected static function hideToken(array &$arr){
+        if(isset($arr["token"]) && is_string($arr["token"])){
+            $arr["token"] = "********";
+        }
+
+        if(isset($arr["paymentMethod"]) && isset($arr["paymentMethod"]["token"]) && isset($arr["paymentMethod"]["token"]["token"]) && is_string($arr["paymentMethod"]["token"]["token"])){
+            $arr["paymentMethod"]["token"]["token"] = "********";
+        }
+    }
 }
