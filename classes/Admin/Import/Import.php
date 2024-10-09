@@ -65,9 +65,9 @@ class Import {
 
             try{
                 $this->dbh->beginTransaction();
-                if ($patId != $r['PatientLast'] . $r['PatientFirst']) {
+                //if ($patId != $r['PatientLast'] . $r['PatientFirst']) {
 
-                    $patId = $r['PatientLast'] . $r['PatientFirst'];
+                //    $patId = $r['PatientLast'] . $r['PatientFirst'];
 
                     $patArray = $this->addPatient($r);
                     $patient = $patArray["patient"];
@@ -76,13 +76,13 @@ class Import {
                     $hospStay = $patArray["hospStay"];
 
                     $idGuest = $patient->getIdName();
-                }  // end of new patient
+               // }  // end of new patient
 
 
-                if (trim($r['PatientLast'] . $r['PatientFirst']) != trim($r['GuestLast'] . $r['GuestFirst'])) {
+                //if (trim($r['PatientLast'] . $r['PatientFirst']) != trim($r['GuestLast'] . $r['GuestFirst'])) {
 
-                    $idGuest = $this->addGuest($r, $psg)->getIdName();
-                }
+                //    $idGuest = $this->addGuest($r, $psg)->getIdName();
+                //}
 /*
                 //stays
                 if($r['Arrive'] != '' && $r['Departure'] != ''){
@@ -92,7 +92,7 @@ class Import {
                 $this->dbh->commit();
 
                 // mark imported
-                $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = 'yes' where `importId` = " . $r['importId']);
+                $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = '1' where `importId` = " . $r['importId']);
 
             }catch(\Exception $e){
                 if($this->dbh->inTransaction()){
@@ -651,6 +651,10 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
             'state' => $state,
             'country' => $country,
             'zip' => $zip));
+
+        if(trim($r['Address']) == ""){
+            $adr['1']['bad'] = 'true';
+        }
 
         return $adr1;
     }
