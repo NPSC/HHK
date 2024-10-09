@@ -79,53 +79,40 @@ if(isset($_POST["startImport"]) && isset($_POST["limit"])){
     }
 }
 
-if(isset($_POST['makeRooms'])){
-    $import = new Import($dbh);
-    $return = $import->makeMissingRooms();
-    if(is_array($return)){
+$cmd = "";
+if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", FILTER_SANITIZE_FULL_SPECIAL_CHARS)){
+	$import = new Import($dbh);
+	switch($cmd){
+		case 'makeRooms':
+			$return = $import->makeMissingRooms();
+			break;
+		case 'makeDoctors':
+			$return = $import->makeMissingDoctors();
+			break;
+		case 'makeHosps':
+			$return = $import->makeMissingHospitals();
+			break;
+		case 'makeDiags':
+			$return = $import->makeMissingDiags();
+			break;
+		case 'makeEthnicities':
+			$return = $import->makeMissingEthnicities();
+			break;
+		case 'makeGenders':
+			$return = $import->makeMissingGenders();
+			break;
+		default:
+			exit;
+	}
+
+	if(is_array($return)){
         echo json_encode($return);
         exit;
     }else{
         echo json_encode(array("error"=>"Invalid Response"));
         exit;
     }
-}
 
-if(isset($_POST['makeDoctors'])){
-    $import = new Import($dbh);
-	$return = $import->makeMissingDoctors();
-
-    if(is_array($return)){
-        echo json_encode($return);
-        exit;
-    }else{
-        echo json_encode(array("error"=>"Invalid Response"));
-        exit;
-    }
-}
-
-if(isset($_POST['makeHosps'])){
-    $import = new Import($dbh);
-    $return = $import->makeMissingHospitals();
-    if(is_array($return)){
-        echo json_encode($return);
-        exit;
-    }else{
-        echo json_encode(array("error"=>"Invalid Response"));
-        exit;
-    }
-}
-
-if(isset($_POST['makeDiags'])){
-    $import = new Import($dbh);
-    $return = $import->makeMissingDiags();
-    if(is_array($return)){
-        echo json_encode($return);
-        exit;
-    }else{
-        echo json_encode(array("error"=>"Invalid Response"));
-        exit;
-    }
 }
 
 ?>
@@ -232,74 +219,24 @@ if(isset($_POST['makeDiags'])){
     				});
 				});
 
-				$(document).on("click", "#makeRooms", function(){
-    				$.ajax({
-    					url: "Import.php",
-    					method: "post",
-    					data:{
-    						makeRooms:true,
-    					},
-    					dataType:"json",
-    					success: function(data){
-        					if(data.success){
-								flagAlertMessage(data.success, false);
-        					}else if(data.error){
-        						flagAlertMessage(data.error, true);
-        					}
-        				}
-    				});
-				});
-				$(document).on("click", "#makeHosps", function(){
-    				$.ajax({
-    					url: "Import.php",
-    					method: "post",
-    					data:{
-    						makeHosps:true,
-    					},
-    					dataType:"json",
-    					success: function(data){
-        					if(data.success){
-								flagAlertMessage(data.success, false);
-        					}else if(data.error){
-        						flagAlertMessage(data.error, true);
-        					}
-        				}
-    				});
-				});
-				$(document).on("click", "#makeDiags", function(){
-    				$.ajax({
-    					url: "Import.php",
-    					method: "post",
-    					data:{
-    						makeDiags:true,
-    					},
-    					dataType:"json",
-    					success: function(data){
-        					if(data.success){
-								flagAlertMessage(data.success, false);
-        					}else if(data.error){
-        						flagAlertMessage(data.error, true);
-        					}
-        				}
-    				});
-				});
-
-				$(document).on("click", "#makeDoctors", function(){
-    				$.ajax({
-    					url: "Import.php",
-    					method: "post",
-    					data:{
-    						makeDoctors:true,
-    					},
-    					dataType:"json",
-    					success: function(data){
-        					if(data.success){
-								flagAlertMessage(data.success, false);
-        					}else if(data.error){
-        						flagAlertMessage(data.error, true);
-        					}
-        				}
-    				});
+				$(document).on("click", ".makeMissing", function(){
+					if($(this).data("entity")){
+						data = {cmd:"make"+$(this).data("entity")}
+					
+						$.ajax({
+							url: "Import.php",
+							method: "post",
+							data:data,
+							dataType:"json",
+							success: function(data){
+								if(data.success){
+									flagAlertMessage(data.success, false);
+								}else if(data.error){
+									flagAlertMessage(data.error, true);
+								}
+							}
+						});
+					}
 				});
 			});
 

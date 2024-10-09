@@ -27,6 +27,8 @@ class Import {
     protected array $relations;
     protected array $diags;
     protected array $rooms;
+    protected array $genders;
+    protected array $ethnicities;
 
     protected int $importedPatients;
     protected int $importedGuests;
@@ -37,13 +39,15 @@ class Import {
         $this->getRelations();
         $this->getDiags();
         $this->getRooms();
+        $this->getGenders();
+        $this->getEthnicities();
     }
 
     public function startImport(int $limit = 100, bool $people = true, bool $visits = false){
 
         ini_set('max_execution_time', '300');
 
-        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null group by i.importId order by `PatientId`, `PatientLast`, `PatientFirst`, `isPatient` LIMIT $limit;";
+        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null group by i.importId order by i.`importId` LIMIT $limit;";
         $stmt = $this->dbh->query($query);
 
         $numRead = $stmt->rowCount();
@@ -79,12 +83,12 @@ class Import {
 
                     $idGuest = $this->addGuest($r, $psg)->getIdName();
                 }
-
+/*
                 //stays
                 if($r['Arrive'] != '' && $r['Departure'] != ''){
                     $this->addVisit($r, $idGuest, $reg, $hospStay);
                 }
-
+*/
                 $this->dbh->commit();
 
                 // mark imported
@@ -106,47 +110,57 @@ class Import {
     private function addPatient(array $r){
 
         // New Patient
-        $newPatFirst = trim(addslashes($r['PatientFirst']));
-        $newPatLast = trim(addslashes($r['PatientLast']));
-        $newPatNickname = trim(addslashes($r['PatientNickname']));
+        $newPatFirst = trim(addslashes($r['FirstName']));
+        $newPatLast = trim(addslashes($r['LastName']));
+        //$newPatNickname = trim(addslashes($r['PatientNickname']));
+        $gender = $this->findIdGender($r['Gender']);
+        $ethnicity = $this->findIdEthnicity($r['Ethnicity']);
+        $birthDate = "";
+        if(trim($r['BirthDate']) != ''){
+            $birthdateDT = new \DateTime($r['BirthDate']);
+            $birthDate = $birthdateDT->format("M j, Y");
+        }
 
 
-        $id = $this->findPerson($newPatFirst, $newPatLast, false);
+        $id = $this->findPerson($newPatFirst, $newPatLast, "Patient");
 
         $patient = new Patient($this->dbh, '', $id);
 
         $post = array(
             'txtFirstName' => $newPatFirst,
             'txtLastName'=>  $newPatLast,
-            'txtNickname' => $newPatNickname,
+            'txtNickname' => '',
 
+            'txtBirthDate'=>$birthDate,
             'selStatus'=>'a',
-            'sel_Gender'=>'',
+            'sel_Gender'=>$gender,
+            'sel_Ethnicity'=>$ethnicity,
             'selMbrType'=>'ai',
         );
 
-        if (trim($r['PatientLast'] . $r['PatientFirst']) == trim($r['GuestLast'] . $r['GuestFirst'])) { //assume patient is the guest
+        //if (trim($r['PatientLast'] . $r['PatientFirst']) == trim($r['GuestLast'] . $r['GuestFirst'])) { //assume patient is the guest
 
-            $homePhone = $this->formatPhone($r['Home']);
-            $cellPhone = $this->formatPhone($r['Cell']);
-            $workPhone = $this->formatPhone($r['Work']);
+            $homePhone = $this->formatPhone($r['Phone']);
+            $cellPhone = $this->formatPhone($r['Mobile']);
+            //$workPhone = $this->formatPhone($r['Work']);
 
             $post['rbPrefMail'] = '1';
             $post['rbEmPref'] = "1";
-            $post['txtEmail'] = array('1'=>$r['Email']);
+            $post['txtEmail'] = array('1'=>$r['EmailAddress']);
             $post['rbPhPref'] = "dh";
-            $post['txtPhone'] = array('dh'=>$homePhone, 'mc'=>$cellPhone, 'gw'=>$workPhone);
+            $post['txtPhone'] = array('dh'=>$homePhone, 'mc'=>$cellPhone, 'gw'=>'');
 
             $adr1 = $this->loadAddress($this->dbh, $r);
             $post['adr'] = $adr1;
 
-        }
+        //}
 
 
         $patient->save($this->dbh, $post, 'admin');
 
 
-        $hospitalId = (isset($this->hospitals[trim(strtolower($r['Hospital']))]) ? $this->hospitals[trim(strtolower($r['Hospital']))] : 0);
+        //$hospitalId = (isset($this->hospitals[trim(strtolower($r['Hospital']))]) ? $this->hospitals[trim(strtolower($r['Hospital']))] : 0);
+        $hospitalId = 21;
 
         // PSG
         $psg = new Psg($this->dbh, 0, $patient->getIdName());
@@ -424,6 +438,76 @@ class Import {
         return array("success"=>$insertCount . " diagnoses inserted");
     }
 
+    /**
+     * Create Genders in HHK if they don't already exist
+     *
+     * @return array
+     */
+    public function makeMissingGenders(){
+        $uploadedDiags = (new ImportMarkup($this->dbh))->getGenderInfo();
+        $insertCount = 0;
+
+        try{
+
+            foreach($uploadedDiags as $diag){
+                if($diag["idGender"] == null && $diag["Gender"] != ''){
+                    //insert new gender
+                    $newCode = 'g' . incCounter($this->dbh, 'codes');
+
+                    $glRs = new GenLookupsRS();
+                    $glRs->Table_Name->setNewVal("Gender");
+                    $glRs->Code->setNewVal($newCode);
+                    $glRs->Description->setNewVal($diag["Gender"]);
+                    $glRs->Type->setNewVal('h');
+                    $glRs->Substitute->setNewVal('');
+                    $glRs->Order->setNewVal(0);
+
+                    EditRS::insert($this->dbh, $glRs);
+                    $insertCount++;
+                }
+            }
+        }catch (\Exception $e){
+            return array("error"=>$e->getMessage());
+        }
+
+        return array("success"=>$insertCount . " genders inserted");
+    }
+
+    /**
+     * Create Ethnicities in HHK if they don't already exist
+     *
+     * @return array
+     */
+    public function makeMissingEthnicities(){
+        $uploadedEthnicities = (new ImportMarkup($this->dbh))->getEthnicityInfo();
+        $insertCount = 0;
+
+        try{
+
+            foreach($uploadedEthnicities as $eth){
+                if($eth["idEthnicity"] == null && $eth["Ethnicity"] != ''){
+                    //insert new ethnicity
+                    $newCode = 'g' . incCounter($this->dbh, 'codes');
+
+                    $glRs = new GenLookupsRS();
+                    $glRs->Table_Name->setNewVal("Ethnicity");
+                    $glRs->Code->setNewVal($newCode);
+                    $glRs->Description->setNewVal($eth["Ethnicity"]);
+                    $glRs->Type->setNewVal('h');
+                    $glRs->Substitute->setNewVal('');
+                    $glRs->Order->setNewVal(0);
+
+                    EditRS::insert($this->dbh, $glRs);
+                    $insertCount++;
+                }
+            }
+        }catch (\Exception $e){
+            return array("error"=>$e->getMessage());
+        }
+
+        return array("success"=>$insertCount . " ethnicities inserted");
+    }
+
 
     /**
      * Undo an import - Sets member status to 'tbd' and importTbl.imported = false
@@ -533,7 +617,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         $city = ucwords(trim($r['City']));
         $county = (isset($r['County']) ? ucfirst($r['County']) : '');
         $country = 'US';
-        $zip = $r['Zip'];
+        $zip = $r['ZIPCode'];
 
         if (strlen($zip) > 4) {
 
@@ -560,8 +644,8 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
 
 
         $adr1 = array('1' => array(
-            'address1' => ucwords(strtolower(trim($r['Street1']))),
-            'address2' => trim($r['Street2']),
+            'address1' => ucwords(strtolower(trim($r['Address']))),
+            'address2' => '',
             'city' => $city,
             'county'=>  $county,
             'state' => $state,
@@ -590,6 +674,18 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         }
     }
 
+    private function getGenders(){
+        foreach(readGenLookupsPDO($this->dbh, 'Gender') as $r) {
+            $this->genders[strtolower($r[1])] = $r[0];
+        }
+    }
+
+    private function getEthnicities(){
+        foreach(readGenLookupsPDO($this->dbh, 'Ethnicity') as $r) {
+            $this->ethnicities[strtolower($r[1])] = $r[0];
+        }
+    }
+
     private function getProgress(){
         $query = "Select count(*) as `Remaining`, (select count(*) from `" . Upload::TBL_NAME . "`) as `Total` from `" . Upload::TBL_NAME . "` i where i.imported is null";
         $stmt = $this->dbh->query($query);
@@ -613,5 +709,12 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
     private function findIdResource(string $roomTitle){
         return (isset($this->rooms[trim(strtolower($roomTitle))]) ? $this->rooms[trim(strtolower($roomTitle))] : 0);
     }
+
+    private function findIdGender(string $gender){
+        return (isset($this->genders[trim(strtolower($gender))]) ? $this->genders[trim(strtolower($gender))] : '');
+    }
+
+    private function findIdEthnicity(string $ethnicity){
+        return (isset($this->ethnicities[trim(strtolower($ethnicity))]) ? $this->ethnicities[trim(strtolower($ethnicity))] : '');
+    }
 }
-?>
