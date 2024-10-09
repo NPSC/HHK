@@ -1371,7 +1371,7 @@ class HouseServices {
         foreach ($tkRsArray as $tkRs) {
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (count($merchants) == 1) {
+            if (count($merchants) == 1 || $tkRs->Merchant->getStoredVal() == "") {
                 $merchant = '';
             }
 
