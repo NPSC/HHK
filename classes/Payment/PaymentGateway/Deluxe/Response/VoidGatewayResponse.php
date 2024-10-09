@@ -43,7 +43,7 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
         return '';
     }
 
-    public function getResponseMessage() {
+    public function getMessage() {
 
         if (isset($this->result['responseMessage']) && is_array($this->result['responseMessage'])) {
             return implode(', ', $this->result['responseMessage']);

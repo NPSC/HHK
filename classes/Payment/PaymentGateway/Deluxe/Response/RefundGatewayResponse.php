@@ -47,7 +47,7 @@ class RefundGatewayResponse extends AbstractGatewayResponse implements GatewayRe
         return $this->getResponseCode();
     }
 
-    public function getResponseMessage() {
+    public function getMessage() {
 
         if (isset($this->result['responseMessage']) && is_string($this->result['responseMessage'])) {
             return $this->result['responseMessage'];

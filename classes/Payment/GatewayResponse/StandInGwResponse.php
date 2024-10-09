@@ -154,7 +154,7 @@ class StandInGwResponse implements GatewayResponseInterface {
         return '000';
     }
 
-    public function getResponseMessage() {
+    public function getMessage() {
         return $this->pAuthRs->Status_Message->getStoredVal();
     }
 
