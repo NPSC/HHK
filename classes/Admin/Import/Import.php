@@ -153,6 +153,10 @@ class Import {
             $adr1 = $this->loadAddress($this->dbh, $r);
             $post['adr'] = $adr1;
 
+            if(trim($r['Address']) == ""){
+            $post['incomplete'] = true;
+            }
+
         //}
 
 
@@ -651,10 +655,6 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
             'state' => $state,
             'country' => $country,
             'zip' => $zip));
-
-        if(trim($r['Address']) == ""){
-            $adr['1']['bad'] = 'true';
-        }
 
         return $adr1;
     }
