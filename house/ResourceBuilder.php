@@ -2274,6 +2274,7 @@ $formBuilderOptions = [
     <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
     <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
     <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+    <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
     <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
     <script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
     <script type="text/javascript" src="<?php echo FORMBUILDER_JS; ?>"></script>

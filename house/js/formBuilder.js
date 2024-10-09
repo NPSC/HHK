@@ -815,8 +815,8 @@
     			type: 'button',
     			events: {
     				click: function() {
-    					var formData = btoa(JSON.stringify(settings.formBuilder.actions.getData()));
-    					
+    					//var formData = btoa(JSON.stringify(settings.formBuilder.actions.getData()));
+						var formData = buffer.Buffer.from(JSON.stringify(settings.formBuilder.actions.getData())).toString("base64");
     					var f = $("<form target='formPreviewIframe' method='POST' style='display:none;'></form>").attr({
         					action: settings.previewURL
     					}).appendTo(document.body);
@@ -1557,7 +1557,7 @@ House Staff`,
 	    			{
 	    				if(data.status == "success"){
 	    					settings.formBuilder = $wrapper.find('#formBuilderContent').empty().formBuilder({
-	    						formData: data.formTemplate,
+	    						formData: buffer.Buffer.from(data.formTemplate, 'base64').toString('utf-8'),
 								inputSets: settings.inputSets,
 								fields: settings.fields,
 								disableFields: settings.disableFields,
@@ -1741,7 +1741,7 @@ House Staff`,
 		    				"cmd":"saveformtemplate",
 		    				"idDocument": idDocument,
 		    				"title": title,
-		    				"doc": btoa(JSON.stringify(formData)),
+		    				"doc": buffer.Buffer.from(JSON.stringify(formData)).toString("base64"),
 		    				"style": style,
 		    				"successTitle": successTitle,
 		    				"successContent": successContent,
