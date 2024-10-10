@@ -1329,16 +1329,22 @@ order by pa.Timestamp desc");
     public static function logGwTx(\PDO $dbh, $status, $request, $response, $transType) {
 
         try {
-            if (!is_array($request)) {
-                $request = json_decode($request, true);
+            if (!is_array($request) && is_array($jsonRequest = json_decode($request, true))) {
+                $request = $jsonRequest;
             }
 
-            if (!is_array($response)) {
-                $response = json_decode($response, true);
+            if (!is_array($response) && is_array($jsonResponse = json_decode($response, true))) {
+                $response = $jsonResponse;
             }
 
-            self::hideToken($request);
-            self::hideToken($response);
+            if(is_array($request)){
+                self::hideToken($request);
+            }
+            
+            if(is_array($response)){
+                self::hideToken($response);
+            }
+            
         }catch(\Exception $e){
 
         }
