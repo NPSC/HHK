@@ -1337,13 +1337,9 @@ order by pa.Timestamp desc");
                 $response = $jsonResponse;
             }
 
-            if(is_array($request)){
-                self::hideToken($request);
-            }
+            self::hideToken($request);
             
-            if(is_array($response)){
-                self::hideToken($response);
-            }
+            self::hideToken($response);
             
         }catch(\Exception $e){
 
@@ -1353,12 +1349,16 @@ order by pa.Timestamp desc");
     }
 
     protected static function hideToken(array &$arr){
-        if(isset($arr["token"]) && is_string($arr["token"])){
-            $arr["token"] = "********";
-        }
 
-        if(isset($arr["paymentMethod"]) && isset($arr["paymentMethod"]["token"]) && isset($arr["paymentMethod"]["token"]["token"]) && is_string($arr["paymentMethod"]["token"]["token"])){
-            $arr["paymentMethod"]["token"]["token"] = "********";
+        if (is_array($arr)) {
+
+            if(isset($arr["token"]) && is_string($arr["token"])){
+                $arr["token"] = "********";
+            }
+
+            if(isset($arr["paymentMethod"]) && isset($arr["paymentMethod"]["token"]) && isset($arr["paymentMethod"]["token"]["token"]) && is_string($arr["paymentMethod"]["token"]["token"])){
+                $arr["paymentMethod"]["token"]["token"] = "********";
+            }
         }
     }
 }

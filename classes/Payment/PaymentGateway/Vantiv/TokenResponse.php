@@ -75,7 +75,7 @@ class TokenResponse extends AbstractCreditResponse {
             $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", ['class' => 'tdlabel', 'style' => 'font-size:.8em;']) . HTMLTable::makeTd($this->response->getAuthCode() . ' ('.ucfirst($this->response->getMerchant()). ')', ['style' => 'font-size:.8em;']));
         }
 
-        if ($this->response->getResponseMessage() != '') {
+        if ($this->response->getMessage() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", ['class' => 'tdlabel', 'style' => 'font-size:.8em;']) . HTMLTable::makeTd($this->response->getMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), ['style' => 'font-size:.8em;']));
         }
 
