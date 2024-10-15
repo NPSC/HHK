@@ -90,7 +90,11 @@ class Upload {
 
                 //add fields
                 foreach($fields as $field){
-                    $stmt .= ", `" . $field . "` VARCHAR(255) NULL";
+                    if($field == "Notes"){
+                        $stmt .= ", `" . $field . "` TEXT NULL";
+                    }else{
+                        $stmt .= ", `" . $field . "` VARCHAR(255) NULL";
+                    }
                 }
                 $stmt .= ", PRIMARY KEY(importId));";
 

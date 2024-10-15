@@ -4,6 +4,9 @@ namespace HHK\Admin\Import;
 
 use HHK\Member\Role\Doctor;
 use HHK\Member\Role\Patient;
+use HHK\Note\LinkNote;
+use HHK\Note\Note;
+use HHK\Notes;
 use HHK\SysConst\RelLinkType;
 use HHK\sec\Session;
 use HHK\House\PSG;
@@ -17,6 +20,7 @@ use HHK\Tables\EditRS;
 use HHK\SysConst\ReservationStatus;
 use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\GenLookupsRS;
+use RuntimeException;
 
 
 class Import {
@@ -62,33 +66,97 @@ class Import {
         $patId = '';
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
+            $guests = [];
             try{
                 $this->dbh->beginTransaction();
-                //if ($patId != $r['PatientLast'] . $r['PatientFirst']) {
+               //loop through guests
+                for ($i = 1; $i < 5; $i++){
+                    if(trim($r['prop_First_Name___Guest_'.$i]) !== "" && trim($r["prop_Last_Name___Guest_".$i]) !== ""){
+                        $guest = [
+                            "GuestFirst" => $r['prop_First_Name___Guest_'.$i],
+                            "GuestLast" => $r["prop_Last_Name___Guest_".$i],
+                            "Relationship_to_Patient" => $r["prop_Relationship_to_Patient_".$i],
+                            "BirthDate" => $r["prop_DOB___Guest_".$i],
+                            "Gender" => (isset($r["prop_Gender___Guest_".$i]) ? $r["prop_Gender___Guest_".$i] : ""),
+                            "Ethnicity" => (isset($r["prop_Ethnicity___Guest_".$i]) ? $r["prop_Ethnicity___Guest_".$i] : ""),
+                            "Street" => $r["prop_Address___Guest_".$i],
+                            "City" => (isset($r["prop_City___Guest_".$i]) ? $r["prop_City___Guest_".$i] : ""),
+                            "County" => (isset($r["prop_County___Guest_".$i]) ? $r["prop_County___Guest_".$i] : ""),
+                            "State" => (isset($r["prop_State_Province___Guest_".$i]) ? $r["prop_State_Province___Guest_".$i] : ""),
+                            "ZipCode" => (isset($r["prop_Zip_Postal_code___Guest_".$i]) ? $r["prop_Zip_Postal_code___Guest_".$i] : ""),
+                            "Phone" => (isset($r["prop_Phone___Guest_".$i]) ? $r["prop_Phone___Guest_".$i] : ""),
+                            "Mobile" => (isset($r["prop_Mobile___Guest_".$i]) ? $r["prop_Mobile___Guest_".$i] : ""),
+                            "Email" => (isset($r["prop_Email___Guest_".$i]) ? $r["prop_Email___Guest_".$i] : ""),
+                            "Diagnosis"=>$r["Diagnosis"],
+                            "Hospital" =>$r["Hospital"],
+                            "importId"=>$r["importId"]
+                        ];
+                        $guests[] = $guest;
+                    }
+                }
 
-                //    $patId = $r['PatientLast'] . $r['PatientFirst'];
+                $patient = false;
 
-                    $patArray = $this->addPatient($r);
+                //find patient
+                foreach($guests as $k=>$guest){
+                    if($guest["Relationship_to_Patient"] == "Self"){
+                        $patArray = $this->addPatient($guest);
+                        $patient = $patArray["patient"];
+                        $psg = $patArray["psg"];
+                        $reg = $patArray["reg"];
+                        $hospStay = $patArray["hospStay"];
+                        $guests[$k]["idName"] = $patient->getIdName();
+                    }
+                }
+
+                if($patient == false){
+                    $guest = [
+                        "GuestFirst" => $r['FirstName'],
+                        "GuestLast" => $r["LastName"],
+                        "Relationship_to_Patient" => "Self",
+                        "BirthDate" => "",
+                        "Gender" => "",
+                        "Ethnicity" => "",
+                        "Street" => "",
+                        "City" => "",
+                        "County" => "",
+                        "State" => "",
+                        "ZipCode" => "",
+                        "Phone" => "",
+                        "Mobile" => "",
+                        "Email" => "",
+                        "Diagnosis"=>$r["Diagnosis"],
+                        "Hospital" =>$r["Hospital"],
+                        "importId" =>$r["importId"]
+                    ];
+
+                    $patArray = $this->addPatient($guest, false);
                     $patient = $patArray["patient"];
                     $psg = $patArray["psg"];
                     $reg = $patArray["reg"];
                     $hospStay = $patArray["hospStay"];
-
-                    $idGuest = $patient->getIdName();
-               // }  // end of new patient
-
-
-                //if (trim($r['PatientLast'] . $r['PatientFirst']) != trim($r['GuestLast'] . $r['GuestFirst'])) {
-
-                //    $idGuest = $this->addGuest($r, $psg)->getIdName();
-                //}
-/*
-                //stays
-                if($r['Arrive'] != '' && $r['Departure'] != ''){
-                    $this->addVisit($r, $idGuest, $reg, $hospStay);
                 }
-*/
+
+                //add guests
+                foreach($guests as $k=>$guest){
+                    if($guest["Relationship_to_Patient"] !== "Self"){
+                        $guests[$k]["idName"] = $this->addGuest($guest, $psg)->getIdName();
+                    }
+                }
+
+                if(trim($r["prop_Vehicle_1___Make___Model"]) != "" && trim($r["prop_Vehicle_1___Color"]) != "" && trim($r["prop_Vehicle_1___License_No_"]) != ""){
+                    $this->addVehicle($r, $reg);
+                }
+                
+                //resv
+                if($r['ArrivalDate'] != '' && $r['DepartureDate'] != '' && count($guests) > 0 && $hospStay instanceof HospitalStay){
+                    $idResv = false;
+                    
+                    $idResv = $this->addReservation($guests, $reg, $hospStay, $r);
+                    $this->addVisit($r, $guests, $reg, $hospStay, $idResv);
+                    
+                }
+
                 $this->dbh->commit();
 
                 // mark imported
@@ -107,11 +175,11 @@ class Import {
 
     }
 
-    private function addPatient(array $r){
+    private function addPatient(array $r, bool $update = true){
 
         // New Patient
-        $newPatFirst = trim(addslashes($r['FirstName']));
-        $newPatLast = trim(addslashes($r['LastName']));
+        $newPatFirst = trim(addslashes($r['GuestFirst']));
+        $newPatLast = trim(addslashes($r['GuestLast']));
         //$newPatNickname = trim(addslashes($r['PatientNickname']));
         $gender = $this->findIdGender($r['Gender']);
         $ethnicity = $this->findIdEthnicity($r['Ethnicity']);
@@ -122,9 +190,30 @@ class Import {
         }
 
 
-        $id = $this->findPerson($newPatFirst, $newPatLast, "Patient");
+        $id = $this->findPerson($newPatFirst, $newPatLast, "patient");
 
-        $patient = new Patient($this->dbh, '', $id);
+        if($id > 0){
+            $patient = new Patient($this->dbh, '', $id);
+            $psg = new Psg($this->dbh, 0, $patient->getIdName());
+            $reg = new Registration($this->dbh, $psg->getIdPsg());
+
+            $hospitalId = (isset($this->hospitals[trim(strtolower($r['Hospital']))]) ? $this->hospitals[trim(strtolower($r['Hospital']))] : 0);
+
+            $hospitalStay = null;
+            if ($hospitalId > 0) {
+
+                $hospitalStay = new HospitalStay($this->dbh, $patient->getIdName());
+                $hospitalStay->setHospitalId($hospitalId);
+                $hospitalStay->setIdPsg($psg->getIdPsg());
+                if(isset($r["Diagnosis"])){
+                    $hospitalStay->setDiagnosis($this->findIdDiag($r["Diagnosis"]));
+                }
+
+                $hospitalStay->save($this->dbh, $psg, 0, 'admin');
+            }
+            return array("patient"=>$patient, "psg"=>$psg, "reg"=> $reg, "hospStay"=>$hospitalStay);
+        }
+        
 
         $post = array(
             'txtFirstName' => $newPatFirst,
@@ -146,25 +235,25 @@ class Import {
 
             $post['rbPrefMail'] = '1';
             $post['rbEmPref'] = "1";
-            $post['txtEmail'] = array('1'=>$r['EmailAddress']);
-            $post['rbPhPref'] = "dh";
+            $post['txtEmail'] = array('1'=>$r['Email']);
+            $post['rbPhPref'] = ($homePhone != '' ? "dh": ($cellPhone != "" ? "mc" : ""));
             $post['txtPhone'] = array('dh'=>$homePhone, 'mc'=>$cellPhone, 'gw'=>'');
 
             $adr1 = $this->loadAddress($this->dbh, $r);
             $post['adr'] = $adr1;
 
-            if(trim($r['Address']) == ""){
+            if(trim($r['Street']) == ""){
             $post['incomplete'] = true;
             }
 
         //}
 
-
+        $patient = new Patient($this->dbh, '', 0);
         $patient->save($this->dbh, $post, 'admin');
 
 
-        //$hospitalId = (isset($this->hospitals[trim(strtolower($r['Hospital']))]) ? $this->hospitals[trim(strtolower($r['Hospital']))] : 0);
-        $hospitalId = 21;
+        $hospitalId = (isset($this->hospitals[trim(strtolower($r['Hospital']))]) ? $this->hospitals[trim(strtolower($r['Hospital']))] : 0);
+        //$hospitalId = 21;
 
         // PSG
         $psg = new Psg($this->dbh, 0, $patient->getIdName());
@@ -207,7 +296,7 @@ class Import {
 
         $newFirst = trim(addslashes($r['GuestFirst']));
         $newLast = trim(addslashes($r['GuestLast']));
-        $newNickname = trim(addslashes($r['GuestNickname']));
+        //$newNickname = trim(addslashes($r['GuestNickname']));
 
         if ($newLast == '') {
             return;
@@ -218,25 +307,31 @@ class Import {
         $guest = new Guest($this->dbh, '', $id);
 
         if($id == 0){
-            $gender = '';
+            $gender = $this->findIdGender($r['Gender']);
+            $ethnicity = $this->findIdEthnicity($r['Ethnicity']);
+            $birthDate = "";
+            if(trim($r['BirthDate']) != ''){
+                $birthdateDT = new \DateTime($r['BirthDate']);
+                $birthDate = $birthdateDT->format("M j, Y");
+            }
 
             // phone
-            $homePhone = $this->formatPhone($r['Home']);
-            $cellPhone = $this->formatPhone($r['Cell']);
-            $workPhone = $this->formatPhone($r['Work']);
+            $homePhone = $this->formatPhone($r['Phone']);
+            $cellPhone = $this->formatPhone($r['Mobile']);
+            //$workPhone = $this->formatPhone($r['Work']);
 
             $post = array(
                 'txtFirstName' => $newFirst,
                 'txtLastName'=>  $newLast,
-                'txtNickname'=> $newNickname,
+                'txtNickname'=> "",//$newNickname,
                 'rbPrefMail'=>'1',
                 'rbEmPref'=>"1",
                 'txtEmail'=>array('1'=>$r['Email']),
-                'rbPhPref'=>"dh",
-                'txtPhone'=>array('dh'=>$homePhone, 'mc'=>$cellPhone, 'gw'=>$workPhone),
-                'txtBirthDate'=> '',  //$r['Date_of_Birth'],
+                'rbPhPref'=>($homePhone != '' ? "dh": ($cellPhone != "" ? "mc" : "")),
+                'txtPhone'=>array('dh'=>$homePhone, 'mc'=>$cellPhone),
+                'txtBirthDate'=> $birthDate,  //$r['Date_of_Birth'],
                 'selStatus'=>'a',
-                'sel_Ethnicity'=>'',
+                'sel_Ethnicity'=>$ethnicity,
                 'sel_Gender'=>$gender,
                 'selMbrType'=>'ai'
             );
@@ -244,10 +339,14 @@ class Import {
             $adr1 = $this->loadAddress($this->dbh, $r);
             $post['adr'] = $adr1;
 
+            if(trim($r['Street']) == ""){
+                $post['incomplete'] = true;
+            }
+
             $guest->save($this->dbh, $post, $uS->username);
         }
         $relship = RelLinkType::Relative;
-        if (isset($r['Relation_to_Patient']) && isset($this->relations[$r['Relation_to_Patient']])) {
+        if (isset($r['Relationship_to_Patient']) && isset($this->relations[$r['Relationship_to_Patient']])) {
             $relship = $this->relations[$r['Relation_to_Patient']];
         }
 
@@ -264,8 +363,8 @@ class Import {
 
     }
 
-    private function addVisit(array $r, $idGuest, $reg, $hospStay){
-
+    private function addVisit(array $r, array $guests, $reg, $hospStay, $resvId, $visitStatus = VisitStatus::CheckedOut){
+/*
         //make hospital stay
         if($hospStay == null){
             $idPatient = $this->findPerson($r["PatientFirst"], $r["PatientLast"], "patient");
@@ -278,36 +377,40 @@ class Import {
         }
 
         //make reservation
-        $idResource = $this->findIdResource($r['RoomNum']);
-        $arrival = (new \DateTime($r['Arrive']))->format("Y-m-d 16:00:00");
-        $departure = (new \DateTime($r['Departure']))->format('Y-m-d 10:00:00');
+        
+        $arrival = (new \DateTime($r['ArrivalDate']))->format("Y-m-d 16:00:00");
+        $departure = (new \DateTime($r['DepartureDate']))->format('Y-m-d 10:00:00');
         $stmt = $this->dbh->prepare("insert into reservation (`idRegistration`, `idGuest`,`idHospital_Stay`, `idResource`, `Expected_Arrival`, `Expected_Departure`, `Number_Guests`, `Status`) VALUES(:idRegistration, :idGuest, :idHospitalStay, :idResource, :Arrive, :Departure, :numGuests, :status)");
         $stmt->execute(array(
             ":idRegistration"=>$reg->getIdRegistration(),
-            ":idGuest"=>$idGuest,
+            ":idGuest"=>$guests[0]["idName"],
             ":idHospitalStay"=>$hospStay->getIdHospital_Stay(),
             ":idResource"=>$idResource,
             ":Arrive"=>$arrival,
             ":Departure"=>$departure,
-            ":numGuests"=>'1',
+            ":numGuests"=>count($guests),
             ":status"=>ReservationStatus::Checkedout
         ));
         $resvId = $this->dbh->lastInsertId();
-
+*/
         if($resvId){
+            $idResource = $this->findIdResource($r['RoomNum']);
+            $arrival = (new \DateTime($r['ArrivalDate']))->format("Y-m-d 16:00:00");
+            $departure = (new \DateTime($r['DepartureDate']))->format('Y-m-d 10:00:00');
+/*
             $stmt = $this->dbh->prepare("insert into reservation_guest (`idReservation`, `idGuest`,`Primary_Guest`) VALUES(:idReservation, :idGuest, :primaryGuest)");
             $stmt->execute(array(
                 ":idReservation"=>$resvId,
-                ":idGuest"=>$idGuest,
+                ":idGuest"=>$guests[0]["idName"],
                 ":primaryGuest"=>1
             ));
-
+*/
             //make visit
             $visitRS = new VisitRS();
             $visitRS->idReservation->setNewVal($resvId);
             $visitRS->idRegistration->setNewVal($reg->getIdRegistration());
             $visitRS->idHospital_stay->setNewVal($hospStay->getIdHospital_Stay());
-            $visitRS->idPrimaryGuest->setNewVal($idGuest);
+            $visitRS->idPrimaryGuest->setNewVal($guests[0]["idName"]);
             $visitRS->idResource->setNewVal($idResource);
             $visitRS->Arrival_Date->setNewVal($arrival);
             $visitRS->Expected_Departure->setNewVal($departure);
@@ -315,22 +418,73 @@ class Import {
             $visitRS->Span->setNewVal(0);
             $visitRS->Span_Start->setNewVal($arrival);
             $visitRS->Span_End->setNewVal($departure);
-            $visitRS->Status->setNewVal(VisitStatus::CheckedOut);
+            $visitRS->Status->setNewVal($visitStatus);
             $idVisit = EditRS::insert($this->dbh, $visitRS);
 
-            //make stay
-            $stayRS = new StaysRS();
-            $stayRS->idName->setNewVal($idGuest);
-            $stayRS->idVisit->setNewVal($idVisit);
-            $stayRS->Visit_Span->setNewVal(0);
-            $stayRS->Checkin_Date->setNewVal($arrival);
-            $stayRS->Checkout_Date->setNewVal($departure);
-            $stayRS->Span_Start_Date->setNewVal($arrival);
-            $stayRS->Span_End_Date->setNewVal($departure);
-            $stayRS->Status->setNewVal(VisitStatus::CheckedOut);
-            EditRS::insert($this->dbh, $stayRS);
-
+            foreach($guests as $guest){
+                //make stay
+                $stayRS = new StaysRS();
+                $stayRS->idName->setNewVal($guest["idName"]);
+                $stayRS->idVisit->setNewVal($idVisit);
+                $stayRS->Visit_Span->setNewVal(0);
+                $stayRS->Checkin_Date->setNewVal($arrival);
+                $stayRS->Checkout_Date->setNewVal($departure);
+                $stayRS->Span_Start_Date->setNewVal($arrival);
+                $stayRS->Span_End_Date->setNewVal($departure);
+                $stayRS->Status->setNewVal($visitStatus);
+                EditRS::insert($this->dbh, $stayRS);
+            }
         }
+    }
+
+    private function addVehicle(array $vehicle, Registration $reg){
+        $stmt = $this->dbh->prepare("insert into vehicle (`idRegistration`, `Make`,`Model`, `Color`, `State_Reg`, `License_Number`) VALUES(:idReg, :make, :model, :color, :state, :license)");
+                $stmt->execute(array(
+                    ":idReg" => $reg->getIdRegistration(),
+                    ":make" => "",
+                    ":model" => substr(trim($vehicle["prop_Vehicle_1___Make___Model"]), 0,45),
+                    ":color" => substr(trim($vehicle["prop_Vehicle_1___Color"]), 0, 45),
+                    ":state" => "",
+                    ":license" => substr(trim($vehicle["prop_Vehicle_1___License_No_"]), 0, 15)
+                ));
+    }
+
+    private function addReservation(array $guests, Registration $reg, HospitalStay $hospStay, array $r, $resvStatus = ReservationStatus::Checkedout){
+        
+        $idResource = $this->findIdResource($r['RoomNum']);
+
+        //make reservation
+        $arrival = (new \DateTime($r['ArrivalDate']))->format("Y-m-d 16:00:00");
+        $departure = (new \DateTime($r['DepartureDate']))->format('Y-m-d 10:00:00');
+        $stmt = $this->dbh->prepare("insert into reservation (`idRegistration`, `idGuest`,`idHospital_Stay`, `idResource`, `Expected_Arrival`, `Expected_Departure`, `Number_Guests`, `Status`) VALUES(:idRegistration, :idGuest, :idHospitalStay, :idResource, :Arrive, :Departure, :numGuests, :status)");
+        $stmt->execute(array(
+            ":idRegistration"=>$reg->getIdRegistration(),
+            ":idGuest"=>$guests[0]["idName"],
+            ":idHospitalStay"=>$hospStay->getIdHospital_Stay(),
+            ":idResource"=>$idResource,
+            ":Arrive"=>$arrival,
+            ":Departure"=>$departure,
+            ":numGuests"=>count($guests),
+            ":status"=>$resvStatus
+        ));
+        $resvId = $this->dbh->lastInsertId();
+
+        if ($resvId) {
+            foreach($guests as $k=>$guest){
+                $stmt = $this->dbh->prepare("insert ignore into reservation_guest (`idReservation`, `idGuest`,`Primary_Guest`) VALUES(:idReservation, :idGuest, :primaryGuest)");
+                $stmt->execute(array(
+                    ":idReservation" => $resvId,
+                    ":idGuest" => $guest["idName"],
+                    ":primaryGuest" => ($k == 0 ? 1:0)
+                ));
+            }
+
+            //add Notes
+            if($r["Notes"] != ""){
+                LinkNote::save($this->dbh, $r["Notes"], $resvId, Note::ResvLink, "", 'admin', true);
+            }
+        }
+        return $resvId;
     }
 
     /**
@@ -357,14 +511,14 @@ class Import {
                     $idRoom = $this->dbh->lastInsertId();
 
                     // create resource record
-                    $stmt = $this->dbh->prepare("insert into resource (`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Util_Priority`,`Status`) values "
-                            . "(:idRoom, 0, :roomTitle, 'uc1', 'room', :roomTitle, 'a')");
+                    $stmt = $this->dbh->prepare("insert into resource (`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Status`) values "
+                            . "(:idRoom, 0, :roomTitle, 'uc1', 'room', 'a')");
                     $stmt->execute(array(":idRoom"=>$idRoom, ":roomTitle"=>$title));
 
                     // Resource-Room
                     $stmt = $this->dbh->prepare("insert into resource_room (`idResource_room`,`idResource`,`idRoom`) values "
-                            . "(:idRoom, :idRoom, :idRoom)");
-                    $stmt->execute(array(":idRoom" => $idRoom));
+                            . "(:idRoom, :idRoom2, :idRoom3)");
+                    $stmt->execute(array(":idRoom" => $idRoom,":idRoom2" => $idRoom,":idRoom3" => $idRoom));
                     $insertCount++;
                 }
             }
@@ -397,6 +551,7 @@ class Import {
                     $insertCount++;
                 }
             }
+            $this->dbh->commit();
         }catch (\Exception $e){
             if($this->dbh->inTransaction()){
                 $this->dbh->rollBack();
@@ -621,7 +776,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         $city = ucwords(trim($r['City']));
         $county = (isset($r['County']) ? ucfirst($r['County']) : '');
         $country = 'US';
-        $zip = $r['ZIPCode'];
+        $zip = $r['ZipCode'];
 
         if (strlen($zip) > 4) {
 
@@ -648,7 +803,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
 
 
         $adr1 = array('1' => array(
-            'address1' => ucwords(strtolower(trim($r['Address']))),
+            'address1' => ucwords(strtolower(trim($r['Street']))),
             'address2' => '',
             'city' => $city,
             'county'=>  $county,

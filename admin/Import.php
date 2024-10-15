@@ -163,7 +163,7 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 					method: "post",
 					data:{
 						startImport:true,
-						limit: 100
+						limit: 300
 					},
 					dataType:"json",
 					success: function(data){

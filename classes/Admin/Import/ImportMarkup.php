@@ -28,7 +28,7 @@ class ImportMarkup {
 
     public function generateSummaryMkup(){
         return HTMLContainer::generateMarkup("h2", "Summary") . HTMLContainer::generateMarkup("div",
-             $this->getStayMkup() . $this->getPeopleMkup() . $this->getHospitalMkup() . $this->getDoctorMkup(). $this->getRoomMkup() . $this->getDiagMkup() . $this->getEthnicityMkup() . $this->getGenderMkup()
+             $this->getStayMkup() . $this->getPeopleMkup() . $this->getHospitalMkup() . $this->getDoctorMkup(). $this->getRoomMkup() . $this->getDiagMkup() . $this->getEthnicityMkup() . $this->getGenderMkup() . $this->getPatientRelationMkup()
         , array("class"=>"hhk-flex mb-3"));
     }
 
@@ -183,6 +183,29 @@ class ImportMarkup {
         return $mkup;
     }
 
+    public function getPatientRelationInfo(){
+        try{
+            $query = "select d.`Code` as idRelation, ifnull(d.`Description`, '') as `HHK Relation`, i.`prop_Relationship_to_Patient_1` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`prop_Relationship_to_Patient_1` = d.`Description` and d.`Table_Name` = 'Patient_Rel_Type' where i.prop_Relationship_to_Patient_1 != '' group by i.`prop_Relationship_to_Patient_1` order by d.Description, i.prop_Relationship_to_Patient_1;";
+            $stmt = $this->dbh->query($query);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){
+            return false;
+        }
+
+    }
+
+    private function getPatientRelationMkup(){
+        $diagInfo = $this->getPatientRelationInfo();
+        if(is_array($diagInfo)){
+            $mkup = HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("h3", "Patient Relationships" . HTMLContainer::generateMarkup("button", "Create Missing Relations", array("data-entity"=>"relationship", "class"=>"makeMissing ui-button ui-corner-all ml-2"))) .
+                CreateMarkupFromDB::generateHTML_Table($diagInfo, "relations")
+                , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
+        }else{
+            $mkup = "";
+        }
+        return $mkup;
+    }
     public function getDoctorInfo(){
         try{
             $query = "select n.`idName` as idDoctor, n.Name_Full as `HHK Doctor`, i.`docFirst`, i.`docLast` from `" . Upload::TBL_NAME . "` i 
