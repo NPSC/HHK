@@ -389,13 +389,15 @@ BEGIN
 
 	DECLARE exit handler for sqlexception
 	BEGIN
-		GET DIAGNOSTICS CONDITION 1 @text = MESSAGE_TEXT;
+		GET DIAGNOSTICS CONDITION 1 @p1 = RETURNED_SQLSTATE, @text = MESSAGE_TEXT;
         IF @@in_transaction = 1
         THEN
 			ROLLBACK;
 		END IF;
-		SELECT CONCAT('ERROR: Cannot delete names. No changes made.<br>', @text) as `error`;
+		SELECT CONCAT('ERROR: Cannot delete names. No changes made.<br>Error ', @p1,': ', @text) as `error`;
 	END;
+
+	DECLARE continue handler for SQLSTATE '42S02' BEGIN END;
 
     IF @@in_transaction = 0
     THEN
@@ -406,7 +408,7 @@ BEGIN
 	END IF;
 
 	-- collect all deletable names.
-	create temporary table tids (idName int);
+	create or replace temporary table tids (idName int);
 	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
 	select count(*) into @numMembers from tids;
 

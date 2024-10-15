@@ -217,7 +217,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         } else if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "payment"){
             //log hosted payment form response
             try {
-                DeluxeGateway::logGwTx($dbh, "", "&nbsp;", json_encode($post["hpfData"]), 'CaptureCardInfo');
+                DeluxeGateway::logGwTx($dbh, "", json_encode([]), json_encode($post["hpfData"]), 'CaptureCardInfo');
             }catch(\Exception $e){
 
             }
@@ -302,7 +302,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
         //log hosted payment form response
         try {
-            DeluxeGateway::logGwTx($dbh, "", "&nbsp;", json_encode($data["hpfData"]), 'CaptureCardInfo');
+            DeluxeGateway::logGwTx($dbh, "", json_encode([]), json_encode($data["hpfData"]), 'CaptureCardInfo');
         }catch(\Exception $e){
 
         }
