@@ -369,6 +369,7 @@ $authIdpList = SAML::getIdpList($dbh, false);
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="js/Configure.js"></script>
     </head>
     <body <?php if ($wInit->testVersion) {
@@ -394,7 +395,7 @@ $authIdpList = SAML::getIdpList($dbh, false);
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
                     <div style="color:#347201;font-size:1.3em;"><?php echo $confError; ?></div>
-                    <form method="post" name="form4" action="">
+                    <form method="post" id="siteConfigForm" name="form4" action="">
                             <?php echo $conf; ?>
                         <br>
                         <div class="divSubmitButtons ui-corner-all">

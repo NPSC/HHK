@@ -1319,7 +1319,7 @@ ORDER BY v.idVisit , v.Span;");
                 unset($attr['checked']);
             }
 
-            if (count($merchants) == 1) {
+            if (count($merchants) == 1 || $tkRs->Merchant->getStoredVal() == "") {
                 $merchant = '';
             } else {
                 $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';

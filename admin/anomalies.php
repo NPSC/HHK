@@ -251,7 +251,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
             }
         }
         $txtIntro .= "<tr><td class='tdlabel'>Records Fetched: </td><td>" . count($rows) . "</td></tr></table>";
-        $markup = "<thead><tr>";
+        $markup .= "<thead><tr>";
     }
 
     // header row
@@ -278,7 +278,8 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
         }
     } else {
 
-        $markup = "<th>No Data</th></thead><tbody>";
+        $markup = "<thead><th></th></thead><tbody></tbody>";
+        
         return array(0 => true, 1 => $markup, 2 => $txtIntro);
     }
 
@@ -396,6 +397,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
                 }
             });
         </script>
+
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>

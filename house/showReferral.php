@@ -136,12 +136,13 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
 
         <script type='text/javascript'>
             $(document).ready(function() {
 
-            	var previewFormData = btoa(JSON.stringify(<?php echo json_encode($formData); ?>));
+            	var previewFormData = buffer.Buffer.from(JSON.stringify(<?php echo json_encode($formData); ?>)).toString("base64");
 
 				var guestGroup = [];
 				var addGuestPosition = 0;
@@ -161,7 +162,11 @@ if(isset($_GET['template'])){
 					dataType:'json',
 					success: function(ajaxData){
 						if(ajaxData.formData && ajaxData.formSettings){
-    						formData = JSON.parse(ajaxData.formData);
+							try{
+    							formData = JSON.parse(ajaxData.formData);
+							}catch(e){
+								formData = JSON.parse(buffer.Buffer.from(ajaxData.formData, 'base64').toString('utf-8'));
+							}
     						formSuccessTitle = ajaxData.formSettings.successTitle;
     						formSuccessContent = ajaxData.formSettings.successContent;
 
@@ -468,7 +473,7 @@ if(isset($_GET['template'])){
                         	   		type: "POST",
                         	    	data : {
                         	    		cmd: "submitform",
-                        	    		formRenderData: btoa(formRenderData),
+                        	    		formRenderData: buffer.Buffer.from(formRenderData).toString('base64'),
                         	    		recaptchaToken: token,
                         	    		template: <?php echo (isset($_GET['template']) ? $_GET['template'] : 0); ?>
                         	    	},

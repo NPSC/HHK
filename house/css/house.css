@@ -409,7 +409,7 @@ textarea {
     text-align: right;
     padding: 2px 3px;
 }
-td.hhk-tdTotals {
+#divStmt td.hhk-tdTotals {
     border-top: 2px solid #333;
 }
 input.ro {
@@ -1104,7 +1104,7 @@ table.dataTable tbody td {
 }
 
 
-textarea.hhk-fluidheight {
+textarea.hhk-autosize {
 	resize: none;
 }
 

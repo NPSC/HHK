@@ -155,7 +155,7 @@ try {
              if(!$uS->logged){
                  $events['error'] = "Unauthorized for page: Please login";
              }else{
-                 $events['formData'] = base64_decode($formData);
+                 $events['formData'] = $formData;
                  $events['formSettings']['formStyle'] = $style;
                  $events['formSettings']['enableRecaptcha'] = false;
                  $events['formSettings']['initialGuests'] = $initialGuests;

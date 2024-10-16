@@ -217,7 +217,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         } else if (isset($post['token']) && isset($post['expDate']) && isset($post["cmd"]) && $post["cmd"] == "payment"){
             //log hosted payment form response
             try {
-                DeluxeGateway::logGwTx($dbh, "", "&nbsp;", json_encode($post["hpfData"]), 'CaptureCardInfo');
+                DeluxeGateway::logGwTx($dbh, "", json_encode([]), json_encode($post["hpfData"]), 'CaptureCardInfo');
             }catch(\Exception $e){
 
             }
@@ -302,7 +302,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
         //log hosted payment form response
         try {
-            DeluxeGateway::logGwTx($dbh, "", "&nbsp;", json_encode($data["hpfData"]), 'CaptureCardInfo');
+            DeluxeGateway::logGwTx($dbh, "", json_encode([]), json_encode($data["hpfData"]), 'CaptureCardInfo');
         }catch(\Exception $e){
 
         }
@@ -598,7 +598,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         return $dataArray;
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0, $payDate = '') {
 
         $uS = Session::getInstance();
 
@@ -1324,5 +1324,41 @@ order by pa.Timestamp desc");
 
     public static function getIframeMkup(){
         return HTMLContainer::generateMarkup("div", "", ["id"=>"deluxeDialog", "style"=>"display:none;"]);
+    }
+
+    public static function logGwTx(\PDO $dbh, $status, $request, $response, $transType) {
+
+        try {
+            if (!is_array($request) && is_array($jsonRequest = json_decode($request, true))) {
+                $request = $jsonRequest;
+            }
+
+            if (!is_array($response) && is_array($jsonResponse = json_decode($response, true))) {
+                $response = $jsonResponse;
+            }
+
+            self::hideToken($request);
+            
+            self::hideToken($response);
+            
+        }catch(\Exception $e){
+
+        }
+        
+        parent::logGwTx($dbh, $status, json_encode($request), json_encode($response), $transType);
+    }
+
+    protected static function hideToken(array &$arr){
+
+        if (is_array($arr)) {
+
+            if(isset($arr["token"]) && is_string($arr["token"])){
+                $arr["token"] = "********";
+            }
+
+            if(isset($arr["paymentMethod"]) && isset($arr["paymentMethod"]["token"]) && isset($arr["paymentMethod"]["token"]["token"]) && is_string($arr["paymentMethod"]["token"]["token"])){
+                $arr["paymentMethod"]["token"]["token"] = "********";
+            }
+        }
     }
 }

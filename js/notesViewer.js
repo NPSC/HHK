@@ -16,7 +16,7 @@
                 id: 'noteText',
                 style: 'width: 100%;',
                 rows: 2,
-                class: 'mr-3 p-2 hhk-fluidheight ui-widget-content ui-corner-all'
+                class: 'mr-3 p-2 hhk-autosize ui-widget-content ui-corner-all'
             },
             newNoteLocation: 'bottom',
             
@@ -291,7 +291,7 @@
             e.preventDefault();
             var selectedCategory = $(this).closest('tr').find('.noteCategory span[data-cat]').data('cat');
             $(this).closest('tr').find('.noteCategory').html(categorySelector(settings, selectedCategory));
-            $(this).closest('tr').find('.noteText').html('<div class="hhk-flex"><textarea class="p-2 hhk-fluidheight ui-widget-content ui-corner-all" style="width: 100%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + $(this).data('notetext') + '</textarea></div>');
+            $(this).closest('tr').find('.noteText').html('<div class="hhk-flex"><textarea class="p-2 hhk-autosize ui-widget-content ui-corner-all" style="width: 100%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + $(this).data('notetext') + '</textarea></div>');
             $(this).closest('td').find('.note-action').show();
             $(this).closest('td').find('.note-delete').hide();
             $(this).hide();

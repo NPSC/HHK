@@ -156,7 +156,7 @@ class PaymentGatewayResponse extends AbstractGatewayResponse implements GatewayR
         $this->operatorId = $v;
     }
     
-    public function getResponseMessage() {
+    public function getMessage() {
         if (isset($this->result['responseMessage']) && is_string($this->result['responseMessage'])) {
             return $this->result['responseMessage'];
         }else if (isset($this->result['responseMessage']) && is_array($this->result['responseMessage'])){
@@ -165,6 +165,8 @@ class PaymentGatewayResponse extends AbstractGatewayResponse implements GatewayR
 
         return '';
     }
+
+
     
     public function getResponseCode() {
         if (isset($this->result['responseCode'])) {

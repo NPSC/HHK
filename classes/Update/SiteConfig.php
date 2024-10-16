@@ -508,7 +508,7 @@ class SiteConfig {
             } else if ($r['Type'] == 't') {
                 // text area
 
-                $inpt = HTMLContainer::generateMarkup('textarea', $r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'rows'=>'2', 'cols'=>'38'));
+                $inpt = HTMLContainer::generateMarkup('textarea', $r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'rows'=>'2', 'cols'=>'42', 'style'=>"min-height: 3em;", 'class'=>'hhk-autosize'));
 
             } else if ($r['Type'] == 'i') {
                 // integer
@@ -585,6 +585,10 @@ class SiteConfig {
 
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
+
+            if(in_array($itemName, ["PaymentDisclaimer", "InvoiceEmailBody", "StatementEmailBody"])){
+                $val = base64_decode($val);
+            }
 
             $value = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $key = filter_var($itemName, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -719,4 +723,3 @@ class SiteConfig {
     }
 
 }
-?>

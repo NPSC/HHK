@@ -78,7 +78,7 @@ class CreditToken {
         }
         $gtRs->Response_Code->setNewVal($vr->getResponseCode());
         $gtRs->Status->setNewVal($vr->getStatus());
-        $gtRs->StatusMessage->setNewVal($vr->getResponseMessage());
+        $gtRs->StatusMessage->setNewVal($vr->getMessage());
         $gtRs->Tran_Type->setNewVal($vr->getTranType());
         $gtRs->Token->setNewVal($vr->getToken());
 
@@ -431,4 +431,3 @@ order by n.Name_Last, n.Name_First, t.Merchant");
     }
 
 }
-?>

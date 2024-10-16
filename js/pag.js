@@ -545,11 +545,6 @@ $(document).ready(
 			});
 		}
 
-		$(document).on("input", "textarea.hhk-fluidheight", function () {
-			this.style.height = 'auto';
-			this.style.height = (this.scrollHeight + 3) + 'px';
-		});
-
 		//Logout after inactivity
 		//logoutTimer();
 

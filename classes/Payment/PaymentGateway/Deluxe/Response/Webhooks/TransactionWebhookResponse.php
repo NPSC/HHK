@@ -152,7 +152,7 @@ class TransactionWebhookResponse extends AbstractGatewayResponse implements Gate
         $this->operatorId = $v;
     }
     
-    public function getResponseMessage() {
+    public function getMessage() {
         if (isset($this->result['responseMessage']) && is_string($this->result['responseMessage'])) {
             return $this->result['responseMessage'];
         }else if (isset($this->result['responseMessage']) && is_array($this->result['responseMessage'])){
