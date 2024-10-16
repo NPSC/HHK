@@ -3,7 +3,7 @@ namespace HHK\OAuth;
 
 use GuzzleHttp\{Client, RequestOptions};
 use HHK\Exception\RuntimeException;
-use GuzzleHttp\Exception\BadResponseException;
+
 
 /**
  * Handles the OAuth login and token request process
@@ -17,7 +17,7 @@ class SalesForceOAuth extends AbstractOAuth{
         parent::__construct($credentials);
     }
 
-    private function requestToken(){
+    public function requestToken(){
 
         $requestOptions = [
             RequestOptions::AUTH => [$this->credentials->getClientId(), $this->credentials->getClientSecret()],

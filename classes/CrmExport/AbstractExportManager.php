@@ -16,7 +16,6 @@ use HHK\sec\Session;
  */
 abstract class AbstractExportManager {
 
-    protected $webService;
     protected $gatewayId;
     protected $userId;
     protected $password;

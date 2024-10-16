@@ -46,6 +46,8 @@ class SalesforceManager extends AbstractExportManager {
     private $getContactEndpoint;
     private $psgGraphs;
     private $graphsResult;
+    protected $webService;
+
 
     /**
      * {@inheritDoc}
@@ -493,7 +495,7 @@ class SalesforceManager extends AbstractExportManager {
     public function upsertMembers(\PDO $dbh, array $sourceIds, $linkRelatives = false) {
 
         if (count($sourceIds) == 0) {
-            $replys[0] = array('error' => "The list of HHK Id's to send is empty.");
+            $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
             return $replys;
         }
 
@@ -1045,13 +1047,13 @@ class SalesforceManager extends AbstractExportManager {
      */
     public static function getSearchFields($dbh, $tableName) {
 
-        $cols = array();
+        $cols = [];
 
         $cols['Id'] = 'Id';
         $cols['FirstName'] = 'FirstName';
         $cols['LastName'] = 'LastName';
         $cols['Email'] = 'Email';
-
+        $cols['HHK_idName__c'] = 'HHK_idName__c';
         return $cols;
     }
 
@@ -1118,7 +1120,7 @@ class SalesforceManager extends AbstractExportManager {
         try {
             $markup .= $this->createTypeLists($dbh);
         }catch(\Exception $e){
-            
+
         }
 
         return $markup;
