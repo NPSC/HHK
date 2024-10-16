@@ -54,6 +54,10 @@ class VoidGatewayResponse extends AbstractGatewayResponse implements GatewayResp
         return '';
     }
 
+    public function getResponseMessage(){
+        return $this->getMessage();
+    }
+
     public function getAuthorizedAmount()
     {
         if (isset($this->result['amount'])) {
