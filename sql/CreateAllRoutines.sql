@@ -408,7 +408,7 @@ BEGIN
 	END IF;
 
 	-- collect all deletable names.
-	create or replace temporary table tids (idName int);
+	create temporary table tids (idName int);
 	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
 	select count(*) into @numMembers from tids;
 
