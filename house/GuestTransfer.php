@@ -18,7 +18,7 @@ use HHK\CrmExport\AbstractExportManager;
  * List and transfer guests to external CMS system
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2024 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -438,6 +438,7 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
 
     $transferIds = [];
+    $rows = [];
 
     $query = "SELECT *
     FROM `vguest_transfer`
@@ -449,7 +450,6 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
         return FALSE;
     }
 
-    $rows = array();
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -461,20 +461,23 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
         }
 
         // Transfer opt-out
-        if ($r['External Id'] == '') {
-
-       		if ($r['Email'] !== '' || ($r['Address'] !== '' && $r['Bad Addr'] === '')) {
-       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox hhk-tfmem', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox', 'checked'=>'checked'));
-       		} else {
-       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox hhk-tfmem', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox'));
-        	}
-        } else if ($r['External Id'] == $excludeTerm) {
-            $r['External Id'] = 'Excluded';
-        } else {
-            $r['External Id'] .= HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['HHK Id'], 'class'=>'hhk-txCbox hhk-tfmem', 'data-txid'=>$r['HHK Id'], 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'display:none;'));
+        switch ($r['External Id']) {
+            case '':
+                if ($r['Email'] !== '' || ($r['Address'] !== '' && $r['Bad Addr'] === '')) {
+                    $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked']);
+                } else {
+                    $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox']);
+                }
+                break;
+            case $excludeTerm:
+                $r['External Id'] = 'Excluded';
+                break;
+            default:
+                $r['External Id'] .= HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked', 'style' => 'display:none;']);
+                break;
         }
 
-        $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
+        $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], ['href' => 'GuestEdit.php?id=' . $r['HHK Id']]);
 
         unset($r['Arrival']);
         unset($r['Departure']);
@@ -485,7 +488,7 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
     }
 
     $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-    return array('mkup' =>$dataTable, 'xfer'=>$transferIds);
+    return ['mkup' => $dataTable, 'xfer' => $transferIds];
 
 }
 
@@ -502,7 +505,7 @@ function getNeonTypes($CmsManager, $list) {
     $rawList = $CmsManager->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
 
     foreach ($rawList as $k => $v) {
-        $neonList[$k] = array(0=>$k, 1=>$v);
+        $neonList[$k] = [0 => $k, 1 => $v];
     }
 
     return $neonList;
@@ -585,9 +588,9 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     // gather input
  // Input arguements
     $rags = [
-        'selCalendar'   => array('filter'=>FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_REQUIRE_SCALAR),
-        'selIntMonth'   => array('filter'=>FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_FORCE_ARRAY),
-        'selIntYear'   => array('filter'=>FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_REQUIRE_SCALAR),
+        'selCalendar'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_REQUIRE_SCALAR],
+        'selIntMonth'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
+        'selIntYear'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_REQUIRE_SCALAR],
         'stDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
         'enDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
     ];
@@ -600,56 +603,53 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     $txtEnd = $inputs['enDate'];
     $selCal = intval($inputs['selCalendar'], 10);
 
-   if ($selCal == 20) {
-        // fiscal year
-        $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-        $startDT = new DateTime($year . '-01-01');
-        $startDT->sub($adjustPeriod);
-        $start = $startDT->format('Y-m-d');
-
-        $endDT = new DateTime(($year + 1) . '-01-01');
-        $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
-
-    } else if ($selCal == 21) {
-        // Calendar year
-        $startDT = new DateTime($year . '-01-01');
-        $start = $startDT->format('Y-m-d');
-
-        $end = ($year + 1) . '-01-01';
-
-    } else if ($selCal == 18) {
-        // Dates
-        if ($txtStart != '') {
-            $startDT = new DateTime($txtStart);
+    switch ($selCal) {
+        case 20:
+            $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
+            $startDT = new DateTime($year . '-01-01');
+            $startDT->sub($adjustPeriod);
             $start = $startDT->format('Y-m-d');
-        }
 
-        if ($txtEnd != '') {
-            $endDT = new DateTime($txtEnd);
+            $endDT = new DateTime(($year + 1) . '-01-01');
+            $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
+            break;
+        case 21:
+            $startDT = new DateTime($year . '-01-01');
+            $start = $startDT->format('Y-m-d');
+
+            $end = ($year + 1) . '-01-01';
+            break;
+        case 18:
+            if ($txtStart != '') {
+                $startDT = new DateTime($txtStart);
+                $start = $startDT->format('Y-m-d');
+            }
+
+            if ($txtEnd != '') {
+                $endDT = new DateTime($txtEnd);
+                $end = $endDT->format('Y-m-d');
+            }
+            break;
+        case 22:
+            $start = $year . '-01-01';
+
+            $endDT = new DateTime($year . date('m') . date('d'));
+            $endDT->add(new DateInterval('P1D'));
             $end = $endDT->format('Y-m-d');
-        }
+            break;
+        default:
+            $interval = 'P' . count($months) . 'M';
+            $month = $months[0];
+            $start = $year . '-' . $month . '-01';
 
-    } else if ($selCal == 22) {
-        // Year to date
-        $start = $year . '-01-01';
+            $endDate = new DateTime($start);
+            $endDate->add(new DateInterval($interval));
 
-        $endDT = new DateTime($year . date('m') . date('d'));
-        $endDT->add(new DateInterval('P1D'));
-        $end = $endDT->format('Y-m-d');
-
-    } else {
-        // Months
-        $interval = 'P' . count($months) . 'M';
-        $month = $months[0];
-        $start = $year . '-' . $month . '-01';
-
-        $endDate = new DateTime($start);
-        $endDate->add(new DateInterval($interval));
-
-        $end = $endDate->format('Y-m-d');
+            $end = $endDate->format('Y-m-d');
+            break;
     }
 
-
+    // Get the possible people to transfer.
     if (filter_has_var(INPUT_POST, 'btnHere')) {
 
         // Get HHK records result table.
@@ -666,9 +666,9 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 
             // Create settings markup
             $sTbl = new HTMLTable();
-            $sTbl->addBodyTr(HTMLTable::makeTh('Guest Selection Timeframe', array('colspan'=>'4')));
-            $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-            $settingstable = $sTbl->generateMarkup(array('style'=>'float:left;'));
+            $sTbl->addBodyTr(HTMLTable::makeTh('Guest Selection Timeframe', ['colspan' => '4']));
+            $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+            $settingstable = $sTbl->generateMarkup(['style' => 'float:left;']);
 
             // Create search criteria markup
             $searchCriteria = $CmsManager->getSearchFields($dbh, $CmsManager::SearchViewName);
@@ -679,15 +679,15 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             }
 
             $scTbl = new HTMLTable();
-            $scTbl->addHeaderTr(HTMLTable::makeTh($CmsManager->getServiceTitle() . ' Search Criteria', array('colspan'=>count($searchCriteria))));
+            $scTbl->addHeaderTr(HTMLTable::makeTh($CmsManager->getServiceTitle() . ' Search Criteria', ['colspan' => count($searchCriteria)]));
             $scTbl->addBodyTr($tr);
-            $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
+            $searchTabel = $scTbl->generateMarkup(['style' => 'float:left; margin-left:2em;']);
 
-            if ($uS->username == 'npscuser') {
-                $mkTable = 0;
-            } else {
+            // if ($uS->username == 'npscuser') {
+            //     $mkTable = 0;
+            // } else {
                 $mkTable = 1;
-            }
+            //}
 
         }
 
@@ -718,28 +718,28 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 // Get Hospitals and Diagnosis button.
 $customFields = $CmsManager->getMyCustomFields($dbh);
 
-if (isset($customFields['Hospital'])) {
-    $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', array('id'=>'btnGetKey', 'type'=>'button', 'style'=>'margin-left:3px; font-size:small;'));
+if (isset($customFields['Hospital']) && $customFields['Hospital'] !== '') {
+    $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', ['id' => 'btnGetKey', 'type' => 'button', 'style' => 'margin-left:3px; font-size:small;']);
     $dboxMarkup = createKeyMap($dbh);
 }
 
-if (isset($customFields['First_Visit'])) {
-    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', array('name'=>'btnGetVisits', 'id'=>'btnGetVisits', 'type'=>'submit', 'style'=>'margin-left:20px;'));
+if (isset($customFields['First_Visit']) && $customFields['First_Visit'] !=='') {
+    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', ['name' => 'btnGetVisits', 'id' => 'btnGetVisits', 'type' => 'submit', 'style' => 'margin-left:20px;']);
 }
 
-if (isset($customFields['Fund'])) {
-    $btnPayments = HTMLInput::generateMarkup('Get HHK Payments', array('type'=>'submit', 'name'=>"btnGetPayments", 'id'=>"btnGetPayments", 'style'=>"margin-left:20px;"));
+if (isset($customFields['Fund']) && $customFields['Fund'] != '') {
+    $btnPayments = HTMLInput::generateMarkup('Get HHK Payments', ['type' => 'submit', 'name' => "btnGetPayments", 'id' => "btnGetPayments", 'style' => "margin-left:20px;"]);
 }
 
 if ($noRecordsMsg != '') {
-    $noRecordsMsg = HTMLContainer::generateMarkup('p', $noRecordsMsg, array('style'=>'font-size:large'));
+    $noRecordsMsg = HTMLContainer::generateMarkup('p', $noRecordsMsg, ['style' => 'font-size:large']);
 }
 
 
 // Setups for the page.
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'5','multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
-$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>count($calOpts)));
+$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), ['name' => 'selIntMonth[]', 'size' => '5', 'multiple' => 'multiple']);
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), ['name' => 'selIntYear', 'size' => '5']);
+$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), ['name' => 'selCalendar', 'size' => count($calOpts)]);
 
 ?>
 <!DOCTYPE html>
@@ -802,7 +802,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                     </table>
                     <table style="float:left;margin-left:10px;">
                         <tr>
-                            <th><?php echo $CmsManager->getServiceTitle(); ?> <span style="font-weight: bold;">Last Name</span> Search</th>
+                            <th><?php echo $CmsManager->getServiceTitle(); ?> Last Name Search</th>
                             <td><input id="txtRSearch" type="text" /></td>
                         </tr>
                         <tr>
@@ -812,7 +812,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         <?php if ($uS->username == "npscuser") { ?>
                          <tr>
                             <th>Relationship</th>
-                            <td><input id="txtRelat" type="text" placeholder="SF Id" value="" /><input id="btnRelat" type="button" value="Go" /></td>
+                            <td><input id="txtRelat" type="text" value="" /><input id="btnRelat" type="button" value="Go" /></td>
                         </tr>
                          <tr>
                             <th>SOQL</th>
