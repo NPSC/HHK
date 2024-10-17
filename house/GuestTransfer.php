@@ -715,7 +715,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 
 }
 
-// Get Hospitals and Diagnosis button.
+// Custom fields determine which CMS attributes to include
 $customFields = $CmsManager->getMyCustomFields($dbh);
 
 if (isset($customFields['Hospital']) && $customFields['Hospital'] !== '') {

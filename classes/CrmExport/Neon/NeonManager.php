@@ -1773,6 +1773,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         $markup = $this->showGatewayCredentials();
 
+        $customFields = $this->getMyCustomFields($dbh);
+
         try {
 
             $stmt = $dbh->query("Select * from neon_lists;");
@@ -1783,32 +1785,37 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     continue;
                 }
 
+                // Remove funds if not being used.
+                if ($list['HHK_Lookup'] == 'Fund' || $list['HHK_Lookup'] == 'Pay_Type' || $list['HHK_Lookup'] == 'Charge_Cards') {
+                    if ($customFields['Fund'] == '') {
+                        continue;
+                    }
+                }
+
                 $neonItems = $this->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
 
-                if ($list['HHK_Lookup'] == 'Fund') {
+                switch ($list['HHK_Lookup']) {
+                    case 'Fund':
+                        $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
+                        $hhkLookup = [];
 
-                    // Use Items for the Fund
-                    $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
-                    $hhkLookup = array();
+                        while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
+                            $hhkLookup[$row["Code"]] = $row;
+                        }
 
-                    while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                        $hhkLookup[$row["Code"]] = $row;
-                    }
+                        $hhkLookup['p'] = ['Code' => 'p', 0 => 'p', 'Description' => 'Payment', 1 => 'Payment', 'Substitute' => '', 2 => ''];
+                        break;
+                    case 'Pay_Type':
+                        $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
+                        $hhkLookup = [];
 
-                    $hhkLookup['p'] = array('Code'=>'p', 0=>'p', 'Description' => 'Payment', 1=>'Payment', 'Substitute'=>'', 2=>'');
-
-                } else if ($list['HHK_Lookup'] == 'Pay_Type') {
-
-                    // Use Items for the pay type
-                    $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
-                    $hhkLookup = array();
-
-                    while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                        $hhkLookup[$row['Code']] = $row;
-                    }
-
-                } else {
-                    $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+                        while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
+                            $hhkLookup[$row['Code']] = $row;
+                        }
+                        break;
+                    default:
+                        $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+                        break;
                 }
 
                 $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
@@ -1830,13 +1837,13 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     }
 
                     $nTbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $hhkTypeCode), array('name' => 'sel' . $list['List_Name'] . '[' . $n . ']')))
+                        HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $hhkTypeCode), ['name' => 'sel' . $list['List_Name'] . '[' . $n . ']']))
                         . HTMLTable::makeTd($k)
-                        . HTMLTable::makeTd($n, array('style'=>'text-align:center;'))
+                        . HTMLTable::makeTd($n, ['style' => 'text-align:center;'])
                         );
                 }
 
-                $markup .= $nTbl->generateMarkup(array('style'=>'margin-top:15px;'), $list['List_Name']);
+                $markup .= $nTbl->generateMarkup(['style' => 'margin-top:15px;'], $list['List_Name']);
             }
 
             // Custom fields
