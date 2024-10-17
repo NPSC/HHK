@@ -520,6 +520,8 @@ class SalesforceManager extends AbstractExportManager {
 
                 // Yes, new Id.  Process current psg
                 $graph = $this->createPsgGraph($guests, $psgId, $linkRelatives);
+
+                // Add to collection
                 if (count($graph) > 0) {
                     $this->psgGraphs[] = $graph;
                 }
@@ -532,10 +534,16 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         // And last group
-        $graph = $this->createPsgGraph($guests, $psgId, $linkRelatives);
-        if (count($graph) > 0) {
-            $this->psgGraphs[] = $graph;
+        if ($psgId > 0) {
+
+            $graph = $this->createPsgGraph($guests, $psgId, $linkRelatives);
+
+            if (count($graph) > 0) {
+                $this->psgGraphs[] = $graph;
+            }
+
         }
+
 
 
         // Anything to transfer?
