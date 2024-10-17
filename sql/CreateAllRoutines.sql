@@ -918,9 +918,11 @@ BEGIN
         idGuest = goodId
         where idGuest = badId;
 
-    update reservation_guest set
+    update ignore reservation_guest set
 	idGuest = goodId
         where idGuest = badId;
+
+	delete from reservation_guest where idGuest = badId;
 
 --    update fin_application set
 -- idGuest = goodId
