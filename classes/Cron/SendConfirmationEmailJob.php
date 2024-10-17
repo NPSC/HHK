@@ -11,6 +11,7 @@ use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\sec\SysConfig;
+use HHK\sec\WebInit;
 use PDO;
 use HHK\House\TemplateForm\SurveyForm;
 use HHK\Exception\RuntimeException;
@@ -79,6 +80,10 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
         $labels = Labels::getLabels();
 
         $uS = Session::getInstance();
+        
+        SysConfig::getCategory($this->dbh, $uS, ["h", "a", "d", "es", "f", "fg", "pr", "v", "ga"], webInit::SYS_CONFIG);
+        
+        WebInit::loadNameLookups($this->dbh, $uS);
 
         $siteName = SysConfig::getKeyValue($this->dbh, 'sys_config', 'siteName');
         $from = SysConfig::getKeyValue($this->dbh, 'sys_config', 'NoReplyAddr');      // Email address message will show as coming from.

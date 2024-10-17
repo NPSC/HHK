@@ -64,7 +64,7 @@ class VehiclesReport extends AbstractReport implements ReportInterface {
         $cFields[] = array('Color', 'Color', 'checked', '', 'string', '20');
         $cFields[] = array('State Reg.', 'State Reg.', 'checked', '', 'string', '20');
         $cFields[] = array(Labels::getString('referral', 'licensePlate', 'License Plate'), 'License Plate', 'checked', '', 'string', '20');
-        $cFields[] = array('Notes', 'Note', 'checked', '', 'string', '20');
+        $cFields[] = array(Labels::getString('referral', 'vehicleNotes', 'Notes'), 'Note', 'checked', '', 'string', '20');
 
         return $cFields;
     }

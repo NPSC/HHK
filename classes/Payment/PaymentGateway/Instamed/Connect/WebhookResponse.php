@@ -47,6 +47,10 @@ class WebhookResponse extends AbstractGatewayResponse implements GatewayResponse
         return '';
     }
 
+    public function getMessage(){
+        return $this->getResponseMessage();
+    }
+
     public function getTranType() {
         if ($this->getTransactionAction() == 'Sale' && $this->getTransactionStatus() == InstamedGateway::VOID) {
             return MpTranType::Void;

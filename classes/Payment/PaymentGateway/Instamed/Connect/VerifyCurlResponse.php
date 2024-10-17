@@ -44,6 +44,10 @@ class VerifyCurlResponse extends AbstractGatewayResponse implements GatewayRespo
         return '';
     }
 
+    public function getMessage(){
+        return $this->getResponseMessage();
+    }
+
     public function getToken() {
         return $this->getPaymentPlanID();
     }

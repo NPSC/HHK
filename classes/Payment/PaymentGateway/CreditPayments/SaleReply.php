@@ -39,7 +39,7 @@ class SaleReply extends AbstractCreditPayments {
         $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $pr->response, $pr->getIdToken()));
 
         // Check for replay - AP*
-        if ($pr->response->getResponseMessage() == MpStatusMessage::Replay) {
+        if ($pr->response->getMessage() == MpStatusMessage::Replay) {
 
             // Find previous response, if we caught it.
             $paRs = new Payment_AuthRS();
@@ -90,4 +90,3 @@ class SaleReply extends AbstractCreditPayments {
     }
 
 }
-?>

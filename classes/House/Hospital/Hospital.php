@@ -185,7 +185,7 @@ class Hospital {
                 $agent = new Agent($dbh, 'a_', $hstay->getAgentId());
 
                 if ($agent->getIdName() > 0 && $agent->getRoleMember()->get_status() !== MemStatus::Active) {
-                    $raErrorMsg = HTMLContainer::generateMarkup('div', 'Agent with Id ' . $hstay->getAgentId() . ' status is "' . $uS->nameLookups['mem_status'][$agent->getRoleMember()->get_status()][1] . '".', array('style'=>'margin:.3em;color:red;'));
+                    $raErrorMsg = HTMLContainer::generateMarkup('div', 'Agent with Id ' . $hstay->getAgentId() . ' is no longer active.', array('style'=>'margin:.3em;color:red;'));
                 }
 
             } catch (RuntimeException $hkex) {

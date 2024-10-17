@@ -223,11 +223,11 @@ class FormTemplate {
     }
 
     public function getTemplate(){
-        if(str_starts_with($this->doc->getMimeType(), "base64:")){
-            return base64_decode($this->doc->getDoc());
-        }else{
+        //if(str_starts_with($this->doc->getMimeType(), "base64:")){
+        //    return base64_decode($this->doc->getDoc());
+        //}else{
             return $this->doc->getDoc();
-        }
+        //}
     }
 
     public function getStyle() {

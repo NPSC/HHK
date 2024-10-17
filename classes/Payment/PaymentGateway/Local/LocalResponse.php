@@ -78,4 +78,3 @@ class LocalResponse extends AbstractCreditResponse {
     }
 
 }
-?>

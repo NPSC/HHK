@@ -343,7 +343,7 @@ class VantivGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes, $resvId = 0) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes, $resvId = 0, $payDate = '') {
 
         $uS = Session::getInstance();
         $rtnResult = NULL;
@@ -1321,4 +1321,3 @@ class VantivGateway extends AbstractPaymentGateway {
     }
 }
 
-?>

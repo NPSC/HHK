@@ -1374,7 +1374,7 @@ class HouseServices {
         foreach ($tkRsArray as $tkRs) {
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (count($merchants) == 1) {
+            if (count($merchants) == 1 || $tkRs->Merchant->getStoredVal() == "") {
                 $merchant = '';
             }
 
@@ -1390,11 +1390,11 @@ class HouseServices {
         if ($gateway->hasCofService()) {
 
         	$attr = array('type'=>'checkbox', 'name'=>'rbUseCard'.$index);
-        	if (count($tkRsArray) == 0) {
+        	/*if (count($tkRsArray) == 0) {
 	        	$attr['checked'] = 'checked';
 	        } else {
 	        	unset($attr['checked']);
-	        }
+	        }*/
 
 	        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'New', array('for'=>'rbUseCard'.$index, 'style'=>'margin-right: .5em;'))
 	        		.  HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:right;', 'colspan'=> '3'))

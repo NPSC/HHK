@@ -50,7 +50,7 @@ class HostedPaymentForm {
         try {
             $loggedData = $dataArray;
             $loggedData["hpfToken"] = "******";
-            DeluxeGateway::logGwTx($dbh, "", "&nbsp;", json_encode($loggedData), 'initHostedPaymentsForm');
+            DeluxeGateway::logGwTx($dbh, "", json_encode([]), json_encode($loggedData), 'initHostedPaymentsForm');
         }catch(\Exception $e){
 
         }

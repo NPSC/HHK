@@ -84,7 +84,7 @@ class ImReturnResponse extends AbstractCreditResponse {
         }
 
         if ($this->response->getResponseMessage() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
         }
 
         if ($this->response->getEMVApplicationIdentifier() != '') {
@@ -114,4 +114,3 @@ class ImReturnResponse extends AbstractCreditResponse {
     }
 
 }
-?>

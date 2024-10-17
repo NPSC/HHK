@@ -228,7 +228,7 @@ WHERE
                 .HTMLTable::makeTh('Color')
                 .HTMLTable::makeTh('Registered')
                 .HTMLTable::makeTh($labels->getString('referral', 'licensePlate', 'License Plate'))
-                .HTMLTable::makeTh('Notes')
+                .HTMLTable::makeTh($labels->getString('referral', 'vehicleNotes', 'Notes'))
                 .HTMLTable::makeTh('Delete')
                 );
 

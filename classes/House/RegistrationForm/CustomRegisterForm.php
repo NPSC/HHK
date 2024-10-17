@@ -429,8 +429,8 @@ class CustomRegisterForm {
                 $mkup .= (!empty($veh->Model->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col"><strong>Model: </strong>' . $veh->Model->getStoredVal() . '</div>':'');
                 $mkup .= (!empty($veh->Color->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="max-width:fit-content"><strong>Color: </strong>' . $veh->Color->getStoredVal() . '</div>':'');
                 $mkup .= (!empty($veh->State_Reg->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="max-width:fit-content"><strong>State: </strong>' . $veh->State_Reg->getStoredVal() . '</div>':'');
-                $mkup .= (!empty($veh->License_Number->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="min-width:fit-content"><strong>License: </strong>' . $veh->License_Number->getStoredVal() . '</div>':'');
-                $mkup .= (!empty($veh->Note->getStoredVal()) ? '<div class="col-12"><strong>Note: </strong>' . $veh->Note->getStoredVal() . '</div>':'');
+                $mkup .= (!empty($veh->License_Number->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="min-width:fit-content"><strong>' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong>' . $veh->License_Number->getStoredVal() . '</div>':'');
+                $mkup .= (!empty($veh->Note->getStoredVal()) ? '<div class="col-12"><strong>' . Labels::getString('referral', 'vehicleNotes', 'Notes') . ': </strong>' . $veh->Note->getStoredVal() . '</div>':'');
 
                 $mkup .= '</div>';
 

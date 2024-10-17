@@ -20,10 +20,10 @@ interface GatewayResponseInterface {
      */
     public function getResponseCode();
     /**
-     * Summary of getResponseMessage
+     * Summary of getMessage
      * @return mixed
      */
-    public function getResponseMessage();
+    public function getMessage();
     /**
      * Summary of getTranType
      * @return mixed
@@ -196,4 +196,3 @@ interface GatewayResponseInterface {
     public function getEMVApplicationResponseCode();
 
 }
-?>

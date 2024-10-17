@@ -16,9 +16,9 @@ use HHK\sec\Session;
  */
 
 /**
- * Description of LocalGatewayResponse
+ * Description of AuthorizeGatewayResponse
  *
- * @author Eric
+ * @author Will
  */
  
 class AuthorizeGatewayResponse implements GatewayResponseInterface {
@@ -166,6 +166,10 @@ class AuthorizeGatewayResponse implements GatewayResponseInterface {
         }
 
         return '';
+    }
+
+    public function getMessage(){
+        return $this->getResponseMessage();
     }
     
     public function getResponseCode() {

@@ -195,9 +195,9 @@ class PaymentSvcs {
 
             case PayType::Charge:
 
-                // Load gateway
+                // Load gateway 
                 $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant(), $pmp->getRtnIdToken());
-                $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes(), $resvId);
+                $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes(), $resvId, $pmp->getPayDate());
 
                 break;
 
@@ -257,14 +257,14 @@ class PaymentSvcs {
         $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
         if (count($pments) != 1) {
-            return array('warning' => 'Payment record not found for Void/Reverse.  ', 'bid' => $bid);
+            return ['warning' => 'Payment record not found for Void/Reverse.  ', 'bid' => $bid];
         }
 
         EditRS::loadRow($pments[0], $payRs);
 
         // Already voided, or otherwise ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
-            return array('warning' => 'Payment is ineligable for Void/Reverse.  ', 'bid' => $bid);
+            return ['warning' => 'Payment is ineligable for Void/Reverse.  ', 'bid' => $bid];
         }
 
         // Find the Payment detail record.
@@ -273,7 +273,7 @@ class PaymentSvcs {
         $pAuths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment), 'and', array($pAuthRs->idPayment_auth));
 
         if (count($pAuths) < 1) {
-            return array('warning' => 'Payment Auth record not found for Void/Reverse.  ', 'bid' => $bid);
+            return ['warning' => 'Payment Auth record not found for Void/Reverse.  ', 'bid' => $bid];
         }
 
         EditRS::loadRow(array_pop($pAuths), $pAuthRs);
@@ -282,7 +282,7 @@ class PaymentSvcs {
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
         if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
-            return array('warning' => 'Use Return instead.  ', 'bid' => $bid);
+            return ['warning' => 'Use Return instead.  ', 'bid' => $bid];
         }
 
         // Load gateway
@@ -308,14 +308,14 @@ class PaymentSvcs {
         $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
         if (count($pments) != 1) {
-            return array('warning' => 'Payment record not found.  Unable to Reverse/Void this purchase.  ', 'bid' => $bid);
+            return ['warning' => 'Payment record not found.  Unable to Reverse/Void this purchase.  ', 'bid' => $bid];
         }
 
         EditRS::loadRow($pments[0], $payRs);
 
         // Already voided, or otherwise ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
-            return array('warning' => 'Payment is ineligable for Reversal/Void.  ', 'bid' => $bid);
+            return ['warning' => 'Payment is ineligable for Reversal/Void.  ', 'bid' => $bid];
         }
 
         // Find the Payment detail record.
@@ -324,7 +324,7 @@ class PaymentSvcs {
         $pAuths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment), 'and', array($pAuthRs->idPayment_auth));
 
         if (count($pAuths) < 1) {
-            return array('warning' => 'Payment Auth record not found for Void/Reverse.  ', 'bid' => $bid);
+            return ['warning' => 'Payment Auth record not found for Void/Reverse.  ', 'bid' => $bid];
         }
 
         EditRS::loadRow(array_pop($pAuths), $pAuthRs);
@@ -333,7 +333,7 @@ class PaymentSvcs {
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
         if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
-            return array('warning' => 'Use Return instead.  ', 'bid' => $bid);
+            return ['warning' => 'Use Return instead.  ', 'bid' => $bid];
         }
 
         // Load gateway
@@ -990,4 +990,3 @@ class PaymentSvcs {
     }
 
 }
-?>

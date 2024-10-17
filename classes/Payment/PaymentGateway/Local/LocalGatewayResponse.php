@@ -146,7 +146,7 @@ class LocalGatewayResponse implements GatewayResponseInterface {
         $this->operatorId = $v;
     }
     
-    public function getResponseMessage() {
+    public function getMessage() {
         return '';
     }
     
@@ -205,4 +205,3 @@ class LocalGatewayResponse implements GatewayResponseInterface {
     
     
 }
-?>

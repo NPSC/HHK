@@ -21,7 +21,7 @@ use HHK\HTMLControls\{HTMLTable, HTMLInput};
  */
 class Price3Steps extends AbstractPriceModel {
 
-    protected $periods;
+    public $periods;
     const TABLE_NAME = 'Rate_Period';
 
     public function amountCalculator($days, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {

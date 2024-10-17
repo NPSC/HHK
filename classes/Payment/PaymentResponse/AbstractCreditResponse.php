@@ -66,7 +66,7 @@ abstract class AbstractCreditResponse extends AbstractPaymentResponse {
             $pDetailRS->idPayment->setNewVal($this->idPayment);
             $pDetailRS->Approved_Amount->setNewVal($this->response->getAuthorizedAmount());
             $pDetailRS->Approval_Code->setNewVal($this->response->getAuthCode());
-            $pDetailRS->Status_Message->setNewVal($this->response->getResponseMessage());
+            $pDetailRS->Status_Message->setNewVal($this->response->getMessage());
             $pDetailRS->Reference_Num->setNewVal($this->response->getRefNo());
             $pDetailRS->Acct_Number->setNewVal($this->response->getMaskedAccount());
             $pDetailRS->Card_Type->setNewVal($this->response->getCardType());
@@ -141,4 +141,3 @@ abstract class AbstractCreditResponse extends AbstractPaymentResponse {
     }
 
 }
-?>

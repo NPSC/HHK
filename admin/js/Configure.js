@@ -87,40 +87,6 @@ $(document).ready(function () {
         });
     }
 
-// CC processor tab
-if ($('.hhk-delMerchant').length > 0) {
-	$('.hhk-delMerchant').on('change', function() {
-		if ($(this).prop('checked') && ! confirm('Delete the ' + $(this).data('merchant') + ' merchant?')) {
-			$(this).prop('checked', false);
-		}
-	});
-}
-if ($('.hhk-setMerchantRooms').length > 0) {
-	$('.hhk-setMerchantRooms').on('change', function() {
-		if ($(this).prop('checked') && ! confirm('This sets ALL the rooms to the ' + $(this).data('merchant') + ' merchant!')) {
-			$(this).prop('checked', false);
-		}
-	});
-}
-
-
-// CC processor tab
-if ($('.hhk-delMerchant').length > 0) {
-	$('.hhk-delMerchant').on('change', function() {
-		if ($(this).prop('checked') && ! confirm('Delete the ' + $(this).data('merchant') + ' merchant?')) {
-			$(this).prop('checked', false);
-		}
-	});
-}
-if ($('.hhk-setMerchantRooms').length > 0) {
-	$('.hhk-setMerchantRooms').on('change', function() {
-		if ($(this).prop('checked') && ! confirm('This sets ALL the rooms to the ' + $(this).data('merchant') + ' merchant!')) {
-			$(this).prop('checked', false);
-		}
-	});
-}
-
-
 // save holidays
 
 $(document).on("submit", "form#formHolidays", function(e){
@@ -961,11 +927,20 @@ $(document).on('change', "#numAddrCalc", function(){
 
     tbs.tabs("option", "active", tabIndex);
     $('#tabs').show();
+    $(document).find("textarea.hhk-autosize").trigger("input");
 
     //authentication tab
     authTabs = $('#authTabs').tabs();
     authTabs.tabs("option", "active", 0);
     $('#authTabs').show();
+
+    $(document).on("submit", "form#siteConfigForm", function (e) {
+        
+        $(this).find("textarea").each(function () {
+            let base64val = buffer.Buffer.from($(this).val()).toString("base64");
+            $(this).val(base64val);
+        });
+    });
 
     $(document).on("submit", "form.authForm", function (e) {
         e.preventDefault();

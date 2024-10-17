@@ -40,3 +40,9 @@ CHANGE COLUMN `RefNo` `RefNo` VARCHAR(50) NOT NULL DEFAULT '' ;
 
 ALTER TABLE `payment` 
 ADD COLUMN IF NOT EXISTS `parent_idPayment` INT(11) NOT NULL DEFAULT 0 AFTER `Is_Refund`;
+
+ALTER TABLE `link_doc`
+DROP INDEX IF EXISTS `indx_linkDoc`;
+
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
+('vehicleNotes', 'Notes', 's', 'rf','','Default: Notes');
