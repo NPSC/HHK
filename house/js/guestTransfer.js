@@ -57,25 +57,74 @@ function upsert(transferIds) {
             alert('Error: Bad Reply from HHK Web Server');
             return;
         }
-        // try {
-        //     incmg = $.parseJSON(incmg);
-        // } catch (err) {
-        //     alert('Error: Bad JSON Encoding');
-        //     return;
-        // }
+        try {
+            data = JSON.parse(incmg);
+        } catch (err) {
+            alert('Error: Bad JSON Encoding');
+            return;
+        }
 
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
             }
             // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
+            flagAlertMessage(data.error, true);
             return;
         }
 
         $('#divMembers').text(incmg);
-        //fillTable(incmg, $('#mTbl'));
+        fillUpsertResult(data, $('#mTbl'));
     });
+}
+
+function fillUpsertResult(incmg, $mTbl) {
+
+        let tr = '';
+
+        if (incmg) {
+
+            if ($mTbl.length === 0) {
+
+                // Create header row
+                $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+
+                tr = '<thead><tr>';
+
+                incmg.foreach(item => {
+                    tr += '<th>' + item + '</th>';
+                });
+
+                tr += '</tr></thead><tbody></tbody>';
+
+
+
+                $mTbl.append(tr);
+                let title = $('<h3 style="margin-top:10px;">Processed ' + cmsTitle + ' Members</h3>');
+                $('#divMembers').append(title).append($mTbl).show();
+            }
+
+
+            let first = 'style="border-top: 2px solid #2E99DD;"';
+            for (let id in incmg) {
+
+                tr = '<tr ' + first + '>';
+                first = '';
+
+                for (let i = 0; i < incmg.length; i++) {
+                    tr += '<th>' + incmg[i] + '</th>';
+                }
+
+                tr += '</tr>';
+            }
+
+            $mTbl.find('tbody').append(tr);
+            $('div#retrieve').empty().hide();
+
+            $('div#printArea').show();
+        }
+
+
 }
 
 function updateRemote(id, accountId, useFlagAlert) {
@@ -818,6 +867,8 @@ $(document).ready(function () {
     var dateFormat = $('#hdateFormat').val();
     cmsTitle = $('#cmsTitle').val();
 
+    let dta = {"100":{"HHK Id":100,"Contact Id":"003U700000LU6iDIAT","Contact Type":"Partner","Name":"But Mom ","Birthdate":"","Address":"123 Fake Addr, dake city, FL, 00000","Phone":"","Email":"","Result":"OK"},"107":{"HHK Id":107,"Contact Id":"003U700000LU6iEIAT","Contact Type":"Partner","Name":"Arnica Montana ","Birthdate":"","Address":"1234 Adfasdfa, Goodyear, AZ, ","Phone":"(555) 777 - 3333","Email":"","Result":"OK"},"108":{"HHK Id":108,"Contact Id":"003U700000LU6iFIAT","Contact Type":"Patient","Name":"Tony The Tiger ","Birthdate":"1938 -09 - 13","Address":"2 Tiger Ln, Dekalb, IL, 60115","Phone":"(555) 232 - 7890","Email":"","Result":"OK"}};
+
     $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits, #btnGetKey, #btnRequest').button();
 
     $('#printButton').button().click(function () {
@@ -838,6 +889,12 @@ $(document).ready(function () {
             .button()
             .val('Start Upsert')
             .show();
+
+        $againBtn = $('<input id="againBtn" type="button" value="Again" />');
+        $againBtn.click(function () {
+            fillUpsertResult(JSON.parse(dta), $('#mTbl'));
+        });
+        $('#divMembers').append($againBtn).show();
 
         $upsertButton.click(function () {
             let ids = [];

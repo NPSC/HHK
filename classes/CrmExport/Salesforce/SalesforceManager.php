@@ -557,7 +557,7 @@ class SalesforceManager extends AbstractExportManager {
             try {
                 $this->graphsResult = $this->webService->postUrl($this->endPoint . 'composite/graph', $body);
 
-                $transferResult =  $this->processGraphsResult($this->graphsResult, $rows);
+                $transferResult =  $this->processGraphsResult($dbh, $this->graphsResult, $rows);
 
             } catch (\RuntimeException $ex) {
                 $transferResult = ['error' => $ex->getMessage()];
@@ -635,7 +635,7 @@ class SalesforceManager extends AbstractExportManager {
         // Anything to transfer?
         if (count($subrequests) > 0) {
 
-            $graph[] = [
+            $graph = [
                 'graphId' => $graphId,
                 'compositeRequest' => $subrequests
             ];
@@ -646,11 +646,12 @@ class SalesforceManager extends AbstractExportManager {
 
     /**
      * Summary of processGraphResult
+     * @param \PDO $dbh
      * @param mixed $graphResult
      * @param mixed $guests
      * @return array
      */
-    protected function processGraphsResult($graphResult, $guestRows) {
+    protected function processGraphsResult(\PDO $dbh, $graphResult, $guestRows) {
 
         $result = [];
 
@@ -659,7 +660,7 @@ class SalesforceManager extends AbstractExportManager {
 
             foreach ($graphResult['graphs'] as $graph) {
                 // Each graph has a collection of subCompositeResponces
-                $this->processCompositeResponse($graph, $guestRows, $result);
+                $this->processCompositeResponse($dbh, $graph, $guestRows, $result);
             }
 
         } else {
@@ -672,12 +673,13 @@ class SalesforceManager extends AbstractExportManager {
 
     /**
      * Summary of processCompositeResponse
+     * @param \PDO $dbh
      * @param mixed $graph
      * @param mixed $guests
      * @param mixed $result
      * @return void
      */
-    protected function processCompositeResponse($graph, $guests, &$result) {
+    protected function processCompositeResponse(\PDO $dbh, $graph, $guests, &$result) {
 
         $idPsg = $graph['graphId'];
         $isSuccessful = $graph['isSuccessful'];
@@ -693,7 +695,7 @@ class SalesforceManager extends AbstractExportManager {
                 'Contact Type' => $guest['Contact_Type__c'],
                 'Name' => ($guest['Salutation'] == '' ? '' : $guest['Salutation'] . ' ') .$guest['FirstName'] . ' ' . ($guest['Middle_Name__c'] == '' ? '' : $guest['Middle_Name__c'] . ' ') . $guest['LastName'] . ' ' . $guest['Suffix__c'] . ($guest['Nickname__c'] == '' ? '' : ', ' . $guest['Nickname__c']),
                 'Birthdate' => $guest['Birthdate'],
-                'Address' => $guest['Street'] . ', ' . $guest['City'] . ', ' . $guest['State'] . ', ' . $guest['Zip'],
+                'Address' => $guest['MailingStreet'] . ', ' . $guest['MailingCity'] . ', ' . $guest['MailingState'] . ', ' . $guest['MailingPostalCode'],
                 'Phone' => $guest['HomePhone'],
                 'Email' => $guest['Email'],
                 'Result' => '',
@@ -705,14 +707,25 @@ class SalesforceManager extends AbstractExportManager {
                     // “OK” success code, for GET, HEAD, and some PATCH requests.
 
                     $f['Contact Id'] = $c['body']['id'];
-                    $f['Result'] = 'OK';
+
+                    if ($f['Contact Id'] != '') {
+
+                        $this->updateLocalExternalId($dbh, $f['HHK Id'], $f['Contact Id']);
+                        $f['Result'] = 'OK';
+
+                    }
 
                     break;
                 case '201':
                     // “Created” success code, for POST requests and some PATCH requests.
 
                     $f['Contact Id'] = $c['body']['id'];
-                    $f['Result'] = 'Contact Created';
+
+                    if ($f['Contact Id'] != '') {
+
+                        $this->updateLocalExternalId($dbh, $f['HHK Id'], $f['Contact Id']);
+                        $f['Result'] = 'Contact Created';
+                    }
 
                     break;
                 case '300':

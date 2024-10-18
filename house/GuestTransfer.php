@@ -555,7 +555,7 @@ $paymentsTable = '';
 $settingstable = '';
 $searchTabel = '';
 $year = date('Y');
-$months = array(date('n'));     // logically overloaded.
+$months = [date('n')];     // logically overloaded.
 $txtStart = '';
 $txtEnd = '';
 $start = '';
@@ -683,11 +683,11 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             $scTbl->addBodyTr($tr);
             $searchTabel = $scTbl->generateMarkup(['style' => 'float:left; margin-left:2em;']);
 
-            // if ($uS->username == 'npscuser') {
-            //     $mkTable = 0;
-            // } else {
+             if ($CmsManager->getServiceName() == AbstractExportManager::CMS_SF) {
+                 $mkTable = 0;
+             } else {
                 $mkTable = 1;
-            //}
+            }
 
         }
 
