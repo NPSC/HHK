@@ -2,6 +2,7 @@
 namespace HHK\CrmExport\Salesforce;
 
 use BadFunctionCallException;
+use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
@@ -492,7 +493,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $sourceIds
      * @return array
      */
-    public function upsertMembers(\PDO $dbh, array $sourceIds, $linkRelatives = false) {
+    public function upsertMembers(\PDO $dbh, array $sourceIds, $linkRelatives = true) {
 
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
@@ -508,8 +509,8 @@ class SalesforceManager extends AbstractExportManager {
 
         $guests = [];
         $this->psgGraphs = [];  // The collection of psg graphs
-        $this->graphsResult = [];
         $psgId = 0;
+        $transferResult = [];
 
         // Collect each psg into a guests array and process it as a composit request set
         // the rows must be ordered by PSG Id
@@ -555,9 +556,9 @@ class SalesforceManager extends AbstractExportManager {
 
             // Transfer this package to SF API
             try {
-                $this->graphsResult = $this->webService->postUrl($this->endPoint . 'composite/graph', $body);
+                $graphsResult = $this->webService->postUrl($this->endPoint . 'composite/graph', $body);
 
-                $transferResult =  $this->processGraphsResult($dbh, $this->graphsResult, $rows);
+                $transferResult = $this->processGraphsResult($dbh, $graphsResult, $rows);
 
             } catch (\RuntimeException $ex) {
                 $transferResult = ['error' => $ex->getMessage()];
@@ -663,6 +664,9 @@ class SalesforceManager extends AbstractExportManager {
                 $this->processCompositeResponse($dbh, $graph, $guestRows, $result);
             }
 
+            // Create an HTML table containing the results
+            $result['table'] = CreateMarkupFromDB::generateHTML_Table($result, 'tblrpt');
+
         } else {
             // graphs object is missing.
             $result = ['error' => 'graphs collection is missing.'];
@@ -690,14 +694,14 @@ class SalesforceManager extends AbstractExportManager {
 
             $guest = $this->findGuest($guests, $idPsg, str_replace('refContact_', '', $c['referenceId']));
             $f = [
-                'HHK Id' => $guest['HHK_idName__c'],
                 'Contact Id' => '',
+                'HHK Id' => $guest['HHK_idName__c'],
                 'Contact Type' => $guest['Contact_Type__c'],
                 'Name' => ($guest['Salutation'] == '' ? '' : $guest['Salutation'] . ' ') .$guest['FirstName'] . ' ' . ($guest['Middle_Name__c'] == '' ? '' : $guest['Middle_Name__c'] . ' ') . $guest['LastName'] . ' ' . $guest['Suffix__c'] . ($guest['Nickname__c'] == '' ? '' : ', ' . $guest['Nickname__c']),
-                'Birthdate' => $guest['Birthdate'],
                 'Address' => $guest['MailingStreet'] . ', ' . $guest['MailingCity'] . ', ' . $guest['MailingState'] . ', ' . $guest['MailingPostalCode'],
                 'Phone' => $guest['HomePhone'],
                 'Email' => $guest['Email'],
+                'Birthdate' => $guest['Birthdate'] != '' ? date('M j, Y', strtotime($guest['Birthdate'])) : '',
                 'Result' => '',
             ];
 
@@ -713,6 +717,8 @@ class SalesforceManager extends AbstractExportManager {
                         $this->updateLocalExternalId($dbh, $f['HHK Id'], $f['Contact Id']);
                         $f['Result'] = 'OK';
 
+                    } else {
+                        $f['Result'] = 'OK, but Contact_Id is missing';
                     }
 
                     break;
@@ -725,6 +731,8 @@ class SalesforceManager extends AbstractExportManager {
 
                         $this->updateLocalExternalId($dbh, $f['HHK Id'], $f['Contact Id']);
                         $f['Result'] = 'Contact Created';
+                    } else {
+                        $f['Result'] = 'Contact Created, but Contact_Id is missing';
                     }
 
                     break;
@@ -819,7 +827,7 @@ class SalesforceManager extends AbstractExportManager {
 
             }
 
-            $result[$guest['HHK_idName__c']] = $f;
+            $result[] = $f;
         }
     }
 
@@ -1068,12 +1076,6 @@ class SalesforceManager extends AbstractExportManager {
      */
     public static function getSearchFields($dbh, $tableName) {
 
-        $cols = [];
-
-        $cols['Id'] = 'Id';
-        $cols['FirstName'] = 'FirstName';
-        $cols['LastName'] = 'LastName';
-        $cols['Email'] = 'Email';
         $cols['HHK_idName__c'] = 'HHK_idName__c';
         return $cols;
     }

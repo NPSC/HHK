@@ -1509,7 +1509,7 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
         IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%m-%d-%Y'),
                 '') AS `Birthdate`,
         IFNULL(`gn`.`Description`, '') AS `No Return`,
-        MAX(IFNULL(`s`.`Span_Start_Date`, '')) AS `Arrival`,
+        IFNULL(`s`.`Span_Start_Date`, '') AS `Arrival`,
         IFNULL(`s`.`Span_End_Date`, '') AS `Departure`,
         IFNULL(`na`.`Bad_Address`, '') AS `Bad Addr`
     FROM
@@ -1533,12 +1533,10 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
             AND `g3`.`Code` = `ng`.`Relationship_Code`)
 		LEFT JOIN `gen_lookups` `gn` ON `gn`.`Table_Name` = 'NoReturnReason'
 			AND `gn`.`Code` = `nd`.`No_Return`
-
     WHERE
         `ng`.`idName` > 0
             AND `n`.`Record_Member` = 1
             AND `n`.`Member_Status` IN ('a' , 'd', 'in')
-    GROUP BY `s`.`idName`
     ORDER BY `ng`.`idPsg`;
 
 

@@ -479,6 +479,9 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
         $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], ['href' => 'GuestEdit.php?id=' . $r['HHK Id']]);
 
+        if ($r['Birthdate'] != '') {
+            $r['Birthdate'] = date('M j, Y', strtotime($r['Birthdate']));
+        }
         unset($r['Arrival']);
         unset($r['Departure']);
         unset($r['Bad Addr']);
@@ -667,7 +670,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             // Create settings markup
             $sTbl = new HTMLTable();
             $sTbl->addBodyTr(HTMLTable::makeTh('Guest Selection Timeframe', ['colspan' => '4']));
-            $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+            $sTbl->addBodyTr(HTMLTable::makeTd('From', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
             $settingstable = $sTbl->generateMarkup(['style' => 'float:left;']);
 
             // Create search criteria markup
@@ -683,6 +686,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             $scTbl->addBodyTr($tr);
             $searchTabel = $scTbl->generateMarkup(['style' => 'float:left; margin-left:2em;']);
 
+            // Call different js routines by CMS manager name.
              if ($CmsManager->getServiceName() == AbstractExportManager::CMS_SF) {
                  $mkTable = 0;
              } else {
@@ -843,7 +847,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         <?php echo $dataTable; ?>
                     </div>
                 </div>
-                <div id="divMembers"></div>
+                <div id="divMembers" style="margin-top:10px;"></div>
             </div>
             <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-bottom:6px;margin-left:20px;font-size:0.9em;">
                 <input id="printButton" value="Print" type="button" />
