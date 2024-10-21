@@ -29,11 +29,18 @@ class ContactCompositeSubresponse extends AbstractCompositeSubresponse
     {
         $result = '';
 
-        if ($this->subResponse->getBody_success()) {
-            $result = "New Contact (" . $this->subResponse->getHttpStatusCode() . ')';
+        if ($this->subresponse->getBody_success()) {
+
+            if ($this->subresponse->getHttpStatusCode() == '201') {
+                $result = "New Contact (" . $this->subresponse->getHttpStatusCode() . ')';
+            } else {
+                $result = "Ok (" . $this->subresponse->getHttpStatusCode() . ')';
+            }
+
             $this->updateLocal($dbh);
+
         } else {
-            $result = $this->subResponse->getBody_message() . '(' . $this->subResponse->getHttpStatusCode() . ')';
+            $result = $this->subresponse->getBody_message() . '(' . $this->subresponse->getHttpStatusCode() . ')';
         }
         return $result;
     }
@@ -44,7 +51,7 @@ class ContactCompositeSubresponse extends AbstractCompositeSubresponse
      */
     public function getContactId(): string
     {
-        $id = $this->subResponse->getBody_id();
+        $id = $this->subresponse->getBody_id();
 
         return $id;
     }
@@ -60,7 +67,7 @@ class ContactCompositeSubresponse extends AbstractCompositeSubresponse
         $uS = Session::getInstance();
         $upd = 0;
         $idName = $this->getIdName();
-        $externalId = $this->subResponse->getBody_id();
+        $externalId = $this->subresponse->getBody_id();
 
         if ($idName > 0 && $externalId != '') {
             $nameRs = new NameRS();

@@ -28,11 +28,11 @@ class RelationCompositeSubresponse extends AbstractCompositeSubresponse {
     public function processResult(\PDO $dbh): string {
         $result = '';
 
-        if ($this->subResponse->getBody_success()) {
-            $result = 'New Relationship (' . $this->subResponse->getHttpStatusCode() . ')';
+        if ($this->subresponse->getBody_success()) {
+            $result = 'New Relationship (' . $this->subresponse->getHttpStatusCode() . ')';
             $this->updateLocal($dbh);
         } else {
-            $result = $this->subResponse->getBody_message() . '(' . $this->subResponse->getHttpStatusCode() . ')';
+            $result = $this->subresponse->getBody_message() . '(' . $this->subresponse->getHttpStatusCode() . ')';
         }
         return $result;
     }
@@ -59,7 +59,7 @@ class RelationCompositeSubresponse extends AbstractCompositeSubresponse {
         $uS = Session::getInstance();
         $upd = 0;
         $idName = $this->getIdName();
-        $externalId = $this->subResponse->getBody_id();
+        $externalId = $this->subresponse->getBody_id();
 
         if ($idName > 0 && $externalId != '') {
             $nameRs = new Name_GuestRS();

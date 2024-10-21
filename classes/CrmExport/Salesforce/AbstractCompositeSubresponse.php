@@ -9,7 +9,7 @@ abstract class AbstractCompositeSubresponse {
      * Summary of idPsg
      * @var int
      */
-    protected $idPsg;
+    public $idPsg;
 
     /**
      * Summary of searchNeedle
@@ -21,7 +21,7 @@ abstract class AbstractCompositeSubresponse {
      * Summary of subResponse
      * @var CompositeSubresponse
      */
-    protected CompositeSubresponse $subResponse;
+    protected CompositeSubresponse $subresponse;
 
 
     const RELATION_NEEDLE = 'refRel_';
@@ -58,7 +58,7 @@ abstract class AbstractCompositeSubresponse {
      * @return int
      */
     public function getIdName() {
-        return intval(str_replace($this->searchNeedle, '', $this->subResponse->getReferenceId()), 10);
+        return intval(str_replace($this->searchNeedle, '', $this->subresponse->getReferenceId()), 10);
     }
 
     /**
