@@ -213,6 +213,9 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="theme-color" content="#5c9ccc">
+        
         <title><?php echo $pageTitle; ?></title>
 
         <?php echo JQ_UI_CSS; ?>
@@ -240,6 +243,9 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+
         <script type="text/javascript">
 
             function getDtBtns(title){
@@ -356,7 +362,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                     },
                     {
                         'data': 'Notes',
-                        'title': 'Notes',
+                        'title': 'Latest Note',
                         'searchable': true,
                         'sortable': false
                     }
@@ -450,7 +456,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                     },
                     {
                         'data': 'Notes',
-                        'title': 'Notes',
+                        'title': 'Latest Note',
                         'searchable': true,
                         'sortable': false
                     }
@@ -495,7 +501,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                     {
                         'targets': [5],
                         'data': 'Notes',
-                        'title': 'Notes',
+                        'title': 'Latest Note',
                         'searchable': true,
                         'sortable': false
                     },
@@ -527,6 +533,35 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                 });
 
                 $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrintAll, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn, #prtClnToday').button();
+
+                $("#roomDetailsDialog").dialog({
+                    width: getDialogWidth(1000),
+                    autoOpen: false,
+                    modal: true,
+                    close: function(){
+                        $("#roomDetailsDialog").empty();
+                    }
+                });
+
+                $("#mainTabs").on("click", ".roomDetails", function(e){
+                    
+                    let $this = $(this);
+                    $("#roomDetailsDialog").empty();
+                    $("#roomDetailsDialog").append('<div class="roomNotes"></div>');
+
+                    $("#roomDetailsDialog").find(".roomNotes").notesViewer({
+                        linkId: $this.data("idroom"),
+                        linkType: 'room',
+                        newNoteAttrs: {id:'taNewRNote', name:'taNewRNote'},
+                        alertMessage: function(text, type) {
+                            flagAlertMessage(text, type);
+                        }
+                    });
+
+                    $("#roomDetailsDialog").dialog("option", "title", $this.data("title"));
+                    $("#roomDetailsDialog").dialog("open");
+
+                });
 
                 $('#mainTabs').tabs({
                     beforeActivate: function (event, ui) {
@@ -653,6 +688,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                 });
 
                 $('#dirtyTable').dataTable({
+                    'responsive':true,
                     ajax: {
                         url: 'ws_resc.php?cmd=cleanStat&tbl=dirtyTable',
                         dataSrc: 'dirtyTable'
@@ -701,6 +737,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                 inTbl.buttons().container().appendTo("#ckin .tbl-btns");
 
                 $('#atblgetter').dataTable({
+                    'responsive':true,
                     'columnDefs': [
                         {'targets': [3, 4],
                             'type': 'date',
@@ -722,18 +759,51 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv" style="margin-bottom: 60px;">
-            <div style="margin-top:10px;">
+            <div class="my-1">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
             </div>
-            <form action="RoomStatus.php" method="post"  id="form1" name="form1" >
-                <div id="mainTabs" style="font-size: .8em; display:none;" class="hhk-tdbox">
-                    <ul>
-                        <li><a href="#clnToday">Rooms Not Ready</a></li>
-                        <li><a href="#ckin"><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In</a></li>
-                        <li><a href="#ckout"><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out</a></li>
-                        <li><a href="#showAll">Show All Rooms</a></li>
-                        <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
-                    </ul>
+
+            <div class="hhk-list-group">
+                <div class="list-group-item list-group-item-action active" aria-current="true">
+                    <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">List group item heading</h5>
+                    <small>3 days ago</small>
+                    </div>
+                    <p class="mb-1">Some placeholder content in a paragraph.</p>
+                    <small>And some small print.</small>
+                </div>
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">List group item heading</h5>
+                    <small class="text-body-secondary">3 days ago</small>
+                    </div>
+                    <p class="mb-1">Some placeholder content in a paragraph.</p>
+                    <small class="text-body-secondary">And some muted small print.</small>
+                </div>
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">List group item heading</h5>
+                    <small class="text-body-secondary">3 days ago</small>
+                    </div>
+                    <p class="mb-1">Some placeholder content in a paragraph.</p>
+                    <small class="text-body-secondary">And some muted small print.</small>
+                </div>
+            </div>
+
+
+            <form action="RoomStatus.php" method="post"  id="form1" name="form1">
+                <div id="mainTabs" style="font-size: .8em; display:none; width: 100%" class="hhk-tdbox hhk-mobile-tabs">
+                    <div class="hhk-flex ui-widget-header ui-corner-all">
+                        <div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
+                        <ul class="hhk-flex" style="border:none;">
+                            <li><a href="#clnToday">Rooms Not Ready</a></li>
+                            <li><a href="#ckin"><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In</a></li>
+                            <li><a href="#ckout"><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out</a></li>
+                            <li><a href="#showAll">Show All Rooms</a></li>
+                            <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
+                        </ul>
+                        <div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
+                    </div>
                     <div id="clnToday">
                         <table id='dirtyTable' class=' order-column display ' style='width:100%;'></table>
                         <div class="ui-corner-all submitButtons">
@@ -784,6 +854,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                     </div>
                 </div>
             </form>
+            <div id="roomDetailsDialog" style="font-size: 0.8em;"></div>
             <input type="hidden" value="<?php echo $groupingTitle;  ?>" id='groupingTitle' />
         </div>  <!-- div id="contentDiv"-->
     </body>

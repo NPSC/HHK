@@ -111,7 +111,10 @@ class ListNotes {
 
             case Note::RoomLink:
 
-                //break;
+                $dbView = 'vroom_notes';
+                $whereField = 'idRoom';
+                $whereClause = "$whereField = $linkId";
+                break;
 
             default:
                 return array('error'=>'The Link Type is not found: ' . $linkType);

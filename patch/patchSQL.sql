@@ -57,3 +57,8 @@ insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id`
 insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "staff" as 'linkType', '0' as 'idLink' from `staff_note`;
 
 insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "member" as 'linkType', `idName` as 'idLink' from `member_note`;
+
+
+insert ignore into `note` (`User_Name`, `Note_Type`, `Title`, `Note_Text`) SELECT "npscuser" as `User_Name`, "text" as `Note_Type`, "" as `Title`, `Notes` from room where `Notes` is not null; 
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT n.`idNote`, "room" as `linkType`, r.`idRoom` from room r join `note` n on r.Notes = n.Note_Text where r.`Notes` is not null;
+update room set `Notes` = null;

@@ -149,6 +149,26 @@ CREATE OR REPLACE VIEW `vdoc_notes` AS
         dn.idLink > 0 && n.`Status` = 'a';
 
 -- -----------------------------------------------------
+-- View `vroom_notes`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vroom_notes` AS
+    SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        dn.idLink as `idRoom`,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        link_note dn ON n.idNote = dn.idNote and dn.linkType = "room"
+    WHERE
+        dn.idLink > 0 && n.`Status` = 'a';
+
+-- -----------------------------------------------------
 -- View `vstaff_notes`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vstaff_notes` AS

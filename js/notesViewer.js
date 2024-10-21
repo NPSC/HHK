@@ -134,7 +134,6 @@
                     name: "Guest",
                     width: "120px",
                     render: function (data, type, row) {
-                        console.log(row);
                         if (row.idGuest) {
                             data = '<a href="GuestEdit.php?id=' + row.idGuest;
                             if (row.idPsg) {
@@ -176,21 +175,26 @@
                 
         $div = $('<div class="hhk-panel d-block d-md-flex" style="align-items: center" />').append($ta);
         
-        if (settings.linkType == 'staff'){
+        if (settings.linkType == 'staff') {
+            $div.append(memberSearch(settings));
         	$div.append(categorySelector(settings));
         }
         
         if (settings.linkId >= 0) {
             
-            $button = $('<button class=" ui-button ui-corner-all ui-widget mt-2 mt-md-0 ml-3" id="note-newNote" style="min-width:fit-content">Save New Note</button>')
+            $button = $('<button class=" ui-button ui-corner-all ui-widget mt-2 mt-md-0" id="note-newNote" style="min-width:fit-content">Save New Note</button>')
                 .click(function (e) {
                     e.preventDefault();
                     var noteTextarea = $('#' + settings.newNoteAttrs.id);
                     var noteData = noteTextarea.val();
+                    
                     if(settings.linkType == "staff"){
-                    	var noteCategory = $wrapper.find("#noteCategory").val();
+                        var noteCategory = $wrapper.find("#noteCategory").val();
+                        var guestId = $("#noteGuest").data("guestId");
+                        console.log(guestId);
                     }else{
-                    	var noteCategory = '';
+                        var noteCategory = '';
+                        var guestId = '';
                     }
 
                     if (settings.linkId < 0) {
@@ -213,7 +217,8 @@
                                 cmd: 'saveNote',
                                 linkType: settings.linkType,
                                 linkId: settings.linkId,
-                                noteCategory:noteCategory,
+                                noteCategory: noteCategory,
+                                guestId: guestId,
                                 data: base64note
                             },
                             success: function( data ){
@@ -600,7 +605,7 @@
     
     function categorySelector(settings, selected = false){
     
-    	$catSelect = $('<select name="noteCategory" id="noteCategory" class="mt-2 mt-md-0"><option disabled ' + (selected == false ? 'selected': '') + '>-- Select Category --</option><option></option></select>');
+    	$catSelect = $('<select name="noteCategory" id="noteCategory" class="mt-2 mt-md-0 mr-3"><option disabled ' + (selected == false ? 'selected': '') + '>-- Select Category --</option><option></option></select>');
         
         for(var k in settings.staffNoteCats){
         	if(k == selected){
@@ -610,6 +615,13 @@
         	}
         };
         return $catSelect;
+    }
+
+    function memberSearch(settings, selected = false){
+    
+    	$guestSearch = $('<input type="search" name="noteGuest" id="noteGuest" class="mt-2 mt-md-0 mr-3" placeholder="Name Search...">');
+        
+        return $guestSearch;
     }
     
     function categoryFilter(settings){
@@ -687,7 +699,18 @@
         	$wrapper.prepend(createNewNote(settings, dtTable, $wrapper));
         }else{
         	$wrapper.append(createNewNote(settings, dtTable, $wrapper));
-		}
+        }
+        
+        //guest search
+        if (settings.linkType == "staff") {
+            createRoleAutoComplete($('#noteGuest'), 3, {cmd: 'guest'},
+            function (item) {
+                if (item.id > 0) {
+                    $('#noteGuest').data("guestId", item.id);
+                }
+            },
+            false);
+        }
 		
         $wrapper.show();
 

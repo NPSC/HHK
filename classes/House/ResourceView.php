@@ -1035,7 +1035,8 @@ from
     ifnull(v.Expected_Departure, '') as `Expected_Departure`,
     r.Last_Cleaned,
     r.Last_Deep_Clean,
-    ifnull(r.Notes, '') as `Notes`
+    ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), '') as `noteDate`,
+    ifnull(nt.`Note_Text`, '') as `Notes`
 from
     room r
         left join
@@ -1054,6 +1055,8 @@ from
     gen_lookups g3 on g3.Table_Name = 'Room_Cleaning_Days' and g3.`Code` = r.Cleaning_Cycle_Code
         left join
     resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
+        left join
+    note nt on nt.idNote = (select idNote from link_note where idLink = r.idRoom and linkType = 'room' order by idNote desc limit 1)
     $genJoin
 where g3.Substitute > 0 and ru.idResource_use is null
     and (re.Retired_At is null or re.Retired_At > date(now()))
@@ -1128,26 +1131,30 @@ ORDER BY $orderBy;");
                 $lastDeepClean = $r['Last_Deep_Clean'] == '' ? '' : date('M d, Y', strtotime($r['Last_Deep_Clean']));
 
             } else {
-                $notes = Notes::markupShell($r['Notes'], $filter.'taNotes[' . $r['idRoom'] . ']');
-                $lastDeepClean = HTMLInput::generateMarkup($lastDeepClean, array("type"=>"text", "class"=>"ckdate","name"=>$filter . 'deepCleanDate[' . $r['idRoom'] . ']'));
+                $notes = HTMLContainer::generateMarkup("div", (strlen($r["Notes"]) > 0 ? HTMLContainer::generateMarkup("div", "<strong>" . $r["noteDate"] . "</strong> - " . $r["Notes"], ["class" => "p-2 mr-3", "style"=>"width: 100%"]) : "")
+                        . HTMLContainer::generateMarkup("button", "View All Room Notes", ['type'=>'button', 'class'=>"roomDetails ui-button ui-corner-all", "data-idRoom"=>$r['idRoom'], "data-title"=>"Housekeeping Details for Room " . $r["Title"]])
+                        ,["class"=>"hhk-flex align-items-center"]);
+                
+                        $lastDeepClean = HTMLInput::generateMarkup($lastDeepClean, array("type"=>"text", "class"=>"ckdate","name"=>$filter . 'deepCleanDate[' . $r['idRoom'] . ']'));
 
                 if ($isDirty) {
-                    $action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
-                    .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Clean][1], array('for'=>$filter.'cbClean' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
-
+                    //$action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
+                    //.HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Clean][1], array('for'=>$filter.'cbClean' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                    $action = HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Clean][1], ['type' => 'button', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'class' => 'ui-button ui-corner-all']);
                 } else if ($isClean && $uS->HouseKeepingSteps > 1) {
-                    $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'id'=>$filter.'cbReady' . $r['idRoom']))
+                    /*$action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'id'=>$filter.'cbReady' . $r['idRoom']))
                         .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Ready][1], array('for'=>$filter.'cbReady' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                     $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
                         .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Dirty][1], array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                */
+                    $action = HTMLContainer::generateMarkup("button", 'Set '.$roomStatuses[RoomState::Ready][1], ['type' => 'button', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'class' => 'ui-button ui-corner-all']);
+                    $action .= HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Dirty][1], ['type' => 'button', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'class' => 'ui-button ui-corner-all']);
                 } else {
-                    $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
+                    /*$action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
                         .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Dirty][1], array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                    */
+                    $action .= HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Dirty][1], ['type' => 'button', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'class' => 'ui-button ui-corner-all']);
                 }
-
-                $action .= ($guestAdmin === FALSE ? '' : HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDeln[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDeln' . $r['idRoom']))
-                            .HTMLContainer::generateMarkup('label', 'Delete Notes', array('for'=>$filter.'cbDeln' . $r['idRoom'], 'style'=>'margin-left:.2em;'))
-                        );
 
             }
 
@@ -1222,7 +1229,7 @@ ORDER BY $orderBy;");
         ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) as `Departure_Date`,
         g.`Description` as `Visit_Status`,
         r.`Last_Cleaned`,
-        ifnull(r.`Notes`, '') as `Notes`
+        concat('<strong>', ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), ''), '</strong>','  ', ifnull(nt.`Note_Text`, '')) as `Notes`
     from
         room r
             left join
@@ -1233,6 +1240,8 @@ ORDER BY $orderBy;");
         name n ON v.idPrimaryGuest = n.idName
             left join
         gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
+            left join
+        note nt on nt.idNote = (select idNote from link_note where idLink = r.idRoom and linkType = 'room' order by idNote desc limit 1)
     where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) between Date('$startCoDate') and Date('$endCoDate');");
 
 
@@ -1327,4 +1336,3 @@ ORDER BY $orderBy;");
     }
 
 }
-?>
