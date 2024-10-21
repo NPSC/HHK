@@ -1200,7 +1200,8 @@ CREATE  OR REPLACE VIEW `vguest_data_sf` AS
         IFNULL(`ng1`.`Relationship_Code`, '') AS `Relationship_Code`,
         IFNULL(`st`.`SF_Type_Code`, '') as `SF_Rel_Type`,
         IFNULL(`ng1`.`idPsg`, 0) as `idPsg`,
-        IFNULL(`ng1`.`Legal_Custody`, 0) as `Legal_Custody`
+        IFNULL(`ng1`.`Legal_Custody`, 0) as `Legal_Custody`,
+        IFNULL(`ng1`.`External_Id`, '') as `Relationship_Id`
     FROM
         `name_guest` `ng1`
         JOIN `name` `n` ON `n`.`idName` = `ng1`.`idName`
@@ -1474,10 +1475,6 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
     SELECT
         `n`.`External_Id` AS `External Id`,
         `n`.`idName` AS `HHK Id`,
-        CASE
-            WHEN `ng`.`Relationship_Code` = 'slf' THEN 'Yes'
-            ELSE ''
-        END AS `Patient`,
         TRIM(CONCAT_WS(' ',
                     IFNULL(`g1`.`Description`, ''),
                     `n`.`Name_First`,
@@ -1516,28 +1513,23 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
         `stays` `s`
         JOIN `visit` `v` ON (`s`.`idVisit` = `v`.`idVisit`
             AND `s`.`Visit_Span` = `v`.`Span`)
-        JOIN `name_guest` `ng` ON (`s`.`idName` = `ng`.`idName`)
-        LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`)
-        LEFT JOIN `name_address` `na` ON (`ng`.`idName` = `na`.`idName`
+        LEFT JOIN `name` `n` ON (`s`.`idName` = `n`.`idName`)
+        LEFT JOIN `name_address` `na` ON (`s`.`idName` = `na`.`idName`
             AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`)
-        LEFT JOIN `name_email` `ne` ON (`ng`.`idName` = `ne`.`idName`
+        LEFT JOIN `name_email` `ne` ON (`s`.`idName` = `ne`.`idName`
             AND `n`.`Preferred_Email` = `ne`.`Purpose`)
-        LEFT JOIN `name_phone` `np` ON (`ng`.`idName` = `np`.`idName`
+        LEFT JOIN `name_phone` `np` ON (`s`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`)
-        LEFT JOIN `name_demog` `nd` ON (`ng`.`idName` = `nd`.`idName`)
+        LEFT JOIN `name_demog` `nd` ON (`s`.`idName` = `nd`.`idName`)
         LEFT JOIN `gen_lookups` `g1` ON (`n`.`Name_Prefix` = `g1`.`Code`
             AND `g1`.`Table_Name` = 'Name_Prefix')
         LEFT JOIN `gen_lookups` `g2` ON (`n`.`Name_Suffix` = `g2`.`Code`
             AND `g2`.`Table_Name` = 'Name_Suffix')
-        LEFT JOIN `gen_lookups` `g3` ON (`g3`.`Table_Name` = 'Patient_Rel_Type'
-            AND `g3`.`Code` = `ng`.`Relationship_Code`)
 		LEFT JOIN `gen_lookups` `gn` ON `gn`.`Table_Name` = 'NoReturnReason'
 			AND `gn`.`Code` = `nd`.`No_Return`
     WHERE
-        `ng`.`idName` > 0
-            AND `n`.`Record_Member` = 1
-            AND `n`.`Member_Status` IN ('a' , 'd', 'in')
-    ORDER BY `ng`.`idPsg`;
+        `n`.`Record_Member` = 1
+            AND `n`.`Member_Status` IN ('a' , 'd', 'in');
 
 
 -- -----------------------------------------------------

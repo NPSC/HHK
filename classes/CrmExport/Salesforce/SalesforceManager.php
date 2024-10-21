@@ -1,12 +1,10 @@
 <?php
 namespace HHK\CrmExport\Salesforce;
 
-use BadFunctionCallException;
+
 use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\Exception\RuntimeException;
-use HHK\Exception\UnexpectedValueException;
-use HHK\Member\Relation\RelationCode;
 use HHK\SysConst\RelLinkType;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
@@ -48,6 +46,7 @@ class SalesforceManager extends AbstractExportManager {
     private $psgGraphs;
     private $graphsResult;
     protected $webService;
+
 
 
     /**
@@ -616,24 +615,28 @@ class SalesforceManager extends AbstractExportManager {
                     continue;
                 }
 
-                // build the upsert details file
-                $relationRow['npe4__Contact__c'] = "@{refContact_" . $g['HHK_idName__c'] . ".id}";
-                $relationRow['npe4__RelatedContact__c'] = "@{refContact_" . $idPatient . ".id}";
-                $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
-                $relationRow['npe4__Type__c'] = $g['SF_Rel_Type'];
-                //$relationRow['Is_an_Emergency_Contact__c']      // t/f
-                $relationRow['Legal_Custody__c'] = ($g['Legal_Custody'] == 0 ? 'false' : 'true');       // t/f
+                // Only new relationships.
+                if ($g['Relationship_Id'] == '') {
 
-                $subrequests[] = [
-                    "method" => "POST",
-                    "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
-                    "referenceId" => "refRel_" . $g['HHK_idName__c'],
-                    "body" => $relationRow
-                ];
+                    // build the upsert details file
+                    $relationRow['npe4__Contact__c'] = "@{refContact_" . $g['HHK_idName__c'] . ".id}";
+                    $relationRow['npe4__RelatedContact__c'] = "@{refContact_$idPatient.id}";
+                    $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
+                    $relationRow['npe4__Type__c'] = $g['SF_Rel_Type'];
+                    //$relationRow['Is_an_Emergency_Contact__c']      // t/f
+                    $relationRow['Legal_Custody__c'] = ($g['Legal_Custody'] == 0 ? 'false' : 'true');       // t/f
+
+                    $subrequests[] = [
+                        "method" => "POST",
+                        "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
+                        "referenceId" => "refRel_" . $g['HHK_idName__c'],
+                        "body" => $relationRow
+                    ];
+                }
             }
         }
 
-        // Anything to transfer?
+        // Make any subrequests?
         if (count($subrequests) > 0) {
 
             $graph = [
@@ -660,8 +663,21 @@ class SalesforceManager extends AbstractExportManager {
         if (isset($graphResult['graphs'])) {
 
             foreach ($graphResult['graphs'] as $graph) {
-                // Each graph has a collection of subCompositeResponces
-                $this->processCompositeResponse($dbh, $graph, $guestRows, $result);
+
+                if ($graph['isSuccessful'] == 'true') {
+
+                    // Each graph has a collection of subCompositeResponces
+                    $this->processCompositeResponse($dbh, $graph, $guestRows, $result);
+
+                } else {
+
+                    // this graph did not work
+                    if (isset($result['error'])) {
+                        $result['error'] .= 'PSG ' . $graph['graphId'] . ' did not succeed';
+                    } else {
+                        $result['error'] = 'PSG ' . $graph['graphId'] . ' did not succeed';
+                    }
+                }
             }
 
             // Create an HTML table containing the results
@@ -686,146 +702,34 @@ class SalesforceManager extends AbstractExportManager {
     protected function processCompositeResponse(\PDO $dbh, $graph, $guests, &$result) {
 
         $idPsg = $graph['graphId'];
-        $isSuccessful = $graph['isSuccessful'];
         $comResp = $graph['graphResponse']['compositeResponse'];
 
         // Each compositeSubrequestResult
         foreach ($comResp as $c) {
 
-            $guest = $this->findGuest($guests, $idPsg, str_replace('refContact_', '', $c['referenceId']));
-            $f = [
+            $subResponse = AbstractCompositeSubresponse::factory($c, $idPsg);
+
+            $guest = $this->findGuest($guests, $idPsg, $subResponse->getidName());
+
+
+            $f = (count($guest) > 0) ? [
                 'Contact Id' => '',
                 'HHK Id' => $guest['HHK_idName__c'],
                 'Contact Type' => $guest['Contact_Type__c'],
-                'Name' => ($guest['Salutation'] == '' ? '' : $guest['Salutation'] . ' ') .$guest['FirstName'] . ' ' . ($guest['Middle_Name__c'] == '' ? '' : $guest['Middle_Name__c'] . ' ') . $guest['LastName'] . ' ' . $guest['Suffix__c'] . ($guest['Nickname__c'] == '' ? '' : ', ' . $guest['Nickname__c']),
-                'Address' => $guest['MailingStreet'] . ', ' . $guest['MailingCity'] . ', ' . $guest['MailingState'] . ', ' . $guest['MailingPostalCode'],
-                'Phone' => $guest['HomePhone'],
-                'Email' => $guest['Email'],
+                'Name' => ($guest['Salutation'] == '' ? '' : $guest['Salutation'] . ' ') . $guest['FirstName'] . ' ' . ($guest['Middle_Name__c'] == '' ? '' : $guest['Middle_Name__c'] . ' ') . $guest['LastName'] . ' ' . $guest['Suffix__c'] . ($guest['Nickname__c'] == '' ? '' : ', ' . $guest['Nickname__c']),
                 'Birthdate' => $guest['Birthdate'] != '' ? date('M j, Y', strtotime($guest['Birthdate'])) : '',
+                'Result' => '',
+            ] : [
+                'Contact Id' => '',
+                'HHK Id' => '',
+                'Contact Type' => '',
+                'Name' => '',
+                'Birthdate' => '',
                 'Result' => '',
             ];
 
-            switch ($c['httpStatusCode']) {
-
-                case '200':
-                    // “OK” success code, for GET, HEAD, and some PATCH requests.
-
-                    $f['Contact Id'] = $c['body']['id'];
-
-                    if ($f['Contact Id'] != '') {
-
-                        $this->updateLocalExternalId($dbh, $f['HHK Id'], $f['Contact Id']);
-                        $f['Result'] = 'OK';
-
-                    } else {
-                        $f['Result'] = 'OK, but Contact_Id is missing';
-                    }
-
-                    break;
-                case '201':
-                    // “Created” success code, for POST requests and some PATCH requests.
-
-                    $f['Contact Id'] = $c['body']['id'];
-
-                    if ($f['Contact Id'] != '') {
-
-                        $this->updateLocalExternalId($dbh, $f['HHK Id'], $f['Contact Id']);
-                        $f['Result'] = 'Contact Created';
-                    } else {
-                        $f['Result'] = 'Contact Created, but Contact_Id is missing';
-                    }
-
-                    break;
-                case '300':
-                    // The value returned when an external ID exists in more than one record. The response body contains the list of matching records.
-
-                    $f['Result'] = 'HHK ID exists in more than one record';
-                    break;
-                case '400':
-                    // The request couldn’t be understood, usually because the JSON or XML body contains an error.
-
-                    $f['Result'] = $c['body']['message'];
-                    break;
-                case '401':
-                    // The session ID or OAuth token used has expired or is invalid.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '403':
-                    // The request has been refused. Verify that the logged-in user has appropriate permissions. If the error code is REQUEST_LIMIT_EXCEEDED, you’ve exceeded API request limits in your org.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '404':
-                    // The requested resource couldn’t be found. Check the URI for errors, and verify that there are no sharing issues.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '405':
-                    // The method specified in the Request-Line isn’t allowed for the resource specified in the URI.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '409':
-                    // The request couldn’t be completed due to a conflict with the current state of the resource. Check that the API version is compatible with the resource you’re requesting.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '410':
-                    // The requested resource has been retired or removed. Delete or update any references to the resource.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '412':
-                    // The request wasn’t executed because one or more of the preconditions that the client specified in the request headers wasn’t satisfied.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '414':
-                    // The length of the URI exceeds the 16,384-byte limit.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '415':
-                    // The entity in the request is in a format that’s not supported by the specified method.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '420':
-                    // Salesforce Edge doesn’t have routing information available for this request host. Contact Salesforce Customer Support.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '428':
-                    // The request wasn’t executed because it wasn’t conditional.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '431':
-                    // The combined length of the URI and headers exceeds the 16,384-byte limit.
-
-                    $f['Result'] = $c['body']['errorCode'];
-                    break;
-                case '500':
-                    // An error has occurred within Lightning Platform, so the request couldn’t be completed.
-
-                    $f['Result'] = 'A 500 error has occurred within Lightning Platform, so the request couldn’t be completed';
-                    break;
-                case '502':
-                    // Salesforce Edge wasn’t able to communicate successfully with the Salesforce instance.
-
-                    $f['Result'] = '502: Salesforce Edge wasn’t able to communicate successfully with the Salesforce instance';
-                    break;
-                case '503':
-                    // The server is unavailable to handle the request. Typically this issue occurs if the server is down for maintenance or is overloaded.
-
-                    $f['Result'] = '503: The server is unavailable to handle the request';
-                    break;
-
-                default:
-                    $f['Result'] = 'Unknown http Status Code: "' . $c['httpStatusCode'] . '"';
-
-            }
+            $f['result'] = $subResponse->processResult($dbh);
+            $f['Contact Id'] = $subResponse->getContactId();
 
             $result[] = $f;
         }

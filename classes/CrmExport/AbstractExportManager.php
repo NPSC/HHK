@@ -218,7 +218,7 @@ abstract class AbstractExportManager {
         $uS = Session::getInstance();
         $upd = 0;
 
-        if ($idName > 0) {
+        if ($idName > 0 && $externalId != '') {
             $nameRs = new NameRS();
             $nameRs->idName->setStoredVal($idName);
             $rows = EditRS::select($dbh, $nameRs, [$nameRs->idName]);

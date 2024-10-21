@@ -440,9 +440,9 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
     $transferIds = [];
     $rows = [];
 
-    $query = "SELECT *
-    FROM `vguest_transfer`
-    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE('$start') and DATE(`Arrival`) < DATE('$end')";
+    $query = "SELECT * FROM `vguest_transfer`
+    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE('$start') and DATE(`Arrival`) < DATE('$end')
+    GROUP BY `HHK ID`";
 
     $stmt = $dbh->query($query);
 
