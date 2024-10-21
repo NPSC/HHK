@@ -1787,7 +1787,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
                 // Remove funds if not being used.
                 if ($list['HHK_Lookup'] == 'Fund' || $list['HHK_Lookup'] == 'Pay_Type' || $list['HHK_Lookup'] == 'Charge_Cards') {
-                    if ($customFields['Fund'] == '') {
+                    if (isset($customFields['Fund']) === false || $customFields['Fund'] == '') {
                         continue;
                     }
                 }
