@@ -664,20 +664,20 @@ class SalesforceManager extends AbstractExportManager {
 
             foreach ($graphResult['graphs'] as $graph) {
 
-                if ($graph['isSuccessful'] == 'true') {
+              //  if ($graph['isSuccessful'] == 'true') {
 
                     // Each graph has a collection of subCompositeResponces
                     $this->processCompositeResponse($dbh, $graph, $guestRows, $result);
 
-                } else {
+             //   } else {
 
-                    // this graph did not work
-                    if (isset($result['error'])) {
-                        $result['error'] .= 'PSG ' . $graph['graphId'] . ' did not succeed';
-                    } else {
-                        $result['error'] = 'PSG ' . $graph['graphId'] . ' did not succeed';
-                    }
-                }
+             //       // this graph did not work
+             //       if (isset($result['error'])) {
+             //           $result['error'] .= 'PSG ' . $graph['graphId'] . ' did not succeed. ';
+             //       } else {
+             //           $result['error'] = 'PSG ' . $graph['graphId'] . ' did not succeed. ';
+             //       }
+             //   }
             }
 
             // Create an HTML table containing the results
@@ -728,7 +728,7 @@ class SalesforceManager extends AbstractExportManager {
                 'Result' => '',
             ];
 
-            $f['result'] = $subResponse->processResult($dbh);
+            $f['Result'] = $subResponse->processResult($dbh);
             $f['Contact Id'] = $subResponse->getContactId();
 
             $result[] = $f;

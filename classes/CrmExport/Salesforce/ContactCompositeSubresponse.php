@@ -40,7 +40,7 @@ class ContactCompositeSubresponse extends AbstractCompositeSubresponse
             $this->updateLocal($dbh);
 
         } else {
-            $result = $this->subresponse->getBody_message() . '(' . $this->subresponse->getHttpStatusCode() . ')';
+            $result = $this->subresponse->getBody_errorCode() . ', ' . $this->subresponse->getBody_message() . ' (' . $this->subresponse->getHttpStatusCode() . ')';
         }
         return $result;
     }

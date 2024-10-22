@@ -50,6 +50,8 @@ function upsert(transferIds) {
         ids: transferIds
     };
 
+    $('#TxButton').hide();
+    
     var posting = $.post('ws_tran.php', parms);
     posting.done(function (incmg) {
 
