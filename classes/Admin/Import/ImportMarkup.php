@@ -73,10 +73,14 @@ class ImportMarkup {
     }
 
     private function getPeopleInfo(){
-        //$query = "select 'Guests' as `Member Type`, count(distinct(concat(GuestLast,GuestFirst))) as `numRecords` from " . Upload::TBL_NAME . " i UNION select 'Patients' as `Member Type`, count(distinct(PatientId)) as `numRecords` from " . Upload::TBL_NAME . " i;";
-        $query = "select 'Patients' as `Member Type`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i;";
-        $stmt = $this->dbh->query($query);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        try {
+            //$query = "select 'Guests' as `Member Type`, count(distinct(concat(GuestLast,GuestFirst))) as `numRecords` from " . Upload::TBL_NAME . " i UNION select 'Patients' as `Member Type`, count(distinct(PatientId)) as `numRecords` from " . Upload::TBL_NAME . " i;";
+            $query = "select 'Patients' as `Member Type`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i;";
+            $stmt = $this->dbh->query($query);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\PDOException $e){
+            return [];
+        }
     }
 
     private function getPeopleMkup(){
@@ -161,7 +165,7 @@ class ImportMarkup {
 
     public function getGenderInfo(){
         try{
-            $query = "select d.`Code` as idGender, ifnull(d.`Description`, '') as `HHK Gender`, i.`Gender` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`Gender` = d.`Description` and d.`Table_Name` = 'Gender' where i.Gender != '' group by i.`Gender` order by d.Description, i.Gender;";
+            $query = "select d.`Code` as idGender, ifnull(d.`Description`, '') as `HHK Gender`, i.`PatientGender` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`PatientGender` = d.`Description` and d.`Table_Name` = 'Gender' where i.PatientGender != '' group by i.`PatientGender` order by d.Description, i.PatientGender;";
             $stmt = $this->dbh->query($query);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
@@ -185,7 +189,7 @@ class ImportMarkup {
 
     public function getPatientRelationInfo(){
         try{
-            $query = "select d.`Code` as idRelation, ifnull(d.`Description`, '') as `HHK Relation`, i.`prop_Relationship_to_Patient_1` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`prop_Relationship_to_Patient_1` = d.`Description` and d.`Table_Name` = 'Patient_Rel_Type' where i.prop_Relationship_to_Patient_1 != '' group by i.`prop_Relationship_to_Patient_1` order by d.Description, i.prop_Relationship_to_Patient_1;";
+            $query = "select d.`Code` as idRelation, ifnull(d.`Description`, '') as `HHK Relation`, i.`Guest_2_Relationship` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`Guest_2_Relationship` = d.`Description` and d.`Table_Name` = 'Patient_Rel_Type' where i.Guest_2_Relationship != '' group by i.`Guest_2_Relationship` order by d.Description, i.Guest_2_Relationship;";
             $stmt = $this->dbh->query($query);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){

@@ -33,7 +33,8 @@ class Import {
     protected array $rooms;
     protected array $genders;
     protected array $ethnicities;
-
+    protected array $noReturn;
+    protected array $mediaSources;
     protected int $importedPatients;
     protected int $importedGuests;
 
@@ -45,6 +46,8 @@ class Import {
         $this->getRooms();
         $this->getGenders();
         $this->getEthnicities();
+        $this->getNoReturn();
+        $this->getMediaSources();
     }
 
     public function startImport(int $limit = 100, bool $people = true, bool $visits = false){
@@ -70,24 +73,50 @@ class Import {
             try{
                 $this->dbh->beginTransaction();
                //loop through guests
-                for ($i = 1; $i < 5; $i++){
-                    if(trim($r['prop_First_Name___Guest_'.$i]) !== "" && trim($r["prop_Last_Name___Guest_".$i]) !== ""){
+                $patient = [
+                    "GuestFirst" => $r['PatientFirst'],
+                    "GuestLast" => $r['PatientLast'],
+                    "Relationship_to_Patient" => "Self",
+                    "BirthDate" => "",
+                    "Gender" => $r["PatientGender"],
+                    "mediaSource" => $r["PatientMarketingOptIn"],
+                    "Street" => "",
+                    "City" => $r["PatientCity"],
+                    "County" => "",
+                    "State" => "",
+                    "ZipCode" => "",
+                    "Phone" => str_replace("-", "", filter_var($r["PatientPhoneNumber"], FILTER_SANITIZE_NUMBER_INT)),
+                    "Mobile" => "",
+                    "Email" => $r["PatientEmail"],
+                    "Diagnosis"=>"",
+                    "PrimaryGuest" => $r["PatientPrimaryGuest"],
+                    "Banned" => $r["PatientBanned"],
+                    "Hospital" =>$r["Hospital"],
+                    "importId"=>$r["importId"]
+                ];
+
+                $guests[] = $patient;
+
+                for ($i = 1; $i < 3; $i++){
+                    if(trim($r['Guest_'.$i.'_First']) !== "" && trim($r['Guest_'.$i.'_Last']) !== ""){
                         $guest = [
-                            "GuestFirst" => $r['prop_First_Name___Guest_'.$i],
-                            "GuestLast" => $r["prop_Last_Name___Guest_".$i],
-                            "Relationship_to_Patient" => $r["prop_Relationship_to_Patient_".$i],
-                            "BirthDate" => $r["prop_DOB___Guest_".$i],
-                            "Gender" => (isset($r["prop_Gender___Guest_".$i]) ? $r["prop_Gender___Guest_".$i] : ""),
-                            "Ethnicity" => (isset($r["prop_Ethnicity___Guest_".$i]) ? $r["prop_Ethnicity___Guest_".$i] : ""),
-                            "Street" => $r["prop_Address___Guest_".$i],
-                            "City" => (isset($r["prop_City___Guest_".$i]) ? $r["prop_City___Guest_".$i] : ""),
-                            "County" => (isset($r["prop_County___Guest_".$i]) ? $r["prop_County___Guest_".$i] : ""),
-                            "State" => (isset($r["prop_State_Province___Guest_".$i]) ? $r["prop_State_Province___Guest_".$i] : ""),
-                            "ZipCode" => (isset($r["prop_Zip_Postal_code___Guest_".$i]) ? $r["prop_Zip_Postal_code___Guest_".$i] : ""),
-                            "Phone" => (isset($r["prop_Phone___Guest_".$i]) ? $r["prop_Phone___Guest_".$i] : ""),
-                            "Mobile" => (isset($r["prop_Mobile___Guest_".$i]) ? $r["prop_Mobile___Guest_".$i] : ""),
-                            "Email" => (isset($r["prop_Email___Guest_".$i]) ? $r["prop_Email___Guest_".$i] : ""),
-                            "Diagnosis"=>$r["Diagnosis"],
+                            "GuestFirst" => $r['Guest_'.$i.'_First'],
+                            "GuestLast" => $r['Guest_'.$i.'_Last'],
+                            "Relationship_to_Patient" => $r["Guest_".$i."_Relationship"],
+                            "BirthDate" => "",
+                            "Gender" => $r["Guest_".$i."_Gender"],
+                            "mediaSource" => $r["Guest_".$i."_Marketing_opt_in"],
+                            "Street" => "",
+                            "City" => $r["Guest_".$i."_City"],
+                            "County" => "",
+                            "State" => "",
+                            "ZipCode" => "",
+                            "Phone" => str_replace("-", "", filter_var($r["Guest_".$i."_Phone_Number"], FILTER_SANITIZE_NUMBER_INT)),
+                            "Mobile" => "",
+                            "Email" => $r["Guest_".$i."_Email"],
+                            "Diagnosis"=>"",
+                            "PrimaryGuest"=>$r["Guest_".$i."_Primary_Guest"],
+                            "Banned"=>$r["Guest_".$i."_Banned"],
                             "Hospital" =>$r["Hospital"],
                             "importId"=>$r["importId"]
                         ];
@@ -109,6 +138,7 @@ class Import {
                     }
                 }
 
+                /*
                 if($patient == false){
                     $guest = [
                         "GuestFirst" => $r['FirstName'],
@@ -136,7 +166,7 @@ class Import {
                     $reg = $patArray["reg"];
                     $hospStay = $patArray["hospStay"];
                 }
-
+*/
                 //add guests
                 foreach($guests as $k=>$guest){
                     if($guest["Relationship_to_Patient"] !== "Self"){
@@ -144,7 +174,7 @@ class Import {
                     }
                 }
 
-                if(trim($r["prop_Vehicle_1___Make___Model"]) != "" && trim($r["prop_Vehicle_1___Color"]) != "" && trim($r["prop_Vehicle_1___License_No_"]) != ""){
+                if(isset($r["prop_Vehicle_1___Make___Model"]) && isset($r["prop_Vehicle_1___Color"]) && trim($r["prop_Vehicle_1___Make___Model"]) != "" && trim($r["prop_Vehicle_1___Color"]) != "" && trim($r["prop_Vehicle_1___License_No_"]) != ""){
                     $this->addVehicle($r, $reg);
                 }
                 
@@ -182,7 +212,10 @@ class Import {
         $newPatLast = trim(addslashes($r['GuestLast']));
         //$newPatNickname = trim(addslashes($r['PatientNickname']));
         $gender = $this->findIdGender($r['Gender']);
-        $ethnicity = $this->findIdEthnicity($r['Ethnicity']);
+        $ethnicity = $this->findIdEthnicity((isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
+        $noReturn = $this->findIdNoReturn($r["Banned"]);
+        $mediaSource = $this->findIdMediaSource($r["mediaSource"]);
+
         $birthDate = "";
         if(trim($r['BirthDate']) != ''){
             $birthdateDT = new \DateTime($r['BirthDate']);
@@ -224,6 +257,8 @@ class Import {
             'selStatus'=>'a',
             'sel_Gender'=>$gender,
             'sel_Ethnicity'=>$ethnicity,
+            'sel_Media_Source'=>$mediaSource,
+            'selnoReturn'=>$noReturn,
             'selMbrType'=>'ai',
         );
 
@@ -308,7 +343,10 @@ class Import {
 
         if($id == 0){
             $gender = $this->findIdGender($r['Gender']);
-            $ethnicity = $this->findIdEthnicity($r['Ethnicity']);
+            $ethnicity = $this->findIdEthnicity((isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
+            $noReturn = $this->findIdNoReturn($r["Banned"]);
+            $mediaSource = $this->findIdMediaSource($r["mediaSource"]);
+
             $birthDate = "";
             if(trim($r['BirthDate']) != ''){
                 $birthdateDT = new \DateTime($r['BirthDate']);
@@ -333,6 +371,8 @@ class Import {
                 'selStatus'=>'a',
                 'sel_Ethnicity'=>$ethnicity,
                 'sel_Gender'=>$gender,
+                'sel_Media_Source'=>$mediaSource,
+                'selnoReturn'=>$noReturn,
                 'selMbrType'=>'ai'
             );
 
@@ -427,6 +467,7 @@ class Import {
                 $stayRS->idName->setNewVal($guest["idName"]);
                 $stayRS->idVisit->setNewVal($idVisit);
                 $stayRS->Visit_Span->setNewVal(0);
+                $stayRS->idRoom->setNewVal($idResource);
                 $stayRS->Checkin_Date->setNewVal($arrival);
                 $stayRS->Checkout_Date->setNewVal($departure);
                 $stayRS->Span_Start_Date->setNewVal($arrival);
@@ -453,17 +494,26 @@ class Import {
         
         $idResource = $this->findIdResource($r['RoomNum']);
 
+        $primaryGuestId = 0;
+        foreach($guests as $guest){
+            if($guest["PrimaryGuest"] == "Yes"){
+                $primaryGuestId = $guest["idName"];
+            }
+        }
+
         //make reservation
         $arrival = (new \DateTime($r['ArrivalDate']))->format("Y-m-d 16:00:00");
         $departure = (new \DateTime($r['DepartureDate']))->format('Y-m-d 10:00:00');
-        $stmt = $this->dbh->prepare("insert into reservation (`idRegistration`, `idGuest`,`idHospital_Stay`, `idResource`, `Expected_Arrival`, `Expected_Departure`, `Number_Guests`, `Status`) VALUES(:idRegistration, :idGuest, :idHospitalStay, :idResource, :Arrive, :Departure, :numGuests, :status)");
+        $stmt = $this->dbh->prepare("insert into reservation (`idRegistration`, `idGuest`,`idHospital_Stay`, `idResource`, `Expected_Arrival`, `Expected_Departure`, `Actual_Arrival`, `Actual_Departure`, `Number_Guests`, `Status`) VALUES(:idRegistration, :idGuest, :idHospitalStay, :idResource, :expectedArrival, :expectedDeparture, :actualArrival, :actualDeparture, :numGuests, :status)");
         $stmt->execute(array(
             ":idRegistration"=>$reg->getIdRegistration(),
-            ":idGuest"=>$guests[0]["idName"],
+            ":idGuest"=>($primaryGuestId > 0 ? $primaryGuestId : $guests[0]["idName"]),
             ":idHospitalStay"=>$hospStay->getIdHospital_Stay(),
             ":idResource"=>$idResource,
-            ":Arrive"=>$arrival,
-            ":Departure"=>$departure,
+            ":expectedArrival"=>$arrival,
+            ":expectedDeparture"=>$departure,
+            ":actualArrival"=>$arrival,
+            ":actualDeparture"=>$departure,
             ":numGuests"=>count($guests),
             ":status"=>$resvStatus
         ));
@@ -475,7 +525,7 @@ class Import {
                 $stmt->execute(array(
                     ":idReservation" => $resvId,
                     ":idGuest" => $guest["idName"],
-                    ":primaryGuest" => ($k == 0 ? 1:0)
+                    ":primaryGuest" => ($guest['PrimaryGuest'] == "Yes" ? 1:0)
                 ));
             }
 
@@ -845,6 +895,18 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         }
     }
 
+    private function getNoReturn(){
+        foreach(readGenLookupsPDO($this->dbh, 'NoReturnReason') as $r) {
+            $this->noReturn[strtolower($r[1])] = $r[0];
+        }
+    }
+
+    private function getMediaSources(){
+        foreach(readGenLookupsPDO($this->dbh, 'Media_Source') as $r) {
+            $this->mediaSources[strtolower($r[1])] = $r[0];
+        }
+    }
+
     private function getProgress(){
         $query = "Select count(*) as `Remaining`, (select count(*) from `" . Upload::TBL_NAME . "`) as `Total` from `" . Upload::TBL_NAME . "` i where i.imported is null";
         $stmt = $this->dbh->query($query);
@@ -857,7 +919,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
     private function getRooms(){
         $stmt = $this->dbh->query("Select idResource, Title from resource");
         while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $this->rooms[strtolower($h['Title'])] = $h['idResource'];
+            $this->rooms[trim(strtolower($h['Title']))] = $h['idResource'];
         }
     }
 
@@ -875,5 +937,13 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
 
     private function findIdEthnicity(string $ethnicity){
         return (isset($this->ethnicities[trim(strtolower($ethnicity))]) ? $this->ethnicities[trim(strtolower($ethnicity))] : '');
+    }
+
+    private function findIdNoReturn(string $noReturn){
+        return (isset($this->noReturn[trim(strtolower($noReturn))]) ? $this->noReturn[trim(strtolower($noReturn))] : '');
+    }
+
+    private function findIdMediaSource(string $mediaSource){
+        return (isset($this->mediaSources[trim(strtolower($mediaSource))]) ? $this->mediaSources[trim(strtolower($mediaSource))] : '');
     }
 }
