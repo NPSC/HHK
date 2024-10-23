@@ -1040,6 +1040,24 @@ $(document).ready(function () {
         kmd.dialog('open');
     });
 
+    $('#hhkdgpallple').click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', true);
+        })
+    });
+
+    $('#hhkdgpnople').click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', false);
+        })
+    });
+
+    $('#hhkdgpback').click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', $(this).prop('defaultChecked'));
+        })
+    });
+
     $('.ckdate').datepicker({
         yearRange: '-07:+01',
         changeMonth: true,
