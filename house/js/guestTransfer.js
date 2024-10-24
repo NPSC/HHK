@@ -51,7 +51,7 @@ function upsert(transferIds) {
     };
 
     $('#TxButton').hide();
-    
+
     var posting = $.post('ws_tran.php', parms);
     posting.done(function (incmg) {
 
@@ -729,84 +729,6 @@ function getRemote(item, source) {
                 $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote)).show();
                 $('#txtSearch').val('');
             }
-        }
-    });
-}
-
-function getRelate(id) {
-    $('div#printArea').hide();
-    $('#divPrintButton').hide();
-
-
-    var posting = $.post('ws_tran.php', { cmd: 'getRelat', accountId: id});
-
-    posting.done(function (incmg) {
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').html(incmg.data);
-
-            $('div#retrieve').prepend($('<h3>Remote Data</h3>'));
-
-
-        }
-    });
-}
-
-function getSOQL(select, from, where) {
-    $('div#printArea').hide();
-    $('#divPrintButton').hide();
-
-    var posting = $.post('ws_tran.php', { cmd: 'soql', 's': select, 'f': from, 'w': where });
-
-    posting.done(function (incmg) {
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').text(JSON.stringify(incmg.data));
-
-            $('div#retrieve').prepend($('<h3>Query Results</h3>'));
-        } else {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').html('nothing returned.');
         }
     });
 }

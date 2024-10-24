@@ -442,7 +442,7 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
     $query = "SELECT * FROM `vguest_transfer`
     WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE('$start') and DATE(`Arrival`) < DATE('$end')
-    GROUP BY `HHK ID`";
+    GROUP BY `HHK ID` ORDER BY `PSG Id`";
 
     $stmt = $dbh->query($query);
 
@@ -821,19 +821,6 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                             <th>Local (HHK) Name Search</th>
                             <td><input id="txtSearch" type="text" /></td>
                         </tr>
-                        <?php if ($uS->username == "npscuser") { ?>
-                         <tr>
-                            <th>Relationship</th>
-                            <td><input id="txtRelat" type="text" value="" /><input id="btnRelat" type="button" value="Go" /></td>
-                        </tr>
-                         <tr>
-                            <th>SOQL</th>
-                            <td><input id="txtSoqls" type="text" placeholder="SELECT" value="" />
-                            <input id="txtSoqlf" type="text" placeholder="FROM" value="" />
-                            <input id="txtSoqlw" type="text" placeholder="WhERE" value="" />
-                            <input id="btnSoql" type="button" value="Go" /></td>
-                        </tr>
-                        <?php } ?>
                     </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>

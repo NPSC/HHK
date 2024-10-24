@@ -1481,6 +1481,8 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
                     `n`.`Name_Middle`,
                     `n`.`Name_Last`,
                     IFNULL(`g2`.`Description`, ''))) AS `Name`,
+        `ng`.`idPsg` AS `PSG Id`,
+        `gr`.`Description` as `Relation`,
         CASE
             WHEN IFNULL(`na`.`Address_1`, '') = '' THEN ''
             WHEN IFNULL(`na`.`Bad_Address`, '') <> '' THEN 'Bad Address'
@@ -1513,20 +1515,24 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
         `stays` `s`
         JOIN `visit` `v` ON (`s`.`idVisit` = `v`.`idVisit`
             AND `s`.`Visit_Span` = `v`.`Span`)
-        LEFT JOIN `name` `n` ON (`s`.`idName` = `n`.`idName`)
-        LEFT JOIN `name_address` `na` ON (`s`.`idName` = `na`.`idName`
+        JOIN `hospital_stay` `hs` on `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+        JOIN `name_guest` `ng` on `hs`.`idPsg` = `ng`.`idPsg`
+        LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`)
+        LEFT JOIN `name_address` `na` ON (`ng`.`idName` = `na`.`idName`
             AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`)
-        LEFT JOIN `name_email` `ne` ON (`s`.`idName` = `ne`.`idName`
+        LEFT JOIN `name_email` `ne` ON (`ng`.`idName` = `ne`.`idName`
             AND `n`.`Preferred_Email` = `ne`.`Purpose`)
-        LEFT JOIN `name_phone` `np` ON (`s`.`idName` = `np`.`idName`
+        LEFT JOIN `name_phone` `np` ON (`ng`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`)
-        LEFT JOIN `name_demog` `nd` ON (`s`.`idName` = `nd`.`idName`)
+        LEFT JOIN `name_demog` `nd` ON (`ng`.`idName` = `nd`.`idName`)
         LEFT JOIN `gen_lookups` `g1` ON (`n`.`Name_Prefix` = `g1`.`Code`
             AND `g1`.`Table_Name` = 'Name_Prefix')
         LEFT JOIN `gen_lookups` `g2` ON (`n`.`Name_Suffix` = `g2`.`Code`
             AND `g2`.`Table_Name` = 'Name_Suffix')
 		LEFT JOIN `gen_lookups` `gn` ON `gn`.`Table_Name` = 'NoReturnReason'
 			AND `gn`.`Code` = `nd`.`No_Return`
+		LEFT JOIN `gen_lookups` `gr` ON `gr`.`Table_Name` = 'Patient_Rel_Type'
+			AND `gr`.`Code` = `ng`.`Relationship_Code`
     WHERE
         `n`.`Record_Member` = 1
             AND `n`.`Member_Status` IN ('a' , 'd', 'in');

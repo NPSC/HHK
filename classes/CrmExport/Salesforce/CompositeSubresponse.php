@@ -34,18 +34,21 @@ class CompositeSubresponse {
      */
     protected $referenceId;
 
+    protected $isSuccessful;
+
 
     /**
      * Summary of __construct
      * @param array $response
      */
-    public function __construct(array $response)
+    public function __construct(array $response, $isSuccessful)
     {
         $this->response = $response;
         $this->body = $response['body'];
         $this->httpHeaders = $response['httpHeaders'];
         $this->httpStatusCode = $response['httpStatusCode'];
         $this->referenceId = $response['referenceId'];
+        $this->isSuccessful = $isSuccessful;
 
     }
 
@@ -78,8 +81,8 @@ class CompositeSubresponse {
 
     public function getBody_errorCode()
     {
-        if (isset($this->body['errorCode'])) {
-            return $this->body['errorCode'];
+        if (isset($this->body[0]['errorCode'])) {
+            return $this->body[0]['errorCode'];
         } else {
             return '';
         }
@@ -87,18 +90,27 @@ class CompositeSubresponse {
 
     public function getBody_message()
     {
-        if (isset($this->body['message'])) {
-            return $this->body['message'];
+        if (isset($this->body[0]['message'])) {
+            return $this->body[0]['message'];
         } else {
             return '';
         }
     }
 
+    public function getBody_fields()
+    {
+        if (isset($this->body[0]['fields'])) {
+            return $this->body[0]['fields'];
+        } else {
+            return [];
+        }
+    }
 
-	/**
-	 * Summary of httpStatusCode
-	 * @return int
-	 */
+
+    /**
+     * Summary of httpStatusCode
+     * @return int
+     */
 	public function getHttpStatusCode() {
 		return $this->httpStatusCode;
 	}

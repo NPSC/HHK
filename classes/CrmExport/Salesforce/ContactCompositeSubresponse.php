@@ -14,10 +14,10 @@ class ContactCompositeSubresponse extends AbstractCompositeSubresponse
      * @param CompositeSubresponse $response
      * @param mixed $idPsg
      */
-    public function __construct(CompositeSubresponse $response, $idPsg)
+    public function __construct(CompositeSubresponse $response, $idPsg, $isSuccessful)
     {
         $this->searchNeedle = self::CONTACT_NEEDLE;
-        parent::__construct($response, $idPsg);
+        parent::__construct($response, $idPsg, $isSuccessful);
 
     }
 
@@ -32,15 +32,15 @@ class ContactCompositeSubresponse extends AbstractCompositeSubresponse
         if ($this->subresponse->getBody_success()) {
 
             if ($this->subresponse->getHttpStatusCode() == '201') {
-                $result = "New Contact (" . $this->subresponse->getHttpStatusCode() . ')';
+                $result = "New Contact";
             } else {
-                $result = "Ok (" . $this->subresponse->getHttpStatusCode() . ')';
+                $result = "Ok";
             }
 
             $this->updateLocal($dbh);
 
         } else {
-            $result = $this->subresponse->getBody_errorCode() . ', ' . $this->subresponse->getBody_message() . ' (' . $this->subresponse->getHttpStatusCode() . ')';
+            $result = 'Contact: '. $this->subresponse->getBody_errorCode() . ', ' . $this->subresponse->getBody_message() . ' (' . $this->subresponse->getHttpStatusCode() . ')';
         }
         return $result;
     }

@@ -17,6 +17,8 @@ abstract class AbstractCompositeSubresponse {
      */
     protected $searchNeedle;
 
+    protected $isSuccessful;
+
     /**
      * Summary of subResponse
      * @var CompositeSubresponse
@@ -33,23 +35,24 @@ abstract class AbstractCompositeSubresponse {
      * @param mixed $idPsg
      * @return ContactCompositeSubresponse|RelationCompositeSubresponse|null
      */
-    public static function factory(array $subResponse, $idPsg) {
+    public static function factory(array $subResponse, $idPsg, $isSuccessful) {
 
-        $compositeSubresponse = new CompositeSubresponse($subResponse);
+        $compositeSubresponse = new CompositeSubresponse($subResponse, $isSuccessful);
 
         if (str_starts_with($compositeSubresponse->getReferenceId(), self::RELATION_NEEDLE)) {
-            return new RelationCompositeSubresponse($compositeSubresponse, $idPsg);
+            return new RelationCompositeSubresponse($compositeSubresponse, $idPsg, $isSuccessful);
         } else if (str_starts_with($compositeSubresponse->getReferenceId(), self::CONTACT_NEEDLE)) {
-            return new ContactCompositeSubresponse($compositeSubresponse, $idPsg);
+            return new ContactCompositeSubresponse($compositeSubresponse, $idPsg, $isSuccessful);
         }
 
         return null;
     }
 
-    public function __construct(CompositeSubresponse $response, $idPsg)
+    public function __construct(CompositeSubresponse $response, $idPsg, $isSuccessful)
     {
         $this->subresponse = $response;
         $this->idPsg = $idPsg;
+        $this->isSuccessful = $isSuccessful;
 
     }
 
@@ -58,7 +61,12 @@ abstract class AbstractCompositeSubresponse {
      * @return int
      */
     public function getIdName() {
-        return intval(str_replace($this->searchNeedle, '', $this->subresponse->getReferenceId()), 10);
+
+        $parts = explode('_', $this->subresponse->getReferenceId());
+        if (isset($parts[1])) {
+            return intval($parts[1], 10);
+        }
+        return 0;
     }
 
     /**

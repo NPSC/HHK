@@ -47,7 +47,7 @@ class SalesforceManager extends AbstractExportManager {
     private $graphsResult;
     protected $webService;
 
-
+    protected $uniqueGuests;
 
     /**
      * {@inheritDoc}
@@ -506,10 +506,11 @@ class SalesforceManager extends AbstractExportManager {
         // Each PSG uses a compositRequest/Graph to identify members and relationships.
         // GraphId = psgId.
 
-        $guests = [];
+        $psgGuests = [];    // list of guests in PSG
         $this->psgGraphs = [];  // The collection of psg graphs
         $psgId = 0;
         $transferResult = [];
+        $this->uniqueGuests = [];
 
         // Collect each psg into a guests array and process it as a composit request set
         // the rows must be ordered by PSG Id
@@ -519,24 +520,25 @@ class SalesforceManager extends AbstractExportManager {
             if ($psgId > 0 && $r['idPsg'] != $psgId) {
 
                 // Yes, new Id.  Process current psg
-                $graph = $this->createPsgGraph($guests, $psgId, $linkRelatives);
+                $graph = $this->createPsgGraph($psgGuests, $psgId, $linkRelatives);
 
                 // Add to collection
                 if (count($graph) > 0) {
                     $this->psgGraphs[] = $graph;
+                    $this->uniqueGuests[$r['HHK_idName__c']] = 'y';
                 }
 
-                $guests = [];
+                $psgGuests = [];
             }
 
             $psgId = $r['idPsg'];
-            $guests[$r['HHK_idName__c']] = $r;
+            $psgGuests[$r['HHK_idName__c']] = $r;
         }
 
         // And last group
         if ($psgId > 0) {
 
-            $graph = $this->createPsgGraph($guests, $psgId, $linkRelatives);
+            $graph = $this->createPsgGraph($psgGuests, $psgId, $linkRelatives);
 
             if (count($graph) > 0) {
                 $this->psgGraphs[] = $graph;
@@ -580,6 +582,8 @@ class SalesforceManager extends AbstractExportManager {
         $subrequests = [];
         $graph = [];
 
+        $additnl = '_' . $graphId;
+
         // Make Contact subrequests
         foreach ($guests as $g) {
 
@@ -589,9 +593,14 @@ class SalesforceManager extends AbstractExportManager {
                 $idPatient = $g['HHK_idName__c'];
             }
 
+            // Don't redefine the guest if already defined in a prevous psg.
+            if (isset($this->uniqueGuests[$g['HHK_idName__c']])) {
+                continue;
+            }
+
             // remove extra fields
             foreach ($g as $k => $w) {
-                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'idPsg' && $k != 'Legal_Custody' && $k != 'Id') {
+                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'idPsg' && $k != 'Legal_Custody' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
                     $filteredRow[$k] = $w;
                 }
             }
@@ -600,7 +609,7 @@ class SalesforceManager extends AbstractExportManager {
             $subrequests[] = [
                 "method" => "PATCH",
                 "url" => $this->getContactEndpoint . 'HHK_idName__c/' . $g['HHK_idName__c'],
-                "referenceId" => "refContact_" . $g['HHK_idName__c'],
+                "referenceId" => "refContact_" . $g['HHK_idName__c'] . $additnl,
                 "body" => $filteredRow
             ];
         }
@@ -619,8 +628,8 @@ class SalesforceManager extends AbstractExportManager {
                 if ($g['Relationship_Id'] == '') {
 
                     // build the upsert details file
-                    $relationRow['npe4__Contact__c'] = "@{refContact_" . $g['HHK_idName__c'] . ".id}";
-                    $relationRow['npe4__RelatedContact__c'] = "@{refContact_$idPatient.id}";
+                    $relationRow['npe4__Contact__c'] = "@{refContact_" . $g['HHK_idName__c'] . $additnl . ".id}";
+                    $relationRow['npe4__RelatedContact__c'] = "@{refContact_" . $idPatient . $additnl . ".id}";
                     $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
                     $relationRow['npe4__Type__c'] = $g['SF_Rel_Type'];
                     //$relationRow['Is_an_Emergency_Contact__c']      // t/f
@@ -629,7 +638,7 @@ class SalesforceManager extends AbstractExportManager {
                     $subrequests[] = [
                         "method" => "POST",
                         "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
-                        "referenceId" => "refRel_" . $g['HHK_idName__c'],
+                        "referenceId" => "refRel_" . $g['HHK_idName__c'] . $additnl,
                         "body" => $relationRow
                     ];
                 }
@@ -664,20 +673,9 @@ class SalesforceManager extends AbstractExportManager {
 
             foreach ($graphResult['graphs'] as $graph) {
 
-              //  if ($graph['isSuccessful'] == 'true') {
+                // Each graph has a collection of subCompositeResponces
+                $this->processCompositeResponse($dbh, $graph, $guestRows, $result);
 
-                    // Each graph has a collection of subCompositeResponces
-                    $this->processCompositeResponse($dbh, $graph, $guestRows, $result);
-
-             //   } else {
-
-             //       // this graph did not work
-             //       if (isset($result['error'])) {
-             //           $result['error'] .= 'PSG ' . $graph['graphId'] . ' did not succeed. ';
-             //       } else {
-             //           $result['error'] = 'PSG ' . $graph['graphId'] . ' did not succeed. ';
-             //       }
-             //   }
             }
 
             // Create an HTML table containing the results
@@ -692,7 +690,7 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
-     * Summary of processCompositeResponse
+     * Summary of processCompositeResponse is a collection of compositSubrequestResults
      * @param \PDO $dbh
      * @param mixed $graph
      * @param mixed $guests
@@ -703,11 +701,12 @@ class SalesforceManager extends AbstractExportManager {
 
         $idPsg = $graph['graphId'];
         $comResp = $graph['graphResponse']['compositeResponse'];
+        $isSuccessful = $graph['isSuccessful'];
 
         // Each compositeSubrequestResult
         foreach ($comResp as $c) {
 
-            $subResponse = AbstractCompositeSubresponse::factory($c, $idPsg);
+            $subResponse = AbstractCompositeSubresponse::factory($c, $idPsg, $isSuccessful);
 
             $guest = $this->findGuest($guests, $idPsg, $subResponse->getidName());
 
@@ -715,15 +714,17 @@ class SalesforceManager extends AbstractExportManager {
             $f = (count($guest) > 0) ? [
                 'Contact Id' => '',
                 'HHK Id' => $guest['HHK_idName__c'],
-                'Contact Type' => $guest['Contact_Type__c'],
                 'Name' => ($guest['Salutation'] == '' ? '' : $guest['Salutation'] . ' ') . $guest['FirstName'] . ' ' . ($guest['Middle_Name__c'] == '' ? '' : $guest['Middle_Name__c'] . ' ') . $guest['LastName'] . ' ' . $guest['Suffix__c'] . ($guest['Nickname__c'] == '' ? '' : ', ' . $guest['Nickname__c']),
+                'PSG Id' =>$idPsg,
+                'Contact Type' => $guest['Contact_Type__c'],
                 'Birthdate' => $guest['Birthdate'] != '' ? date('M j, Y', strtotime($guest['Birthdate'])) : '',
                 'Result' => '',
             ] : [
                 'Contact Id' => '',
                 'HHK Id' => '',
-                'Contact Type' => '',
                 'Name' => '',
+                'PSG Id' => $idPsg,
+                'Contact Type' => '',
                 'Birthdate' => '',
                 'Result' => '',
             ];

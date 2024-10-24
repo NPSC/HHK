@@ -14,10 +14,10 @@ class RelationCompositeSubresponse extends AbstractCompositeSubresponse {
      * @param \HHK\CrmExport\Salesforce\CompositeSubresponse $response
      * @param mixed $idPsg
      */
-    public function __construct(CompositeSubresponse $response, $idPsg)
+    public function __construct(CompositeSubresponse $response, $idPsg, $isSuccessful)
     {
         $this->searchNeedle = self::RELATION_NEEDLE;
-        parent::__construct($response, $idPsg);
+        parent::__construct($response, $idPsg, $isSuccessful);
 
     }
 
@@ -29,10 +29,10 @@ class RelationCompositeSubresponse extends AbstractCompositeSubresponse {
         $result = '';
 
         if ($this->subresponse->getBody_success()) {
-            $result = 'New Relationship (' . $this->subresponse->getHttpStatusCode() . ')';
+            $result = 'New Relationship';
             $this->updateLocal($dbh);
         } else {
-            $result = $this->subresponse->getBody_message() . '(' . $this->subresponse->getHttpStatusCode() . ')';
+            $result = $result = 'Relat: ' . $this->subresponse->getBody_errorCode() . $this->subresponse->getBody_message() . '(' . $this->subresponse->getHttpStatusCode() . ')';
         }
         return $result;
     }
