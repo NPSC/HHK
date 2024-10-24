@@ -499,9 +499,6 @@ class SalesforceManager extends AbstractExportManager {
             return $replys;
         }
 
-        // get the member records
-        $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ") ORDER BY `idPsg`;");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Each PSG uses a compositRequest/Graph to identify members and relationships.
         // GraphId = psgId.
@@ -511,6 +508,10 @@ class SalesforceManager extends AbstractExportManager {
         $psgId = 0;
         $transferResult = [];
         $this->uniqueGuests = [];
+
+        // get the member records
+        $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ") ORDER BY `idPsg`;");
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Collect each psg into a guests array and process it as a composit request set
         // the rows must be ordered by PSG Id
@@ -525,7 +526,7 @@ class SalesforceManager extends AbstractExportManager {
                 // Add to collection
                 if (count($graph) > 0) {
                     $this->psgGraphs[] = $graph;
-                    $this->uniqueGuests[$r['HHK_idName__c']] = 'y';
+
                 }
 
                 $psgGuests = [];
@@ -597,6 +598,8 @@ class SalesforceManager extends AbstractExportManager {
             if (isset($this->uniqueGuests[$g['HHK_idName__c']])) {
                 continue;
             }
+
+            $this->uniqueGuests[$g['HHK_idName__c']] = 'y';
 
             // remove extra fields
             foreach ($g as $k => $w) {
