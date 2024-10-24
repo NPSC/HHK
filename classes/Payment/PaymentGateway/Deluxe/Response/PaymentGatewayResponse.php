@@ -165,9 +165,11 @@ class PaymentGatewayResponse extends AbstractGatewayResponse implements GatewayR
 
         return '';
     }
-
-
     
+    public function getResponseMessage(){
+        return $this->getMessage();
+    }
+
     public function getResponseCode() {
         if (isset($this->result['responseCode'])) {
             return $this->result['responseCode'];

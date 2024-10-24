@@ -58,6 +58,10 @@ class RefundGatewayResponse extends AbstractGatewayResponse implements GatewayRe
         return '';
     }
 
+    public function getResponseMessage(){
+        return $this->getMessage();
+    }
+
     public function getAuthorizedAmount()
     {
         if (isset($this->result['amountApproved'])) {
