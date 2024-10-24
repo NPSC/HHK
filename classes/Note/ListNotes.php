@@ -77,7 +77,7 @@ class ListNotes {
 
             case Note::PsgLink:
 
-                $dbView = 'vpsg_notes';
+                $dbView = 'vpsg_notes_concat';
                 $whereField = 'Psg_Id';
                 $whereClause = "$whereField = $linkId";
                 break;
