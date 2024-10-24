@@ -308,7 +308,7 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
             $cFields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)');
         }
 
-        if ($uS->useChecklists) {
+        if ($uS->useChecklists && count($this->checklistItems) > 0) {
             //checklist items
             $ciFields = [];
             $ciTitles = [];

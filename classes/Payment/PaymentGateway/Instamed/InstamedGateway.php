@@ -498,7 +498,7 @@ class InstamedGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
-    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0) {
+    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0, $payDate = '') {
 
         $uS = Session::getInstance();
 
@@ -1314,4 +1314,4 @@ where r.idRegistration =" . $idReg);
     }
 
 }
-?>
+

@@ -245,6 +245,7 @@ $(document).ready(function () {
 	});
 
     var tabIndex = parseInt($('#tabIndex').val());
+    var tabActive = $('#tabActive').val();
     $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, #btnTaxSave, .reNewBtn').button();
 
     $('#txtFaIncome, #txtFaSize').change(function () {
@@ -286,7 +287,11 @@ $(document).ready(function () {
     });
     setupRates();
     $('#mainTabs').tabs();
-    $('#mainTabs').tabs("option", "active", tabIndex);
+    //$('#mainTabs').tabs("option", "active", tabIndex);
+    if (tabActive.length > 0) {
+        let tabIndex = $('#mainTabs ul a[href="' + tabActive + '"]').parent().index();
+        $('#mainTabs').tabs("option", "active", tabIndex);
+    }
     $('#statEvents').dialog({
         autoOpen: false,
         resizable: true,

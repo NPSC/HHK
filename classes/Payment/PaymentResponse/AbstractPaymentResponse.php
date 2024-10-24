@@ -4,7 +4,7 @@ namespace HHK\Payment\PaymentResponse;
 
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\PaymentRS;
-use HHK\SysConst\PaymentStatusCode;
+
 
 /**
  * AbstractPaymentResponse.php
@@ -329,4 +329,3 @@ abstract class AbstractPaymentResponse {
         return $this;
     }
 }
-?>

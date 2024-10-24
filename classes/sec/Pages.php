@@ -1,7 +1,7 @@
 <?php
 namespace HHK\sec;
 
-use HHK\Exception\{RuntimeException, DuplicateException};
+use HHK\Exception\{RuntimeException, DuplicateException, ValidationException};
 use HHK\SysConst\WebPageCode;
 use HHK\Tables\EditRS;
 use HHK\Tables\WebSec\{PageRS, Page_SecurityGroupRS, Web_SitesRS};
@@ -70,6 +70,7 @@ class Pages {
         $website = '';
         $loginPageId = 0;
         $secGroups = array();
+        $pageErrors = "";
 
         // Get list of security groups
         $stmtg = $dbh->query("Select Group_Code, Title, '' as Substitute from w_groups");
@@ -145,10 +146,10 @@ class Pages {
                 }
 
                 // File Name
-                if (isset($post['txtFileName'][$pageId]) && $post['txtFileName'][$pageId] != '' && file_exists($post['txtFileName'][$pageId])) {
+                if (isset($post['txtFileName'][$pageId]) && $post['txtFileName'][$pageId] != '' && file_exists("../" . $siteList[$post["hdnWebSite"]]["Relative_Address"] . $post['txtFileName'][$pageId])) {
                     $pageRs->File_Name->setNewVal($post['txtFileName'][$pageId]);
                 } else {
-                    continue;
+                    throw new ValidationException("Page filename (" . $siteList[$post["hdnWebSite"]]["Relative_Address"] . $post['txtFileName'][$pageId] . ") doesn't exist.");
                 }
             }
 

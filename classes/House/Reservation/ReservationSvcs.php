@@ -155,6 +155,7 @@ class ReservationSvcs
 
         foreach ($docs as $r) {
             $cronAlert = "";
+            $intervalStr = "";
 
             $li .= HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('a', $r['tabTitle'] . ($r["cronJobs"] ? '<i class="ml-2 bi bi-watch"></i>':'') , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
@@ -163,8 +164,29 @@ class ReservationSvcs
                 foreach($r["cronJobs"] as $job){
                     $jobTime = new \DateTime($reserv->getExpectedArrival());
                     $jobTime->sub(new \DateInterval("P" . $job["Params"]["solicitBuffer"] . "D"));
-                    $jobTime->setTime($job["Hour"], $job["Minute"]);
-                    $cronAlert .= "This email is sent automatically at " . $jobTime->format("g:i a") . " <strong>" . $job["Params"]["solicitBuffer"] . " days before</strong> (" . $jobTime->format("M j, Y") . ") the expected arrival date " . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? "of <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : ""); 
+
+                    switch($job["Interval"]){
+                        case "daily":
+                            $jobTime->setTime($job["Hour"], $job["Minute"]);
+                            $intervalStr = "at " . $jobTime->format("g:i a") . " <strong>";
+                            break;
+                        case "hourly":
+                            $intervalStr = "every hour at " . $job["Minute"] . " minutes past the hour <strong> ";
+                            break;
+                        case "weekly":
+                            $weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                            $jobTime->setTime($job["Hour"], $job["Minute"]);
+                            $cronAlert .= "This email is sent automatically at " . $jobTime->format("g:i a") . " if " . $jobTime->format("M j, Y") . " (" . $job["Params"]["solicitBuffer"] . " days before the expected arrival) falls on a " . $weekdays[$job["Day"]] . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? " for <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : "");
+                            break;
+                        case "monthly":
+                            $jobTime->setTime($job["Hour"], $job["Minute"]);
+                            $cronAlert = "This email is sent automatically at " . $jobTime->format("g:i a") . " if " . $jobTime->format("M j, Y") . " (" . $job["Params"]["solicitBuffer"] . " days before the expected arrival) falls on day " . $job["Day"] . " of the month " . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? " for <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : "");
+                            break;
+                        default:
+                            $intervalStr = "";
+                    }
+                    
+                    $cronAlert .= ($intervalStr != '' ? "This email is sent automatically " . $intervalStr . $job["Params"]["solicitBuffer"] . " days before</strong> (" . $jobTime->format("M j, Y") . ") the expected arrival date " . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? "of <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : ""):""); 
                 }
                 $cronAlert = HTMLContainer::generateMarkup("div", '<i class="mr-3 bi bi-info-circle-fill"></i>' . $cronAlert, ['class' => 'mb-4 p-2 ui-corner-all ui-state-highlight']);
             }
