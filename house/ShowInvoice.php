@@ -49,7 +49,7 @@ if (isset($_POST['hdninvnum'])) {
     $invNum = filter_var($_POST["hdninvnum"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
-if (isset($_GET['createlink'])){
+if (isset($_POST['createlink'])){
     $createLink = true;
 }else{
     $createLink = false;
@@ -131,6 +131,17 @@ try {
             foreach ($emAddrs as $emAddr) {
                 if ($emAddr != '') {
                     try {
+                        
+                        if(isset($_POST["cbPayOnline"])){
+                            //generate payment link
+                            $linkRequest = new PaymentLinkRequest($dbh, new DeluxeGateway($dbh, 'wireland'));
+                            $response = $linkRequest->submit($invoice, $emAddr);
+
+                            if(isset($response['paymentLinkURL'])){
+                                $emBody .= '<br><br><a href="' . $response["paymentLinkURL"] . '" target="_blank">Click here to pay invoice online</a>';
+                            }
+                        }
+
                         $mail = new HHKMailer($dbh);
 
                         $mail->From = $uS->FromAddress;
@@ -163,16 +174,11 @@ try {
 
         $emBody = $uS->InvoiceEmailBody;
 
-        /* 
-        if(isset($_GET['createlink'])){
-            $linkRequest = new PaymentLinkRequest($dbh, new DeluxeGateway($dbh, 'wireland'));
-            $response = $linkRequest->submit($invoice);
-
-            if(isset($response['paymentLinkURL'])){
-                $emBody .= "\n\rPay invoice online - " . $response["paymentLinkURL"];
-            }
+        
+        if(isset($_POST['payonline'])){
+            
         }
-        */
+        
         
         // create send email table
         if ($invoice->isDeleted() === FALSE) {

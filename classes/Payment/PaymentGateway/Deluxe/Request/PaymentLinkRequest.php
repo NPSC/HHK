@@ -21,11 +21,15 @@ Class PaymentLinkRequest extends AbstractDeluxeRequest {
      * @return array $responseBody
      * @throws PaymentException
      */
-    public function submit(Invoice $invoice, string $currrency = "USD"){
+    public function submit(Invoice $invoice, string $emailAddr, string $currrency = "USD"){
 
         $uS = Session::getInstance();
 
         $billTo = $invoice->getBillToName($this->dbh, $invoice->getSoldToId());
+
+        if($emailAddr == ""){
+            $emailAddr = $invoice->getBillToEmail($this->dbh);
+        }
 
         //build request data
         $requestData = [
@@ -46,10 +50,11 @@ Class PaymentLinkRequest extends AbstractDeluxeRequest {
             ],
             'paymentLinkExpiry'=>"1 week",
             'acceptPaymentMethod'=>[
-                "Card"
+                "Card",
+                "ACH"
             ],
             'deliveryMethod'=>[
-                "email"=>$invoice->getBillToEmail($this->dbh)
+                "email"=>$emailAddr
             ],
             'confirmationMessage'=>"Thank you for your payment"
         ];
@@ -76,11 +81,13 @@ Class PaymentLinkRequest extends AbstractDeluxeRequest {
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
             $this->responseCode = (isset($this->responseBody["responseCode"]) ? $this->responseBody["responseCode"] : $resp->getStatusCode());
             
+            /*
             if(is_array($this->responseBody["responseMessage"])){
                 $this->responseMsg = implode(", ", $this->responseBody["responseMessage"]);
             }else if(isset($this->responseBody["responseMessage"])){
                 $this->responseMsg = $this->responseBody["responseMessage"];
             }
+            */
 
             try {
                 //self::logGwTx($dbh, $authRequest->getResponseCode(), json_encode($data), json_encode($resp), 'CardInfoVerify');

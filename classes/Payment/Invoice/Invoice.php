@@ -898,6 +898,11 @@ where
 			HTMLTable::makeTd('Body', ['class'=>"tdlabel"]) . 
             HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize')))
 		);
+		
+		$emTbl->addBodyTr(
+			HTMLTable::makeTd('Pay Online?', ['class'=>"tdlabel", "style"=>"min-width: 120px;"]) . 
+			HTMLTable::makeTd(HTMLInput::generateMarkup("", ["type"=>"checkbox", "name"=>"cbPayOnline", "id"=>"cbPayOnline"]) . HTMLContainer::generateMarkup("label", 'Allow this invoice to be paid online', array('for' => 'cbPayOnline', 'class'=>'ml-2')))
+		);
 		$emTbl->addBodyTr(
 			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
 			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Invoice.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowInvoice.php?invnum='.$invNum.'&pdfDownload', 'class' => 'hhk-autosize')))
