@@ -70,11 +70,13 @@ function upsert(transferIds) {
             if (data.gotopage) {
                 window.open(data.gotopage, '_self');
             }
-            // Stop Processing and return.
+
             flagAlertMessage(data.error, true);
             return;
+
         } else if (data.table) {
             $('#divMembers').html(data.table);
+            $('#divMembers').prepend($('<p style="font-weight: bold;">Transfer Results</p>'));
         }
 
     });
@@ -760,7 +762,7 @@ $(document).ready(function () {
 
         $upsertButton
             .button()
-            .val('Start Upsert')
+            .val('Transfer to '+cmsTitle)
             .show();
 
 
@@ -801,20 +803,6 @@ $(document).ready(function () {
         $memberButton = $('#TxButton');
 
         stopTransfer = true;
-
-        // $('#tblrpt').dataTable({
-        //     'columnDefs': [
-        //         {'targets': [7],
-        //             'type': 'date',
-        //             'render': function (data, type, row) {
-        //                 return dateRender(data, type, dateFormat);
-        //             }
-        //         }
-        //     ],
-        //     "displayLength": 25,
-        //     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-        //     "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        // });
 
         $memberButton
                 .button()
@@ -962,21 +950,27 @@ $(document).ready(function () {
         kmd.dialog('open');
     });
 
-    $('#hhkdgpallple').click(function () {
+    $('#hhkdgpallple').button().click(function () {
         $('.hhk-tfmem').each(function (index) {
             $(this).prop('checked', true);
         })
     });
 
-    $('#hhkdgpnople').click(function () {
+    $('#hhkdgpnople').button().click(function () {
         $('.hhk-tfmem').each(function (index) {
             $(this).prop('checked', false);
         })
     });
 
-    $('#hhkdgpback').click(function () {
+    $('#hhkdgpback').button().click(function () {
         $('.hhk-tfmem').each(function (index) {
             $(this).prop('checked', $(this).prop('defaultChecked'));
+        })
+    });
+
+    $('#hhkdgpnew').button().click(function () {
+        $('.hhk-tf-update').each(function (index) {
+            $(this).prop('checked', false);
         })
     });
 

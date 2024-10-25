@@ -473,7 +473,8 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
                 $r['External Id'] = 'Excluded';
                 break;
             default:
-                $r['External Id'] .= HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked', 'style' => 'display:none;']);
+                // Update remote.
+                $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'style'=>'margin-right:2px;', 'class' => 'hhk-txCbox hhk-tfmem hhk-tf-update', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked']) . $r['External Id'];
                 break;
         }
 
@@ -493,8 +494,9 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
     $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
 
     $allorNone = HTMLInput::generateMarkup('All', ['type'=>'button', 'name' => 'hhkdgpallple', 'id'=>'hhkdgpallple', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
-    . HTMLInput::generateMarkup('None', ['type'=>'button', 'name' => 'hhkdgpallple', 'id'=>'hhkdgpnople', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
-    . HTMLInput::generateMarkup('Reset', ['type'=>'button', 'name' => 'hhkdgpallple', 'id'=>'hhkdgpback', 'class' => 'hhk-aon', 'style'=>'margin-right:1px;']);
+        . HTMLInput::generateMarkup('None', ['type'=>'button', 'name' => 'hhkdgpnople', 'id'=>'hhkdgpnople', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+        . HTMLInput::generateMarkup('Reset', ['type'=>'button', 'name' => 'hhkdgpback', 'id'=>'hhkdgpback', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+        . HTMLInput::generateMarkup('New Only', ['type' => 'button', 'name' => 'hhkdgpnew', 'id' => 'hhkdgpnew', 'class' => 'hhk-aon', 'style' => 'margin-right:1px;']);
 
     $label = HTMLContainer::generateMarkup('span', 'External Id checkboxes: ');
     $frame = HTMLContainer::generateMarkup('div', $label . $allorNone, ['style'=>'margin-top:1ex; margin-bottom:3px;']);
