@@ -77,10 +77,18 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
         $from = SysConfig::getKeyValue($this->dbh, 'sys_config', 'NoReplyAddr');      // Email address message will show as coming from.
         $maxAutoEmail = SysConfig::getKeyValue($this->dbh, 'sys_config', 'MaxAutoEmail');
 
-        $subjectLine = $labels->getString('referral', 'Survey_Subject', '');
+        if($this->params["EmailTemplate"] > 0){
+            $sForm = new SurveyForm($this->dbh, $this->params['EmailTemplate']);
+        }else{
+            throw new RuntimeException("Cannot find Survey document");
+        }
 
-        if ($subjectLine == '') {
-            throw new RuntimeException("Subject line is missing.  Go to Labels & Prompts, referral -> Survey_Subject.");
+        if($sForm->getSubjectLine() != ""){
+            $subjectLine = $sForm->getSubjectLine();
+        }else if($labels->getString('referral', 'Survey_Subject', '') != ""){
+            $subjectLine = $labels->getString('referral', 'Survey_Subject', '');
+        }else{
+            throw new RuntimeException("Subject line is missing.  Go to Resource Builder -> Form Upload -> Survey -> Email Subject.");
         }
 
         if ($from == '') {
@@ -218,19 +226,9 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
         $mail->From = $from;
         $mail->addReplyTo($from);
         $mail->FromName = htmlspecialchars_decode($siteName, ENT_QUOTES);
-
-        $mail->isHTML(true);
         $mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
-
-        if($this->params["EmailTemplate"] > 0){
-            $sForm = new SurveyForm($this->dbh, $this->params['EmailTemplate']);
-        }else{
-            throw new RuntimeException("Cannot find Survey document");
-        }
-
-        if($sForm->getSubjectLine() != ""){
-            $subjectLine = $sForm->getSubjectLine();
-        }
+        
+        $mail->isHTML(true);
 
         $badAddresses = 0;
         $deparatureDT = new \DateTime();
@@ -264,8 +262,6 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
                 $mail->clearAddresses();
                 $mail->addAddress($emailAddr);
-
-                $mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
                 $mail->msgHTML($form);
 
                 if ($mail->send() === FALSE) {
