@@ -216,7 +216,7 @@ class Hospital {
 
                             // No, The guest's agent name is different than the one saved.
                             $guestSubmittedAgent = HTMLContainer::generateMarkup('span', 'Different Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
-                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ($referralHospitalData['referralAgent']['extension']== '' ? '' :'x' . $referralHospitalData['referralAgent']['extension']) . ', ' .$referralHospitalData['referralAgent']['email'],
+                            . ', ' . $referralHospitalData['referralAgent']['phone'] . (isset($referralHospitalData['referralAgent']['extension']) && $referralHospitalData['referralAgent']['extension'] != '' ? 'x' . $referralHospitalData['referralAgent']['extension'] :'') . ', ' .$referralHospitalData['referralAgent']['email'],
                             ['class' => 'ui-state-highlight']);
 
                     }
