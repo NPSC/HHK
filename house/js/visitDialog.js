@@ -190,8 +190,11 @@ function saveHospitalStay(idHs, idVisit) {
     var parms = parms.concat($('.hospital-stay:not(#txtDiagnosis)').serializeArray());
 
     //diagnosis
-    let base64diag = buffer.Buffer.from($('#txtDiagnosis').val()).toString("base64");
-    parms.push({ 'name': 'txtDiagnosis', 'value': base64diag });
+    let txtDiagnosis = $('#txtDiagnosis').val();
+    if (typeof txtDiagnosis == "string") {
+        txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+    }
+    parms.push({ 'name': 'txtDiagnosis', 'value': txtDiagnosis });
 
 	$.post('ws_resv.php', parms, function (data) {
         if (!data) {
