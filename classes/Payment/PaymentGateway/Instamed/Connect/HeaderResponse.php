@@ -20,6 +20,11 @@ class HeaderResponse extends AbstractGatewayResponse {
 
         //"https://online.instamed.com/providers/Form/SSO/SSOError?respCode=401&respMessage=Invalid AccountID or Password.&lightWeight=true"
 
+        //check for lowercase
+        if (isset($this->response["relaystate"])) {
+            $this->response[InstamedGateway::RELAY_STATE] = $this->response["relaystate"];
+        }
+
         if (isset($this->response[InstamedGateway::RELAY_STATE])) {
 
             $qs = parse_url($this->response[InstamedGateway::RELAY_STATE], PHP_URL_QUERY);

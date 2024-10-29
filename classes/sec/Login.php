@@ -206,7 +206,7 @@ class Login {
 
     public static function IEMsg(){
         try {
-            if ($userAgentArray = get_browser(NULL, TRUE)) {
+            if ($userAgentArray = @get_browser(NULL, TRUE)) {
 
                 if (is_array($userAgentArray)) {
 
@@ -227,7 +227,6 @@ class Login {
                 }
             }
         } catch (\Exception $d) {
-            return "Missing Browscap";
         }
 
         return '';
