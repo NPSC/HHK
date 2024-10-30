@@ -116,7 +116,7 @@ if (SecurityComponent::isHTTPS()) {
                     </div>
                 </div>
                	<?php echo $disclaimer; ?>
-                <?php echo Login::IEMsg() . Login::trainingMsg(); ?>
+                <?php echo Login::trainingMsg(); ?>
                 <div class="row justify-content-center">
 					<div class="col-xl-4 col-md-6">
 						<div class="ui-widget center">
