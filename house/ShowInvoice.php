@@ -1,14 +1,13 @@
 <?php
 
 use HHK\Notification\Mail\HHKMailer;
-use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentLinkRequest;
+//use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+//use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentLinkRequest;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\TableLog\HouseLog;
-use Mpdf\Mpdf;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**

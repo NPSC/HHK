@@ -17,6 +17,9 @@
 			"HHK\\" : "classes/"
 		}
 	},
+	"config": {
+		"optimize-autoloader": true
+	},
 	"require" : {
          "php" : "^7.4|^8.1",
         "ext-xml": "*",
