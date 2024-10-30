@@ -488,7 +488,15 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
     }
 
     $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-    return ['mkup' => $dataTable, 'xfer' => $transferIds];
+    $allorNone = HTMLInput::generateMarkup('All', ['type'=>'button', 'name' => 'hhkdgpallple', 'id'=>'hhkdgpallple', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+        . HTMLInput::generateMarkup('None', ['type'=>'button', 'name' => 'hhkdgpnople', 'id'=>'hhkdgpnople', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+        . HTMLInput::generateMarkup('Reset', ['type'=>'button', 'name' => 'hhkdgpback', 'id'=>'hhkdgpback', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+        . HTMLInput::generateMarkup('New Only', ['type' => 'button', 'name' => 'hhkdgpnew', 'id' => 'hhkdgpnew', 'class' => 'hhk-aon', 'style' => 'margin-right:1px;']);
+
+    $label = HTMLContainer::generateMarkup('span', 'External Id checkboxes: ');
+    $frame = HTMLContainer::generateMarkup('div', $label . $allorNone, ['style'=>'margin-top:1ex; margin-bottom:3px;']);
+
+    return ['mkup' => $frame . $dataTable, 'xfer' => $transferIds];
 
 }
 

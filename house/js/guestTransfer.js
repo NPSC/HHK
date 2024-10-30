@@ -1036,6 +1036,30 @@ $(document).ready(function () {
     $('#btnGetKey').click(function () {
         kmd.dialog('open');
     });
+    
+    $('#hhkdgpallple').button().click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', true);
+        })
+    });
+
+    $('#hhkdgpnople').button().click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', false);
+        })
+    });
+
+    $('#hhkdgpback').button().click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', $(this).prop('defaultChecked'));
+        })
+    });
+
+    $('#hhkdgpnew').button().click(function () {
+        $('.hhk-tf-update').each(function (index) {
+            $(this).prop('checked', false);
+        })
+    });
 
     $('.ckdate').datepicker({
         yearRange: '-07:+01',
