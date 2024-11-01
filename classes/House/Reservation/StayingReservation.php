@@ -113,6 +113,7 @@ class StayingReservation extends CheckingIn {
 
         // Dates
         $this->reserveData->setArrivalDT($nowDT);
+        $this->reserveData->setDepartureDateStr($resv->getExpectedDeparture());
 
 
         // Room Chooser
