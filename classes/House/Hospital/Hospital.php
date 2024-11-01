@@ -105,7 +105,7 @@ class Hospital {
         				)
         		. ($mrn == '' ? '' : HTMLTable::makeTd(
         				HTMLInput::generateMarkup(
-        				    (isset($referralHospitalData['mrn']) && $referralHospitalData['mrn'] != '' ? $referralHospitalData['mrn'] : $hstay->getMrn()),
+        				    $hstay->getMrn(),
         						array('name'=>'psgMrn', 'size'=>'14', 'class'=>'ignrSave hospital-stay')
         						)
         				))
@@ -463,9 +463,11 @@ class Hospital {
 
             $diagtbl = new HTMLTable();
 
-            $myDiagnosis = (isset($referralHospitalData['diagnosis']) && $referralHospitalData['diagnosis'] != '' ? $referralHospitalData['diagnosis'] : $hstay->getDiagnosisCode());
-            $diagnosisDetails = (isset($referralHospitalData['diagnosisDetails']) && $referralHospitalData['diagnosisDetails'] != '' ? $referralHospitalData['diagnosisDetails']: $hstay->getDiagnosis2());
-
+            //$myDiagnosis = (isset($referralHospitalData['diagnosis']) && $referralHospitalData['diagnosis'] != '' && strlen($hstay->getDiagnosisCode()) == 0 ? $referralHospitalData['diagnosis'] : $hstay->getDiagnosisCode());
+            $myDiagnosis = $hstay->getDiagnosisCode();
+            //$diagnosisDetails = (isset($referralHospitalData['diagnosisDetails']) && $referralHospitalData['diagnosisDetails'] != '' && strlen($hstay->getDiagnosis2()) == 0  ? $referralHospitalData['diagnosisDetails']: $hstay->getDiagnosis2());
+            $diagnosisDetails = $hstay->getDiagnosis2();
+            
             $diagId = (isset($diags[$myDiagnosis]) ? $myDiagnosis : '');
             $diagCat = (!empty($diagId) && isset($diagCats[$diags[$diagId]['Substitute']]) ? $diagCats[$diags[$diagId]['Substitute']][1] . ": " : '');
 
@@ -542,7 +544,7 @@ class Hospital {
 
             $diagtbl->addBodyTr(HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($locs, (isset($referralHospitalData['location']) && $referralHospitalData['location'] != '' ? $referralHospitalData['location'] : $hstay->getLocationCode()), TRUE),
+                    HTMLSelector::doOptionsMkup($locs,  $hstay->getLocationCode(), TRUE),
                 		array('name'=>'selLocation', 'class'=>'hospital-stay'))
                 )
             );

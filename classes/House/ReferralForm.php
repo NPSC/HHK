@@ -570,6 +570,33 @@ class ReferralForm {
 	    $reg = new Registration($dbh, $psg->getIdPsg());
 	    $hospStay = new HospitalStay($dbh, $psg->getIdPatient());
 
+		if (isset($this->formUserData['hospital'])) {
+			if (isset($this->formUserData['hospital']['diagnosis']) && $this->formUserData['hospital']['diagnosis'] != '') {
+				$hospStay->setDiagnosisCode($this->formUserData['hospital']['diagnosis']);
+			}
+
+			if (isset($this->formUserData['hospital']['diagnosisDetails']) && $this->formUserData['hospital']['diagnosisDetails'] != '') {
+				$hospStay->setDiagnosis2($this->formUserData['hospital']['diagnosisDetails']);
+			}
+
+			if (isset($this->formUserData['hospital']['location']) && $this->formUserData['hospital']['location'] != '') {
+				$hospStay->setLocationCode($this->formUserData['hospital']['location']);
+			}
+
+			if (isset($this->formUserData['hospital']['mrn']) && $this->formUserData['hospital']['mrn'] != '') {
+				$hospStay->setMrn($this->formUserData['hospital']['mrn']);
+			}
+
+			if (isset($this->formUserData['hospital']['treatmentStart']) && $this->formUserData['hospital']['treatmentStart'] != '') {
+				$hospStay->setArrivalDate($this->formUserData['hospital']['treatmentStart']);
+			}
+
+			if (isset($this->formUserData['hospital']['treatmentEnd']) && $this->formUserData['hospital']['treatmentEnd'] != '') {
+				$hospStay->setExpectedDepartureDate($this->formUserData['hospital']['treatmentEnd']);
+			}
+			$hospStay->save($dbh, $psg, 0, $uS->username);
+		}
+		
 	    // Define the reservation.
         $resv = Reservation_1::instantiateFromIdReserv($dbh, 0);
 
