@@ -504,13 +504,15 @@ class History {
 
         unset($cleanCodes);
 
+        $curGuestDemogIcon = ($uS->CurGuestDemogIcon != "" ? $uS->CurGuestDemogIcon : "ADA");
+
         $query = "select v.*,
                 IFNULL(`di`.`Description`, '') AS `demogTitle`,
                 IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` from vcurrent_residents v" . 
-                ($uS->CurGuestDemogIcon != "Gender" ? 
+                ($curGuestDemogIcon != "Gender" && $curGuestDemogIcon != "" ? 
                     " LEFT JOIN `name_demog` nd on v.Id = nd.idName 
-                      LEFT JOIN `gen_lookups` di on nd.".$uS->CurGuestDemogIcon . " = di.Code and di.Table_Name = '" . $uS->CurGuestDemogIcon . "'" : "") .
-                ($uS->CurGuestDemogIcon == "Gender" ?
+                      LEFT JOIN `gen_lookups` di on nd.".$curGuestDemogIcon . " = di.Code and di.Table_Name = '" . $curGuestDemogIcon . "'" : "") .
+                ($curGuestDemogIcon == "Gender" ?
                     " LEFT JOIN `gen_lookups` di on v.Gender = di.Code and di.Table_Name = 'Gender'" : ""
                 ) . 
                 " order by `Room`;";
