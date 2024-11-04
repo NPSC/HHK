@@ -125,8 +125,8 @@ class RateChooser {
      */
     public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs) {
 
-        $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
-        $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'margin-left:.5em;');
+        $attrFixed = array('class'=>'hhk-fxFixed ml-2', 'style'=>'');
+        $attrAdj = array('class'=>'hhk-fxAdj ml-2', 'style'=>'');
         $fixedRate = '';
         $rateTbl = new HTMLTable();
 
@@ -164,7 +164,7 @@ class RateChooser {
                 . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'rateChgCB', 'class'=>'hhk-feeskeys', 'style'=>'margin-left: 1em;', 'title'=>'Change the room rate'))
 
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $rateCat[0], FALSE), array('name'=>'selRateCategory', 'class'=>'hhk-feeskeys'))
-                .HTMLContainer::generateMarkup('span', 'Amt: $' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'class'=>'hhk-feeskeys', 'size'=>'4')), $attrFixed)
+                .HTMLContainer::generateMarkup('span', 'Amt: $' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'class'=>'hhk-feeskeys', 'size'=>'8')), $attrFixed)
                 . HTMLContainer::generateMarkup('span', 'Adj:'.$adjSel, $attrAdj), array('class'=>'changeRateTd', 'style'=>'display:none;'))
                 .HTMLTable::makeTh('As Of: ', array('class'=>'changeRateTd', 'style'=>'display:none;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('rpl', array('name'=>'rbReplaceRate', 'type'=>'radio', 'checked'=>'checked', 'class'=>'hhk-feeskeys'))
@@ -679,8 +679,8 @@ class RateChooser {
             }
         }
 
-        $attrFixed = array('class'=>'hhk-fxFixed');
-        $attrFixedInput = array("name"=>"txtFixedRate", "size"=>"4");
+        $attrFixed = array('class'=>'hhk-fxFixed ml-2');
+        $attrFixedInput = array("name"=>"txtFixedRate", "size"=>"8");
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj = array('style'=>'display:none;');
         }else{

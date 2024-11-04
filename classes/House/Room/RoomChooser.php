@@ -294,7 +294,7 @@ class RoomChooser {
         // Blank
         $resArray['0'] = array(
             "maxOcc" => 0,
-            "rate" => 0,
+            "rate" => ($this->resv->getFixedRoomRate() ? $this->resv->getFixedRoomRate() : 0),
             'defaultRateCat' => '',
             "title" => '',
             'key' => 0,
