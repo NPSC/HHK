@@ -20,6 +20,7 @@ use HHK\Notification\SMS\SimpleTexting\Contact;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\Notification\SMS\SimpleTexting\Message;
 use HHK\Notification\SMS\SimpleTexting\Messages;
+use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\GLTableNames;
@@ -394,6 +395,9 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			$report->loadReport($dbh);
 			$idGuest = $report->getGuestId();
 			$reportAr = $report->toArray();
+            
+            //user can edit?
+            $reportAr["userCanEdit"] = $report->userCanEdit();
 
             if(isset($_POST['print'])){
 	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");

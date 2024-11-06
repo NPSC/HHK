@@ -150,10 +150,10 @@
     };
 
     function clearform($wrapper) {
-        $wrapper.incidentdialog.find("input").val("");
+        $wrapper.incidentdialog.find("input").val("").removeAttr("readonly");
         $wrapper.incidentdialog.find("input").removeClass("ui-state-error");
         $wrapper.incidentdialog.find("textarea").empty();
-        $wrapper.incidentdialog.find("textarea").val("");
+        $wrapper.incidentdialog.find("textarea").val("").removeAttr("readonly");
         $wrapper.incidentdialog.find("option").removeAttr("selected");
         $wrapper.incidentdialog.find(".incidentStatus").val("a");
         $wrapper.incidentdialog.find(".jsignature").empty();
@@ -281,6 +281,12 @@
                 },
                 success: function (data) {
                     if (data.title) {
+                        if (data.userCanEdit === false) {
+                            $wrapper.incidentdialog.find("input[name=incidentTitle]").attr("readonly", "readonly");
+                            $wrapper.incidentdialog.find("input[name=incidentDate]").attr("readonly", "readonly");
+                            $wrapper.incidentdialog.find("textarea[name=incidentDescription]").attr("readonly", "readonly");
+                        }
+
                         $wrapper.incidentdialog.find("input[name=reportId]").val(repID);
                         $wrapper.incidentdialog.find("input[name=incidentTitle]").val(data.title);
                         $wrapper.incidentdialog.find("input[name=incidentDate]").val(data.reportDate);

@@ -2,6 +2,7 @@
 
 namespace HHK\Incident;
 
+use HHK\sec\SecurityComponent;
 use HHK\Tables\{EditRS, ReportRS};
 use HHK\Exception\RuntimeException;
 
@@ -137,6 +138,11 @@ class Report {
         return $report;
     }
 
+    /**
+     * Summary of saveNew
+     * @param \PDO $dbh
+     * @return bool
+     */
     public function saveNew(\PDO $dbh) {
 
         if ($this->isValid() === FALSE) {
@@ -167,12 +173,20 @@ class Report {
 
     }
 
+    
     /**
-     *
+     * Summary of updateContents
      * @param \PDO $dbh
-     * @param string $noteText
-     * @param string $updatedBy
-     * @return int the number of records updated.
+     * @param mixed $reportTitle
+     * @param mixed $reportDate
+     * @param mixed $reportResolutionDate
+     * @param mixed $reportDescription
+     * @param mixed $reportResolution
+     * @param mixed $reportSignature
+     * @param mixed $signatureDate
+     * @param mixed $reportStatus
+     * @param mixed $updatedBy
+     * @return int
      */
     public function updateContents(\PDO $dbh, $reportTitle, $reportDate, $reportResolutionDate, $reportDescription, $reportResolution, $reportSignature, $signatureDate, $reportStatus, $updatedBy) {
 
@@ -180,10 +194,13 @@ class Report {
 
         if ($this->getIdReport() > 0 && $this->loadReport($dbh)) {
 
-            $this->reportRS->Title->setNewVal($reportTitle);
-            $this->reportRS->Report_Date->setNewVal($reportDate);
+            if($this->userCanEdit()){
+                $this->reportRS->Title->setNewVal($reportTitle);
+                $this->reportRS->Report_Date->setNewVal($reportDate);
+                $this->reportRS->Description->setNewVal($reportDescription);
+            }
+            
             $this->reportRS->Resolution_Date->setNewVal($reportResolutionDate);
-            $this->reportRS->Description->setNewVal($reportDescription);
             $this->reportRS->Resolution->setNewVal($reportResolution);
             $this->reportRS->Signature->setNewVal($reportSignature);
             $this->reportRS->Signature_Date->setNewVal($signatureDate);
@@ -196,6 +213,10 @@ class Report {
         }
 
         return $counter;
+    }
+
+    public function userCanEdit(){
+        return (SecurityComponent::is_Admin() || SecurityComponent::is_Authorized("guestadmin"));
     }
 
     /**
