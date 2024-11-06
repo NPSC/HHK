@@ -247,10 +247,24 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
 
+            var parms = [
+                { 'name': 'cmd', 'value': 'saveResv' },
+                { 'name': 'idPsg', 'value': pageManager.getIdPsg() },
+                { 'name': 'prePayment', 'value': pageManager.getPrePaymtAmt() },
+                { 'name': 'rid', 'value': pageManager.getIdResv() }
+            ];
+            var parms = parms.concat($('#form1 *:not(#txtDiagnosis)').serializeArray());
+
+            //diagnosis
+            let txtDiagnosis = $('#txtDiagnosis').val();
+            if (typeof txtDiagnosis === "string") {
+                txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+            }
+            parms.push({ 'name': 'txtDiagnosis', 'value': txtDiagnosis });
 
             $.post(
                 'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                $.param(parms) + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
                     try {
                         data = $.parseJSON(data);
