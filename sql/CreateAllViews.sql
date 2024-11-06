@@ -1879,6 +1879,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         `i`.`Notes` AS `Notes`,
         `i`.`Deleted` AS `Deleted`,
         `i`.`Updated_By` AS `Invoice_Updated_By`,
+        `i`.`Timestamp` AS `Invoice_Created_At`,
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
         ifnull(`il`.`Description`, '') as `il_Description`,
         ifnull(`il`.`Amount`, 0) as `il_Amount`,
