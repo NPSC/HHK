@@ -1595,8 +1595,10 @@ CREATE OR REPLACE VIEW `vguest_view` AS
                     WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
                     ELSE CONCAT(`n`.`Name_Last`, ' ', `g`.`Description`)
                 END,
-                '') AS `Last Name`,
-        IFNULL(`n`.`Name_First`, '') AS `First Name`,
+                '') AS `Guest Last Name`,
+        IFNULL(`n`.`Name_First`, '') AS `Guest First Name`,
+        IFNULL(`pn`.`Name_Last`,'') AS `Patient Last Name`,
+        IFNULL(`pn`.`Name_First`, '') AS `Patient First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
         CASE
             WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone'
@@ -1624,13 +1626,14 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         IFNULL(`v`.`License_Number`, '') AS `License Plate`,
         IFNULL(`v`.`Note`, '') AS `Note`
     FROM
-        (((((((((((`stays` `s`
+        ((((((((((((`stays` `s`
         LEFT JOIN `name` `n` ON (`n`.`idName` = `s`.`idName`))
         LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
         LEFT JOIN `visit` `vs` ON (`s`.`idVisit` = `vs`.`idVisit`
             AND `s`.`Visit_Span` = `vs`.`Span`))
         LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `name` `pn` ON (`hs`.`idPatient` = `pn`.`idName`))
         LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))
         LEFT JOIN `gen_lookups` `diag` ON (`diag`.`Table_Name` = 'Diagnosis'
             AND `diag`.`Code` = `hs`.`Diagnosis`))
