@@ -627,6 +627,23 @@ where ru.idResource_use is null
         return $events;
     }
 
+    protected function getEventTitle(array $r): string {
+        $uS = Session::getInstance();
+
+        switch ($uS->RibbonText){
+            case "pgl": //Primary Guest Last Name
+                return $r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
+            case "pgf": //Primary Guest Full Name
+                return $r['Name_Full'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
+            case "pl": //Patient Last Name
+                return "";
+            case "pf": //Patient Full Name
+                return "";
+            default:
+                return $r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
+        }
+    }
+
 
     // Parses a string into a DateTime object, optionally forced into the given timezone.
     public static function parseDateTime($string, $timezone=null) {
