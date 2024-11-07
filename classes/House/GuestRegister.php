@@ -888,7 +888,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
             foreach ($demogs as $d) {
                 if ($d["Attributes"] && $attributes = json_decode($d["Attributes"], true)){
                     $this->ribbonColors[$d[0]] = array(
-                        't' => isset($attributes["textColor"]) ? trim(strtolower($attributes["textColor"])) : "#ffffff",
+                        't' => isset($attributes["fontColor"]) ? trim(strtolower($attributes["fontColor"])) : "#ffffff",
                         'b' => isset($attributes["backgroundColor"]) ? trim(strtolower($attributes["backgroundColor"])) : 'transparent'
                     );
                 }else if ($d[2] != '') {
