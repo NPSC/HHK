@@ -46,3 +46,11 @@ DROP INDEX IF EXISTS `indx_linkDoc`;
 
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
 ('vehicleNotes', 'Notes', 's', 'rf','','Default: Notes');
+
+-- add custom ribbon text
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('RibbonText','pgl','lu','c','Type of text shown on the calendar ribbon','RibbonText',1);
+
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pgl", "Primary Guest Last Name", 10);
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pgf", "Primary Guest Full Name", 20);
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pl", "Patient Last Name", 30);
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pf", "Patient Full Name", 40);
