@@ -29,6 +29,9 @@ use HHK\sec\Labels;
  */
 class CreditToken {
 
+
+    const TOKEN_LIFE_DAYS = 365;
+
     /**
      * Summary of storeToken
      * @param \PDO $dbh
@@ -67,7 +70,7 @@ class CreditToken {
         }
         $gtRs->Frequency->setNewVal('OneTime');
         $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
-        $gtRs->LifetimeDays->setNewVal(180);
+        $gtRs->LifetimeDays->setNewVal(self::TOKEN_LIFE_DAYS);
 
         if ($cardNum != '') {
             $gtRs->MaskedAccount->setNewVal($cardNum);
