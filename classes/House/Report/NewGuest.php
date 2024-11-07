@@ -227,7 +227,9 @@ class NewGuest
     IFNULL(hs.idHospital, 0) AS `idHospital`,
     IFNULL(hs.idAssociation, 0) AS `idAssociation`,
 	IFNULL(v.Actual_Departure, '') AS `Visit End`,
-    MIN(s.Span_Start_Date) AS `First Stay`
+    MIN(s.Span_Start_Date) AS `First Stay`,
+    IFNULL(ra.Name_First, '') as `Referral_Agent_First`,
+    IFNULL(ra.Name_Last, '') as `Referral_Agent_Last`
 FROM
     stays s
         JOIN
@@ -243,6 +245,8 @@ FROM
     name_email ne ON n.idName = ne.idName AND n.Preferred_Email = ne.Purpose
         LEFT JOIN
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
+        LEFT JOIN
+    `name` ra on hs.idReferralAgent = ra.idName
         LEFT JOIN
     `name_guest` ng ON s.idName = ng.idName and hs.idPsg = ng.idPsg
         LEFT JOIN
