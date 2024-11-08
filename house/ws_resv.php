@@ -9,7 +9,7 @@ use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
 use HHK\Incident\ListReports;
-use HHK\Incident\Report;
+use HHK\Incident\IncidentReport;
 use HHK\Member\Address\Phones;
 use HHK\Member\IndivMember;
 use HHK\Note\LinkNote;
@@ -378,8 +378,6 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			}
         }
 
-        //require(CLASSES . 'DataTableServer.php');
-
         $events = ListReports::loadList($dbh, $guestId, $psgId, $_GET);
 
         break;
@@ -391,7 +389,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
                 $idReport = intval(filter_var($_POST['repid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $report = new Report($idReport);
+            $report = new IncidentReport($idReport);
 			$report->loadReport($dbh);
 			$idGuest = $report->getGuestId();
 			$reportAr = $report->toArray();
@@ -454,7 +452,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $signatureDate = $_POST['signatureDate'];
         }
 
-        $report = Report::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $signature, $signatureDate, $guestId, $psgId);
+        $report = IncidentReport::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $signature, $signatureDate, $guestId, $psgId);
 		$report->saveNew($dbh);
 
         $events = ['status' => 'success', 'idReport' => $report->getIdReport()];
@@ -501,7 +499,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $signatureDate = $_POST['signatureDate'];
         }
 
-        $report = new Report($repId);
+        $report = new IncidentReport($repId);
         $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution,$signature, $signatureDate, $incidentStatus, $uS->username);
 
         $events = ['status' => 'success', 'idReport' => $report->getIdReport(), 'incidentTitle' => $incidentTitle, 'incidentDate' => $incidentDate, 'incidentStatus' => $incidentStatus];
@@ -519,7 +517,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         }
 
         if ($repId > 0) {
-            $report = new Report($repId);
+            $report = new IncidentReport($repId);
             $deleteCount = $report->deleteReport($dbh, $uS->userName);
         }
 
@@ -538,7 +536,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         }
 
         if ($repId > 0) {
-            $report = new Report($repId);
+            $report = new IncidentReport($repId);
             $deleteCount = $report->undoDeleteReport($dbh, $uS->userName);
         }
 

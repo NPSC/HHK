@@ -7,7 +7,7 @@ use HHK\Tables\{EditRS, ReportRS};
 use HHK\Exception\RuntimeException;
 
 /**
- * Report.php
+ * IncidentReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
@@ -17,12 +17,12 @@ use HHK\Exception\RuntimeException;
  */
 
 /**
- * Description of Report
+ * Description of IncidentReport
  *
  * @author Will
  */
 
-class Report {
+class IncidentReport {
 
     // Report Status
     const ActiveStatus = 'a';
@@ -112,11 +112,11 @@ class Report {
      * @param string $reportDescription
      * @param string $reportAuthor
      */
-    public static function createNew($reportTitle, $reportDate, $reportDescription, $reportAuthor = '', $reportStatus = Report::ActiveStatus, $reportResolution = '', $reportResolutionDate = '', $reportSignature = '', $signatureDate = '', $guestId = '', $psgId = '' ) {
+    public static function createNew($reportTitle, $reportDate, $reportDescription, $reportAuthor = '', $reportStatus = IncidentReport::ActiveStatus, $reportResolution = '', $reportResolutionDate = '', $reportSignature = '', $signatureDate = '', $guestId = '', $psgId = '' ) {
 
         if ($reportTitle != '' && $reportAuthor != '') {
 
-            $report = new Report();
+            $report = new IncidentReport();
 
             $report->setTitle($reportTitle);
             $report->setReportDate($reportDate);
@@ -215,7 +215,7 @@ class Report {
         return $counter;
     }
 
-    public function userCanEdit(){
+    public static function userCanEdit(){
         return (SecurityComponent::is_Admin() || SecurityComponent::is_Authorized("guestadmin"));
     }
 
@@ -229,7 +229,7 @@ class Report {
 
         $counter = 0;
 
-        if ($this->getIdReport() > 0 && $this->loadReport($dbh)) {
+        if ($this->getIdReport() > 0 && $this->loadReport($dbh) && $this->userCanEdit()) {
 
             $this->reportRS->Status->setNewVal(self::DeletedStatus);
             $this->reportRS->Updated_By->setNewVal($username);

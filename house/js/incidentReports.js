@@ -180,11 +180,12 @@
         $li.append($('<span class="ui-icon ui-icon-pencil" />'));
 
         $ul.append($li);
-
-        // Delete Edit Icon
-        $li = $('<li title="Delete report" data-reportid="' + reportId + '" />').addClass('hhk-report-button incident-delete ui-corner-all ui-state-default');
-        $li.append($('<span class="ui-icon ui-icon-trash" />'));
-
+        
+        if (row.canDelete) {
+            // Delete Edit Icon
+            $li = $('<li title="Delete report" data-reportid="' + reportId + '" />').addClass('hhk-report-button incident-delete ui-corner-all ui-state-default');
+            $li.append($('<span class="ui-icon ui-icon-trash" />'));
+        }
         $ul.append($li);
 
         // Undo Delete Edit Icon
@@ -283,7 +284,7 @@
                     if (data.title) {
                         if (data.userCanEdit === false) {
                             $wrapper.incidentdialog.find("input[name=incidentTitle]").attr("readonly", "readonly");
-                            $wrapper.incidentdialog.find("input[name=incidentDate]").attr("readonly", "readonly");
+                            $wrapper.incidentdialog.find("input[name=incidentDate]").attr("readonly", "readonly").datepicker("destroy");
                             $wrapper.incidentdialog.find("textarea[name=incidentDescription]").attr("readonly", "readonly");
                         }
 
