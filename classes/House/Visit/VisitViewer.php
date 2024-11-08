@@ -250,6 +250,11 @@ class VisitViewer {
             $tr .= HTMLTable::makeTd($r['Patient_Name']);
         }
 
+        if(isset($r["Checked_In_By"])){
+            $th .= HTMLTable::makeTh("Checked In By");
+            $tr .= HTMLTable::makeTd($r['Checked_In_By']);
+        }
+
 
         // add completed rows to table
         $table->addBodyTr($tr);

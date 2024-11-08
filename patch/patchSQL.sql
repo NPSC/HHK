@@ -46,3 +46,6 @@ DROP INDEX IF EXISTS `indx_linkDoc`;
 
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
 ('vehicleNotes', 'Notes', 's', 'rf','','Default: Notes');
+
+ALTER TABLE `visit`
+ADD COLUMN IF NOT EXISTS `Checked_In_By` varchar(45) NOT NULL DEFAULT '' AFTER `Recorded`;

@@ -2124,6 +2124,7 @@ CREATE TABLE if not exists `visit` (
   `Notes` text,
   `Status` varchar(5) NOT NULL DEFAULT '',
   `Recorded` INT(1) NOT NULL DEFAULT '0',
+  `Checked_In_By` varchar(45) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
