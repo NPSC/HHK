@@ -3,7 +3,7 @@ namespace HHK\CrmExport\Salesforce;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
-use HHK\OAuth\OAuth;
+use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
 use HHK\Exception\{RuntimeException, UploadException};
 use GuzzleHttp\Exception\BadResponseException;
@@ -18,7 +18,7 @@ class SF_Connector {
 
     /**
      * Summary of oAuth
-     * @var Oauth
+     * @var SalesForceOauth
      */
     protected $oAuth;
 
@@ -40,7 +40,7 @@ class SF_Connector {
      */
     public function login() {
 
-        $this->oAuth = new OAuth($this->credentials);
+        $this->oAuth = new SalesForceOauth($this->credentials);
 
         $this->oAuth->login();
     }
@@ -59,7 +59,7 @@ class SF_Connector {
     public function search($query, $endpoint) {
 
         try{
-            if(!$this->oAuth instanceof OAuth){
+            if(!$this->oAuth instanceof SalesForceOauth){
                 $this->login();
             }
 
@@ -92,7 +92,7 @@ class SF_Connector {
     public function goUrl($endpoint) {
 
         try{
-            if(!$this->oAuth instanceof OAuth){
+            if(!$this->oAuth instanceof SalesForceOauth){
                 $this->login();
             }
 
@@ -125,7 +125,7 @@ class SF_Connector {
     public function postUrl($endpoint, array $params, $isUpdate = FALSE) {
 
        try{
-            if(!$this->oAuth instanceof OAuth){
+            if(!$this->oAuth instanceof SalesForceOauth){
                 $this->login();
             }
 
@@ -159,7 +159,7 @@ class SF_Connector {
     {
 
         try {
-            if (!$this->oAuth instanceof OAuth) {
+            if (!$this->oAuth instanceof SalesForceOauth) {
                 $this->login();
             }
 
