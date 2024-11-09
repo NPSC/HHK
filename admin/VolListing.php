@@ -1,6 +1,7 @@
 <?php
 
 use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
+use HHK\sec\Labels;
 
 /**
  * VolListing.php
@@ -19,6 +20,8 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 $uS = Session::getInstance();
 
+// Get labels
+$labels = Labels::getLabels();
 $menuMarkup = $wInit->generatePageMenu();
 
 //disable inactive users
@@ -37,22 +40,27 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $noReport = "";
 $markup = "";
+$isAdmin = false;
+
+if($uS->rolecode == '10'){ //if Admin User
+    $isAdmin = true;
+}
 
 if (count($rows) > 0) {
     // Table header row
     $markup = "<thead><tr>";
-    if($uS->rolecode == '10'){ //if Admin User
+    if($isAdmin){
         $markup .= "<th>x</th>";
     }
     foreach ($rows[0] as $k => $v) {
-        $markup .= "<th>" . $k . "</th>";
+        $markup .= "<th>$k</th>";
     }
     $markup .= "</tr></thead><tbody>";
 
-    $clnRows = array();
+    $clnRows = [];
     $id = 0;
     $collector = '';
-    $lastRow = array();
+    $lastRow = [];
 
     // Collect auth codes
     foreach ($rows as $rw) {
@@ -84,7 +92,7 @@ if (count($rows) > 0) {
     // peruse the rows
     foreach ($clnRows as $rw) {
 
-        if ($rw["Id"] > 0 || SecurityComponent::is_TheAdmin()) { //hide Admin user unless logged in as Admin
+        if ($rw["Id"] > 0 || SecurityComponent::is_TheAdmin()) { //hide Admin user unless logged in as The Admin
 
             $markup .= "<tr class='trClass" . $rw['Id'] . "' >";
             // peruse the fields in each row
@@ -92,20 +100,18 @@ if (count($rows) > 0) {
 
                 if ($k == 'Id') {
 
-                    if ($uS->rolecode == '10') {
-                        $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
+                    if ($isAdmin) {
+                        $markup .= "<td><input type='checkbox' id='delCkBox$r' name='$r' class='delCkBox' /></td>";
                     }
 
                     if ($r < 1) {
-                        $markup .= "<td>" . $r . "</td>";
+                        $markup .= "<td>$r</td>";
                     } else {
-                        $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
+                        $markup .= "<td><a href='NameEdit.php?id=$r'>$r</a></td>";
                     }
 
-                } else if ($k == 'Last Login' || $k == 'Password Changed') {
-                    $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
                 } else {
-                    $markup .= "<td>" . $r . "</td>";
+                    $markup .= "<td>$r</td>";
                 }
             }
             $markup .= "</tr>";
@@ -115,7 +121,7 @@ if (count($rows) > 0) {
 } else {
     $noReport = "No Web Users";
 }
-$volReport = $markup;
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -136,18 +142,51 @@ $volReport = $markup;
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 
         <script type="text/javascript">
+
     $(document).ready(function() {
+
+        let isAdmin = $('#isAdmin').val(),
+            dateFormat = $('#dateFormat').val(),
+            dateTimeFormat = $('#dateTimeFormat').val(),
+            wUserCols;
+
+        wUserCols = [
+            {data: 'Id', title: 'id', sortable: false},
+            {data: 'Name', title: 'Name'},
+            {data: 'Username', title: 'Username'},
+            {data: 'Type', title: 'Type'},
+            {data: 'Status', title: 'Status'},
+            {data: 'Role', title: 'Role'},
+            {data: 'Default Page', title: 'Default Page'},
+            {data: 'Authorization Code', title: 'Authorization Code', sortable: false},
+            {data: 'Last Login', title: 'Last Login', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
+            {data: 'Password Changed', title: 'Password Changed', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
+            {data: 'Password Expires', title: 'Password Expires', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
+            {data: 'Two Factor Enabled', title: 'Two Factor Enabled'},
+            {data: 'Updated By', title: 'Updated By'},
+            {data: 'Last Updated', title: 'Last Updated', render: function (data, type) {return dateRender(data, type, dateFormat);}},
+        ];
+
+        if (isAdmin) {
+            // Add to beginning of the array
+            wUserCols.unshift( {data: 'x',  title: 'x', sortable:false} );
+        }
+
 
         $('#dataTbl').dataTable({
             "displayLength": 25,
+            order: false,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
+            columns: wUserCols,
+            "dom": '<"top"lif><"hhk-overflow-x"rt><"bottom"p>'
         });
+
         $('div#vollisting').on('change', 'input.delCkBox', function() {
             if ($(this).prop('checked')) {
                 var rep = confirm("Delete this record?");
@@ -198,11 +237,13 @@ $volReport = $markup;
                 <?php echo $noReport ?>
                 <form autocomplete="off">
                 <table id="dataTbl" class="display">
-                    <?php echo $volReport ?>
+                    <?php echo $markup ?>
                 </table>
                 </form>
             </div>
         </div>
-
+        <input id="isAdmin" type="hidden" value="<?php echo $isAdmin; ?>"/>
+        <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
+        <input  type="hidden" id="dateTimeFormat" value='<?php echo $labels->getString("momentFormats", "dateTime", "MMM D YYYY h:mm a"); ?>' />
     </body>
 </html>

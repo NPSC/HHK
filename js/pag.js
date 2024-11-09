@@ -63,6 +63,10 @@ function dateRender(data, type, format) {
 			return '';
 		}
 
+		if (moment(data, 'YYYY-MM-DD HH:mm:ss Z').isValid()===false) {
+			return data;
+		}
+
 		if (!format || format === '') {
 			format = 'MMM D, YYYY';
 		}

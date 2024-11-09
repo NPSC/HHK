@@ -3153,16 +3153,16 @@ select
     gr.Description AS Role,
     u.Default_Page AS `Default Page`,
     wg.Title as `Authorization Code`,
-    u.Last_Login AS `Last Login`,
-    IF(`u`.`idIdp` > 0, '', `u`.`PW_Change_Date`) AS `Password Changed`,
+    ifnull(u.Last_Login, '') AS `Last Login`,
+    IF(`u`.`idIdp` > 0, '', ifnull(`u`.`PW_Change_Date`, '')) AS `Password Changed`,
     CASE
         WHEN `u`.`idIdp` > 0 THEN CONCAT('Managed by ', `i`.`Name`)
         WHEN `u`.`Chg_PW` THEN 'Next Login'
         WHEN (`u`.`pass_rules` = 0 || `sc`.`Value` = 0) THEN 'Never'
         WHEN `u`.`PW_Change_Date`
-            THEN DATE_FORMAT((`u`.`PW_Change_Date` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
+            THEN DATE_ADD(`u`.`PW_Change_Date`, INTERVAL `sc`.`Value` DAY)
         WHEN `u`.`Timestamp`
-            THEN DATE_FORMAT((`u`.`Timestamp` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
+            THEN DATE_ADD(`u`.`Timestamp`, INTERVAL `sc`.`Value` DAY)
         ELSE ''
     END AS `Password Expires`,
     CASE
@@ -3171,7 +3171,7 @@ select
         ELSE 'Yes'
 	END AS `Two Factor Enabled`,
     u.Updated_By AS `Updated By`,
-    DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
+    ifnull(u.Last_Updated, '') AS `Last Updated`
 from
     ((((w_users u
     left join `name` v ON ((u.idName = v.idName)))
