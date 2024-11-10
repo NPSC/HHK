@@ -130,17 +130,18 @@ if (count($rows) > 0) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
+
         <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <link href="../css/datatables.min.css" rel="stylesheet">
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script src="../js/datatables2.min.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
 
@@ -184,7 +185,12 @@ if (count($rows) > 0) {
             order: false,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             columns: wUserCols,
-            "dom": '<"top"lif><"hhk-overflow-x"rt><"bottom"p>'
+            layout: {
+                topStart: 'info',
+                bottom: 'paging',
+                bottomStart: null,
+                bottomEnd: null
+            }
         });
 
         $('div#vollisting').on('change', 'input.delCkBox', function() {
