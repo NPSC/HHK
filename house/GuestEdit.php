@@ -61,7 +61,7 @@ $labels = Labels::getLabels();
 
 $resultMessage = "";
 $alertMessage = '';
-$id = 0;
+$id = -1;
 $idPsg = 0;
 $psg = NULL;
 $uname = $uS->username;
@@ -179,7 +179,9 @@ if ($id > 0) {
             $showSearchOnly = TRUE;
         }
     }
-} else {
+}else if($id == 0){
+
+}else{
     $showSearchOnly = TRUE;
 }
 
@@ -212,9 +214,13 @@ if ($idPsg > 0) {
         }
     }
 
+    if($id == 0){
+        $foundIt = TRUE;
+    }
+
     // The psg is not attached to this guest.
     if ($foundIt === FALSE) {
-        $alertMessage = $labels->getString('MemberType', 'guest', 'Guest').' is not a memeber of the PSG indicated on the URL (GET param).  ';
+        $alertMessage = $labels->getString('MemberType', 'guest', 'Guest').' is not a member of the PSG indicated on the URL (GET param).  ';
         $idPsg = 0;
     }
 
@@ -311,6 +317,12 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
                         $v = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                         $psg->setNewMember($k, $v);
                     }
+                }
+
+                if(filter_has_var(INPUT_POST, 'selPatRel')){
+                    $k = $id;
+                    $v = filter_input(INPUT_POST, "selPatRel", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    $psg->setNewMember($k, $v);
                 }
 
                 if (filter_has_var(INPUT_POST, 'cbLegalCust')) {
@@ -429,7 +441,7 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
 $isPatient = false;
 
 // Heading member name text
-if ($name->isNew()) {
+if ($name->isNew() && $name->get_idName() == 0) {
 
     $niceName = "New ".$labels->getString('MemberType', 'guest', 'Guest');
 
@@ -447,8 +459,8 @@ if ($name->isNew()) {
 //
 // Name Edit Row
 $tbl = new HTMLTable();
-$tbl->addHeaderTr($name->createMarkupHdr($labels, TRUE));
-$tbl->addBodyTr($name->createMarkupRow('', TRUE));
+$tbl->addHeaderTr($name->createMarkupHdr($labels, ($id > 0)));
+$tbl->addBodyTr($name->createMarkupRow('', ($id > 0)));
 
 $nameMarkup = $tbl->generateMarkup();
 

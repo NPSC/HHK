@@ -486,6 +486,21 @@ $(document).ready(function () {
 
     createZipAutoComplete($('input.hhk-zipsearch'), 'ws_admin.php', zipXhr);
 
+    createRoleAutoComplete($('#txtPersonSearch'), 3, {cmd: 'guest'}, function (item) {
+        console.log(item);
+        if (item.id === 0) {
+            window.location = "GuestEdit.php?id=0&psg=" + $("#hdnpsg").val();
+        } else if (item.id > 0) {
+            let $psgTbl = $('#psgMemTbl tbody');
+            let $newMemRow = $psgTbl.find(".newPSGMember").clone().removeClass("newPSGMember d-none");
+
+            $newMemRow.find(".newPSGMemId").text(item.id);
+            $newMemRow.find(".newPSGMemName").text(item.label);
+            $newMemRow.find("select").attr("name", "selPrel[" + item.id + "]");
+            $psgTbl.append($newMemRow);
+        }
+    });
+
     // Main form submit button.  Disable page during POST
     $('#btnSubmit').click(function () {
         if ($(this).val() === 'Saving>>>>') {
