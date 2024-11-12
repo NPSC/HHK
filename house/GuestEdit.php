@@ -179,8 +179,7 @@ if ($id > 0) {
             $showSearchOnly = TRUE;
         }
     }
-}else if($id == 0){
-
+}else if($id == 0 && $idPsg > 0){
 }else{
     $showSearchOnly = TRUE;
 }
@@ -678,7 +677,7 @@ if($uS->ShowGuestPhoto){
 	$guestPhotoMarkup = showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
 }
 
-$guestName = "<span style='font-size:2em;'>$niceName</span>";
+$guestName = "<span style='font-size:2em;'>$niceName</span>" . $patient->getRoleMember()->get_fullName();
 
 if ($name->getNoReturnDemog() != '') {
     $guestName = "<span style='font-size:2em;color:red;'>$niceName - No Return: " . $uS->nameLookups['NoReturnReason'][$name->getNoReturnDemog()][1] . "</span>";
@@ -921,7 +920,7 @@ $uS->guestId = $id;
                     </div>
                 </div>
                 </div>
-                <?php if ($id > 0) {  ?>
+                <?php if ($idPsg > 0) {  ?>
                 <div id="psgList" class="hhk-showonload hhk-tdbox hhk-visitdialog hhk-mobile-tabs mb-2" style="display:none;">
                     <div class="hhk-flex ui-widget-header ui-corner-all">
                     	<div class="d-xl-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>

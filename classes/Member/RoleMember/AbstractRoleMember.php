@@ -248,9 +248,10 @@ abstract class AbstractRoleMember extends IndivMember {
             } else {
 
                 $allowEmpty = TRUE;
-                if ($uS->PatientAsGuest === FALSE) {
+                $parray = removeOptionGroups($parray);
+                //if ($uS->PatientAsGuest === FALSE) {
                     unset($parray[RelLinkType::Self]);
-                }
+                //}
             }
 
             // Patient relationship

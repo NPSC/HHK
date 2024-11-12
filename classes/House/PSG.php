@@ -232,16 +232,6 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         }
 
-        //new member
-        $mTable->addBodyTr(
-            HTMLTable::makeTd("New", array('style'=>'text-align:center;'))
-            .HTMLTable::makeTd("", ['class'=>'newPSGMemId'])
-            .HTMLTable::makeTd("", ['class'=>'newPSGMemName'])
-            .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($relListLessSlf, "", FALSE), array('name'=>'selPrel')))
-            .HTMLTable::makeTd("", array('colspan'=>'2'))
-        , ['class'=>"d-none newPSGMember"]);
-
-
         $newMemMkup = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('span', 'Add people - Name search: ')
             .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
