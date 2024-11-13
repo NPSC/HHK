@@ -862,7 +862,7 @@ REPLACE INTO `template_tag` VALUES
 (7,'c', 'Guest First Name', '${GuestFirstName}',''),
 (8,'c', 'Guest Last Name', '${GuestLastName}',''),
 (9,'c', 'Guest Name Prefix', '${GuestNamePrefix}',''),
-(10,'c', 'Guest Name Suffix', '${GuestNameSuffix}','');
+(10,'c', 'Guest Name Suffix', '${GuestNameSuffix}',''),
 (11,'c','Expected Arrival','${ExpectedArrival}',''),
 (12,'c','Expected Departure','${ExpectedDeparture}',''),
 (13,'c','Date Today','${DateToday}',''),
