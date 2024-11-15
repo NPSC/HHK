@@ -98,9 +98,10 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         $cFields[] = array($eTitles, $eFields, '', '', 'string', '20', array());
 
         if ($uS->TrackAuto) {
-            $cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
-            $cFields[] = array('Model', 'Model', 'checked', '', 'string', '20');
-            $cFields[] = array('Color', 'Color', 'checked', '', 'string', '20');
+            $cFields[] = array('Vehicle', 'Vehicle', 'checked', '', 'string', '20');
+            //$cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
+            //$cFields[] = array('Model', 'Model', 'checked', '', 'string', '20');
+            //$cFields[] = array('Color', 'Color', 'checked', '', 'string', '20');
             $cFields[] = array('State Reg.', 'State Reg.', 'checked', '', 'string', '20');
             $cFields[] = array(Labels::getString('referral', 'licensePlate', 'License Plate'), 'License Plate', 'checked', '', 'string', '20');
             $cFields[] = array(Labels::getString('referral', 'vehicleNotes', 'Notes'), 'Note', 'checked', '', 'string', '20');

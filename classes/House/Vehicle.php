@@ -29,16 +29,20 @@ class Vehicle {
      * @param int $idReg
      * @return array
      */
-    public static function getRecords(\PDO $dbh, $idReg) {
+    public static function getRecords(\PDO $dbh, $idReg, int $idResv = 0) {
 
         $rows = array();
 
-        if ($idReg > 0) {
+        if ($idReg > 0 && $idResv > 0){
+            
+            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle where v.idRegistration = $idReg and (rv.idReservation = $idResv or rv.idReservation IS NULL)");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }else if ($idReg > 0) {
 
             $stmt = $dbh->query("select v.*, n.Name_Full from vehicle v left join name n on v.idName = n.idName where v.idRegistration = $idReg");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-         }
+        }
 
         return $rows;
 
@@ -106,14 +110,14 @@ WHERE
      * @param mixed $refVehicle
      * @return string
      */
-    public static function createVehicleMarkup(\PDO $dbh, $idReg, $noVehicle, $refVehicle = []) {
+    public static function createVehicleMarkup(\PDO $dbh, $idReg, $idResv, $noVehicle, $refVehicle = []) {
 
         // work on the state
         $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
             'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
             'OK', 'ON', 'OR', 'PA', 'PE', 'PR', 'PQ', 'RI', 'SC', 'SD', 'SK', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY');
 
-        $rows = self::getRecords($dbh, $idReg);
+        $rows = self::getRecords($dbh, $idReg, $idResv);
 
         $tbl = new HTMLTable();
 
@@ -140,10 +144,21 @@ WHERE
             if (self::checkMatch($carRS, $refVehicle)) {
                 $hasRef = TRUE;
             }
+            $thisResvMkup = "";
+            if ($idResv > 0) {
+                $thisResvCbAttrs = ["type"=>"checkbox", "name"=>"cbVehResv[".$idPrefix."]", 'id'=>$idPrefix.'cbVehResv', 'class'=>'hhk-vehicle'];
+
+                if($r["idReservation"] == $idResv){
+                    $thisResvCbAttrs["checked"] = "checked";
+                }
+            
+                $thisResvMkup = HTMLTable::makeTd(HTMLInput::generateMarkup("", $thisResvCbAttrs), ["style" => "text-align: center;"]);
+            }
 
             $tbl->addBodyTr(
                 //HTMLTable::makeTd(HTMLSelector::generateMarkup( , array('name'=>'selVehGuest['.$idPrefix.']')))
-                HTMLTable::makeTd(HTMLInput::generateMarkup($carRS->Make->getStoredVal(), array('name'=>'txtVehMake[' .$idPrefix.']', 'id'=>$idPrefix.'txtVehMake','class'=>'hhk-vehicle ','size'=>'10')))
+                ($idResv > 0 ? $thisResvMkup : "")
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($carRS->Make->getStoredVal(), array('name'=>'txtVehMake[' .$idPrefix.']', 'id'=>$idPrefix.'txtVehMake','class'=>'hhk-vehicle ','size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($carRS->Model->getStoredVal(), array('name'=>'txtVehModel[' .$idPrefix.']', 'id'=>$idPrefix.'txtVehModel', 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($carRS->Color->getStoredVal(), array('name'=>'txtVehColor[' . $idPrefix.']', 'id'=>$idPrefix.'txtVehColor', 'class'=>'hhk-vehicle', 'size'=>'7')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup($stateOpt, array('name'=>'selVehLicense[' .$idPrefix.']', 'id'=>$idPrefix.'selVehLicense', 'class'=>'hhk-vehicle')))
@@ -208,7 +223,8 @@ WHERE
         foreach ($idx as $i) {
 
             $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
+                ($idResv > 0 ? HTMLTable::makeTd(HTMLInput::generateMarkup("", array('name'=>"cbVehResv[$i]", 'class'=>'hhk-vehicle', 'type'=>'checkbox')), ["style" => "text-align: center;"]) : "")
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehModel[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehColor[$i]", 'class'=>'hhk-vehicle', 'size'=>'7')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup($stateOpt, array('name'=>"selVehLicense[$i]", 'class'=>'hhk-vehicle hhk-US-States')))
@@ -223,7 +239,8 @@ WHERE
         $nextVehButton = HTMLInput::generateMarkup('Next Vehicle', array('type'=>'button', 'id'=>'btnNextVeh'));
 
         $tbl->addHeaderTr(
-                HTMLTable::makeTh('Make')
+            ($idResv > 0 ? HTMLTable::makeTh('This Visit') : "")
+                .HTMLTable::makeTh('Make')
                 .HTMLTable::makeTh('Model')
                 .HTMLTable::makeTh('Color')
                 .HTMLTable::makeTh('Registered')
@@ -242,8 +259,8 @@ WHERE
 
         $mk1 = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', 'Vehicle', array('style'=>'font-weight:bold;'))
-                    .HTMLContainer::generateMarkup('div', HTMLInput::generateMarkup('', $noV)
-                    .HTMLContainer::generateMarkup('label', ' No vehicle this visit', array('for'=>'cbNoVehicle', 'title'=>'Check for no vehicle')), array('style'=>'margin:.3em;'))
+                    .($idResv > 0 ? HTMLContainer::generateMarkup('div', HTMLInput::generateMarkup('', $noV)
+                    .HTMLContainer::generateMarkup('label', ' No vehicle this visit', array('for'=>'cbNoVehicle', 'title'=>'Check for no vehicle')), array('style'=>'margin:.3em;')) : "")
                     . HTMLContainer::generateMarkup('p', '', array('id'=>'vehValidate', 'style'=>'color:red;'))
                     . $cars, array('class'=>'hhk-panel')),
                     array('style'=>'display: inline-block', 'class'=>'mr-3'));
@@ -273,7 +290,7 @@ WHERE
      * @param int $idReg
      * @return string
      */
-    public static function saveVehicle(\PDO $dbh, $idReg) {
+    public static function saveVehicle(\PDO $dbh, $idReg, int $idResv = 0) {
         $rtnMsg = "";
 
         $args = [
@@ -364,6 +381,16 @@ WHERE
             if (isset($post["selVehGuest"][$k])) {
                 $idGuest = intVal($post["selVehGuest"][$k], 10);
                 $carRS->idName->setNewVal($idGuest);
+            }
+
+            if($idResv > 0){
+                if (isset($_POST['cbVehResv'][$k])) {
+                    $stmt = $dbh->prepare("INSERT IGNORE INTO `reservation_vehicle` (`idReservation`, `idVehicle`, `idName`) VALUES (:idReservation, :idVehicle, :idName);");
+                    $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$k, ":idName"=>0]);
+                }else{
+                    $stmt = $dbh->prepare("DELETE FROM `reservation_vehicle` WHERE `idReservation` = :idReservation AND `idVehicle` = :idVehicle;");
+                    $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$k]);
+                }
             }
 
             if ($idVehicle == 0 && ($make != '' || $plate != '' || $note != '')) {

@@ -514,7 +514,7 @@ if ($psg->getIdPsg() > 0) {
             ['class' => 'hhk-panel mb-3 mr-3'])) . $ccMarkup;
 
     if ($uS->TrackAuto) {
-        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), $registration->getNoVehicle());
+        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), 0, $registration->getNoVehicle());
     }
 
     // Look for visits
@@ -666,7 +666,7 @@ if($uS->ShowGuestPhoto){
 	$guestPhotoMarkup = showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
 }
 
-$guestName = "<span style='font-size:2em;'>$niceName</span>";
+$guestName = "<span style='font-size:2em;'>$niceName</span>";// . $patient->getRoleMember()->get_fullName();
 
 if ($name->getNoReturnDemog() != '') {
     $guestName = "<span style='font-size:2em;color:red;'>$niceName - No Return: " . $uS->nameLookups['NoReturnReason'][$name->getNoReturnDemog()][1] . "</span>";

@@ -3,6 +3,8 @@
 namespace HHK\House\Reservation;
 
 use HHK\Exception\RuntimeException;
+use HHK\House\Registration;
+use HHK\House\Vehicle;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Family\Family;
 use HHK\House\ReserveData\ReserveData;
@@ -69,8 +71,24 @@ class StayingReservation extends CheckingIn {
             return $checkingIn;
 
         } else {
+
+            $uS = Session::getInstance();
+            
             // Same room, just add the guests.
             $this->addGuestStay($dbh);
+
+            // Save any vehicles
+            $reg = new Registration($dbh, $this->reserveData->getIdPsg());
+            if ($uS->TrackAuto) {
+                $reg->extractVehicleFlag();
+            }
+
+            $reg->saveRegistrationRs($dbh, $this->reserveData->getIdPsg(), $uS->username);
+
+            // Save any vehicles
+            if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
+                Vehicle::saveVehicle($dbh, $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
+            }
         }
 
         return $this;

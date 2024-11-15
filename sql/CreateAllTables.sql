@@ -1757,6 +1757,16 @@ CREATE TABLE IF NOT EXISTS `reservation_multiple` (
   ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
+-- -----------------------------------------------------
+-- Table `reservation_vehicle`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `reservation_vehicle` (
+  `idReservation` int(11) NOT NULL,
+  `idVehicle` int(11) NOT NULL,
+  `idName` int(11) NOT NULL,
+  PRIMARY KEY (`idReservation`,`idVehicle`)
+) ENGINE=InnoDB;
+
 
 -- -----------------------------------------------------
 -- Table `resource`

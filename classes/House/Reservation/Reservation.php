@@ -870,7 +870,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $noVeh = '1';
         }
 
-        return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $noVeh, $refVehicle);
+        return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal(), $noVeh, $refVehicle);
 
     }
 

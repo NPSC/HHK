@@ -1617,12 +1617,10 @@ CREATE OR REPLACE VIEW `vguest_view` AS
                 IFNULL(`ec`.`Name_Last`, '')) AS `EC Name`,
         IFNULL(`ec`.`Phone_Home`, '') AS `EC Phone Home`,
         IFNULL(`ec`.`Phone_Alternate`, '') AS `EC Phone Alternate`,
-        IFNULL(`v`.`Make`, '') AS `Make`,
-        IFNULL(`v`.`Model`, '') AS `Model`,
-        IFNULL(`v`.`Color`, '') AS `Color`,
-        IFNULL(`v`.`State_Reg`, '') AS `State Reg.`,
-        IFNULL(`v`.`License_Number`, '') AS `License Plate`,
-        IFNULL(`v`.`Note`, '') AS `Note`
+        group_concat(concat(`Color`, ' ', `Make`, ' ', `Model`) SEPARATOR '<br class="my-1">') AS `Vehicle`,
+        group_concat(`v`.`State_Reg` SEPARATOR '<br class="my-1">') AS `State Reg.`,
+        group_concat(`v`.`License_Number` SEPARATOR '<br class="my-1">') AS `License Plate`,
+        group_concat(`v`.`Note` SEPARATOR '<br class="my-1">') AS `Note`
     FROM
         (((((((((((`stays` `s`
         LEFT JOIN `name` `n` ON (`n`.`idName` = `s`.`idName`))
@@ -1636,13 +1634,15 @@ CREATE OR REPLACE VIEW `vguest_view` AS
             AND `diag`.`Code` = `hs`.`Diagnosis`))
         LEFT JOIN `gen_lookups` `loc` ON (`loc`.`Table_Name` = 'Location'
             AND `loc`.`Code` = `hs`.`Location`))
-        LEFT JOIN `vehicle` `v` ON (`vs`.`idRegistration` = `v`.`idRegistration`))
+        LEFT JOIN `reservation_vehicle` `rv` on (`rv`.`idReservation` = `vs`.`idReservation`))
+        LEFT JOIN `vehicle` `v` ON (`rv`.`idVehicle` = `v`.`idVehicle`)
         LEFT JOIN `emergency_contact` `ec` ON (`n`.`idName` = `ec`.`idName`))
         LEFT JOIN `room` `rm` ON (`s`.`idRoom` = `rm`.`idRoom`))
         LEFT JOIN `gen_lookups` `g` ON (`g`.`Table_Name` = 'Name_Suffix'
             AND `g`.`Code` = `n`.`Name_Suffix`))
     WHERE
-        `s`.`Status` = 'a';
+        `s`.`Status` = 'a'
+    GROUP BY `s`.`idStays`;
 
 
 
