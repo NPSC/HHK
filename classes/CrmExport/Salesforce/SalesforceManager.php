@@ -26,6 +26,18 @@ class SalesforceManager extends AbstractExportManager {
     const PW_PLACEHOLDER = '**********';
 
     /**
+     * Documentation for the following Composite Graph payload limitations.
+     * website:  https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_graph_limits.htm
+     */
+
+    const MAX_PAYLOAD_GRAPHS = 75;
+    const MAX_NODES = 500;
+    const GRAPH_DEPTH = 15;
+    const MAX_DIFF_NODES = 15;
+    const MAX__GRAPH_FAILS = 14;
+
+
+    /**
      * Summary of endPoint
      * @var string
      */
@@ -505,7 +517,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $psgGuests = [];    // list of guests in PSG
         $this->psgGraphs = [];  // The collection of psg graphs
-        $psgId = 0;
+        $psgId = 0; // multiple records for each psgId
         $transferResult = [];
         $this->uniqueGuests = [];
 
@@ -558,7 +570,7 @@ class SalesforceManager extends AbstractExportManager {
 
             // Transfer this package to SF API
             try {
-                $graphsResult = $this->webService->postUrl($this->endPoint . 'composite/graph', $body);
+                $graphsResult = $this->webService->postUrl("{$this->endPoint}composite/graph", $body);
 
                 $transferResult = $this->processGraphsResult($dbh, $graphsResult, $rows);
 
