@@ -67,6 +67,7 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
     $stmt = $dbh->query("SELECT
     s.idVisit,
     s.Visit_Span,
+    SUM(
     CASE
         WHEN
             DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
@@ -75,7 +76,7 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
             DATE(s.Span_Start_Date) >= DATE('$end')
         THEN 0
         ELSE
-            SUM(DATEDIFF(
+            DATEDIFF(
                 CASE
                     WHEN
                         DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('$end')
@@ -87,34 +88,31 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
                     WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
                     ELSE DATE(s.Span_Start_Date)
                 END
-            ))
-        END AS `Actual_Guest_Nights`,
+            )
+        END) AS `Actual_Guest_Nights`,
+    SUM(
     CASE
         WHEN DATE(s.Span_Start_Date) >= DATE('$start') THEN 0
         WHEN
             DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start')
         THEN
-            SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))),
-                    DATE(s.Span_Start_Date)))
-        ELSE SUM(DATEDIFF(CASE
+            DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))),
+                    DATE(s.Span_Start_Date))
+        ELSE DATEDIFF(CASE
                     WHEN
                         DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$start')
                     THEN
                         DATE('$start')
                     ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
                 END,
-                DATE(s.Span_Start_Date)))
-    END AS `PI_Guest_Nights`
+                DATE(s.Span_Start_Date))
+    END) AS `PI_Guest_Nights`
 
 FROM stays s JOIN name n ON s.idName = n.idName
 
 WHERE  IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
        AND DATE(s.Span_Start_Date) < DATE('$end')
-       and DATE(ifnull(s.Span_End_Date,
-       case
-       when now() > s.Expected_Co_Date then now()
-       else s.Expected_Co_Date
-       end)) >= DATE('$start')
+       and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('$start')
 GROUP BY s.idVisit, s.Visit_Span");
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
