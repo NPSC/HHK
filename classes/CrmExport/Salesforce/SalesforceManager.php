@@ -525,7 +525,7 @@ class SalesforceManager extends AbstractExportManager {
         $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ") ORDER BY `idPsg`;");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        // Collect each psg into a guests array and process it as a composit request set
+        // Collect each psg into a guests array and process it as a composit request set to make a graph
         // the rows must be ordered by PSG Id
         foreach ($rows as $r) {
 
@@ -538,7 +538,6 @@ class SalesforceManager extends AbstractExportManager {
                 // Add to collection
                 if (count($graph) > 0) {
                     $this->psgGraphs[] = $graph;
-
                 }
 
                 $psgGuests = [];
