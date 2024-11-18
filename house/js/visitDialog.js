@@ -858,8 +858,14 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
+
                 flagAlertMessage(data.error, 'error');
                 $('#keysfees').dialog("close");
+
+                if (data.receipt && data.receipt !== '') {
+                    showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                }
+
                 return;
             }
 
