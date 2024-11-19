@@ -227,6 +227,41 @@ function saveHospitalStay(idHs, idVisit) {
 	});
 }
 
+function viewVehicleDialog(idVisit, $vehDialog) {
+
+    $.post('ws_resv.php', { cmd: 'viewVeh', 'idV': idVisit }, function (data) {
+
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+
+        } else if (data.success) {
+
+            $vehDialog.empty();
+            $vehDialog.append($(data.success));
+            $vehDialog.dialog({
+                autoOpen: true,
+                width: getDialogWidth(800),
+                resizable: true,
+                modal: true,
+                title: (data.title ? data.title : 'Vehicle Details'),
+                buttons: {
+                    "Cancel": function () {
+                        $(this).dialog("close");
+                    },
+                    "Save": function () {
+                        //saveHospitalStay(idHs, idVisit);
+                        $(this).dialog("close");
+                    }
+                }
+            });
+        }
+    }, "json");
+}
+
 var isCheckedOut = false;
 
 /**
@@ -394,6 +429,12 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
         $('#tblActiveVisit').on('click', '.hhk-hospitalstay', function (event){
             event.preventDefault();
             viewHospitalStay($(this).data('idhs'), idVisit, $('#hsDialog'));
+        });
+
+        $diagbox.on('click', '#vehAdjust', function (event){
+            event.preventDefault();
+            console.log("vehicle clicked");
+            viewVehicleDialog(idVisit, $('#vehDialog'));
         });
 
         $('#spnExPay').hide();

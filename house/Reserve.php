@@ -331,6 +331,7 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
+            <div id="vehDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
             <div id="ecSearch" style="display:none;">
                 <table>

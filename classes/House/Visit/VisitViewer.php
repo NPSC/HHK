@@ -339,7 +339,12 @@ class VisitViewer {
         // Adjust button
         if ($showAdjust && $action != 'ref') {
 
-            $visitBoxLabel .= HTMLInput::generateMarkup('Adjust Fees...', array('name'=>'paymentAdjust', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'title'=>'Create one-time additional charges or discounts.'));
+            $visitBoxLabel .= HTMLInput::generateMarkup('Adjust Fees...', array('name'=>'paymentAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Create one-time additional charges or discounts.', 'class'=>'ml-3'));
+        }
+
+        if ($r['Status'] == VisitStatus::CheckedIn && $action != 'ref' && $uS->TrackAuto) {
+
+            $visitBoxLabel .= HTMLInput::generateMarkup('Edit Vehicles...', array('name'=>'vehAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Edit vehicles for this visit.', 'class'=>'ui-button ui-corner-all ui-widget ml-2', 'role'=>'button'));
         }
 
 
