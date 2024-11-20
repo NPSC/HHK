@@ -236,7 +236,7 @@ WHERE
             $x++;
         }
 
-        $nextVehButton = HTMLInput::generateMarkup('Next Vehicle', array('type'=>'button', 'id'=>'btnNextVeh'));
+        $nextVehButton = HTMLInput::generateMarkup('Next Vehicle', array('type'=>'button', 'id'=>'btnNextVeh', 'class'=>'my-2'));
 
         $tbl->addHeaderTr(
             ($idResv > 0 ? HTMLTable::makeTh('This Visit') : "")
@@ -391,6 +391,7 @@ WHERE
                     $stmt = $dbh->prepare("DELETE FROM `reservation_vehicle` WHERE `idReservation` = :idReservation AND `idVehicle` = :idVehicle;");
                     $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$k]);
                 }
+                $rtnMsg = "Vehicles Updated. ";
             }
 
             if ($idVehicle == 0 && ($make != '' || $plate != '' || $note != '')) {

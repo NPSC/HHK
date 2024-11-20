@@ -214,7 +214,20 @@ try {
 
         case 'saveVeh':
 
-            $events = ["error" => "Not Implemented"];
+            $idV = 0;
+            if (isset($_POST['idV'])) {
+                $idV = intval(filter_input(INPUT_POST, 'idV', FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
+            $vehStmt->execute([':idv' => $idV]);
+            $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
+
+            try {
+                $events = ["success"=> Vehicle::saveVehicle($dbh, $row["idRegistration"], $row["idReservation"])];
+            }catch(\Exception $e){
+                $events = ["error" => "Error saving vehicle: " . $e->getMessage()];
+            }
     
             break;
 

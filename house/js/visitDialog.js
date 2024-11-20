@@ -227,6 +227,33 @@ function saveHospitalStay(idHs, idVisit) {
 	});
 }
 
+function setupVehicle(veh) {
+    var nextVehId = 2;
+    var $cbVeh = veh.find('#cbNoVehicle');
+    var $nextVeh = veh.find('#btnNextVeh');
+    var $tblVeh = veh.find('#tblVehicle');
+
+    $cbVeh.change(function () {
+        if (this.checked) {
+            $tblVeh.hide('scale, horizontal');
+        } else {
+            $tblVeh.show('scale, horizontal');
+        }
+    });
+
+    $cbVeh.change();
+    $nextVeh.button();
+
+    $nextVeh.click(function () {
+        veh.find('#trVeh' + nextVehId).show('fade');
+        nextVehId++;
+        if (nextVehId > 4) {
+            $nextVeh.hide('fade');
+        }
+    });
+
+}
+
 function viewVehicleDialog(idVisit, $vehDialog) {
 
     $.post('ws_resv.php', { cmd: 'viewVeh', 'idV': idVisit }, function (data) {
@@ -242,6 +269,9 @@ function viewVehicleDialog(idVisit, $vehDialog) {
 
             $vehDialog.empty();
             $vehDialog.append($(data.success));
+            
+            setupVehicle($vehDialog);
+
             $vehDialog.dialog({
                 autoOpen: true,
                 width: getDialogWidth(800),
@@ -253,11 +283,30 @@ function viewVehicleDialog(idVisit, $vehDialog) {
                         $(this).dialog("close");
                     },
                     "Save": function () {
-                        //saveHospitalStay(idHs, idVisit);
+                        saveVehicles(idVisit, $vehDialog);
                         $(this).dialog("close");
                     }
                 }
             });
+        }
+    }, "json");
+}
+
+function saveVehicles(idVisit, $vehDialog) {
+    let params = $vehDialog.find("#tblVehicle input").serializeArray();
+    params.push({ name: "cmd", value: "saveVeh" });
+    params.push({ name: "idV", value: idVisit });
+    $.post('ws_resv.php', params, function (data) {
+
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+
+        } else if (data.success) {
+            flagAlertMessage(data.success, 'success');
         }
     }, "json");
 }
