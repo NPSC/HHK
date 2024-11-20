@@ -91,7 +91,18 @@
     			subtype: "submit",
     			className: "submit-btn btn btn-primary",
     			name: "submit",
-    		}
+				},
+				{
+					"type": "text",
+					"subtype": "email",
+				"label": "Confirmation Email",
+					"placeholder": "Confirmation Email",
+					"description": "Send a confirmation email on form submission",
+				"className": "form-control",
+					"name": "notifyMeEmail",
+				"hhkField": "",
+				"width": "col-md-3",
+			  }
   			],
   			requiredFields:[ //fields that every referral form must include and set as required
   				'patient.firstName',
@@ -777,7 +788,8 @@
     				"width": "col-md-3",
   				},
   				{
-					"type": "text",
+						"type": "text",
+						"subtype": "email",
     				"label": "Email",
     				"placeholder": "Email",
     				"className": "form-control",
@@ -787,7 +799,7 @@
   				},
   				]
   				
-  			}]:[])
+					}] : []),
   			],
   			disableFields: [
       			'autocomplete',
@@ -1371,19 +1383,30 @@ House Staff`,
 							<div class="col-12">
 								<p style="margin-bottom: 1em;">Add a custom message displayed on a successful form submission</p>
 								<label for="formSuccessTitle" style="display:block">Sucess Title</label>
-								<input type="text" id="formSuccessTitle" name="formSuccessTitle" placeholder="Success Title" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
+								<input type="text" id="formSuccessTitle" name="formSuccessTitle" placeholder="Success Title" class="p-2 mb-2" style="width: 100%">
 								<label for="formSuccessContent" style="display:block">Success Content</label>
-								<textarea id="formSuccessContent" name="formSuccessContent" placeholder="Success Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
+								<textarea id="formSuccessContent" name="formSuccessContent" placeholder="Success Content" rows="5" class="p-2 mb-2" style="width: 100%"></textarea>
 							</div>
 						</div>
 				    </div>
 				    
 				    <div id="tabs-2">
-				        <div class="row">
-							<div class="col-12">
+						<div class="ui-widget mb-3">
+							<p class="ui-widget-header ui-corner-top p-2">Staff Notification</p>
+							<div class="ui-widget ui-widget-content ui-corner-bottom p-2">
 								<p style="margin-bottom: 1em;">Any addresses listed in "referralFormEmail" in Site Configuration will be notified by email when a form is submitted</p>
 								<label for="notifySubject" style="display:block">Email Subject</label>
-								<input type="text" id="notifySubject" name="notifySubject" placeholder="Email Subject" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
+								<input type="text" id="notifySubject" name="notifySubject" placeholder="Email Subject" class="p-2 mb-2" style="width: 100%">
+							</div>
+						</div>
+						<div class="ui-widget">
+							<p class="ui-widget-header ui-corner-top p-2">Confirmation Notification</p>
+							<div class="ui-widget ui-widget-content ui-corner-bottom p-2">
+								<p style="margin-bottom: 1em;">Send confirmation to email address in "Confirmation Email" field</p>
+								<label for="notifyMeSubject" style="display:block">Email Subject</label>
+								<input type="text" id="notifyMeSubject" name="notifyMeSubject" placeholder="Email Subject" class="p-2 mb-2" style="width: 100%">
+								<label for="notifyMeContent" style="display:block">Email Body</label>
+								<textarea id="notifyMeContent" name="notifyMeContent" placeholder="Email Body" class="hhk-autosize p-2 mb-2" rows="5" style="width: 100%; resize: none;"></textarea>
 							</div>
 						</div>
 				    </div>
