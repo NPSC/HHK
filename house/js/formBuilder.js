@@ -1367,7 +1367,7 @@ House Staff`,
 				</form>
 			</div>
 			<div id="formBuilderContent" style="margin-top: 1em;"></div>
-			<div id="settingsDialog" title="Form Settings">
+			<div id="settingsDialog" title="Form Settings" style="font-size: 0.9em;">
 			
 				<div id="formSettingsTabs">
     				<ul>
@@ -1402,7 +1402,10 @@ House Staff`,
 						<div class="ui-widget">
 							<p class="ui-widget-header ui-corner-top p-2">Confirmation Notification</p>
 							<div class="ui-widget ui-widget-content ui-corner-bottom p-2">
-								<p style="margin-bottom: 1em;">Send confirmation to email address in "Confirmation Email" field</p>
+								<div class="mb-3">
+									<input type="checkbox" name="notifyMe" id="notifyMe">
+									<label for="notifyMe">Send confirmation to email address in "Confirmation Email" field</label>
+								</div>
 								<label for="notifyMeSubject" style="display:block">Email Subject</label>
 								<input type="text" id="notifyMeSubject" name="notifyMeSubject" placeholder="Email Subject" class="p-2 mb-2" style="width: 100%">
 								<label for="notifyMeContent" style="display:block">Email Body</label>
@@ -1604,9 +1607,10 @@ House Staff`,
 	    					settingsDialog.find('textarea#formStyle').val(data.formSettings.formStyle).data('oldVal', data.formSettings.formStyle);
 	    					settingsDialog.find('input#enableRecaptcha').prop('checked', data.formSettings.enableRecaptcha).data('oldval', data.formSettings.enableRecaptcha);
 	    					settingsDialog.find('input#enableReservation').prop('checked', data.formSettings.enableReservation).data('oldval', data.formSettings.enableReservation);
-	    					settingsDialog.find('input#notifySubject').val(data.formSettings.notifySubject).data('oldVal',data.formSettings.notifySubject);
-							settingsDialog.find('textarea#notifyContent').val(data.formSettings.notifyContent).data('oldVal',data.formSettings.notifyContent);
-	    					settingsDialog.find('input#emailPatient').prop('checked', data.formSettings.emailPatient).data('oldval', data.formSettings.emailPatient);
+							settingsDialog.find('input#notifySubject').val(data.formSettings.notifySubject).data('oldVal', data.formSettings.notifySubject);
+							settingsDialog.find('input#notifyMeSubject').val(data.formSettings.notifyMeSubject).data('oldVal',data.formSettings.notifyMeSubject);
+							settingsDialog.find('textarea#notifyMeContent').val(data.formSettings.notifyMeContent).data('oldVal',data.formSettings.notifyMeContent);
+							settingsDialog.find('input#notifyMe').prop('checked', data.formSettings.notifyMe).data('oldval', data.formSettings.notifyMe);
 	    					settingsDialog.find('input[name=initialGuests]').val(data.formSettings.initialGuests).data('oldVal',data.formSettings.initialGuests);
 	    					settingsDialog.find('input[name=maxGuests]').val(data.formSettings.maxGuests).data('oldVal',data.formSettings.maxGuests);
 	    					settingsDialog.find('textarea#fontImport').val(data.formSettings.fontImport).data('oldVal',data.formSettings.fontImport);
@@ -1705,9 +1709,10 @@ House Staff`,
 			var successContent = settingsDialog.find('textarea#formSuccessContent').val();
 			var enableRecaptcha = settingsDialog.find('input#enableRecaptcha').prop('checked');
 			var enableReservation = settingsDialog.find('input#enableReservation').prop('checked');
-			var emailPatient = settingsDialog.find('input#emailPatient').prop('checked');
+			var notifyMe = settingsDialog.find('input#notifyMe').prop('checked');
 			var notifySubject = settingsDialog.find('input#notifySubject').val();
-			var notifyContent = settingsDialog.find('textarea#notifyContent').val();
+			var notifyMeSubject = settingsDialog.find('input#notifyMeSubject').val();
+			var notifyMeContent = settingsDialog.find('textarea#notifyMeContent').val();
 			var initialGuests = settingsDialog.find('input[name=initialGuests]').val();
 			var maxGuests = settingsDialog.find('input[name=maxGuests]').val();
 			var fontImport = settingsDialog.find('textarea#fontImport').val();
@@ -1726,16 +1731,19 @@ House Staff`,
 					}
 				});
 				
-				if(emailPatient){
-					var filtered = formData.filter(x=> (x.name === 'patient.email'));
+				if(notifyMe){
+					var filtered = formData.filter(x=> (x.name === 'notifyMeEmail'));
 					if(filtered.length == 0){
-						emailErrorMsg += "<br>The patient email field is required for email notifications";
+						emailErrorMsg += "<br>The Confirmation Email field is required for email notifications";
 					}
 					if(notifySubject.length == 0){
 						emailErrorMsg += "<br>Email Subject cannot be blank";
 					}
-					if(notifyContent.length == 0){
-						emailErrorMsg += "<br>Email Content cannot be blank";
+					if(notifyMeSubject.length == 0){
+						emailErrorMsg += "<br>Confirmation Email Subject cannot be blank";
+					}
+					if(notifyMeContent.length == 0){
+						emailErrorMsg += "<br>Confirmation Email Content cannot be blank";
 					}
 				}
 				
@@ -1770,9 +1778,10 @@ House Staff`,
 		    				"successContent": successContent,
 		    				"enableRecaptcha": enableRecaptcha,
 		    				"enableReservation": enableReservation,
-		    				"emailPatient": emailPatient,
-		    				"notifySubject": notifySubject,
-		    				"notifyContent": notifyContent,
+							"notifySubject": notifySubject,
+							"notifyMe": notifyMe,
+							"notifyMeSubject": notifyMeSubject,
+		    				"notifyMeContent": notifyMeContent,
 		    				"initialGuests": initialGuests,
 		    				"maxGuests": maxGuests,
 		    				"fontImport": fontImport,

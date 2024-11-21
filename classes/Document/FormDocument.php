@@ -197,14 +197,14 @@ class FormDocument {
         $submissionEmailAddress = (isset($userData['notifyMeEmail']) ? $userData['notifyMeEmail'] : '');
         $uS = Session::getInstance();
 
-        if($this->doc->getIdDocument() > 0 && $submissionEmailAddress != '' && $templateSettings['notifyMeSubject'] !='' && $templateSettings['notifyMeContent'] != ''){
+        if($this->doc->getIdDocument() > 0 && $submissionEmailAddress != '' && $templateSettings['notifyMe'] && $templateSettings['notifyMeSubject'] !='' && $templateSettings['notifyMeContent'] != ''){
             //send email
 
             $mail = new HHKMailer($dbh);
 
             $mail->From = $uS->NoReplyAddr;
             $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
-            $mail->addReplyTo($uS->ReplyTo, $uS->siteName);
+            $mail->addReplyTo($uS->ReplyTo, htmlspecialchars_decode($uS->siteName, ENT_QUOTES));
 
             $to = filter_var(trim($submissionEmailAddress), FILTER_SANITIZE_EMAIL);
             if ($to !== FALSE && $to != '') {
@@ -214,7 +214,7 @@ class FormDocument {
             $mail->isHTML(true);
 
             $mail->Subject = $templateSettings['notifyMeSubject'];
-            $mail->msgHTML($templateSettings['notifyMeContent']);
+            $mail->msgHTML(nl2br($templateSettings['notifyMeContent']));
 
             $mail->send();
 
