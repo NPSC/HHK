@@ -877,6 +877,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(hs.idHospital, 0) as idHospital,
     ifnull(hs.idAssociation, 0) as idAssociation,
     ifnull(nra.Name_Full, '') as Referral_Agent,
+    ifnull(hs.MRN, '') as MRN,
     ifnull(g.Description, hs.Diagnosis) as Diagnosis,
     ifnull(hs.Diagnosis2, '') as Diagnosis2,
     ifnull(group_concat(i.Title order by it.List_Order separator ', '), '') as Insurance,
@@ -1725,6 +1726,10 @@ if (count($filter->getHospitals()) > 1) {
     } else {
         $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
     }
+}
+
+if($uS->searchMRN){
+    $cFields[] = array($labels->getString('hospital', 'MRN', 'MRN'), 'MRN', '', '', 's', '', array());
 }
 
 if ($uS->Doctor) {
