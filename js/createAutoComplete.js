@@ -155,8 +155,14 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
     const maxLength = 10;
     
     const _source = function (request, response, cache, shoNew, inputParms, minChars) {
-    
-        let term = request.term.toString().substr(0,minChars);
+        
+        let term = request.term.toString(); //.substr(0,minChars);
+        
+        //sanitize phone search
+        if (inputParms.cmd == "phone") {
+            term = term.replace(/(?![0-9])./gmi, '');
+            $(txtCtrl).val(term);
+        }
         
         if ( term in cache ) {
 
@@ -203,18 +209,18 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
                 }
 
 	            if (shoNew) {
-	                data.unshift({'id':0, 'fullName':'<span class="ui-icon ui-icon-plusthick"></span><span style="padding-left:1em;">New Person</span>'});
-	            } else if (data.length === 0) {
-	                data.push({'id':'n', 'substitute':'No one found'});
+	                data.results.unshift({'id':0, 'fullName':'<span class="ui-icon ui-icon-plusthick"></span><span style="padding-left:1em;">New Person</span>'});
+	            } else if (data.results.length === 0) {
+	                data.results.push({'id':'n', 'substitute':'No one found'});
 	                cache = {};
 	            }
 	            
-	            if(data.length > maxLength){
-					data.unshift({'id':'n', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
+	            if(data.total > maxLength){
+					data.results.unshift({'id':'n', 'substitute':'Keep typing... (' + data.total + ' results found)'});
 				}
 
-                cache[ term ] = data;
-                response( data );
+                //cache[ term ] = data;
+                response( data.results );
             });
         }
     };

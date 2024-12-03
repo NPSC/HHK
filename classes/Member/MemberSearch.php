@@ -67,12 +67,15 @@ class MemberSearch {
      */
     protected $letters;
 
+    protected $limit;
+
     /**
      * Summary of __construct
      * @param mixed $letters
      */
-    public function __construct($letters) {
+    public function __construct($letters, int $limit = 10) {
 
+        $this->limit = $limit;
         $this->letters = $letters;
     	$this->prepareLetters($letters);
     }
@@ -790,6 +793,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
@@ -834,9 +838,15 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             ];
 
             $events[] = $namArray;
+
+            $i++;
+            if($i >= $this->limit){
+                break;
+            }
+            
         }
 
-        return $events;
+        return ['total'=>$stmt->rowCount(), 'limit'=>$this->limit, 'results'=>$events];
     }
 
     /**
@@ -875,6 +885,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
@@ -916,9 +927,15 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             ];
 
             $events[] = $namArray;
+
+            $i++;
+            if($i >= $this->limit){
+                break;
+            }
+
         }
 
-        return $events;
+        return ['total'=>$stmt->rowCount(), 'limit'=>$this->limit, 'results'=>$events];
     }
 
     /**
@@ -996,6 +1013,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
@@ -1037,9 +1055,13 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             ];
 
             $events[] = $namArray;
+            $i++;
+            if($i >= $this->limit){
+                break;
+            }
         }
 
-        return $events;
+        return ['total'=>$stmt->rowCount(), 'limit'=>$this->limit, 'results'=>$events];
     }
 
 
@@ -1087,6 +1109,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
@@ -1134,6 +1157,12 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . ($row2['MRN'] != '' ? " MRN: " . $row2['MRN'] : '');
 
             $events[] = $namArray;
+
+            $i++;
+            if($i >= $this->limit){
+                break;
+            }
+
         }
 
         if ($mode == 'mo') {
@@ -1144,7 +1173,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             $events[] = array("id" => 0, "value" => "New Person");
         }
 
-        return $events;
+        return ['total'=>$stmt->rowCount(), 'limit'=>$this->limit, 'results'=>$events];
     }
 
     /**
