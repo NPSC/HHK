@@ -247,32 +247,35 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
 
-            var parms = [
-                { 'name': 'cmd', 'value': 'saveResv' },
-                { 'name': 'idPsg', 'value': pageManager.getIdPsg() },
-                { 'name': 'prePayment', 'value': pageManager.getPrePaymtAmt() },
-                { 'name': 'rid', 'value': pageManager.getIdResv() }
-            ];
-            var parms = parms.concat($('#form1 *:not(#txtDiagnosis)').serializeArray());
+            var formData = new FormData($('#form1')[0]);
 
+            formData.append('cmd', 'saveResv');
+            formData.append('idPsg', pageManager.getIdPsg());
+            formData.append('prePayment', pageManager.getPrePaymtAmt());
+            formData.append('rid', pageManager.getIdResv());
+            
             //diagnosis
             let txtDiagnosis = $('#txtDiagnosis').val();
             if (typeof txtDiagnosis === "string") {
                 txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
             }
-            parms.push({ 'name': 'txtDiagnosis', 'value': txtDiagnosis });
+            formData.append('txtDiagnosis', txtDiagnosis);
 
-            $.post(
-                'ws_resv.php',
-                $.param(parms) + '&' + $.param({mem: pageManager.people.list()}),
-                function(data) {
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        flagAlertMessage(err.message, 'error');
-                        return;
-                    }
+            let peopleStr = $.param({ mem: pageManager.people.list() });
+            let people = new URLSearchParams(peopleStr);
 
+            for (const [key, value] of people.entries()) {
+                formData.append(key, value);
+            }
+
+            $.ajax({
+                type: 'post',
+                url: 'ws_resv.php',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function (data, textStatus) {
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
@@ -308,8 +311,13 @@ $(document).ready(function() {
                     if(data.info){
                         flagAlertMessage(data.info, 'info');
                     }
+                },
+                error: function (data, textStatus) {
+                    flagAlertMessage(textStatus, "error");
+                    $('#btnDone').val("Save");
                 }
-            );
+
+            });
 
         }
     });
