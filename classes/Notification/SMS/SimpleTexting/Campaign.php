@@ -59,7 +59,7 @@ Class Campaign {
                 NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"], ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
                 throw new SmsException("Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
-                NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase(), ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName]);
+                NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase(), ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName, "response"=>$e->getResponse()->getBody()->getContents()]);
                 throw new SmsException("Error sending campaign: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
@@ -83,11 +83,11 @@ Class Campaign {
 
     /**
      * Summary of prepareAndSendCampaign
-     * @param string $status
+     * @param string|null $status
      * @throws \HHK\Exception\SmsException
      * @return array
      */
-    public function prepareAndSendCampaign(string $status){
+    public function prepareAndSendCampaign(string|null $status){
         $client = $this->settings->getClient();
 
         $messages = new Messages($this->dbh);

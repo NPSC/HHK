@@ -123,7 +123,7 @@ Class Contacts extends AbstractContacts{
             }
         }
 
-        throw new SmsException("Syncing is taking longer than expected, check contacts on SimpleTexting dashboard. Last detected status: " . $status);
+        throw new SmsException("Syncing is taking longer than expected, check contacts on SimpleTexting dashboard. Last detected status: " . $status . " Batch ID: " . $batchId);
     }
 
     protected function getBatchProgress(string $batchId){
