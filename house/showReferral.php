@@ -254,6 +254,13 @@ if(isset($_GET['template'])){
                             					}
                             				}
 
+											if($(field).hasClass("bfh-states")){
+												$(field).bfhstates($(field).data()).val($(field).attr('user-data'));
+											}else if($(field).hasClass("bfh-countries")){
+												$(field).bfhcountries($(field).data()).val($(field).attr('user-data'));
+											}
+											
+
                             				if(data.multiple){
                                 				return $('<div/>').addClass(data.width + ' mb-3 field-container')
                               					.append($('<div/>').addClass('card')
@@ -284,16 +291,6 @@ if(isset($_GET['template'])){
     								var hhkprefix = $(this).attr('id').replace("adrzip", "").replaceAll(".", '\\.');
                             		$(this).data('hhkprefix', hhkprefix).data('hhkindex','');
     							});
-
-                        	// set country and state selectors
-                            $renderedForm.find('select.bfh-countries').each(function() {
-                                var $countries = $(this);
-                                $countries.bfhcountries($countries.data()).val($countries.attr('user-data'));
-                            });
-                            $renderedForm.find('select.bfh-states').each(function() {
-                                var $states = $(this);
-                                $states.bfhstates($states.data()).val($states.attr('user-data'));
-                            });
 
                         	//zip code search
                         	$renderedForm.find('input.hhk-zipsearch').each(function() {
@@ -385,16 +382,6 @@ if(isset($_GET['template'])){
     								var hhkprefix = $(this).attr('id').replace("adrzip", "").replaceAll(".", '\\.');
                             		$(this).data('hhkprefix', hhkprefix).data('hhkindex','');
     							});
-
-                            	// set country and state selectors
-                                $renderedForm.find('select.bfh-countries').each(function() {
-                                    var $countries = $(this);
-                                    $countries.bfhcountries($countries.data()).val($countries.attr('user-data'));
-                                });
-                                $renderedForm.find('select.bfh-states').each(function() {
-                                    var $states = $(this);
-                                    $states.bfhstates($states.data()).val($states.attr('user-data'));
-                                });
 
                             	//zip code search
                             	$renderedForm.find('input.hhk-zipsearch').each(function() {
@@ -572,6 +559,7 @@ if(isset($_GET['template'])){
     	<form action="#" method="POST" novalidate id="renderedForm">
     	<?php } ?>
         <div id="formContent" class="container-fluid">
+			<div style="background: url(../images/ui-anim_basic_16x16.gif) center no-repeat; width: 100%; height: 10em;"></div>
 			<div id="formError" style="text-align: center"></div>
         </div>
         <div class="alert alert-success msg" role="alert" style="display: none">
