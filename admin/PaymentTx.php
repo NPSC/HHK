@@ -62,35 +62,58 @@ $txData = '';
 $txSelection = '';
 $resultMessage = '';
 $dateSelected = '';
+$errorCodeSelected = '';
+$errorCodeText = '';
 $nameSelected = '';
+$selectParams = [];
 
 if (filter_has_var(INPUT_POST, 'btnGo')) {
 
-    // gather input
-    if (filter_has_var(INPUT_POST, 'selTx')) {
-        $txSelection = filter_input(INPUT_POST, 'selTx', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
+    $whereClause = '';
 
+    // Date is always delivered to the where
     $searchDate = date('Y-m-d');
     if (filter_has_var(INPUT_POST, 'txtDate')) {
         $dateSelected = filter_input(INPUT_POST, 'txtDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if ($dateSelected != '') {
             $searchDate = date('Y-m-d', strtotime($dateSelected));
         }
+        $selectParams[':sdate'] = $searchDate;
     }
 
+    if (filter_has_var(INPUT_POST, 'selTx')) {
+        $txSelection = filter_input(INPUT_POST, 'selTx', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        if ($txSelection != '') {
+            $selectParams[':txcode'] = $txSelection;
+            $whereClause .= ' and `GwTransCode` = :txcode ';
+        }
+    }
+
+    // Not in the where clause ??
     if (filter_has_var(INPUT_POST, 'txtName')) {
         $nameSelected = filter_input(INPUT_POST, 'txtName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 
+    // Add Response errorCode.  EKC,  12/6/2024
+    if (filter_has_var(INPUT_POST, 'errorCode')) {
+        $errorCodeSelected = filter_input(INPUT_POST, 'errorCode', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    $stmt = $dbh->prepare("select * from gateway_transaction where DATE(Timestamp) = :sdate and GwTransCode like :txcode");
-    $stmt->execute(array(':sdate'=>$searchDate, ':txcode'=>$txSelection));
+        if ($errorCodeSelected != '') {
+            $selectParams[':errorCode'] = "%error_Code:_$errorCodeSelected%";
+            $whereClause .= ' and `Vendor_Response` LIKE :errorCode ';
+            $errorCodeText = "; Error Code = $errorCodeSelected";
+        }
+    }
+
+
+    $stmt = $dbh->prepare("select * from `gateway_transaction` where DATE(`Timestamp`) = DATE(:sdate) $whereClause");
+    $stmt->execute($selectParams);
 
     $records = $stmt->rowCount();
 
     $tbl = new HTMLTable();
-    $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan' => '5', 'style' => 'background-color:#459E00;')));
+    $tbl->addBodyTr(HTMLTable::makeTd('', ['colspan' => '5', 'style' => 'background-color:#459E00;']));
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -134,39 +157,40 @@ if (filter_has_var(INPUT_POST, 'btnGo')) {
         // Request parameters
         $reqTbl = makeParmtable($req);
         $tbl->addBodyTr(
-                HTMLTable::makeTd('Request', array('class' => 'tdlabel', 'style' => 'font-weight:bold;'))
-                . HTMLTable::makeTd($reqTbl, array('colspan' => '4', 'style' => 'padding:0;'))
+                HTMLTable::makeTd('Request', ['class' => 'tdlabel', 'style' => 'font-weight:bold;'])
+                . HTMLTable::makeTd($reqTbl, ['colspan' => '4', 'style' => 'padding:0;'])
         );
 
         // Response parameters
         $resTbl = makeParmtable($res);
         $tbl->addBodyTr(
-                HTMLTable::makeTd('Response', array('class' => 'tdlabel', 'style' => 'font-weight:bold;'))
-                . HTMLTable::makeTd($resTbl, array('colspan' => '4', 'style' => 'padding:0;'))
+                HTMLTable::makeTd('Response', ['class' => 'tdlabel', 'style' => 'font-weight:bold;'])
+                . HTMLTable::makeTd($resTbl, ['colspan' => '4', 'style' => 'padding:0;'])
         );
 
-        $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan' => '5', 'style' => 'background-color:#459E00;')));
+        $tbl->addBodyTr(HTMLTable::makeTd('', ['colspan' => '5', 'style' => 'background-color:#459E00;']));
     }
 
-    $txData = HTMLContainer::generateMarkup('h3', 'Found ' . $records . ' records for ' . $searchDate) . $tbl->generateMarkup(array("max-width"=>"100%"));
+    $txData = HTMLContainer::generateMarkup('h3', "Found $records records for $searchDate$errorCodeText") . $tbl->generateMarkup(["max-width" => "100%"]);
 }
 
 
-$txList = array(
-    array(0=>'%', 1=>'(all)'),
-    array(0=>'CardInfoInit', 1=>'Card Info Init'),
-    array(0=>'CardInfoVerify', 1=>'Card Info Verify'),
-    array(0=>'HostedCoInit', 1=>'Hosted CO Init'),
-    array(0=>'HostedCoVerify', 1=>'Hosted CO Verify'),
-    array(0=>'CreditSaleToken', 1=>'Credit Sale Token'),
-    array(0=>'CreditVoidSaleToken', 1=>'Credit Void Sale Token'),
-    array(0=>'CreditReturnToken', 1=>'Credit Return Token'),
-    array(0=>'CreditVoidReturnToken', 1=>'Credit Void Return Token'),
-    array(0=>'Webhook', 1=>'Webhook'),
+$txList = [
+    [0 => '', 1 => '(all)'],
+    [0 => 'CardInfoInit', 1 => 'Card Info Init'],
+    [0 => 'CardInfoVerify', 1 => 'Card Info Verify'],
+    [0 => 'HostedCoInit', 1 => 'Hosted CO Init'],
+    [0 => 'HostedCoVerify', 1 => 'Hosted CO Verify'],
+    [0 => 'CreditSaleToken', 1 => 'Credit Sale Token'],
+    [0 => 'CreditVoidSaleToken', 1 => 'Credit Void Sale Token'],
+    [0 => 'CreditReturnToken', 1 => 'Credit Return Token'],
+    [0 => 'CreditVoidReturnToken', 1 => 'Credit Void Return Token'],
+    [0 => 'Webhook', 1 => 'Webhook'],
 
-);
+];
 $txSelector = HTMLSelector::generateMarkup(
-        HTMLSelector::doOptionsMkup($txList, $txSelection, FALSE), array('name' => 'selTx'));
+        HTMLSelector::doOptionsMkup($txList, $txSelection, FALSE),
+    ['name' => 'selTx']);
 
 ?>
 <!DOCTYPE html>
@@ -212,11 +236,13 @@ $txSelector = HTMLSelector::generateMarkup(
             <form method="post">
                 <table class="mb-3">
                     <tr>
+                        <th>Error Code</th>
                         <th>Transaction Type</th>
                         <th>Date</th>
                         <th title='Leave blank to return all names'>Name Filter</th>
                     </tr>
                     <tr>
+                        <td><input type='text' name='errorCode' value='<?php echo $errorCodeSelected; ?>'/></td>
                         <td><?php echo $txSelector; ?></td>
                         <td><input type="text" class="ckdate" name='txtDate' value='<?php echo $dateSelected; ?>'/></td>
                         <td><input type="text" name='txtName' value='<?php echo $nameSelected; ?>'/></td>
