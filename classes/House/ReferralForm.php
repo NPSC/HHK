@@ -604,7 +604,9 @@ class ReferralForm {
         }
 
 		//add reservation notes
-		if(isset($this->formUserData['resvNotes']) && $this->formUserData['resvNotes'] != ''){
+		if(isset($this->formUserData['resvNotes']) && is_array($this->formUserData['resvNotes'])){
+			LinkNote::save($dbh, $this->formUserData['resvNotes'][0], $resv->getIdReservation(), Note::ResvLink, "", "Referral", $uS->ConcatVisitNotes);
+		}else if(isset($this->formUserData['resvNotes']) && $this->formUserData['resvNotes'] != ''){
 			LinkNote::save($dbh, $this->formUserData['resvNotes'], $resv->getIdReservation(), Note::ResvLink, "", "Referral", $uS->ConcatVisitNotes);
 		}
 

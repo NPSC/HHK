@@ -664,9 +664,16 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
     case 'sendCampaign':
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $batchId = filter_input(INPUT_POST, 'batchId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $campaignListId = filter_input(INPUT_POST, 'campaignListId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $campaignListName = filter_input(INPUT_POST, 'campaignListName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $campaign = new Campaign($dbh, $msgText, $msgText);
-        $events = $campaign->prepareAndSendCampaign($status);
+            if ($status) {
+                $events = $campaign->prepareAndSendCampaign($status);
+            }else if($batchId && $campaignListId && $campaignListName){
+                $events = $campaign->checkBatchAndSendCampaign($batchId, $campaignListId, $campaignListName);
+            }
 
         break;
     case 'loadContacts':
