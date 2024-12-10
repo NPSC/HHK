@@ -726,7 +726,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $
  * @param boolean $visitFee  Flag to show/hide visit fees
  * @return array|void
  */
-function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee, $statsOnly, $rescGroup, $labels)
+function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $local, $visitFee, $statsOnly, $rescGroup, $labels)
 {
 
     // get session instance
@@ -751,9 +751,6 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
         getGuestNights($dbh, $start, $end, $actualGuestNights, $piGuestNights);
 
     }
-
-
-    $query = buildQuery($start, $end, $uS->subsidyId) . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
 
 
     $tbl = new HTMLTable();
@@ -866,6 +863,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     $vat = new ValueAddedTax($dbh);
 
     $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
+
+    $query = buildQuery($start, $end, $uS->subsidyId) . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
 
     $stmt = $dbh->query($query);
 
@@ -982,7 +981,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                 $totalthrdPaid += $visit['thdpd'];
                 $totalDonationPaid += $visit['donpd'];
                 $totalUnpaid += $unpaid;
-                $totalSubsidy += ($visit['fcg'] - $visit['chg']);
+                $totalSubsidy += $visit['fcg'] - $visit['chg'];
                 $nites[] = $visit['nit'];
 
                 if (!$statsOnly) {
@@ -1131,23 +1130,26 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
 
 
 
-    // Print the last visit.
+    // process the last visit.
     if (count($savedr) > 0 && $visit['nit'] > 0) {
 
         $totalLodgingCharge += $visit['chg'];
         $chargesAr[] = $visit['chg'] / $visit['nit'];
         $totalAddnlCharged += ($visit['addch']);
-        $totalVisitFee += $visit['vfa'];
-        $totalCharged += $visit['chg'];
-
-        $totalAmtPending += $visit['pndg'];
-        $totalNights += $visit['nit'];
-        $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
 
         $totalTaxCharged += $visit['taxcgd'];
         $totalAddnlTax += $visit['adjchtx'];
         $totalTaxPaid += $visit['taxpd'];
         $totalTaxPending += $visit['taxpndg'];
+
+        if ($visit['nit'] > $uS->VisitFeeDelayDays) {
+            $totalVisitFee += $visit['vfa'];
+        }
+
+        $totalCharged += $visit['chg'];
+        $totalAmtPending += $visit['pndg'];
+        $totalNights += $visit['nit'];
+        $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
 
         // Set expected departure to now if earlier than "today"
         $expDepDT = new \DateTime($savedr['Expected_Departure']);
@@ -1160,7 +1162,6 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
         }
 
         $paid = $visit['gpd'] + $visit['thdpd'] + $visit['hpd'];
-
         $unpaid = ($visit['chg'] + $visit['preCh']) - $paid;
         $preCharge = $visit['preCh'];
         $charged = $visit['chg'];
@@ -1230,7 +1231,6 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
             $visit['day'] = $visit['nit'] + 1;
         }
 
-
         $totalDays += $visit['day'];
         $totalPaid += $dPaid;
         $totalHousePaid += $visit['hpd'];
@@ -1238,18 +1238,16 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
         $totalthrdPaid += $visit['thdpd'];
         $totalDonationPaid += $visit['donpd'];
         $totalUnpaid += $unpaid;
-        $totalSubsidy += ($visit['fcg'] - $visit['chg']);
+        $totalSubsidy += $visit['fcg'] - $visit['chg'];
         $nites[] = $visit['nit'];
 
         if (!$statsOnly) {
-            if (!$local) {
-                try {
-                    doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
-                } catch (\Exception $e) {
+            try {
+                doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
+            } catch (\Exception $e) {
+                if (isset($writer)) {
                     die();
                 }
-            } else {
-                doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
             }
         }
     }
@@ -1379,10 +1377,10 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
             }
 
             if ($entry != '') {
-                $entry = HTMLContainer::generateMarkup('p', $entry, array('style' => 'font-weight:bold;text-decoration: underline;'));
+                $entry = HTMLContainer::generateMarkup('p', $entry, ['style' => 'font-weight:bold;text-decoration: underline;']);
             }
 
-            $tr .= HTMLTable::makeTd($entry . ($statsOnly ? '' : ' ' . $f[0]), array('style' => 'vertical-align:top;'));
+            $tr .= HTMLTable::makeTd($entry . ($statsOnly ? '' : ' ' . $f[0]), ['style' => 'vertical-align:top;']);
         }
 
         if ($statsOnly) {
@@ -1392,13 +1390,12 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
         }
 
         // Main data table
-        $dataTable = $tbl->generateMarkup(array('id' => 'tblrpt', 'class' => 'display compact', 'style' => 'width:100%'));
+        $dataTable = $tbl->generateMarkup(['id' => 'tblrpt', 'class' => 'display compact', 'style' => 'width:100%']);
 
         // Stats panel
         $statsTable = newStatsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
-        //$statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
 
-        return array('data' => $dataTable, 'stats' => $statsTable);
+        return ['data' => $dataTable, 'stats' => $statsTable];
 
     } else {
         HouseLog::logDownload($dbh, 'Visit Report', "Excel", "Visit Report for " . $start . " - " . $end . " downloaded", $uS->username);
@@ -1684,7 +1681,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
 
     if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
 
-        $tblArray = doReport($dbh, $colSelector, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, count($filter->getAList()), $local, $uS->VisitFee, $statsOnly, $rescGroups[$filter->getSelectedResourceGroups()], $labels);
+        $tblArray = doReport($dbh, $colSelector, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $local, $uS->VisitFee, $statsOnly, $rescGroups[$filter->getSelectedResourceGroups()], $labels);
 
         $dataTable = $tblArray['data'];
         $statsTable = $tblArray['stats'];
