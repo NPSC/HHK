@@ -915,6 +915,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                     $visit['gpd'] = 0;
                 } else if ($preCharge > 0) {
                     $visit['gpd'] -= $preCharge;
+                    $preCharge = 0;
                 }
 
                 if ($preCharge >= $visit['thdpd']) {
@@ -922,6 +923,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                     $visit['thdpd'] = 0;
                 } else if ($preCharge > 0) {
                     $visit['thdpd'] -= $preCharge;
+                    $preCharge = 0;
                 }
 
                 if ($preCharge >= $visit['hpd']) {
@@ -929,6 +931,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                     $visit['hpd'] = 0;
                 } else if ($preCharge > 0) {
                     $visit['hpd'] -= $preCharge;
+                    $preCharge = 0;
                 }
 
 
@@ -1172,6 +1175,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
             $visit['gpd'] = 0;
         } else if ($preCharge > 0) {
             $visit['gpd'] -= $preCharge;
+            $preCharge = 0;
         }
 
         if ($preCharge >= $visit['thdpd']) {
@@ -1179,6 +1183,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
             $visit['thdpd'] = 0;
         } else if ($preCharge > 0) {
             $visit['thdpd'] -= $preCharge;
+            $preCharge = 0;
         }
 
         if ($preCharge >= $visit['hpd']) {
@@ -1186,6 +1191,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
             $visit['hpd'] = 0;
         } else if ($preCharge > 0) {
             $visit['hpd'] -= $preCharge;
+            $preCharge = 0;
         }
 
 
