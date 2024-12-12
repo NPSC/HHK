@@ -375,35 +375,44 @@ try {
 
         case 'getStatEvent':
 
-            $id = 0;
-            if (isset($_REQUEST["id"])) {
-                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            $type = '';
-            if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-            $title = '';
-            if (isset($_REQUEST["title"])) {
-                $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
+            if(SecurityComponent::is_Authorized("guestadmin") || SecurityComponent::is_Authorized("guestoperations")){
+            
+                $id = 0;
+                if (isset($_REQUEST["id"])) {
+                    $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+                }
+                $type = '';
+                if (isset($_REQUEST["tp"])) {
+                    $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+                $title = '';
+                if (isset($_REQUEST["title"])) {
+                    $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
 
-            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+                $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+            }else{
+                $events = ["error"=>"Unauthorized"];
+            }
 
             break;
 
         case 'saveStatEvent':
 
-            $id = 0;
-            if (isset($_REQUEST["id"])) {
-                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            $type = '';
-            if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
+            if (SecurityComponent::is_Authorized("guestadmin") || SecurityComponent::is_Authorized("guestoperations")) {
+                $id = 0;
+                if (isset($_REQUEST["id"])) {
+                    $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+                }
+                $type = '';
+                if (isset($_REQUEST["tp"])) {
+                    $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
 
-            $events = ResourceView::saveStatusEvents($dbh, $id, $type, $_POST);
+                $events = ResourceView::saveStatusEvents($dbh, $id, $type, $_POST);
+            }else{
+                $events = ["error"=>"Unauthorized"];
+            }
 
             break;
 

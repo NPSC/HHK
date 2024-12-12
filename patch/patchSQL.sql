@@ -46,3 +46,5 @@ DROP INDEX IF EXISTS `indx_linkDoc`;
 
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
 ('vehicleNotes', 'Notes', 's', 'rf','','Default: Notes');
+
+call new_webpage('guestoperations', 0, '', 0, 'h', '', '', 'c', '', '', current_timestamp(), 'g');
