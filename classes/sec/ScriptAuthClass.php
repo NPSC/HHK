@@ -254,8 +254,8 @@ class ScriptAuthClass extends SecurityComponent {
                 } else if ($this->get_Page_Type() == "s") {
 
                     $rtn = ["error" => "Unauthorized-"];
-                    $uS = Session::getInstance();
-                    $uS->destroy(TRUE);
+                    //$uS = Session::getInstance();
+                    //$uS->destroy(TRUE);
                     echo json_encode($rtn);
 
                 } else {
