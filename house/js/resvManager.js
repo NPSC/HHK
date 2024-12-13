@@ -691,6 +691,111 @@ function resvManager(initData, options) {
             }
         }
 
+        function copyEmergContactSelector($button, prefix) {
+
+            // remove any previous incarnations
+            $('.hhk-addrPicker').remove();
+
+            var $sel = $('<select id="selAddrch" multiple="multiple" />');
+            var opts = 0;
+            var optTexts = [];
+
+            for (var p in addrs.list()) {
+
+                if (addrs.list()[p].Address_1 != '' || addrs.list()[p].Postal_Code != '') {
+
+                    var notFound = true,
+                            optText = addrs.list()[p].Address_1 + ', '
+                            + (addrs.list()[p].Address_2 == '' ? '' : addrs.list()[p].Address_2 + ', ')
+                            + addrs.list()[p].City + ', '
+                            + addrs.list()[p].State_Province + '  '
+                            + addrs.list()[p].Postal_Code;
+
+                    for (var i = 0; i <= optTexts.length; i++) {
+                        if (optTexts[i] == optText) {
+                            notFound = false;
+                            continue;
+                        }
+                    }
+
+                    if (notFound) {
+                        // Add as option
+                        optTexts[opts] = optText;
+                        opts++;
+
+                        $('<option class="hhk-addrPickerPanel" value="' + p + '">' + optText + '</option>')
+                                .appendTo($sel);
+                    }
+                }
+            }
+
+            if (opts > 0) {
+
+                $sel.prop('size', opts + 1).prepend($('<option value="0" >(Cancel)</option>'));
+
+                $sel.change(function () {
+                    setAddress(prefix, $(this).val());
+                });
+
+                var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker hhk-addrPickerPanel"/>')
+                        .append($('<p class="hhk-addrPickerPanel">Choose an Address: </p>'))
+                        .append($sel)
+                        .appendTo($('body'));
+
+                $selDiv.position({
+                    my: 'left top',
+                    at: 'right center',
+                    of: $button
+                });
+            }
+
+        }
+
+        function setEmergContact(prefix, p) {
+
+            if (p == 0) {
+                $('#divSelAddr').remove();
+                return;
+            }
+
+            $('#' + prefix + 'adraddress1' + addrPurpose).val(addrs.list()[p].Address_1);
+            $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[p].Address_2);
+            $('#' + prefix + 'adrcity' + addrPurpose).val(addrs.list()[p].City);
+            $('#' + prefix + 'adrcounty' + addrPurpose).val(addrs.list()[p].County);
+            $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[p].Postal_Code);
+
+            if ($('#' + prefix + 'adrcountry' + addrPurpose).val() != addrs.list()[p].Country_Code) {
+                $('#' + prefix + 'adrcountry' + addrPurpose).val(addrs.list()[p].Country_Code).change();
+            }
+
+            $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
+
+
+            // Clear the incomplete address checkbox if the address is valid.
+            if (isAddressComplete(prefix) && $('#' + prefix + 'incomplete').prop('checked') === true) {
+                $('#' + prefix + 'incomplete').prop('checked', false);
+            }
+
+            // Update the address flag
+            setAddrFlag($('#' + prefix + 'liaddrflag'));
+            $('#divSelAddr').remove();
+
+        }
+
+        function eraseEmergContact(prefix) {
+
+            $('#' + prefix + 'adraddress1' + addrPurpose).val('');
+            $('#' + prefix + 'adraddress2' + addrPurpose).val('');
+            $('#' + prefix + 'adrcity' + addrPurpose).val('');
+            $('#' + prefix + 'adrcounty' + addrPurpose).val('');
+            $('#' + prefix + 'adrstate' + addrPurpose).val('');
+            $('#' + prefix + 'adrcountry' + addrPurpose).val('');
+            $('#' + prefix + 'adrzip' + addrPurpose).val('');
+
+            setAddrFlag($('#' + prefix + 'liaddrflag'));
+
+        }
+
         function initFamilyTable(data) {
 
             var fDiv, fHdr, expanderButton;
@@ -941,6 +1046,11 @@ function resvManager(initData, options) {
                 // Copy Address
                 $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function () {
                     copyAddrSelector($(this), $(this).data('prefix'));
+                });
+
+                // Copy Emergency Contact
+                $('#' + divFamDetailId).on('click', '.hhk-emergCopy', function () {
+                    copyEmergContactSelector($(this), $(this).data('prefix'));
                 });
 
                 // Delete address
