@@ -48,3 +48,6 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Desc
 ('vehicleNotes', 'Notes', 's', 'rf','','Default: Notes');
 
 call new_webpage('guestoperations', 0, '', 0, 'h', '', '', 'c', '', '', current_timestamp(), 'g');
+
+alter table notification_log
+modify column if not exists `Timestamp` timestamp(5) NOT NULL DEFAULT CURRENT_TIMESTAMP(5);

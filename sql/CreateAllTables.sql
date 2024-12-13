@@ -1286,7 +1286,7 @@ CREATE TABLE if not exists `notification_log` (
   `From` varchar(255) NOT NULL DEFAULT '',
   `Log_Text` varchar(255) NOT NULL DEFAULT '',
   `Log_Details` JSON NOT NULL DEFAULT '{}',
-  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Timestamp` timestamp(5) NOT NULL DEFAULT CURRENT_TIMESTAMP(5),
   PRIMARY KEY (`idLog`)
 ) ENGINE=InnoDB;
 

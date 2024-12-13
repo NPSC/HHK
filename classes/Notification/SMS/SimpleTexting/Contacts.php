@@ -5,6 +5,8 @@ namespace HHK\Notification\SMS\SimpleTexting;
 use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\SmsException;
 use HHK\Notification\SMS\AbstractContacts;
+use HHK\sec\Session;
+use HHK\TableLog\NotificationLog;
 
 Class Contacts extends AbstractContacts{
     protected Settings $settings;
@@ -99,6 +101,9 @@ Class Contacts extends AbstractContacts{
                 $response = $client->post("contacts-batch/batch-update",
                     ["json"=>$contacts]
                 );
+
+                $uS = Session::getInstance();
+                NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, "", $uS->smsFrom, "Syncing contacts", ["listIds"=>$listIds, "response"=>json_decode($response->getBody()->getContents(), true)]);
     
                 $respArr = json_decode($response->getBody(), true);
                 if (isset($respArr["id"])) {
@@ -107,6 +112,7 @@ Class Contacts extends AbstractContacts{
                     throw new SmsException("Error syncing contacts: batch ID not found");
                 }
             }catch(ClientException $e){
+                NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, "", $uS->smsFrom, "Syncing contacts", ["listIds"=>$listIds, "response"=>json_decode($e->getResponse()->getBody()->getContents(), true)]);
                 $respArr = json_decode($e->getResponse()->getBody(), true);
     
                 if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
@@ -143,6 +149,9 @@ Class Contacts extends AbstractContacts{
             $client = $this->settings->getClient();
             $response = $client->get("contacts-batch/batch-update/" . $batchId);
 
+            $uS = Session::getInstance();
+            NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, "", $uS->smsFrom, "Syncing contacts: checking batch status", ["batchId"=>$batchId, "response"=>json_decode($response->getBody()->getContents(), true)]);
+
             $respArr = json_decode($response->getBody(), true);
             if (isset($respArr["status"])) {
                 return $respArr["status"];
@@ -150,6 +159,9 @@ Class Contacts extends AbstractContacts{
                 throw new SmsException("Error syncing contacts: batch status not found");
             }
         }catch(ClientException $e){
+            $uS = Session::getInstance();
+            NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, "", $uS->smsFrom, "Syncing contacts", ["batchId"=>$batchId, "response"=>json_decode($e->getResponse()->getBody()->getContents(), true)]);
+
             $respArr = json_decode($e->getResponse()->getBody(), true);
 
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
