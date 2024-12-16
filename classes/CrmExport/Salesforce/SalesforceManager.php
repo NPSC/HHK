@@ -55,8 +55,9 @@ class SalesforceManager extends AbstractExportManager {
      private $searchEndpoint;
 
     private $getContactEndpoint;
-    private $psgGraphs;
-    private $graphsResult;
+
+    protected $transferResult;
+    protected $errorResult;
     protected $webService;
 
     protected $uniqueGuests;
@@ -89,24 +90,28 @@ class SalesforceManager extends AbstractExportManager {
 
     /**
      * Summary of getRelationship
-     * @param mixed $post
+     * @param mixed $accountId
      * @return string
      */
     public function getRelationship($accountId) {
 
         $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/' . $accountId);
 
-        $parms = array();
+        $parms = [];
         $this->unwindResponse($parms, $result);
         $resultStr = new HTMLTable();
 
         foreach ($parms as $k => $v) {
-            $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
+            $resultStr->addBodyTr(HTMLTable::makeTd($k, []) . HTMLTable::makeTd($v));
         }
 
         return $resultStr->generateMarkup();
     }
 
+    /**
+     * Summary of getRelationshipPicklist
+     * @return array
+     */
     public function getRelationshipPicklist() {
 
         $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/describe');
@@ -155,8 +160,8 @@ class SalesforceManager extends AbstractExportManager {
                 $namArray['id'] = $r["Id"];
                 $namArray['fullName'] = $r["Name"];
                 $namArray['value'] = $r['Name'];
-                $namArray['Phone'] = isset($r['phone']) ? $r['phone'] : '';
-                $namArray['Email'] = isset($r['email']) ? $r['email'] : '';
+                $namArray['Phone'] = $r['phone'] ?? '';
+                $namArray['Email'] = $r['email'] ?? '';
                 $attributes = $r['attributes'];
                 $namArray['url'] = $attributes['url'];
                 $namArray['Type'] = $attributes['type'];
@@ -165,11 +170,11 @@ class SalesforceManager extends AbstractExportManager {
             }
 
             if (count($replys) === 0) {
-                $replys[] = array("id" => 0, "value" => "No one found.");
+                $replys[] = ["id" => 0, "value" => "No one found."];
             }
 
         } else {
-            $replys[] = array("id" => 0, "value" => "No one found.");
+            $replys[] = ["id" => 0, "value" => "No one found."];
         }
 
 
@@ -184,9 +189,9 @@ class SalesforceManager extends AbstractExportManager {
      */
     public function getMember(\PDO $dbh, $parameters) {
 
-        $source = (isset($parameters['src']) ? $parameters['src'] : '');
-        $id = (isset($parameters['accountId']) ? $parameters['accountId'] : '');
-        $url = (isset($parameters['url']) ? $parameters['url'] : '');
+        $source = $parameters['src'] ?? '';
+        $id = $parameters['accountId'] ?? '';
+        $url = $parameters['url'] ?? '';
         $reply = '';
         $resultStr = new HTMLTable();
         $this->setAccountId('');
@@ -202,9 +207,9 @@ class SalesforceManager extends AbstractExportManager {
                 foreach ($row as $k => $v) {
 
                     if ($k == 'Id' && $v == SELF::EXCLUDE_TERM) {
-                        $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd('*Excluded*'));
+                        $resultStr->addBodyTr(HTMLTable::makeTd($k, []) . HTMLTable::makeTd('*Excluded*'));
                     } else {
-                        $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
+                        $resultStr->addBodyTr(HTMLTable::makeTd($k, []) . HTMLTable::makeTd($v));
                     }
                 }
 
@@ -221,7 +226,7 @@ class SalesforceManager extends AbstractExportManager {
             $this->unwindResponse($parms, $result);
 
             foreach ($parms as $k => $v) {
-                $resultStr->addBodyTr(HTMLTable::makeTd($k, array()) . HTMLTable::makeTd($v));
+                $resultStr->addBodyTr(HTMLTable::makeTd($k, []) . HTMLTable::makeTd($v));
             }
 
             $reply = $resultStr->generateMarkup();
@@ -260,7 +265,7 @@ class SalesforceManager extends AbstractExportManager {
     public function exportMembers(\PDO $dbh, array $sourceIds, array $updateIds = []) {
 
         if (count($sourceIds) == 0) {
-            $replys[0] = array('error'=>"The list of HHK Id's to send is empty.");
+            $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
             return $replys;
         }
 
@@ -269,7 +274,7 @@ class SalesforceManager extends AbstractExportManager {
         $stmt = $this->loadSearchDB($dbh, 'vguest_search_sf', $sourceIds);
 
         if (is_null($stmt)) {
-            $replys[0] = array('error'=>'No local records were found.');
+            $replys[0] = ['error' => 'No local records were found.'];
             return $replys;
         }
 
@@ -498,35 +503,80 @@ class SalesforceManager extends AbstractExportManager {
         return $replys;
     }
 
+
     /**
-     * Summary of upsertMembers
+     * Summary of upsertMembers Bulk insert/update of members
      * @param \PDO $dbh
      * @param array $sourceIds
+     * @param bool $linkRelatives
      * @return array
      */
     public function upsertMembers(\PDO $dbh, array $sourceIds, $linkRelatives = true) {
+
+        $this->uniqueGuests = [];   // Keep track to not repeat a guest upsert into multiple psgs?
+        $this->transferResult = [];
+        $this->errorResult = [];
 
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
             return $replys;
         }
 
-
         // Each PSG uses a compositRequest/Graph to identify members and relationships.
         // GraphId = psgId.
 
-        $psgGuests = [];    // list of guests in PSG
-        $this->psgGraphs = [];  // The collection of psg graphs
-        $psgId = 0; // multiple records for each psgId
-        $transferResult = [];
-        $this->uniqueGuests = [];
-
-        // get the member records
+        // get the member records. the rows must be ordered by PSG Id
         $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ") ORDER BY `idPsg`;");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+        $idPsg = 0;
+        $batchRows = [];
+        $graphCounter = 0;
+
+
+        foreach ($rows as $r) {
+
+            if ($idPsg > 0 && $idPsg != $r['idPsg']) {
+
+                // Do we have enough graphs
+                if ($graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) - 100 >= self::MAX_NODES) {
+
+                    $this->transferBatch($dbh, $batchRows, $linkRelatives);
+                    $batchRows = [];
+                    $graphCounter = 0;
+                }
+
+                $graphCounter++;
+
+            }
+
+            $idPsg = $r['idPsg'];
+
+            $batchRows[] = $r;
+
+        }
+
+        // Anything left?
+        if (count($batchRows) > 0) {
+            $this->transferBatch($dbh, $batchRows, $linkRelatives);
+        }
+
+        // Create an HTML table containing the results
+        $result['table'] = CreateMarkupFromDB::generateHTML_Table($this->transferResult, 'tblrpt');
+
+        return $result;
+    }
+
+    protected function transferBatch(\PDO $dbh, array $rows, $linkRelatives = true) {
+
+        $psgGuests = [];    // list of guests in PSG
+        $psgGraphs = [];  // The collection of psg graphs
+        $psgId = 0; // multiple records for each psgId
+
+
+
         // Collect each psg into a guests array and process it as a composit request set to make a graph
-        // the rows must be ordered by PSG Id
+        // $rows must be ordered by PSG Id
         foreach ($rows as $r) {
 
             // New PSG Id?
@@ -537,7 +587,7 @@ class SalesforceManager extends AbstractExportManager {
 
                 // Add to collection
                 if (count($graph) > 0) {
-                    $this->psgGraphs[] = $graph;
+                    $psgGraphs[] = $graph;
                 }
 
                 $psgGuests = [];
@@ -553,32 +603,30 @@ class SalesforceManager extends AbstractExportManager {
             $graph = $this->createPsgGraph($psgGuests, $psgId, $linkRelatives);
 
             if (count($graph) > 0) {
-                $this->psgGraphs[] = $graph;
+                $psgGraphs[] = $graph;
             }
 
         }
 
 
-
         // Anything to transfer?
-        if (count($this->psgGraphs) > 0) {
+        if (count($psgGraphs) > 0) {
 
             $body = [
-                "graphs" => $this->psgGraphs,
+                "graphs" => $psgGraphs,
             ];
 
             // Transfer this package to SF API
             try {
                 $graphsResult = $this->webService->postUrl("{$this->endPoint}composite/graph", $body);
 
-                $transferResult = $this->processGraphsResult($dbh, $graphsResult, $rows);
+                $this->processGraphsResult($dbh, $graphsResult, $rows);
 
             } catch (\RuntimeException $ex) {
-                $transferResult = ['error' => $ex->getMessage()];
+                $this->errorResult[] = $ex->getMessage();
             }
         }
 
-        return $transferResult;
     }
 
     /**
@@ -675,8 +723,8 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of processGraphResult
      * @param \PDO $dbh
      * @param mixed $graphResult
-     * @param mixed $guests
-     * @return array
+     * @param mixed $guestRows
+     * @return void
      */
     protected function processGraphsResult(\PDO $dbh, $graphResult, $guestRows) {
 
@@ -688,19 +736,15 @@ class SalesforceManager extends AbstractExportManager {
             foreach ($graphResult['graphs'] as $graph) {
 
                 // Each graph has a collection of subCompositeResponces
-                $this->processCompositeResponse($dbh, $graph, $guestRows, $result);
+                $this->processCompositeResponse($dbh, $graph, $guestRows);
 
             }
 
-            // Create an HTML table containing the results
-            $result['table'] = CreateMarkupFromDB::generateHTML_Table($result, 'tblrpt');
-
         } else {
             // graphs object is missing.
-            $result = ['error' => 'graphs collection is missing.'];
+            $this->errorResult[] = 'graphs collection is missing.';
         }
 
-        return $result;
     }
 
     /**
@@ -708,10 +752,9 @@ class SalesforceManager extends AbstractExportManager {
      * @param \PDO $dbh
      * @param mixed $graph
      * @param mixed $guests
-     * @param mixed $result
      * @return void
      */
-    protected function processCompositeResponse(\PDO $dbh, $graph, $guests, &$result) {
+    protected function processCompositeResponse(\PDO $dbh, $graph, $guests) {
 
         $idPsg = $graph['graphId'];
         $comResp = $graph['graphResponse']['compositeResponse'];
@@ -746,7 +789,8 @@ class SalesforceManager extends AbstractExportManager {
             $f['Result'] = $subResponse->processResult($dbh);
             $f['Contact Id'] = $subResponse->getContactId();
 
-            $result[] = $f;
+            // Collect in one massive result array across batches.
+            $this->transferResult[] = $f;
         }
     }
 
