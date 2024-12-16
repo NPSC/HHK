@@ -63,7 +63,7 @@ function dateRender(data, type, format) {
 			return '';
 		}
 
-		if (moment(data, 'YYYY-MM-DD HH:mm:ss Z').isValid()===false) {
+		if (moment(data, 'YYYY-MM-DD HH:mm:ss.SSSS Z').isValid()===false) {
 			return data;
 		}
 
@@ -71,7 +71,7 @@ function dateRender(data, type, format) {
 			format = 'MMM D, YYYY';
 		}
 
-		return moment(data, 'YYYY-MM-DD HH:mm:ss Z').format(format);
+		return moment(data, 'YYYY-MM-DD HH:mm:ss.SSSS Z').format(format);
 	}
 
 	// Otherwise the data type requested (`type`) is type detection or

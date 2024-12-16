@@ -844,7 +844,11 @@ $(document).on('change', "#numAddrCalc", function(){
                 var json = JSON.parse(data);
                 var detailStr = "";
                 $.each(json, function (k, v) {
-                    detailStr += "<div><strong>" + k + ":</strong>" + v + "</div>";
+                    if (typeof v == 'string') {
+                        detailStr += "<div><strong>" + k + ":</strong>" + v + "</div>";
+                    } else {
+                        detailStr += "<div><strong>" + k + ":</strong><pre>" + JSON.stringify(v, null, 2) + "</pre></div>";
+                    }
                 });
                 return detailStr;
             }
@@ -854,7 +858,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "title": "Timestamp",
             'data': 'Timestamp',
             render: function (data, type) {
-                return dateRender(data, type, dateFormat);
+                return dateRender(data, type, 'MMM D YYYY h:mm:ss.SSSS a');
             }
         }
     ];

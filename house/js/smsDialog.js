@@ -332,6 +332,15 @@
                 success: function (data) {
                     settings.guestData = data;
 
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        $dialog.dialog("close");
+                        return;
+                    }
+
                     //set dialog title
                     if (settings.guestData[0] && settings.guestData[0].Room) {
                         $dialog.dialog("option", "title", "Text Guests in Room " + settings.guestData[0].Room);
@@ -425,6 +434,15 @@
                 dataType: "json",
                 success: function (data) {
                     settings.guestData = data;
+
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        $dialog.dialog("close");
+                        return;
+                    }
 
                     //set dialog title
                     if (settings.guestData.title) {

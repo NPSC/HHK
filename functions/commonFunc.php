@@ -48,7 +48,8 @@ function initPDO(bool $override = FALSE)
     if ($roleCode >= WebRole::Guest && $override === FALSE) {
         // Get the site configuration object
         try {
-            $config = parse_ini_file(ciCFG_FILE, true);
+            //$config = parse_ini_file(ciCFG_FILE, true);
+            $config = parse_ini_file(CONF_PATH . ciCFG_FILE, true);
         } catch (Exception $ex) {
             $ssn->destroy();
             throw new RuntimeException("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
