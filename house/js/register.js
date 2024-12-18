@@ -195,7 +195,7 @@ function ckOut(gname, id, idReserv, idVisit, span) {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?rid=' + idReserv, '_blank');
+            window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
         },
         "Check Out": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -212,7 +212,7 @@ function editVisit(gname, id, idReserv, idVisit, span) {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?rid=' + idReserv, '_blank');
+            window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
         },
         "Save": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -1241,7 +1241,7 @@ $(document).ready(function () {
                         window.open('ShowStatement.php?vid=' + info.event.extendedProps.idVisit, '_blank');
                     },
                     "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?rid=' + info.event.extendedProps.idResv , '_blank');
+                        window.open('ShowRegForm.php?vid=' + info.event.extendedProps.idVisit + '&span=' + info.event.extendedProps.Span , '_blank');
                     },
                     "Save": function () {
                         saveFees(0, info.event.extendedProps.idVisit, info.event.extendedProps.Span, true, 'register.php');
