@@ -233,9 +233,7 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
                     $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
                 }
             }
-        }
-
-        if ($idGst > 0) {
+        }else if ($idGst > 0) {
 
             $gtRs = new Guest_TokenRS();
             $gtRs->idGuest->setStoredVal($idGst);
