@@ -195,7 +195,7 @@ function ckOut(gname, id, idReserv, idVisit, span) {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
+            window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + span, '_blank');
         },
         "Check Out": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -212,7 +212,7 @@ function editVisit(gname, id, idReserv, idVisit, span) {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
+            window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + span, '_blank');
         },
         "Save": function() {
             saveFees(id, idVisit, span, true, 'register.php');
