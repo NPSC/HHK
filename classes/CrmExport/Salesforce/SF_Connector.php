@@ -40,7 +40,7 @@ class SF_Connector {
      */
     public function login() {
 
-        $this->oAuth = new SalesForceOauth($this->credentials);
+        $this->oAuth = new SalesForceOAuth($this->credentials);
 
         $this->oAuth->login();
     }
@@ -59,7 +59,7 @@ class SF_Connector {
     public function search($query, $endpoint) {
 
         try{
-            if(!$this->oAuth instanceof SalesForceOauth){
+            if(!$this->oAuth instanceof SalesForceOAuth){
                 $this->login();
             }
 
@@ -125,7 +125,7 @@ class SF_Connector {
     public function postUrl($endpoint, array $params, $isUpdate = FALSE) {
 
        try{
-            if(!$this->oAuth instanceof SalesForceOauth){
+            if(!$this->oAuth instanceof SalesForceOAuth){
                 $this->login();
             }
 
@@ -159,7 +159,7 @@ class SF_Connector {
     {
 
         try {
-            if (!$this->oAuth instanceof SalesForceOauth) {
+            if (!$this->oAuth instanceof SalesForceOAuth) {
                 $this->login();
             }
 

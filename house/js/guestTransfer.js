@@ -50,6 +50,8 @@ function upsert(transferIds) {
         ids: transferIds
     };
 
+    $('#TxButton').hide();
+
     var posting = $.post('ws_tran.php', parms);
     posting.done(function (incmg) {
 
@@ -57,24 +59,26 @@ function upsert(transferIds) {
             alert('Error: Bad Reply from HHK Web Server');
             return;
         }
-        // try {
-        //     incmg = $.parseJSON(incmg);
-        // } catch (err) {
-        //     alert('Error: Bad JSON Encoding');
-        //     return;
-        // }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
+        try {
+            data = JSON.parse(incmg);
+        } catch (err) {
+            alert('Error: Bad JSON Encoding');
             return;
         }
 
-        $('#divMembers').text(incmg);
-        //fillTable(incmg, $('#mTbl'));
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+
+            flagAlertMessage(data.error, true);
+            return;
+
+        } else if (data.table) {
+            $('#divMembers').html(data.table);
+            $('#divMembers').prepend($('<p style="font-weight: bold;">Transfer Results</p>'));
+        }
+
     });
 }
 
@@ -731,84 +735,6 @@ function getRemote(item, source) {
     });
 }
 
-function getRelate(id) {
-    $('div#printArea').hide();
-    $('#divPrintButton').hide();
-
-
-    var posting = $.post('ws_tran.php', { cmd: 'getRelat', accountId: id});
-
-    posting.done(function (incmg) {
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').html(incmg.data);
-
-            $('div#retrieve').prepend($('<h3>Remote Data</h3>'));
-
-
-        }
-    });
-}
-
-function getSOQL(select, from, where) {
-    $('div#printArea').hide();
-    $('#divPrintButton').hide();
-
-    var posting = $.post('ws_tran.php', { cmd: 'soql', 's': select, 'f': from, 'w': where });
-
-    posting.done(function (incmg) {
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').text(JSON.stringify(incmg.data));
-
-            $('div#retrieve').prepend($('<h3>Query Results</h3>'));
-        } else {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').html('nothing returned.');
-        }
-    });
-}
-
 
 $(document).ready(function () {
 
@@ -836,8 +762,9 @@ $(document).ready(function () {
 
         $upsertButton
             .button()
-            .val('Start Upsert')
+            .val('Transfer to '+cmsTitle)
             .show();
+
 
         $upsertButton.click(function () {
             let ids = [];
@@ -876,20 +803,6 @@ $(document).ready(function () {
         $memberButton = $('#TxButton');
 
         stopTransfer = true;
-
-        // $('#tblrpt').dataTable({
-        //     'columnDefs': [
-        //         {'targets': [7],
-        //             'type': 'date',
-        //             'render': function (data, type, row) {
-        //                 return dateRender(data, type, dateFormat);
-        //             }
-        //         }
-        //     ],
-        //     "displayLength": 25,
-        //     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-        //     "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        // });
 
         $memberButton
                 .button()
@@ -1037,6 +950,30 @@ $(document).ready(function () {
         kmd.dialog('open');
     });
     
+    $('#hhkdgpallple').button().click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', true);
+        })
+    });
+
+    $('#hhkdgpnople').button().click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', false);
+        })
+    });
+
+    $('#hhkdgpback').button().click(function () {
+        $('.hhk-tfmem').each(function (index) {
+            $(this).prop('checked', $(this).prop('defaultChecked'));
+        })
+    });
+
+    $('#hhkdgpnew').button().click(function () {
+        $('.hhk-tf-update').each(function (index) {
+            $(this).prop('checked', false);
+        })
+    });
+
     $('#hhkdgpallple').button().click(function () {
         $('.hhk-tfmem').each(function (index) {
             $(this).prop('checked', true);

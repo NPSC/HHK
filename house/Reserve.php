@@ -11,13 +11,13 @@ use HHK\Member\Role\AbstractRole;
 use HHK\Member\Role\Guest;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
 use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
 use HHK\TableLog\HouseLog;
+
 
 /**
  * Reserve.php
@@ -264,7 +264,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php 
+        <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
                 if ($uS->mode == Mode::Live) {
                     echo DELUXE_EMBED_JS;

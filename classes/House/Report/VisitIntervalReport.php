@@ -453,7 +453,7 @@ where
             $r['idVisit'] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit', 'data-gid'=>$r['idPrimaryGuest'], 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'style'=>'display:inline-table;'));
             $r['idPrimaryGuest'] = HTMLContainer::generateMarkup('a', $r['Name_Last'] . ', ' . $r['Name_First'], array('href'=>'GuestEdit.php?id=' . $r['idPrimaryGuest'] . '&psg=' . $r['idPsg']));
             $r['idPatient'] = HTMLContainer::generateMarkup('a', $r['Patient_Last'] . ', ' . $r['Patient_First'], array('href'=>'GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']));
-        
+
         }
 
         //$this->generateNumbers();
@@ -484,7 +484,7 @@ where
         }
 
         $rescGroup = $this->filter->getResourceGroups()[$this->filter->getSelectedResourceGroups()];
-        
+
         $curVisit = 0;
         $curRoom = 0;
         $curRate = '';
@@ -500,43 +500,43 @@ where
 
             // records ordered by idVisit.
             if ($curVisit != $r['idVisit']) {
-    
+
                 // If i did not just start
                 if (count($visit) > 0 && $visit['nit'] > 0) {
-    
+
                     $totalLodgingCharge += $visit['chg'];
                     $chargesAr[] = $visit['chg']/$visit['nit'];
                     $totalAddnlCharged += ($visit['addch']);
-    
+
                     $totalTaxCharged += $visit['taxcgd'];
                     $totalAddnlTax += $visit['adjchtx'];
                     $totalTaxPaid += $visit['taxpd'];
                     $totalTaxPending += $visit['taxpndg'];
-    
+
                     if ($visit['nit'] > $uS->VisitFeeDelayDays) {
                         $totalVisitFee += $visit['vfa'];
                     }
-    
+
                     $totalCharged += $visit['chg'];
                     $totalAmtPending += $visit['pndg'];
                     $totalNights += $visit['nit'];
                     $totalGuestNights += max($visit['gnit'] - $visit['nit'], 0);
-    
+
                     // Set expected departure to now if earlier than "today"
                     $expDepDT = new \DateTime($savedr['Expected_Departure']);
                     $expDepDT->setTime(0,0,0);
-    
+
                     if ($expDepDT < $now) {
                         $expDepStr = $now->format('Y-m-d');
                     } else {
                         $expDepStr = $expDepDT->format('Y-m-d');
                     }
-    
+
                     $paid = $visit['gpd'] + $visit['thdpd'] + $visit['hpd'];
                     $unpaid = ($visit['chg'] + $visit['preCh']) - $paid;
                     $preCharge = $visit['preCh'];
                     $charged = $visit['chg'];
-    
+
                     // Reduce all payments by precharge
                     if ($preCharge >= $visit['gpd']) {
                         $preCharge -= $visit['gpd'];
@@ -544,35 +544,35 @@ where
                     } else if ($preCharge > 0) {
                         $visit['gpd'] -= $preCharge;
                     }
-    
+
                     if ($preCharge >= $visit['thdpd']) {
                         $preCharge -= $visit['thdpd'];
                         $visit['thdpd'] = 0;
                     } else if ($preCharge > 0) {
                         $visit['thdpd'] -= $preCharge;
                     }
-    
+
                     if ($preCharge >= $visit['hpd']) {
                         $preCharge -= $visit['hpd'];
                         $visit['hpd'] = 0;
                     } else if ($preCharge > 0) {
                         $visit['hpd'] -= $preCharge;
                     }
-    
-    
+
+
                     $dPaid = $visit['hpd'] + $visit['gpd'] + $visit['thdpd'];
-    
+
                     $departureDT = new \DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
-    
+
                     if ($departureDT > $reportEndDT) {
-    
+
                         // report period ends before the visit
                         $visit['day'] = $visit['nit'];
-    
+
                         if ($unpaid < 0) {
                             $unpaid = 0;
                         }
-    
+
                         if ($visit['gpd'] >= $charged) {
                             $dPaid -= $visit['gpd'] - $charged;
                             $visit['gpd'] = $charged;
@@ -580,7 +580,7 @@ where
                         } else if ($charged > 0) {
                             $charged -= $visit['gpd'];
                         }
-    
+
                         if ($visit['thdpd'] >= $charged) {
                             $dPaid -= $visit['thdpd'] - $charged;
                             $visit['thdpd'] = $charged;
@@ -588,7 +588,7 @@ where
                         } else if ($charged > 0) {
                             $charged -= $visit['thdpd'];
                         }
-    
+
                         if ($visit['hpd'] >= $charged) {
                             $dPaid -= $visit['hpd'] - $charged;
                             $visit['hpd'] = $charged;
@@ -596,12 +596,12 @@ where
                         } else if ($charged > 0) {
                             $charged -= $visit['hpd'];
                         }
-    
+
                     } else {
                         // visit ends in this report period
                         $visit['day'] = $visit['nit'] + 1;
                     }
-    
+
                     $totalDays += $visit['day'];
                     $totalPaid += $dPaid;
                     $totalHousePaid += $visit['hpd'];
@@ -615,32 +615,32 @@ where
                     if ($r['Rate_Category'] == RoomRateCategories::Fixed_Rate_Category) {
 
                         $r['rate'] = $r['Pledged_Rate'];
-                
+
                     } else if (isset($visit['rateId']) && isset($rateTitles[$visit['rateId']])) {
-                
+
                         $rateTxt = $rateTitles[$visit['rateId']];
-                
+
                         if ($visit['adj'] != 0) {
                             $parts = explode('$', $rateTxt);
-                
+
                             if (count($parts) == 2) {
                                 $amt = floatval($parts[1]) * (1 + $visit['adj']/100);
                                 $rateTxt = $parts[0] . '$' . number_format($amt, 2);
                             }
                         }
-                
+
                         $r['rate'] = $rateTxt;
-                
+
                     } else {
                         $r['rate'] = '';
                     }
-                
+
                     // Average rate
                     $r['meanRate'] = 0;
                     if ($visit['nit'] > 0) {
                         $r['meanRate'] = number_format(($visit['chg'] / $visit['nit']), 2);
                     }
-                
+
                     $r['meanGstRate'] = 0;
                     if ($visit['gnit'] > 0) {
                         $r['meanGstRate'] = number_format(($visit['chg'] / $visit['gnit']), 2);
@@ -656,28 +656,28 @@ where
                         }
                     }*/
                 }
-    
+
                 $curVisit = $r['idVisit'];
                 $curRate = '';
                 $curRateId = 0;
                 $curAdj = 0;
                 $curAmt = 0;
                 $curRoom = 0;
-    
+
                 $addChgTax = 0;
                 $lodgeTax = 0;
-    
+
                 $taxSums = $vat->getTaxedItemSums($r['idVisit'], $r['Visit_Age']);
-    
+
                 if (isset($taxSums[ItemId::AddnlCharge])) {
                     $addChgTax = $taxSums[ItemId::AddnlCharge];
                 }
-    
+
                 if (isset($taxSums[ItemId::Lodging])) {
                     $lodgeTax = $taxSums[ItemId::Lodging];
                 }
-    
-    
+
+
                 $visit = array(
                     'id' => $r['idVisit'],
                     'chg' => 0, // charges
@@ -707,14 +707,14 @@ where
                     'rmc' => 0, // Room change counter
                     'rtc' => 0  // Rate Category counter
                     );
-    
+
             }
-    
+
             // Count rate changes
             if ($curRateId != $r['idRoom_Rate']
                     || ($curRate == RoomRateCategories::Fixed_Rate_Category && $curAmt != $r['Pledged_Rate'])
                     || ($curRate != RoomRateCategories::Fixed_Rate_Category && $curAdj != $r['Expected_Rate'])) {
-    
+
                 $curRate = $r['Rate_Category'];
                 $curRateId = $r['idRoom_Rate'];
                 $curAdj = $r['Expected_Rate'];
@@ -722,70 +722,70 @@ where
                 $visit['rateId'] = $r['idRoom_Rate'];
                 $visit['rtc']++;
             }
-    
+
             // Count room changes
             if ($curRoom != $r['idResource']) {
                 $curRoom = $r['idResource'];
                 $visit['rmc']++;
             }
-    
+
             $adjRatio = (1 + $r['Expected_Rate']/100);
             $visit['adj'] = $r['Expected_Rate'];
-    
+
             $days = $r['Actual_Month_Nights'];
             $gdays = $actualGuestNights[$r['idVisit']][$r['Span']] ?? 0;
-    
+
             $visit['gnit'] += $gdays;
-    
+
             // $gdays contains all the guests.
             if ($gdays >= $days) {
                 $gdays -= $days;
             }
-    
+
             $visit['nit'] += $days;
             $totalCatNites[$r[$rescGroup[0]]] += $days;
-    
+
             $piDays = $r['Pre_Interval_Nights'];
             $piGdays = $piGuestNights[$r['idVisit']][$r['Span']] ?? 0;
             $visit['pin'] += $piDays;
             $visit['gpin'] += $piGdays;
-    
+
             if ($piGdays >= $piDays) {
                 $piGdays -= $piDays;
             }
-    
-    
+
+
             //  Add up any pre-interval charges
             if ($piDays > 0) {
-    
+
                 // collect all pre-charges
                 $priceModel->setCreditDays($r['Rate_Glide_Credit']);
                 $visit['preCh'] += $priceModel->amountCalculator($piDays, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $piGdays) * $adjRatio;
-    
+
             }
-    
+
             if ($days > 0) {
-    
+
                 $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
                 $visit['chg'] += $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
                 $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
-    
+
                 $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
                 $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
-    
+
                 if ($adjRatio > 0) {
                     // Only adjust when the charge will be more.
                     $fullCharge = $fullCharge * $adjRatio;
                 }
-    
+
                 // Only Positive values.
                 $visit['fcg'] += ($fullCharge > 0 ? $fullCharge : 0);
             }
-    
+
             $savedr = $r;
 
-            
-    
+
+
         }
     }
 

@@ -780,7 +780,7 @@ $uS->guestId = $id;
         }
 
         if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php 
+        <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
                 if ($uS->mode == Mode::Live) {
                     echo DELUXE_EMBED_JS;

@@ -63,6 +63,7 @@ $tabIndex = 0;
 $resultAccumulator = '';
 $ccResultMessage = '';
 $holResultMessage = '';
+$externalErrMsg = '';
 
 $CmsManager = NULL;
 $rteFileSelection = '';
@@ -97,9 +98,13 @@ if (filter_has_var(INPUT_POST, "btnExtCnf") && $CmsManager !== NULL) {
     $tabIndex = 9;
 
     try {
-        $CmsManager->saveConfig($dbh);
+        $externalErrMsg = $CmsManager->saveConfig($dbh);
     } catch (UploadException $ex) {
         $externalErrMsg = "Save Configuration Error: " . $ex->getMessage();
+    }
+
+    if ($externalErrMsg != '') {
+        $externalErrMsg = HTMLContainer::generateMarkup('p', $externalErrMsg, array('class'=>'ui-state-error'));
     }
 }
 
@@ -469,6 +474,7 @@ echo $newsaml->getEditMarkup();
                 </div>
 <?php if ($uS->ContactManager != '') { ?>
                     <div id="external" class="ui-tabs-hide" >
+                        <?php echo $externalErrMsg; ?>
                         <form method="post" id="formext" name="formext" action="">
                             <div id="serviceContent" class="hhk-tdbox"><span style="margin-left:300px;">Loading...</span></div>
                             <div class="divSubmitButtons ui-corner-all">

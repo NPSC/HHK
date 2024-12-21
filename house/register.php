@@ -387,7 +387,7 @@ if($uS->useOnlineReferral){
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php 
+        <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
                 if ($uS->mode == Mode::Live) {
                     echo DELUXE_EMBED_JS;

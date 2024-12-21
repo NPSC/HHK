@@ -3,7 +3,7 @@ namespace HHK\OAuth;
 
 use GuzzleHttp\{Client, RequestOptions};
 use HHK\Exception\RuntimeException;
-use GuzzleHttp\Exception\BadResponseException;
+
 
 /**
  * Handles the OAuth login and token request process

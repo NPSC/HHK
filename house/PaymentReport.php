@@ -99,7 +99,7 @@ if (isset($_POST['cmd'])) {
             }catch(\Exception $e){
 
             }
-            
+
             break;
         case 'ccTransaction':
             $start = filter_input(INPUT_POST, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -334,7 +334,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 					$payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
 				}
 			}
-		
+
 		}
 
         if ($whType != '') {

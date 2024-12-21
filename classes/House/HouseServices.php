@@ -51,6 +51,7 @@ use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 
 
+
 /**
  * HouseServices.php
  *
@@ -190,6 +191,7 @@ class HouseServices {
         if ($action != 'hf') {
         	$mkup .= HTMLContainer::generateMarkup('div',
                 VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('class' => 'hhk-flex'));
+
         }
 
 
@@ -778,6 +780,7 @@ class HouseServices {
         $uS = Session::getInstance();
         $payResult = NULL;
         $invoice = NULL;
+        $invoice = NULL;
 
         if (is_null($paymentManager->pmp)) {
             return $payResult;
@@ -806,7 +809,7 @@ class HouseServices {
         }
 
         //get resvId
-        $resvId = ($visit instanceof Reservation_1 ? $visit->getIdReservation():0);
+        $resvId = ($visit instanceof Reservation_1 ? $visit->getIdReservation() : 0);
 
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 

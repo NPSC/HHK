@@ -232,7 +232,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
         $badAddresses = 0;
         $deparatureDT = new \DateTime();
-        
+
         if($this->params["after"] == "beforecheckout"){
             $deparatureDT->add(new \DateInterval('P' . $delayDays . 'D'));
         } else {

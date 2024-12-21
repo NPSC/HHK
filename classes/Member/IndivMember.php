@@ -894,7 +894,7 @@ ORDER BY `List_Order`");
         }
 
         //CRM External Id
-        if ($uS->ContactManager != '' && isset($post[$idPrefix . 'txtExternalId'])) {
+        if ($uS->ContactManager != '' && isset($post[$idPrefix . 'txtExternalId']) && $n->External_Id->getNewVal() != AbstractExportManager::EXCLUDE_TERM && $n->External_Id->getStoredVal() != AbstractExportManager::EXCLUDE_TERM) {
             $n->External_Id->setNewVal(filter_var($post[$idPrefix.'txtExternalId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 

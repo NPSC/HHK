@@ -175,24 +175,6 @@ try {
 
             break;
 
-        case 'soql':
-
-            $arguments = [
-                's' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                'f' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                'w' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            ];
-
-            $post = filter_input_array(INPUT_POST, $arguments);
-
-            try {
-                $events = ['data' => $transfer->searchQuery($post['s'], $post['f'], $post['w'])];
-            } catch (Exception $ex) {
-                $events = ["error" => "Search Error: " . $ex->getMessage()];
-            }
-
-            break;
-
         case 'listCustFields':
 
             try {
@@ -229,18 +211,6 @@ try {
 
             $events['data'] = $transfer->getMember($dbh, $post);
             $events['accountId'] = $transfer->getAccountId();
-
-            break;
-
-        case 'getRelat':
-
-            $arguments = [
-                'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            ];
-
-            $post = filter_input_array(INPUT_POST, $arguments);
-
-            $events['data'] = $transfer->getRelationship($post['accountId']);
 
             break;
 

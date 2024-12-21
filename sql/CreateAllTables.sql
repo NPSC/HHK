@@ -1095,6 +1095,7 @@ CREATE TABLE if not exists `name_guest` (
   `Legal_Custody` int(11) NOT NULL DEFAULT '0',
   `Relationship_Code` varchar(5) NOT NULL DEFAULT '',
   `Type` varchar(45) NOT NULL DEFAULT '',
+  `External_Id` varchar(45) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1922,6 +1923,20 @@ CREATE TABLE if not exists `secondary_unit_desig` (
 
 
 -- -----------------------------------------------------
+-- Table `sf_type_map`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `sf_type_map` (
+  `idSf_type_map` INT NOT NULL AUTO_INCREMENT,
+  `List_Name` VARCHAR(45) NOT NULL DEFAULT '',
+  `SF_Type_Code` VARCHAR(45) NULL DEFAULT '',
+  `SF_Type_Name` VARCHAR(45) NULL DEFAULT '',
+  `HHK_Type_Code` VARCHAR(45) NULL DEFAULT '',
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idSf_type_map`)
+  ) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `ssotoken`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `ssotoken` (
@@ -2363,7 +2378,7 @@ ALTER TABLE `activity`
 ALTER TABLE `campaign`
 	ADD UNIQUE KEY IF NOT EXISTS `Campaign_Code_UNIQUE` (`Campaign_Code`);
 
-ALTER TABLE `checklist_item` 
+ALTER TABLE `checklist_item`
 ADD UNIQUE INDEX IF NOT EXISTS `Unique_Checklist_Item` (`Entity_Id` ASC, `GL_TableName` ASC, `GL_Code` ASC);
 
 

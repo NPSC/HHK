@@ -16,7 +16,6 @@ use HHK\sec\Session;
  */
 abstract class AbstractExportManager {
 
-    protected $webService;
     protected $gatewayId;
     protected $userId;
     protected $password;
@@ -219,14 +218,14 @@ abstract class AbstractExportManager {
         $uS = Session::getInstance();
         $upd = 0;
 
-        if ($idName > 0) {
+        if ($idName > 0 && $externalId != '') {
             $nameRs = new NameRS();
             $nameRs->idName->setStoredVal($idName);
-            $rows = EditRS::select($dbh, $nameRs, array($nameRs->idName));
+            $rows = EditRS::select($dbh, $nameRs, [$nameRs->idName]);
             EditRS::loadRow($rows[0], $nameRs);
 
             $nameRs->External_Id->setNewVal($externalId);
-            $upd = EditRS::update($dbh, $nameRs, array($nameRs->idName));
+            $upd = EditRS::update($dbh, $nameRs, [$nameRs->idName]);
 
             if ($upd > 0) {
                 NameLog::writeUpdate($dbh, $nameRs, $nameRs->idName->getStoredVal(), $uS->username);
