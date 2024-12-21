@@ -30,7 +30,7 @@ class SalesforceManager extends AbstractExportManager {
      * website:  https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_graph_limits.htm
      */
 
-    const MAX_PAYLOAD_GRAPHS = 75;
+    const MAX_PAYLOAD_GRAPHS = 70;
     const MAX_NODES = 500;
     const GRAPH_DEPTH = 15;
     const MAX_DIFF_NODES = 15;
