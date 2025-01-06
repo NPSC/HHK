@@ -502,6 +502,10 @@ $ckdate";
         if (filter_has_var(INPUT_POST, 'selAssoc')) {
             $reqs = $_POST['selAssoc'];
             if (is_array($reqs)) {
+                if(count($reqs) > 2 && in_array("", $reqs)){
+                    $k = array_search("", $reqs);
+                    unset($reqs[$k]);
+                }
                 $this->selectedAssocs = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
@@ -509,6 +513,10 @@ $ckdate";
         if (filter_has_var(INPUT_POST, 'selHospital')) {
             $reqs = $_POST['selHospital'];
             if (is_array($reqs)) {
+                if(count($reqs) > 2 && in_array("", $reqs)){
+                    $k = array_search("", $reqs);
+                    unset($reqs[$k]);
+                }
                 $this->selectedHosptials = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
