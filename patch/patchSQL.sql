@@ -49,7 +49,8 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Desc
 
 call new_webpage('guestoperations', 0, '', 0, 'h', '', '', 'c', '', '', current_timestamp(), 'g');
 
-alter table notification_log
-modify column if not exists `Timestamp` timestamp(5) NOT NULL DEFAULT CURRENT_TIMESTAMP(5);
+ALTER TABLE `notification_log`
+MODIFY COLUMN IF EXISTS `Timestamp` timestamp(5) NOT NULL DEFAULT CURRENT_TIMESTAMP(5);
+
 ALTER TABLE `name_guest`
 ADD COLUMN IF NOT EXISTS `External_Id` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Type`;

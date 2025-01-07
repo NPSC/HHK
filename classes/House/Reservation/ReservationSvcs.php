@@ -222,7 +222,11 @@ class ReservationSvcs
                     $mail = new HHKMailer($dbh);
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
-                    $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
+                    
+                    $tos = explode(',', $emailAddr);
+                    foreach ($tos as $k=>$to) {
+                        $mail->addAddress(filter_var($to, FILTER_SANITIZE_EMAIL)); // Add a recipient
+                    }
 
                     $ccs = explode(',', $ccEmailAddr);
                     foreach ($ccs as $cc){
@@ -260,14 +264,9 @@ class ReservationSvcs
 
                     }
                     
-                    $noteText .= ' sent to ' . $emailAddr .  " with subject: " . $docs[$docCode]["subjectLine"];
+                    $noteText .= ' sent to ' . implode(", ", $mail->getToString()) .  " with subject: " . $docs[$docCode]["subjectLine"];
                     if($ccEmailAddr != '' && count($ccs) > 0){
-                        $noteText .= '; CC\'d to ';
-                        foreach ($ccs as $cc){
-                            if($cc != ''){
-                                $noteText .= $cc . ' ';
-                            }
-                        }
+                        $noteText .= '; CC\'d to ' . implode(", ", $mail->getCCString());
                     }
                     if ($notes != '') { // add special note if any are present
                         $noteText .= ' with a ' . Labels::getString("Referral", "specialNoteConfEmail", "Special Note") . ': ' . str_replace('\n', ' ', $notes);
