@@ -61,7 +61,7 @@ class RelationCompositeSubresponse extends AbstractCompositeSubresponse {
         $idName = $this->getIdName();
         $externalId = $this->subresponse->getBody_id();
 
-        if ($idName > 0 && $externalId != '') {
+        if ($idName > 0 && $externalId != '' && $externalId !== null) {
             $nameRs = new Name_GuestRS();
             $nameRs->idName->setStoredVal($idName);
             $nameRs->idPsg->setStoredVal($this->idPsg);
