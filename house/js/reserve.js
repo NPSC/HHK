@@ -215,7 +215,7 @@ $(document).ready(function() {
 
 						$('#spnStatus').text('Deleted');
                     }
-                     
+
                     if (data.xfer || data.inctx || data.deluxehpf) {
 				        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
 				        //return;
@@ -247,13 +247,24 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
 
-            var formData = new FormData($('#form1')[0]);
+            const formData = new FormData($('#form1')[0]);
+
+            // Remove unchanged entries
+            for (const pair of formData.entries()) {
+
+                const el = document.querySelector("#divfamDetail input[name='" + pair[0] + "']");
+
+                if (el && pair[1] === el.defaultValue) {
+                    formData.delete(pair[0]);
+                }
+
+            }
 
             formData.append('cmd', 'saveResv');
             formData.append('idPsg', pageManager.getIdPsg());
             formData.append('prePayment', pageManager.getPrePaymtAmt());
             formData.append('rid', pageManager.getIdResv());
-            
+
             //diagnosis
             let txtDiagnosis = $('#txtDiagnosis').val();
             if (typeof txtDiagnosis === "string") {
