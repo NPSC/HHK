@@ -61,6 +61,7 @@ class SalesforceManager extends AbstractExportManager {
     protected $webService;
 
     protected $uniqueGuests;
+    protected $trace;
 
     /**
      * {@inheritDoc}
@@ -511,11 +512,12 @@ class SalesforceManager extends AbstractExportManager {
      * @param bool $linkRelatives
      * @return array
      */
-    public function upsertMembers(\PDO $dbh, array $sourceIds, $linkRelatives = true) {
+    public function upsertMembers(\PDO $dbh, array $sourceIds, $trace, $linkRelatives = true) {
 
         $this->uniqueGuests = [];   // Keep track to not repeat a guest upsert into multiple psgs?
         $this->transferResult = [];
         $this->errorResult = [];
+        $this->trace = $trace == 'true' ? TRUE : FALSE;
 
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
@@ -662,7 +664,7 @@ class SalesforceManager extends AbstractExportManager {
 
             // remove extra fields
             foreach ($g as $k => $w) {
-                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'idPsg' && $k != 'Legal_Custody' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
+                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'idPsg' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
                     $filteredRow[$k] = $w;
                 }
             }
@@ -691,11 +693,11 @@ class SalesforceManager extends AbstractExportManager {
 
                     // build the upsert details file
                     $relationRow['npe4__Contact__c'] = "@{refContact_" . $g['HHK_idName__c'] . $additnl . ".id}";
-                    $relationRow['npe4__RelatedContact__c'] = "@{refContact_" . $idPatient . $additnl . ".id}";
+                    $relationRow['npe4__RelatedContact__c'] = "@{refContact_$idPatient$additnl.id}";
                     $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
                     $relationRow['npe4__Type__c'] = $g['SF_Rel_Type'];
                     //$relationRow['Is_an_Emergency_Contact__c']      // t/f
-                    $relationRow['Legal_Custody__c'] = ($g['Legal_Custody'] == 0 ? 'false' : 'true');       // t/f
+                    $relationRow['Legal_Custody__c'] = $g['Legal_Custody'] == 0 ? 'false' : 'true';       // t/f
 
                     $subrequests[] = [
                         "method" => "POST",

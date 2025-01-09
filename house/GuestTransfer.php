@@ -850,6 +850,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
                 <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
+                <input id="cbTrace" type="checkbox" style="margin-left:2em;"/>
         	</div>
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
@@ -860,6 +861,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
 	    <input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
         <input id="cmsTitle" type="hidden" value="<?php echo $CmsManager->getServiceTitle(); ?>"/>
+        <input id="username" type="hidden" value="<?php echo $uS->username; ?>" />
 
     </body>
 </html>

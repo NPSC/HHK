@@ -1,13 +1,14 @@
 // guestTransfer.js
 //
 var stopTransfer,
-        $visitButton,
-        $memberButton,
-        $upsertButton,
-        $psgCBs,
-        $excCBs,
-        $relSels,
-        cmsTitle;
+    $visitButton,
+    $memberButton,
+    $upsertButton,
+    $psgCBs,
+    $excCBs,
+    $relSels,
+    cmsTitle,
+    username;
 
 
 function updateLocal(id) {
@@ -44,9 +45,10 @@ function updateLocal(id) {
     });
 }
 
-function upsert(transferIds) {
+function upsert(transferIds, trace) {
     var parms = {
         cmd: 'upsert',
+        trace: trace,
         ids: transferIds
     };
 
@@ -743,6 +745,7 @@ $(document).ready(function () {
     var end = $('#hend').val();
     var dateFormat = $('#hdateFormat').val();
     cmsTitle = $('#cmsTitle').val();
+    username = $('#username').val();
 
     $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits, #btnGetKey, #btnRequest').button();
 
@@ -757,6 +760,13 @@ $(document).ready(function () {
         $('#btnPay').hide();
         $('#btnVisits').hide();
         $('#divMembers').empty();
+
+        // Check to show server trace.
+        const $cbTrace = $('#cbTrace');
+        $cbTrace.hide();
+        if (username == 'npscuser') {
+            $cbTrace.show();
+        }
 
         $upsertButton = $('#TxButton');
 
@@ -785,7 +795,7 @@ $(document).ready(function () {
                 }
             });
 
-            upsert(ids);
+            upsert(ids, $cbTrace.prop('checked'));
         });
 
     }
@@ -949,7 +959,7 @@ $(document).ready(function () {
     $('#btnGetKey').click(function () {
         kmd.dialog('open');
     });
-    
+
     $('#hhkdgpallple').button().click(function () {
         $('.hhk-tfmem').each(function (index) {
             $(this).prop('checked', true);

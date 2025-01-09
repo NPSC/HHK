@@ -50,13 +50,14 @@ try {
                     'filter' => FILTER_SANITIZE_NUMBER_INT,
                     'flags' => FILTER_FORCE_ARRAY,
                 ],
+                'trace' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             ];
             $post = filter_input_array(INPUT_POST, $rags);
 
             if (isset($post['ids']) && count($post['ids']) > 0) {
 
                 try {
-                    $events = $transfer->upsertMembers($dbh, $post['ids']);
+                    $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace']);
 
                 } catch (Exception $ex) {
                     $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
@@ -273,7 +274,7 @@ try {
 
 
 if (is_array($events)) {
-    echo (json_encode($events));
+    echo json_encode($events);
 } else {
     echo $events;
 }
