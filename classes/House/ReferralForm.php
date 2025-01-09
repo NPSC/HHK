@@ -1009,7 +1009,9 @@ class ReferralForm {
 	        'county'=>  $data->getAddressCounty(),
 	        'state' => $data->getAddressState(),
 	        'country' => $data->getAddressCountry(),
-	        'zip' => $data->getAddressZip()));
+	        'zip' => $data->getAddressZip(),
+			'forceSave' => true
+		));
 
 	    $post['rbPrefMail'] = AddressPurpose::Home;
 	    $post['adr'] = $adr1;
