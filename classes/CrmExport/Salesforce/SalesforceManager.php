@@ -4,6 +4,7 @@ namespace HHK\CrmExport\Salesforce;
 
 use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\Salesforce\Subresponse\AbstractCompositeSubresponse;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\RelLinkType;
 use HHK\Tables\CmsGatewayRS;
@@ -62,6 +63,7 @@ class SalesforceManager extends AbstractExportManager {
 
     protected $uniqueGuests;
     protected $trace;
+    protected $traceData;
 
     /**
      * {@inheritDoc}
@@ -518,6 +520,8 @@ class SalesforceManager extends AbstractExportManager {
         $this->transferResult = [];
         $this->errorResult = [];
         $this->trace = $trace == 'true' ? TRUE : FALSE;
+        $this->traceData = '';
+
 
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
@@ -565,6 +569,10 @@ class SalesforceManager extends AbstractExportManager {
 
         // Create an HTML table containing the results
         $result['table'] = CreateMarkupFromDB::generateHTML_Table($this->transferResult, 'tblrpt');
+
+        if ($this->trace) {
+            $result['trace'] = $this->traceData;
+        }
 
         return $result;
     }
@@ -618,9 +626,19 @@ class SalesforceManager extends AbstractExportManager {
                 "graphs" => $psgGraphs,
             ];
 
+            // Show request trace?
+            if ($this->trace) {
+                $this->traceData .= "<br><br>request-" . \json_encode($body, JSON_PRETTY_PRINT);
+            }
+
             // Transfer this package to SF API
             try {
                 $graphsResult = $this->webService->postUrl("{$this->endPoint}composite/graph", $body);
+
+                // Trace response
+                if ($this->trace) {
+                    $this->traceData .= "<br><br>response-" .\json_encode($graphsResult, JSON_PRETTY_PRINT);
+                }
 
                 $this->processGraphsResult($dbh, $graphsResult, $rows);
 
@@ -664,7 +682,7 @@ class SalesforceManager extends AbstractExportManager {
 
             // remove extra fields
             foreach ($g as $k => $w) {
-                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'idPsg' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
+                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'Legal_Custody' && $k != 'idPsg' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
                     $filteredRow[$k] = $w;
                 }
             }

@@ -81,6 +81,10 @@ function upsert(transferIds, trace) {
             $('#divMembers').prepend($('<p style="font-weight: bold;">Transfer Results</p>'));
         }
 
+        if (data.trace) {
+            $('#divMembers').append(data.trace);
+        }
+
     });
 }
 
