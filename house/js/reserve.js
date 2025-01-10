@@ -247,18 +247,21 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
 
-            const formData = new FormData($('#form1')[0]);
+            // Start with the reservation form data.
+            const formData = new FormData($('#formResev')[0]);
 
-            // Remove unchanged entries
-            for (const pair of formData.entries()) {
+            // add the dates section
+            $('div#datesSection').find('input').each(function () {
+                formData.append($(this).attr('name'), $(this).val());
+            });
 
-                const el = document.querySelector("#divfamDetail input[name='" + pair[0] + "']");
-
-                if (el && pair[1] === el.defaultValue) {
-                    formData.delete(pair[0]);
+            // Add the family section
+            const familyData = document.querySelectorAll('div#famSection input');
+            familyData.forEach(element => {
+                if (element.defaultValue !== element.value) {
+                    formData.append(element.name, element.value);
                 }
-
-            }
+            });
 
             formData.append('cmd', 'saveResv');
             formData.append('idPsg', pageManager.getIdPsg());

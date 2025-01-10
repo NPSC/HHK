@@ -295,9 +295,9 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="guestSearch" class="mb-3 hhk-panel row" style="margin-left:10px; margin-right:10px;">
                 <?php echo $mk1; ?>
             </div>
-            <form action="Reserve.php" method="post"  id="form1" autocomplete="off">
-                <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"></div>
-                <div id="famSection" style="font-size: .9em; display:none; max-width: 100%; margin-bottom:.5em;" class="ui-widget hhk-visitdialog mb-3"></div>
+            <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"></div>
+            <div id="famSection" style="font-size: .9em; display:none; max-width: 100%; margin-bottom:.5em;" class="ui-widget hhk-visitdialog mb-3"></div>
+            <form action="Reserve.php" method="post"  id="formResev" autocomplete="off">
                 <?php if ($uS->UseIncidentReports) { ?>
 	            <div id="incidentsSection" style="font-size: .9em; display: none; max-width: 100%" class="ui-widget hhk-visitdialog mb-3">
 		            <div style="padding:2px; cursor:pointer;" class="ui-widget-header ui-state-default ui-corner-top hhk-incidentHdr">
@@ -341,7 +341,7 @@ $resvObjEncoded = json_encode($resvAr);
                 </table>
             </div>
 
-        </>
+        </f>
         <form name="xform" id="xform" method="post"></form>
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size: 0.9em;">
             <form id="frmConfirm" action="Reserve.php" method="post"></form>
