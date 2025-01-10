@@ -256,11 +256,8 @@ $(document).ready(function() {
             });
 
             // Add the family section
-            const familyData = document.querySelectorAll('div#famSection input');
-            familyData.forEach(element => {
-                if (element.defaultValue !== element.value) {
-                    formData.append(element.name, element.value);
-                }
+            $('div#famSection').find('input').each(function () {
+                formData.append($(this).attr('name'), $(this).val());
             });
 
             formData.append('cmd', 'saveResv');
