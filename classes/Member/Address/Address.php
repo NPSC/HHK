@@ -608,7 +608,7 @@ class Address extends AbstractContactPoint{
             }
         }
 
-        if($p["forceSave"] === true){
+        if(isset($p["forceSave"]) && $p["forceSave"] === true){
             $addrComplete = true;
         }
 
