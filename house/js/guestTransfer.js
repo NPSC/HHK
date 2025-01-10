@@ -734,7 +734,7 @@ function getRemote(item, source) {
                     updteRemote.remove();
                 }
 
-                $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote)).show();
+                $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>')).show();
                 $('#txtSearch').val('');
             }
         }
