@@ -1740,7 +1740,19 @@ if ($uS->CoTod) {
 ?>
 <!DOCTYPE html>
 <html>
-
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title><?php echo $wInit->pageTitle; ?></title>
+        <?php echo JQ_UI_CSS; ?>
+        <?php echo HOUSE_CSS; ?>
+        <?php echo JQ_DT_CSS ?>
+        <?php echo NOTY_CSS; ?>
+        <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
+        <?php echo CSSVARS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
@@ -1770,38 +1782,6 @@ if ($uS->CoTod) {
                 }
             }
         ?>
-
-    <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo VISIT_INTERVAL_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
-    <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {
-        echo INS_EMBED_JS;
-    } ?>
-    <?php
-    if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
-        if ($uS->mode == Mode::Live) {
-            echo DELUXE_EMBED_JS;
-        } else {
-            echo DELUXE_SANDBOX_EMBED_JS;
-        }
-    }
-    ?>
 
 </head>
 
