@@ -442,7 +442,7 @@ $isPatient = false;
 // Heading member name text
 if ($name->isNew() && $name->get_idName() == 0) {
 
-    $niceName = "New ".$labels->getString('MemberType', 'guest', 'Guest');
+    $niceName = "New ".$labels->getString('MemberType', 'guest', 'Guest') .  " for " . $labels->getString('MemberType', 'patient', 'Patient') . ": " . $psg->getPatientName($dbh);
 
 } else {
 
@@ -677,7 +677,7 @@ if($uS->ShowGuestPhoto){
 	$guestPhotoMarkup = showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
 }
 
-$guestName = "<span style='font-size:2em;'>$niceName</span>" . $patient->getRoleMember()->get_fullName();
+$guestName = "<span style='font-size:2em;'>$niceName</span>";
 
 if ($name->getNoReturnDemog() != '') {
     $guestName = "<span style='font-size:2em;color:red;'>$niceName - No Return: " . $uS->nameLookups['NoReturnReason'][$name->getNoReturnDemog()][1] . "</span>";
