@@ -41,6 +41,7 @@ function resvManager(initData, options) {
     var rooms = [];
     var people = new Items();
     var addrs = new Items();
+    var emergContacts = new Items();
     var familySection = new FamilySection($('#famSection'));
     var resvSection = new ResvSection($('#resvSection'));
     var hospSection = new HospitalSection($('#hospitalSection'));
@@ -700,16 +701,14 @@ function resvManager(initData, options) {
             var opts = 0;
             var optTexts = [];
 
-            for (var p in addrs.list()) {
+            for (var p in emergContacts.list()) {
 
-                if (addrs.list()[p].Address_1 != '' || addrs.list()[p].Postal_Code != '') {
+                if (emergContacts.list()[p].First != '' || emergContacts.list()[p].Last != '') {
 
                     var notFound = true,
-                            optText = addrs.list()[p].Address_1 + ', '
-                            + (addrs.list()[p].Address_2 == '' ? '' : addrs.list()[p].Address_2 + ', ')
-                            + addrs.list()[p].City + ', '
-                            + addrs.list()[p].State_Province + '  '
-                            + addrs.list()[p].Postal_Code;
+                            optText = emergContacts.list()[p].First + ' ' + emergContacts.list()[p].Last + " " +
+                            emergContacts.list()[p].phone
+                            ;
 
                     for (var i = 0; i <= optTexts.length; i++) {
                         if (optTexts[i] == optText) {
@@ -734,11 +733,11 @@ function resvManager(initData, options) {
                 $sel.prop('size', opts + 1).prepend($('<option value="0" >(Cancel)</option>'));
 
                 $sel.change(function () {
-                    setAddress(prefix, $(this).val());
+                    setEmergContact(prefix, $(this).val());
                 });
 
                 var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker hhk-addrPickerPanel"/>')
-                        .append($('<p class="hhk-addrPickerPanel">Choose an Address: </p>'))
+                        .append($('<p class="hhk-addrPickerPanel">Choose an Emergency Contact: </p>'))
                         .append($sel)
                         .appendTo($('body'));
 
@@ -758,42 +757,38 @@ function resvManager(initData, options) {
                 return;
             }
 
-            $('#' + prefix + 'adraddress1' + addrPurpose).val(addrs.list()[p].Address_1);
-            $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[p].Address_2);
-            $('#' + prefix + 'adrcity' + addrPurpose).val(addrs.list()[p].City);
-            $('#' + prefix + 'adrcounty' + addrPurpose).val(addrs.list()[p].County);
-            $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[p].Postal_Code);
+            $('#' + prefix + 'txtEmrgFirst').val(emergContacts.list()[p].First);
+            $('#' + prefix + 'txtEmrgLast').val(emergContacts.list()[p].Last);
+            $('#' + prefix + 'txtEmrgPhn').val(emergContacts.list()[p].phone);
+            $('#' + prefix + 'txtEmrgAlt').val(emergContacts.list()[p].altPhone);
+            $('#' + prefix + 'selEmrgRel').val(emergContacts.list()[p].relation).change();
 
-            if ($('#' + prefix + 'adrcountry' + addrPurpose).val() != addrs.list()[p].Country_Code) {
-                $('#' + prefix + 'adrcountry' + addrPurpose).val(addrs.list()[p].Country_Code).change();
-            }
-
-            $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
-
-
-            // Clear the incomplete address checkbox if the address is valid.
-            if (isAddressComplete(prefix) && $('#' + prefix + 'incomplete').prop('checked') === true) {
-                $('#' + prefix + 'incomplete').prop('checked', false);
-            }
-
-            // Update the address flag
-            setAddrFlag($('#' + prefix + 'liaddrflag'));
             $('#divSelAddr').remove();
 
         }
 
         function eraseEmergContact(prefix) {
 
-            $('#' + prefix + 'adraddress1' + addrPurpose).val('');
-            $('#' + prefix + 'adraddress2' + addrPurpose).val('');
-            $('#' + prefix + 'adrcity' + addrPurpose).val('');
-            $('#' + prefix + 'adrcounty' + addrPurpose).val('');
-            $('#' + prefix + 'adrstate' + addrPurpose).val('');
-            $('#' + prefix + 'adrcountry' + addrPurpose).val('');
-            $('#' + prefix + 'adrzip' + addrPurpose).val('');
+            $('#' + prefix + 'txtEmrgFirst').val("");
+            $('#' + prefix + 'txtEmrgLast').val("");
+            $('#' + prefix + 'txtEmrgPhn').val("");
+            $('#' + prefix + 'txtEmrgAlt').val("");
+            $('#' + prefix + 'selEmrgRel').val("");
 
-            setAddrFlag($('#' + prefix + 'liaddrflag'));
 
+        }
+
+        function loadEmergContact(prefix) {
+            if (prefix === undefined) {
+                return;
+            }
+
+            emergContacts.list()[prefix].First = $('#' + prefix + 'txtEmrgFirst').val();
+            emergContacts.list()[prefix].Last = $('#' + prefix + 'txtEmrgLast').val();
+            emergContacts.list()[prefix].phone = $('#' + prefix + 'txtEmrgPhn').val();
+            emergContacts.list()[prefix].altPhone = $('#' + prefix + 'txtEmrgAlt').val();
+            emergContacts.list()[prefix].relation = $('#' + prefix + 'selEmrgRel').val();
+            
         }
 
         function initFamilyTable(data) {
@@ -910,6 +905,7 @@ function resvManager(initData, options) {
             // Add new people to the lists.
             people.makeList(data.famSection.mem, 'pref');
             addrs.makeList(data.famSection.addrs, 'pref');
+            emergContacts.makeList(data.famSection.emergContacts, 'pref');
 
             // add patient to the UI
             if (data.famSection.tblBody['1'] !== undefined) {
@@ -1041,6 +1037,7 @@ function resvManager(initData, options) {
                 // Load the addresses into the addrs object if changed.
                 $('#' + divFamDetailId).on('change', '.hhk-copy-target', function () {
                     loadAddress($(this).data('pref'));
+                    loadEmergContact($(this).data('pref'));
                 });
 
                 // Copy Address

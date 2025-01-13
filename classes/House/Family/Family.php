@@ -288,6 +288,28 @@ class Family {
         return $addrs;
     }
 
+    protected function getEmergContacts(\PDO $dbh, $roles) {
+
+        $addrs = array();
+
+        foreach ($roles as $role) {
+            $emergObj = $role->getEmergContactObj($dbh);
+            $emerg = [];
+
+            $emerg['First'] = $emergObj->getEcNameFirst();
+            $emerg['Last'] = $emergObj->getEcNameLast();
+            $emerg['phone'] = $emergObj->getEcPhone();
+            $emerg['altPhone'] = $emergObj->getEcAltPhone();
+            $emerg['relation'] = $emergObj->getEcRelationship();
+            $emerg['pref'] = $role->getRoleMember()->getIdPrefix();
+
+            $emergs[$role->getRoleMember()->getIdPrefix()] = $emerg;
+
+        }
+
+        return $emergs;
+    }
+
     public function createAddPersonMu(\PDO $dbh, ReserveData $rData) {
 
         $addPerson = array();
@@ -493,7 +515,7 @@ class Family {
             HTMLContainer::generateMarkup('span', $familyName . ' Family')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
+        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'emergContacts'=>$this->getEmergContacts($dbh, $this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
 
     }
 
