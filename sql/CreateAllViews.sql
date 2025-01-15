@@ -1505,8 +1505,7 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
                     `np`.`Phone_Extension`)
         END AS `Phone`,
         IFNULL(`ne`.`Email`, '') AS `Email`,
-        IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%m-%d-%Y'),
-                '') AS `Birthdate`,
+        IFNULL(DATE(`n`.`BirthDate`), '') AS `Birthdate`,
         IFNULL(`gn`.`Description`, '') AS `No Return`,
         IFNULL(`s`.`Span_Start_Date`, '') AS `Arrival`,
         IFNULL(`s`.`Span_End_Date`, '') AS `Departure`,
