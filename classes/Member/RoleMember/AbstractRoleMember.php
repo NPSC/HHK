@@ -194,10 +194,12 @@ abstract class AbstractRoleMember extends IndivMember {
         // Last Name
         $attrs['name'] = $this->getIdPrefix().'txtLastName';
         $attrs['class'] = 'hhk-lastname';
+        $attrs['required'] = 'required';
         unset($attrs['size']);
         $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Last->getstoredVal(), $attrs));
 
         // Suffix
+        unset($attrs['required']);
         $attrs['name'] = $this->getIdPrefix().'selSuffix';
         unset($attrs['class']);
         $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
@@ -256,7 +258,7 @@ abstract class AbstractRoleMember extends IndivMember {
 
             // Patient relationship
             $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                     HTMLSelector::doOptionsMkup($parray, $patientRelationship, $allowEmpty), array('name'=>$this->getIdPrefix() . 'selPatRel', 'data-prefix'=>$this->getIdPrefix(), 'class'=>'patientRelch')));
+                     HTMLSelector::doOptionsMkup($parray, $patientRelationship, $allowEmpty), array('name'=>$this->getIdPrefix() . 'selPatRel', 'data-prefix'=>$this->getIdPrefix(), 'class'=>'patientRelch', 'required'=>'required')));
         }
 
         return $tr;

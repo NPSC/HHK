@@ -125,7 +125,7 @@ body {
 	padding: 3px 1em 3px .4em;
 }
 
-.ui-autocomplete .autocompleteNoReturn {
+.ui-autocomplete .autocompleteNoReturn, strong.noReturn {
 	background-color: red;
 	border-radius: 0.5em;
 	color: white;
@@ -133,7 +133,7 @@ body {
 	margin-left: 0.5em;
 }
 
-.ui-autocomplete .autocompleteMemStatus {
+.ui-autocomplete .autocompleteMemStatus, span.deceased {
 	background-color: gray;
 	border-radius: 0.5em;
 	color: white;
@@ -175,7 +175,7 @@ body {
 }
   
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
-.hhk-loading { background: white url('../../images/ui-anim_basic_16x16.gif') left center no-repeat; }
+ /*.hhk-loading { background: white url('../../images/ui-anim_basic_16x16.gif') left center no-repeat; } */
 .hhk-loading-btn { background: transparent url('../../images/ui-anim_basic_16x16.gif') center center no-repeat; width: 16px; height: 16px;}
 .hhk-icon-redLight {
     width: 16px;
@@ -960,13 +960,20 @@ table.dataTable tbody td {
 	padding: 1em;
 }
 
-#viewMsgsDialog.loading, #viewMsgsDialog .loading, #stmtDiv .loading {
-	background: url(../../images/ui-anim_basic_16x16.gif);
-	background-repeat: no-repeat;
-	background-position: center;
+#viewMsgsDialog.loading, #viewMsgsDialog .loading, #stmtDiv .loading, .hhk-loading, .hhk-loading:hover {
+	background-image: url(../../images/ui-anim_basic_16x16.gif) !important;
+	background-repeat: no-repeat !important;
+	background-position: center !important;
+	min-height: 4em;
+	min-width: 4em;
 }
-#viewMsgsDialog.loading *, #viewMsgsDialog .loading *, #stmtDiv .loading * {
+#viewMsgsDialog.loading *, #viewMsgsDialog .loading *, #stmtDiv .loading *, .hhk-loading * {
 	display: none !important;
+}
+
+input.ui-button.hhk-loading{
+	min-height: 0;
+	min-width: 0
 }
 
 #viewMsgsDialog #msgsTabContent .msgTitle{
@@ -1219,4 +1226,18 @@ input:checked + .hhk-slider:before {
 #deluxeDialog input:disabled{
 	background-color: #e9ecef;
     opacity: 1;
+}
+
+#tblFamily .hhk-activeGuestEdit input:not([type=checkbox]), #tblFamily .hhk-activeGuestEdit select {
+	border: none;
+	color: black;
+	opacity: 1;
+	background: none;
+	appearance: none;
+}
+
+#tblFamily .hhk-activeGuestEdit a {
+	border: 1px solid #fad42e;
+    background: #fbec88;
+    color: #363636;
 }

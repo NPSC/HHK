@@ -364,6 +364,8 @@ class Family {
             $guestUserData = $formUserData['guests'];
         }
 
+        $guestEditMkup = boolval(filter_input(INPUT_POST,'guestEditMkup', FILTER_VALIDATE_BOOLEAN));
+
         $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
                     ,  HTMLContainer::generateMarkup('li',
                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-1-s'))
@@ -374,9 +376,11 @@ class Family {
 
         // Name Header
         $th = HTMLContainer::generateMarkup('tr',
-                HTMLTable::makeTh('Staying')
-                . HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuestAbrev', 'PG'), array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')))
+                ($guestEditMkup ? HTMLTable::makeTh('Remove') : "") .
+                HTMLTable::makeTh(($guestEditMkup ? 'Id' : 'Staying'))
+                . ($guestEditMkup ? "" : HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuestAbrev', 'PG'), array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'))))
                 . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
+                . ($guestEditMkup ? HTMLTable::makeTh('Guardian') : "")
                 . HTMLTable::makeTh('Phone')
                 . HTMLTable::makeTh($AdrCopyDownIcon));
 
@@ -390,7 +394,7 @@ class Family {
 
             $trs[0] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
-                , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
+                , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass . ($rData->getId() == $role->getIdName() ? " hhk-activeGuestEdit" : "")));
 
             if ($this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr)) {
 
@@ -404,14 +408,14 @@ class Family {
                     $demoMu .= $this->getDemographicsMarkup($dbh, $role, (isset($patientUserData['demographics']) ? $patientUserData['demographics'] : []));
                 }
 
-                if ($this->showInsurance) {
+                if ($this->showInsurance && $guestEditMkup == false) {
                     // Demographics
                     $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
                 $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap"));
 
-                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'12')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow' . ($rData->getId() == $role->getIdName() ? " hhk-activeGuestEdit" : "")));
             }
         }
 
@@ -448,7 +452,7 @@ class Family {
             $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
-                    , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
+                    , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass . ($rData->getId() == $role->getIdName() ? " hhk-activeGuestEdit" : "")));
 
 
             // Add addresses and demo's
@@ -475,8 +479,8 @@ class Family {
 
                 $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     HTMLTable::makeTd('')
-                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap")), array('colspan'=>'11'))
-                    , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap")), array('colspan'=>'12'))
+                    , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow' . ($rData->getId() == $role->getIdName() ? " hhk-activeGuestEdit" : "")));
             }
         }
 

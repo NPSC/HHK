@@ -67,6 +67,7 @@ function resvManager(initData, options) {
     t.getSpan = getSpan;
     t.setRooms = setRooms;
     t.options = options;
+    
 
 
     function getPrePaymtAmt() {
@@ -281,7 +282,7 @@ function resvManager(initData, options) {
             }
         }
 
-        function addGuest(item, data, term) {
+        function addGuest(item, data, term, options) {
 
             if (item.No_Return !== undefined && item.No_Return !== '') {
                 flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
@@ -308,7 +309,12 @@ function resvManager(initData, options) {
                 gstCoDate: $('#gstCoDate').val(),
                 cmd: 'addResvGuest'
             };
-
+            
+            if(options.guestEditMkup){
+                resv.guestEditMkup = true;
+            }
+console.log(resv);
+console.log(options);
             getReserve(resv);
 
         }
@@ -985,7 +991,7 @@ function resvManager(initData, options) {
 
                 // Add people search
                 createRoleAutoComplete($('#txtPersonSearch'), 3, {cmd: 'guest'}, function (item) {
-                    addGuest(item, data, $('#txtPersonSearch').val());
+                    addGuest(item, data, $('#txtPersonSearch').val(), options);
                 });
 
                 // Emergency Contact search icon hook to emergency contact dialog box
@@ -2345,7 +2351,7 @@ function resvManager(initData, options) {
                 resvId: data.rid
             });
 
-            $(".btnTextGuest").each(function () {
+            $("#famSection .btnTextGuest").each(function () {
                 var guestId = $(this).data("idname");
                 $(this).smsDialog({"guestId":guestId});
             });
@@ -2681,7 +2687,12 @@ function resvManager(initData, options) {
             isCheckin: isCheckin,
             gstDate: sdata.gstDate,
             gstCoDate: sdata.gstCoDate,
-            cmd: sdata.cmd};
+            cmd: sdata.cmd
+        };
+
+        if(sdata.guestEditMkup){
+            parms.guestEditMkup = sdata.guestEditMkup;
+        }
 
         $.post('ws_resv.php', parms, function (data) {
 

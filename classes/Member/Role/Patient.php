@@ -75,13 +75,21 @@ class Patient extends AbstractRole {
     public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         $uS = Session::getInstance();
-
-        $td = $this->createStayMarkup($mem);
+        
+        $guestEditMkup = boolval(filter_input(INPUT_POST,'guestEditMkup', FILTER_VALIDATE_BOOLEAN));
+        
+        if($guestEditMkup){
+            $td = $this->createIdMarkup($mem);
+            $guardianTd = HTMLTable::makeTd();
+        }else{
+            $td = $this->createStayMarkup($mem);
+            $guardianTd = "";
+        }
 
         // Phone
         $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
 
-        $mu =  $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph;
+        $mu =  $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $guardianTd . $ph;
 
 
         if ($uS->PatientAddr || ($uS->PatientAsGuest && $uS->GuestAddr)) {

@@ -241,12 +241,28 @@ abstract class AbstractRole {
     public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         // Staying button
-        $td = $this->createStayMarkup($mem);
+        $guestEditMkup = boolval(filter_input(INPUT_POST,'guestEditMkup', FILTER_VALIDATE_BOOLEAN));
+        
+        if($guestEditMkup){
+            $td = $this->createIdMarkup($mem);
+
+            if (true == false) {
+                $grd = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbLegalCust['.$this->getIdName().']', 'checked'=>'checked'));
+            } else {
+                $grd = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbLegalCust['.$this->getIdName().']'));
+            }
+            $guardianTd = HTMLTable::makeTd($grd, ['class'=>'align-center']);
+        }else{
+            $td = $this->createStayMarkup($mem);
+            $guardianTd = "";
+        }
+        
+        
 
         // Phone
         $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
 
-        return $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph;
+        return $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $guardianTd . $ph;
 
     }
 
@@ -277,6 +293,43 @@ abstract class AbstractRole {
         }
 
         return $td;
+    }
+
+    public function createIdMarkup(PSGMember $stay) {
+        $td = "";
+
+        if($stay->isPatient() === false){
+            $td = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'delpMem['.$this->getIdName().']'));
+        }
+
+        $idPsg = intval(filter_input(INPUT_POST, "idPsg", FILTER_SANITIZE_NUMBER_INT));
+
+        $link = HTMLContainer::generateMarkup("a", $this->roleMember->get_idName(), ['href'=>"GuestEdit.php?id=".$this->getIdName() . ($idPsg > 0 ? "&psg=" . $idPsg : "")]);
+
+        // Staying button
+        if(isset($this->roleMember) && $this->roleMember->get_status() == MemStatus::Deceased){
+            // Set for deceased
+            $tdContent = HTMLContainer::generateMarkup("div",
+                    $link . 
+                    HTMLContainer::generateMarkup("span", "Deceased", ["class"=>"deceased"])
+                , ['class'=>'hhk-flex justify-content-between']);
+            
+        }else if ($this->getNoReturn() != '') {
+
+            // Set for no return
+            $tdContent = HTMLContainer::generateMarkup("div",
+            $link . 
+                HTMLContainer::generateMarkup("strong", $this->getNoReturn(), ["class"=>"noReturn"])
+            , ['class'=>'hhk-flex justify-content-between']);
+            //$td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()));
+
+        }else{
+            $tdContent = HTMLContainer::generateMarkup("div",
+            $link, ['class'=>'hhk-flex justify-content-between']);
+        }
+
+        return HTMLTable::makeTd($td, ['class'=>'align-center']) . HTMLTable::makeTd($tdContent);
+
     }
 
 

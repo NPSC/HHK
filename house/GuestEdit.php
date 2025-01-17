@@ -3,10 +3,12 @@ use HHK\Checklist;
 use HHK\CreateMarkupFromDB;
 use HHK\Exception\RuntimeException;
 use HHK\History;
+use HHK\House\Family\Family;
 use HHK\House\HouseServices;
 use HHK\House\PSG;
 use HHK\House\Registration;
 use HHK\House\Reservation\Reservation_1;
+use HHK\House\ReserveData\ReserveData;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Vehicle;
 use HHK\HTMLControls\HTMLContainer;
@@ -269,6 +271,14 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
     try {
         // Name
         $msg .= $name->saveChanges($dbh, $_POST);
+
+        //add new person to PSG
+        if($id == 0 && $name->get_idName() > 0 && $psg->getIdPsg() > 0) {
+            $rel = filter_input(INPUT_POST,"selPatRel", FILTER_SANITIZE_SPECIAL_CHARS);
+            $psg->setNewMember($name->get_idName(), $rel);
+            $psg->saveMembers($dbh, $uname);
+        }
+
         $id = $name->get_idName();
 
         // Address
@@ -680,9 +690,9 @@ if($uS->ShowGuestPhoto){
 $guestName = "<span style='font-size:2em;'>$niceName</span>";
 
 if ($name->getNoReturnDemog() != '') {
-    $guestName = "<span style='font-size:2em;color:red;'>$niceName - No Return: " . $uS->nameLookups['NoReturnReason'][$name->getNoReturnDemog()][1] . "</span>";
+    $guestName = "<span style='font-size:2em;'>$niceName</span><strong class='noReturn'>No Return: " . $uS->nameLookups['NoReturnReason'][$name->getNoReturnDemog()][1] . "</strong>";
 } else if ($name->get_status() == MemStatus::Deceased) {
-    $guestName = "<span style='font-size:2em;color:#914A4A;'>$niceName - Deceased</span>";
+    $guestName = "<span style='font-size:2em;'>$niceName</span><span class='deceased'>Deceased</span>";
 }
 
 
@@ -766,6 +776,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
@@ -805,8 +816,8 @@ $uS->guestId = $id;
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-        	<div class="hhk-flex hhk-flex-wrap">
-                <div style="margin-top:5px;">
+        	<div class="hhk-flex hhk-flex-wrap align-items-center">
+                <div class="hhk-flex align-items-center mr-2">
                     <?php echo $guestName; ?>
                 </div>
                 <form autocomplete="off">
@@ -948,7 +959,10 @@ $uS->guestId = $id;
                         <div class="d-xl-none d-flex align-items-center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
                     </div>
                     <div id="vpsg" class="ui-tabs-hide hhk-overflow-x"  style="display:none;">
-                        <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
+                        <div id="divPSGContainer">
+                            <div id="famSection" style="font-size: .9em; display:none; max-width: 100%;" class="ui-widget hhk-visitdialog mb-3"></div>
+                            <?php echo $psgTabMarkup; ?>
+                        </div>
                     </div>
                     <div id="vregister"  class="ui-tabs-hide" style="display:none;">
                         <div id="divRegContainer" class="hhk-flex hhk-flex-wrap"><?php echo $regTabMarkup; ?></div>
@@ -984,7 +998,7 @@ $uS->guestId = $id;
                 <?php } ?>
                 <!-- End of Tabs Control -->
                 <div id="submitButtons" class="ui-corner-all" style="font-size:0.9em;">
-                    <input type="submit" name="btnSubmit" value="Save" id="btnSubmit" />
+                    <input type="submit" name="btnSubmit" value="Save" id="btnSubmit" class="ui-button ui-corner-all ui-widget" />
                 </div>
                 <input type="hidden" name="hdnid" id="hdnid" value="<?php echo $id; ?>" />
                 <input type='hidden' name='hdnpsg' id='hdnpsg' value='<?php echo $idPsg; ?>'/>

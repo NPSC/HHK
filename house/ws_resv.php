@@ -2,6 +2,7 @@
 use HHK\Exception\NotFoundException;
 use HHK\Exception\SmsException;
 use HHK\Exception\ValidationException;
+use HHK\House\Family\Family;
 use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\PSG;
 use HHK\House\Reservation\ActiveReservation;
@@ -63,6 +64,18 @@ $events = [];
 try {
 
     switch ($c) {
+
+    case "getFamily":
+        $idPsg = intval(filter_input(INPUT_POST, "idPsg", FILTER_SANITIZE_NUMBER_INT), 10);
+
+        $rData = new ReserveData();
+        $rData->setIdPsg($idPsg);
+
+        $family = new Family($dbh, $rData);
+        
+        $events = ["famSection"=>$family->createFamilyMarkup($dbh, $rData)];
+
+        break;
 
     case "getResv":
 

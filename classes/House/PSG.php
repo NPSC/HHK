@@ -9,6 +9,7 @@ use HHK\Member\Role\Guest;
 use HHK\sec\{Session, Labels};
 use HHK\SysConst\{NameGuestStatus, RelLinkType, VisitStatus};
 use HHK\SysConst\ChecklistType;
+use HHK\SysConst\MemStatus;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{Name_GuestRS, NameRS};
@@ -180,6 +181,8 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             ng.Relationship_Code,
             ng.Legal_Custody,
             IFNULL(n.Name_Full, '') AS `Name_Full`,
+            n.Member_Status,
+            ifnull(nr.Description, '') as `NoReturn`,
             CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END AS `Preferred_Phone`
         FROM
             name_guest ng
@@ -187,6 +190,10 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             psg p ON ng.idPsg = p.idPsg
                 JOIN
             name n ON n.idName = ng.idName
+                JOIN
+			name_demog nd on n.idName = nd.idName
+				LEFT JOIN
+			gen_lookups nr on nd.No_Return = nr.Code and nr.Table_Name = 'NoReturnReason'
                 LEFT JOIN
             name_phone np ON np.idName = n.idName
                 AND n.Preferred_Phone = np.Phone_Code
@@ -221,6 +228,16 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                 $nme = $r['Name_Full'];
             }
 
+            if($r['Member_Status'] == MemStatus::Deceased || $r['NoReturn'] !== ""){
+                if($r['Member_Status'] == MemStatus::Deceased){
+                    $nme .= '<span class="deceased">Deceased</span>';
+                }
+                if($r['NoReturn'] !== ""){
+                    $nme .= '<strong class="noReturn">' . $r['NoReturn'] . '</strong>';
+                }
+                $nme = HTMLContainer::generateMarkup("div", $nme, ["class"=>'hhk-flex justify-content-between']);
+            }
+
             $mTable->addBodyTr(
                     HTMLTable::makeTd($rem, array('style'=>'text-align:center;'))
                     .HTMLTable::makeTd($ent)
@@ -232,12 +249,22 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         }
 
+        //new member row
+        $mTable->addBodyTr(
+            HTMLTable::makeTd("New")
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup("span", "", ['class'=>'newPSGMemId']))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup("span", "", ['class'=>'newPSGMemName']))
+            .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($relListLessSlf, "", TRUE)))
+            .HTMLTable::makeTd($grd, array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd()
+            , ['class'=>'newPSGMember d-none']);
+
         $newMemMkup = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('span', 'Add people - Name search: ')
             .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
 
         	, array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
-
+            $newMemMkup = "";
         $memMkup =  HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend','Members', array('style'=>'font-weight:bold;'))

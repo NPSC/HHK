@@ -100,9 +100,53 @@ function paymentRefresh() {
 	$('#psgList').tabs('load', indx);
 }
 
+function loadFamily(idPsg, activeId){
+
+    let formData = new FormData();
+    formData.append("cmd", "getResv");
+    formData.append("idPsg", idPsg);
+    formData.append("id", activeId);
+    formData.append("rid", "-1");
+    formData.append("guestEditMkup", true);
+
+    $.ajax({
+        type: "POST",
+        url: "../house/ws_resv.php",
+        data: formData,
+        contentType: false,
+		processData: false,
+        dataType: "JSON",
+        success: function(data) {
+            let pageManagerOptions = {
+                "UseIncidentReports":false,
+                ClosedDays:[],
+                guestEditMkup: true
+
+            }
+            pageManager = new resvManager(data, pageManagerOptions);
+
+            pageManager.loadResv(data);
+            $('#phEmlTabs').tabs();
+            $('#emergTabs').tabs();
+            $('#addrsTabs').tabs();
+            $('#InsTabs').tabs();
+
+            $("#tblFamily .hhk-activeGuestEdit input:not([type=checkbox]), #tblFamily .hhk-activeGuestEdit select").attr("disabled", "disabled");
+            $("#tblFamily .hhk-activeGuestEdit .hhk-togAddr").hide();
+            $("#tblFamily .hhk-activeGuestEdit.hhk-addrRow").remove();
+
+        },
+        error: function(error) {
+            console.log(error);
+        }
+    });
+
+}
+
 
 // Init j-query.
 $(document).ready(function () {
+
     "use strict";
     var memData = memberData;
     var nextVeh = 1;
@@ -147,7 +191,7 @@ $(document).ready(function () {
 		});
     }
 
-    $(".btnTextGuest").smsDialog({"guestId":memData.id});
+    $("#divNametabs .btnTextGuest").smsDialog({"guestId":memData.id});
 
     // relationship dialog
     $("#submit").dialog({
@@ -223,6 +267,8 @@ $(document).ready(function () {
          viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
          $('#divAlert1').hide();
     });
+
+    loadFamily(memData.idPsg, memData.id);
 
     // Reservations
     $('#resvAccordion').accordion({
@@ -487,26 +533,26 @@ $(document).ready(function () {
     createZipAutoComplete($('input.hhk-zipsearch'), 'ws_admin.php', zipXhr);
 
     createRoleAutoComplete($('#txtPersonSearch'), 3, {cmd: 'guest'}, function (item) {
-        console.log(item);
+
         if (item.id === 0) {
             window.location = "GuestEdit.php?id=0&psg=" + $("#hdnpsg").val();
         } else if (item.id > 0) {
-            let $psgTbl = $('#psgMemTbl tbody');
+            let $psgTbl = $(document).find('#psgMemTbl tbody');
             let $newMemRow = $psgTbl.find(".newPSGMember").clone().removeClass("newPSGMember d-none");
 
             $newMemRow.find(".newPSGMemId").text(item.id);
             $newMemRow.find(".newPSGMemName").text(item.label);
-            $newMemRow.find("select").attr("name", "selPrel[" + item.id + "]");
+            $newMemRow.find("select").attr("name", "selPrel[" + item.id + "]").attr('required', 'required');
             $psgTbl.append($newMemRow);
         }
     });
 
     // Main form submit button.  Disable page during POST
-    $('#btnSubmit').click(function () {
-        if ($(this).val() === 'Saving>>>>') {
+    $('form#form1').submit(function () {
+        if ($("#btnSubmit").val() === '') {
             return false;
         }
-        $(this).val('Saving>>>>');
+        $("#btnSubmit").val('').addClass("hhk-loading");
     });
 
     // Member search letter input box
