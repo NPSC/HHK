@@ -52,6 +52,20 @@ if(isset($_FILES['csvFile'])){
     }catch (\Exception $e){
         $errorMsg = $e->getMessage();
     }
+}else if(isset($_POST["numFakeMembers"])){
+	try{
+		$numMembers = intval(filter_input(INPUT_POST, 'numFakeMemberse', FILTER_SANITIZE_NUMBER_INT));
+
+        $upload = new Upload($dbh, $numMembers);
+
+        if($upload->upload()){
+            $import = new ImportMarkup($dbh);
+            $importTbl = $import->generateMkup();
+        }
+
+    }catch (\Exception $e){
+        $errorMsg = $e->getMessage();
+    }
 }
 
 if(isset($_POST["undo"])){
@@ -251,6 +265,10 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 					<div>
 						<label for="csvFile">Upload CSV File:</label>
 						<input type="file" id="csvFile" name="csvFile" accept=".csv">
+					</div>
+					<div>
+					<label for="numFakeMembers">OR - Number of fake records:</label>
+						<input type="number" id="numFakeMembers" name="numFakeMembers">
 					</div>
 					<?php if(isset($errorMsg)){ ?>
 					<div>

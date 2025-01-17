@@ -34,5 +34,8 @@
 	},
 	"scripts" : {
 		"pack" : "HHK\\devTools\\Build::run"
+	},
+	"require-dev": {
+		"fakerphp/faker": "^1.24"
 	}
 }
