@@ -14,6 +14,8 @@ class Upload {
             $this->rawData = $this->parseFile($file);
         }elseif(is_int($file) && $file > 0){
             $this->rawData = $this->makeFakeMembers($file);
+        }else{
+            throw new \ErrorException("CSV file or number of fake members is required");
         }
     }
 

@@ -39,7 +39,7 @@ if(isset($_GET['includeTbl'])){
     $importTbl = $import->generateMkup();
 }
 
-if(isset($_FILES['csvFile'])){
+if(isset($_FILES['csvFile']) && file_exists($_FILES['csvFile']['full_path'])){
 
     try{
         $upload = new Upload($dbh, $_FILES['csvFile']);
@@ -54,7 +54,7 @@ if(isset($_FILES['csvFile'])){
     }
 }else if(isset($_POST["numFakeMembers"])){
 	try{
-		$numMembers = intval(filter_input(INPUT_POST, 'numFakeMemberse', FILTER_SANITIZE_NUMBER_INT));
+		$numMembers = intval(filter_input(INPUT_POST, 'numFakeMembers', FILTER_SANITIZE_NUMBER_INT));
 
         $upload = new Upload($dbh, $numMembers);
 
