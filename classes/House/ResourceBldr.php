@@ -185,7 +185,8 @@ Order by `t`.`List_Order`;");
               . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTh('Category') : '')
                . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
                 . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
-                 . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
+                 . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
+                 . ($type == GlTypeCodes::Demographics ? HTMLTable::makeTh('Icon <a href="https://icons.getbootstrap.com/" target="_blank" class="ml-2" title="More Info"><i class="bi bi-info-circle-fill"></i></a>') : '')
                   . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
         $tbl->addHeaderTr($hdrTr);
@@ -228,6 +229,12 @@ Order by `t`.`List_Order`;");
                 }
             }
 
+            $txtDiagAttrs = ['name' => 'txtDiag[' . $d[0] . ']', 'title' => (isset($descriptions[$d[0]]) ? $descriptions[$d[0]] : '')];
+
+            if($tableName == "Calendar_Status_Colors"){
+                $txtDiagAttrs["readonly"] = "readonly";
+                $txtDiagAttrs["size"] = "30";
+            }
             $tbl->addBodyTr(
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(
@@ -237,7 +244,7 @@ Order by `t`.`List_Order`;");
                         ["class" => "sort-handle", "title" => "Drag to sort"]
                     ) : '') .
                 HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($d[1], ['name' => 'txtDiag[' . $d[0] . ']', 'title' => (isset($descriptions[$d[0]]) ? $descriptions[$d[0]] : '')])
+                    HTMLInput::generateMarkup($d[1], $txtDiagAttrs)
                 ) .
                 ($tableName == DIAGNOSIS_TABLE_NAME ?
                     HTMLTable::makeTd(
@@ -275,6 +282,8 @@ Order by `t`.`List_Order`;");
         if ($type != GlTypeCodes::U && $type != GlTypeCodes::m && $tableName != RESERV_STATUS_TABLE_NAME) {
             // new entry row
 
+            $colspan = $type == GLTypeCodes::Demographics ? 5:2;
+
             $tbl->addBodyTr(
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(
@@ -286,7 +295,7 @@ Order by `t`.`List_Order`;");
                     HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, ''), ['name' => 'selDiagCat[0]'])) : '')
                 . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ?
                     HTMLTable::makeTd(HTMLInput::generateMarkup('', ['size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'])) : '')
-                . HTMLTable::makeTd('New', ['colspan' => 2])
+                . HTMLTable::makeTd('New', ['colspan' => $colspan])
             );
         }
 
@@ -296,11 +305,23 @@ Order by `t`.`List_Order`;");
     public static function makeRibbonColorMkup(string $type, string $tableName, array $d){
         $uS = Session::getInstance();
         $mkup = "";
+        $fontColor = "";
+        $backgroundColor = "";
+        $iconClass = "";
 
-        if(($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName)){
-            $splits = explode(',', $d[2]);
-            $fontColor = (isset($splits[0]) && $splits[0] != '' ? $splits[0]: ($uS->DefCalEventTextColor != '' ? $uS->DefCalEventTextColor : "#ffffff"));
-            $backgroundColor = (isset($splits[1]) && $splits[1] != '' ? $splits[1]: ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : "#3788d8"));
+        if(($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors")){
+            if($d["Attributes"]){
+                $attributes = json_decode($d["Attributes"], true);
+                $fontColor = isset($attributes['fontColor']) ? $attributes["fontColor"] : "";
+                $backgroundColor = isset($attributes["backgroundColor"]) ? $attributes["backgroundColor"] : "";
+                $iconClass = isset($attributes["iconClass"]) ? $attributes["iconClass"] : "";
+            }
+
+            if ($fontColor == "" && $backgroundColor == "") {
+                $splits = explode(',', $d[2]);
+                $fontColor = (isset($splits[0]) && $splits[0] != '' ? $splits[0] : ($uS->DefCalEventTextColor != '' ? $uS->DefCalEventTextColor : "#ffffff"));
+                $backgroundColor = (isset($splits[1]) && $splits[1] != '' ? $splits[1] : ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : "#3788d8"));
+            }
 
             //font color
             $mkup .= HTMLTable::makeTd(
@@ -322,6 +343,28 @@ Order by `t`.`List_Order`;");
                 ])
             );
 
+            if ($type == GlTypeCodes::Demographics) {
+                //icon
+                $mkup .= HTMLTable::makeTd(
+                    HTMLInput::generateMarkup(
+                        $iconClass,
+                        [
+                            'size' => '20',
+                            'name' => 'txtDiagIconClass[' . $d[0] . ']',
+                            'type' => 'text',
+                            'class'=>"bs-icon"
+                        ]
+                    )
+                    . HTMLContainer::generateMarkup(
+                        "i",
+                        "",
+                        [
+                            'style'=>'font-size: 1.1rem;',
+                            'class' => 'demogIconPreview mx-2 ' . $iconClass
+                        ]
+                    )
+                );
+            }
         }
         return $mkup;
     }
@@ -516,17 +559,22 @@ Order by `t`.`List_Order`;");
                         $rep = function ($dbh, $newId, $oldId) {
                             return $dbh->exec("update checklist_item set `GL_Code` = '$newId' where `GL_Code` = '$oldId';");
                         };
-                        break;
+                        break; 
                 }
             }
 
             $amounts = array();
 
-
-            //overload amounts var for demog colors
+            $attributes = [];
             if(isset($postLookups['txtDiagFontColor']) && isset($postLookups['txtDiagBkColor'])){
                 foreach ($postLookups['txtDiagFontColor'] as $k =>$fontColor){
-                    $amounts[$k] = $fontColor . (isset($postLookups['txtDiagBkColor'][$k]) ? "," . $postLookups['txtDiagBkColor'][$k] : "");
+                    $attributes[$k] = ["fontColor"=>$fontColor];
+                    if (isset($postLookups['txtDiagBkColor'][$k])) {
+                        $attributes[$k]["backgroundColor"] = $postLookups['txtDiagBkColor'][$k];
+                    }
+                    if (isset($postLookups['txtDiagIconClass'][$k])) {
+                        $attributes[$k]["iconClass"] = $postLookups['txtDiagIconClass'][$k];
+                    }
                 }
             }
 
@@ -606,7 +654,7 @@ Order by `t`.`List_Order`;");
             } else if (isset($postLookups['selmisc'])) {
                 replaceLookups($dbh, $postLookups['selmisc'], $codeArray, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : array()));
             } else {
-                replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? $postLookups['selDiagDel'] : array()));
+                replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? $postLookups['selDiagDel'] : array()));
             }
         }
 
