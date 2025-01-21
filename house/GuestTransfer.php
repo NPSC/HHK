@@ -751,7 +751,7 @@ if ($noRecordsMsg != '') {
 
 // Setups for the page.
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), ['name' => 'selIntMonth[]', 'size' => '5', 'multiple' => 'multiple']);
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), ['name' => 'selIntYear', 'size' => '5']);
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year.' ', '2010', $uS->fy_diff_Months, FALSE), ['name' => 'selIntYear', 'size' => '5', 'style'=>'min-width:4em;']);
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), ['name' => 'selCalendar', 'size' => count($calOpts)]);
 
 ?>
@@ -818,10 +818,6 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                             <th><?php echo $CmsManager->getServiceTitle(); ?> Last Name Search</th>
                             <td><input id="txtRSearch" type="text" /></td>
                         </tr>
-                        <tr>
-                            <th>Local (HHK) Name Search</th>
-                            <td><input id="txtSearch" type="text" /></td>
-                        </tr>
                     </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
@@ -834,7 +830,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <div style="margin-top: 15px; margin-left:50px;" id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
 
-            <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div id="localrecords">
                     <div style="margin-bottom:.8em; float:left;">
                         <?php echo $settingstable . $searchTabel; ?>
@@ -845,6 +841,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 </div>
                 <div id="divMembers" style="margin-top:10px;"></div>
             </div>
+
             <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-bottom:6px;margin-left:20px;font-size:0.9em;">
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
@@ -852,6 +849,10 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
                 <input id="cbTrace" type="checkbox" style="margin-left:2em;"/>
         	</div>
+            <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none;;font-size:1em; padding:5px;">
+                <p style="margin-left:20px;">Transfering </p>
+            </div>
+
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
 

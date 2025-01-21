@@ -53,9 +53,14 @@ function upsert(transferIds, trace) {
     };
 
     $('#TxButton').hide();
+    $('#divPrintButton ').hide();
+    $('#loadingIcon').show();
 
     var posting = $.post('ws_tran.php', parms);
     posting.done(function (incmg) {
+
+        $('#loadingIcon').hide();
+        $('#divPrintButton ').show();
 
         if (!incmg) {
             alert('Error: Bad Reply from HHK Web Server');
@@ -759,6 +764,7 @@ $(document).ready(function () {
 
     if (makeTable == 0) {
 
+        // Salesforce
         $('div#printArea').show();
         $('#divPrintButton').show();
         $('#btnPay').hide();
@@ -988,30 +994,6 @@ $(document).ready(function () {
         })
     });
 
-    $('#hhkdgpallple').button().click(function () {
-        $('.hhk-tfmem').each(function (index) {
-            $(this).prop('checked', true);
-        })
-    });
-
-    $('#hhkdgpnople').button().click(function () {
-        $('.hhk-tfmem').each(function (index) {
-            $(this).prop('checked', false);
-        })
-    });
-
-    $('#hhkdgpback').button().click(function () {
-        $('.hhk-tfmem').each(function (index) {
-            $(this).prop('checked', $(this).prop('defaultChecked'));
-        })
-    });
-
-    $('#hhkdgpnew').button().click(function () {
-        $('.hhk-tf-update').each(function (index) {
-            $(this).prop('checked', false);
-        })
-    });
-
     $('.ckdate').datepicker({
         yearRange: '-07:+01',
         changeMonth: true,
@@ -1047,9 +1029,7 @@ $(document).ready(function () {
     createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {
         getRemote(item, 'remote');
     }, false, '../house/ws_tran.php');
-    createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {
-        getRemote(item, 'hhk');
-    }, false);
+    
 
     $('#vcategory').show();
 });
