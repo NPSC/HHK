@@ -2487,6 +2487,8 @@ ALTER TABLE `stays`
     ADD INDEX IF NOT EXISTS `index_Span_End` (`Span_End_Date` ASC);
 ALTER TABLE `stays`
     ADD INDEX IF NOT EXISTS `index_idName` (`idName` ASC);
+ALTER TABLE `stays`
+    ADD INDEX IF NOT EXISTS `index_Status` (`Status` ASC);
 
 ALTER TABLE `vehicle`
     ADD INDEX IF NOT EXISTS `INDEX_LICENSE` (`License_Number` ASC);

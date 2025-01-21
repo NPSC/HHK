@@ -297,6 +297,7 @@ abstract class AbstractRole {
 
     public function createIdMarkup(PSGMember $stay) {
         $td = "";
+        $noReturn = "";
 
         if($stay->isPatient() === false){
             $td = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'delpMem['.$this->getIdName().']'));
@@ -306,29 +307,19 @@ abstract class AbstractRole {
 
         $link = HTMLContainer::generateMarkup("a", $this->roleMember->get_idName(), ['href'=>"GuestEdit.php?id=".$this->getIdName() . ($idPsg > 0 ? "&psg=" . $idPsg : "")]);
 
-        // Staying button
         if(isset($this->roleMember) && $this->roleMember->get_status() == MemStatus::Deceased){
             // Set for deceased
-            $tdContent = HTMLContainer::generateMarkup("div",
-                    $link . 
-                    HTMLContainer::generateMarkup("span", "Deceased", ["class"=>"deceased"])
-                , ['class'=>'hhk-flex justify-content-between']);
-            
-        }else if ($this->getNoReturn() != '') {
-
+            $noReturn .= HTMLContainer::generateMarkup("span", "Deceased", ["class"=>"mx-1 deceased"]);
+        }
+        
+        if ($this->getNoReturn() != '') {
             // Set for no return
-            $tdContent = HTMLContainer::generateMarkup("div",
-            $link . 
-                HTMLContainer::generateMarkup("strong", $this->getNoReturn(), ["class"=>"noReturn"])
-            , ['class'=>'hhk-flex justify-content-between']);
-            //$td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()));
-
-        }else{
-            $tdContent = HTMLContainer::generateMarkup("div",
-            $link, ['class'=>'hhk-flex justify-content-between']);
+            $noReturn .= HTMLContainer::generateMarkup("strong", $this->getNoReturn(), ["class"=>"mx-1 noReturn"]);
         }
 
-        return HTMLTable::makeTd($td, ['class'=>'align-center']) . HTMLTable::makeTd($tdContent);
+        $noReturn = HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $noReturn, ['class'=>'hhk-flex justify-content-between']));
+
+        return HTMLTable::makeTd($td, ['class'=>'align-center']) . $noReturn . HTMLTable::makeTd($link);
 
     }
 

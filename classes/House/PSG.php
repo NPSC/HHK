@@ -259,19 +259,14 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             .HTMLTable::makeTd()
             , ['class'=>'newPSGMember d-none']);
 
-        $newMemMkup = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('span', 'Add people - Name search: ')
-            .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
-
-        	, array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
-            $newMemMkup = "";
-        $memMkup =  HTMLContainer::generateMarkup('div',
+        $memMkup = "";
+        /*$memMkup .=  HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend','Members', array('style'=>'font-weight:bold;'))
-                        . $mTable->generateMarkup(['id'=>"psgMemTbl"]) . $newMemMkup,
+                        . $mTable->generateMarkup(['id'=>"psgMemTbl"]),
                         array('class'=>'hhk-panel')),
                 ["class"=>"mr-3 mb-3"]);
-
+*/
         $lastConfDate = $this->psgRS->Info_Last_Confirmed->getStoredVal();
         if ($lastConfDate != '') {
             $lcdDT = new \DateTime($lastConfDate);

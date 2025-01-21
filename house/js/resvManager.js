@@ -711,13 +711,13 @@ console.log(options);
 
             fDiv.append($famTbl).append($(data.famSection.adtnl));
 
-            expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:2px;' class='ui-widget'/>")
+            expanderButton = $("<ul style='list-style-type:none;padding-top:2px;' class='ui-widget'/>")
                     .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
                             .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
 
-            fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
+            fHdr = $('<div id="divfamHdr" style="cursor:pointer;" class="hhk-flex justify-content-between align-items-center px-2 py-1"/>')
                     .append($(data.famSection.hdr))
-                    .append(expanderButton).append('<div style="clear:both;"/>');
+                    .append(expanderButton);
 
             fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
             fHdr.click(function () {

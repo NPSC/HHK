@@ -376,7 +376,8 @@ class Family {
 
         // Name Header
         $th = HTMLContainer::generateMarkup('tr',
-                ($guestEditMkup ? HTMLTable::makeTh('Remove') : "") .
+                ($guestEditMkup ? HTMLTable::makeTh('Remove') . HTMLTable::makeTh('No Return') : "") .
+
                 HTMLTable::makeTh(($guestEditMkup ? 'Id' : 'Staying'))
                 . ($guestEditMkup ? "" : HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuestAbrev', 'PG'), array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'))))
                 . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
@@ -495,7 +496,7 @@ class Family {
         // Header
         $hdr = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('span', $familyName . ' Family')
-            , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
+            , array('class'=>'hhk-checkinHdr m-0'));
 
         return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
 

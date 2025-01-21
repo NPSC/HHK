@@ -353,6 +353,13 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
                 }
             }
 
+            //save family
+            $rData = new ReserveData();
+            $rData->setIdPsg($psg->getIdPsg());
+            $family = new Family($dbh, $rData);
+            $family->save($dbh, $_POST, $rData, $uname);
+            $msg .= $rData->getMsgs();
+
             // Notes
             $psgNotes = '';
             if (filter_has_var(INPUT_POST, 'txtPSGNotes')) {
