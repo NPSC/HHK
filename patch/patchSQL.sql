@@ -54,3 +54,5 @@ MODIFY COLUMN IF EXISTS `Timestamp` timestamp(5) NOT NULL DEFAULT CURRENT_TIMEST
 
 ALTER TABLE `name_guest`
 ADD COLUMN IF NOT EXISTS `External_Id` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Type`;
+
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES ('s', 'Actual Departure', '${ActualDeparture}');

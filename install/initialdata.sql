@@ -896,7 +896,8 @@ REPLACE INTO `template_tag` VALUES
 (41,'ra', 'Blank Textbox', '${BlankTextBox}',''),
 (42,'ra', 'Blank Inline Textbox', '${BlankInlineTextBox}',''),
 (43,'ra', 'Blank Textarea', '${BlankTextArea}',''),
-(44,'ra', 'Checkbox Toggle', '${CheckBox}','');
+(44,'ra', 'Checkbox Toggle', '${CheckBox}',''),
+(45,'s', 'Actual Departure', '${ActualDeparture}','');
 -- ;
 
 replace into `item` (`idItem`, `Description`) values
