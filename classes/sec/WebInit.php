@@ -381,4 +381,11 @@ class WebInit {
     public static function isAJAX(){
         return (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == "XMLHttpRequest");
     }
+
+    public static function requestExpects(string $mime){
+        $accept = (isset($_SERVER['HTTP_ACCEPT']) ? strtolower(str_replace(" ", "", $_SERVER['HTTP_ACCEPT'])) : "");
+        $acceptAr = explode(",", $accept);
+
+        return (in_array($mime, $acceptAr));
+    }
 }
