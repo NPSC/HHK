@@ -126,6 +126,7 @@ function loadFamily(idPsg, activeId){
             pageManager = new resvManager(data, pageManagerOptions);
 
             pageManager.loadResv(data);
+            
             $('#phEmlTabs').tabs();
             $('#emergTabs').tabs();
             $('#addrsTabs').tabs();
@@ -134,6 +135,9 @@ function loadFamily(idPsg, activeId){
             $("#tblFamily .hhk-activeGuestEdit input:not([type=checkbox]), #tblFamily .hhk-activeGuestEdit select").attr("disabled", "disabled");
             $("#tblFamily .hhk-activeGuestEdit .hhk-togAddr").hide();
             $("#tblFamily .hhk-activeGuestEdit.hhk-addrRow").remove();
+
+            console.log(pageManager.people.list());
+            psgMembers =  pageManager.people.list();
 
         },
         error: function(error) {
@@ -154,6 +158,7 @@ $(document).ready(function () {
     var listEvtTable;
     var setupNotes,
         $psgList;
+    var psgMembers = {};
 
 //    $.widget( "ui.autocomplete", $.ui.autocomplete, {
 //        _resizeMenu: function() {
@@ -548,11 +553,41 @@ $(document).ready(function () {
     });
 
     // Main form submit button.  Disable page during POST
-    $('form#form1').submit(function () {
+    $('form#form1').submit(function (e) {
+        e.preventDefault();
         if ($("#btnSubmit").val() === '') {
             return false;
         }
         $("#btnSubmit").val('').addClass("hhk-loading");
+
+        //let famData = $("form#form1").serialize();
+        //famData += "&btnSubmit&" + $.param({mem: window.psgMembers});
+
+        let famData = $("form#form1").serializeJSON();
+
+        $.ajax({
+            type: "POST",
+            url: "GuestEdit.php",
+            //dataType: "json",
+            data: {
+                data: JSON.stringify(famData),
+                btnSubmit: "Save",
+                mem: JSON.stringify(window.psgMembers)
+            },
+            success: function(data) {
+                if(data.success){
+                    flagAlertMessage(data.success, "success");
+                }else if(data.error) {
+                    flagAlertMessage(data.error, "error");
+                }
+                $("#btnSubmit").val('Save').removeClass("hhk-loading");
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+        return false;
+
     });
 
     // Member search letter input box

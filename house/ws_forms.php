@@ -74,9 +74,15 @@ try {
 
 $c = "";
 
+$request = json_decode(file_get_contents('php://input'), true);
+    
+if(!is_array($request)) {
+    $request = $_REQUEST;
+}
+
 // Get our command
-if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (isset($request["cmd"])) {
+    $c = filter_var($request["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
 $uS = Session::getInstance();
@@ -167,8 +173,8 @@ try {
          case "submitform" :
 
 			$recaptchaToken = '';
-			if(isset($_POST['recaptchaToken'])){
-				$recaptchaToken = filter_var($_POST['recaptchaToken'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+			if(isset($request['recaptchaToken'])){
+				$recaptchaToken = filter_var($request['recaptchaToken'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 			}
 
 			$recaptcha = new Recaptcha();
@@ -177,7 +183,14 @@ try {
 			}else{
 			    $score = 1.0;
 			}
-
+            
+            if(isset($request["submitData"])){
+                $events = ["success"=>"data submitted correctly", "submitData"=>$request["submitData"]];
+            }else{
+                $events = ["error"=>"submitData object not found"];
+            }
+            break;
+            /*
             $fields = array();
             if(isset($_POST['formRenderData'])){
                 try{
@@ -205,7 +218,7 @@ try {
                 $events = ['status'=>'error', 'errors'=>['server'=>'The form appears to be empty, please try again']];
                 break;
             }
-
+*/
             $templateId = '';
             if(isset($_POST['template'])){
                 $templateId = intval(filter_var($_POST['template'], FILTER_SANITIZE_NUMBER_INT), 10);

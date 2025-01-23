@@ -116,7 +116,9 @@ try {
     }
 }
 
-
+if(filter_has_var(INPUT_POST, "data")){
+    $data = json_decode($_POST["data"], true);
+}
 
 /*
  * called with get parameters id=x, load that id if feasable.
@@ -268,6 +270,16 @@ $idPatient = $psg->getIdPatient();
 if (filter_has_var(INPUT_POST, "btnSubmit")) {
     $msg = "";
 
+    if(filter_has_var(INPUT_POST,"data")) {
+        $post = json_decode($_POST["data"]);
+    }
+        $rData = new ReserveData();
+        $rData->setIdPsg($idPsg);
+
+        $family = new Family($dbh, $rData);
+        $family->save($dbh, $_POST, $rData, $uS->username);
+        $msg.= $rData->getPsgTitle() . " saved.  ";
+
     try {
         // Name
         $msg .= $name->saveChanges($dbh, $_POST);
@@ -352,13 +364,6 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
                     }
                 }
             }
-
-            //save family
-            $rData = new ReserveData();
-            $rData->setIdPsg($psg->getIdPsg());
-            $family = new Family($dbh, $rData);
-            $family->save($dbh, $_POST, $rData, $uname);
-            $msg .= $rData->getMsgs();
 
             // Notes
             $psgNotes = '';
@@ -448,9 +453,18 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
         // success
         $resultMessage = $msg;
 
+        if(WebInit::isAJAX()){
+            echo json_encode(["success"=>$resultMessage]);
+            exit;
+        }
+
 
     } catch (Exception $ex) {
         $resultMessage = $ex->getMessage();
+        if(WebInit::isAJAX()){
+            echo json_encode(["error"=>$resultMessage]);
+            exit;
+        }
     }
 }
 
@@ -780,6 +794,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SERIALIZEJSON; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
@@ -969,6 +984,7 @@ $uS->guestId = $id;
                         <div id="divPSGContainer">
                             <div id="famSection" style="font-size: .9em; display:none; max-width: 100%;" class="ui-widget hhk-visitdialog mb-3"></div>
                             <?php echo $psgTabMarkup; ?>
+                            <input type="hidden" value="" name="mem" id="mem">
                         </div>
                     </div>
                     <div id="vregister"  class="ui-tabs-hide" style="display:none;">

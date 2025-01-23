@@ -137,6 +137,7 @@ if(isset($_GET['template'])){
 		<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo SERIALIZEJSON; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
 
         <script type='text/javascript'>
@@ -466,17 +467,19 @@ if(isset($_GET['template'])){
                         		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
                         		$renderedForm.find('.submit-btn').prop('disabled','disabled').html(spinner).append(' Submitting...');
 
-                        		var formRenderData = cleanString(JSON.stringify(formRender.userData));
+								var submitData = $("form#renderedForm").serializeJSON();
 
                         		$.ajax({
                         	    	url : "ws_forms.php",
                         	   		type: "POST",
-                        	    	data : {
+									contentType: "application/json",
+                        	    	data : JSON.stringify({
                         	    		cmd: "submitform",
-                        	    		formRenderData: buffer.Buffer.from(formRenderData).toString('base64'),
+                        	    		//formRenderData: formRenderData, //buffer.Buffer.from(formRenderData).toString('base64'),
+										submitData: submitData,
                         	    		recaptchaToken: token,
                         	    		template: <?php echo (isset($_GET['template']) ? $_GET['template'] : 0); ?>
-                        	    	},
+                        	    	}),
                         	    	dataType: "json",
                         	    	success: function(data, textStatus, jqXHR)
                         	    	{
