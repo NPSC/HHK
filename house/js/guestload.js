@@ -553,42 +553,45 @@ $(document).ready(function () {
 
     // Main form submit button.  Disable page during POST
     const formEl = document.querySelector("form#form1");
-    formEl.addEventListener("submit", async(e) => {
-        e.preventDefault();
-        $("#btnSubmit").attr("disabled", "disabled").val('').addClass("hhk-loading");
-        try{
-            //grab data
-            let famData = $("form#form1").serializeJSON();
-            famData["btnSubmit"] = "Save";
-            famData["mem"] = window.psgMembers;
+    
+    if(formEl){
+        formEl.addEventListener("submit", async(e) => {
+            e.preventDefault();
+            $("#btnSubmit").attr("disabled", "disabled").val('').addClass("hhk-loading");
+            try{
+                //grab data
+                let famData = $("form#form1").serializeJSON();
+                famData["btnSubmit"] = "Save";
+                famData["mem"] = window.psgMembers;
 
-            const response = await fetch("GuestEdit.php", {
-                method: "POST",
-                body: JSON.stringify(famData),
-                headers: {
-                    "Content-Type": "application/json",
-                    "accept": "application/json"
+                const response = await fetch("GuestEdit.php", {
+                    method: "POST",
+                    body: JSON.stringify(famData),
+                    headers: {
+                        "Content-Type": "application/json",
+                        "accept": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Response status: ${response.status}`);
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`);
+                const responseBody = await response.json();
+
+                if(responseBody.success){
+                    flagAlertMessage(responseBody.success, "success");
+                }else if(responseBody.error) {
+                    throw new Error(responseBody.error);
+                }
+
+            }catch(e){
+                flagAlertMessage(e.message, "error");
             }
 
-            const responseBody = await response.json();
-
-            if(responseBody.success){
-                flagAlertMessage(responseBody.success, "success");
-            }else if(responseBody.error) {
-                throw new Error(responseBody.error);
-            }
-
-        }catch(e){
-            flagAlertMessage(e.message, "error");
-        }
-
-        $("#btnSubmit").attr("disabled", null).val('Save').removeClass("hhk-loading");
-    });
+            $("#btnSubmit").attr("disabled", null).val('Save').removeClass("hhk-loading");
+        });
+    };
 
     // Member search letter input box
     $('#txtsearch').keypress(function (event) {

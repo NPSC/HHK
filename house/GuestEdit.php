@@ -119,33 +119,33 @@ try {
 //load json request body
 $request = json_decode(file_get_contents('php://input'), true);
     
-if(!is_array($request)) {
-    $request = $_REQUEST;
+if(is_array($request)) {
+    $_POST = array_merge($_POST, $request);
 }
 
 
 /*
  * called with get parameters id=x, load that id if feasable.
  */
-if (isset($request["id"])) {
+if (filter_has_var(INPUT_GET, "id")) {
 
-    $id = intval(filter_var($request["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+    $id = intval(filter_input(INPUT_GET, "id", FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
-if (isset($request['psg'])) {
+if (filter_has_var(INPUT_GET, 'psg')) {
 
-    $idPsg = intval(filter_var($request["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
+    $idPsg = intval(filter_input(INPUT_GET, "psg", FILTER_SANITIZE_NUMBER_INT), 10);
 
-} else if (isset($request['hdnpsg'])) {
+} else if (filter_has_var(INPUT_POST, 'hdnpsg')) {
 
-    $idPsg = intval(filter_var($request["hdnpsg"], FILTER_SANITIZE_NUMBER_INT), 10);
+    $idPsg = intval(filter_input(INPUT_POST, "hdnpsg", FILTER_SANITIZE_NUMBER_INT), 10);
 
 }
 
 
-if (isset($request["tab"])) {
+if (filter_has_var(INPUT_GET, "tab")) {
 
-	$guestTabIndex = intval(filter_var($request["tab"], FILTER_SANITIZE_NUMBER_INT), 10);
+	$guestTabIndex = intval(filter_input(INPUT_GET, "tab", FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
 
@@ -153,9 +153,9 @@ if (isset($request["tab"])) {
 /*
 * This is the ID that the previous page instance saved for us.
 */
-if (isset($request["hdnid"])) {
+if (filter_has_var(INPUT_POST, "hdnid")) {
 
-   $h_idTxt = filter_var($request["hdnid"], FILTER_SANITIZE_NUMBER_INT);
+   $h_idTxt = filter_input(INPUT_POST, "hdnid", FILTER_SANITIZE_NUMBER_INT);
    $id = intval($h_idTxt, 10);
 
    if ($uS->guestId != $id) {
@@ -283,11 +283,11 @@ if (isset($request["btnSubmit"])) {
 
     try {
         // Name
-        $msg .= $name->saveChanges($dbh, $request);
+        $msg .= $name->saveChanges($dbh, $_POST);
 
         //add new person to PSG
         if($id == 0 && $name->get_idName() > 0 && $psg->getIdPsg() > 0) {
-            $rel = filter_var("selPatRel", FILTER_SANITIZE_SPECIAL_CHARS);
+            $rel = filter_input(INPUT_POST, "selPatRel", FILTER_SANITIZE_SPECIAL_CHARS);
             $psg->setNewMember($name->get_idName(), $rel);
             $psg->saveMembers($dbh, $uname);
         }
@@ -295,16 +295,16 @@ if (isset($request["btnSubmit"])) {
         $id = $name->get_idName();
 
         // Address
-        $msg .= $address->savePost($dbh, $request, $uname);
+        $msg .= $address->savePost($dbh, $_POST, $uname);
 
         // Phone number
-        $msg .= $phones->savePost($dbh, $request, $uname);
+        $msg .= $phones->savePost($dbh, $_POST, $uname);
 
         // Email Address
-        $msg .= $emails->savePost($dbh, $request, $uname);
+        $msg .= $emails->savePost($dbh, $_POST, $uname);
 
         // Emergency contact
-        $msg .= $emergContact->save($dbh, $id, $request, $uname);
+        $msg .= $emergContact->save($dbh, $id, $_POST, $uname);
 
 
         // house
@@ -313,9 +313,9 @@ if (isset($request["btnSubmit"])) {
             $delMe = FALSE;
 
             // Delete member
-            if (isset($request['delpMem']) && is_array($request['delpMem'])) {
+            if (filter_has_var(INPUT_POST, 'delpMem') && is_array($_POST['delpMem'])) {
 
-                foreach ($request['delpMem'] as $k => $v) {
+                foreach ($_POST['delpMem'] as $k => $v) {
 
                     $k = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT),10);
 
@@ -332,26 +332,26 @@ if (isset($request["btnSubmit"])) {
 
             } else {
 
-                if (isset($request['selPrel'])) {
+                if (filter_has_var(INPUT_POST, 'selPrel')) {
 
-                    foreach ($request['selPrel'] as $k => $v) {
+                    foreach ($_POST['selPrel'] as $k => $v) {
                         $k = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT),10);
                         $v = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                         $psg->setNewMember($k, $v);
                     }
                 }
 
-                if(isset($request['selPatRel'])){
+                if(filter_has_var(INPUT_POST, 'selPatRel')){
                     $k = $id;
-                    $v = filter_var( $request["selPatRel"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    $v = filter_input(INPUT_POST,  "selPatRel", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                     $psg->setNewMember($k, $v);
                 }
 
-                if (isset($request['cbLegalCust']) && is_array($request['cbLegalCust'])) {
+                if (filter_has_var(INPUT_POST, 'cbLegalCust') && is_array($_POST['cbLegalCust'])) {
 
                     foreach ($psg->psgMembers as $g => $v) {
 
-                        if (isset($request['cbLegalCust'][$g])) {
+                        if (isset($_POST['cbLegalCust'][$g])) {
                             $v->Legal_Custody->setNewVal(1);
                         } else {
                             $v->Legal_Custody->setNewVal(0);
@@ -368,13 +368,13 @@ if (isset($request["btnSubmit"])) {
 
             // Notes
             $psgNotes = '';
-            if (isset($request['txtPSGNotes'])) {
-                $psgNotes = filter_var($request['txtPSGNotes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            if (filter_has_var(INPUT_POST, 'txtPSGNotes')) {
+                $psgNotes = filter_input(INPUT_POST, 'txtPSGNotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             // Last info confirmed date
-            if (isset($request['cbLastConfirmed']) && isset($request['txtLastConfirmed'])) {
-                $lastConfirmed = filter_var($request['txtLastConfirmed'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            if (filter_has_var(INPUT_POST, 'cbLastConfirmed') && filter_has_var(INPUT_POST, 'txtLastConfirmed')) {
+                $lastConfirmed = filter_input(INPUT_POST, 'txtLastConfirmed', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $psg->setLastConfirmed($lastConfirmed);
             }
 
