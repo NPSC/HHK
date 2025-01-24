@@ -56,3 +56,6 @@ ALTER TABLE `name_guest`
 ADD COLUMN IF NOT EXISTS `External_Id` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Type`;
 
 INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES ('s', 'Actual Departure', '${ActualDeparture}');
+
+INSERT IGNORE into `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("stmtShowRateTitle", "false", "b", "f", "Show the room rate title on Statements", 1);
+

@@ -2,6 +2,8 @@
 
 namespace HHK\Purchase\PriceModel;
 
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Session;
 use HHK\SysConst\{RateStatus, RoomRateCategories, ItemPriceCode};
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
@@ -251,14 +253,14 @@ abstract class AbstractPriceModel {
 
         // Short circuit for fixed rate x
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category) {
-            $tiers[] = array('rate'=> $pledgedRate, 'days'=>$days, 'amt'=>($days * $pledgedRate));
+            $tiers[] = array('rate'=> $pledgedRate, 'days'=>$days, 'amt'=>($days * $pledgedRate), 'title'=>$rrateRs->Title->getStoredVal());
             return $tiers;
         }
 
         $adjRatio = (1 + $rateAdjust/100);
 
         $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $days * $adjRatio;
-        $tiers[] = array('rate'=>$rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>$amount);
+        $tiers[] = array('rate'=>$rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>$amount, 'title'=>$rrateRs->Title->getStoredVal());
 
         return $tiers;
     }
@@ -283,12 +285,23 @@ abstract class AbstractPriceModel {
             $totalAmt += $t['amt'];
             $roomCharge += $t['amt'];
 
+            $uS = Session::getInstance();
+            
+            if($uS->stmtShowRateTitle){
+                $rateColumn = HTMLContainer::generateMarkup("div",
+                    HTMLContainer::generateMarkup("span", $t["title"], ["class"=>"mr-3"]) .
+                    HTMLContainer::generateMarkup("span", number_format($t['rate'], 2), ["class"=>"ml-3"])
+                , ["class"=>"hhk-flex justify-content-between"]);
+            }else{
+                $rateColumn = number_format($t['rate'], 2);
+            }
+
             $tbl->addBodyTr(
                  HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('class'=>"align-center"))
                 .HTMLTable::makeTd($r['title'])
                 .HTMLTable::makeTd($startDT->format('M j, Y'))
                 .HTMLTable::makeTd($startDT->add(new \DateInterval('P' . $t['days'] . 'D'))->format('M j, Y'))
-                .HTMLTable::makeTd(number_format($t['rate'], 2), array('class'=>'align-right'))
+                .HTMLTable::makeTd($rateColumn, array('class'=>'align-right'))
                 .HTMLTable::makeTd($t['days'], array('class'=>'align-center'))
                 .HTMLTable::makeTd(number_format($t['amt'], 2), array('class'=>'align-right'))
             , ["class"=>$separator]);

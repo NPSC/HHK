@@ -707,6 +707,7 @@ Thank you
 ('showRegEmptyFields', 'true', 'b', 'h', '', 'On Registrations, show empty fields', '', '1'),
 ('Show_Holidays', 'false', 'b', 'c', '', 'Indicate holidays on the calendar','', '1'),
 ('Show_Closed', 'false', 'b', 'c', '', 'Indicate closed days on the calendar','', '1'),
+('stmtShowRateTitle', 'false', 'b', 'f', '', "Show the room rate title on Statements", '',  '1'),
 ('sId','11','i','a','','House organization Id','',1),
 ('siteName','Hospitality HouseKeeper','s','a','','House or organization  name','',1),
 ('smsProvider', '', 'lu', 'sms', '', 'Enable SMS integration', 'smsProvider', 1),
