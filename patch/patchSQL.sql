@@ -59,3 +59,4 @@ INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES (
 
 INSERT IGNORE into `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("stmtShowRateTitle", "false", "b", "f", "Show the room rate title on Statements", 1);
 
+INSERT IGNORE into `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("minResvDays", "0", "i", "h", "Enforce a minimum length for reservations, 0 = no minimum", 1);

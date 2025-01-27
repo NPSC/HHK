@@ -1458,6 +1458,12 @@ function resvManager(initData, options) {
 
                             $('#' + data.daysEle).val(numDays);
 
+                            if(data.mindays > 0 && numDays < data.mindays){
+                                $('#' + data.daysErrEle).text("Stay length is less than " + data.mindays + " days").show();
+                            }else{
+                                $('#' + data.daysErrEle).empty().hide();
+                            }
+
                             if ($('#spnNites').length > 0) {
                                 $('#spnNites').text(numDays);
                             }
