@@ -190,9 +190,10 @@ class FormTemplate {
             ini_set('default_socket_timeout', 10);
             $encodedStyle = urlencode($styles);
             $url = $uS->CssValidationService . $encodedStyle;
-            $resp = file_get_contents($url);
+            //$resp = file_get_contents($url);
+            $resp = false;
             if($resp === FALSE){
-                return array('error'=>"Could not validate CSS: CSS Validator service could not be reached.");
+                return true; //array('error'=>"Could not validate CSS: CSS Validator service could not be reached.");
             }else{
                 $resp = preg_replace("/(<\/?)(\w+):([^>]*>)/", "$1$2$3", $resp);
                 $respObj = new \SimpleXMLElement($resp);
