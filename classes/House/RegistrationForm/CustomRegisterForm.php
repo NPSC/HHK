@@ -431,19 +431,19 @@ class CustomRegisterForm {
                 $mkup .= '<div class="row mb-2 ui-widget-content ui-corner-all py-2">';
 
                 if($veh->idVehicle->getStoredVal() > 0){
-                    $mkup .= (!empty($veh->Make->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col"><strong>Make: </strong>' . $veh->Make->getStoredVal() . '</div>':'');
-                    $mkup .= (!empty($veh->Model->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col"><strong>Model: </strong>' . $veh->Model->getStoredVal() . '</div>':'');
-                    $mkup .= (!empty($veh->Color->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="max-width:fit-content"><strong>Color: </strong>' . $veh->Color->getStoredVal() . '</div>':'');
-                    $mkup .= (!empty($veh->State_Reg->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="max-width:fit-content"><strong>State: </strong>' . $veh->State_Reg->getStoredVal() . '</div>':'');
-                    $mkup .= (!empty($veh->License_Number->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="min-width:fit-content"><strong>' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong>' . $veh->License_Number->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->Make->getStoredVal()) ? '<div class="col"><strong>Make: </strong>' . $veh->Make->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->Model->getStoredVal()) ? '<div class="col"><strong>Model: </strong>' . $veh->Model->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->Color->getStoredVal()) ? '<div class="col" style="max-width:fit-content"><strong>Color: </strong>' . $veh->Color->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->State_Reg->getStoredVal()) ? '<div class="col" style="max-width:fit-content"><strong>State: </strong>' . $veh->State_Reg->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->License_Number->getStoredVal()) ? '<div class="col" style="min-width:fit-content"><strong>' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong>' . $veh->License_Number->getStoredVal() . '</div>':'');
                     $mkup .= (!empty($veh->Note->getStoredVal()) ? '<div class="col-12"><strong>' . Labels::getString('referral', 'vehicleNotes', 'Notes') . ': </strong>' . $veh->Note->getStoredVal() . '</div>':'');
                 }else if($uS->showRegEmptyFields){
                     //show empty row
-                    $mkup .= '<div class="col hhk-flex align-items-end"><strong class="mr-1">Make: </strong><span class="col hhk-line"></span></div>';
-                    $mkup .= '<div class="col hhk-flex align-items-end"><strong class="mr-1">Model: </strong><span class="col hhk-line"></span></div>';
-                    $mkup .= '<div class="col hhk-flex align-items-end"><strong class="mr-1">Color: </strong><span class="col hhk-line"></span></div>';
-                    $mkup .= '<div class="col hhk-flex align-items-end"><strong class="mr-1">State: </strong><span class="col hhk-line"></span></div>';
-                    $mkup .= '<div class="col hhk-flex align-items-end"><strong class="mr-1">' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Make: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Model: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Color: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col-2 mt-3 hhk-flex align-items-end"><strong class="mr-1">State: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col-6 mt-3 hhk-flex align-items-end"><strong class="mr-1">' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong><span class="col hhk-line"></span></div>';
                 }
 
                 $mkup .= '</div>';
