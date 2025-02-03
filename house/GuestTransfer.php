@@ -850,7 +850,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <input id="cbTrace" type="checkbox" style="margin-left:2em;"/>
         	</div>
             <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none;;font-size:1em; padding:5px;">
-                <p style="margin-left:20px;">Transfering </p>
+                <p id="loadingText" style="margin-left:20px;">Transfering </p>
             </div>
 
         </div>

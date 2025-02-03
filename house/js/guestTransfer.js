@@ -46,21 +46,18 @@ function updateLocal(id) {
 }
 
 function upsert(transferIds, trace) {
-    var parms = {
+    const parms = {
         cmd: 'upsert',
         trace: trace,
         ids: transferIds
     };
 
-    $('#TxButton').hide();
-    $('#divPrintButton ').hide();
     $('#loadingIcon').show();
 
     var posting = $.post('ws_tran.php', parms);
     posting.done(function (incmg) {
 
         $('#loadingIcon').hide();
-        $('#divPrintButton ').show();
 
         if (!incmg) {
             alert('Error: Bad Reply from HHK Web Server');
@@ -79,9 +76,12 @@ function upsert(transferIds, trace) {
             }
 
             flagAlertMessage(data.error, true);
+            $('#divMembers').append($('<p style="font-weight: bold; margin-top:15px;margin-left:50px;">' + data.error + '</p>'));
+            $('#TxButton').prop('disabled', false);
             return;
 
         } else if (data.table) {
+            $('#TxButton').hide();
             $('#divMembers').html(data.table);
             $('#divMembers').prepend($('<p style="font-weight: bold;">Transfer Results</p>'));
         }
@@ -763,15 +763,14 @@ $(document).ready(function () {
     });
 
     if (makeTable == 0) {
-
-        // Salesforce
+        // Salesforce Transfer
         $('div#printArea').show();
         $('#divPrintButton').show();
         $('#btnPay').hide();
         $('#btnVisits').hide();
         $('#divMembers').empty();
 
-        // Check to show server trace.
+        // Checkbutton to show server trace.
         const $cbTrace = $('#cbTrace');
         $cbTrace.hide();
         if (username == 'npscuser') {
@@ -782,33 +781,35 @@ $(document).ready(function () {
 
         $upsertButton
             .button()
-            .val('Transfer to '+cmsTitle)
-            .show();
+            .val('Transfer to '+ cmsTitle)
+            .show()
+            // click event
+            .click(function () {
+                let ids = [];
+                let n = 0;
 
+                $(this).prop('disabled', true);
 
-        $upsertButton.click(function () {
-            let ids = [];
-            let n = 0;
+                // Loop through the checked names
+                $('input.hhk-tfmem').each(function () {
 
-            $('input.hhk-tfmem').each(function () {
+                    if ($(this).prop('checked')) {
 
-                if ($(this).prop('checked')) {
+                        const props = { 'checked': false, 'disabled': true };
 
-                    const props = { 'checked': false, 'disabled': true };
+                        $(this).parents('tr').css('background-color', 'lightgray');
 
-                    $(this).parents('tr').css('background-color', 'lightgray');
+                        $(this).prop(props).end();
 
-                    $(this).prop(props).end();
+                        ids[n++] = $(this).data('txid');
 
-                    ids[n++] = $(this).data('txid');
+                    }
+                });
 
-                }
+                upsert(ids, $cbTrace.prop('checked'));
             });
 
-            upsert(ids, $cbTrace.prop('checked'));
-        });
-
-    }
+    } // end salesforce xfer.
 
     // Retrieve HHK Records
     if (makeTable === '1') {
@@ -1029,7 +1030,7 @@ $(document).ready(function () {
     createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {
         getRemote(item, 'remote');
     }, false, '../house/ws_tran.php');
-    
+
 
     $('#vcategory').show();
 });
