@@ -132,7 +132,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
         //daily data
         $curDate = new \DateTime($this->filter->getReportStart());
         $end = new \DateTime($this->filter->getQueryEnd());
-        $yesterday = new \DateTime()->sub(new \DateInterval("P1D"));
+        $yesterday = (new \DateTime())->sub(new \DateInterval("P1D"));
 
         //loop each day until end
         for ($curDate; $curDate < $end && $curDate < $yesterday; $curDate->add(new \DateInterval("P1D"))){
