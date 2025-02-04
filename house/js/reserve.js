@@ -5,6 +5,19 @@ var paymentMarkup;
 var pageManager;
 var receiptMarkup;
 
+async function postJSON(request) {
+
+    const response = await fetch(request);
+
+    if (response.ok) {
+        const json = await response.json();
+        return json;
+    }
+
+    throw new Error(`Response status: ${response.status}`);
+
+}
+
 $(document).ready(function() {
     "use strict";
     var t = this;
@@ -215,7 +228,7 @@ $(document).ready(function() {
 
 						$('#spnStatus').text('Deleted');
                     }
-                     
+
                     if (data.xfer || data.inctx || data.deluxehpf) {
 				        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
 				        //return;
@@ -253,7 +266,7 @@ $(document).ready(function() {
             formData.append('idPsg', pageManager.getIdPsg());
             formData.append('prePayment', pageManager.getPrePaymtAmt());
             formData.append('rid', pageManager.getIdResv());
-            
+
             //diagnosis
             let txtDiagnosis = $('#txtDiagnosis').val();
             if (typeof txtDiagnosis === "string") {
@@ -268,14 +281,19 @@ $(document).ready(function() {
                 formData.append(key, value);
             }
 
-            $.ajax({
-                type: 'post',
-                url: 'ws_resv.php',
-                data: formData,
-                processData: false,
-                contentType: false,
-                dataType: 'json',
-                success: function (data, textStatus) {
+            // send the fetch request
+
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+
+            const svrRequest = new Request('ws_resv.php', {
+                method: 'POST',
+                body: formData,
+                //headers: myHeaders
+            });
+
+            postJSON(svrRequest)
+                .then(data => {
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
@@ -286,38 +304,88 @@ $(document).ready(function() {
                     }
 
                     if (data.xfer || data.inctx || data.deluxehpf) {
-                        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
+                        paymentRedirect(data, $('#xform'), { resvId: pageManager.getIdResv() });
                         //return;
                     }
 
                     if (data.redirTo) {
-                       location.replace(data.redirTo);
+                        location.replace(data.redirTo);
                     }
 
                     pageManager.loadResv(data);
 
                     if (data.receiptMarkup && data.receiptMarkup != '') {
-						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
-					}
+                        showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+                    }
 
                     if (data.resv !== undefined) {
                         if (data.warning === undefined) {
                             flagAlertMessage(data.resvTitle + ' Saved. ' + (data.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + data.resv.rdiv.rStatTitle), 'success');
                         }
                     } else {
-                        flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved. ', 'success');
+                        flagAlertMessage((data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved. ', 'success');
                     }
 
-                    if(data.info){
+                    if (data.info) {
                         flagAlertMessage(data.info, 'info');
                     }
-                },
-                error: function (data, textStatus) {
+                })
+                .catch(err => {
                     flagAlertMessage(textStatus, "error");
                     $('#btnDone').val("Save");
-                }
+                });
 
-            });
+
+            // $.ajax({
+            //     type: 'post',
+            //     url: 'ws_resv.php',
+            //     data: formData,
+            //     processData: false,
+            //     contentType: false,
+            //     dataType: 'json',
+            //     success: function (data, textStatus) {
+            //         if (data.gotopage) {
+            //             window.open(data.gotopage, '_self');
+            //         }
+
+            //         if (data.error) {
+            //             flagAlertMessage(data.error, 'error');
+            //             $('#btnDone').val('Save').show();
+            //         }
+
+            //         if (data.xfer || data.inctx || data.deluxehpf) {
+            //             paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
+            //             //return;
+            //         }
+
+            //         if (data.redirTo) {
+            //            location.replace(data.redirTo);
+            //         }
+
+            //         pageManager.loadResv(data);
+
+            //         if (data.receiptMarkup && data.receiptMarkup != '') {
+			// 			showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+			// 		}
+
+            //         if (data.resv !== undefined) {
+            //             if (data.warning === undefined) {
+            //                 flagAlertMessage(data.resvTitle + ' Saved. ' + (data.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + data.resv.rdiv.rStatTitle), 'success');
+            //             }
+            //         } else {
+            //             flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved. ', 'success');
+            //         }
+
+            //         if(data.info){
+            //             flagAlertMessage(data.info, 'info');
+            //         }
+            //     },
+            //     error: function (data, textStatus) {
+            //         flagAlertMessage(textStatus, "error");
+            //         $('#btnDone').val("Save");
+            //     }
+
+            // });
 
         }
     });

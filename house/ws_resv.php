@@ -48,7 +48,6 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
-
 $c = "";
 
 // Get our command
@@ -567,10 +566,10 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
     case 'getResvMsgsDialog':
 
         $idResv = intval(filter_input(INPUT_GET, 'idResv', FILTER_SANITIZE_NUMBER_INT));
-                
+
         if($idResv > 0){
             $messages = new Messages($dbh);
-    
+
             $events = $messages->getResvGuestsData($idResv);
         }else{
             throw new NotFoundException("Reservation ID not found");
@@ -589,11 +588,11 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
     case 'getGuestMsgsDialog':
         $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
-    
+
         $messages = new Messages($dbh);
 
         $events = $messages->getGuestData($idName);
-    
+
         break;
 
     case 'loadMsgs':
@@ -654,11 +653,11 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         case 'sendResvMsg':
             $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT));
             $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    
+
             $messages = new Messages($dbh, true);
 
             $events = $messages->sendResvMessage($idResv, $msgText);
-    
+
             break;
 
     case 'sendCampaign':
@@ -687,7 +686,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         }else{
             $events = $contacts->fetchContacts();
         }
-        
+
         break;
 
     case 'syncContacts':
