@@ -69,6 +69,11 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
     $dataTableWrapper = "<div class='mt-3'><button class='ui-button ui-button-default ui-corner-all' id='print-" . $occupancyReport->getInputSetReportName() . "'>Print</button></div>" . $occupancyReport->generateMarkup();
 }
 
+if (isset($_POST['btnExcel-' . $occupancyReport->getInputSetReportName()])) {
+    $activeTab = 1;
+    $occupancyReport->downloadExcel();
+}
+
 if (filter_has_var(INPUT_POST, 'cmd')) {
 
     $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -254,7 +259,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
             		<?php echo "<div><button class='ui-button ui-button-default ui-corner-all' id='print-" . $dailyOccupancyReport->getInputSetReportName() . "'>Print</button></div>" . $dailyOccupancyReport->generateMarkup(); ?>
             	</div>
             	<div id="historicalOcc">
-            		<?php echo $occupancyReport->generateFilterMarkup(false) . $dataTableWrapper; ?>
+            		<?php echo $occupancyReport->generateFilterMarkup() . $dataTableWrapper; ?>
             	</div>
             </div>
         </div>

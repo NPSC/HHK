@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\Report;
 
+use HHK\ExcelHelper;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
@@ -66,6 +67,105 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
 
 
+    }
+
+    public function downloadExcel(string $fileName = 'HHKReport', string $action = "download", string $to = ""): void{
+        $uS = Session::getInstance();
+        $writer = new ExcelHelper($fileName);
+        $writer->setAuthor($uS->username);
+        $writer->setTitle($this->reportTitle);
+
+        // build header
+        $hdr = array();
+        $flds = array();
+        $colWidths = array();
+
+
+        foreach($this->filteredFields as $field){
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
+        }
+
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
+
+        //daily data
+        $curDate = new \DateTime($this->filter->getReportStart());
+        $end = new \DateTime($this->filter->getQueryEnd());
+
+        //loop each day until end
+        for ($curDate; $curDate < $end; $curDate->add(new \DateInterval("P1D"))){
+            $curEnd = (new \DateTimeImmutable($curDate->format("Y-m-d")))->add(new \DateInterval("P1D"));
+            $summaryData = $this->getMainSummaryData($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"));
+            $ageDistribution = $this->getAgeDistribution($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"));
+            $diagCategoryTotals = $this->getDiagnosisCategoryTotals($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"));
+
+            //write row
+            $flds = array();
+            $flds[] = $curDate->format("Y-m-d");
+    
+            //loop summaryData
+            foreach ($summaryData[0] as $s) {
+                $flds[] = $s;
+            }
+
+            //age distribution
+            $ageFields = array("Adult", "Child", self::NOT_INDICATED, "Total Guests");
+            foreach ($ageFields as $title) {
+                $found = false;
+                foreach ($ageDistribution as $dist) {
+                    if (isset($dist[0]) && $dist[0] === $title) {
+                        $flds[] = $dist[1];
+                        $found = true;
+                    }
+                }
+                if(!$found){
+                    $flds[] = 0;
+                }
+            }
+
+            //diagnosis categories
+            $diagCats = $this->diagCats;
+            $diagCats[] = ["noCat", self::NO_CAT];
+            $diagCats[] = ["noDiag", self::NO_DIAGNOSIS];
+
+            foreach ($diagCats as $cat){
+                $found = false;
+                foreach($diagCategoryTotals as $val){
+                    if($val[0] === $cat[1]){
+                        $flds[] = (isset($val[1]) ? $val[1] : 0);
+                        $found = true;
+                    }
+                }
+                if(!$found){
+                    $flds[] = 0;
+                }
+                
+            }
+
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
+        }
+
+        //HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);
+
+        /*
+        switch($action){
+            case ExcelHelper::ACTION_SAVE_DOC:
+                $writer->saveDoc($this->dbh, $uS->username, $this->getInputSetReportName());
+                break;
+            case ExcelHelper::ACTION_EMAIL:
+                $writer->emailDoc($this->dbh, $to);
+                break;
+            case ExcelHelper::ACTION_DOWNLOAD:
+                $writer->download();
+                break;
+            default:
+                $writer->download();
+                break;
+        }
+                */
+        $writer->download();
     }
 
     public function getAgeDistribution(){
