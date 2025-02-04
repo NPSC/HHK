@@ -149,7 +149,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
             function drawDiagnosisTotals() {
 
-                let data = <?php echo json_encode($occupancyReport->getDiagnosisCategoryTotals()); ?>;
+                let data = <?php echo json_encode($occupancyReport->getDiagnosisCategoryTotals($occupancyReport->filter->getReportStart(), $occupancyReport->filter->getQueryEnd())); ?>;
 
                 let dataTable = google.visualization.arrayToDataTable(data);
 

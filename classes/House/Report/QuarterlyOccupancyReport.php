@@ -13,11 +13,23 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
     const NO_CAT = "No Category";
     const NO_DIAGNOSIS = "No Diagnosis";
     
+    protected $roomTypes;
+    protected $rmtroomTitle;
+    protected $diagCats;
+
+    protected $dispType;
+    
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
 
         $this->reportTitle = $uS->siteName . ' Occupancy Report';
         $this->inputSetReportName = "occupancy";
+
+        $this->roomTypes = readGenLookupsPDO($dbh, "Resource_Type");
+        $this->rmtroomTitle = (isset($this->roomTypes['rmtroom']['Description']) ? $this->roomTypes['rmtroom']['Description']: "Remote Room");
+        $this->diagCats = readGenLookupsPDO($dbh, "Diagnosis_Category");
+
+        $this->dispType = (filter_has_var(INPUT_POST, "btnExcel-" . $this->inputSetReportName) ? "excel":"here");
 
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }
@@ -27,8 +39,8 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
     }
 
     public function makeSummaryMkup(): string {
-        $summaryData = $this->getMainSummaryData();
-        $ageDist = $this->getAgeDistribution();
+        $summaryData = $this->getMainSummaryData($this->filter->getReportStart(), $this->filter->getQueryEnd());
+        $ageDist = $this->getAgeDistribution($this->filter->getReportStart(), $this->filter->getQueryEnd());
 
         $summaryTbl = new HTMLTable();
         $summaryTbl->addBodyTr($summaryTbl->makeTd("Prepared at", array("class"=>"tdlabel")) . $summaryTbl->makeTd((new \DateTime())->format("M j, Y h:i a")));
@@ -57,8 +69,36 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
     }
 
     public function makeCFields(): array {
+        $cFields = [];
 
-        return array();
+        if($this->dispType == "excel"){
+            $cFields[] = array("Date", "Date", 'checked', '', 'date', '20');
+            $cFields[] = array("Room-nights available", "Room-nights available", 'checked', '', 'string', '20');
+            $cFields[] = array("Room-nights occupied", "Room-nights occupied", 'checked', '', 'string', '20');
+            $cFields[] = array("Occupancy Rate", "Occupancy Rate", 'checked', '', 'string', '20');
+            $cFields[] = array($this->rmtroomTitle . "-nights occupied", $this->rmtroomTitle . "-nights occupied", 'checked', '', 'string', '20');
+            $cFields[] = array("Unique " . Labels::getString("Statement", "psgPlural", "PSGs"), "Unique " . Labels::getString("Statement", "psgPlural", "PSGs"), 'checked', '', 'string', '20');
+            $cFields[] = array("New " . Labels::getString("Statement", "psgPlural", "PSGs"), "New " . Labels::getString("Statement", "psgPlural", "PSGs"), 'checked', '', 'string', '20');
+            $cFields[] = array("Total Visits", "Total Visits", 'checked', '', 'string', '20');
+            $cFields[] = array("Average Visit Length", "Average Visit Length", 'checked', '', 'string', '20');
+            $cFields[] = array("Median Visit Length", "Median Visit Length", 'checked', '', 'string', '20');
+            $cFields[] = array("Average First Visit Length", "Average First Visit Length", 'checked', '', 'string', '20');
+            $cFields[] = array("Median First Visit Length", "Median First Visit Length", 'checked', '', 'string', '20');
+
+            //age distribution
+            $cFields[] = array("Adult", "Adult", 'checked', '', 'string', '20');
+            $cFields[] = array("Child", "Child", 'checked', '', 'string', '20');
+            $cFields[] = array(self::NOT_INDICATED, self::NOT_INDICATED, 'checked', '', 'string', '20');
+            $cFields[] = array("Total Guests", "Total Guests", 'checked', '', 'string', '20');
+
+            //diagCategories
+            foreach($this->diagCats as $cat){
+                $cFields[] = array($cat[1], $cat[1], 'checked', '', 'string', '20');
+            }
+            $cFields[] = array(self::NO_CAT, self::NO_CAT, 'checked', '', 'string', '20');
+            $cFields[] = array(self::NO_DIAGNOSIS, self::NO_DIAGNOSIS, 'checked', '', 'string', '20');
+        }
+        return $cFields;
 
     }
 
@@ -92,9 +132,10 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
         //daily data
         $curDate = new \DateTime($this->filter->getReportStart());
         $end = new \DateTime($this->filter->getQueryEnd());
+        $yesterday = new \DateTime()->sub(new \DateInterval("P1D"));
 
         //loop each day until end
-        for ($curDate; $curDate < $end; $curDate->add(new \DateInterval("P1D"))){
+        for ($curDate; $curDate < $end && $curDate < $yesterday; $curDate->add(new \DateInterval("P1D"))){
             $curEnd = (new \DateTimeImmutable($curDate->format("Y-m-d")))->add(new \DateInterval("P1D"));
             $summaryData = $this->getMainSummaryData($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"));
             $ageDistribution = $this->getAgeDistribution($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"));
@@ -168,11 +209,11 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
         $writer->download();
     }
 
-    public function getAgeDistribution(){
+    public function getAgeDistribution(string $start, string $end){
 
         $query = 'select if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), "' . self::NOT_INDICATED . '") as `Key`, count(distinct n.idName) as "count" from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span join name n on s.idName = n.idName where date(s.Span_Start_Date) < date(:endDate) and date(ifnull(s.Span_End_Date, now())) > date(:startDate) and not DATE(s.Span_End_Date) <=> DATE(s.Span_Start_Date) and not DATE(v.Span_End) <=> DATE(v.Span_Start) group by `key`';
         $stmt = $this->dbh->prepare($query);
-        $stmt->execute([":startDate"=>$this->filter->getReportStart(), ":endDate"=>$this->filter->getQueryEnd()]);
+        $stmt->execute([":startDate"=>$start, ":endDate"=>$end]);
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
         $total = 0;
         foreach($data as $key=>$value){
@@ -185,17 +226,17 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     }
 
-    public function getMainSummaryData(){
+    public function getMainSummaryData(string $start, string $end){
 
         $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
         $query = '
 SELECT
-(select count(*) from resource re where re.Type = "room")*datediff("' . $this->filter->getQueryEnd() . '", "' . $this->filter->getReportStart() . '") as "Room-nights available",
-(select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getQueryEnd() . '")), date("' . $this->filter->getQueryEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v where date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '") and not date(v.Span_Start) <=> date(v.Span_End)) as "Room-nights occupied",
-CONCAT(ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getQueryEnd() . '")), date("' . $this->filter->getQueryEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v where date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '"))/((select count(*) from resource re where re.Type = "room")*datediff("' . $this->filter->getQueryEnd() . '", "' . $this->filter->getReportStart() . '"))*100,1), "%") as "Occupancy Rate",
-ifnull((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getQueryEnd() . '")), date("' . $this->filter->getQueryEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '")), "0") as "' . $rmtroomTitle . '-nights occupied",
+(select count(*) from resource re where re.Type = "room")*datediff("' . $end . '", "' . $start . '") as "Room-nights available",
+(select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v where date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '") and not date(v.Span_Start) <=> date(v.Span_End)) as "Room-nights occupied",
+CONCAT(ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v where date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '"))/((select count(*) from resource re where re.Type = "room")*datediff("' . $end . '", "' . $start . '"))*100,1), "%") as "Occupancy Rate",
+ifnull((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '")), "0") as "' . $rmtroomTitle . '-nights occupied",
 (select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where date(v.Span_Start) < date(:endDate6) and date(ifnull(v.Span_End, curdate()+interval 1 day)) > date(:startDate6) and not date(v.Span_Start) <=> date(v.Span_End)) as "Unique ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
 (select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate()+interval 1 day)) > date(:startDate14) and date(fv.Span_Start) < date(:endDate14) and not date(fv.Span_Start) <=> date(fv.Span_End))) as "New ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
 (select count(distinct v.idVisit) from visit v where date(v.Span_Start) < date(:endDate8) and date(ifnull(v.Span_End, curdate()+interval 1 day)) > date(:startDate8) and not date(v.Span_Start) <=> date(v.Span_End)) as "Total Visits",
@@ -206,13 +247,13 @@ ifnull((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->ge
 ';
         $stmt = $this->dbh->prepare($query);
         $stmt->execute([
-            ":startDate6"=>$this->filter->getReportStart(), ":endDate6"=>$this->filter->getQueryEnd(),
-            ":startDate8"=>$this->filter->getReportStart(), ":endDate8"=>$this->filter->getQueryEnd(),
-            ":startDate9"=>$this->filter->getReportStart(), ":endDate9"=>$this->filter->getQueryEnd(),
-            ":startDate10"=>$this->filter->getReportStart(), ":endDate10"=>$this->filter->getQueryEnd(),
-            ":startDate11"=>$this->filter->getReportStart(), ":endDate11"=>$this->filter->getQueryEnd(),
-            ":startDate12"=>$this->filter->getReportStart(), ":endDate12"=>$this->filter->getQueryEnd(),
-            ":startDate14"=>$this->filter->getReportStart(), ":endDate14"=>$this->filter->getQueryEnd(),
+            ":startDate6"=>$start, ":endDate6"=>$end,
+            ":startDate8"=>$start, ":endDate8"=>$end,
+            ":startDate9"=>$start, ":endDate9"=>$end,
+            ":startDate10"=>$start, ":endDate10"=>$end,
+            ":startDate11"=>$start, ":endDate11"=>$end,
+            ":startDate12"=>$start, ":endDate12"=>$end,
+            ":startDate14"=>$start, ":endDate14"=>$end,
         ]);
 
         $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -256,14 +297,14 @@ group by `child/adult`;';
         return $data;
     }
 
-    public function getDiagnosisCategoryTotals(){
+    public function getDiagnosisCategoryTotals(string $start, string $end){
 
-        $query = 'select if(d.Code is not null, ifnull(dc.Description, "' . self::NO_CAT . '"), "' . self::NO_DIAGNOSIS . '") as "Category", sum(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getQueryEnd() . '")), date("' . $this->filter->getQueryEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) as "count"
+        $query = 'select if(d.Code is not null, ifnull(dc.Description, "' . self::NO_CAT . '"), "' . self::NO_DIAGNOSIS . '") as "Category", sum(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) as "count"
 from visit v
 join hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
 left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
 left join gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = "Diagnosis_Category"
-where date(ifnull(v.Span_End, now())) >= date("' . $this->filter->getReportStart() . '") and date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '")
+where date(ifnull(v.Span_End, now())) >= date("' . $start . '") and date(v.Span_Start) < date("' . $end . '")
 group by `Category` order by `count` desc;';
 
         $stmt = $this->dbh->prepare($query);
