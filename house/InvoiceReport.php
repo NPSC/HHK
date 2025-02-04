@@ -140,7 +140,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     $g['Balance'] = number_format($r['Balance'], 2);
     $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], ['id' => 'divInvNotes' . $r['Invoice_Number'], 'style' => 'max-width:190px;']);
 
-
+//add invoice notes to payment report
     if ($isLocal) {
 
         $tr = '';
@@ -1238,7 +1238,7 @@ $(document).ready(function() {
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
             <span class="ui-helper-hidden-accessible"><input type="text"/></span>
-            <table><tr>
+            <table style="width: 100%"><tr>
                     <td class="tdlabel">Invoice Number:</td>
                     <td><span id="spnInvNumber"></span></td>
                 </tr><tr>
@@ -1248,7 +1248,7 @@ $(document).ready(function() {
                     <td class="tdlabel">Bill Date:</td>
                     <td><input id="txtBillDate" readonly="readonly" class="ckdate" /></td>
                 </tr><tr>
-                    <td colspan="2"><textarea rows="2" cols="50" id="taBillNotes" ></textarea></td>
+                    <td colspan="2"><textarea rows="2" id="taBillNotes" style="width: 100%"></textarea></td>
                 </tr>
             </table>
         </div>

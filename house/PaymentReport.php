@@ -156,7 +156,8 @@ if (!empty($_ENV['Service_Name'])) {
 
 $cFields[] = array("Updated", 'Updated', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("By", 'By', 'checked', '', 'string', '20', array());
-$cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
+$cFields[] = array("Invoice Notes", 'Invoice_Notes', 'checked', '', 'string', '20', array());
+$cFields[] = array("Payment Notes", 'Payment_Notes', 'checked', '', 'string', '20', array());
 
 $fieldSets = ReportFieldSet::listFieldSets($dbh, 'payment', true);
 $fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
