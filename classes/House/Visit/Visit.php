@@ -528,7 +528,7 @@ class Visit {
             // Change date today?
             if ($chgDT->format('Y-m-d') == date('Y-m-d')) {
                 foreach ($rooms as $r) {
-                    $r->putDirty();
+                    $r->putTurnOver();
                     $r->saveRoom($dbh, $uname, TRUE);
                 }
             }
