@@ -84,6 +84,9 @@ if (count($filter->getAList()) > 0) {
     $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospitalAssoc', 'checked', '', 'string', '20', array());
 }
 
+$cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent')." First", 'Referral_Agent_First', '', '', 'string', '15', array());
+$cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent')." Last", 'Referral_Agent_Last', '', '', 'string', '15', array());
+
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
 
