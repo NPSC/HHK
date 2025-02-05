@@ -20,6 +20,10 @@ body {
 	--nav-text-color: #fff;
 }
 
+#tblGuestViewrpt td {
+	vertical-align: top;
+}
+
 .fc {
 	--fc-event-border-color: #e9e9e9;
 }

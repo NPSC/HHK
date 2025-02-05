@@ -514,7 +514,7 @@ if ($psg->getIdPsg() > 0) {
             ['class' => 'hhk-panel mb-3 mr-3'])) . $ccMarkup;
 
     if ($uS->TrackAuto) {
-        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), $registration->getNoVehicle());
+        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), 0, $registration->getNoVehicle());
     }
 
     // Look for visits
@@ -666,7 +666,7 @@ if($uS->ShowGuestPhoto){
 	$guestPhotoMarkup = showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
 }
 
-$guestName = "<span style='font-size:2em;'>$niceName</span>";
+$guestName = "<span style='font-size:2em;'>$niceName</span>";// . $patient->getRoleMember()->get_fullName();
 
 if ($name->getNoReturnDemog() != '') {
     $guestName = "<span style='font-size:2em;color:red;'>$niceName - No Return: " . $uS->nameLookups['NoReturnReason'][$name->getNoReturnDemog()][1] . "</span>";
@@ -1003,6 +1003,7 @@ $uS->guestId = $id;
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="regDialog" style="display:none;"></div>
             <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
+            <div id="vehDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="submit" style="display:none;">

@@ -8,6 +8,8 @@ use HHK\House\Reservation\ActiveReservation;
 use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
+use HHK\House\Vehicle;
+use HHK\House\Visit\Visit;
 use HHK\Incident\ListReports;
 use HHK\Incident\IncidentReport;
 use HHK\Member\Address\Phones;
@@ -193,6 +195,42 @@ try {
     	}
 
     	break;
+
+        case 'viewVeh':
+
+            $idV = 0;
+            if (isset($_POST['idV'])) {
+                $idV = intval(filter_input(INPUT_POST, 'idV', FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
+            $vehStmt->execute([':idv' => $idV]);
+            $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
+            
+            $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], false);
+    
+            $events = ['success' => $mkup, 'title' => "Edit Vehicles"];
+    
+            break;
+
+        case 'saveVeh':
+
+            $idV = 0;
+            if (isset($_POST['idV'])) {
+                $idV = intval(filter_input(INPUT_POST, 'idV', FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
+            $vehStmt->execute([':idv' => $idV]);
+            $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
+
+            try {
+                $events = ["success"=> Vehicle::saveVehicle($dbh, $row["idRegistration"], $row["idReservation"])];
+            }catch(\Exception $e){
+                $events = ["error" => "Error saving vehicle: " . $e->getMessage()];
+            }
+    
+            break;
 
     case 'getNoteList':
 
