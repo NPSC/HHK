@@ -188,7 +188,7 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
     dialg.find('#txtBillDate').datepicker({numberOfMonths: 1});
 
     dialg.dialog('option', 'buttons', buttons);
-    dialg.dialog('option', 'width', 500);
+    dialg.dialog('option', 'width', 450);
     dialg.dialog('open');
 }
 

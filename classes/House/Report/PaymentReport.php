@@ -168,7 +168,8 @@ class PaymentReport {
             "Original Amount"=>"dollar",
             "Amount"=>"dollar",
         	"Updated"=>"MM/DD/YYYY",
-            "Notes"=>"string"
+            "Invoice_Notes"=>"string",
+            "Payment_Notes"=>"string"
         );
 
         $colWidths = array('10', '10', '20', '20', '15', '10', '10', '15', '20', '15', '15', '15', 15, '20');
@@ -429,7 +430,8 @@ class PaymentReport {
             'Detail' => $payDetail,
             'Payment_External_Id'=>$p['Payment_External_Id'],
             'By' => $p['Payment_Created_By'],
-            'Notes'=>$p['Payment_Note'],
+            'Invoice_Notes'=>$r['i']['Invoice_Description'],
+            'Payment_Notes'=>$p['Payment_Note'],
         	'Merchant'=>$payGW
         );
 

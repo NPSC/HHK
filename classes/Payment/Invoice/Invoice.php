@@ -774,9 +774,10 @@ where
 		) );
 
 		if ($this->getInvoiceNotes () != '') {
-			$rec .= HTMLContainer::generateMarkup ( 'p', $this->getInvoiceNotes (), array (
-					'class' => 'mt-3'
-			) );
+			$rec .= HTMLContainer::generateMarkup("div", 
+				HTMLContainer::generateMarkup("h4", "Notes")
+				. HTMLContainer::generateMarkup ( 'p', $this->getInvoiceNotes ())
+			, ['class' => 'my-3']);
 		}
 
 		if ($this->isDeleted ()) {

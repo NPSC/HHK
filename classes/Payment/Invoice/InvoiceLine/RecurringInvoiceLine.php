@@ -98,7 +98,7 @@ class RecurringInvoiceLine extends AbstractInvoiceLine {
                 $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
             }
         } else {
-            $this->description = $description . ($this->var == '' ? '' : '; ' . $this->var);
+            $this->description = $description; // . ($this->var == '' ? '' : '; ' . $this->var);
         }
 
         return $this;

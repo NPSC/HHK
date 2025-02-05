@@ -43,6 +43,10 @@ class Receipt {
 	protected static function makeInvoiceLineMarkup(\PDO $dbh, Invoice $invoice, &$tbl) {
 		$uS = Session::getInstance();
 
+        if($invoice->getInvoiceNotes() != "") {
+            $tbl->addBodyTr(HTMLTable::makeTd("Invoice Notes:", array('class'=>'tdlabel', 'style'=>"font-size: 0.8em;")) . HTMLTable::makeTd($invoice->getInvoiceNotes(), array('class'=>'hhk-tdTotals', 'style'=>"font-size: 0.8em;")));
+        }
+        
 		// Taxes
 		$tax = floatval($uS->ImpliedTaxRate)/100;
 

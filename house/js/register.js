@@ -1473,7 +1473,7 @@ $(document).ready(function () {
                         $('#rptInvdiv').on('click', '.invSetBill', function (event) {
                             event.preventDefault();
                             $(".hhk-alert").hide();
-                            invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
+                            invSetBill($(this).data('inb'), $(this).data('payor'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
                         });
 
                         // Handles several actions
