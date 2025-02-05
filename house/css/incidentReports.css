@@ -18,6 +18,15 @@
     box-sizing: border-box;
 }
 
+#incidentDialog input:read-only,
+#incidentDialog textarea:read-only, 
+#incidentDialog input:read-only:focus-visible,
+#incidentDialog textarea:read-only:focus-visible {
+	border: none;
+	outline: none;
+	cursor: default;
+}
+
 #incidentPrint {
 	margin: 1em;
 }

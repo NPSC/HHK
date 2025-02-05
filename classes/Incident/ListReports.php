@@ -41,8 +41,8 @@ class ListReports {
         if ($guestId == '' && $psgId == '') {
             return array('error'=>'The Guest Id and/or PSG Id are missing.');
         }
-/**
-        if($guestId != ''){
+
+/*        if($guestId != ''){
 	        $whereClause .= "Guest_Id = $guestId";
         }
 **/
@@ -53,7 +53,13 @@ class ListReports {
 			$whereClause .= "Psg_Id = $psgId";
 		}
 
-        return SSP::complex ( $parms, $dbh, $dbView, $priKey, $columns, null, $whereClause );
+        $dtable = SSP::complex ( $parms, $dbh, $dbView, $priKey, $columns, null, $whereClause );
+
+        foreach($dtable["data"] as $k=>$row){
+            $dtable["data"][$k]["canDelete"] = IncidentReport::userCanEdit();
+        }
+
+        return $dtable;
 
     }
 
