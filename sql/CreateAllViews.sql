@@ -2373,6 +2373,8 @@ CREATE or replace VIEW `vregister` AS
                 END,
                 '') AS `Guest Last`,
         `n`.`Name_Full` AS `Name_Full`,
+        ifnull(pn.Name_Last, '') as `Patient Last`,
+        ifnull(pn.Name_Full, '') as `Patient Full Name`,
         `n`.`Gender` AS `Gender`,
         `nd`.`Newsletter` AS `Newsletter`,
         `nd`.`Photo_Permission` AS `Photo_Permission`,
@@ -2383,8 +2385,9 @@ CREATE or replace VIEW `vregister` AS
         `nd`.`Education_Level` AS `Education_Level`,
         `nd`.`Special_Needs` AS `Special_Needs`
     FROM
-        (((((`visit` `v`
+        ((((((`visit` `v`
         LEFT JOIN `hospital_stay` `hs` ON (`v`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `name` `pn` ON (`hs`.`idPatient` = `pn`.`idName`))
         LEFT JOIN `name` `n` ON (`v`.`idPrimaryGuest` = `n`.`idName`))
         LEFT JOIN `name_demog` `nd` ON (`v`.`idPrimaryGuest` = `nd`.`idName`))
         LEFT JOIN `gen_lookups` `gs` ON (`gs`.`Table_Name` = 'Name_Suffix'
@@ -2409,6 +2412,8 @@ CREATE or Replace VIEW `vregister_resv` AS
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         ifnull(hs.idAssociation, 0) as `idAssociation`,
         n.Name_Full,
+        ifnull(pn.Name_Last, '') as `Patient Last`,
+        ifnull(pn.Name_Full, '') as `Patient Full Name`,
         gv.Title as `Status_Text`,
         r.idRegistration,
         n.Gender,
@@ -2425,6 +2430,8 @@ CREATE or Replace VIEW `vregister_resv` AS
         `reservation` `r`
             left join
         `hospital_stay` `hs` ON `r`.`idHospital_Stay` = `hs`.`idHospital_stay`
+            left join
+        `name` `pn` ON `hs`.`idPatient` = `pn`.`idName`
             left join
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join

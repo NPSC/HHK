@@ -47,6 +47,7 @@ DROP INDEX IF EXISTS `indx_linkDoc`;
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
 ('vehicleNotes', 'Notes', 's', 'rf','','Default: Notes');
 
+
 call new_webpage('guestoperations', 0, '', 0, 'h', '', '', 'c', '', '', current_timestamp(), 'g');
 
 ALTER TABLE `notification_log`
@@ -79,3 +80,11 @@ insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id`
 insert ignore into `note` (`User_Name`, `Note_Type`, `Title`, `Note_Text`) SELECT "npscuser" as `User_Name`, "text" as `Note_Type`, "" as `Title`, `Notes` from room where `Notes` is not null; 
 insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT n.`idNote`, "room" as `linkType`, r.`idRoom` from room r join `note` n on r.Notes = n.Note_Text where r.`Notes` is not null;
 update room set `Notes` = null;
+
+-- add custom ribbon text
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('RibbonText','pgl','lu','c','Type of text shown on the calendar ribbon','RibbonText',1);
+
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pgl", "Primary Guest Last Name", 10);
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pgf", "Primary Guest Full Name", 20);
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pl", "Patient Last Name", 30);
+INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pf", "Patient Full Name", 40);

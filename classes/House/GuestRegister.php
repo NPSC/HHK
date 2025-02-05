@@ -326,7 +326,7 @@ where ru.idResource_use is null
             }
 
             // Render Event
-            $titleText = htmlspecialchars_decode($r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note']: ''), ENT_QUOTES);
+            $titleText = htmlspecialchars_decode($this->getEventTitle($r), ENT_QUOTES);
             $visitExtended = FALSE;
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
@@ -608,7 +608,7 @@ where ru.idResource_use is null
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] =  htmlspecialchars_decode($r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note']: ''), ENT_QUOTES);
+            $s['title'] =  htmlspecialchars_decode($this->getEventTitle($r), ENT_QUOTES);
             $s['hospName'] = htmlspecialchars_decode($hospitals[$r['idHospital']]['Title'], ENT_QUOTES);
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
@@ -625,6 +625,23 @@ where ru.idResource_use is null
         }
 
         return $events;
+    }
+
+    protected function getEventTitle(array $r): string {
+        $uS = Session::getInstance();
+
+        switch ($uS->RibbonText){
+            case "pgl": //Primary Guest Last Name
+                return $r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
+            case "pgf": //Primary Guest Full Name
+                return $r['Name_Full'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
+            case "pl": //Patient Last Name
+                return $r['Patient Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');;
+            case "pf": //Patient Full Name
+                return $r['Patient Full Name'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');;
+            default:
+                return $r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
+        }
     }
 
 
