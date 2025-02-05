@@ -987,7 +987,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
             . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
-            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
+            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN`, ifnull(s.idRoom, '') as 'idRoom', ifnull(r.Title, '') as 'Room' "
             . " from `name` n "
             . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
             . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
@@ -997,6 +997,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
             . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
             . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
+            . " left join stays s on n.idName = s.idName and s.Status = 'a'"
+            . " left join resource r on s.idRoom = r.idResource"
             . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
             . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
@@ -1052,6 +1054,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status'] : ''),
                 'city' => $row2['City'],
                 'state' => $row2['State'],
+                'idRoom' => $row2['idRoom'],
+                'room' => $row2['Room']
             ];
 
             $events[] = $namArray;

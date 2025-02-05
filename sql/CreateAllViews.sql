@@ -139,14 +139,34 @@ CREATE OR REPLACE VIEW `vdoc_notes` AS
         n.User_Name,
         n.Title,
         n.Note_Text,
-        dn.Doc_Id,
+        dn.idLink as `Doc_Id`,
         n.`Timestamp`
     FROM
         note n
             JOIN
-        doc_note dn ON n.idNote = dn.Note_Id
+        link_note dn ON n.idNote = dn.idNote and dn.linkType = "document"
     WHERE
-        dn.Doc_Id > 0 && n.`Status` = 'a';
+        dn.idLink > 0 && n.`Status` = 'a';
+
+-- -----------------------------------------------------
+-- View `vroom_notes`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vroom_notes` AS
+    SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        dn.idLink as `idRoom`,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        link_note dn ON n.idNote = dn.idNote and dn.linkType = "room"
+    WHERE
+        dn.idLink > 0 && n.`Status` = 'a';
 
 -- -----------------------------------------------------
 -- View `vstaff_notes`
@@ -155,6 +175,10 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
     SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        ifnull(ng.idName, ifnull(np.idName, '')) AS `idGuest`,
+        ifnull(p.idPsg, '') AS `idPsg`,
+        ifnull(concat(ng.Name_First, " ", ng.Name_Last), ifnull(concat(np.Name_First, " ", np.Name_Last), '')) AS `PrimaryGuest`,
+        ifnull(re.Title, '') AS `room`,
         n.flag,
         n.User_Name,
         n.Category,
@@ -164,7 +188,19 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
     FROM
         note n
             JOIN
-        staff_note sn ON n.idNote = sn.Note_Id
+        link_note sn ON n.idNote = sn.idNote and sn.linkType IN ("staff", "reservation", "psg")
+            LEFT JOIN
+        psg p ON sn.idLink = p.idPsg and sn.linkType = "psg"
+            LEFT JOIN
+        reservation_guest rg on sn.idLink = rg.idReservation and sn.linkType = "reservation" and rg.Primary_Guest = 1
+            LEFT JOIN
+        reservation r on rg.idReservation = r.idReservation
+            LEFT JOIN
+        resource re on r.idResource = re.idResource
+            LEFT JOIN 
+        name ng on rg.idGuest = ng.idName
+            LEFT JOIN 
+        name np on p.idPatient = np.idName
     WHERE
         n.`Status` = 'a';
 
@@ -180,12 +216,12 @@ CREATE OR REPLACE VIEW `vmem_notes` AS
         n.User_Name,
         n.Title,
         n.Note_Text,
-        mn.idName,
+        mn.idLink as `idName`,
         n.`Timestamp`
     FROM
         note n
             JOIN
-        member_note mn ON n.idNote = mn.Note_Id
+        link_note mn ON n.idNote = mn.idNote and mn.linkType = "member"
     WHERE
         n.`Status` = 'a';
 
@@ -2197,19 +2233,19 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         n.User_Name,
         n.Title,
         n.Note_Text,
-        rn.Reservation_Id,
+        rn.idLink as `Reservation_Id`,
         reg.idPsg,
         n.`Timestamp`
     FROM
         note n
     JOIN
-        reservation_note rn ON n.idNote = rn.Note_Id
+        link_note rn ON n.idNote = rn.idNote and rn.linkType = "reservation"
     JOIN
-        reservation r ON rn.Reservation_Id = r.idReservation
+        reservation r ON rn.idLink = r.idReservation
     JOIN
 	registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a';
+        rn.idLink > 0 && n.`Status` = 'a';
 
 
 -- -----------------------------------------------------
@@ -2223,43 +2259,21 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
         n.User_Name,
         n.Title,
         n.Note_Text,
-        v.idVisit,
+        if(n.flag = '1', "", v.idVisit) as `idVisit`,
         reg.idPsg,
         n.`Timestamp`
     FROM
         note n
             JOIN
-        reservation_note rn ON n.idNote = rn.Note_Id
+        link_note rn ON n.idNote = rn.idNote and rn.linkType = "reservation"
             join
-        visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
+        visit v on v.idReservation = rn.idLink and v.Span = 0
 			join
-		reservation r ON rn.Reservation_Id = r.idReservation
+		reservation r ON rn.idLink = r.idReservation
 			join
 		registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0' and v.`Status` <> 'c'
-	UNION SELECT
-        n.idNote AS `Note_Id`,
-        n.idNote AS `Action`,
-        n.flag,
-        n.User_Name,
-        n.Title,
-        n.Note_Text,
-        "",
-        reg.idPsg,
-        n.`Timestamp`
-    FROM
-        note n
-            JOIN
-        reservation_note rn ON n.idNote = rn.Note_Id
-            join
-        visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
-			join
-		reservation r ON rn.Reservation_Id = r.idReservation
-			join
-		registration reg on r.idRegistration = reg.idRegistration
-    WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1' and v.`Status` <> 'c';
+        rn.idLink > 0 && n.`Status` = 'a' && v.`Status` <> 'c';
 
 
 -- -----------------------------------------------------
@@ -2273,14 +2287,14 @@ CREATE OR REPLACE VIEW `vpsg_notes` AS
         n.User_Name,
         n.Title,
         n.Note_Text,
-        pn.Psg_Id,
+        pn.idLink as `Psg_Id`,
         n.`Timestamp`
     FROM
         note n
             JOIN
-        psg_note pn ON n.idNote = pn.Note_Id
+        link_note pn ON n.idNote = pn.idNote and pn.linkType = "psg"
     WHERE
-        pn.Psg_Id > 0 && n.`Status` = 'a';
+        pn.idLink > 0 && n.`Status` = 'a';
 
 -- -----------------------------------------------------
 -- View `vpsg_notes_concat`
@@ -2293,33 +2307,18 @@ CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
         n.User_Name,
         n.Title,
         n.Note_Text,
-        pn.Psg_Id,
+        if(ln.linkType = "psg", ln.idLink, reg.idPsg) as `PSG_Id`,
         n.`Timestamp`
     FROM
         note n
             JOIN
-        psg_note pn ON n.idNote = pn.Note_Id
-    WHERE
-        pn.Psg_Id > 0 && n.`Status` = 'a'
-    UNION DISTINCT SELECT
-        n.idNote AS `Note_Id`,
-        n.idNote AS `Action`,
-        n.flag,
-        n.User_Name,
-        n.Title,
-        n.Note_Text,
-        reg.idPsg,
-        n.`Timestamp`
-    FROM
-        note n
-            JOIN
-        reservation_note rn ON n.idNote = rn.Note_Id
-			join
-		reservation r ON rn.Reservation_Id = r.idReservation
-			join
+        link_note ln ON n.idNote = ln.idNote and ln.linkType in ("psg", "reservation")
+            LEFT JOIN
+		reservation r ON ln.idLink = r.idReservation and ln.linkType = "reservation"
+			LEFT JOIN
 		registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a';
+        ln.idLink > 0 && n.`Status` = 'a';
 
 -- -----------------------------------------------------
 -- View `vpsg_guest`

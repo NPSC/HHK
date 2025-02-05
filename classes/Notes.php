@@ -20,8 +20,6 @@ use HHK\HTMLControls\HTMLContainer;
  */
 
 class Notes {
-
-
     public static function markupShell($notesText, $taId, $txtboxRows = '1', $taClass = 'hhk-feeskeys') {
 
         if (is_null($notesText)) {
@@ -33,6 +31,7 @@ class Notes {
                      '',
                      array('name'=>$taId, 'rows'=>$txtboxRows, 'class'=>$taClass)
                      );
+        $notesBtn = HTMLContainer::generateMarkup("button", "View Room Notes", ['type'=>'button', 'class'=>"roomDetails ui-button ui-corner-all", "data-idRoom"=>$taId]);
 
         // reverse output
         $lines = explode("\n", $notesText);
@@ -42,9 +41,9 @@ class Notes {
             $reverse .= $lines[$i] . "<br/>";
         }
 
-        $output = HTMLContainer::generateMarkup('div', $reverse, array('class'=>'hhk-existgNotes'));
+        $output = HTMLContainer::generateMarkup('div', $reverse, array('class'=>'hhk-existgNotes ui-corner-all mb-2'));
 
-        return HTMLContainer::generateMarkup('div', $output . $inputTa, array('class'=>'hhk-noteBox'));
+        return HTMLContainer::generateMarkup('div', $output  . $notesBtn, array('class'=>'hhk-noteBox'));
 
     }
 

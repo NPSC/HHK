@@ -153,7 +153,15 @@ body {
 	margin-top: 0.5em;
 }
 
-.ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteMRN {
+.ui-autocomplete .autocompleteRoom {
+	background-color: #5c9ccc;
+	border-radius: 0.25em;
+	color: white;
+	padding: 0 0.5em;
+	margin-left: 0.5em;
+}
+
+.ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteMRN, .ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteRoom {
 	background-color: white;
 	border-radius: 0.25em;
 	color: #5c9ccc;
@@ -1223,4 +1231,23 @@ input:checked + .hhk-slider:before {
 #deluxeDialog input:disabled{
 	background-color: #e9ecef;
     opacity: 1;
+}
+
+
+.hhk-list-group .list-group-item {
+	border-top: 1px solid #a6c9e2;
+	border-left: 1px solid #a6c9e2;
+	border-right: 1px solid #a6c9e2;
+	padding: 0.5em;
+}
+
+.hhk-list-group > .list-group-item:first-child {
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+}
+
+.hhk-list-group .list-group-item:last-child {
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+	border-bottom: 1px solid #a6c9e2;
 }

@@ -63,3 +63,19 @@ ALTER TABLE `visit`
 ADD COLUMN IF NOT EXISTS `Checked_In_By` varchar(45) NOT NULL DEFAULT '' AFTER `Recorded`;
 
 INSERT IGNORE into `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("minResvDays", "0", "i", "h", "Enforce a minimum length for reservations, 0 = no minimum", 1);
+
+-- Move note links
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "reservation" as 'linkType', `Reservation_Id` as 'idLink' from `reservation_note`;
+
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "psg" as 'linkType', `Psg_Id` as 'idLink' from `psg_note`;
+
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "document" as 'linkType', `Doc_Id` as 'idLink' from `doc_note`;
+
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "staff" as 'linkType', '0' as 'idLink' from `staff_note`;
+
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT `Note_Id` as 'idNote', "member" as 'linkType', `idName` as 'idLink' from `member_note`;
+
+
+insert ignore into `note` (`User_Name`, `Note_Type`, `Title`, `Note_Text`) SELECT "npscuser" as `User_Name`, "text" as `Note_Type`, "" as `Title`, `Notes` from room where `Notes` is not null; 
+insert ignore into `link_note` (`idNote`, `linkType`, `idLink`) SELECT n.`idNote`, "room" as `linkType`, r.`idRoom` from room r join `note` n on r.Notes = n.Note_Text where r.`Notes` is not null;
+update room set `Notes` = null;
