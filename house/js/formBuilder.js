@@ -84,6 +84,7 @@
 				className: "form-control",
 				width: "col-md-12",
     			name: "resvNotes",
+				hhkField: (options.labels.reservation || 'Reservation') + " Notes",
     		},
 			{
     			label: "Submit",

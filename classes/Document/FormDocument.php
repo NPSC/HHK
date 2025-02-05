@@ -240,6 +240,8 @@ class FormDocument {
     public function validateFields(array $fields){
         $response = ["fields"=>[], "errors"=>[]];
 
+        $uS = Session::getInstance();
+
         $fieldData = [];
 
         foreach($fields as $key=>$field){
@@ -294,6 +296,12 @@ class FormDocument {
 
                         if($checkin->format('Y-m-d') >= $checkout->format('Y-m-d')){
                             $response["errors"][] = ['field'=>'checkoutdate', 'error'=>'Checkout Date must be after Checkin Date'];
+                        }
+
+                        $days = $checkin->diff($checkout)->days;
+                        $minResvDays = $uS->minResvDays;
+                        if($uS->minResvDays > 0 && $checkin->diff($checkout)->days < $uS->minResvDays){
+                            $response["errors"][] = ['field'=>'checkoutdate', 'error'=>'Stay dates must be a minimum of ' . $uS->minResvDays . " days"];
                         }
                     }catch(\Exception $e){
 

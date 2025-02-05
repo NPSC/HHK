@@ -61,3 +61,5 @@ INSERT IGNORE into `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 ALTER TABLE `visit`
 ADD COLUMN IF NOT EXISTS `Checked_In_By` varchar(45) NOT NULL DEFAULT '' AFTER `Recorded`;
+
+INSERT IGNORE into `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("minResvDays", "0", "i", "h", "Enforce a minimum length for reservations, 0 = no minimum", 1);

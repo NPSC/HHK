@@ -636,6 +636,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('MaxExpected','260','i','h','','Maximum Expected days out for a visit','',1),
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size','',1),
 ('merchantReceipt', 'false', 'b', 'f', '', 'Print customer and merchant receipt on single page','',1),
+("minResvDays", "0", "i", "h", '', "Enforce a minimum length for reservations, 0 = no minimum", '', 1),
 ('mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode',1),
 ('NewsletterURL', 'https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa', 'url', 'a','', 'Newsletter iframe URL', '', 0),
 ('NightsCounter','calYear','s','c','','Count nights by year (calYear) or by grand total','',1),
