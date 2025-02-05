@@ -343,7 +343,10 @@ class Visit {
         }
 
         $this->visitRS->Status->setNewVal(VisitStatus::CheckedIn);
+        
         $this->visitRS->idResource->setNewVal($this->resource->getIdResource());
+
+        $this->visitRS->Checked_In_By->setNewVal($username);
 
         $this->updateVisitRecord($dbh, $username);
 

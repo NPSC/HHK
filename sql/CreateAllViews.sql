@@ -2883,7 +2883,8 @@ CREATE or replace VIEW `vspan_listing` AS
         case when ifnull(hs.MRN, '') = '' then ifnull(n.Name_Full, '') else concat( ifnull(n.Name_Full, '') ,' (' , ifnull(hs.MRN, '') , ')') end
          as `Patient_Name`,
 	ifnull(hs.idHospital, 0) as `idHospital`,
-	ifnull(hs.idAssociation, 0) as `idAssociation`
+	ifnull(hs.idAssociation, 0) as `idAssociation`,
+    v.Checked_In_By
     from
         `visit` `v`
         left join `resource` `re` ON `v`.`idResource` = `re`.`idResource`
