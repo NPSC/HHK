@@ -288,6 +288,28 @@ class Family {
         return $addrs;
     }
 
+    protected function getEmergContacts(\PDO $dbh, $roles) {
+
+        $addrs = array();
+
+        foreach ($roles as $role) {
+            $emergObj = $role->getEmergContactObj($dbh);
+            $emerg = [];
+
+            $emerg['First'] = $emergObj->getEcNameFirst();
+            $emerg['Last'] = $emergObj->getEcNameLast();
+            $emerg['phone'] = $emergObj->getEcPhone();
+            $emerg['altPhone'] = $emergObj->getEcAltPhone();
+            $emerg['relation'] = $emergObj->getEcRelationship();
+            $emerg['pref'] = $role->getRoleMember()->getIdPrefix();
+
+            $emergs[$role->getRoleMember()->getIdPrefix()] = $emerg;
+
+        }
+
+        return $emergs;
+    }
+
     public function createAddPersonMu(\PDO $dbh, ReserveData $rData) {
 
         $addPerson = array();
@@ -493,7 +515,7 @@ class Family {
             HTMLContainer::generateMarkup('span', $familyName . ' Family')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
+        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'emergContacts'=>$this->getEmergContacts($dbh, $this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
 
     }
 
@@ -519,14 +541,18 @@ class Family {
         $uS = Session::getInstance();
 
         // Add search icon
-        $ecSearch = HTMLContainer::generateMarkup('span', '', array('data-prefix'=>$role->getRoleMember()->getIdPrefix(), 'class'=>'hhk-emSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
+        $ecSearch = HTMLContainer::generateMarkup("li", HTMLContainer::generateMarkup('span', '', array("class"=>"ui-icon ui-icon-search")), array('data-prefix'=>$role->getRoleMember()->getIdPrefix(), 'class'=>'hhk-emSearch ui-state-default ui-corner-all', 'title'=>'Search'));
+
+        $copy = HTMLContainer::generateMarkup('li',
+                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-copy hhk-emergPickerPanel'))
+                        , array('class'=>'ui-state-default ui-corner-all hhk-emergCopy hhk-emergPickerPanel', 'data-prefix'=>$role->getRoleMember()->getIdPrefix(), 'title'=>'Click to copy.'));
 
         $ec = $role->getEmergContactObj($dbh);
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . $ecSearch, array('style'=>'font-weight:bold;'))
+                HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . HTMLContainer::generateMarkup("ul", $copy . $ecSearch, array("class"=>"ui-widget ui-helper-clearfix hhk-ui-icons ml-2")), array('class'=>"hhk-flex align-items-center", 'style'=>'font-weight:bold;'))
                 . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact(), $emergUserData), array('class'=>'hhk-panel')),
-                array('style'=>'float:left; margin-right:3px;'));
+                array('class'=>'mr-1', 'style'=>'font-size: 0.9em;'));
 
     }
 

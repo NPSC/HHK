@@ -169,16 +169,14 @@ abstract class AbstractRole {
         if ($useCopyIcon) {
             $copy = HTMLContainer::generateMarkup('li',
                         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-copy hhk-addrPickerPanel'))
-                        , array('class'=>'ui-state-default ui-corner-all hhk-addrCopy hhk-addrPickerPanel', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Click to copy.'));
+                        , array('class'=>'ui-state-default ui-corner-all hhk-addrCopy hhk-addrPickerPanel', 'data-prefix'=>$idPrefix, 'title'=>'Click to copy.'));
         }
 
-        $legendTitle = HTMLContainer::generateMarkup('ul'
-                , HTMLContainer::generateMarkup('li',
+        $legendTitle = HTMLContainer::generateMarkup('ul',$copy .
+                 HTMLContainer::generateMarkup('li',
                         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
-                    , array('class'=>'ui-state-default ui-corner-all hhk-addrErase', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Erase'))
-                .$copy
-                .HTMLContainer::generateMarkup('span', 'Home Address', array('style'=>'float:right;margin-top:5px;margin-right:.4em;'))
-                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+                    , array('class'=>'ui-state-default ui-corner-all hhk-addrErase', 'data-prefix'=>$idPrefix, 'title'=>'Erase'))
+                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons ml-2'));
 
         // Incomplete address
         $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'incomplete', 'class'=>'hhk-incompleteAddr', 'data-prefix'=>$idPrefix);
@@ -201,7 +199,7 @@ abstract class AbstractRole {
                 HTMLContainer::generateMarkup(
                     'fieldset',
                     //HTMLContainer::generateMarkup('legend', 'Home Address'.$copy.$trash, array('style'=>'font-weight:bold;'))
-                    HTMLContainer::generateMarkup('legend', $legendTitle, array('style'=>'font-weight:bold;'))
+                    HTMLContainer::generateMarkup('legend', 'Home Address' . $legendTitle, array('class'=>'hhk-flex align-items-center', 'style'=>'font-weight:bold;'))
                     . $this->addr->createPanelMarkup(AddressPurpose::Home, $this->getAddrObj()->get_recordSet(AddressPurpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated)
                     . $incomplete,
                     array('class'=>'hhk-panel')),
