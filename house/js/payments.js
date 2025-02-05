@@ -1767,17 +1767,17 @@ function paymentsTable(tableID, containerID, refreshPayments) {
     var ptbl = $('#' + tableID).DataTable({
         'columnDefs': [
             {
-                'targets': 8,
+                'targets': [9, 10],
                 'type': 'date',
                 'render': function (data, type, row) {
                     return dateRender(data, type);
                 }
             },
             {
-                'targets': 9,
+                'targets': [12],
                 'type': 'date',
                 'render': function (data, type, row) {
-                    return dateRender(data, type);
+                    return dateRender(data, type, "MMM D, YYYY h:mm a");
                 }
             }
         ],

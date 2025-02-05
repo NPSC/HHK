@@ -579,7 +579,9 @@ class ActivityReport {
     ifnull(`n`.`Name_Last`, '') as `Last`,
     ifnull(`n`.`Company`, '') as `Company`,
     ifnull(`r`.`Title`, '') as `Room`,
-    ifnull(`re`.`idPsg`, 0) as `idPsg`
+    ifnull(`re`.`idPsg`, 0) as `idPsg`,
+    `v`.`idVisit`,
+    `v`.`Span`
 from
     `vlist_inv_pments` `lp`
         left join
@@ -594,7 +596,7 @@ where `lp`.`idPayment` > 0
  $whDates $whStatus $whType $whId Order By lp.idInvoice;";
 
         $stmt = $dbh->query($query);
-        $invoices = Statement::processPayments($stmt, ['First', 'Last', 'Company', 'Room', 'idPsg']);
+        $invoices = Statement::processPayments($stmt, ['First', 'Last', 'Company', 'Room', 'idPsg', 'idVisit', 'Span', 'Invoice_Created_At']);
 
         $rowCount = $stmt->rowCount();
 
@@ -614,7 +616,8 @@ where `lp`.`idPayment` > 0
         // Main fees listing table
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(
-                HTMLTable::makeTh("Room")
+            HTMLTable::makeTh("Visit")
+                . HTMLTable::makeTh("Room")
                 . HTMLTable::makeTh("Payor")
                 . HTMLTable::makeTh("Invoice")
                 . HTMLTable::makeTh("Pay Type")
@@ -625,6 +628,7 @@ where `lp`.`idPayment` > 0
                 . HTMLTable::makeTh("Date")
                 . HTMLTable::makeTh("Updated")
                 . HTMLTable::makeTh("By")
+                . HTMLTable::makeTh("Created")
                 . ($showExternlId ? HTMLTable::makeTh("Ext. Id") : '')
                 . HTMLTable::makeTh('Notes'));
 
@@ -730,7 +734,8 @@ where `lp`.`idPayment` > 0
                 }
 
 
-                $trow = HTMLTable::makeTd($r['Room']);
+                $trow = HTMLTable::makeTd((isset($r["idVisit"]) ? $r["idVisit"] : ""));
+                $trow .= HTMLTable::makeTd($r['Room']);
                 $trow .= HTMLTable::makeTd($nameTd);
                 $trow .= HTMLTable::makeTd($invoiceMkup);
                 $trow .= HTMLTable::makeTd($payTypeTitle);
@@ -741,6 +746,7 @@ where `lp`.`idPayment` > 0
                 $trow .= HTMLTable::makeTd($dateDT->format('c'));
                 $trow .= HTMLTable::makeTd($updatedDateString);
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
+                $trow .= HTMLTable::makeTd($r['Invoice_Created_At']);
 
                 if ($showExternlId) {
                     $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
@@ -760,7 +766,8 @@ where `lp`.`idPayment` > 0
                 $houseAction = HTMLInput::generateMarkup('Delete', ['type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive', 'style' => 'font-size: 0.8em', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']]);
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($r['Room'])
+                    HTMLTable::makeTd((isset($r["idVisit"]) && isset($r["Span"]) ? $r["idVisit"] ."-" . $r["Span"] : ""))
+                    . HTMLTable::makeTd($r['Room'])
                     . HTMLTable::makeTd($uS->siteName)
                     . HTMLTable::makeTd($invoiceMkup)
                     . HTMLTable::makeTd(str_replace(';', '', $h['Desc']))
