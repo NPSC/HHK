@@ -37,7 +37,7 @@ class Campaign {
                 'json' => $requestArray
             ]);
         }catch(ClientException $e){
-            NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign: " . $respArr["status"] . ": " . $respArr["message"], ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName, "request"=>$requestArray, "response"=>$e->getResponse()->getBody()->getContents()]);
+            NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign", ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName, "request"=>$requestArray, "response"=>$e->getResponse()->getBody()->getContents()]);
             $respArr = json_decode($e->getResponse()->getBody(), true);
 
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
