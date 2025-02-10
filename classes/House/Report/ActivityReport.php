@@ -273,12 +273,19 @@ class ActivityReport {
 
 
         $diagnoses = readGenLookupsPDO($dbh, 'Diagnosis');
+        $locations = readGenLookupsPDO($dbh, 'Location');
         $psgId = 0;
 
         $stmtd = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'doc'");
         $doctors = array();
         while ($d = $stmtd->fetch(\PDO::FETCH_ASSOC)) {
             $doctors[$d['idName']] = $d['Name_Full'];
+        }
+
+        $stmtra = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ra'");
+        $referralAgents = array();
+        while ($ra = $stmtra->fetch(\PDO::FETCH_ASSOC)) {
+            $referralAgents[$ra['idName']] = $ra['Name_Full'];
         }
 
         $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open " . $labels->getString('MemberType', 'patient', 'Patient') . " Edit page'></span>";
@@ -314,11 +321,24 @@ class ActivityReport {
                             }
                         }
 
+                        if ($key == 'Location') {
+                            if (isset($locations[$parts[0]])) {
+                                $parts[0] = $locations[$parts[0]][1];
+                            }
+                            if (isset($locations[$parts[2]])) {
+                                $parts[2] = $locations[$parts[2]][1];
+                            }
+                        }
+
                         $logData[$key] = array('old' => $parts[0], 'new' => $parts[2]);
                     }
                 } else {
                     if ($key == 'Diagnosis' && isset($diagnoses[$v])) {
                         $v = $diagnoses[$v][1];
+                    }
+
+                    if ($key == 'Location' && isset($locations[$v])) {
+                        $v = $locations[$v][1];
                     }
 
                     $logData[$key] = array('old' => '', 'new' => $v);
@@ -368,7 +388,12 @@ class ActivityReport {
                         break;
 
                     case 'idReferralAgent':
-                        $log['new'] = $r['Agent_First'] . ' ' . $r['Agent_Last'];
+                        if (isset($referralAgents[$log['old']])) {
+                            $log['old'] = $referralAgents[$log['old']];
+                        }
+                        if (isset($referralAgents[$log['new']])) {
+                            $log['new'] = $referralAgents[$log['new']];
+                        }
                         break;
 
                     case 'idDoctor':

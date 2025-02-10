@@ -242,13 +242,20 @@
                             Print($wrapper, settings, data.idReport);
                             
                         }else{
+                            if(data.status == "success"){
+                                settings.alertMessage("Incident Saved successfully.", 'success');
+                            }
                             $wrapper.incidentdialog.dialog("close");
                             clearform($wrapper);
                         }
                         $table.ajax.reload();
                     } else {
+                        if(data.gotopage){
+                            window.location = data.gotopage;
+                        }
+
                         if (data.error) {
-                            settings.alertMessage(data.error, 'alert');
+                            settings.alertMessage(data.error, 'error');
                         } else {
                             settings.alertMessage('An unknown error occurred.', 'alert');
                         }
