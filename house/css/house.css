@@ -458,7 +458,7 @@ div#global-title {
 }
 
 /* Put JqueryUI dialogs above submit buttons */
-.ui-dialog { z-index: 91000 !important ;}
+ .ui-dialog { z-index: 91000} 
 
 /* Styles for button groups on housekeeping page */
 

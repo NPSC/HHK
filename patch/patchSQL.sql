@@ -88,3 +88,6 @@ INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VA
 INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pgf", "Primary Guest Full Name", 20);
 INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pl", "Patient Last Name", 30);
 INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VALUES("RibbonText", "pf", "Patient Full Name", 40);
+
+
+UPDATE `sys_config` SET `Description` = 'Number of minutes until an idle session get automatically logged out, default 30, max 45' WHERE (`Key` = 'SessionTimeout');
