@@ -71,7 +71,7 @@ if (isset($_POST['btnHere-' . $occupancyReport->getInputSetReportName()])) {
 
 if (isset($_POST['btnExcel-' . $occupancyReport->getInputSetReportName()])) {
     $activeTab = 1;
-    $occupancyReport->downloadExcel();
+    $occupancyReport->downloadExcel("OccupancyReport");
 }
 
 if (filter_has_var(INPUT_POST, 'cmd')) {
