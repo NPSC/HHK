@@ -139,7 +139,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
             $curEnd = (new \DateTimeImmutable($curDate->format("Y-m-d")))->add(new \DateInterval("P1D"));
             $summaryData = $this->getMainSummaryData($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"));
             $ageDistribution = $this->getAgeDistribution($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"));
-            $diagCategoryTotals = $this->getDiagnosisCategoryTotals($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"));
+            $diagCategoryTotals = $this->getDiagnosisCategoryTotals($curDate->format("Y-m-d"), $curEnd->format("Y-m-d"), true);
 
             //write row
             $flds = array();
@@ -297,7 +297,7 @@ group by `child/adult`;';
         return $data;
     }
 
-    public function getDiagnosisCategoryTotals(string $start, string $end){
+    public function getDiagnosisCategoryTotals(string $start, string $end, bool $isExcel = false){
 
         $query = 'select if(d.Code is not null, ifnull(dc.Description, "' . self::NO_CAT . '"), "' . self::NO_DIAGNOSIS . '") as "Category", sum(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) as "count"
 from visit v
@@ -315,7 +315,7 @@ group by `Category` order by `count` desc;';
 
         foreach($data as $key=>$value){
             $value[1] = (float) $value[1];
-            $value[0] = $value[0] . " - " . number_format($value[1]/$total*100, 1) . "%";
+            $value[0] = ($isExcel == false ? $value[0] . " - " . number_format($value[1]/$total*100, 1) . "%" : $value[0]);
             $data[$key] = $value;
         }
 
