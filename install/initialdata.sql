@@ -905,7 +905,10 @@ REPLACE INTO `template_tag` VALUES
 (42,'ra', 'Blank Inline Textbox', '${BlankInlineTextBox}',''),
 (43,'ra', 'Blank Textarea', '${BlankTextArea}',''),
 (44,'ra', 'Checkbox Toggle', '${CheckBox}',''),
-(45,'s', 'Actual Departure', '${ActualDeparture}','');
+(45,'s', 'Actual Departure', '${ActualDeparture}',''),
+(46,'c','Logo URL','${logoUrl}',''),
+(47,'s','Logo URL','${logoUrl}',''),
+(48,'ra','Logo URL','${logoUrl}','');
 -- ;
 
 replace into `item` (`idItem`, `Description`) values

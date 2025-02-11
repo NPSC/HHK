@@ -91,3 +91,9 @@ INSERT ignore INTO `gen_lookups` (`Table_Name`,`Code`,`Description`, `Order`) VA
 
 
 UPDATE `sys_config` SET `Description` = 'Number of minutes until an idle session get automatically logged out, default 30, max 45' WHERE (`Key` = 'SessionTimeout');
+
+INSERT IGNORE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`, `Replacement_Wrapper`)
+VALUES
+('c','Logo URL','${logoUrl}',''),
+('s','Logo URL','${logoUrl}',''),
+('ra','Logo URL','${logoUrl}','');

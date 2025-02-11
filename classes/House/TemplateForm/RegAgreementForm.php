@@ -3,14 +3,7 @@
 namespace HHK\House\TemplateForm;
 
 use HHK\House\RegistrationForm\CustomRegisterForm;
-use HHK\HTMLControls\HTMLContainer;
-use HHK\House\Reservation\Reservation_1;
-use HHK\Member\Role\Guest;
-use HHK\sec\Labels;
 use HHK\sec\Session;
-use HHK\Purchase\PriceModel\AbstractPriceModel;
-use HHK\SysConst\RoomRateCategories;
-use HHK\House\PSG;
 
 /**
  * RegAgreementForm.php
@@ -31,6 +24,8 @@ class RegAgreementForm extends AbstractTemplateForm {
 
     public function makeReplacements(\PDO $dbh, CustomRegisterForm $regForm, array $guests, int $primaryGuestId, string $room, string $arrival, string $departure) {
 
+        $uS = Session::getInstance();
+
         return array(
             'Room' => $room,
             'ArrivalDate' => date('M j, Y', strtotime($arrival)),
@@ -43,7 +38,8 @@ class RegAgreementForm extends AbstractTemplateForm {
             'BlankInlineTextBox' => $regForm->BlankInlineTextBox(),
             'BlankTextArea' => $regForm->BlankTextarea(),
             'CheckBox' => $regForm->checkbox(),
-            'DateToday' => date('M j, Y')
+            'DateToday' => date('M j, Y'),
+            'logoUrl' => $uS->resourceURL .'conf/' . $uS->statementLogoFile,
         );
 
     }
