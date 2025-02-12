@@ -304,19 +304,20 @@ from visit v
 join hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
 left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
 left join gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = "Diagnosis_Category"
-where date(ifnull(v.Span_End, now())) >= date("' . $start . '") and date(v.Span_Start) < date("' . $end . '")
+where (v.Span_End >= "' . $start . ' 00:00:00" || (v.Span_End is null and now() >= "' . $start . ' 00:00:00")) and v.Span_Start < "' . $end . ' 00:00:00"
 group by `Category` order by `count` desc;';
 
         $stmt = $this->dbh->prepare($query);
         $stmt->execute();
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-        $total = $this->sumTotal($data);
-
-        foreach($data as $key=>$value){
-            $value[1] = (float) $value[1];
-            $value[0] = ($isExcel == false ? $value[0] . " - " . number_format($value[1]/$total*100, 1) . "%" : $value[0]);
-            $data[$key] = $value;
+        if($isExcel == false){
+            $total = $this->sumTotal($data);
+            foreach($data as $key=>$value){
+                $value[1] = (float) $value[1];
+                $value[0] = $value[0] . " - " . number_format($value[1]/$total*100, 1) . "%";
+                $data[$key] = $value;
+            }
         }
 
         array_unshift($data, ["Category", "Value"]);
