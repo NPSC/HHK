@@ -44,6 +44,7 @@ abstract class AbstractReport {
     protected string $reportTitle = "";
     protected string $description = "";
     protected string $inputSetReportName = "";
+    protected string $excelFileName = "HHKReport";
     protected bool $rendered = false;
     protected bool $render = false;
     protected string $drawCallback = "";
@@ -263,10 +264,10 @@ abstract class AbstractReport {
 ';
     }
 
-    public function downloadExcel(string $fileName = "HHKReport"):void {
+    public function downloadExcel():void {
 
         $uS = Session::getInstance();
-        $writer = new ExcelHelper($fileName);
+        $writer = new ExcelHelper($this->excelFileName);
         $writer->setAuthor($uS->username);
         $writer->setTitle($this->reportTitle);
 

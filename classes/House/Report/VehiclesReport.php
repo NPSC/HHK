@@ -27,6 +27,7 @@ class VehiclesReport extends AbstractReport implements ReportInterface {
         $uS = Session::getInstance();
         $this->reportTitle = $uS->siteName . " Vehicles for " . date('D M j, Y');
         $this->inputSetReportName = "vehicles";
+        $this->excelFileName = "VehiclesReport";
 
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }

@@ -38,6 +38,7 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         $uS = Session::getInstance();
         $this->reportTitle = $uS->siteName . " Resident ".Labels::getString('MemberType', 'visitor', 'Guest'). "s for " . date('D M j, Y');
         $this->inputSetReportName = "GuestView";
+        $this->excelFileName = "CurrentGuestReport";
 
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }

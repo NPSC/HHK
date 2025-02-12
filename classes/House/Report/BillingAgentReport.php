@@ -42,6 +42,7 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
         $this->reportTitle = $uS->siteName . ' Billing Agent Report';
         $this->description = "This report shows all patients who stayed in the time period and were invoiced to a specific billing agent";
         $this->inputSetReportName = "billingAgent";
+        $this->excelFileName = "BillingAgentReport";
 
         $this->demogs = readGenLookupsPDO($dbh, 'Demographics');
         $this->billingAgents = $this->loadBillingAgents($dbh);

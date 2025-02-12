@@ -43,6 +43,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 
         $this->reportTitle = $uS->siteName . ' ' . Labels::getString('guestEdit', 'reservationTitle', 'Reservation') . ' Report';
         $this->inputSetReportName = "reserv";
+        $this->excelFileName = Labels::getString('guestEdit', 'reservationTitle', 'Reservation') . "Report";
         $this->locations = readGenLookupsPDO($dbh, 'Location');
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
         $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));

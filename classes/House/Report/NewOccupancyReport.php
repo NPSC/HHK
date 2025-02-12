@@ -23,6 +23,7 @@ class NewOccupancyReport extends AbstractReport implements ReportInterface {
 
         $this->reportTitle = $uS->siteName . ' Occupancy Report';
         $this->inputSetReportName = "newOccupancy";
+        $this->excelFileName = "OccupancyReport";
 
         $this->roomTypes = readGenLookupsPDO($dbh, "Resource_Type");
         $this->rmtroomTitle = (isset($this->roomTypes['rmtroom']['Description']) ? $this->roomTypes['rmtroom']['Description']: "Remote Room");

@@ -38,6 +38,7 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
         $this->reportTitle = $uS->siteName . ' Birthday Report';
         $this->description = "This report shows all guests who are staying or scheduled to stay AND have a birthday during the selected time period";
         $this->inputSetReportName = "birthday";
+        $this->excelFileName = "BirthdayReport";
 
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }

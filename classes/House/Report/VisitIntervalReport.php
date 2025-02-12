@@ -48,6 +48,7 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
 
         $this->reportTitle = $uS->siteName . ' Visit Report';
         $this->inputSetReportName = "visit";
+        $this->excelFileName = "VisitReport";
         $this->locations = readGenLookupsPDO($dbh, 'Location');
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
         $this->adjusts = readGenLookupsPDO($dbh, 'Addnl_Charge');
