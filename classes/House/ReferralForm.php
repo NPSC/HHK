@@ -537,6 +537,7 @@ class ReferralForm {
 
 	            // Set referral form status to done.
 	            $this->setReferralStatus($dbh, ReferralFormStatus::Accepted, $psg->getIdPsg());
+				$this->setIdReservation($dbh, $idResv);
 
 	            // Load reserve page.
 	            header('location:Reserve.php?rid='.$idResv);
@@ -1183,6 +1184,10 @@ class ReferralForm {
 	    $this->formDoc->updateStatus($dbh, $status);
 	    $this->formDoc->linkNew($dbh, 0, $idPsg);
 
+	}
+
+	public function setIdReservation(\PDO $dbh, int $idResv){
+		$this->formDoc->updateIdReservation($dbh, $idResv);
 	}
 
 	/**
