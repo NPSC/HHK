@@ -2556,6 +2556,9 @@ ALTER TABLE `visit`
 ALTER TABLE `document`
     ADD INDEX IF NOT EXISTS `Indx_Status` (`Status` ASC);
 
+ALTER TABLE `document`
+    ADD INDEX IF NOT EXISTS `indx_Type` (`Category` ASC, `Type` ASC);
+
 ALTER TABLE `name_log`
     ADD INDEX IF NOT EXISTS `INDEX_IDNAME` (`idName` ASC);
 

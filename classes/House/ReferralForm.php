@@ -7,6 +7,7 @@ use HHK\HTMLControls\{HTMLContainer,HTMLTable};
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchFor};
 use HHK\Note\Note;
+use HHK\sec\Labels;
 use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, GLTableNames, RelLinkType, ReservationStatus};
 use HHK\Member\Address\CleanAddress;
 use HHK\HTMLControls\HTMLInput;
@@ -502,7 +503,7 @@ class ReferralForm {
 	 * @param integer $idPatient
 	 * @throws RuntimeException
 	 */
-	public function finishReferral(\PDO $dbh, $idPatient) {
+	public function finishReferral(\PDO $dbh, $idPatient, int $idResv = -1) {
 
 	    // Get idPsg
 	    $psg = new PSG($dbh, 0, $idPatient);
@@ -514,13 +515,29 @@ class ReferralForm {
 	        // Save Guests
 	        $guests = $this->setGuests($dbh, $_POST, $psg);
 
-	        // Create reservation
-	        $idResv = $this->makeNewReservation($dbh, $psg, $guests);
+			if($idResv > 0) {
+				//merge resv
+				$idResv = $this->mergeReservation($dbh, $idResv, $psg, $guests);
+			}else if ($idResv < 0) {
+	        	// Create reservation
+	        	$idResv = $this->makeNewReservation($dbh, $psg, $guests);
+			}else if($idResv == 0){
+
+				//search for reservation
+				$resvAr = $this->resvSearcher($dbh, $psg);
+
+				if(count($resvAr) > 0){
+					return $this->resvMkup($resvAr);
+				}else{
+					$idResv = $this->makeNewReservation($dbh, $psg, $guests);
+				}
+			}
 
 	        if ($idResv > 0) {
 
 	            // Set referral form status to done.
 	            $this->setReferralStatus($dbh, ReferralFormStatus::Accepted, $psg->getIdPsg());
+				$this->setIdReservation($dbh, $idResv);
 
 	            // Load reserve page.
 	            header('location:Reserve.php?rid='.$idResv);
@@ -529,6 +546,15 @@ class ReferralForm {
 	        throw new RuntimeException('The People are Saved, but a reservation was not created yet.  ');
 	    }
 
+	}
+	protected function resvSearcher(\PDO $dbh, PSG $psg) {
+		$query = "select r.idReservation, r.Expected_Arrival, r.Expected_Departure, l.Title as 'Status', p.Name_Full as 'Patient' from reservation r join registration reg on r.idRegistration = reg.idRegistration join lookups l on r.Status = l.Code and Category = 'ReservStatus' join hospital_stay hs on r.idHospital_Stay = hs.idHospital_stay join name p on hs.idPatient = p.idName where reg.idPsg = :idPsg and l.Type = 'a'";
+		$stmt = $dbh->prepare($query);
+		$stmt->execute([
+			"idPsg"=>$psg->getIdPsg()
+		]);
+
+		return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 	}
 
 	/**
@@ -614,6 +640,134 @@ class ReferralForm {
 
         return $resv->getIdReservation();
 
+	}
+
+	/**
+	 * Merge referral with existing reservation for patient and any guests.
+	 * @param \PDO $dbh
+	 * @param int $idResv
+	 * @param PSG $psg Patient's PSG
+	 * @param array $guests array of guest member id's
+	 * @return number|mixed
+	 */
+	protected function mergeReservation(\PDO $dbh, int $idResv, PSG $psg, array $guests) {
+
+	    $uS = Session::getInstance();
+
+	    // Reservation Checkin set?
+	    if (is_null($this->CkinDT)) {
+	        return 0;
+	    }
+
+	    // Replace missing checkout date with check-in + default days.
+	    if (is_null($this->CkoutDT)) {
+	        $this->CkoutDT = $this->CkinDT->add(new \DateInterval('P' . $uS->DefaultDays . 'D'));
+	    }
+
+	    // Room Rate
+	    $rateChooser = new RateChooser($dbh);
+
+	    // Default Room Rate category
+	    if ($uS->RoomPriceModel == ItemPriceCode::Basic) {
+	        $rateCategory = RoomRateCategories::Fixed_Rate_Category;
+	    } else if ($uS->RoomRateDefault != '') {
+	        $rateCategory = $uS->RoomRateDefault;
+	    } else {
+	        $rateCategory = DefaultSettings::Rate_Category;
+	    }
+
+	    $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
+
+
+	    $reg = new Registration($dbh, $psg->getIdPsg());
+
+	    // Define the reservation.
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+
+		$hospStay = new HospitalStay($dbh, $psg->getIdPatient(), $resv->getIdHospitalStay());
+
+        $resv->setExpectedArrival($this->CkinDT->format('Y-m-d'))
+            ->setExpectedDeparture($this->CkoutDT->format('Y-m-d'))
+            ->setNumberGuests(count($guests)+1)
+            ->setIdReferralDoc($this->referralDocId);
+
+        $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
+        $resv->saveConstraints($dbh, array());
+
+		if(count($guests) > 0){
+			$query = "delete from `reservation_guest` where idReservation = :idReservation";
+			$stmt = $dbh->prepare($query);
+			$stmt->execute([":idReservation" => $resv->getIdReservation()]);
+
+			foreach ($guests as $g) {
+
+				$rgRs = new Reservation_GuestRS();
+				$rgRs->idReservation->setNewVal($resv->getIdReservation());
+				$rgRs->idGuest->setNewVal($g);
+				$rgRs->Primary_Guest->setNewVal('');
+				EditRS::insert($dbh, $rgRs);
+			}
+		}
+
+		try{
+			// Save Reservtaion guests - patient
+			$rgRs = new Reservation_GuestRS();
+			$rgRs->idReservation->setNewVal($resv->getIdReservation());
+			$rgRs->idGuest->setNewVal($psg->getIdPatient());
+			$rgRs->Primary_Guest->setNewVal('1');
+			EditRS::insert($dbh, $rgRs);
+		}catch(\Exception $e){
+
+		}
+
+		//add reservation notes
+		if(isset($this->formUserData['resvNotes']) && is_array($this->formUserData['resvNotes'])){
+			LinkNote::save($dbh, $this->formUserData['resvNotes'][0], $resv->getIdReservation(), Note::ResvLink, "", "Referral", $uS->ConcatVisitNotes);
+		}else if(isset($this->formUserData['resvNotes']) && $this->formUserData['resvNotes'] != ''){
+			LinkNote::save($dbh, $this->formUserData['resvNotes'], $resv->getIdReservation(), Note::ResvLink, "", "Referral", $uS->ConcatVisitNotes);
+		}
+
+        $this->copyNotes($dbh, $resv->getIdReservation(), $this->referralDocId);
+
+        return $resv->getIdReservation();
+
+	}
+
+	protected function resvMkup(array $resvAr){
+		$tbl = new HTMLTable();
+
+		$tbl->addHeaderTr(
+			HTMLTable::makeTh("Id")
+			. HTMLTable::makeTh("Expected Arrival")
+			. HTMLTable::makeTh("Expected Departure")
+			. HTMLTable::makeTh("Status")
+			. HTMLTable::makeTh("Patient")
+		);
+
+		//new resv
+		$tbl->addBodyTr(
+			HTMLTable::makeTd(HTMLInput::generateMarkup("", ["type"=>'radio', 'name'=>'idResv', 'value'=>-1]))
+			. HTMLTable::makeTd("New " . Labels::getString('GuestEdit', 'reservationTitle', 'Reservation'), ['colspan'=>'4'])
+		);
+
+		$tbl->addBodyTr(HTMLTable::makeTd("", ["colspan"=>'5']));
+		$tbl->addBodyTr(
+			HTMLTable::makeTh('Existing ' . Labels::getString('GuestEdit', 'reservationTitle', 'Reservation') . 's', ['colspan'=>'5', 'style'=>'text-align: left'])
+		);
+
+		foreach($resvAr as $row){
+			$arrival = new \DateTime($row["Expected_Arrival"]);
+			$depart = new \DateTime($row["Expected_Departure"]);
+			$tbl->addBodyTr(
+				HTMLTable::makeTd(HTMLInput::generateMarkup("", ["type"=>'radio', 'name'=>'idResv', 'value'=> $row["idReservation"]]))
+				. HTMLTable::makeTd($arrival->format('M j, Y'))
+				. HTMLTable::makeTd($depart->format('M j, Y'))
+				. HTMLTable::makeTd($row['Status'])
+				. HTMLTable::makeTd($row['Patient'])
+			);
+		}
+
+		return  $tbl->generateMarkup();
 	}
 
 	/**
@@ -1030,6 +1184,10 @@ class ReferralForm {
 	    $this->formDoc->updateStatus($dbh, $status);
 	    $this->formDoc->linkNew($dbh, 0, $idPsg);
 
+	}
+
+	public function setIdReservation(\PDO $dbh, int $idResv){
+		$this->formDoc->updateIdReservation($dbh, $idResv);
 	}
 
 	/**
