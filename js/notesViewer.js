@@ -98,16 +98,18 @@
         var settings = $.extend(true, {}, defaults, options);
 
         var $wrapper = $(this);
-        
-        if(settings.linkType == 'staff'){
+
+        if(settings.linkType == 'staff' || settings.linkType == 'curguests' || settings.linkType == "waitlist" || settings.linkType == "confirmed" || settings.linkType == "unconfirmed"){
         	settings.dtCols.forEach(function(El, Index, array){
         		if(El.targets > 3){
-        			El.targets = El.targets + 3;
+        			El.targets = El.targets + 1;
         			settings.dtCols[Index] = El;
         		}
         	});
-        
-        	settings.dtCols.push({
+
+            switch(settings.linkType){
+                case "staff":
+        	    settings.dtCols.push({
                 	"targets": 4,
                         sortable: true,
                         searchable: true,
@@ -123,10 +125,40 @@
                             }
                             return data;
                         }
-            });
-            
+                });
+                break;
+
+                case "curguests":
+                    settings.dtCols.push({
+                        "targets": 4,
+                            sortable: true,
+                            searchable: true,
+                            data: "Room",
+                            title: "Room",
+                            className: "noteRoom",
+                            name: "Room",
+                            width: "120px"
+                    });
+                    break;
+
+                    case "waitlist":
+                    case "confirmed":
+                    case "unconfirmed":
+                        settings.dtCols.push({
+                            "targets": 4,
+                                sortable: true,
+                                searchable: true,
+                                data: "Primary Guest",
+                                title: "Primary Guest",
+                                className: "noteResv",
+                                name: "Primary Guest",
+                                width: "120px"
+                        });
+                        break;
+            }
+           /* 
             settings.dtCols.push({
-                "targets": 5,
+                "targets": 6,
                     sortable: true,
                     searchable: true,
                     data: "Guest",
@@ -146,7 +178,7 @@
             });
 
             settings.dtCols.push({
-                "targets": 6,
+                "targets": 7,
                     sortable: true,
                     searchable: true,
                     data: "room",
@@ -154,7 +186,7 @@
                     name: "Room",
                     width: "120px",
             });
-            
+           */ 
         }
         
         //set uid
@@ -176,7 +208,7 @@
         $div = $('<div class="hhk-panel d-block d-md-flex" style="align-items: center" />').append($ta);
         
         if (settings.linkType == 'staff') {
-            $div.append(memberSearch(settings));
+            //$div.append(memberSearch(settings));
         	$div.append(categorySelector(settings));
         }
         
@@ -594,6 +626,7 @@
         	$(this).addClass('catActive');
         	searchVal = $(this).data('id');
         	if(searchVal != ''){
+                console.log(searchVal);
         		$table.column(".noteCategory").search("^" + searchVal + "$" , true).draw();
         	}else{
         		$table.column(".noteCategory").search('').draw();
@@ -680,7 +713,11 @@
 	                if( data["Flag"] ==  1){
 	                    $(row).css("font-weight", "bold");
 	                }
-	            }
+	            },
+                orderFixed: [4, "asc"],
+                rowGroup: {
+                    dataSrc: "group"
+                }
             });
 
             actions($wrapper, settings, dtTable);
@@ -697,7 +734,7 @@
         if(settings.newNoteLocation == 'top'){
         	$wrapper.prepend(categoryFilter(settings));
         	$wrapper.prepend(createNewNote(settings, dtTable, $wrapper));
-        }else{
+        }else if(settings.newNoteLocation == 'bottom'){
         	$wrapper.append(createNewNote(settings, dtTable, $wrapper));
         }
         

@@ -711,6 +711,50 @@ $(document).ready(function () {
 
     $("#btnTextWaitlistGuests").button().smsDialog({ "campaign": "waitlist" });
 
+    //notes
+    let notesDialog = $('<div id="registerNotes" class="visitDialog" style="font-size: 0.8em;"><div class="regNotesWrapper hhk-panel hhk-tdbox"></div></div>');
+    $("document").append(notesDialog);
+    notesDialog.dialog({
+        autoOpen: false,
+        height: "auto",
+        minHeight: 800,
+        width: getDialogWidth(1500),
+        modal: true,
+        close: function (event, ui){
+            notesDialog.find("#note-newNote").trigger('click');
+            notesDialog.find(".regNotesWrapper").empty();
+        },
+        buttons: {
+            "Close": function(){
+                notesDialog.dialog("close");
+            }
+        },
+        position: {my: "center", at: "center"},
+    });
+
+    $(".btnRegNotes").button().on("click", function(e){
+        e.preventDefault();
+        let dialogTitle = $(this).data("title");
+        let linkType = $(this).data("linktype");
+        notesDialog.dialog("open");
+        notesDialog.dialog("option", "title", dialogTitle);
+      	notesDialog.find(".regNotesWrapper").notesViewer({
+		    linkId: 0,
+			linkType: linkType,
+			newNoteLocation:"hidden",
+            defaultLength: 10,
+			alertMessage: function(text, type) {
+			    flagAlertMessage(text, type);
+			}
+		});
+    });
+
+    $("#btnConfResvNotes").button();
+    $("#btnUnConfResvNotes").button();
+    $("#btnWaitlistResvNotes").button();
+
+    
+
     // Reservations
     let rvCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},

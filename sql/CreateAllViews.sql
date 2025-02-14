@@ -188,7 +188,7 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
     FROM
         note n
             JOIN
-        link_note sn ON n.idNote = sn.idNote and sn.linkType IN ("staff", "reservation", "psg")
+        link_note sn ON n.idNote = sn.idNote and sn.linkType IN ("staff")
             LEFT JOIN
         psg p ON sn.idLink = p.idPsg and sn.linkType = "psg"
             LEFT JOIN
@@ -2234,6 +2234,7 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         n.Title,
         n.Note_Text,
         rn.idLink as `Reservation_Id`,
+        r.Status as `Reservation_Status`,
         reg.idPsg,
         n.`Timestamp`
     FROM

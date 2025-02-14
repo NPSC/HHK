@@ -165,7 +165,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divdaily']);
 
 // Currently Checked In guests
-        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlCurGuests', 'class' => 'ml-5', 'style' => 'font-size:.9em;']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextCurGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']) :""), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlCurGuests', 'class' => 'ml-5', 'style' => 'font-size:.9em;']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextCurGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']) :"") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Current Guests','data-linktype'=>'curguests', 'style' => 'font-size:.9em;']), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divcurres']);
 
 // make registration form print button
@@ -176,13 +176,13 @@ $regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput
 
 $currentReservations = HTMLContainer::generateMarkup('h3',
         '<span>' . $labels->getString('register', 'reservationTab', 'Confirmed Reservations') . '</span>' .
-        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlConfRes', 'style' => 'font-size:.9em;', 'class' => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . $regButton
+        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlConfRes', 'style' => 'font-size:.9em;', 'class' => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'id' => "btnWaitlistResvNotes", 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Confirmed Reservations','data-linktype'=>'confirmed', 'style' => 'font-size:.9em;']) . $regButton
         ,
     ['style' => 'background-color:#D3D3D3; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap p-3"])
         . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divreservs']);
 
 if ($uS->ShowUncfrmdStatusTab) {
-    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlUcRes', 'style' => 'font-size:.9em;', 'class' => 'ml-5']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextUnConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): ""), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlUcRes', 'style' => 'font-size:.9em;', 'class' => 'ml-5']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Unconfirmed Reservations','data-linktype'=>'unconfirmed', 'style' => 'font-size:.9em;']), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divunreserv']);
 }
 
@@ -194,7 +194,7 @@ if ($uS->ShowUncfrmdStatusTab) {
 
 
 $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'waitlistTab', 'Wait List') . '</span>' .
-        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlWlist', 'style' => 'font-size:.9em;', "class" => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextWaitlistGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "")
+        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlWlist', 'style' => 'font-size:.9em;', "class" => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextWaitlistGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'id' => "btnWaitlistResvNotes", 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Waitlist Reservations','data-linktype'=>'waitlist', 'style' => 'font-size:.9em;'])
         //.$wlButton
         ,
     ['style' => 'background-color:#D3D3D3; align-items:baseline;', 'class' => 'hhk-flex hhk-flex-wrap p-2'])

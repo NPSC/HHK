@@ -68,6 +68,42 @@ class ListNotes {
                 $whereClause = "$whereField IN ($linkId, '') AND idPsg = $idPsg";
                 break;
 
+            case "curguests":
+
+                $dbView = 'vresv_notes';
+                $whereField = 'Reservation_Status';
+                $whereClause = "$whereField IN ('s')";
+                $columns[] = array('db'=> 'Room', 'dt'=>'Room');
+                $columns[] = array('db'=> 'Room', 'dt'=>'group');
+                break;
+
+            case "waitlist":
+
+                $dbView = 'vresv_notes';
+                $whereField = 'Reservation_Status';
+                $whereClause = "$whereField IN ('w')";
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'Primary Guest');
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'group');
+                break;
+
+            case "confirmed":
+
+                $dbView = 'vresv_notes';
+                $whereField = 'Reservation_Status';
+                $whereClause = "$whereField IN ('a')";
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'Primary Guest');
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'group');
+                break;
+
+            case "unconfirmed":
+
+                $dbView = 'vresv_notes';
+                $whereField = 'Reservation_Status';
+                $whereClause = "$whereField IN ('uc')";
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'Primary Guest');
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'group');
+                break;
+            
             case Note::VisitLink:
 
                 $dbView = 'vvisit_notes';
@@ -102,6 +138,7 @@ class ListNotes {
                 $columns[] = array('db'=> 'idGuest', 'dt'=>'idGuest');
                 $columns[] = array('db'=> 'idPsg', 'dt'=>'idPsg');
                 $columns[] = array('db'=> 'room', 'dt'=>'room');
+
                 break;
             case Note::MemberLink:
                 $dbView = 'vmem_notes';
