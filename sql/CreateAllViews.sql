@@ -2235,6 +2235,8 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         n.Note_Text,
         rn.idLink as `Reservation_Id`,
         r.Status as `Reservation_Status`,
+        rm.Title as `Room`,
+        pg.Name_Full as `Primary Guest`,
         reg.idPsg,
         n.`Timestamp`
     FROM
@@ -2243,6 +2245,12 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         link_note rn ON n.idNote = rn.idNote and rn.linkType = "reservation"
     JOIN
         reservation r ON rn.idLink = r.idReservation
+    LEFT JOIN
+        name pg ON r.idGuest = pg.idName
+    LEFT JOIN 
+        `resource_room` `rr` ON `r`.`idResource` = `rr`.`idResource`
+    LEFT JOIN 
+        `room` `rm` ON `rr`.`idRoom` = `rm`.`idRoom`
     JOIN
 	registration reg on r.idRegistration = reg.idRegistration
     WHERE
@@ -2309,6 +2317,7 @@ CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
         n.Title,
         n.Note_Text,
         if(ln.linkType = "psg", ln.idLink, reg.idPsg) as `PSG_Id`,
+        pn.Name_Full AS `Patient`,
         n.`Timestamp`
     FROM
         note n
@@ -2318,6 +2327,10 @@ CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
 		reservation r ON ln.idLink = r.idReservation and ln.linkType = "reservation"
 			LEFT JOIN
 		registration reg on r.idRegistration = reg.idRegistration
+            LEFT JOIN 
+        psg ON (`ln`.`linkType` = 'psg' AND `ln`.`idLink` = `psg`.`idPsg`) OR `reg`.`idPsg` = `psg`.`idPsg`
+            LEFT JOIN 
+        `name` `pn` ON `psg`.`idPatient` = `pn`.`idName`
     WHERE
         ln.idLink > 0 && n.`Status` = 'a';
 

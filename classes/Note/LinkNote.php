@@ -54,12 +54,12 @@ class LinkNote {
      * @param \PDO $dbh
      * @param mixed $linkType
      * @param mixed $linkId
-     * @return mixed
+     * @return array
      */
     public static function findIdPsg(\PDO $dbh, $linkType, $linkId) {
 
         $query = '';
-        $idPsg = 0;
+        $idPsgs = [];
 
         if ($linkType == Note::ResvLink) {
             $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
@@ -68,7 +68,19 @@ class LinkNote {
             $query = "select reg.idPsg from registration reg join visit r on reg.idRegistration = r.idRegistration "
                     . "where r.idVisit = $linkId";
         } else if ($linkType == Note::PsgLink) {
-            return $linkId;
+            return [$linkId];
+        }else if ($linkType == "curguests") {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.Status = 's'";
+        }else if ($linkType == "confirmed") {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.Status = 'a'";
+        }else if ($linkType == "unconfirmed") {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.Status = 'uc'";
+        }else if ($linkType == "waitlist") {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.Status = 'w'";
         }
 
         if ($query != '') {
@@ -76,12 +88,13 @@ class LinkNote {
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-            if (is_array($rows) && isset($rows[0][0])) {
-                $idPsg = intval($rows[0][0], 10);
+            if(count($rows) > 0){
+                foreach($rows as $k=>$v){
+                    $idPsgs[] = $v[0];
+                }
             }
         }
-
-        return $idPsg;
+        return $idPsgs;
     }
 
     /**

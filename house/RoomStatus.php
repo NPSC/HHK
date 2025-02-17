@@ -547,7 +547,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                     
                     let $this = $(this);
                     $("#roomDetailsDialog").empty();
-                    $("#roomDetailsDialog").append('<div class="roomNotes"></div>');
+                    $("#roomDetailsDialog").append('<div class="roomNotes hhk-tdbox"></div>');
 
                     $("#roomDetailsDialog").find(".roomNotes").notesViewer({
                         linkId: $this.data("idroom"),

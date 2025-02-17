@@ -712,7 +712,7 @@ $(document).ready(function () {
     $("#btnTextWaitlistGuests").button().smsDialog({ "campaign": "waitlist" });
 
     //notes
-    let notesDialog = $('<div id="registerNotes" class="visitDialog" style="font-size: 0.8em;"><div class="regNotesWrapper hhk-panel hhk-tdbox"></div></div>');
+    let notesDialog = $('<div id="registerNotes" class="visitDialog" style="font-size: 0.8em;"><div class="regNotesWrapper hhk-tdbox"></div></div>');
     $("document").append(notesDialog);
     notesDialog.dialog({
         autoOpen: false,
@@ -748,11 +748,6 @@ $(document).ready(function () {
 			}
 		});
     });
-
-    $("#btnConfResvNotes").button();
-    $("#btnUnConfResvNotes").button();
-    $("#btnWaitlistResvNotes").button();
-
     
 
     // Reservations

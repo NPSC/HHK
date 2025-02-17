@@ -128,33 +128,17 @@
                 });
                 break;
 
-                case "curguests":
-                    settings.dtCols.push({
-                        "targets": 4,
-                            sortable: true,
-                            searchable: true,
-                            data: "Room",
-                            title: "Room",
-                            className: "noteRoom",
-                            name: "Room",
-                            width: "120px"
-                    });
-                    break;
-
-                    case "waitlist":
-                    case "confirmed":
-                    case "unconfirmed":
+                    default:
                         settings.dtCols.push({
                             "targets": 4,
                                 sortable: true,
                                 searchable: true,
-                                data: "Primary Guest",
-                                title: "Primary Guest",
-                                className: "noteResv",
-                                name: "Primary Guest",
-                                width: "120px"
+                                data: "group",
+                                title: "group",
+                                className: "noteRoom",
+                                name: "group",
+                                visible: false
                         });
-                        break;
             }
            /* 
             settings.dtCols.push({
@@ -673,7 +657,7 @@
         if (settings.linkId >= 0) {
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
-            var dtTable = $table.DataTable({
+            var dtSettings = {
 		        "columnDefs": settings.dtCols,
 		        "serverSide": true,
 		        "processing": true,
@@ -713,12 +697,18 @@
 	                if( data["Flag"] ==  1){
 	                    $(row).css("font-weight", "bold");
 	                }
-	            },
-                orderFixed: [4, "asc"],
-                rowGroup: {
+	            }
+            };
+
+            //only show grouping when showing notes from multiple linkIds
+            if(settings.linkId === 0 && settings.linkType !== "staff"){
+                dtSettings.orderFixed = [4, "asc"];
+                dtSettings.rowGroup = {
                     dataSrc: "group"
-                }
-            });
+                };
+            }
+
+            var dtTable = $table.DataTable(dtSettings);
 
             actions($wrapper, settings, dtTable);
             

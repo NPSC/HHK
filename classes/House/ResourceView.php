@@ -1131,7 +1131,7 @@ ORDER BY $orderBy;");
                 $lastDeepClean = $r['Last_Deep_Clean'] == '' ? '' : date('M d, Y', strtotime($r['Last_Deep_Clean']));
 
             } else {
-                $notes = HTMLContainer::generateMarkup("div", (strlen($r["Notes"]) > 0 ? HTMLContainer::generateMarkup("div", "<strong>" . $r["noteDate"] . "</strong> - " . $r["Notes"], ["class" => "p-2 mr-3", "style"=>"width: 100%"]) : "")
+                $notes = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", (strlen($r["Notes"]) > 0 ? "<strong>" . $r["noteDate"] . "</strong> - " . $r["Notes"] : ""), ["class" => "p-2 mr-3", "style"=>"width: 100%"])
                         . HTMLContainer::generateMarkup("button", "View All Room Notes", ['type'=>'button', 'class'=>"roomDetails ui-button ui-corner-all", "data-idRoom"=>$r['idRoom'], "data-title"=>"Housekeeping Details for Room " . $r["Title"]])
                         ,["class"=>"hhk-flex align-items-center"]);
                 

@@ -45,14 +45,16 @@ class ListNotes {
         $whereField = '';
         $whereClause = '';
         $priKey = 'Note_Id';
-        $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
+        $idPsgs = LinkNote::findIdPsg($dbh, $linkType, $linkId);
 
         if ($concatNotes) {
 
-            if ($idPsg > 0) {
+            if (count($idPsgs) > 0) {
                 $linkType = "concat";
-                $linkId = $idPsg;
+                $linkId = implode(',',$idPsgs);
             }
+        }else{
+            $idPsgs = implode(',',$idPsgs);
         }
 
         if ($linkType == '') {
@@ -65,7 +67,7 @@ class ListNotes {
 
                 $dbView = 'vresv_notes';
                 $whereField = 'Reservation_Id';
-                $whereClause = "$whereField IN ($linkId, '') AND idPsg = $idPsg";
+                $whereClause = "$whereField IN ($linkId, '') AND idPsg in ($idPsgs)";
                 break;
 
             case "curguests":
@@ -92,7 +94,7 @@ class ListNotes {
                 $whereField = 'Reservation_Status';
                 $whereClause = "$whereField IN ('a')";
                 $columns[] = array('db'=> 'Primary Guest', 'dt'=>'Primary Guest');
-                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'group');
+                $columns[] = array('db'=> 'Room', 'dt'=>'group');
                 break;
 
             case "unconfirmed":
@@ -108,7 +110,7 @@ class ListNotes {
 
                 $dbView = 'vvisit_notes';
                 $whereField = 'idVisit';
-                $whereClause = "$whereField IN ($linkId, '') AND idPsg = $idPsg";
+                $whereClause = "$whereField IN ($linkId, '') AND idPsg in ($idPsgs)";
                 break;
 
             case Note::PsgLink:
@@ -121,7 +123,8 @@ class ListNotes {
             case "concat":
                 $dbView = 'vpsg_notes_concat';
                 $whereField = 'Psg_Id';
-                $whereClause = "$whereField = $linkId";
+                $whereClause = "$whereField in ($linkId)";
+                $columns[] = array('db'=> 'Patient', 'dt'=>'group');
                 break;
 
             case Note::DocumentLink:

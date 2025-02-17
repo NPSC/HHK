@@ -972,13 +972,20 @@ table.dataTable tbody td {
 	padding: 1em;
 }
 
-#viewMsgsDialog.loading, #viewMsgsDialog .loading, #stmtDiv .loading {
-	background: url(../../images/ui-anim_basic_16x16.gif);
-	background-repeat: no-repeat;
-	background-position: center;
+#viewMsgsDialog.loading, #viewMsgsDialog .loading, #stmtDiv .loading, .hhk-loading, .hhk-loading:hover {
+	background-image: url(../../images/ui-anim_basic_16x16.gif) !important;
+	background-repeat: no-repeat !important;
+	background-position: center !important;
+	min-height: 4em;
+	min-width: 4em;
 }
-#viewMsgsDialog.loading *, #viewMsgsDialog .loading *, #stmtDiv .loading * {
+#viewMsgsDialog.loading *, #viewMsgsDialog .loading *, #stmtDiv .loading *, .hhk-loading * {
 	display: none !important;
+}
+
+input.ui-button.hhk-loading{
+	min-height: 0;
+	min-width: 0
 }
 
 #viewMsgsDialog #msgsTabContent .msgTitle{
