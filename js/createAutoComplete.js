@@ -152,7 +152,6 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
     "use strict";
     var cache = {};
     
-    const maxLength = 10;
     
     const _source = function (request, response, cache, shoNew, inputParms, minChars) {
         
@@ -163,6 +162,8 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
             term = term.replace(/(?![0-9])./gmi, '');
             $(txtCtrl).val(term);
         }
+
+        var maxLength = 10;
         
         if ( term in cache ) {
 
@@ -192,7 +193,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
             }
             
             if(filtered.length > maxLength){
-				filtered.unshift({'id':'n', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
+				filtered.unshift({'id':'a', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
 			}
 
             response( filtered );
@@ -215,8 +216,9 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 	                cache = {};
 	            }
 	            
-	            if(data.total > maxLength){
-					data.results.unshift({'id':'n', 'substitute':'Keep typing... (' + data.total + ' results found)'});
+	            if(data.total > data.limit){
+					data.results.unshift({'id':'a', 'substitute':'Keep typing... (showing ' + data.limit + " of " + data.total + ' results)'});
+                    maxLength = data.limit;
 				}
 
                 //cache[ term ] = data;

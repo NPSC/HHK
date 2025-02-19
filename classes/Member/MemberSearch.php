@@ -3,6 +3,7 @@
 namespace HHK\Member;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\sec\Session;
 use HHK\SysConst\MemDesignation;
 use HHK\SysConst\PhonePurpose;
 use HHK\SysConst\RelLinkType;
@@ -73,9 +74,12 @@ class MemberSearch {
      * Summary of __construct
      * @param mixed $letters
      */
-    public function __construct($letters, int $limit = 10) {
+    public function __construct($letters) {
 
-        $this->limit = $limit;
+        
+        $uS = Session::getInstance();
+        $this->limit = intval($uS->maxNameSearch);
+
         $this->letters = $letters;
     	$this->prepareLetters($letters);
     }
@@ -86,32 +90,43 @@ class MemberSearch {
      * @return void
      */
     public function prepareLetters($letters) {
+        $this->letters = trim($letters);
 
-    	$parts = explode(' ', strtolower(trim($letters)));
+        //check for ! show all character
+        if(str_ends_with($letters, "!")){
+            $this->limit = -1;
+            $this->letters = rtrim($letters, "!");
+        }
+
+    	$parts = explode(',', strtolower(trim($this->letters)));
 
     	if (count($parts) > 1) {
-
-    		// first or last name?
-    		if (stristr($parts[0], ',') === FALSE) {
-    			//first name first
-    			$this->Name_First = $parts[0] . '%';
-    			$this->Name_Last = $parts[1] . '%';
-    		} else {
-    			// last name first
-    			$this->Name_First = $parts[1] . '%';
-    			$this->Name_Last = str_replace(',', '', $parts[0]) . '%';
-    		}
+            // Comma in search - last name first
+            $this->Name_First = trim($parts[1]) . '%';
+    		$this->Name_Last = trim($parts[0]) . '%';
 
     		$this->twoParts = TRUE;
-    		$this->Company = strtolower(trim($letters)) . '%';
+    		$this->Company = strtolower(trim($this->letters)) . '%';
 
     	} else {
+            //no comma in search, split by first space
+            $parts = explode(' ', strtolower(trim($this->letters)));
 
-    		$this->Name_First = $parts[0] . '%';
-    		$this->Name_Last = $parts[0] . '%';
-    		$this->Company = $parts[0] . '%';
-//    		$this->MRN = $parts[0] . '%';
-    		$this->twoParts = FALSE;
+            if (count($parts) > 1) {
+                //first name first
+                $this->Name_First = trim($parts[0]) . '%';
+                unset($parts[0]);
+                $this->Name_Last = trim(implode($parts)) . '%';
+                $this->Company = strtolower(trim($this->letters)) . '%';
+                $this->twoParts = TRUE;
+            }else{
+                $this->Name_First = $parts[0] . '%';
+                $this->Name_Last = $parts[0] . '%';
+                $this->Company = $parts[0] . '%';
+    //    		$this->MRN = $parts[0] . '%';
+                $this->twoParts = FALSE;
+            }
+    		
     	}
 
     }
@@ -793,6 +808,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        if($this->limit < 0){
+            $this->limit = $stmt->rowCount();
+        }
+
         $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
@@ -884,6 +903,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         $stmt = $dbh->query($query);
 
         $events = array();
+
+        if($this->limit < 0){
+            $this->limit = $stmt->rowCount();
+        }
 
         $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1015,6 +1038,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        if($this->limit < 0){
+            $this->limit = $stmt->rowCount();
+        }
+
         $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
@@ -1113,6 +1140,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        if($this->limit < 0){
+            $this->limit = $stmt->rowCount();
+        }
+        
         $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();

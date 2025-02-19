@@ -97,3 +97,11 @@ VALUES
 ('c','Logo URL','${logoUrl}',''),
 ('s','Logo URL','${logoUrl}',''),
 ('ra','Logo URL','${logoUrl}','');
+
+INSERT IGNORE INTO sys_config (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) values ("maxNameSearch", "10", "lu", "h", "Max number of search results displayed in autocomplete searches", "searchResultCount", 1);
+INSERT IGNORE INTO gen_lookups (`Table_Name`, `Code`,`Description`) values
+("searchResultCount", "10", "10"),
+("searchResultCount", "20", "20"),
+("searchResultCount", "30", "30"),
+("searchResultCount", "40", "40"),
+("searchResultCount", "50", "50");

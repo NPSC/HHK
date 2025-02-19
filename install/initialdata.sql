@@ -459,6 +459,12 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Salutation','for','Formal','','',0),
 ('Salutation','mm','Retro-Mr. & Mrs.','','',0),
 
+("searchResultCount", "10", "10",'','',10),
+("searchResultCount", "20", "20",'','',20),
+("searchResultCount", "30", "30",'','',30),
+("searchResultCount", "40", "40",'','',40),
+("searchResultCount", "50", "50",'','',50),
+
 ('Site_Mode', 'dev', 'Development','','',0),
 ('Site_Mode', 'demo', 'Demonstration','','',0),
 ('Site_Mode', 'live', 'Production','','',0),
@@ -638,7 +644,9 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('MajorDonation','500','i','d','','Major donator trigger amount','',1),
 ('MaxAutoEmail','100','i','h','','Maximum number of automatic email messages to send per batch','',1),
 ('MaxDonate','100000','i','d','','Maximum amount amount for a single donation','',1),
+
 ('MaxExpected','260','i','h','','Maximum Expected days out for a visit','',1),
+("maxNameSearch", "10", "lu", "h", "", "Max number of search results displayed in autocomplete searches", "searchResultCount",'', 1),
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size','',1),
 ('merchantReceipt', 'false', 'b', 'f', '', 'Print customer and merchant receipt on single page','',1),
 ("minResvDays", "0", "i", "h", '', "Enforce a minimum length for reservations, 0 = no minimum", '', 1),
