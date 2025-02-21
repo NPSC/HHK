@@ -175,7 +175,7 @@ abstract class AbstractInvoiceLine {
         $this->setItemId($item->getIdItem());
         $this->setPrice($item->getUnitPrice());
         $this->setQuantity($quantity);
-        $this->setDescription($item->getDescription());
+        $this->setDescription($item->getIdItem() == \HHK\SysConst\ItemId::AddnlCharge ? $str1 : $item->getDescription());
 
     }
 
