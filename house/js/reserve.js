@@ -5,19 +5,42 @@ var paymentMarkup;
 var pageManager;
 var receiptMarkup;
 
-async function postJSON(request) {
+async function formDataToJsonAndFetch(formData, url, options = {}) {
+    try {
+        // 1. Convert FormData to JSON
+        const jsonObject = Object.fromEntries(formData.entries());
 
-    const response = await fetch(request);
 
-    if (response.ok) {
-        const json = await response.json();
-        return json;
+        // 2. Fetch the data
+        // Default fetch options if not provided
+        const defaultOptions = {
+            method: 'POST', // Or 'GET', 'PUT', 'DELETE', etc. as needed
+            headers: {
+                'Content-Type': 'application/json', // Important for JSON data
+            },
+            body: JSON.stringify(jsonObject), // Convert JSON object to string
+        };
+
+        // Merge default options with user-provided options (if any)
+        const fetchOptions = { ...defaultOptions, ...options };  // Spread operator for merging
+
+        const response = await fetch(url, fetchOptions);
+
+        if (!response.ok) {
+            const errorText = await response.text(); // Get error message from server
+            throw new Error(`HTTP error! status: ${response.status},  Message: ${errorText}`);
+        }
+
+
+        // 3. Process the response (e.g., parse JSON response from server)
+        const responseData = await response.json(); // If server sends JSON back
+        return responseData; // Return the parsed JSON data
+
+    } catch (error) {
+        console.error("Error during fetch or FormData conversion:", error);
+        throw error; // Re-throw the error to be handled by the caller if needed
     }
-
-    throw new Error(`Response status: ${response.status}`);
-
 }
-
 $(document).ready(function() {
     "use strict";
     var t = this;
@@ -281,114 +304,56 @@ $(document).ready(function() {
                 formData.append(key, value);
             }
 
-            // send the fetch request
+            try {
+                const response = formDataToJsonAndFetch(formData, 'ws_resv.php');
+                console.log("Success! Response from server:", response);
 
-            const myHeaders = new Headers();
-            myHeaders.append("Content-Type", "application/json");
+                if (response.gotopage) {
+                    window.open(response.gotopage, '_self');
+                }
 
-            const svrRequest = new Request('ws_resv.php', {
-                method: 'POST',
-                body: formData,
-                //headers: myHeaders
-            });
+                if (response.error) {
+                    flagAlertMessage(response.error, 'error');
+                    $('#btnDone').val('Save').show();
+                }
 
-            postJSON(svrRequest)
-                .then(data => {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
+                if (response.xfer || response.inctx || response.deluxehpf) {
+                    paymentRedirect(response, $('#xform'), { resvId: pageManager.getIdResv() });
+                    //return;
+                }
+
+                if (response.redirTo) {
+                    location.replace(response.redirTo);
+                }
+
+                pageManager.loadResv(response);
+
+                if (response.receiptMarkup && response.receiptMarkup != '') {
+                    showReceipt('#pmtRcpt', response.receiptMarkup, 'Payment Receipt');
+                }
+
+                if (response.resv !== undefined) {
+                    if (response.warning === undefined) {
+                        flagAlertMessage(response.resvTitle + ' Saved. ' + (response.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + response.resv.rdiv.rStatTitle), 'success');
                     }
+                } else {
+                    flagAlertMessage((response.resvTitle === undefined ? '' : response.resvTitle) + ' Saved. ', 'success');
+                }
 
-                    if (data.error) {
-                        flagAlertMessage(data.error, 'error');
-                        $('#btnDone').val('Save').show();
-                    }
+                if (response.info) {
+                    flagAlertMessage(response.info, 'info');
+                }
 
-                    if (data.xfer || data.inctx || data.deluxehpf) {
-                        paymentRedirect(data, $('#xform'), { resvId: pageManager.getIdResv() });
-                        //return;
-                    }
+            } catch (error) {
+                console.error("Error handling form submission:", error);
 
-                    if (data.redirTo) {
-                        location.replace(data.redirTo);
-                    }
-
-                    pageManager.loadResv(data);
-
-                    if (data.receiptMarkup && data.receiptMarkup != '') {
-                        showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
-                    }
-
-                    if (data.resv !== undefined) {
-                        if (data.warning === undefined) {
-                            flagAlertMessage(data.resvTitle + ' Saved. ' + (data.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + data.resv.rdiv.rStatTitle), 'success');
-                        }
-                    } else {
-                        flagAlertMessage((data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved. ', 'success');
-                    }
-
-                    if (data.info) {
-                        flagAlertMessage(data.info, 'info');
-                    }
-                })
-                .catch(err => {
-                    flagAlertMessage(textStatus, "error");
-                    $('#btnDone').val("Save");
-                });
-
-
-            // $.ajax({
-            //     type: 'post',
-            //     url: 'ws_resv.php',
-            //     data: formData,
-            //     processData: false,
-            //     contentType: false,
-            //     dataType: 'json',
-            //     success: function (data, textStatus) {
-            //         if (data.gotopage) {
-            //             window.open(data.gotopage, '_self');
-            //         }
-
-            //         if (data.error) {
-            //             flagAlertMessage(data.error, 'error');
-            //             $('#btnDone').val('Save').show();
-            //         }
-
-            //         if (data.xfer || data.inctx || data.deluxehpf) {
-            //             paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
-            //             //return;
-            //         }
-
-            //         if (data.redirTo) {
-            //            location.replace(data.redirTo);
-            //         }
-
-            //         pageManager.loadResv(data);
-
-            //         if (data.receiptMarkup && data.receiptMarkup != '') {
-			// 			showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
-			// 		}
-
-            //         if (data.resv !== undefined) {
-            //             if (data.warning === undefined) {
-            //                 flagAlertMessage(data.resvTitle + ' Saved. ' + (data.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + data.resv.rdiv.rStatTitle), 'success');
-            //             }
-            //         } else {
-            //             flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved. ', 'success');
-            //         }
-
-            //         if(data.info){
-            //             flagAlertMessage(data.info, 'info');
-            //         }
-            //     },
-            //     error: function (data, textStatus) {
-            //         flagAlertMessage(textStatus, "error");
-            //         $('#btnDone').val("Save");
-            //     }
-
-            // });
-
+                flagAlertMessage("An error occurred during form submission.", "error");
+                $('#btnDone').val("Save");
+            }
         }
+
     });
+
 
     function getGuest(item) {
 

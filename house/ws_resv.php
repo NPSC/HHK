@@ -48,24 +48,46 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
-$c = "";
+$inputData = $_REQUEST;    // page received data, initially from $_REQUEST
+$command = '';     // web service ciommand
+$events = [];       // output data.
 
-// Get our command
-if (isset($_REQUEST["cmd"])) {
-    $c = htmlspecialchars($_REQUEST["cmd"]);
+
+// check for posted application/json data in a POST request
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (stripos($contentType, 'application/json') !== false   && strtoupper($_SERVER['REQUEST_METHOD']) == 'POST') {
+
+    // Get the posted data
+    $inputJson = file_get_contents('php://input');
+    if ($inputJson === false) {
+        //failure
+        $events = ["error" => "posted data input failure."];
+    }
+
+    // Decode the json posted data
+    $inputData = json_decode($inputJson, true);
+    if ($inputData === null) {
+        //failure
+        $events = ["error" => "posted data input failure."];
+    }
+
+}
+
+// Check the webservice command
+if (isset($inputData['cmd'])) {
+    $command = htmlspecialchars($inputData['cmd']);
 }
 
 
-$events = [];
 
 
 try {
 
-    switch ($c) {
+    switch ($command) {
 
     case "getResv":
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $events = $resv->createMarkup($dbh);
 
@@ -74,7 +96,7 @@ try {
 
     case "saveResv":
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $newResv = $resv->save($dbh);
 
@@ -85,7 +107,7 @@ try {
 
     case "getCkin":
 
-        $resv = CheckingIn::reservationFactoy($dbh);
+        $resv = CheckingIn::reservationFactoy($dbh, $inputData);
 
         $events = $resv->createMarkup($dbh);
 
@@ -94,7 +116,7 @@ try {
 
     case 'saveCheckin':
 
-        $resv = CheckingIn::reservationFactoy($dbh);
+        $resv = CheckingIn::reservationFactoy($dbh, $inputData);
 
         $newResv = $resv->save($dbh);
 
@@ -106,7 +128,7 @@ try {
     case 'delResv':
 
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $events = $resv->delete($dbh);
 
@@ -122,9 +144,9 @@ try {
         }
 
         if ($isCheckin) {
-            $resv = CheckingIn::reservationFactoy($dbh);
+            $resv = CheckingIn::reservationFactoy($dbh, $inputData);
         } else {
-            $resv = Reservation::reservationFactoy($dbh);
+            $resv = Reservation::reservationFactoy($dbh, $inputData);
         }
 
         $events = $resv->addPerson($dbh);
@@ -699,7 +721,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         break;
 
     default:
-        $events = ["error" => "Bad Command: \"" . $c . "\""];
+        $events = ["error" => "Bad Command: \"" . $command . "\""];
 }
 
 } catch (NotFoundException | ValidationException | SmsException $e){
@@ -717,7 +739,7 @@ if (is_array($events)) {
     $json = json_encode($events);
 
     if ($json !== FALSE) {
-        echo ($json);
+        echo $json;
     } else {
         $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);

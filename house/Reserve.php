@@ -136,7 +136,7 @@ if (isset($uS->cofrid)) {
 }
 
 
-$resvObj = new ReserveData();
+$resvObj = new ReserveData($_REQUEST);
 
 
 if (isset($_GET['id'])) {

@@ -114,7 +114,7 @@ class ReserveData {
      * Summary of __construct
      * @param string $reservationTitle
      */
-    function __construct($reservationTitle = '') {
+    public function __construct($rawPost, $reservationTitle = '') {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
@@ -145,7 +145,7 @@ class ReserveData {
             'mrnumresv' => FILTER_SANITIZE_NUMBER_INT,
         ];
 
-        $inputs = filter_input_array(INPUT_POST, $args);
+        $inputs = filter_var_array($rawPost, $args);
 
 
         if (isset($inputs['rid'])) {
@@ -678,17 +678,17 @@ class ReserveData {
         $this->insistCkinDemog = $id;
         return $this;
     }
-    
+
     public function setInsistCkinPhone($id) {
         $this->insistCkinPhone = $id;
         return $this;
     }
-    
+
     public function setInsistCkinEmail($id) {
         $this->insistCkinEmail = $id;
         return $this;
     }
-    
+
     public function setInsistCkinAddress($id) {
         $this->insistCkinAddress = $id;
         return $this;

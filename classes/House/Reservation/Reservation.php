@@ -84,11 +84,11 @@ class Reservation {
      * @throws \HHK\Exception\RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|Reservation|ReserveSearcher|StaticReservation|StayingReservation
      */
-    public static function reservationFactoy(\PDO $dbh) {
+    public static function reservationFactoy(\PDO $dbh, $inputData) {
 
         $uS = Session::getInstance();
 
-        $rData = new ReserveData();
+        $rData = new ReserveData($inputData);
 
         // idPsg < 0
         if ($rData->getForceNewPsg()) {
@@ -802,7 +802,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             }else{
                 $checklistMkup = "";
             }
-            
+
             // Allow to change reserv status.
             $dataArray['rstat'] = $this->createStatusChooser(
                 $resv,
