@@ -122,44 +122,15 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         return $itemList;
     }
 
-    protected function getSelectedBillingAgentNames(){
-        $billingAgentNames = [];
-        if(count($this->selectedBillingAgents) > 0){
-            foreach($this->billingAgents as $ba){
-                if(in_array($ba[0],$this->selectedBillingAgents)){
-                    $billingAgentNames[] = $ba[1];
-                }
-            }
-        }else{
-            $billingAgentNames = ["All"];
-        }
-        return $billingAgentNames;
-    }
-
-    protected function getBillingAgentMarkup(){
-
-        $billingAgentSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->billingAgents, $this->selectedBillingAgents), array('name' => 'selBillingAgents[]', 'size'=>(count($this->billingAgents) < 13 ? count($this->billingAgents) + 1 : '13'), 'multiple'=>'multiple'));
-    
-        $tbl = new HTMLTable();
-        $tr = '';
-    
-        $tbl->addHeaderTr(HTMLTable::makeTh("Billing Agent"));
-    
-        $tbl->addBodyTr($tr . HTMLTable::makeTd($billingAgentSelector, array('style'=>'vertical-align: top;')));
-    
-        return $tbl;
-    }
-
     protected function getItemMarkup(){
-        $itemSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->items, $this->selectedItems), array('name' => 'selItems[]', 'size' => (count($this->items) + 1), 'multiple' => 'multiple'));
         $additionalChargesSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->additionalCharges, $this->selectedItems), array('name' => 'selAdditionalCharges[]', 'size' => (count($this->additionalCharges) + 1), 'multiple' => 'multiple'));
         $discountsSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->discounts, $this->selectedItems), array('name' => 'selItems[]', 'size' => (count($this->discounts) + 1), 'multiple' => 'multiple'));
         $tbl = new HTMLTable();
         $tr = '';
         
-        $tbl->addHeaderTr(HTMLTable::makeTh("Invoice Items") . HTMLTable::makeTh("Additional Charges") . HTMLTable::makeTh("Discounts"));
+        $tbl->addHeaderTr( HTMLTable::makeTh("Additional Charges") . HTMLTable::makeTh("Discounts"));
         
-        $tbl->addBodyTr($tr . HTMLTable::makeTd($itemSelector, array('style'=>'vertical-align: top;')) . HTMLTable::makeTd($additionalChargesSelector, array('style'=>'vertical-align: top;')) . HTMLTable::makeTd($discountsSelector, array('style'=>'vertical-align: top;')));
+        $tbl->addBodyTr(HTMLTable::makeTd($additionalChargesSelector, array('style'=>'vertical-align: top;')) . HTMLTable::makeTd($discountsSelector, array('style'=>'vertical-align: top;')));
         
         return $tbl;
     }
@@ -193,16 +164,11 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         $whDates =  "v.Span_Start <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
 
         $whBilling = "";
-        if(count($this->selectedBillingAgents) > 0){
-            $billingAgents = implode(",", $this->selectedBillingAgents);
+        if(count($this->filter->getSelectedBillingAgents()) > 0){
+            $billingAgents = implode(",", $this->filter->getSelectedBillingAgents());
             $whBilling = " and i.Sold_To_Id in (" . $billingAgents . ")";
         }
-        $baIds = array();
-        if(count($this->billingAgents) > 0){
-            foreach($this->billingAgents as $ba){
-                $baIds[] = $ba[0];
-            }
-        }
+
 
         $this->query = "select
     CONCAT(v.idVisit, '-', v.Span) as idVisit,
@@ -232,6 +198,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     ifnull(i.Invoice_Number, '') as `Invoice_Number`,
     sum(ifnull(i.Amount, '')) as `Invoice_Amount`,
     if(trim(ba.Name_Full) != '', ba.Name_Full, ba.Company) as `Billed To`,
+    il.Description as `Additional Charge/Discount`,
     ifnull(invs.Description, '') as `Invoice_Status_Title`
 from
     visit v
@@ -253,13 +220,15 @@ from
         left join
     gen_lookups vs on vs.Table_Name = 'Visit_Status' and vs.Code = v.Status
         join
-    invoice i on v.idVisit = i.Order_Number and v.Span = i.Suborder_Number and i.Sold_To_Id in (".implode(",",$baIds).")
-        left join
-    invoice_line il on i.idInvoice = il.Invoice_Id and il.Deleted = 0 and il.Item_Id = ". ItemId::Lodging ."
+    invoice i on v.idVisit = i.Order_Number and v.Span = i.Suborder_Number
+        join
+    invoice_line il on i.idInvoice = il.Invoice_Id and il.Deleted = 0 and il.Item_Id IN (". ItemId::AddnlCharge .", " . ItemId::Discount . ")
+        join
+    gen_lookups ilt on il.Type_Id = ilt.Code and ilt.Table_Name in ('Addnl_Charge', 'House_Discount')
         left join
     gen_lookups invs on invs.Table_Name = 'Invoice_Status' and invs.Code = i.Status
         join
-    name ba on i.Sold_To_Id = ba.idName and ba.idName in (".implode(",",$baIds).")
+    name ba on i.Sold_To_Id = ba.idName
 where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id order by v.idVisit";
     }
 
@@ -330,6 +299,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
         $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
         $cFields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');
         $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
+        $cFields[] = array("Additional Charge/Discount", 'Additional Charge/Discount', 'checked', '', 'string', '20');
         $cFields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
         //$cFields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
         $cFields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
@@ -346,7 +316,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
 
         $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
 
-        $mkup .= HTMLContainer::generateMarkup("p", 'Biling Agents: ' . implode(", ", $this->selectedBillingAgentNames));
+        $mkup .= HTMLContainer::generateMarkup("p", 'Biling Agents: ' . $this->filter->getSelectedBillingAgentsString());
         
         if(isset($stats["TotalPatientsServed"])){
             $mkup .= HTMLContainer::generateMarkup("p", "Unique ".Labels::getString("MemberType", "patient", "Patient")."s Served: " . $stats["TotalPatientsServed"]);
