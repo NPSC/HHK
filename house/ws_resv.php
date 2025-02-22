@@ -398,8 +398,6 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			}
         }
 
-        //require(CLASSES . 'DataTableServer.php');
-
         $events = ListReports::loadList($dbh, $guestId, $psgId, $_GET);
 
         break;

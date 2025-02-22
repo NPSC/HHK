@@ -5,36 +5,79 @@ var paymentMarkup;
 var pageManager;
 var receiptMarkup;
 
-async function formDataToJsonAndFetch(formData, url, options = {}) {
+function formDataToJsonAndFetch(formData, url, options = {}) {
+    pageManager = this.pageManager;
     try {
-        // 1. Convert FormData to JSON
+        // Convert FormData to JSON
         const jsonObject = Object.fromEntries(formData.entries());
+        const myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
 
-
-        // 2. Fetch the data
         // Default fetch options if not provided
         const defaultOptions = {
             method: 'POST', // Or 'GET', 'PUT', 'DELETE', etc. as needed
-            headers: {
-                'Content-Type': 'application/json', // Important for JSON data
-            },
+            headers: myHeaders,
             body: JSON.stringify(jsonObject), // Convert JSON object to string
         };
 
         // Merge default options with user-provided options (if any)
         const fetchOptions = { ...defaultOptions, ...options };  // Spread operator for merging
 
-        const response = await fetch(url, fetchOptions);
+        fetch(url, fetchOptions)
+            .then((response) => {
 
-        if (!response.ok) {
-            const errorText = await response.text(); // Get error message from server
-            throw new Error(`HTTP error! status: ${response.status},  Message: ${errorText}`);
-        }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}}`);
+                }
 
+                return response.text();
+            })
+            .then((text) => {
+                // Convert the response text to a JSON object
+                const responseData = JSON.parse(text);
 
-        // 3. Process the response (e.g., parse JSON response from server)
-        const responseData = await response.json(); // If server sends JSON back
-        return responseData; // Return the parsed JSON data
+                if (responseData.gotopage) {
+                    window.open(responseData.gotopage, '_self');
+                }
+
+                if (responseData.error) {
+                    flagAlertMessage(responseData.error, 'error');
+                    $('#btnDone').val('Save').show();
+                }
+
+                if (responseData.xfer || responseData.inctx || responseData.deluxehpf) {
+                    paymentRedirect(responseData, $('#xform'), { resvId: pageManager.getIdResv() });
+
+                }
+
+                if (responseData.redirTo) {
+                    location.replace(responseData.redirTo);
+                }
+
+                pageManager.loadResv(responseData);
+
+                if (responseData.receiptMarkup && responseData.receiptMarkup != '') {
+                    showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt');
+                }
+
+                if (responseData.resv !== undefined) {
+                    if (responseData.warning === undefined) {
+                        flagAlertMessage(respresponseDataonse.resvTitle + ' Saved. ' + (responseData.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + responseData.resv.rdiv.rStatTitle), 'success');
+                    }
+                } else {
+                    flagAlertMessage((responseData.resvTitle === undefined ? '' : responseData.resvTitle) + ' Saved. ', 'success');
+                }
+
+                if (responseData.info) {
+                    flagAlertMessage(responseData.info, 'info');
+                }
+
+            })
+            .catch((error) => {
+                console.error("Error during fetch or FormData conversion:", error);
+                throw error; // Re-throw the error to be handled by the caller if needed
+            });
+
 
     } catch (error) {
         console.error("Error during fetch or FormData conversion:", error);
@@ -47,7 +90,7 @@ $(document).ready(function() {
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON($('#resv').val());
     var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
-    var pageManager = t.pageManager;
+ //   var pageManager = t.pageManager;
     let isRepeatReservHost = $('#isRepeatReservHost').val();
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
@@ -305,44 +348,8 @@ $(document).ready(function() {
             }
 
             try {
-                const response = formDataToJsonAndFetch(formData, 'ws_resv.php');
-                console.log("Success! Response from server:", response);
-
-                if (response.gotopage) {
-                    window.open(response.gotopage, '_self');
-                }
-
-                if (response.error) {
-                    flagAlertMessage(response.error, 'error');
-                    $('#btnDone').val('Save').show();
-                }
-
-                if (response.xfer || response.inctx || response.deluxehpf) {
-                    paymentRedirect(response, $('#xform'), { resvId: pageManager.getIdResv() });
-                    //return;
-                }
-
-                if (response.redirTo) {
-                    location.replace(response.redirTo);
-                }
-
-                pageManager.loadResv(response);
-
-                if (response.receiptMarkup && response.receiptMarkup != '') {
-                    showReceipt('#pmtRcpt', response.receiptMarkup, 'Payment Receipt');
-                }
-
-                if (response.resv !== undefined) {
-                    if (response.warning === undefined) {
-                        flagAlertMessage(response.resvTitle + ' Saved. ' + (response.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + response.resv.rdiv.rStatTitle), 'success');
-                    }
-                } else {
-                    flagAlertMessage((response.resvTitle === undefined ? '' : response.resvTitle) + ' Saved. ', 'success');
-                }
-
-                if (response.info) {
-                    flagAlertMessage(response.info, 'info');
-                }
+                // Handle the response from the server
+                formDataToJsonAndFetch(formData, 'ws_resv.php');  // returns native JS object
 
             } catch (error) {
                 console.error("Error handling form submission:", error);
