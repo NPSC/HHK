@@ -223,13 +223,11 @@ from
     invoice i on v.idVisit = i.Order_Number and v.Span = i.Suborder_Number
         join
     invoice_line il on i.idInvoice = il.Invoice_Id and il.Deleted = 0 and il.Item_Id IN (". ItemId::AddnlCharge .", " . ItemId::Discount . ")
-        join
-    gen_lookups ilt on il.Type_Id = ilt.Code and ilt.Table_Name in ('Addnl_Charge', 'House_Discount')
         left join
     gen_lookups invs on invs.Table_Name = 'Invoice_Status' and invs.Code = i.Status
         join
     name ba on i.Sold_To_Id = ba.idName
-where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id order by v.idVisit";
+where i.Deleted = 0 and " . $whDates . $whBilling . " group by i.idInvoice order by v.idVisit";
     }
 
     public function getStats(){
