@@ -540,6 +540,12 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                     modal: true,
                     close: function(){
                         $("#roomDetailsDialog").empty();
+                        try{
+                            //refresh all tables with notes
+                            $("table#dirtyTable, table#outTable, table#roomTable").DataTable().ajax.reload();
+                        }catch(e){
+
+                        }
                     }
                 });
 
@@ -560,7 +566,6 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
 
                     $("#roomDetailsDialog").dialog("option", "title", $this.data("title"));
                     $("#roomDetailsDialog").dialog("open");
-
                 });
 
                 $('#mainTabs').tabs({

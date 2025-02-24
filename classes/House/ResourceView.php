@@ -1056,7 +1056,7 @@ from
         left join
     resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
         left join
-    note nt on nt.idNote = (select idNote from link_note where idLink = r.idRoom and linkType = 'room' order by idNote desc limit 1)
+    note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
     $genJoin
 where g3.Substitute > 0 and ru.idResource_use is null
     and (re.Retired_At is null or re.Retired_At > date(now()))
