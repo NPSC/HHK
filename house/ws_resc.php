@@ -564,11 +564,13 @@ try {
             }
 
             $room = new Room($dbh, $id);
-
+            
             if ($room->setCleanStatus($stat) === FALSE) {
                 $events['msg'] = 'Room Cleaning State change FAILED.';
+                $events['status'] = "error";
             } else {
                 $events['msg'] = 'Room Cleaning state changed';
+                $events['status']= "success";
             }
 
             $room->saveRoom($dbh, $uS->username);

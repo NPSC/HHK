@@ -1090,13 +1090,16 @@ ORDER BY $orderBy;");
 
                 if ($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver) {
                     $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text'], array('style'=>'background-color:yellow;'));
+                    $statColor = "yellow";
                     $isDirty = TRUE;
 
                 } else if ($r['Status'] == RoomState::Clean || $r['Status'] == RoomState::Ready) {
                     $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text'], array('style'=>'background-color:#bbf7b2;'));
+                    $statColor = "#bbf7b2";
 
                 } else {
                     $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
+                    $statColor = "transparent";
                 }
 
             } else {
@@ -1104,13 +1107,16 @@ ORDER BY $orderBy;");
 
                 if ($r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Dirty) {
                     $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
+                    $statColor = "yellow";
                     $isDirty = TRUE;
 
                 } else if ($r['Status'] == RoomState::Ready) {
                     $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:#3fff0f;'));
+                    $statColor = "#3fff0f";
 
                 } else {
                     $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+                    $statColor = "transparent";
                     $isClean = TRUE;
                 }
             }
@@ -1140,20 +1146,20 @@ ORDER BY $orderBy;");
                 if ($isDirty) {
                     //$action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
                     //.HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Clean][1], array('for'=>$filter.'cbClean' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
-                    $action = HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Clean][1], ['type' => 'button', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'class' => 'ui-button ui-corner-all']);
+                    $action = HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Clean][1], ['type' => 'button', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'data-idRoom'=>$r['idRoom'], 'data-setstatus'=>RoomState::Clean, 'class' => 'ui-button ui-corner-all setRoomStat']);
                 } else if ($isClean && $uS->HouseKeepingSteps > 1) {
                     /*$action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'id'=>$filter.'cbReady' . $r['idRoom']))
                         .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Ready][1], array('for'=>$filter.'cbReady' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                     $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
                         .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Dirty][1], array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                 */
-                    $action = HTMLContainer::generateMarkup("button", 'Set '.$roomStatuses[RoomState::Ready][1], ['type' => 'button', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'class' => 'ui-button ui-corner-all']);
-                    $action .= HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Dirty][1], ['type' => 'button', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'class' => 'ui-button ui-corner-all']);
+                    $action = HTMLContainer::generateMarkup("button", 'Set '.$roomStatuses[RoomState::Ready][1], ['type' => 'button', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'data-idRoom'=>$r['idRoom'], 'data-setstatus'=>RoomState::Ready, 'class' => 'ui-button ui-corner-all setRoomStat']);
+                    $action .= HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Dirty][1], ['type' => 'button', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'data-idRoom'=>$r['idRoom'], 'data-setstatus'=>RoomState::Dirty, 'class' => 'ui-button ui-corner-all setRoomStat']);
                 } else {
                     /*$action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
                         .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Dirty][1], array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                     */
-                    $action .= HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Dirty][1], ['type' => 'button', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'class' => 'ui-button ui-corner-all']);
+                    $action .= HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Dirty][1], ['type' => 'button', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'data-idRoom'=>$r['idRoom'], 'data-setstatus'=>RoomState::Dirty, 'class' => 'ui-button ui-corner-all setRoomStat']);
                 }
 
             }
@@ -1161,6 +1167,7 @@ ORDER BY $orderBy;");
             $fixedRows['Group_Title'] = $r['Group_Title'];
             $fixedRows['Room'] = $r['Title'];
             $fixedRows['Status'] = $stat;
+            $fixedRows['StatusColor'] = $statColor;
             $fixedRows['Action'] = $action;
             $fixedRows['Occupant'] = $r['Name'];
             $fixedRows['numGuests'] = $r['numGuests'];
