@@ -105,3 +105,9 @@ INSERT IGNORE INTO gen_lookups (`Table_Name`, `Code`,`Description`) values
 ("searchResultCount", "30", "30"),
 ("searchResultCount", "40", "40"),
 ("searchResultCount", "50", "50");
+
+
+call new_webpage('ws_session.php', 0, '', 0, 'a', '', '', 's', '', '', current_timestamp(), 'g');
+call new_webpage('ws_session.php', 0, '', 0, 'a', '', '', 's', '', '', current_timestamp(), 'ga');
+call new_webpage('ws_session.php', 0, '', 0, 'a', '', '', 's', '', '', current_timestamp(), 'gr');
+call new_webpage('ws_session.php', 0, '', 0, 'a', '', '', 's', '', '', current_timestamp(), 'mm');

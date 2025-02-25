@@ -3,6 +3,7 @@
 namespace HHK\Note;
 
 use HHK\DataTableServer\SSP;
+use HHK\Exception\NotFoundException;
 
 /**
  * ListNotes.php
@@ -52,6 +53,8 @@ class ListNotes {
             if (count($idPsgs) > 0) {
                 $linkType = "concat";
                 $linkId = implode(',',$idPsgs);
+            }else{
+                throw new NotFoundException("Unable to load notes, PSG Id not found");
             }
         }else{
             $idPsgs = implode(',',$idPsgs);
