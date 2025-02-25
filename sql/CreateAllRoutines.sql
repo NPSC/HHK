@@ -374,15 +374,14 @@ BEGIN
 
 END -- ;
 
-
-
 -- --------------------------------------------------------
 --
--- Procedure `delete_names_u_tbd`
+-- Procedure `delete_tids_names`
+-- Deletes name records for ids in `tids` table
 --
-DROP procedure IF EXISTS `delete_names_u_tbd`; -- ;
+DROP procedure IF EXISTS `delete_tids_names`; -- ;
 
-CREATE PROCEDURE `delete_names_u_tbd`()
+CREATE PROCEDURE `delete_tids_names`()
 -- assumes you already deleted any payments, invoices, visits and stays
 
 BEGIN
@@ -407,9 +406,6 @@ BEGIN
 		SET @tranLevel = @tranLevel + 1;
 	END IF;
 
-	-- collect all deletable names.
-	create temporary table tids (idName int);
-	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
 	select count(*) into @numMembers from tids;
 
 	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd join tids n on nd.idName = n.idName);
@@ -476,6 +472,59 @@ BEGIN
 	Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
         select Now(), 'audit', 'delete', 'delete_names_u_tbd', idName, concat('name.idName: ', idName, ' -> null') from tids;
 
+	IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        select concat(@numMembers, " members deleted.") as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+        THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
+
+
+END -- ;
+
+
+-- --------------------------------------------------------
+--
+-- Procedure `delete_names_u_tbd`
+--
+DROP procedure IF EXISTS `delete_names_u_tbd`; -- ;
+
+CREATE PROCEDURE `delete_names_u_tbd`()
+-- assumes you already deleted any payments, invoices, visits and stays
+
+BEGIN
+
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @p1 = RETURNED_SQLSTATE, @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot delete names. No changes made.<br>Error ', @p1,': ', @text) as `error`;
+	END;
+
+	DECLARE continue handler for SQLSTATE '42S02' BEGIN END;
+
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
+
+	-- collect all deletable names.
+	create temporary table tids (idName int);
+	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
+	
+	-- delete member records
+	call `delete_tids_names`;
+
 	drop temporary table tids;
 
 	IF @@in_transaction = 1 AND @tranLevel = 0
@@ -492,6 +541,60 @@ BEGIN
 
 END -- ;
 
+
+-- --------------------------------------------------------
+--
+-- Procedure `delete_name`
+--
+DROP procedure IF EXISTS `delete_name`; -- ;
+
+CREATE PROCEDURE `delete_name`(IN badId INT)
+-- assumes you already deleted any payments, invoices, visits and stays
+
+BEGIN
+
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @p1 = RETURNED_SQLSTATE, @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot delete names. No changes made.<br>Error ', @p1,': ', @text) as `error`;
+	END;
+
+	DECLARE continue handler for SQLSTATE '42S02' BEGIN END;
+
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
+
+	-- collect all deletable names.
+	create temporary table tids (idName int);
+	insert into tids (idName) VALUES (badId);
+	
+	-- delete member records
+	call `delete_tids_names`;
+
+	drop temporary table tids;
+
+	IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        select concat(@numMembers, " members deleted.") as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+        THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
+
+
+END -- ;
 
 
 -- --------------------------------------------------------
@@ -960,11 +1063,7 @@ BEGIN
 	idName = goodId
         where idName = badId;
 
-    update `name` set
-	Member_Status = 'TBD'
-        where idName = badId;
-
-    call `delete_names_u_tbd`;
+    call delete_name(badId);
 
     insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
         values (now(), 'audit', 'update', 'sp', badId, 'Remove Dup Guest');
