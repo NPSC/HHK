@@ -20,6 +20,7 @@ window.housekeeping.getDtBtns = function(title){
             },
             customize: function (win) {
                 $(win.document.body).css("font-size", "0.9em");
+                $(win.document.body).find("td .hhk-noprint").hide();
 
                 $(win.document.body).find("table").css("font-size", "inherit");
             }
@@ -122,7 +123,16 @@ $(document).ready(function () {
             'data': 'Notes',
             'title': 'Latest Note',
             'searchable': true,
-            'sortable': false
+            'sortable': false,
+            render: function(data, type, row){
+                if(type == 'print'){
+                    data = $(data);
+                    data.find(".hhk-noprint").remove();
+                    return data[0].outerHTML;
+                }else{
+                    return data;
+                }
+            }
         }
     ];
 
