@@ -139,8 +139,8 @@ class FormDocument {
         $this->doc->saveNew($dbh);
 
         if($this->doc->getIdDocument() > 0){
-            //$this->sendPatientEmail();
-            $this->sendNotifyEmail($dbh);
+            $this->sendSubmissionEmail($dbh);
+            $this->sendStaffEmail($dbh);
             return array("status"=>"success");
         }else{
             return array("status"=>"error");
@@ -153,7 +153,7 @@ class FormDocument {
      *
      * @return boolean
      */
-    private function sendNotifyEmail(\PDO $dbh){
+    private function sendStaffEmail(\PDO $dbh){
         $uS = Session::getInstance();
         $to = filter_var(trim($uS->referralFormEmail), FILTER_SANITIZE_EMAIL);
 
@@ -186,40 +186,42 @@ class FormDocument {
         return false;
     }
 
-/*     private function sendPatientEmail(){
+     /**
+      * Send email to user who submitted referral
+      * @param \PDO $dbh
+      * @return bool|string[]
+      */
+     private function sendSubmissionEmail(\PDO $dbh){
         $templateSettings = $this->formTemplate->getSettings();
         $userData = json_decode($this->doc->getUserData(), true);
-        $patientEmailAddress = (isset($userData['patient']['email']) ? $userData['patient']['email'] : '');
+        $submissionEmailAddress = (isset($userData['notifyMeEmail']) ? $userData['notifyMeEmail'] : '');
         $uS = Session::getInstance();
 
-        if($this->doc->getIdDocument() > 0 && $templateSettings['emailPatient'] == true && $patientEmailAddress != '' && $templateSettings['notifySubject'] !='' && $templateSettings['notifyContent'] != ''){
+        if($this->doc->getIdDocument() > 0 && $submissionEmailAddress != '' && $templateSettings['notifyMe'] && $templateSettings['notifyMeSubject'] !='' && $templateSettings['notifyMeContent'] != ''){
             //send email
 
-            $mail = new HHKMailer();
+            $mail = new HHKMailer($dbh);
 
             $mail->From = $uS->NoReplyAddr;
             $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
-            $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
+            $mail->addReplyTo($uS->ReplyTo, htmlspecialchars_decode($uS->siteName, ENT_QUOTES));
 
-            $to = filter_var(trim($patientEmailAddress), FILTER_SANITIZE_EMAIL);
+            $to = filter_var(trim($submissionEmailAddress), FILTER_SANITIZE_EMAIL);
             if ($to !== FALSE && $to != '') {
                 $mail->addAddress($to);
             }
 
             $mail->isHTML(true);
 
-            $mail->Subject = $templateSettings['notifySubject'];
-            $mail->msgHTML($templateSettings['notifyContent']);
+            $mail->Subject = $templateSettings['notifyMeSubject'];
+            $mail->msgHTML(nl2br($templateSettings['notifyMeContent']));
 
-            if ($mail->send() === FALSE) {
-                return array('error'=>$mail->ErrorInfo);
-            }else{
-                return true;
-            }
+            $mail->send();
 
         }
+        return true;
 
-    } */
+    }
 
     public function updateStatus(\PDO $dbh, $status){
         if($this->getStatus() == 'd' && $status == 'd'){

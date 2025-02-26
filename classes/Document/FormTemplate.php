@@ -34,6 +34,9 @@ class FormTemplate {
      */
     protected $doc;
 
+    /**
+     * Summary of __construct
+     */
     public function __construct() {
 
     }
@@ -56,7 +59,7 @@ class FormTemplate {
         return $rows;
     }
 
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -84,6 +87,14 @@ class FormTemplate {
         }
         if($notifySubject == ''){
             $validationErrors['notifySubject'] = "The Email Subject field is required";
+        }
+
+        if($notifyMeSubject == '' && $notifyMe == true){
+            $validationErrors['notifyMeSubject'] = "The Confirmation Notification Subject field is required";
+        }
+
+        if($notifyMeContent == '' && $notifyMe == true){
+            $validationErrors['notifyMeContent'] = "The Confirmation Notification Content field is required";
         }
 
         if($initialGuests > self::MAX_GUESTS){
@@ -126,7 +137,7 @@ class FormTemplate {
         }
     }
 
-    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -158,6 +169,14 @@ class FormTemplate {
             $validationErrors['notifySubject'] = "The Email Subject field is required";
         }
 
+        if($notifyMeSubject == '' && $notifyMe == true){
+            $validationErrors['notifyMeSubject'] = "The Confirmation Notification Subject field is required";
+        }
+
+        if($notifyMeContent == '' && $notifyMe == true){
+            $validationErrors['notifyMeContent'] = "The Confirmation Notification Content field is required";
+        }
+
         if($initialGuests > 20){
             $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20 people.";
         }
@@ -171,7 +190,7 @@ class FormTemplate {
         }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'notifyMe'=>$notifyMe, 'notifyMeSubject'=>$notifyMeSubject, 'notifyMeContent'=>$notifyMeContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
             
             $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, "base64:text/json", $username);
             if($count == 1){
@@ -253,7 +272,10 @@ class FormTemplate {
             'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
-            'notifySubject'=>(isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted"),
+            'notifySubject'=>htmlspecialchars_decode((isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted")),
+            'notifyMe'=>(isset($abstract->notifyMe) && $abstract->notifyMe === true ? true:false),
+            'notifyMeSubject'=>htmlspecialchars_decode((isset($abstract->notifyMeSubject) && $abstract->notifyMeSubject != "" ? $abstract->notifyMeSubject : "")),
+            'notifyMeContent'=>htmlspecialchars_decode((isset($abstract->notifyMeContent) && $abstract->notifyMeContent != "" ? $abstract->notifyMeContent : "")),
             'recaptchaScript'=>$recaptcha->getScriptTag(),
             'maxGuests'=>(isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
             'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1),

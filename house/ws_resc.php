@@ -705,9 +705,19 @@ try {
                 $notifySubject = filter_var($_REQUEST['notifySubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $notifyContent = '';
-            if(isset($_REQUEST['notifyContent'])) {
-                $notifyContent = filter_var($_REQUEST['notifyContent'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $notifyMe = false;
+            if(isset($_REQUEST['notifyMe'])) {
+                $notifyMe = boolval(filter_var($_REQUEST['notifyMe'], FILTER_VALIDATE_BOOLEAN));
+            }
+
+            $notifyMeSubject = '';
+            if(isset($_REQUEST['notifyMeSubject'])) {
+                $notifyMeSubject = filter_var($_REQUEST['notifyMeSubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            $notifyMeContent = '';
+            if(isset($_REQUEST['notifyMeContent'])) {
+                $notifyMeContent = filter_var($_REQUEST['notifyMeContent'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $initialGuests = '';
@@ -718,11 +728,6 @@ try {
             $maxGuests = '';
             if(isset($_REQUEST['maxGuests'])) {
                 $maxGuests = intval(filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-
-            $emailPatient = '';
-            if(isset($_REQUEST['emailPatient'])) {
-                $emailPatient = filter_var($_REQUEST['emailPatient'], FILTER_VALIDATE_BOOLEAN);
             }
 
             $fontImport = '';
@@ -736,9 +741,9 @@ try {
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $uS->username);
             }
 
             break;
