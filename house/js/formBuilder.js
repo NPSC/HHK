@@ -1557,8 +1557,14 @@ House Staff`,
 	    			success: function(data, textStatus, jqXHR)
 	    			{
 	    				if(data.status == "success"){
+							try{
+								JSON.parse(data.formTemplate);
+								formData = data.formTemplate;
+							}catch(e){
+								formData = buffer.Buffer.from(data.formTemplate, 'base64').toString('utf-8');
+							}
 	    					settings.formBuilder = $wrapper.find('#formBuilderContent').empty().formBuilder({
-	    						formData: buffer.Buffer.from(data.formTemplate, 'base64').toString('utf-8'),
+	    						formData: formData,
 								inputSets: settings.inputSets,
 								fields: settings.fields,
 								disableFields: settings.disableFields,
