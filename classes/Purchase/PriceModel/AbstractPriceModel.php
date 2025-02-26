@@ -288,12 +288,10 @@ abstract class AbstractPriceModel {
             $uS = Session::getInstance();
             
             if($uS->stmtShowRateTitle){
-                $rateColumn = HTMLContainer::generateMarkup("div",
-                    HTMLContainer::generateMarkup("span", $t["title"], ["class"=>"mr-3"]) .
-                    HTMLContainer::generateMarkup("span", number_format($t['rate'], 2), ["class"=>"ml-3"])
-                , ["class"=>"hhk-flex justify-content-between"]);
+                $rateColumn = HTMLTable::makeTd($t["title"], ["class"=>"pr-3", "style"=>"border-right: none;"]) .
+                    HTMLTable::makeTd(number_format($t['rate'], 2), ["class"=>"pl-3 align-right", "style"=>"border-left: none;"]);
             }else{
-                $rateColumn = number_format($t['rate'], 2);
+                $rateColumn = HTMLTable::makeTd(number_format($t['rate'], 2), array('class'=>'align-right'));
             }
 
             $tbl->addBodyTr(
@@ -301,7 +299,7 @@ abstract class AbstractPriceModel {
                 .HTMLTable::makeTd($r['title'])
                 .HTMLTable::makeTd($startDT->format('M j, Y'))
                 .HTMLTable::makeTd($startDT->add(new \DateInterval('P' . $t['days'] . 'D'))->format('M j, Y'))
-                .HTMLTable::makeTd($rateColumn, array('class'=>'align-right'))
+                .$rateColumn
                 .HTMLTable::makeTd($t['days'], array('class'=>'align-center'))
                 .HTMLTable::makeTd(number_format($t['amt'], 2), array('class'=>'align-right'))
             , ["class"=>$separator]);
@@ -372,12 +370,14 @@ abstract class AbstractPriceModel {
      * @return void
      */
     public function itemMarkup($r, &$tbl) {
+        $uS = Session::getInstance();
+        $colspan = ($uS->stmtShowRateTitle ? 4:3);
 
         $tbl->addBodyTr(
             HTMLTable::makeTd($r['orderNum'], array('class'=>'align-center'))
             .HTMLTable::makeTd('')
             .HTMLTable::makeTd($r['date'])
-            .HTMLTable::makeTd($r['desc'], array('colspan'=>'3', 'class'=>'align-right'))
+            .HTMLTable::makeTd($r['desc'], array('colspan'=>$colspan, 'class'=>'align-right'))
             .HTMLTable::makeTd($r['amt'], array('class'=>'align-right')));
 
     }
@@ -389,12 +389,15 @@ abstract class AbstractPriceModel {
      * @return void
      */
     public function rateHeaderMarkup(&$tbl, $labels) {
+        $uS = Session::getInstance();
+        $colspan = ($uS->stmtShowRateTitle ? 2:1);
+
     	$tbl->addHeaderTr(
     			HTMLTable::makeTh('Visit Id')
     			.HTMLTable::makeTh('Room')
     			.HTMLTable::makeTh('Start')
     			.HTMLTable::makeTh('End')
-    			.HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate'))
+    			.HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate'), ['colspan'=>$colspan])
     			.HTMLTable::makeTh('Nights')
     			.HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
 
@@ -425,9 +428,11 @@ abstract class AbstractPriceModel {
      * @return void
      */
     public function rateTotalMarkup(&$tbl, $label, $numberNites, $totalAmt, $guestNites) {
+        $uS = Session::getInstance();
+        $colspan = ($uS->stmtShowRateTitle ? 6:5);
 
         // Room Fee totals
-        $tbl->addBodyTr(HTMLTable::makeTd($label, array('colspan'=>'5', 'class'=>'tdlabel hhk-tdTotals', 'style'=>'font-weight:bold;'))
+        $tbl->addBodyTr(HTMLTable::makeTd($label, array('colspan'=>$colspan, 'class'=>'tdlabel hhk-tdTotals', 'style'=>'font-weight:bold;'))
             .HTMLTable::makeTd($numberNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
             .HTMLTable::makeTd('$'. $totalAmt, array('class'=>'hhk-tdTotals', 'style'=>'text-align:right;font-weight:bold;')));
 
