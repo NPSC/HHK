@@ -759,7 +759,7 @@ where `lp`.`idPayment` > 0
                 }
 
 
-                $trow = HTMLTable::makeTd((isset($r["idVisit"]) ? $r["idVisit"] : ""));
+                $trow = HTMLTable::makeTd((isset($r["idVisit"]) && isset($r["Span"]) ? $r["idVisit"] ."-" . $r["Span"] : ""));
                 $trow .= HTMLTable::makeTd($r['Room']);
                 $trow .= HTMLTable::makeTd($nameTd);
                 $trow .= HTMLTable::makeTd($invoiceMkup);
@@ -803,6 +803,7 @@ where `lp`.`idPayment` > 0
                     . HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
                     . HTMLTable::makeTd('')
                     . HTMLTable::makeTd($r['Invoice_Updated_By'])
+                    . HTMLTable::makeTd($r['Invoice_Created_At'])
                     . ($showExternlId ? HTMLTable::makeTd('') : '')
                     . HTMLTable::makeTd('')
                 );
