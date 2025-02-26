@@ -976,6 +976,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 flagAlertMessage(data.success, 'success');
 
                 if (typeof calendar !== 'undefined') {
+                    calendar.refetchResources();
                     calendar.refetchEvents();
                 }
             }

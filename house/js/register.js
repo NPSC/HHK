@@ -53,6 +53,7 @@ function setRoomTo(idResv, idResc) {
         if (data.success && data.success !== '') {
             flagAlertMessage(data.msg, 'success');
         }
+        calendar.refetchResources();
         calendar.refetchEvents();
         refreshdTables(data);
         return true;
@@ -114,6 +115,7 @@ function cgResvStatus(rid, status) {
             }
             if (data.success) {
                 flagAlertMessage(data.success, 'info');
+                calendar.refetchResources();
                 calendar.refetchEvents();
             }
             refreshdTables(data);
@@ -460,6 +462,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 	                flagAlertMessage(data.msg, 'info');
 	            }
 
+                calendar.refetchResources();
 				calendar.refetchEvents();
 	            refreshdTables(data);
 
@@ -547,6 +550,7 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
                 flagAlertMessage(data.success, 'success');
             }
             if (updateCal === undefined || updateCal === true) {
+                calendar.refetchResources();
                 calendar.refetchEvents();
                 refreshdTables(data);
             }
@@ -1626,6 +1630,7 @@ $(document).ready(function () {
             }
 
             if(ui.newTab.prop('id') === 'liCal'){
+                calendar.refetchResources();
             	calendar.refetchEvents();
             }
         },
