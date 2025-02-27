@@ -180,7 +180,7 @@
 				<iframe id="formDetailsIframe" name="formPreviewIframe" width="1024" height="768" style="border: 0"></iframe>
 			</div>
 			<div id="formNotesDialog" title="Notes">
-				<div class="docNotesWrapper"></div>
+				<div class="docNotesWrapper hhk-tdbox" style="font-size: 0.8em;"></div>
 			</div>
 		`
 		);
