@@ -35,7 +35,7 @@ class Vehicle {
 
         if ($idReg > 0 && $idResv > 0){
             
-            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle where v.idRegistration = $idReg and (rv.idReservation = $idResv or rv.idReservation IS NULL)");
+            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else if ($idReg > 0) {
 
