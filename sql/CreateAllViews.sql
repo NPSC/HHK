@@ -983,7 +983,7 @@ AS SELECT
    `r`.`Guest_Id` AS `Guest_Id`,
    `r`.`Psg_Id` AS `Psg_Id`
 FROM
-        ((`report` `r`
+        ((`incident_report` `r`
         LEFT JOIN `name_guest` `ng` ON (`r`.`Guest_Id` = `ng`.`idName`
             AND `r`.`Psg_Id` = `ng`.`idPsg`))
         LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`))

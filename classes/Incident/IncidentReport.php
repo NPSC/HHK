@@ -3,7 +3,7 @@
 namespace HHK\Incident;
 
 use HHK\sec\SecurityComponent;
-use HHK\Tables\{EditRS, ReportRS};
+use HHK\Tables\{EditRS, IncidentReportRS};
 use HHK\Exception\RuntimeException;
 
 /**
@@ -72,7 +72,7 @@ class IncidentReport {
 
         if ($this->idReport > 0) {
 
-            $reportRS = new ReportRs();
+            $reportRS = new IncidentReportRs();
             $reportRS->idReport->setStoredVal($this->idReport);
             $rows = EditRS::select($dbh, $reportRS, array($reportRS->idReport));
 
@@ -150,7 +150,7 @@ class IncidentReport {
         }
 
         // Insert
-        $reportRS = new ReportRs();
+        $reportRS = new IncidentReportRs();
         $reportRS->Title->setNewVal($this->getTitle());
         $reportRS->Report_Date->setNewVal($this->getReportDate());
         $reportRS->Description->setNewVal($this->getDescription());

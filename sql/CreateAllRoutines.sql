@@ -1366,7 +1366,7 @@ BEGIN
 		SELECT
 			Psg_Id, COUNT(Psg_Id)
 		FROM
-			report
+			incident_report
 		WHERE
 			`Status` in (activ, resol, onHold, del)
 		GROUP BY Psg_Id;
@@ -1374,7 +1374,7 @@ BEGIN
 
     select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, ifnull(r.Report_Date, '') as `Report_Date`, ifnull(r.Resolution_Date, '') as `Resolution_Date`, ifnull(g.Description, '') as `Status`
     from
-		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, onHold, del)
+		tble t join incident_report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, onHold, del)
 		left join hospital_stay hs on t.idPsg = hs.idPsg
         left join name n on hs.idPatient = n.idName
         left join gen_lookups g on g.Table_Name = 'Incident_Status' and g.Code = r.`Status`

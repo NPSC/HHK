@@ -1636,7 +1636,9 @@ CREATE TABLE if not exists `relationship` (
 -- -----------------------------------------------------
 -- Table `report`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `report` (
+ALTER TABLE IF EXISTS `report` RENAME TO `incident_report`; -- handle catch-22 of renaming tables
+
+CREATE TABLE IF NOT EXISTS `incident_report` (
   `idReport` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `Title` varchar(240) NOT NULL DEFAULT '',
   `Category` varchar(5) NOT NULL DEFAULT '',
@@ -2486,7 +2488,7 @@ ALTER TABLE `psg`
 ALTER TABLE `registration`
     ADD INDEX IF NOT EXISTS `Index_idPsg` (`idPsg` ASC);
 
-ALTER TABLE `report`
+ALTER TABLE `incident_report`
 	ADD  INDEX IF NOT EXISTS `Index_Psg_Id` (`Psg_Id`);
 
 ALTER TABLE `report_field_sets`
