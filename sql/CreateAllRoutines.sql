@@ -441,9 +441,9 @@ BEGIN
 	update hospital_stay hs join tids n on hs.idPcDoctor = n.idName set hs.idPcDoctor = 0;
 	update hospital_stay hs join tids n on hs.idReferralAgent = n.idName set hs.idReferralAgent = 0;
 
-	-- delete any reports for this psg or guest
-    delete rp from report rp where rp.Psg_Id in (select idPsg from psg p join tids n on p.idPatient = n.idName);
-    delete rp from report rp join tids n on rp.Guest_Id = n.idName;
+	-- delete any incident reports for this psg or guest
+    delete rp from incident_report rp where rp.Psg_Id in (select idPsg from psg p join tids n on p.idPatient = n.idName);
+    delete rp from incident_report rp join tids n on rp.Guest_Id = n.idName;
 
     -- delete any registrations for the psg.
     delete rg from registration rg where rg.idPsg in (select idPsg from psg p join tids n on p.idPatient = n.idName);
@@ -1039,7 +1039,7 @@ BEGIN
     idGuest = goodId
 		where idGuest = badId;
 
-	update report set
+	update incident_report set
     Guest_Id = goodId
 		where Guest_Id = badId;
 
