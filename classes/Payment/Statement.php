@@ -831,6 +831,11 @@ class Statement {
 
                 }
 
+                //add invoice notes
+                if($r['i']["Invoice_Description"] !== ""){
+                    $descs[] = HTMLTable::makeTd("Invoice Notes:", ['style'=>'font-size:.8em;', 'class'=>'align-right']) . HTMLTable::makeTd($r['i']['Invoice_Description'], ['colspan'=>'4', 'style'=>'font-size:.8em;']);
+                }
+
             }
 
             self::makePaymentLine($payLines, $tbl, $tdAttrs, $descs, $r['i']);
