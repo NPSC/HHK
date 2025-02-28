@@ -196,7 +196,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     ifnull(pgn.Name_Last, '') as `pgLast`,
     ifnull(vs.Description, '') as `Status_Title`,
     ifnull(i.Invoice_Number, '') as `Invoice_Number`,
-    sum(ifnull(i.Amount, '')) as `Invoice_Amount`,
+    sum(ifnull(il.Amount, '')) as `Invoice_Amount`,
     if(trim(ba.Name_Full) != '', ba.Name_Full, ba.Company) as `Billed To`,
     il.Description as `Additional Charge/Discount`,
     ifnull(invs.Description, '') as `Invoice_Status_Title`
