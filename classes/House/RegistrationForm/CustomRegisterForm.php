@@ -806,6 +806,7 @@ class CustomRegisterForm {
 
             // visit
             $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, '', $span);
+            $idReservation = $visit->getIdReservation();
             $reg = new Registration($dbh, 0, $visit->getIdRegistration());
             $visit->getResource($dbh);
 
@@ -979,7 +980,7 @@ class CustomRegisterForm {
             $vehs = array();
             if ($reg->getNoVehicle() == 0) {
                 // Remove unused vehicles from the array, if thsy somehow get in.
-                $cars = Vehicle::getRecords($dbh, $reg->getIdRegistration());
+                $cars = Vehicle::getRecords($dbh, $reg->getIdRegistration(), $idReservation, true);
 
                 foreach ($cars as $c) {
                     if ($c['No_Vehicle'] != 1) {

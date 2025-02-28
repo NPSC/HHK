@@ -29,13 +29,13 @@ class Vehicle {
      * @param int $idReg
      * @return array
      */
-    public static function getRecords(\PDO $dbh, $idReg, int $idResv = 0) {
+    public static function getRecords(\PDO $dbh, $idReg, int $idResv = 0, $thisResv = false) {
 
         $rows = array();
 
         if ($idReg > 0 && $idResv > 0){
             
-            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg");
+            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg" . ($thisResv ? " and rv.idReservation = $idResv": ""));
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else if ($idReg > 0) {
 

@@ -274,7 +274,7 @@ function viewVehicleDialog(idVisit, $vehDialog) {
 
             $vehDialog.dialog({
                 autoOpen: true,
-                width: getDialogWidth(800),
+                width: getDialogWidth(900),
                 resizable: true,
                 modal: true,
                 title: (data.title ? data.title : 'Vehicle Details'),
