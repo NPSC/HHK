@@ -205,6 +205,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
                 visitor: "<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>"
             }
             window.curTab = parseInt('<?php echo $currentTab; ?>', 10);
+            window.startYear = "<?php echo $uS->StartYear; ?>";
         </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>

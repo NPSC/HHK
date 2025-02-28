@@ -498,9 +498,9 @@ $(document).ready(function () {
         rowGroup: {dataSrc: 'Group_Title'},
         "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
         "buttons": housekeeping.getDtBtns("Housekeeping - All Rooms"),
-        "initComplete": function(settings, json){
+        "drawCallback": function(settings, json){
             $('.ckdate').datepicker({
-                yearRange: '<?php echo $uS->StartYear; ?>:+01',
+                yearRange: startYear + ':+01',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
@@ -522,9 +522,9 @@ $(document).ready(function () {
         rowGroup: {dataSrc: 'Group_Title'},
         "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
         "buttons": housekeeping.getDtBtns("Housekeeping - Rooms Not Ready"),
-        "initComplete": function(settings, json){
+        "drawCallback": function(settings, json){
             $('.ckdate').datepicker({
-                yearRange: '<?php echo $uS->StartYear; ?>:+01',
+                yearRange: startYear + ':+01',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
