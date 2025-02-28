@@ -39,6 +39,8 @@ function getDoc(item) {
     }
     $('.hhk-docInfo').show();
 }
+
+
 function gotIncomeDiag(idResv, idReg, data) {
     if (data.error) {
         if (data.gotopage) {
@@ -407,3 +409,42 @@ function showRegDialog(markup, idReg) {
         }
     });
 }
+
+function formDataToJsonAndFetch(formData, url, processResults, options = {}) {
+
+    // Convert FormData to JSON
+    const jsonObject = Object.fromEntries(formData.entries());
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+
+    // Default fetch options if not provided
+    const defaultOptions = {
+        method: 'POST', // Or 'GET', 'PUT', 'DELETE', etc. as needed
+        headers: myHeaders,
+        body: JSON.stringify(jsonObject), // Convert JSON object to string
+    };
+
+    // Merge default options with user-provided options (if any)
+    const fetchOptions = { ...defaultOptions, ...options }; // Spread operator for merging
+
+    fetch(url, fetchOptions)
+        .then((response) => {
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}}`);
+            }
+
+            return response.text();
+        })
+        .then((text) => {
+
+            processResults(text);
+
+        })
+        .catch((error) => {
+            console.error("Error during fetch or FormData conversion:", error);
+            throw error; // Re-throw the error to be handled by the caller if needed
+        });
+
+}
+

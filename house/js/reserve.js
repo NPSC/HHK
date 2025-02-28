@@ -5,92 +5,12 @@ var paymentMarkup;
 var pageManager;
 var receiptMarkup;
 
-function formDataToJsonAndFetch(formData, url, options = {}) {
-    pageManager = this.pageManager;
-    try {
-        // Convert FormData to JSON
-        const jsonObject = Object.fromEntries(formData.entries());
-        const myHeaders = new Headers();
-        myHeaders.append('Content-Type', 'application/json');
-
-        // Default fetch options if not provided
-        const defaultOptions = {
-            method: 'POST', // Or 'GET', 'PUT', 'DELETE', etc. as needed
-            headers: myHeaders,
-            body: JSON.stringify(jsonObject), // Convert JSON object to string
-        };
-
-        // Merge default options with user-provided options (if any)
-        const fetchOptions = { ...defaultOptions, ...options };  // Spread operator for merging
-
-        fetch(url, fetchOptions)
-            .then((response) => {
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}}`);
-                }
-
-                return response.text();
-            })
-            .then((text) => {
-                // Convert the response text to a JSON object
-                const responseData = JSON.parse(text);
-
-                if (responseData.gotopage) {
-                    window.open(responseData.gotopage, '_self');
-                }
-
-                if (responseData.error) {
-                    flagAlertMessage(responseData.error, 'error');
-                    $('#btnDone').val('Save').show();
-                }
-
-                if (responseData.xfer || responseData.inctx || responseData.deluxehpf) {
-                    paymentRedirect(responseData, $('#xform'), { resvId: pageManager.getIdResv() });
-
-                }
-
-                if (responseData.redirTo) {
-                    location.replace(responseData.redirTo);
-                }
-
-                pageManager.loadResv(responseData);
-
-                if (responseData.receiptMarkup && responseData.receiptMarkup != '') {
-                    showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt');
-                }
-
-                if (responseData.resv !== undefined) {
-                    if (responseData.warning === undefined) {
-                        flagAlertMessage(respresponseDataonse.resvTitle + ' Saved. ' + (responseData.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + responseData.resv.rdiv.rStatTitle), 'success');
-                    }
-                } else {
-                    flagAlertMessage((responseData.resvTitle === undefined ? '' : responseData.resvTitle) + ' Saved. ', 'success');
-                }
-
-                if (responseData.info) {
-                    flagAlertMessage(responseData.info, 'info');
-                }
-
-            })
-            .catch((error) => {
-                console.error("Error during fetch or FormData conversion:", error);
-                throw error; // Re-throw the error to be handled by the caller if needed
-            });
-
-
-    } catch (error) {
-        console.error("Error during fetch or FormData conversion:", error);
-        throw error; // Re-throw the error to be handled by the caller if needed
-    }
-}
 $(document).ready(function() {
     "use strict";
     var t = this;
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON($('#resv').val());
     var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
- //   var pageManager = t.pageManager;
     let isRepeatReservHost = $('#isRepeatReservHost').val();
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
@@ -254,56 +174,80 @@ $(document).ready(function() {
         if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
 
             if (pageManager.deleteReserve() === false) {
-				$(this).val('Final Delete');
-				$('#btnDone').hide();
-				$('#btnCheckinNow').hide();
-				$('#btnShowReg').hide();
-				return;
-			}
+                $(this).val('Final Delete');
+                $('#btnDone').hide();
+                $('#btnCheckinNow').hide();
+                $('#btnShowReg').hide();
+                return;
+            }
 
             $(this).val('Deleting >>>>');
 
-			 $.post(
-				'ws_resv.php',
-                $('#form1').serialize() + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
-                 function(datas) {
-                    let data;
-                    try {
-                        data = $.parseJSON(datas);
-                    } catch (err) {
-                        flagAlertMessage(err.message, 'error');
-                        $(idForm).remove();
-                    }
+            var formData = new FormData($('#form1')[0]);
 
-                    if (data.error) {
-                        flagAlertMessage(data.error, 'error');
-                        $('#btnDelete').val('Delete').show();
-                    }
+            formData.append('cmd', 'delResv');
+            formData.append('idPsg', pageManager.getIdPsg());
+            formData.append('prePayment', pageManager.getPrePaymtAmt());
+            formData.append('rid', pageManager.getIdResv());
 
-				    if (data.warning) {
-				        flagAlertMessage(data.warning, 'warning');
-				    }
+            //diagnosis
+            let txtDiagnosis = $('#txtDiagnosis').val();
+            if (typeof txtDiagnosis === "string") {
+                txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+            }
+            formData.append('txtDiagnosis', txtDiagnosis);
 
-                    if (data.receiptMarkup && data.receiptMarkup != '') {
-						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
-					}
+            let peopleStr = $.param({ mem: pageManager.people.list() });
+            let people = new URLSearchParams(peopleStr);
 
-					if (data.deleted) {
-						$('#form1').remove();
-						$('#contentDiv').append('<p>' + data.deleted + '</p>');
+            for (const [key, value] of people.entries()) {
+                formData.append(key, value);
+            }
 
-						$('#spnStatus').text('Deleted');
-                    }
+            try {
 
-                    if (data.xfer || data.inctx || data.deluxehpf) {
-				        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
-				        //return;
-				    }
+                formDataToJsonAndFetch(formData, 'ws_resv.php',
+                    function (text) {
 
-                }
-        	);
+                        const data = $.parseJSON(text);
+
+                        if (data.error) {
+                            flagAlertMessage(data.error, 'error');
+                            $('#btnDelete').val('Delete').show();
+                        }
+
+                        if (data.warning) {
+                            flagAlertMessage(data.warning, 'warning');
+                        }
+
+                        if (data.receiptMarkup && data.receiptMarkup != '') {
+                            showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+                        }
+
+                        if (data.deleted) {
+                            $('#form1').remove();
+                            $('#contentDiv').append('<p>' + data.deleted + '</p>');
+
+                            $('#spnStatus').text('Deleted');
+                        }
+
+                        if (data.xfer || data.inctx || data.deluxehpf) {
+                            paymentRedirect(data, $('#xform'), { resvId: pageManager.getIdResv() });
+
+                        }
+
+                    });
+
+            } catch (error) {
+                console.error("Error handling form submission:", error);
+
+                flagAlertMessage("An error occurred during form submission.", "error");
+
+            }
+
         }
     });
+
 
     $('#btnShowReg').click(function () {
         window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
@@ -349,8 +293,47 @@ $(document).ready(function() {
 
             try {
                 // Handle the response from the server
-                formDataToJsonAndFetch(formData, 'ws_resv.php');  // returns native JS object
+                const text = formDataToJsonAndFetch(formData, 'ws_resv.php',  // returns text object
+                    (text) => {
+                        const responseData = JSON.parse(text);
 
+                        if (responseData.gotopage) {
+                            window.open(responseData.gotopage, '_self');
+                        }
+
+                        if (responseData.error) {
+                            flagAlertMessage(responseData.error, 'error');
+                            $('#btnDone').val('Save').show();
+                        }
+
+                        if (responseData.xfer || responseData.inctx || responseData.deluxehpf) {
+                            paymentRedirect(responseData, $('#xform'), { resvId: pageManager.getIdResv() });
+
+                        }
+
+                        if (responseData.redirTo) {
+                            location.replace(responseData.redirTo);
+                        }
+
+                        pageManager.loadResv(responseData);
+
+                        if (responseData.receiptMarkup && responseData.receiptMarkup != '') {
+                            showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt');
+                        }
+
+                        if (responseData.resv !== undefined) {
+                            if (responseData.warning === undefined) {
+                                flagAlertMessage(respresponseDataonse.resvTitle + ' Saved. ' + (responseData.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + responseData.resv.rdiv.rStatTitle), 'success');
+                            }
+                        } else {
+                            flagAlertMessage((responseData.resvTitle === undefined ? '' : responseData.resvTitle) + ' Saved. ', 'success');
+                        }
+
+                        if (responseData.info) {
+                            flagAlertMessage(responseData.info, 'info');
+                        }
+
+                    });
             } catch (error) {
                 console.error("Error handling form submission:", error);
 
