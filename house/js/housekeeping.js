@@ -425,7 +425,7 @@ $(document).ready(function () {
             if (d != coDate) {
                 coDate = d;
                 $('#inTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate));
-                var updatedBtn = housekeeping.getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In - " + $.datepicker.formatDate("M d, yy", coDate))[0];
+                var updatedBtn = housekeeping.getDtBtns("Housekeeping - " + labels.visitor + "s Checking In - " + $.datepicker.formatDate("M d, yy", coDate))[0];
                 $('#inTable').DataTable().button(0).remove().add(0, updatedBtn);
                 $('#inTable').DataTable().ajax.reload();
             }
@@ -443,7 +443,7 @@ $(document).ready(function () {
             endDate.setDate(startDate.getDate() + (btn.data("weeks") * 7));
 
             $('#inTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", startDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", endDate));
-            var updatedBtn = housekeeping.getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In - " + $.datepicker.formatDate("M d, yy", startDate) + " to " + $.datepicker.formatDate("M d, yy", endDate))[0];
+            var updatedBtn = housekeeping.getDtBtns("Housekeeping - " + labels.visitor + "s Checking In - " + $.datepicker.formatDate("M d, yy", startDate) + " to " + $.datepicker.formatDate("M d, yy", endDate))[0];
             $('#inTable').DataTable().button(0).remove().add(0, updatedBtn);
             $('#inTable').DataTable().ajax.reload();
             btn.addClass("ui-state-active");
@@ -462,7 +462,7 @@ $(document).ready(function () {
             if (d != coDate) {
                 coDate = d;
                 $('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate));
-                var updatedBtn = housekeeping.getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out - " + $.datepicker.formatDate("M d, yy", coDate))[0];
+                var updatedBtn = housekeeping.getDtBtns("Housekeeping - " + labels.visitor + "s Checking Out - " + $.datepicker.formatDate("M d, yy", coDate))[0];
                 $('#outTable').DataTable().button(0).remove().add(0, updatedBtn);
                 $('#outTable').DataTable().ajax.reload();
             }
@@ -480,7 +480,7 @@ $(document).ready(function () {
             endDate.setDate(startDate.getDate() + (btn.data("weeks") * 7));
 
             $('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", startDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", endDate));
-            var updatedBtn = housekeeping.getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out - " + $.datepicker.formatDate("M d, yy", startDate) + " to " + $.datepicker.formatDate("M d, yy", endDate))[0];
+            var updatedBtn = housekeeping.getDtBtns("Housekeeping - " + labels.visitor + "s Checking Out - " + $.datepicker.formatDate("M d, yy", startDate) + " to " + $.datepicker.formatDate("M d, yy", endDate))[0];
             $('#outTable').DataTable().button(0).remove().add(0, updatedBtn);
             $('#outTable').DataTable().ajax.reload();
             btn.addClass("ui-state-active");
@@ -543,7 +543,7 @@ $(document).ready(function () {
         "deferRender": true,
         "columns": housekeeping.outCols,
         "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
-        "buttons": housekeeping.getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out - " + $.datepicker.formatDate("M d, yy", coDate)),
+        "buttons": housekeeping.getDtBtns("Housekeeping - " + labels.visitor + "s Checking Out - " + $.datepicker.formatDate("M d, yy", coDate)),
     });
     outTbl.buttons().container().appendTo("#ckout .tbl-btns");
 
@@ -555,7 +555,7 @@ $(document).ready(function () {
         "deferRender": true,
         "columns": housekeeping.inCols,
         "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
-        "buttons": housekeeping.getDtBtns("Housekeeping - <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In - " + $.datepicker.formatDate("M d, yy", coDate)),
+        "buttons": housekeeping.getDtBtns("Housekeeping - " + labels.visitor + "s Checking In - " + $.datepicker.formatDate("M d, yy", coDate)),
     });
 
     inTbl.buttons().container().appendTo("#ckin .tbl-btns");
