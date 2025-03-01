@@ -118,7 +118,8 @@ class ReserveData {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
-        $this->psgMembers = array();
+        $this->psgMembers = [];
+
 
         $args = [
             'rid' => FILTER_SANITIZE_NUMBER_INT,
@@ -146,7 +147,6 @@ class ReserveData {
         ];
 
         $inputs = filter_var_array($rawPost, $args);
-
 
         if (isset($inputs['rid'])) {
             $this->setIdResv(intval($inputs['rid'], 10));
