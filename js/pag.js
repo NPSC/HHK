@@ -157,7 +157,7 @@ function logoutTimer(){
 
 	$dialog.dialog({
 		width : getDialogWidth(400),
-		height : 225,
+		height : 230,
 		modal : true,
 		autoOpen: false,
 		title : "Stay Logged In?",

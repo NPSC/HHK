@@ -147,6 +147,7 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
     foreach ($rooms as $r) {
         $r->saveRoom($dbh, $uS->username, TRUE);
     }
+
 }
 
 //Resource grouping controls
@@ -158,7 +159,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $rescGroupBy = $uS->CalResourceGroupBy;
     $groupingTitle = $rescGroups[$uS->CalResourceGroupBy]["Description"];
 }
-
+//add datetime to reservations report
 ?>
 <!DOCTYPE html>
 <html lang="en">

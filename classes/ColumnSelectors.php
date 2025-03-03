@@ -37,6 +37,7 @@ class ColumnSelectors {
     protected $controlName;
 
     protected $columnDefs;
+    protected $dateTimecolumnDefs;
 
     /**
      * Filter Sets array
@@ -58,6 +59,7 @@ class ColumnSelectors {
         $this->cols = $cols;
         $this->controlName = $contrlName;
         $this->columnDefs = array();
+        $this->dateTimecolumnDefs = array();
         $this->useFilterSets = $useFilterSets;
         $this->filterSets = $filterSets;
         $this->filterSetSelection = $filterSetSelection;
@@ -226,6 +228,8 @@ class ColumnSelectors {
                         $titles[] = $d;
                         if (isset($d[7]) && $d[7] == 'date') {
                             $this->columnDefs[] = $colIndex;
+                        }else if (isset($d[7]) && $d[7] == 'datetime') {
+                            $this->dateTimecolumnDefs[] = $colIndex;
                         }
                         $colIndex++;
                     }
@@ -234,6 +238,8 @@ class ColumnSelectors {
                     $titles[] = $c;
                     if (isset($c[7]) && $c[7] == 'date') {
                         $this->columnDefs[] = $colIndex;
+                    }else if (isset($c[7]) && $c[7] == 'datetime') {
+                        $this->dateTimecolumnDefs[] = $colIndex;
                     }
                     $colIndex++;
                 }
@@ -248,6 +254,12 @@ class ColumnSelectors {
     public function getColumnDefs() {
 
         return $this->columnDefs;
+
+    }
+
+    public function getDateTimeColumnDefs() {
+
+        return $this->dateTimecolumnDefs;
 
     }
 

@@ -376,7 +376,6 @@ $(document).ready(function () {
         }
     };
 
-    window.housekeeping.setRoomStatBtns = document.getElementsByClassName('setRoomStat');
     $(document).on('click', ".setRoomStat", function(e){
         $(e.target).parents("td").addClass("hhk-loading");
         let idResc = $(e.target).data("idroom");
@@ -405,7 +404,7 @@ $(document).ready(function () {
                         "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
                         "buttons": housekeeping.getDtBtns("Housekeeping - Cleaning Log"),
                     });
-                }else if(ui.newPanel.find("table#roomTable").length > 0 || ui.newPanel.find("table#dirtyTable").length > 0){
+                }else if(ui.newPanel.find("table#roomTable.dataTable").length > 0 || ui.newPanel.find("table#dirtyTable.dataTable").length > 0){
                     ui.newPanel.find("table").DataTable().ajax.reload();
                 }
             }

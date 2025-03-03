@@ -2239,7 +2239,7 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         rn.idLink as `Reservation_Id`,
         r.Status as `Reservation_Status`,
         rm.Title as `Room`,
-        pg.Name_Full as `Primary Guest`,
+        concat(pg.Name_First, ' ', pg.Name_Last) as `Primary Guest`,
         reg.idPsg,
         n.`Timestamp`
     FROM
@@ -2320,7 +2320,7 @@ CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
         n.Title,
         n.Note_Text,
         if(ln.linkType = "psg", ln.idLink, reg.idPsg) as `PSG_Id`,
-        pn.Name_Full AS `Patient`,
+        concat(pn.Name_First, ' ', pn.Name_Last) AS `Patient`,
         n.`Timestamp`
     FROM
         note n
