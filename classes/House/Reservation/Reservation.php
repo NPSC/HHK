@@ -368,7 +368,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
-        if ($this->family->save($dbh, $_POST, $this->reserveData, $uS->username) === FALSE) {
+        if ($this->family->save($dbh, $this->reserveData, $uS->username) === FALSE) {
             return;
         }
 
@@ -1585,26 +1585,23 @@ WHERE
         $departure = '';
         $arrival = '';
 
-        $args = [
-            'gstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            'gstCoDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-        ];
+        // $args = [
+        //     'gstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        //     'gstCoDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        // ];
 
-        $post = filter_input_array(INPUT_POST, $args);
+        // $post = filter_input_array(INPUT_POST, $args);
 
-        if (isset($post['gstDate'])) {
-            $arrival = $post['gstDate'];
-        }
-        if (isset($post['gstCoDate'])) {
-            $departure = $post['gstCoDate'];
-        }
+        $arrival = $this->reserveData->getArrivalDateStr();
+
+        $departure = $this->reserveData->getDepartureDateStr();
 
         if ($arrival == '' || $departure == '') {
             throw new RuntimeException('Reservation dates not set.  ');
         }
 
         try {
-            $arrivalDT = new \DateTime($arrival);
+            $arrivalDT = new \DateTime(datetime: $arrival);
             $departureDT = new \DateTime($departure);
 
             $this->reserveData->setArrivalDT($arrivalDT);

@@ -110,6 +110,8 @@ class ReserveData {
     protected $intervalRepeatResv = 0;
     protected $numberRepeatResv = 0;
 
+    protected $rawPost;
+
     /**
      * Summary of __construct
      * @param string $reservationTitle
@@ -119,6 +121,7 @@ class ReserveData {
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
         $this->psgMembers = [];
+        $this->rawPost = $rawPost;
 
 
         $args = [
@@ -834,6 +837,10 @@ class ReserveData {
 
     public function getMsgs() {
         return $this->msgs;
+    }
+
+    public function getRawPost() {
+        return $this->rawPost;
     }
 
 }

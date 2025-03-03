@@ -140,7 +140,8 @@ class ActiveReservation extends Reservation {
             ]
         ];
 
-        $post = filter_input_array(INPUT_POST, $args);
+        //$post = filter_input_array(INPUT_POST, $args);
+        $post = filter_var_array($this->reserveData->getRawPost(), $args);
 
         // Set goto checkingin page?
         if (isset($post['resvCkinNow'])) {
@@ -408,10 +409,10 @@ class ActiveReservation extends Reservation {
     public function changeRoom(\PDO $dbh, $idResv, $idResc) {
 
         $uS = Session::getInstance();
-        $dataArray = array();
+        $dataArray = [];
 
         if ($idResv < 1) {
-            return array('error'=>'Reservation Id is not set.');
+            return ['error' => 'Reservation Id is not set.'];
         }
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
@@ -461,7 +462,7 @@ class ActiveReservation extends Reservation {
             $dataArray = $this->createMarkup($dbh);
 
             if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
-                
+
                 $creditCheckOut = $this->payResult->getForwardHostedPayment();
 
                 // Credit payment?

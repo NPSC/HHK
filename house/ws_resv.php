@@ -165,7 +165,7 @@ try {
             $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $resv = new ActiveReservation(new ReserveData(), null, null);
+        $resv = new ActiveReservation(new ReserveData($inputData), null, null);
 
         $events = $resv->changeRoom($dbh, $idResv, $idResc);
 

@@ -270,7 +270,8 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
 
-            var formData = new FormData($('#form1')[0]);
+            const formData = new FormData($('#form1')[0]);
+            let jsonObject = {};
 
             formData.append('cmd', 'saveResv');
             formData.append('idPsg', pageManager.getIdPsg());
@@ -284,16 +285,17 @@ $(document).ready(function() {
             }
             formData.append('txtDiagnosis', txtDiagnosis);
 
-            let peopleStr = $.param({ mem: pageManager.people.list() });
-            let people = new URLSearchParams(peopleStr);
-
-            for (const [key, value] of people.entries()) {
-                formData.append(key, value);
+            // convert to base json object
+            for (const pair of formData.entries()) {
+                jsonObject[pair[0]] = pair[1];
             }
+
+            // Add people to the json object
+            jsonObject.mem = pageManager.people.list();
 
             try {
                 // Handle the response from the server
-                const text = formDataToJsonAndFetch(formData, 'ws_resv.php',  // returns text object
+                const text = jsonFetch(jsonObject, 'ws_resv.php',  // returns text object
                     (text) => {
                         const responseData = JSON.parse(text);
 
