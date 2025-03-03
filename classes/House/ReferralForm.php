@@ -742,8 +742,13 @@ class ReferralForm {
 		);
 
 		//new resv
+		$newResvAttrs = ["type"=>'radio', 'name'=>'idResv', 'value'=>-1, 'required'=>'required'];
+		if(count($resvAr) == 0){
+			$newResvAttrs["checked"] = "checked";
+		}
+
 		$tbl->addBodyTr(
-			HTMLTable::makeTd(HTMLInput::generateMarkup("", ["type"=>'radio', 'name'=>'idResv', 'value'=>-1, 'required'=>'required']))
+			HTMLTable::makeTd(HTMLInput::generateMarkup("", $newResvAttrs))
 			. HTMLTable::makeTd("New " . Labels::getString('GuestEdit', 'reservationTitle', 'Reservation'), ['colspan'=>'4'])
 		);
 
