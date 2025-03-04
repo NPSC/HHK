@@ -343,10 +343,10 @@ class Family {
             }
 
             if ($shoAddr) {
-
+                
                 if ($this->IncldEmContact) {
                     // Emergency Contact
-                    $demoMu = $this->getEmergencyConntactMu($dbh, $role);
+                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
                 }
 
                 if ($this->showDemographics) {
@@ -355,7 +355,8 @@ class Family {
                 }
 
                 // Add addresses and demo's
-                $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
+                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap"));
+                $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
             }
 
             $mem = $rData->getPsgMember($prefix)->toArray();

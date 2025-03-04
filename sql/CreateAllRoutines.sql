@@ -1174,7 +1174,7 @@ BEGIN
 	WHERE
 		idPSG = dupIdPsg;
 
-		UPDATE report
+		UPDATE incident_report
 	SET
 		Psg_Id = keepIdPsg
 	WHERE

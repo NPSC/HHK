@@ -49,6 +49,7 @@ $continueLink = HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'re
 $numGuests = 0;
 $datesMkup = '';
 $displayGuest = 'display:none;';
+$displayResv = 'display:none;';
 $final = '';
 $resvMkup = '';
 
@@ -142,11 +143,11 @@ if ($idDoc > 0) {
 
             	    // Unhide guest section
             	    $displayGuest = '';
-            	    $chosen = ' Chosen';   // Patient title ribbon.
 
         	    }
-
                 
+                $chosen = ' Chosen';   // Patient title ribbon.
+                $displayResv = '';
         	    $resvMkup = $refForm->finishReferral($dbh, $patient->getIdName(), 0);
 
         	} else {
@@ -236,7 +237,7 @@ if ($idDoc > 0) {
                     </div>
                 </div>
 
-                <div id="ResvSection" style="font-size: .9em; min-width: 810px;<?php echo $displayGuest; ?>"  class="ui-widget hhk-visitdialog mb-3">
+                <div id="ResvSection" style="font-size: .9em; min-width: 810px;<?php echo $displayResv; ?>"  class="ui-widget hhk-visitdialog mb-3">
                     <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-top hhk-panel">
                     	<?php echo $labels->getString('GuestEdit', 'reservationTitle', 'Reservation') . 's'; ?>
                     </div>
