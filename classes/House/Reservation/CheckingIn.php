@@ -53,7 +53,7 @@ class CheckingIn extends ActiveReservation {
     protected $errors;
 
     /**
-     * Summary of reservationFactoy 
+     * Summary of reservationFactoy
      * @param \PDO $dbh
      * @param mixed $post
      * @throws \HHK\Exception\RuntimeException
@@ -577,7 +577,7 @@ FROM reservation r
 
         $uS = Session::getInstance();
 
-        $pmp = PaymentChooser::readPostedPayment($dbh);
+        $pmp = PaymentChooser::readPostedPayment($dbh, $this->reserveData->getRawPost());
 
         // Check for key deposit
         if ($uS->KeyDeposit && is_null($pmp) === FALSE) {

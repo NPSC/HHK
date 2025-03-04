@@ -211,7 +211,7 @@ $(document).ready(function() {
                 jsonFetch(jsonObject, 'ws_resv.php',
                     (text) => {
 
-                        const data = $.parseJSON(text);
+                        const data = JSON.parse(text);
 
                         if (data.error) {
                             flagAlertMessage(data.error, 'error');
@@ -297,7 +297,7 @@ $(document).ready(function() {
 
             try {
                 // Handle the response from the server
-                const text = jsonFetch(jsonObject, 'ws_resv.php',  // returns text object
+                jsonFetch(jsonObject, 'ws_resv.php',  // returns text object
                     (text) => {
                         const responseData = JSON.parse(text);
 
@@ -327,7 +327,7 @@ $(document).ready(function() {
 
                         if (responseData.resv !== undefined) {
                             if (responseData.warning === undefined) {
-                                flagAlertMessage(respresponseDataonse.resvTitle + ' Saved. ' + (responseData.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + responseData.resv.rdiv.rStatTitle), 'success');
+                                flagAlertMessage(responseData.resvTitle + ' Saved. ' + (responseData.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + responseData.resv.rdiv.rStatTitle), 'success');
                             }
                         } else {
                             flagAlertMessage((responseData.resvTitle === undefined ? '' : responseData.resvTitle) + ' Saved. ', 'success');

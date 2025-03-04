@@ -500,7 +500,7 @@ class ActiveReservation extends Reservation {
      */
     public function savePrePayment(\PDO $dbh) {
 
-        $pmp = PaymentChooser::readPostedPayment($dbh);  // Returns PaymentManagerPayment.
+        $pmp = PaymentChooser::readPostedPayment($dbh, $this->reserveData->getRawPost());  // Returns PaymentManagerPayment.
         $resv = new Reservation_1($this->reservRs);
 
         if (is_null($pmp) === FALSE && ($pmp->getTotalPayment() != 0 || $pmp->getOverPayment() != 0)) {

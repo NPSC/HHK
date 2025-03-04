@@ -15,13 +15,13 @@ function ckedIn(data) {
         paymentRedirect(data, $('#xform'));
         return;
     }
-    
+
     if (data.redirTo) {
        location.replace(data.redirTo);
     }
 
     if (data.success) {
-        
+
         if (data.ckmeout) {
             var buttons = {
                 "Show Statement": function() {
@@ -151,7 +151,7 @@ $(document).ready(function() {
         if (pageManager.verifyInput() === true) {
 
             $(this).val('Saving >>>>');
-            
+
             const formData = new FormData($('#form1')[0]);
             const jsonObject = {};
 
@@ -177,11 +177,11 @@ $(document).ready(function() {
 
             try {
                 // Handle the response from the server
-                const text = jsonFetch(jsonObject, 'ws_resv.php', (text) => { 
+                jsonFetch(jsonObject, 'ws_resv.php', (text) => {
 
                     $('#btnDone').val(resv.saveButtonLabel).show();
 
-                    data = $.parseJSON(text);
+                    const data = JSON.parse(text);
 
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
