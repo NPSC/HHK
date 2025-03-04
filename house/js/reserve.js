@@ -183,7 +183,8 @@ $(document).ready(function() {
 
             $(this).val('Deleting >>>>');
 
-            var formData = new FormData($('#form1')[0]);
+            const jsonObject = {};
+            const formData = new FormData($('#form1')[0]);
 
             formData.append('cmd', 'delResv');
             formData.append('idPsg', pageManager.getIdPsg());
@@ -197,17 +198,18 @@ $(document).ready(function() {
             }
             formData.append('txtDiagnosis', txtDiagnosis);
 
-            let peopleStr = $.param({ mem: pageManager.people.list() });
-            let people = new URLSearchParams(peopleStr);
-
-            for (const [key, value] of people.entries()) {
-                formData.append(key, value);
+            // convert to base json object
+            for (const pair of formData.entries()) {
+                jsonObject[pair[0]] = pair[1];
             }
+
+            // Add people to the json object
+            jsonObject.mem = pageManager.people.list();
 
             try {
 
-                formDataToJsonAndFetch(formData, 'ws_resv.php',
-                    function (text) {
+                jsonFetch(jsonObject, 'ws_resv.php',
+                    (text) => {
 
                         const data = $.parseJSON(text);
 

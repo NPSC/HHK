@@ -48,7 +48,6 @@ $(document).ready(function() {
     var t = this;
     var resv = $.parseJSON($('#resv').val());
     var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
-    var pageManager = t.pageManager;
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
     dateFormat = $('#dateFormat').val();
@@ -153,19 +152,36 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
             
-            $.post(
-                'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveCheckin&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&vid=' + pageManager.getIdVisit() + '&span=' + pageManager.getSpan() + '&' + $.param({mem: pageManager.people.list()}),
-                function(data) {
+            const formData = new FormData($('#form1')[0]);
+            const jsonObject = {};
+
+            formData.append('cmd', 'saveCheckin');
+            formData.append('idPsg', pageManager.getIdPsg());
+            formData.append('prePayment', pageManager.getPrePaymtAmt());
+            formData.append('rid', pageManager.getIdResv());
+
+            //diagnosis
+            let txtDiagnosis = $('#txtDiagnosis').val();
+            if (typeof txtDiagnosis === "string") {
+                txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+            }
+            formData.append('txtDiagnosis', txtDiagnosis);
+
+            // convert to base json object
+            for (const pair of formData.entries()) {
+                jsonObject[pair[0]] = pair[1];
+            }
+
+            // Add people to the json object
+            jsonObject.mem = pageManager.people.list();
+
+            try {
+                // Handle the response from the server
+                const text = jsonFetch(jsonObject, 'ws_resv.php', (text) => { 
 
                     $('#btnDone').val(resv.saveButtonLabel).show();
 
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        flagAlertMessage(err.message, 'error');
-                        return;
-                    }
+                    data = $.parseJSON(text);
 
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
@@ -180,8 +196,14 @@ $(document).ready(function() {
 //                    } else {
                         ckedIn(data);
 //                    }
-                }
-            );
+                });
+
+            } catch (error) {
+                console.error("Error handling form submission:", error);
+
+                flagAlertMessage("An error occurred during form submission.", "error");
+            }
+
         }
     });
 

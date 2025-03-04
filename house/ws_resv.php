@@ -137,7 +137,7 @@ try {
 
     case "addResvGuest":
 
-        $isCheckin = FALSE;
+        $isCheckin = FALSE; 
 
         if (isset($_POST['isCheckin'])) {
             $isCheckin = filter_var($_POST['isCheckin'], FILTER_VALIDATE_BOOLEAN);

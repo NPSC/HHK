@@ -53,7 +53,7 @@ class CheckingIn extends ActiveReservation {
     protected $errors;
 
     /**
-     * Summary of reservationFactoy
+     * Summary of reservationFactoy 
      * @param \PDO $dbh
      * @param mixed $post
      * @throws \HHK\Exception\RuntimeException

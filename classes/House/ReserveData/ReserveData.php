@@ -112,10 +112,6 @@ class ReserveData {
 
     protected $rawPost;
 
-    /**
-     * Summary of __construct
-     * @param string $reservationTitle
-     */
     public function __construct($rawPost, $reservationTitle = '') {
 
         $uS = Session::getInstance();
