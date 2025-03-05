@@ -204,7 +204,7 @@ abstract class AbstractReport {
             },
             {"targets": ' . $dateTimeColumnDefs . ',
             "type": "date",
-            "render": function ( data, type, row ) {return dateRender(data, type, dateFormat + " h:m a");}
+            "render": function ( data, type, row ) {return dateRender(data, type, dateFormat + " h:mm a");}
             }
             ],
             "displayLength": 50,
