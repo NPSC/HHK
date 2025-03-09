@@ -2,6 +2,7 @@
 use HHK\Exception\NotFoundException;
 use HHK\Exception\SmsException;
 use HHK\Exception\ValidationException;
+use HHK\Exception\UnexpectedValueException;
 use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\PSG;
 use HHK\House\Reservation\ActiveReservation;
@@ -65,13 +66,31 @@ if (stripos($contentType, 'application/json') !== false   && strtoupper($_SERVER
     }
 
     // Decode the json posted data
-    $inputData = json_decode($inputJson, true);
-    if ($inputData === null) {
+    $inputEncoded = json_decode($inputJson, true);
+    if ($inputEncoded === null) {
         //failure
         $events = ["error" => "posted data input failure."];
     }
 
+    $inputData = [];
+
+    // convert string representations of arrays into an array
+    try {
+        $inputData = parseKeysToArray($inputEncoded);
+        
+    } catch (UnexpectedValueException $ex) {
+        $events = ["error" => "posted data input failure."];    //failure
+        $json = json_encode($events);
+
+        if ($json !== FALSE) {
+            echo $json;
+        } else {
+            $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
+            echo json_encode($events);
+        }
+    }
 }
+
 
 // Check the webservice command
 if (isset($inputData['cmd'])) {
