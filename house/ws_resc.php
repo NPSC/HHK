@@ -573,7 +573,7 @@ try {
                 $events['status']= "success";
             }
 
-            $room->saveRoom($dbh, $uS->username);
+            $room->saveRoom($dbh, $uS->username, true);
 
             $events['curres'] = 'y';
 

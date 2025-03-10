@@ -1137,7 +1137,7 @@ ORDER BY $orderBy;");
                 $lastDeepClean = $r['Last_Deep_Clean'] == '' ? '' : date('M d, Y', strtotime($r['Last_Deep_Clean']));
 
             } else {
-                $notes = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", (strlen($r["Notes"]) > 0 ? "<strong>" . $r["noteDate"] . "</strong> - " . $r["Notes"] : ""), ["class" => "p-2 mr-3", "style"=>"width: 100%"])
+                $notes = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", (strlen($r["Notes"]) > 0 ? "<strong>" . $r["noteDate"] . "</strong> - " . $r["Notes"] : ""), ["class" => "p-2 mr-3", "style"=>"width: 100%; text-wrap: auto;"])
                         . HTMLContainer::generateMarkup("button", "View Room Notes", ['type'=>'button', 'class'=>"roomDetails ui-button ui-corner-all hhk-noprint", "data-idRoom"=>$r['idRoom'], "data-title"=>"Housekeeping Details for Room " . $r["Title"]])
                         ,["class"=>"hhk-flex align-items-center"]);
                 
@@ -1248,7 +1248,7 @@ ORDER BY $orderBy;");
             left join
         gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
             left join
-        note nt on nt.idNote = (select idNote from link_note where idLink = r.idRoom and linkType = 'room' order by idNote desc limit 1)
+        note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
     where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) between Date('$startCoDate') and Date('$endCoDate');");
 
 

@@ -135,7 +135,7 @@ WHERE
                 }
             }
 
-            if ($linkId > 0) {
+            if ($linkId >= 0) {
 
                 $dbh->exec("insert into `link_note` (`linkType`, `idLink`, `idNote`) values ('$linkType', '$linkId', '" . $note->getIdNote() . "');");
             } else {

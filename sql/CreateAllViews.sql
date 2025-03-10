@@ -416,16 +416,18 @@ CREATE OR REPLACE VIEW `vcleaning_log` AS
         `c`.`Status` AS `Status`,
         `c`.`Last_Cleaned` AS `Last_Cleaned`,
 		`c`.`Last_Deep_Clean` as `Last_Deep_Clean`,
-        `c`.`Notes` AS `Notes`,
+        concat(ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), ''), ' ', ifnull(nt.`Note_Text`, '')) as `Notes`,
         IFNULL(`g`.`Description`, '') AS `Status_Text`,
         `c`.`Username` AS `Username`,
         `c`.`Timestamp` AS `Timestamp`
     FROM
-        (((`cleaning_log` `c`
-        LEFT JOIN `room` `r` ON ((`c`.`idRoom` = `r`.`idRoom`)))
-        LEFT JOIN `resource_room` `rr` ON ((`c`.`idRoom` = `rr`.`idRoom`)))
-        LEFT JOIN `gen_lookups` `g` ON (((`g`.`Table_Name` = 'Room_Status')
-            AND (`g`.`Code` = `c`.`Status`))));
+        `cleaning_log` `c`
+        LEFT JOIN `room` `r` ON `c`.`idRoom` = `r`.`idRoom`
+        LEFT JOIN `resource_room` `rr` ON `c`.`idRoom` = `rr`.`idRoom`
+        LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = 'Room_Status'
+            AND `g`.`Code` = `c`.`Status`
+        left join
+            note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1);
 
 
 -- -----------------------------------------------------
