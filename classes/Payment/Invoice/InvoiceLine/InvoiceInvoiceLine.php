@@ -34,6 +34,7 @@ class InvoiceInvoiceLine extends AbstractInvoiceLine {
      * @return static
      */
     public function setDescription($description) {
+        parent::setDescription($description);
 
         // Carried invoice number is in the $var field.
         $this->description .= $this->var;
