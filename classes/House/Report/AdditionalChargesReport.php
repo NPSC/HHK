@@ -343,7 +343,13 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by i.idInvoice order
     }
 
     protected function getAdditionalChargeCounts(){
-        $query = 'select il.description, count(*) from invoice_line il
+        $selectedDiags = $this->filter->getSelectedDiagnoses();
+        $whDiags = "";
+        if(count($selectedDiags) > 0){
+            $whDiags = " and hs.Diagnosis in (" . implode(",", $selectedDiags) . ")";
+        }
+
+        $query = 'select il.description, count(*) as `count` from invoice_line il
 join invoice i on il.Invoice_Id = i.idInvoice
 join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
 where il.Item_Id = 9 and 
@@ -353,16 +359,25 @@ v.idVisit in (
 	join stays s on psg.idPatient = s.idName
 	join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
     join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
+    left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
 	where 
-		date(v.`Arrival_Date`) < date("2023-01-01") 
-		and (date(v.`Actual_Departure`) > date("2021-12-31") or v.`Actual_Departure` is null)
+		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
+		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
 		and v.Status in ("co", "a")
-        and d.Description like "Cancer:%"
+        ' . $whDiags . '
 	group by v.idVisit
     )
 group by il.Description';
 
+        $stmt = $this->dbh->query($query);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+    }
+
+    protected function generateSummaryTable(array $data){
+        $tbl = new HTMLTable();
+        if(count($data) > 0){
+
+        }
     }
 }
