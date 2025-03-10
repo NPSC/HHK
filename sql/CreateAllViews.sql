@@ -416,16 +416,18 @@ CREATE OR REPLACE VIEW `vcleaning_log` AS
         `c`.`Status` AS `Status`,
         `c`.`Last_Cleaned` AS `Last_Cleaned`,
 		`c`.`Last_Deep_Clean` as `Last_Deep_Clean`,
-        `c`.`Notes` AS `Notes`,
+        concat(ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), ''), ' ', ifnull(nt.`Note_Text`, '')) as `Notes`,
         IFNULL(`g`.`Description`, '') AS `Status_Text`,
         `c`.`Username` AS `Username`,
         `c`.`Timestamp` AS `Timestamp`
     FROM
-        (((`cleaning_log` `c`
-        LEFT JOIN `room` `r` ON ((`c`.`idRoom` = `r`.`idRoom`)))
-        LEFT JOIN `resource_room` `rr` ON ((`c`.`idRoom` = `rr`.`idRoom`)))
-        LEFT JOIN `gen_lookups` `g` ON (((`g`.`Table_Name` = 'Room_Status')
-            AND (`g`.`Code` = `c`.`Status`))));
+        `cleaning_log` `c`
+        LEFT JOIN `room` `r` ON `c`.`idRoom` = `r`.`idRoom`
+        LEFT JOIN `resource_room` `rr` ON `c`.`idRoom` = `rr`.`idRoom`
+        LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = 'Room_Status'
+            AND `g`.`Code` = `c`.`Status`
+        left join
+            note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1);
 
 
 -- -----------------------------------------------------
@@ -983,7 +985,7 @@ AS SELECT
    `r`.`Guest_Id` AS `Guest_Id`,
    `r`.`Psg_Id` AS `Psg_Id`
 FROM
-        ((`report` `r`
+        ((`incident_report` `r`
         LEFT JOIN `name_guest` `ng` ON (`r`.`Guest_Id` = `ng`.`idName`
             AND `r`.`Psg_Id` = `ng`.`idPsg`))
         LEFT JOIN `name` `n` ON (`ng`.`idName` = `n`.`idName`))
@@ -1583,8 +1585,10 @@ CREATE OR REPLACE VIEW `vguest_view` AS
                     WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
                     ELSE CONCAT(`n`.`Name_Last`, ' ', `g`.`Description`)
                 END,
-                '') AS `Last Name`,
-        IFNULL(`n`.`Name_First`, '') AS `First Name`,
+                '') AS `Guest Last Name`,
+        IFNULL(`n`.`Name_First`, '') AS `Guest First Name`,
+        IFNULL(`pn`.`Name_Last`,'') AS `Patient Last Name`,
+        IFNULL(`pn`.`Name_First`, '') AS `Patient First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
         CASE
             WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone'
@@ -1610,13 +1614,14 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         group_concat(`v`.`License_Number` SEPARATOR '<br class="my-1">') AS `License Plate`,
         group_concat(`v`.`Note` SEPARATOR '<br class="my-1">') AS `Note`
     FROM
-        (((((((((((`stays` `s`
+        ((((((((((((`stays` `s`
         LEFT JOIN `name` `n` ON (`n`.`idName` = `s`.`idName`))
         LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
         LEFT JOIN `visit` `vs` ON (`s`.`idVisit` = `vs`.`idVisit`
             AND `s`.`Visit_Span` = `vs`.`Span`))
         LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `name` `pn` ON (`hs`.`idPatient` = `pn`.`idName`))
         LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))
         LEFT JOIN `gen_lookups` `diag` ON (`diag`.`Table_Name` = 'Diagnosis'
             AND `diag`.`Code` = `hs`.`Diagnosis`))
@@ -2236,7 +2241,7 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         rn.idLink as `Reservation_Id`,
         r.Status as `Reservation_Status`,
         rm.Title as `Room`,
-        pg.Name_Full as `Primary Guest`,
+        concat(pg.Name_First, ' ', pg.Name_Last) as `Primary Guest`,
         reg.idPsg,
         n.`Timestamp`
     FROM
@@ -2317,7 +2322,7 @@ CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
         n.Title,
         n.Note_Text,
         if(ln.linkType = "psg", ln.idLink, reg.idPsg) as `PSG_Id`,
-        pn.Name_Full AS `Patient`,
+        concat(pn.Name_First, ' ', pn.Name_Last) AS `Patient`,
         n.`Timestamp`
     FROM
         note n

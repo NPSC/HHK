@@ -189,6 +189,7 @@ abstract class AbstractReport {
 
     public function generateReportScript(){
         $jsonColumnDefs = json_encode($this->colSelector->getColumnDefs());
+        $dateTimeColumnDefs = json_encode($this->colSelector->getDateTimeColumnDefs());
         $uS = Session::getInstance();
 
         return '
@@ -200,6 +201,10 @@ abstract class AbstractReport {
             {"targets": ' . $jsonColumnDefs . ',
             "type": "date",
             "render": function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+            },
+            {"targets": ' . $dateTimeColumnDefs . ',
+            "type": "date",
+            "render": function ( data, type, row ) {return dateRender(data, type, dateFormat + " h:mm a");}
             }
             ],
             "displayLength": 50,

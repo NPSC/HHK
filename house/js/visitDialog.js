@@ -274,7 +274,7 @@ function viewVehicleDialog(idVisit, $vehDialog) {
 
             $vehDialog.dialog({
                 autoOpen: true,
-                width: getDialogWidth(800),
+                width: getDialogWidth(900),
                 resizable: true,
                 modal: true,
                 title: (data.title ? data.title : 'Vehicle Details'),
@@ -293,7 +293,7 @@ function viewVehicleDialog(idVisit, $vehDialog) {
 }
 
 function saveVehicles(idVisit, $vehDialog) {
-    let params = $vehDialog.find("#tblVehicle input").serializeArray();
+    let params = $vehDialog.find("#tblVehicle input, #tblVehicle select").serializeArray();
     params.push({ name: "cmd", value: "saveVeh" });
     params.push({ name: "idV", value: idVisit });
     $.post('ws_resv.php', params, function (data) {
@@ -976,6 +976,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 flagAlertMessage(data.success, 'success');
 
                 if (typeof calendar !== 'undefined') {
+                    calendar.refetchResources();
                     calendar.refetchEvents();
                 }
             }

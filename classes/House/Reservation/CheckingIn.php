@@ -135,7 +135,7 @@ FROM reservation r
 
         // check for additional visit span guest
         if ($rData->getSpanStatus() == VisitStatus::ChangeRate || $rData->getSpanStatus() == VisitStatus::NewSpan || $rData->getSpanStatus() == VisitStatus::CheckedOut) {
-            return new CheckedoutReservation($rData, $rRs, new Family($dbh, $rData));
+            return new CheckedoutReservation($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
 
         // Staying resv - add guests
@@ -157,7 +157,7 @@ FROM reservation r
         }
 
         // Default
-        return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
+        return new StaticReservation($rData, $rRs, new Family($dbh, $rData, TRUE));
 
     }
 

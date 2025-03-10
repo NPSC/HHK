@@ -10,6 +10,7 @@ use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Vehicle;
 use HHK\House\Visit\Visit;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\Incident\ListReports;
 use HHK\Incident\IncidentReport;
 use HHK\Member\Address\Phones;
@@ -755,6 +756,15 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
     $events = ["error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 }
 
+
+//make receipt copy
+if(isset($events['receiptMarkup']) && $uS->merchantReceipt == true){
+    $events['receiptMarkup'] = HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('div', $events['receiptMarkup'] . HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+        . HTMLContainer::generateMarkup('div', $events['receiptMarkup'] . HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+        ,
+            ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+}
 
 
 if (is_array($events)) {

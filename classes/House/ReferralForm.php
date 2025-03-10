@@ -512,13 +512,14 @@ class ReferralForm {
 	        throw new RuntimeException('Patient has no PSG.  Patient Id = '.$idPatient . '.  ');
 	    }else {
 
-	        // Save Guests
-	        $guests = $this->setGuests($dbh, $_POST, $psg);
-
 			if($idResv > 0) {
+				// Save Guests
+				$guests = $this->setGuests($dbh, $_POST, $psg);
 				//merge resv
 				$idResv = $this->mergeReservation($dbh, $idResv, $psg, $guests);
 			}else if ($idResv < 0) {
+				// Save Guests
+				$guests = $this->setGuests($dbh, $_POST, $psg);
 	        	// Create reservation
 	        	$idResv = $this->makeNewReservation($dbh, $psg, $guests);
 			}else if($idResv == 0){
@@ -526,11 +527,7 @@ class ReferralForm {
 				//search for reservation
 				$resvAr = $this->resvSearcher($dbh, $psg);
 
-				if(count($resvAr) > 0){
-					return $this->resvMkup($resvAr);
-				}else{
-					$idResv = $this->makeNewReservation($dbh, $psg, $guests);
-				}
+				return $this->resvMkup($resvAr);
 			}
 
 	        if ($idResv > 0) {
@@ -745,26 +742,33 @@ class ReferralForm {
 		);
 
 		//new resv
+		$newResvAttrs = ["type"=>'radio', 'name'=>'idResv', 'value'=>-1, 'required'=>'required'];
+		if(count($resvAr) == 0){
+			$newResvAttrs["checked"] = "checked";
+		}
+
 		$tbl->addBodyTr(
-			HTMLTable::makeTd(HTMLInput::generateMarkup("", ["type"=>'radio', 'name'=>'idResv', 'value'=>-1]))
+			HTMLTable::makeTd(HTMLInput::generateMarkup("", $newResvAttrs))
 			. HTMLTable::makeTd("New " . Labels::getString('GuestEdit', 'reservationTitle', 'Reservation'), ['colspan'=>'4'])
 		);
 
-		$tbl->addBodyTr(HTMLTable::makeTd("", ["colspan"=>'5']));
-		$tbl->addBodyTr(
-			HTMLTable::makeTh('Existing ' . Labels::getString('GuestEdit', 'reservationTitle', 'Reservation') . 's', ['colspan'=>'5', 'style'=>'text-align: left'])
-		);
-
-		foreach($resvAr as $row){
-			$arrival = new \DateTime($row["Expected_Arrival"]);
-			$depart = new \DateTime($row["Expected_Departure"]);
+		if(count($resvAr) > 0){
+			$tbl->addBodyTr(HTMLTable::makeTd("", ["colspan"=>'5']));
 			$tbl->addBodyTr(
-				HTMLTable::makeTd(HTMLInput::generateMarkup("", ["type"=>'radio', 'name'=>'idResv', 'value'=> $row["idReservation"]]))
-				. HTMLTable::makeTd($arrival->format('M j, Y'))
-				. HTMLTable::makeTd($depart->format('M j, Y'))
-				. HTMLTable::makeTd($row['Status'])
-				. HTMLTable::makeTd($row['Patient'])
+				HTMLTable::makeTh('Existing ' . Labels::getString('GuestEdit', 'reservationTitle', 'Reservation') . 's', ['colspan'=>'5', 'style'=>'text-align: left'])
 			);
+
+			foreach($resvAr as $row){
+				$arrival = new \DateTime($row["Expected_Arrival"]);
+				$depart = new \DateTime($row["Expected_Departure"]);
+				$tbl->addBodyTr(
+					HTMLTable::makeTd(HTMLInput::generateMarkup("", ["type"=>'radio', 'name'=>'idResv', 'value'=> $row["idReservation"], 'required'=>'required']))
+					. HTMLTable::makeTd($arrival->format('M j, Y'))
+					. HTMLTable::makeTd($depart->format('M j, Y'))
+					. HTMLTable::makeTd($row['Status'])
+					. HTMLTable::makeTd($row['Patient'])
+				);
+			}
 		}
 
 		return  $tbl->generateMarkup();

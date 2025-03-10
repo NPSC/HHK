@@ -283,7 +283,7 @@ WHERE
 
        // Get notes
        $stmtn = $dbh->query("SELECT
-    rn.Reservation_Id,
+    rn.idLink as `Reservation_Id`,
     n.User_Name,
     CASE
         WHEN n.Title = '' THEN n.Note_Text
@@ -291,11 +291,11 @@ WHERE
     END AS Note_Text,
     n.`Timestamp`
 FROM
-visit v join reservation_note rn on v.idReservation = rn.Reservation_Id
+visit v join link_note rn on v.idReservation = rn.idLink and linkType = 'reservation'
         JOIN
-    note n ON rn.Note_Id = n.idNote
+    note n ON rn.idNote = n.idNote
 where v.`Status` = 'a' and n.`Status` = 'a'
-ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
+ORDER BY rn.idLink, n.`Timestamp` DESC;");
 
         $notes = array();
         $rv = 0;
@@ -317,7 +317,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
             gc.Substitute as Cleaning_Days,
             IFNULL(g.Description, '') AS `Status_Text`,
             IFNULL(n.Name_Full, '') AS `Name`,
-            r.`Notes`,
+            concat(ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), ''), ' ', ifnull(nt.`Note_Text`, '')) as `Notes`,
             IFNULL(v.idVisit, 0) AS idVisit,
             IFNULL(v.Span, 0) AS `Span`,
             IFNULL(v.idReservation, 0) AS `idResv`,
@@ -343,6 +343,8 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
                 LEFT JOIN
             gen_lookups gc ON gc.Table_Name = 'Room_Cleaning_Days'
                 AND gc.Code = r.Cleaning_Cycle_Code
+                left join
+            note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
         ORDER BY r.idRoom";
 
 

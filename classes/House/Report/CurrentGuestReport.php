@@ -78,10 +78,12 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
         // Report column selector
         // array: title, ColumnName, checked, fixed, Excel Type, Excel Style
-        $cFields[] = array('Last Name', 'Last Name', 'checked', '', 'string', '20');
-        $cFields[] = array("First Name", 'First Name', 'checked', '', 'string', '20');
         $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
+        $cFields[] = array('Guest Last Name', 'Guest Last Name', 'checked', '', 'string', '20');
+        $cFields[] = array("Guest First Name", 'Guest First Name', 'checked', '', 'string', '20');
         $cFields[] = array("Phone", 'Phone', 'checked', '', 'string', '15');
+        $cFields[] = array('Patient Last Name', 'Patient Last Name', '', '', 'string', '20');
+        $cFields[] = array("Patient First Name", 'Patient First Name', '', '', 'string', '20');
         $cFields[] = array("Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Expected Departure", 'Expected Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         if ($uS->EmptyExtendLimit > 0) {

@@ -29,13 +29,13 @@ class Vehicle {
      * @param int $idReg
      * @return array
      */
-    public static function getRecords(\PDO $dbh, $idReg, int $idResv = 0) {
+    public static function getRecords(\PDO $dbh, $idReg, int $idResv = 0, $thisResv = false) {
 
         $rows = array();
 
         if ($idReg > 0 && $idResv > 0){
             
-            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle where v.idRegistration = $idReg and (rv.idReservation = $idResv or rv.idReservation IS NULL)");
+            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg" . ($thisResv ? " and rv.idReservation = $idResv": ""));
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else if ($idReg > 0) {
 
@@ -301,6 +301,7 @@ WHERE
             'selVehLicense' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
             'txtVehNote' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
             'selVehGuest' => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
+            'cbVehResv' => ['filter' => FILTER_VALIDATE_BOOL, 'flags' => FILTER_FORCE_ARRAY],
         ];
 
         $post = filter_input_array(INPUT_POST, $args);
@@ -345,7 +346,7 @@ WHERE
             }
 
             $idVehicle = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
-            $carRS = new VehicleRs();
+            $carRS = new VehicleRS();
 
             if ($idVehicle > 0 && isset($vehs[$idVehicle])) {
                 $carRS = $vehs[$idVehicle];
@@ -383,23 +384,14 @@ WHERE
                 $carRS->idName->setNewVal($idGuest);
             }
 
-            if($idResv > 0){
-                if (isset($_POST['cbVehResv'][$k])) {
-                    $stmt = $dbh->prepare("INSERT IGNORE INTO `reservation_vehicle` (`idReservation`, `idVehicle`, `idName`) VALUES (:idReservation, :idVehicle, :idName);");
-                    $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$k, ":idName"=>0]);
-                }else{
-                    $stmt = $dbh->prepare("DELETE FROM `reservation_vehicle` WHERE `idReservation` = :idReservation AND `idVehicle` = :idVehicle;");
-                    $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$k]);
-                }
-                $rtnMsg = "Vehicles Updated. ";
-            }
-
             if ($idVehicle == 0 && ($make != '' || $plate != '' || $note != '')) {
                 //
                 $carRS->idRegistration->setNewVal($idReg);
 
                 $n = EditRS::insert($dbh, $carRS);
+                
                 if ($n > 0) {
+                    $carRS->idVehicle->setStoredVal($n);
                     $rtnMsg = "Vehicle Added.  ";
                 }
 
@@ -413,6 +405,17 @@ WHERE
                 }
 
             }
+
+            if($idResv > 0){
+                if (isset($post['cbVehResv'][$k])) {
+                    $stmt = $dbh->prepare("INSERT IGNORE INTO `reservation_vehicle` (`idReservation`, `idVehicle`, `idName`) VALUES (:idReservation, :idVehicle, :idName);");
+                    $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$carRS->idVehicle->getStoredVal(), ":idName"=>0]);
+                }else{
+                    $stmt = $dbh->prepare("DELETE FROM `reservation_vehicle` WHERE `idReservation` = :idReservation AND `idVehicle` = :idVehicle;");
+                    $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$carRS->idVehicle->getStoredVal()]);
+                }
+            }
+
         }
 
         return $rtnMsg;

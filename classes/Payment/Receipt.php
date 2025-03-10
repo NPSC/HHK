@@ -94,9 +94,9 @@ class Receipt {
         $uS = Session::getInstance();
 
         // Assemble the statement
-        $rec = self::getHouseIconMarkup();
+        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
+        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center'));
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2')));
@@ -147,15 +147,14 @@ class Receipt {
             $disclaimer = HTMLContainer::generateMarkup('div', $uS->PaymentDisclaimer, array('style'=>'font-size:0.7em; text-align:justify'));
         }
 
-        $receiptAttrs = array('style' => 'margin-bottom:10px;clear:both;float:left;');
+        $receiptAttrs = array('class' => 'mb-3');
         if($invoice->getBalance() > 0){
             $receiptAttrs['class'] = "ui-state-highlight";
         }
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup() . $disclaimer, $receiptAttrs);
-        $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['style'=>"width: 100%"]) . $disclaimer, $receiptAttrs);
 
-        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
+        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'padding:10px;'));
     }
 
     /**
@@ -351,9 +350,9 @@ class Receipt {
     public static function createDeclinedMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, AbstractPaymentResponse $payResp) {
 
         // Assemble the statement
-        $rec = self::getHouseIconMarkup();
+        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
+        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center'));
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2')));
@@ -400,7 +399,7 @@ class Receipt {
         }
 
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;background-color:pink;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['style'=>'width: 100%']), array('style'=>'margin-bottom:10px;clear:both;background-color:pink;'));
         $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));

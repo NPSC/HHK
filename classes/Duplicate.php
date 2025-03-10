@@ -312,7 +312,7 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
     (select count(*) from stays where idName = n.idName) as `stays`,
     (select count(*) from reservation_guest where idGuest = n.idName) as `Resvs`,
     (select count(*) from link_doc where idGuest = n.idName or idPSG = ng.idPsg) as `Docs`,
-    (select count(*) from report where Guest_Id = n.idName or Psg_Id = ng.idPsg) as `Incidents`
+    (select count(*) from incident_report where Guest_Id = n.idName or Psg_Id = ng.idPsg) as `Incidents`
 from
     `name` n
         left join
@@ -361,7 +361,7 @@ where
     (select count(*) from stays where idName = n.idName) as `stays`,
     (select count(*) from reservation_guest where idGuest = n.idName) as `Resvs`,
     (select count(*) from link_doc where idGuest = n.idName) as `Docs`,
-    (select count(*) from report where Guest_Id = n.idName or Psg_Id = ng.idPsg) as `Incidents`
+    (select count(*) from incident_report where Guest_Id = n.idName or Psg_Id = ng.idPsg) as `Incidents`
 from
     `name` n
         left join

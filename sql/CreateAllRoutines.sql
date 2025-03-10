@@ -374,6 +374,117 @@ BEGIN
 
 END -- ;
 
+-- --------------------------------------------------------
+--
+-- Procedure `delete_tids_names`
+-- Deletes name records for ids in `tids` table
+--
+DROP procedure IF EXISTS `delete_tids_names`; -- ;
+
+CREATE PROCEDURE `delete_tids_names`()
+-- assumes you already deleted any payments, invoices, visits and stays
+
+BEGIN
+
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @p1 = RETURNED_SQLSTATE, @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot delete names. No changes made.<br>Error ', @p1,': ', @text) as `error`;
+	END;
+
+	DECLARE continue handler for SQLSTATE '42S02' BEGIN END;
+
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
+
+	select count(*) into @numMembers from tids;
+
+	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd join tids n on nd.idName = n.idName);
+    -- delete na from volunteer_hours na join tids n on na.idName = n.idName;
+	update donations d join tids n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0;
+	update donations d join tids n on d.Assoc_Id = n.idName set d.Assoc_Id = 0;
+	delete r from relationship r join tids n on (r.idName = n.idName or r.Target_Id = n.idName);
+	delete wa from w_auth wa join tids n on wa.idName = n.idName;
+	delete wu from w_users wu join tids n on wu.idName = n.idName;
+	delete wp from w_user_passwords wp join tids n on wp.idUser = n.idName;
+	delete id from id_securitygroup id join tids n on id.idName = n.idName;
+	delete m from mcalendar m join tids n on m.idName = n.idName;
+	delete ml from mail_listing ml join tids n on ml.id = n.idName;
+	delete mn from member_note mn join tids n on mn.idName = n.idName;
+	delete mh from member_history mh join tids n on mh.idName = n.idName;
+	-- delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
+	delete gt from guest_token gt join tids n on gt.idGuest = n.idName;
+	-- remove deleted organizations from member records.
+	update name n join tids n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='';
+
+	-- remove from any reservation guest listing.
+	delete rg from reservation_guest rg join tids n on rg.idGuest = n.idName;
+	-- remove reservation_guest for any deleted reservations.
+	delete rg from reservation_guest rg where rg.idReservation in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
+    -- remove notes
+	delete rn from reservation_note rn where rn.Reservation_Id in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
+	delete nt from note nt where nt.idNote in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
+    delete r from reservation r join tids n on r.idGuest = n.idName;
+
+	-- hospital stay entries.
+	delete hs from hospital_stay hs join tids n on hs.idPatient = n.idName;
+	update hospital_stay hs join tids n on hs.idDoctor = n.idName set hs.idDoctor = 0;
+	update hospital_stay hs join tids n on hs.idPcDoctor = n.idName set hs.idPcDoctor = 0;
+	update hospital_stay hs join tids n on hs.idReferralAgent = n.idName set hs.idReferralAgent = 0;
+
+	-- delete any incident reports for this psg or guest
+    delete rp from incident_report rp where rp.Psg_Id in (select idPsg from psg p join tids n on p.idPatient = n.idName);
+    delete rp from incident_report rp join tids n on rp.Guest_Id = n.idName;
+
+    -- delete any registrations for the psg.
+    delete rg from registration rg where rg.idPsg in (select idPsg from psg p join tids n on p.idPatient = n.idName);
+	-- delete any members of a deleted patient's PSG
+	delete ng from name_guest ng where ng.idPsg in (select idPsg from psg p join tids n on p.idPatient = n.idName);
+	-- remove deleted members from the psg
+	delete ng from name_guest ng join tids n on ng.idName = n.idName;
+	-- delete the deleted patient's PSG
+	delete p from psg p join tids n on p.idPatient = n.idName;
+
+	delete v from vehicle v join tids n on v.idName = n.idName;
+    delete ec from emergency_contact ec join tids n on ec.idName = n.idName;
+
+	delete na from name_address na join tids n on na.idName = n.idName;
+	delete na from name_crypto na join tids n on na.idName = n.idName;
+	delete na from name_demog na join tids n on na.idName = n.idName;
+	delete na from name_email na join tids n on na.idName = n.idName;
+	delete na from name_phone na join tids n on na.idName = n.idName;
+	delete na from name_insurance na join tids n on na.idName = n.idName;
+	delete na from name_language na join tids n on na.idName = n.idName;
+	delete na from name_volunteer2 na join tids n on na.idName = n.idName;
+
+	DELETE n from name n join tids t on n.idName = t.idName;
+
+	-- Log it
+	Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
+        select Now(), 'audit', 'delete', 'delete_names_u_tbd', idName, concat('name.idName: ', idName, ' -> null') from tids;
+
+	IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        select concat(@numMembers, " members deleted.") as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+        THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
+
+
+END -- ;
 
 
 -- --------------------------------------------------------
@@ -410,71 +521,9 @@ BEGIN
 	-- collect all deletable names.
 	create temporary table tids (idName int);
 	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
-	select count(*) into @numMembers from tids;
-
-	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd join tids n on nd.idName = n.idName);
-    -- delete na from volunteer_hours na join tids n on na.idName = n.idName;
-	update donations d join tids n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0;
-	update donations d join tids n on d.Assoc_Id = n.idName set d.Assoc_Id = 0;
-	delete r from relationship r join tids n on (r.idName = n.idName or r.Target_Id = n.idName);
-	delete wa from w_auth wa join tids n on wa.idName = n.idName;
-	delete wu from w_users wu join tids n on wu.idName = n.idName;
-	delete wp from w_user_passwords wp join tids n on wp.idUser = n.idName;
-	delete id from id_securitygroup id join tids n on id.idName = n.idName;
-	delete m from mcalendar m join tids n on m.idName = n.idName;
-	delete ml from mail_listing ml join tids n on ml.id = n.idName;
-	delete mn from member_note mn join tids n on mn.idName = n.idName;
-	delete mh from member_history mh join tids n on mh.idName = n.idName;
-	-- delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
-	delete gt from guest_token gt join tids n on gt.idGuest = n.idName;
-	-- remove deleted organizations from member records.
-	update name n join tids n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='';
-
-	-- remove from any reservation guest listing.
-	delete rg from reservation_guest rg join tids n on rg.idGuest = n.idName;
-	-- remove reservation_guest for any deleted reservations.
-	delete rg from reservation_guest rg where rg.idReservation in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
-    -- remove notes
-	delete rn from reservation_note rn where rn.Reservation_Id in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
-	delete nt from note nt where nt.idNote in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
-    delete r from reservation r join tids n on r.idGuest = n.idName;
-
-	-- hospital stay entries.
-	delete hs from hospital_stay hs join tids n on hs.idPatient = n.idName;
-	update hospital_stay hs join tids n on hs.idDoctor = n.idName set hs.idDoctor = 0;
-	update hospital_stay hs join tids n on hs.idPcDoctor = n.idName set hs.idPcDoctor = 0;
-	update hospital_stay hs join tids n on hs.idReferralAgent = n.idName set hs.idReferralAgent = 0;
-
-	-- delete any reports for this psg or guest
-    delete rp from report rp where rp.Psg_Id in (select idPsg from psg p join tids n on p.idPatient = n.idName);
-    delete rp from report rp join tids n on rp.Guest_Id = n.idName;
-
-    -- delete any registrations for the psg.
-    delete rg from registration rg where rg.idPsg in (select idPsg from psg p join tids n on p.idPatient = n.idName);
-	-- delete any members of a deleted patient's PSG
-	delete ng from name_guest ng where ng.idPsg in (select idPsg from psg p join tids n on p.idPatient = n.idName);
-	-- remove deleted members from the psg
-	delete ng from name_guest ng join tids n on ng.idName = n.idName;
-	-- delete the deleted patient's PSG
-	delete p from psg p join tids n on p.idPatient = n.idName;
-
-	delete v from vehicle v join tids n on v.idName = n.idName;
-    delete ec from emergency_contact ec join tids n on ec.idName = n.idName;
-
-	delete na from name_address na join tids n on na.idName = n.idName;
-	delete na from name_crypto na join tids n on na.idName = n.idName;
-	delete na from name_demog na join tids n on na.idName = n.idName;
-	delete na from name_email na join tids n on na.idName = n.idName;
-	delete na from name_phone na join tids n on na.idName = n.idName;
-	delete na from name_insurance na join tids n on na.idName = n.idName;
-	delete na from name_language na join tids n on na.idName = n.idName;
-	delete na from name_volunteer2 na join tids n on na.idName = n.idName;
-
-	DELETE n from name n join tids t on n.idName = t.idName;
-
-	-- Log it
-	Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
-        select Now(), 'audit', 'delete', 'delete_names_u_tbd', idName, concat('name.idName: ', idName, ' -> null') from tids;
+	
+	-- delete member records
+	call `delete_tids_names`;
 
 	drop temporary table tids;
 
@@ -492,6 +541,60 @@ BEGIN
 
 END -- ;
 
+
+-- --------------------------------------------------------
+--
+-- Procedure `delete_name`
+--
+DROP procedure IF EXISTS `delete_name`; -- ;
+
+CREATE PROCEDURE `delete_name`(IN badId INT)
+-- assumes you already deleted any payments, invoices, visits and stays
+
+BEGIN
+
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @p1 = RETURNED_SQLSTATE, @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot delete names. No changes made.<br>Error ', @p1,': ', @text) as `error`;
+	END;
+
+	DECLARE continue handler for SQLSTATE '42S02' BEGIN END;
+
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
+
+	-- collect all deletable names.
+	create temporary table tids (idName int);
+	insert into tids (idName) VALUES (badId);
+	
+	-- delete member records
+	call `delete_tids_names`;
+
+	drop temporary table tids;
+
+	IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        select concat(@numMembers, " members deleted.") as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+        THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
+
+
+END -- ;
 
 
 -- --------------------------------------------------------
@@ -936,7 +1039,7 @@ BEGIN
     idGuest = goodId
 		where idGuest = badId;
 
-	update report set
+	update incident_report set
     Guest_Id = goodId
 		where Guest_Id = badId;
 
@@ -960,11 +1063,7 @@ BEGIN
 	idName = goodId
         where idName = badId;
 
-    update `name` set
-	Member_Status = 'TBD'
-        where idName = badId;
-
-    call `delete_names_u_tbd`;
+    call delete_name(badId);
 
     insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
         values (now(), 'audit', 'update', 'sp', badId, 'Remove Dup Guest');
@@ -1075,7 +1174,7 @@ BEGIN
 	WHERE
 		idPSG = dupIdPsg;
 
-		UPDATE report
+		UPDATE incident_report
 	SET
 		Psg_Id = keepIdPsg
 	WHERE
@@ -1267,7 +1366,7 @@ BEGIN
 		SELECT
 			Psg_Id, COUNT(Psg_Id)
 		FROM
-			report
+			incident_report
 		WHERE
 			`Status` in (activ, resol, onHold, del)
 		GROUP BY Psg_Id;
@@ -1275,7 +1374,7 @@ BEGIN
 
     select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, ifnull(r.Report_Date, '') as `Report_Date`, ifnull(r.Resolution_Date, '') as `Resolution_Date`, ifnull(g.Description, '') as `Status`
     from
-		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, onHold, del)
+		tble t join incident_report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, onHold, del)
 		left join hospital_stay hs on t.idPsg = hs.idPsg
         left join name n on hs.idPatient = n.idName
         left join gen_lookups g on g.Table_Name = 'Incident_Status' and g.Code = r.`Status`

@@ -322,8 +322,8 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         }
         
         $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
-        $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
+        $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
 
         return $cFields;
     }

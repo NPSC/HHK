@@ -3,6 +3,7 @@
 namespace HHK\Note;
 
 use HHK\DataTableServer\SSP;
+use HHK\Exception\NotFoundException;
 
 /**
  * ListNotes.php
@@ -47,14 +48,13 @@ class ListNotes {
         $priKey = 'Note_Id';
         $idPsgs = LinkNote::findIdPsg($dbh, $linkType, $linkId);
 
-        if ($concatNotes) {
-
-            if (count($idPsgs) > 0) {
-                $linkType = "concat";
-                $linkId = implode(',',$idPsgs);
-            }
-        }else{
+        if ($concatNotes && count($idPsgs) > 0) {
+            $linkType = "concat";
+            $linkId = $idPsgs = implode(',',$idPsgs);
+        }else if(count($idPsgs) > 0 ){
             $idPsgs = implode(',',$idPsgs);
+        }else{
+            $idPsgs = "''";
         }
 
         if ($linkType == '') {
