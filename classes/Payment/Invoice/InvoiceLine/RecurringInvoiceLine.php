@@ -85,7 +85,7 @@ class RecurringInvoiceLine extends AbstractInvoiceLine {
         $this->invLineRs->Period_End->setNewVal($this->getPeriodEnd());
         $this->invLineRs->Description->setNewVal($this->getDescription());
 
-        parent::updateLine($dbh);
+        return parent::updateLine($dbh);
     }
 
     public function setDescription($description) {

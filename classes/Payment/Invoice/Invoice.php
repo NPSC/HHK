@@ -1127,16 +1127,16 @@ where
 		return $adrTbl;
 	}
  /**
-  * Summary of delegateTo
+  * Summary of delegateTo - Delegate (carry) $this invoice to the $delegatedToInvoice.
   * @param \PDO $dbh
-  * @param \HHK\Payment\Invoice\Invoice $delegatedInvoice
-  * @param mixed $user
+  * @param \HHK\Payment\Invoice\Invoice $delegatedToInvoice
+  * @param mixed $user 
   * @return bool
   */
-	public function delegateTo(\PDO $dbh, Invoice $delegatedInvoice, $user) {
+	public function delegateTo(\PDO $dbh, Invoice $delegatedToInvoice, $user) {
 
 		// only delegate to invoices with the same order number
-		if ($this->getOrderNumber () != $delegatedInvoice->getOrderNumber ()) {
+		if ($this->getOrderNumber () != $delegatedToInvoice->getOrderNumber ()) {
 			return FALSE;
 		}
 
@@ -1144,17 +1144,19 @@ where
 		if ($this->getStatus () == InvoiceStatus::Unpaid) {
 
 			// update delegated invoice
-			$carriedAmt = $delegatedInvoice->invRs->Carried_Amount->getStoredVal ();
-			$delegatedInvoice->invRs->Carried_Amount->setNewVal ( $carriedAmt + $this->getBalance () );
+			//
+			$carriedAmt = $delegatedToInvoice->invRs->Carried_Amount->getStoredVal ();
+			$delegatedToInvoice->invRs->Carried_Amount->setNewVal ( $carriedAmt + $this->getBalance () );
 
 			$invItem = new Item ( $dbh, ItemId::InvoiceDue, $this->getBalance () );
 			$invLine = new InvoiceInvoiceLine ();
 			$invLine->createNewLine ( $invItem, 1, $this->getInvoiceNumber () );
 
-			$delegatedInvoice->addLine ( $dbh, $invLine, $user );
+			$delegatedToInvoice->addLine ( $dbh, $invLine, $user );
 
 			// Update this invoice to Carried.
-			$this->invRs->Delegated_Invoice_Id->setNewVal ( $delegatedInvoice->idInvoice );
+			//
+			$this->invRs->Delegated_Invoice_Id->setNewVal ( $delegatedToInvoice->idInvoice );
 			$this->invRs->Status->setNewVal ( InvoiceStatus::Carried );
 			$this->invRs->Last_Updated->setNewVal ( date ( 'Y-m-d H:i:s' ) );
 			$this->invRs->Updated_By->setNewVal ( $user );
