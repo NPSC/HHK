@@ -324,6 +324,29 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by i.idInvoice order
             $mkup .= HTMLContainer::generateMarkup("p", "Total Amount Billed: $" . number_format($stats["TotalBilled"],2));
         }
 
+        $totalsMkup = "";
+        $totalsMkup .= $this->generateSummaryTable("Additional Charge", $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2']);
+        
+
+        foreach($this->colSelector->getFilteredFields() as $fld){
+            if($fld[1] == "Age"){
+                $totalsMkup .= $this->generateSummaryTable("Age", $this->getAgeCounts())->generateMarkup(['class'=>'mx-2']);
+            }
+
+            if($fld[1] == "pAddr"){
+                $totalsMkup .= $this->generateZipCodeSummaryTable($this->getZipCodeTotals())->generateMarkup(['class'=>'mx-2']);
+            }
+
+            if (isset($this->demogs[$fld[1]]) && strtolower($this->demogs[$fld[1]][2]) == 'y'){
+                $totalsMkup .= $this->generateSummaryTable($this->demogs[$fld[1]]["Description"], $this->getDemographicTotals($this->demogs[$fld[1]]["Code"]))->generateMarkup(['class'=>'mx-2']);
+            }
+        }
+
+        $mkup .= HTMLContainer::generateMarkup("div",
+        HTMLContainer::generateMarkup("h3", "Summary", ["class"=>"ui-widget-header ui-state-default ui-corner-top"]) . 
+        HTMLContainer::generateMarkup("div", $totalsMkup, ["class"=>"hhk-flex hhk-tdbox hhk-visitdialog ui-widget-content ui-corner-bottom py-3", "style"=>"flex-flow:wrap;"])
+        , ["class"=>"ui-widget mt-3", "id"=>"summaryAccordion"]);
+
         return $mkup;
 
     }
@@ -374,10 +397,174 @@ group by il.Description';
 
     }
 
-    protected function generateSummaryTable(array $data){
-        $tbl = new HTMLTable();
-        if(count($data) > 0){
-
+    protected function getAgeCounts(){
+        $selectedDiags = $this->filter->getSelectedDiagnoses();
+        $whDiags = "";
+        if(count($selectedDiags) > 0){
+            $whDiags = " and hs.Diagnosis in (" . implode(",", $selectedDiags) . ")";
         }
+
+        $query = 'select concat(10*floor(timestampdiff(YEAR, n.BirthDate, CURDATE())/10), "-", 10*floor(timestampdiff(YEAR, n.BirthDate, CURDATE())/10) + 9) as `description`, count(*) as `count` from `name` n
+where n.idName in (
+	select n.idName from name n 
+	join psg on n.idName = psg.idPatient
+	join stays s on psg.idPatient = s.idName
+	join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+    join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
+    join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
+	where 
+		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
+		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
+		and v.Status in ("co", "a")
+        ' . $whDiags . '
+	group by n.idName
+    )
+group by `description`
+;';
+
+        $stmt = $this->dbh->query($query);
+        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        //fill defined brackets
+        $brackets = ["0-19"=>["description"=>"0-19", "count"=>0],
+            "20-29"=>["description"=>"20-29", "count"=>0],
+            "30-39"=>["description"=>"30-39", "count"=>0],
+            "40-49"=>["description"=>"40-49", "count"=>0],
+            "50-59"=>["description"=>"50-59", "count"=>0],
+            "60-69"=>["description"=>"60-69", "count"=>0],
+            "70-79"=>["description"=>"70-79", "count"=>0],
+            "80+"=>["description"=>"80+", "count"=>0]
+        ];
+
+        foreach($results as $result){
+            if($result["description"] == "0-9" || $result["description"] == "10-19"){
+                $brackets["0-19"]["count"] += $result["count"];
+            }else if(isset($brackets[$result["description"]])){
+                $brackets[$result["description"]]["count"] = $result["count"];
+            }else{
+                $brackets["80+"]["count"] += $result["count"];
+            }
+        }
+        return $brackets;
+    }
+
+    protected function getDemographicTotals(string $demographic){
+        $selectedDiags = $this->filter->getSelectedDiagnoses();
+        $whDiags = "";
+        if(count($selectedDiags) > 0){
+            $whDiags = " and hs.Diagnosis in (" . implode(",", $selectedDiags) . ")";
+        }
+
+        $subquery = '(
+	select n.idName from name n 
+	join psg on n.idName = psg.idPatient
+	join stays s on psg.idPatient = s.idName
+	join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+    join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
+    join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
+	where 
+		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
+		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
+		and v.Status in ("co", "a")
+        ' . $whDiags . '
+	group by n.idName
+    )';
+
+        $join = 'left join name_demog nd on nd.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" left join name n on nd.idName = n.idName and n.idName in ' . $subquery;
+        if($demographic == "Gender"){
+            $join = 'left join name n on n.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" and n.idName in ' . $subquery;
+        }
+
+
+        $query = 'select de.Description as "description", count(n.idName) as `count` from gen_lookups de '
+        .$join.
+        'where de.Table_Name = "'.$demographic.'"
+group by de.`description` order by de.Order asc
+;';
+
+        $stmt = $this->dbh->query($query);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    protected function getZipCodeTotals(){
+
+        $selectedDiags = $this->filter->getSelectedDiagnoses();
+        $whDiags = "";
+        if(count($selectedDiags) > 0){
+            $whDiags = " and hs.Diagnosis in (" . implode(",", $selectedDiags) . ")";
+        }
+
+        $subquery = '(
+	select n.idName from name n 
+	join psg on n.idName = psg.idPatient
+	join stays s on psg.idPatient = s.idName
+	join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+    join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
+    join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
+	where 
+		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
+		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
+		and v.Status in ("co", "a")
+        ' . $whDiags . '
+	group by n.idName
+    )';
+
+        $query = 'select na.City, na.State_Province, na.Postal_Code, count(n.idName) as `count` from name n 
+        join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose 
+        where n.idName in ' . $subquery .
+'group by na.Postal_Code;';
+
+        $stmt = $this->dbh->query($query);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Summary of generateSummaryTable
+     * @param string $header
+     * @param array $data
+     * @return HTMLTable
+     */
+    protected function generateSummaryTable(string $header, array $data){
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(HTMLTable::makeTh($header) . HTMLTable::makeTh("Count"));
+        $total = 0;
+        
+        foreach($data as $row){
+            $tbl->addBodyTr(
+                HTMLTable::makeTd($row["description"], ['style'=>'white-space: nowrap;'])
+                .HTMLTable::makeTd($row["count"])
+            );
+            $total += $row["count"];
+        }
+
+        $tbl->addBodyTr(
+            HTMLTable::makeTd("Total", ['style'=>'white-space: nowrap;'])
+            .HTMLTable::makeTd($total)
+        , ["style"=>"font-weight: bold; border-top: 2px solid #2E99DD"]);
+
+        return $tbl;
+    }
+
+    protected function generateZipCodeSummaryTable(array $data){
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(HTMLTable::makeTh("City") . HTMLTable::makeTh("State") .  HTMLTable::makeTh("Zip Code") . HTMLTable::makeTh("Count"));
+        $total = 0;
+        
+        foreach($data as $row){
+            $tbl->addBodyTr(
+                HTMLTable::makeTd($row["City"], ['style'=>'white-space: nowrap;'])
+                .HTMLTable::makeTd($row["State_Province"], ['style'=>'white-space: nowrap;'])
+                .HTMLTable::makeTd($row["Postal_Code"], ['style'=>'white-space: nowrap;'])
+                .HTMLTable::makeTd($row["count"])
+            );
+            $total += $row["count"];
+        }
+
+        $tbl->addBodyTr(
+            HTMLTable::makeTd("Total", ['style'=>'white-space: nowrap;', 'colspan'=>'3'])
+            .HTMLTable::makeTd($total)
+        , ["style"=>"font-weight: bold; border-top: 2px solid #2E99DD"]);
+
+        return $tbl;
     }
 }
