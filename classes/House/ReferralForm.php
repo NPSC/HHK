@@ -782,11 +782,11 @@ class ReferralForm {
 	 * @return void
 	 */
 	public function copyNotes(\PDO $dbh, $resvId, $idDoc){
-		$stmt = $dbh->prepare("select * from `doc_note` where `Doc_Id` = :docId");
+		$stmt = $dbh->prepare("select * from `link_note` where `idLink` = :docId and `linkType` = 'document'");
 		$stmt->execute([":docId"=>$idDoc]);
-		$insertStmt = $dbh->prepare("INSERT INTO `reservation_note` (`Reservation_Id`, `Note_Id`) VALUES(:resvId, :noteId)");
+		$insertStmt = $dbh->prepare("INSERT INTO `link_note` (`idNote`, `linkType`, `idLink`) VALUES(:noteId, 'reservation', :resvId)");
 		foreach($stmt->fetchAll() as $row){
-			$insertStmt->execute([':resvId'=>$resvId, ':noteId'=>$row['Note_Id']]);
+			$insertStmt->execute([':resvId'=>$resvId, ':noteId'=>$row['idNote']]);
 		}
 	}
 

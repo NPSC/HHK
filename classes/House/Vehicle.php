@@ -208,7 +208,8 @@ WHERE
             }
 
             $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['make']) ? $refVehicle['make']: ""), array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
+                ($idResv > 0 ? HTMLTable::makeTd(HTMLInput::generateMarkup("", array('name'=>"cbVehResv[$i]", 'class'=>'hhk-vehicle', 'type'=>'checkbox', 'checked'=>'checked')), ["style" => "text-align: center;"]) : "")
+                .HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['make']) ? $refVehicle['make']: ""), array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['model']) ? $refVehicle['model'] : ""), array('name'=>"txtVehModel[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup((isset($refVehicle['color']) ? $refVehicle['color']: ""), array('name'=>"txtVehColor[$i]", 'class'=>'hhk-vehicle', 'size'=>'7')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup($opts, array('name'=>"selVehLicense[$i]", 'class'=>'hhk-vehicle hhk-US-States')))
@@ -223,7 +224,7 @@ WHERE
         foreach ($idx as $i) {
 
             $tbl->addBodyTr(
-                ($idResv > 0 ? HTMLTable::makeTd(HTMLInput::generateMarkup("", array('name'=>"cbVehResv[$i]", 'class'=>'hhk-vehicle', 'type'=>'checkbox')), ["style" => "text-align: center;"]) : "")
+                ($idResv > 0 ? HTMLTable::makeTd(HTMLInput::generateMarkup("", array('name'=>"cbVehResv[$i]", 'class'=>'hhk-vehicle', 'type'=>'checkbox', 'checked'=>'checked')), ["style" => "text-align: center;"]) : "")
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehModel[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehColor[$i]", 'class'=>'hhk-vehicle', 'size'=>'7')))

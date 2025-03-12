@@ -753,7 +753,7 @@ Thank you
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
 ('useChecklists', 'false', 'b', 'hf', '', 'Enable Checklist feature', '', 1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
-('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
+('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',1),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
 ('UseCleaningBOdays', 'false', 'b', 'hf','', 'Set holidays as housekeeping black-out days','', '1'),
 ('vehicleReportEmail', '', 'ea', 'ha', '', 'Notified of Vehicle Report (configured in Job Scheduler)','', 1),
