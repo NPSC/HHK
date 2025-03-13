@@ -629,7 +629,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     , array('class'=>'mb-2 mb-md-0 mr-3'))
                 .HTMLContainer::generateMarkup('span', 'Expected Days: '.
                     HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4', "style"=>"outline: none; border: none; background:none; font-weight:bold; color:#2e6e9e;"))
-                    . HTMLContainer::generateMarkup("span", "Stay length is less than " . $uS->minResvDays . " days", ["class"=>"ui-state-highlight ui-corner-all p-1", "style"=>"font-size: 0.8em;" . (!is_int($days) || $days > $uS->minResvDays ? "display: none;": ""), "id"=>$prefix."gstDaysErr"])
+                    . HTMLContainer::generateMarkup("span", "Stay length is less than " . $uS->minResvDays . " days", ["class"=>"ui-state-highlight ui-corner-all p-1", "style"=>"font-size: 0.8em;" . (!is_int($days) || $days >= $uS->minResvDays ? "display: none;": ""), "id"=>$prefix."gstDaysErr"])
                     , array('class'=>'mb-2 mb-md-0 mr-3'))
         		.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'font-size:.8em;'))
         		, array('style'=>'font-size:.9em; align-items: center;', 'id'=>$prefix.'spnRangePicker', "class"=>"hhk-flex hhk-flex-wrap"))
