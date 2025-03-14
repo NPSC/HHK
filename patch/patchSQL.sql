@@ -111,3 +111,8 @@ call new_webpage('ws_session.php', 0, '', 0, 'a', '', '', 's', '', '', current_t
 call new_webpage('ws_session.php', 0, '', 0, 'a', '', '', 's', '', '', current_timestamp(), 'ga');
 call new_webpage('ws_session.php', 0, '', 0, 'a', '', '', 's', '', '', current_timestamp(), 'gr');
 call new_webpage('ws_session.php', 0, '', 0, 'a', '', '', 's', '', '', current_timestamp(), 'mm');
+
+INSERT IGNORE INTO `reservation_vehicle` (`idReservation`, `idVehicle`, `idName`)
+SELECT `r`.`idReservation`, `v`.`idVehicle`, 0 from `vehicle` v
+JOIN `reservation` r on `v`.`idRegistration` = `r`.`idRegistration`
+WHERE `v`.`No_Vehicle` = "" AND `r`.`Status` in ("co", "s");

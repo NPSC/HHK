@@ -236,6 +236,7 @@ function setupVehicle(veh) {
     $cbVeh.change(function () {
         if (this.checked) {
             $tblVeh.hide('scale, horizontal');
+
         } else {
             $tblVeh.show('scale, horizontal');
         }
@@ -293,7 +294,7 @@ function viewVehicleDialog(idVisit, $vehDialog) {
 }
 
 function saveVehicles(idVisit, $vehDialog) {
-    let params = $vehDialog.find("#tblVehicle input, #tblVehicle select").serializeArray();
+    let params = $vehDialog.find("#tblVehicle input, #tblVehicle select, #cbNoVehicle").serializeArray();
     params.push({ name: "cmd", value: "saveVeh" });
     params.push({ name: "idV", value: idVisit });
     $.post('ws_resv.php', params, function (data) {

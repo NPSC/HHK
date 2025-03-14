@@ -303,6 +303,7 @@ WHERE
             'txtVehNote' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
             'selVehGuest' => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
             'cbVehResv' => ['filter' => FILTER_VALIDATE_BOOL, 'flags' => FILTER_FORCE_ARRAY],
+            'cbNoVehicle' => ['filter' => FILTER_VALIDATE_BOOLEAN],
         ];
 
         $post = filter_input_array(INPUT_POST, $args);
@@ -408,6 +409,10 @@ WHERE
             }
 
             if($idResv > 0){
+                if(isset($post['cbNoVehicle'])){
+                    unset($post['cbVehResv']);
+                }
+
                 if (isset($post['cbVehResv'][$k])) {
                     $stmt = $dbh->prepare("INSERT IGNORE INTO `reservation_vehicle` (`idReservation`, `idVehicle`, `idName`) VALUES (:idReservation, :idVehicle, :idName);");
                     $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$carRS->idVehicle->getStoredVal(), ":idName"=>0]);
