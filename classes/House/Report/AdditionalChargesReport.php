@@ -34,7 +34,6 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     public array $demogs;
     public array $additionalCharges;
     public array $discounts;
-    public array $items;
     public array $selectedAdditionalCharges = [];
     protected array $statsArray = [];
 
@@ -48,7 +47,6 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
 
         $this->demogs = readGenLookupsPDO($dbh, 'Demographics');
         $this->additionalCharges = array_merge($this->formatGenLookup(readGenLookupsPDO($dbh, 'Addnl_Charge'), "Additional Charges"), $this->formatGenLookup(readGenLookupsPDO($dbh, 'House_Discount'), "Discounts"));
-        $this->items = $this->loadItems($dbh);
 
         if (filter_has_var(INPUT_POST, 'selAdditionalCharges')) {
             $this->selectedAdditionalCharges = filter_input(INPUT_POST, 'selAdditionalCharges', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
@@ -72,57 +70,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         return $genLookups;
     }
 
-    protected function loadBillingAgents(\PDO $dbh){
-        $stmt = $dbh->query("SELECT n.idName, if(trim(n.Name_Full) != '', n.Name_Full, n.Company) as `Title`" .
-            " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
-            " where n.Member_Status='a' and n.Record_Member = 1 order by n.Company");
-        return $stmt->fetchAll(\PDO::FETCH_NUM);
-    }
-
-    protected function loadItems(\PDO $dbh){
-        $uS = Session::getInstance();
-
-        $stmt = $dbh->query("SELECT idItem, Description, Percentage, Last_Order_Id from item where Deleted = 0");
-        $itemList = array();
-
-        while($r = $stmt->fetch(\PDO::FETCH_NUM)) {
-
-            if ($r[0] == ItemId::LodgingDonate) {
-                $r[1] = "Lodging Donation";
-            } else if ($r[0] == ItemId::AddnlCharge) {
-                $r[1] = "Additional Charges";
-            }
-
-            if ($r[2] != 0) {
-                $r[1] .= ' '.TaxedItem::suppressTrailingZeros($r[2]);
-
-                if ($r[3] != 0) {
-                    $r[2] = 'Old Rates';
-                } else {
-                    $r[2] = '';
-                }
-            } else {
-                $r[2] = '';
-            }
-
-            if ($r[0] == ItemId::DepositRefund && $uS->KeyDeposit === FALSE) {
-                continue;
-            } else if ($r[0] == ItemId::KeyDeposit && $uS->KeyDeposit === FALSE) {
-                continue;
-            } else if ($r[0] == ItemId::VisitFee && $uS->VisitFee === FALSE) {
-                continue;
-            } else if ($r[0] == ItemId::AddnlCharge && count($this->additionalCharges) == 0) {
-                continue;
-            } else if ($r[0] == ItemId::InvoiceDue) {
-                continue;
-            }
-
-            $itemList[$r[0]] = $r;
-        }
-        return $itemList;
-    }
-
-    protected function getItemMarkup(){
+    protected function getAdditionalChargesMarkup(){
         $additionalChargesSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->additionalCharges, $this->selectedAdditionalCharges), array('name' => 'selAdditionalCharges[]', 'size' => (count($this->additionalCharges) + 3), 'multiple' => 'multiple'));
         $tbl = new HTMLTable();
         $tr = '';
@@ -163,7 +111,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         $whDates =  "v.Span_Start <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
 
         $whBilling = "";
-        if(count($this->filter->getSelectedBillingAgents()) > 0){
+        if(count($this->filter->getSelectedBillingAgents()) > 0 && !in_array("", $this->filter->getSelectedBillingAgents())){
             $billingAgents = implode(",", $this->filter->getSelectedBillingAgents());
             $whBilling = " and i.Sold_To_Id in (" . $billingAgents . ")";
         }
@@ -186,7 +134,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
 
         $selectedCharges = $this->selectedAdditionalCharges;
         $whCharges = "";
-        if(count($selectedCharges) > 0 && !in_array("", $selectedDiags)){
+        if(count($selectedCharges) > 0){
             foreach($selectedCharges as $d){
                 if ($d != '' && isset($this->additionalCharges[$d])) {
                     if ($whCharges == '') {
@@ -261,26 +209,38 @@ from
 where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " group by i.idInvoice order by v.idVisit";
     }
 
+    /**
+     * Retrieves statistics for the additional charges report.
+     *
+     * This method executes the query to fetch the report data and calculates
+     * the total number of unique patients served, the total amount billed, 
+     * and the unique patient and visit IDs.
+     *
+     * @return array An associative array containing:
+     *               - "TotalPatientsServed": The number of unique patients served.
+     *               - "TotalBilled": The total amount billed.
+     *               - "patientIds": An array of unique patient IDs.
+     *               - "visitIds": An array of unique visit IDs.
+     */
     public function getStats(){
         if(count($this->statsArray) == 0){
 
             $stmt = $this->dbh->query($this->query);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $patientIds = array();
+            $visitIds = array();
             $totalBilled = 0.00;
             
             foreach ($rows as $row){
                 $patientIds[] = $row["pId"];
+                $visitIds[] = $row["visitId"];
                 $totalBilled+= $row["Invoice_Amount"];
             }
 
-            if(count($patientIds) == 0){
-                $patientIds[] = 0;
-            }
-
             $patientIds = array_unique($patientIds);
+            $visitIds = array_unique($visitIds);
 
-            $this->statsArray = ["TotalPatientsServed" => count($patientIds), "TotalBilled"=>$totalBilled, "patientIds"=>$patientIds];
+            $this->statsArray = ["TotalPatientsServed" => count($patientIds), "TotalBilled"=>$totalBilled, "patientIds"=>$patientIds, "visitIds"=>$visitIds];
         }
 
         return $this->statsArray;
@@ -289,7 +249,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
     public function makeFilterMkup():void{
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
         $this->filterMkup .= $this->filter->billingAgentMarkup()->generateMarkup();
-        $this->filterMkup .= $this->getItemMarkup()->generateMarkup();
+        $this->filterMkup .= $this->getAdditionalChargesMarkup()->generateMarkup();
         $this->filterMkup .= $this->filter->diagnosisMarkup()->generateMarkup();
         $this->filterMkup .= $this->getColSelectorMkup();
     }
@@ -410,25 +370,17 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
     }
 
     protected function getAdditionalChargeCounts(){
-        $selectedDiags = $this->filter->getSelectedDiagnoses();
-        $whDiags = "";
-        if(count($selectedDiags) > 0 && !in_array("", $selectedDiags)){
-            foreach($selectedDiags as $d){
-                if ($d != '') {
-                    if ($whDiags == '') {
-                        $whDiags .= "'".$d."'";
-                    } else {
-                        $whDiags .= ",'". $d."'";
-                    }
-                }
-            }
+        $visitIds = $this->getStats()["visitIds"];
 
-            $whDiags = " and hs.Diagnosis in (" . $whDiags . ")";
+        if(count($visitIds) == 0){
+            $visitIds = [0];
         }
+
+        $visitIds = implode(", ", $visitIds);
 
         $selectedCharges = $this->selectedAdditionalCharges;
         $whCharges = "";
-        if(count($selectedCharges) > 0 && !in_array("", $selectedDiags)){
+        if(count($selectedCharges) > 0){
             foreach($selectedCharges as $d){
                 if ($d != '' && isset($this->additionalCharges[$d])) {
                     if ($whCharges == '') {
@@ -445,21 +397,8 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         $query = 'select il.description, count(*) as `count` from invoice_line il
 join invoice i on il.Invoice_Id = i.idInvoice
 join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
-where il.Item_Id = 9 and 
-v.idVisit in (
-	select v.idVisit from name n 
-	join psg on n.idName = psg.idPatient
-	join stays s on psg.idPatient = s.idName
-	join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-    join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
-	where 
-		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
-		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
-		and v.Status in ("co", "a")
-        ' . $whDiags . $whCharges . '
-	group by v.idVisit
-    )
+where il.Item_Id = ' . ItemId::AddnlCharge . ' and 
+v.idVisit in (' . $visitIds .') ' . $whCharges . '
 group by il.Description';
 
         $stmt = $this->dbh->query($query);
@@ -469,6 +408,10 @@ group by il.Description';
 
     protected function getAgeCounts(){
         $patientIds = $this->getStats()["patientIds"];
+
+        if(count($patientIds) == 0){
+            $patientIds = [0];
+        }
 
         $query = 'select concat(10*floor(timestampdiff(YEAR, n.BirthDate, CURDATE())/10), "-", 10*floor(timestampdiff(YEAR, n.BirthDate, CURDATE())/10) + 9) as `description`, count(*) as `count` from `name` n
 where n.idName in (' . implode(", ", $patientIds) . ')
@@ -504,6 +447,10 @@ group by `description`
     protected function getDemographicTotals(string $demographic){
         $patientIds = $this->getStats()["patientIds"];
 
+        if(count($patientIds) == 0){
+            $patientIds = [0];
+        }
+
         $join = 'left join name_demog nd on nd.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" left join name n on nd.idName = n.idName and n.idName in (' . implode(", ", $patientIds) . ')';
         if($demographic == "Gender"){
             $join = 'left join name n on n.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" and n.idName in (' . implode(", ", $patientIds) . ')';
@@ -522,6 +469,10 @@ group by de.`description` order by de.Order asc
 
     protected function getZipCodeTotals(){
         $patientIds = $this->getStats()["patientIds"];
+
+        if(count($patientIds) == 0){
+            $patientIds = [0];
+        }
 
         $query = 'select na.City, na.State_Province, na.Postal_Code, count(n.idName) as `count` from name n 
         join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose 

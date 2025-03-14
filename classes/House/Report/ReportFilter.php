@@ -674,6 +674,9 @@ $ckdate";
             $reqs = $_POST['selBillingAgents'];
             if (is_array($reqs)) {
                 $this->selectedBillingAgents = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if($this->selectedBillingAgents[0] == ""){
+                    unset($this->selectedBillingAgents[0]);
+                }
             }
         }
 
