@@ -23,7 +23,7 @@ interface ReportInterface {
     public function makeFilterMkup():void;
 
     /**
-     * Build your summary content, (wrapper + logo will be added by AbstractReport::generateSummaryMkup())
+     * Build your summary content, (wrapper + logo will be added by AbstractReport::generateSummaryMkup()). If you'd also like to add a stats box, set $this->statsMkup in here
      *
      * @return string
      */

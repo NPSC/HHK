@@ -35,7 +35,8 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     public array $additionalCharges;
     public array $discounts;
     public array $items;
-    public array $selectedItems;
+    public array $selectedAdditionalCharges = [];
+    protected array $statsArray = [];
 
 
     public function __construct(\PDO $dbh, array $request = []){
@@ -46,28 +47,27 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         $this->inputSetReportName = "additionalCharges";
 
         $this->demogs = readGenLookupsPDO($dbh, 'Demographics');
-        $this->additionalCharges = $this->formatGenLookup(readGenLookupsPDO($dbh, 'Addnl_Charge'));
-        $this->discounts = $this->formatGenLookup(readGenLookupsPDO($dbh, 'House_Discount'));
+        $this->additionalCharges = array_merge($this->formatGenLookup(readGenLookupsPDO($dbh, 'Addnl_Charge'), "Additional Charges"), $this->formatGenLookup(readGenLookupsPDO($dbh, 'House_Discount'), "Discounts"));
         $this->items = $this->loadItems($dbh);
 
-        if (filter_has_var(INPUT_POST, 'selItems')) {
-            $this->selectedItems = filter_input(INPUT_POST, 'selItems', FILTER_SANITIZE_NUMBER_INT, FILTER_REQUIRE_ARRAY);
-            if($this->selectedItems[0] == ""){
-                unset($this->selectedItems[0]);
+        if (filter_has_var(INPUT_POST, 'selAdditionalCharges')) {
+            $this->selectedAdditionalCharges = filter_input(INPUT_POST, 'selAdditionalCharges', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
+            if($this->selectedAdditionalCharges[0] == ""){
+                unset($this->selectedAdditionalCharges[0]);
             }
-        }else{
-            $this->selectedItems = [];
         }
 
         parent::__construct($dbh, $this->inputSetReportName, $request);
         $this->filter->createBillingAgents($dbh);
         $this->filter->createDiagnoses($dbh);
+        $this->filter->loadSelectedDiagnoses();
+        $this->filter->loadSelectedBillingAgents();
     }
 
-    protected function formatGenLookup(array $genLookups){
+    protected function formatGenLookup(array $genLookups, string $group = ""){
         foreach($genLookups as $k=>&$v){
-            $v["Substitute"] = "";
-            $v[2] = "";
+            $v["Substitute"] = $group;
+            $v[2] = $group;
         }
         return $genLookups;
     }
@@ -123,14 +123,13 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     }
 
     protected function getItemMarkup(){
-        $additionalChargesSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->additionalCharges, $this->selectedItems), array('name' => 'selAdditionalCharges[]', 'size' => (count($this->additionalCharges) + 1), 'multiple' => 'multiple'));
-        $discountsSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->discounts, $this->selectedItems), array('name' => 'selItems[]', 'size' => (count($this->discounts) + 1), 'multiple' => 'multiple'));
+        $additionalChargesSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->additionalCharges, $this->selectedAdditionalCharges), array('name' => 'selAdditionalCharges[]', 'size' => (count($this->additionalCharges) + 3), 'multiple' => 'multiple'));
         $tbl = new HTMLTable();
         $tr = '';
         
-        $tbl->addHeaderTr( HTMLTable::makeTh("Additional Charges") . HTMLTable::makeTh("Discounts"));
+        $tbl->addHeaderTr( HTMLTable::makeTh("Additional Charges/Discounts"));
         
-        $tbl->addBodyTr(HTMLTable::makeTd($additionalChargesSelector, array('style'=>'vertical-align: top;')) . HTMLTable::makeTd($discountsSelector, array('style'=>'vertical-align: top;')));
+        $tbl->addBodyTr(HTMLTable::makeTd($additionalChargesSelector, array('style'=>'vertical-align: top;')));
         
         return $tbl;
     }
@@ -167,6 +166,38 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         if(count($this->filter->getSelectedBillingAgents()) > 0){
             $billingAgents = implode(",", $this->filter->getSelectedBillingAgents());
             $whBilling = " and i.Sold_To_Id in (" . $billingAgents . ")";
+        }
+
+        $selectedDiags = $this->filter->getSelectedDiagnoses();
+        $whDiags = "";
+        if(count($selectedDiags) > 0 && !in_array("", $selectedDiags)){
+            foreach($selectedDiags as $d){
+                if ($d != '') {
+                    if ($whDiags == '') {
+                        $whDiags .= "'".$d."'";
+                    } else {
+                        $whDiags .= ",'". $d."'";
+                    }
+                }
+            }
+
+            $whDiags = " and hs.Diagnosis in (" . $whDiags . ")";
+        }
+
+        $selectedCharges = $this->selectedAdditionalCharges;
+        $whCharges = "";
+        if(count($selectedCharges) > 0 && !in_array("", $selectedDiags)){
+            foreach($selectedCharges as $d){
+                if ($d != '' && isset($this->additionalCharges[$d])) {
+                    if ($whCharges == '') {
+                        $whCharges .= "'".$this->additionalCharges[$d]["Description"]."'";
+                    } else {
+                        $whCharges .= ",'". $this->additionalCharges[$d]["Description"]."'";
+                    }
+                }
+            }
+
+            $whCharges = " and il.description in (" . $whCharges . ")";
         }
 
 
@@ -227,19 +258,32 @@ from
     gen_lookups invs on invs.Table_Name = 'Invoice_Status' and invs.Code = i.Status
         join
     name ba on i.Sold_To_Id = ba.idName
-where i.Deleted = 0 and " . $whDates . $whBilling . " group by i.idInvoice order by v.idVisit";
+where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " group by i.idInvoice order by v.idVisit";
     }
 
     public function getStats(){
-        $stmt = $this->dbh->query($this->query);
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        $patientIds = array();
-        $totalBilled = 0.00;
-        foreach ($rows as $row){
-            $patientIds[] = $row["pId"];
-            $totalBilled+= $row["Invoice_Amount"];
+        if(count($this->statsArray) == 0){
+
+            $stmt = $this->dbh->query($this->query);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $patientIds = array();
+            $totalBilled = 0.00;
+            
+            foreach ($rows as $row){
+                $patientIds[] = $row["pId"];
+                $totalBilled+= $row["Invoice_Amount"];
+            }
+
+            if(count($patientIds) == 0){
+                $patientIds[] = 0;
+            }
+
+            $patientIds = array_unique($patientIds);
+
+            $this->statsArray = ["TotalPatientsServed" => count($patientIds), "TotalBilled"=>$totalBilled, "patientIds"=>$patientIds];
         }
-        return ["TotalPatientsServed" => count(array_unique($patientIds)), "TotalBilled"=>$totalBilled];
+
+        return $this->statsArray;
     }
 
     public function makeFilterMkup():void{
@@ -342,10 +386,10 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by i.idInvoice order
             }
         }
 
-        $mkup .= HTMLContainer::generateMarkup("div",
-        HTMLContainer::generateMarkup("h3", "Summary", ["class"=>"ui-widget-header ui-state-default ui-corner-top"]) . 
+        $this->statsMkup = HTMLContainer::generateMarkup("div",
+        HTMLContainer::generateMarkup("h3", "Summary", ["class"=>"ui-widget-header ui-state-default ui-corner-all"]) . 
         HTMLContainer::generateMarkup("div", $totalsMkup, ["class"=>"hhk-flex hhk-tdbox hhk-visitdialog ui-widget-content ui-corner-bottom py-3", "style"=>"flex-flow:wrap;"])
-        , ["class"=>"ui-widget mt-3", "id"=>"summaryAccordion"]);
+        , ["class"=>"ui-widget my-3", "id"=>"summaryAccordion"]);
 
         return $mkup;
 
@@ -368,8 +412,34 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by i.idInvoice order
     protected function getAdditionalChargeCounts(){
         $selectedDiags = $this->filter->getSelectedDiagnoses();
         $whDiags = "";
-        if(count($selectedDiags) > 0){
-            $whDiags = " and hs.Diagnosis in (" . implode(",", $selectedDiags) . ")";
+        if(count($selectedDiags) > 0 && !in_array("", $selectedDiags)){
+            foreach($selectedDiags as $d){
+                if ($d != '') {
+                    if ($whDiags == '') {
+                        $whDiags .= "'".$d."'";
+                    } else {
+                        $whDiags .= ",'". $d."'";
+                    }
+                }
+            }
+
+            $whDiags = " and hs.Diagnosis in (" . $whDiags . ")";
+        }
+
+        $selectedCharges = $this->selectedAdditionalCharges;
+        $whCharges = "";
+        if(count($selectedCharges) > 0 && !in_array("", $selectedDiags)){
+            foreach($selectedCharges as $d){
+                if ($d != '' && isset($this->additionalCharges[$d])) {
+                    if ($whCharges == '') {
+                        $whCharges .= "'".$this->additionalCharges[$d]["Description"]."'";
+                    } else {
+                        $whCharges .= ",'". $this->additionalCharges[$d]["Description"]."'";
+                    }
+                }
+            }
+
+            $whCharges = " and il.description in (" . $whCharges . ")";
         }
 
         $query = 'select il.description, count(*) as `count` from invoice_line il
@@ -387,7 +457,7 @@ v.idVisit in (
 		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
 		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
 		and v.Status in ("co", "a")
-        ' . $whDiags . '
+        ' . $whDiags . $whCharges . '
 	group by v.idVisit
     )
 group by il.Description';
@@ -398,27 +468,10 @@ group by il.Description';
     }
 
     protected function getAgeCounts(){
-        $selectedDiags = $this->filter->getSelectedDiagnoses();
-        $whDiags = "";
-        if(count($selectedDiags) > 0){
-            $whDiags = " and hs.Diagnosis in (" . implode(",", $selectedDiags) . ")";
-        }
+        $patientIds = $this->getStats()["patientIds"];
 
         $query = 'select concat(10*floor(timestampdiff(YEAR, n.BirthDate, CURDATE())/10), "-", 10*floor(timestampdiff(YEAR, n.BirthDate, CURDATE())/10) + 9) as `description`, count(*) as `count` from `name` n
-where n.idName in (
-	select n.idName from name n 
-	join psg on n.idName = psg.idPatient
-	join stays s on psg.idPatient = s.idName
-	join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-    join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
-	where 
-		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
-		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
-		and v.Status in ("co", "a")
-        ' . $whDiags . '
-	group by n.idName
-    )
+where n.idName in (' . implode(", ", $patientIds) . ')
 group by `description`
 ;';
 
@@ -449,30 +502,11 @@ group by `description`
     }
 
     protected function getDemographicTotals(string $demographic){
-        $selectedDiags = $this->filter->getSelectedDiagnoses();
-        $whDiags = "";
-        if(count($selectedDiags) > 0){
-            $whDiags = " and hs.Diagnosis in (" . implode(",", $selectedDiags) . ")";
-        }
+        $patientIds = $this->getStats()["patientIds"];
 
-        $subquery = '(
-	select n.idName from name n 
-	join psg on n.idName = psg.idPatient
-	join stays s on psg.idPatient = s.idName
-	join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-    join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
-	where 
-		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
-		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
-		and v.Status in ("co", "a")
-        ' . $whDiags . '
-	group by n.idName
-    )';
-
-        $join = 'left join name_demog nd on nd.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" left join name n on nd.idName = n.idName and n.idName in ' . $subquery;
+        $join = 'left join name_demog nd on nd.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" left join name n on nd.idName = n.idName and n.idName in (' . implode(", ", $patientIds) . ')';
         if($demographic == "Gender"){
-            $join = 'left join name n on n.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" and n.idName in ' . $subquery;
+            $join = 'left join name n on n.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" and n.idName in (' . implode(", ", $patientIds) . ')';
         }
 
 
@@ -487,31 +521,11 @@ group by de.`description` order by de.Order asc
     }
 
     protected function getZipCodeTotals(){
-
-        $selectedDiags = $this->filter->getSelectedDiagnoses();
-        $whDiags = "";
-        if(count($selectedDiags) > 0){
-            $whDiags = " and hs.Diagnosis in (" . implode(",", $selectedDiags) . ")";
-        }
-
-        $subquery = '(
-	select n.idName from name n 
-	join psg on n.idName = psg.idPatient
-	join stays s on psg.idPatient = s.idName
-	join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-    join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
-	where 
-		date(v.`Arrival_Date`) < date("' . $this->filter->getReportEnd() . '") 
-		and (date(v.`Actual_Departure`) > date("' . $this->filter->getReportStart() . '") or v.`Actual_Departure` is null)
-		and v.Status in ("co", "a")
-        ' . $whDiags . '
-	group by n.idName
-    )';
+        $patientIds = $this->getStats()["patientIds"];
 
         $query = 'select na.City, na.State_Province, na.Postal_Code, count(n.idName) as `count` from name n 
         join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose 
-        where n.idName in ' . $subquery .
+        where n.idName in (' . implode(", ", $patientIds) . ')' .
 'group by na.Postal_Code;';
 
         $stmt = $this->dbh->query($query);
