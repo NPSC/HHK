@@ -429,7 +429,8 @@ group by `description`
             "50-59"=>["description"=>"50-59", "count"=>0],
             "60-69"=>["description"=>"60-69", "count"=>0],
             "70-79"=>["description"=>"70-79", "count"=>0],
-            "80+"=>["description"=>"80+", "count"=>0]
+            "80+"=>["description"=>"80+", "count"=>0],
+            "Unknown"=>["description"=>"Unknown", "count"=>0]
         ];
 
         foreach($results as $result){
@@ -437,6 +438,8 @@ group by `description`
                 $brackets["0-19"]["count"] += $result["count"];
             }else if(isset($brackets[$result["description"]])){
                 $brackets[$result["description"]]["count"] = $result["count"];
+            }else if($result["description"] == null){
+                $brackets["Unknown"]["count"] = $result["count"];
             }else{
                 $brackets["80+"]["count"] += $result["count"];
             }
