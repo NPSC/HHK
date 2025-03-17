@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\ExcelHelper;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
@@ -10,6 +11,7 @@ use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\VolMemberType;
+use HHK\TableLog\HouseLog;
 
 /**
  * AdditionalChargesReport.php
@@ -534,5 +536,75 @@ group by de.`description` order by de.Order asc
         , ["style"=>"font-weight: bold; border-top: 2px solid #2E99DD"]);
 
         return $tbl;
+    }
+
+    protected function generateExcelSummaryTable(string $header, array $data, ExcelHelper &$writer){
+        
+        $writer->writeSheetRow("Summary", [$header], ["font-style"=>"bold"]);
+        $total = 0;
+        
+        foreach($data as $row){
+            $writer->writeSheetRow("Summary", [$row["description"],$row["count"]]);
+            $total += $row["count"];
+        }
+        $writer->writeSheetRow("Summary", ["Total",$total], ['font-style'=>'bold']);
+        $writer->writeSheetRow("Summary", []);
+    }
+
+    public function downloadExcel(string $fileName = "HHKReport"):void {
+
+        $uS = Session::getInstance();
+        $writer = new ExcelHelper($fileName);
+        $writer->setAuthor($uS->username);
+        $writer->setTitle($this->reportTitle);
+
+        // build header
+        $hdr = array();
+        $flds = array();
+        $colWidths = array();
+
+
+        foreach($this->filteredFields as $field){
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
+        }
+
+        $this->getResultSet();
+
+        //summary sheet
+        $writer->writeSheetHeader("Summary", ["Name"=>"string", "Count"=>"integer"], $writer->getHdrStyle([20, 10]));
+        
+        foreach($this->colSelector->getFilteredFields() as $fld){
+            if($fld[1] == "Age"){
+                $this->generateExcelSummaryTable("Age", $this->getAgeCounts(), $writer);
+            }
+
+            if($fld[1] == "pAddr"){
+                //$totalsMkup .= $this->generateZipCodeSummaryTable($this->getZipCodeTotals())->generateMarkup(['class'=>'mx-2']);
+            }
+
+            if (isset($this->demogs[$fld[1]]) && strtolower($this->demogs[$fld[1]][2]) == 'y'){
+                $this->generateExcelSummaryTable($this->demogs[$fld[1]]["Description"], $this->getDemographicTotals($this->demogs[$fld[1]]["Code"]), $writer);
+            }
+        }
+
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Raw Data", $hdr, $hdrStyle);
+
+        foreach($this->resultSet as $r){
+
+            $flds = array();
+
+            foreach ($this->filteredFields as $f) {
+                $flds[] = $r[$f[1]];
+            }
+
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Raw Data", $row);
+        }
+
+        HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);
+
+        $writer->download();
     }
 }
