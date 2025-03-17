@@ -45,6 +45,7 @@ abstract class AbstractReport {
     protected string $description = "";
     protected string $inputSetReportName = "";
     protected bool $rendered = false;
+    protected string $statsMkup = "";
 
     /**
      * @param \PDO $dbh
@@ -180,10 +181,11 @@ abstract class AbstractReport {
 
         $uS = Session::getInstance();
         $summaryMkup = $this->makeSummaryMkup();
+        $statsMkup = $this->statsMkup;
 
         $titleMkup = HTMLContainer::generateMarkup('h3', $this->reportTitle, array('class'=>'mt-2'));
         $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ml-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/" . $uS->statementLogoFile, "width"=>$uS->statementLogoWidth)), array('id'=>'repSummary', 'class'=>'hhk-flex mb-3', 'style'=>'justify-content: space-between'));
-        return $titleMkup . $bodyMkup;
+        return $titleMkup . $bodyMkup . $statsMkup;
 
     }
 
