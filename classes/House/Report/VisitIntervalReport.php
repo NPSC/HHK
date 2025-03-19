@@ -59,9 +59,10 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
             $this->useTaxes = TRUE;
         }
 
-        parent::__construct($dbh, $this->inputSetReportName, $request);
-
+        $this->filter = new ReportFilter();
         $this->filter->createResourceGroups($this->dbh);
+
+        parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
 

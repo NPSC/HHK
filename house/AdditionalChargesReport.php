@@ -47,7 +47,7 @@ if (isset($_POST['btnHere-' . $report->getInputSetReportName()])) {
 
 if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
     ini_set('memory_limit', "280M");
-    $report->downloadExcel("BillingAgentReport");
+    $report->downloadExcel("AdditioinalChargesReport");
 }
 
 ?>

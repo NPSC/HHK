@@ -58,7 +58,7 @@ abstract class AbstractReport {
 
         $this->dbh = $dbh;
         $this->request = $request;
-        $this->filter = new ReportFilter();
+        $this->filter = (!isset($this->filter) ? new ReportFilter() : $this->filter);
         $this->filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
         $this->filter->createHospitals();
 

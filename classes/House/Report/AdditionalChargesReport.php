@@ -57,11 +57,13 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
             }
         }
 
-        parent::__construct($dbh, $this->inputSetReportName, $request);
+        $this->filter = new ReportFilter();
         $this->filter->createBillingAgents($dbh);
         $this->filter->createDiagnoses($dbh);
         $this->filter->loadSelectedDiagnoses();
         $this->filter->loadSelectedBillingAgents();
+
+        parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
     protected function formatGenLookup(array $genLookups, string $group = ""){
@@ -235,7 +237,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
             
             foreach ($rows as $row){
                 $patientIds[] = $row["pId"];
-                $visitIds[] = $row["visitId"];
+                $visitIds[] = $row["visitId"] . "-" . $row["Span"];
                 $totalBilled+= $row["Invoice_Amount"];
             }
 
@@ -331,26 +333,26 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         }
 
         $totalsMkup = "";
-        $totalsMkup .= $this->generateSummaryTable("Additional Charge", $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2']);
+        $totalsMkup .= $this->generateSummaryTable("Additional Charge", $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2 mb-2']);
         
 
         foreach($this->colSelector->getFilteredFields() as $fld){
             if($fld[1] == "Age"){
-                $totalsMkup .= $this->generateSummaryTable("Age", $this->getAgeCounts())->generateMarkup(['class'=>'mx-2']);
+                $totalsMkup .= $this->generateSummaryTable("Age", $this->getAgeCounts())->generateMarkup(['class'=>'mx-2 mb-2']);
             }
 
             if($fld[1] == "pAddr"){
-                $totalsMkup .= $this->generateZipCodeSummaryTable($this->getZipCodeTotals())->generateMarkup(['class'=>'mx-2']);
+                $totalsMkup .= $this->generateZipCodeSummaryTable($this->getZipCodeTotals())->generateMarkup(['class'=>'mx-2 mb-2']);
             }
 
             if (isset($this->demogs[$fld[1]]) && strtolower($this->demogs[$fld[1]][2]) == 'y'){
-                $totalsMkup .= $this->generateSummaryTable($this->demogs[$fld[1]]["Description"], $this->getDemographicTotals($this->demogs[$fld[1]]["Code"]))->generateMarkup(['class'=>'mx-2']);
+                $totalsMkup .= $this->generateSummaryTable($this->demogs[$fld[1]]["Description"], $this->getDemographicTotals($this->demogs[$fld[1]]["Code"]))->generateMarkup(['class'=>'mx-2 mb-2']);
             }
         }
 
         $this->statsMkup = HTMLContainer::generateMarkup("div",
         HTMLContainer::generateMarkup("h3", "Summary", ["class"=>"ui-widget-header ui-state-default ui-corner-all"]) . 
-        HTMLContainer::generateMarkup("div", $totalsMkup, ["class"=>"hhk-flex hhk-tdbox hhk-visitdialog ui-widget-content ui-corner-bottom py-3", "style"=>"flex-flow:wrap;"])
+        HTMLContainer::generateMarkup("div", $totalsMkup, ["class"=>"hhk-flex hhk-tdbox hhk-visitdialog ui-widget-content ui-corner-bottom pt-3 pb-2", "style"=>"flex-flow:wrap;"])
         , ["class"=>"ui-widget my-3", "id"=>"summaryAccordion"]);
 
         return $mkup;
@@ -375,7 +377,11 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         $visitIds = $this->getStats()["visitIds"];
 
         if(count($visitIds) == 0){
-            $visitIds = [0];
+            $visitIds = ['null'];
+        }else{
+            foreach($visitIds as $k=>$v){
+                $visitIds[$k] = "'".$v."'";
+            }
         }
 
         $visitIds = implode(", ", $visitIds);
@@ -400,7 +406,8 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
 join invoice i on il.Invoice_Id = i.idInvoice
 join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
 where il.Item_Id = ' . ItemId::AddnlCharge . ' and 
-v.idVisit in (' . $visitIds .') ' . $whCharges . '
+il.Deleted = 0 and
+concat(v.idVisit, "-", v.Span) in (' . $visitIds .') ' . $whCharges . '
 group by il.Description';
 
         $stmt = $this->dbh->query($query);
@@ -461,11 +468,10 @@ group by `description`
             $join = 'left join name n on n.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" and n.idName in (' . implode(", ", $patientIds) . ')';
         }
 
-
         $query = 'select de.Description as "description", count(n.idName) as `count` from gen_lookups de '
         .$join.
         'where de.Table_Name = "'.$demographic.'"
-group by de.`description` order by de.Order asc
+group by de.`description` order by de.Order asc, de.`Code` asc
 ;';
 
         $stmt = $this->dbh->query($query);
@@ -540,7 +546,7 @@ group by de.`description` order by de.Order asc
 
     protected function generateExcelSummaryTable(string $header, array $data, ExcelHelper &$writer){
         
-        $writer->writeSheetRow("Summary", [$header], ["font-style"=>"bold"]);
+        $writer->writeSheetHeader("Summary", [$header=>"string", "Count"=>"integer"], $writer->getHdrStyle([20, 10]));
         $total = 0;
         
         foreach($data as $row){
@@ -549,6 +555,17 @@ group by de.`description` order by de.Order asc
         }
         $writer->writeSheetRow("Summary", ["Total",$total], ['font-style'=>'bold']);
         $writer->writeSheetRow("Summary", []);
+    }
+
+    protected function generateExcelZipCodeSummaryTable(array $data, ExcelHelper &$writer){
+        $writer->writeSheetHeader("Zip Codes", ["City"=>"string", "State"=>"string", "Zip Code"=>"string", "Count"=>"integer"], $writer->getHdrStyle([20, 10, 10, 10]));
+        $total = 0;
+        
+        foreach($data as $row){
+            $writer->writeSheetRow("Zip Codes", [$row["City"],$row["State_Province"],$row["Postal_Code"],$row["count"]]);
+            $total += $row["count"];
+        }
+        $writer->writeSheetRow("Zip Codes", ["Total","","",$total], ['font-style'=>'bold']);
     }
 
     public function downloadExcel(string $fileName = "HHKReport"):void {
@@ -572,15 +589,15 @@ group by de.`description` order by de.Order asc
         $this->getResultSet();
 
         //summary sheet
-        $writer->writeSheetHeader("Summary", ["Name"=>"string", "Count"=>"integer"], $writer->getHdrStyle([20, 10]));
-        
+        $this->generateExcelSummaryTable("Additional Charge", $this->getAdditionalChargeCounts(), $writer);
+
         foreach($this->colSelector->getFilteredFields() as $fld){
             if($fld[1] == "Age"){
                 $this->generateExcelSummaryTable("Age", $this->getAgeCounts(), $writer);
             }
 
             if($fld[1] == "pAddr"){
-                //$totalsMkup .= $this->generateZipCodeSummaryTable($this->getZipCodeTotals())->generateMarkup(['class'=>'mx-2']);
+                $this->generateExcelZipCodeSummaryTable($this->getZipCodeTotals(), $writer);
             }
 
             if (isset($this->demogs[$fld[1]]) && strtolower($this->demogs[$fld[1]][2]) == 'y'){
