@@ -311,18 +311,22 @@ abstract class AbstractReport {
         float:right;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt {
+    div#summaryAccordion table, table#tbl' . $this->inputSetReportName . 'rpt {
         border-collapse: collapse;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt td {
+    div#summaryAccordion table td, table#tbl' . $this->inputSetReportName . 'rpt td {
         border:1px solid #c1c1c1;
         padding: 10px;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt thead th {
+    div#summaryAccordion table thead th, table#tbl' . $this->inputSetReportName . 'rpt thead th {
         padding:10px;
-        border-bottom: 2px solid #111
+        border-bottom: 2px solid #111;
+    }
+
+    div#summaryAccordion .hhk-flex>table {
+        margin: 0 0.5rem 0.5rem 0.5rem;
     }
 
 </style>
