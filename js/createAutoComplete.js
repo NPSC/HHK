@@ -314,7 +314,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 				}
 				
 				if(item.memberStatus != '' || item.noReturn != '' || item.room != ''){
-					rightContent = "<div class='right'>" + item.memberStatus + item.room + "</div>";
+					rightContent = "<div class='right'>" + item.memberStatus + item.noReturn + item.room + "</div>";
                 }
                 
 				
