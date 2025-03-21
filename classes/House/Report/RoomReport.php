@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use DateTime;
 use HHK\House\OperatingHours;
 use HHK\Notes;
 use HHK\HTMLControls\HTMLContainer;
@@ -330,9 +331,9 @@ ORDER BY rn.idLink, n.`Timestamp` DESC;");
             `name` n ON s.idName = n.idName
                 LEFT JOIN
             visit v ON s.idVisit = v.idVisit AND s.Visit_Span = v.Span
-				LEFT JOIN
+				JOIN
             resource_room rr on r.idRoom = rr.idRoom
-                LEFT JOIN
+                JOIN
 			resource rs on rr.idResource = rs.idResource
                 LEFT JOIN
             hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
@@ -345,6 +346,8 @@ ORDER BY rn.idLink, n.`Timestamp` DESC;");
                 AND gc.Code = r.Cleaning_Cycle_Code
                 left join
             note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
+        
+        where (rs.Retired_At is null or rs.Retired_At > '" . (new DateTime())->format('Y-m-d') . "')
         ORDER BY r.idRoom";
 
 
