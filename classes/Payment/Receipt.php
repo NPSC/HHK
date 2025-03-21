@@ -96,7 +96,7 @@ class Receipt {
         // Assemble the statement
         $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
 
-        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center'));
+        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2')));
@@ -152,9 +152,9 @@ class Receipt {
             $receiptAttrs['class'] = "ui-state-highlight";
         }
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['style'=>"width: 100%"]) . $disclaimer, $receiptAttrs);
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>"receiptContent"]) . $disclaimer, $receiptAttrs);
 
-        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'padding:10px;'));
+        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'padding:10px; justify-self: center;'));
     }
 
     /**
@@ -170,9 +170,9 @@ class Receipt {
 
         $uS = Session::getInstance();
 
-        $rec = self::getHouseIconMarkup();
+        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
+        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . ' ' . $type . " Receipt", array('colspan'=>'2')));
@@ -211,9 +211,9 @@ class Receipt {
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>'receiptContent']), array('class'=>"mb-3"));
 
-        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
+        return HTMLContainer::generateMarkup('div', $rec, attributes: array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
     // Return a Payment
@@ -229,9 +229,9 @@ class Receipt {
 
         $uS = Session::getInstance();
 
-        $rec = self::getHouseIconMarkup();
+        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
+        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
 
         $tbl = new HTMLTable();
 
@@ -272,9 +272,9 @@ class Receipt {
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>'receiptContent']), array('class'=>"mb-3"));
 
-        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
+        return HTMLContainer::generateMarkup('div', $rec, attributes: array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
     // Refund arbitrary Amount
@@ -290,9 +290,9 @@ class Receipt {
 
         $uS = Session::getInstance();
 
-        $rec = self::getHouseIconMarkup();
+        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
+        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
 
         $tbl = new HTMLTable();
 
@@ -333,7 +333,7 @@ class Receipt {
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>"receiptContent"]), array('class'=>'mb-3'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
@@ -352,7 +352,7 @@ class Receipt {
         // Assemble the statement
         $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
 
-        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center'));
+        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2')));
@@ -399,8 +399,7 @@ class Receipt {
         }
 
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['style'=>'width: 100%']), array('style'=>'margin-bottom:10px;clear:both;background-color:pink;'));
-        $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>'receiptContent']), array('class="mb-3', 'style'=>'background-color:pink;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
     }
@@ -421,7 +420,7 @@ class Receipt {
 
             $rec .= HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->receiptLogoWidth)),
-                array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
+                array('class'=>'mr-2'));
         }
 
         return $rec;
@@ -603,7 +602,7 @@ WHERE
                     }
                 }
 
-                $mkup = $adrTbl->generateMarkup();
+                $mkup = $adrTbl->generateMarkup(['class'=>'ml-2']);
             }
         }
 

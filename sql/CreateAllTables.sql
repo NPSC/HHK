@@ -2451,6 +2451,7 @@ CREATE INDEX IF NOT EXISTS `indx_idPsg` ON `link_doc` (`idPSG` ASC);
 
 CREATE INDEX IF NOT EXISTS `indx_idNote` ON `link_note` (`idNote`);
 CREATE INDEX IF NOT EXISTS `indx_linkType` ON `link_note` (`linkType`);
+CREATE INDEX IF NOT EXISTS `indx_idLink` ON `link_note` (`idLink`);
 CREATE UNIQUE INDEX IF NOT EXISTS `unq_link` ON `link_note` (`idNote` ASC, `linkType` ASC, `idLink` ASC);
 
 ALTER TABLE `name`

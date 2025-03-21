@@ -935,6 +935,7 @@ class Statement {
                 foreach ($myLines as $l) {
 
                     if ($first) {
+                        $extraLine = ($r['i']['Invoice_Description'] !== "" ? 1 : 0);
 
                         $payor = $r['i']['Company'];
                         if ($payor == '') {
@@ -944,8 +945,10 @@ class Statement {
                         $mattrs = array_merge($tdAttrs);
                         $vattrs = array_merge($tdAttrs, array('class'=>'align-right'));
 
-                        $initialTd = HTMLTable::makeTd($r['i']['Order_Number'] . '-' . $r['i']['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>count($myLines))))
-                        .HTMLTable::makeTd($payor, array_merge($tdAttrs, array('rowspan'=>count($myLines))));
+                        $initialTd = HTMLTable::makeTd($r['i']['Order_Number'] . '-' . $r['i']['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>count($myLines)+$extraLine))
+                        )
+                        .HTMLTable::makeTd($payor, array_merge($tdAttrs, array('rowspan'=>count($myLines)+$extraLine)))
+                        .HTMLTable::makeTd(($r['i']['Invoice_Date'] == '' ? '' : date('M j, Y', strtotime($r['i']['Invoice_Date']))), array_merge($mattrs, array('rowspan'=>count($myLines))));
 
                         $trAttrs = array("class" => "stmtHead");
 
@@ -955,14 +958,24 @@ class Statement {
                         $initialTd = '';
                         $mattrs = $tdAttrs;
                         $vattrs = array_merge($tdAttrs, array('class'=>'align-right'));
+                        $trAttrs = array();
                     }
 
-                    $tr = $initialTd . HTMLTable::makeTd(($r['i']['Invoice_Date'] == '' ? '' : date('M j, Y', strtotime($r['i']['Invoice_Date']))), $mattrs)
+                    $tr = $initialTd
                     .HTMLTable::makeTd($l['Description'], array_merge($mattrs, array('colspan'=>'3')))
                     .HTMLTable::makeTd(($l['Status'] == InvoiceStatus::Unpaid ? 'Pending' : 'Paid'), $mattrs)
                     .HTMLTable::makeTd('$'.number_format($l['Amount'],2), $vattrs);
 
-                    $tbl->addBodyTr($tr, $trAttrs);                }
+                    $tbl->addBodyTr($tr, $trAttrs);
+                    
+                }
+
+                if($r['i']['Invoice_Description'] !== ""){
+                    $trNotes = HTMLTable::makeTd("Invoice Notes:", ['class'=>'align-right'])
+                        .HTMLTable::makeTd($r['i']['Invoice_Description'], array_merge($mattrs, array('colspan'=>'5')));
+
+                    $tbl->addBodyTr($trNotes, ['style'=>'font-size:.8em;']);
+                }
             }
         }
 
