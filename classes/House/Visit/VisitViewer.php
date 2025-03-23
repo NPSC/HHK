@@ -1343,8 +1343,8 @@ where `Deleted` = 0 and `Status` = 'up'
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
-        $spans = array();
-        $stays = array();
+        $spans = [];
+        $stays = [];
         $firstArrival = NULL;
 
 
@@ -1399,7 +1399,7 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
 
-        $visits = array();
+        $visits = [];
 
         $tonight = new \DateTime();
         $tonight->add(new \DateInterval('P1D'));

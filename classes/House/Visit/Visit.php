@@ -398,6 +398,10 @@ class Visit {
 
         $uS = Session::getInstance();
 
+        // used to control sending email to housekeeping.
+        $houseKeepingEmail = $uS->HouseKeepingEmail;
+        $rateGlideDays = 0;
+
         $rtnMessage = '';
 
         if ($resc->isNewResource()) {
@@ -405,18 +409,18 @@ class Visit {
         }
 
         if ($this->visitRS->idResource->getStoredVal() == $resc->getIdResource()) {
-            return "Error - Change Rooms: new room = old room.  ";
+            return "Error - Change Rooms: the new room cannot be the same as the old room.  ";
         }
 
         if (count($this->stays) > $resc->getMaxOccupants()) {
-            return "Error - Change Rooms failed: New room too small, too many occupants.  ";
+            return "Error - Change Rooms failed:The New room is too small, or has too many occupants.  ";
         }
 
         // Change date cannot be earlier than span start date.
         $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
         $spanStartDT->setTime(0,0,0);
         if ($chgDT < $spanStartDT) {
-            return "Error - Change Rooms failed: Change Date is prior to Visit Span start date.  ";
+            return "Error - Change Rooms failed: The Change Date is prior to Visit Span start date.  ";
         }
 
         $expDepDT = new \DateTime($this->getExpectedDeparture());
@@ -448,7 +452,7 @@ class Visit {
 
         // get rooms
         $oldRoom = "";
-        $rooms = array();
+        $rooms = [];
         if ($this->getResource($dbh) != NULL) {
             $oldRoom = $this->resource->getTitle();
             $rooms = $this->resource->getRooms();
@@ -465,8 +469,6 @@ class Visit {
             $rateRs = $pm->getCategoryRateRs(0, $newRateCategory);
             $newIdRoomRate = $rateRs->idRoom_rate->getStoredVal();
         }
-
-        $houseKeepingEmail = $uS->HouseKeepingEmail;
 
         if ($spanStartDT == $roomChangeDate) {
             // Just replace the room
@@ -491,7 +493,7 @@ class Visit {
                         // update current stay
                         $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
 
-                        if (is_null($rm)) {
+                        if ($rm === null) {
                             continue;
                         }
 
@@ -499,9 +501,18 @@ class Visit {
                         $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
                         $stayRS->Updated_By->setNewVal($uname);
 
-                        EditRS::update($dbh, $stayRS, array($stayRS->idStays));
+                        EditRS::update($dbh, $stayRS, [$stayRS->idStays]);
                         $logText = VisitLog::getUpdateText($stayRS);
-                        VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
+                        VisitLog::logStay(
+                            $dbh, 
+                            $this->getIdVisit(), 
+                            $stayRS->Visit_Span->getStoredVal(), 
+                            $stayRS->idRoom->getStoredVal(), 
+                            $stayRS->idStays->getStoredVal(), 
+                            $stayRS->idName->getStoredVal(), 
+                            $this->visitRS->idRegistration->getStoredVal(), 
+                            $logText, "update", 
+                            $uname);
 
                         EditRS::updateStoredVals($stayRS);
                     }
@@ -516,13 +527,30 @@ class Visit {
                 $rateCategory = $newRateCategory;
                 $idRoomRate = $newIdRoomRate;
                 $rtnMessage .= 'Room Rate Changed.  ';
+                $rateGlideDays = $this->getRateGlideCredit();
             } else {
                 $rateCategory = $this->getRateCategory();
                 $idRoomRate = $this->getIdRoomRate();
+
+                // add previous span duration to visit's rate glide credit.
+                $rateGlideDays = $this->getRateGlideCredit() +  $roomChangeDate->diff($spanStartDT, true)->days;
             }
 
             // Change rooms on date given.
-            $this->cutInNewSpan($dbh, $resc, VisitStatus::NewSpan, $rateCategory, $idRoomRate, $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $this->visitRS->idRateAdjust->getStoredVal(), $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
+            $this->cutInNewSpan(
+                $dbh, 
+                $resc, 
+                VisitStatus::NewSpan, 
+                $rateCategory, 
+                $idRoomRate, 
+                $this->getPledgedRate(), 
+                $this->visitRS->Expected_Rate->getStoredVal(), 
+                $this->visitRS->idRateAdjust->getStoredVal(), 
+                $chgDT->format('Y-m-d H:i:s'),
+                intval($this->visitRS->Span->getStoredVal(), 10) + 1,
+                0,
+                $rateGlideDays);
+
             $rtnMessage .= 'Guests Changed Rooms.  ';
 
             // Change date today?
@@ -724,14 +752,13 @@ class Visit {
      * @param integer $stayOnLeave
      * @throws RuntimeException
      */
-    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, $changeDate, $newSpan, $stayOnLeave = 0) {
+    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, $changeDate, $newSpan, $stayOnLeave = 0, $rateGlideDays = 0) {
 
         $uS = Session::getInstance();
-        $glideDays = 0;
-        $this->stays = array();
+        $this->stays = [];
 
         // Load all stays for this span
-        $this->loadStays($dbh, '');  // empty string triggers all stays of all statuses
+        $this->loadStays($dbh, '');  // empty string loads all stays of all statuses
 
         // End old span
         $newSpanStatus = $this->visitRS->Status->getStoredVal();
@@ -763,13 +790,13 @@ class Visit {
         $this->visitRS->idRoom_rate->setNewVal($newRateId);
         $this->visitRS->Expected_Rate->setNewVal($rateAdjust);
         $this->visitRS->idRateAdjust->setNewVal($idRateAdjust);
-        $this->visitRS->Rate_Glide_Credit->setNewVal($glideDays);
+        $this->visitRS->Rate_Glide_Credit->setNewVal($rateGlideDays);
         $this->visitRS->Timestamp->setNewVal(date('Y-m-d H:i:s'));
 
         $idVisit = EditRS::insert($dbh, $this->visitRS);
 
         if ($idVisit == 0) {
-            throw new RuntimeException('[cutinNewSpan()] Visit insert failed.   ');
+            throw new RuntimeException('[cutinNewSpan()] Visit span insert failed.   ');
         }
 
         $logTexti = VisitLog::getInsertText($this->visitRS);
@@ -1271,9 +1298,9 @@ class Visit {
 
         $uS = Session::getInstance();
         $reply = '';
-        $staysToUpdate = array();
+        $staysToUpdate = [];
         $visitActive = FALSE;
-        $stayStartDates = array();
+        $stayStartDates = [];
 
         if ($this->getSpan() == 0) {
             $visitActive = TRUE;
