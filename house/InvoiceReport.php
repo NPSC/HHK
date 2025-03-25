@@ -138,7 +138,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     $g['Departure'] = $r['Departure'];
     $g['hospital'] = $hospital;
     $g['Balance'] = number_format($r['Balance'], 2);
-    $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], ['id' => 'divInvNotes' . $r['Invoice_Number'], 'style' => 'max-width:190px;']);
+    $g['Notes'] = HTMLContainer::generateMarkup('div', $r['Notes'], ['id' => 'divInvNotes' . $r['Invoice_Number'], 'style' => 'max-width:190px; white-space:normal;']);
 
 //add invoice notes to payment report
     if ($isLocal) {

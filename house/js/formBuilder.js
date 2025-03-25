@@ -23,6 +23,11 @@
             fieldOptions: {},
             demogs:{},
             fields: [
+				{
+					"type": "select",
+					"label":"Select",
+					"className": "form-select"
+				  },
     		{
     			"type": "select",
     			"label": "Referral Source",
@@ -807,7 +812,8 @@
       			'button',
       			'file',
       			'hidden',
-      			'number'
+      			'number',
+				'select'
     		],
     		actionButtons: [
     		{

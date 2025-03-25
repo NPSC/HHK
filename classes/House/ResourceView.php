@@ -1167,8 +1167,10 @@ ORDER BY $orderBy;");
             $fixedRows['Group_Title'] = $r['Group_Title'];
             $fixedRows['Room'] = $r['Title'];
             $fixedRows['Status'] = $stat;
-            $fixedRows['StatusColor'] = $statColor;
-            $fixedRows['Action'] = $action;
+            if($printOnly == false){
+                $fixedRows['StatusColor'] = $statColor;
+                $fixedRows['Action'] = $action;
+            }
             $fixedRows['Occupant'] = $r['Name'];
             $fixedRows['numGuests'] = $r['numGuests'];
             $fixedRows['Checked_In'] = $arrival;

@@ -141,15 +141,17 @@ function logoutTimer(){
 					expiresIn = data.ExpiresIn;
 					intervalID = setInterval(countdown, 1000);
 					$dialog.dialog('open');
-					timerID = setTimeout(function(){location.href = 'index.php?log=lo';}, data.ExpiresIn*1000);
+					timerID = setTimeout(function(){location.reload();}, (data.ExpiresIn+1)*1000);
 				}
 			}
 		});
 	}
 
 	function countdown(){
-		expiresIn--;
-		$("#expiresIn").text(expiresIn);
+		if(expiresIn > 0){
+			expiresIn--;
+			$("#expiresIn").text(expiresIn);
+		}
 	}
 
 	$dialog = $('<div id="logoutTimer" style="display:none; text-align: center;"><h3>You will be logged out in</h3><h2><span id="expiresIn"></span> Seconds</h2></div>');
