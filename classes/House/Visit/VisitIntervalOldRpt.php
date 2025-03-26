@@ -815,6 +815,13 @@ where
         $totalTaxCharged = 0;
         $totalTaxPaid = 0;
         $totalTaxPending = 0;
+        $totalEachTaxPaid = [];
+        $totalEachTaxCharged = [];
+
+        foreach ($this->eachTaxPaid as $k => $v) {
+            $totalEachTaxPaid[$k] = 0;
+            $totalEachTaxCharged[$k] = 0;
+        }
 
         $totalPaid = 0;
         $totalHousePaid = 0;
@@ -829,7 +836,7 @@ where
         $totalGuestNights = 0;
         $totalDays = 0;
 
-        $totalCatNites[] = array();
+        $totalCatNites[] = [];
 
         foreach ($categories as $c) {
             $totalCatNites[$c[0]] = 0;
@@ -869,6 +876,12 @@ where
                     $totalAddnlTax += $visit['adjchtx'];
                     $totalTaxPaid += $visit['taxpd'];
                     $totalTaxPending += $visit['taxpndg'];
+
+                    // Individual tax totals
+                    foreach ($this->eachTaxPaid as $k => $v) {
+                        $totalEachTaxPaid[$k] += isset($visit["paid_$k"]) ? $visit["paid_$k"] : 0;
+                        $totalEachTaxCharged[$k] += isset($visit["chg_$k"]) ? $visit["chg_$k"] : 0;
+                    }
 
                     if ($visit['nit'] > $uS->VisitFeeDelayDays) {
                         $totalVisitFee += $visit['vfa'];
@@ -1148,6 +1161,12 @@ where
             $totalTaxPaid += $visit['taxpd'];
             $totalTaxPending += $visit['taxpndg'];
 
+            // Individual tax totals
+            foreach ($this->eachTaxPaid as $k => $v) {
+                $totalEachTaxPaid[$k] += isset($visit["paid_$k"]) ? $visit["paid_$k"] : 0;
+                $totalEachTaxCharged[$k] += isset($visit["chg_$k"]) ? $visit["chg_$k"] : 0;
+            }
+
             if ($visit['nit'] > $uS->VisitFeeDelayDays) {
                 $totalVisitFee += $visit['vfa'];
             }
@@ -1295,95 +1314,46 @@ where
 
                 $entry = '';
 
-                switch ($f[1]) {
-                    case 'nights':
-                        $entry = $totalNights;
-                        break;
+                $entry = match ($f[1]) {
+                    'nights' => $totalNights,
+                    'days' => $totalDays,
+                    'gnights' => $totalGuestNights,
+                    'lodg' => '$' . number_format($totalLodgingCharge, 2),
+                    'visitFee' => '$' . number_format($totalVisitFee, 2),
+                    'adjch' => '$' . number_format($totalAddnlCharged, 2),
+                    'adjchtx' => '$' . number_format($totalAddnlTax, 2),
+                    'taxcgd' => '$' . number_format($totalTaxCharged, 2),
+                    'taxpd' => '$' . number_format($totalTaxPaid, 2),
+                    'taxpndg' => '$' . number_format($totalTaxPending, 2),
+                    'totch' => '$' . number_format($totalCharged, 2),
+                    'gpaid' => '$' . number_format($totalGuestPaid, 2),
+                    'thdpaid' => '$' . number_format($totalthrdPaid, 2),
+                    'hpaid' => '$' . number_format($totalHousePaid, 2),
+                    'totpd' => '$' . number_format($totalPaid, 2),
+                    'unpaid' => '$' . number_format($totalUnpaid, 2),
+                    'pndg' => '$' . number_format($totalAmtPending, 2),
+                    'sub' => '$' . number_format($totalSubsidy, 2),
+                    'rateAdj' => ' ',
+                    'meanRate' => '$' . number_format($avDailyFee, 2),
+                    'meanGstRate' => '$' . number_format($avGuestFee, 2),
+                    'donpd' => '$' . number_format($totalDonationPaid, 2),
+                    default => '',
+                };
 
-                    case 'days':
-                        $entry = $totalDays;
-                        break;
-
-                    case 'gnights':
-                        $entry = $totalGuestNights;
-                        break;
-
-                    case 'lodg':
-                        $entry = '$' . number_format($totalLodgingCharge, 2);
-                        break;
-
-                    case 'visitFee':
-                        $entry = '$' . number_format($totalVisitFee, 2);
-                        break;
-
-                    case 'adjch':
-                        $entry = '$' . number_format($totalAddnlCharged, 2);
-                        break;
-
-                    case 'adjchtx':
-                        $entry = '$' . number_format($totalAddnlTax, 2);
-                        break;
-
-                    case 'taxcgd':
-                        $entry = '$' . number_format($totalTaxCharged, 2);
-                        break;
-
-                    case 'taxpd':
-                        $entry = '$' . number_format($totalTaxPaid, 2);
-                        break;
-
-                    case 'taxpndg':
-                        $entry = '$' . number_format($totalTaxPending, 2);
-                        break;
-
-                    case 'totch':
-                        $entry = '$' . number_format($totalCharged, 2);
-                        break;
-
-                    case 'gpaid':
-                        $entry = '$' . number_format($totalGuestPaid, 2);
-                        break;
-
-                    case 'thdpaid':
-                        $entry = '$' . number_format($totalthrdPaid, 2);
-                        break;
-
-                    case 'hpaid':
-                        $entry = '$' . number_format($totalHousePaid, 2);
-                        break;
-
-                    case 'totpd':
-                        $entry = '$' . number_format($totalPaid, 2);
-                        break;
-
-                    case 'unpaid':
-                        $entry = '$' . number_format($totalUnpaid, 2);
-                        break;
-
-                    case 'pndg':
-                        $entry = '$' . number_format($totalAmtPending, 2);
-                        break;
-
-                    case 'sub':
-                        $entry = '$' . number_format($totalSubsidy, 2);
-                        break;
-
-                    case 'rateAdj':
-                        $entry = ' ';
-                        break;
-
-                    case 'meanRate':
-                        $entry = '$' . number_format($avDailyFee, 2);
-                        break;
-
-                    case 'meanGstRate':
-                        $entry = '$' . number_format($avGuestFee, 2);
-                        break;
-
-                    case 'donpd':
-                        $entry = '$' . number_format($totalDonationPaid, 2);
-                        break;
+                // Individual tax totals
+                if ($entry == '') {
+                    foreach ($this->eachTaxPaid as $k => $v) {
+                        switch ($f[1]) {
+                            case "paid_$k":
+                                $entry = '$' . number_format($totalEachTaxPaid[$k], 2);
+                                break;
+                            case "chg_$k":
+                                $entry = '$' . number_format($totalEachTaxCharged[$k], 2);
+                                break;
+                        };
+                    }
                 }
+
 
                 if ($entry != '') {
                     $entry = HTMLContainer::generateMarkup('p', $entry, ['style' => 'font-weight:bold;text-decoration: underline;']);
