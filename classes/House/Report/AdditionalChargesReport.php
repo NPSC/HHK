@@ -32,10 +32,8 @@ use HHK\TableLog\HouseLog;
 
 class AdditionalChargesReport extends AbstractReport implements ReportInterface {
 
-    public array $diags;
     public array $demogs;
     public array $additionalCharges;
-    public array $discounts;
     public array $selectedAdditionalCharges = [];
     protected array $statsArray = [];
 
@@ -323,6 +321,10 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
 
         $mkup .= HTMLContainer::generateMarkup("p", 'Biling Agents: ' . $this->filter->getSelectedBillingAgentsString());
+
+        $mkup .= HTMLContainer::generateMarkup("p", 'Additional Charges/Discounts: ' . $this->getSelectedAdditionalChargesString());
+
+        $mkup .= HTMLContainer::generateMarkup("p", 'Diagnoses: ' . $this->filter->getSelectedDiagnosesString());
         
         if(isset($stats["TotalPatientsServed"])){
             $mkup .= HTMLContainer::generateMarkup("p", "Unique ".Labels::getString("MemberType", "patient", "Patient")."s Served: " . $stats["TotalPatientsServed"]);
@@ -357,6 +359,21 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
 
         return $mkup;
 
+    }
+
+    public function getSelectedAdditionalChargesString(){
+        $chargeTitles = "";
+        foreach ($this->selectedAdditionalCharges as $h) {
+            if (isset($this->additionalCharges[$h])) {
+                $chargeTitles .= $this->additionalCharges[$h][1] . ', ';
+            }
+        }
+        if ($chargeTitles != '') {
+            $h = trim($chargeTitles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
     }
 
     public function generateMarkup(string $outputType = ""){

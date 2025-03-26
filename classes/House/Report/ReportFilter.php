@@ -907,6 +907,22 @@ $ckdate";
         }
     }
 
+    public function getSelectedDiagnosesString(){
+        $diagnosesList = $this->getDiagnoses();
+        $diagnosesTitles = "";
+        foreach ($this->getSelectedDiagnoses() as $h) {
+            if (isset($diagnosesList[$h])) {
+                $diagnosesTitles .= $diagnosesList[$h][1] . ', ';
+            }
+        }
+        if ($diagnosesTitles != '') {
+            $h = trim($diagnosesTitles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
+    }
+
     /**
      * Summary of getSelectedResourceGroups
      * @return array|mixed
