@@ -238,7 +238,14 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     $cFields[] = array("Lodging Charge", 'lodg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
 
     if ($useTaxes) {
-        $cFields[] = array('Tax Charged', 'taxcgd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+        $tFields = ['taxcgd'];
+        $tTitles = ['Tax Charged'];
+
+        foreach ($eachTaxPaid as $k => $t) {
+            $tTitles[] = $t['desc'] . ' Charged';
+            $tFields[] = "chg_$k";
+        }
+        $cFields[] = [$tTitles, $tFields, $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', ['style' => 'text-align:right;']];
     }
 
     $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest') . " Paid", 'gpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
@@ -247,11 +254,16 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     $cFields[] = array("Lodging Paid", 'totpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
 
     if ($useTaxes) {
-        $cFields[] = array('Tax Paid', 'taxpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+
+        $tFields = ['taxpd'];
+        $tTitles = ['Tax Paid'];
 
         foreach ($eachTaxPaid as $k => $t) {
-            $cFields[] = [$t['desc'] . ' Paid', "paid_$k", $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', ['style' => 'text-align:right;']];
+            $tTitles[] = $t['desc'] . ' Paid';
+            $tFields[] = "paid_$k";
         }
+
+        $cFields[] = [$tTitles, $tFields, $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', ['style' => 'text-align:right;']];
     }
 
     $cFields[] = array("Unpaid", 'unpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
@@ -337,7 +349,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
 
     if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
 
-        $visitInterval = new VisitIntervalOldRpt();
+        $visitInterval = new VisitIntervalOldRpt($eachTaxPaid);
 
         $tblArray = $visitInterval->doReport($dbh, $colSelector, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $local, $uS->VisitFee, $statsOnly, $rescGroups[$filter->getSelectedResourceGroups()], $eachTaxSQL);
 

@@ -28,6 +28,14 @@ use HHK\SysConst\{
 use HHK\TableLog\HouseLog;
 
 class VisitIntervalOldRpt {
+
+    protected $eachTaxPaid;
+
+    public function __construct($eachTaxPaid)
+    {
+        $this->eachTaxPaid = $eachTaxPaid;
+    }
+
     /**
      * Summary of getGuestNights - returns total of main guest nights plus any additional guest nights
      * @param \PDO $dbh
@@ -562,6 +570,10 @@ where
         $r['taxpd'] = ($visit['taxpd'] == 0 ? '' : number_format($visit['taxpd'], 2));
         $r['taxpndg'] = ($visit['taxpndg'] == 0 ? '' : number_format($visit['taxpndg'], 2));
 
+        foreach ($this->eachTaxPaid as $k => $v) {
+            $r["paid_$k"] = $visit["paid_$k"] == 0 ? '' : number_format($visit["paid_$k"], 2);
+            $r["chg_$k"] = $visit["chg_$k"] == 0 ? '' : number_format($visit["chg_$k"], 2);
+        }
 
         $visitFeePaid = '';
 
@@ -1022,6 +1034,11 @@ where
                     'rtc' => 0  // Rate Category counter
                 ];
 
+                foreach ($this->eachTaxPaid as $k => $v) {
+                    $visit["paid_$k"] = $r["paid_$k"];
+                    $visit["chg_$k"] = 0;
+                }
+
             }
 
             // Count rate changes
@@ -1085,6 +1102,23 @@ where
                 $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
                 $visit['chg'] += $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
                 $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
+
+                $taxedItems = $vat->getCurrentTaxingItems($r['idVisit'], $r['Visit_Age'], ItemId::Lodging);
+                foreach ($this->eachTaxPaid as $k => $v) {
+
+                    foreach ($taxedItems as $ti) {
+
+                        switch ($ti->getIdTaxingItem()) {
+                            case $k:
+                                $visit["chg_$k"] = round($visit['chg'] * $v['perc'] / 100, 2);
+                                break;
+                            default:
+                                $visit["chg_$k"] = 0;
+                                break;
+                        }
+                    }
+
+                }
 
                 $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
                 $fullCharge = $priceModel->amountCalculator($days, 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays);
