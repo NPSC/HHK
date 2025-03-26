@@ -1103,22 +1103,18 @@ where
                 $visit['chg'] += $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
                 $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
 
-                $taxedItems = $vat->getCurrentTaxingItems($r['idVisit'], $r['Visit_Age'], ItemId::Lodging);
+                // Zero the individual taxes
                 foreach ($this->eachTaxPaid as $k => $v) {
-
-                    foreach ($taxedItems as $ti) {
-
-                        switch ($ti->getIdTaxingItem()) {
-                            case $k:
-                                $visit["chg_$k"] = round($visit['chg'] * $v['perc'] / 100, 2);
-                                break;
-                            default:
-                                $visit["chg_$k"] = 0;
-                                break;
-                        }
-                    }
-
+                    $visit["chg_$k"] = 0;
                 }
+
+                // Get the (current) taxing items for this visit
+                $taxedItems = $vat->getCurrentTaxingItems($r['idVisit'], $r['Visit_Age'], ItemId::Lodging);
+
+                foreach ($taxedItems as $ti) {
+                    $visit["chg_" . $ti->getIdTaxingItem()] = round($visit['chg'] * $ti->getPercentTax() / 100, 2);
+                }
+
 
                 $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
                 $fullCharge = $priceModel->amountCalculator($days, 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays);
