@@ -1309,10 +1309,10 @@ where
 
             // Remove 0-total individual taxes
             foreach ($this->eachTaxPaid as $k => $v) {
-                if ($totalEachTaxPaid[$k] == 0) {
+                if (round($totalEachTaxPaid[$k], 2) == 0) {
                     unset($totalEachTaxPaid[$k]);
                 }
-                if ($totalEachTaxCharged[$k] == 0) {
+                if (round($totalEachTaxCharged[$k], 2) == 0) {
                     unset($totalEachTaxCharged[$k]);
                 }
             }
@@ -1354,10 +1354,18 @@ where
                     foreach ($this->eachTaxPaid as $k => $v) {
                         switch ($f[1]) {
                             case "paid_$k":
-                                $entry = '$' . number_format($totalEachTaxPaid[$k], 2);
+                                if (isset($totalEachTaxPaid[$k])) {
+                                    $entry = '$' . number_format($totalEachTaxPaid[$k], 2);
+                                } else {
+                                    continue 3;
+                                }
                                 break;
                             case "chg_$k":
-                                $entry = '$' . number_format($totalEachTaxCharged[$k], 2);
+                                if (isset($totalEachTaxCharged[$k])) {
+                                    $entry = '$' . number_format($totalEachTaxCharged[$k], 2);
+                                } else {
+                                    continue 3;
+                                }
                                 break;
                             default:
                         };

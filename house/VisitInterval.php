@@ -242,7 +242,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
         $tTitles = ['Lodging Tax Charged'];
 
         foreach ($eachTaxPaid as $k => $t) {
-            $tTitles[] = number_format($t['perc'], 3) . ' Tax Charged';
+            $tTitles[] = rtrim(number_format($t['perc'], 3), "0.") . '% Tax Charged';
             $tFields[] = "chg_$k";
         }
 
@@ -260,7 +260,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
         $tTitles = ['Lodging Tax Paid'];
 
         foreach ($eachTaxPaid as $k => $t) {
-            $tTitles[] = number_format($t['perc'], 3) . ' Tax Paid';
+            $tTitles[] = rtrim(number_format($t['perc'], 3), "0.") . '% Tax Paid';
             $tFields[] = "paid_$k";
         }
 
