@@ -238,16 +238,13 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     $cFields[] = array("Lodging Charge", 'lodg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
 
     if ($useTaxes) {
-        $tFields = [];
-        $tTitles = [];
+        $tFields = ['taxcgd'];
+        $tTitles = ['Lodging Tax Charged'];
 
         foreach ($eachTaxPaid as $k => $t) {
-            $tTitles[] = $t['desc'] . ' Charged';
+            $tTitles[] = number_format($t['perc'], 3) . ' Tax Charged';
             $tFields[] = "chg_$k";
         }
-
-        $tFields[] = 'taxcgd';
-        $tTitles[] = 'Tax Charged';
 
         $cFields[] = [$tTitles, $tFields, $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', ['style' => 'text-align:right;']];
     }
@@ -259,16 +256,13 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
 
     if ($useTaxes) {
 
-        $tFields = [];
-        $tTitles = [];
+        $tFields = ['taxpd'];
+        $tTitles = ['Lodging Tax Paid'];
 
         foreach ($eachTaxPaid as $k => $t) {
-            $tTitles[] = $t['desc'] . ' Paid';
+            $tTitles[] = number_format($t['perc'], 3) . ' Tax Paid';
             $tFields[] = "paid_$k";
         }
-
-        $tFields[] = 'taxpd';
-        $tTitles[] = 'Tax Paid';
 
         $cFields[] = [$tTitles, $tFields, $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', ['style' => 'text-align:right;']];
     }

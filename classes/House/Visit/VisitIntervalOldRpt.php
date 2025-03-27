@@ -1307,6 +1307,15 @@ where
                 $avGuestFee = $totalCharged / ($totalNights + $totalGuestNights); // $totalGuestNights is actually total additional nights: total guest nights = $toalNights + $totalGuestNights
             }
 
+            // Remove 0-total individual taxes
+            foreach ($this->eachTaxPaid as $k => $v) {
+                if ($totalEachTaxPaid[$k] == 0) {
+                    unset($totalEachTaxPaid[$k]);
+                }
+                if ($totalEachTaxCharged[$k] == 0) {
+                    unset($totalEachTaxCharged[$k]);
+                }
+            }
 
             // totals footer
             $tr = '';
@@ -1350,6 +1359,7 @@ where
                             case "chg_$k":
                                 $entry = '$' . number_format($totalEachTaxCharged[$k], 2);
                                 break;
+                            default:
                         };
                     }
                 }
