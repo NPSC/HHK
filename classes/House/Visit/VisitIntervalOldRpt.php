@@ -468,22 +468,23 @@ where
 
 
     /**
-     * Prettify a row.
-     *
-     * @param array $r  db record row
-     * @param array $visit
-     * @param float $unpaid
+     * Summary of doMarkup - Pretify a row
+     * @param mixed $fltrdFields
+     * @param mixed $r
+     * @param mixed $visit
+     * @param mixed $paid
+     * @param mixed $unpaid
      * @param \DateTimeInterface $departureDT
-     * @param HTMLTable $tbl
-     * @param boolean $local  Flag for Excel output
-     * @param ExcelHelper $sml
-     * @param object $reportRows  PHPExecl object
-     * @param array $rateTitles  Room rates
-     * @param Session $uS
-     * @param bool $visitFee  Flag to show/hide visit fees
-
+     * @param mixed $matrix
+     * @param mixed $local
+     * @param ExcelHelper|null $sml
+     * @param mixed $header
+     * @param mixed $rateTitles
+     * @param mixed $uS
+     * @param mixed $visitFee
+     * @return void
      */
-    protected function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $departureDT, HTMLTable &$tbl, $local, &$sml, $header, &$reportRows, $rateTitles, $uS, $visitFee = FALSE)
+    protected function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $departureDT, &$matrix, $local, ExcelHelper|null &$sml, $header, $rateTitles, $uS, $visitFee = FALSE)
     {
 
         $arrivalDT = new \DateTime($r['Arrival_Date']);
@@ -566,9 +567,9 @@ where
         $r['thdpaid'] = ($visit['thdpd'] == 0 ? '' : number_format($visit['thdpd'], 2));
         $r['donpd'] = ($visit['donpd'] == 0 ? '' : number_format($visit['donpd'], 2));
 
-        $r['taxcgd'] = ($visit['taxcgd'] == 0 ? '' : number_format($visit['taxcgd'], 2));
-        $r['taxpd'] = ($visit['taxpd'] == 0 ? '' : number_format($visit['taxpd'], 2));
-        $r['taxpndg'] = ($visit['taxpndg'] == 0 ? '' : number_format($visit['taxpndg'], 2));
+        $r['taxcgd'] = $visit['taxcgd'] == 0 ? '' : number_format($visit['taxcgd'], 2);
+        $r['taxpd'] = $visit['taxpd'] == 0 ? '' : number_format($visit['taxpd'], 2);
+        $r['taxpndg'] = $visit['taxpndg'] == 0 ? '' : number_format($visit['taxpndg'], 2);
 
         foreach ($this->eachTaxPaid as $k => $v) {
             $r["paid_$k"] = $visit["paid_$k"] == 0 ? '' : number_format($visit["paid_$k"], 2);
@@ -617,9 +618,9 @@ where
 
         if ($local) {
 
-            $r['idVisit'] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class' => 'hhk-viewVisit', 'data-gid' => $r['idPrimaryGuest'], 'data-vid' => $r['idVisit'], 'data-span' => $r['Span'], 'style' => 'display:inline-table;'));
-            $r['idPrimaryGuest'] = HTMLContainer::generateMarkup('a', $r['Name_Last'] . ', ' . $r['Name_First'], array('href' => 'GuestEdit.php?id=' . $r['idPrimaryGuest'] . '&psg=' . $r['idPsg']));
-            $r['idPatient'] = HTMLContainer::generateMarkup('a', $r['Patient_Last'] . ', ' . $r['Patient_First'], array('href' => 'GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']));
+            $r['idVisit'] = HTMLContainer::generateMarkup('div', $r['idVisit'], ['class' => 'hhk-viewVisit', 'data-gid' => $r['idPrimaryGuest'], 'data-vid' => $r['idVisit'], 'data-span' => $r['Span'], 'style' => 'display:inline-table;']);
+            $r['idPrimaryGuest'] = HTMLContainer::generateMarkup('a', $r['Name_Last'] . ', ' . $r['Name_First'], ['href' => 'GuestEdit.php?id=' . $r['idPrimaryGuest'] . '&psg=' . $r['idPsg']]);
+            $r['idPatient'] = HTMLContainer::generateMarkup('a', $r['Patient_Last'] . ', ' . $r['Patient_First'], ['href' => 'GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']]);
             $r['Arrival'] = $arrivalDT->format('c');
             $r['Departure'] = $departureDT->format('c');
 
@@ -655,12 +656,13 @@ where
                 $r['Insurance'] = $insInfoIcon . $r['Insurance'];
             }
 
-            $tr = '';
+            //$tr = '';
             foreach ($fltrdFields as $f) {
-                $tr .= HTMLTable::makeTd($r[$f[1]], $f[6]);
+                $matrix[$f[1]][] = [$r[$f[1]], $f[6]];
+                //$tr .= HTMLTable::makeTd($r[$f[1]], $f[6]);
             }
 
-            $tbl->addBodyTr($tr);
+            //$tbl->addBodyTr($tr);
 
         } else {
 
@@ -678,7 +680,7 @@ where
             }
 
             $n = 0;
-            $flds = array();
+            $flds = [];
 
             foreach ($fltrdFields as $f) {
 
@@ -700,16 +702,19 @@ where
     }
 
     /**
-     *
+     * Summary of doReport
      * @param \PDO $dbh
-     * @param string $start
-     * @param string $end
-     * @param string $whHosp  SQL fragment
-     * @param string $whAssoc  SQL fragment
-     * @param array $aList
-     * @param boolean $local
-     * @param boolean $visitFee  Flag to show/hide visit fees
-     * @return array|void
+     * @param \HHK\ColumnSelectors $colSelector
+     * @param mixed $start
+     * @param mixed $end
+     * @param mixed $whHosp
+     * @param mixed $whAssoc
+     * @param mixed $local
+     * @param mixed $visitFee
+     * @param mixed $statsOnly
+     * @param mixed $rescGroup
+     * @param mixed $eachTaxSql
+     * @return null | array{data: string, stats: string}
      */
     public function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $local, $visitFee, $statsOnly, $rescGroup, $eachTaxSql)
     {
@@ -737,7 +742,7 @@ where
 
         }
 
-
+        $matrix = [];
         $tbl = new HTMLTable();
         $reportRows = 0;
 
@@ -747,13 +752,6 @@ where
         $header = [];
 
         if ($local) {
-
-            $th = '';
-
-            foreach ($fltrdTitles as $t) {
-                $th .= HTMLTable::makeTh($t);
-            }
-            $tbl->addHeaderTr($th);
 
         } else {
 
@@ -987,7 +985,7 @@ where
 
                     if (!$statsOnly) {
                         try {
-                            $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
+                            $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $writer, $header, $rateTitles, $uS, $visitFee);
                         } catch (\Exception $e) {
                             if (isset($writer)) {
                                 die();
@@ -1271,17 +1269,33 @@ where
 
             if (!$statsOnly) {
                 try {
-                    $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
+                    $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $writer, $header, $rateTitles, $uS, $visitFee);
                 } catch (\Exception $e) {
                     if (isset($writer)) {
                         die();
                     }
                 }
             }
-        }
+        } // End of last visit
 
 
+        //
         // Finalize and print.
+        //
+
+        // Remove 0-total individual taxes
+        foreach ($this->eachTaxPaid as $k => $v) {
+            if (round($totalEachTaxPaid[$k], 2) == 0) {
+                unset($totalEachTaxPaid[$k]);
+                unset($matrix["paid_$k"]);
+            }
+            if (round($totalEachTaxCharged[$k], 2) == 0) {
+                unset($totalEachTaxCharged[$k]);
+                unset($matrix["chg_$k"]);
+            }
+        }
+        
+        
         if ($local) {
 
             $avDailyFee = 0;
@@ -1307,15 +1321,31 @@ where
                 $avGuestFee = $totalCharged / ($totalNights + $totalGuestNights); // $totalGuestNights is actually total additional nights: total guest nights = $toalNights + $totalGuestNights
             }
 
-            // Remove 0-total individual taxes
-            foreach ($this->eachTaxPaid as $k => $v) {
-                if (round($totalEachTaxPaid[$k], 2) == 0) {
-                    unset($totalEachTaxPaid[$k]);
-                }
-                if (round($totalEachTaxCharged[$k], 2) == 0) {
-                    unset($totalEachTaxCharged[$k]);
-                }
+            // Header
+            $th = '';
+            
+            foreach ($fltrdTitles as $t) {
+                $th .= HTMLTable::makeTh($t);
             }
+
+            $tbl->addHeaderTr($th);
+
+            // report rows
+            foreach ($matrix as $k => $v) {
+                $tr = '';
+
+                foreach ($v as $r) {
+//                    if (isset($r[0]) && $r[0] != '') {
+                        $tr .= HTMLTable::makeTd($r[0], $r[1]);
+ //                   } else {
+ //                       $tr .= HTMLTable::makeTd($r[0]);
+//                    }
+                }
+
+                $tbl->addBodyTr($tr);
+
+            }
+
 
             // totals footer
             $tr = '';
@@ -1350,27 +1380,26 @@ where
                 };
 
                 // Individual tax totals
-                if ($entry == '') {
-                    foreach ($this->eachTaxPaid as $k => $v) {
-                        switch ($f[1]) {
-                            case "paid_$k":
-                                if (isset($totalEachTaxPaid[$k])) {
-                                    $entry = '$' . number_format($totalEachTaxPaid[$k], 2);
-                                } else {
-                                    continue 3;
-                                }
-                                break;
-                            case "chg_$k":
-                                if (isset($totalEachTaxCharged[$k])) {
-                                    $entry = '$' . number_format($totalEachTaxCharged[$k], 2);
-                                } else {
-                                    continue 3;
-                                }
-                                break;
-                            default:
-                        };
-                    }
+                if (isset($totalEachTaxPaid[$f[1]])) {
+                    $entry = '$' . number_format($totalEachTaxPaid[$f[1]], 2);
                 }
+                if (isset($totalEachTaxCharged[$f[1]])) {
+                    $entry = '$' . number_format($totalEachTaxCharged[$f[1]], 2);
+                }
+                // if ($entry == '') {
+                //     foreach ($this->eachTaxPaid as $k => $v) {
+                //         switch ($f[1]) {
+                //             case "paid_$k":
+                //                 break;
+                //             case "chg_$k":
+                //                 if (isset($totalEachTaxCharged[$k])) {
+                //                     $entry = '$' . number_format($totalEachTaxCharged[$k], 2);
+                //                 }
+                //                 break;
+                //             default:
+                //         };
+                //     }
+                // }
 
 
                 if ($entry != '') {
