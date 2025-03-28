@@ -477,14 +477,12 @@ where
      * @param \DateTimeInterface $departureDT
      * @param mixed $matrix
      * @param mixed $local
-     * @param ExcelHelper|null $sml
-     * @param mixed $header
      * @param mixed $rateTitles
      * @param mixed $uS
      * @param mixed $visitFee
      * @return void
      */
-    protected function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $departureDT, &$matrix, $local, ExcelHelper|null &$sml, $header, $rateTitles, $uS, $visitFee = FALSE)
+    protected function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $departureDT, &$matrix, $local, $rateTitles, $uS, $visitFee = FALSE)
     {
 
         $arrivalDT = new \DateTime($r['Arrival_Date']);
@@ -656,13 +654,11 @@ where
                 $r['Insurance'] = $insInfoIcon . $r['Insurance'];
             }
 
-            //$tr = '';
+            // add to the matrix for the report
             foreach ($fltrdFields as $f) {
                 $matrix[$f[1]][] = [$r[$f[1]], $f[6]];
-                //$tr .= HTMLTable::makeTd($r[$f[1]], $f[6]);
             }
 
-            //$tbl->addBodyTr($tr);
 
         } else {
 
@@ -679,25 +675,19 @@ where
                 $r['pBirth'] = '';
             }
 
-            $n = 0;
-            $flds = [];
-
             foreach ($fltrdFields as $f) {
 
                 //$flds[$n++] = array('type' => $f[4], 'value' => $r[$f[1]], 'style'=>$f[5]);
                 if ($r[$f[1]] != '' && $f[5] != '') {
                     if ($r[$f[1]] == "") {
-                        $flds[$n++] = "0.00";
+                        $matrix[$f[1]][] = "0.00";
                     } else {
-                        $flds[$n++] = strval(str_replace(',', '', $r[$f[1]]));
+                        $matrix[$f[1]][] = strval(str_replace(',', '', $r[$f[1]]));
                     }
                 } else {
-                    $flds[$n++] = html_entity_decode(strval($r[$f[1]]), ENT_QUOTES, 'UTF-8');
+                    $matrix[$f[1]][] = html_entity_decode(strval($r[$f[1]]), ENT_QUOTES, 'UTF-8');
                 }
             }
-
-            $row = ExcelHelper::convertStrings($header, $flds);
-            $sml->writeSheetRow('Sheet1', $row);
         }
     }
 
@@ -743,61 +733,10 @@ where
         }
 
         $matrix = [];
-        $tbl = new HTMLTable();
-        $reportRows = 0;
-
 
         $fltrdTitles = $colSelector->getFilteredTitles();
         $fltrdFields = $colSelector->getFilteredFields();
-        $header = [];
 
-        if ($local) {
-
-        } else {
-
-            // Setup for excel output
-            ini_set('max_execution_time', "60");
-            $reportRows = 1;
-
-            $fileName = 'VisitReport';
-            $writer = new ExcelHelper($fileName);
-            $types = [
-                's' => 'string',
-                'n' => 'integer',
-                'money' => 'money', // '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'
-                'date' => 'MM/DD/YYYY',
-            ];
-
-
-            //build header
-            $colWidths = [];
-
-            foreach ($fltrdFields as $field) {
-                if ($field[5] != "" && $field[5] == '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)') { //if format is money
-                    $header[$field[0]] = $types['s'];
-                    $colWidths[] = 15;
-                } elseif (isset($field[7]) && $field[7] == "date") { //if format is date
-                    $header[$field[0]] = $types['date'];
-                    $colWidths[] = 15;
-                } elseif ($field[4] == 'n') { //if format is integer
-                    $header[$field[0]] = 'integer';
-                    $colWidths[] = 10;
-                } else { //otherwise set format as string
-                    $header[$field[0]] = 'string';
-                    $colWidths[] = 20;
-                }
-            }
-
-            try {
-                $hdrStyle = $writer->getHdrStyle($colWidths);
-                $writer->writeSheetHeader('Sheet1', $header, $hdrStyle);
-            } catch (\Exception $e) {
-                $writer->download();
-            }
-
-            $reportRows++;
-
-        }
 
         $curVisit = 0;
         $curRoom = 0;
@@ -985,7 +924,7 @@ where
 
                     if (!$statsOnly) {
                         try {
-                            $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $writer, $header, $rateTitles, $uS, $visitFee);
+                            $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $rateTitles, $uS, $visitFee);
                         } catch (\Exception $e) {
                             if (isset($writer)) {
                                 die();
@@ -1269,7 +1208,7 @@ where
 
             if (!$statsOnly) {
                 try {
-                    $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $writer, $header, $rateTitles, $uS, $visitFee);
+                    $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $rateTitles, $uS, $visitFee);
                 } catch (\Exception $e) {
                     if (isset($writer)) {
                         die();
@@ -1322,28 +1261,28 @@ where
             }
 
             // Header
-            $th = '';
+            $tr = '';
             
             foreach ($fltrdTitles as $t) {
-                $th .= HTMLTable::makeTh($t);
+                $tr .= HTMLTable::makeTh($t);
             }
 
-            $tbl->addHeaderTr($th);
+            $tbl = new HTMLTable();
+            $tbl->addHeaderTr($tr);
 
-            // report rows
-            foreach ($matrix as $k => $v) {
+
+            // Body
+            $rowcount = count($matrix['idVisit']);
+            $counter = 0;
+
+            // unwind the matrix into a table
+            while($counter < $rowcount) {
                 $tr = '';
-
-                foreach ($v as $r) {
-//                    if (isset($r[0]) && $r[0] != '') {
-                        $tr .= HTMLTable::makeTd($r[0], $r[1]);
- //                   } else {
- //                       $tr .= HTMLTable::makeTd($r[0]);
-//                    }
+                foreach ($matrix as $m) {
+                    $tr .= HTMLTable::makeTd($m[$counter][0], $m[$counter][1]);
                 }
-
                 $tbl->addBodyTr($tr);
-
+                $counter++;
             }
 
 
@@ -1386,21 +1325,6 @@ where
                 if (isset($totalEachTaxCharged[$f[1]])) {
                     $entry = '$' . number_format($totalEachTaxCharged[$f[1]], 2);
                 }
-                // if ($entry == '') {
-                //     foreach ($this->eachTaxPaid as $k => $v) {
-                //         switch ($f[1]) {
-                //             case "paid_$k":
-                //                 break;
-                //             case "chg_$k":
-                //                 if (isset($totalEachTaxCharged[$k])) {
-                //                     $entry = '$' . number_format($totalEachTaxCharged[$k], 2);
-                //                 }
-                //                 break;
-                //             default:
-                //         };
-                //     }
-                // }
-
 
                 if ($entry != '') {
                     $entry = HTMLContainer::generateMarkup('p', $entry, ['style' => 'font-weight:bold;text-decoration: underline;']);
@@ -1424,6 +1348,64 @@ where
             return ['data' => $dataTable, 'stats' => $statsTable];
 
         } else {
+            // Setup for excel output
+            ini_set('max_execution_time', "60");
+            $reportRows = 1;
+
+            $fileName = 'VisitReport';
+            $writer = new ExcelHelper($fileName);
+            $types = [
+                's' => 'string',
+                'n' => 'integer',
+                'money' => 'money', // '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'
+                'date' => 'MM/DD/YYYY',
+            ];
+
+
+            //build header
+            $colWidths = [];
+            $header = [];
+
+            foreach ($fltrdFields as $field) {
+                if ($field[5] != "" && $field[5] == '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)') { //if format is money
+                    $header[$field[0]] = $types['s'];
+                    $colWidths[] = 15;
+                } elseif (isset($field[7]) && $field[7] == "date") { //if format is date
+                    $header[$field[0]] = $types['date'];
+                    $colWidths[] = 15;
+                } elseif ($field[4] == 'n') { //if format is integer
+                    $header[$field[0]] = 'integer';
+                    $colWidths[] = 10;
+                } else { //otherwise set format as string
+                    $header[$field[0]] = 'string';
+                    $colWidths[] = 20;
+                }
+            }
+
+            try {
+                $hdrStyle = $writer->getHdrStyle($colWidths);
+                $writer->writeSheetHeader('Sheet1', $header, $hdrStyle);
+            } catch (\Exception $e) {
+                $writer->download();
+            }
+
+            // body
+            $rowcount = count($matrix['idVisit']);
+            $counter = 0;
+            $n = 0;
+
+            // while($counter < $rowcount) {
+            //     $flds = [];
+            //     foreach ($matrix as $m) {
+            //         $flds[$n++] = $m[$counter];
+            //     }
+
+            //     $row = ExcelHelper::convertStrings($header, $flds);
+            //     $writer->writeSheetRow('Sheet1', $row);
+            //     $counter++;
+            // }
+
+            // Finish
             HouseLog::logDownload($dbh, 'Visit Report', "Excel", "Visit Report for " . $start . " - " . $end . " downloaded", $uS->username);
             $writer->download();
 
