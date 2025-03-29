@@ -656,7 +656,7 @@ where
 
             // add to the matrix for the report
             foreach ($fltrdFields as $f) {
-                $matrix[$f[1]][] = [$r[$f[1]], $f[6]];
+                $matrix[$f[1]][] = $r[$f[1]];
             }
 
 
@@ -1227,10 +1227,12 @@ where
             if (round($totalEachTaxPaid[$k], 2) == 0) {
                 unset($totalEachTaxPaid[$k]);
                 unset($matrix["paid_$k"]);
+                unset($fltrdFields["paid_$k"]);
             }
             if (round($totalEachTaxCharged[$k], 2) == 0) {
                 unset($totalEachTaxCharged[$k]);
                 unset($matrix["chg_$k"]);
+                unset($fltrdFields["chg_$k"]);
             }
         }
         
@@ -1262,9 +1264,8 @@ where
 
             // Header
             $tr = '';
-            
-            foreach ($fltrdTitles as $t) {
-                $tr .= HTMLTable::makeTh($t);
+            foreach ($fltrdFields as $f) {
+                $tr .= HTMLTable::makeTh($f[0]);
             }
 
             $tbl = new HTMLTable();
@@ -1278,8 +1279,8 @@ where
             // unwind the matrix into a table
             while($counter < $rowcount) {
                 $tr = '';
-                foreach ($matrix as $m) {
-                    $tr .= HTMLTable::makeTd($m[$counter][0], $m[$counter][1]);
+                foreach ($matrix as $k=> $m) {
+                    $tr .= HTMLTable::makeTd($m[$counter], isset($fltrdFields[$k][6]) ? $fltrdFields[$k][6] : []);
                 }
                 $tbl->addBodyTr($tr);
                 $counter++;
@@ -1349,7 +1350,6 @@ where
 
         } else {
             // Setup for excel output
-            ini_set('max_execution_time', "60");
             $reportRows = 1;
 
             $fileName = 'VisitReport';
@@ -1392,18 +1392,19 @@ where
             // body
             $rowcount = count($matrix['idVisit']);
             $counter = 0;
-            $n = 0;
 
-            // while($counter < $rowcount) {
-            //     $flds = [];
-            //     foreach ($matrix as $m) {
-            //         $flds[$n++] = $m[$counter];
-            //     }
+            while($counter < $rowcount) {
+                $flds = [];
+                $n = 0;
 
-            //     $row = ExcelHelper::convertStrings($header, $flds);
-            //     $writer->writeSheetRow('Sheet1', $row);
-            //     $counter++;
-            // }
+                foreach ($matrix as $m) {
+                    $flds[$n++] = $m[$counter];
+                }
+
+                $row = ExcelHelper::convertStrings($header, $flds);
+                $writer->writeSheetRow('Sheet1', $row);
+                $counter++;
+            }
 
             // Finish
             HouseLog::logDownload($dbh, 'Visit Report', "Excel", "Visit Report for " . $start . " - " . $end . " downloaded", $uS->username);
