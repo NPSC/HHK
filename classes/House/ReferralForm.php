@@ -97,11 +97,11 @@ class ReferralForm {
 		if ($this->formDoc->loadDocument($dbh, $this->referralDocId)) {
 
 		    if (is_null($this->formUserData = $this->formDoc->getUserData())) {
-		        throw new \Exception("Referral form user input is blank.  Document Id = " . $this->referralDocId);
+		        throw new \Exception("The Referral form user input is blank.  Document Id = " . $this->referralDocId);
 		    }
 
 		} else {
-		    throw new \Exception("Referral form not found.  Document Id = " . $this->referralDocId);
+		    throw new \Exception("The Referral form was not found.  Document Id = " . $this->referralDocId);
 		}
 
 	}
@@ -313,7 +313,7 @@ class ReferralForm {
 
 	    return $this->gstResults;
 	}
-
+ 
 	/**
 	 * Defines and saves the selected patient.
 	 *

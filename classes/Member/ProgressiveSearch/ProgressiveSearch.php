@@ -7,7 +7,7 @@ use HHK\Member\ProgressiveSearch\SearchNameData\SearchResults;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameData;
 
 class ProgressiveSearch {
-
+ 
 
 	public static function doSearch(\PDO $dbh, SearchFor $searchFor) {
 
@@ -32,45 +32,52 @@ class ProgressiveSearch {
         $id = intval($idName);
 
         return "SELECT
-    n.idName,
-    n.Name_Last,
-    n.Name_First,
-    n.Name_Middle,
-    n.Name_Suffix,
-    n.Name_Nickname,
-    n.Name_Prefix,
-    n.Name_Suffix,
-    IFNULL(n.BirthDate, '') as `Birthdate`,
-    n.`Gender`,
-    nd.`Ethnicity`,
-    IFNULL(np.Phone_Num, '') AS `Phone_Num`,
-    IFNULL(np.SMS_Status, '') AS `SMS_Status`,
-    IFNULL(ne.Email, '') as `Email`,
-    IFNULL(na.Address_1, '') as `Address1`,
-    IFNULL(na.Address_2, '') as `Address2`,
-    IFNULL(na.City, '') AS `City`,
-    IFNULL(na.County, '') AS `County`,
-    IFNULL(na.State_Province, '') AS `State_Province`,
-    IFNULL(na.Postal_Code, '') AS `Postal_Code`,
-    IFNULL(na.Country_Code, '') AS `Country_Code`,
-    IFNULL(gr.Description, '') AS `No_Return`
-FROM
-    name n
-        LEFT JOIN
-    name_phone np ON n.idName = np.idName
-        AND n.Preferred_Phone = np.Phone_Code
-        LEFT JOIN
-    name_email ne ON n.idName = ne.idName
-        AND n.Preferred_Email = ne.Purpose
-        LEFT JOIN
-    name_address na ON n.idName = na.idName
-        AND n.Preferred_Mail_Address = na.Purpose
-        LEFT JOIN
-    name_demog nd ON n.idName = nd.idName
-        LEFT JOIN
-    gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
-        AND gr.Code = nd.No_Return
-WHERE n.idName = $id ";
+            n.idName,
+            n.Name_Last,
+            n.Name_First,
+            n.Name_Middle,
+            n.Name_Suffix,
+            n.Name_Nickname,
+            n.Name_Prefix,
+            n.Name_Suffix,
+            IFNULL(n.BirthDate, '') as `Birthdate`,
+            n.`Gender`,
+            nd.`Ethnicity`,
+            IFNULL(np.Phone_Num, '') AS `Phone_Num`,
+            IFNULL(np.SMS_Status, '') AS `SMS_Status`,
+            IFNULL(ne.Email, '') as `Email`,
+            IFNULL(na.Address_1, '') as `Address1`,
+            IFNULL(na.Address_2, '') as `Address2`,
+            IFNULL(na.City, '') AS `City`,
+            IFNULL(na.County, '') AS `County`,
+            IFNULL(na.State_Province, '') AS `State_Province`,
+            IFNULL(na.Postal_Code, '') AS `Postal_Code`,
+            IFNULL(na.Country_Code, '') AS `Country_Code`,
+            IFNULL(gr.Description, '') AS `No_Return`,
+            IFNULL(ec.Name_First, '') as `ec_First`,
+            IFNULL(ec.Name_Last, '') as `ec_Last`,
+            IFNULL(ec.Phone_Home, '') as `ec_Phone`,
+            IFNULL(ec.Phone_Alternate, '') as `ec_Alternate`,
+            IFNULL(ec.Relationship, '') as `ec_Relationship`
+        FROM
+            name n
+                LEFT JOIN
+            name_phone np ON n.idName = np.idName
+                AND n.Preferred_Phone = np.Phone_Code
+                LEFT JOIN
+            name_email ne ON n.idName = ne.idName
+                AND n.Preferred_Email = ne.Purpose
+                LEFT JOIN
+            name_address na ON n.idName = na.idName
+                AND n.Preferred_Mail_Address = na.Purpose
+                LEFT JOIN
+            emergency_contact ec ON n.idName = ec.idName
+                LEFT JOIN
+            name_demog nd ON n.idName = nd.idName
+                LEFT JOIN
+            gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
+                AND gr.Code = nd.No_Return
+        WHERE n.idName = $id ";
 
     }
 
@@ -91,48 +98,48 @@ WHERE n.idName = $id ";
         }
 
 	    return "SELECT
-    n.idName,
-    n.Name_Prefix,
-    n.Name_Last,
-    n.Name_First,
-    n.Name_Middle,
-    n.Name_Suffix,
-    n.Name_Nickname,
-    IFNULL(n.BirthDate, '') as `Birthdate`,
-    n.`Gender`,
-    nd.`Ethnicity`,
-    IFNULL(np.Phone_Num, '') AS `Phone_Num`,
-    IFNULL(np.SMS_Status, '') AS `SMS_Status`,
-    IFNULL(ne.Email, '') as `Email`,
-    IFNULL(na.Address_1, '') as `Address1`,
-    IFNULL(na.Address_2, '') as `Address2`,
-    IFNULL(na.City, '') AS `City`,
-    IFNULL(na.County, '') AS `County`,
-    IFNULL(na.State_Province, '') AS `State_Province`,
-    IFNULL(na.Postal_Code, '') AS `Postal_Code`,
-    IFNULL(na.Country_Code, '') AS `Country_Code`,
-    " . $selRel . "
-    IFNULL(gr.Description, '') AS `No_Return`
-FROM
-    name n
-    " . $joinRel . "
-        LEFT JOIN
-    name_phone np ON n.idName = np.idName
-        AND n.Preferred_Phone = np.Phone_Code
-        LEFT JOIN
-    name_email ne ON n.idName = ne.idName
-        AND n.Preferred_Email = ne.Purpose
-        LEFT JOIN
-    name_address na ON n.idName = na.idName
-        AND n.Preferred_Mail_Address = na.Purpose
-        LEFT JOIN
-    name_demog nd ON n.idName = nd.idName
-        LEFT JOIN
-    gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
-        AND gr.Code = nd.No_Return
-WHERE n.idName > 0 and n.Record_Member = 1 and n.Member_Status ='a' and n.Name_Last LIKE '%" . $searchFor->getNameLast() . "%'
-    AND (n.Name_First like '%" . $searchFor->getNameFirst() . "%' OR n.Name_Nickname = '%" . $searchFor->getNameFirst() . "%') "
-    .  $where;
+        n.idName,
+        n.Name_Prefix,
+        n.Name_Last,
+        n.Name_First,
+        n.Name_Middle,
+        n.Name_Suffix,
+        n.Name_Nickname,
+        IFNULL(n.BirthDate, '') as `Birthdate`,
+        n.`Gender`,
+        nd.`Ethnicity`,
+        IFNULL(np.Phone_Num, '') AS `Phone_Num`,
+        IFNULL(np.SMS_Status, '') AS `SMS_Status`,
+        IFNULL(ne.Email, '') as `Email`,
+        IFNULL(na.Address_1, '') as `Address1`,
+        IFNULL(na.Address_2, '') as `Address2`,
+        IFNULL(na.City, '') AS `City`,
+        IFNULL(na.County, '') AS `County`,
+        IFNULL(na.State_Province, '') AS `State_Province`,
+        IFNULL(na.Postal_Code, '') AS `Postal_Code`,
+        IFNULL(na.Country_Code, '') AS `Country_Code`,
+        " . $selRel . "
+        IFNULL(gr.Description, '') AS `No_Return`
+    FROM
+        name n
+        " . $joinRel . "
+            LEFT JOIN
+        name_phone np ON n.idName = np.idName
+            AND n.Preferred_Phone = np.Phone_Code
+            LEFT JOIN
+        name_email ne ON n.idName = ne.idName
+            AND n.Preferred_Email = ne.Purpose
+            LEFT JOIN
+        name_address na ON n.idName = na.idName
+            AND n.Preferred_Mail_Address = na.Purpose
+            LEFT JOIN
+        name_demog nd ON n.idName = nd.idName
+            LEFT JOIN
+        gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
+            AND gr.Code = nd.No_Return
+    WHERE n.idName > 0 and n.Record_Member = 1 and n.Member_Status ='a' and n.Name_Last LIKE '%" . $searchFor->getNameLast() . "%'
+        AND (n.Name_First like '%" . $searchFor->getNameFirst() . "%' OR n.Name_Nickname = '%" . $searchFor->getNameFirst() . "%') "
+        .  $where;
 
 	}
 
