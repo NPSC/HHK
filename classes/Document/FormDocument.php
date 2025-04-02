@@ -6,6 +6,7 @@ use HHK\DataTableServer\SSP;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
+use HHK\sec\SysConfig;
 
 /**
  * FormDocument.php
@@ -116,7 +117,7 @@ class FormDocument {
 
         $abstractJson = json_encode(["enableReservation"=>$templateSettings['enableReservation']]);
 
-        $validatedDoc = $this->validateFields($fields);
+        $validatedDoc = $this->validateFields($dbh, $fields);
 
         if(count($validatedDoc['errors']) > 0){
             return array('errors'=>$validatedDoc['errors']);
@@ -251,7 +252,7 @@ class FormDocument {
         return $this->doc->getStatus();
     }
 
-    public function validateFields(array $fields){
+    public function validateFields(\PDO $dbh, array $fields){
         $response = ["fields"=>[], "errors"=>[]];
 
         $uS = Session::getInstance();
@@ -313,9 +314,9 @@ class FormDocument {
                         }
 
                         $days = $checkin->diff($checkout)->days;
-                        $minResvDays = $uS->minResvDays;
-                        if($uS->minResvDays > 0 && $checkin->diff($checkout)->days < $uS->minResvDays){
-                            $response["errors"][] = ['field'=>'checkoutdate', 'error'=>'Stay dates must be a minimum of ' . $uS->minResvDays . " days"];
+                        $minResvDays = SysConfig::getKeyValue($dbh, 'sys_config', 'minResvDays');
+                        if($minResvDays > 0 && $checkin->diff($checkout)->days < $minResvDays){
+                            $response["errors"][] = ['field'=>'checkoutdate', 'error'=>'Stay dates must be a minimum of ' . $minResvDays . " days"];
                         }
                     }catch(\Exception $e){
 

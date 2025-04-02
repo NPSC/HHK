@@ -1075,7 +1075,7 @@ class SAML {
                     }
                 }
                 if($idpConfig['idpSigningCert2'] != ''){
-                    $formattedCert = Utils::formatCert($idpConfig['idpSigningCert'], true);
+                    $formattedCert = Utils::formatCert($idpConfig['idpSigningCert2'], true);
                     if(!is_array($this->getCertificateInfo(false, $formattedCert))){
                         $errorMsg.="<br>Idp Rollover Signing Cert must be a valid certificate";
                     }else{
@@ -1093,7 +1093,7 @@ class SAML {
                     }
                 }
                 if($idpConfig['idpEncryptionCert2'] != ''){
-                    $formattedCert = Utils::formatCert($idpConfig['idpEncryptionCert'], true);
+                    $formattedCert = Utils::formatCert($idpConfig['idpEncryptionCert2'], true);
                     if(!is_array($this->getCertificateInfo(false, $formattedCert))){
                         $errorMsg.="<br>Idp Rollover Encryption Cert must be a valid certificate";
                     }else{

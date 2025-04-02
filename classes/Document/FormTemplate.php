@@ -271,6 +271,7 @@ class FormTemplate {
             'successTitle'=>(isset($abstract->successTitle) ? $abstract->successTitle : ""),
             'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
+            'recaptchaSiteKey'=>$recaptcha->getSiteKey(),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
             'notifySubject'=>htmlspecialchars_decode((isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted")),
             'notifyMe'=>(isset($abstract->notifyMe) && $abstract->notifyMe === true ? true:false),
