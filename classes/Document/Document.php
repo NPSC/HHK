@@ -364,7 +364,7 @@ class Document {
      * @param string $username
      * @return int the number of rows affected
      */
-    public function deleteDocument(\PDO $dbh, $username) {
+    public function deleteDocument(\PDO $dbh, $username, bool $forceDelete = FALSE) {
 
         $counter = 0;
 
@@ -374,8 +374,12 @@ class Document {
             $this->documentRS->Updated_By->setNewVal($username);
             $this->documentRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
-            $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
-            EditRS::updateStoredVals($this->documentRS);
+            if($forceDelete == true){
+                return EditRS::delete($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            }else{
+                $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+                EditRS::updateStoredVals($this->documentRS);
+            }
         }
 
         return $counter;

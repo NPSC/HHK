@@ -650,7 +650,18 @@ try {
                 }
             }
             break;
-
+        case "deleteformtemplate" :
+                $idDocument = 0;
+                if(isset($_REQUEST['idDocument'])) {
+                    $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
+                    $formTemplate = new FormTemplate();
+                    if($formTemplate->loadTemplate($dbh, $idDocument)){
+                        $events = $formTemplate->delete($dbh);
+                    }else{
+                        $events = ["status"=>"error", "msg"=> "Form not found"];
+                    }
+                }
+                break;
         case "saveformtemplate" :
             $idDocument = 0;
             if(isset($_REQUEST['idDocument'])) {

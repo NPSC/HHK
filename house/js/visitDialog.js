@@ -287,6 +287,9 @@ function viewVehicleDialog(idVisit, $vehDialog) {
                         saveVehicles(idVisit, $vehDialog);
                         $(this).dialog("close");
                     }
+                },
+                close: function () {
+                    $(this).dialog("destroy").empty();
                 }
             });
         }
@@ -481,9 +484,8 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             viewHospitalStay($(this).data('idhs'), idVisit, $('#hsDialog'));
         });
 
-        $diagbox.on('click', '#vehAdjust', function (event){
+        $("#divksStays").on('click', '#vehAdjust', function (event){
             event.preventDefault();
-            console.log("vehicle clicked");
             viewVehicleDialog(idVisit, $('#vehDialog'));
         });
 

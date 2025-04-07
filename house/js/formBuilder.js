@@ -1366,6 +1366,8 @@ House Staff`,
 					<option value=""></option>
 				</select>
 				<button id="newReferral">New Referral Form</button>
+				<button id="duplicateReferral">Duplicate this Referral Form</button>
+				<button id="deleteReferral">Delete this Referral Form</button>
 				<span class="formTitleContainer">
 					<label for="formTitle">Form Title: </label>
 					<input typle="text" id="formTitle" placeholder="Form Title" style="padding:0.4em 0.5em;">
@@ -1568,12 +1570,20 @@ House Staff`,
 					"location":"../js/formBuilder"
 				}
 			});
-
+			$wrapper.find('.formTitleContainer').show();
+			$wrapper.find('#newReferral').hide();
 			settingsDialog.find('input#formSuccessTitle').val(settings.defaultFormSettings.successTitle).data('oldVal', "");
 			settingsDialog.find('textarea#formSuccessContent').val(settings.defaultFormSettings.successContent).data('oldVal', "");
 			settingsDialog.find('input[name=initialGuests]').val(settings.defaultFormSettings.initialGuests).data('oldVal',"");
 			settingsDialog.find('input[name=maxGuests]').val(settings.defaultFormSettings.maxGuests).data('oldVal',"");
 		});
+
+		$wrapper.on('click', '#duplicateReferral', function(e){
+			e.preventDefault();
+			onSave("new");
+		});
+
+		$wrapper.find('#duplicateReferral, #deleteReferral, .formTitleContainer').hide();
 		
 		$wrapper.on('change', '#selectform', function(){
 			var idDocument = $(this).val();
@@ -1615,6 +1625,8 @@ House Staff`,
 							});
 							
 							$wrapper.find('#formiframebtn').data('url', data.formURL).show();
+							$wrapper.find('#duplicateReferral, #deleteReferral, .formTitleContainer').show();
+							$wrapper.find('#newReferral').hide();
 							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
 							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
 	    					settingsDialog.find('textarea#formStyle').val(data.formSettings.formStyle).data('oldVal', data.formSettings.formStyle);
@@ -1634,11 +1646,41 @@ House Staff`,
 			}else{
 				$wrapper.find('#formBuilderContent').empty();
 				$wrapper.find('#formiframebtn').data('code', '').hide();
+				$wrapper.find('#duplicateReferral, #deleteReferral, .formTitleContainer').hide();
+				$wrapper.find('#newReferral').show();
 				$wrapper.find('#formTitle').val("");
 				settingsDialog.find('textarea').val('').data('oldstyles', '');
 				settingsDialog.find('input#enableRecaptcha').prop('checked', false);
 			}
 			
+		});
+
+		$wrapper.on('click', '#deleteReferral', function(e){
+			e.preventDefault();
+			var idDocument = $wrapper.find('#selectform').val();
+
+			if(idDocument && confirm("Are you sure you want to delete this form? This action cannot be undone.")){
+				$.ajax({
+	    			url : settings.serviceURL,
+	   				type: "GET",
+	    			data : {
+	    				"cmd":"deleteformtemplate",
+	    				"idDocument": idDocument
+	    			},
+	    			dataType: "json",
+	    			success: function(data, textStatus, jqXHR)
+	    			{
+	    				if(data.status == "success"){
+							$wrapper.find("#selectform option[value='"+idDocument+"']").remove();
+							$wrapper.find("#selectform").val("").change();
+							flagAlertMessage(data.msg, false);
+	    				}else{
+							flagAlertMessage(data.msg, true);
+						}
+	    			}
+	    		});
+			}
+
 		});
 		
 		$wrapper.on('click', '#formiframebtn', function(e){
@@ -1712,11 +1754,15 @@ House Staff`,
 			}
 		};
 		
-		var onSave = function(event, formData){
+		var onSave = function(data){
 			settings.formBuilder.actions.closeAllFieldEdit();
-			
-			var idDocument = $wrapper.find('#selectform').val();
-			var title = $wrapper.find('#formTitle').val();
+			if(data == "new"){ //duplicate form
+				var idDocument = 0
+				var title = $wrapper.find('#formTitle').val() + " (copy)";
+			}else{
+				var idDocument = $wrapper.find('#selectform').val();
+				var title = $wrapper.find('#formTitle').val();
+			}
 			var style = settingsDialog.find('textarea#formStyle').val();
 			var successTitle = settingsDialog.find('input#formSuccessTitle').val();
 			var successContent = settingsDialog.find('textarea#formSuccessContent').val();
