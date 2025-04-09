@@ -351,8 +351,8 @@ class FormDocument {
         }
     }
 
-    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null){
-        return $this->doc->linkNew($dbh, $guestId, $psgId);
+    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null, $idReservation = 0){
+        return $this->doc->linkNew($dbh, $guestId, $psgId, $idReservation);
     }
 
     /**

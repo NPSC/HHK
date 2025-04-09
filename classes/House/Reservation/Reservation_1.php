@@ -522,14 +522,14 @@ class Reservation_1 {
 
         $uS = Session::getInstance();
 
-        if ($uS->useOnlineReferral && $this->getIdReferralDoc() > 0) {
+        if ($uS->useOnlineReferral) {
             // Update the referral form document status
             $resvStatuses = ['a', 'p', 'uc', 'w'];
 
             if (in_array($this->reservRs->Status->getStoredVal(), $resvStatuses)) {
-                $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Accepted . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+                $dbh->exec("UPDATE `document` `d` JOIN `link_doc` ld on `d`.`idDocument` = ld.`idDocument` SET `Status` = '" . ReferralFormStatus::Accepted . "' WHERE ld.idReservation = '" . $this->getIdReservation() . "';");
             } else {
-                $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Archived . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+                $dbh->exec("UPDATE `document` `d` JOIN `link_doc` ld on `d`.`idDocument` = ld.`idDocument` SET `Status` = '" . ReferralFormStatus::Archived . "' WHERE ld.idReservation = '" . $this->getIdReservation() . "';");
             }
         }
 

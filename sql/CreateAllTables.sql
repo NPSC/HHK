@@ -339,12 +339,14 @@ CREATE TABLE if not exists `doc_note` (
 -- Table `link_doc`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `link_doc` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `idDocument` int(11) NOT NULL,
   `idGuest` int(11) DEFAULT NULL,
   `idPSG` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10;
+  `idReservation` int(11) DEFAULT 0,
+  `username` varchar(100) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idDocument`, `idGuest`, `idPSG`, `idReservation`)
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `link_note`
@@ -2448,6 +2450,7 @@ ALTER TABLE `labels`
 CREATE INDEX IF NOT EXISTS `indx_idDocument` ON `link_doc` (`idDocument` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idGuest` ON `link_doc` (`idGuest` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idPsg` ON `link_doc` (`idPSG` ASC);
+CREATE INDEX IF NOT EXISTS `indx_idReservation` ON `link_doc` (`idReservation` ASC);
 
 CREATE INDEX IF NOT EXISTS `indx_idNote` ON `link_note` (`idNote`);
 CREATE INDEX IF NOT EXISTS `indx_linkType` ON `link_note` (`linkType`);

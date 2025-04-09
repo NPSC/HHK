@@ -116,3 +116,28 @@ INSERT IGNORE INTO `reservation_vehicle` (`idReservation`, `idVehicle`, `idName`
 SELECT `r`.`idReservation`, `v`.`idVehicle`, 0 from `vehicle` v
 JOIN `reservation` r on `v`.`idRegistration` = `r`.`idRegistration`
 WHERE `v`.`No_Vehicle` = "" AND `r`.`Status` in ("co", "s");
+
+
+-- add columns and enforce no duplicates with updated primary key BE SURE TO CHECK FOR DUPLICATES FIRST
+ALTER TABLE `link_doc` 
+ADD COLUMN IF NOT EXISTS `idReservation` INT(11) NOT NULL AFTER `idPSG`,
+ADD COLUMN IF NOT EXISTS `username` VARCHAR(100) NOT NULL DEFAULT '' AFTER `idReservation`,
+ADD COLUMN IF NOT EXISTS `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP() AFTER `username`,
+DROP COLUMN if exists `id`,
+DROP PRIMARY KEY,
+ADD PRIMARY KEY (`idDocument`, `idGuest`, `idPSG`, `idReservation`),
+ADD INDEX IF NOT EXISTS`indx_idReservation` (`idReservation` ASC);
+;
+
+-- insert link_doc records for all docs with an idReservation in the Abstract column
+insert ignore into link_doc (`idDocument`, `idGuest`, `idPSG`, `idReservation`)
+select d.idDocument, 0 as `idGuest`, reg.idPsg, JSON_VALUE(d.Abstract, "$.idReservation") as `idReservation` from document d
+join reservation r on JSON_VALUE(d.Abstract, "$.idReservation") = r.idReservation
+join registration reg on r.idRegistration = reg.idRegistration
+where d.Category = "form" and d.Type = "json" and JSON_VALUE(d.Abstract, "$.idReservation") > 0;
+
+-- insert link_doc records for all docs with an idReferralDoc set in a reservation
+insert ignore into link_doc (`idDocument`, `idGuest`, `idPSG`, `idReservation`)
+select r.idReferralDoc, 0 as `idGuest`, reg.idPsg, r.idReservation as `idReservation` from reservation r
+join registration reg on r.idRegistration = reg.idRegistration
+where r.idReferralDoc > 0;

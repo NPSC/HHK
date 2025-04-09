@@ -189,14 +189,17 @@ class Document {
      * @param \PDO $dbh
      * @param string $guestId
      * @param string $psgId
-     * @return int last insert id.
+     * @return int number of rows updated.
      */
-    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null) {
-        if ($this->idDocument && ($psgId || $guestId)) {
-            $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`) VALUES("' . $this->idDocument . '", "' . intval($guestId) . '", "' . intval($psgId) . '");';
+    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null, $idReservation = 0) {
+        if ($this->idDocument && ($psgId || $guestId || $idReservation)) {
+            $uS = Session::getInstance();
+            $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`, `idReservation`, `username`) VALUES("' . $this->idDocument . '", "' . intval($guestId) . '", "' . intval($psgId) . '", "' . intval($idReservation) . '", "' . $uS->username . '");';
             $stmt = $dbh->prepare($query);
             $stmt->execute();
-            return $dbh->lastInsertId();
+            return $stmt->rowCount();
+        }else{
+            return 0;
         }
     }
 
