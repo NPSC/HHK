@@ -232,18 +232,6 @@ class FormDocument {
         }
     }
 
-
-    public function updateIdReservation(\PDO $dbh, int $idResv){
-        $abstract = $this->doc->getAbstract();
-        $abstract = json_decode($abstract, true);
-        if(is_array($abstract)){
-            $abstract["idReservation"] = $idResv;
-        }else{
-            $abstract = ["idReservation"=>$idResv];
-        }
-        return $this->doc->updateAbstract($dbh, $abstract);
-    }
-
     public function updateUserData(\PDO $dbh, $userData){
         return $this->doc->updateUserData($dbh, $userData);
     }

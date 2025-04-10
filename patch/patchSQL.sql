@@ -127,7 +127,15 @@ DROP COLUMN if exists `id`,
 DROP PRIMARY KEY,
 ADD PRIMARY KEY (`idDocument`, `idGuest`, `idPSG`, `idReservation`),
 ADD INDEX IF NOT EXISTS`indx_idReservation` (`idReservation` ASC);
-;
+
+-- add foreign key constraint to link_doc
+ALTER TABLE `link_doc` 
+ADD CONSTRAINT `fk_idDocument`
+  FOREIGN KEY if not exists (`idDocument`)
+  REFERENCES `document` (`idDocument`)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION;
+
 
 -- insert link_doc records for all docs with an idReservation in the Abstract column
 insert ignore into link_doc (`idDocument`, `idGuest`, `idPSG`, `idReservation`)

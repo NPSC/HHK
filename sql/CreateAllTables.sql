@@ -318,6 +318,21 @@ CREATE TABLE if not exists `document` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
+-- Table `document_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `document_log` (
+  `Log_Type` varchar(45) NOT NULL,
+  `Sub_Type` varchar(45) NOT NULL,
+  `User_Name` varchar(45) NOT NULL DEFAULT '',
+  `idName` int(11) NOT NULL DEFAULT '0',
+  `idPsg` int(11) NOT NULL DEFAULT '0',
+  `idDocument` int(11) NOT NULL DEFAULT '0',
+  `idReservation` int(11) NOT NULL DEFAULT '0',
+  `Log_Text` varchar(5000) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=MyISAM;
+
+-- -----------------------------------------------------
 -- Table `staff_note`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `staff_note` (
@@ -2451,6 +2466,13 @@ CREATE INDEX IF NOT EXISTS `indx_idDocument` ON `link_doc` (`idDocument` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idGuest` ON `link_doc` (`idGuest` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idPsg` ON `link_doc` (`idPSG` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idReservation` ON `link_doc` (`idReservation` ASC);
+
+ALTER TABLE `link_doc` 
+ADD CONSTRAINT `fk_idDocument`
+  FOREIGN KEY if not exists(`idDocument`)
+  REFERENCES `document` (`idDocument`)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION;
 
 CREATE INDEX IF NOT EXISTS `indx_idNote` ON `link_note` (`idNote`);
 CREATE INDEX IF NOT EXISTS `indx_linkType` ON `link_note` (`linkType`);
