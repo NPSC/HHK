@@ -2,6 +2,7 @@
 
 namespace HHK\Notification\SMS\SimpleTexting;
 
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\SmsException;
 use HHK\sec\Labels;
@@ -36,7 +37,7 @@ class Campaign {
             $response = $client->post('campaigns', [
                 'json' => $requestArray
             ]);
-        }catch(ClientException $e){
+        }catch(BadResponseException $e){
             NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $listName, $uS->smsFrom, "Error sending campaign", ["msgText" => $this->message->getMessageTemplate()["text"], "listId"=>$listId, "listName"=>$listName, "request"=>$requestArray, "response"=>$e->getResponse()->getBody()->getContents()]);
             $respArr = json_decode($e->getResponse()->getBody(), true);
 
@@ -109,10 +110,13 @@ class Campaign {
                     $contacts = new Contacts($this->dbh);
                     $syncStatus = $contacts->syncContacts($status, [$this->settings->getSmsListName(), $campaignListId]);
 
-                    if(strtolower($syncStatus) == "done"){
+                    if(strtolower($syncStatus["status"]) == "done"){
                         $this->sendCampaign($campaignListId, $campaignListName);
-
-                        return ["success" => "Message sent successfully"];
+                        $msg = "Message sent successfully";
+                        if(count($syncStatus["warnings"]) > 0){
+                            $msg .= ", however, the following contacts may not have been included: <br>" . implode("<br>", $syncStatus["warnings"]);
+                        }
+                        return ["success" => $msg];
                     }else{
                         return ["info" => "It's taking longer than expected to send the message, would you like to continue to wait?", "batchId"=>$contacts->getBatchId(), "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName];
                     }
@@ -132,10 +136,14 @@ class Campaign {
         
         $syncStatus = $contacts->syncContacts(null, [$this->settings->getSmsListName(), $campaignListId]);
 
-        if(strtolower($syncStatus) == "done"){
+        if(strtolower($syncStatus["status"]) == "done"){
             $this->sendCampaign($campaignListId, $campaignListName);
 
-            return ["success" => "Message sent successfully"];
+            $msg = "Message sent successfully";
+            if(count($syncStatus["warnings"]) > 0){
+                $msg .= ", however, the following contacts may not have been included: <br>" . implode("<br>", $syncStatus["warnings"]);
+            }
+            return ["success" => $msg];
         }else{
             return ["info" => "It's taking longer than expected to send the message, would you like to continue to wait?", "batchId"=>$batchId, "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName, "lastBatchStatus"=>$syncStatus];
         }
