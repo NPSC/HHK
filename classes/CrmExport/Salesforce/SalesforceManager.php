@@ -628,22 +628,26 @@ class SalesforceManager extends AbstractExportManager {
 
             // Show request trace?
             if ($this->trace) {
-                $this->traceData .= "<br><br>request-" . \json_encode($body, JSON_PRETTY_PRINT);
+                $this->traceData .= "<h4>Request</h4><pre>" . json_encode($body, JSON_PRETTY_PRINT) . "</pre>";
             }
 
             // Transfer this package to SF API
             try {
-                $graphsResult = $this->webService->postUrl("{$this->endPoint}composite/graph", $body);
+                $graphsResult = $this->webService->postUrl($this->endPoint . "composite/graph", $body);
 
                 // Trace response
                 if ($this->trace) {
-                    $this->traceData .= "<br><br>response-" .\json_encode($graphsResult, JSON_PRETTY_PRINT);
+                    $this->traceData .= "<h4>Response</h4><pre>" .\json_encode($graphsResult, JSON_PRETTY_PRINT) . "</pre>";
                 }
 
                 $this->processGraphsResult($dbh, $graphsResult, $rows);
 
             } catch (\RuntimeException $ex) {
                 $this->errorResult[] = $ex->getMessage();
+
+                if ($this->trace) {
+                    $this->traceData .= "<h4>Errors</h4><pre>" .\json_encode($this->errorResult, JSON_PRETTY_PRINT) . "</pre>";
+                }
             }
         }
 

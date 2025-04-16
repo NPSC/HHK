@@ -771,7 +771,7 @@ $(document).ready(function () {
         $('#divMembers').empty();
 
         // Checkbutton to show server trace.
-        const $cbTrace = $('#cbTrace');
+        const $cbTrace = $('#cbTraceWrapper');
         $cbTrace.hide();
         if (username == 'npscuser') {
             $cbTrace.show();
@@ -806,7 +806,7 @@ $(document).ready(function () {
                     }
                 });
 
-                upsert(ids, $cbTrace.prop('checked'));
+                upsert(ids, $cbTrace.find("input").prop('checked'));
             });
 
     } // end salesforce xfer.

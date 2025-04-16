@@ -847,7 +847,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
                 <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
-                <input id="cbTrace" type="checkbox" style="margin-left:2em;"/>
+                <span style="display: none;" id="cbTraceWrapper" class="ml-3"><input id="cbTrace" type="checkbox" class="mr-1"><label for="cbTrace">Print debug info</label></span>
         	</div>
             <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none;;font-size:1em; padding:5px;">
                 <p id="loadingText" style="margin-left:20px;">Transfering </p>
