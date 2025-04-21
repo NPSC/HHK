@@ -228,8 +228,10 @@ where ru.idResource is null" . $whereGroupSql . ";";
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if(isset($row['Occupancy'])){
+            $uS->goc = intval($row['Occupancy']);
             $span = HTMLContainer::generateMarkup('span', '<strong>' . $row['Occupancy'] . '% </strong>' . ($uS->RoomOccCat != 'none' ? $row['Category'] : 'Total') . ' Occupancy.', array('style'=>'margin-left:10px;font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));
         }else{
+            $uS->goc = 0;
             $span = "";
         }
         return $span;
