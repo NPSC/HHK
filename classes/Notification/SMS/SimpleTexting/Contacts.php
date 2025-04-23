@@ -131,7 +131,7 @@ Class Contacts extends AbstractContacts{
                 
                 $status = $this->getBatchProgress($this->batchId);
                 
-                if($status != "IN_PROGRESS"){
+                if($status["status"] != "IN_PROGRESS"){
                     return $status;
                 }
                 sleep(5);
@@ -147,14 +147,21 @@ Class Contacts extends AbstractContacts{
     protected function getBatchProgress(string $batchId){
         try {
             $client = $this->settings->getClient();
+            
             $response = $client->get("contacts-batch/batch-update/" . $batchId);
 
             $uS = Session::getInstance();
             NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, "", $uS->smsFrom, "Syncing contacts: checking batch status", ["batchId"=>$batchId, "response"=>json_decode($response->getBody()->getContents(), true)]);
 
             $respArr = json_decode($response->getBody(), true);
-            if (isset($respArr["status"])) {
-                return $respArr["status"];
+            if (isset($respArr["status"]) && isset($respArr["results"])) {
+                $warnings = [];
+                foreach($respArr["results"] as $result){
+                    if(isset($result["errorCode"])){
+                        $warnings[] = $result["contactPhone"] . ": " . $result["errorMessage"];
+                    }
+                }
+                return ["status"=>$respArr["status"], "warnings"=>$warnings];
             } else {
                 throw new SmsException("Error syncing contacts: batch status not found");
             }

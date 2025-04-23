@@ -51,7 +51,7 @@ define('INS_EMBED_JS', '<script src="https://cdn.instamed.com/Content/Js/embed.j
 define('DELUXE_SANDBOX_EMBED_JS', '<script src="https://hostedform2.deluxe.com/V2/deluxe.js"></script>');
 define('DELUXE_EMBED_JS', '<script src="https://hostedpaymentform.deluxe.com/v2/deluxe.js"></script>');
 define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js' . JSV. '"></script>');
-define('REFERRAL_FORM_JS', 'js/referralForm.js' . JSV);
+define('REFERRAL_FORM_JS', 'js/referralForm-min.js' . JSV);
 define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js' . JSV);
 define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);
 define('HOUSEKEEPING_JS', 'js/housekeeping.js' . JSV);

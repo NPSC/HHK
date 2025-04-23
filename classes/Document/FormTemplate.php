@@ -6,6 +6,7 @@ use HHK\House\Hospital\Hospital;
 use HHK\sec\Session;
 use HHK\sec\Recaptcha;
 use HHK\sec\Labels;
+use HHK\Tables\EditRS;
 /**
  * FormTemplate.php
  *
@@ -81,6 +82,10 @@ class FormTemplate {
 
         if(!$title){
             $validationErrors['title'] = "The title field is required.";
+        }
+
+        if(strlen($title) > 0 && $this->isDuplicateTitle($dbh, $title, 0)){
+            $validationErrors['title'] = 'Form title "' . $title . '" already exists.';
         }
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
@@ -162,6 +167,9 @@ class FormTemplate {
         if(!$title){
             $validationErrors['title'] = "The title field is required.";
         }
+        if(strlen($title) > 0 && $this->doc->getIdDocument() > 0 && $this->isDuplicateTitle($dbh, $title, $this->doc->getIdDocument())){
+            $validationErrors['title'] = 'Form title "' . $title . '" already exists.';
+        }
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
@@ -201,6 +209,21 @@ class FormTemplate {
         }else{
             return array('status'=>'error', 'msg'=>'The following errors have been found', 'errors'=>$validationErrors);
         }
+    }
+
+    public function delete(\PDO $dbh){
+        $uS = Session::getInstance();
+        if($this->doc->getIdDocument() > 0 && $this->doc->deleteDocument($dbh, $uS->username, true)){
+            return array('status'=>'success', 'msg'=>"Form deleted successfully");
+        }else{
+            return array('status'=>'error', 'msg'=>'Unable to delete form');
+        }
+    }
+
+    public function isDuplicateTitle(\PDO $dbh, $title, $idDocument){
+        $templates = $this->listTemplates($dbh);
+        $foundID = array_search($title, array_column($templates, 'Title'));
+        return ($foundID !== false && $templates[$foundID]['idDocument'] != $idDocument);
     }
 
     public function validateCSS($styles){

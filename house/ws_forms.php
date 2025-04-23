@@ -106,10 +106,10 @@ try {
                      $events['formSettings'] = $formTemplate->getSettings();
                      $events['lookups'] = $formTemplate->getLookups($dbh);
                  }else{
-                     $events['error'] = "Document is not a form template";
+                     $events['error'] = "Form Template not found";
                  }
              }else{
-                 $events['error'] = "No Referral form found";
+                 $events['error'] = "Form Template not found";
              }
              break;
 

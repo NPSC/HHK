@@ -732,7 +732,7 @@ where
 
         }
 
-        $matrix = [];
+        $matrix = ['idVisit' => []];
 
         $fltrdTitles = $colSelector->getFilteredTitles();
         $fltrdFields = $colSelector->getFilteredFields();

@@ -20,6 +20,8 @@ $(document).ready(function() {
         },
         dataType:'json',
         success: function(ajaxData){
+            $("#formContent").removeClass("hhk-loading");
+            
             if(ajaxData.formData && ajaxData.formSettings){
                 try{
                     formData = JSON.parse(ajaxData.formData);

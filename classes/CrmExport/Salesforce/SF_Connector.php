@@ -207,14 +207,14 @@ class SF_Connector {
     protected function checkErrors(BadResponseException $exception) {
 
         $errorResponse = $exception->getResponse();
-        $errorJson = json_decode($errorResponse->getBody()->getContents());
+        $errorJson = json_decode($errorResponse->getBody());
 
         if(isset($errorJson->error_description)){
             throw new RuntimeException("Unable to postURL via OAuth: " . $errorJson->error_description);
         }elseif(is_countable($errorJson)){
-            throw new RuntimeException($this->collectErrors($errorJson));
+            throw new RuntimeException($this->collectErrors($errorJson) . 'Requested URL: ' . $exception->getRequest()->getUri());
         }else{
-            throw new RuntimeException('to PostURL via OAuth: ' . $errorResponse->getBody()->getContents());
+            throw new RuntimeException('to PostURL via OAuth: ' . $errorResponse->getBody());
         }
 
     }

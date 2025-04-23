@@ -2,6 +2,7 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\Document\FormDocument;
 use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\Constraint\{ConstraintsReservation, ConstraintsVisit};
@@ -13,6 +14,8 @@ use HHK\Note\{LinkNote, Note};
 use HHK\SysConst\{MemBasis, ReservationStatus, RoomState, VisitStatus, RoomRateCategories, ItemId, InvoiceStatus};
 use HHK\SysConst\ReferralFormStatus;
 use HHK\TableLog\{ReservationLog, VisitLog};
+use HHK\TableLog\DocumentLog;
+use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
 use HHK\Tables\Reservation\ReservationRS;
@@ -522,19 +525,34 @@ class Reservation_1 {
 
         $uS = Session::getInstance();
 
-        if ($uS->useOnlineReferral && $this->getIdReferralDoc() > 0) {
+        if ($uS->useOnlineReferral) {
             // Update the referral form document status
             $resvStatuses = ['a', 'p', 'uc', 'w'];
-
             if (in_array($this->reservRs->Status->getStoredVal(), $resvStatuses)) {
-                $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Accepted . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+                $newStatus = ReferralFormStatus::Accepted;
             } else {
-                $dbh->exec("UPDATE `document` SET `Status` = '" . ReferralFormStatus::Archived . "' WHERE idDocument = '" . $this->getIdReferralDoc() . "';");
+                $newStatus = ReferralFormStatus::Archived;
             }
+
+            $this->updateReferralFormDocStatus($dbh, $newStatus);
         }
 
         return $this->reservRs;
     }
+
+    /**
+     * Update the referral form doc status
+     * @param \PDO $dbh
+     * @return void
+     */
+    public function updateReferralFormDocStatus(\PDO $dbh, $newStatus) {
+        $referralDocs = $this->getReferralDocs($dbh);
+
+        foreach ($referralDocs as $doc) {
+            $doc->updateStatus($dbh, $newStatus);
+        }
+    }
+
 
     /**
      * Summary of deleteMe
@@ -551,7 +569,7 @@ class Reservation_1 {
         }
 
         // Set referal doc to archived
-        $dbh->exec("update document d left join reservation r on d.idDocument = r.idReferralDoc set d.Status = '" . ReferralFormStatus::Archived . "' where r.idReservation = " . $this->getIdReservation());
+        $this->updateReferralFormDocStatus($dbh, ReferralFormStatus::Archived);
 
         //move notes to PSG
         $idPsg = $this->getIdPsg($dbh);
@@ -2012,6 +2030,28 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
      */
     public function getIdReferralDoc() {
         return $this->idReferralDoc;
+    }
+
+    /**
+     * Retrieves the referral documents associated with a reservation.
+     *
+     * @param \PDO $dbh
+     * @return array<FormDocument>
+     */
+    public function getReferralDocs(\PDO $dbh) {
+        $docs = [];
+        if($this->getIdReservation() > 0){
+            $stmt = $dbh->query("select ld.idDocument from link_doc ld join document d on ld.idDocument = d.idDocument where ld.idReservation = " . $this->getIdReservation() . " and d.Type = 'json' and d.Category = 'form'");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            foreach($rows as $row){
+                $doc = new FormDocument();
+                if($doc->loadDocument($dbh, $row['idDocument'])){
+                    $docs[] = $doc;
+                }
+            }
+        }
+        return $docs;
     }
 
     /**

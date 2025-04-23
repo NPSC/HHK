@@ -85,7 +85,7 @@ class Login {
         	$ssn->rolecode = WebRole::Guest;
         }
 
-        SysConfig::getCategory($dbh, $ssn, ["a", "f", "es", "ga", "pr", "ha", "sms"], WebInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $ssn, ["a", "f", "es", "ga", "pr", "ha", "sms", "g"], WebInit::SYS_CONFIG);
         
         return $dbh;
     }

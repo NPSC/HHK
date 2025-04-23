@@ -318,6 +318,21 @@ CREATE TABLE if not exists `document` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
+-- Table `document_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `document_log` (
+  `Log_Type` varchar(45) NOT NULL,
+  `Sub_Type` varchar(45) NOT NULL,
+  `User_Name` varchar(45) NOT NULL DEFAULT '',
+  `idName` int(11) NOT NULL DEFAULT '0',
+  `idPsg` int(11) NOT NULL DEFAULT '0',
+  `idDocument` int(11) NOT NULL DEFAULT '0',
+  `idReservation` int(11) NOT NULL DEFAULT '0',
+  `Log_Text` varchar(5000) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=MyISAM;
+
+-- -----------------------------------------------------
 -- Table `staff_note`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `staff_note` (
@@ -339,12 +354,14 @@ CREATE TABLE if not exists `doc_note` (
 -- Table `link_doc`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `link_doc` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `idDocument` int(11) NOT NULL,
   `idGuest` int(11) DEFAULT NULL,
   `idPSG` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10;
+  `idReservation` int(11) DEFAULT 0,
+  `username` varchar(100) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idDocument`, `idGuest`, `idPSG`, `idReservation`)
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `link_note`
@@ -2448,6 +2465,14 @@ ALTER TABLE `labels`
 CREATE INDEX IF NOT EXISTS `indx_idDocument` ON `link_doc` (`idDocument` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idGuest` ON `link_doc` (`idGuest` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idPsg` ON `link_doc` (`idPSG` ASC);
+CREATE INDEX IF NOT EXISTS `indx_idReservation` ON `link_doc` (`idReservation` ASC);
+
+ALTER TABLE `link_doc` 
+ADD CONSTRAINT `fk_idDocument`
+  FOREIGN KEY if not exists(`idDocument`)
+  REFERENCES `document` (`idDocument`)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION;
 
 CREATE INDEX IF NOT EXISTS `indx_idNote` ON `link_note` (`idNote`);
 CREATE INDEX IF NOT EXISTS `indx_linkType` ON `link_note` (`linkType`);

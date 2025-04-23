@@ -144,8 +144,7 @@ if(isset($_GET['template'])){
     	<?php }else{ ?>
     	<form action="#" method="POST" novalidate id="renderedForm">
     	<?php } ?>
-        <div id="formContent" class="container-fluid">
-			<div style="background: url(../images/ui-anim_basic_16x16.gif) center no-repeat; width: 100%; height: 10em;"></div>
+        <div id="formContent" class="container-fluid hhk-loading" style="min-height: 300px;">
 			<div id="formError" style="text-align: center"></div>
         </div>
         <div class="alert alert-success msg" role="alert" style="display: none">
