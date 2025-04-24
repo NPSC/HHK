@@ -63,11 +63,7 @@ class WebhookResponse extends AbstractGatewayResponse implements GatewayResponse
     }
 
     public function getToken() {
-        if (isset($this->result['saveOnFileTransactionID'])) {
-            return $this->result['saveOnFileTransactionID'];
-        }
-
-        return '';
+        return $this->getPaymentPlanID();
     }
 
     public function setSaveOnFileTransactionID($id) {
