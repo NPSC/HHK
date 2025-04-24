@@ -49,7 +49,7 @@ class VerifyCurlResponse extends AbstractGatewayResponse implements GatewayRespo
     }
 
     public function getToken() {
-        return $this->getPaymentPlanID();
+        return $this->getSaveOnFileTransactionID();
     }
 
     public function getCardType() {
@@ -194,8 +194,15 @@ class VerifyCurlResponse extends AbstractGatewayResponse implements GatewayRespo
         return '';
     }
 
+    public function getSaveOnFileTransactionID() {
+        if (isset($this->result['saveOnFileTransactionID'])) {
+            return $this->result['saveOnFileTransactionID'];
+        }
+        return '';
+    }
+
     public function saveCardonFile() {
-        if ($this->getPaymentPlanID() != '') {
+        if ($this->getSaveOnFileTransactionID() != '') {
             return TRUE;
         }
         return FALSE;

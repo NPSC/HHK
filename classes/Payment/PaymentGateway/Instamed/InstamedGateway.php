@@ -723,6 +723,31 @@ group by pa.Approved_Amount having `Total` >= $amount;");
                 $isPartialPayment = FALSE;
             }
 
+            if($webhookResp->getToken() == '') {
+                //get saveOnFileTransactionID from the Instamed Receipt
+
+                $params = $this->getCredentials()->toCurl()
+                        . "&transactionAction=ViewReceipt"
+                        . "&requestToken=true"
+                        . "&singleSignOnToken=" . $webhookResp->getSsoToken();
+                $curlRequest = new ImCurlRequest();
+                $resp = $curlRequest->submit($params, $this->NvpUrl, $this->getCredentials()->id, $this->getCredentials()->password);
+
+                $response = new VerifyCurlResponse($resp);
+                $response->setMerchant($this->getMerchant());
+        
+                // Save raw transaction in the db.
+                try {
+                    self::logGwTx($dbh, $response->getResponseCode(), $params, json_encode($response->getResultArray()), 'CardInfoVerify');
+                } catch (\Exception $ex) {
+                    // Do Nothing
+                }
+
+                if(isset($resp['saveOnFileTransactionID']) && $webhookResp->getPrimaryTransactionID() == $resp['primaryTransactionID']) {
+                    $webhookResp->setSaveOnFileTransactionID($resp['saveOnFileTransactionID']);
+                }
+            }
+
             // Make a sale response...
             $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes, date("Y-m-d H:i:s"), $isPartialPayment);
 
