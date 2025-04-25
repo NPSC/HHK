@@ -9,6 +9,7 @@ use GuzzleHttp\Psr7\Response;
 use HHK\sec\OAuth\Repository\ClientRepository;
 use HHK\sec\OAuth\Repository\ScopeRepository;
 use HHK\sec\OAuth\Repository\AccessTokenRepository;
+use League\OAuth2\Server\ResourceServer;
 
 
 class OAuthServer
@@ -16,11 +17,8 @@ class OAuthServer
     private ClientRepository $clientRepository;
     private ScopeRepository $scopeRepository;
     private AccessTokenRepository $accessTokenRepository;
-
-    /**
-     * @var AuthorizationServer
-     */
-    private AuthorizationServer $server;
+    private AuthorizationServer $authServer;
+    private ResourceServer $resourceServer;
 
     private string $privateKeyPath;
     private string $publicKeyPath;
@@ -40,7 +38,7 @@ class OAuthServer
         $this->encryptionKey = 'L7/AxZDnKHKX5yWWJBAEs0ZE5TVydMxbbt6gFxMeIDk='; // generate using base64_encode(random_bytes(32))
 
         // Setup the authorization server
-        $this->server = new AuthorizationServer(
+        $this->authServer = new AuthorizationServer(
             $this->clientRepository,
             $this->accessTokenRepository,
             $this->scopeRepository,
@@ -49,25 +47,25 @@ class OAuthServer
         );
 
         // Enable the client credentials grant on the server
-        $this->server->enableGrantType(
+        $this->authServer->enableGrantType(
             new ClientCredentialsGrant(),
             new \DateInterval('PT1H') // access tokens will expire after 1 hour
         );
 
     }
 
+    public function getResourceServer(){
+        if (!isset($this->resourceServer)) {
+            $this->resourceServer = new ResourceServer(
+                $this->accessTokenRepository,
+                $this->publicKeyPath
+            );
+        }
+        return $this->resourceServer;
+    }
 
-    /**
-     * Summary of requestAccessToken
-     * @param \PDO $dbh
-     * @param Request $request
-     * @param Response $response
-     * @return Response $response
-     */
-    public function requestAccessToken(\PDO $dbh, $request, $response){
-        // Handle the request and generate a response
-        $response = $this->server->respondToAccessTokenRequest($request, $response);
-        return $response;
+    public function getAuthServer(){
+        return $this->authServer;
     }
 
 }
