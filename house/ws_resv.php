@@ -36,7 +36,7 @@ use HHK\TableLog\NotificationLog;
  * ws_resv.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -207,11 +207,11 @@ try {
             $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
             $vehStmt->execute([':idv' => $idV]);
             $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
-            
+
             $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], false);
-    
+
             $events = ['success' => $mkup, 'title' => "Edit Vehicles"];
-    
+
             break;
 
         case 'saveVeh':
@@ -230,7 +230,7 @@ try {
             }catch(\Exception $e){
                 $events = ["error" => "Error saving vehicle: " . $e->getMessage()];
             }
-    
+
             break;
 
     case 'getNoteList':
@@ -436,13 +436,13 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			$report->loadReport($dbh);
 			$idGuest = $report->getGuestId();
 			$reportAr = $report->toArray();
-            
+
             //user can edit?
             $reportAr["userCanEdit"] = $report->userCanEdit();
 
             if(isset($_POST['print'])){
 	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");
-	            $guestAr = $stmt->fetch(PDO::FETCH_ASSOC);
+	            $guestAr = $stmt->fetch(\PDO::FETCH_ASSOC);
 	            $reportAr = $reportAr + ["guest"=>$guestAr];
 	            $reportAr['description'] = nl2br($reportAr['description']);
 	            $reportAr['resolution'] = nl2br($reportAr['resolution']);
@@ -612,10 +612,10 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
     case 'getResvMsgsDialog':
 
         $idResv = intval(filter_input(INPUT_GET, 'idResv', FILTER_SANITIZE_NUMBER_INT));
-                
+
         if($idResv > 0){
             $messages = new Messages($dbh);
-    
+
             $events = $messages->getResvGuestsData($idResv);
         }else{
             throw new NotFoundException("Reservation ID not found");
@@ -634,11 +634,11 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
     case 'getGuestMsgsDialog':
         $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
-    
+
         $messages = new Messages($dbh);
 
         $events = $messages->getGuestData($idName);
-    
+
         break;
 
     case 'loadMsgs':
@@ -699,11 +699,11 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         case 'sendResvMsg':
             $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT));
             $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    
+
             $messages = new Messages($dbh, true);
 
             $events = $messages->sendResvMessage($idResv, $msgText);
-    
+
             break;
 
     case 'sendCampaign':
@@ -732,7 +732,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         }else{
             $events = $contacts->fetchContacts();
         }
-        
+
         break;
 
     case 'syncContacts':

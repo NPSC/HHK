@@ -1,19 +1,19 @@
 <?php
 
+use HHK\CreateMarkupFromDB;
+use HHK\CrmExport\AbstractExportManager;
+use HHK\Exception\RuntimeException;
+use HHK\Exception\UnexpectedValueException;
+use HHK\HTMLControls\HTMLTable;
+use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
-use HHK\sec\Session;
-use HHK\CreateMarkupFromDB;
-use HHK\HTMLControls\HTMLTable;
-use HHK\Exception\RuntimeException;
-use HHK\CrmExport\AbstractExportManager;
-use HHK\Exception\UnexpectedValueException;
 
 /**
  * ws_tran.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -170,7 +170,7 @@ try {
 
             try {
                 $events = $transfer->searchMembers($post);
-            } catch (Exception $ex) {
+            } catch (\Exception $ex) {
                 $events = ["error" => "Search Error: " . $ex->getMessage()];
             }
 
@@ -266,7 +266,7 @@ try {
 } catch (PDOException $ex) {
 
     $events = ["error" => "Database Error: " . $ex->getMessage()];
-} catch (Exception $ex) {
+} catch (\Exception $ex) {
 
     $events = ["error" => "HouseKeeper Error: " . $ex->getMessage()];
 }
