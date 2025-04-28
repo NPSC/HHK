@@ -3,7 +3,7 @@ namespace HHK\CrmExport\Salesforce;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
-use HHK\OAuth\OAuth;
+use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
 use HHK\Exception\{RuntimeException, UploadException};
 use GuzzleHttp\Exception\BadResponseException;
@@ -18,7 +18,7 @@ class SF_Connector {
 
     /**
      * Summary of oAuth
-     * @var Oauth
+     * @var SalesForceOauth
      */
     protected $oAuth;
 
@@ -40,7 +40,7 @@ class SF_Connector {
      */
     public function login() {
 
-        $this->oAuth = new OAuth($this->credentials);
+        $this->oAuth = new SalesForceOAuth($this->credentials);
 
         $this->oAuth->login();
     }
@@ -59,7 +59,7 @@ class SF_Connector {
     public function search($query, $endpoint) {
 
         try{
-            if(!$this->oAuth instanceof OAuth){
+            if(!$this->oAuth instanceof SalesForceOAuth){
                 $this->login();
             }
 
@@ -92,7 +92,7 @@ class SF_Connector {
     public function goUrl($endpoint) {
 
         try{
-            if(!$this->oAuth instanceof OAuth){
+            if(!$this->oAuth instanceof SalesForceOauth){
                 $this->login();
             }
 
@@ -125,7 +125,7 @@ class SF_Connector {
     public function postUrl($endpoint, array $params, $isUpdate = FALSE) {
 
        try{
-            if(!$this->oAuth instanceof OAuth){
+            if(!$this->oAuth instanceof SalesForceOAuth){
                 $this->login();
             }
 
@@ -159,7 +159,7 @@ class SF_Connector {
     {
 
         try {
-            if (!$this->oAuth instanceof OAuth) {
+            if (!$this->oAuth instanceof SalesForceOAuth) {
                 $this->login();
             }
 
@@ -207,14 +207,14 @@ class SF_Connector {
     protected function checkErrors(BadResponseException $exception) {
 
         $errorResponse = $exception->getResponse();
-        $errorJson = json_decode($errorResponse->getBody()->getContents());
+        $errorJson = json_decode($errorResponse->getBody());
 
         if(isset($errorJson->error_description)){
             throw new RuntimeException("Unable to postURL via OAuth: " . $errorJson->error_description);
         }elseif(is_countable($errorJson)){
-            throw new RuntimeException($this->collectErrors($errorJson));
+            throw new RuntimeException($this->collectErrors($errorJson) . 'Requested URL: ' . $exception->getRequest()->getUri());
         }else{
-            throw new RuntimeException('to PostURL via OAuth: ' . $errorResponse->getBody()->getContents());
+            throw new RuntimeException('to PostURL via OAuth: ' . $errorResponse->getBody());
         }
 
     }

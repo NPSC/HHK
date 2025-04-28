@@ -41,6 +41,7 @@ function resvManager(initData, options) {
     var rooms = [];
     var people = new Items();
     var addrs = new Items();
+    var emergContacts = new Items();
     var familySection = new FamilySection($('#famSection'));
     var resvSection = new ResvSection($('#resvSection'));
     var hospSection = new HospitalSection($('#hospitalSection'));
@@ -691,6 +692,105 @@ function resvManager(initData, options) {
             }
         }
 
+        function copyEmergContactSelector($button, prefix) {
+
+            // remove any previous incarnations
+            $('.hhk-addrPicker').remove();
+
+            var $sel = $('<select id="selAddrch" multiple="multiple" />');
+            var opts = 0;
+            var optTexts = [];
+
+            for (var p in emergContacts.list()) {
+
+                if (emergContacts.list()[p].First != '' || emergContacts.list()[p].Last != '') {
+
+                    var notFound = true,
+                            optText = emergContacts.list()[p].First + ' ' + emergContacts.list()[p].Last + " " +
+                            emergContacts.list()[p].phone
+                            ;
+
+                    for (var i = 0; i <= optTexts.length; i++) {
+                        if (optTexts[i] == optText) {
+                            notFound = false;
+                            continue;
+                        }
+                    }
+
+                    if (notFound) {
+                        // Add as option
+                        optTexts[opts] = optText;
+                        opts++;
+
+                        $('<option class="hhk-addrPickerPanel" value="' + p + '">' + optText + '</option>')
+                                .appendTo($sel);
+                    }
+                }
+            }
+
+            if (opts > 0) {
+
+                $sel.prop('size', opts + 1).prepend($('<option value="0" >(Cancel)</option>'));
+
+                $sel.change(function () {
+                    setEmergContact(prefix, $(this).val());
+                });
+
+                var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker hhk-addrPickerPanel"/>')
+                        .append($('<p class="hhk-addrPickerPanel">Choose an Emergency Contact: </p>'))
+                        .append($sel)
+                        .appendTo($('body'));
+
+                $selDiv.position({
+                    my: 'left top',
+                    at: 'right center',
+                    of: $button
+                });
+            }
+
+        }
+
+        function setEmergContact(prefix, p) {
+
+            if (p == 0) {
+                $('#divSelAddr').remove();
+                return;
+            }
+
+            $('#' + prefix + 'txtEmrgFirst').val(emergContacts.list()[p].First);
+            $('#' + prefix + 'txtEmrgLast').val(emergContacts.list()[p].Last);
+            $('#' + prefix + 'txtEmrgPhn').val(emergContacts.list()[p].phone);
+            $('#' + prefix + 'txtEmrgAlt').val(emergContacts.list()[p].altPhone);
+            $('#' + prefix + 'selEmrgRel').val(emergContacts.list()[p].relation).change();
+
+            $('#divSelAddr').remove();
+
+        }
+
+        function eraseEmergContact(prefix) {
+
+            $('#' + prefix + 'txtEmrgFirst').val("");
+            $('#' + prefix + 'txtEmrgLast').val("");
+            $('#' + prefix + 'txtEmrgPhn').val("");
+            $('#' + prefix + 'txtEmrgAlt').val("");
+            $('#' + prefix + 'selEmrgRel').val("");
+
+
+        }
+
+        function loadEmergContact(prefix) {
+            if (prefix === undefined) {
+                return;
+            }
+
+            emergContacts.list()[prefix].First = $('#' + prefix + 'txtEmrgFirst').val();
+            emergContacts.list()[prefix].Last = $('#' + prefix + 'txtEmrgLast').val();
+            emergContacts.list()[prefix].phone = $('#' + prefix + 'txtEmrgPhn').val();
+            emergContacts.list()[prefix].altPhone = $('#' + prefix + 'txtEmrgAlt').val();
+            emergContacts.list()[prefix].relation = $('#' + prefix + 'selEmrgRel').val();
+            
+        }
+
         function initFamilyTable(data) {
 
             var fDiv, fHdr, expanderButton;
@@ -805,6 +905,7 @@ function resvManager(initData, options) {
             // Add new people to the lists.
             people.makeList(data.famSection.mem, 'pref');
             addrs.makeList(data.famSection.addrs, 'pref');
+            emergContacts.makeList(data.famSection.emergContacts, 'pref');
 
             // add patient to the UI
             if (data.famSection.tblBody['1'] !== undefined) {
@@ -936,11 +1037,17 @@ function resvManager(initData, options) {
                 // Load the addresses into the addrs object if changed.
                 $('#' + divFamDetailId).on('change', '.hhk-copy-target', function () {
                     loadAddress($(this).data('pref'));
+                    loadEmergContact($(this).data('pref'));
                 });
 
                 // Copy Address
                 $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function () {
                     copyAddrSelector($(this), $(this).data('prefix'));
+                });
+
+                // Copy Emergency Contact
+                $('#' + divFamDetailId).on('click', '.hhk-emergCopy', function () {
+                    copyEmergContactSelector($(this), $(this).data('prefix'));
                 });
 
                 // Delete address
@@ -1457,6 +1564,12 @@ function resvManager(initData, options) {
                             var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
 
                             $('#' + data.daysEle).val(numDays);
+
+                            if(data.mindays > 0 && numDays < data.mindays){
+                                $('#' + data.daysErrEle).text("Stay length is less than " + data.mindays + " days").show();
+                            }else{
+                                $('#' + data.daysErrEle).empty().hide();
+                            }
 
                             if ($('#spnNites').length > 0) {
                                 $('#spnNites').text(numDays);

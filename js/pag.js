@@ -63,11 +63,15 @@ function dateRender(data, type, format) {
 			return '';
 		}
 
+		if (moment(data, 'YYYY-MM-DD HH:mm:ss.SSSS Z').isValid()===false) {
+			return data;
+		}
+
 		if (!format || format === '') {
 			format = 'MMM D, YYYY';
 		}
 
-		return moment(data, 'YYYY-MM-DD HH:mm:ss Z').format(format);
+		return moment(data, 'YYYY-MM-DD HH:mm:ss.SSSS Z').format(format);
 	}
 
 	// Otherwise the data type requested (`type`) is type detection or
@@ -120,6 +124,7 @@ function openiframe(src, width, height, title, buttons) {
 function logoutTimer(){
 	var timerID;
 	var intervalID;
+	var expiresIn;
 
 	function resetTimer(){
 		$.ajax({
@@ -133,17 +138,20 @@ function logoutTimer(){
 					$dialog.dialog('close');
 				}else{
 					$("#expiresIn").text(data.ExpiresIn);
+					expiresIn = data.ExpiresIn;
 					intervalID = setInterval(countdown, 1000);
 					$dialog.dialog('open');
-					timerID = setTimeout(function(){location.href = 'index.php?log=lo';}, data.ExpiresIn*1000);
+					timerID = setTimeout(function(){location.reload();}, (data.ExpiresIn+1)*1000);
 				}
 			}
 		});
 	}
 
 	function countdown(){
-		var expiresIn = $("#expiresIn").text();
-		$("#expiresIn").text(expiresIn - 1);
+		if(expiresIn > 0){
+			expiresIn--;
+			$("#expiresIn").text(expiresIn);
+		}
 	}
 
 	$dialog = $('<div id="logoutTimer" style="display:none; text-align: center;"><h3>You will be logged out in</h3><h2><span id="expiresIn"></span> Seconds</h2></div>');
@@ -151,7 +159,7 @@ function logoutTimer(){
 
 	$dialog.dialog({
 		width : getDialogWidth(400),
-		height : 225,
+		height : 230,
 		modal : true,
 		autoOpen: false,
 		title : "Stay Logged In?",
@@ -546,7 +554,7 @@ $(document).ready(
 		}
 
 		//Logout after inactivity
-		//logoutTimer();
+		logoutTimer();
 
 		//autosize textarea based on content
 		$(document).on("input", "textarea.hhk-autosize", function () {

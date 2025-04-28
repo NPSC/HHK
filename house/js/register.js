@@ -53,6 +53,7 @@ function setRoomTo(idResv, idResc) {
         if (data.success && data.success !== '') {
             flagAlertMessage(data.msg, 'success');
         }
+        calendar.refetchResources();
         calendar.refetchEvents();
         refreshdTables(data);
         return true;
@@ -114,6 +115,7 @@ function cgResvStatus(rid, status) {
             }
             if (data.success) {
                 flagAlertMessage(data.success, 'info');
+                calendar.refetchResources();
                 calendar.refetchEvents();
             }
             refreshdTables(data);
@@ -195,7 +197,7 @@ function ckOut(gname, id, idReserv, idVisit, span) {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?rid=' + idReserv, '_blank');
+            window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + span, '_blank');
         },
         "Check Out": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -212,7 +214,7 @@ function editVisit(gname, id, idReserv, idVisit, span) {
             window.open('ShowStatement.php?vid=' + idVisit, '_blank');
         },
         "Show Registration Form": function() {
-            window.open('ShowRegForm.php?rid=' + idReserv, '_blank');
+            window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + span, '_blank');
         },
         "Save": function() {
             saveFees(id, idVisit, span, true, 'register.php');
@@ -460,6 +462,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 	                flagAlertMessage(data.msg, 'info');
 	            }
 
+                calendar.refetchResources();
 				calendar.refetchEvents();
 	            refreshdTables(data);
 
@@ -547,6 +550,7 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
                 flagAlertMessage(data.success, 'success');
             }
             if (updateCal === undefined || updateCal === true) {
+                calendar.refetchResources();
                 calendar.refetchEvents();
                 refreshdTables(data);
             }
@@ -710,6 +714,45 @@ $(document).ready(function () {
     $("#btnTextUnConfResvGuests").button().smsDialog({ "campaign": "unconfirmed_reservation" });
 
     $("#btnTextWaitlistGuests").button().smsDialog({ "campaign": "waitlist" });
+
+    //notes
+    let notesDialog = $('<div id="registerNotes" class="visitDialog" style="font-size: 0.8em;"><div class="regNotesWrapper hhk-tdbox"></div></div>');
+    $("document").append(notesDialog);
+    notesDialog.dialog({
+        autoOpen: false,
+        height: "auto",
+        minHeight: 800,
+        width: getDialogWidth(1500),
+        modal: true,
+        close: function (event, ui){
+            notesDialog.find("#note-newNote").trigger('click');
+            notesDialog.find(".regNotesWrapper").empty();
+        },
+        buttons: {
+            "Close": function(){
+                notesDialog.dialog("close");
+            }
+        },
+        position: {my: "center", at: "center"},
+    });
+
+    $(".btnRegNotes").button().on("click", function(e){
+        e.preventDefault();
+        let dialogTitle = $(this).data("title");
+        let linkType = $(this).data("linktype");
+        notesDialog.dialog("open");
+        notesDialog.dialog("option", "title", dialogTitle);
+      	notesDialog.find(".regNotesWrapper").notesViewer({
+		    linkId: 0,
+			linkType: linkType,
+			newNoteLocation:"hidden",
+            defaultLength: 10,
+			alertMessage: function(text, type) {
+			    flagAlertMessage(text, type);
+			}
+		});
+    });
+    
 
     // Reservations
     let rvCols = [
@@ -1241,7 +1284,7 @@ $(document).ready(function () {
                         window.open('ShowStatement.php?vid=' + info.event.extendedProps.idVisit, '_blank');
                     },
                     "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?rid=' + info.event.extendedProps.idResv , '_blank');
+                        window.open('ShowRegForm.php?vid=' + info.event.extendedProps.idVisit + '&span=' + info.event.extendedProps.Span , '_blank');
                     },
                     "Save": function () {
                         saveFees(0, info.event.extendedProps.idVisit, info.event.extendedProps.Span, true, 'register.php');
@@ -1473,7 +1516,7 @@ $(document).ready(function () {
                         $('#rptInvdiv').on('click', '.invSetBill', function (event) {
                             event.preventDefault();
                             $(".hhk-alert").hide();
-                            invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
+                            invSetBill($(this).data('inb'), $(this).data('payor'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
                         });
 
                         // Handles several actions
@@ -1587,6 +1630,7 @@ $(document).ready(function () {
             }
 
             if(ui.newTab.prop('id') === 'liCal'){
+                calendar.refetchResources();
             	calendar.refetchEvents();
             }
         },

@@ -14,3 +14,5 @@ define('DEFAULT_CSS', '<link href="css/default.css' . JSV . '" rel="stylesheet" 
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
+
+define('CONFIGURE_JS', "js/Configure.js" . JSV);

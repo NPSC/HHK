@@ -1,18 +1,19 @@
 <?php
 
+
 use HHK\Exception\RuntimeException;
 use HHK\House\ReserveData\ReserveData;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentResult\PaymentResult;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
-use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\VisitStatus;
+use HHK\SysConst\Mode;
+
 
 /**
  * CheckingIn.php
@@ -65,7 +66,6 @@ try {
                 ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
         }
 
-        // Display a status message.
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
@@ -153,6 +153,9 @@ $resvAr['isCheckin'] = TRUE;
 $resvAr['insistCkinEmail'] = $uS->insistCkinEmail;
 $resvAr['insistCkinPhone'] = $uS->insistCkinPhone;
 $resvAr['insistCkinAddress'] = $uS->insistCkinAddress;
+$resvAr['insistCkinEmail'] = $uS->insistCkinEmail;
+$resvAr['insistCkinPhone'] = $uS->insistCkinPhone;
+$resvAr['insistCkinAddress'] = $uS->insistCkinAddress;
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 $resvAr['datePickerButtons'] = $uS->RegNoMinorSigLines;
 
@@ -198,6 +201,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -221,14 +225,16 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php 
+        <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
                 if ($uS->mode == Mode::Live) {
                     echo DELUXE_EMBED_JS;
@@ -283,6 +289,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
             <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+            <div id="vehDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="ecSearch" style="display:none;">
                 <table>
                     <tr>

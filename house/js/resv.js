@@ -265,7 +265,9 @@ function setupRates(ckIn) {
                 }
             }
 
-            daysCalculator(days, $selRateCat.val(), 0, 0, adj, parseInt($('#spnNumGuests').text()), (ckIn.idResv === undefined ? 0 : ckIn.idResv), function(amt) {
+            daysCalculator(days, $selRateCat.val(), 0, 0, adj, parseInt($('#spnNumGuests').text()), (ckIn.idResv === undefined ? 0 : ckIn.idResv), function(rawAmt) {
+
+                let amt = parseFloat(rawAmt);
 
                 $('#spnLodging').text('$' + amt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
 

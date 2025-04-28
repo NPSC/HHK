@@ -89,10 +89,18 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
         $from = SysConfig::getKeyValue($this->dbh, 'sys_config', 'NoReplyAddr');      // Email address message will show as coming from.
         $maxAutoEmail = SysConfig::getKeyValue($this->dbh, 'sys_config', 'MaxAutoEmail');
 
-        $subjectLine = $labels->getString('referral', 'Res_Confirmation_Subject', '');
+        if($this->params["EmailTemplate"] > 0){
+            $sForm = new ConfirmationForm($this->dbh, $this->params['EmailTemplate']);
+        }else{
+            throw new RuntimeException("Cannot find Confirmation document");
+        }
 
-        if ($subjectLine == '') {
-            throw new RuntimeException("Subject line is missing.  Go to Labels & Prompts, referral -> Survey_Subject.");
+        if($sForm->getSubjectLine() != ""){
+            $subjectLine = $sForm->getSubjectLine();
+        }else if($labels->getString('referral', 'Res_Confirmation_Subject', '') != ""){
+            $subjectLine = $labels->getString('referral', 'Res_Confirmation_Subject', '');
+        }else{
+            throw new RuntimeException("Subject line is missing.  Go to Resource Builder -> Form Upload -> Confirmation -> Email Subject.");
         }
 
         if ($from == '') {
@@ -163,16 +171,6 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
         $mail->isHTML(true);
         $mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
 
-        if($this->params["EmailTemplate"] > 0){
-            $sForm = new ConfirmationForm($this->dbh, $this->params['EmailTemplate']);
-        }else{
-            throw new RuntimeException("Cannot find Confirmation document");
-        }
-
-        if($sForm->getSubjectLine() != ""){
-            $subjectLine = $sForm->getSubjectLine();
-        }
-
         $badAddresses = 0;
         $ArrivalDT = new \DateTime();
         $ArrivalDT->add(new \DateInterval('P' . $delayDays . 'D'));
@@ -204,8 +202,6 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
 
                 $mail->clearAddresses();
                 $mail->addAddress($emailAddr);
-
-                $mail->Subject = htmlspecialchars_decode($subjectLine, ENT_QUOTES);
                 $mail->msgHTML($form);
 
                 if ($mail->send() === FALSE) {

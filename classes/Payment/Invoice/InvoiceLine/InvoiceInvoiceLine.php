@@ -28,5 +28,20 @@ class InvoiceInvoiceLine extends AbstractInvoiceLine {
         $this->setTypeId(InvoiceLineType::Invoice);
     }
 
+        /**
+     * Summary of setDescription
+     * @param mixed $description
+     * @return static
+     */
+    public function setDescription($description) {
+        parent::setDescription($description);
+
+        // Carried invoice number is in the $var field.
+        $this->description .= $this->var;
+
+        return $this;
+    }
+
+
 }
 ?>

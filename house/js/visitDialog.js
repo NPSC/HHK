@@ -190,8 +190,11 @@ function saveHospitalStay(idHs, idVisit) {
     var parms = parms.concat($('.hospital-stay:not(#txtDiagnosis)').serializeArray());
 
     //diagnosis
-    let base64diag = buffer.Buffer.from($('#txtDiagnosis').val()).toString("base64");
-    parms.push({ 'name': 'txtDiagnosis', 'value': base64diag });
+    let txtDiagnosis = $('#txtDiagnosis').val();
+    if (typeof txtDiagnosis == "string") {
+        txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+    }
+    parms.push({ 'name': 'txtDiagnosis', 'value': txtDiagnosis });
 
 	$.post('ws_resv.php', parms, function (data) {
         if (!data) {
@@ -222,6 +225,94 @@ function saveHospitalStay(idHs, idVisit) {
             }
         }
 	});
+}
+
+function setupVehicle(veh) {
+    var nextVehId = 2;
+    var $cbVeh = veh.find('#cbNoVehicle');
+    var $nextVeh = veh.find('#btnNextVeh');
+    var $tblVeh = veh.find('#tblVehicle');
+
+    $cbVeh.change(function () {
+        if (this.checked) {
+            $tblVeh.hide('scale, horizontal');
+
+        } else {
+            $tblVeh.show('scale, horizontal');
+        }
+    });
+
+    $cbVeh.change();
+    $nextVeh.button();
+
+    $nextVeh.click(function () {
+        veh.find('#trVeh' + nextVehId).show('fade');
+        nextVehId++;
+        if (nextVehId > 4) {
+            $nextVeh.hide('fade');
+        }
+    });
+
+}
+
+function viewVehicleDialog(idVisit, $vehDialog) {
+
+    $.post('ws_resv.php', { cmd: 'viewVeh', 'idV': idVisit }, function (data) {
+
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+
+        } else if (data.success) {
+
+            $vehDialog.empty();
+            $vehDialog.append($(data.success));
+            
+            setupVehicle($vehDialog);
+
+            $vehDialog.dialog({
+                autoOpen: true,
+                width: getDialogWidth(900),
+                resizable: true,
+                modal: true,
+                title: (data.title ? data.title : 'Vehicle Details'),
+                buttons: {
+                    "Cancel": function () {
+                        $(this).dialog("close");
+                    },
+                    "Save": function () {
+                        saveVehicles(idVisit, $vehDialog);
+                        $(this).dialog("close");
+                    }
+                },
+                close: function () {
+                    $(this).dialog("destroy").empty();
+                }
+            });
+        }
+    }, "json");
+}
+
+function saveVehicles(idVisit, $vehDialog) {
+    let params = $vehDialog.find("#tblVehicle input, #tblVehicle select, #cbNoVehicle").serializeArray();
+    params.push({ name: "cmd", value: "saveVeh" });
+    params.push({ name: "idV", value: idVisit });
+    $.post('ws_resv.php', params, function (data) {
+
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+
+        } else if (data.success) {
+            flagAlertMessage(data.success, 'success');
+        }
+    }, "json");
 }
 
 var isCheckedOut = false;
@@ -391,6 +482,11 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
         $('#tblActiveVisit').on('click', '.hhk-hospitalstay', function (event){
             event.preventDefault();
             viewHospitalStay($(this).data('idhs'), idVisit, $('#hsDialog'));
+        });
+
+        $("#divksStays").on('click', '#vehAdjust', function (event){
+            event.preventDefault();
+            viewVehicleDialog(idVisit, $('#vehDialog'));
         });
 
         $('#spnExPay').hide();
@@ -855,8 +951,14 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
+
                 flagAlertMessage(data.error, 'error');
                 $('#keysfees').dialog("close");
+
+                if (data.receipt && data.receipt !== '') {
+                    showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                }
+
                 return;
             }
 
@@ -877,6 +979,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 flagAlertMessage(data.success, 'success');
 
                 if (typeof calendar !== 'undefined') {
+                    calendar.refetchResources();
                     calendar.refetchEvents();
                 }
             }

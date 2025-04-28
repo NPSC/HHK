@@ -95,6 +95,7 @@ class ConfirmationForm extends AbstractTemplateForm {
             'Notes' => $notes,
             'VisitFeeNotice' => $visitFeeNotice,
             'ImgPath' => $uS->resourceURL . 'conf/img/',
+            'logoUrl' => $uS->resourceURL .'conf/' . $uS->statementLogoFile,
         );
 
     }

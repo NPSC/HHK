@@ -105,7 +105,7 @@ WHERE
      * @param string $status
      * @return array
      */
-    public function getCampaignGuestsData(string $status){
+    public function getCampaignGuestsData(string|null $status){
         $contacts = new Contacts($this->dbh);
 
         switch ($status){
@@ -118,7 +118,7 @@ WHERE
             case "waitlist":
                 return ["status" => $status, "title" => Labels::getString('register', 'waitlistTab', 'Wait List'), "contacts" => $contacts->getWaitlistReservationGuestPhones()];
             default:
-                return ["status" => $status, "title" => "", "contacts" => []];
+                throw new SmsException("Error sending Campaign: Invalid list type of " . $status);
         }
     }
 

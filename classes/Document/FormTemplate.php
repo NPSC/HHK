@@ -6,6 +6,7 @@ use HHK\House\Hospital\Hospital;
 use HHK\sec\Session;
 use HHK\sec\Recaptcha;
 use HHK\sec\Labels;
+use HHK\Tables\EditRS;
 /**
  * FormTemplate.php
  *
@@ -34,6 +35,9 @@ class FormTemplate {
      */
     protected $doc;
 
+    /**
+     * Summary of __construct
+     */
     public function __construct() {
 
     }
@@ -56,7 +60,7 @@ class FormTemplate {
         return $rows;
     }
 
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -79,11 +83,23 @@ class FormTemplate {
         if(!$title){
             $validationErrors['title'] = "The title field is required.";
         }
+
+        if(strlen($title) > 0 && $this->isDuplicateTitle($dbh, $title, 0)){
+            $validationErrors['title'] = 'Form title "' . $title . '" already exists.';
+        }
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
         if($notifySubject == ''){
             $validationErrors['notifySubject'] = "The Email Subject field is required";
+        }
+
+        if($notifyMeSubject == '' && $notifyMe == true){
+            $validationErrors['notifyMeSubject'] = "The Confirmation Notification Subject field is required";
+        }
+
+        if($notifyMeContent == '' && $notifyMe == true){
+            $validationErrors['notifyMeContent'] = "The Confirmation Notification Content field is required";
         }
 
         if($initialGuests > self::MAX_GUESTS){
@@ -126,7 +142,7 @@ class FormTemplate {
         }
     }
 
-    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -151,11 +167,22 @@ class FormTemplate {
         if(!$title){
             $validationErrors['title'] = "The title field is required.";
         }
+        if(strlen($title) > 0 && $this->doc->getIdDocument() > 0 && $this->isDuplicateTitle($dbh, $title, $this->doc->getIdDocument())){
+            $validationErrors['title'] = 'Form title "' . $title . '" already exists.';
+        }
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
         if($notifySubject == ''){
             $validationErrors['notifySubject'] = "The Email Subject field is required";
+        }
+
+        if($notifyMeSubject == '' && $notifyMe == true){
+            $validationErrors['notifyMeSubject'] = "The Confirmation Notification Subject field is required";
+        }
+
+        if($notifyMeContent == '' && $notifyMe == true){
+            $validationErrors['notifyMeContent'] = "The Confirmation Notification Content field is required";
         }
 
         if($initialGuests > 20){
@@ -171,7 +198,7 @@ class FormTemplate {
         }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'notifyMe'=>$notifyMe, 'notifyMeSubject'=>$notifyMeSubject, 'notifyMeContent'=>$notifyMeContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
             
             $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, "base64:text/json", $username);
             if($count == 1){
@@ -184,13 +211,32 @@ class FormTemplate {
         }
     }
 
+    public function delete(\PDO $dbh){
+        $uS = Session::getInstance();
+        if($this->doc->getIdDocument() > 0 && $this->doc->deleteDocument($dbh, $uS->username, true)){
+            return array('status'=>'success', 'msg'=>"Form deleted successfully");
+        }else{
+            return array('status'=>'error', 'msg'=>'Unable to delete form');
+        }
+    }
+
+    public function isDuplicateTitle(\PDO $dbh, $title, $idDocument){
+        $templates = $this->listTemplates($dbh);
+        $foundID = array_search($title, array_column($templates, 'Title'));
+        return ($foundID !== false && $templates[$foundID]['idDocument'] != $idDocument);
+    }
+
     public function validateCSS($styles){
+        //short circuit validator
+        return ["valid"=>"true"];
+
         $uS = Session::getInstance();
         try{
             ini_set('default_socket_timeout', 10);
             $encodedStyle = urlencode($styles);
             $url = $uS->CssValidationService . $encodedStyle;
-            $resp = file_get_contents($url);
+            //$resp = file_get_contents($url);
+            $resp = false;
             if($resp === FALSE){
                 return array('error'=>"Could not validate CSS: CSS Validator service could not be reached.");
             }else{
@@ -248,8 +294,12 @@ class FormTemplate {
             'successTitle'=>(isset($abstract->successTitle) ? $abstract->successTitle : ""),
             'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
+            'recaptchaSiteKey'=>$recaptcha->getSiteKey(),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
-            'notifySubject'=>(isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted"),
+            'notifySubject'=>htmlspecialchars_decode((isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted")),
+            'notifyMe'=>(isset($abstract->notifyMe) && $abstract->notifyMe === true ? true:false),
+            'notifyMeSubject'=>htmlspecialchars_decode((isset($abstract->notifyMeSubject) && $abstract->notifyMeSubject != "" ? $abstract->notifyMeSubject : "")),
+            'notifyMeContent'=>htmlspecialchars_decode((isset($abstract->notifyMeContent) && $abstract->notifyMeContent != "" ? $abstract->notifyMeContent : "")),
             'recaptchaScript'=>$recaptcha->getScriptTag(),
             'maxGuests'=>(isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
             'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1),

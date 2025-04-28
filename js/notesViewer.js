@@ -98,16 +98,18 @@
         var settings = $.extend(true, {}, defaults, options);
 
         var $wrapper = $(this);
-        
-        if(settings.linkType == 'staff'){
+
+        if(settings.linkType == 'staff' || settings.linkType == 'curguests' || settings.linkType == "waitlist" || settings.linkType == "confirmed" || settings.linkType == "unconfirmed"){
         	settings.dtCols.forEach(function(El, Index, array){
         		if(El.targets > 3){
         			El.targets = El.targets + 1;
         			settings.dtCols[Index] = El;
         		}
         	});
-        
-        	settings.dtCols.push({
+
+            switch(settings.linkType){
+                case "staff":
+        	    settings.dtCols.push({
                 	"targets": 4,
                         sortable: true,
                         searchable: true,
@@ -123,7 +125,52 @@
                             }
                             return data;
                         }
-                	});
+                });
+                break;
+
+                    default:
+                        settings.dtCols.push({
+                            "targets": 4,
+                                sortable: true,
+                                searchable: true,
+                                data: "group",
+                                title: "group",
+                                className: "noteRoom",
+                                name: "group",
+                                visible: false
+                        });
+            }
+           /* 
+            settings.dtCols.push({
+                "targets": 6,
+                    sortable: true,
+                    searchable: true,
+                    data: "Guest",
+                    title: "Guest",
+                    name: "Guest",
+                    width: "120px",
+                    render: function (data, type, row) {
+                        if (row.idGuest) {
+                            data = '<a href="GuestEdit.php?id=' + row.idGuest;
+                            if (row.idPsg) {
+                                data += '&psg=' + row.idPsg;
+                            }
+                            data+= '">' + row.Guest + '</a>';
+                        }
+                        return data;
+                    }
+            });
+
+            settings.dtCols.push({
+                "targets": 7,
+                    sortable: true,
+                    searchable: true,
+                    data: "room",
+                    title: "Room",
+                    name: "Room",
+                    width: "120px",
+            });
+           */ 
         }
         
         //set uid
@@ -144,21 +191,26 @@
                 
         $div = $('<div class="hhk-panel d-block d-md-flex" style="align-items: center" />').append($ta);
         
-        if (settings.linkType == 'staff'){
+        if (settings.linkType == 'staff') {
+            //$div.append(memberSearch(settings));
         	$div.append(categorySelector(settings));
         }
         
         if (settings.linkId >= 0) {
             
-            $button = $('<button class=" ui-button ui-corner-all ui-widget mt-2 mt-md-0 ml-3" id="note-newNote" style="min-width:fit-content">Save New Note</button>')
+            $button = $('<button class=" ui-button ui-corner-all ui-widget mt-2 mt-md-0" id="note-newNote" style="min-width:fit-content">Save New Note</button>')
                 .click(function (e) {
                     e.preventDefault();
                     var noteTextarea = $('#' + settings.newNoteAttrs.id);
                     var noteData = noteTextarea.val();
+                    
                     if(settings.linkType == "staff"){
-                    	var noteCategory = $wrapper.find("#noteCategory").val();
+                        var noteCategory = $wrapper.find("#noteCategory").val();
+                        var guestId = $("#noteGuest").data("guestId");
+                        console.log(guestId);
                     }else{
-                    	var noteCategory = '';
+                        var noteCategory = '';
+                        var guestId = '';
                     }
 
                     if (settings.linkId < 0) {
@@ -181,7 +233,8 @@
                                 cmd: 'saveNote',
                                 linkType: settings.linkType,
                                 linkId: settings.linkId,
-                                noteCategory:noteCategory,
+                                noteCategory: noteCategory,
+                                guestId: guestId,
                                 data: base64note
                             },
                             success: function( data ){
@@ -557,6 +610,7 @@
         	$(this).addClass('catActive');
         	searchVal = $(this).data('id');
         	if(searchVal != ''){
+                console.log(searchVal);
         		$table.column(".noteCategory").search("^" + searchVal + "$" , true).draw();
         	}else{
         		$table.column(".noteCategory").search('').draw();
@@ -568,7 +622,7 @@
     
     function categorySelector(settings, selected = false){
     
-    	$catSelect = $('<select name="noteCategory" id="noteCategory" class="mt-2 mt-md-0"><option disabled ' + (selected == false ? 'selected': '') + '>-- Select Category --</option><option></option></select>');
+    	$catSelect = $('<select name="noteCategory" id="noteCategory" class="mt-2 mt-md-0 mr-3"><option disabled ' + (selected == false ? 'selected': '') + '>-- Select Category --</option><option></option></select>');
         
         for(var k in settings.staffNoteCats){
         	if(k == selected){
@@ -578,6 +632,13 @@
         	}
         };
         return $catSelect;
+    }
+
+    function memberSearch(settings, selected = false){
+    
+    	$guestSearch = $('<input type="search" name="noteGuest" id="noteGuest" class="mt-2 mt-md-0 mr-3" placeholder="Name Search...">');
+        
+        return $guestSearch;
     }
     
     function categoryFilter(settings){
@@ -596,7 +657,7 @@
         if (settings.linkId >= 0) {
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
-            var dtTable = $table.DataTable({
+            var dtSettings = {
 		        "columnDefs": settings.dtCols,
 		        "serverSide": true,
 		        "processing": true,
@@ -637,7 +698,17 @@
 	                    $(row).css("font-weight", "bold");
 	                }
 	            }
-            });
+            };
+
+            //only show grouping when showing notes from multiple linkIds
+            if(settings.linkId === 0 && settings.linkType !== "staff"){
+                dtSettings.orderFixed = [4, "asc"];
+                dtSettings.rowGroup = {
+                    dataSrc: "group"
+                };
+            }
+
+            var dtTable = $table.DataTable(dtSettings);
 
             actions($wrapper, settings, dtTable);
             
@@ -653,9 +724,20 @@
         if(settings.newNoteLocation == 'top'){
         	$wrapper.prepend(categoryFilter(settings));
         	$wrapper.prepend(createNewNote(settings, dtTable, $wrapper));
-        }else{
+        }else if(settings.newNoteLocation == 'bottom'){
         	$wrapper.append(createNewNote(settings, dtTable, $wrapper));
-		}
+        }
+        
+        //guest search
+        if (settings.linkType == "staff") {
+            createRoleAutoComplete($('#noteGuest'), 3, {cmd: 'guest'},
+            function (item) {
+                if (item.id > 0) {
+                    $('#noteGuest').data("guestId", item.id);
+                }
+            },
+            false);
+        }
 		
         $wrapper.show();
 

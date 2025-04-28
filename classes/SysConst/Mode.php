@@ -18,4 +18,3 @@ class Mode {
     const Training = "train";
     const Dev = "dev";
 }
-?>

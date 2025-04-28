@@ -37,6 +37,10 @@
                     <textarea class="ui-widget-content ui-corner-all" maxlength="288" placeholder="Message..."></textarea>
                     <button class="ui-button ui-corner-all sendCampaign" name="sendCampaign" title="Send Message"><i class="bi bi-send-fill"></i></button>
                 </div>
+                <div class="infoMsg hhk-flex ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2 align-items-center justify-content-between" style="display:none">
+                    <div class="smsInfoMsg"></div>
+                    <button class="ui-button ui-corner-all btnBatchWait" name="btnBatchWait">Keep wating</button>
+                </div>
             </div>`,
             msgMkup:
                 `<div class="msgContainer hhk-flex"> 
@@ -185,18 +189,66 @@
 
         $dialog.on("click", "#campaignTabContent .sendCampaign", function () {
             var sendMsgBtn = $(this);
-            sendMsgBtn.attr('disabled', true).html('&nbsp;').addClass("loading");
-            
-            var msgMkup = $(this).parent('.newMsg').find("textarea").attr("disabled", true);
+            var msgMkup = $(this).parent('.newMsg').find("textarea");
             var msgText = msgMkup.val();
+            var infoMkup = $(this).parents('#campaignTabContent').find(".infoMsg");
+            
+            if (msgText.length > 0) {
+                sendMsgBtn.attr('disabled', true).html('&nbsp;').addClass("loading");
+                msgMkup.attr("disabled", true);
+
+                $.ajax({
+                    method: "post",
+                    url: settings.serviceURL,
+                    data: {
+                        cmd: "sendCampaign",
+                        status: settings.guestData.status,
+                        msgText: msgText
+                    },
+                    dataType: "json",
+                    success: function (data) {
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, 'error');
+                            sendMsgBtn.attr('disabled', false).html(uiMkup.sendIcon).removeClass("loading");
+                            return;
                 
+                        } else if (data.success) {
+                            flagAlertMessage(data.success, "success");
+                            sendMsgBtn.attr('disabled', false).html(uiMkup.sendIcon).removeClass("loading");
+                            msgMkup.val("").attr('disabled', false);
+                            $dialog.dialog("close");
+                        } else if (data.info) {
+                            infoMkup.find(".smsInfoMsg").text(data.info);
+                            infoMkup.show();
+                            delete data.info;
+                            infoMkup.find(".btnBatchWait").data("batchInfo", data);
+                            console.log(infoMkup.find(".btnBatchWait").data("batchInfo"));
+                        }
+                    }
+                });
+            } else {
+                flagAlertMessage("SMS Message... field cannot be blank.");
+            }
+        });
+
+        $dialog.on("click", "#campaignTabContent .btnBatchWait", function () {
+            var sendMsgBtn = $(this);
+            
+            var msgMkup = $(this).parents('#campaignTabContent').find('.newMsg textarea').attr("disabled", true);
+            var msgText = msgMkup.val();
+            var infoMkup = $(this).parents('#campaignTabContent').find(".infoMsg");
+            var batchInfo = infoMkup.find(".btnBatchWait").data("batchInfo");
+            infoMkup.hide();
             $.ajax({
                 method: "post",
                 url: settings.serviceURL,
                 data: {
                     cmd: "sendCampaign",
-                    status: settings.guestData.status,
-                    msgText: msgText
+                    msgText: msgText,
+                    ...batchInfo
                 },
                 dataType: "json",
                 success: function (data) {
@@ -213,6 +265,9 @@
                         sendMsgBtn.attr('disabled', false).html(uiMkup.sendIcon).removeClass("loading");
                         msgMkup.val("").attr('disabled', false);
                         $dialog.dialog("close");
+                    } else if (data.info) {
+                        infoMkup.find(".smsInfoMsg").text(data.info);
+                        infoMkup.show();
                     }
                 }
             });
@@ -276,6 +331,15 @@
                 dataType: "json",
                 success: function (data) {
                     settings.guestData = data;
+
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        $dialog.dialog("close");
+                        return;
+                    }
 
                     //set dialog title
                     if (settings.guestData[0] && settings.guestData[0].Room) {
@@ -370,6 +434,15 @@
                 dataType: "json",
                 success: function (data) {
                     settings.guestData = data;
+
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        $dialog.dialog("close");
+                        return;
+                    }
 
                     //set dialog title
                     if (settings.guestData.title) {

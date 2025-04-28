@@ -8,8 +8,11 @@ use HHK\House\Reservation\ActiveReservation;
 use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
+use HHK\House\Vehicle;
+use HHK\House\Visit\Visit;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\Incident\ListReports;
-use HHK\Incident\Report;
+use HHK\Incident\IncidentReport;
 use HHK\Member\Address\Phones;
 use HHK\Member\IndivMember;
 use HHK\Note\LinkNote;
@@ -20,6 +23,7 @@ use HHK\Notification\SMS\SimpleTexting\Contact;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\Notification\SMS\SimpleTexting\Message;
 use HHK\Notification\SMS\SimpleTexting\Messages;
+use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\GLTableNames;
@@ -32,7 +36,7 @@ use HHK\TableLog\NotificationLog;
  * ws_resv.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -193,6 +197,42 @@ try {
 
     	break;
 
+        case 'viewVeh':
+
+            $idV = 0;
+            if (isset($_POST['idV'])) {
+                $idV = intval(filter_input(INPUT_POST, 'idV', FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
+            $vehStmt->execute([':idv' => $idV]);
+            $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
+
+            $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], false);
+
+            $events = ['success' => $mkup, 'title' => "Edit Vehicles"];
+
+            break;
+
+        case 'saveVeh':
+
+            $idV = 0;
+            if (isset($_POST['idV'])) {
+                $idV = intval(filter_input(INPUT_POST, 'idV', FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
+            $vehStmt->execute([':idv' => $idV]);
+            $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
+
+            try {
+                $events = ["success"=> Vehicle::saveVehicle($dbh, $row["idRegistration"], $row["idReservation"])];
+            }catch(\Exception $e){
+                $events = ["error" => "Error saving vehicle: " . $e->getMessage()];
+            }
+
+            break;
+
     case 'getNoteList':
 
         $linkType = '';
@@ -233,6 +273,10 @@ try {
 
         if (isset($_POST['linkId'])) {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if (isset($_POST['guestId'])) {
+            $idGuest = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         $events = ['idNote' => LinkNote::save($dbh, $data, $idLink, $linkType, $noteCategory, $uS->username, $uS->ConcatVisitNotes)];
@@ -377,8 +421,6 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			}
         }
 
-        //require(CLASSES . 'DataTableServer.php');
-
         $events = ListReports::loadList($dbh, $guestId, $psgId, $_GET);
 
         break;
@@ -390,14 +432,17 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
                 $idReport = intval(filter_var($_POST['repid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $report = new Report($idReport);
+            $report = new IncidentReport($idReport);
 			$report->loadReport($dbh);
 			$idGuest = $report->getGuestId();
 			$reportAr = $report->toArray();
 
+            //user can edit?
+            $reportAr["userCanEdit"] = $report->userCanEdit();
+
             if(isset($_POST['print'])){
 	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");
-	            $guestAr = $stmt->fetch(PDO::FETCH_ASSOC);
+	            $guestAr = $stmt->fetch(\PDO::FETCH_ASSOC);
 	            $reportAr = $reportAr + ["guest"=>$guestAr];
 	            $reportAr['description'] = nl2br($reportAr['description']);
 	            $reportAr['resolution'] = nl2br($reportAr['resolution']);
@@ -450,7 +495,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $signatureDate = $_POST['signatureDate'];
         }
 
-        $report = Report::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $signature, $signatureDate, $guestId, $psgId);
+        $report = IncidentReport::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $signature, $signatureDate, $guestId, $psgId);
 		$report->saveNew($dbh);
 
         $events = ['status' => 'success', 'idReport' => $report->getIdReport()];
@@ -497,7 +542,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $signatureDate = $_POST['signatureDate'];
         }
 
-        $report = new Report($repId);
+        $report = new IncidentReport($repId);
         $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution,$signature, $signatureDate, $incidentStatus, $uS->username);
 
         $events = ['status' => 'success', 'idReport' => $report->getIdReport(), 'incidentTitle' => $incidentTitle, 'incidentDate' => $incidentDate, 'incidentStatus' => $incidentStatus];
@@ -515,7 +560,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         }
 
         if ($repId > 0) {
-            $report = new Report($repId);
+            $report = new IncidentReport($repId);
             $deleteCount = $report->deleteReport($dbh, $uS->userName);
         }
 
@@ -534,7 +579,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         }
 
         if ($repId > 0) {
-            $report = new Report($repId);
+            $report = new IncidentReport($repId);
             $deleteCount = $report->undoDeleteReport($dbh, $uS->userName);
         }
 
@@ -567,10 +612,10 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
     case 'getResvMsgsDialog':
 
         $idResv = intval(filter_input(INPUT_GET, 'idResv', FILTER_SANITIZE_NUMBER_INT));
-                
+
         if($idResv > 0){
             $messages = new Messages($dbh);
-    
+
             $events = $messages->getResvGuestsData($idResv);
         }else{
             throw new NotFoundException("Reservation ID not found");
@@ -589,11 +634,11 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
     case 'getGuestMsgsDialog':
         $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
-    
+
         $messages = new Messages($dbh);
 
         $events = $messages->getGuestData($idName);
-    
+
         break;
 
     case 'loadMsgs':
@@ -654,19 +699,26 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         case 'sendResvMsg':
             $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT));
             $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    
+
             $messages = new Messages($dbh, true);
 
             $events = $messages->sendResvMessage($idResv, $msgText);
-    
+
             break;
 
     case 'sendCampaign':
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $batchId = filter_input(INPUT_POST, 'batchId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $campaignListId = filter_input(INPUT_POST, 'campaignListId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $campaignListName = filter_input(INPUT_POST, 'campaignListName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $campaign = new Campaign($dbh, $msgText, $msgText);
-        $events = $campaign->prepareAndSendCampaign($status);
+            if ($status) {
+                $events = $campaign->prepareAndSendCampaign($status);
+            }else if($batchId && $campaignListId && $campaignListName){
+                $events = $campaign->checkBatchAndSendCampaign($batchId, $campaignListId, $campaignListName);
+            }
 
         break;
     case 'loadContacts':
@@ -680,7 +732,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         }else{
             $events = $contacts->fetchContacts();
         }
-        
+
         break;
 
     case 'syncContacts':
@@ -704,6 +756,15 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
     $events = ["error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
 }
 
+
+//make receipt copy
+if(isset($events['receiptMarkup']) && $uS->merchantReceipt == true){
+    $events['receiptMarkup'] = HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('div', $events['receiptMarkup'] . HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+        . HTMLContainer::generateMarkup('div', $events['receiptMarkup'] . HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+        ,
+            ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+}
 
 
 if (is_array($events)) {

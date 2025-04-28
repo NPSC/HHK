@@ -37,6 +37,7 @@ class ColumnSelectors {
     protected $controlName;
 
     protected $columnDefs;
+    protected $dateTimecolumnDefs;
 
     /**
      * Filter Sets array
@@ -58,6 +59,7 @@ class ColumnSelectors {
         $this->cols = $cols;
         $this->controlName = $contrlName;
         $this->columnDefs = array();
+        $this->dateTimecolumnDefs = array();
         $this->useFilterSets = $useFilterSets;
         $this->filterSets = $filterSets;
         $this->filterSetSelection = $filterSetSelection;
@@ -187,7 +189,7 @@ class ColumnSelectors {
 
     public function getFilteredTitles() {
 
-        $titles = array();
+        $titles = [];
 
         foreach ($this->cols as $c) {
 
@@ -210,7 +212,7 @@ class ColumnSelectors {
 
     public function getFilteredFields() {
 
-        $titles = array();
+        $titles = [];
         $colIndex = 0;
 
         foreach ($this->cols as $c) {
@@ -219,27 +221,30 @@ class ColumnSelectors {
 
                 if (!is_string($c[1])) {
 
+                    // Unwind hidden columns
                     for ($i = 0; $i < count($c[1]); $i++) {
                         $d = $c;
                         $d[1] = $c[1][$i];
                         $d[0] = $c[0][$i];
-                        $titles[] = $d;
+                        $titles[$d[1]] = $d;
                         if (isset($d[7]) && $d[7] == 'date') {
                             $this->columnDefs[] = $colIndex;
+                        }else if (isset($d[7]) && $d[7] == 'datetime') {
+                            $this->dateTimecolumnDefs[] = $colIndex;
                         }
                         $colIndex++;
                     }
 
                 } else {
-                    $titles[] = $c;
+                    $titles[$c[1]] = $c;
                     if (isset($c[7]) && $c[7] == 'date') {
                         $this->columnDefs[] = $colIndex;
+                    }else if (isset($c[7]) && $c[7] == 'datetime') {
+                        $this->dateTimecolumnDefs[] = $colIndex;
                     }
                     $colIndex++;
                 }
             }
-
-
         }
 
         return $titles;
@@ -248,6 +253,12 @@ class ColumnSelectors {
     public function getColumnDefs() {
 
         return $this->columnDefs;
+
+    }
+
+    public function getDateTimeColumnDefs() {
+
+        return $this->dateTimecolumnDefs;
 
     }
 

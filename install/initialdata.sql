@@ -42,6 +42,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Calendar_Status_Colors', 'w', 'Waitlist', '','u',90),
 ('Calendar_Status_Colors', 'uc', 'Unconfirmed', '','u',100),
 
+("RibbonText", "pgl", "Primary Guest Last Name",'', '', 10),
+("RibbonText", "pgf", "Primary Guest Full Name",'', '', 20),
+("RibbonText", "pl", "Patient Last Name",'','', 30),
+("RibbonText", "pf", "Patient Full Name",'','', 40),
+
 ('Campaign_Status','a','Active','','',0),
 ('Campaign_Status','d','Disabled','','',0),
 
@@ -454,6 +459,12 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Salutation','for','Formal','','',0),
 ('Salutation','mm','Retro-Mr. & Mrs.','','',0),
 
+("searchResultCount", "10", "10",'','',10),
+("searchResultCount", "20", "20",'','',20),
+("searchResultCount", "30", "30",'','',30),
+("searchResultCount", "40", "40",'','',40),
+("searchResultCount", "50", "50",'','',50),
+
 ('Site_Mode', 'dev', 'Development','','',0),
 ('Site_Mode', 'demo', 'Demonstration','','',0),
 ('Site_Mode', 'live', 'Production','','',0),
@@ -633,9 +644,12 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('MajorDonation','500','i','d','','Major donator trigger amount','',1),
 ('MaxAutoEmail','100','i','h','','Maximum number of automatic email messages to send per batch','',1),
 ('MaxDonate','100000','i','d','','Maximum amount amount for a single donation','',1),
+
 ('MaxExpected','260','i','h','','Maximum Expected days out for a visit','',1),
+("maxNameSearch", "10", "lu", "h", "", "Max number of search results displayed in autocomplete searches", "searchResultCount",'', 1),
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size','',1),
 ('merchantReceipt', 'false', 'b', 'f', '', 'Print customer and merchant receipt on single page','',1),
+("minResvDays", "0", "i", "h", '', "Enforce a minimum length for reservations, 0 = no minimum", '', 1),
 ('mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode',1),
 ('NewsletterURL', 'https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa', 'url', 'a','', 'Newsletter iframe URL', '', 0),
 ('NightsCounter','calYear','s','c','','Count nights by year (calYear) or by grand total','',1),
@@ -678,6 +692,7 @@ Thank you
 ('ResvEarlyArrDays','2','i','h','','Number of days before reservation to show check-in button on reservation chooser','',1),
 ('RibbonBottomColor', '', 'lu', 'c', '', 'Ribbon bottom-bar color source', 'RibbonColors', '1'),
 ('RibbonColor','hospital','lu','c','','Ribbon Background color source','RibbonColors',1),
+('RibbonText','pgl','lu','c','','Type of text shown on the calendar ribbon','RibbonText',1)
 ('Room_Colors', '', 'lu', 'c','', 'Use Room Color or housekeeping status for Rooms column on calendar', 'RoomColors', '1'),
 ('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model',0),
 ('RoomRateDefault','e','s','h','','Use the Resource Builder','',0),
@@ -686,7 +701,7 @@ Thank you
 ('Run_As_Test', 'false', 'b', 'a', '', 'Run As Test flag', '',0),
 ('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0'),
 ('searchMRN', 'true', 'b', 'hf', '', 'Allow search by MRN', '',1),
-('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, default 30','',1),
+('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, default 30, max 45','',1),
 ('ShoStaysCtr','true','b','c','','Show the stays counter on the House Calendar page','',1),
 ('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1'),
 ('ShowBirthDate','true','b','h','','Show birthdate for patients and guests','',1),
@@ -707,6 +722,7 @@ Thank you
 ('showRegEmptyFields', 'true', 'b', 'h', '', 'On Registrations, show empty fields', '', '1'),
 ('Show_Holidays', 'false', 'b', 'c', '', 'Indicate holidays on the calendar','', '1'),
 ('Show_Closed', 'false', 'b', 'c', '', 'Indicate closed days on the calendar','', '1'),
+('stmtShowRateTitle', 'false', 'b', 'f', '', "Show the room rate title on Statements", '',  '1'),
 ('sId','11','i','a','','House organization Id','',1),
 ('siteName','Hospitality HouseKeeper','s','a','','House or organization  name','',1),
 ('smsProvider', '', 'lu', 'sms', '', 'Enable SMS integration', 'smsProvider', 1),
@@ -737,7 +753,7 @@ Thank you
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
 ('useChecklists', 'false', 'b', 'hf', '', 'Enable Checklist feature', '', 1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
-('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
+('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',1),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
 ('UseCleaningBOdays', 'false', 'b', 'hf','', 'Set holidays as housekeeping black-out days','', '1'),
 ('vehicleReportEmail', '', 'ea', 'ha', '', 'Notified of Vehicle Report (configured in Job Scheduler)','', 1),
@@ -862,7 +878,7 @@ REPLACE INTO `template_tag` VALUES
 (7,'c', 'Guest First Name', '${GuestFirstName}',''),
 (8,'c', 'Guest Last Name', '${GuestLastName}',''),
 (9,'c', 'Guest Name Prefix', '${GuestNamePrefix}',''),
-(10,'c', 'Guest Name Suffix', '${GuestNameSuffix}','');
+(10,'c', 'Guest Name Suffix', '${GuestNameSuffix}',''),
 (11,'c','Expected Arrival','${ExpectedArrival}',''),
 (12,'c','Expected Departure','${ExpectedDeparture}',''),
 (13,'c','Date Today','${DateToday}',''),
@@ -896,7 +912,11 @@ REPLACE INTO `template_tag` VALUES
 (41,'ra', 'Blank Textbox', '${BlankTextBox}',''),
 (42,'ra', 'Blank Inline Textbox', '${BlankInlineTextBox}',''),
 (43,'ra', 'Blank Textarea', '${BlankTextArea}',''),
-(44,'ra', 'Checkbox Toggle', '${CheckBox}','');
+(44,'ra', 'Checkbox Toggle', '${CheckBox}',''),
+(45,'s', 'Actual Departure', '${ActualDeparture}',''),
+(46,'c','Logo URL','${logoUrl}',''),
+(47,'s','Logo URL','${logoUrl}',''),
+(48,'ra','Logo URL','${logoUrl}','');
 -- ;
 
 replace into `item` (`idItem`, `Description`) values
@@ -1180,7 +1200,7 @@ REPLACE INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`
 (110,'VisitInterval.php',31,'Visit Interval Report','',0,'h','102','c','p'),(111,'GuestView.php',31,'Guests & Vehicles','',0,'h','79','v','p'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','',0,'h','102','l','p'),(114,'ShowInvoice.php',31,'Show Invoice','',0,'h','','','p'),(115,'InvoiceReport.php',31,'Invoice Report','',0,'h','102','n','p'),(116,'ShowHsKpg.php',31,'Housekeeping','',0,'h','','','p'),(117,'PrtRegForm.php',31,'Print Registration Forms','',0,'h','','','p'),(118,'occDemo.php',31,'Guest Demographics','',0,'h','102','g','p'),(119,'ItemReport.php',31,'Item Report','',0,'h','102','s','p'),
 (120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',1,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),
 (130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p'),
-(132,'IncmStmt.php',31,'Income Statement','',0,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p'),(136,'ws_reportFilter.php',31,'','',0,'h','','','s'),(137,'RecentActivity.php',31,'Recent Activity','',0,'h','102','w','p'),(138,'ws_tran.php',31,'','',0,'h','','','s');
+(132,'IncmStmt.php',31,'Income Statement','',0,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p'),(136,'ws_reportFilter.php',31,'','',0,'h','','','s'),(137,'RecentActivity.php',31,'Recent Activity','',0,'h','102','w','p'),(138,'ws_tran.php',31,'','',0,'h','','','s'),(139,'ws_session.php',0,'','',0,'a','','','s');
 -- ;
 
 UNLOCK TABLES;
@@ -1197,7 +1217,7 @@ REPLACE INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),
 (110,'ga'),(111,'g'),(111,'ga'),(113,'ga'),(114,'g'),(114,'ga'),(115,'ga'),(116,'g'),(116,'ga'),(117,'g'),(117,'ga'),(118,'ga'),(119,'ga'),(120,'mm'),(121,'ga'),
-(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga'), (132,'ga'),(133,'pub'),(134,'pub'),(135,'g'),(135,'ga'),(136,'ga'),(136,'gr'),(136,'g'),(137,'ga'),(137,'gr');
+(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga'), (132,'ga'),(133,'pub'),(134,'pub'),(135,'g'),(135,'ga'),(136,'ga'),(136,'gr'),(136,'g'),(137,'ga'),(137,'gr'),(139, 'g'),(139, 'ga'),(139, 'gr'),(139, 'mm');
 -- ;
 UNLOCK TABLES;
 

@@ -54,20 +54,20 @@ class FamilyAddGuest extends Family {
 
                 if ($this->IncldEmContact) {
                     // Emergency Contact
-                    $demoMu = $this->getEmergencyConntactMu($dbh, $role);
+                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
                 }
 
                 if ($this->showDemographics) {
                     // Demographics
-                    $demoMu = $this->getDemographicsMarkup($dbh, $role);
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
                 }
 
                 if ($this->showInsurance) {
                     // Demographics
                     $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
-
-                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap"));
+                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
 
@@ -124,7 +124,7 @@ class FamilyAddGuest extends Family {
 
                 $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     HTMLTable::makeTd('')
-                    . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11'))
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap")), array('colspan'=>'11'))
                     , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
 
@@ -143,7 +143,7 @@ class FamilyAddGuest extends Family {
             HTMLContainer::generateMarkup('span', $familyName . ' Family')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
+        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'emergContacts'=>$this->getEmergContacts($dbh, $this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
 
     }
 

@@ -50,6 +50,7 @@ class VisitRS extends AbstractTableRS {
     public $Rate_Glide_Credit;  // int(11) not null default '0',
     public $Notes;   // TEXT NULL DEFAULT NULL ,
     public $Status;   // VARCHAR(5) NOT NULL DEFAULT '' ,
+    public $Checked_In_By; // VARCHAR(45) NOT NULL DEFAULT '' ,
     public $Updated_By;   // VARCHAR(45) NOT NULL DEFAULT '' ,
     public $Last_Updated;   // DATETIME NULL DEFAULT NULL ,
     public $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
@@ -89,6 +90,7 @@ class VisitRS extends AbstractTableRS {
         $this->Notes = new DB_Field("Notes", "", new DbStrSanitizer(15000), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5), TRUE, TRUE);
 
+        $this->Checked_In_By = new DB_Field("Checked_In_By", "", new DbStrSanitizer(45), FALSE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

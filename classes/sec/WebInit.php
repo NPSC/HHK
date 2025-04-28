@@ -138,7 +138,7 @@ class WebInit {
         date_default_timezone_set($uS->tz);
 
         // Check session timeout
-        if (isset($uS->SessionTimeout) === FALSE || $uS->SessionTimeout < 1) {
+        if (isset($uS->SessionTimeout) === FALSE || $uS->SessionTimeout < 1 || $uS->SessionTimeout > 45) {
             $uS->SessionTimeout = 30;
         }
 

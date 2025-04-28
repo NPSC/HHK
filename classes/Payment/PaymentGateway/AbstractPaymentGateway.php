@@ -158,7 +158,7 @@ abstract class AbstractPaymentGateway {
             case AbstractPaymentGateway::DELUXE:
 
                 return DeluxeGateway::_createEditMarkup($dbh, $gatewayName, $resultMsg);
-                
+
             default:
 
                 return LocalGateway::_createEditMarkup($dbh, $gatewayName);
@@ -180,7 +180,7 @@ abstract class AbstractPaymentGateway {
             case AbstractPaymentGateway::DELUXE:
 
                 return DeluxeGateway::_saveEditMarkup($dbh, $gatewayName, $post);
-                
+
             default:
 
                 return LocalGateway::_saveEditMarkup($dbh, $gatewayName, $post);
@@ -214,7 +214,7 @@ abstract class AbstractPaymentGateway {
             case AbstractPaymentGateway::DELUXE:
 
                 return new DeluxeGateway($dbh, $gwType, $tokenId);
-            
+
             default:
 
                 return new LocalGateway($dbh, $gwType);

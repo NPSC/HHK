@@ -1,19 +1,19 @@
 <?php
 
+use HHK\CreateMarkupFromDB;
+use HHK\CrmExport\AbstractExportManager;
+use HHK\Exception\RuntimeException;
+use HHK\Exception\UnexpectedValueException;
+use HHK\HTMLControls\HTMLTable;
+use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
-use HHK\sec\Session;
-use HHK\CreateMarkupFromDB;
-use HHK\HTMLControls\HTMLTable;
-use HHK\Exception\RuntimeException;
-use HHK\CrmExport\AbstractExportManager;
-use HHK\Exception\UnexpectedValueException;
 
 /**
  * ws_tran.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -50,13 +50,14 @@ try {
                     'filter' => FILTER_SANITIZE_NUMBER_INT,
                     'flags' => FILTER_FORCE_ARRAY,
                 ],
+                'trace' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             ];
             $post = filter_input_array(INPUT_POST, $rags);
 
             if (isset($post['ids']) && count($post['ids']) > 0) {
 
                 try {
-                    $events = $transfer->upsertMembers($dbh, $post['ids']);
+                    $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace']);
 
                 } catch (Exception $ex) {
                     $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
@@ -169,25 +170,7 @@ try {
 
             try {
                 $events = $transfer->searchMembers($post);
-            } catch (Exception $ex) {
-                $events = ["error" => "Search Error: " . $ex->getMessage()];
-            }
-
-            break;
-
-        case 'soql':
-
-            $arguments = [
-                's' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                'f' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                'w' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            ];
-
-            $post = filter_input_array(INPUT_POST, $arguments);
-
-            try {
-                $events = ['data' => $transfer->searchQuery($post['s'], $post['f'], $post['w'])];
-            } catch (Exception $ex) {
+            } catch (\Exception $ex) {
                 $events = ["error" => "Search Error: " . $ex->getMessage()];
             }
 
@@ -229,18 +212,6 @@ try {
 
             $events['data'] = $transfer->getMember($dbh, $post);
             $events['accountId'] = $transfer->getAccountId();
-
-            break;
-
-        case 'getRelat':
-
-            $arguments = [
-                'accountId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            ];
-
-            $post = filter_input_array(INPUT_POST, $arguments);
-
-            $events['data'] = $transfer->getRelationship($post['accountId']);
 
             break;
 
@@ -295,7 +266,7 @@ try {
 } catch (PDOException $ex) {
 
     $events = ["error" => "Database Error: " . $ex->getMessage()];
-} catch (Exception $ex) {
+} catch (\Exception $ex) {
 
     $events = ["error" => "HouseKeeper Error: " . $ex->getMessage()];
 }
@@ -303,7 +274,7 @@ try {
 
 
 if (is_array($events)) {
-    echo (json_encode($events));
+    echo json_encode($events);
 } else {
     echo $events;
 }

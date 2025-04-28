@@ -440,9 +440,9 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
     $transferIds = [];
     $rows = [];
 
-    $query = "SELECT *
-    FROM `vguest_transfer`
-    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE('$start') and DATE(`Arrival`) < DATE('$end')";
+    $query = "SELECT * FROM `vguest_transfer`
+    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE('$start') and DATE(`Arrival`) < DATE('$end')
+    GROUP BY `HHK ID` ORDER BY `PSG Id`";
 
     $stmt = $dbh->query($query);
 
@@ -473,12 +473,16 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
                 $r['External Id'] = 'Excluded';
                 break;
             default:
-                $r['External Id'] .= HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked', 'style' => 'display:none;']);
+                // Update remote.
+                $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'style'=>'margin-right:2px;', 'class' => 'hhk-txCbox hhk-tfmem hhk-tf-update', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked']) . $r['External Id'];
                 break;
         }
 
         $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], ['href' => 'GuestEdit.php?id=' . $r['HHK Id']]);
 
+        if ($r['Birthdate'] != '') {
+            $r['Birthdate'] = date('M j, Y', strtotime($r['Birthdate']));
+        }
         unset($r['Arrival']);
         unset($r['Departure']);
         unset($r['Bad Addr']);
@@ -488,7 +492,15 @@ function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
     }
 
     $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-    return ['mkup' => $dataTable, 'xfer' => $transferIds];
+    $allorNone = HTMLInput::generateMarkup('All', ['type'=>'button', 'name' => 'hhkdgpallple', 'id'=>'hhkdgpallple', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+        . HTMLInput::generateMarkup('None', ['type'=>'button', 'name' => 'hhkdgpnople', 'id'=>'hhkdgpnople', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+        . HTMLInput::generateMarkup('Reset', ['type'=>'button', 'name' => 'hhkdgpback', 'id'=>'hhkdgpback', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+        . HTMLInput::generateMarkup('New Only', ['type' => 'button', 'name' => 'hhkdgpnew', 'id' => 'hhkdgpnew', 'class' => 'hhk-aon', 'style' => 'margin-right:1px;']);
+
+    $label = HTMLContainer::generateMarkup('span', 'External Id checkboxes: ');
+    $frame = HTMLContainer::generateMarkup('div', $label . $allorNone, ['style'=>'margin-top:1ex; margin-bottom:3px;']);
+
+    return ['mkup' => $frame . $dataTable, 'xfer' => $transferIds];
 
 }
 
@@ -555,7 +567,7 @@ $paymentsTable = '';
 $settingstable = '';
 $searchTabel = '';
 $year = date('Y');
-$months = array(date('n'));     // logically overloaded.
+$months = [date('n')];     // logically overloaded.
 $txtStart = '';
 $txtEnd = '';
 $start = '';
@@ -667,7 +679,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             // Create settings markup
             $sTbl = new HTMLTable();
             $sTbl->addBodyTr(HTMLTable::makeTh('Guest Selection Timeframe', ['colspan' => '4']));
-            $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+            $sTbl->addBodyTr(HTMLTable::makeTd('From', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
             $settingstable = $sTbl->generateMarkup(['style' => 'float:left;']);
 
             // Create search criteria markup
@@ -683,11 +695,12 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             $scTbl->addBodyTr($tr);
             $searchTabel = $scTbl->generateMarkup(['style' => 'float:left; margin-left:2em;']);
 
-            // if ($uS->username == 'npscuser') {
-            //     $mkTable = 0;
-            // } else {
+            // Call different js routines by CMS manager name.
+             if ($CmsManager->getServiceName() == AbstractExportManager::CMS_SF) {
+                 $mkTable = 0;
+             } else {
                 $mkTable = 1;
-            //}
+            }
 
         }
 
@@ -738,7 +751,7 @@ if ($noRecordsMsg != '') {
 
 // Setups for the page.
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), ['name' => 'selIntMonth[]', 'size' => '5', 'multiple' => 'multiple']);
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), ['name' => 'selIntYear', 'size' => '5']);
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year.' ', '2010', $uS->fy_diff_Months, FALSE), ['name' => 'selIntYear', 'size' => '5', 'style'=>'min-width:4em;']);
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), ['name' => 'selCalendar', 'size' => count($calOpts)]);
 
 ?>
@@ -805,23 +818,6 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                             <th><?php echo $CmsManager->getServiceTitle(); ?> Last Name Search</th>
                             <td><input id="txtRSearch" type="text" /></td>
                         </tr>
-                        <tr>
-                            <th>Local (HHK) Name Search</th>
-                            <td><input id="txtSearch" type="text" /></td>
-                        </tr>
-                        <?php if ($uS->username == "npscuser") { ?>
-                         <tr>
-                            <th>Relationship</th>
-                            <td><input id="txtRelat" type="text" value="" /><input id="btnRelat" type="button" value="Go" /></td>
-                        </tr>
-                         <tr>
-                            <th>SOQL</th>
-                            <td><input id="txtSoqls" type="text" placeholder="SELECT" value="" />
-                            <input id="txtSoqlf" type="text" placeholder="FROM" value="" />
-                            <input id="txtSoqlw" type="text" placeholder="WhERE" value="" />
-                            <input id="btnSoql" type="button" value="Go" /></td>
-                        </tr>
-                        <?php } ?>
                     </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
@@ -834,7 +830,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <div style="margin-top: 15px; margin-left:50px;" id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
 
-            <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div id="localrecords">
                     <div style="margin-bottom:.8em; float:left;">
                         <?php echo $settingstable . $searchTabel; ?>
@@ -843,14 +839,20 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         <?php echo $dataTable; ?>
                     </div>
                 </div>
-                <div id="divMembers"></div>
+                <div id="divMembers" style="margin-top:10px;"></div>
             </div>
-            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-bottom:6px;margin-left:20px;font-size:0.9em;">
+
+            <div id="divPrintButton" style="clear:both; display:none;margin-left:20px;font-size:0.9em; align-items: center;" class="hhk-flex py-3">
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
                 <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
+                <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none; font-size:1em; padding:5px; margin-left: 2em;">
+                    <p id="loadingText" style="margin-left:20px;">Transfering </p>
+                </div>
+                <span style="display: none;" id="cbTraceWrapper" class="ml-3"><input id="cbTrace" type="checkbox" class="mr-1"><label for="cbTrace">Print debug info</label></span>
         	</div>
+
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
 
@@ -860,6 +862,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
 	    <input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
         <input id="cmsTitle" type="hidden" value="<?php echo $CmsManager->getServiceTitle(); ?>"/>
+        <input id="username" type="hidden" value="<?php echo $uS->username; ?>" />
 
     </body>
 </html>

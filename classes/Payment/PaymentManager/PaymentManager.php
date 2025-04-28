@@ -401,7 +401,7 @@ class PaymentManager {
 
         if (count($unpaidInvoices) > 0) {
 
-            if (is_null($this->invoice)) {
+            if ($this->invoice === null) {
                 $this->invoice = $unpaidInvoices[0];
                 $this->invoice->setBillDate($dbh, NULL, $uS->username, $notes);
 

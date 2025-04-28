@@ -273,12 +273,19 @@ class ActivityReport {
 
 
         $diagnoses = readGenLookupsPDO($dbh, 'Diagnosis');
+        $locations = readGenLookupsPDO($dbh, 'Location');
         $psgId = 0;
 
         $stmtd = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'doc'");
         $doctors = array();
         while ($d = $stmtd->fetch(\PDO::FETCH_ASSOC)) {
             $doctors[$d['idName']] = $d['Name_Full'];
+        }
+
+        $stmtra = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ra'");
+        $referralAgents = array();
+        while ($ra = $stmtra->fetch(\PDO::FETCH_ASSOC)) {
+            $referralAgents[$ra['idName']] = $ra['Name_Full'];
         }
 
         $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open " . $labels->getString('MemberType', 'patient', 'Patient') . " Edit page'></span>";
@@ -314,11 +321,24 @@ class ActivityReport {
                             }
                         }
 
+                        if ($key == 'Location') {
+                            if (isset($locations[$parts[0]])) {
+                                $parts[0] = $locations[$parts[0]][1];
+                            }
+                            if (isset($locations[$parts[2]])) {
+                                $parts[2] = $locations[$parts[2]][1];
+                            }
+                        }
+
                         $logData[$key] = array('old' => $parts[0], 'new' => $parts[2]);
                     }
                 } else {
                     if ($key == 'Diagnosis' && isset($diagnoses[$v])) {
                         $v = $diagnoses[$v][1];
+                    }
+
+                    if ($key == 'Location' && isset($locations[$v])) {
+                        $v = $locations[$v][1];
                     }
 
                     $logData[$key] = array('old' => '', 'new' => $v);
@@ -368,7 +388,12 @@ class ActivityReport {
                         break;
 
                     case 'idReferralAgent':
-                        $log['new'] = $r['Agent_First'] . ' ' . $r['Agent_Last'];
+                        if (isset($referralAgents[$log['old']])) {
+                            $log['old'] = $referralAgents[$log['old']];
+                        }
+                        if (isset($referralAgents[$log['new']])) {
+                            $log['new'] = $referralAgents[$log['new']];
+                        }
                         break;
 
                     case 'idDoctor':
@@ -579,7 +604,9 @@ class ActivityReport {
     ifnull(`n`.`Name_Last`, '') as `Last`,
     ifnull(`n`.`Company`, '') as `Company`,
     ifnull(`r`.`Title`, '') as `Room`,
-    ifnull(`re`.`idPsg`, 0) as `idPsg`
+    ifnull(`re`.`idPsg`, 0) as `idPsg`,
+    `v`.`idVisit`,
+    `v`.`Span`
 from
     `vlist_inv_pments` `lp`
         left join
@@ -594,7 +621,7 @@ where `lp`.`idPayment` > 0
  $whDates $whStatus $whType $whId Order By lp.idInvoice;";
 
         $stmt = $dbh->query($query);
-        $invoices = Statement::processPayments($stmt, ['First', 'Last', 'Company', 'Room', 'idPsg']);
+        $invoices = Statement::processPayments($stmt, ['First', 'Last', 'Company', 'Room', 'idPsg', 'idVisit', 'Span', 'Invoice_Created_At']);
 
         $rowCount = $stmt->rowCount();
 
@@ -614,7 +641,8 @@ where `lp`.`idPayment` > 0
         // Main fees listing table
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(
-                HTMLTable::makeTh("Room")
+            HTMLTable::makeTh("Visit")
+                . HTMLTable::makeTh("Room")
                 . HTMLTable::makeTh("Payor")
                 . HTMLTable::makeTh("Invoice")
                 . HTMLTable::makeTh("Pay Type")
@@ -625,6 +653,7 @@ where `lp`.`idPayment` > 0
                 . HTMLTable::makeTh("Date")
                 . HTMLTable::makeTh("Updated")
                 . HTMLTable::makeTh("By")
+                . HTMLTable::makeTh("Created")
                 . ($showExternlId ? HTMLTable::makeTh("Ext. Id") : '')
                 . HTMLTable::makeTh('Notes'));
 
@@ -730,7 +759,8 @@ where `lp`.`idPayment` > 0
                 }
 
 
-                $trow = HTMLTable::makeTd($r['Room']);
+                $trow = HTMLTable::makeTd((isset($r["idVisit"]) && isset($r["Span"]) ? $r["idVisit"] ."-" . $r["Span"] : ""));
+                $trow .= HTMLTable::makeTd($r['Room']);
                 $trow .= HTMLTable::makeTd($nameTd);
                 $trow .= HTMLTable::makeTd($invoiceMkup);
                 $trow .= HTMLTable::makeTd($payTypeTitle);
@@ -741,6 +771,7 @@ where `lp`.`idPayment` > 0
                 $trow .= HTMLTable::makeTd($dateDT->format('c'));
                 $trow .= HTMLTable::makeTd($updatedDateString);
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
+                $trow .= HTMLTable::makeTd($r['Invoice_Created_At']);
 
                 if ($showExternlId) {
                     $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
@@ -760,7 +791,8 @@ where `lp`.`idPayment` > 0
                 $houseAction = HTMLInput::generateMarkup('Delete', ['type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive', 'style' => 'font-size: 0.8em', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']]);
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($r['Room'])
+                    HTMLTable::makeTd((isset($r["idVisit"]) && isset($r["Span"]) ? $r["idVisit"] ."-" . $r["Span"] : ""))
+                    . HTMLTable::makeTd($r['Room'])
                     . HTMLTable::makeTd($uS->siteName)
                     . HTMLTable::makeTd($invoiceMkup)
                     . HTMLTable::makeTd(str_replace(';', '', $h['Desc']))
@@ -771,6 +803,7 @@ where `lp`.`idPayment` > 0
                     . HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
                     . HTMLTable::makeTd('')
                     . HTMLTable::makeTd($r['Invoice_Updated_By'])
+                    . HTMLTable::makeTd($r['Invoice_Created_At'])
                     . ($showExternlId ? HTMLTable::makeTd('') : '')
                     . HTMLTable::makeTd('')
                 );

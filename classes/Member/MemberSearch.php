@@ -3,6 +3,7 @@
 namespace HHK\Member;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\sec\Session;
 use HHK\SysConst\MemDesignation;
 use HHK\SysConst\PhonePurpose;
 use HHK\SysConst\RelLinkType;
@@ -67,11 +68,17 @@ class MemberSearch {
      */
     protected $letters;
 
+    protected $limit;
+
     /**
      * Summary of __construct
      * @param mixed $letters
      */
     public function __construct($letters) {
+
+        
+        $uS = Session::getInstance();
+        $this->limit = intval($uS->maxNameSearch);
 
         $this->letters = $letters;
     	$this->prepareLetters($letters);
@@ -83,32 +90,43 @@ class MemberSearch {
      * @return void
      */
     public function prepareLetters($letters) {
+        $this->letters = trim($letters);
 
-    	$parts = explode(' ', strtolower(trim($letters)));
+        //check for ! show all character
+        if(str_ends_with($letters, "!")){
+            $this->limit = -1;
+            $this->letters = rtrim($letters, "!");
+        }
+
+    	$parts = explode(',', strtolower(trim($this->letters)));
 
     	if (count($parts) > 1) {
-
-    		// first or last name?
-    		if (stristr($parts[0], ',') === FALSE) {
-    			//first name first
-    			$this->Name_First = $parts[0] . '%';
-    			$this->Name_Last = $parts[1] . '%';
-    		} else {
-    			// last name first
-    			$this->Name_First = $parts[1] . '%';
-    			$this->Name_Last = str_replace(',', '', $parts[0]) . '%';
-    		}
+            // Comma in search - last name first
+            $this->Name_First = trim($parts[1]) . '%';
+    		$this->Name_Last = trim($parts[0]) . '%';
 
     		$this->twoParts = TRUE;
-    		$this->Company = strtolower(trim($letters)) . '%';
+    		$this->Company = strtolower(trim($this->letters)) . '%';
 
     	} else {
+            //no comma in search, split by first space
+            $parts = explode(' ', strtolower(trim($this->letters)));
 
-    		$this->Name_First = $parts[0] . '%';
-    		$this->Name_Last = $parts[0] . '%';
-    		$this->Company = $parts[0] . '%';
-//    		$this->MRN = $parts[0] . '%';
-    		$this->twoParts = FALSE;
+            if (count($parts) > 1) {
+                //first name first
+                $this->Name_First = trim($parts[0]) . '%';
+                unset($parts[0]);
+                $this->Name_Last = trim(implode($parts)) . '%';
+                $this->Company = strtolower(trim($this->letters)) . '%';
+                $this->twoParts = TRUE;
+            }else{
+                $this->Name_First = $parts[0] . '%';
+                $this->Name_Last = $parts[0] . '%';
+                $this->Company = $parts[0] . '%';
+    //    		$this->MRN = $parts[0] . '%';
+                $this->twoParts = FALSE;
+            }
+    		
     	}
 
     }
@@ -790,6 +808,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        if($this->limit < 0){
+            $this->limit = $stmt->rowCount();
+        }
+
+        $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
@@ -834,9 +857,15 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             ];
 
             $events[] = $namArray;
+
+            $i++;
+            if($i >= $this->limit){
+                break;
+            }
+            
         }
 
-        return $events;
+        return ['total'=>$stmt->rowCount(), 'limit'=>$this->limit, 'results'=>$events];
     }
 
     /**
@@ -875,6 +904,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        if($this->limit < 0){
+            $this->limit = $stmt->rowCount();
+        }
+
+        $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
@@ -916,9 +950,15 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             ];
 
             $events[] = $namArray;
+
+            $i++;
+            if($i >= $this->limit){
+                break;
+            }
+
         }
 
-        return $events;
+        return ['total'=>$stmt->rowCount(), 'limit'=>$this->limit, 'results'=>$events];
     }
 
     /**
@@ -970,7 +1010,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
             . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
-            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
+            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN`, ifnull(s.idRoom, '') as 'idRoom', ifnull(r.Title, '') as 'Room' "
             . " from `name` n "
             . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
             . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
@@ -980,6 +1020,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
             . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
             . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
+            . " left join stays s on n.idName = s.idName and s.Status = 'a'"
+            . " left join resource r on s.idRoom = r.idResource"
             . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
             . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
@@ -996,6 +1038,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        if($this->limit < 0){
+            $this->limit = $stmt->rowCount();
+        }
+
+        $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
@@ -1034,12 +1081,18 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status'] : ''),
                 'city' => $row2['City'],
                 'state' => $row2['State'],
+                'idRoom' => $row2['idRoom'],
+                'room' => $row2['Room']
             ];
 
             $events[] = $namArray;
+            $i++;
+            if($i >= $this->limit){
+                break;
+            }
         }
 
-        return $events;
+        return ['total'=>$stmt->rowCount(), 'limit'=>$this->limit, 'results'=>$events];
     }
 
 
@@ -1087,6 +1140,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $events = array();
 
+        if($this->limit < 0){
+            $this->limit = $stmt->rowCount();
+        }
+        
+        $i = 0;
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
@@ -1134,6 +1192,12 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . ($row2['MRN'] != '' ? " MRN: " . $row2['MRN'] : '');
 
             $events[] = $namArray;
+
+            $i++;
+            if($i >= $this->limit){
+                break;
+            }
+
         }
 
         if ($mode == 'mo') {
@@ -1144,7 +1208,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             $events[] = array("id" => 0, "value" => "New Person");
         }
 
-        return $events;
+        return ['total'=>$stmt->rowCount(), 'limit'=>$this->limit, 'results'=>$events];
     }
 
     /**

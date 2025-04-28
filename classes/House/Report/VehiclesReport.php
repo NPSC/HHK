@@ -86,7 +86,9 @@ class VehiclesReport extends AbstractReport implements ReportInterface {
     ifnull(v.License_Number, '') as `" . Labels::getString('referral', 'licensePlate', 'License Plate') . "`,
 	ifnull(v.Note, '') as `Note`
 from
-	vehicle v join reservation r on v.idRegistration = r.idRegistration
+	vehicle v 
+    join reservation_vehicle rv on v.idVehicle = rv.idVehicle
+    join reservation r on v.idRegistration = r.idRegistration and rv.idReservation = r.idReservation
         left join
     `name` n ON n.idName = r.idGuest
         left join

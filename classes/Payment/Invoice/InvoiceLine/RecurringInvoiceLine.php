@@ -85,7 +85,7 @@ class RecurringInvoiceLine extends AbstractInvoiceLine {
         $this->invLineRs->Period_End->setNewVal($this->getPeriodEnd());
         $this->invLineRs->Description->setNewVal($this->getDescription());
 
-        parent::updateLine($dbh);
+        return parent::updateLine($dbh);
     }
 
     public function setDescription($description) {
@@ -98,7 +98,7 @@ class RecurringInvoiceLine extends AbstractInvoiceLine {
                 $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
             }
         } else {
-            $this->description = $description . ($this->var == '' ? '' : '; ' . $this->var);
+            $this->description = $description; // . ($this->var == '' ? '' : '; ' . $this->var);
         }
 
         return $this;

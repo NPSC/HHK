@@ -13,7 +13,6 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Purchase\ValueAddedTax;
 use HHK\Purchase\PaymentChooser;
 use HHK\SysConst\GLTableNames;
-use HHK\Config_Lite\Config_Lite;
 use HHK\House\PSG;
 use HHK\House\Room\RoomChooser;
 use HHK\sec\Labels;
@@ -23,7 +22,7 @@ use HHK\Document\Document;
  * ws_ckin.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -259,7 +258,7 @@ try {
 
             $regForms = $uS->regFormObjs;
 
-            if(isset($uS->regFormObjs[$uuid]) && !is_null($uS->regFormObjs[$uuid])){
+            if(isset($uS->regFormObjs[$uuid]) && !$uS->regFormObjs[$uuid] === null){
                 //find this form
                 foreach($uS->regFormObjs[$uuid] as $doc){
                     if($doc["tabIndex"] === $formCode){
@@ -706,21 +705,21 @@ try {
         break;
 
     // Card on file
-    case "viewCredit":
+    // case "viewCredit":
 
-        $idReg = 0;
-        if (isset($_POST['reg'])) {
-            $idReg = intval(filter_var($_POST['reg'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
+    //     $idReg = 0;
+    //     if (isset($_POST['reg'])) {
+    //         $idReg = intval(filter_var($_POST['reg'], FILTER_SANITIZE_NUMBER_INT), 10);
+    //     }
 
-        $pbp = '';
-        if (isset($_POST['pbp'])) {
-            $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+    //     $pbp = '';
+    //     if (isset($_POST['pbp'])) {
+    //         $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    //     }
 
-        //$events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
+    //     //$events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
 
-        break;
+    //     break;
 
     case 'rvstat':
 
@@ -808,9 +807,9 @@ if(isset($events['receipt']) && $uS->merchantReceipt == true){
             ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
 }
 
-} catch (PDOException $ex) {
+} catch (\PDOException $ex) {
     $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
-} catch (Exception $ex) {
+} catch (\Exception $ex) {
     $events = ["error" => "Web Server Error: " . $ex->getMessage()];
 }
 

@@ -54,12 +54,12 @@ class LinkNote {
      * @param \PDO $dbh
      * @param mixed $linkType
      * @param mixed $linkId
-     * @return mixed
+     * @return array
      */
     public static function findIdPsg(\PDO $dbh, $linkType, $linkId) {
 
         $query = '';
-        $idPsg = 0;
+        $idPsgs = [];
 
         if ($linkType == Note::ResvLink) {
             $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
@@ -68,7 +68,19 @@ class LinkNote {
             $query = "select reg.idPsg from registration reg join visit r on reg.idRegistration = r.idRegistration "
                     . "where r.idVisit = $linkId";
         } else if ($linkType == Note::PsgLink) {
-            return $linkId;
+            return [$linkId];
+        }else if ($linkType == "curguests") {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.Status = 's'";
+        }else if ($linkType == "confirmed") {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.Status = 'a'";
+        }else if ($linkType == "unconfirmed") {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.Status = 'uc'";
+        }else if ($linkType == "waitlist") {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.Status = 'w'";
         }
 
         if ($query != '') {
@@ -76,12 +88,13 @@ class LinkNote {
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-            if (is_array($rows) && isset($rows[0][0])) {
-                $idPsg = intval($rows[0][0], 10);
+            if(count($rows) > 0){
+                foreach($rows as $k=>$v){
+                    $idPsgs[] = $v[0];
+                }
             }
         }
-
-        return $idPsg;
+        return $idPsgs;
     }
 
     /**
@@ -96,21 +109,10 @@ class LinkNote {
 
         if ($note->getIdNote() > 0) {
 
-            $table = '';
-            $field = '';
+            if($linkType == Note::VisitLink) {
 
-            switch ($linkType) {
-
-                case Note::ResvLink:
-
-                    $table = 'reservation_note';
-                    $field = 'Reservation_Id';
-                    break;
-
-                case Note::VisitLink:
-
-                    // We actually need the reservation ID
-                    $stmt = $dbh->query("SELECT
+                // We actually need the reservation ID
+                $stmt = $dbh->query("SELECT
     v.`idReservation`, IFNULL(r.Title, '(?)')
 FROM
     `visit` v
@@ -120,57 +122,24 @@ FROM
     resource r ON rv.idResource = r.idResource
 WHERE
     v.`Span` = 0 AND v.`idVisit` =" . $linkId);
-                    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-                    if (count($rows) > 0) {
+                if (count($rows) > 0) {
 
-                        // Update the visit text
-                        $title = 'Visit ' . $linkId . ', Room ' . $rows[0][1];
-                        $note->saveTitle($dbh, $title);
+                    // Update the visit text
+                    $title = 'Visit ' . $linkId . ', Room ' . $rows[0][1];
+                    $note->saveTitle($dbh, $title);
 
-                        $linkId = $rows[0][0];
-                        $table = 'reservation_note';
-                        $field = 'Reservation_Id';
-                    }
-
-                    break;
-
-                case Note::PsgLink:
-
-                    $table = 'psg_note';
-                    $field = 'Psg_Id';
-                    break;
-
-                case Note::DocumentLink:
-
-                    $table = 'doc_note';
-                    $field = 'Doc_Id';
-                    break;
-
-                case Note::StaffLink:
-
-                    $table = 'staff_note';
-                    $field = 'Link_Id';
-                    break;
-
-                case Note::MemberLink:
-                    $table = 'member_note';
-                    $field = 'idName';
-                    break;
-
-                case Note::RoomLink:
-
-                    //break;
-
-                default:
-                    return 'The Link Type is not found: ' . $linkType;
+                    $linkId = $rows[0][0];
+                    $linkType = Note::ResvLink;
+                }
             }
 
-            if ($table != '' && $field != '') {
+            if ($linkId >= 0) {
 
-                $dbh->exec("insert into `$table` (`$field`, Note_Id) values ('$linkId', '" . $note->getIdNote() . "');");
+                $dbh->exec("insert into `link_note` (`linkType`, `idLink`, `idNote`) values ('$linkType', '$linkId', '" . $note->getIdNote() . "');");
             } else {
-                return 'The link table or link field are missing ';
+                return 'The link id is missing ';
             }
         }
 

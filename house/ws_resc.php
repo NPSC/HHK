@@ -32,14 +32,14 @@ use HHK\Update\SiteConfig;
  * ws_resc.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 /**
  *  includes and requires
  */
-require ("homeIncludes.php");
+require "homeIncludes.php";
 
 
 $wInit = new WebInit(WebPageCode::Service);
@@ -84,9 +84,9 @@ try {
             $guestPhoto = $_FILES['guestPhoto'];
 
             if (is_null($guestId) || $guestId === FALSE) {
-                throw new Exception('GuestId missing');
+                throw new \Exception('GuestId missing');
             } else if (is_null($guestPhoto) || $guestPhoto === FALSE) {
-                throw new Exception('guest Photo missing');
+                throw new \Exception('guest Photo missing');
             }
 
             $photo = new Photo();
@@ -100,7 +100,7 @@ try {
             $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
 
             if ($guestId < 1) {
-                throw new Exception("GuestId missing");
+                throw new \Exception("GuestId missing");
             } else {
                 // Delete it.
                 $delete = "CALL delete_guest_photo($guestId)";
@@ -132,11 +132,11 @@ try {
                 $mimeType = filter_input(INPUT_POST, 'mimetype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $doc = $_FILES['file'];
 
-                if (is_null($guestId) || $guestId === FALSE) {
-                throw new Exception('GuestId missing');
-            } else if (is_null($doc) || $doc === FALSE) {
-                throw new Exception('Document is missing');
-            }
+                if ($guestId === null || $guestId === FALSE) {
+                    throw new \Exception('GuestId missing');
+                } else if ($doc === null || $doc === FALSE) {
+                    throw new \Exception('Document is missing');
+                }
 
                 $docContents = file_get_contents($doc['tmp_name']);
 
@@ -183,7 +183,7 @@ try {
             $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $docGuestId = intval(filter_input(INPUT_POST, 'docGuestId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if (is_null($docId) || $docId === FALSE) {
+            if ($docId === null || $docId === FALSE) {
                 throw new Exception('DocId missing');
             }
 
@@ -200,7 +200,7 @@ try {
 
                 $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if (is_null($docId) || $docId === FALSE || $docId < 1) {
+            if ($docId === null || $docId === FALSE || $docId < 1) {
             throw new Exception('DocId missing');
             }
 
@@ -218,7 +218,7 @@ try {
 
             $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if (is_null($docId) || $docId === FALSE || $docId < 1) {
+            if ($docId === null || $docId === FALSE || $docId < 1) {
                 throw new Exception('DocId missing');
             }
 
@@ -246,16 +246,16 @@ try {
 
             if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {
                 $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $startDT = new DateTime($startDate);
+                $startDT = new \DateTime($startDate);
             } else {
-                $startDT = new DateTime();
+                $startDT = new \DateTime();
             }
 
             if (isset($_REQUEST["end"]) && $_REQUEST["end"] != '') {
                 $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $endDT = new DateTime($endDate);
+                $endDT = new \DateTime($endDate);
             } else {
-                $endDT = new DateTime();
+                $endDT = new \DateTime();
             }
 
             $strt = $startDT->format('Y-m-d');
@@ -310,7 +310,7 @@ try {
                 $markup = HTMLContainer::generateMarkup('div', ActivityReport::unpaidInvoiceLog($dbh), ['style' => 'margin-left:5px;']);
             }
 
-            $events = (isset($_REQUEST['direct'])) ? HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;']) : ['success' => HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;'])];
+            $events = isset($_REQUEST['direct']) ? HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;']) : ['success' => HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;'])];
 
             break;
 
@@ -375,35 +375,44 @@ try {
 
         case 'getStatEvent':
 
-            $id = 0;
-            if (isset($_REQUEST["id"])) {
-                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            $type = '';
-            if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-            $title = '';
-            if (isset($_REQUEST["title"])) {
-                $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
+            if(SecurityComponent::is_Authorized("guestadmin") || SecurityComponent::is_Authorized("guestoperations")){
 
-            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+                $id = 0;
+                if (isset($_REQUEST["id"])) {
+                    $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+                }
+                $type = '';
+                if (isset($_REQUEST["tp"])) {
+                    $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+                $title = '';
+                if (isset($_REQUEST["title"])) {
+                    $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+
+                $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+            }else{
+                $events = ["error"=>"Unauthorized"];
+            }
 
             break;
 
         case 'saveStatEvent':
 
-            $id = 0;
-            if (isset($_REQUEST["id"])) {
-                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            $type = '';
-            if (isset($_REQUEST["tp"])) {
-                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
+            if (SecurityComponent::is_Authorized("guestadmin") || SecurityComponent::is_Authorized("guestoperations")) {
+                $id = 0;
+                if (isset($_REQUEST["id"])) {
+                    $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+                }
+                $type = '';
+                if (isset($_REQUEST["tp"])) {
+                    $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
 
-            $events = ResourceView::saveStatusEvents($dbh, $id, $type, $_POST);
+                $events = ResourceView::saveStatusEvents($dbh, $id, $type, $_POST);
+            }else{
+                $events = ["error"=>"Unauthorized"];
+            }
 
             break;
 
@@ -558,11 +567,13 @@ try {
 
             if ($room->setCleanStatus($stat) === FALSE) {
                 $events['msg'] = 'Room Cleaning State change FAILED.';
+                $events['status'] = "error";
             } else {
                 $events['msg'] = 'Room Cleaning state changed';
+                $events['status']= "success";
             }
 
-            $room->saveRoom($dbh, $uS->username);
+            $room->saveRoom($dbh, $uS->username, true);
 
             $events['curres'] = 'y';
 
@@ -575,13 +586,13 @@ try {
                 $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-	//start Date
+	        //start Date
             $startDate = '';
             if (isset($_REQUEST['stdte'])) {
                 $startDate = filter_var($_REQUEST['stdte'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-		//end Date
+		    //end Date
             $endDate = '';
             if (isset($_REQUEST['enddte'])) {
                 $endDate = filter_var($_REQUEST['enddte'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -639,7 +650,18 @@ try {
                 }
             }
             break;
-
+        case "deleteformtemplate" :
+                $idDocument = 0;
+                if(isset($_REQUEST['idDocument'])) {
+                    $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
+                    $formTemplate = new FormTemplate();
+                    if($formTemplate->loadTemplate($dbh, $idDocument)){
+                        $events = $formTemplate->delete($dbh);
+                    }else{
+                        $events = ["status"=>"error", "msg"=> "Form not found"];
+                    }
+                }
+                break;
         case "saveformtemplate" :
             $idDocument = 0;
             if(isset($_REQUEST['idDocument'])) {
@@ -694,9 +716,19 @@ try {
                 $notifySubject = filter_var($_REQUEST['notifySubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $notifyContent = '';
-            if(isset($_REQUEST['notifyContent'])) {
-                $notifyContent = filter_var($_REQUEST['notifyContent'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $notifyMe = false;
+            if(isset($_REQUEST['notifyMe'])) {
+                $notifyMe = boolval(filter_var($_REQUEST['notifyMe'], FILTER_VALIDATE_BOOLEAN));
+            }
+
+            $notifyMeSubject = '';
+            if(isset($_REQUEST['notifyMeSubject'])) {
+                $notifyMeSubject = filter_var($_REQUEST['notifyMeSubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            $notifyMeContent = '';
+            if(isset($_REQUEST['notifyMeContent'])) {
+                $notifyMeContent = filter_var($_REQUEST['notifyMeContent'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $initialGuests = '';
@@ -707,11 +739,6 @@ try {
             $maxGuests = '';
             if(isset($_REQUEST['maxGuests'])) {
                 $maxGuests = intval(filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-
-            $emailPatient = '';
-            if(isset($_REQUEST['emailPatient'])) {
-                $emailPatient = filter_var($_REQUEST['emailPatient'], FILTER_VALIDATE_BOOLEAN);
             }
 
             $fontImport = '';
@@ -725,9 +752,9 @@ try {
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $uS->username);
             }
 
             break;
@@ -809,12 +836,12 @@ function getCssVars(Session $uS){
     header('Content-Type: text/css');
     $vars = "";
 
-    $vars .= ($uS->printScale ? "
+    $vars .= $uS->printScale ? "
     @media print{
         body{
-            font-size: " . $uS->printScale/100 . "rem;
+            font-size: " . $uS->printScale / 100 . "rem;
         }
-    }" : '');
+    }" : '';
 
     return $vars;
 }
@@ -830,7 +857,7 @@ function getNameDetails(\PDO $dbh, $post){
         $stmt = $dbh->prepare($query);
         $stmt->execute();
 
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resultTbl = new HTMLTable();
         $resultTbl->addHeaderTr(HTMLTable::makeTh('ID').HTMLTable::makeTh('First Name').HTMLTable::makeTh('Last Name').HTMLTable::makeTh('Address 1').HTMLTable::makeTh('Address 2').HTMLTable::makeTh('City').HTMLTable::makeTh('State').HTMLTable::makeTh('Zip'));
@@ -844,7 +871,7 @@ function getNameDetails(\PDO $dbh, $post){
                 }
             }
             $resultTbl->addBodyTr($tr);
-            
+
         }
         //$resultTbl->addfooterTr(HTMLTable::makeTd(implode(', ', $post['idNames']), ['colspan'=>'8']));
         $resultMkup = HTMLContainer::generateMarkup('div', $resultTbl->generateMarkup([], (isset($post['title']) ? HTMLContainer::generateMarkup("h4", $post['title'], ['class'=>"my-2"]) : '')), ['class'=>'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog', 'style'=>'width: fit-content; max-width: 100%; font-size: 0.9em; padding: 5px;', 'id'=>'nameDetails']);

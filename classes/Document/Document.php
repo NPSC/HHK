@@ -2,9 +2,11 @@
 
 namespace HHK\Document;;
 
+use HHK\TableLog\DocumentLog;
 use HHK\Tables\{DocumentRS, EditRS};
 use HHK\Exception\RuntimeException;
 use HHK\sec\Session;
+use HHK\Tables\LinkDocRS;
 
 /**
  * Document.php
@@ -174,6 +176,10 @@ class Document {
         $documentRS->Updated_By->setNewVal($this->getUpdatedBy());
 
         $this->idDocument = EditRS::insert($dbh, $documentRS);
+        if($this->idDocument > 0){
+            $logText = DocumentLog::getInsertText($documentRS);
+            DocumentLog::logDocument($dbh, $this->idDocument, 0, 0, 0, $logText, "insert", $this->getCreatedBy());
+        }
         $documentRS->idDocument->setNewVal($this->idDocument);
         EditRS::updateStoredVals($documentRS);
 
@@ -189,14 +195,23 @@ class Document {
      * @param \PDO $dbh
      * @param string $guestId
      * @param string $psgId
-     * @return int last insert id.
+     * @return int number of rows updated.
      */
-    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null) {
-        if ($this->idDocument && ($psgId || $guestId)) {
-            $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`) VALUES("' . $this->idDocument . '", "' . intval($guestId) . '", "' . intval($psgId) . '");';
-            $stmt = $dbh->prepare($query);
-            $stmt->execute();
-            return $dbh->lastInsertId();
+    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null, $idReservation = 0) {
+        if ($this->idDocument && ($psgId || $guestId || $idReservation)) {
+            $uS = Session::getInstance();
+            $linkDocRS = new LinkDocRS();
+            $linkDocRS->idDocument->setNewVal($this->idDocument);
+            $linkDocRS->idGuest->setNewVal($guestId);
+            $linkDocRS->idPSG->setNewVal($psgId);
+            $linkDocRS->idReservation->setNewVal($idReservation);
+            $linkDocRS->username->setNewVal($uS->username);
+            EditRS::insert($dbh, $linkDocRS);
+            $logText = DocumentLog::getInsertText($linkDocRS);
+            DocumentLog::logDocument($dbh, $this->idDocument, 0, 0, 0, $logText, "link", $uS->username);
+            return 1;
+        }else{
+            return 0;
         }
     }
 
@@ -208,6 +223,7 @@ class Document {
      */
     public function saveTitle(\PDO $dbh, $title) {
 
+        $uS = Session::getInstance();
         $counter = 0;
 
         if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
@@ -215,6 +231,10 @@ class Document {
             $this->documentRS->Title->setNewVal($title);
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            if($counter > 0){
+                $logText = DocumentLog::getUpdateText($this->documentRS);
+                DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+            }
             EditRS::updateStoredVals($this->documentRS);
 
             if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
@@ -254,6 +274,11 @@ class Document {
                 $this->documentRS->Doc->setNewVal($doc);
 
                 $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+                if($counter > 0){
+                    $uS = Session::getInstance();
+                    $logText = DocumentLog::getUpdateText($this->documentRS);
+                    DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+                }
                 EditRS::updateStoredVals($this->documentRS);
 
             }
@@ -280,6 +305,11 @@ class Document {
             $this->documentRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            if($counter > 0){
+                $logText = DocumentLog::getUpdateText($this->documentRS);
+                DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+            }
+
             EditRS::updateStoredVals($this->documentRS);
         }
 
@@ -301,6 +331,37 @@ class Document {
             $this->documentRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+
+            if($counter > 0){
+                $logText = DocumentLog::getUpdateText($this->documentRS);
+                DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+            }
+
+            EditRS::updateStoredVals($this->documentRS);
+        }
+
+        return $counter;
+    }
+
+    public function updateAbstract(\PDO $dbh, $abstract) {
+
+        $counter = 0;
+
+        if(is_array($abstract)){
+            $abstract = json_encode($abstract);
+        }
+
+        if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
+            $uS = Session::getInstance();
+            $this->documentRS->Abstract->setNewVal($abstract);
+            $this->documentRS->Updated_By->setNewVal($uS->username);
+            $this->documentRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+
+            $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            if($counter > 0){
+                $logText = DocumentLog::getUpdateText($this->documentRS);
+                DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+            }
             EditRS::updateStoredVals($this->documentRS);
         }
 
@@ -331,6 +392,11 @@ class Document {
             $this->documentRS->Updated_By->setNewVal($username);
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            if($counter > 0){
+                $uS = Session::getInstance();
+                $logText = DocumentLog::getUpdateText($this->documentRS);
+                DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+            }
             EditRS::updateStoredVals($this->documentRS);
         }
 
@@ -343,8 +409,9 @@ class Document {
      * @param string $username
      * @return int the number of rows affected
      */
-    public function deleteDocument(\PDO $dbh, $username) {
+    public function deleteDocument(\PDO $dbh, $username, bool $forceDelete = FALSE) {
 
+        $uS = Session::getInstance();
         $counter = 0;
 
         if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
@@ -353,8 +420,21 @@ class Document {
             $this->documentRS->Updated_By->setNewVal($username);
             $this->documentRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
-            $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
-            EditRS::updateStoredVals($this->documentRS);
+            if($forceDelete == true){
+                $deleted = EditRS::delete($dbh, $this->documentRS, array($this->documentRS->idDocument));
+                if($deleted){
+                    $logText = DocumentLog::getDeleteText($this->documentRS, $this->getIdDocument());
+                    DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "delete", $uS->username);
+                }
+                return $deleted;
+            }else{
+                $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+                if($counter > 0){
+                    $logText = DocumentLog::getUpdateText($this->documentRS);
+                    DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+                }
+                EditRS::updateStoredVals($this->documentRS);
+            }
         }
 
         return $counter;
@@ -377,6 +457,11 @@ class Document {
             $this->documentRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            if($counter > 0){
+                $uS = Session::getInstance();
+                $logText = DocumentLog::getUpdateText($this->documentRS);
+                DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+            }
             EditRS::updateStoredVals($this->documentRS);
         }
 

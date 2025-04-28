@@ -112,7 +112,7 @@ class HTMLSelector extends AbstractHTMLControl {
             }
 
             //if blank is selected or selection doesn't exist, select blank
-            if (array_search('', $sels) !== FALSE || array_search($sel, $gArray) === false) {
+            if (array_search('', $sels) !== FALSE || count($sels) == 0) {
                 $attrs["selected"] = "selected";
             }
 

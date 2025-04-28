@@ -476,6 +476,22 @@ class SearchNameData implements SearchNameDataInterface {
             $this->setAddressCounty($this->setIfNew($r["County"], $formData->getAddressCounty()));
         }
 
+        if (isset($r["ec_First"])) {
+            $this->setEmrgFirst($this->setIfNew($r["ec_First"], $formData->getEmrgFirst()));
+        }
+        if (isset($r["ec_Last"])) {
+            $this->setEmrgLast($this->setIfNew($r["ec_Last"], $formData->getEmrgLast()));
+        }
+        if (isset($r["ec_Phone"])) {
+            $this->setEmrgPhone($this->setIfNew($r["ec_Phone"], $formData->getEmrgPhone()));
+        }
+        if (isset($r["ec_Alternate"])) {
+            $this->setEmrgAltPhone($this->setIfNew($r["ec_Alternate"], $formData->getEmrgAltPhone()));
+        }
+        if (isset($r["ec_Relationship"])) {
+            $this->setEmrgRelation($this->setIfNew($r["ec_Relationship"], $formData->getEmrgRelation()));
+        }
+
     }
 
     public function setNoReturn($v)

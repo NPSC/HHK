@@ -502,6 +502,10 @@ $ckdate";
         if (filter_has_var(INPUT_POST, 'selAssoc')) {
             $reqs = $_POST['selAssoc'];
             if (is_array($reqs)) {
+                if(count($reqs) > 2 && in_array("", $reqs)){
+                    $k = array_search("", $reqs);
+                    unset($reqs[$k]);
+                }
                 $this->selectedAssocs = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
@@ -509,6 +513,10 @@ $ckdate";
         if (filter_has_var(INPUT_POST, 'selHospital')) {
             $reqs = $_POST['selHospital'];
             if (is_array($reqs)) {
+                if(count($reqs) > 2 && in_array("", $reqs)){
+                    $k = array_search("", $reqs);
+                    unset($reqs[$k]);
+                }
                 $this->selectedHosptials = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
         }
@@ -666,6 +674,9 @@ $ckdate";
             $reqs = $_POST['selBillingAgents'];
             if (is_array($reqs)) {
                 $this->selectedBillingAgents = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if($this->selectedBillingAgents[0] == ""){
+                    unset($this->selectedBillingAgents[0]);
+                }
             }
         }
 
@@ -890,6 +901,22 @@ $ckdate";
         }
         if ($billingTitles != '') {
             $h = trim($billingTitles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
+    }
+
+    public function getSelectedDiagnosesString(){
+        $diagnosesList = $this->getDiagnoses();
+        $diagnosesTitles = "";
+        foreach ($this->getSelectedDiagnoses() as $h) {
+            if (isset($diagnosesList[$h])) {
+                $diagnosesTitles .= $diagnosesList[$h][1] . ', ';
+            }
+        }
+        if ($diagnosesTitles != '') {
+            $h = trim($diagnosesTitles);
             return substr($h, 0, strlen($h) - 1);
         }else{
             return "All";

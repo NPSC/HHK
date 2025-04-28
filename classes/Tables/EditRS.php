@@ -30,8 +30,8 @@ class EditRS {
      * @param string $combiner
      * @return array
      */
-    public static function select(\PDO $dbh, TableRSInterface $rs, array $whereDbFieldArray, $combiner = "and", array $orderByDbFieldArray = array(), $ascending = TRUE) {
-        $paramList = array();
+    public static function select(\PDO $dbh, TableRSInterface $rs, array $whereDbFieldArray, $combiner = "and", array $orderByDbFieldArray = [], $ascending = TRUE) {
+        $paramList = [];
         $query = "";
         $whClause = "";
 
@@ -86,7 +86,7 @@ class EditRS {
             $query .= " where " . $whClause;
         }
 
-        $volStmt = $dbh->prepare($query . $orderBy, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+        $volStmt = $dbh->prepare($query . $orderBy, [\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY]);
         $volStmt->execute($paramList);
         return $volStmt->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -351,4 +351,4 @@ class EditRS {
         }
     }
 }
-?>
+

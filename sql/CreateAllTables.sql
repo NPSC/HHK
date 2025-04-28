@@ -318,6 +318,21 @@ CREATE TABLE if not exists `document` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 -- -----------------------------------------------------
+-- Table `document_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `document_log` (
+  `Log_Type` varchar(45) NOT NULL,
+  `Sub_Type` varchar(45) NOT NULL,
+  `User_Name` varchar(45) NOT NULL DEFAULT '',
+  `idName` int(11) NOT NULL DEFAULT '0',
+  `idPsg` int(11) NOT NULL DEFAULT '0',
+  `idDocument` int(11) NOT NULL DEFAULT '0',
+  `idReservation` int(11) NOT NULL DEFAULT '0',
+  `Log_Text` varchar(5000) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=MyISAM;
+
+-- -----------------------------------------------------
 -- Table `staff_note`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `staff_note` (
@@ -339,12 +354,25 @@ CREATE TABLE if not exists `doc_note` (
 -- Table `link_doc`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `link_doc` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `idDocument` int(11) NOT NULL,
   `idGuest` int(11) DEFAULT NULL,
   `idPSG` int(11) DEFAULT NULL,
+  `idReservation` int(11) DEFAULT 0,
+  `username` varchar(100) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idDocument`, `idGuest`, `idPSG`, `idReservation`)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `link_note`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `link_note` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `idNote` int(11) NOT NULL,
+  `linkType` varchar(20) DEFAULT NULL,
+  `idLink` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10;
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `donations`
@@ -1095,6 +1123,7 @@ CREATE TABLE if not exists `name_guest` (
   `Legal_Custody` int(11) NOT NULL DEFAULT '0',
   `Relationship_Code` varchar(5) NOT NULL DEFAULT '',
   `Type` varchar(45) NOT NULL DEFAULT '',
+  `External_Id` varchar(45) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1286,7 +1315,7 @@ CREATE TABLE if not exists `notification_log` (
   `From` varchar(255) NOT NULL DEFAULT '',
   `Log_Text` varchar(255) NOT NULL DEFAULT '',
   `Log_Details` JSON NOT NULL DEFAULT '{}',
-  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Timestamp` timestamp(5) NOT NULL DEFAULT CURRENT_TIMESTAMP(5),
   PRIMARY KEY (`idLog`)
 ) ENGINE=InnoDB;
 
@@ -1624,7 +1653,9 @@ CREATE TABLE if not exists `relationship` (
 -- -----------------------------------------------------
 -- Table `report`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `report` (
+ALTER TABLE IF EXISTS `report` RENAME TO `incident_report`; -- handle catch-22 of renaming tables
+
+CREATE TABLE IF NOT EXISTS `incident_report` (
   `idReport` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `Title` varchar(240) NOT NULL DEFAULT '',
   `Category` varchar(5) NOT NULL DEFAULT '',
@@ -1756,6 +1787,16 @@ CREATE TABLE IF NOT EXISTS `reservation_multiple` (
   PRIMARY KEY (`idReservation_multiple`)
   ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
+
+-- -----------------------------------------------------
+-- Table `reservation_vehicle`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `reservation_vehicle` (
+  `idReservation` int(11) NOT NULL,
+  `idVehicle` int(11) NOT NULL,
+  `idName` int(11) NOT NULL,
+  PRIMARY KEY (`idReservation`,`idVehicle`)
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -1919,6 +1960,20 @@ CREATE TABLE if not exists `secondary_unit_desig` (
   `TitleCaps` varchar(6) NOT NULL
 ) ENGINE=MyISAM;
 
+
+
+-- -----------------------------------------------------
+-- Table `sf_type_map`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `sf_type_map` (
+  `idSf_type_map` INT NOT NULL AUTO_INCREMENT,
+  `List_Name` VARCHAR(45) NOT NULL DEFAULT '',
+  `SF_Type_Code` VARCHAR(45) NULL DEFAULT '',
+  `SF_Type_Name` VARCHAR(45) NULL DEFAULT '',
+  `HHK_Type_Code` VARCHAR(45) NULL DEFAULT '',
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idSf_type_map`)
+  ) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -2124,6 +2179,7 @@ CREATE TABLE if not exists `visit` (
   `Notes` text,
   `Status` varchar(5) NOT NULL DEFAULT '',
   `Recorded` INT(1) NOT NULL DEFAULT '0',
+  `Checked_In_By` varchar(45) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2363,7 +2419,7 @@ ALTER TABLE `activity`
 ALTER TABLE `campaign`
 	ADD UNIQUE KEY IF NOT EXISTS `Campaign_Code_UNIQUE` (`Campaign_Code`);
 
-ALTER TABLE `checklist_item` 
+ALTER TABLE `checklist_item`
 ADD UNIQUE INDEX IF NOT EXISTS `Unique_Checklist_Item` (`Entity_Id` ASC, `GL_TableName` ASC, `GL_Code` ASC);
 
 
@@ -2409,6 +2465,19 @@ ALTER TABLE `labels`
 CREATE INDEX IF NOT EXISTS `indx_idDocument` ON `link_doc` (`idDocument` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idGuest` ON `link_doc` (`idGuest` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idPsg` ON `link_doc` (`idPSG` ASC);
+CREATE INDEX IF NOT EXISTS `indx_idReservation` ON `link_doc` (`idReservation` ASC);
+
+ALTER TABLE `link_doc` 
+ADD CONSTRAINT `fk_idDocument`
+  FOREIGN KEY if not exists(`idDocument`)
+  REFERENCES `document` (`idDocument`)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION;
+
+CREATE INDEX IF NOT EXISTS `indx_idNote` ON `link_note` (`idNote`);
+CREATE INDEX IF NOT EXISTS `indx_linkType` ON `link_note` (`linkType`);
+CREATE INDEX IF NOT EXISTS `indx_idLink` ON `link_note` (`idLink`);
+CREATE UNIQUE INDEX IF NOT EXISTS `unq_link` ON `link_note` (`idNote` ASC, `linkType` ASC, `idLink` ASC);
 
 ALTER TABLE `name`
     ADD INDEX IF NOT EXISTS `Index_Name` (`Name_Last` ASC, `Name_First` ASC);
@@ -2445,7 +2514,7 @@ ALTER TABLE `psg`
 ALTER TABLE `registration`
     ADD INDEX IF NOT EXISTS `Index_idPsg` (`idPsg` ASC);
 
-ALTER TABLE `report`
+ALTER TABLE `incident_report`
 	ADD  INDEX IF NOT EXISTS `Index_Psg_Id` (`Psg_Id`);
 
 ALTER TABLE `report_field_sets`
@@ -2514,6 +2583,9 @@ ALTER TABLE `visit`
 
 ALTER TABLE `document`
     ADD INDEX IF NOT EXISTS `Indx_Status` (`Status` ASC);
+
+ALTER TABLE `document`
+    ADD INDEX IF NOT EXISTS `indx_Type` (`Category` ASC, `Type` ASC);
 
 ALTER TABLE `name_log`
     ADD INDEX IF NOT EXISTS `INDEX_IDNAME` (`idName` ASC);

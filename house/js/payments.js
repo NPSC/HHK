@@ -18,6 +18,18 @@
  */
 var gblAdjustData = [];
 
+var gblRtCalcParams = {
+    days: 0,
+    idRate: 0,
+    idVisit: 0,
+    fixedAmt: 0,
+    adjAmt: 0,
+    numGuests: 0,
+    idResv: 0
+}
+
+var gblRtCalcData = false;
+
 
 function roundTo(n, digits) {
 
@@ -1217,8 +1229,17 @@ function createInvChooser(idVisit, index) {
 
 function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {
 
-    if (days > 0) {
+    if (days > 0 && (days != gblRtCalcParams.days || idRate != gblRtCalcParams.idRate || idVisit != gblRtCalcParams.idVisit || fixedAmt != gblRtCalcParams.fixedAmt || adjAmt != gblRtCalcParams.adjAmt || numGuests != gblRtCalcParams.numGuests || idResv != gblRtCalcParams.idResv)) {
         var parms = {cmd: 'rtcalc', vid: idVisit, rid: idResv, nites: days, rcat: idRate, fxd: fixedAmt, adj: adjAmt, gsts: numGuests};
+        gblRtCalcParams = {
+            days: days,
+            idRate: idRate,
+            idVisit: idVisit,
+            fixedAmt: fixedAmt,
+            adjAmt: adjAmt,
+            numGuests: numGuests,
+            idResv: idResv
+        }
         // ask momma how much
         $.post('ws_ckin.php', parms,
                 function (data) {
@@ -1248,8 +1269,12 @@ function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idRe
                         }
 
                         rtnFunction(amt);
+                        gblRtCalcData = data;
+                        
                     }
                 });
+    } else if (gblRtCalcData.amt) {
+        rtnFunction(gblRtCalcData.amt);
     }
 
 }
@@ -1742,17 +1767,17 @@ function paymentsTable(tableID, containerID, refreshPayments) {
     var ptbl = $('#' + tableID).DataTable({
         'columnDefs': [
             {
-                'targets': 8,
+                'targets': [9, 10],
                 'type': 'date',
                 'render': function (data, type, row) {
                     return dateRender(data, type);
                 }
             },
             {
-                'targets': 9,
+                'targets': [12],
                 'type': 'date',
                 'render': function (data, type, row) {
-                    return dateRender(data, type);
+                    return dateRender(data, type, "MMM D, YYYY h:mm a");
                 }
             }
         ],

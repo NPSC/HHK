@@ -23,6 +23,11 @@
             fieldOptions: {},
             demogs:{},
             fields: [
+				{
+					"type": "select",
+					"label":"Select",
+					"className": "form-select"
+				  },
     		{
     			"type": "select",
     			"label": "Referral Source",
@@ -84,6 +89,7 @@
 				className: "form-control",
 				width: "col-md-12",
     			name: "resvNotes",
+				hhkField: (options.labels.reservation || 'Reservation') + " Notes",
     		},
 			{
     			label: "Submit",
@@ -91,7 +97,18 @@
     			subtype: "submit",
     			className: "submit-btn btn btn-primary",
     			name: "submit",
-    		}
+				},
+				{
+					"type": "text",
+					"subtype": "email",
+				"label": "Confirmation Email",
+					"placeholder": "Confirmation Email",
+					"description": "Send a confirmation email on form submission",
+				"className": "form-control",
+					"name": "notifyMeEmail",
+				"hhkField": "",
+				"width": "col-md-3",
+			  }
   			],
   			requiredFields:[ //fields that every referral form must include and set as required
   				'patient.firstName',
@@ -777,7 +794,8 @@
     				"width": "col-md-3",
   				},
   				{
-					"type": "text",
+						"type": "text",
+						"subtype": "email",
     				"label": "Email",
     				"placeholder": "Email",
     				"className": "form-control",
@@ -787,14 +805,15 @@
   				},
   				]
   				
-  			}]:[])
+					}] : []),
   			],
   			disableFields: [
       			'autocomplete',
       			'button',
       			'file',
       			'hidden',
-      			'number'
+      			'number',
+				'select'
     		],
     		actionButtons: [
     		{
@@ -1347,6 +1366,8 @@ House Staff`,
 					<option value=""></option>
 				</select>
 				<button id="newReferral">New Referral Form</button>
+				<button id="duplicateReferral">Duplicate this Referral Form</button>
+				<button id="deleteReferral">Delete this Referral Form</button>
 				<span class="formTitleContainer">
 					<label for="formTitle">Form Title: </label>
 					<input typle="text" id="formTitle" placeholder="Form Title" style="padding:0.4em 0.5em;">
@@ -1355,7 +1376,7 @@ House Staff`,
 				</form>
 			</div>
 			<div id="formBuilderContent" style="margin-top: 1em;"></div>
-			<div id="settingsDialog" title="Form Settings">
+			<div id="settingsDialog" title="Form Settings" style="font-size: 0.9em;">
 			
 				<div id="formSettingsTabs">
     				<ul>
@@ -1371,19 +1392,33 @@ House Staff`,
 							<div class="col-12">
 								<p style="margin-bottom: 1em;">Add a custom message displayed on a successful form submission</p>
 								<label for="formSuccessTitle" style="display:block">Sucess Title</label>
-								<input type="text" id="formSuccessTitle" name="formSuccessTitle" placeholder="Success Title" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
+								<input type="text" id="formSuccessTitle" name="formSuccessTitle" placeholder="Success Title" class="p-2 mb-2" style="width: 100%">
 								<label for="formSuccessContent" style="display:block">Success Content</label>
-								<textarea id="formSuccessContent" name="formSuccessContent" placeholder="Success Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
+								<textarea id="formSuccessContent" name="formSuccessContent" placeholder="Success Content" rows="5" class="p-2 mb-2" style="width: 100%"></textarea>
 							</div>
 						</div>
 				    </div>
 				    
 				    <div id="tabs-2">
-				        <div class="row">
-							<div class="col-12">
+						<div class="ui-widget mb-3">
+							<p class="ui-widget-header ui-corner-top p-2">Staff Notification</p>
+							<div class="ui-widget ui-widget-content ui-corner-bottom p-2">
 								<p style="margin-bottom: 1em;">Any addresses listed in "referralFormEmail" in Site Configuration will be notified by email when a form is submitted</p>
 								<label for="notifySubject" style="display:block">Email Subject</label>
-								<input type="text" id="notifySubject" name="notifySubject" placeholder="Email Subject" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
+								<input type="text" id="notifySubject" name="notifySubject" placeholder="Email Subject" class="p-2 mb-2" style="width: 100%">
+							</div>
+						</div>
+						<div class="ui-widget">
+							<p class="ui-widget-header ui-corner-top p-2">Confirmation Notification</p>
+							<div class="ui-widget ui-widget-content ui-corner-bottom p-2">
+								<div class="mb-3">
+									<input type="checkbox" name="notifyMe" id="notifyMe">
+									<label for="notifyMe">Send confirmation to email address in "Confirmation Email" field</label>
+								</div>
+								<label for="notifyMeSubject" style="display:block">Email Subject</label>
+								<input type="text" id="notifyMeSubject" name="notifyMeSubject" placeholder="Email Subject" class="p-2 mb-2" style="width: 100%">
+								<label for="notifyMeContent" style="display:block">Email Body</label>
+								<textarea id="notifyMeContent" name="notifyMeContent" placeholder="Email Body" class="hhk-autosize p-2 mb-2" rows="5" style="width: 100%; resize: none;"></textarea>
 							</div>
 						</div>
 				    </div>
@@ -1528,19 +1563,27 @@ House Staff`,
 				typeUserAttrs: settings.typeUserAttrs,
 				layoutTemplates: settings.layoutTemplates,
 				onSave: onSave,
-				onAddField:onAddField,
+				onAddFieldAfter:onAddField,
 				//onCloseFieldEdit:onCloseFieldEdit,
 				stickyControls: settings.stickyControls,
 				"i18n":{
 					"location":"../js/formBuilder"
 				}
 			});
-
+			$wrapper.find('.formTitleContainer').show();
+			$wrapper.find('#newReferral').hide();
 			settingsDialog.find('input#formSuccessTitle').val(settings.defaultFormSettings.successTitle).data('oldVal', "");
 			settingsDialog.find('textarea#formSuccessContent').val(settings.defaultFormSettings.successContent).data('oldVal', "");
 			settingsDialog.find('input[name=initialGuests]').val(settings.defaultFormSettings.initialGuests).data('oldVal',"");
 			settingsDialog.find('input[name=maxGuests]').val(settings.defaultFormSettings.maxGuests).data('oldVal',"");
 		});
+
+		$wrapper.on('click', '#duplicateReferral', function(e){
+			e.preventDefault();
+			onSave("new");
+		});
+
+		$wrapper.find('#duplicateReferral, #deleteReferral, .formTitleContainer').hide();
 		
 		$wrapper.on('change', '#selectform', function(){
 			var idDocument = $(this).val();
@@ -1556,8 +1599,14 @@ House Staff`,
 	    			success: function(data, textStatus, jqXHR)
 	    			{
 	    				if(data.status == "success"){
+							try{
+								JSON.parse(data.formTemplate);
+								formData = data.formTemplate;
+							}catch(e){
+								formData = buffer.Buffer.from(data.formTemplate, 'base64').toString('utf-8');
+							}
 	    					settings.formBuilder = $wrapper.find('#formBuilderContent').empty().formBuilder({
-	    						formData: buffer.Buffer.from(data.formTemplate, 'base64').toString('utf-8'),
+	    						formData: formData,
 								inputSets: settings.inputSets,
 								fields: settings.fields,
 								disableFields: settings.disableFields,
@@ -1567,7 +1616,7 @@ House Staff`,
 								typeUserAttrs: settings.typeUserAttrs,
 								layoutTemplates: settings.layoutTemplates,
 								onSave: onSave,
-								onAddField:onAddField,
+								onAddFieldAfter:onAddField,
 								//onCloseFieldEdit:onCloseFieldEdit,
 								stickyControls: settings.stickyControls,
 								"i18n":{
@@ -1576,14 +1625,17 @@ House Staff`,
 							});
 							
 							$wrapper.find('#formiframebtn').data('url', data.formURL).show();
+							$wrapper.find('#duplicateReferral, #deleteReferral, .formTitleContainer').show();
+							$wrapper.find('#newReferral').hide();
 							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
 							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
 	    					settingsDialog.find('textarea#formStyle').val(data.formSettings.formStyle).data('oldVal', data.formSettings.formStyle);
 	    					settingsDialog.find('input#enableRecaptcha').prop('checked', data.formSettings.enableRecaptcha).data('oldval', data.formSettings.enableRecaptcha);
 	    					settingsDialog.find('input#enableReservation').prop('checked', data.formSettings.enableReservation).data('oldval', data.formSettings.enableReservation);
-	    					settingsDialog.find('input#notifySubject').val(data.formSettings.notifySubject).data('oldVal',data.formSettings.notifySubject);
-							settingsDialog.find('textarea#notifyContent').val(data.formSettings.notifyContent).data('oldVal',data.formSettings.notifyContent);
-	    					settingsDialog.find('input#emailPatient').prop('checked', data.formSettings.emailPatient).data('oldval', data.formSettings.emailPatient);
+							settingsDialog.find('input#notifySubject').val(data.formSettings.notifySubject).data('oldVal', data.formSettings.notifySubject);
+							settingsDialog.find('input#notifyMeSubject').val(data.formSettings.notifyMeSubject).data('oldVal',data.formSettings.notifyMeSubject);
+							settingsDialog.find('textarea#notifyMeContent').val(data.formSettings.notifyMeContent).data('oldVal',data.formSettings.notifyMeContent);
+							settingsDialog.find('input#notifyMe').prop('checked', data.formSettings.notifyMe).data('oldval', data.formSettings.notifyMe);
 	    					settingsDialog.find('input[name=initialGuests]').val(data.formSettings.initialGuests).data('oldVal',data.formSettings.initialGuests);
 	    					settingsDialog.find('input[name=maxGuests]').val(data.formSettings.maxGuests).data('oldVal',data.formSettings.maxGuests);
 	    					settingsDialog.find('textarea#fontImport').val(data.formSettings.fontImport).data('oldVal',data.formSettings.fontImport);
@@ -1594,11 +1646,41 @@ House Staff`,
 			}else{
 				$wrapper.find('#formBuilderContent').empty();
 				$wrapper.find('#formiframebtn').data('code', '').hide();
+				$wrapper.find('#duplicateReferral, #deleteReferral, .formTitleContainer').hide();
+				$wrapper.find('#newReferral').show();
 				$wrapper.find('#formTitle').val("");
 				settingsDialog.find('textarea').val('').data('oldstyles', '');
 				settingsDialog.find('input#enableRecaptcha').prop('checked', false);
 			}
 			
+		});
+
+		$wrapper.on('click', '#deleteReferral', function(e){
+			e.preventDefault();
+			var idDocument = $wrapper.find('#selectform').val();
+
+			if(idDocument && confirm("Are you sure you want to delete this form? This action cannot be undone.")){
+				$.ajax({
+	    			url : settings.serviceURL,
+	   				type: "GET",
+	    			data : {
+	    				"cmd":"deleteformtemplate",
+	    				"idDocument": idDocument
+	    			},
+	    			dataType: "json",
+	    			success: function(data, textStatus, jqXHR)
+	    			{
+	    				if(data.status == "success"){
+							$wrapper.find("#selectform option[value='"+idDocument+"']").remove();
+							$wrapper.find("#selectform").val("").change();
+							flagAlertMessage(data.msg, false);
+	    				}else{
+							flagAlertMessage(data.msg, true);
+						}
+	    			}
+	    		});
+			}
+
 		});
 		
 		$wrapper.on('click', '#formiframebtn', function(e){
@@ -1672,19 +1754,24 @@ House Staff`,
 			}
 		};
 		
-		var onSave = function(event, formData){
+		var onSave = function(data){
 			settings.formBuilder.actions.closeAllFieldEdit();
-			
-			var idDocument = $wrapper.find('#selectform').val();
-			var title = $wrapper.find('#formTitle').val();
+			if(data == "new"){ //duplicate form
+				var idDocument = 0
+				var title = $wrapper.find('#formTitle').val() + " (copy)";
+			}else{
+				var idDocument = $wrapper.find('#selectform').val();
+				var title = $wrapper.find('#formTitle').val();
+			}
 			var style = settingsDialog.find('textarea#formStyle').val();
 			var successTitle = settingsDialog.find('input#formSuccessTitle').val();
 			var successContent = settingsDialog.find('textarea#formSuccessContent').val();
 			var enableRecaptcha = settingsDialog.find('input#enableRecaptcha').prop('checked');
 			var enableReservation = settingsDialog.find('input#enableReservation').prop('checked');
-			var emailPatient = settingsDialog.find('input#emailPatient').prop('checked');
+			var notifyMe = settingsDialog.find('input#notifyMe').prop('checked');
 			var notifySubject = settingsDialog.find('input#notifySubject').val();
-			var notifyContent = settingsDialog.find('textarea#notifyContent').val();
+			var notifyMeSubject = settingsDialog.find('input#notifyMeSubject').val();
+			var notifyMeContent = settingsDialog.find('textarea#notifyMeContent').val();
 			var initialGuests = settingsDialog.find('input[name=initialGuests]').val();
 			var maxGuests = settingsDialog.find('input[name=maxGuests]').val();
 			var fontImport = settingsDialog.find('textarea#fontImport').val();
@@ -1703,16 +1790,19 @@ House Staff`,
 					}
 				});
 				
-				if(emailPatient){
-					var filtered = formData.filter(x=> (x.name === 'patient.email'));
+				if(notifyMe){
+					var filtered = formData.filter(x=> (x.name === 'notifyMeEmail'));
 					if(filtered.length == 0){
-						emailErrorMsg += "<br>The patient email field is required for email notifications";
+						emailErrorMsg += "<br>The Confirmation Email field is required for email notifications";
 					}
 					if(notifySubject.length == 0){
 						emailErrorMsg += "<br>Email Subject cannot be blank";
 					}
-					if(notifyContent.length == 0){
-						emailErrorMsg += "<br>Email Content cannot be blank";
+					if(notifyMeSubject.length == 0){
+						emailErrorMsg += "<br>Confirmation Email Subject cannot be blank";
+					}
+					if(notifyMeContent.length == 0){
+						emailErrorMsg += "<br>Confirmation Email Content cannot be blank";
 					}
 				}
 				
@@ -1747,9 +1837,10 @@ House Staff`,
 		    				"successContent": successContent,
 		    				"enableRecaptcha": enableRecaptcha,
 		    				"enableReservation": enableReservation,
-		    				"emailPatient": emailPatient,
-		    				"notifySubject": notifySubject,
-		    				"notifyContent": notifyContent,
+							"notifySubject": notifySubject,
+							"notifyMe": notifyMe,
+							"notifyMeSubject": notifyMeSubject,
+		    				"notifyMeContent": notifyMeContent,
 		    				"initialGuests": initialGuests,
 		    				"maxGuests": maxGuests,
 		    				"fontImport": fontImport,

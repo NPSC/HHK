@@ -49,7 +49,9 @@ $continueLink = HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'re
 $numGuests = 0;
 $datesMkup = '';
 $displayGuest = 'display:none;';
+$displayResv = 'display:none;';
 $final = '';
+$resvMkup = '';
 
 // Referral form
 if (isset($_GET['docid'])) {
@@ -67,6 +69,19 @@ if (isset($_POST['rbPatient'])) {
 
     // Patient already selected
     $idPatient = intval(filter_input(INPUT_POST, 'idPatient', FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+// Reservation
+if (isset($_POST['rbResv'])) {
+
+    $idResv = intval(filter_input(INPUT_POST, 'rbResv', FILTER_SANITIZE_NUMBER_INT), 10);
+
+} else if (isset($_POST['idPatient'])) {
+
+    // Patient already selected
+    $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT), 10);
+}else{
+    $idResv = -1;
 }
 
 
@@ -128,16 +143,16 @@ if ($idDoc > 0) {
 
             	    // Unhide guest section
             	    $displayGuest = '';
-            	    $chosen = ' Chosen';   // Patient title ribbon.
 
-        	    } else {
-        	        // no guests, Create reservation
-        	        $refForm->finishReferral($dbh, $patient->getIdName());
         	    }
+                
+                $chosen = ' Chosen';   // Patient title ribbon.
+                $displayResv = '';
+        	    $resvMkup = $refForm->finishReferral($dbh, $patient->getIdName(), 0);
 
         	} else {
-        	    // Create reservation
-        	    $refForm->finishReferral($dbh, $idPatient);
+        	    // Create/load reservation
+        	    $resvMkup .= $refForm->finishReferral($dbh, $idPatient, $idResv);
         	}
 
     	} else {
@@ -219,6 +234,15 @@ if ($idDoc > 0) {
                     </div>
                     <div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding:5px;">
                     	<?php echo $guestMkup; ?>
+                    </div>
+                </div>
+
+                <div id="ResvSection" style="font-size: .9em; min-width: 810px;<?php echo $displayResv; ?>"  class="ui-widget hhk-visitdialog mb-3">
+                    <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-top hhk-panel">
+                    	<?php echo $labels->getString('GuestEdit', 'reservationTitle', 'Reservation') . 's'; ?>
+                    </div>
+                    <div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding:5px;">
+                    	<?php echo $resvMkup; ?>
                     </div>
                 </div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">

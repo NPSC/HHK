@@ -469,7 +469,7 @@ class Address extends AbstractContactPoint{
                 // Update the address
                 $adrComplete = $this->loadPostData($a, $p);
 
-                if ($adrComplete === TRUE ) {
+                if ($adrComplete === TRUE) {
                     $a->Set_Incomplete->setNewVal(0);
 
 
@@ -606,6 +606,10 @@ class Address extends AbstractContactPoint{
             if ($p['zip'] == '') {
                 $addrComplete = FALSE;
             }
+        }
+
+        if(isset($p["forceSave"]) && $p["forceSave"] === true){
+            $addrComplete = true;
         }
 
         $a->Last_Updated->setNewVal(date("Y-m-d H:i:s"));

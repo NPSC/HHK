@@ -154,6 +154,7 @@ class ActiveReservation extends Reservation {
         $resv->setHospitalStay($this->family->getHospStay());
         $resv->setExpectedArrival($this->reserveData->getArrivalDT()->format('Y-m-d ' . $uS->CheckInTime . ':00:00'));
         $resv->setExpectedDeparture($this->reserveData->getDepartureDT()->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
+        $resv->setIdReferralDoc(null); //decouple online referral doc after initial save
 
         // Determine Reservation Status
         $reservStatus = ReservationStatus::Waitlist;
@@ -200,7 +201,7 @@ class ActiveReservation extends Reservation {
 
         // Save any vehicles
         if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
-            Vehicle::saveVehicle($dbh, $reg->getIdRegistration());
+            Vehicle::saveVehicle($dbh, $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
         }
 
         // Save Checklists

@@ -31,7 +31,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#stmtDiv #btnPrint').click(function () {
+    $(document).on('click', '#stmtDiv #btnPrint', function () {
         $('div.PrintArea').printArea(
             {
                 mode: 'popup',

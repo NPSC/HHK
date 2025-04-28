@@ -51,6 +51,7 @@ use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 
 
+
 /**
  * HouseServices.php
  *
@@ -190,6 +191,7 @@ class HouseServices {
         if ($action != 'hf') {
         	$mkup .= HTMLContainer::generateMarkup('div',
                 VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('class' => 'hhk-flex'));
+
         }
 
 
@@ -224,7 +226,7 @@ class HouseServices {
         $returnCkdIn = FALSE;
 
         if ($idVisit == 0) {
-            return array("error" => "Neither Guest or Visit was selected.");
+            return ["error" => "Neither Guest or Visit was selected."];
         }
 
         // Remove any indicated visit stays
@@ -778,6 +780,7 @@ class HouseServices {
         $uS = Session::getInstance();
         $payResult = NULL;
         $invoice = NULL;
+        $invoice = NULL;
 
         if (is_null($paymentManager->pmp)) {
             return $payResult;
@@ -806,7 +809,7 @@ class HouseServices {
         }
 
         //get resvId
-        $resvId = ($visit instanceof Reservation_1 ? $visit->getIdReservation():0);
+        $resvId = ($visit instanceof Reservation_1 ? $visit->getIdReservation() : 0);
 
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 
@@ -1093,7 +1096,7 @@ class HouseServices {
 
         // Next visit must be the last.
         if ($nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedIn && $nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedOut) {
-            return 'Cannot Undo this room change. Next Visit Span must be Checked-in or Checked-out.  ';
+            return 'Cannot Undo this room change. The next Visit Span must be Checked-in or Checked-out.  ';
         }
 
         // Dates
@@ -1525,7 +1528,7 @@ class HouseServices {
     public static function changeExpectedDepartureDate(\PDO $dbh, $idGuest, $idVisit, $newDate) {
 
         if ($newDate == '' || $idGuest < 1 || $idVisit < 1) {
-            return array('error' => 'Parameters not specified.   ');
+            return ['error' => 'Parameters not specified.   '];
         }
 
         $visit = new Visit($dbh, 0, $idVisit);
@@ -1534,7 +1537,7 @@ class HouseServices {
 
         $result = $visit->changeExpectedCheckoutDates($dbh, $guestDates, $uS->MaxExpected, $uS->username);
 
-        return array('success' => $result['message'], 'isChanged' => $result['isChanged']);
+        return ['success' => $result['message'], 'isChanged' => $result['isChanged']];
     }
 
     /** Move a visit temporally by so many days
@@ -1550,11 +1553,11 @@ class HouseServices {
         $dataArray = array();
 
         if ($idVisit == 0) {
-            return array("error" => "Visit not specified.");
+            return ["error" => "Visit not specified."];
         }
 
         if (SecurityComponent::is_Authorized('guestadmin') === FALSE) {
-            return array("error" => "User not authorized to move visits.");
+            return ["error" => "User not authorized to move visits."];
         }
 
         // save the visit info

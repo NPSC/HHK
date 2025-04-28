@@ -14,7 +14,7 @@ class NotificationLog extends AbstractTableLog {
         $logRS->From->setNewVal($from);
         $logRS->Log_Text->setNewVal($logText);
         $logRS->Log_Details->setNewVal(json_encode($details));
-        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
+        //$logRS->Timestamp->setNewVal((new \DateTime())->format("Y-m-d H:i:s.u"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -30,7 +30,7 @@ class NotificationLog extends AbstractTableLog {
         $logRS->From->setNewVal($from);
         $logRS->Log_Text->setNewVal($logText);
         $logRS->Log_Details->setNewVal(json_encode($details));
-        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
+        //$logRS->Timestamp->setNewVal((new \DateTime())->format("Y-m-d H:i:s.u"));
 
         return self::insertLog($dbh, $logRS);
 

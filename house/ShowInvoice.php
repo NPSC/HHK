@@ -1,14 +1,13 @@
 <?php
 
 use HHK\Notification\Mail\HHKMailer;
-use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentLinkRequest;
+//use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+//use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentLinkRequest;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\TableLog\HouseLog;
-use Mpdf\Mpdf;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
@@ -105,7 +104,7 @@ try {
                     }
                 }
             }
-            
+
         }
 
         if (isset($_POST['txtSubject'])) {
@@ -163,7 +162,7 @@ try {
 
         $emBody = $uS->InvoiceEmailBody;
 
-        /* 
+        /*
         if(isset($_GET['createlink'])){
             $linkRequest = new PaymentLinkRequest($dbh, new DeluxeGateway($dbh, 'wireland'));
             $response = $linkRequest->submit($invoice);
@@ -173,13 +172,13 @@ try {
             }
         }
         */
-        
+
         // create send email table
         if ($invoice->isDeleted() === FALSE) {
             $emtableMarkup = $invoice->makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>", $emSubject, $emAddrs, $emBody, $invNum);
         }
 
-        
+
 
     } else {
         $msg .= 'Invoice not found.';
@@ -238,7 +237,7 @@ if ($msg != '') {
                 <div class='hhk-noprint'>
                     <form class="formEm" name="formEm" method="POST" action="ShowInvoice.php">
                         <?php echo $emtableMarkup; ?>
-                        
+
                     </form>
 
                 </div>

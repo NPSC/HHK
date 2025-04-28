@@ -85,7 +85,7 @@ class Login {
         	$ssn->rolecode = WebRole::Guest;
         }
 
-        SysConfig::getCategory($dbh, $ssn, ["a", "f", "es", "ga", "pr", "ha", "sms"], WebInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $ssn, ["a", "f", "es", "ga", "pr", "ha", "sms", "g"], WebInit::SYS_CONFIG);
         
         return $dbh;
     }
@@ -206,7 +206,7 @@ class Login {
 
     public static function IEMsg(){
         try {
-            if ($userAgentArray = get_browser(NULL, TRUE)) {
+            if ($userAgentArray = @get_browser(NULL, TRUE)) {
 
                 if (is_array($userAgentArray)) {
 
@@ -227,7 +227,6 @@ class Login {
                 }
             }
         } catch (\Exception $d) {
-            return "Missing Browscap";
         }
 
         return '';

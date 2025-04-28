@@ -207,6 +207,11 @@ class CustomRegisterForm {
                 "type"=>"bool",
                 "default"=>true
             ],
+            "showblank"=>[
+                "label"=>"Show blank vehicle line if vehicle hasn't been entered",
+                "type"=>"bool",
+                "default"=>false
+            ]
         ],
         "Credit Cards"=>[
             "show"=>[
@@ -410,7 +415,7 @@ class CustomRegisterForm {
     protected function vehicleBlock(array $vehs) {
         $mkup = "";
 
-        if (count($vehs) > 0) {
+        if (count($vehs) > 0 || !empty($this->settings['Vehicle']['showblank'])) {
             $uS = Session::getInstance();
             $s = '';
             if (count($vehs) > 1) {
@@ -425,12 +430,21 @@ class CustomRegisterForm {
 
                 $mkup .= '<div class="row mb-2 ui-widget-content ui-corner-all py-2">';
 
-                $mkup .= (!empty($veh->Make->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col"><strong>Make: </strong>' . $veh->Make->getStoredVal() . '</div>':'');
-                $mkup .= (!empty($veh->Model->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col"><strong>Model: </strong>' . $veh->Model->getStoredVal() . '</div>':'');
-                $mkup .= (!empty($veh->Color->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="max-width:fit-content"><strong>Color: </strong>' . $veh->Color->getStoredVal() . '</div>':'');
-                $mkup .= (!empty($veh->State_Reg->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="max-width:fit-content"><strong>State: </strong>' . $veh->State_Reg->getStoredVal() . '</div>':'');
-                $mkup .= (!empty($veh->License_Number->getStoredVal() || $uS->showRegEmptyFields) ? '<div class="col" style="min-width:fit-content"><strong>' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong>' . $veh->License_Number->getStoredVal() . '</div>':'');
-                $mkup .= (!empty($veh->Note->getStoredVal()) ? '<div class="col-12"><strong>' . Labels::getString('referral', 'vehicleNotes', 'Notes') . ': </strong>' . $veh->Note->getStoredVal() . '</div>':'');
+                if($veh->idVehicle->getStoredVal() > 0){
+                    $mkup .= (!empty($veh->Make->getStoredVal()) ? '<div class="col"><strong>Make: </strong>' . $veh->Make->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->Model->getStoredVal()) ? '<div class="col"><strong>Model: </strong>' . $veh->Model->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->Color->getStoredVal()) ? '<div class="col" style="max-width:fit-content"><strong>Color: </strong>' . $veh->Color->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->State_Reg->getStoredVal()) ? '<div class="col" style="max-width:fit-content"><strong>State: </strong>' . $veh->State_Reg->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->License_Number->getStoredVal()) ? '<div class="col" style="min-width:fit-content"><strong>' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong>' . $veh->License_Number->getStoredVal() . '</div>':'');
+                    $mkup .= (!empty($veh->Note->getStoredVal()) ? '<div class="col-12"><strong>' . Labels::getString('referral', 'vehicleNotes', 'Notes') . ': </strong>' . $veh->Note->getStoredVal() . '</div>':'');
+                }else if($uS->showRegEmptyFields){
+                    //show empty row
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Make: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Model: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Color: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col-2 mt-3 hhk-flex align-items-end"><strong class="mr-1">State: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col-6 mt-3 hhk-flex align-items-end"><strong class="mr-1">' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong><span class="col hhk-line"></span></div>';
+                }
 
                 $mkup .= '</div>';
 
@@ -728,7 +742,7 @@ class CustomRegisterForm {
         }
 
         // Vehicles
-        if (is_null($vehicles) === FALSE) {
+        if (is_null($vehicles) === FALSE || !empty($this->settings['Vehicle']['showblank'])) {
             $mkup .= $this->vehicleBlock($vehicles);
         }
 
@@ -792,6 +806,7 @@ class CustomRegisterForm {
 
             // visit
             $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, '', $span);
+            $idReservation = $visit->getIdReservation();
             $reg = new Registration($dbh, 0, $visit->getIdRegistration());
             $visit->getResource($dbh);
 
@@ -965,13 +980,18 @@ class CustomRegisterForm {
             $vehs = array();
             if ($reg->getNoVehicle() == 0) {
                 // Remove unused vehicles from the array, if thsy somehow get in.
-                $cars = Vehicle::getRecords($dbh, $reg->getIdRegistration());
+                $cars = Vehicle::getRecords($dbh, $reg->getIdRegistration(), $idReservation, true);
 
                 foreach ($cars as $c) {
                     if ($c['No_Vehicle'] != 1) {
                         $vehs[] = $c;
                     }
                 }
+
+            }
+
+            if(count($vehs) == 0 && !empty($this->settings['Vehicle']['showblank'])) {
+                $vehs[] = new VehicleRS();
             }
         } else {
             $vehs = NULL;

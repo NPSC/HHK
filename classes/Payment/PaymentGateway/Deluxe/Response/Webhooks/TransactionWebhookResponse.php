@@ -1,6 +1,6 @@
 <?php
 
-namespace HHK\Payment\PaymentGateway\Deluxe\Response;
+namespace HHK\Payment\PaymentGateway\Deluxe\Response\Webhooks;
 
 use HHK\Exception\PaymentException;
 use HHK\Payment\GatewayResponse\AbstractGatewayResponse;

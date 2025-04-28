@@ -3,6 +3,7 @@
 namespace HHK\Note;
 
 use HHK\DataTableServer\SSP;
+use HHK\Exception\NotFoundException;
 
 /**
  * ListNotes.php
@@ -45,14 +46,15 @@ class ListNotes {
         $whereField = '';
         $whereClause = '';
         $priKey = 'Note_Id';
-        $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
+        $idPsgs = LinkNote::findIdPsg($dbh, $linkType, $linkId);
 
-        if ($concatNotes) {
-
-            if ($idPsg > 0) {
-                $linkType = "concat";
-                $linkId = $idPsg;
-            }
+        if ($concatNotes && count($idPsgs) > 0) {
+            $linkType = "concat";
+            $linkId = $idPsgs = implode(',',$idPsgs);
+        }else if(count($idPsgs) > 0 ){
+            $idPsgs = implode(',',$idPsgs);
+        }else{
+            $idPsgs = "''";
         }
 
         if ($linkType == '') {
@@ -65,19 +67,55 @@ class ListNotes {
 
                 $dbView = 'vresv_notes';
                 $whereField = 'Reservation_Id';
-                $whereClause = "$whereField IN ($linkId, '') AND idPsg = $idPsg";
+                $whereClause = "$whereField IN ($linkId, '') AND idPsg in ($idPsgs)";
                 break;
 
+            case "curguests":
+
+                $dbView = 'vresv_notes';
+                $whereField = 'Reservation_Status';
+                $whereClause = "$whereField IN ('s')";
+                $columns[] = array('db'=> 'Room', 'dt'=>'Room');
+                $columns[] = array('db'=> 'Room', 'dt'=>'group');
+                break;
+
+            case "waitlist":
+
+                $dbView = 'vresv_notes';
+                $whereField = 'Reservation_Status';
+                $whereClause = "$whereField IN ('w')";
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'Primary Guest');
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'group');
+                break;
+
+            case "confirmed":
+
+                $dbView = 'vresv_notes';
+                $whereField = 'Reservation_Status';
+                $whereClause = "$whereField IN ('a')";
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'Primary Guest');
+                $columns[] = array('db'=> 'Room', 'dt'=>'group');
+                break;
+
+            case "unconfirmed":
+
+                $dbView = 'vresv_notes';
+                $whereField = 'Reservation_Status';
+                $whereClause = "$whereField IN ('uc')";
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'Primary Guest');
+                $columns[] = array('db'=> 'Primary Guest', 'dt'=>'group');
+                break;
+            
             case Note::VisitLink:
 
                 $dbView = 'vvisit_notes';
                 $whereField = 'idVisit';
-                $whereClause = "$whereField IN ($linkId, '') AND idPsg = $idPsg";
+                $whereClause = "$whereField IN ($linkId, '') AND idPsg in ($idPsgs)";
                 break;
 
             case Note::PsgLink:
 
-                $dbView = 'vpsg_notes';
+                $dbView = 'vpsg_notes_concat';
                 $whereField = 'Psg_Id';
                 $whereClause = "$whereField = $linkId";
                 break;
@@ -85,7 +123,8 @@ class ListNotes {
             case "concat":
                 $dbView = 'vpsg_notes_concat';
                 $whereField = 'Psg_Id';
-                $whereClause = "$whereField = $linkId";
+                $whereClause = "$whereField in ($linkId)";
+                $columns[] = array('db'=> 'Patient', 'dt'=>'group');
                 break;
 
             case Note::DocumentLink:
@@ -98,6 +137,11 @@ class ListNotes {
                 $dbView = 'vstaff_notes';
                 $whereClause = "";
                 $columns[] = array('db'=> 'Category', 'dt'=>'Category');
+                $columns[] = array('db'=> 'PrimaryGuest', 'dt'=>'Guest');
+                $columns[] = array('db'=> 'idGuest', 'dt'=>'idGuest');
+                $columns[] = array('db'=> 'idPsg', 'dt'=>'idPsg');
+                $columns[] = array('db'=> 'room', 'dt'=>'room');
+
                 break;
             case Note::MemberLink:
                 $dbView = 'vmem_notes';
@@ -107,7 +151,10 @@ class ListNotes {
 
             case Note::RoomLink:
 
-                //break;
+                $dbView = 'vroom_notes';
+                $whereField = 'idRoom';
+                $whereClause = "$whereField = $linkId";
+                break;
 
             default:
                 return array('error'=>'The Link Type is not found: ' . $linkType);

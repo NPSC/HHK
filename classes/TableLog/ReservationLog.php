@@ -19,6 +19,8 @@ class ReservationLog extends AbstractTableLog {
     const Reservation = 'reservation';
     const FinApplication = 'fin_application';
 
+    const Document = 'document';
+
 
     public static function logReservation(\PDO $dbh, $idResv, $idReg, $idhstay, $idResc, $idRoomRate, $idGuest, $logText, $subType, $userName, $idPsg = 0) {
 
@@ -92,7 +94,5 @@ class ReservationLog extends AbstractTableLog {
         return self::insertLog($dbh, $logRS);
 
     }
-
-
 }
 ?>

@@ -152,11 +152,18 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
     "use strict";
     var cache = {};
     
-    const maxLength = 10;
     
     const _source = function (request, response, cache, shoNew, inputParms, minChars) {
-    
-        let term = request.term.toString().substr(0,minChars);
+        
+        let term = request.term.toString(); //.substr(0,minChars);
+        
+        //sanitize phone search
+        if (inputParms.cmd == "phone") {
+            term = term.replace(/(?![0-9])./gmi, '');
+            $(txtCtrl).val(term);
+        }
+
+        var maxLength = 10;
         
         if ( term in cache ) {
 
@@ -186,7 +193,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
             }
             
             if(filtered.length > maxLength){
-				filtered.unshift({'id':'n', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
+				filtered.unshift({'id':'a', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
 			}
 
             response( filtered );
@@ -203,18 +210,19 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
                 }
 
 	            if (shoNew) {
-	                data.unshift({'id':0, 'fullName':'<span class="ui-icon ui-icon-plusthick"></span><span style="padding-left:1em;">New Person</span>'});
-	            } else if (data.length === 0) {
-	                data.push({'id':'n', 'substitute':'No one found'});
+	                data.results.unshift({'id':0, 'fullName':'<span class="ui-icon ui-icon-plusthick"></span><span style="padding-left:1em;">New Person</span>'});
+	            } else if (data.results.length === 0) {
+	                data.results.push({'id':'n', 'substitute':'No one found'});
 	                cache = {};
 	            }
 	            
-	            if(data.length > maxLength){
-					data.unshift({'id':'n', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
+	            if(data.total > data.limit){
+					data.results.unshift({'id':'a', 'substitute':'Keep typing... (showing ' + data.limit + " of " + data.total + ' results)'});
+                    maxLength = data.limit;
 				}
 
-                cache[ term ] = data;
-                response( data );
+                //cache[ term ] = data;
+                response( data.results );
             });
         }
     };
@@ -244,6 +252,11 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 					item.noReturn = '';
 				} else if (item.noReturn != '') {
 					item.noReturn = "<span class='autocompleteNoReturn'>" + item.noReturn + "</span>";
+                }
+                if (item.room === undefined) {
+					item.room = '';
+				} else if (item.room != '') {
+					item.room = "<span class='autocompleteRoom'>Room " + item.room + "</span>";
 				}
 				if (item.fullName === undefined) {
 					item.fullName = ''
@@ -300,9 +313,10 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 					mrnRow = "<div class='autocompleteItemMRN'>" + item.mrn + "</div>";
 				}
 				
-				if(item.memberStatus != '' || item.noReturn != ''){
-					rightContent = "<div class='right'>" + item.memberStatus + item.noReturn + "</div>";
-				}
+				if(item.memberStatus != '' || item.noReturn != '' || item.room != ''){
+					rightContent = "<div class='right'>" + item.memberStatus + item.noReturn + item.room + "</div>";
+                }
+                
 				
 			    return $( "<li>" )
 			        .append( "<div style='font-size:.85em;'><div class='hhk-flex'><div class='left'>" + firstRow + detailsRow + mrnRow + "</div>" + rightContent + "</div></div>" )

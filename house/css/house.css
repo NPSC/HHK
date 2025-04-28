@@ -20,6 +20,10 @@ body {
 	--nav-text-color: #fff;
 }
 
+#tblGuestViewrpt td {
+	vertical-align: top;
+}
+
 .fc {
 	--fc-event-border-color: #e9e9e9;
 }
@@ -149,7 +153,15 @@ body {
 	margin-top: 0.5em;
 }
 
-.ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteMRN {
+.ui-autocomplete .autocompleteRoom {
+	background-color: #5c9ccc;
+	border-radius: 0.25em;
+	color: white;
+	padding: 0 0.5em;
+	margin-left: 0.5em;
+}
+
+.ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteMRN, .ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteRoom {
 	background-color: white;
 	border-radius: 0.25em;
 	color: #5c9ccc;
@@ -446,7 +458,7 @@ div#global-title {
 }
 
 /* Put JqueryUI dialogs above submit buttons */
-.ui-dialog { z-index: 91000 !important ;}
+ .ui-dialog { z-index: 91000} 
 
 /* Styles for button groups on housekeeping page */
 
@@ -960,13 +972,20 @@ table.dataTable tbody td {
 	padding: 1em;
 }
 
-#viewMsgsDialog.loading, #viewMsgsDialog .loading, #stmtDiv .loading {
-	background: url(../../images/ui-anim_basic_16x16.gif);
-	background-repeat: no-repeat;
-	background-position: center;
+#viewMsgsDialog.loading, #viewMsgsDialog .loading, #stmtDiv .loading, .hhk-loading, .hhk-loading:hover {
+	background-image: url(../../images/ui-anim_basic_16x16.gif) !important;
+	background-repeat: no-repeat !important;
+	background-position: center !important;
+	min-height: 4em;
+	min-width: 4em;
 }
-#viewMsgsDialog.loading *, #viewMsgsDialog .loading *, #stmtDiv .loading * {
+#viewMsgsDialog.loading *, #viewMsgsDialog .loading *, #stmtDiv .loading *, .hhk-loading * {
 	display: none !important;
+}
+
+input.ui-button.hhk-loading{
+	min-height: 0;
+	min-width: 0
 }
 
 #viewMsgsDialog #msgsTabContent .msgTitle{
@@ -1219,4 +1238,32 @@ input:checked + .hhk-slider:before {
 #deluxeDialog input:disabled{
 	background-color: #e9ecef;
     opacity: 1;
+}
+
+
+.hhk-list-group .list-group-item {
+	border-top: 1px solid #a6c9e2;
+	border-left: 1px solid #a6c9e2;
+	border-right: 1px solid #a6c9e2;
+	padding: 0.5em;
+}
+
+.hhk-list-group > .list-group-item:first-child {
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+}
+
+.hhk-list-group .list-group-item:last-child {
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+	border-bottom: 1px solid #a6c9e2;
+}
+
+.ReceiptArea table.receiptContent {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.ReceiptArea {
+	justify-self: center;
 }

@@ -29,6 +29,9 @@ use HHK\sec\Labels;
  */
 class CreditToken {
 
+
+    const TOKEN_LIFE_DAYS = 365;
+
     /**
      * Summary of storeToken
      * @param \PDO $dbh
@@ -67,7 +70,7 @@ class CreditToken {
         }
         $gtRs->Frequency->setNewVal('OneTime');
         $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
-        $gtRs->LifetimeDays->setNewVal(180);
+        $gtRs->LifetimeDays->setNewVal(self::TOKEN_LIFE_DAYS);
 
         if ($cardNum != '') {
             $gtRs->MaskedAccount->setNewVal($cardNum);
@@ -80,7 +83,10 @@ class CreditToken {
         $gtRs->Status->setNewVal($vr->getStatus());
         $gtRs->StatusMessage->setNewVal($vr->getMessage());
         $gtRs->Tran_Type->setNewVal($vr->getTranType());
-        $gtRs->Token->setNewVal($vr->getToken());
+        
+        if($gtRs->Token->getStoredVal() == ''){
+            $gtRs->Token->setNewVal($vr->getToken());
+        }
 
         $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAuthorizedAmount(), $vr->getTranType());
         $gtRs->Running_Total->setNewVal($runTot);
@@ -230,9 +236,7 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
                     $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
                 }
             }
-        }
-
-        if ($idGst > 0) {
+        }else if ($idGst > 0) {
 
             $gtRs = new Guest_TokenRS();
             $gtRs->idGuest->setStoredVal($idGst);

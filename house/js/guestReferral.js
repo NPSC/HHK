@@ -100,7 +100,7 @@ $(document).ready(function() {
 		
 	} else {
 		// Guest chooser
-		$btnDone.val('Save Guests');
+		$btnDone.val('Save');
 		$('#finaly').val('1');
 		
 		var gindx = 'g0';

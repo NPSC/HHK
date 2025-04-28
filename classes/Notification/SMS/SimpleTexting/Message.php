@@ -170,7 +170,7 @@ Class Message {
             }else if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                 throw new SmsException("Error sending message: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
-                throw new SmsException("Invalid response received while trying to send message. Error  " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                throw new SmsException("Invalid response received while trying to send message. Error  " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
 

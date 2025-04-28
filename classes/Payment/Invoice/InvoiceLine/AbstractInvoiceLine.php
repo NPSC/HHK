@@ -175,7 +175,7 @@ abstract class AbstractInvoiceLine {
         $this->setItemId($item->getIdItem());
         $this->setPrice($item->getUnitPrice());
         $this->setQuantity($quantity);
-        $this->setDescription($item->getDescription());
+        $this->setDescription($item->getIdItem() == \HHK\SysConst\ItemId::AddnlCharge || $item->getIdItem() == \HHK\SysConst\ItemId::Discount ? $str1 : $item->getDescription());
 
     }
 
@@ -428,12 +428,13 @@ abstract class AbstractInvoiceLine {
         $this->description = $description;
 
         // var will have invoice notes when useDetail is off.
+        /*
         if ($this->useDetail) {
             $this->description .= ($this->description != '' ? '; ' . $this->var : $this->var);
         } else {
             $this->description .= ($this->var != '' ? '; ' . $this->var : '');
         }
-
+*/
         return $this;
     }
 

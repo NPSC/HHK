@@ -45,6 +45,7 @@ abstract class AbstractReport {
     protected string $description = "";
     protected string $inputSetReportName = "";
     protected bool $rendered = false;
+    protected string $statsMkup = "";
 
     /**
      * @param \PDO $dbh
@@ -57,7 +58,7 @@ abstract class AbstractReport {
 
         $this->dbh = $dbh;
         $this->request = $request;
-        $this->filter = new ReportFilter();
+        $this->filter = (!isset($this->filter) ? new ReportFilter() : $this->filter);
         $this->filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
         $this->filter->createHospitals();
 
@@ -180,15 +181,17 @@ abstract class AbstractReport {
 
         $uS = Session::getInstance();
         $summaryMkup = $this->makeSummaryMkup();
+        $statsMkup = $this->statsMkup;
 
         $titleMkup = HTMLContainer::generateMarkup('h3', $this->reportTitle, array('class'=>'mt-2'));
         $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ml-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/" . $uS->statementLogoFile, "width"=>$uS->statementLogoWidth)), array('id'=>'repSummary', 'class'=>'hhk-flex mb-3', 'style'=>'justify-content: space-between'));
-        return $titleMkup . $bodyMkup;
+        return $titleMkup . $bodyMkup . $statsMkup;
 
     }
 
     public function generateReportScript(){
         $jsonColumnDefs = json_encode($this->colSelector->getColumnDefs());
+        $dateTimeColumnDefs = json_encode($this->colSelector->getDateTimeColumnDefs());
         $uS = Session::getInstance();
 
         return '
@@ -200,6 +203,10 @@ abstract class AbstractReport {
             {"targets": ' . $jsonColumnDefs . ',
             "type": "date",
             "render": function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+            },
+            {"targets": ' . $dateTimeColumnDefs . ',
+            "type": "date",
+            "render": function ( data, type, row ) {return dateRender(data, type, dateFormat + " h:mm a");}
             }
             ],
             "displayLength": 50,
@@ -304,18 +311,22 @@ abstract class AbstractReport {
         float:right;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt {
+    div#summaryAccordion table, table#tbl' . $this->inputSetReportName . 'rpt {
         border-collapse: collapse;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt td {
+    div#summaryAccordion table td, table#tbl' . $this->inputSetReportName . 'rpt td {
         border:1px solid #c1c1c1;
         padding: 10px;
     }
 
-    table#tbl' . $this->inputSetReportName . 'rpt thead th {
+    div#summaryAccordion table thead th, table#tbl' . $this->inputSetReportName . 'rpt thead th {
         padding:10px;
-        border-bottom: 2px solid #111
+        border-bottom: 2px solid #111;
+    }
+
+    div#summaryAccordion .hhk-flex>table {
+        margin: 0 0.5rem 0.5rem 0.5rem;
     }
 
 </style>

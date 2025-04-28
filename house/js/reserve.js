@@ -247,18 +247,35 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
 
+            var formData = new FormData($('#form1')[0]);
 
-            $.post(
-                'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
-                function(data) {
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        flagAlertMessage(err.message, 'error');
-                        return;
-                    }
+            formData.append('cmd', 'saveResv');
+            formData.append('idPsg', pageManager.getIdPsg());
+            formData.append('prePayment', pageManager.getPrePaymtAmt());
+            formData.append('rid', pageManager.getIdResv());
+            
+            //diagnosis
+            let txtDiagnosis = $('#txtDiagnosis').val();
+            if (typeof txtDiagnosis === "string") {
+                txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+            }
+            formData.append('txtDiagnosis', txtDiagnosis);
 
+            let peopleStr = $.param({ mem: pageManager.people.list() });
+            let people = new URLSearchParams(peopleStr);
+
+            for (const [key, value] of people.entries()) {
+                formData.append(key, value);
+            }
+
+            $.ajax({
+                type: 'post',
+                url: 'ws_resv.php',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function (data, textStatus) {
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
@@ -294,8 +311,13 @@ $(document).ready(function() {
                     if(data.info){
                         flagAlertMessage(data.info, 'info');
                     }
+                },
+                error: function (data, textStatus) {
+                    flagAlertMessage(textStatus, "error");
+                    $('#btnDone').val("Save");
                 }
-            );
+
+            });
 
         }
     });
