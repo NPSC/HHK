@@ -2388,6 +2388,36 @@ CREATE TABLE if not exists `w_user_tokens` (
 
 
 -- -----------------------------------------------------
+-- Table `oauth_clients`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `oauth_clients` (
+  `client_id` INT NOT NULL,
+  `idName` INT NULL,
+  `name` VARCHAR(45) NULL,
+  `secret` VARCHAR(100) NULL,
+  `revoked` TINYINT NULL,
+  `Updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idClient`),
+  INDEX `indx_idName` (`idName` ASC));
+
+
+-- -----------------------------------------------------
+-- Table `oauth_access_tokens`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `oauth_access_tokens` (
+  `id` varchar(100) NOT NULL,
+  `idName` INT NULL,
+  `client_id` INT NOT NULL,
+  `name` VARCHAR(45) NULL,
+  `scopes` TEXT NULL,
+  `revoked` TINYINT NULL,
+  `expires_at` DATETIME NULL,
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `indx_idName` (`idName` ASC));
+
+-- -----------------------------------------------------
 -- Table `web_sites`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `web_sites` (
