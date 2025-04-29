@@ -69,75 +69,57 @@ class Import {
         $patId = '';
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $guests = [];
+            //$guests = [];
             try{
                 $this->dbh->beginTransaction();
+
                //loop through guests
                 $patient = [
-                    "GuestFirst" => $r['PatientFirst'],
-                    "GuestLast" => $r['PatientLast'],
-                    "Relationship_to_Patient" => "Self",
-                    "BirthDate" => "",
-                    "Gender" => $r["PatientGender"],
-                    "mediaSource" => $r["PatientMarketingOptIn"],
-                    "Street" => "",
-                    "City" => $r["PatientCity"],
+                    "FirstName" => $r['PatientFirst'],
+                    "LastName" => $r['PatientLast'],
+                    //"Relationship_to_Patient" => "Self",
+                    //"BirthDate" => "",
+                    //"Gender" => $r["PatientGender"],
+                    //"mediaSource" => $r["PatientMarketingOptIn"],
+                    "Address" => $r["Address"],
+                    "City" => $r["City"],
                     "County" => "",
                     "State" => "",
-                    "ZipCode" => "",
-                    "Phone" => str_replace("-", "", filter_var($r["PatientPhoneNumber"], FILTER_SANITIZE_NUMBER_INT)),
+                    "ZipCode" => $r["ZipCode"],
+                    "Phone" => str_replace("-", "", filter_var($r["Phone"], FILTER_SANITIZE_NUMBER_INT)),
                     "Mobile" => "",
-                    "Email" => $r["PatientEmail"],
-                    "Diagnosis"=>"",
-                    "PrimaryGuest" => $r["PatientPrimaryGuest"],
-                    "Banned" => $r["PatientBanned"],
-                    "Hospital" =>$r["Hospital"],
+                    "Email" => $r["Email"],
+                    //"Diagnosis"=>"",
+                    //"PrimaryGuest" => $r["PatientPrimaryGuest"],
+                    //"Banned" => $r["PatientBanned"],
+                    //"Hospital" =>$r["Hospital"],
                     "importId"=>$r["importId"]
                 ];
 
-                $guests[] = $patient;
+                $this->addGuest($patient, false);
 
-                for ($i = 1; $i < 3; $i++){
-                    if(trim($r['Guest_'.$i.'_First']) !== "" && trim($r['Guest_'.$i.'_Last']) !== ""){
                         $guest = [
-                            "GuestFirst" => $r['Guest_'.$i.'_First'],
-                            "GuestLast" => $r['Guest_'.$i.'_Last'],
-                            "Relationship_to_Patient" => $r["Guest_".$i."_Relationship"],
-                            "BirthDate" => "",
-                            "Gender" => $r["Guest_".$i."_Gender"],
-                            "mediaSource" => $r["Guest_".$i."_Marketing_opt_in"],
-                            "Street" => "",
-                            "City" => $r["Guest_".$i."_City"],
+                            "FirstName" => $r['FirstName'],
+                            "LastName" => $r['LastName'],
+                            //"Relationship_to_Patient" => $r["PatientRelation"],
+                            //"BirthDate" => "",
+                            //"Gender" => $r["Guest_".$i."_Gender"],
+                            //"mediaSource" => $r["Guest_".$i."_Marketing_opt_in"],
+                            "Address" => $r["Address"],
+                            "City" => $r["City"],
                             "County" => "",
                             "State" => "",
-                            "ZipCode" => "",
-                            "Phone" => str_replace("-", "", filter_var($r["Guest_".$i."_Phone_Number"], FILTER_SANITIZE_NUMBER_INT)),
+                            "ZipCode" => $r["ZipCode"],
+                            "Phone" => str_replace("-", "", filter_var($r["Phone"], FILTER_SANITIZE_NUMBER_INT)),
                             "Mobile" => "",
-                            "Email" => $r["Guest_".$i."_Email"],
+                            "Email" => $r["Email"],
                             "Diagnosis"=>"",
-                            "PrimaryGuest"=>$r["Guest_".$i."_Primary_Guest"],
-                            "Banned"=>$r["Guest_".$i."_Banned"],
-                            "Hospital" =>$r["Hospital"],
+                            //"PrimaryGuest"=>$r["Guest_".$i."_Primary_Guest"],
+                            //"Banned"=>$r["Guest_".$i."_Banned"],
+                            //"Hospital" =>$r["Hospital"],
                             "importId"=>$r["importId"]
                         ];
-                        $guests[] = $guest;
-                    }
-                }
-
-                $patient = false;
-
-                //find patient
-                foreach($guests as $k=>$guest){
-                    if($guest["Relationship_to_Patient"] == "Self"){
-                        $patArray = $this->addPatient($guest);
-                        $patient = $patArray["patient"];
-                        $psg = $patArray["psg"];
-                        $reg = $patArray["reg"];
-                        $hospStay = $patArray["hospStay"];
-                        $guests[$k]["idName"] = $patient->getIdName();
-                    }
-                }
-
+                $this->addGuest($guest, false);
                 /*
                 if($patient == false){
                     $guest = [
@@ -168,7 +150,7 @@ class Import {
                 }
 */
                 //add guests
-                foreach($guests as $k=>$guest){
+                /*foreach($guests as $k=>$guest){
                     if($guest["Relationship_to_Patient"] !== "Self"){
                         $guests[$k]["idName"] = $this->addGuest($guest, $psg)->getIdName();
                     }
@@ -185,7 +167,7 @@ class Import {
                     $idResv = $this->addReservation($guests, $reg, $hospStay, $r);
                     $this->addVisit($r, $guests, $reg, $hospStay, $idResv);
                     
-                }
+                }*/
 
                 $this->dbh->commit();
 
@@ -324,13 +306,20 @@ class Import {
         return array("patient"=>$patient, "psg"=>$psg, "reg"=> $reg, "hospStay"=>$hospitalStay);
     }
 
-    private function addGuest(array $r, $psg){
+    /**
+     * Search for person and or create them. if PSG is given, add the guest to the PSG.
+     * @param array $r ["firstName", "LastName", "Middle", "Gender", "Ethnicity", "BirthDate", "Banned", "mediaSource", "Relationship_to_Patient", "Address", "Address2, "City", "County", "State", "ZipCode", "Phone", "Mobile", "Email"]
+     * @param mixed $psg
+     * @return Guest
+     */
+    private function addGuest(array $r, PSG|bool $psg = false){
 
         // get session instance
         $uS = Session::getInstance();
 
-        $newFirst = trim(addslashes($r['GuestFirst']));
-        $newLast = trim(addslashes($r['GuestLast']));
+        $newFirst = isset($r["FirstName"]) ? trim(addslashes($r['FirstName'])) : "";
+        $newLast = isset($r["LastName"]) ? trim(addslashes($r['LastName'])) : "";
+        $newMiddle = isset($r["Middle"]) ? trim(addslashes(string: $r['Middle'])) : "";
         //$newNickname = trim(addslashes($r['GuestNickname']));
 
         if ($newLast == '') {
@@ -342,26 +331,27 @@ class Import {
         $guest = new Guest($this->dbh, '', $id);
 
         if($id == 0){
-            $gender = $this->findIdGender($r['Gender']);
+            $gender = $this->findIdGender((isset($r['Gender']) ? $r["Gender"] : ""));
             $ethnicity = $this->findIdEthnicity((isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
-            $noReturn = $this->findIdNoReturn($r["Banned"]);
-            $mediaSource = $this->findIdMediaSource($r["mediaSource"]);
+            $noReturn =  $this->findIdNoReturn((isset($r["Banned"]) ? $r["Banned"] : ""));
+            $mediaSource = $this->findIdMediaSource((isset($r["mediaSource"]) ? $r["mediaSource"] : ""));
 
             $birthDate = "";
-            if(trim($r['BirthDate']) != ''){
+            if(isset($r["BirthDate"]) && trim($r['BirthDate']) != ''){
                 $birthdateDT = new \DateTime($r['BirthDate']);
                 $birthDate = $birthdateDT->format("M j, Y");
             }
 
             // phone
             $homePhone = $this->formatPhone($r['Phone']);
-            $cellPhone = $this->formatPhone($r['Mobile']);
+            $cellPhone = ''; //$this->formatPhone($r['Mobile']);
             //$workPhone = $this->formatPhone($r['Work']);
 
             $post = array(
                 'txtFirstName' => $newFirst,
                 'txtLastName'=>  $newLast,
                 'txtNickname'=> "",//$newNickname,
+                'txtMiddleName'=> $newMiddle,
                 'rbPrefMail'=>'1',
                 'rbEmPref'=>"1",
                 'txtEmail'=>array('1'=>$r['Email']),
@@ -379,8 +369,8 @@ class Import {
             $adr1 = $this->loadAddress($this->dbh, $r);
             $post['adr'] = $adr1;
 
-            if(trim($r['Street']) == ""){
-                $post['incomplete'] = true;
+            if(trim($r['Address']) == ""){
+                //$post['incomplete'] = true;
             }
 
             $guest->save($this->dbh, $post, $uS->username);
@@ -770,7 +760,7 @@ class Import {
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::Doctor . "'
 WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         }else{
-            return 0;
+            $query = "Select n.idName from name n where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
         }
         
 
@@ -853,8 +843,8 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
 
 
         $adr1 = array('1' => array(
-            'address1' => ucwords(strtolower(trim($r['Street']))),
-            'address2' => '',
+            'address1' => isset($r['Address']) ? ucwords(strtolower(trim($r['Address']))) : '',
+            'address2' => isset($r['Address2']) ? ucwords(strtolower(trim($r['Address2']))) : '',
             'city' => $city,
             'county'=>  $county,
             'state' => $state,

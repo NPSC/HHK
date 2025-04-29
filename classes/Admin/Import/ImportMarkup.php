@@ -189,7 +189,7 @@ class ImportMarkup {
 
     public function getPatientRelationInfo(){
         try{
-            $query = "select d.`Code` as idRelation, ifnull(d.`Description`, '') as `HHK Relation`, i.`Guest_2_Relationship` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`Guest_2_Relationship` = d.`Description` and d.`Table_Name` = 'Patient_Rel_Type' where i.Guest_2_Relationship != '' group by i.`Guest_2_Relationship` order by d.Description, i.Guest_2_Relationship;";
+            $query = "select d.`Code` as idRelation, ifnull(d.`Description`, '') as `HHK Relation`, i.`PatientRelation` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`PatientRelation` = d.`Description` and d.`Table_Name` = 'Patient_Rel_Type' where i.PatientRelation != '' group by i.`PatientRelation` order by d.Description, i.PatientRelation;";
             $stmt = $this->dbh->query($query);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){

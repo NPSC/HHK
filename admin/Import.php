@@ -39,7 +39,7 @@ if(isset($_GET['includeTbl'])){
     $importTbl = $import->generateMkup();
 }
 
-if(isset($_FILES['csvFile']) && file_exists($_FILES['csvFile']['full_path'])){
+if(isset($_FILES['csvFile']) && file_exists($_FILES['csvFile']['tmp_name'])){
 
     try{
         $upload = new Upload($dbh, $_FILES['csvFile']);
@@ -177,7 +177,7 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 					method: "post",
 					data:{
 						startImport:true,
-						limit: 300
+						limit: 50
 					},
 					dataType:"json",
 					success: function(data){

@@ -12,8 +12,8 @@ class Upload {
         
         if(is_array($file)){
             $this->rawData = $this->parseFile($file);
-        }elseif(is_int($file) && $file > 0){
-            $this->rawData = $this->makeFakeMembers($file);
+        //}elseif(is_int($file) && $file > 0){
+        //    $this->rawData = $this->makeFakeMembers($file);
         }else{
             throw new \ErrorException("CSV file or number of fake members is required");
         }
@@ -129,9 +129,10 @@ class Upload {
 
                 //add fields
                 foreach($fields as $field){
+                    $field = trim($field);
                     if($field == "Notes"){
                         $stmt .= ", `" . $field . "` TEXT NULL";
-                    }else{
+                    }else if(strlen($field) > 0){
                         $stmt .= ", `" . $field . "` VARCHAR(255) NULL";
                     }
                 }
