@@ -2396,9 +2396,9 @@ CREATE TABLE if not exists `oauth_clients` (
   `name` VARCHAR(45) NULL,
   `secret` VARCHAR(100) NULL,
   `revoked` TINYINT NULL,
-  `Updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idClient`),
+  PRIMARY KEY (`client_id`),
   INDEX `indx_idName` (`idName` ASC));
 
 
@@ -2413,6 +2413,7 @@ CREATE TABLE if not exists `oauth_access_tokens` (
   `scopes` TEXT NULL,
   `revoked` TINYINT NULL,
   `expires_at` DATETIME NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
   `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   INDEX `indx_idName` (`idName` ASC));

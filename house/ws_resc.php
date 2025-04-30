@@ -804,7 +804,9 @@ try {
         case "getCssVars":
             $events = getCssVars($uS);
             break;
-
+        case "generateRandomString":
+            $events = getRandomString();
+            break;
         case "getNameDetails":
             $post = filter_input_array(INPUT_POST, ['idNames'=>['filter', FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_FORCE_ARRAY], 'title'=>['filter', FILTER_SANITIZE_FULL_SPECIAL_CHARS]]);
             $events = getNameDetails($dbh, $post);

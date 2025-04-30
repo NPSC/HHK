@@ -12,10 +12,16 @@ class ClientRepository implements ClientRepositoryInterface
      * @inheritDoc
      */
     public function getClientEntity(string $clientIdentifier): ClientEntityInterface|null {
+        $dbh = initPDO(true);
+        $stmt = $dbh->prepare("SELECT * FROM `oauth_clients` WHERE `client_id` = :client_id limit 1");
+        $stmt->execute(array(
+            'client_id' => $clientIdentifier,
+        ));
+        $clientRow = $stmt->fetch();
         $client = new ClientEntity();
 
-        $client->setIdentifier($clientIdentifier);
-        $client->setName('HHK');
+        $client->setIdentifier($clientRow['client_id']);
+        $client->setName($clientRow['name']);
         $client->setConfidential(true);
 
         return $client;
@@ -26,6 +32,18 @@ class ClientRepository implements ClientRepositoryInterface
      * @inheritDoc
      */
     public function validateClient(string $clientIdentifier, string|null $clientSecret, string|null $grantType): bool {
-        return true;
+        $dbh = initPDO(true);
+        $stmt = $dbh->prepare("SELECT `client_id` FROM `oauth_clients` WHERE `client_id` = :client_id AND `secret` = :client_secret");
+        $stmt->execute(array(
+            'client_id' => $clientIdentifier,
+            'client_secret' => $clientSecret
+        ));
+        $client = $stmt->fetch();
+
+        if ($client) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

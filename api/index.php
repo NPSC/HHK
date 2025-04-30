@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use HHK\House\Report\DailyOccupancyReport;
 use HHK\House\Report\RoomReport;
+use HHK\sec\OAuth\Entity\AccessTokenEntity;
+use HHK\sec\OAuth\Repository\AccessTokenRepository;
 use HHK\sec\SysConfig;
 use HHK\sec\OAuth\Middleware\ResourceServerMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -59,6 +61,9 @@ require ("../house/homeIncludes.php");
         // Define your API routes here
         $group->get('/hello', function (Request $request, Response $response) {
             $data = ["status"=>"success", "message" => "Hello, World!"];
+            $clientId = $request->getAttribute('oauth_client_id');
+            $userId = $request->getAttribute('oauth_user_id');
+            $data["user"] = ["clientId" => $clientId, "userId" => $userId];
             $response->getBody()->write(json_encode($data));
             return $response->withHeader('Content-Type', 'application/json');
         });
