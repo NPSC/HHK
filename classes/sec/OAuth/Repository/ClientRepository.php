@@ -13,10 +13,15 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientEntity(string $clientIdentifier): ClientEntityInterface|null {
         $dbh = initPDO(true);
-        $stmt = $dbh->prepare("SELECT * FROM `oauth_clients` WHERE `client_id` = :client_id limit 1");
+        $stmt = $dbh->prepare("SELECT * FROM `oauth_clients` WHERE `client_id` = :client_id AND `revoked` = 0 limit 1");
         $stmt->execute(array(
             'client_id' => $clientIdentifier,
         ));
+
+        if ($stmt->rowCount() == 0) {
+            return null;
+        }
+        
         $clientRow = $stmt->fetch();
         $client = new ClientEntity();
 

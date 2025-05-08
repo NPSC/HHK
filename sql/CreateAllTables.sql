@@ -2413,10 +2413,11 @@ CREATE TABLE if not exists `oauth_access_tokens` (
   `scopes` TEXT NULL,
   `revoked` TINYINT NULL,
   `expires_at` DATETIME NULL,
-  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  INDEX `indx_idName` (`idName` ASC));
+  INDEX `indx_idName` (`idName` ASC)
+);
 
 -- -----------------------------------------------------
 -- Table `web_sites`
@@ -2538,6 +2539,15 @@ ALTER TABLE `payment_info_check`
 CREATE INDEX IF NOT EXISTS `ix_Payment_Id` ON payment_invoice(Payment_Id);
 CREATE INDEX IF NOT EXISTS `ix_Invoice_Id` ON payment_invoice(Invoice_Id);
 
+
+ALTER TABLE `oauth_access_tokens` 
+    ADD INDEX IF NOT EXISTS `fk_client_id_idx` (`client_id` ASC);
+
+ALTER TABLE `oauth_access_tokens` 
+    ADD CONSTRAINT `fk_client_id`
+      FOREIGN KEY IF NOT EXISTS (`client_id`) REFERENCES `oauth_clients` (`client_id`)
+      ON DELETE CASCADE
+      ON UPDATE NO ACTION;
 
 ALTER TABLE `psg`
     ADD UNIQUE INDEX IF NOT EXISTS `idPatient_UNIQUE` (`idPatient` ASC);

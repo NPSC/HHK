@@ -236,6 +236,55 @@ where ru.idResource is null" . $whereGroupSql . ";";
         }
         return $span;
     }
+    
+    /**
+     * Get the number of vacancies for tonight, taking into account current visits, confirmed reservation and OOS rooms.
+     * @param \PDO $dbh
+     * @return int
+     */
+    public static function getTonightVacancies(\PDO $dbh): int {
+        $stmt = $dbh->prepare(
+            "SELECT
+            count(r.idResource) as `Vacancies`
+            FROM
+            resource r
+            WHERE
+            (r.Retired_At is null or date(r.Retired_At) >= date(now())) -- don't include retired rooms
+            AND r.idResource NOT IN (
+            -- get visits currently checked in as of today and planning to stay tonight
+            SELECT v.idResource
+                FROM visit v
+                WHERE
+                    v.Status not in ('" . VisitStatus::CheckedOut . "')
+                    AND date(v.Arrival_Date) <= date(now())
+                    AND date(v.Expected_Departure) > date(now())
+            )
+            AND r.idResource NOT IN (
+            -- find all OOS rooms
+            SELECT ru.idResource
+                FROM resource_use ru
+                WHERE
+                    date(ru.Start_Date) <= date(NOW())
+                    AND date(ru.End_Date)   >  date(NOW())
+
+            )
+            AND r.idResource NOT IN (
+
+            SELECT res.idResource
+                FROM reservation res
+                WHERE
+                    res.Status in ('a')
+                    AND date(res.Expected_Arrival)   <= date(NOW())
+                    AND date(res.Expected_Departure) >  date(NOW())
+
+            );"
+        );
+
+        $stmt->execute();
+        $vacancies = (int) $stmt->fetch(\PDO::FETCH_ASSOC)['Vacancies'];
+        return $vacancies;
+
+    }
 
     /**
      * Summary of dailyReport
