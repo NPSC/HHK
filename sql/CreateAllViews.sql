@@ -3166,3 +3166,79 @@ from
 
 CREATE OR REPLACE VIEW `vcurrent_operating_hours` AS
 select * from operating_schedules where End_Date is null group by Day having max(idDay);
+
+
+-- -----------------------------------------------------
+-- API Views
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- View `vapi_register_resv`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vapi_register_resv` AS
+    SELECT 
+        `r`.`idReservation` AS `ReservationId`,
+        `r`.`idResource` AS `RoomId`,
+        `res`.`Title` AS `RoomTitle`,
+        `r`.`Status` AS `ReservationStatusId`,
+        `gv`.`Title` AS `ReservationStatusTitle`,
+        `r`.`Expected_Arrival` AS `ExpectedArrival`,
+        `r`.`Expected_Departure` AS `ExpectedDeparture`,
+        `r`.`idGuest` AS `PrimaryGuestId`,
+        IFNULL(CASE
+                    WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
+                    ELSE CONCAT(`n`.`Name_Last`, ' ', `gs`.`Description`)
+                END,
+                '') AS `PrimaryGuestLast`,
+        `n`.`Name_First` AS `PrimaryGuestFirst`,
+        `n`.`Name_Full` AS `PrimaryGuestFullName`,
+        COUNT(`rg`.`idGuest`) AS `GuestCount` 
+    FROM
+        `reservation` `r`
+        JOIN `reservation_guest` `rg` on `rg`.`idReservation` = `r`.`idReservation`
+        LEFT JOIN `name` `n` ON `r`.`idGuest` = `n`.`idName`
+        LEFT JOIN `name_demog` `nd` ON `r`.`idGuest` = `nd`.`idName`
+        LEFT JOIN `gen_lookups` `gs` ON `gs`.`Table_Name` = 'Name_Suffix'
+            AND `gs`.`Code` = `n`.`Name_Suffix`
+        LEFT JOIN `lookups` `gv` ON `gv`.`Category` = 'ReservStatus'
+            AND `gv`.`Code` = `r`.`Status`
+		LEFT JOIN `resource` `res` ON `res`.`idResource` = `r`.`idResource`
+	GROUP BY `r`.`idReservation`;
+
+-- -----------------------------------------------------
+-- View `vapi_register_resv`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vapi_register` AS
+    SELECT 
+		CONCAT(`v`.`idVisit`, '-', `v`.`Span`) as `VisitSpanId`,
+        `v`.`idVisit` AS `VisitId`,
+        `v`.`Span` AS `SpanId`,
+        `v`.`idReservation` AS `ReservationId`,
+        `v`.`idResource` AS `RoomId`,
+        `res`.`Title` AS `RoomTitle`,
+        `v`.`Status` AS `VisitStatusId`,
+        `gv`.`Description` AS `VisitStatusTitle`,
+        `v`.`Span_Start` AS `SpanStart`,
+        `v`.`Span_End` AS `SpanEnd`,
+        `v`.`Expected_Departure` AS `ExpectedDeparture`,
+        `n`.`idName` AS `PrimaryGuestId`,
+        IFNULL(CASE
+                    WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
+                    ELSE CONCAT(`n`.`Name_Last`, ' ', `gs`.`Description`)
+                END,
+                '') AS `PrimaryGuestLast`,
+		`n`.`Name_First` AS `PrimaryGuestFirst`,
+        `n`.`Name_Full` AS `PrimaryGuestFullName`,
+        COUNT(`s`.`idName`) AS `GuestCount`
+    FROM
+        `visit` `v`
+        LEFT JOIN `name` `n` ON `v`.`idPrimaryGuest` = `n`.`idName`
+        LEFT JOIN `gen_lookups` `gs` ON `gs`.`Table_Name` = 'Name_Suffix'
+            AND `gs`.`Code` = `n`.`Name_Suffix`
+        LEFT JOIN `gen_lookups` `gv` ON `gv`.`Table_Name` = 'Visit_Status'
+            AND `gv`.`Code` = `v`.`Status`
+		LEFT JOIN `resource` `res` ON `v`.`idResource` = `res`.`idResource`
+        LEFT JOIN `stays` `s` on `v`.`idVisit` = `s`.`idVisit`
+        AND `v`.`Span` = `s`.`Visit_Span`
+        AND `v`.`Status` = `s`.`Status`
+    GROUP BY `v`.`idVisit`, `v`.`Span`;

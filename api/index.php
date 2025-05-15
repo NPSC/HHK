@@ -8,6 +8,8 @@ use HHK\sec\OAuth\Middleware\AllowedOriginMiddleware;
 use HHK\sec\OAuth\Middleware\LogMiddleware;
 use HHK\sec\SysConfig;
 use HHK\sec\OAuth\Middleware\ResourceServerMiddleware;
+use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\VisitStatus;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -107,6 +109,36 @@ require ("../house/homeIncludes.php");
                 $response->getBody()->write(json_encode($returnData));
                 return $response->withHeader('Content-Type', 'application/json');
             });
+
+            $group->get('/reservations', function (Request $request, Response $response) use ($dbh) {
+                $beginDate = filter_input(INPUT_GET, 'beginDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+                $beginDate = new \DateTime($beginDate);
+                $endDate = new \DateTime($endDate);
+
+                $returnData = [];
+                $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($dbh, "sys_config", "siteName"));
+                $returnData["generatedAt"] = (new \DateTime())->format("Y-m-d H:i:s");
+                $returnData["beginDate"] = $beginDate->format("Y-m-d");
+                $returnData["endDate"] = $endDate->format("Y-m-d");
+                
+                $query = "select * from vapi_register_resv where ReservationStatusId in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
+                . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $beginDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
+
+                $stmt = $dbh->query($query);
+                $returnData["reservations"] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
+            DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
+                $stmtv = $dbh->query($query);
+
+                $returnData["visits"] = $stmtv->fetchAll(PDO::FETCH_ASSOC);
+
+                $response->getBody()->write(json_encode($returnData));
+                return $response->withHeader('Content-Type', 'application/json');
+            });
+
         })->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()));
     })->add(new LogMiddleware($dbh)); // add logging middleware to log all requests and responses
 
