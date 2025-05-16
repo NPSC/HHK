@@ -110,27 +110,27 @@ require ("../house/homeIncludes.php");
                 return $response->withHeader('Content-Type', 'application/json');
             });
 
-            $group->get('/reservations', function (Request $request, Response $response) use ($dbh) {
-                $beginDate = filter_input(INPUT_GET, 'beginDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $group->get('/calendar', function (Request $request, Response $response) use ($dbh) {
+                $startDate = filter_input(INPUT_GET, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-                $beginDate = new \DateTime($beginDate);
+                $startDate = new \DateTime($startDate);
                 $endDate = new \DateTime($endDate);
 
                 $returnData = [];
                 $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($dbh, "sys_config", "siteName"));
                 $returnData["generatedAt"] = (new \DateTime())->format("Y-m-d H:i:s");
-                $returnData["beginDate"] = $beginDate->format("Y-m-d");
+                $returnData["startDate"] = $startDate->format("Y-m-d");
                 $returnData["endDate"] = $endDate->format("Y-m-d");
                 
                 $query = "select * from vapi_register_resv where ReservationStatusId in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-                . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $beginDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
+                . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $startDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
 
                 $stmt = $dbh->query($query);
                 $returnData["reservations"] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
-            DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
+            DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$startDate->format('Y-m-d') . "');";
                 $stmtv = $dbh->query($query);
 
                 $returnData["visits"] = $stmtv->fetchAll(PDO::FETCH_ASSOC);
