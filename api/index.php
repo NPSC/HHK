@@ -49,6 +49,7 @@ require ("../house/homeIncludes.php");
 
     // set up token endpoint
     $app->post('/oauth2/token', function (Request $request, Response $response) use ($oAuthServer) {
+        $response->withHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
         try{
             return $oAuthServer->getAuthServer()->respondToAccessTokenRequest($request, $response);
         }catch (OAuthServerException $e) {
@@ -127,13 +128,36 @@ require ("../house/homeIncludes.php");
                 . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $startDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
 
                 $stmt = $dbh->query($query);
-                $returnData["reservations"] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $resvRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($resvRows as &$row) {
+                    $row["PrimaryGuest"] = [
+                        "id"=>$row["PrimaryGuestId"],
+                        "firstName"=>$row["PrimaryGuestFirst"],
+                        "lastName"=>$row["PrimaryGuestLast"],
+                        "fullName"=>$row["PrimaryGuestFullName"],
+                        "email"=>$row["PrimaryGuestEmail"]
+                    ];
+                    unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
+                }
+
+                $returnData["reservations"] = $resvRows;
 
                 $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$startDate->format('Y-m-d') . "');";
                 $stmtv = $dbh->query($query);
+                $visitRows = $stmtv->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($visitRows as &$row) {
+                    $row["PrimaryGuest"] = [
+                        "id"=>$row["PrimaryGuestId"],
+                        "firstName"=>$row["PrimaryGuestFirst"],
+                        "lastName"=>$row["PrimaryGuestLast"],
+                        "fullName"=>$row["PrimaryGuestFullName"],
+                        "email"=>$row["PrimaryGuestEmail"]
+                    ];
+                    unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
+                }
 
-                $returnData["visits"] = $stmtv->fetchAll(PDO::FETCH_ASSOC);
+                $returnData["visits"] = $visitRows;
 
                 $response->getBody()->write(json_encode($returnData));
                 return $response->withHeader('Content-Type', 'application/json');

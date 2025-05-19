@@ -3164,6 +3164,10 @@ from
     left join w_idp i on (u.idIdp = i.idIdp));
 
 
+-- -----------------------------------------------------
+-- View `vcurrent_operating_hours`
+-- -----------------------------------------------------
+
 CREATE OR REPLACE VIEW `vcurrent_operating_hours` AS
 select * from operating_schedules where End_Date is null group by Day having max(idDay);
 
@@ -3192,6 +3196,7 @@ CREATE OR REPLACE VIEW `vapi_register_resv` AS
                 '') AS `PrimaryGuestLast`,
         `n`.`Name_First` AS `PrimaryGuestFirst`,
         `n`.`Name_Full` AS `PrimaryGuestFullName`,
+        `ne`.`Email` AS `PrimaryGuestEmail`,
         COUNT(`rg`.`idGuest`) AS `GuestCount` 
     FROM
         `reservation` `r`
@@ -3203,10 +3208,11 @@ CREATE OR REPLACE VIEW `vapi_register_resv` AS
         LEFT JOIN `lookups` `gv` ON `gv`.`Category` = 'ReservStatus'
             AND `gv`.`Code` = `r`.`Status`
 		LEFT JOIN `resource` `res` ON `res`.`idResource` = `r`.`idResource`
+        LEFT JOIN `name_email` `ne` on `n`.`idName` = `ne`.`idName` and `ne`.`Purpose` = `n`.`Preferred_Email`
 	GROUP BY `r`.`idReservation`;
 
 -- -----------------------------------------------------
--- View `vapi_register_resv`
+-- View `vapi_register`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vapi_register` AS
     SELECT 
@@ -3229,10 +3235,12 @@ CREATE OR REPLACE VIEW `vapi_register` AS
                 '') AS `PrimaryGuestLast`,
 		`n`.`Name_First` AS `PrimaryGuestFirst`,
         `n`.`Name_Full` AS `PrimaryGuestFullName`,
+        `ne`.`Email` AS `PrimaryGuestEmail`,
         COUNT(`s`.`idName`) AS `GuestCount`
     FROM
         `visit` `v`
         LEFT JOIN `name` `n` ON `v`.`idPrimaryGuest` = `n`.`idName`
+        LEFT JOIN `name_email` `ne` on `n`.`idName` = `ne`.`idName` and `ne`.`Purpose` = `n`.`Preferred_Email`
         LEFT JOIN `gen_lookups` `gs` ON `gs`.`Table_Name` = 'Name_Suffix'
             AND `gs`.`Code` = `n`.`Name_Suffix`
         LEFT JOIN `gen_lookups` `gv` ON `gv`.`Table_Name` = 'Visit_Status'
