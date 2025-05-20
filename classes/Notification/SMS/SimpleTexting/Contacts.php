@@ -57,7 +57,9 @@ Class Contacts extends AbstractContacts{
         return $filtered;
     }
 
-    public function syncContacts(string|null $status, array $listIds = []){
+    public function syncContacts(string|null $status, array $listIds = [], $filterVal = ""){
+        $uS = Session::getInstance();
+        $filterField = $uS->CalResourceGroupBy;
 
         $listIds = (count($listIds) == 0 ? [$this->settings->getSmsListName()] : $listIds);
         $phones = [];
@@ -66,13 +68,13 @@ Class Contacts extends AbstractContacts{
 
             switch ($status){
                 case "checked_in":
-                    $phones = $this->getCheckedInGuestPhones();
+                    $phones = $this->getCheckedInGuestPhones($filterField, $filterVal);
                     break;
                 case "confirmed_reservation":
-                    $phones = $this->getConfirmedReservationGuestPhones();
+                    $phones = $this->getConfirmedReservationGuestPhones($filterField, $filterVal);
                     break;
                 case "unconfirmed_reservation":
-                    $phones = $this->getUnConfirmedReservationGuestPhones();
+                    $phones = $this->getUnConfirmedReservationGuestPhones($filterField, $filterVal);
                     break;
                 case "waitlist":
                     $phones = $this->getWaitlistReservationGuestPhones();

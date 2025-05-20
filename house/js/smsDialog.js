@@ -30,6 +30,10 @@
             campaignTabMkup:
                 `<div id="campaignTabContent" class="hhk-overflow-x ui-tabs-panel ui-corner-all ui-widget-content">
                 <h4 class="msgTitle"></h4>
+                <div class="smsRoomCategory ui-widget-content ui-corner-all">
+                    <h5>Filter</h5>
+                    <select id="smsFilter"name="smsFilter"></select>
+                </div>
                 <div class="allRecipients ui-widget-content ui-corner-all">
                     <h5>To</h5>
                 </div>
@@ -456,6 +460,14 @@
                         $dialog.find(".msgTitle").text("Text " + settings.guestData.title);
                         $dialog.find(".newMsg textarea").attr("placeholder", "Message...").val("");
                         
+                        if(settings.guestData.filterOptions !== undefined && typeof settings.guestData.filterOptions == "object") {
+                            let filterSelector = $dialog.find("select#smsFilter");
+                            filterSelector.append("<option value=''>All Guests</option>");
+                            $.each(settings.guestData.filterOptions, function (i, filterOption){
+                                filterSelector.append("<option value='" + filterOption.Code + "'>" + filterOption.Description + "</option>");
+                            });
+                        }
+
                         var guestStr = ""
                         $.each(settings.guestData.contacts, function (i, contact) {
                             guestStr += contact.Name_First + " " + contact.Name_Last + " - " + contact.Phone_Num + "<br>";

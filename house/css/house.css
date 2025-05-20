@@ -1072,7 +1072,7 @@ input.ui-button.hhk-loading{
 	min-width: fit-content;
 }
 
-#viewMsgsDialog .allRecipients {
+#viewMsgsDialog .allRecipients, #viewMsgsDialog .smsRoomCategory {
 	display: flex;
 	padding: 0 0.5em;
 	margin: 0.5em 0 0 0.5em;
@@ -1080,7 +1080,7 @@ input.ui-button.hhk-loading{
 	flex-wrap: wrap;
 }
 
-#viewMsgsDialog .allRecipients *{
+#viewMsgsDialog .allRecipients *, #viewMsgsDialog .smsRoomCategory * {
 	margin: 0.5em 0.5em 0.5em 0;
 }
 
