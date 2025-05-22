@@ -68,7 +68,7 @@ Class Messages extends AbstractMessages {
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                 throw new SmsException("Error getting messages: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
-                throw new SmsException("Error getting messages: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                throw new SmsException("Error getting messages: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
     }

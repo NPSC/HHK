@@ -9,7 +9,6 @@ use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Vehicle;
-use HHK\House\Visit\Visit;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Incident\ListReports;
 use HHK\Incident\IncidentReport;
@@ -23,7 +22,6 @@ use HHK\Notification\SMS\SimpleTexting\Contact;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\Notification\SMS\SimpleTexting\Message;
 use HHK\Notification\SMS\SimpleTexting\Messages;
-use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\GLTableNames;
@@ -708,6 +706,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
     case 'sendCampaign':
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $filterVal = filter_input(INPUT_POST, 'filterVal', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $batchId = filter_input(INPUT_POST, 'batchId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $campaignListId = filter_input(INPUT_POST, 'campaignListId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -715,7 +714,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
         $campaign = new Campaign($dbh, $msgText, $msgText);
             if ($status) {
-                $events = $campaign->prepareAndSendCampaign($status);
+                $events = $campaign->prepareAndSendCampaign($status, $filterVal);
             }else if($batchId && $campaignListId && $campaignListName){
                 $events = $campaign->checkBatchAndSendCampaign($batchId, $campaignListId, $campaignListName);
             }

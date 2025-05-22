@@ -58,7 +58,7 @@ abstract class AbstractContacts
         ];
 
         if($filterVal != "") {
-            $query .= " and r." . $filterField . " = :filterVal";
+            $query .= " and rm." . $filterField . " = :filterVal";
             $params[":filterVal"] = $filterVal;
         }
 
@@ -82,7 +82,7 @@ abstract class AbstractContacts
         ];
 
         if($filterVal != "") {
-            $query .= " and r." . $filterField . " = :filterVal";
+            $query .= " and rm." . $filterField . " = :filterVal";
             $params[":filterVal"] = $filterVal;
         }
 

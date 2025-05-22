@@ -107,6 +107,7 @@ Class Settings {
                         $resp = $this->client->post("contact-lists", ['json' => ['name' => Settings::HHKListName]]);
                         return true;
                     }catch(ClientException $e){
+                        $respArr = json_decode($e->getResponse()->getBody(), true);
                         if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                             throw new SmsException("Unable to validate SMS settings: " . $respArr["status"] . ": " . $respArr["message"]);
                         } else {

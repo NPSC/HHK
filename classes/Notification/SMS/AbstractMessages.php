@@ -105,7 +105,7 @@ WHERE
      * @param string $status
      * @return array
      */
-    public function getCampaignGuestsData(string|null $status){
+    public function getCampaignGuestsData(string|null $status, string $filterVal = ""){
         $contacts = new Contacts($this->dbh);
         $uS = Session::getInstance();
         $filterField = "";
@@ -120,11 +120,11 @@ WHERE
 
         switch ($status){
             case "checked_in":
-                return ["status"=>$status, "title"=>"Current " . Labels::getString('MemberType', 'visitor', 'Guest') . "s", "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts"=>$contacts->getCheckedInGuestPhones($filterField)];
+                return ["status"=>$status, "title"=>"Current " . Labels::getString('MemberType', 'visitor', 'Guest') . "s", "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts"=>$contacts->getCheckedInGuestPhones($filterField, $filterVal)];
             case "confirmed_reservation":
-                return ["status" => $status, "title" => Labels::getString('register', 'reservationTab', 'Confirmed Reservations'), "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts" => $contacts->getConfirmedReservationGuestPhones($filterField)];
+                return ["status" => $status, "title" => Labels::getString('register', 'reservationTab', 'Confirmed Reservations'), "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts" => $contacts->getConfirmedReservationGuestPhones($filterField, $filterVal)];
             case "unconfirmed_reservation":
-                return ["status" => $status, "title" => Labels::getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'), "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts" => $contacts->getUnConfirmedReservationGuestPhones($filterField)];
+                return ["status" => $status, "title" => Labels::getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'), "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts" => $contacts->getUnConfirmedReservationGuestPhones($filterField, $filterVal)];
             case "waitlist":
                 return ["status" => $status, "title" => Labels::getString('register', 'waitlistTab', 'Wait List'), "contacts" => $contacts->getWaitlistReservationGuestPhones()];
             default:

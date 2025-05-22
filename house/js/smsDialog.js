@@ -30,8 +30,8 @@
             campaignTabMkup:
                 `<div id="campaignTabContent" class="hhk-overflow-x ui-tabs-panel ui-corner-all ui-widget-content">
                 <h4 class="msgTitle"></h4>
-                <div class="smsRoomCategory ui-widget-content ui-corner-all">
-                    <h5>Filter</h5>
+                <div class="smsFilterRow ui-widget-content ui-corner-all d-none">
+                    <h5>Filter: </h5>
                     <select id="smsFilter"name="smsFilter"></select>
                 </div>
                 <div class="allRecipients ui-widget-content ui-corner-all">
@@ -71,7 +71,8 @@
             autoOpen:false,
             dialogTitle: "Text Guests",
             serviceURL: 'ws_resv.php',
-            guestData: []
+            guestData: [],
+            guestCount: 0
             
         };
 
@@ -196,7 +197,13 @@
             var msgMkup = $(this).parent('.newMsg').find("textarea");
             var msgText = msgMkup.val();
             var infoMkup = $(this).parents('#campaignTabContent').find(".infoMsg");
+            var filterVal = $dialog.find("select#smsFilter").val();
             
+            if(settings.guestCount == 0){
+                flagAlertMessage("There are no guests to send message to. Change the filter option and try again.");
+                return false;
+            }
+
             if (msgText.length > 0) {
                 sendMsgBtn.attr('disabled', true).html('&nbsp;').addClass("loading");
                 msgMkup.attr("disabled", true);
@@ -207,6 +214,7 @@
                     data: {
                         cmd: "sendCampaign",
                         status: settings.guestData.status,
+                        filterVal: filterVal,
                         msgText: msgText
                     },
                     dataType: "json",
@@ -466,11 +474,32 @@
                             $.each(settings.guestData.filterOptions, function (i, filterOption){
                                 filterSelector.append("<option value='" + filterOption.Code + "'>" + filterOption.Description + "</option>");
                             });
+                            $dialog.find(".smsFilterRow").removeClass("d-none");
+
+                            filterSelector.on("change", function (){
+                                let guestStr = ""
+                                settings.guestCount = 0;
+                                $.each(settings.guestData.contacts, function (i, contact) {
+                                    if (filterSelector.val() == "" || contact[settings.guestData.filterBy.Code] == filterSelector.val()){
+                                        guestStr += contact.Name_First + " " + contact.Name_Last + " - " + contact.Phone_Num + "<br>";
+                                        settings.guestCount++;
+                                    }
+                                });
+
+                                $dialog.find(".allRecipients").empty().html("<h5>To:</h5><span class='hhk-tooltip' id='collapsedrecipients' title=''>" + settings.guestData.title + (filterSelector.val().length > 0 ? " - " + settings.guestData.filterOptions[filterSelector.val()].Description : "") + " (" + settings.guestCount + ")</span>");
+                        
+                                $dialog.find("#collapsedrecipients").tooltip({
+                                    content: guestStr
+                                });
+
+                            });
                         }
 
                         var guestStr = ""
+                        settings.guestCount = 0;
                         $.each(settings.guestData.contacts, function (i, contact) {
                             guestStr += contact.Name_First + " " + contact.Name_Last + " - " + contact.Phone_Num + "<br>";
+                            settings.guestCount++;
                         });
 
                         $dialog.find(".allRecipients").empty().html("<h5>To:</h5><span class='hhk-tooltip' id='collapsedrecipients' title=''>" + settings.guestData.title + " (" + settings.guestData.contacts.length + ")</span>");
