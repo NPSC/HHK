@@ -332,7 +332,7 @@ class HouseServices {
         } else {
 
             // Instantiate a payment manager payment container.
-            $paymentManger = new PaymentManager(PaymentChooser::readPostedPayment($dbh));
+            $paymentManger = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
 
 
             // Process a checked in guest
@@ -584,7 +584,7 @@ class HouseServices {
         }
 
         // Instantiate a payment manager payment container.
-        $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh));
+        $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
 
         // Is it a return payment?
         if (is_null($paymentManager->pmp) === FALSE && $paymentManager->pmp->getTotalPayment() < 0) {

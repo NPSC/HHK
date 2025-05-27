@@ -36,7 +36,7 @@ class PaymentChooser {
      * @param string $rtnIndex
      * @return PaymentManagerPayment|null
      */
-    public static function readPostedPayment(\PDO $dbh, $rtnIndex = ReturnIndex::ReturnIndex) {
+    public static function readPostedPayment(\PDO $dbh, $rawPost, $rtnIndex = ReturnIndex::ReturnIndex) {
 
         $args = [
             'txtInvId' => FILTER_SANITIZE_NUMBER_INT,
@@ -123,7 +123,7 @@ class PaymentChooser {
 
         ];
 
-        $inputs = filter_input_array(INPUT_POST, $args);
+        $inputs = filter_var_array($rawPost, $args);
 
         // Payment Type
         if (isset($inputs['PayTypeSel'])) {
@@ -164,7 +164,7 @@ class PaymentChooser {
         }
 
         // Manual Key check box
-        if (isset($_POST['btnvrKeyNumber'])) {
+        if (isset($rawPost['btnvrKeyNumber'])) {
             $pmp->setManualKeyEntry(TRUE);
         } else {
             $pmp->setManualKeyEntry(FALSE);
@@ -176,7 +176,7 @@ class PaymentChooser {
         }
 
         // Use new CC
-        if (isset($_POST['cbNewCard'])) {
+        if (isset($rawPost['cbNewCard'])) {
             $pmp->setNewCardOnFile(TRUE);
         } else {
             $pmp->setNewCardOnFile(FALSE);
@@ -251,17 +251,17 @@ class PaymentChooser {
         }
 
         //  Visit fees
-        if (isset($_POST['visitFeeCb']) && isset($inputs['visitFeeAmt'])) {
+        if (isset($rawPost['visitFeeCb']) && isset($inputs['visitFeeAmt'])) {
             $pmp->setVisitFeePayment(floatval($inputs['visitFeeAmt']));
         }
 
         // Room/Key deposit
-        if (isset($_POST["keyDepRx"]) && isset($inputs["keyDepAmt"])) {
+        if (isset($rawPost["keyDepRx"]) && isset($inputs["keyDepAmt"])) {
             $pmp->setKeyDepositPayment(floatval($inputs["keyDepAmt"]));
         }
 
         // Retained Amount payment
-        if (isset($_POST["cbHeld"]) && isset($inputs["heldAmount"])) {
+        if (isset($rawPost["cbHeld"]) && isset($inputs["heldAmount"])) {
             $pmp->setRetainedAmtPayment(floatval($inputs["heldAmount"]));
         }
 
@@ -291,7 +291,7 @@ class PaymentChooser {
         }
 
         // Reimburse Taxes.
-        if (isset($_POST["cbReimburseVAT"])) {
+        if (isset($rawPost["cbReimburseVAT"])) {
             $pmp->setReimburseTaxCb(TRUE);
         }   else {
             $pmp->setReimburseTaxCb(FALSE);
@@ -303,14 +303,14 @@ class PaymentChooser {
         }
 
         // House waive
-        if (isset($_POST['houseWaiveCb'])) {
+        if (isset($rawPost['houseWaiveCb'])) {
             $pmp->setFinalPaymentFlag(TRUE);
         } else {
             $pmp->setFinalPaymentFlag(FALSE);
         }
 
         // House Discount amount
-        if (isset($_POST['houseWaiveCb']) && isset($inputs['HsDiscAmount'])) {
+        if (isset($rawPost['houseWaiveCb']) && isset($inputs['HsDiscAmount'])) {
             $pmp->setHouseDiscPayment(floatval($inputs['HsDiscAmount']));
         }
 
@@ -336,7 +336,7 @@ class PaymentChooser {
 
                 $num = filter_var($key, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-                if (isset($_POST['unpaidCb'][$num])) {
+                if (isset($rawPost['unpaidCb'][$num])) {
                     $pmp->addInvoiceByNumber($dbh, $num, $amt);
                 }
             }
@@ -348,7 +348,7 @@ class PaymentChooser {
         }
 
         // Reimburse Taxes
-        if (isset($_POST['cbReimburseVAT'])) {
+        if (isset($rawPost['cbReimburseVAT'])) {
             $pmp->setReimburseTaxCb(TRUE);
         } else {
             $pmp->setReimburseTaxCb(FALSE);
@@ -553,7 +553,7 @@ class PaymentChooser {
 
         unset($excessPays[ExcessPay::Hold]);
         unset($excessPays[ExcessPay::Ignore]);
-        
+
         if($uS->UseRebook){
             $excessPays[ExcessPay::MoveToResv] = array(ExcessPay::MoveToResv, 'Next Reservation');
         }
