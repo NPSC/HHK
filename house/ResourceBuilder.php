@@ -1061,7 +1061,7 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
 
         $ustmt = $dbh->prepare($sql);
 
-        if (!empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain")) {
+        if (!empty($_FILES['formfile']['tmp_name']) && (in_array($mimetype, $allowedMimetypes) && in_array($filetype, $allowedFiletypes))) {
             $ustmt->bindParam(":doc", $doc, PDO::PARAM_LOB);
         }
         $ustmt->bindParam(":abstract", $abstract);
