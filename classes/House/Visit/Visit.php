@@ -24,7 +24,7 @@ use HHK\Tables\Fields\DB_Field;
  * Visit.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -49,7 +49,7 @@ class Visit {
      * Summary of visitRSs
      * @var array[VisitRS]
      */
-    protected $visitRSs = array();
+    protected $visitRSs = [];
     /**
      * Summary of newVisit
      * @var bool
@@ -59,7 +59,7 @@ class Visit {
      * Summary of stays
      * @var array
      */
-    public $stays = array();
+    public $stays = [];
     /**
      * Summary of overrideMaxOccupants
      * @var bool
@@ -80,7 +80,7 @@ class Visit {
      * Summary of __construct
      * @param \PDO $dbh
      * @param int $idReg
-     * @param int $idVisit
+     * @param int $searchIdVisit
      * @param \DateTime|null $arrivalDT
      * @param \DateTime|null $departureDT
      * @param \HHK\House\Resource\AbstractResource|null $resource
@@ -89,16 +89,16 @@ class Visit {
      * @param bool $forceNew
      * @throws \HHK\Exception\RuntimeException
      */
-    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
+    function __construct(\PDO $dbh, $idReg, $searchIdVisit, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
 
-        $this->visitRSs = $this->loadVisits($dbh, $idReg, $idVisit, $span, $forceNew);
+        $this->visitRSs = $this->loadVisits($dbh, $idReg, $searchIdVisit, $span, $forceNew);
 
-        if (!is_null($resource) && !$resource->isNewResource()) {
+        if ($resource !== null && ! $resource->isNewResource()) {
             $this->resource = $resource;
         }
 
 
-        // index the current visit span.
+        // Find the last visit span.
         $currentSpan = -1;
         foreach ($this->visitRSs as $v) {
             if ($v->Span->getStoredVal() > $currentSpan) {
@@ -115,7 +115,7 @@ class Visit {
             $nowDT->setTime(0, 0, 0);
 
             if ($arrivalDT > $departureDT) {
-                throw new RuntimeException('Silly human, the arrival date cannot be AFTER the departure date.  ');
+                throw new RuntimeException('The arrival date cannot be AFTER the departure date.  ');
             }
 
             $this->visitRS->Arrival_Date->setNewVal($arrivalDT->format('Y-m-d H:i:s'));
@@ -153,7 +153,7 @@ class Visit {
 
         $uS = Session::getInstance();
         $visitRS = new VisitRs();
-        $visits = array();
+        $visits = [];
 
         if ($idVisit > 0) {
             // Existing Visit
@@ -162,16 +162,16 @@ class Visit {
 
                 $visitRS->Span->setStoredVal($span);
                 $visitRS->idVisit->setStoredVal($idVisit);
-                $rows = EditRS::select($dbh, $visitRS, Array($visitRS->idVisit, $visitRS->Span));
+                $rows = EditRS::select($dbh, $visitRS, [$visitRS->idVisit, $visitRS->Span]);
 
             } else {
 
                 $visitRS->idVisit->setStoredVal($idVisit);
-                $rows = EditRS::select($dbh, $visitRS, Array($visitRS->idVisit));
+                $rows = EditRS::select($dbh, $visitRS, [$visitRS->idVisit]);
             }
 
             if (count($rows) == 0) {
-                throw new RuntimeException("Visit record not found.");
+                throw new RuntimeException("Existing Visit record not found. Visit ID: {$idVisit}." );
             } else {
                 // load each visit span
                 foreach ($rows as $r) {
@@ -180,16 +180,17 @@ class Visit {
                     $visits[$vRS->Span->getStoredVal()] = $vRS;
                 }
             }
+
         } else if ($idReg > 0 && $idVisit == 0) {
-            // New visit, existing Registration
+            // New visit
 
             $visitRS->idRegistration->setStoredVal($idReg);
             $visitRS->Status->setStoredVal(VisitStatus::CheckedIn);
-            $rows = EditRS::select($dbh, $visitRS, Array($visitRS->idRegistration, $visitRS->Status));
+            $rows = EditRS::select($dbh, $visitRS, [$visitRS->idRegistration, $visitRS->Status]);
 
             if (count($rows) > $uS->RoomsPerPatient) {
 
-                throw new RuntimeException('More than ' . $uS->RoomsPerPatient . ' checked-in visits for this registration.');
+                throw new RuntimeException("This visit is declined. It exceeds the maximum number of rooms per patient: {$uS->RoomsPerPatient}" );
 
             } else if (count($rows) == 0 || $forceNew) {
                 // new visit
@@ -255,7 +256,7 @@ class Visit {
     }
 
     /**
-     * Summary of addGuestStay
+     * Summary of addGuestStay  Adds a new stay for a guest.
      * @param int $idGuest
      * @param string $checkinDate
      * @param string $stayStartDate
@@ -303,6 +304,7 @@ class Visit {
             throw new UnexpectedValueException("Set the Expected Departure date.");
         }
 
+        // Update the visit expected departure date if the stay's expected departure is later than the visit's expected departure.
         $stayCoDt = new \DateTime($expectedCO);
         $visitCoDt = new \DateTime($this->getExpectedDeparture());
 
@@ -311,7 +313,7 @@ class Visit {
         }
 
 
-        // Create a new stay in memory
+        // Create a new stay record
         $stayRS = new StaysRS();
 
         $stayRS->idName->setNewVal($idGuest);
@@ -343,7 +345,7 @@ class Visit {
         }
 
         $this->visitRS->Status->setNewVal(VisitStatus::CheckedIn);
-        
+
         $this->visitRS->idResource->setNewVal($this->resource->getIdResource());
 
         $this->visitRS->Checked_In_By->setNewVal($username);
@@ -504,14 +506,14 @@ class Visit {
                         EditRS::update($dbh, $stayRS, [$stayRS->idStays]);
                         $logText = VisitLog::getUpdateText($stayRS);
                         VisitLog::logStay(
-                            $dbh, 
-                            $this->getIdVisit(), 
-                            $stayRS->Visit_Span->getStoredVal(), 
-                            $stayRS->idRoom->getStoredVal(), 
-                            $stayRS->idStays->getStoredVal(), 
-                            $stayRS->idName->getStoredVal(), 
-                            $this->visitRS->idRegistration->getStoredVal(), 
-                            $logText, "update", 
+                            $dbh,
+                            $this->getIdVisit(),
+                            $stayRS->Visit_Span->getStoredVal(),
+                            $stayRS->idRoom->getStoredVal(),
+                            $stayRS->idStays->getStoredVal(),
+                            $stayRS->idName->getStoredVal(),
+                            $this->visitRS->idRegistration->getStoredVal(),
+                            $logText, "update",
                             $uname);
 
                         EditRS::updateStoredVals($stayRS);
@@ -538,14 +540,14 @@ class Visit {
 
             // Change rooms on date given.
             $this->cutInNewSpan(
-                $dbh, 
-                $resc, 
-                VisitStatus::NewSpan, 
-                $rateCategory, 
-                $idRoomRate, 
-                $this->getPledgedRate(), 
-                $this->visitRS->Expected_Rate->getStoredVal(), 
-                $this->visitRS->idRateAdjust->getStoredVal(), 
+                $dbh,
+                $resc,
+                VisitStatus::NewSpan,
+                $rateCategory,
+                $idRoomRate,
+                $this->getPledgedRate(),
+                $this->visitRS->Expected_Rate->getStoredVal(),
+                $this->visitRS->idRateAdjust->getStoredVal(),
                 $chgDT->format('Y-m-d H:i:s'),
                 intval($this->visitRS->Span->getStoredVal(), 10) + 1,
                 0,

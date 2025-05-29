@@ -281,7 +281,7 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
     }
 
     /**
-     * Summary of isNewResource
+     * Summary of isNewResource  Checks if the resource is unsaved.
      * @return bool
      */
     public function isNewResource() {
@@ -317,7 +317,7 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
 
         } else {
 
-            $num = EditRS::update($dbh, $this->resourceRS, array($this->resourceRS->idResource));
+            $num = EditRS::update($dbh, $this->resourceRS, [$this->resourceRS->idResource]);
 
             if ($num > 0) {
                 $logText = RoomLog::getUpdateText($this->resourceRS);
