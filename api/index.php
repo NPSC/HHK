@@ -2,22 +2,16 @@
 
 declare(strict_types=1);
 
-use HHK\House\Report\DailyOccupancyReport;
-use HHK\House\Report\RoomReport;
-use HHK\sec\OAuth\Middleware\AllowedOriginMiddleware;
-use HHK\sec\OAuth\Middleware\LogMiddleware;
-use HHK\sec\SysConfig;
-use HHK\sec\OAuth\Middleware\ResourceServerMiddleware;
-use HHK\SysConst\ReservationStatus;
-use HHK\SysConst\VisitStatus;
+use HHK\sec\Session;
+use HHK\sec\Login;
+use HHK\API\OAuth\OAuthServer;
+use HHK\API\Controllers\{CalendarController, ReportController, WidgetController};
+use HHK\API\Middleware\{AccessTokenHasScopeMiddleware, AllowedOriginMiddleware, LogMiddleware, ResourceServerMiddleware};
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
-use HHK\sec\OAuth\OAuthServer;
-use League\OAuth2\Server\Exception\OAuthServerException;
-use HHK\sec\Session;
-use HHK\sec\Login;
 use Slim\Routing\RouteCollectorProxy;
+use League\OAuth2\Server\Exception\OAuthServerException;
 
 /**
  * index.php
@@ -32,139 +26,71 @@ use Slim\Routing\RouteCollectorProxy;
 
 require ("../house/homeIncludes.php");
 
-    $login = new Login();
-    $login->initHhkSession(CONF_PATH, ciCFG_FILE);
-    $uS = Session::getInstance();
-    $dbh = initPDO(TRUE);
-    $oAuthServer = new OAuthServer($dbh);
-
-    //create Slim App instance
-    $app = AppFactory::create();
-    $app->setBasePath('/api'); // Set the base path for the API
-
-    //add middleware
-    $app->addRoutingMiddleware();
-    $app->addErrorMiddleware(false, false, false);
-
-
-    // set up token endpoint
-    $app->post('/oauth2/token', function (Request $request, Response $response) use ($oAuthServer) {
-        $response->withHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
-        try{
-            return $oAuthServer->getAuthServer()->respondToAccessTokenRequest($request, $response);
-        }catch (OAuthServerException $e) {
-            return $e->generateHttpResponse($response);
-        }
-    });
-
-
-    // actual protected API routes
-    $app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer) {
-
-        //public widgets protected by CORS
-        $group->group('/widget', function (RouteCollectorProxy $group) use ($dbh) {
-            
-            //vacancy widget 
-            // Endpoint: /api/v1/widget/vacancy
-            $group->get('/vacancy', function (Request $request, Response $response) use ($dbh) {
-                $vacancies = RoomReport::getTonightVacancies($dbh);
+$login = new Login();
+$login->initHhkSession(CONF_PATH, ciCFG_FILE);
+$uS = Session::getInstance();
+$dbh = initPDO(TRUE);
+$oAuthServer = new OAuthServer($dbh);
     
-                $data = ["status"=>"success", "hasVacancy" => $vacancies > 0, "vacancyCount" => $vacancies];
-                $response->getBody()->write(json_encode($data));
-                return $response->withHeader('Content-Type', 'application/json');
+//create Slim App instance
+$app = AppFactory::create();
+$app->setBasePath('/api'); // Set the base path for the API
+
+//add middleware
+$app->addRoutingMiddleware();
+$app->addErrorMiddleware(true, false, false);
+
+// set up token endpoint
+// Endpoint: /api/oauth2/token
+$app->post('/oauth2/token', function (Request $request, Response $response) use ($oAuthServer) {
+    $response->withHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+    try{
+        return $oAuthServer->getAuthServer()->respondToAccessTokenRequest($request, $response);
+    }catch (OAuthServerException $e) {
+        return $e->generateHttpResponse($response);
+    }
+})->add(new LogMiddleware($dbh));
+
+
+// actual protected API routes
+$app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer) {
+
+    //public widgets protected by CORS
+    $group->group('/widget', function (RouteCollectorProxy $group) use ($dbh) {
+            
+        //vacancy widget 
+        // Endpoint: /api/v1/widget/vacancy
+        $group->get('/vacancy', function (Request $request, Response $response, array $args) use ($dbh) {
+            return (new WidgetController($dbh))->vacancy($request, $response, $args);
+        });
+
+    })->add(new LogMiddleware($dbh))->add(new AllowedOriginMiddleware($dbh));
+
+    //OAuth protected routes
+    $group->group("", function (RouteCollectorProxy $group) use ($dbh) {
+
+        $group->group('/reports', function (RouteCollectorProxy $group) use ($dbh) {
+
+            // Occupancy Today
+            // Endpoint: /api/v1/reports/occupancy/today
+            $group->get('/occupancy/today', function (Request $request, Response $response, array $args) use ($dbh) {
+                return (new ReportController($dbh))->occupancyToday($request, $response, $args);
             });
 
-        })->add(new AllowedOriginMiddleware($dbh));
-
-        //OAuth protected routes
-        $group->group("", function (RouteCollectorProxy $group) use ($dbh) {
-
-            $group->get('/reports/occupancy/today', function (Request $request, Response $response) use ($dbh) {
-                $dailyOccupancy = new DailyOccupancyReport($dbh);
-                $rawData = $dailyOccupancy->getMainSummaryData();
-
-                $returnData = [];
-                $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($dbh, "sys_config", "siteName"));
-                $returnData["date"] = (new \DateTime())->format("Y-m-d");
-                $returnData["occupancy"] = $rawData[0];
-                $returnData["generated"] = (new \DateTime())->format("Y-m-d H:i:s");
-
-                $response->getBody()->write(json_encode($returnData));
-                return $response->withHeader('Content-Type', 'application/json');
+            // All time occupancy
+            // Endpoint: /api/v1/reports/occupancy/alltime
+            $group->get('/occupancy/alltime', function (Request $request, Response $response, array $args) use ($dbh) {
+                return (new ReportController($dbh))->occupancyAllTime($request, $response, $args);
             });
+        })->add(new AccessTokenHasScopeMiddleware("reports:read"));
 
-            $group->get('/reports/occupancy/alltime', function (Request $request, Response $response) use ($dbh) {
+        // Calendar
+        // Endpoint: /api/v1/calendar
+        $group->get('/calendar', function(Request $request, Response $response, array $args) use ($dbh){
+            return (new CalendarController($dbh))->index($request, $response, $args);
+        })->add(new AccessTokenHasScopeMiddleware("calendar:read"));
 
-                $uS = Session::getInstance();
-                $stats = [];
-                $stats["nightsOfRest"] = RoomReport::getGlobalNightsCounter($dbh);
-                $stats["nightsOfRest"] = $uS->gnc;
-                $stats["totalStays"] = RoomReport::getGlobalStaysCounter($dbh);
-                $stats["totalOccupancyPercentage"] = RoomReport::getGlobalRoomOccupancy($dbh);
+    })->add(new LogMiddleware($dbh))->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()));
+});
 
-                $returnData = [];
-                $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($dbh, "sys_config", "siteName"));
-                $returnData["generated"] = (new \DateTime())->format("Y-m-d H:i:s");
-                $returnData["occupancy"] = $stats;
-
-                $response->getBody()->write(json_encode($returnData));
-                return $response->withHeader('Content-Type', 'application/json');
-            });
-
-            $group->get('/calendar', function (Request $request, Response $response) use ($dbh) {
-                $startDate = filter_input(INPUT_GET, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-                $startDate = new \DateTime($startDate);
-                $endDate = new \DateTime($endDate);
-
-                $returnData = [];
-                $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($dbh, "sys_config", "siteName"));
-                $returnData["generatedAt"] = (new \DateTime())->format("Y-m-d H:i:s");
-                $returnData["startDate"] = $startDate->format("Y-m-d");
-                $returnData["endDate"] = $endDate->format("Y-m-d");
-                
-                $query = "select * from vapi_register_resv where ReservationStatusId in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-                . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $startDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
-
-                $stmt = $dbh->query($query);
-                $resvRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($resvRows as &$row) {
-                    $row["PrimaryGuest"] = [
-                        "id"=>$row["PrimaryGuestId"],
-                        "firstName"=>$row["PrimaryGuestFirst"],
-                        "lastName"=>$row["PrimaryGuestLast"],
-                        "fullName"=>$row["PrimaryGuestFullName"],
-                        "email"=>$row["PrimaryGuestEmail"]
-                    ];
-                    unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
-                }
-
-                $returnData["reservations"] = $resvRows;
-
-                $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
-            DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$startDate->format('Y-m-d') . "');";
-                $stmtv = $dbh->query($query);
-                $visitRows = $stmtv->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($visitRows as &$row) {
-                    $row["PrimaryGuest"] = [
-                        "id"=>$row["PrimaryGuestId"],
-                        "firstName"=>$row["PrimaryGuestFirst"],
-                        "lastName"=>$row["PrimaryGuestLast"],
-                        "fullName"=>$row["PrimaryGuestFullName"],
-                        "email"=>$row["PrimaryGuestEmail"]
-                    ];
-                    unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
-                }
-
-                $returnData["visits"] = $visitRows;
-
-                $response->getBody()->write(json_encode($returnData));
-                return $response->withHeader('Content-Type', 'application/json');
-            });
-
-        })->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()));
-    })->add(new LogMiddleware($dbh)); // add logging middleware to log all requests and responses
-
-    $app->run();
-
+$app->run();

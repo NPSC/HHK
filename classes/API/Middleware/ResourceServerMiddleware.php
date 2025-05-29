@@ -1,5 +1,5 @@
 <?php
-namespace HHK\sec\OAuth\Middleware;
+namespace HHK\API\Middleware;
 
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\ResourceServer;
@@ -8,6 +8,9 @@ use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * Middleware for validating access tokens.
+ */
 class ResourceServerMiddleware
 {
 

@@ -3163,6 +3163,19 @@ from
     left join sys_config sc ON (sc.Key = 'passResetDays')
     left join w_idp i on (u.idIdp = i.idIdp));
 
+-- -----------------------------------------------------
+-- View `v_oauth_clients`
+-- -----------------------------------------------------
+
+CREATE OR REPLACE VIEW `v_oauth_clients` AS
+select c.*, group_concat(s.Code SEPARATOR ", ") as `scopes`, ifnull(u.User_Name, n.Name_Full) as `issuedTo`, l.Timestamp as `LastUsed` from oauth_clients c
+left join oauth_client_scopes cs on c.client_id = cs.oauth_client
+left join gen_lookups s on cs.oauth_scope = s.Code and s.Table_Name = "Oauth_Scopes"
+left join name n on c.idName = n.idName
+left join w_users u on n.idName = u.idName
+left join api_access_log l on l.idLog = (select max(idLog) from api_access_log where oauth_client_id = c.client_id)
+group by c.client_id;
+
 
 -- -----------------------------------------------------
 -- View `vcurrent_operating_hours`

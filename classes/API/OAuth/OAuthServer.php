@@ -1,14 +1,12 @@
 <?php
-namespace HHK\sec\OAuth;
+namespace HHK\API\OAuth;
 
 use HHK\sec\SysConfig;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\Grant\ClientCredentialsGrant;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
-use HHK\sec\OAuth\Repository\ClientRepository;
-use HHK\sec\OAuth\Repository\ScopeRepository;
-use HHK\sec\OAuth\Repository\AccessTokenRepository;
+use HHK\API\OAuth\Repository\ClientRepository;
+use HHK\API\OAuth\Repository\ScopeRepository;
+use HHK\API\OAuth\Repository\AccessTokenRepository;
 use League\OAuth2\Server\ResourceServer;
 
 

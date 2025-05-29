@@ -210,7 +210,8 @@ $logSelRows = [
     ['ss','Sys Config Log'],
     ['rr','Rooms Log'],
     ['ll','Lookups Log'],
-    ['nl', 'Notification Log']
+    ['nl', 'Notification Log'],
+    ['api', 'HHK API Access Log']
 ];
 
 try {

@@ -1,11 +1,14 @@
 <?php
-namespace HHK\sec\OAuth\Middleware;
+namespace HHK\API\Middleware;
 
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 
+/**
+ * Restrict an API endpoint to specific origins.
+ */
 class AllowedOriginMiddleware
 {
     public function __construct(private \PDO $dbh, private array $allowedOrigins = [])
@@ -18,10 +21,10 @@ class AllowedOriginMiddleware
 
         $origin = $request->getHeaderLine('origin');
 
-        if(!in_array($origin, $this->allowedOrigins) && !in_array($origin, $this->getEndpointAllowedOrigins($endpoint))) {
+        if(!in_array($origin, $this->allowedOrigins)) {
             $response = new Response();
-            $response->getBody()->write(json_encode(['error'=>'Unauthorized']));
-            return $response->withStatus(403);
+            $response->getBody()->write(json_encode(['error'=>'Unauthorized', 'description'=>"Origin not allowed."]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
         }
 
         $response = $handler->handle($request);

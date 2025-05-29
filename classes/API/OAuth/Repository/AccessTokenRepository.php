@@ -1,7 +1,7 @@
 <?php
-namespace HHK\sec\OAuth\Repository;
+namespace HHK\API\OAuth\Repository;
 
-use HHK\sec\OAuth\Entity\AccessTokenEntity;
+use HHK\API\OAuth\Entity\AccessTokenEntity;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
@@ -18,8 +18,12 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
 
         $accessToken->setClient($clientEntity);
 
+        $authorizedScopes = ClientRepository::getAuthorizedScopes($clientEntity->getIdentifier());
+
         foreach ($scopes as $scope) {
-            $accessToken->addScope($scope);
+            if(in_array($scope->getIdentifier(), $authorizedScopes)){ // if the client is authorized for the requested scope
+                $accessToken->addScope($scope);
+            }
         }
 
         if ($userIdentifier !== null) {

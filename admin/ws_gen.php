@@ -186,6 +186,39 @@ try {
     
             break;
 
+        case "showAPIAccessLog":
+
+            $columns = array(
+                array( 'db' => 'requestPath',  'dt' => 'requestPath' ),
+                array( 'db' => 'responseCode',   'dt' => 'responseCode' ),
+                array( 'db' => 'request', 'dt' => 'request'),
+                array( 'db' => 'response', 'dt' => 'response'),
+                array( 'db' => 'ip_address', 'dt' => 'ip_address'),
+                array( 'db' => 'oauth_client_id', 'dt' => 'oauth_client_id'),
+                array( 'db' => 'oauth_user_id', 'dt' => 'oauth_user_id'),
+                array( 'db' => 'oauth_access_token_id', 'dt' => 'oauth_access_token_id'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
+                );
+            $events = SSP::complex ( $_GET, $dbh, "api_access_log", "idLog", $columns, null, null );
+    
+            break;
+
+        case "showOauthClients":
+
+            $columns = array(
+                array( 'db' => 'client_id',  'dt' => 'client_id' ),
+                array( 'db' => 'name',   'dt' => 'name' ),
+                array( 'db' => 'revoked', 'dt' => 'revoked'),
+                array( 'db' => 'scopes', 'dt' => 'scopes'),
+                array( 'db' => 'issuedTo', 'dt' => 'issuedTo'),
+                array( 'db' => 'LastUsed', 'dt' => 'LastUsed'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
+                );
+
+            $events = SSP::complex ( $_GET, $dbh, "v_oauth_clients", "client_id", $columns, null, null );
+    
+            break;
+
         case "showCron":
 
             $columns = array(

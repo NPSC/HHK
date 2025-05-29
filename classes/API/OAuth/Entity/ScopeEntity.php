@@ -1,6 +1,6 @@
 <?php
 
-namespace HHK\sec\OAuth\Entity;
+namespace HHK\API\OAuth\Entity;
 
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Entities\Traits\EntityTrait;

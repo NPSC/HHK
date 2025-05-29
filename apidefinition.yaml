@@ -1,0 +1,315 @@
+openapi: 3.0.4
+info:
+  title: Hospitality Housekeeper API
+  description: |-
+    This API provides access to Hospitality Housekeeper data
+  version: 1.0.0
+servers:
+  - url: https://hhk.wireland.local/api/v1
+tags:
+  - name: Calendar
+    description: Access calendar events
+  - name: Reports
+    description: Access to Reports
+paths:
+  /calendar:
+    get:
+      tags:
+        - Calendar
+      summary: Get list of Reservations and Visits
+      description: Get a list of all upcoming reservations and current visits within a given time frame
+      operationId: getCalendar
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date (yyyy-mm-dd) to filter by
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: End date (yyyy-mm-dd) to filter by
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calendar'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oauth2:
+          - read:calendar
+  /reports/occupancy/alltime:
+    get:
+      tags:
+        - Reports
+      summary: Get a summary of occupancy for all time
+      description: Get House Occupancy data for all time
+      operationId: occupancyAllTime
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  houseName:
+                    type: string
+                    example: "API Hospitality House"
+                  generated:
+                    type: string
+                    format: date-time
+                  occupancy:
+                    type: object
+                    properties:
+                      nightsOfRest:
+                        type: integer
+                        format: int64
+                      totalStays:
+                        type: integer
+                        format: int64
+                      totalOccupancyPercentage:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+                        multipleOf: 0.01
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oauth2:
+            - read:reports
+  /reports/occupancy/today:
+    get:
+      tags:
+        - Reports
+      summary: Get a summary of occupancy for today
+      description: Get House Occupancy data for today
+      operationId: occupancyToday
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  houseName:
+                    type: string
+                    example: "API Hospitality House"
+                  date:
+                    type: string
+                    format: date
+                  occupancy:
+                    type: object
+                    properties:
+                      totalRooms:
+                        type: integer
+                        format: int64
+                      totalRemoteRooms:
+                        type: integer
+                        format: int64
+                      unavailableRooms:
+                        type: integer
+                        format: int64
+                      vacantRooms:
+                        type: integer
+                        format: int64
+                      occupiedRooms:
+                        type: integer
+                        format: int64
+                      anticipatedArrivals:
+                        type: integer
+                        format: int64
+                      anticipatedDepartures:
+                        type: integer
+                        format: int64
+                      availableRoomOccupancyPercentage:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+                        multipleOf: 0.01
+                      totalRoomOccupancyPercentage:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+                        multipleOf: 0.01
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oauth2:
+            - read:reports
+components:
+  schemas:
+    Calendar:
+      type: object
+      properties:
+        houseName:
+          type: string
+          example: "API Hospitality House"
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        reservations:
+          type: array
+          items:
+              $ref: "#/components/schemas/Reservation"
+        visits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Visit"
+          
+    Reservation:
+      type: object
+      properties:
+        ReservationId:
+          type: integer
+          format: int64
+          example: 1594
+        RoomId:
+          type: integer
+          format: int64
+          example: 58
+        RoomTitle:
+          type: string
+          example: Room 13
+        ReservationStatusId:
+          type: string
+          enum:
+            - a
+            - uc
+            - d
+            - td
+            - ns
+        ReservationStatusTitle:
+          type: string
+          example: Confirmed
+        ExpectedArrival:
+          type: string
+          format: date-time
+        ExpectedDeparture:
+          type: string
+          format: date-time
+        PrimaryGuest:
+          $ref: "#/components/schemas/Guest"
+        GuestCount:
+          type: integer
+          format: int64
+          example: 1
+    Visit:
+      type: object
+      properties:
+        VisitSpanId:
+          type: string
+          example: 495-0
+        VisitId:
+          type: integer
+          format: int64
+          example: 495
+        SpanId:
+          type: integer
+          format: int64
+          example: 0
+        RoomId:
+          type: integer
+          format: int64
+          example: 49
+        RoomTitle:
+          type: string
+          example: Unit 106
+        VisitStatusId:
+          type: string
+          enum:
+            - a
+            - co
+        VisitStatusTitle:
+          type: string
+          example: Checked In
+        SpanStart:
+          type: string
+          format: date-time
+        SpanEnd:
+          type: string
+          format: date-time
+          nullable: true
+        ExpectedDeparture:
+          type: string
+          format: date-time
+        PrimaryGuest:
+          $ref: "#/components/schemas/Guest"
+        GuestCount:
+          type: integer
+          format: int64
+          example: 1
+    Guest:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Smith
+        fullName:
+          type: string
+          example: Mr. John Smith
+        email:
+          type: string
+          example: john@email.com
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+      xml:
+        name: '##default'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://hhk.wireland.local/api/oauth2/token
+          scopes:
+            "calendar:read": read reservations and visits from calendar
+            "reports:read": read reports

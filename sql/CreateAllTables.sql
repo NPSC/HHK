@@ -42,6 +42,25 @@ CREATE TABLE if not exists `activity` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
+-- -----------------------------------------------------
+-- Table `api_access_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `api_access_log` (
+  `idLog` int(11) NOT NULL AUTO_INCREMENT,
+  `requestPath` varchar(255) NOT NULL,
+  `responseCode` varchar(3) NOT NULL DEFAULT '',
+  `request` JSON NOT NULL DEFAULT '{}',
+  `response` JSON NOT NULL DEFAULT '{}',
+  `oauth_client_id` varchar(45) NOT NULL DEFAULT '',
+  `oauth_user_id` varchar(45) NOT NULL DEFAULT '',
+  `oauth_access_token_id` varchar(100) NOT NULL DEFAULT '',
+  `ip_address` varchar(45) NOT NULL DEFAULT '',
+  `Timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idLog`),
+  INDEX `idx_oauth_client_id` (`oauth_client_id`),
+  INDEX `idx_oauth_access_token_id` (`oauth_access_token_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1;
+
 
 -- -----------------------------------------------------
 -- Table `attribute`
@@ -2401,6 +2420,21 @@ CREATE TABLE if not exists `oauth_clients` (
   PRIMARY KEY (`client_id`),
   INDEX `indx_idName` (`idName` ASC));
 
+-- -----------------------------------------------------
+-- Table `oauth_client_scopes`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `oauth_client_scopes` (
+  `oauth_client` INT NOT NULL,
+  `oauth_scope` VARCHAR(100) NOT NULL,
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`oauth_client`, `oauth_scope`),
+  CONSTRAINT `fk_oauth_client`
+    FOREIGN KEY (`oauth_client`)
+    REFERENCES `oauth_clients` (`client_id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION);
+
 
 -- -----------------------------------------------------
 -- Table `oauth_access_tokens`
@@ -2416,7 +2450,12 @@ CREATE TABLE if not exists `oauth_access_tokens` (
   `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  INDEX `indx_idName` (`idName` ASC)
+  INDEX `indx_idName` (`idName` ASC),
+  CONSTRAINT `fk_client_id`
+    FOREIGN KEY (`client_id`)
+    REFERENCES `oauth_clients` (`client_id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
 );
 
 -- -----------------------------------------------------
