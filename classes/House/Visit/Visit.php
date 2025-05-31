@@ -107,6 +107,7 @@ class Visit {
             }
         }
 
+        // If no visit found, create and save a new one.
         if ($this->visitRS->idVisit->getStoredVal() === 0) {
 
             // New Visit
@@ -121,7 +122,6 @@ class Visit {
             $this->visitRS->Arrival_Date->setNewVal($arrivalDT->format('Y-m-d H:i:s'));
             $this->visitRS->Span_Start->setNewVal($arrivalDT->format('Y-m-d H:i:s'));
             $this->visitRS->Status->setNewVal(VisitStatus::Pending);
-
             $this->visitRS->Expected_Departure->setNewVal($departureDT->format('Y-m-d 10:00:00'));
 
             $idVisit = EditRS::insert($dbh, $this->visitRS);
@@ -142,12 +142,14 @@ class Visit {
     }
 
     /**
-     *
+     * Summary of loadVisits
      * @param \PDO $dbh
-     * @param int $idReg
-     * @param int $idVisit
-     * @return array
-     * @throws RuntimeException
+     * @param mixed $idReg
+     * @param mixed $idVisit
+     * @param mixed $span
+     * @param mixed $forceNew
+     * @throws \HHK\Exception\RuntimeException
+     * @return VisitRS[]
      */
     protected function loadVisits(\PDO $dbh, $idReg, $idVisit, $span = -1, $forceNew = FALSE) {
 
@@ -159,61 +161,55 @@ class Visit {
             // Existing Visit
 
             if ($span >= 0) {
-
+                // Load a specific visit span
                 $visitRS->Span->setStoredVal($span);
                 $visitRS->idVisit->setStoredVal($idVisit);
                 $rows = EditRS::select($dbh, $visitRS, [$visitRS->idVisit, $visitRS->Span]);
 
             } else {
-
+                // Load all visit spans for this visit
                 $visitRS->idVisit->setStoredVal($idVisit);
                 $rows = EditRS::select($dbh, $visitRS, [$visitRS->idVisit]);
             }
 
-            if (count($rows) == 0) {
-                throw new RuntimeException("Existing Visit record not found. Visit ID: {$idVisit}." );
-            } else {
-                // load each visit span
+            if (count($rows) > 0) {
+                // collect each visit span
                 foreach ($rows as $r) {
                     $vRS = new VisitRs();
                     EditRS::loadRow($r, $vRS);
                     $visits[$vRS->Span->getStoredVal()] = $vRS;
                 }
+            } else {
+                throw new RuntimeException("Existing Visit record not found. Visit ID: {$idVisit}.");
             }
 
         } else if ($idReg > 0 && $idVisit == 0) {
             // New visit
 
+            // Check if there are existing active visits for this registration.
             $visitRS->idRegistration->setStoredVal($idReg);
             $visitRS->Status->setStoredVal(VisitStatus::CheckedIn);
-            $rows = EditRS::select($dbh, $visitRS, [$visitRS->idRegistration, $visitRS->Status]);
+            $activeVisitRows = EditRS::select($dbh, $visitRS, [$visitRS->idRegistration, $visitRS->Status]);
 
-            if (count($rows) > $uS->RoomsPerPatient) {
+            if (count($activeVisitRows) > $uS->RoomsPerPatient) {
 
                 throw new RuntimeException("This visit is declined. It exceeds the maximum number of rooms per patient: {$uS->RoomsPerPatient}" );
 
-            } else if (count($rows) == 0 || $forceNew) {
-                // new visit
+            } else if (count($activeVisitRows) == 0 || $forceNew) {
+                // make a new visit
                 $visitRS = new VisitRs();
                 $visitRS->idRegistration->setNewVal($idReg);
                 $visitRS->Span->setNewVal(0);
                 $visits[0] = $visitRS;
             } else {
-                // existing active visit
+                // use an existing active visit
                 $vRS = new VisitRs();
-                EditRS::loadRow($rows[0], $vRS);
+                EditRS::loadRow($activeVisitRows[0], $vRS);
                 $visits[$vRS->Span->getStoredVal()] = $vRS;
             }
 
-        } else if ($idReg > 0 && $idVisit < 0) {
-            // add another visit to this registration
-            $visitRS = new VisitRs();
-            $visitRS->idRegistration->setNewVal($idReg);
-            $visitRS->Span->setNewVal(0);
-            $visits[0] = $visitRS;
-
         } else {
-            throw new RuntimeException("Visit not instantiated.");
+            throw new RuntimeException("Visit not instantiated. Visit ID: {$idVisit}, Registration ID: {$idReg}.");
         }
 
         return $visits;

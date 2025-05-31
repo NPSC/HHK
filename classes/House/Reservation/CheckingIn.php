@@ -248,7 +248,8 @@ FROM reservation r
 
                 $dataArray['pay'] = HTMLContainer::generateMarkup('div',
                     PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $resv->getIdReservation(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), FALSE, $reg->getPreferredTokenId())
-                    , array('style'=>'flex-basis: 100%'));
+                    ,
+                    ['style' => 'flex-basis: 100%']);
 
             }
 
@@ -278,24 +279,27 @@ FROM reservation r
 
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
-            HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
-            , array('id'=>'hhk-noteViewer', 'style'=>'width: 100%; font-size: 0.9em;', 'class'=>'hhk-panel'));
+            HTMLContainer::generateMarkup('legend', 'Visit Notes', ['style' => 'font-weight:bold;'])
+            ,
+            ['id' => 'hhk-noteViewer', 'style' => 'width: 100%; font-size: 0.9em;', 'class' => 'hhk-panel']);
 
         if ($uS->UseDocumentUpload) {
             // Reservation Docs
             $dataArray['docViewer'] = HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', "Documents", array('style'=>'font-weight:bold;'))
-                , array('id'=>'vDocs', 'style'=>'width: 100%; font-size:0.9em;', 'class'=>'hhk-panel'));
+                HTMLContainer::generateMarkup('legend', "Documents", ['style' => 'font-weight:bold;'])
+                ,
+                ['id' => 'vDocs', 'style' => 'width: 100%; font-size:0.9em;', 'class' => 'hhk-panel']);
         }
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('span', 'Checking In')
-        	.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'margin-left:1em; font-size:.8em;'))
-            , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
+        	.HTMLContainer::generateMarkup('span', $lastVisitMU, ['style' => 'margin-left:1em; font-size:.8em;'])
+            ,
+            ['style' => 'float:left;', 'class' => 'hhk-checkinHdr']);
 
 
-        return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
+        return ['hdr' => $hdr, 'rdiv' => $dataArray];
     }
 
     /**
@@ -370,8 +374,8 @@ FROM reservation r
             return;
         }
 
-        // create visit ( -1 forces a new visit)
-        $visit = new Visit($dbh, $resv->getIdRegistration(), -1, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $resc, $uS->username);
+        // create visit, forcing a new visit.
+        $visit = new Visit($dbh, $resv->getIdRegistration(), 0, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $resc, $uS->username, 0, true);
 
         // Add guests
         foreach ($this->getStayingMembers() as $m) {
@@ -580,7 +584,7 @@ FROM reservation r
         $pmp = PaymentChooser::readPostedPayment($dbh, $this->reserveData->getRawPost());
 
         // Check for key deposit
-        if ($uS->KeyDeposit && is_null($pmp) === FALSE) {
+        if ($uS->KeyDeposit && $pmp !== null) {
 
             $reg = new Registration($dbh, 0, $idRegistration);
 

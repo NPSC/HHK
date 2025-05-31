@@ -62,7 +62,7 @@ class CheckedoutReservation extends CheckingIn {
      * @param mixed $formUserData
      * @return void
      */
-    protected function createFamilyMarkup(\PDO $dbh, $formUserData = array()) {
+    protected function createFamilyMarkup(\PDO $dbh, $formUserData = []) {
 
         $psgMembers = $this->reserveData->getPsgMembers();
 
@@ -184,7 +184,7 @@ class CheckedoutReservation extends CheckingIn {
      * Summary of addGuestStay
      * @param \PDO $dbh
      * @throws \HHK\Exception\RuntimeException
-     * @return CheckedoutReservation
+     * @return CheckedoutReservation | null
      */
     protected function addGuestStay(\PDO $dbh) {
 
@@ -263,7 +263,7 @@ class CheckedoutReservation extends CheckingIn {
 
 
 
-        $addingMembers = array();
+        $addingMembers = [];
 
         // Guest aleady present?
         foreach ($this->getStayingMembers() as $m) {
@@ -333,7 +333,7 @@ class CheckedoutReservation extends CheckingIn {
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
-        if ($this->family->save($dbh, $_POST, $this->reserveData, $uS->username) === FALSE) {
+        if ($this->family->save($dbh,$this->reserveData, $uS->username) === FALSE) {
             return;
         }
 
