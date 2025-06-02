@@ -187,6 +187,11 @@ try {
             break;
 
         case "showAPIAccessLog":
+            $where = "";
+            if(isset($_REQUEST['clientId'])) {
+                $clientId = filter_var($_REQUEST['clientId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $where = ["condition"=>"`oauth_client_id` = :clientId", "bindings"=>[":clientId"=>$clientId]];
+            }
 
             $columns = array(
                 array( 'db' => 'requestPath',  'dt' => 'requestPath' ),
@@ -199,7 +204,7 @@ try {
                 array( 'db' => 'oauth_access_token_id', 'dt' => 'oauth_access_token_id'),
                 array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
                 );
-            $events = SSP::complex ( $_GET, $dbh, "api_access_log", "idLog", $columns, null, null );
+            $events = SSP::complex ( $_GET, $dbh, "api_access_log", "idLog", $columns, null, $where);
     
             break;
 
@@ -217,6 +222,46 @@ try {
 
             $events = SSP::complex ( $_GET, $dbh, "v_oauth_clients", "client_id", $columns, null, null );
     
+            break;
+
+        case "getOauthClient":
+            $clientId = false;
+            if (isset($_REQUEST['clientId'])) {
+                $clientId = filter_var($_REQUEST['clientId'], FILTER_SANITIZE_NUMBER_INT);
+            }
+
+            if ($clientId){
+                //client info
+                $clientSql = "select * from v_oauth_clients where client_id = :id";
+                $clientStmt = $dbh->prepare($clientSql);
+                $clientStmt->execute(["id"=>$clientId]);
+                $client = $clientStmt->fetch(PDO::FETCH_ASSOC);
+                if (!$client) {
+                    throw new RuntimeException("Client ID not found");
+                }
+
+                //client info
+                $clientSql = "select * from v_oauth_clients where client_id = :id";
+                $clientStmt = $dbh->prepare($clientSql);
+                $clientStmt->execute(["id"=>$clientId]);
+                $client = $clientStmt->fetch(PDO::FETCH_ASSOC);
+                if (!$client) {
+                    throw new RuntimeException("Client ID not found");
+                }
+
+                //access tokens
+                $tokenSql = "select * from oauth_access_tokens where client_id = :id and revoked = 0 and expires_at > now()order by Timestamp desc";
+                $tokenStmt = $dbh->prepare($tokenSql);
+                $tokenStmt->execute(["id"=>$clientId]);
+                $tokens = $tokenStmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach($tokens as &$token){
+                    $token["scopes"] = json_decode($token["scopes"]);
+                }
+                $events = ["client"=>$client, "accessTokens"=>$tokens];
+
+            }else{
+                throw new RuntimeException("clientId is required");
+            }
             break;
 
         case "showCron":

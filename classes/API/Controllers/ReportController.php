@@ -30,7 +30,8 @@ class ReportController
         $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
         $returnData["date"] = (new \DateTime())->format("Y-m-d");
         $returnData["occupancy"] = $rawData[0];
-        $returnData["generated"] = (new \DateTime())->format("Y-m-d H:i:s");
+        $returnData["generated"] = (new \DateTime())->format(\DateTime::ISO8601);
+
 
         $response->getBody()->write(json_encode($returnData));
         return $response->withHeader('Content-Type', 'application/json');
@@ -47,7 +48,7 @@ class ReportController
 
         $returnData = [];
         $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
-        $returnData["generated"] = (new \DateTime())->format("Y-m-d H:i:s");
+        $returnData["generated"] = (new \DateTime())->format(\DateTime::ISO8601);
         $returnData["occupancy"] = $stats;
 
         $response->getBody()->write(json_encode($returnData));

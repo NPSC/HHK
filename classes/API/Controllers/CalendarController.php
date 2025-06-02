@@ -22,10 +22,20 @@ class CalendarController
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $startDate = filter_input(INPUT_GET, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-                $startDate = new \DateTime($startDate);
-                $endDate = new \DateTime($endDate);
+        try{
+            $startDate = new \DateTime($startDate);
+            $endDate = new \DateTime($endDate);
+        }catch(\Exception $e){
+            $response->getBody()->write(json_encode(["error"=>"Bad Request", "error_description"=>"Invalid date: " . $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
+
+        if ($startDate > $endDate) {
+            $response->getBody()->write(json_encode(["error"=>"Bad Request", "error_description"=>"Invalid date range"]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
 
                 $returnData = [];
                 $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));

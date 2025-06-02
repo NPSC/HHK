@@ -123,7 +123,16 @@ if($uS->rolecode == '10'){ //if Admin User
 
         if (isAdmin) {
             // Add to beginning of the array
-            dtAPIUsersCols.unshift( {data: 'client_id',  title: 'x', sortable:false} );
+            dtAPIUsersCols.unshift( 
+                {
+                    data: 'client_id',  
+                    title: '', 
+                    sortable:false,
+                    render(data, type){
+                        return '<button type="button" class="edit-client ui-button ui-corner-all" data-client-id="' + data + '">View</button>';
+                    }
+                } 
+            );
         }
 
 
@@ -146,6 +155,184 @@ if($uS->rolecode == '10'){ //if Admin User
                     'cmd': 'showOauthClients'
                 }
             }
+        });
+
+        var dtAPIAccessLogCols = [
+        {
+            targets: [0],
+            className: 'dt-control',
+            orderable: false,
+            data: null,
+            defaultContent: ''
+        },
+        {
+            "targets": [1],
+            "title": "Request Endpoint",
+            "searchable": false,
+            "sortable": false,
+            "data": "requestPath",
+        },
+        {
+            "targets": [2],
+            "title": "Response Code",
+            "searchable": false,
+            "sortable": true,
+            "data": "responseCode",
+        },
+        {
+            "targets": [3],
+            "title": "OAuth Client ID",
+            "searchable": false,
+            "sortable": true,
+            "data": "oauth_client_id",
+        },
+        {
+            "targets": [4],
+            "title": "oauth_access_token_id",
+            "searchable": true,
+            "sortable": true,
+            "data": "oauth_access_token_id",
+            "visible": false,
+        },
+        {
+            "targets": [5],
+            "title": "Request",
+            "searchable": true,
+            "sortable": true,
+            "data": "request",
+            "visible": false,
+        },
+        {
+            "targets": [6],
+            "title": "Response",
+            "searchable": true,
+            "sortable": true,
+            "data": "response",
+            "visible": false,
+        },
+        {
+            "targets": [7],
+            "title": "IP Address",
+            "searchable": true,
+            "sortable": true,
+            "data": "ip_address",
+        },
+        {
+            "targets": [8],
+            "title": "Timestamp",
+            'data': 'Timestamp',
+            render: function (data, type) {
+                return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
+            }
+        }
+    ];
+
+    
+    window.client_id = 0;
+    let logTable = $('#clientAccessLog').dataTable({
+                        "columnDefs": dtAPIAccessLogCols,
+                        "serverSide": true,
+                        "processing": true,
+                        //"deferRender": true,
+                        "language": { "sSearch": "Search Log:" },
+                        "sorting": [[8, 'desc']],
+                        "displayLength": 25,
+                        "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                        layout: {
+                            topStart: 'info',
+                            bottom: 'paging',
+                            bottomStart: null,
+                            bottomEnd: null
+                        },
+                        ajax: {
+                            url: 'ws_gen.php',
+                            data: function(d){
+                                d.cmd = 'showAPIAccessLog',
+                                d.clientId = window.client_id
+                            }
+                        }
+                    });
+
+                    logTable.on('click', 'td.dt-control', function (e) {
+                        let tr = e.target.closest('tr');
+                        let row = logTable.DataTable().row(tr);
+                    
+                        if (row.child.isShown()) {
+                            // This row is already open - close it
+                            row.child.hide();
+                        }
+                        else {
+                            // Open this row
+                            row.child(formatAPIDetails(row.data())).show();
+                        }
+                    });
+
+                    function formatAPIDetails(row){
+        return `
+            <div>` +
+            (row.oauth_access_token_id ?
+                `<div class="mb-3">
+                    <strong>Access Token ID</strong>
+                    <pre style="white-space: pre-wrap;">${row.oauth_access_token_id}</pre>
+                </div>` : '') +
+                `<div class="mb-3">
+                    <strong>Request</strong>
+                    <pre style="white-space: pre-wrap;">${row.request}</pre>
+                </div>
+                <div>
+                    <strong>Response</strong>
+                    <pre style="white-space: pre-wrap;">${row.response}</pre>
+                </div>
+            </div>
+        `;
+    }
+        $('#dataTbl').on('click', 'button.edit-client', function(){
+            window.client_id = $(this).data("client-id");
+            $.ajax({
+                url: 'ws_gen.php',
+                data: {
+                    'cmd': 'getOauthClient',
+                    'clientId': client_id
+                },
+                dataType: 'json',
+                success: function(data) {
+                    let $dialog = $("#clientDetailsDialog");
+                    $dialog.find("#client-id").text(data.client.client_id);
+                    $dialog.find("#client-name").text(data.client.name);
+                    $dialog.find("#client-secret").text(data.client.secret);
+                    $dialog.find("#client-scopes").text(data.client.scopes);
+                    $dialog.find("#client-issued-to").text(data.client.issuedTo);
+                    $dialog.find("#client-issued-at").text(data.client.Timestamp);
+                    $dialog.find("#client-last-used").text(data.client.LastUsed);
+
+
+                    //access Tokens
+                    let $tokenTbl = $dialog.find("table#accessTokens");
+                    $tokenTbl.find("tbody").empty();
+                    $.each(data.accessTokens, function(index, value) {
+                        let $contentRow = $(`<tr>
+                            <td>${value.client_id}</td>
+                            <td>${value.scopes.join(", ")}</td>
+                            <td>${value.Timestamp}</td>
+                            <td>${value.expires_at}</td>
+                            <td>${value.revoked}</td>
+                        </tr>`);
+                        $contentRow.appendTo($tokenTbl.find("tbody"));
+                    });
+
+                    logTable.DataTable().ajax.reload();
+
+                    $dialog.dialog("open");
+                }
+            });
+        });
+
+        $("#clientDetailsDialog").dialog({
+            autoOpen: false,
+            width: 1500,
+            height: 800,
+            title: 'Client Details',
+            modal: true,
         });
 
         $('div#vollisting').on('change', 'input.delCkBox', function() {
@@ -201,6 +388,45 @@ if($uS->rolecode == '10'){ //if Admin User
                 </table>
                 </form>
             </div>
+        </div>
+        <div id="clientDetailsDialog" style="font-size: 0.9em;">
+            <table style="width: 100%" id="clientDetailsTable" class="mb-3">
+                <thead>
+                    <th>Client ID</th>
+                    <th>Client Name</th>
+                    <th>Client Secret</th>
+                    <th>Scopes</th>
+                    <th>Issued To</th>
+                    <th>Issued At</th>
+                    <th>Last Used</th>
+                </thead>
+                <tr>
+                    <td id="client-id"></td>
+                    <td id="client-name"></td>
+                    <td id="client-secret"></td>
+                    <td id="client-scopes"></td>
+                    <td id="client-issued-to"></td>
+                    <td id="client-issued-at"></td>
+                    <td id="client-last-used"></td>
+                </tr>
+            </table>
+            <h3>Active Access Tokens</h3>
+            <table style="width: 100%" id="accessTokens" class="mb-3">
+                <thead>
+                    <th>Client ID</th>
+                    <th>Scopes</th>
+                    <th>Issued At</th>
+                    <th>Expires At</th>
+                    <th>Revoked</th>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+            <h3>API Access Log</h3>
+            <table id="clientAccessLog"></table>
+
+            <pre id="client-raw"></pre>
         </div>
         <input id="isAdmin" type="hidden" value="<?php echo $isAdmin; ?>"/>
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
