@@ -52,7 +52,7 @@ class StayingReservation extends CheckingIn {
      * @param \PDO $dbh
      * @return ActiveReservation|StayingReservation
      */
-    public function save(\PDO $dbh) { 
+    public function save(\PDO $dbh) {
 
         // Check for new room
         //if (isset($_POST['cbNewRoom'])) {
@@ -74,7 +74,7 @@ class StayingReservation extends CheckingIn {
         } else {
 
             $uS = Session::getInstance();
-            
+
             // Same room, just add the guests.
             $this->addGuestStay($dbh);
 
@@ -219,7 +219,7 @@ class StayingReservation extends CheckingIn {
         $this->initialSave($dbh);
 
         // open visit
-        $visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
+        $visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), NULL, NULL, $resc);
 
         // Add guests
         foreach ($this->getStayingMembers() as $m) {
@@ -241,7 +241,7 @@ class StayingReservation extends CheckingIn {
         $this->payResult = NULL;
 
         $this->resc = $resc;
-        $this->visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
+        $this->visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), NULL, NULL, $resc);
 
         return;
     }

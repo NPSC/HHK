@@ -89,7 +89,9 @@ class Visit {
      * @param bool $forceNew
      * @throws \HHK\Exception\RuntimeException
      */
-    function __construct(\PDO $dbh, $idReg, $searchIdVisit, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
+    public function __construct(\PDO $dbh, $idReg, $searchIdVisit, $span = -1, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $forceNew = FALSE) {
+
+        $uS = Session::getInstance();
 
         $this->visitRSs = $this->loadVisits($dbh, $idReg, $searchIdVisit, $span, $forceNew);
 
@@ -131,7 +133,7 @@ class Visit {
             }
 
             $logText = VisitLog::getInsertText($this->visitRS);
-            VisitLog::logVisit($dbh, $idVisit, 0, $this->getidResource(), $idReg, $logText, "insert", $userName);
+            VisitLog::logVisit($dbh, $idVisit, 0, $this->getidResource(), $idReg, $logText, "insert", $uS->userName);
 
             $this->visitRS->idVisit->setNewVal($idVisit);
             EditRS::updateStoredVals($this->visitRS);

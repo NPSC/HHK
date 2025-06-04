@@ -318,7 +318,7 @@ class CheckedoutReservation extends CheckingIn {
         }
 
         $this->resc = $resc;
-        $this->visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
+        $this->visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), NULL, NULL, $resc);
 
         return;
     }

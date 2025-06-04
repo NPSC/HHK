@@ -805,7 +805,7 @@ class CustomRegisterForm {
         if ($idVisit > 0) {
 
             // visit
-            $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, '', $span);
+            $visit = new Visit($dbh, 0, $idVisit, $span);
             $idReservation = $visit->getIdReservation();
             $reg = new Registration($dbh, 0, $visit->getIdRegistration());
             $visit->getResource($dbh);

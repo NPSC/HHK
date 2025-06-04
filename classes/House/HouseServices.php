@@ -39,6 +39,7 @@ use HHK\SysConst\InvoiceStatus;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\PayType;
 use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\ResourceStatus;
 use HHK\SysConst\RoomState;
 use HHK\SysConst\VisitStatus;
 use HHK\TableLog\VisitLog;
@@ -86,18 +87,18 @@ class HouseServices {
         $span = intval($idSpan, 10);
 
         if ($idVisit < 1 || $span < 0) {
-            return array("error" => "A Visit is not selected: " . $idV . "-" . $idSpan);
+            return ["error" => "A Visit is not selected: $idV-$idSpan"];
         }
 
         $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
         $stmt1 = $dbh->query($query);
         $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
-        $dataArray = array();
+        $dataArray = [];
 
 
         if (count($rows) == 0) {
-            return array("error" => "<span>No Data.</span>");
+            return ["error" => "<span>No Data.</span>"];
         }
 
         $r = $rows[0];
@@ -180,17 +181,19 @@ class HouseServices {
                 $action,
                 $coDate,
                 $showAdjust)
-            , array('style' => 'margin-top:10px;'));
+            ,
+            ['style' => 'margin-top:10px;']);
 
         $mkup = HTMLContainer::generateMarkup('div',
         		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
                 . $mkup,
-            array('id'=>'divksStays'));
+            ['id' => 'divksStays']);
 
         // Show fees if not hf = hide fees.
         if ($action != 'hf') {
         	$mkup .= HTMLContainer::generateMarkup('div',
-                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('class' => 'hhk-flex'));
+                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action),
+                ['class' => 'hhk-flex']);
 
         }
 
@@ -218,8 +221,8 @@ class HouseServices {
     public static function saveFees(\PDO $dbh, $idVisit, $span, array $post, $postbackPage) {
 
         $uS = Session::getInstance();
-        $dataArray = array();
-        $creditCheckOut = array();
+        $dataArray = [];
+        $creditCheckOut = [];
         $reply = '';
         $warning = '';
         $returnReserv = FALSE;
@@ -239,7 +242,7 @@ class HouseServices {
         }
 
         // instantiate current visit
-        $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, $uS->username, $span);
+        $visit = new Visit($dbh, 0, $idVisit, $span);
 
 
         // Notes
@@ -327,6 +330,7 @@ class HouseServices {
 
             $reply .= self::undoCheckout($dbh, $visit, $newExpectedDT, $uS->username);
             $returnCkdIn = TRUE;
+
 
         // Not undoing checkout...
         } else {
@@ -562,7 +566,7 @@ class HouseServices {
             array('class'=>'hhk-payInvoice', 'style' => 'min-width:600px;clear:left;')
         );
 
-        return array('mkup'=>$mkup);
+        return ['mkup' => $mkup];
     }
 
     /**
@@ -576,8 +580,8 @@ class HouseServices {
 
         $reply = 'Uh-oh, Payment NOT made.';
         $postbackPage = '';
-        $dataArray = array();
-        $creditCheckOut = array();
+        $dataArray = [];
+        $creditCheckOut = [];
 
         if (isset($post['pbp'])) {
             $postbackPage = filter_var($post['pbp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -587,7 +591,7 @@ class HouseServices {
         $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
 
         // Is it a return payment?
-        if (is_null($paymentManager->pmp) === FALSE && $paymentManager->pmp->getTotalPayment() < 0) {
+        if ($paymentManager->pmp !== null && $paymentManager->pmp->getTotalPayment() < 0) {
 
             // Here is where we look for the reimbursment pay type.
             $paymentManager->pmp->setRtnPayType($paymentManager->pmp->getPayType());
@@ -599,7 +603,7 @@ class HouseServices {
         // Make payment
         $payResult = self::processPayments($dbh, $paymentManager, NULL, $postbackPage, $idPayor);
 
-        if (is_null($payResult) === FALSE) {
+        if ($payResult !== null) {
 
             $reply = $payResult->getReplyMessage();
 
@@ -608,12 +612,12 @@ class HouseServices {
             }
 
             // Receipt
-            if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
+            if ($payResult->getReceiptMarkup() != '') {
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
             }
 
             // New Invoice
-            if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
+            if ($payResult->getInvoiceNumber() != '') {
                 $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
             }
         }
@@ -839,13 +843,13 @@ class HouseServices {
     public static function showChangeRooms(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin) {
 
         $uS = Session::getInstance();
-        $dataArray = array();
+        $dataArray = [];
 
         $idVisit = intval($idV, 10);
         $span = intval($idSpan, 10);
 
         if ($idVisit < 1 || $span < 0) {
-            return array("error" => "A Visit is not selected: " . $idV . "-" . $idSpan);
+            return ["error" => "A Visit is not selected: $idV-$idSpan"];
         }
 
         $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
@@ -854,7 +858,7 @@ class HouseServices {
 
 
         if (count($rows) == 0) {
-            return array("error" => "<span>No Data for the indicated visit id and span ($idV, $idSpan).</span>");
+            return ["error" => "<span>No Data for the indicated visit id and span ($idV, $idSpan).</span>"];
         }
 
         $r = $rows[0];
@@ -883,21 +887,28 @@ class HouseServices {
             $dataArray['success'] = $roomChooser->createChangeRoomsMarkup($dbh, $idGuest, $isAdmin);
 
             $dataArray['rooms'] = $roomChooser->makeRoomsArray();
-            $dataArray['curResc'] = array(
-                "maxOcc" => $curResc->getMaxOccupants(),
-                "rate" => $visit->getPledgedRate(),
+            $dataArray['curResc'] = [
+                'idResc' => $curResc->getIdResource(),
+                'maxOcc' => $curResc->getMaxOccupants(),
+                'rate' => $visit->getPledgedRate(),
                 'defaultRateCat' => $curResc->getDefaultRoomCategory(),
-                "title" => $curResc->getTitle(),
+                'title' => $curResc->getTitle(),
                 'key' => $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),
-                'status' => 'a',
+                'status' => ResourceStatus::Available,
                 'merchant' => $curResc->getMerchant(),
-            );
+            ];
 
-            $dataArray['start'] = $vspanStartDT->format('c');
-            $dataArray['end'] = $expDepDT->format('c');
+            $dataArray['visitSpan'] = [
+                'start' => $vspanStartDT->format('c'),
+                'end' => $expDepDT->format('c'),
+                'idVisit' => $idVisit,
+                'span' => $span,
+                'isAuthorized' => $isAdmin,
+                'idGuest' => $idGuest,
+            ];
 
         } else {
-            $dataArray['error'] = "Change rooms command only available for checked-in visits.";
+            $dataArray['error'] = "The Change Rooms command is only available for checked-in visits.";
         }
 
 
@@ -984,7 +995,7 @@ class HouseServices {
         if ($newRescId != 0) {
 
             // instantiate current visit
-            $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, $uS->username, $span);
+            $visit = new Visit($dbh, 0, $idVisit, $span);
 
 
             if ($newRescId != $visit->getidResource()) {

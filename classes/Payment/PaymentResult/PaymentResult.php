@@ -47,7 +47,7 @@ class PaymentResult {
         $this->idRegistration = $idRegistration;
         $this->idInvoice = $idInvoice;
         $this->idName = $idName;
-        $this->forwardHostedPayment = array();
+        $this->forwardHostedPayment = [];
         $this->idToken = $idToken;
     }
 

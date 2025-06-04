@@ -375,7 +375,7 @@ FROM reservation r
         }
 
         // create visit, forcing a new visit.
-        $visit = new Visit($dbh, $resv->getIdRegistration(), 0, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $resc, $uS->username, 0, true);
+        $visit = new Visit($dbh, $resv->getIdRegistration(), 0, 0, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $resc, true);
 
         // Add guests
         foreach ($this->getStayingMembers() as $m) {
