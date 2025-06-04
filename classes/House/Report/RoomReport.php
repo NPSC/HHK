@@ -10,6 +10,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\House\Resource\ResourceTypes;
 use HHK\Purchase\VisitCharges;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\sec\SysConfig;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\ResourceStatus;
 use HHK\SysConst\RoomState;
@@ -44,9 +45,9 @@ class RoomReport {
      * @param \PDO $dbh
      * @param mixed $year
      * @param mixed $fyDiffMonths
-     * @return mixed
+     * @return int
      */
-    protected static function getGlobalNightsCount(\PDO $dbh, $year = '', $fyDiffMonths = 0) {
+    public static function getGlobalNightsCount(\PDO $dbh, $year = '', $fyDiffMonths = 0) {
 
         $niteCount = 0;
 
@@ -74,7 +75,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
             }
         }
 
-        return $niteCount;
+        return intval($niteCount);
     }
 
     /**
@@ -82,9 +83,9 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
      * @param \PDO $dbh
      * @param mixed $year
      * @param mixed $fiscalYearMonths
-     * @return mixed
+     * @return int
      */
-    protected static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths = 0) {
+    public static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths = 0) {
 
         $whClause = '';
         if ($year != '') {
@@ -95,7 +96,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
         if (count($rows) == 1) {
-            return $rows[0][0];
+            return intval($rows[0][0]);
         } else {
             return 0;
         }
@@ -201,21 +202,17 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
     }
 
     /**
-     * Summary of getGlobalRoomOccupancy
+     * Get the current room occupancy percentage optionally filtered by room category
      * @param \PDO $dbh
-     * @return string
+     * @param string $roomCategory
+     * @return array
      */
-    public static function getGlobalRoomOccupancy(\PDO $dbh) {
-
-        $uS = Session::getInstance();
-
-        if (!$uS->ShowRoomOcc) {
-            return '';
-        }
+    public static function getCurrentRoomOccupancy(\PDO $dbh, string $roomCategory = 'none') {
+        $returnArr = ["Occupancy" => 0, "Category" => "Total"];
 
         $whereGroupSql = "";
-        if($uS->RoomOccCat && $uS->RoomOccCat != 'none'){
-            $whereGroupSql = " and rm.Category = '" . $uS->RoomOccCat . "'";
+        if($roomCategory != 'none'){
+            $whereGroupSql = " and rm.Category = '" . $roomCategory . "'";
         }
         $query = "select round(sum(if(`idVisit` > 0, 1, 0))/count(r.idResource)*100) as 'Occupancy', g.Description as 'Category' from `resource` r
 left join visit v on r.idResource = v.idResource and v.Status = 'a'
@@ -227,14 +224,23 @@ where ru.idResource is null" . $whereGroupSql . ";";
         $stmt = $dbh->query($query);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if(isset($row['Occupancy'])){
-            $uS->goc = intval($row['Occupancy']);
-            $span = HTMLContainer::generateMarkup('span', '<strong>' . $row['Occupancy'] . '% </strong>' . ($uS->RoomOccCat != 'none' ? $row['Category'] : 'Total') . ' Occupancy.', array('style'=>'margin-left:10px;font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));
-        }else{
-            $uS->goc = 0;
-            $span = "";
+        if(isset($row['Occupancy']) && isset($row['Category'])){
+            $returnArr["Occupancy"] = $row['Occupancy'];
+            $returnArr["Category"] = $roomCategory != 'none' ? $row['Category'] : 'Total';
         }
-        return $span;
+
+        return $returnArr;
+    }
+
+    public static function getCurrentRoomOccupancyMkup(\PDO $dbh){
+        $uS = Session::getInstance();
+
+        if (!$uS->ShowRoomOcc) {
+            return '';
+        }
+
+        $occupancyArr = self::getCurrentRoomOccupancy($dbh, $uS->RoomOccCat);
+        return HTMLContainer::generateMarkup('span', '<strong>' . $occupancyArr['Occupancy'] . '% </strong>' . $occupancyArr['Category'] . ' Occupancy.', array('style'=>'margin-left:10px;font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));
     }
     
     /**

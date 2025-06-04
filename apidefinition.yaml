@@ -80,11 +80,6 @@ paths:
                       totalStays:
                         type: integer
                         format: int64
-                      totalOccupancyPercentage:
-                        type: integer
-                        minimum: 0
-                        maximum: 100
-                        multipleOf: 0.01
         default:
           description: Unexpected error
           content:

@@ -25,7 +25,7 @@ class AccessTokenHasScopeMiddleware
             return $handler->handle($request);
         }else{
             $response = new Response();
-            $response->getBody()->write(json_encode(['error'=>'Unauthorized', 'description'=>"Access token does not contain the required scope"]));
+            $response->getBody()->write(json_encode(['error'=>'Unauthorized', 'error_description'=>"Access token does not contain the required scope"]));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
         }
     }

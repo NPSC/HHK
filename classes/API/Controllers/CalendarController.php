@@ -1,6 +1,7 @@
 <?php
 namespace HHK\API\Controllers;
 
+use DateTime;
 use HHK\sec\SysConfig;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\VisitStatus;
@@ -39,7 +40,7 @@ class CalendarController
 
                 $returnData = [];
                 $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
-                $returnData["generatedAt"] = (new \DateTime())->format("Y-m-d H:i:s");
+                $returnData["generatedAt"] = (new \DateTime())->format(\DateTime::RFC3339);
                 $returnData["startDate"] = $startDate->format("Y-m-d");
                 $returnData["endDate"] = $endDate->format("Y-m-d");
                 
@@ -56,6 +57,8 @@ class CalendarController
                         "fullName"=>$row["PrimaryGuestFullName"],
                         "email"=>$row["PrimaryGuestEmail"]
                     ];
+                    $row["ExpectedArrival"] = (new DateTime($row["ExpectedArrival"]))->format(DateTime::RFC3339);
+                    $row["ExpectedDeparture"] = (new DateTime($row["ExpectedDeparture"]))->format(DateTime::RFC3339);
                     unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
                 }
 
@@ -73,6 +76,9 @@ class CalendarController
                         "fullName"=>$row["PrimaryGuestFullName"],
                         "email"=>$row["PrimaryGuestEmail"]
                     ];
+                    $row["SpanStart"] = $row["SpanStart"] ? (new DateTime($row["SpanStart"]))->format(DateTime::RFC3339):null;
+                    $row["SpanEnd"] = $row["SpanEnd"] ? (new DateTime($row["SpanEnd"]))->format(DateTime::RFC3339):null;
+                    $row["ExpectedDeparture"] = $row["ExpectedDeparture"] ? (new DateTime($row["ExpectedDeparture"]))->format(DateTime::RFC3339):null;
                     unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
                 }
 

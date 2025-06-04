@@ -30,7 +30,7 @@ class ReportController
         $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
         $returnData["date"] = (new \DateTime())->format("Y-m-d");
         $returnData["occupancy"] = $rawData[0];
-        $returnData["generated"] = (new \DateTime())->format(\DateTime::ISO8601);
+        $returnData["generated"] = (new \DateTime())->format(\DateTime::RFC3339);
 
 
         $response->getBody()->write(json_encode($returnData));
@@ -40,18 +40,20 @@ class ReportController
     public function occupancyAllTime(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
         $uS = Session::getInstance();
+        $previousNights = SysConfig::getKeyValue($this->dbh, "sys_config", "PreviousNights");
+        $roomOccCat = SysConfig::getKeyValue($this->dbh, "sys_config", "RoomOccCat");
+
         $stats = [];
-        $stats["nightsOfRest"] = RoomReport::getGlobalNightsCounter($this->dbh);
-        $stats["nightsOfRest"] = $uS->gnc;
-        $stats["totalStays"] = RoomReport::getGlobalStaysCounter($this->dbh);
-        $stats["totalOccupancyPercentage"] = RoomReport::getGlobalRoomOccupancy($this->dbh);
+        $stats["totalNightsOfRest"] = intval(RoomReport::getGlobalNightsCount($this->dbh) + $previousNights);
+        $stats["totalStays"] = RoomReport::getGlobalStaysCount($this->dbh);
 
         $returnData = [];
         $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
-        $returnData["generated"] = (new \DateTime())->format(\DateTime::ISO8601);
+        $returnData["generated"] = (new \DateTime())->format(\DateTime::RFC3339);
         $returnData["occupancy"] = $stats;
 
         $response->getBody()->write(json_encode($returnData));
         return $response->withHeader('Content-Type', 'application/json');
     }
+
 }
