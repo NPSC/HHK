@@ -647,9 +647,9 @@ class SiteConfig {
         $tbl = new HTMLTable();
 
         // Payment Gateway name
-
+        $gwName = SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway');
         $opts = readGenLookupsPDO($dbh, 'Pay_Gateway_Name');
-        $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway'), TRUE), array('name' => 'payGtwyName'));
+        $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwName, TRUE), array('name' => 'payGtwyName'));
 
         $tbl->addBodyTr(
                 HTMLTable::makeTh('Payment Gateway', array())
@@ -675,7 +675,7 @@ class SiteConfig {
         // Spacer
         $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
 
-        return $tbl->generateMarkup() . AbstractPaymentGateway::createEditMarkup($dbh, $uS->PaymentGateway, $resultMessage);
+        return $tbl->generateMarkup() . AbstractPaymentGateway::createEditMarkup($dbh, $gwName, $resultMessage);
     }
 
     public static function savePaymentCredentials(\PDO $dbh, $post) {
