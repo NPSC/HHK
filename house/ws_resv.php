@@ -10,7 +10,6 @@ use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Vehicle;
-use HHK\House\Visit\Visit;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Incident\ListReports;
 use HHK\Incident\IncidentReport;
@@ -24,7 +23,7 @@ use HHK\Notification\SMS\SimpleTexting\Contact;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\Notification\SMS\SimpleTexting\Message;
 use HHK\Notification\SMS\SimpleTexting\Messages;
-use HHK\sec\SecurityComponent;
+
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\GLTableNames;
@@ -81,7 +80,7 @@ if (stripos($contentType, 'application/json') !== false   && strtoupper($_SERVER
     // convert string representations of arrays into an array
     try {
         $inputData = parseKeysToArray($inputEncoded);
-        
+
     } catch (UnexpectedValueException $ex) {
         $events = ["error" => "posted data input failure."];    //failure
         $json = json_encode($events);
@@ -160,7 +159,7 @@ try {
 
     case "addResvGuest":
 
-        $isCheckin = FALSE; 
+        $isCheckin = FALSE;
 
         if (isset($_POST['isCheckin'])) {
             $isCheckin = filter_var($_POST['isCheckin'], FILTER_VALIDATE_BOOLEAN);

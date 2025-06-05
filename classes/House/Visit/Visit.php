@@ -2,10 +2,12 @@
 
 namespace HHK\House\Visit;
 
+use DateTimeInterface;
 use HHK\Exception\RuntimeException;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\sec\SecurityComponent;
 use HHK\SysConst\{RoomRateCategories, VisitStatus};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
@@ -89,7 +91,7 @@ class Visit {
      * @param bool $forceNew
      * @throws \HHK\Exception\RuntimeException
      */
-    public function __construct(\PDO $dbh, $idReg, $searchIdVisit, $span = -1, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $forceNew = FALSE) {
+    public function __construct(\PDO $dbh, $idReg, $searchIdVisit, $span = -1, DateTimeInterface $arrivalDT = NULL, DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $forceNew = FALSE) {
 
         $uS = Session::getInstance();
 
@@ -384,26 +386,32 @@ class Visit {
     }
 
     /**
-     * Summary of changeRooms
+     * Summary of changeRooms - Make a new span with the new room.
      * @param \PDO $dbh
      * @param \HHK\House\Resource\AbstractResource $resc
-     * @param string $uname
-     * @param \DateTime $chgDT
-     * @param bool $isAdmin
-     * @param string $newRateCategory
+     * @param \DateTimeInterface $chgDT
+     * @param \DateTimeInterface $chgEndDT
+     * @param mixed $newRateCategory
      * @throws \HHK\Exception\RuntimeException
      * @return string
      */
-    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '') {
+    public function changeRooms(\PDO $dbh, AbstractResource $resc, DateTimeInterface $chgDT, DateTimeInterface $chgEndDT, $newRateCategory) {
 
         $uS = Session::getInstance();
 
         // used to control sending email to housekeeping.
         $houseKeepingEmail = $uS->HouseKeepingEmail;
         $rateGlideDays = 0;
-
         $rtnMessage = '';
 
+        $now = new \DateTimeImmutable();
+        $today = $now->setTime(0, 0, 0);
+
+        $chgDayDT = new \DateTime($chgDT->format('Y-m-d 0:0:0'));
+
+        $isFutureChange = ($chgDayDT > $today) ? true : false;
+
+        // Check if the resource is valid.
         if ($resc->isNewResource()) {
             throw new RuntimeException('Invalid Resource supplied to visit->changeRooms.');
         }
@@ -419,19 +427,20 @@ class Visit {
         // Change date cannot be earlier than span start date.
         $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
         $spanStartDT->setTime(0,0,0);
-        if ($chgDT < $spanStartDT) {
+        if ($chgDayDT < $spanStartDT) {
             return "Error - Change Rooms failed: The Change Date is prior to Visit Span start date.  ";
         }
 
         $expDepDT = new \DateTime($this->getExpectedDeparture());
-        $expDepDT->setTime(10, 0, 0);
-        $now = new \DateTime();
-        $now->setTime(10, 0, 0);
+        $expDepDT->setTime(0, 0, 0);
 
-        if ($expDepDT <= $now) {
-            $expDepDT = $now->add(new \DateInterval('P1D'));
+        if ($expDepDT <= $today) {
+            $expDepDT = $today->add(new \DateInterval('P1D'));
         }
 
+        if ($expDepDT < $chgEndDT) {
+            $expDepDT = $chgEndDT;
+        };
 
         // Reservation
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
@@ -439,11 +448,23 @@ class Visit {
         // Room Available
         if ($reserv->isNew() === FALSE) {
 
-            $rescOpen = $reserv->isResourceOpen($dbh, $resc->getIdResource(), $chgDT->format('Y-m-d H:i:s'), $expDepDT->format('Y-m-d H:i:s'), count($this->stays), array('room','rmtroom','part'), FALSE, $isAdmin);
+            $rescOpen = $reserv->isResourceOpen(
+                    $dbh, $resc->getIdResource(),
+                    $chgDT->format('Y-m-d H:i:s'),
+                    $expDepDT->format('Y-m-d H:i:s'),
+                    count($this->stays),
+                    ['room', 'rmtroom', 'part'],
+                    FALSE,
+                    SecurityComponent::is_Authorized("guestadmin")
+                );
 
             if ($rescOpen) {
-                $reserv->setIdResource($resc->getIdResource());
-                $reserv->saveReservation($dbh, $this->getIdRegistration(), $uname);
+
+                if ($isFutureChange === false) {
+                    $reserv->setIdResource($resc->getIdResource());
+                    $reserv->saveReservation($dbh, $this->getIdRegistration(), $uS->username);
+                }
+
             } else {
                 return "Error - Change Rooms failed: The new room is busy or missing necessary attributes.  ";
             }
@@ -458,7 +479,6 @@ class Visit {
             $rooms = $this->resource->getRooms();
         }
 
-        // if room change date = span start date, just replace the room in the visit record.
         $roomChangeDate = new \DateTime($chgDT->format('Y-m-d'));
         $roomChangeDate->setTime(0,0,0);
 
@@ -481,7 +501,7 @@ class Visit {
                 $rtnMessage .= 'Room Rate Changed.  ';
             }
 
-            $cnt = $this->updateVisitRecord($dbh, $uname);
+            $cnt = $this->updateVisitRecord($dbh, $uS->username);
             $houseKeepingEmail = '';  // Don't trigger housekeeping for replace room
 
             if ($cnt > 0) {
@@ -499,7 +519,7 @@ class Visit {
 
                         $stayRS->idRoom->setNewVal($rm->getIdRoom());
                         $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-                        $stayRS->Updated_By->setNewVal($uname);
+                        $stayRS->Updated_By->setNewVal($uS->username);
 
                         EditRS::update($dbh, $stayRS, [$stayRS->idStays]);
                         $logText = VisitLog::getUpdateText($stayRS);
@@ -512,7 +532,7 @@ class Visit {
                             $stayRS->idName->getStoredVal(),
                             $this->visitRS->idRegistration->getStoredVal(),
                             $logText, "update",
-                            $uname);
+                            $uS->username);
 
                         EditRS::updateStoredVals($stayRS);
                     }
@@ -520,7 +540,7 @@ class Visit {
 
                 $rtnMessage .= 'Guests Replaced Rooms.  ';
             }
-        } else {
+        } else {  // Change rooms on a date other than the span start date.
 
             // Set new room rate?
             if ($newRateCategory != '' && $newRateCategory != $this->getRateCategory()) {
@@ -536,17 +556,26 @@ class Visit {
                 $rateGlideDays = $this->getRateGlideCredit() +  $roomChangeDate->diff($spanStartDT, true)->days;
             }
 
+            // Is the change in the future?
+            if ($isFutureChange) {
+                $newStatus = VisitStatus::Reserved;
+                $rtnMessage .= 'Guests scheduled to Change Rooms on ' . $chgDT->format('g:ia D M jS, Y') . '.  ';
+            } else {
+                $newStatus = VisitStatus::NewSpan;
+                $rtnMessage .= 'Guests Changed Rooms.  ';
+            }
+
             // Change rooms on date given.
             $this->cutInNewSpan(
                 $dbh,
                 $resc,
-                VisitStatus::NewSpan,
+                $newStatus,
                 $rateCategory,
                 $idRoomRate,
                 $this->getPledgedRate(),
                 $this->visitRS->Expected_Rate->getStoredVal(),
                 $this->visitRS->idRateAdjust->getStoredVal(),
-                $chgDT->format('Y-m-d H:i:s'),
+                $chgDT,
                 intval($this->visitRS->Span->getStoredVal(), 10) + 1,
                 0,
                 $rateGlideDays);
@@ -557,7 +586,7 @@ class Visit {
             if ($chgDT->format('Y-m-d') == date('Y-m-d')) {
                 foreach ($rooms as $r) {
                     $r->putTurnOver();
-                    $r->saveRoom($dbh, $uname, TRUE);
+                    $r->saveRoom($dbh, $uS->username, TRUE);
                 }
             }
         }
@@ -713,7 +742,7 @@ class Visit {
             $pledgedRate,
             $rateAdjust,
             $idRateAdjust,
-            $chgDT->format('Y-m-d H:i:s'),
+            $chgDT,
             (intval($this->visitRS->Span->getStoredVal(), 10) + 1),
             $stayOnLeave);
 
@@ -747,28 +776,37 @@ class Visit {
      * @param float $pledgedRate
      * @param float $rateAdjust
      * @param string $uname
-     * @param string $changeDate
+     * @param \DateTimeInterface $changeDT
      * @param integer $newSpan  span Id for new visit span.
      * @param integer $stayOnLeave
      * @throws RuntimeException
      */
-    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, $changeDate, $newSpan, $stayOnLeave = 0, $rateGlideDays = 0) {
+    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, DateTimeInterface $changeDT, $newSpan, $stayOnLeave = 0, $rateGlideDays = 0) {
 
         $uS = Session::getInstance();
         $this->stays = [];
+        $now = new \DateTime();
 
         // Load all stays for this span
         $this->loadStays($dbh, '');  // empty string loads all stays of all statuses
 
-        // End old span
-        $newSpanStatus = $this->visitRS->Status->getStoredVal();
-        $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
+        // Change Date in the future?
+        if ($changeDT > $now) {
+            // No change to current visit status.
 
-        $this->visitRS->Span_End->setNewVal($changeDate);
-        $this->visitRS->Status->setNewVal($visitStatus);
+            $newSpanStatus = $visitStatus;
+            $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
 
-        $this->updateVisitRecord($dbh, $uS->username);
+        } else {
+            // End old span
+            $newSpanStatus = $this->visitRS->Status->getStoredVal();
+            $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
 
+            $this->visitRS->Span_End->setNewVal($changeDT);
+            $this->visitRS->Status->setNewVal($visitStatus);
+
+            $this->updateVisitRecord($dbh, $uS->username);
+        }
 
         // copy old values for new visit rs
         foreach ($this->visitRS as $p) {
@@ -783,7 +821,7 @@ class Visit {
         $this->visitRS->idResource->setNewVal($resc->getIdResource());
         $this->visitRS->Span->setNewVal($newSpan);
         $this->visitRS->Span_End->setNewVal($newSpanEnd);
-        $this->visitRS->Span_Start->setNewVal($changeDate);
+        $this->visitRS->Span_Start->setNewVal($changeDT);
         $this->visitRS->Status->setNewVal($newSpanStatus);
         $this->visitRS->Pledged_Rate->setNewVal($pledgedRate);
         $this->visitRS->Rate_Category->setNewVal($newRateCategory);
@@ -1077,7 +1115,7 @@ class Visit {
      * @param bool $sendEmail
      * @return bool
      */
-    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTimeInterface $dateDeparted, $sendEmail) {
+    protected function checkStaysEndVisit(\PDO $dbh, $username, DateTimeInterface $dateDeparted, $sendEmail) {
 
         $uS = Session::getInstance();
 
@@ -1233,7 +1271,7 @@ class Visit {
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
-    protected function removeSpanStub(\PDO $dbh, \DateTimeInterface $dateDepartedDT){
+    protected function removeSpanStub(\PDO $dbh, DateTimeInterface $dateDepartedDT){
 
         $uS = Session::getInstance();
 
@@ -2145,12 +2183,12 @@ class Visit {
      * @param \DateTime $returnDT
      * @return int
      */
-    protected function resetStays(\PDO $dbh, $prevStays, \DateTimeInterface $returnDT) {
+    protected function resetStays(\PDO $dbh, $prevStays, DateTimeInterface $returnDT) {
 
         $uS = Session::getInstance();
 
         /**
-         * @var \DateTimeInterface $retDayDT
+         * @var DateTimeInterface $retDayDT
          */
         $retDayDT = $returnDT->setTime(0,0,0);
         $changedStays = 0;

@@ -119,7 +119,7 @@ function justDate($dateTime) {
     if ($dateTime instanceof \DateTime) {
         $dateTime->setTime(0,0,0);
     } else if ($dateTime instanceof \DateTimeImmutable) {
-        $dateTime =  $dateTime->setTime(0,0,0);
+        $dateTime = $dateTime->setTime(0,0,0);
     } else if (is_string($dateTime)) {
         $dateTime = new \DateTime($dateTime);
         $dateTime->setTime(0,0,0);
@@ -817,7 +817,7 @@ function parseKeysToArray(array $inputArray): array
     $result = [];
 
     foreach ($inputArray as $key => $parameter) {
-    
+
         // short circuit for actuall arrays.
         if (is_array($parameter)) {
             $result[$key] = $parameter;
@@ -836,7 +836,7 @@ function parseKeysToArray(array $inputArray): array
                     if (!isset($result[$key1])) {
                         $result[$key1] = [];
                     }
-                    $result[$key1][$key2] = $parameter; 
+                    $result[$key1][$key2] = $parameter;
                 } elseif (count($match) === 4) { // Double level array
                     $key1 = $match[1];
                     $key2 = $match[2];
@@ -849,9 +849,9 @@ function parseKeysToArray(array $inputArray): array
                         $result[$key1][$key2] = [];
                     }
 
-                    $result[$key1][$key2][$key3] = $parameter; 
+                    $result[$key1][$key2][$key3] = $parameter;
                 } else {
-                    throw new UnexpectedValueException("Input parameter '$key' is malformed."); 
+                    throw new UnexpectedValueException("Input parameter '$key' is malformed.");
                 }
             }
         }

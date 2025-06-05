@@ -117,7 +117,7 @@ try {
                 $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $events = HouseServices::showChangeRooms($dbh, $idGuest, $idVisit, $span, $guestAdmin);
+            $events = HouseServices::showVisitChangeRooms($dbh, $idGuest, $idVisit, $span, $guestAdmin);
 
             break;
 
@@ -138,9 +138,14 @@ try {
                 $useDefaultRate = filter_var($_POST['useDefault'], FILTER_VALIDATE_BOOLEAN);
             }
 
-            $changeDate = '';
+            $changeStartDate = '';
             if (isset($_POST['changeDate'])) {
-                $changeDate = filter_var($_POST['changeDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $changeStartDate = filter_var($_POST['changeDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            $changeEndDate = '';
+            if (isset($_POST['changeEndDate'])) {
+                $changeEndDate = filter_var($_POST['changeEndDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             $replaceRoom = '';
@@ -148,7 +153,7 @@ try {
                 $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $events = HouseServices::changeRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $useDefaultRate, $changeDate);
+            $events = HouseServices::changeVisitRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $changeStartDate, $changeEndDate, $useDefaultRate);
 
             break;
 

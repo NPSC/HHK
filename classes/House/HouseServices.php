@@ -57,7 +57,7 @@ use HHK\sec\Session;
  * HouseServices.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -831,7 +831,7 @@ class HouseServices {
 
     }
 
-    /** Fill in the change room dialog box in order to show it to the user
+    /** Fill in the VISIT change room dialog box in order to show it to the user
      *
      * @param \PDO $dbh
      * @param int $idGuest
@@ -840,7 +840,7 @@ class HouseServices {
      * @param boolean $isAdmin
      * @return array
      */
-    public static function showChangeRooms(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin) {
+    public static function showVisitChangeRooms(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin) {
 
         $uS = Session::getInstance();
         $dataArray = [];
@@ -982,10 +982,22 @@ class HouseServices {
     }
 
 
-    public static function changeRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $useDefaultRate, $changeDate) {
+    /**
+     * Summary of changeVisitRooms
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @param int $span
+     * @param int $newRescId
+     * @param string $replaceRoom
+     * @param string $changeDate
+     * @param string $changeEndDate
+     * @param bool $useDefaultRate
+     * @return array<float|int|string>
+     */
+    public static function changeVisitRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $changeDate, $changeEndDate, $useDefaultRate) {
 
         $uS = Session::getInstance();
-        $dataArray = array();
+        $dataArray = [];
         $returntoVisit = FALSE;
         $returnCkdIn = FALSE;
         $returnReserv = FALSE;
@@ -1005,18 +1017,24 @@ class HouseServices {
                 $now = new \DateTime();
 
                 if ($replaceRoom == 'rpl') {
-
+                    // Replace room in existing span
                     $chRoomDT = new \DateTime($visit->getSpanStart());
+                    $chgEndDT = $now;
 
                 } else {
-
+                    // Change room - new span
                     if ($changeDate != '') {
 
                         $chDT = new \DateTime($changeDate);
                         $chRoomDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
 
+                        $chDT = new \DateTime($changeEndDate);
+                        $chgEndDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $uS->CheckOutTime . ':00:00');
+
                     } else {
+                        // No change date, use today
                         $chRoomDT = $now;
+                        $chgEndDT = $now;
                     }
                 }
 
@@ -1032,7 +1050,7 @@ class HouseServices {
 
                 $arriveDT = new \DateTime($visit->getSpanStart());
 
-                if ($chRoomDT < $arriveDT || $chRoomDT > $now) {
+                if ($chRoomDT < $arriveDT || $chRoomDT > $chgEndDT) {
 
                     $reply .= "The change room date must be within the visit timeframe, between " . $arriveDT->format('M j, Y') . ' and ' . $now->format('M j, Y');
 
@@ -1051,7 +1069,7 @@ class HouseServices {
                         $newRateCategory = $resc->getDefaultRoomCategory();
                     }
 
-                    $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, SecurityComponent::is_Authorized("guestadmin"), $newRateCategory);
+                    $reply .= $visit->changeRooms($dbh, $resc, $chRoomDT, $chgEndDT, $newRateCategory);
 
                     $returnCkdIn = TRUE;
                     $returnReserv = TRUE;
