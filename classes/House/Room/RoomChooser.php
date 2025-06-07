@@ -202,39 +202,53 @@ class RoomChooser {
     public function createChangeRoomsMarkup(\PDO $dbh, $idGuest, $isAuthorized) {
 
         $table = new HTMLTable();
-        $table->addHeaderTr(HTMLTable::makeTh('Change Rooms from ' . $this->selectedResource->getTitle(), array('colspan' => '2')));
+        $table->addHeaderTr(HTMLTable::makeTh('Change Rooms from: ' . $this->selectedResource->getTitle(), ['colspan' => '2']));
 
+        // Add radio buttons for room change options
         $table->addBodyTr(
-            HTMLTable::makeTd('As of:', array('class' => 'tdlabel', 'rowspan'=>'2'))
+            HTMLTable::makeTd('As of:', ['class' => 'tdlabel', 'rowspan' => '2'])
             . HTMLTable::makeTd(
-                HTMLInput::generateMarkup('rpl', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomrpl', 'type'=>'radio'))
-                .HTMLContainer::generateMarkup('label', 'Start of Visit Span - '. $this->checkinDT->format('M d, Y'), array('style'=>'margin-left:.3em;', 'for'=>'rbReplaceRoomrpl'
-                    , 'title'=>'The visit span is the date of the last room change, rate change, or start of visit.'))
+                HTMLInput::generateMarkup('rpl', ['name' => 'rbReplaceRoom', 'id' => 'rbReplaceRoomrpl', 'type' => 'radio'])
+                .HTMLContainer::generateMarkup('label', 'Start of Visit Span: '. $this->checkinDT->format('M d, Y'), [
+                    'style' => 'margin-left:.3em;',
+                    'for' => 'rbReplaceRoomrpl',
+                    'title' => 'The visit span is the date of the last room change, rate change, or start of visit.',]
+                )
         ));
 
         $table->addBodyTr(
             HTMLTable::makeTd(
-                HTMLInput::generateMarkup('new', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomnew', 'type'=>'radio'))
-                .HTMLContainer::generateMarkup('label', 'Date', array('style'=>'margin-left:.3em; margin-right:.3em;', 'for'=>'rbReplaceRoomnew'))
-                .HTMLInput::generateMarkup('', array('name'=>'resvChangeDate', 'class'=>'hhk-feeskeys'))
+                HTMLInput::generateMarkup('new', ['name' => 'rbReplaceRoom', 'id' => 'rbReplaceRoomnew', 'type' => 'radio'])
+                .HTMLContainer::generateMarkup('label', 'Date', ['style' => 'margin-left:.3em; margin-right:.3em;', 'for' => 'rbReplaceRoomnew'])
+                .HTMLInput::generateMarkup('', ['name' => 'resvChangeDate', 'class' => 'hhk-feeskeys'])
             ));
 
         $table->addBodyTr(
-            HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
+            HTMLTable::makeTd('To:', ['class' => 'tdlabel'])
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'resvFutureDate', 'class' => 'hhk-feeskeys']))
+            ,
+            ['id' => 'trFutureDate', 'style' => 'display:none']
+        );
+
+        $table->addBodyTr(
+            HTMLTable::makeTd('Change to:', ['class' => 'tdlabel', 'id' => 'hhk-roomChsrtitle'])
             . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
-                . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'margin-left: 0.8em; display:none'))));
+            . HTMLContainer::generateMarkup('span', '', ['id' => 'rmDepMessage', 'style' => 'margin-left: 0.8em; display:none']))
+        );
 
         $table->addBodyTr(
             HTMLTable::makeTd(
-                HTMLInput::generateMarkup('', array('name'=>'cbUseDefaultRate', 'id'=>'cbUseDefaultRate', 'checked'=>'checked', 'type'=>'checkbox'))
-                .HTMLContainer::generateMarkup('label', 'Change to the new room rate', array('style'=>'margin-left:.3em; margin-right:.3em;', 'for'=>'cbUseDefaultRate'))
-                , array('colspan'=>'2'))
-            , array('id'=>'trUseDefaultRate', 'style'=>'display:none; text-align:center;'));
+                HTMLInput::generateMarkup('', ['name' => 'cbUseDefaultRate', 'id' => 'cbUseDefaultRate', 'checked' => 'checked', 'type' => 'checkbox'])
+                .HTMLContainer::generateMarkup('label', 'Change to the new room rate', ['style' => 'margin-left:.3em; margin-right:.3em;', 'for' => 'cbUseDefaultRate'])
+                ,
+                ['colspan' => '2'])
+            ,
+            ['id' => 'trUseDefaultRate', 'style' => 'display:none; text-align:center;']);
 
         $table->addBodyTr(
-            HTMLTable::makeTd('', array('colspan'=>'2', 'id'=>'rmChgMsg', 'style'=>'color:red;display:none')));
+            HTMLTable::makeTd('', ['colspan' => '2', 'id' => 'rmChgMsg', 'style' => 'color:red;display:none']));
 
-        return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:350px;'));
+        return $table->generateMarkup(['id' => 'moveTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:350px;']);
     }
 
     public function createChangeRoomsSelector(\PDO $dbh, $isAuthorized) {

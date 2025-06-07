@@ -522,6 +522,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Visit_Status', '1', 'On Leave','','',0),
 ('Visit_Status', 'c', 'Cancelled','','',0),
 ('Visit_Status', 'p', 'Pending','','',0),
+('Visit_Status', 'r', 'Reserved','','',0),
 
 
 ('Vol_Category','Vol_Type','Member Type','','',0),

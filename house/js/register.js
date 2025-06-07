@@ -339,7 +339,8 @@ function showChangeRoom(gname, id, idVisit, span) {
 
             }
 
-            let sDate = new Date(data.start)
+            let sDate = new Date(data.visitSpan.start)
+            const now = new Date();
 
             let $diagbox = $('#chgRoomDialog');
 
@@ -348,6 +349,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 			let $selResource = $diagbox.find('#selResource');
             let $changeDate = $('#resvChangeDate');
+            let $changeEndDate = $('#resvFutureDate');
             let $replaceRoom = $('input[name=rbReplaceRoom]');
             let $cbUseDefaultRate = $('#cbUseDefaultRate');
 
@@ -357,26 +359,50 @@ function showChangeRoom(gname, id, idVisit, span) {
                 changeYear: true,
                 autoSize: true,
                 numberOfMonths: 1,
-                maxDate: 0,
+                maxDate: '+1y',
                 minDate: sDate,
                 dateFormat: 'M d, yy'
             });
 
-            $changeDate.datepicker('setDate', new Date());
+            $changeEndDate.datepicker({
+                yearRange: '-0:+00',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                numberOfMonths: 1,
+                maxDate: '+2y',
+                minDate: now,
+                dateFormat: 'M d, yy'
+            });
+
+            $changeDate.datepicker('setDate', now);
 
             // room changer radiobutton
             $replaceRoom.change(function () {
 				if($(this).val() == 'new' && $changeDate.val() !== '') {
-					getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource);
-				} else if ($(this).val() == 'rpl') {
-					getVisitRoomList(idVisit, span, sDate, $selResource);
+					$changeDate.change();
+                } else if ($(this).val() == 'rpl') {
+                    $('#trFutureDate').hide();
+                    $changeEndDate.datepicker('option', 'setDate', null);
+                    $changeDate.datepicker('option', 'setDate', null);
+                    getVisitRoomList(idVisit, span, sDate, $selResource);
 				}
 			});
 
             // Date Control
-            $changeDate.change(function (){
-				$('input[name=rbReplaceRoomnew]').prop('checked', true);
-				getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource);
+            $changeDate.change(function () {
+
+                $('input[id="rbReplaceRoomnew"]').prop('checked', true);
+
+                if ($changeDate.datepicker("getDate") > now) {
+                    $('#trFutureDate').show('fade');
+                    $changeEndDate.datepicker('option', 'minDate', $changeDate.datepicker("getDate"));
+                } else {
+                    $changeEndDate.datepicker('option', 'setDate', null);
+                    $('#trFutureDate').hide();
+                }
+                getVisitRoomList(idVisit, span, $changeDate.datepicker("getDate"), $selResource);
+
 			});
 
             //init room selector data
@@ -413,7 +439,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 		    let buttons = {
 		        "Change Rooms": function() {
 		        	if($('#selResource').val() > 0){
-		            	changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker( "getDate" ).toUTCString());
+                        changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker("getDate").toUTCString(), $changeEndDate.datepicker("getDate").toUTCString());
 		            	$(this).dialog("close");
 		            }else{
 		            	$('#rmDepMessage').text('Choose a room').show();
@@ -432,9 +458,9 @@ function showChangeRoom(gname, id, idVisit, span) {
         }
     });
 
-	function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate) {
+    function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate, changeEndDate) {
 
-		let parms = {cmd: 'doChangeRooms', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate};
+        let parms = { cmd: 'doChangeRooms', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate, changeEndDate: changeEndDate };
 
 		$.post('ws_ckin.php', parms,
 			function (data) {
@@ -625,7 +651,7 @@ function getDtBtns(title, stripHtml = true, className = ""){
                 customize: function (win) {
                     $(win.document.body)
                         .css("font-size", "0.9em");
-                    
+
                     if (className.length > 0) {
                         $(win.document.body)
                             .addClass(className);
@@ -706,7 +732,7 @@ $(document).ready(function () {
 		if(showCurrentGuestPhotos){
 			cgCols.unshift({data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px"});
     }
-    
+
     $("#btnTextCurGuests").button().smsDialog({ "campaign": "checked_in"});
 
     $("#btnTextConfResvGuests").button().smsDialog({ "campaign": "confirmed_reservation" });
@@ -752,7 +778,7 @@ $(document).ready(function () {
 			}
 		});
     });
-    
+
 
     // Reservations
     let rvCols = [
@@ -1734,7 +1760,7 @@ $(document).ready(function () {
            				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
            			}
                 });
-               
+
                $("#unreserv .btnShowResvMsgs").off('click');
                 $("#unreserv .btnShowResvMsgs").each(function () {
                     $(this).smsDialog({ "resvId": $(this).data('rid') });
@@ -1759,7 +1785,7 @@ $(document).ready(function () {
            			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);
            		}
             });
-           
+
            $("#waitlist .btnShowResvMsgs").off('click');
            $("#waitlist .btnShowResvMsgs").each(function () {
                $(this).smsDialog({ "resvId": $(this).data('rid') });

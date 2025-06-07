@@ -406,7 +406,6 @@ class Visit {
 
         $now = new \DateTimeImmutable();
         $today = $now->setTime(0, 0, 0);
-
         $chgDayDT = new \DateTime($chgDT->format('Y-m-d 0:0:0'));
 
         $isFutureChange = ($chgDayDT > $today) ? true : false;
@@ -438,8 +437,8 @@ class Visit {
             $expDepDT = $today->add(new \DateInterval('P1D'));
         }
 
-        if ($expDepDT < $chgEndDT) {
-            $expDepDT = $chgEndDT;
+        if ($expDepDT < $chgDayDT) {
+            $expDepDT = $chgDayDT;
         };
 
         // Reservation
@@ -451,7 +450,7 @@ class Visit {
             $rescOpen = $reserv->isResourceOpen(
                     $dbh, $resc->getIdResource(),
                     $chgDT->format('Y-m-d H:i:s'),
-                    $expDepDT->format('Y-m-d H:i:s'),
+                    $expDepDT->format("Y-m-d $uS->chackout:00:00"),
                     count($this->stays),
                     ['room', 'rmtroom', 'part'],
                     FALSE,
@@ -479,9 +478,6 @@ class Visit {
             $rooms = $this->resource->getRooms();
         }
 
-        $roomChangeDate = new \DateTime($chgDT->format('Y-m-d'));
-        $roomChangeDate->setTime(0,0,0);
-
         $newIdRoomRate = $this->getIdRoomRate();
 
         if ($newRateCategory != '' && $newRateCategory != $this->getRateCategory()) {
@@ -490,7 +486,7 @@ class Visit {
             $newIdRoomRate = $rateRs->idRoom_rate->getStoredVal();
         }
 
-        if ($spanStartDT == $roomChangeDate) {
+        if ($spanStartDT == $chgDayDT) {
             // Just replace the room
             $this->setIdResource($resc->getIdResource());
             $this->resource = $resc;
@@ -553,7 +549,7 @@ class Visit {
                 $idRoomRate = $this->getIdRoomRate();
 
                 // add previous span duration to visit's rate glide credit.
-                $rateGlideDays = $this->getRateGlideCredit() +  $roomChangeDate->diff($spanStartDT, true)->days;
+                $rateGlideDays = $this->getRateGlideCredit() +  $chgDayDT->diff($spanStartDT, true)->days;
             }
 
             // Is the change in the future?
@@ -576,6 +572,7 @@ class Visit {
                 $this->visitRS->Expected_Rate->getStoredVal(),
                 $this->visitRS->idRateAdjust->getStoredVal(),
                 $chgDT,
+                $chgEndDT,
                 intval($this->visitRS->Span->getStoredVal(), 10) + 1,
                 0,
                 $rateGlideDays);
@@ -743,6 +740,7 @@ class Visit {
             $rateAdjust,
             $idRateAdjust,
             $chgDT,
+            new \DateTime(),
             (intval($this->visitRS->Span->getStoredVal(), 10) + 1),
             $stayOnLeave);
 
@@ -776,37 +774,44 @@ class Visit {
      * @param float $pledgedRate
      * @param float $rateAdjust
      * @param string $uname
-     * @param \DateTimeInterface $changeDT
+     * @param \DateTimeInterface $chgDT
+     * @param \DateTimeInterface $chgEndDT
      * @param integer $newSpan  span Id for new visit span.
      * @param integer $stayOnLeave
      * @throws RuntimeException
      */
-    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, DateTimeInterface $changeDT, $newSpan, $stayOnLeave = 0, $rateGlideDays = 0) {
+    protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, DateTimeInterface $chgDT, $chgEndDT, $newSpan, $stayOnLeave, $rateGlideDays = 0) {
 
         $uS = Session::getInstance();
         $this->stays = [];
-        $now = new \DateTime();
+
+        $now = new \DateTimeImmutable();
+        $today = $now->setTime(0, 0, 0);
+        $chgDayDT = new \DateTime($chgDT->format('Y-m-d 0:0:0'));
 
         // Load all stays for this span
         $this->loadStays($dbh, '');  // empty string loads all stays of all statuses
 
         // Change Date in the future?
-        if ($changeDT > $now) {
+        if ($chgDayDT > $today) {
             // No change to current visit status.
 
             $newSpanStatus = $visitStatus;
-            $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
+            $newSpanEnd = '';
+
+            $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->chackout:00:00"));
 
         } else {
             // End old span
             $newSpanStatus = $this->visitRS->Status->getStoredVal();
             $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
 
-            $this->visitRS->Span_End->setNewVal($changeDT);
+            $this->visitRS->Span_End->setNewVal($chgDT);
             $this->visitRS->Status->setNewVal($visitStatus);
-
-            $this->updateVisitRecord($dbh, $uS->username);
         }
+
+        // Save the old visit span.
+        $this->updateVisitRecord($dbh, $uS->username);
 
         // copy old values for new visit rs
         foreach ($this->visitRS as $p) {
@@ -821,7 +826,7 @@ class Visit {
         $this->visitRS->idResource->setNewVal($resc->getIdResource());
         $this->visitRS->Span->setNewVal($newSpan);
         $this->visitRS->Span_End->setNewVal($newSpanEnd);
-        $this->visitRS->Span_Start->setNewVal($changeDT);
+        $this->visitRS->Span_Start->setNewVal($chgDT->format('Y-m-d H:i:s'));
         $this->visitRS->Status->setNewVal($newSpanStatus);
         $this->visitRS->Pledged_Rate->setNewVal($pledgedRate);
         $this->visitRS->Rate_Category->setNewVal($newRateCategory);
@@ -858,7 +863,7 @@ class Visit {
     protected function replaceStays(\PDO $dbh, $oldVisitStatus, $uname, $stayOnLeave = 0) {
 
         $oldStays = $this->stays;  // contains all the stays.
-        $this->stays = array();
+        $this->stays = [];
 
         $this->getResource($dbh);
 
@@ -881,7 +886,7 @@ class Visit {
 
             if($stayRS->Status->getStoredVal() == VisitStatus::Active){
                 $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants); //only allocate a room if the stay is checked in
-                if (is_null($rm)) {
+                if ($rm === null) {
                     throw new RuntimeException('Room is full.  ');
                 }
             }
