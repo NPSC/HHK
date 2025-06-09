@@ -352,6 +352,11 @@ where ru.idResource_use is null
             // Set ribbon color
             $this->setRibbonColors($r, $s);
 
+            // Future visit span?
+            if ($r['Visit_Status'] == VisitStatus::Reserved) {
+               $s['borderColor'] = '#333';
+            }
+
             //
             $s['id'] = 'v' . $r['id'];
             $s['idVisit'] = $r['idVisit'];

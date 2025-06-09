@@ -247,6 +247,7 @@ class Visit {
         if ($upCtr > 0) {
             $logText = VisitLog::getUpdateText($visitRS);
 
+            // Update the visit log
             EditRS::updateStoredVals($visitRS);
             VisitLog::logVisit($dbh, $visitRS->idVisit->getStoredVal(), $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
 
@@ -802,12 +803,13 @@ class Visit {
             $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->chackout:00:00"));
 
         } else {
-            // End old span
-            $newSpanStatus = $this->visitRS->Status->getStoredVal();
+            // End current span
+            $newSpanStatus = $this->visitRS->Status->getStoredVal();  // use the current visit status for the new span.
+            $this->visitRS->Status->setNewVal($visitStatus);          // set the current visit status to the one passed in.
+
             $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
 
             $this->visitRS->Span_End->setNewVal($chgDT);
-            $this->visitRS->Status->setNewVal($visitStatus);
         }
 
         // Save the old visit span.
@@ -836,6 +838,12 @@ class Visit {
         $this->visitRS->Rate_Glide_Credit->setNewVal($rateGlideDays);
         $this->visitRS->Timestamp->setNewVal(date('Y-m-d H:i:s'));
 
+        if ($chgDayDT > $today) {
+            // Future change, set the expected departure date to the end date.
+            $this->visitRS->Expected_Departure->setNewVal($chgEndDT->format("Y-m-d $uS->chackout:00:00"));
+        }
+
+        // Save the new visit span.
         $idVisit = EditRS::insert($dbh, $this->visitRS);
 
         if ($idVisit == 0) {
@@ -866,6 +874,8 @@ class Visit {
         $this->stays = [];
 
         $this->getResource($dbh);
+        $rm = $this->resource->allocateRoom(0, $this->overrideMaxOccupants); 
+        // TODO:  This should be a check for the number of occupants in the room, not just the overrideMaxOccupants.
 
         $visitSpanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
         $visitSpanStartDT->setTime(0, 0, 0);
@@ -882,19 +892,20 @@ class Visit {
                 $stayEndDT->setTime(0, 0, 0);
             }
 
-            $rm = $this->resource->allocateRoom(0, $this->overrideMaxOccupants); //get room object regardless of status
 
-            if($stayRS->Status->getStoredVal() == VisitStatus::Active){
-                $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants); //only allocate a room if the stay is checked in
-                if ($rm === null) {
-                    throw new RuntimeException('Room is full.  ');
-                }
-            }
+            // the following cannot happen if we are in the middle of updating the stays.  EKC 6/8/2025
+            //
+            // if($stayRS->Status->getStoredVal() == VisitStatus::Active){
+            //     $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants); //only allocate a room if the stay is checked in
+            //     if ($rm === null) {
+            //         throw new RuntimeException('Room is full.  ');
+            //     }
+            // }
 
             if ($stayStartDT >= $visitSpanStartDT) {
-                // Just update the span id and status
+                // Just update the span id, room and status
 
-                // leave checked out spans alone.
+                // update stay status if not checked out.
                 if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedOut) {
                     $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
                 }
