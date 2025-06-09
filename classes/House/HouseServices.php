@@ -82,7 +82,7 @@ class HouseServices {
 
         // Get labels
         $labels = Labels::getLabels();
-
+        $isFutureSpan = FALSE;
         $idVisit = intval($idV, 10);
         $span = intval($idSpan, 10);
 
@@ -102,6 +102,11 @@ class HouseServices {
         }
 
         $r = $rows[0];
+
+        if ($r['Status'] == VisitStatus::Reserved) {
+            //  we are looking at a future span.
+            $isFutureSpan = TRUE;
+        }
 
         // Hospital and association lists
         $r['Hospital'] = '';
@@ -163,7 +168,7 @@ class HouseServices {
         $hdArry = readGenLookupsPDO($dbh, "House_Discount");
         $adnlArray = readGenLookupsPDO($dbh, 'Addnl_Charge');
 
-        if ($action != 'cf' && (count($hdArry) > 0 || count($adnlArray) > 0)) {
+        if ($action != 'cf' && !$isFutureSpan && (count($hdArry) > 0 || count($adnlArray) > 0)) {
             $showAdjust = TRUE;
         }
 
@@ -185,12 +190,22 @@ class HouseServices {
             ['style' => 'margin-top:10px;']);
 
         $mkup = HTMLContainer::generateMarkup('div',
-        		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
+        		VisitViewer::createStaysMarkup(
+                    $dbh,
+                    $r['idReservation'],
+                    $idVisit,
+                    $span,
+                    $isFutureSpan,
+                    $r['idPrimaryGuest'],
+                    $idGuest,
+                    $labels,
+                    $action,
+                    $coStayDates)
                 . $mkup,
             ['id' => 'divksStays']);
 
         // Show fees if not hf = hide fees.
-        if ($action != 'hf') {
+        if ($action != 'hf' && !$isFutureSpan) {
         	$mkup .= HTMLContainer::generateMarkup('div',
                 VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action),
                 ['class' => 'hhk-flex']);
@@ -199,7 +214,6 @@ class HouseServices {
 
 
         $dataArray['success'] = $mkup;
-
 
         // Start and end dates for rate changer
         $dataArray['start'] = $vspanStartDT->format('c');

@@ -340,6 +340,7 @@ function showChangeRoom(gname, id, idVisit, span) {
             }
 
             let sDate = new Date(data.visitSpan.start)
+            let expEndDT = new Date(data.visitSpan.end);
             const now = new Date();
 
             let $diagbox = $('#chgRoomDialog');
@@ -348,13 +349,13 @@ function showChangeRoom(gname, id, idVisit, span) {
             $diagbox.append($('<div class="hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
 
 			let $selResource = $diagbox.find('#selResource');
-            let $changeDate = $('#resvChangeDate');
-            let $changeEndDate = $('#resvFutureDate');
-            let $replaceRoom = $('input[name=rbReplaceRoom]');
-            let $cbUseDefaultRate = $('#cbUseDefaultRate');
+            let $changeDate = $diagbox.find('#resvChangeDate');
+            let $changeEndDate = $diagbox.find('#resvFutureDate');
+            let $replaceRoom = $diagbox.find('input[name=rbReplaceRoom]');
+            let $cbUseDefaultRate = $diagbox.find('#cbUseDefaultRate');
 
             $changeDate.datepicker({
-                yearRange: '-05:+00',
+                yearRange: '-03:+01',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
@@ -365,22 +366,23 @@ function showChangeRoom(gname, id, idVisit, span) {
             });
 
             $changeEndDate.datepicker({
-                yearRange: '-0:+00',
+                yearRange: '-03:+01',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
                 numberOfMonths: 1,
-                maxDate: '+2y',
-                minDate: now,
+                maxDate: '+1y',
+                minDate: sDate,
                 dateFormat: 'M d, yy'
             });
 
             $changeDate.datepicker('setDate', now);
+            $changeEndDate.datepicker('option', 'setDate', expEndDT);
 
             // room changer radiobutton
             $replaceRoom.change(function () {
 				if($(this).val() == 'new' && $changeDate.val() !== '') {
-					$changeDate.change();
+                    $changeDate.change();
                 } else if ($(this).val() == 'rpl') {
                     $('#trFutureDate').hide();
                     $changeEndDate.datepicker('option', 'setDate', null);
@@ -397,6 +399,8 @@ function showChangeRoom(gname, id, idVisit, span) {
                 if ($changeDate.datepicker("getDate") > now) {
                     $('#trFutureDate').show('fade');
                     $changeEndDate.datepicker('option', 'minDate', $changeDate.datepicker("getDate"));
+
+
                 } else {
                     $changeEndDate.datepicker('option', 'setDate', null);
                     $('#trFutureDate').hide();

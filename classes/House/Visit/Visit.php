@@ -451,7 +451,7 @@ class Visit {
             $rescOpen = $reserv->isResourceOpen(
                     $dbh, $resc->getIdResource(),
                     $chgDT->format('Y-m-d H:i:s'),
-                    $expDepDT->format("Y-m-d $uS->chackout:00:00"),
+                    $expDepDT->format("Y-m-d $uS->CheckOutTime:00:00"),
                     count($this->stays),
                     ['room', 'rmtroom', 'part'],
                     FALSE,
@@ -556,7 +556,7 @@ class Visit {
             // Is the change in the future?
             if ($isFutureChange) {
                 $newStatus = VisitStatus::Reserved;
-                $rtnMessage .= 'Guests scheduled to Change Rooms on ' . $chgDT->format('g:ia D M jS, Y') . '.  ';
+                $rtnMessage .= 'Guests scheduled to Change Rooms on ' . $chgDT->format('D M jS, Y') . '.  ';
             } else {
                 $newStatus = VisitStatus::NewSpan;
                 $rtnMessage .= 'Guests Changed Rooms.  ';
@@ -578,7 +578,6 @@ class Visit {
                 0,
                 $rateGlideDays);
 
-            $rtnMessage .= 'Guests Changed Rooms.  ';
 
             // Change date today?
             if ($chgDT->format('Y-m-d') == date('Y-m-d')) {
@@ -800,7 +799,7 @@ class Visit {
             $newSpanStatus = $visitStatus;
             $newSpanEnd = '';
 
-            $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->chackout:00:00"));
+            $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->CheckOutTime:00:00"));
 
         } else {
             // End current span
@@ -815,6 +814,8 @@ class Visit {
         // Save the old visit span.
         $this->updateVisitRecord($dbh, $uS->username);
 
+        // Start the new visit span.
+
         // copy old values for new visit rs
         foreach ($this->visitRS as $p) {
             if ($p instanceof DB_Field) {
@@ -824,7 +825,7 @@ class Visit {
 
         $this->resource = $resc;
 
-        // Create new visit span
+        // Insert new visit span
         $this->visitRS->idResource->setNewVal($resc->getIdResource());
         $this->visitRS->Span->setNewVal($newSpan);
         $this->visitRS->Span_End->setNewVal($newSpanEnd);
@@ -840,7 +841,7 @@ class Visit {
 
         if ($chgDayDT > $today) {
             // Future change, set the expected departure date to the end date.
-            $this->visitRS->Expected_Departure->setNewVal($chgEndDT->format("Y-m-d $uS->chackout:00:00"));
+            $this->visitRS->Expected_Departure->setNewVal($chgEndDT->format("Y-m-d $uS->CheckOutTime:00:00"));
         }
 
         // Save the new visit span.
@@ -855,7 +856,10 @@ class Visit {
 
         EditRS::updateStoredVals($this->visitRS);
 
-        $this->replaceStays($dbh, $visitStatus, $uS->username, $stayOnLeave);
+        // Don't need to replace the stays if the change date is in the future.
+        if ($chgDayDT <= $today) {
+            $this->replaceStays($dbh, $visitStatus, $uS->username, $stayOnLeave);
+        }
 
     }
 
@@ -874,7 +878,7 @@ class Visit {
         $this->stays = [];
 
         $this->getResource($dbh);
-        $rm = $this->resource->allocateRoom(0, $this->overrideMaxOccupants); 
+        $rm = $this->resource->allocateRoom(0, $this->overrideMaxOccupants);
         // TODO:  This should be a check for the number of occupants in the room, not just the overrideMaxOccupants.
 
         $visitSpanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
