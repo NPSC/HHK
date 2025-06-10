@@ -1,5 +1,6 @@
 <?php
 
+use HHK\API\OAuth\CRUD\Client;
 use HHK\Cron\SendConfirmationEmailJob;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
@@ -227,41 +228,49 @@ try {
         case "getOauthClient":
             $clientId = false;
             if (isset($_REQUEST['clientId'])) {
-                $clientId = filter_var($_REQUEST['clientId'], FILTER_SANITIZE_NUMBER_INT);
+                $clientId = filter_var($_REQUEST['clientId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
             if ($clientId){
-                //client info
-                $clientSql = "select * from v_oauth_clients where client_id = :id";
-                $clientStmt = $dbh->prepare($clientSql);
-                $clientStmt->execute(["id"=>$clientId]);
-                $client = $clientStmt->fetch(PDO::FETCH_ASSOC);
-                if (!$client) {
-                    throw new RuntimeException("Client ID not found");
-                }
-
-                //client info
-                $clientSql = "select * from v_oauth_clients where client_id = :id";
-                $clientStmt = $dbh->prepare($clientSql);
-                $clientStmt->execute(["id"=>$clientId]);
-                $client = $clientStmt->fetch(PDO::FETCH_ASSOC);
-                if (!$client) {
-                    throw new RuntimeException("Client ID not found");
-                }
-
-                //access tokens
-                $tokenSql = "select * from oauth_access_tokens where client_id = :id and revoked = 0 and expires_at > now()order by Timestamp desc";
-                $tokenStmt = $dbh->prepare($tokenSql);
-                $tokenStmt->execute(["id"=>$clientId]);
-                $tokens = $tokenStmt->fetchAll(PDO::FETCH_ASSOC);
-                foreach($tokens as &$token){
-                    $token["scopes"] = json_decode($token["scopes"]);
-                }
-                $events = ["client"=>$client, "accessTokens"=>$tokens];
-
+                $client = new Client($dbh, $clientId);
+                $events = ["client"=>$client->getClient(), "accessTokens"=>$client->getAccessTokens()];
             }else{
                 throw new RuntimeException("clientId is required");
             }
+            break;
+
+        case 'getOauthClientSecret':
+            $clientId = false;
+            if (isset($_GET['clientId'])) {
+                $clientId = filter_var($_GET['clientId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            if ($clientId){
+                $client = new Client($dbh, $clientId);
+                $events = ["client_secret"=>$client->getClientSecret()];
+            }else{
+                throw new RuntimeException("clientId is required");
+            }
+            break;
+
+        case "generateOauthClient":
+            
+            if(SecurityComponent::is_TheAdmin()){
+                $name = "";
+                if (isset($_POST['client_name'])) {
+                    $name = filter_var($_POST['client_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+                $scopes = [];
+                if (isset($_POST['client_scopes'])) {
+                    $scopes = filter_input(INPUT_POST, 'client_scopes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
+                }
+
+                $client = new Client($dbh);
+                $events = $client->generateNewClient($name, $scopes);
+            }else{
+                throw new RuntimeException("You must be the admin to generate a new client");
+            }
+            
             break;
 
         case "showCron":

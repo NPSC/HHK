@@ -37,5 +37,8 @@
 	},
 	"scripts" : {
 		"pack" : "HHK\\devTools\\Build::run"
+	},
+	"require-dev": {
+		"phpstan/phpstan": "^2.1"
 	}
 }

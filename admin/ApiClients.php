@@ -1,5 +1,6 @@
 <?php
 
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
 use HHK\sec\Labels;
 
@@ -31,6 +32,8 @@ $isAdmin = false;
 if($uS->rolecode == '10'){ //if Admin User
     $isAdmin = true;
 }
+
+$availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
 
 ?>
 <!DOCTYPE html>
@@ -70,20 +73,13 @@ if($uS->rolecode == '10'){ //if Admin User
             let dtAPIUsersCols = [
             {
                 "targets": [1],
-                "title": "Client ID",
-                "searchable": false,
-                "sortable": false,
-                "data": "client_id",
-            },
-            {
-                "targets": [2],
                 "title": "Client Name",
                 "searchable": false,
                 "sortable": true,
                 "data": "name",
             },
             {
-                "targets": [3],
+                "targets": [2],
                 "title": "Scopes",
                 "searchable": false,
                 "sortable": true,
@@ -93,14 +89,7 @@ if($uS->rolecode == '10'){ //if Admin User
                 }
             },
             {
-                "targets": [4],
-                "title": "Issued To",
-                "searchable": true,
-                "sortable": true,
-                "data": "issuedTo",
-            },
-            {
-                "targets": [5],
+                "targets": [3],
                 "title": "Lased Used",
                 "searchable": true,
                 "sortable": true,
@@ -110,7 +99,7 @@ if($uS->rolecode == '10'){ //if Admin User
                 }
             },
             {
-                "targets": [6],
+                "targets": [4],
                 "title": "Created At",
                 "searchable": true,
                 "sortable": true,
@@ -288,41 +277,28 @@ if($uS->rolecode == '10'){ //if Admin User
     }
         $('#dataTbl').on('click', 'button.edit-client', function(){
             window.client_id = $(this).data("client-id");
+            $("#clientDetailsDialog").dialog("open");
+        });
+
+        $(".generate-client-btn").on("click", function(){
+            $("#newClientDialog").dialog("open");
+        });
+
+        $("#clientDetailsDialog").on("click", "button#get-client-secret", function(){
             $.ajax({
                 url: 'ws_gen.php',
                 data: {
-                    'cmd': 'getOauthClient',
-                    'clientId': client_id
+                    'cmd': 'getOauthClientSecret',
+                    'clientId': window.client_id
                 },
                 dataType: 'json',
                 success: function(data) {
-                    let $dialog = $("#clientDetailsDialog");
-                    $dialog.find("#client-id").text(data.client.client_id);
-                    $dialog.find("#client-name").text(data.client.name);
-                    $dialog.find("#client-secret").text(data.client.secret);
-                    $dialog.find("#client-scopes").text(data.client.scopes);
-                    $dialog.find("#client-issued-to").text(data.client.issuedTo);
-                    $dialog.find("#client-issued-at").text(data.client.Timestamp);
-                    $dialog.find("#client-last-used").text(data.client.LastUsed);
-
-
-                    //access Tokens
-                    let $tokenTbl = $dialog.find("table#accessTokens");
-                    $tokenTbl.find("tbody").empty();
-                    $.each(data.accessTokens, function(index, value) {
-                        let $contentRow = $(`<tr>
-                            <td>${value.client_id}</td>
-                            <td>${value.scopes.join(", ")}</td>
-                            <td>${value.Timestamp}</td>
-                            <td>${value.expires_at}</td>
-                            <td>${value.revoked}</td>
-                        </tr>`);
-                        $contentRow.appendTo($tokenTbl.find("tbody"));
-                    });
-
-                    logTable.DataTable().ajax.reload();
-
-                    $dialog.dialog("open");
+                    if(data.client_secret){
+                        $("#clientDetailsDialog").find('span#client-secret').text(data.client_secret);
+                        $("#clientDetailsDialog").find('button#get-client-secret').hide();
+                    } else if(data.error_description){
+                        flagAlertMessage(data.error_description, 'error');
+                    }
                 }
             });
         });
@@ -333,6 +309,107 @@ if($uS->rolecode == '10'){ //if Admin User
             height: 800,
             title: 'Client Details',
             modal: true,
+            close: function(){
+                let $dialog = $("#clientDetailsDialog");
+                $dialog.find("#client-id").text("");
+                $dialog.find("#client-name").text("");
+                $dialog.find("#client-secret").text("");
+                $dialog.find("#get-client-secret").show();
+                $dialog.find("#client-scopes").text("");
+                $dialog.find("#client-issued-to").text("");
+                $dialog.find("#client-issued-at").text("");
+                $dialog.find("#client-last-used").text("");
+                $dialog.find("table#accessTokens tbody").empty();
+                
+                $(this).addClass("hhk-loading");
+            },
+            open: function(e){
+                if(window.client_id){
+
+                    $.ajax({
+                        url: 'ws_gen.php',
+                        data: {
+                            'cmd': 'getOauthClient',
+                            'clientId': window.client_id
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            let $dialog = $("#clientDetailsDialog");
+                            $dialog.find("#client-id").text(data.client.client_id);
+                            $dialog.find("#client-name").text(data.client.name);
+                            $dialog.find("#client-scopes").text(data.client.scopes);
+                            $dialog.find("#client-issued-to").text(data.client.issuedTo);
+                            $dialog.find("#client-issued-at").text(data.client.Timestamp);
+                            $dialog.find("#client-last-used").text(data.client.LastUsed);
+
+
+                            //access Tokens
+                            let $tokenTbl = $dialog.find("table#accessTokens");
+                            $tokenTbl.find("tbody").empty();
+                            $.each(data.accessTokens, function(index, value) {
+                                let $contentRow = $(`<tr>
+                                    <td>${value.client_id}</td>
+                                    <td>${value.scopes.join(", ")}</td>
+                                    <td>${value.Timestamp}</td>
+                                    <td>${value.expires_at}</td>
+                                    <td>${value.revoked}</td>
+                                </tr>`);
+                                $contentRow.appendTo($tokenTbl.find("tbody"));
+                            });
+
+                            logTable.DataTable().ajax.reload();
+
+                            $dialog.removeClass("hhk-loading");
+                        }
+                    });
+                }else{
+                    $("#clientDetailsDialog").dialog("close");
+                }
+            }
+        });
+
+        $("#newClientDialog").dialog({
+            autoOpen: false,
+            width: "auto",
+            height: 400,
+            title: 'Generate New Client',
+            modal: true,
+            buttons:{
+                "Generate": function(){
+                    $("#newClientForm").submit();
+                    
+                }
+            },
+            close: function(){
+                $("#newClientForm")[0].reset();
+            }
+        });
+        
+        $("#newClientForm").on("submit", function(e){
+            e.preventDefault();
+
+            let clientName = $("#newClientDialog").find("input#newClientName").val();
+            let clientScopes = $("#newClientDialog").find("select#newClientScopes").val();
+
+            if(!clientName || !clientScopes){
+                flagAlertMessage("All fields are required", 'error');
+                return;
+            }
+
+            $.ajax({
+                url: 'ws_gen.php',
+                method: 'POST',
+                data: {
+                    'cmd': 'generateOauthClient',
+                    'client_name': clientName,
+                    'client_scopes': clientScopes
+                },
+                dataType: 'json',
+                success: function(data) {
+                    $("#newClientDialog").dialog("close");
+                    $('#dataTbl').DataTable().ajax.reload();
+                }
+            });
         });
 
         $('div#vollisting').on('change', 'input.delCkBox', function() {
@@ -384,12 +461,13 @@ if($uS->rolecode == '10'){ //if Admin User
             <div id="vollisting" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content">
                 <?php echo $noReport ?>
                 <form autocomplete="off">
+                    <?php echo (SecurityComponent::is_TheAdmin() ? '<button type="button"class="generate-client-btn ui-button ui-corner-all">Generate Client</button>' : '') ?>
                 <table id="dataTbl" class="display">
                 </table>
                 </form>
             </div>
         </div>
-        <div id="clientDetailsDialog" style="font-size: 0.9em;">
+        <div id="clientDetailsDialog" style="font-size: 0.9em;" class="hhk-loading">
             <table style="width: 100%" id="clientDetailsTable" class="mb-3">
                 <thead>
                     <th>Client ID</th>
@@ -403,7 +481,7 @@ if($uS->rolecode == '10'){ //if Admin User
                 <tr>
                     <td id="client-id"></td>
                     <td id="client-name"></td>
-                    <td id="client-secret"></td>
+                    <td><span id="client-secret"></span><button type="button" id="get-client-secret" class="ui-button ui-corner-all" style="padding: 0.2em 0.4em;">Show</button></td>
                     <td id="client-scopes"></td>
                     <td id="client-issued-to"></td>
                     <td id="client-issued-at"></td>
@@ -425,8 +503,20 @@ if($uS->rolecode == '10'){ //if Admin User
             </table>
             <h3>API Access Log</h3>
             <table id="clientAccessLog"></table>
-
-            <pre id="client-raw"></pre>
+        </div>
+        <div id="newClientDialog" style="font-size: 0.9em;">
+            <form id="newClientForm">
+                <table>
+                    <tr>
+                        <td><label for="newClientName">Client Name</label></td>
+                        <td><input type="text" id="newClientName" name="clientName" required style="width: 100%"/></td>
+                    </tr>
+                    <tr>
+                        <td><label for="newClientScopes">Scopes</label></td>
+                        <td><?php echo HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($availableScopes, "", true), ["name"=>"newClientScopes", "multiple"=>"true"]);?></td>
+                    </tr>
+                </table>
+            </form>
         </div>
         <input id="isAdmin" type="hidden" value="<?php echo $isAdmin; ?>"/>
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />

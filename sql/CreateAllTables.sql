@@ -2410,7 +2410,7 @@ CREATE TABLE if not exists `w_user_tokens` (
 -- Table `oauth_clients`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `oauth_clients` (
-  `client_id` INT NOT NULL,
+  `client_id` VARCHAR(32) NOT NULL,
   `idName` INT NULL,
   `name` VARCHAR(45) NULL,
   `secret` VARCHAR(100) NULL,
@@ -2425,7 +2425,7 @@ CREATE TABLE if not exists `oauth_clients` (
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `oauth_client_scopes` (
-  `oauth_client` INT NOT NULL,
+  `oauth_client` VARCHAR(32) NOT NULL,
   `oauth_scope` VARCHAR(100) NOT NULL,
   `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`oauth_client`, `oauth_scope`),
@@ -2442,7 +2442,7 @@ CREATE TABLE IF NOT EXISTS `oauth_client_scopes` (
 CREATE TABLE if not exists `oauth_access_tokens` (
   `id` varchar(100) NOT NULL,
   `idName` INT NULL,
-  `client_id` INT NOT NULL,
+  `client_id` VARCHAR(32) NOT NULL,
   `name` VARCHAR(45) NULL,
   `scopes` TEXT NULL,
   `revoked` TINYINT NULL,

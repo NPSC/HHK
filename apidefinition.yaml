@@ -277,28 +277,16 @@ components:
         email:
           type: string
           example: john@email.com
-    ApiResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        type:
-          type: string
-        message:
-          type: string
-      xml:
-        name: '##default'
     Error:
       type: object
       properties:
-        code:
+        error:
           type: string
-        message:
+        error_description:
           type: string
       required:
-        - code
-        - message
+        - error
+        - error_description
   securitySchemes:
     oauth2:
       type: oauth2
@@ -307,4 +295,4 @@ components:
           tokenUrl: https://hhk.wireland.local/api/oauth2/token
           scopes:
             "calendar:read": read reservations and visits from calendar
-            "reports:read": read reports
+            "aggregatereports:read": read aggregate reports

@@ -82,7 +82,7 @@ $app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer
             $group->get('/occupancy/alltime', function (Request $request, Response $response, array $args) use ($dbh) {
                 return (new ReportController($dbh))->occupancyAllTime($request, $response, $args);
             });
-        })->add(new AccessTokenHasScopeMiddleware("reports:read"));
+        })->add(new AccessTokenHasScopeMiddleware("aggregatereports:read"));
 
         // Calendar
         // Endpoint: /api/v1/calendar

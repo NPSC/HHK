@@ -41,7 +41,7 @@ class ClientRepository implements ClientRepositoryInterface
         $stmt = $dbh->prepare("SELECT `client_id` FROM `oauth_clients` WHERE `client_id` = :client_id AND `secret` = :client_secret");
         $stmt->execute(array(
             'client_id' => $clientIdentifier,
-            'client_secret' => $clientSecret
+            'client_secret' => encryptMessage($clientSecret)
         ));
         $client = $stmt->fetch();
 
