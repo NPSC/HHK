@@ -385,7 +385,7 @@ function showChangeRoom(gname, id, idVisit, span) {
                     $changeDate.change();
                 } else if ($(this).val() == 'rpl') {
                     $('#trFutureDate').hide();
-                    $changeEndDate.datepicker('option', 'setDate', null);
+                    //$changeEndDate.datepicker('option', 'setDate', null);
                     $changeDate.datepicker('option', 'setDate', null);
                     getVisitRoomList(idVisit, span, sDate, $selResource);
 				}
@@ -402,7 +402,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 
                 } else {
-                    $changeEndDate.datepicker('option', 'setDate', null);
+                    //$changeEndDate.datepicker('option', 'setDate', null);
                     $('#trFutureDate').hide();
                 }
                 getVisitRoomList(idVisit, span, $changeDate.datepicker("getDate"), $selResource);

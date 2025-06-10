@@ -861,21 +861,32 @@ class HouseServices {
 
         $idVisit = intval($idV, 10);
         $span = intval($idSpan, 10);
+        $hasReservedSpan = FALSE;
+        $r = null;
 
+        // Check if the visit and span are valid.
         if ($idVisit < 1 || $span < 0) {
             return ["error" => "A Visit is not selected: $idV-$idSpan"];
         }
 
-        $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
+        // Look at all the spans for this visit.
+        $query = "select * from visit where idVisit = $idVisit;";
         $stmt1 = $dbh->query($query);
-        $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
+        while ($rw = $stmt1->fetch(\PDO::FETCH_ASSOC)) {
 
+            if ($rw['Status'] == VisitStatus::Reserved) {
+                $hasReservedSpan = TRUE;
+            }
 
-        if (count($rows) == 0) {
-            return ["error" => "<span>No Data for the indicated visit id and span ($idV, $idSpan).</span>"];
+            if ($span == $rw['Span']) {
+                $r = $rw;
+            }
         }
 
-        $r = $rows[0];
+        // span found?
+        if ($r === null) {
+            return ["error" => "<span>No Data for the indicated visit Id span ($idVisit, $idSpan).</span>"];
+        }
 
 
         // Change rooms control
@@ -893,18 +904,17 @@ class HouseServices {
             }
 
             $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation']);
-            $visit = new Visit($dbh, $reserv->getIdRegistration(), $idVisit);
 
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT->setTime($uS->CheckOutTime, 0));
             $curResc = $roomChooser->getSelectedResource();
 
-            $dataArray['success'] = $roomChooser->createChangeRoomsMarkup($dbh, $idGuest, $isAdmin);
+            $dataArray['success'] = $roomChooser->createChangeRoomsMarkup($dbh, $idGuest, $isAdmin, $hasReservedSpan);
 
             $dataArray['rooms'] = $roomChooser->makeRoomsArray();
             $dataArray['curResc'] = [
                 'idResc' => $curResc->getIdResource(),
                 'maxOcc' => $curResc->getMaxOccupants(),
-                'rate' => $visit->getPledgedRate(),
+                'rate' => $r['Pledged_Rate'],
                 'defaultRateCat' => $curResc->getDefaultRoomCategory(),
                 'title' => $curResc->getTitle(),
                 'key' => $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),
@@ -919,6 +929,7 @@ class HouseServices {
                 'span' => $span,
                 'isAuthorized' => $isAdmin,
                 'idGuest' => $idGuest,
+                'hasReservedSpan' => $hasReservedSpan
             ];
 
         } else {
@@ -1055,11 +1066,11 @@ class HouseServices {
 
                 $departDT = new \DateTime($visit->getExpectedDeparture());
                 $departDT->setTime($uS->CheckOutTime, 0, 0);
-                $now2 = new \DateTime();
-                $now2->setTime($uS->CheckOutTime, 0, 0);
+                $today = new \DateTime();
+                $today->setTime($uS->CheckOutTime, 0, 0);
 
-                if ($departDT < $now2) {
-                    $departDT = $now2;
+                if ($departDT < $today) {
+                    $departDT = $today;
                 }
 
                 $arriveDT = new \DateTime($visit->getSpanStart());
