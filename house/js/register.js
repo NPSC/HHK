@@ -377,7 +377,7 @@ function showChangeRoom(gname, id, idVisit, span) {
             });
 
             $changeDate.datepicker('setDate', now);
-            $changeEndDate.datepicker('option', 'setDate', expEndDT);
+            $changeEndDate.datepicker('setDate', expEndDT);
 
             // room changer radiobutton
             $replaceRoom.change(function () {
@@ -385,8 +385,8 @@ function showChangeRoom(gname, id, idVisit, span) {
                     $changeDate.change();
                 } else if ($(this).val() == 'rpl') {
                     $('#trFutureDate').hide();
-                    //$changeEndDate.datepicker('option', 'setDate', null);
-                    $changeDate.datepicker('option', 'setDate', null);
+                    $changeEndDate.datepicker('setDate', null);
+                    $changeDate.datepicker('setDate', null);
                     getVisitRoomList(idVisit, span, sDate, $selResource);
 				}
 			});

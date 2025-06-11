@@ -90,6 +90,7 @@ class HouseServices {
             return ["error" => "A Visit is not selected: $idV-$idSpan"];
         }
 
+        // TODO get all the visit spans
         $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
         $stmt1 = $dbh->query($query);
         $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
