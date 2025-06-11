@@ -101,39 +101,39 @@ class HouseServices {
             return ["error" => "<span>No Data.</span>"];
         }
 
-        $r = $rows[0];
+        $vSpanListing = $rows[0];
 
-        if ($r['Status'] == VisitStatus::Reserved) {
+        if ($vSpanListing['Status'] == VisitStatus::Reserved) {
             //  we are looking at a future span.
             $isFutureSpan = TRUE;
         }
 
         // Hospital and association lists
-        $r['Hospital'] = '';
-        if (isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
-            $r['Hospital'] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
+        $vSpanListing['Hospital'] = '';
+        if (isset($uS->guestLookups[GLTableNames::Hospital][$vSpanListing['idHospital']])) {
+            $vSpanListing['Hospital'] = $uS->guestLookups[GLTableNames::Hospital][$vSpanListing['idHospital']][1];
         }
 
-        $r['Association'] = '';
-        if (isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']])) {
-            $r['Association'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
-            if (trim($r['Association']) == '(None)') {
-                $r['Association'] = '';
+        $vSpanListing['Association'] = '';
+        if (isset($uS->guestLookups[GLTableNames::Hospital][$vSpanListing['idAssociation']])) {
+            $vSpanListing['Association'] = $uS->guestLookups[GLTableNames::Hospital][$vSpanListing['idAssociation']][1];
+            if (trim($vSpanListing['Association']) == '(None)') {
+                $vSpanListing['Association'] = '';
             }
         }
 
-        if ($r['Span_End'] != '') {
-            $vspanEndDT = new \DateTime($r['Span_End']);
+        if ($vSpanListing['Span_End'] != '') {
+            $vspanEndDT = new \DateTime($vSpanListing['Span_End']);
             $vspanEndDT->sub(new \DateInterval('P1D'));
         } else {
             $vspanEndDT = new \DateTime();
         }
 
-        $vspanStartDT = new \DateTime($r['Span_Start']);
+        $vspanStartDT = new \DateTime($vSpanListing['Span_Start']);
 
         $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
-        $visitCharge = new VisitCharges($r['idVisit']);
+        $visitCharge = new VisitCharges($vSpanListing['idVisit']);
         $visitCharge->sumPayments($dbh);
 
         $coDate = '';
@@ -177,11 +177,10 @@ class HouseServices {
         $mkup = HTMLContainer::generateMarkup('div',
             VisitViewer::createActiveMarkup(
                 $dbh,
-                $r,
+                $vSpanListing,
                 $visitCharge,
                 $uS->KeyDeposit,
                 $uS->VisitFee,
-                $isAdmin,
                 $uS->EmptyExtendLimit,
                 $action,
                 $coDate,
@@ -192,11 +191,11 @@ class HouseServices {
         $mkup = HTMLContainer::generateMarkup('div',
         		VisitViewer::createStaysMarkup(
                     $dbh,
-                    $r['idReservation'],
+                    $vSpanListing['idReservation'],
                     $idVisit,
                     $span,
                     $isFutureSpan,
-                    $r['idPrimaryGuest'],
+                    $vSpanListing['idPrimaryGuest'],
                     $idGuest,
                     $labels,
                     $action,
@@ -207,7 +206,7 @@ class HouseServices {
         // Show fees if not hf = hide fees.
         if ($action != 'hf' && !$isFutureSpan) {
         	$mkup .= HTMLContainer::generateMarkup('div',
-                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action),
+                VisitViewer::createPaymentMarkup($dbh, $vSpanListing, $visitCharge, $idGuest, $action),
                 ['class' => 'hhk-flex']);
 
         }
@@ -1604,7 +1603,7 @@ class HouseServices {
     public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta) {
 
         $uS = Session::getInstance();
-        $dataArray = array();
+        $dataArray = [];
 
         if ($idVisit == 0) {
             return ["error" => "Visit not specified."];

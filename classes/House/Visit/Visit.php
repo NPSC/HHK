@@ -1177,6 +1177,12 @@ class Visit {
             }
         }
 
+        // Check for a future Visit Reserve span.
+        $rowsAffected = $dbh->exec("Delete from visit where idVisit = " . $this->getIdVisit() . " and Status = '" . VisitStatus::Reserved . "';");
+        if ($rowsAffected > 0) {
+            $this->setInfoMessage("Reserved Visit removed.  ");
+        }
+
         // Update visit record
         $this->visitRS->Actual_Departure->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Span_End->setNewVal($dateDeparted->format("Y-m-d H:i:s"));

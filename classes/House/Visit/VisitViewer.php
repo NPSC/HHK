@@ -47,18 +47,17 @@ class VisitViewer {
     /**
      * Summary of createActiveMarkup
      * @param \PDO $dbh
-     * @param mixed $r
+     * @param mixed $vSpanListing
      * @param \HHK\Purchase\VisitCharges $visitCharge
      * @param bool $keyDepFlag
      * @param bool $visitFeeFlag
-     * @param bool $isAdmin
      * @param int $extendVisitDays
      * @param string $action
      * @param string $coDate
      * @param bool $showAdjust
      * @return string
      */
-    public static function createActiveMarkup(\PDO $dbh, array $r, VisitCharges $visitCharge, $keyDepFlag, $visitFeeFlag, $isAdmin,
+    public static function createActiveMarkup(\PDO $dbh, array $vSpanListing, VisitCharges $visitCharge, $keyDepFlag, $visitFeeFlag,
             $extendVisitDays, $action, $coDate, $showAdjust) {
 
         $uS = Session::getInstance();
@@ -87,10 +86,10 @@ class VisitViewer {
         if ($keyDepFlag && $visitCharge->getDepositCharged() > 0) {
 
             $keyDepAmount = $visitCharge->getKeyFeesPaid() + $visitCharge->getDepositPending();
-            $depAmtText = ($keyDepAmount == 0 ? "" : number_format($keyDepAmount, 2) . ($r['DepositPayType'] != '' ? '(' . $r['DepositPayType'] . ')' : ''));
+            $depAmtText = ($keyDepAmount == 0 ? "" : number_format($keyDepAmount, 2) . ($vSpanListing['DepositPayType'] != '' ? '(' . $vSpanListing['DepositPayType'] . ')' : ''));
 
             // Deposit Disposition selector - only if
-            if (($r['Status'] == VisitStatus::CheckedIn || $r['Status'] == VisitStatus::CheckedOut) && $keyDepAmount != 0) {
+            if (($vSpanListing['Status'] == VisitStatus::CheckedIn || $vSpanListing['Status'] == VisitStatus::CheckedOut) && $keyDepAmount != 0) {
 
                 $kdRow .= HTMLTable::makeTd(($keyDepAmount == 0 ? "" : "$")
                         .HTMLContainer::generateMarkup('span', $depAmtText, ['id' => 'kdPaid', 'style'=>'margin-right:7px;', 'data-amt'=>$keyDepAmount]));
@@ -99,7 +98,7 @@ class VisitViewer {
 
             } else {
 
-                $kdRow = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $depAmtText, ['id' => 'kdPaid', 'data-amt'=>$keyDepAmount]), array('style' => 'text-align:center;'));
+                $kdRow = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $depAmtText, ['id' => 'kdPaid', 'data-amt'=>$keyDepAmount]), ['style' => 'text-align:center;']);
 
                 $kdHeader = HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'));
             }
@@ -107,11 +106,11 @@ class VisitViewer {
         }
 
         // Arrival text
-        $tr = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date('M j, Y', strtotime($r['Arrival_Date'])), array('id'=>'spanvArrDate')));
+        $tr = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date('M j, Y', strtotime($vSpanListing['Arrival_Date'])), ['id' => 'spanvArrDate']));
         $th = HTMLTable::makeTh('First Arrival');
 
         if($uS->noticetoCheckout){
-            $noticeToCheckout = ($r['Notice_to_Checkout'] ? date('M j, Y', strtotime($r['Notice_to_Checkout'])) : '');
+            $noticeToCheckout = ($vSpanListing['Notice_to_Checkout'] ? date('M j, Y', strtotime($vSpanListing['Notice_to_Checkout'])) : '');
             $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($noticeToCheckout, array('class'=>'ckdate', 'id'=>'noticeToCheckout','name'=>'noticeToCheckout', 'size'=>'12')));
             $th .= HTMLTable::makeTh(Labels::getString("Visit", "noticeToCheckout", "Notice to Checkout"));
         }
@@ -119,7 +118,7 @@ class VisitViewer {
         $departureText = "";
         $days = "";
 
-        switch ($r['Status']) {
+        switch ($vSpanListing['Status']) {
             case VisitStatus::CheckedIn:
 
                 $depHeader = "Expected End";
@@ -129,15 +128,15 @@ class VisitViewer {
                     // deal with changed checkout date
                     $deptDT = new \DateTime($coDate);
                     $deptDT->setTime(0, 0, 0);
-                    $arrivalDT = new \DateTime($r['Arrival_Date']);
+                    $arrivalDT = new \DateTime($vSpanListing['Arrival_Date']);
                     $arrivalDT->setTime(0, 0, 0);
                     $days = $deptDT->diff($arrivalDT, TRUE)->days;
                     $departureText = $deptDT->format('M, j, Y');
 
                 } else {
 
-                    $departureText = date('M j, Y', strtotime($r['Expected_Departure']));
-                    $days = $r['Expected_Nights'];
+                    $departureText = date('M j, Y', strtotime($vSpanListing['Expected_Departure']));
+                    $days = $vSpanListing['Expected_Nights'];
                 }
 
                 break;
@@ -146,23 +145,23 @@ class VisitViewer {
 
                 $depHeader = "Room Changed";
                 $daysHeader = "Span Nights";
-                $departureText = date('M j, Y', strtotime($r['Span_End']));
-                $days = $r['Actual_Span_Nights'];
+                $departureText = date('M j, Y', strtotime($vSpanListing['Span_End']));
+                $days = $vSpanListing['Actual_Span_Nights'];
                 break;
 
             case VisitStatus::ChangeRate:
 
                 $depHeader = "Changed Room Rate";
                 $daysHeader = "Span Nights";
-                $departureText = date('M j, Y', strtotime($r['Span_End']));
-                $days = $r['Actual_Span_Nights'];
+                $departureText = date('M j, Y', strtotime($vSpanListing['Span_End']));
+                $days = $vSpanListing['Actual_Span_Nights'];
                 break;
 
             case VisitStatus::CheckedOut:
                 $depHeader = "Actual End";
                 $daysHeader = "Actual Nights";
-                $departureText = date('M j, Y', strtotime($r['Actual_Departure']));
-                $days = $r['Actual_Nights'];
+                $departureText = date('M j, Y', strtotime($vSpanListing['Actual_Departure']));
+                $days = $vSpanListing['Actual_Nights'];
 
                 break;
 
@@ -174,15 +173,15 @@ class VisitViewer {
                     // deal with changed checkout date
                     $deptDT = new \DateTime($coDate);
                     $deptDT->setTime(0, 0, 0);
-                    $arrivalDT = new \DateTime($r['Arrival_Date']);
+                    $arrivalDT = new \DateTime($vSpanListing['Arrival_Date']);
                     $arrivalDT->setTime(0, 0, 0);
                     $days = $deptDT->diff($arrivalDT, TRUE)->days;
                     $departureText = $deptDT->format('M, j, Y');
 
                 } else {
 
-                    $departureText = date('M j, Y', strtotime($r['Expected_Departure']));
-                    $days = $r['Expected_Nights'];
+                    $departureText = date('M j, Y', strtotime($vSpanListing['Expected_Departure']));
+                    $days = $vSpanListing['Expected_Nights'];
                 }
 
                 break;
@@ -205,9 +204,9 @@ class VisitViewer {
         }
 
         //Room Rate
-        $rateTitle = RoomRate::getRateDescription($dbh, $r['idRoom_Rate'], $r['Rate_Category'], $r['Expected_Rate']);
-        if ($r['Rate_Category'] == RoomRateCategories::Fixed_Rate_Category) {
-            $rateTitle .= ': $' . number_format($r['Pledged_Rate'], 2);
+        $rateTitle = RoomRate::getRateDescription($dbh, $vSpanListing['idRoom_Rate'], $vSpanListing['Rate_Category'], $vSpanListing['Expected_Rate']);
+        if ($vSpanListing['Rate_Category'] == RoomRateCategories::Fixed_Rate_Category) {
+            $rateTitle .= ': $' . number_format($vSpanListing['Pledged_Rate'], 2);
         }
 
         $tr .= HTMLTable::makeTd($rateTitle);
@@ -216,7 +215,7 @@ class VisitViewer {
         // Visit fee
         if ($visitFeeFlag) {
 
-            if ($r['Status'] == VisitStatus::Reserved) {
+            if ($vSpanListing['Status'] == VisitStatus::Reserved) {
                 $vFeeSelector = HTMLContainer::generateMarkup('span', '$' . number_format($visitCharge->getVisitFeeCharged(), 2));
             } else {
 
@@ -238,32 +237,32 @@ class VisitViewer {
         }
 
         // hospital
-        $hname = $r['Hospital'];
+        $hname = $vSpanListing['Hospital'];
 
-        if ($r['Association'] != '' && $r['Association'] != '(None)') {
-            $hname = $r['Association'] . ' / ' . $hname;
+        if ($vSpanListing['Association'] != '' && $vSpanListing['Association'] != '(None)') {
+            $hname = $vSpanListing['Association'] . ' / ' . $hname;
         }
 
         $hospitalButton = '';
-        if ($r['idHospital'] > 0) {
+        if ($vSpanListing['idHospital'] > 0) {
 
             $hospitalButton = HTMLInput::generateMarkup($hname
         	,
                 [
                     'type' => 'button',
                     'class' => 'hhk-hospitalstay ui-corner-all hhk-hospTitleBtn ui-button ignrSave',
-                    'data-idhs' => $r['idHospital_stay'],
-                    'style' => ($uS->guestLookups['Hospitals'][$r['idHospital']][5] ? "color:" . $uS->guestLookups['Hospitals'][$r['idHospital']][5] . "; border: 1px solid black;" : '') . ($uS->guestLookups['Hospitals'][$r['idHospital']][4] ? "background:" . $uS->guestLookups['Hospitals'][$r['idHospital']][4] . ";" : '') . ";",
+                    'data-idhs' => $vSpanListing['idHospital_stay'],
+                    'style' => ($uS->guestLookups['Hospitals'][$vSpanListing['idHospital']][5] ? "color:" . $uS->guestLookups['Hospitals'][$vSpanListing['idHospital']][5] . "; border: 1px solid black;" : '') . ($uS->guestLookups['Hospitals'][$vSpanListing['idHospital']][4] ? "background:" . $uS->guestLookups['Hospitals'][$vSpanListing['idHospital']][4] . ";" : '') . ";",
                     'title' => $labels->getString('Hospital', 'hospital', 'Hospital') . ' Details'
                 ]
             );
-        }else if($r['idHospital_stay'] > 0 && $r['idHospital'] == 0){
+        }else if($vSpanListing['idHospital_stay'] > 0 && $vSpanListing['idHospital'] == 0){
             $hospitalButton = HTMLInput::generateMarkup("No Hospital Assigned"
         	,
                 [
                     'type' => 'button',
                     'class' => 'hhk-hospitalstay ui-corner-all hhk-hospTitleBtn ui-button ignrSave',
-                    'data-idhs' => $r['idHospital_stay'],
+                    'data-idhs' => $vSpanListing['idHospital_stay'],
                     'style' => "color:#fff; border: 1px solid #2C3E50; background: #5c9ccc;",
                     'title' => $labels->getString('Hospital', 'hospital', 'Hospital') . ' Details'
                 ]
@@ -274,40 +273,40 @@ class VisitViewer {
         $tr .= HTMLTable::makeTd($hospitalButton, array('id'=>'hhk-HospitalTitle'));
 
         // Patient Name
-        if ($r['Patient_Name'] != '') {
+        if ($vSpanListing['Patient_Name'] != '') {
             $th .= HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'));
-            $tr .= HTMLTable::makeTd($r['Patient_Name']);
+            $tr .= HTMLTable::makeTd($vSpanListing['Patient_Name']);
         }
 
-        if(isset($r["Checked_In_By"])){
+        if(isset($vSpanListing["Checked_In_By"])){
             $th .= HTMLTable::makeTh("Checked In By");
-            $tr .= HTMLTable::makeTd($r['Checked_In_By']);
+            $tr .= HTMLTable::makeTd($vSpanListing['Checked_In_By']);
         }
 
 
         // add completed rows to table
         $table->addBodyTr($tr);
         $table->addHeaderTr($th);
-        $tblMarkup = $table->generateMarkup(array('id' => 'tblActiveVisit', 'style'=>'width:100%; min-width: max-content;'));
+        $tblMarkup = $table->generateMarkup(['id' => 'tblActiveVisit', 'style' => 'width:100%; min-width: max-content;']);
 
         $weekendRowMkup = "";
 
         // Change Rate markup
-        if ($uS->RoomPriceModel != ItemPriceCode::None && $action != 'ref' && $r['Status'] != VisitStatus::Reserved) {
+        if ($uS->RoomPriceModel != ItemPriceCode::None && $action != 'ref' && $vSpanListing['Status'] != VisitStatus::Reserved) {
 
             $rateChooser = new RateChooser($dbh);
             $vRs = new VisitRs();
-            EditRS::loadRow($r, $vRs);
+            EditRS::loadRow($vSpanListing, $vRs);
             $rateTbl = $rateChooser->createChangeRateMarkup($dbh, $vRs);
 
             $weekendRowMkup .= $rateTbl->generateMarkup();
         }
 
         // Weekender button
-        if ($r['Status'] == VisitStatus::CheckedIn && $extendVisitDays > 0 && $action != 'ref') {
+        if ($vSpanListing['Status'] == VisitStatus::CheckedIn && $extendVisitDays > 0 && $action != 'ref') {
             $etbl = new HTMLTable();
 
-            $olStmt = $dbh->query("select `On_Leave`, `Span_Start_Date`  from `stays` where `stays`.`idVisit` = " . $r['idVisit'] . " and `stays`.`Status` = 'a' LIMIT 0, 1 ");
+            $olStmt = $dbh->query("select `On_Leave`, `Span_Start_Date`  from `stays` where `stays`.`idVisit` = " . $vSpanListing['idVisit'] . " and `stays`.`Status` = 'a' LIMIT 0, 1 ");
             $olRows = $olStmt->fetchAll(\PDO::FETCH_NUM);
 
             if (isset($olRows[0][0]) && $olRows[0][0] > 0) {
@@ -316,39 +315,39 @@ class VisitViewer {
                 $leaveEndDT = $leaveStartDT->add(new \DateInterval('P'. $olRows[0][0] . 'D'));
 
                 $etbl->addBodyTr(HTMLTable::makeTh(
-                        HTMLContainer::generateMarkup('label', 'On Leave Until: ' . $leaveEndDT->format('M j, Y'), array('for'=>'leaveRetCb', 'style'=>'margin-right:.5em;'))
-                        .HTMLInput::generateMarkup('', array('name' => 'leaveRetCb', 'type' => 'checkbox', 'class'=>'hhk-feeskeys hhk-extVisitSw', 'title'=>'Return from leave or extend leave')))
+                        HTMLContainer::generateMarkup('label', 'On Leave Until: ' . $leaveEndDT->format('M j, Y'), ['for' => 'leaveRetCb', 'style' => 'margin-right:.5em;'])
+                        .HTMLInput::generateMarkup('', ['name' => 'leaveRetCb', 'type' => 'checkbox', 'class' => 'hhk-feeskeys hhk-extVisitSw', 'title' => 'Return from leave or extend leave']))
 
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('ext', array('name'=>'rbOlpicker', 'id'=>'rbOlpicker-ext', 'type'=>'radio', 'class' => 'hhk-feeskeys'))
-                    . HTMLContainer::generateMarkup('label', 'Extend Until:', array('style'=>'margin-left:.3em;','for'=>'rbOlpicker-ext'))
-                    . HTMLInput::generateMarkup('', array('name' => 'extendDate', 'style'=>'margin-left:.3em;', 'class' => 'hhk-feeskeys ckdateFut'))
-                    , array('style'=>'display:none;', 'class'=>'hhk-extendVisit'))
+                    . HTMLContainer::generateMarkup('label', 'Extend Until:', ['style' => 'margin-left:.3em;', 'for' => 'rbOlpicker-ext'])
+                    . HTMLInput::generateMarkup('', ['name' => 'extendDate', 'style' => 'margin-left:.3em;', 'class' => 'hhk-feeskeys ckdateFut'])
+                    , ['style' => 'display:none;', 'class' => 'hhk-extendVisit'])
 
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('rtDate', array('name'=>'rbOlpicker', 'id'=>'rbOlpicker-rtDate', 'type'=>'radio', 'checked'=>'checked', 'class' => 'hhk-feeskeys'))
-                    . HTMLContainer::generateMarkup('label', 'Returned:', array('style'=>'margin-left:.3em;','for'=>'rbOlpicker-rtDate'))
-                    . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'txtWRetDate', 'style'=>'margin-left:.3em;', 'class'=>'ckdate hhk-feeskeys'))
-                    , array('style'=>'display:none;', 'class'=>'hhk-extendVisit')));
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('rtDate', ['name' => 'rbOlpicker', 'id' => 'rbOlpicker-rtDate', 'type' => 'radio', 'checked' => 'checked', 'class' => 'hhk-feeskeys'])
+                    . HTMLContainer::generateMarkup('label', 'Returned:', ['style' => 'margin-left:.3em;', 'for' => 'rbOlpicker-rtDate'])
+                    . HTMLInput::generateMarkup(date('M j, Y'), ['id' => 'txtWRetDate', 'style' => 'margin-left:.3em;', 'class' => 'ckdate hhk-feeskeys'])
+                    , ['style' => 'display:none;', 'class' => 'hhk-extendVisit']));
 
             } else {
                 // Not on leave
                 $ths = HTMLTable::makeTh(
-                        HTMLContainer::generateMarkup('label', 'Weekend Leave', array('for'=>'extendCb', 'style'=>'margin-right:.5em;'))
-                        .HTMLInput::generateMarkup('', array('name' => 'extendCb', 'type' => 'checkbox', 'class'=>'hhk-feeskeys hhk-extVisitSw', 'title'=>'Start Leave')))
+                        HTMLContainer::generateMarkup('label', 'Weekend Leave', ['for' => 'extendCb', 'style' => 'margin-right:.5em;'])
+                        .HTMLInput::generateMarkup('', ['name' => 'extendCb', 'type' => 'checkbox', 'class' => 'hhk-feeskeys hhk-extVisitSw', 'title' => 'Start Leave']))
                 .HTMLTable::makeTd(
-                        HTMLContainer::generateMarkup('span', 'For:', array('style'=>'margin-left:.3em;'))
-                    . HTMLInput::generateMarkup($extendVisitDays, array('name' => 'extendDays', 'size'=>'2', 'style'=>'margin-left:.3em;', 'class' => 'hhk-feeskeys'))
-                    . HTMLContainer::generateMarkup('span', 'nights', array('style'=>'margin-left:.3em;'))
-                    , array('style'=>'display:none;', 'class'=>'hhk-extendVisit'))
+                        HTMLContainer::generateMarkup('span', 'For:', ['style' => 'margin-left:.3em;'])
+                    . HTMLInput::generateMarkup($extendVisitDays, ['name' => 'extendDays', 'size' => '2', 'style' => 'margin-left:.3em;', 'class' => 'hhk-feeskeys'])
+                    . HTMLContainer::generateMarkup('span', 'nights', ['style' => 'margin-left:.3em;'])
+                    , ['style' => 'display:none;', 'class' => 'hhk-extendVisit'])
                 .HTMLTable::makeTd(
-                        HTMLContainer::generateMarkup('span', 'Starting:', array('style'=>'margin-left:.3em;'))
-                    . HTMLInput::generateMarkup(date('M j, Y'), array('name' => 'txtWStart', 'readonly'=>'readonly', 'class' => 'hhk-feeskeys ckdate', 'style'=>'margin-left:.3em;'))
-                    ,array('style'=>'display:none;', 'class'=>'hhk-extendVisit'));
+                        HTMLContainer::generateMarkup('span', 'Starting:', ['style' => 'margin-left:.3em;'])
+                    . HTMLInput::generateMarkup(date('M j, Y'), ['name' => 'txtWStart', 'readonly' => 'readonly', 'class' => 'hhk-feeskeys ckdate', 'style' => 'margin-left:.3em;'])
+                    , ['style' => 'display:none;', 'class' => 'hhk-extendVisit']);
 
                 if ($uS->RoomPriceModel != ItemPriceCode::None) {
                     $ths .= HTMLTable::makeTd(
-                        HTMLContainer::generateMarkup('label', 'No Room Charge', array('for'=>'noChargeCb', 'style'=>'margin-right:.5em;'))
-                        .HTMLInput::generateMarkup('', array('name' => 'noChargeCb', 'type' => 'checkbox', 'class' => 'hhk-feeskeys'))
-                        , array('style'=>'display:none;', 'class'=>'hhk-extendVisit'));
+                        HTMLContainer::generateMarkup('label', 'No Room Charge', ['for' => 'noChargeCb', 'style' => 'margin-right:.5em;'])
+                        .HTMLInput::generateMarkup('', ['name' => 'noChargeCb', 'type' => 'checkbox', 'class' => 'hhk-feeskeys'])
+                        ,['style' => 'display:none;', 'class' => 'hhk-extendVisit']);
                 }
 
                 $etbl->addBodyTr($ths);
@@ -363,8 +362,8 @@ class VisitViewer {
 
         //Ribbon note
         $ribbonTbl = new HTMLTable();
-        $ribbonTbl->addHeaderTr(HTMLTable::makeTh("Ribbon Note", array('title'=>'This note shows on the visit ribbon on the calemdar page')) . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Notes'], array('name'=>'txtRibbonNote', 'size'=>'25', 'maxlength'=>'20', 'title'=>'Maximun 20 characters'))));
-        $ribbonTblMarkup = $ribbonTbl->generateMarkup(array("class"=>"my-2"));
+        $ribbonTbl->addHeaderTr(HTMLTable::makeTh("Ribbon Note", ['title' => 'This note shows on the visit ribbon on the calemdar page']) . HTMLTable::makeTd(HTMLInput::generateMarkup($vSpanListing['Notes'], ['name' => 'txtRibbonNote', 'size' => '25', 'maxlength' => '20', 'title' => 'Maximun 20 characters'])));
+        $ribbonTblMarkup = $ribbonTbl->generateMarkup(["class" => "my-2"]);
 
         $tblMarkup .= $ribbonTblMarkup . $notesContainer;
 
@@ -373,26 +372,26 @@ class VisitViewer {
         // Adjust button
         if ($showAdjust && $action != 'ref') {
 
-            $visitBoxLabel .= HTMLInput::generateMarkup('Adjust Fees...', array('name'=>'paymentAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Create one-time additional charges or discounts.', 'class'=>'ml-3'));
+            $visitBoxLabel .= HTMLInput::generateMarkup('Adjust Fees...', ['name' => 'paymentAdjust', 'type' => 'button', 'style' => 'font-size:.8em;', 'title' => 'Create one-time additional charges or discounts.', 'class' => 'ml-3']);
         }
 
-        if ($r['Status'] == VisitStatus::CheckedIn && $action != 'ref' && $uS->TrackAuto) {
+        if ($vSpanListing['Status'] == VisitStatus::CheckedIn && $action != 'ref' && $uS->TrackAuto) {
 
-            $visitBoxLabel .= HTMLInput::generateMarkup('Edit Vehicles...', array('name'=>'vehAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Edit vehicles for this visit.', 'class'=>'ui-button ui-corner-all ui-widget ml-2', 'role'=>'button'));
+            $visitBoxLabel .= HTMLInput::generateMarkup('Edit Vehicles...', ['name' => 'vehAdjust', 'type' => 'button', 'style' => 'font-size:.8em;', 'title' => 'Edit vehicles for this visit.', 'class' => 'ui-button ui-corner-all ui-widget ml-2', 'role' => 'button']);
         }
 
 
         // Make undo checkout button.
-        if ($r['Status'] == VisitStatus::CheckedOut) {
+        if ($vSpanListing['Status'] == VisitStatus::CheckedOut) {
 
-            $spnMkup = HTMLContainer::generateMarkup('label', ' Undo Checkout', array('for'=>'undoCkout'))
-                    . HTMLInput::generateMarkup('', array('id'=>'undoCkout', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'))
-                    . HTMLContainer::generateMarkup('span', 'New Expected Departure Date: ', array('style'=>'margin-right: 0.3em; margin-left:0.3em;'))
-                    . HTMLInput::generateMarkup('', array('id'=>'txtUndoDate', 'class'=>'ckdateFut hhk-feeskeys'));
+            $spnMkup = HTMLContainer::generateMarkup('label', ' Undo Checkout', ['for' => 'undoCkout'])
+                    . HTMLInput::generateMarkup('', ['id' => 'undoCkout', 'type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.3em;margin-left:0.3em;'])
+                    . HTMLContainer::generateMarkup('span', 'New Expected Departure Date: ', ['style' => 'margin-right: 0.3em; margin-left:0.3em;'])
+                    . HTMLInput::generateMarkup('', ['id' => 'txtUndoDate', 'class' => 'ckdateFut hhk-feeskeys']);
 
-            $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>'Undo Checkout'));
+            $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, ['style' => 'margin:0 1em;', 'title' => 'Undo Checkout']);
 
-        } else if ($r['Status'] == VisitStatus::NewSpan) {
+        } else if ($vSpanListing['Status'] == VisitStatus::NewSpan) {
 
             // Make undo Room Change button
             $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Room Change', ['for' => 'undoRmChg'])
@@ -405,9 +404,10 @@ class VisitViewer {
 
         return
             HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', $visitBoxLabel, array('style'=>'font-weight:bold;'))
-                   . HTMLContainer::generateMarkup("div", $tblMarkup, array("style"=>"overflow:auto;"))
-                , array('class'=>'hhk-panel', 'style'=>'margin-bottom:10px;'));
+                HTMLContainer::generateMarkup('legend', $visitBoxLabel, ['style' => 'font-weight:bold;'])
+                   . HTMLContainer::generateMarkup("div", $tblMarkup, ["style" => "overflow:auto;"])
+                ,
+                ['class' => 'hhk-panel', 'style' => 'margin-bottom:10px;']);
 
     }
 
@@ -1380,7 +1380,7 @@ where `Deleted` = 0 and `Status` = 'up'
         // get visit recordsets, order by span
         $visitRS = new VisitRs();
         $visitRS->idVisit->setStoredVal($idVisit);
-        $visitRcrds = EditRS::select($dbh, $visitRS, array($visitRS->idVisit), 'and', array($visitRS->Span));
+        $visitRcrds = EditRS::select($dbh, $visitRS, [$visitRS->idVisit], 'and', [$visitRS->Span]);
 
         // Bad visit?.
         if (count($visitRcrds) < 1) {
@@ -1393,12 +1393,21 @@ where `Deleted` = 0 and `Status` = 'up'
         $spans = [];
         $stays = [];
         $firstArrival = NULL;
+        $hasReservedSpan = false;
+        $reserveSpanRs = null;
 
 
         $lastSpanId = 0;
         foreach ($visitRcrds as $r) {
+
             if ($r['Span'] > $lastSpanId) {
-                $lastSpanId = $r['Span'];
+
+                if ($r['Status'] == VisitStatus::Reserved) {
+                    $hasReservedSpan = true;
+                    $reserveSpanRs = $r;
+                } else {
+                    $lastSpanId = $r['Span'];
+                }
             }
         }
 
