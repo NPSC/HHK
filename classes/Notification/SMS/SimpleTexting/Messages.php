@@ -2,7 +2,10 @@
 
 namespace HHK\Notification\SMS\SimpleTexting;
 
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\ServerException;
 use HHK\Exception\SmsException;
 use HHK\Notification\SMS\AbstractMessages;
 
@@ -62,13 +65,15 @@ Class Messages extends AbstractMessages {
                 throw new SmsException("Error getting messages: content not found on remote");
             }
             
-        }catch(ClientException $e){
+        }catch(BadResponseException $e){
             $respArr = json_decode($e->getResponse()->getBody(), true);
 
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                 throw new SmsException("Error getting messages: " . $respArr["status"] . ": " . $respArr["message"]);
-            } else {
-                throw new SmsException("Error getting messages: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+            } else if(is_array($respArr) && isset($respArr['details'])){
+                throw new SmsException("Error getting messages: " . $respArr["details"]);
+            }else{
+                throw new SmsException("Error getting messages: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase() . $e->getResponse()->getBody());
             }
         }
     }
