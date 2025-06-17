@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Admin\Import;
 
+use ErrorException;
+use PDOException;
+
 class Upload {
 
     protected \PDO $dbh;
@@ -39,7 +42,9 @@ class Upload {
                         $insertList .= ", ";
                     }
 
-                    $fieldList .= $field;
+                    $field = preg_replace("/[^A-Za-z0-9]/", '', $field);
+
+                    $fieldList .= "`".$field."`";
                     $insertList .= ":".$field;
                 }
                 $fieldList .= ")";
@@ -48,11 +53,16 @@ class Upload {
                 $stmt = $this->dbh->prepare($insertSql);
 
                 foreach($this->rawData as $line){
-                    $data = array();
-                    foreach ($line as $key=>$value){
-                        $data[":" . $key] = htmlentities($value);
+                    try{
+                        $data = array();
+                        foreach ($line as $key=>$value){
+                            $key = preg_replace("/[^A-Za-z0-9]/", '', $key);
+                            $data[":" . $key] = htmlentities($value);
+                        }
+                        $stmt->execute($data);
+                    }catch(PDOException $e){
+                        throw new ErrorException($e->getMessage(). " Query: ".$stmt->queryString." params: ".print_r($data, true)." ImportLine: '".$line."'");
                     }
-                    $stmt->execute($data);
                 }
 
                 if($this->dbh->inTransaction()){
@@ -129,6 +139,7 @@ class Upload {
 
                 //add fields
                 foreach($fields as $field){
+                    $field = preg_replace("/[^A-Za-z0-9]/", '', $field);
                     $field = trim($field);
                     if($field == "Notes"){
                         $stmt .= ", `" . $field . "` TEXT NULL";
