@@ -115,6 +115,9 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 		case 'makeGenders':
 			$return = $import->makeMissingGenders();
 			break;
+		case 'makerelationship':
+			$return = $import->makeMissingRelationships();
+			break;
 		default:
 			exit;
 	}
@@ -177,10 +180,11 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 					method: "post",
 					data:{
 						startImport:true,
-						limit: 50
+						limit: 100
 					},
 					dataType:"json",
 					success: function(data){
+						console.log(data);
     					if(data.success && data.progress.progress){
     						$("#progressBar .progressValue").css("width", data.progress.progress + "%");
     						$("#progressBar .progressValueText").text(data.progress.progress + "%");
@@ -212,7 +216,9 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
     				$("#progressBar .progressValueText").css("color","black");
 					$("#progressBar .spinner").show();
 					$("#startImport").hide();
+
 					startImport();
+
 				});
 
 				$(document).on("click", "#undo", function(){
@@ -266,10 +272,12 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 						<label for="csvFile">Upload CSV File:</label>
 						<input type="file" id="csvFile" name="csvFile" accept=".csv">
 					</div>
+					<!--
 					<div>
 					<label for="numFakeMembers">OR - Number of fake records:</label>
 						<input type="number" id="numFakeMembers" name="numFakeMembers">
 					</div>
+					-->
 					<?php if(isset($errorMsg)){ ?>
 					<div>
 						<?php echo $errorMsg; ?>

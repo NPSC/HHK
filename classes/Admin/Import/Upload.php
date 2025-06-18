@@ -18,7 +18,7 @@ class Upload {
         //}elseif(is_int($file) && $file > 0){
         //    $this->rawData = $this->makeFakeMembers($file);
         }else{
-            throw new \ErrorException("CSV file or number of fake members is required");
+            throw new ErrorException("CSV file or number of fake members is required");
         }
     }
 
@@ -42,8 +42,6 @@ class Upload {
                         $insertList .= ", ";
                     }
 
-                    $field = preg_replace("/[^A-Za-z0-9]/", '', $field);
-
                     $fieldList .= "`".$field."`";
                     $insertList .= ":".$field;
                 }
@@ -56,7 +54,6 @@ class Upload {
                     try{
                         $data = array();
                         foreach ($line as $key=>$value){
-                            $key = preg_replace("/[^A-Za-z0-9]/", '', $key);
                             $data[":" . $key] = htmlentities($value);
                         }
                         $stmt->execute($data);
@@ -71,7 +68,7 @@ class Upload {
                 
                 return true;
             }else{
-                throw new \ErrorException("Failed to insert row: " . "No fields found in file.");
+                throw new ErrorException("Failed to insert row: " . "No fields found in file.");
             }
         }catch (\Exception $e){
             if($this->dbh->inTransaction()){
@@ -86,6 +83,12 @@ class Upload {
         if($csvFile['type'] == 'text/csv'){
 
             $csv = array_map('str_getcsv', file($csvFile['tmp_name']));
+
+            //clean up column header
+            array_walk($csv[0], function(&$val){
+                $val = preg_replace("/[^A-Za-z0-9]/", '', $val);
+            });
+
             array_walk($csv, function(&$a) use ($csv) {
                 $a = array_combine($csv[0], $a);
             });
@@ -94,7 +97,7 @@ class Upload {
             return $csv;
 
         }else{
-            throw new \ErrorException("Uploaded file is not a CSV file. Type is " . $csvFile['type']);
+            throw new ErrorException("Uploaded file is not a CSV file. Type is " . $csvFile['type']);
         }
     }
 
@@ -126,7 +129,7 @@ class Upload {
 
             return $members;
         }else{
-            throw new \ErrorException("Number of members must be > 0");
+            throw new ErrorException("Number of members must be > 0");
         }
     }
 
@@ -135,11 +138,10 @@ class Upload {
             $fields = array_keys($this->rawData[0]);
 
             if(count($fields) > 0){
-                $stmt = "CREATE OR REPLACE TABLE `" . SELF::TBL_NAME . "`(`importId` INT AUTO_INCREMENT, `imported` BOOL";
+                $stmt = "CREATE OR REPLACE TABLE `" . SELF::TBL_NAME . "`(`importId` INT AUTO_INCREMENT, `imported` BOOL, status ENUM('pending', 'processing', 'done') DEFAULT 'pending', workerId  varchar(32) ";
 
                 //add fields
                 foreach($fields as $field){
-                    $field = preg_replace("/[^A-Za-z0-9]/", '', $field);
                     $field = trim($field);
                     if($field == "Notes"){
                         $stmt .= ", `" . $field . "` TEXT NULL";
@@ -150,15 +152,15 @@ class Upload {
                 $stmt .= ", PRIMARY KEY(importId));";
 
                 if($this->dbh->exec($stmt) === false){
-                    throw new \ErrorException("SQL Error: " . $this->dbh->errorInfo()[2]);
+                    throw new ErrorException("SQL Error: " . $this->dbh->errorInfo()[2]);
                 }else{
                     return true;
                 }
             }else{
-                throw new \ErrorException("Unable to create " . self::TBL_NAME . " table: No fields found in file");
+                throw new ErrorException("Unable to create " . self::TBL_NAME . " table: No fields found in file");
             }
         }else{
-            throw new \ErrorException("Unable to create " . self::TBL_NAME . " table: Unable to parse file");
+            throw new ErrorException("Unable to create " . self::TBL_NAME . " table: Unable to parse file");
         }
     }
 

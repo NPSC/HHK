@@ -51,10 +51,17 @@ class Import {
     }
 
     public function startImport(int $limit = 100, bool $people = true, bool $visits = false){
-
+        $uS = Session::getInstance();
         ini_set('max_execution_time', '300');
 
-        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null group by i.importId order by i.`importId` LIMIT $limit;";
+        
+
+
+        $batchquery = "UPDATE `". Upload::TBL_NAME."` set status = 'processing' where status = 'pending' order by `patientID` LIMIT $limit;";
+        $this->dbh->exec($batchquery);
+        
+        //$query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and status = 'pending' group by i.importId order by i.`patientID` LIMIT $limit;";
+        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and i.status = 'processing' group by i.importId order by i.`patientID`";
         $stmt = $this->dbh->query($query);
 
         $numRead = $stmt->rowCount();
@@ -69,57 +76,84 @@ class Import {
         $patId = '';
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
             //$guests = [];
             try{
                 $this->dbh->beginTransaction();
 
                //loop through guests
                 $patient = [
-                    "FirstName" => $r['PatientFirst'],
-                    "LastName" => $r['PatientLast'],
-                    //"Relationship_to_Patient" => "Self",
+                    "FirstName" => $r['patientFirstName'],
+                    "Middle" => $r['patientMiddleName'],
+                    "LastName" => $r['patientLastName'],
+                    "Email" =>"",
+                    "Address" => "",
+                    "Address2" => "",
+                    "City" => "",
+                    "County" => "",
+                    "State" => "",
+                    "ZipCode"=>"",
+                    "Hospital"=>"",
+                    "importId" => $r["importId"],
+                ];
+
+                if($r["patientID"] == $r["guestID"]){
+                    //include extra info
+                
                     //"BirthDate" => "",
                     //"Gender" => $r["PatientGender"],
                     //"mediaSource" => $r["PatientMarketingOptIn"],
-                    "Address" => $r["Address"],
-                    "City" => $r["City"],
-                    "County" => "",
-                    "State" => "",
-                    "ZipCode" => $r["ZipCode"],
-                    "Phone" => str_replace("-", "", filter_var($r["Phone"], FILTER_SANITIZE_NUMBER_INT)),
-                    "Mobile" => "",
-                    "Email" => $r["Email"],
+                    $patient["Address"] = $r["address1"];
+                    $patient["Address2"] = $r["address2"];
+                    $patient["City"] = $r["city"];
+                    $patient["County"] = "";
+                    $patient["State"] = $r["state"];
+                    $patient["ZipCode"] = $r["zipCode"];
+                    $patient["Phone"] = str_replace("-", "", filter_var($r["homeNumber"], FILTER_SANITIZE_NUMBER_INT));
+                    $patient["Mobile"] = str_replace("-", "", filter_var($r["cellNumber"], FILTER_SANITIZE_NUMBER_INT));
+                    $patient["Email"] = $r["eMail"];
                     //"Diagnosis"=>"",
                     //"PrimaryGuest" => $r["PatientPrimaryGuest"],
                     //"Banned" => $r["PatientBanned"],
                     //"Hospital" =>$r["Hospital"],
-                    "importId"=>$r["importId"]
-                ];
+                    
+                }
 
-                $this->addGuest($patient, false);
+                $patArray = $this->addPatient($patient, false);
 
-                        $guest = [
-                            "FirstName" => $r['FirstName'],
-                            "LastName" => $r['LastName'],
-                            //"Relationship_to_Patient" => $r["PatientRelation"],
+                if($r["patientID"] !== $r["guestID"]){
+                    $guest = [
+                            "FirstName" => $r['guestFirstName'],
+                            "Middle" => $r['guestMiddleName'],
+                            "LastName" => $r['guestLastName'],
+                            "Relation_to_Patient" => $r["relationship"],
                             //"BirthDate" => "",
                             //"Gender" => $r["Guest_".$i."_Gender"],
                             //"mediaSource" => $r["Guest_".$i."_Marketing_opt_in"],
-                            "Address" => $r["Address"],
-                            "City" => $r["City"],
+                            "Address" => $r["address1"],
+                            "Address2" => $r["address2"],
+                            "City" => $r["city"],
                             "County" => "",
-                            "State" => "",
-                            "ZipCode" => $r["ZipCode"],
-                            "Phone" => str_replace("-", "", filter_var($r["Phone"], FILTER_SANITIZE_NUMBER_INT)),
-                            "Mobile" => "",
-                            "Email" => $r["Email"],
-                            "Diagnosis"=>"",
+                            "State" => $r["state"],
+                            "ZipCode" => $r["zipCode"],
+                            "Phone" => str_replace("-", "", filter_var($r["homeNumber"], FILTER_SANITIZE_NUMBER_INT)),
+                            "Mobile" => str_replace("-", "", filter_var($r["cellNumber"], FILTER_SANITIZE_NUMBER_INT)),
+                            "Email" => $r["eMail"],
+                            //"Diagnosis"=>"",
                             //"PrimaryGuest"=>$r["Guest_".$i."_Primary_Guest"],
                             //"Banned"=>$r["Guest_".$i."_Banned"],
                             //"Hospital" =>$r["Hospital"],
                             "importId"=>$r["importId"]
-                        ];
-                $this->addGuest($guest, false);
+                    ];
+                    $this->addGuest($guest, $patArray['psg']);
+                }
+
+                //add notes
+                $noteText = trim(filter_var($r["Notes"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                if($noteText !== ""){
+                    LinkNote::save($this->dbh, $noteText, $patArray['psg']->getIdPsg(), Note::PsgLink, "", $uS->username, $uS->ConcatVisitNotes);
+                }
+
                 /*
                 if($patient == false){
                     $guest = [
@@ -172,7 +206,7 @@ class Import {
                 $this->dbh->commit();
 
                 // mark imported
-                $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = '1' where `importId` = " . $r['importId']);
+                $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = '1' and status = 'done' where `importId` = " . $r['importId']);
 
             }catch(\Exception $e){
                 if($this->dbh->inTransaction()){
@@ -190,19 +224,20 @@ class Import {
     private function addPatient(array $r, bool $update = true){
 
         // New Patient
-        $newPatFirst = trim(addslashes($r['GuestFirst']));
-        $newPatLast = trim(addslashes($r['GuestLast']));
+        $newPatFirst = trim(addslashes($r['FirstName']));
+        $newPatMiddle = trim(addslashes($r['Middle']));
+        $newPatLast = trim(addslashes($r['LastName']));
         //$newPatNickname = trim(addslashes($r['PatientNickname']));
-        $gender = $this->findIdGender($r['Gender']);
-        $ethnicity = $this->findIdEthnicity((isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
-        $noReturn = $this->findIdNoReturn($r["Banned"]);
-        $mediaSource = $this->findIdMediaSource($r["mediaSource"]);
+        //$gender = $this->findIdGender($r['Gender']);
+        //$ethnicity = $this->findIdEthnicity((isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
+        //$noReturn = $this->findIdNoReturn($r["Banned"]);
+        //$mediaSource = $this->findIdMediaSource($r["mediaSource"]);
 
         $birthDate = "";
-        if(trim($r['BirthDate']) != ''){
-            $birthdateDT = new \DateTime($r['BirthDate']);
-            $birthDate = $birthdateDT->format("M j, Y");
-        }
+        //if(trim($r['BirthDate']) != ''){
+        //    $birthdateDT = new \DateTime($r['BirthDate']);
+        //    $birthDate = $birthdateDT->format("M j, Y");
+        //}
 
 
         $id = $this->findPerson($newPatFirst, $newPatLast, "patient");
@@ -237,17 +272,17 @@ class Import {
 
             'txtBirthDate'=>$birthDate,
             'selStatus'=>'a',
-            'sel_Gender'=>$gender,
-            'sel_Ethnicity'=>$ethnicity,
-            'sel_Media_Source'=>$mediaSource,
-            'selnoReturn'=>$noReturn,
+            //'sel_Gender'=>$gender,
+            //'sel_Ethnicity'=>$ethnicity,
+            //'sel_Media_Source'=>$mediaSource,
+            //'selnoReturn'=>$noReturn,
             'selMbrType'=>'ai',
         );
 
         //if (trim($r['PatientLast'] . $r['PatientFirst']) == trim($r['GuestLast'] . $r['GuestFirst'])) { //assume patient is the guest
 
-            $homePhone = $this->formatPhone($r['Phone']);
-            $cellPhone = $this->formatPhone($r['Mobile']);
+            $homePhone = (isset($r['Phone']) ? $this->formatPhone($r['Phone']):'');
+            $cellPhone = (isset($r['Mobile']) ? $this->formatPhone($r['Mobile']):'');
             //$workPhone = $this->formatPhone($r['Work']);
 
             $post['rbPrefMail'] = '1';
@@ -259,7 +294,7 @@ class Import {
             $adr1 = $this->loadAddress($this->dbh, $r);
             $post['adr'] = $adr1;
 
-            if(trim($r['Street']) == ""){
+            if(trim($r['Address']) == ""){
             $post['incomplete'] = true;
             }
 
@@ -310,7 +345,7 @@ class Import {
      * Search for person and or create them. if PSG is given, add the guest to the PSG.
      * @param array $r ["firstName", "LastName", "Middle", "Gender", "Ethnicity", "BirthDate", "Banned", "mediaSource", "Relationship_to_Patient", "Address", "Address2, "City", "County", "State", "ZipCode", "Phone", "Mobile", "Email"]
      * @param mixed $psg
-     * @return Guest
+     * @return Guest|bool
      */
     private function addGuest(array $r, PSG|bool $psg = false){
 
@@ -323,7 +358,7 @@ class Import {
         //$newNickname = trim(addslashes($r['GuestNickname']));
 
         if ($newLast == '') {
-            return;
+            return false;
         }
 
         $id = $this->findPerson($newFirst, $newLast, false);
@@ -344,7 +379,7 @@ class Import {
 
             // phone
             $homePhone = $this->formatPhone($r['Phone']);
-            $cellPhone = ''; //$this->formatPhone($r['Mobile']);
+            $cellPhone = $this->formatPhone($r['Mobile']);
             //$workPhone = $this->formatPhone($r['Work']);
 
             $post = array(
@@ -673,6 +708,41 @@ class Import {
     }
 
     /**
+     * Create patient relations in HHK if they don't already exist
+     *
+     * @return array
+     */
+    public function makeMissingRelationships(){
+        $uploadedRelations = (new ImportMarkup($this->dbh))->getGenLookupInfo("Patient_Rel_Type", "relationship");
+        $insertCount = 0;
+
+        try{
+
+            foreach($uploadedRelations as $diag){
+                if($diag["id"] == null && $diag["Import Name"] != ''){
+                    //insert new lookup
+                    $newCode = 'g' . incCounter($this->dbh, 'codes');
+
+                    $glRs = new GenLookupsRS();
+                    $glRs->Table_Name->setNewVal("Patient_Rel_Type");
+                    $glRs->Code->setNewVal($newCode);
+                    $glRs->Description->setNewVal($diag["Import Name"]);
+                    $glRs->Type->setNewVal('h');
+                    $glRs->Substitute->setNewVal('');
+                    $glRs->Order->setNewVal(0);
+
+                    EditRS::insert($this->dbh, $glRs);
+                    $insertCount++;
+                }
+            }
+        }catch (\Exception $e){
+            return array("error"=>$e->getMessage());
+        }
+
+        return array("success"=>$insertCount . " relationships inserted");
+    }
+
+    /**
      * Create Ethnicities in HHK if they don't already exist
      *
      * @return array
@@ -806,7 +876,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         return array("success"=>$insertCount . " doctors inserted");
     }
 
-    private function formatPhone($phone){
+    private function formatPhone(string $phone){
         return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $phone);
     }
 

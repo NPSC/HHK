@@ -43,9 +43,9 @@ class ImportMarkup {
         }
     }
 
-    public function getHospitalInfo(){
+    public function getHospitalInfo(string $fieldName = ""){
         try{
-            $query = "select h.idHospital, ifnull(h.Title, 'unknown') as 'HHK Hospital', `Hospital`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i left join hospital h on h.Title = i.Hospital group by `Hospital`;";
+            $query = "select h.idHospital, ifnull(h.Title, 'unknown') as 'HHK Hospital', i.`$fieldName`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i left join hospital h on h.Title = i.`$fieldName` group by `Hospital`;";
             $stmt = $this->dbh->query($query);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\PDOException $e){
@@ -55,13 +55,13 @@ class ImportMarkup {
     }
 
     private function getHospitalMkup(){
-        $hospitalInfo = $this->getHospitalInfo();
+        $hospitalInfo = $this->getHospitalInfo("");
 
         if (is_array($hospitalInfo)) {
             $mkup = HTMLContainer::generateMarkup(
                 "div",
                 HTMLContainer::generateMarkup("h3", "Hospitals" . HTMLContainer::generateMarkup("button", "Create Missing Hospitals", array("data-entity" => "Hosps", "class" => "makeMissing ui-button ui-corner-all ml-2"))) .
-                CreateMarkupFromDB::generateHTML_Table($this->getHospitalInfo(), "hosp")
+                CreateMarkupFromDB::generateHTML_Table($hospitalInfo, "hosp")
                 ,
                 array("class" => "ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2")
             );
@@ -92,9 +92,9 @@ class ImportMarkup {
         return $mkup;
     }
 
-    public function getRoomInfo(){
+    public function getRoomInfo(string $fieldName = ""){
         try{
-            $query = "select r.idResource, ifnull(r.Title, 'unknown') as `HHK room`, i.`RoomNum` from " . Upload::TBL_NAME . " i left join `resource` r on i.RoomNum = r.Title where i.RoomNum != '' group by i.RoomNum order by i.RoomNum";
+            $query = "select r.idResource, ifnull(r.Title, 'unknown') as `HHK room`, i.`$fieldName` from " . Upload::TBL_NAME . " i left join `resource` r on i.`$fieldName` = r.Title where i.`$fieldName` != '' group by i.RoomNum order by i.`$fieldName`";
             $stmt = $this->dbh->query($query);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
@@ -103,11 +103,11 @@ class ImportMarkup {
     }
 
     private function getRoomMkup(){
-        $roomInfo = $this->getRoomInfo();
+        $roomInfo = $this->getRoomInfo("");
         if(is_array($roomInfo)){
             $mkup = HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("h3", "Rooms" . HTMLContainer::generateMarkup("button", "Create Missing Rooms", array("data-entity"=>"Rooms", "class"=>"makeMissing ui-button ui-corner-all ml-2"))) .
-                CreateMarkupFromDB::generateHTML_Table($this->getRoomInfo(), "room")
+                CreateMarkupFromDB::generateHTML_Table($roomInfo, "room")
                 , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
         }else{
             $mkup = '';
@@ -115,9 +115,26 @@ class ImportMarkup {
         return $mkup;
     }
 
-    public function getDiagInfo(){
+    /**
+     * Find/match HHK gen lookups to a specific import field
+     * @param string $genLookupTableName
+     * @param string $importFieldName
+     * @return bool|array{id:int, HHK Name: string, Import Name: string}
+     */
+    public function getGenLookupInfo(string $genLookupTableName = "", string $importFieldName = ""){
         try{
-            $query = "select d.`Code` as idDiagnosis, ifnull(d.`Description`, '') as `HHK Diagnosis`, i.`Diagnosis` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`Diagnosis` = d.`Description` and d.`Table_Name` = 'Diagnosis' where i.Diagnosis != '' group by i.`Diagnosis` order by d.Description, i.Diagnosis;";
+            $query = "select d.`Code` as `id`, ifnull(d.`Description`, '') as `HHK Name`, i.`$importFieldName` as `Import Name` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`$importFieldName` = d.`Description` and d.`Table_Name` = '$genLookupTableName' where i.`$importFieldName` != '' group by i.`$importFieldName` order by d.Description, i.`$importFieldName`;";
+            $stmt = $this->dbh->query($query);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){
+            return false;
+        }
+
+    }
+
+    public function getDiagInfo(string $fieldName = ""){
+        try{
+            $query = "select d.`Code` as idDiagnosis, ifnull(d.`Description`, '') as `HHK Diagnosis`, i.`$fieldName` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`$fieldName` = d.`Description` and d.`Table_Name` = 'Diagnosis' where i.`$fieldName` != '' group by i.`$fieldName` order by d.Description, i.`$fieldName`;";
             $stmt = $this->dbh->query($query);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
@@ -127,11 +144,11 @@ class ImportMarkup {
     }
 
     private function getDiagMkup(){
-        $diagInfo = $this->getDiagInfo();
+        $diagInfo = $this->getGenLookupInfo("Diagnosis", "");
         if(is_array($diagInfo)){
             $mkup = HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("h3", "Diagnosis" . HTMLContainer::generateMarkup("button", "Create Missing Diagnoses", array("data-entity"=>"Diags", "class"=>"makeMissing ui-button ui-corner-all ml-2"))) .
-                CreateMarkupFromDB::generateHTML_Table($this->getDiagInfo(), "diag")
+                CreateMarkupFromDB::generateHTML_Table($diagInfo, "diag")
                 , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
         }else{
             $mkup = "";
@@ -151,7 +168,7 @@ class ImportMarkup {
     }
 
     private function getEthnicityMkup(){
-        $ethnicityInfo = $this->getEthnicityInfo();
+        $ethnicityInfo = $this->getGenLookupInfo("Ethnicity", "");
         if(is_array($ethnicityInfo)){
             $mkup = HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("h3", "Ethnicities" . HTMLContainer::generateMarkup("button", "Create Missing Ethnicities", array("data-entity"=>"Ethnicities", "class"=>"makeMissing ui-button ui-corner-all ml-2"))) .
@@ -175,7 +192,7 @@ class ImportMarkup {
     }
 
     private function getGenderMkup(){
-        $genderInfo = $this->getGenderInfo();
+        $genderInfo = $this->getGenLookupInfo("Gender", "");
         if(is_array($genderInfo)){
             $mkup = HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("h3", "Genders" . HTMLContainer::generateMarkup("button", "Create Missing Genders", array("data-entity"=>"Genders", "class"=>"makeMissing ui-button ui-corner-all ml-2"))) .
@@ -199,7 +216,7 @@ class ImportMarkup {
     }
 
     private function getPatientRelationMkup(){
-        $diagInfo = $this->getPatientRelationInfo();
+        $diagInfo = $this->getGenLookupInfo("Patient_Rel_Type", "relationship");
         if(is_array($diagInfo)){
             $mkup = HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("h3", "Patient Relationships" . HTMLContainer::generateMarkup("button", "Create Missing Relations", array("data-entity"=>"relationship", "class"=>"makeMissing ui-button ui-corner-all ml-2"))) .
