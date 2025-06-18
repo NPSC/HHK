@@ -93,6 +93,19 @@ if(isset($_POST["startImport"]) && isset($_POST["limit"])){
     }
 }
 
+if(isset($_GET["checkStatus"])){
+	$query = "select `status`, ifnull(workerId, '') as `workerId`, count(importId) as `records` from `" . Upload::TBL_NAME . "` group by workerId, `status` order by records asc;";
+	$stmt = $dbh->query($query);
+	$return = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	if(is_array($return)){
+        echo json_encode($return);
+        exit;
+    }else{
+        echo json_encode(array("error"=>"Invalid Response"));
+        exit;
+    }
+}
+
 $cmd = "";
 if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", FILTER_SANITIZE_FULL_SPECIAL_CHARS)){
 	$import = new Import($dbh);
@@ -174,18 +187,22 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 
         <script type="text/javascript">
 
-        	var startImport = function(){
+        	var startImport = function(batchSize = 500, totalBatchLimit = 0){
+				var batchesComplete = 0;
+
 				$.ajax({
 					url: "Import.php",
 					method: "post",
 					data:{
 						startImport:true,
-						limit: 100
+						limit: batchSize
 					},
 					dataType:"json",
 					success: function(data){
 						console.log(data);
     					if(data.success && data.progress.progress){
+							batchesComplete++
+							flagAlertMessage("Worker "+data.workerId+" completed successfully")
     						$("#progressBar .progressValue").css("width", data.progress.progress + "%");
     						$("#progressBar .progressValueText").text(data.progress.progress + "%");
     						if(data.progress.progress >=50){
@@ -207,6 +224,40 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 				});
 			}
 
+			function generateWorkerTable(data) {
+				let table = '<table>';
+				table += '<thead><tr><th>Worker ID</th><th>Status</th><th>Records</th></tr></thead>';
+				table += '<tbody>';
+
+				data.forEach(item => {
+				table += `<tr>
+					<td>${item.workerId}</td>
+					<td>${item.status}</td>
+					<td>${item.records}</td>
+				</tr>`;
+				});
+
+				table += '</tbody></table>';
+				return table;
+			}
+
+			var getWorkerProgress = function(){
+
+				$.ajax({
+					url: "Import.php",
+					method: "get",
+					data:{
+						checkStatus:true,
+					},
+					dataType:"json",
+					success: function(data){
+						console.log(data);
+						$("#workerProgress").html(generateWorkerTable(data));
+    				}
+				});
+			}
+
+
 			$(document).ready(function(){
 
 				$(document).on("click", "#startImport", function(){
@@ -219,6 +270,10 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 
 					startImport();
 
+				});
+
+				$(document).on("click", "#getProgress", function(){
+					getWorkerProgress();
 				});
 
 				$(document).on("click", "#undo", function(){
@@ -291,12 +346,13 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 
 			<?php if(isset($importTbl)){ ?>
             <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3" style="max-width:100%">
-				<div class="hhk-flex"><h2>Import Progress</h2><a href="Import.php?includeTbl=true" class="ui-button ui-corner-all ml-3">Show raw data</a><button class="ui-button ui-corner-all ml-3" id="startImport">Start Import</button><button class="ui-button ui-corner-all ml-3" id="undo">Undo Import</button></div>
+				<div class="hhk-flex"><h2>Import Progress</h2><a href="Import.php?includeTbl=true" class="ui-button ui-corner-all ml-3">Show raw data</a><button class="ui-button ui-corner-all ml-3" id="startImport">Start Import</button><button class="ui-button ui-corner-all ml-3" id="undo">Undo Import</button><button class="ui-button ui-corner-all ml-3" id="getProgress">Get Progress</button></div>
 				<div id="progressBar" class="ui-widget ui-widget-content ui-corner-all d-none">
 					<div class="progressValue ui-corner-all"></div>
 					<img src="../images/ui-anim_basic_16x16.gif" class="spinner">
 					<div class="progressValueText">0%</div>
 				</div>
+				<div id="workerProgress" style="white-space:pre-wrap;"></div>
 				<?php echo $importTbl; ?>
             </div>
 			<?php } ?>

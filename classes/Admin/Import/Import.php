@@ -40,28 +40,29 @@ class Import {
 
     public function __construct(\PDO $dbh){
         $this->dbh = $dbh;
-        $this->getHospitals();
+        //$this->getHospitals();
         $this->getRelations();
-        $this->getDiags();
-        $this->getRooms();
-        $this->getGenders();
-        $this->getEthnicities();
-        $this->getNoReturn();
-        $this->getMediaSources();
+        //$this->getDiags();
+        //$this->getRooms();
+        //$this->getGenders();
+        //$this->getEthnicities();
+        //$this->getNoReturn();
+        //$this->getMediaSources();
     }
 
     public function startImport(int $limit = 100, bool $people = true, bool $visits = false){
         $uS = Session::getInstance();
+        $workerId = bin2hex(random_bytes(16)); //generate random 32 char string for workerId
         ini_set('max_execution_time', '300');
 
         
 
 
-        $batchquery = "UPDATE `". Upload::TBL_NAME."` set status = 'processing' where status = 'pending' order by `patientID` LIMIT $limit;";
+        $batchquery = "UPDATE `". Upload::TBL_NAME."` set status = 'processing', workerId = '$workerId' where status = 'pending' order by `patientID` LIMIT $limit;";
         $this->dbh->exec($batchquery);
         
         //$query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and status = 'pending' group by i.importId order by i.`patientID` LIMIT $limit;";
-        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and i.status = 'processing' group by i.importId order by i.`patientID`";
+        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and i.status = 'processing' and i.workerId = '$workerId' group by i.importId order by i.`patientID`";
         $stmt = $this->dbh->query($query);
 
         $numRead = $stmt->rowCount();
@@ -87,6 +88,7 @@ class Import {
                     "Middle" => $r['patientMiddleName'],
                     "LastName" => $r['patientLastName'],
                     "Email" =>"",
+                    "Phone" =>"",
                     "Address" => "",
                     "Address2" => "",
                     "City" => "",
@@ -97,7 +99,7 @@ class Import {
                     "importId" => $r["importId"],
                 ];
 
-                if($r["patientID"] == $r["guestID"]){
+                //if($r["patientID"] == $r["guestID"] || strtolower($r["relationship"]) == "patient"){
                     //include extra info
                 
                     //"BirthDate" => "",
@@ -117,16 +119,16 @@ class Import {
                     //"Banned" => $r["PatientBanned"],
                     //"Hospital" =>$r["Hospital"],
                     
-                }
+                //}
 
                 $patArray = $this->addPatient($patient, false);
 
-                if($r["patientID"] !== $r["guestID"]){
+                if(!($r["patientID"] == $r["guestID"] || strtolower($r["relationship"]) == "patient")){
                     $guest = [
                             "FirstName" => $r['guestFirstName'],
                             "Middle" => $r['guestMiddleName'],
                             "LastName" => $r['guestLastName'],
-                            "Relation_to_Patient" => $r["relationship"],
+                            "Relationship_to_Patient" => strtolower($r["relationship"]),
                             //"BirthDate" => "",
                             //"Gender" => $r["Guest_".$i."_Gender"],
                             //"mediaSource" => $r["Guest_".$i."_Marketing_opt_in"],
@@ -203,21 +205,25 @@ class Import {
                     
                 }*/
 
+                // mark imported
+                $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = '1', status = 'done' where `importId` = " . $r['importId']);
+
                 $this->dbh->commit();
 
-                // mark imported
-                $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = '1' and status = 'done' where `importId` = " . $r['importId']);
+                
 
             }catch(\Exception $e){
                 if($this->dbh->inTransaction()){
                     $this->dbh->rollBack();
                 }
 
+                $this->dbh->exec("update `" . Upload::TBL_NAME . "` set status = 'pending', workerId = null where `importId` = " . $r['importId']);
+
                 return array("error"=>$e->getMessage(), "ImportId"=>$r['importId'], "trace"=>$e->getTraceAsString());
             }
         }
 
-        return array('success'=>true, 'batch'=>$numRead, 'patients'=>$this->importedPatients, 'guests'=>$this->importedGuests, "progress"=>$this->getProgress());
+        return array('success'=>true, 'batch'=>$numRead, 'workerId'=>$workerId, 'patients'=>$this->importedPatients, 'guests'=>$this->importedGuests, "progress"=>$this->getProgress());
 
     }
 
@@ -240,7 +246,7 @@ class Import {
         //}
 
 
-        $id = $this->findPerson($newPatFirst, $newPatLast, "patient");
+        $id = $this->findPerson($newPatFirst, $newPatLast, "patient", true, $r["Phone"]);
 
         if($id > 0){
             $patient = new Patient($this->dbh, '', $id);
@@ -361,7 +367,7 @@ class Import {
             return false;
         }
 
-        $id = $this->findPerson($newFirst, $newLast, false);
+        $id = $this->findPerson($newFirst, $newLast, "guest", true, $r["Phone"]);
 
         $guest = new Guest($this->dbh, '', $id);
 
@@ -411,8 +417,8 @@ class Import {
             $guest->save($this->dbh, $post, $uS->username);
         }
         $relship = RelLinkType::Relative;
-        if (isset($r['Relationship_to_Patient']) && isset($this->relations[$r['Relationship_to_Patient']])) {
-            $relship = $this->relations[$r['Relation_to_Patient']];
+        if (isset($r['Relationship_to_Patient']) && isset($this->relations[$r['Relationship_to_Patient']]) && $r["Relationship_to_Patient"] !== "patient") {
+            $relship = $this->relations[$r['Relationship_to_Patient']];
         }
 
         if($psg instanceof PSG){
