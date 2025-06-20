@@ -40,8 +40,6 @@ $uS = Session::getInstance();
 // Get labels
 $labels = Labels::getLabels();
 
-$isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
-
 $paymentMarkup = '';
 $paymentStatus = '';
 $receiptMarkup = '';
@@ -154,14 +152,14 @@ if (isset($_GET['gamess'])) {
 $locations = readGenLookupsPDO($dbh, 'Location');
 $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
-
+// Check for Visit Span reserve status starting today.
+// TODO
 
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
     . HTMLInput::generateMarkup('Print', ['type' => 'button', 'id' => 'btnPrtDaily', 'style' => 'font-size:.8em;', 'class' => 'ml-5'])
         . HTMLInput::generateMarkup('Refresh', ['type' => 'button', 'id' => 'btnRefreshDaily', 'style' => 'font-size:.8em;', 'class' => 'ml-5'])
-        ,
-    ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+        , ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divdaily']);
 
 // Currently Checked In guests
@@ -171,14 +169,12 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
 // make registration form print button
 $regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', ['id' => 'regckindate', 'class' => 'ckdate hhk-prtRegForm ml-2 mr-3'])
         . HTMLInput::generateMarkup('Print Default Registration Forms', ['id' => 'btnPrintRegForm', 'type' => 'button', 'data-page' => 'PrtRegForm.php', 'class' => 'hhk-prtRegForm mt-3 mt-md-0', 'style' => 'font-size:0.86em;'])
-        ,
-    ['style' => 'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap my-3 my-lg-0 ml-lg-5"]);
+        , ['style' => 'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap my-3 my-lg-0 ml-lg-5"]);
 
 $currentReservations = HTMLContainer::generateMarkup('h3',
         '<span>' . $labels->getString('register', 'reservationTab', 'Confirmed Reservations') . '</span>' .
         HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlConfRes', 'style' => 'font-size:.9em;', 'class' => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Confirmed Reservations','data-linktype'=>'confirmed', 'style' => 'font-size:.9em;']) . $regButton
-        ,
-    ['style' => 'background-color:#D3D3D3; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap p-3"])
+        , ['style' => 'background-color:#D3D3D3; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap p-3"])
         . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divreservs']);
 
 if ($uS->ShowUncfrmdStatusTab) {
@@ -187,17 +183,9 @@ if ($uS->ShowUncfrmdStatusTab) {
 }
 
 
-// make waitlist print button
-//$wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL ml-2 mr-3'))
-//        . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL mt-3 mt-md-0', 'style'=>'font-size:.85em;'))
-//        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap my-3 my-md-0 ml-md-5"));
-
-
 $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'waitlistTab', 'Wait List') . '</span>' .
         HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlWlist', 'style' => 'font-size:.9em;', "class" => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextWaitlistGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Waitlist Reservations','data-linktype'=>'waitlist', 'style' => 'font-size:.9em;'])
-        //.$wlButton
-        ,
-    ['style' => 'background-color:#D3D3D3; align-items:baseline;', 'class' => 'hhk-flex hhk-flex-wrap p-2'])
+        , ['style' => 'background-color:#D3D3D3; align-items:baseline;', 'class' => 'hhk-flex hhk-flex-wrap p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divwaitlist']);
 
 
@@ -208,6 +196,7 @@ if ($stmth->rowCount() > 1) {
     $shoHosptialName = TRUE;
 }
 
+// Show hosptials
 if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' || strtolower($uS->RibbonColor) == 'hospital')) {
 
     $hospLabel = HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'hospital', 'Hospital') . ': ');
@@ -326,22 +315,19 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
 
 }
 
+// Notice to JS
 $showRateCol = FALSE;
 if ($uS->RoomPriceModel != ItemPriceCode::None) {
     $showRateCol = TRUE;
 }
 
 
-if ($uS->UseWLnotes) {
-    $showWlNotes = TRUE;
-} else {
-    $showWlNotes = FALSE;
-}
+$showWlNotes = ($uS->UseWLnotes) ? TRUE : FALSE;
 
-$referralStatuses = "";
-if($uS->useOnlineReferral){
-    $referralStatuses = json_encode(readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
-}
+// $referralStatuses = "";
+// if($uS->useOnlineReferral){
+//     $referralStatuses = json_encode(readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
+// }
 
 
 ?>
@@ -426,6 +412,9 @@ if($uS->useOnlineReferral){
                 background-color: #fcb5b5;
                 opacity: .6;
             }
+            .custom-green {
+                background-color:  #befcb0;
+            }
 
         </style>
     </head>
@@ -463,7 +452,7 @@ if($uS->useOnlineReferral){
                         <?php if($uS->useOnlineReferral){ ?>
                             <li><a href="#vreferrals"><span id="spnNumReferral"></span> <?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> </a></li>
                         <?php }
-                         if ($isGuestAdmin && $showCharges) { ?>
+                         if (SecurityComponent::is_Authorized('guestadmin') && $showCharges) { ?>
                             <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
                             <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
                         <?php } ?>
@@ -510,7 +499,7 @@ if($uS->useOnlineReferral){
                 <div id="vreferrals" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                 </div>
                 <?php } ?>
-                <?php if ($isGuestAdmin) { ?>
+                <?php if (SecurityComponent::is_Authorized('guestadmin')) { ?>
                 <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                     <table>
                         <tr>

@@ -270,7 +270,7 @@ function viewVehicleDialog(idVisit, $vehDialog) {
 
             $vehDialog.empty();
             $vehDialog.append($(data.success));
-            
+
             setupVehicle($vehDialog);
 
             $vehDialog.dialog({
@@ -393,9 +393,8 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             dateFormat: 'M d, yy'
         });
 
-        // Background color is different if visit is checking out in the past.
+        // Background color
         $diagbox.css('background-color', '#fff');
-
         if (action === 'ref') {
             // Checking out in the past
             $diagbox.css('background-color', '#FEFF9B');
@@ -711,6 +710,10 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             $diagbox.css('background-color', '#F2F2F2');
         }
 
+        // Is reserve span background color
+        if (data.visitStatus == 'r') {
+            title += ';  Future Room Change';
+        }
 
         setupPayments($('#selRateCategory').val(), idVisit, visitSpan, $('#pmtRcpt'), '#keysfees');
 
@@ -759,8 +762,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
         $diagbox.dialog('option', 'width', ($( window ).width() * .95));
         $diagbox.dialog('option', 'height', $( window ).height());
         $diagbox.dialog('open');
-
-
     });
 }
 

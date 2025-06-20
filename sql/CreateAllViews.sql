@@ -197,9 +197,9 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
         reservation r on rg.idReservation = r.idReservation
             LEFT JOIN
         resource re on r.idResource = re.idResource
-            LEFT JOIN 
+            LEFT JOIN
         name ng on rg.idGuest = ng.idName
-            LEFT JOIN 
+            LEFT JOIN
         name np on p.idPatient = np.idName
     WHERE
         n.`Status` = 'a';
@@ -497,9 +497,9 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
               END) as `Guest Last`,
 		(case when (`m`.`Preferred_Phone` = 'no') then 'No Phone' else  IFNULL(`np`.`Phone_Num`, '') END) AS `Phone`,
         (CASE
-            WHEN (`v`.`Ext_Phone_Installed` = 1) THEN 'Y'
+            WHEN (`v`.`Has_Future_Change` = 1) THEN 'Y'
             ELSE ''
-        END) AS `Use House Phone`,
+        END) AS `Has_Future_Change`,
         IFNULL(`r`.`Phone`,'') AS `Room Phone`,
         IFNULL(`s`.`Status`, '') AS `Stay_Status`,
         IFNULL(`s`.`On_Leave`, 0) AS `On_Leave`,
@@ -2001,10 +2001,23 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
 -- View `vlist_first_visit`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vlist_first_visit` AS
-select v.* from visit v
-join registration reg on v.idRegistration = reg.idRegistration
-
-where v.Status in ("a", "co") and v.Arrival_Date = (select min(vv.Arrival_Date) from visit vv join registration reg2 on vv.idRegistration = reg2.idRegistration where reg.idPsg = reg2.idPsg and not date(vv.Arrival_Date) <=> date(vv.Actual_Departure));
+SELECT
+    v.*
+FROM
+    visit v
+        JOIN
+    registration reg ON v.idRegistration = reg.idRegistration
+WHERE
+    v.Status IN ('a' , 'co')
+        AND v.Arrival_Date = (SELECT
+            MIN(vv.Arrival_Date)
+        FROM
+            visit vv
+                JOIN
+            registration reg2 ON vv.idRegistration = reg2.idRegistration
+        WHERE
+            reg.idPsg = reg2.idPsg
+                AND NOT DATE(vv.Arrival_Date) <=> DATE(vv.Actual_Departure));
 
 
 -- -----------------------------------------------------
@@ -2253,9 +2266,9 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         reservation r ON rn.idLink = r.idReservation
     LEFT JOIN
         name pg ON r.idGuest = pg.idName
-    LEFT JOIN 
+    LEFT JOIN
         `resource_room` `rr` ON `r`.`idResource` = `rr`.`idResource`
-    LEFT JOIN 
+    LEFT JOIN
         `room` `rm` ON `rr`.`idRoom` = `rm`.`idRoom`
     JOIN
 	registration reg on r.idRegistration = reg.idRegistration
@@ -2333,9 +2346,9 @@ CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
 		reservation r ON ln.idLink = r.idReservation and ln.linkType = "reservation"
 			LEFT JOIN
 		registration reg on r.idRegistration = reg.idRegistration
-            LEFT JOIN 
+            LEFT JOIN
         psg ON (`ln`.`linkType` = 'psg' AND `ln`.`idLink` = `psg`.`idPsg`) OR `reg`.`idPsg` = `psg`.`idPsg`
-            LEFT JOIN 
+            LEFT JOIN
         `name` `pn` ON `psg`.`idPatient` = `pn`.`idName`
     WHERE
         ln.idLink > 0 && n.`Status` = 'a';
@@ -2380,6 +2393,7 @@ CREATE or replace VIEW `vregister` AS
         `v`.`idResource` AS `idResource`,
         `v`.`idReservation` AS `idReservation`,
         `v`.`Status` AS `Visit_Status`,
+        `v`.`Has_Future_Change` AS `Has_Future_Change`,
         `v`.`Span_Start` AS `Span_Start`,
         `v`.`Expected_Departure` AS `Expected_Departure`,
         `v`.`Span_End` AS `Span_End`,
@@ -2892,7 +2906,7 @@ CREATE or replace VIEW `vspan_listing` AS
         (to_days(`v`.`Expected_Departure`) - to_days(`v`.`Span_Start`)) AS `Expected_Span_Nights`,
         `v`.`Return_Date`,
         `v`.`Notice_to_Checkout`,
-        `v`.`Ext_Phone_Installed`,
+        `v`.`Has_Future_Change`,
         `v`.`OverRideMaxOcc`,
         '' as `Visit_Notes`,
         `v`.`Notes` AS `Notes`,
@@ -3165,4 +3179,11 @@ from
 
 
 CREATE OR REPLACE VIEW `vcurrent_operating_hours` AS
-select * from operating_schedules where End_Date is null group by Day having max(idDay);
+SELECT
+    *
+FROM
+    operating_schedules
+WHERE
+    End_Date IS NULL
+GROUP BY Day
+HAVING MAX(idDay);

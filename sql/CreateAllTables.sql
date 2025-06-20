@@ -2172,9 +2172,7 @@ CREATE TABLE if not exists `visit` (
   `Rate_Category` varchar(5) NOT NULL DEFAULT '',
   `idRateAdjust` VARCHAR(5) NULL DEFAULT '0',
   `Rate_Glide_Credit` int(11) not null default '0',
-  `Ext_Phone_Installed` int(1) NOT NULL DEFAULT '0',
-  `Medical_Cooler` int(1) NOT NULL DEFAULT '0',
-  `Wheel_Chair` int(1) NOT NULL DEFAULT '0',
+  `Has_Future_Change` int(1) NOT NULL DEFAULT '0',
   `OverRideMaxOcc` int(1) NOT NULL DEFAULT '0',
   `Notes` text,
   `Status` varchar(5) NOT NULL DEFAULT '',
@@ -2467,7 +2465,7 @@ CREATE INDEX IF NOT EXISTS `indx_idGuest` ON `link_doc` (`idGuest` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idPsg` ON `link_doc` (`idPSG` ASC);
 CREATE INDEX IF NOT EXISTS `indx_idReservation` ON `link_doc` (`idReservation` ASC);
 
-ALTER TABLE `link_doc` 
+ALTER TABLE `link_doc`
 ADD CONSTRAINT `fk_idDocument`
   FOREIGN KEY if not exists(`idDocument`)
   REFERENCES `document` (`idDocument`)

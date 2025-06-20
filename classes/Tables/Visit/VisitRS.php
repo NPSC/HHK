@@ -33,9 +33,9 @@ class VisitRS extends AbstractTableRS {
     public $Return_Date;   // DATETIME NULL DEFAULT NULL ,
     public $Key_Dep_Disposition;   // VARCHAR(4) NOT NULL DEFAULT '' ,
     public $DepositPayType;  // VARCHAR(5) NOT NULL DEFAULT ''
-    public $Ext_Phone_Installed;   // INT(1) NOT NULL DEFAULT 0 ,
-    public $Medical_Cooler;   // INT(1) NOT NULL DEFAULT '',
-    public $Wheel_Chair;   // INT(1) NOT NULL DEFAULT '',
+    public $Has_Future_Change;   // INT(1) NOT NULL DEFAULT 0 ,
+//    public $Medical_Cooler;   // INT(1) NOT NULL DEFAULT '',
+//    public $Wheel_Chair;   // INT(1) NOT NULL DEFAULT '',
     public $Recorded;   // INT(1) NOT NULL DEFAULT '',
     public $OverRideMaxOcc;  // int(1) NOT NULL DEFAULT '0',
     public $Span_Start;  // datetime DEFAULT NULL,
@@ -83,9 +83,7 @@ class VisitRS extends AbstractTableRS {
         $this->Return_Date = new DB_Field("Return_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Key_Dep_Disposition = new DB_Field("Key_Dep_Disposition", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->DepositPayType = new DB_Field("DepositPayType", "", new DbStrSanitizer(5), TRUE, TRUE);
-        $this->Ext_Phone_Installed = new DB_Field("Ext_Phone_Installed", 0, new DbIntSanitizer());
-        $this->Medical_Cooler = new DB_Field("Medical_Cooler", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Wheel_Chair = new DB_Field("Wheel_Chair", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Has_Future_Change = new DB_Field("Has_Future_Change", 0, new DbIntSanitizer());
         $this->Recorded = new DB_Field("Recorded", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Notes = new DB_Field("Notes", "", new DbStrSanitizer(15000), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5), TRUE, TRUE);
@@ -98,4 +96,3 @@ class VisitRS extends AbstractTableRS {
     }
 
 }
-?>

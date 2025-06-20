@@ -508,13 +508,13 @@ class History {
 
         $query = "select v.*,
                 IFNULL(`di`.`Description`, '') AS `demogTitle`,
-                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` from vcurrent_residents v" . 
-                ($curGuestDemogIcon != "Gender" && $curGuestDemogIcon != "" ? 
-                    " LEFT JOIN `name_demog` nd on v.Id = nd.idName 
+                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` from vcurrent_residents v" .
+                ($curGuestDemogIcon != "Gender" && $curGuestDemogIcon != "" ?
+                    " LEFT JOIN `name_demog` nd on v.Id = nd.idName
                       LEFT JOIN `gen_lookups` di on nd.".$curGuestDemogIcon . " = di.Code and di.Table_Name = '" . $curGuestDemogIcon . "'" : "") .
                 ($curGuestDemogIcon == "Gender" ?
                     " LEFT JOIN `gen_lookups` di on v.Gender = di.Code and di.Table_Name = 'Gender'" : ""
-                ) . 
+                ) .
                 " order by `Room`;";
         $stmt = $dbh->query($query);
 
@@ -562,7 +562,7 @@ class History {
 
             // Guest first name
             $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>"ml-3 " . $r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
-            
+
             /*
             if (isset($r['ADA']) && $r['ADA'] == 'im') {
                 $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $immobilityIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
@@ -671,11 +671,7 @@ class History {
             }
 
             // House Phone
-            if (strtolower($r['Use House Phone']) == 'y' && $r['Phone'] == '') {
-                $fixedRows['Phone'] = $r['Room Phone'] . ' (H)';
-            } else {
-                $fixedRows['Phone'] = $r['Phone'];
-            }
+            $fixedRows['Phone'] = $r['Phone'];
 
 
             // Hospital

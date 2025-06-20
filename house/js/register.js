@@ -955,7 +955,6 @@ $(document).ready(function () {
         }
     });
 
-
     $(document).mousedown(function (e) {
         var roomChooser = $('div#pudiv');
 
@@ -1383,7 +1382,7 @@ $(document).ready(function () {
                 // visits
                 } else if (info.event.extendedProps.idVisit !== undefined) {
 
-                    if (info.event.extendedProps.vStatusCode == 'a') {
+                    if (info.event.extendedProps.vStatusCode == 'a' || info.event.extendedProps.vStatusCode == 'r') {
                     	info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + ', ' + info.event.extendedProps.guests + (info.event.extendedProps.guests > 1 ? ' ' + visitorLabel + 's': ' '+ visitorLabel) + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
 					} else {
                     	info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');

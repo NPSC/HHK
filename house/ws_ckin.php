@@ -493,7 +493,7 @@ try {
             $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = HouseServices::getVisitFees($dbh, $idGuest, $idVisit, $span, $guestAdmin, $s, $cod);
+        $events = HouseServices::getVisitFees($dbh, $idGuest, $idVisit, $span, $s, $cod);
 
         break;
 

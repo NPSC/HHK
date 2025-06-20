@@ -783,7 +783,6 @@ class Visit {
     protected function cutInNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $idRateAdjust, DateTimeInterface $chgDT, $chgEndDT, $newSpan, $stayOnLeave, $rateGlideDays = 0) {
 
         $uS = Session::getInstance();
-        $this->stays = [];
 
         $now = new \DateTimeImmutable();
         $today = $now->setTime(0, 0, 0);
@@ -798,8 +797,11 @@ class Visit {
 
             $newSpanStatus = $visitStatus;
             $newSpanEnd = '';
-
+            $this->visitRS->Has_Future_Change->setNewVal(1);
             $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->CheckOutTime:00:00"));
+
+            // Update the checked in stays
+            $this->setStaysExpectedEnd($dbh, $this->stays, $chgDT, $uS->username);
 
         } else {
             // End current span
@@ -807,7 +809,7 @@ class Visit {
             $this->visitRS->Status->setNewVal($visitStatus);          // set the current visit status to the one passed in.
 
             $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
-
+            $this->visitRS->Has_Future_Change->setNewVal(0);
             $this->visitRS->Span_End->setNewVal($chgDT);
         }
 
@@ -837,6 +839,7 @@ class Visit {
         $this->visitRS->Expected_Rate->setNewVal($rateAdjust);
         $this->visitRS->idRateAdjust->setNewVal($idRateAdjust);
         $this->visitRS->Rate_Glide_Credit->setNewVal($rateGlideDays);
+        $this->visitRS->Has_Future_Change->setNewVal(0);
         $this->visitRS->Timestamp->setNewVal(date('Y-m-d H:i:s'));
 
         if ($chgDayDT > $today) {
@@ -974,6 +977,22 @@ class Visit {
         $this->saveNewStays($dbh, $uname);
     }
 
+    protected function setStaysExpectedEnd(\PDO $dbh, array &$stays, \DateTime $expEndDate) {
+
+        $uS = Session::getInstance();
+        foreach ($stays as $stayRS) {
+
+            if ($stayRS->status->getStoredVal() == VisitStatus::CheckedIn) {
+                $stayRS->Expected_Co_Date->setNewVal($expEndDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+                $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+                $stayRS->Updated_By->setNewVal($uS->username);
+
+                EditRS::update($dbh, $stayRS, [$stayRS->idStays]);
+                $logText = VisitLog::getUpdateText($stayRS);
+                VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+            }
+        }
+    }
 
     /**
      * Summary of checkOutGuest
@@ -1187,6 +1206,7 @@ class Visit {
         $this->visitRS->Actual_Departure->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Span_End->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Status->setNewVal(VisitStatus::CheckedOut);
+        $this->visitRS->Has_Future_Change->setNewVal(0);
 
         $this->updateVisitRecord($dbh, $username);
 
@@ -2713,19 +2733,19 @@ class Visit {
     }
 
     /**
-     * Summary of getExtPhoneInstalled
+     * Summary of getHas_Future_Change
      * @return mixed
      */
-    public function getExtPhoneInstalled() {
-        return $this->visitRS->Ext_Phone_Installed->getStoredVal();
+    public function getHas_Future_Change() {
+        return $this->visitRS->Has_Future_Change->getStoredVal();
     }
 
     /**
-     * Summary of setExtPhoneInstalled
+     * Summary of setHas_Future_Change
      * @return void
      */
-    public function setExtPhoneInstalled() {
-        $this->visitRS->Ext_Phone_Installed->setNewVal(1);
+    public function setHas_Future_Change() {
+        $this->visitRS->Has_Future_Change->setNewVal(1);
     }
 
 }

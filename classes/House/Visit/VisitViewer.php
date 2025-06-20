@@ -398,6 +398,14 @@ class VisitViewer {
                     . HTMLInput::generateMarkup('', ['id' => 'undoRmChg', 'type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.3em;margin-left:0.3em;']);
 
             $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, ['style' => 'margin:0.1em;', 'title' => 'Undo Room Change']);
+
+        } else if ($vSpanListing['Status'] == VisitStatus::CheckedIn && $vSpanListing['Has_Future_Change'] > 0) {
+
+            // Make undo Future Room Change button
+            $spnMkup = HTMLContainer::generateMarkup('label', '- Delete Future Room Change', ['for' => 'delFutRmChg'])
+                . HTMLInput::generateMarkup('Delete Future Room Change', ['id' => 'delFutRmChg', 'type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.3em;margin-left:0.3em;']);
+
+            $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, ['style' => 'margin:0.1em;', 'title' => 'Delete Future Room Change']);
         }
 
 

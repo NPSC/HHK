@@ -219,7 +219,7 @@ where ru.idResource_use is null
     public function getRegister(\PDO $dbh, $startTime, $endTime, $timezone) {
 
         $uS = Session::getInstance();
-        $events = array();
+        $events = [];
         $p1d = new \DateInterval('P1D');
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
@@ -251,11 +251,15 @@ where ru.idResource_use is null
         $this->getRetiredRoomEvents($dbh, $beginDate, $endDate, $timezone, $events);
 
 
-        // Visits
-        $query = "select vr.*, s.On_Leave, count(*) as `Guest_Count` from vregister vr left join stays s on `vr`.`idVisit` = `s`.`idVisit`
-        AND `vr`.`Span` = `s`.`Visit_Span`
-        AND `vr`.`Visit_Status` = `s`.`Status` where vr.Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
-            DATE(vr.Span_Start) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.Span_End), case when DATE(now()) > DATE(vr.Expected_Departure) then DATE(now()) else DATE(vr.Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "') group by vr.id;";
+        // Visit Spans
+        $query = "select vr.*, s.On_Leave, count(*) as `Guest_Count`
+        from vregister vr left join stays s on `vr`.`idVisit` = `s`.`idVisit`
+            AND `vr`.`Span` = `s`.`Visit_Span`
+            AND `vr`.`Visit_Status` = `s`.`Status`
+        where vr.Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
+            DATE(vr.Span_Start) <= DATE('" . $endDate->format('Y-m-d') . "') and
+            ifnull(DATE(vr.Span_End), case when DATE(now()) > DATE(vr.Expected_Departure) then DATE(now()) else DATE(vr.Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "')
+        group by vr.id;";
         $stmtv = $dbh->query($query);
 
         while ($r = $stmtv->fetch(\PDO::FETCH_ASSOC)) {
@@ -268,7 +272,7 @@ where ru.idResource_use is null
             $extended = FALSE;
             $now = new \DateTime();
             $now->setTime(23, 59, 59);
-            $s = array();
+            $s = [];
 
             if ($r['Span_End'] != "") {
 
@@ -298,7 +302,7 @@ where ru.idResource_use is null
             }
 
             $validHolidays = FALSE;
-            // New parameter controls BO days
+            // New parameter controls B/O days
             if ($uS->UseCleaningBOdays) {
                 $validHolidays = TRUE;
             }
@@ -337,6 +341,10 @@ where ru.idResource_use is null
                 $titleText .= ' ($)';
             }
 
+            if ($r['Has_Future_Change'] > 0) {
+                $titleText .= " (->)";
+            }
+
             if ($extended) {
                 $visitExtended = TRUE;
             }
@@ -354,7 +362,8 @@ where ru.idResource_use is null
 
             // Future visit span?
             if ($r['Visit_Status'] == VisitStatus::Reserved) {
-               $s['borderColor'] = '#333';
+               $s['borderColor'] = '#4aaa34';
+                $titleText = '(<-) ' . $titleText;
             }
 
             //
@@ -406,7 +415,7 @@ where ru.idResource_use is null
 
             $extended = FALSE;
             $now = new \DateTime();
-            $s = array();
+            $s = [];
 
             $endDT = new \DateTime($r['Expected_Departure']);
             $clDate = new \DateTime($r['Expected_Departure']);
@@ -440,7 +449,7 @@ where ru.idResource_use is null
 
                 // Days before fall on a holiday too?
                 while ($myHolidays->is_holiday($stDT->format('U'))) {
-                    $c = array(
+                    $c = [
                         'id' => 'H' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
@@ -452,8 +461,7 @@ where ru.idResource_use is null
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
-
-                    );
+                    ];
 
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
@@ -467,7 +475,7 @@ where ru.idResource_use is null
 
                 while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
                     // Add a Cleaning Black-Out Event
-                    $c = array(
+                    $c = [
                         'id' => 'BO' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
@@ -479,8 +487,7 @@ where ru.idResource_use is null
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'white',
-
-                    );
+                    ];
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
 
@@ -491,7 +498,7 @@ where ru.idResource_use is null
 
                 // Days before fall on a holiday too?
                 while ($myHolidays->is_holiday($stDT->format('U'))) {
-                    $c = array(
+                    $c = [
                         'id' => 'H' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
@@ -503,8 +510,7 @@ where ru.idResource_use is null
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
-
-                    );
+                    ];
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
 
@@ -527,7 +533,7 @@ where ru.idResource_use is null
                 // End date fall on a holiday?
                 while ($myHolidays->is_holiday($clDate->format('U'))) {
 
-                    $c = array(
+                    $c = [
                         'id' => 'H' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
@@ -539,8 +545,7 @@ where ru.idResource_use is null
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
-
-                    );
+                    ];
 
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
@@ -555,7 +560,7 @@ where ru.idResource_use is null
 
                 while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
                     // Add a Cleaning Black-Out Event
-                    $c = array(
+                    $c = [
                         'id' => 'BO' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
@@ -567,8 +572,7 @@ where ru.idResource_use is null
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'white',
-
-                    );
+                    ];
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
 
@@ -578,7 +582,7 @@ where ru.idResource_use is null
 
                 // Now End date fall on a holiday?
                 while ($beginHolidays->is_holiday($clDate->format('U')) || $endHolidays->is_holiday($clDate->format('U'))) {
-                    $c = array(
+                    $c = [
                         'id' => 'H' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => FALSE,
@@ -590,8 +594,7 @@ where ru.idResource_use is null
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
-
-                    );
+                    ];
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
 
@@ -599,10 +602,6 @@ where ru.idResource_use is null
                     $clDate->setTime(10, 0, 0);
                 }
             }
-            // Waitlist omit background event.
-//            if ($r['idResource'] != 0 && $r['idHospital'] > 0) {
-//                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->HospitalColorBar);
-//            }
 
             $s['id'] = 'r' . $eventId++;
             $s['idReservation'] = $r['idReservation'];
@@ -673,37 +672,12 @@ where ru.idResource_use is null
     }
 
 
-//     protected function addBackgroundEvent($r, $hospitals, $hospitalColors) {
-
-//         $uS = Session::getInstance();
-//         $backgroundBorderColor = '';
-
-//         $hospitalColors = $uS->RibbonBottomColor || strtolower($uS->GuestNameColor) == 'hospital';
-
-//             // Use Association colors?
-//         if ($hospitalColors) {
-
-//             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
-
-//             	if (isset($hospitals[$r['idAssociation']])) {
-//             	    $backgroundBorderColor = $hospitals[$r['idAssociation']]['Background_Color'];
-//             	}
-
-//             } else if (isset($hospitals[$r['idHospital']])) {
-//                 $backgroundBorderColor = $hospitals[$r['idHospital']]['Background_Color'];
-//             }
-
-//         }
-
-//         return $backgroundBorderColor;
-//     }
-
     protected function addVisitBlackouts(&$events, $myHolidays, $dtendDate, $timezone, $idResc, $nonClean) {
 
         $p1d = new \DateInterval('P1D');
 
         while ($myHolidays->is_holiday($dtendDate->format('U'))) {
-                    $c = array(
+                    $c = [
                         'id' => 'H' . $idResc,
                         'kind' => CalEventKind::BO,
                         'editable' => FALSE,
@@ -715,8 +689,7 @@ where ru.idResource_use is null
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
-
-                    );
+                    ];
 
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
@@ -732,7 +705,7 @@ where ru.idResource_use is null
                 while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
                     // Add a Cleaning Black-Out Event
 
-                    $c = array(
+                    $c = [
                         'id' => 'BO' . $idResc,
                         'kind' => CalEventKind::BO,
                         'editable' => FALSE,
@@ -745,7 +718,7 @@ where ru.idResource_use is null
                         'textColor' => 'white',
                         'borderColor' => 'white',
 
-                    );
+                    ];
 
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
@@ -759,7 +732,7 @@ where ru.idResource_use is null
 
                 // Check for holidays again?
                 while ($myHolidays->is_holiday($dtendDate->format('U'))) {
-                    $c = array(
+                    $c = [
                         'id' => 'H' . $idResc,
                         'kind' => CalEventKind::BO,
                         'editable' => FALSE,
@@ -772,7 +745,7 @@ where ru.idResource_use is null
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
 
-                    );
+                    ];
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
 
@@ -819,20 +792,20 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
             }
 
             // Set Start and end for fullCalendar control
-            $c = array(
+            $c = [
                 'id' => 'RR' . $idCounter++,
                 'kind' => CalEventKind::OOS,
                 'resourceId' => "id-" . $r["idResource"],
                 'idResc' => $r["idResource"],
-                'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes']: ''),
-            		'start' => $stDateDT->format('Y-m-d\TH:i:00'),
-            		'end' => $enDateDT->format('Y-m-d\TH:i:00'),
+                'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes'] : ''),
+                'start' => $stDateDT->format('Y-m-d\TH:i:00'),
+                'end' => $enDateDT->format('Y-m-d\TH:i:00'),
                 'title' => $r['StatusTitle'],
                 'allDay' => 1,
                 'backgroundColor' => 'gray',
                 'textColor' => 'white',
                 'borderColor' => 'black',
-            );
+            ];
 
             $event = new Event($c, $timezone);
             $events[] = $event->toArray();
@@ -863,20 +836,20 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
             }
 
             // Set Start and end for fullCalendar control
-            $c = array(
+            $c = [
                 'id' => 'RET' . $idCounter++,
                 'kind' => CalEventKind::OOS,
                 'resourceId' => "id-" . $r["idResource"],
                 'idResc' => $r["idResource"],
                 'reason' => '',
-            		'start' => $RetiredDT->format('Y-m-d\TH:i:00'),
-            		'end' => $endDate->format('Y-m-d\TH:i:00'),
+                'start' => $RetiredDT->format('Y-m-d\TH:i:00'),
+                'end' => $endDate->format('Y-m-d\TH:i:00'),
                 'title' => "Retired",
                 'allDay' => 1,
                 'backgroundColor' => 'gray',
                 'textColor' => 'white',
                 'borderColor' => 'black',
-            );
+            ];
 
             $event = new Event($c, $timezone);
             $events[] = $event->toArray();
@@ -897,11 +870,11 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
             foreach($hospitals as $h) {
 
-                $this->ribbonColors[$h['idHospital']] = array(
+                $this->ribbonColors[$h['idHospital']] = [
                     't' => trim(strtolower($h['Text_Color'])),
-                    'b' => trim(strtolower($h['Background_Color']))
+                    'b' => trim(strtolower($h['Background_Color'])),
 
-                );
+                ];
             }
 
             // Get guest name colorings
@@ -909,24 +882,24 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
             foreach ($demogs as $d) {
                 if ($d["Attributes"] && $attributes = json_decode($d["Attributes"], true)){
-                    $this->ribbonColors[$d[0]] = array(
+                    $this->ribbonColors[$d[0]] = [
                         't' => isset($attributes["fontColor"]) ? trim(strtolower($attributes["fontColor"])) : "#ffffff",
                         'b' => isset($attributes["backgroundColor"]) ? trim(strtolower($attributes["backgroundColor"])) : 'transparent'
-                    );
+                    ];
                 }else if ($d[2] != '') {
 
                     // Split colors out of CDL
                     $splits = explode(',', $d[2]);
 
-                    $this->ribbonColors[$d[0]] = array(
+                    $this->ribbonColors[$d[0]] = [
                         't' => trim(strtolower($splits[0])),
                         'b' => isset($splits[1]) ? trim(strtolower($splits[1])) : 'transparent'
-                    );
+                    ];
                 }else{
-                    $this->ribbonColors[$d[0]] = array(
+                    $this->ribbonColors[$d[0]] = [
                         't' => "#ffffff",
-                        'b' => ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor: "#3788d8")
-                    );
+                        'b' => ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : "#3788d8"),
+                    ];
                 }
             }
         }
@@ -1057,6 +1030,9 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan])) { //checked out
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedOut]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedOut]['t'];
+                } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == VisitStatus::Reserved) {
+                    $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::ReservedSpan]['b'];
+                    $s['textColor'] = $this->ribbonColors[CalendarStatusColors::ReservedSpan]['t'];
                 }
             }
         }
@@ -1115,6 +1091,8 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::Unconfirmed];
                 } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan])) { //checked out
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckedOut];
+                } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == VisitStatus::Reserved) {
+                    $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::ReservedSpan];
                 }
             }
         }

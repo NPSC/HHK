@@ -76,7 +76,7 @@ class HouseServices {
      * @param array $coStayDates Dates for an early checkout. Adjusts the final payments
      * @return array
      */
-    public static function getVisitFees(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin, $action = '', $coStayDates = []) {
+    public static function getVisitFees(\PDO $dbh, $idGuest, $idV, $idSpan, $action = '', $coStayDates = []) {
 
         $uS = Session::getInstance();
 
@@ -90,7 +90,7 @@ class HouseServices {
             return ["error" => "A Visit is not selected: $idV-$idSpan"];
         }
 
-        // TODO get all the visit spans
+        // Get the visit span indicated
         $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
         $stmt1 = $dbh->query($query);
         $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
@@ -99,7 +99,7 @@ class HouseServices {
 
 
         if (count($rows) == 0) {
-            return ["error" => "<span>No Data.</span>"];
+            return ["error" => "<span>No Visit Data.  idVisit=$idVisit and Span = $span.</span>"];
         }
 
         $vSpanListing = $rows[0];
@@ -218,6 +218,7 @@ class HouseServices {
         // Start and end dates for rate changer
         $dataArray['start'] = $vspanStartDT->format('c');
         $dataArray['end'] = $vspanEndDT->format('c');
+        $dataArray['visitStatus'] = $vSpanListing['Status'];
 
         return $dataArray;
     }
