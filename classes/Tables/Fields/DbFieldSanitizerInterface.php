@@ -18,7 +18,7 @@ interface DbFieldSanitizerInterface {
     public function sanitize($v);
     /**
      * Summary of getDbType
-     * @return void
+     * @return mixed
      */
     public function getDbType();
 }

@@ -801,7 +801,7 @@ class Visit {
             $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->CheckOutTime:00:00"));
 
             // Update the checked in stays
-            $this->setStaysExpectedEnd($dbh, $this->stays, $chgDT, $uS->username);
+            $this->setStaysExpectedEnd($dbh, $this->stays, $chgDT);
 
         } else {
             // End current span
@@ -977,6 +977,13 @@ class Visit {
         $this->saveNewStays($dbh, $uname);
     }
 
+    /**
+     * Summary of setStaysExpectedEnd - Set the expected end date of checked-in stays.
+     * @param \PDO $dbh
+     * @param array $stays
+     * @param \DateTime $expEndDate
+     * @return void
+     */
     protected function setStaysExpectedEnd(\PDO $dbh, array &$stays, \DateTime $expEndDate) {
 
         $uS = Session::getInstance();
@@ -1191,8 +1198,11 @@ class Visit {
             $endDate = new \DateTime($dateDeparted->format('Y-m-d 0:0:0'));
 
             if ($endDate == $visitCkedIn) {
+                $tempVisitRs = $this->visitRS;
                 // Delete this new span .
-                $this->removeSpanStub($dbh, $dateDeparted);
+                $this->deleteThisVisitSpan($dbh);
+                $this->loadSpan($dbh, $tempVisitRs->idVisit->getStoredVal(), $tempVisitRs->Span->getStoredVal() - 1);
+                $this->checkoutStays($dbh, $this->getIdVisit(), $this->getSpan(), $dateDeparted);
             }
         }
 
@@ -1311,13 +1321,14 @@ class Visit {
     }
 
     /**
-     * Summary of removeSpanStub
+     * Summary of deleteThisVisitSpan - Deletes 'this' visit clearing up any stays or on-leaves
      * @param \PDO $dbh
-     * @param \DateTime $dateDepartedDT
+     * @param int idVisit
+     * @param int span
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
-    protected function removeSpanStub(\PDO $dbh, DateTimeInterface $dateDepartedDT){
+    public function deleteThisVisitSpan(\PDO $dbh){
 
         $uS = Session::getInstance();
 
@@ -1334,30 +1345,57 @@ class Visit {
             $logText = VisitLog::getDeleteText($this->visitRS, $this->getIdVisit());
             VisitLog::logVisit($dbh, $this->visitRS->idVisit->getStoredVal(), $this->visitRS->Span->getStoredVal(), $this->visitRS->idResource->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
 
+            $this->visitRS = new VisitRs();
             unset($this->visitRSs[$this->getSpan()]);
             unset($this->stays);
             $this->resource = NULL;
 
         } else {
-            throw new RuntimeException("Remove stub: Visit record not found.");
+            throw new RuntimeException("Delete Visit-Span: Visit record not found.");
         }
 
+    }
+
+    /**
+     * Summary of loadSpan
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @param int $span
+     * @throws \HHK\Exception\RuntimeException
+     * @return void
+     */
+    protected function loadSpan(\PDO $dbh, $idVisit, $span) {
         // Load previous visit span
         $visitRS = new VisitRS();
-        $visitRS->Span->setStoredVal(($this->getSpan() - 1));
-        $visitRS->idVisit->setStoredVal($this->getIdVisit());
-        $rows = EditRS::select($dbh, $visitRS, Array($visitRS->idVisit, $visitRS->Span));
+        $visitRS->Span->setStoredVal($span);
+        $visitRS->idVisit->setStoredVal($idVisit);
+        $rows = EditRS::select($dbh, $visitRS, [$visitRS->idVisit, $visitRS->Span]);
 
         if (count($rows) == 0) {
-            throw new RuntimeException("Remove stub: Previous Visit record not found.");
+            throw new RuntimeException("Load Span: Previous Visit record not found.");
         }
 
         // load visitRS
         $this->visitRS = new VisitRs();
         EditRS::loadRow($rows[0], $this->visitRS);
+        $this->visitRSs[$this->visitRS->Span->getStoredVal()] = $this->visitRS;
+        $this->loadStays($dbh, VisitStatus::CheckedIn);
+    }
+
+    /**
+     * Summary of CheckoutStays - Checks out all the stays for the given visit span.
+     * @param \PDO $dbh
+     * @param int $idvisit
+     * @param int $span
+     * @param \DateTimeInterface $dateDepartedDT
+     * @return void
+     */
+    protected function checkoutStays(\PDO $dbh, $idvisit, $span, DateTimeInterface $dateDepartedDT) {
+
+        $uS = session::getInstance();
 
         // Load and update previous stays
-        $allStays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');
+        $allStays = self::loadStaysStatic($dbh, $idvisit, $span, '');
         foreach ($allStays as $stayRs) {
 
             $stayRs->Status->setNewVal(VisitStatus::CheckedOut);
@@ -1367,7 +1405,7 @@ class Visit {
             EditRS::update($dbh, $stayRs, array($stayRs->idStays));
 
             $logText = VisitLog::getUpdateText($stayRs);
-            VisitLog::logStay($dbh, $this->getIdVisit(), $stayRs->Visit_Span->getStoredVal(), $stayRs->idRoom->getStoredVal(), $stayRs->idStays->getStoredVal(), $stayRs->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+            VisitLog::logStay($dbh, $idvisit, $stayRs->Visit_Span->getStoredVal(), $stayRs->idRoom->getStoredVal(), $stayRs->idStays->getStoredVal(), $stayRs->idName->getStoredVal(), 0, $logText, "update", $uS->username);
         }
 
     }

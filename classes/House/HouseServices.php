@@ -532,7 +532,13 @@ class HouseServices {
 
             $reply .= self::undoRoomChange($dbh, $visit, $uS->username);
             $returnCkdIn = TRUE;
+        }
 
+        // Delete future room change
+        if (isset($post['delFutRmChg']) && $visit->getVisitStatus() == VisitStatus::CheckedIn) {
+
+            $reply .= self::deleteFutureVisit($dbh, $visit->getIdVisit());
+            $returnCkdIn = TRUE;
         }
 
 
@@ -567,6 +573,31 @@ class HouseServices {
     }
 
     /**
+     * Summary of deleteFutureVisit
+     * @param \PDO $dbh
+     * @param mixed $idVisit
+     * @return string
+     */
+    public static function deleteFutureVisit(\PDO $dbh, $idVisit) {
+        // Look for the reserved future visit
+        $vstmt = $dbh->query("Select * from visit where Status = '" . VisitStatus::Reserved . "' and idVisit = $idVisit;");
+        $ro = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($ro) > 0) {
+            // Delete the reserved visit
+            $vrs = new VisitRS();
+            EditRS::loadRow($ro[1], $vrs);
+            $resVisit = new Visit($dbh, 0, $vrs->idVisit->getStoredVal(), $vrs->Span->getStoredVal());
+
+            $resVisit->deleteThisVisitSpan($dbh);
+        } else {
+            return 'The Visit to Delete was not found.  ';
+        }
+
+        return '';
+    }
+
+    /**
      * Summary of showPayInvoice
      * @param \PDO $dbh
      * @param int $id
@@ -578,7 +609,7 @@ class HouseServices {
         $mkup = HTMLContainer::generateMarkup(
             'div',
             PaymentChooser::createPayInvMarkup($dbh, $id, $iid),
-            array('class'=>'hhk-payInvoice', 'style' => 'min-width:600px;clear:left;')
+            ['class' => 'hhk-payInvoice', 'style' => 'min-width:600px;clear:left;']
         );
 
         return ['mkup' => $mkup];
@@ -666,7 +697,7 @@ class HouseServices {
     public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes) {
 
         $uS = Session::getInstance();
-        $dataArray = array();
+        $dataArray = [];
 
         if ($ord == 0 || ($discount == '' && $addnlCharge == '')) {
             return $dataArray;

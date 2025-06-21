@@ -707,12 +707,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                 $('#guestCredit').val('');
             }
 
-            $diagbox.css('background-color', '#F2F2F2');
+            $diagbox.css('background-color', '#f2f2f2');
         }
 
         // Is reserve span background color
         if (data.visitStatus == 'r') {
             title += ';  Future Room Change';
+            $diagbox.css('background-color', '#dbf9d4');
         }
 
         setupPayments($('#selRateCategory').val(), idVisit, visitSpan, $('#pmtRcpt'), '#keysfees');

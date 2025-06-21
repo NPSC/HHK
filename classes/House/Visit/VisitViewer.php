@@ -403,7 +403,7 @@ class VisitViewer {
 
             // Make undo Future Room Change button
             $spnMkup = HTMLContainer::generateMarkup('label', '- Delete Future Room Change', ['for' => 'delFutRmChg'])
-                . HTMLInput::generateMarkup('Delete Future Room Change', ['id' => 'delFutRmChg', 'type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.3em;margin-left:0.3em;']);
+                . HTMLInput::generateMarkup('Delete Future Room Change', ['id' => 'delFutRmChg', 'name' => 'delFutRmChg','type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.3em;margin-left:0.3em;']);
 
             $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, ['style' => 'margin:0.1em;', 'title' => 'Delete Future Room Change']);
         }

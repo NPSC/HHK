@@ -41,7 +41,7 @@ class DB_Field {
      * @param bool $updateOnChange default: true
      * @param bool $logMe default: true
      */
-    function __construct($col, $defaultVal, DbFieldSanitizerInterface $sanitizer, $updateOnChange = TRUE, $logMe = FALSE) {
+    public function __construct($col, $defaultVal, DbFieldSanitizerInterface $sanitizer, $updateOnChange = TRUE, $logMe = FALSE) {
 
         $this->setCol($col);
         $this->sanitizer = $sanitizer;
