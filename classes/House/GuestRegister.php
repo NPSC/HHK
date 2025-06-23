@@ -223,6 +223,7 @@ where ru.idResource_use is null
         $p1d = new \DateInterval('P1D');
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
+        $spans=[];
 
 
         if ($startTime == "" || $endTime == "") {
@@ -263,6 +264,10 @@ where ru.idResource_use is null
         $stmtv = $dbh->query($query);
 
         while ($r = $stmtv->fetch(\PDO::FETCH_ASSOC)) {
+            $spans[] = $r;
+        }
+
+        foreach ($spans as $r) {
 
             if ($r["idResource"] == 0) {
                 continue;
@@ -324,7 +329,7 @@ where ru.idResource_use is null
             }
 
 
-            // show event on first day of calendar
+            // Make sure an extended event shows on first day of calendar
             if ($endDT->format('Y-m-d') == $beginDate->format('Y-m-d') && $extended) {
                 $endDT->add(new \DateInterval('P1D'));
             }
@@ -334,7 +339,7 @@ where ru.idResource_use is null
             $visitExtended = FALSE;
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
-                $titleText .= ' (rm)';
+                $titleText .= ' (-> ' . $this->findSpanResourceTitle($spans, $r['idVisit'], $r['Span'] + 1) . ')';
             }
 
             if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
@@ -342,7 +347,7 @@ where ru.idResource_use is null
             }
 
             if ($r['Has_Future_Change'] > 0) {
-                $titleText .= " (->)";
+                $titleText .= " (-> " . $this->findStatusResourceTitle($spans, $r['idVisit'], VisitStatus::Reserved) . ')';
             }
 
             if ($extended) {
@@ -363,7 +368,7 @@ where ru.idResource_use is null
             // Future visit span?
             if ($r['Visit_Status'] == VisitStatus::Reserved) {
                $s['borderColor'] = '#4aaa34';
-                $titleText = '(<-) ' . $titleText;
+                $titleText .= ' (<- ' . $this->findStatusResourceTitle($spans, $r['idVisit'], VisitStatus::CheckedIn) . ')';
             }
 
             //
@@ -811,6 +816,37 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
             $events[] = $event->toArray();
 
         }
+    }
+
+    /**
+     * Summary of findResourceTitle
+     * @param array $spans
+     * @param int $idVisit
+     * @param string $status
+     * @return string
+     */
+    protected function findStatusResourceTitle($spans, $idVisit, $status) {
+
+        $title = '';
+        foreach ($spans as $p) {
+            if ($p['idVisit'] == $idVisit && $p['Visit_Status'] == $status) {
+                $title = htmlspecialchars_decode($p['Resource_Title'], ENT_QUOTES);
+            }
+        }
+
+        return $title;
+    }
+
+    protected function findSpanResourceTitle($spans, $idVisit, $span) {
+
+        $title = '';
+        foreach ($spans as $p) {
+            if ($p['idVisit'] == $idVisit && $p['Span'] == $span) {
+                $title = htmlspecialchars_decode($p['Resource_Title'], ENT_QUOTES);
+            }
+        }
+
+        return $title;
     }
 
     protected function getRetiredRoomEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events) {

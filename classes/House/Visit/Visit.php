@@ -810,7 +810,7 @@ class Visit {
 
             $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
             $this->visitRS->Has_Future_Change->setNewVal(0);
-            $this->visitRS->Span_End->setNewVal($chgDT);
+            $this->visitRS->Span_End->setNewVal($chgDT->format('Y-m-d H:i:s'));
         }
 
         // Save the old visit span.
@@ -989,7 +989,7 @@ class Visit {
         $uS = Session::getInstance();
         foreach ($stays as $stayRS) {
 
-            if ($stayRS->status->getStoredVal() == VisitStatus::CheckedIn) {
+            if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
                 $stayRS->Expected_Co_Date->setNewVal($expEndDate->format("Y-m-d $uS->CheckOutTime:00:00"));
                 $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
                 $stayRS->Updated_By->setNewVal($uS->username);

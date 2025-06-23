@@ -2399,6 +2399,7 @@ CREATE or replace VIEW `vregister` AS
         `v`.`Span_End` AS `Span_End`,
         `v`.`Notes` AS `Ribbon_Note`,
         `gv`.`Description` AS `Status_Text`,
+        `r`.`Title` as `Resource_Title`,
         IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
         IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
         IFNULL(CASE
@@ -2421,6 +2422,7 @@ CREATE or replace VIEW `vregister` AS
     FROM
         ((((((`visit` `v`
         LEFT JOIN `hospital_stay` `hs` ON (`v`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `resource` `r` ON `v`.`idResource` = `r`.`idResource`
         LEFT JOIN `name` `pn` ON (`hs`.`idPatient` = `pn`.`idName`))
         LEFT JOIN `name` `n` ON (`v`.`idPrimaryGuest` = `n`.`idName`))
         LEFT JOIN `name_demog` `nd` ON (`v`.`idPrimaryGuest` = `nd`.`idName`))

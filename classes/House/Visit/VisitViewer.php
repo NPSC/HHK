@@ -1408,14 +1408,13 @@ where `Deleted` = 0 and `Status` = 'up'
         $lastSpanId = 0;
         foreach ($visitRcrds as $r) {
 
-            if ($r['Span'] > $lastSpanId) {
+            if ($r['Status'] == VisitStatus::Reserved) {
+                $hasReservedSpan = true;
+                $reserveSpanRs = $r;
+            }
 
-                if ($r['Status'] == VisitStatus::Reserved) {
-                    $hasReservedSpan = true;
-                    $reserveSpanRs = $r;
-                } else {
-                    $lastSpanId = $r['Span'];
-                }
+            if ($r['Span'] > $lastSpanId) {
+                $lastSpanId = $r['Span'];
             }
         }
 
@@ -1479,7 +1478,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
             $spanStartDT = newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
 
-            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
+            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn || $vRs->Status->getStoredVal() == VisitStatus::Reserved) {
 
                 $spanEndDt = newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
                 $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
@@ -1525,7 +1524,7 @@ where `Deleted` = 0 and `Status` = 'up'
                 }
 
                 // Checked-Out spans cannot move their end date beyond todays date.
-                if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
+                if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn && $vRs->Status->getStoredVal() != VisitStatus::Reserved) {
                     if ($spanEndDt >= $tonight) {
                         return ['error'=>'Checked-Out visits cannot move their end date beyond todays date  Use Undo Checkout instead. '];
                     }
@@ -1576,10 +1575,14 @@ where `Deleted` = 0 and `Status` = 'up'
             $visits[$s]['start'] = $spanStartDT;
             $visits[$s]['end'] = $spanEndDt;
 
-            $stayMsg = self::moveStaysDates($dbh, $stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta, $visits[$s]);
 
-            if ($stayMsg != '') {
-                return ['error'=>$stayMsg];
+            if (isset($stays[$vRs->Span->getStoredVal()])) {
+                
+                $stayMsg = self::moveStaysDates($dbh, $stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta, $visits[$s]);
+
+                if ($stayMsg != '') {
+                    return ['error'=>$stayMsg];
+                }
             }
         }
 
@@ -1601,7 +1604,7 @@ where `Deleted` = 0 and `Status` = 'up'
             $visitRS->Span_Start->setNewVal($v['start']->format('Y-m-d H:i:s'));
             $visitRS->Arrival_Date->setNewVal($firstArrival->format('Y-m-d H:i:s'));
 
-            if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+            if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRS->Status->getStoredVal() == VisitStatus::Reserved) {
 
                 $visitRS->Expected_Departure->setNewVal($v['end']->format('Y-m-d H:i:s'));
                 $estDepart = $v['end']->format('Y-m-d H:i:s');
@@ -1623,8 +1626,9 @@ where `Deleted` = 0 and `Status` = 'up'
                 VisitLog::logVisit($dbh, $idVisit, $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
             }
 
-            self::saveStaysDates($dbh, $stays[$visitRS->Span->getStoredVal()], $visitRS->idRegistration->getStoredVal(), $uname);
-
+            if (isset($stays[$visitRS->Span->getStoredVal()])) {
+                self::saveStaysDates($dbh, $stays[$visitRS->Span->getStoredVal()], $visitRS->idRegistration->getStoredVal(), $uname);
+            }
         }
 
 
