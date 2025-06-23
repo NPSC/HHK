@@ -6,7 +6,6 @@ use HHK\Member\Role\Doctor;
 use HHK\Member\Role\Patient;
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
-use HHK\Notes;
 use HHK\SysConst\RelLinkType;
 use HHK\sec\Session;
 use HHK\House\PSG;
@@ -20,7 +19,6 @@ use HHK\Tables\EditRS;
 use HHK\SysConst\ReservationStatus;
 use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\GenLookupsRS;
-use RuntimeException;
 
 
 class Import {
@@ -28,28 +26,58 @@ class Import {
     protected \PDO $dbh;
     protected array $zipLookups;
     protected array $hospitals;
-    protected array $relations;
-    protected array $diags;
     protected array $rooms;
-    protected array $genders;
-    protected array $ethnicities;
-    protected array $noReturn;
-    protected array $mediaSources;
     protected int $importedPatients;
     protected int $importedGuests;
 
+    /**
+     * Mapping of import field to gen lookup table name
+     * 
+     * @var array //[<import field> => <genLookupTableName>]
+     */
+    public array $genLookupMapping; //array[<import field>] => <genLookupTableName>
+    
+    /**
+     * Mapping of import field to a single specific HHK field
+     * 
+     * @var array //[<hhkField> => <import field>]
+     */
+    public array $fieldMapping;
+    
+    protected array $genLookups;
+
     public function __construct(\PDO $dbh){
         $this->dbh = $dbh;
+        
+        //TODO: Customize mappings for each import to facilitate making missing lookups
+        $this->genLookupMapping = [
+            //"<importfieldname>"=>"genLookupTableName"
+            "relationship"=>"Patient_Rel_Type",
+            "patientTitle"=>"Name_Prefix"
+        ];
+
+        $this->fieldMapping = [
+            "hospital"=>"",
+            "room"=>"",
+            "doctor"=>[
+                "first"=>"",
+                "last"=>"",
+                "full"=>""
+            ]
+        ];
+
+        $this->loadGenLookups();
         //$this->getHospitals();
-        $this->getRelations();
-        //$this->getDiags();
         //$this->getRooms();
-        //$this->getGenders();
-        //$this->getEthnicities();
-        //$this->getNoReturn();
-        //$this->getMediaSources();
     }
 
+    /**
+     * Main import method, customize for each import
+     * @param int $limit
+     * @param bool $people
+     * @param bool $visits
+     * @return array{batch: int, guests: int, patients: int, progress: array{imported: float|int, progress: float, remaining: mixed, success: bool, workerId: string}|array{ImportId: mixed, error: string, trace: string}}
+     */
     public function startImport(int $limit = 100, bool $people = true, bool $visits = false){
         $uS = Session::getInstance();
         $workerId = bin2hex(random_bytes(16)); //generate random 32 char string for workerId
@@ -77,6 +105,8 @@ class Import {
         $patId = '';
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            //TODO: Customize for each import
 
             //$guests = [];
             try{
@@ -111,8 +141,8 @@ class Import {
                     $patient["County"] = "";
                     $patient["State"] = $r["state"];
                     $patient["ZipCode"] = $r["zipCode"];
-                    $patient["Phone"] = str_replace("-", "", filter_var($r["homeNumber"], FILTER_SANITIZE_NUMBER_INT));
-                    $patient["Mobile"] = str_replace("-", "", filter_var($r["cellNumber"], FILTER_SANITIZE_NUMBER_INT));
+                    $patient["Phone"] = $r["homeNumber"];
+                    $patient["Mobile"] = $r["cellNumber"];
                     $patient["Email"] = $r["eMail"];
                     //"Diagnosis"=>"",
                     //"PrimaryGuest" => $r["PatientPrimaryGuest"],
@@ -138,8 +168,8 @@ class Import {
                             "County" => "",
                             "State" => $r["state"],
                             "ZipCode" => $r["zipCode"],
-                            "Phone" => str_replace("-", "", filter_var($r["homeNumber"], FILTER_SANITIZE_NUMBER_INT)),
-                            "Mobile" => str_replace("-", "", filter_var($r["cellNumber"], FILTER_SANITIZE_NUMBER_INT)),
+                            "Phone" => $r["homeNumber"],
+                            "Mobile" => $r["cellNumber"],
                             "Email" => $r["eMail"],
                             //"Diagnosis"=>"",
                             //"PrimaryGuest"=>$r["Guest_".$i."_Primary_Guest"],
@@ -262,7 +292,7 @@ class Import {
                 $hospitalStay->setHospitalId($hospitalId);
                 $hospitalStay->setIdPsg($psg->getIdPsg());
                 if(isset($r["Diagnosis"])){
-                    $hospitalStay->setDiagnosis($this->findIdDiag($r["Diagnosis"]));
+                    $hospitalStay->setDiagnosis($this->findIdGenLookup("diagnosis", $r["Diagnosis"]));
                 }
 
                 $hospitalStay->save($this->dbh, $psg, 0, 'admin');
@@ -330,7 +360,7 @@ class Import {
             $hospitalStay->setHospitalId($hospitalId);
             $hospitalStay->setIdPsg($psg->getIdPsg());
             if(isset($r["Diagnosis"])){
-                $hospitalStay->setDiagnosis($this->findIdDiag($r["Diagnosis"]));
+                $hospitalStay->setDiagnosis($this->findIdGenLookup("diagnosis", $r["Diagnosis"]));
             }
             if(isset($r["MRN"])){
                 $hospitalStay->setMrn($r["MRN"]);
@@ -372,10 +402,10 @@ class Import {
         $guest = new Guest($this->dbh, '', $id);
 
         if($id == 0){
-            $gender = $this->findIdGender((isset($r['Gender']) ? $r["Gender"] : ""));
-            $ethnicity = $this->findIdEthnicity((isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
-            $noReturn =  $this->findIdNoReturn((isset($r["Banned"]) ? $r["Banned"] : ""));
-            $mediaSource = $this->findIdMediaSource((isset($r["mediaSource"]) ? $r["mediaSource"] : ""));
+            $gender = $this->findIdGenLookup("Gender", (isset($r['Gender']) ? $r["Gender"] : ""));
+            $ethnicity = $this->findIdGenLookup("Ethnicity", (isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
+            $noReturn =  $this->findIdGenLookup("No_Return", (isset($r["Banned"]) ? $r["Banned"] : ""));
+            $mediaSource = $this->findIdGenLookup("Media_Source", (isset($r["mediaSource"]) ? $r["mediaSource"] : ""));
 
             $birthDate = "";
             if(isset($r["BirthDate"]) && trim($r['BirthDate']) != ''){
@@ -417,8 +447,8 @@ class Import {
             $guest->save($this->dbh, $post, $uS->username);
         }
         $relship = RelLinkType::Relative;
-        if (isset($r['Relationship_to_Patient']) && isset($this->relations[$r['Relationship_to_Patient']]) && $r["Relationship_to_Patient"] !== "patient") {
-            $relship = $this->relations[$r['Relationship_to_Patient']];
+        if (isset($r['Relationship_to_Patient'])) {
+            $relship = $this->findIdGenLookup("Patient_Rel_Type", $r['Relationship_to_Patient']);
         }
 
         if($psg instanceof PSG){
@@ -569,6 +599,199 @@ class Import {
     }
 
     /**
+     * Search for a member record depending on name/phone/email/member type (guest/patient)
+     *
+     * @param string $first
+     * @param string $last
+     * @param string $memberType - "guest", "patient" "doctor" or ""
+     * @param bool $limit - limit to 1 record or multiple
+     * @param string $phone
+     * @param string $email
+     * @return number|array
+     */
+    private function findPerson(string $first, string $last, string $memberType, bool $limit = true, string $phone = '', string $email = ''){
+
+        $newFirst = trim(htmlentities($first, ));
+        $newLast = trim(htmlentities($last));
+        $phone = ($phone !='' ? $this->formatPhone($phone) : null);
+        $email = ($email !='' ? trim($email) : null);
+
+
+        if(in_array($memberType, ["guest", "patient"])){
+            $query = "Select n.idName, ng.idPsg, ng.Relationship_Code from name n join name_guest ng on n.idName = ng.idName where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
+            if($memberType == "guest"){
+                $query .= " and ng.Relationship_Code != 'slf'";
+            }else if($memberType == "patient"){
+                $query .= " and ng.Relationship_Code = 'slf'";
+            }
+        }else if($memberType == VolMemberType::Doctor){
+            $query = "SELECT distinct n.idName, n.Name_Last, n.Name_First
+FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::Doctor . "'
+WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
+        }else{
+            $query = "Select n.idName from name n where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
+        }
+        
+
+        if($limit){
+            $query .= " limit 1";
+        }
+
+        $stmtg = $this->dbh->query($query);
+        $rowCount = $stmtg->rowCount();
+        $rowgs = $stmtg->fetchAll(\PDO::FETCH_NUM);
+
+        if ($rowCount == 0) {
+            $id = 0;
+        } else if($rowCount == 1) {
+            $id = $rowgs[0][0];
+        } else {
+            $id = $rowgs;
+        }
+        return $id;
+    }
+
+    
+
+    /**
+     * Trim and format phone as (###) ###-####
+     * @param string $phone
+     * @return array|string|null
+     */
+    private function formatPhone(string $phone){
+        $phone = preg_replace('[^0-9]', '', $phone);//throw out any non numeric characters
+        return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $phone); //format remaining numbers
+    }
+
+    private function loadAddress(\PDO $dbh, $r) {
+
+        $state = ucfirst(trim($r['State']));
+        $city = ucwords(trim($r['City']));
+        $county = (isset($r['County']) ? ucfirst($r['County']) : '');
+        $country = 'US';
+        $zip = $r['ZipCode'];
+
+        if (strlen($zip) > 4) {
+
+            $searchZip = substr($zip, 0, 5);
+
+            if (isset($this->zipLookups[$searchZip]) === FALSE) {
+
+                $stmtz = $dbh->query("Select City, State, County from postal_codes where Zip_Code = '$searchZip'");
+                $rows = $stmtz->fetchAll(\PDO::FETCH_ASSOC);
+
+                if (count($rows) == 1) {
+                    $this->zipLookups[$searchZip] = $rows[0];
+                }
+            }
+
+            if (isset($this->zipLookups[$searchZip])) {
+
+                $state = $this->zipLookups[$searchZip]['State'];
+                $city = $this->zipLookups[$searchZip]['City'];
+                $county = $this->zipLookups[$searchZip]['County'];
+
+            }
+        }
+
+
+        $adr1 = array('1' => array(
+            'address1' => isset($r['Address']) ? ucwords(strtolower(trim($r['Address']))) : '',
+            'address2' => isset($r['Address2']) ? ucwords(strtolower(trim($r['Address2']))) : '',
+            'city' => $city,
+            'county'=>  $county,
+            'state' => $state,
+            'country' => $country,
+            'zip' => $zip));
+
+        return $adr1;
+    }
+
+    private function getHospitals(){
+        $stmt = $this->dbh->query("Select idHospital, Title from hospital");
+        while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $this->hospitals[strtolower($h['Title'])] = $h['idHospital'];
+        }
+    }
+
+    private function getRooms(){
+        $stmt = $this->dbh->query("Select idResource, Title from resource");
+        while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $this->rooms[trim(strtolower($h['Title']))] = $h['idResource'];
+        }
+    }
+
+    private function findIdResource(string $roomTitle){
+        return (isset($this->rooms[trim(strtolower($roomTitle))]) ? $this->rooms[trim(strtolower($roomTitle))] : 0);
+    }
+
+    /**
+     * Find the Gen lookup ID based on given value, return empty string if not found
+     * @param string $importFieldName
+     * @param string $importFieldValue
+     * @return int|string
+     */
+    private function findIdGenLookup(string $genLookupTableName, string $importFieldValue):int|string
+    {
+        if(isset($this->genLookups[$genLookupTableName])){
+            return (isset($this->genLookups[$genLookupTableName][trim(strtolower($importFieldValue))]) ? $this->genLookups[$genLookupTableName][trim(strtolower($importFieldValue))] : '');
+        }
+        return '';
+    }
+
+    /**
+     * Load required gen lookups based on contents of genLookupMapping
+     * @return void
+     */
+    private function loadGenLookups(){
+        foreach($this->genLookupMapping as $fieldName=>$genlookupTableName){
+            if(!isset($this->genLookups[$genlookupTableName])){
+                $this->genLookups[$genlookupTableName] = [];
+                foreach(readGenLookupsPDO($this->dbh, $genlookupTableName) as $r) {
+                    $this->genLookups[$genlookupTableName][strtolower($r[1])] = $r[0];
+                }
+            }
+        }
+    }
+
+    /**
+     * Create genLookups in HHK if they don't already exist
+     *
+     * @return array
+     */
+    public function makeMissingGenLookups(string $importFieldName){
+        if(isset($this->genLookupMapping[$importFieldName])){
+            $uploadedGenLookups = (new ImportMarkup($this->dbh))->getGenLookupInfo($this->genLookupMapping[$importFieldName], $importFieldName);
+        }
+        $insertCount = 0;
+
+        try{
+
+            foreach($uploadedGenLookups as $genLookup){
+                if($genLookup["id"] == null && $genLookup["Import Name"] != ''){
+                    //insert new ethnicity
+                    $newCode = 'g' . incCounter($this->dbh, 'codes');
+
+                    $glRs = new GenLookupsRS();
+                    $glRs->Table_Name->setNewVal($this->genLookupMapping[$importFieldName]);
+                    $glRs->Code->setNewVal($newCode);
+                    $glRs->Description->setNewVal($genLookup["Import Name"]);
+                    $glRs->Type->setNewVal('h');
+                    $glRs->Substitute->setNewVal('');
+                    $glRs->Order->setNewVal(0);
+
+                    EditRS::insert($this->dbh, $glRs);
+                    $insertCount++;
+                }
+            }
+        }catch (\Exception $e){
+            return array("error"=>$e->getMessage());
+        }
+
+        return array("success"=>$insertCount . " " .$this->genLookupMapping[$importFieldName] . "s inserted");
+    }
+
+    /**
      * Create rooms in HHK if they don't already exist
      *
      * @return array
@@ -644,220 +867,10 @@ class Import {
     }
 
     /**
-     * Create Diagnoses in HHK if they don't already exist
-     *
-     * @return array
+     * Create Doctors in HHK if they don't already exist
+     * 
+     * @return array{success: string}
      */
-    public function makeMissingDiags(){
-        $uploadedDiags = (new ImportMarkup($this->dbh))->getDiagInfo();
-        $insertCount = 0;
-
-        try{
-
-            foreach($uploadedDiags as $diag){
-                if($diag["idDiagnosis"] == null && $diag["Diagnosis"] != ''){
-                    //insert new diag
-                    $newCode = 'g' . incCounter($this->dbh, 'codes');
-
-                    $glRs = new GenLookupsRS();
-                    $glRs->Table_Name->setNewVal("Diagnosis");
-                    $glRs->Code->setNewVal($newCode);
-                    $glRs->Description->setNewVal($diag["Diagnosis"]);
-                    $glRs->Type->setNewVal('h');
-                    $glRs->Substitute->setNewVal('');
-                    $glRs->Order->setNewVal(0);
-
-                    EditRS::insert($this->dbh, $glRs);
-                    $insertCount++;
-                }
-            }
-        }catch (\Exception $e){
-            return array("error"=>$e->getMessage());
-        }
-
-        return array("success"=>$insertCount . " diagnoses inserted");
-    }
-
-    /**
-     * Create Genders in HHK if they don't already exist
-     *
-     * @return array
-     */
-    public function makeMissingGenders(){
-        $uploadedDiags = (new ImportMarkup($this->dbh))->getGenderInfo();
-        $insertCount = 0;
-
-        try{
-
-            foreach($uploadedDiags as $diag){
-                if($diag["idGender"] == null && $diag["Gender"] != ''){
-                    //insert new gender
-                    $newCode = 'g' . incCounter($this->dbh, 'codes');
-
-                    $glRs = new GenLookupsRS();
-                    $glRs->Table_Name->setNewVal("Gender");
-                    $glRs->Code->setNewVal($newCode);
-                    $glRs->Description->setNewVal($diag["Gender"]);
-                    $glRs->Type->setNewVal('h');
-                    $glRs->Substitute->setNewVal('');
-                    $glRs->Order->setNewVal(0);
-
-                    EditRS::insert($this->dbh, $glRs);
-                    $insertCount++;
-                }
-            }
-        }catch (\Exception $e){
-            return array("error"=>$e->getMessage());
-        }
-
-        return array("success"=>$insertCount . " genders inserted");
-    }
-
-    /**
-     * Create patient relations in HHK if they don't already exist
-     *
-     * @return array
-     */
-    public function makeMissingRelationships(){
-        $uploadedRelations = (new ImportMarkup($this->dbh))->getGenLookupInfo("Patient_Rel_Type", "relationship");
-        $insertCount = 0;
-
-        try{
-
-            foreach($uploadedRelations as $diag){
-                if($diag["id"] == null && $diag["Import Name"] != ''){
-                    //insert new lookup
-                    $newCode = 'g' . incCounter($this->dbh, 'codes');
-
-                    $glRs = new GenLookupsRS();
-                    $glRs->Table_Name->setNewVal("Patient_Rel_Type");
-                    $glRs->Code->setNewVal($newCode);
-                    $glRs->Description->setNewVal($diag["Import Name"]);
-                    $glRs->Type->setNewVal('h');
-                    $glRs->Substitute->setNewVal('');
-                    $glRs->Order->setNewVal(0);
-
-                    EditRS::insert($this->dbh, $glRs);
-                    $insertCount++;
-                }
-            }
-        }catch (\Exception $e){
-            return array("error"=>$e->getMessage());
-        }
-
-        return array("success"=>$insertCount . " relationships inserted");
-    }
-
-    /**
-     * Create Ethnicities in HHK if they don't already exist
-     *
-     * @return array
-     */
-    public function makeMissingEthnicities(){
-        $uploadedEthnicities = (new ImportMarkup($this->dbh))->getEthnicityInfo();
-        $insertCount = 0;
-
-        try{
-
-            foreach($uploadedEthnicities as $eth){
-                if($eth["idEthnicity"] == null && $eth["Ethnicity"] != ''){
-                    //insert new ethnicity
-                    $newCode = 'g' . incCounter($this->dbh, 'codes');
-
-                    $glRs = new GenLookupsRS();
-                    $glRs->Table_Name->setNewVal("Ethnicity");
-                    $glRs->Code->setNewVal($newCode);
-                    $glRs->Description->setNewVal($eth["Ethnicity"]);
-                    $glRs->Type->setNewVal('h');
-                    $glRs->Substitute->setNewVal('');
-                    $glRs->Order->setNewVal(0);
-
-                    EditRS::insert($this->dbh, $glRs);
-                    $insertCount++;
-                }
-            }
-        }catch (\Exception $e){
-            return array("error"=>$e->getMessage());
-        }
-
-        return array("success"=>$insertCount . " ethnicities inserted");
-    }
-
-
-    /**
-     * Undo an import - Sets member status to 'tbd' and importTbl.imported = false
-     * You must go into Misc->Delete Member Records to finish the undo process.
-     *
-     * @return array
-     */
-    public function undoImport(){
-        try{
-            $this->dbh->beginTransaction();
-            $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");
-            $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = null");
-        }catch(\Exception $e){
-            if($this->dbh->inTransaction()){
-                $this->dbh->rollBack();
-            }
-            return array("error"=>$e->getMessage());
-        }
-        $this->dbh->commit();
-        return array("success"=>"Imported people have been set for 'To Be Deleted', use the 'Delete Member Records' function to delete them.");
-    }
-
-    /**
-     * Search for a member record depending on name/phone/email/member type (guest/patient)
-     *
-     * @param string $first
-     * @param string $last
-     * @param string $memberType - "guest", "patient" "doctor" or ""
-     * @param bool $limit - limit to 1 record or multiple
-     * @param string $phone
-     * @param string $email
-     * @return number|array
-     */
-    private function findPerson(string $first, string $last, string $memberType, bool $limit = true, string $phone = '', string $email = ''){
-
-        $newFirst = trim(htmlentities($first, ));
-        $newLast = trim(htmlentities($last));
-        $phone = ($phone !='' ? $this->formatPhone($phone) : null);
-        $email = ($email !='' ? trim($email) : null);
-
-
-        if(in_array($memberType, ["guest", "patient"])){
-            $query = "Select n.idName, ng.idPsg, ng.Relationship_Code from name n join name_guest ng on n.idName = ng.idName where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
-            if($memberType == "guest"){
-                $query .= " and ng.Relationship_Code != 'slf'";
-            }else if($memberType == "patient"){
-                $query .= " and ng.Relationship_Code = 'slf'";
-            }
-        }else if($memberType == VolMemberType::Doctor){
-            $query = "SELECT distinct n.idName, n.Name_Last, n.Name_First
-FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::Doctor . "'
-WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
-        }else{
-            $query = "Select n.idName from name n where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
-        }
-        
-
-        if($limit){
-            $query .= " limit 1";
-        }
-
-        $stmtg = $this->dbh->query($query);
-        $rowCount = $stmtg->rowCount();
-        $rowgs = $stmtg->fetchAll(\PDO::FETCH_NUM);
-
-        if ($rowCount == 0) {
-            $id = 0;
-        } else if($rowCount == 1) {
-            $id = $rowgs[0][0];
-        } else {
-            $id = $rowgs;
-        }
-        return $id;
-    }
-
     public function makeMissingDoctors(){
         $uS = Session::getInstance();
         $insertCount = 0;
@@ -882,97 +895,6 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         return array("success"=>$insertCount . " doctors inserted");
     }
 
-    private function formatPhone(string $phone){
-        return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $phone);
-    }
-
-    private function loadAddress(\PDO $dbh, $r) {
-
-        $state = ucfirst(trim($r['State']));
-        $city = ucwords(trim($r['City']));
-        $county = (isset($r['County']) ? ucfirst($r['County']) : '');
-        $country = 'US';
-        $zip = $r['ZipCode'];
-
-        if (strlen($zip) > 4) {
-
-            $searchZip = substr($zip, 0, 5);
-
-            if (isset($this->zipLookups[$searchZip]) === FALSE) {
-
-                $stmtz = $dbh->query("Select City, State, County from postal_codes where Zip_Code = '$searchZip'");
-                $rows = $stmtz->fetchAll(\PDO::FETCH_ASSOC);
-
-                if (count($rows) == 1) {
-                    $this->zipLookups[$searchZip] = $rows[0];
-                }
-            }
-
-            if (isset($this->zipLookups[$searchZip])) {
-
-                $state = $this->zipLookups[$searchZip]['State'];
-                $city = $this->zipLookups[$searchZip]['City'];
-                $county = $this->zipLookups[$searchZip]['County'];
-
-            }
-        }
-
-
-        $adr1 = array('1' => array(
-            'address1' => isset($r['Address']) ? ucwords(strtolower(trim($r['Address']))) : '',
-            'address2' => isset($r['Address2']) ? ucwords(strtolower(trim($r['Address2']))) : '',
-            'city' => $city,
-            'county'=>  $county,
-            'state' => $state,
-            'country' => $country,
-            'zip' => $zip));
-
-        return $adr1;
-    }
-
-    private function getHospitals(){
-        $stmt = $this->dbh->query("Select idHospital, Title from hospital");
-        while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $this->hospitals[strtolower($h['Title'])] = $h['idHospital'];
-        }
-    }
-
-    private function getRelations(){
-        foreach(readGenLookupsPDO($this->dbh, 'Patient_Rel_Type') as $r) {
-            $this->relations[strtolower($r[1])] = $r[0];
-        }
-    }
-
-    private function getDiags(){
-        foreach(readGenLookupsPDO($this->dbh, 'Diagnosis') as $r) {
-            $this->diags[strtolower($r[1])] = $r[0];
-        }
-    }
-
-    private function getGenders(){
-        foreach(readGenLookupsPDO($this->dbh, 'Gender') as $r) {
-            $this->genders[strtolower($r[1])] = $r[0];
-        }
-    }
-
-    private function getEthnicities(){
-        foreach(readGenLookupsPDO($this->dbh, 'Ethnicity') as $r) {
-            $this->ethnicities[strtolower($r[1])] = $r[0];
-        }
-    }
-
-    private function getNoReturn(){
-        foreach(readGenLookupsPDO($this->dbh, 'NoReturnReason') as $r) {
-            $this->noReturn[strtolower($r[1])] = $r[0];
-        }
-    }
-
-    private function getMediaSources(){
-        foreach(readGenLookupsPDO($this->dbh, 'Media_Source') as $r) {
-            $this->mediaSources[strtolower($r[1])] = $r[0];
-        }
-    }
-
     private function getProgress(){
         $query = "Select count(*) as `Remaining`, (select count(*) from `" . Upload::TBL_NAME . "`) as `Total` from `" . Upload::TBL_NAME . "` i where i.imported is null";
         $stmt = $this->dbh->query($query);
@@ -982,34 +904,24 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         return array("imported"=>$imported, "remaining"=>$row["Remaining"], "progress"=>$progress);
     }
 
-    private function getRooms(){
-        $stmt = $this->dbh->query("Select idResource, Title from resource");
-        while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $this->rooms[trim(strtolower($h['Title']))] = $h['idResource'];
+    /**
+     * Undo an import - Sets member status to 'tbd' and importTbl.imported = false
+     * You must go into Misc->Delete Member Records to finish the undo process.
+     *
+     * @return array
+     */
+    public function undoImport(){
+        try{
+            $this->dbh->beginTransaction();
+            $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");
+            $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = null");
+        }catch(\Exception $e){
+            if($this->dbh->inTransaction()){
+                $this->dbh->rollBack();
+            }
+            return array("error"=>$e->getMessage());
         }
-    }
-
-    private function findIdDiag(string $diag){
-        return (isset($this->diags[trim(strtolower($diag))]) ? $this->diags[trim(strtolower($diag))] : '');
-    }
-
-    private function findIdResource(string $roomTitle){
-        return (isset($this->rooms[trim(strtolower($roomTitle))]) ? $this->rooms[trim(strtolower($roomTitle))] : 0);
-    }
-
-    private function findIdGender(string $gender){
-        return (isset($this->genders[trim(strtolower($gender))]) ? $this->genders[trim(strtolower($gender))] : '');
-    }
-
-    private function findIdEthnicity(string $ethnicity){
-        return (isset($this->ethnicities[trim(strtolower($ethnicity))]) ? $this->ethnicities[trim(strtolower($ethnicity))] : '');
-    }
-
-    private function findIdNoReturn(string $noReturn){
-        return (isset($this->noReturn[trim(strtolower($noReturn))]) ? $this->noReturn[trim(strtolower($noReturn))] : '');
-    }
-
-    private function findIdMediaSource(string $mediaSource){
-        return (isset($this->mediaSources[trim(strtolower($mediaSource))]) ? $this->mediaSources[trim(strtolower($mediaSource))] : '');
+        $this->dbh->commit();
+        return array("success"=>"Imported people have been set for 'To Be Deleted', use the 'Delete Member Records' function to delete them.");
     }
 }

@@ -119,17 +119,9 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 		case 'makeHosps':
 			$return = $import->makeMissingHospitals();
 			break;
-		case 'makeDiags':
-			$return = $import->makeMissingDiags();
-			break;
-		case 'makeEthnicities':
-			$return = $import->makeMissingEthnicities();
-			break;
-		case 'makeGenders':
-			$return = $import->makeMissingGenders();
-			break;
-		case 'makerelationship':
-			$return = $import->makeMissingRelationships();
+		case 'makeGenLookup':
+			$importFieldName = filter_input(INPUT_POST, "importfieldname", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+			$return = $import->makeMissingGenLookups($importFieldName);
 			break;
 		default:
 			exit;
@@ -313,6 +305,27 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 						});
 					}
 				});
+
+				$(document).on("click", ".makeMissingGenLookups", function(){
+					if($(this).data("genlookup")){
+						data = {cmd:"makeGenLookup", importfieldname: $(this).data("importfieldname")}
+					
+						$.ajax({
+							url: "Import.php",
+							method: "post",
+							data:data,
+							dataType:"json",
+							success: function(data){
+								if(data.success){
+									flagAlertMessage(data.success, false);
+								}else if(data.error){
+									flagAlertMessage(data.error, true);
+								}
+							}
+						});
+					}
+				});
+				
 			});
 
         </script>

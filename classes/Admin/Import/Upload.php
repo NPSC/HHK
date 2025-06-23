@@ -8,7 +8,7 @@ class Upload {
 
     protected \PDO $dbh;
     protected array $rawData;
-    const TBL_NAME = "Import";
+    const TBL_NAME = "import";
 
     public function __construct(\PDO $dbh, array|int $file) {
         $this->dbh = $dbh;
