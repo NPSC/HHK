@@ -473,7 +473,7 @@ try {
             $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = HouseServices::moveVisit($dbh, $idVisit, $span, $sdelta, $edelta);
+        $events = HouseServices::setupMoveVisit($dbh, $idVisit, $span, $sdelta, $edelta);
         break;
 
     case "visitFees":

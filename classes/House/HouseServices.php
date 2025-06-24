@@ -580,21 +580,30 @@ class HouseServices {
      */
     public static function deleteFutureVisit(\PDO $dbh, $idVisit) {
         // Look for the reserved future visit
+        $msg = '';
         $vstmt = $dbh->query("Select * from visit where Status = '" . VisitStatus::Reserved . "' and idVisit = $idVisit;");
         $ro = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($ro) > 0) {
             // Delete the reserved visit
             $vrs = new VisitRS();
-            EditRS::loadRow($ro[1], $vrs);
+            EditRS::loadRow($ro[0], $vrs);
             $resVisit = new Visit($dbh, 0, $vrs->idVisit->getStoredVal(), $vrs->Span->getStoredVal());
 
             $resVisit->deleteThisVisitSpan($dbh);
+
+            // remove Has_Future_Change
+            $stmt = $dbh->prepare("UPDATE visit SET Has_Future_Change = 0 WHERE idVisit = :idVisit;"); 
+            $stmt->bindValue(':idVisit', $idVisit, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            $msg .= 'The Future Visit was deleted.  ';
+
         } else {
-            return 'The Visit to Delete was not found.  ';
+            $msg .= 'The Future Visit to Delete was not found.  ';
         }
 
-        return '';
+        return $msg;
     }
 
     /**
@@ -1633,31 +1642,51 @@ class HouseServices {
      * @param int $dayDelta
      * @return array
      */
-    public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta) {
+    public static function setupMoveVisit(\PDO $dbh, $idVisit, $targetSpan, $startDelta, $endDelta) {
 
         $uS = Session::getInstance();
         $dataArray = [];
 
-        if ($idVisit == 0) {
-            return ["error" => "Visit not specified."];
-        }
+        // get visit recordsets, order by span
+        $visitRS = new VisitRs();
+        $visitRS->idVisit->setStoredVal($idVisit);
+        $visitRcrds = EditRS::select($dbh, $visitRS, [$visitRS->idVisit], 'and', [$visitRS->Span]);
 
-        if (SecurityComponent::is_Authorized('guestadmin') === FALSE) {
-            return ["error" => "User not authorized to move visits."];
-        }
+        // Have data?
+        if (count($visitRcrds) > 0) {
 
-        // save the visit info
-        $reply = VisitViewer::moveVisit($dbh, $idVisit, $span, $startDelta, $endDelta, $uS->username);
+            // Find any visits with future spans.
+            $resvSpan = 0;  // Reserved span must be 1 or greater.
+            foreach ($visitRcrds as $r) {
+                if ($r['Status'] == VisitStatus::Reserved) {
+                    $resvSpan = $r['Span'];
+                }
+            }
 
-        if ($reply === FALSE) {
+            // pick out the only case that requres special care - drag end date of checked in spant with a following reserved span.
+            if ($resvSpan > 0 && $resvSpan != $targetSpan && $startDelta == 0) {
 
-            $dataArray['warning'] = 'Warning:  Visit not moved.';
+                // Handle end-date changes for reserved visits. Requires changing the dates of both checked-in and reserved spans.
+                $reply = VisitViewer::moveReservedVisit($dbh, $visitRcrds, $targetSpan, $endDelta);
+
+            } else {
+
+                // Move the spans.
+                $reply = VisitViewer::moveVisit($dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta);
+            }
+
+            // Hndle errors
+            if ($reply === FALSE) {
+                $dataArray['warning'] = 'Warning:  Visit not moved. ';
+            } else {
+                // Return checked in guests markup?
+                $dataArray['curres'] = 'y';
+                $dataArray = array_merge($dataArray, $reply);
+            }
+
 
         } else {
-
-            // Return checked in guests markup?
-            $dataArray['curres'] = 'y';
-            $dataArray = array_merge($dataArray, $reply);
+            $dataArray['warning'] = 'Visit not found. ';
         }
 
         return $dataArray;

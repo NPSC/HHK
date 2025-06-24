@@ -2,6 +2,7 @@
 
 namespace HHK\House\Visit;
 
+use DateTime;
 use HHK\House\OperatingHours;
 use HHK\Purchase\PriceModel\PriceGuestDay;
 use HHK\sec\Labels;
@@ -403,9 +404,9 @@ class VisitViewer {
 
             // Make undo Future Room Change button
             $spnMkup = HTMLContainer::generateMarkup('label', '- Delete Future Room Change', ['for' => 'delFutRmChg'])
-                . HTMLInput::generateMarkup('Delete Future Room Change', ['id' => 'delFutRmChg', 'name' => 'delFutRmChg','type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.3em;margin-left:0.3em;']);
+                . HTMLInput::generateMarkup('Delete Future Room Change', ['id' => 'delFutRmChg', 'name' => 'delFutRmChg','type' => 'checkbox', 'class' => 'hhk-feeskeys', 'style' => 'margin-right:.3em;margin-left:0.4em;']);
 
-            $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, ['style' => 'margin:0.1em;', 'title' => 'Delete Future Room Change']);
+            $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, ['style' => 'margin:0.1em; margin-top:0.2em', 'title' => 'Delete Future Room Change']);
         }
 
 
@@ -414,8 +415,7 @@ class VisitViewer {
             HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $visitBoxLabel, ['style' => 'font-weight:bold;'])
                    . HTMLContainer::generateMarkup("div", $tblMarkup, ["style" => "overflow:auto;"])
-                ,
-                ['class' => 'hhk-panel', 'style' => 'margin-bottom:10px;']);
+                , ['class' => 'hhk-panel', 'style' => 'margin-bottom:10px;']);
 
     }
 
@@ -1366,14 +1366,13 @@ where `Deleted` = 0 and `Status` = 'up'
      * Move a visit temporally by delta days
      *
      * @param \PDO $dbh
-     * @param int $idVisit
-     * @param int $span
+     * @param array $visitRcrds
+     * @param int $targetSpan
      * @param int $startDelta
      * @param int $endDelta
-     * @param string $uname
      * @return array
      */
-    public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta, $uname) {
+    public static function moveVisit(\PDO $dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta) {
 
         $uS = Session::getInstance();
 
@@ -1382,17 +1381,7 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         if (abs($endDelta) > ($uS->MaxExpected) || abs($startDelta) > ($uS->MaxExpected)) {
-            return ['error'=>'Move refused, change too large: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta];
-        }
-
-        // get visit recordsets, order by span
-        $visitRS = new VisitRs();
-        $visitRS->idVisit->setStoredVal($idVisit);
-        $visitRcrds = EditRS::select($dbh, $visitRS, [$visitRS->idVisit], 'and', [$visitRS->Span]);
-
-        // Bad visit?.
-        if (count($visitRcrds) < 1) {
-            return ['error'=>'Visit not found'];
+            return ['error'=>'Move refused, change too large according to system parameter MaxExpected: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta];
         }
 
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
@@ -1401,18 +1390,14 @@ where `Deleted` = 0 and `Status` = 'up'
         $spans = [];
         $stays = [];
         $firstArrival = NULL;
-        $hasReservedSpan = false;
-        $reserveSpanRs = null;
-
 
         $lastSpanId = 0;
         foreach ($visitRcrds as $r) {
 
-            if ($r['Status'] == VisitStatus::Reserved) {
-                $hasReservedSpan = true;
-                $reserveSpanRs = $r;
-            }
+            //Convenience variable
+            $idVisit = $r['idVisit'];
 
+            // find the last span id
             if ($r['Span'] > $lastSpanId) {
                 $lastSpanId = $r['Span'];
             }
@@ -1457,7 +1442,7 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         // Check the case that user moved the end of a ribbon inbetween spans.
-        if (isset($spans[$span]) === FALSE) {
+        if (isset($spans[$targetSpan]) === FALSE) {
             return ['error'=>'Use only the begining span or the very last span to resize this visit.'];
         }
 
@@ -1556,6 +1541,7 @@ where `Deleted` = 0 and `Status` = 'up'
             END),
             v.Span_Start) != 0 and
         ifnull(DATE(v.Span_End), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
+
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':beginDate'=>$spanStartDT->format('Y-m-d'),
@@ -1618,16 +1604,16 @@ where `Deleted` = 0 and `Status` = 'up'
             }
 
             $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-            $visitRS->Updated_By->setNewVal($uname);
+            $visitRS->Updated_By->setNewVal($uS->username);
 
-            $cnt = EditRS::update($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
+            $cnt = EditRS::update($dbh, $visitRS, [$visitRS->idVisit, $visitRS->Span]);
             if ($cnt > 0) {
                 $logText = VisitLog::getUpdateText($visitRS);
-                VisitLog::logVisit($dbh, $idVisit, $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
+                VisitLog::logVisit($dbh, $idVisit, $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
             }
 
             if (isset($stays[$visitRS->Span->getStoredVal()])) {
-                self::saveStaysDates($dbh, $stays[$visitRS->Span->getStoredVal()], $visitRS->idRegistration->getStoredVal(), $uname);
+                self::saveStaysDates($dbh, $stays[$visitRS->Span->getStoredVal()], $visitRS->idRegistration->getStoredVal(), $uS->username);
             }
         }
 
@@ -1653,7 +1639,7 @@ where `Deleted` = 0 and `Status` = 'up'
             if (is_null($estDepart) === FALSE && $estDepart != '') {
                 $reserv->setExpectedDeparture($estDepart);
             }
-            $reserv->saveReservation($dbh, $lastVisitRs->idRegistration->getStoredVal(), $uname);
+            $reserv->saveReservation($dbh, $lastVisitRs->idRegistration->getStoredVal(), $uS->username);
         }
 
         if (is_null($actualDepart) === FALSE && $actualDepart != '') {
@@ -1665,7 +1651,7 @@ where `Deleted` = 0 and `Status` = 'up'
         $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
         $firstArrival->setTime(intval($uS->CheckInTime), 0, 0);
 
-        $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uname);
+        $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uS->username);
 
         $operatingHours = new OperatingHours($dbh);
         if($operatingHours->isHouseClosed($firstArrival)){
@@ -1677,6 +1663,75 @@ where `Deleted` = 0 and `Status` = 'up'
         } else {
             $reply = ['success'=>'Visit Moved. ' . $reply];
         }
+        return $reply;
+    }
+
+    /**
+     * Summary of moveReservedVisit.  change end date of checked in span with a following reserved span.
+     * @param \PDO $dbh
+     * @param array $visitRcrds
+     * @param int $targetSpan   // The checked-in span.
+     * @param int $endDelta
+     * @return array|array{error: string}
+     */
+    public static function moveReservedVisit(\PDO $dbh, $visitRcrds, $ckinSpan, $endDelta) {
+
+        $uS = Session::getInstance();
+        $reply = [];
+
+        if ($endDelta == 0) {
+            return [];
+        }
+
+        if (abs($endDelta) > $uS->MaxExpected) {
+            return ['error' => "Change Date refused, change too large according to system parameter MaxExpected: End Delta = $endDelta"];
+        }
+
+        $tonight = new DateTime();
+        $tonight->add(new \DateInterval('P1D'));
+        $tonight->setTime(0,0,0);
+
+        $today = new DateTime();
+        $today->setTime(intval($uS->CheckOutTime), 0, 0);
+
+        $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
+       
+        $spanEndDt = newDateWithTz($visitRcrds[$ckinSpan]['Expected_Departure'], $uS->tz);
+        $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
+
+        if ($spanEndDt < $tonight) {
+            // error
+            return ['error' => "Change Date refused, the visit span end date cannot be before today. "];
+        }
+
+            
+        if ($endDelta < 0) {
+            // Move back
+            $spanEndDt->sub($endInterval);
+
+        } else {
+            // Move ahead
+            $spanEndDt->add($endInterval);
+        }
+
+        // Check room availability.
+
+
+        // Check for pre-existing reservations
+        $resvs = ReservationSvcs::getCurrentReservations(
+            $dbh, 
+            $visitRcrds[0]['idReservation'], 
+            $visitRcrds[0]['idPrimaryGuest'], 
+            0, 
+            new DateTime($visitRcrds[0]['Arrival_Date']), 
+            $spanEndDt
+        );
+
+        if (count($resvs) > 0) {
+            return ['error'=>"The Move overlaps another reservation or visit.  "];
+        }
+
+
         return $reply;
     }
 
