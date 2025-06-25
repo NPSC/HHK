@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use HHK\API\Middleware\CorsMiddleware;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\API\OAuth\OAuthServer;
 use HHK\API\Controllers\{CalendarController, ReportController, WidgetController};
 use HHK\API\Middleware\{AccessTokenHasScopeMiddleware, AllowedOriginMiddleware, LogMiddleware, ResourceServerMiddleware};
+use HHK\sec\SysConfig;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -31,6 +33,7 @@ $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 $uS = Session::getInstance();
 $dbh = initPDO(TRUE);
 $oAuthServer = new OAuthServer($dbh);
+$debugMode = ($uS->mode == "dev");
     
 //create Slim App instance
 $app = AppFactory::create();
@@ -38,12 +41,16 @@ $app->setBasePath('/api'); // Set the base path for the API
 
 //add middleware
 $app->addRoutingMiddleware();
-$app->addErrorMiddleware(true, false, false);
+$app->addErrorMiddleware($debugMode, false, false);
+
+//CORS
+$app->add(new CorsMiddleware($app));
 
 // set up token endpoint
 // Endpoint: /api/oauth2/token
 $app->post('/oauth2/token', function (Request $request, Response $response) use ($oAuthServer) {
-    $response->withHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+    $response->withHeader("Access-Control-Allow-Headers", "Content-Type, authorization, Accept");
+
     try{
         return $oAuthServer->getAuthServer()->respondToAccessTokenRequest($request, $response);
     }catch (OAuthServerException $e) {
