@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-use HHK\API\Middleware\CorsMiddleware;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\API\OAuth\OAuthServer;
 use HHK\API\Controllers\{CalendarController, ReportController, WidgetController};
-use HHK\API\Middleware\{AccessTokenHasScopeMiddleware, AllowedOriginMiddleware, LogMiddleware, ResourceServerMiddleware};
+use HHK\API\Middleware\{AccessTokenHasScopeMiddleware, AllowedOriginMiddleware, LogMiddleware, ResourceServerMiddleware, CorsMiddleware};
 use HHK\sec\SysConfig;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
