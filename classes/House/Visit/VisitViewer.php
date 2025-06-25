@@ -140,6 +140,10 @@ class VisitViewer {
                     $days = $vSpanListing['Expected_Nights'];
                 }
 
+                if ($vSpanListing['Has_Future_Change'] > 0) {
+                    // Future room change
+                    $depHeader = "Expected Room Change";
+                }
                 break;
 
             case VisitStatus::NewSpan:
@@ -499,7 +503,13 @@ class VisitViewer {
         // Add them to the stays table.
         if ($visitStatus == VisitStatus::CheckedIn) {
 
-            $ckOutTitle = "Exp'd Check Out";
+            if ($staysDtable[0]['Has_Future_Change'] > 0) {
+                // Future room change
+                $ckOutTitle = "Exp'd Room Change";
+            } else {
+                $ckOutTitle = "Exp'd Check Out";
+            }
+            
 
             foreach ($staysDtable as $k => $r) {
 
@@ -1715,8 +1725,9 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         // Check room availability.
+        //Todo Check room availability for both spans.
 
-
+        
         // Check for pre-existing reservations
         $resvs = ReservationSvcs::getCurrentReservations(
             $dbh, 

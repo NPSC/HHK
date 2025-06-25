@@ -2956,6 +2956,7 @@ select
     v.Status as `Visit_Status`,
     v.idRegistration as `idRegistration`,
     v.DepositPayType as DepositPayType,
+    v.Has_Future_Change as Has_Future_Change,
     g.Description as `Status_Title`,
     s.Checkin_Date,
     s.Checkout_Date,
