@@ -20,9 +20,15 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
 
         $authorizedScopes = ClientRepository::getAuthorizedScopes($clientEntity->getIdentifier());
 
-        foreach ($scopes as $scope) {
-            if(in_array($scope->getIdentifier(), $authorizedScopes)){ // if the client is authorized for the requested scope
+        if(count($scopes) == 0){
+            foreach ($authorizedScopes as $scope) {
                 $accessToken->addScope($scope);
+            }
+        }else{
+            foreach ($scopes as $scope) {
+                if(in_array($scope, $authorizedScopes)){ // if the client is authorized for the requested scope
+                    $accessToken->addScope($scope);
+                }
             }
         }
 

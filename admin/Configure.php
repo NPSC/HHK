@@ -233,6 +233,7 @@ if (filter_has_var(INPUT_POST, 'saveHolidays')) {
 try {
     $holidays = SiteConfig::createHolidaysMarkup($dbh, $holResultMessage);
 } catch (Exception $pex) {
+    $holidays = "";
 }
 
 $googleDistanceMkup = "";

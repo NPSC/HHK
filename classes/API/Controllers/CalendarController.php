@@ -1,7 +1,9 @@
 <?php
 namespace HHK\API\Controllers;
 
+use DateInterval;
 use DateTime;
+use DateTimeImmutable;
 use HHK\sec\SysConfig;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\VisitStatus;
@@ -26,8 +28,13 @@ class CalendarController
         $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         try{
-            $startDate = new \DateTime($startDate);
-            $endDate = new \DateTime($endDate);
+            if($startDate && $endDate){
+                $startDate = new DateTime($startDate);
+                $endDate = new DateTime($endDate);
+            }else{
+                $startDate = new DateTimeImmutable("today");
+                $endDate = $startDate->add(new DateInterval("P1W"));
+            }
         }catch(\Exception $e){
             $response->getBody()->write(json_encode(["error"=>"Bad Request", "error_description"=>"Invalid date: " . $e->getMessage()]));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
@@ -40,7 +47,7 @@ class CalendarController
 
                 $returnData = [];
                 $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
-                $returnData["generatedAt"] = (new \DateTime())->format(\DateTime::RFC3339);
+                $returnData["generatedAt"] = (new DateTime())->format(DateTime::RFC3339);
                 $returnData["startDate"] = $startDate->format("Y-m-d");
                 $returnData["endDate"] = $endDate->format("Y-m-d");
                 
@@ -68,6 +75,7 @@ class CalendarController
             DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$startDate->format('Y-m-d') . "');";
                 $stmtv = $this->dbh->query($query);
                 $visitRows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
+                
                 foreach ($visitRows as &$row) {
                     $row["PrimaryGuest"] = [
                         "id"=>$row["PrimaryGuestId"],

@@ -2,6 +2,7 @@
 namespace HHK\API\OAuth\Repository;
 
 use HHK\API\OAuth\Entity\ClientEntity;
+use HHK\API\OAuth\Entity\ScopeEntity;
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 
@@ -54,11 +55,20 @@ class ClientRepository implements ClientRepositoryInterface
 
     public static function getAuthorizedScopes(string $clientIdentifier): array
     {
+        $scopes = [];
+
         $dbh = initPDO(true);
         $stmt = $dbh->prepare("SELECT `cs`.`oauth_scope` FROM `oauth_clients` `c` LEFT JOIN `oauth_client_scopes` `cs` ON `c`.`client_id` = `cs`.`oauth_client` WHERE `c`.`client_id` = :client_id AND `c`.`revoked` = 0");
         $stmt->execute(array(
             'client_id' => $clientIdentifier
         ));
-        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        $rows = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+        foreach($rows as $scopeName){
+            $scope = new ScopeEntity();
+            $scope->setIdentifier($scopeName);
+            $scopes[] = $scope;
+        }
+        return $scopes;
     }
 }

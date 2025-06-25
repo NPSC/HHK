@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         executionOrder="depends,defects"
+         shortenArraysForExportThreshold="10"
+         requireCoverageMetadata="true"
+         beStrictAboutCoverageMetadata="true"
+         beStrictAboutOutputDuringTests="true"
+         displayDetailsOnPhpunitDeprecations="true"
+         failOnPhpunitDeprecation="true"
+         failOnRisky="true"
+         failOnWarning="true"
+         colors="true">
+    <testsuites>
+        <testsuite name="default">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <php>
+        <env name="API_BASE_URL" value="" force="true">
+        <env name="API_CLIENT_ID" value="" force="true">
+        <env name="API_CLIENT_SECRET" value="" force="true">
+    </php>
+
+    <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
+        <include>
+            <directory>classes</directory>
+        </include>
+    </source>
+</phpunit>
