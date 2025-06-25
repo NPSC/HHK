@@ -509,7 +509,7 @@ class VisitViewer {
             } else {
                 $ckOutTitle = "Exp'd Check Out";
             }
-            
+
 
             foreach ($staysDtable as $k => $r) {
 
@@ -1542,28 +1542,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
 
             // Check room availability.
-            $query = "select v.idResource from vregister v where v.Visit_Status <> :vstat and v.idVisit != :visit and v.idResource = :idr and
-        DATE(v.Span_Start) < :endDate
-        AND DATEDIFF(IFNULL(DATE(v.Span_End),
-            CASE
-                WHEN NOW() > DATE(v.Expected_Departure) THEN ADDDATE(NOW(), 1)
-                ELSE DATE(v.Expected_Departure)
-            END),
-            v.Span_Start) != 0 and
-        ifnull(DATE(v.Span_End), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
-
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':beginDate'=>$spanStartDT->format('Y-m-d'),
-                ':endDate'=>$spanEndDt->format('Y-m-d'),
-                ':vstat'=> VisitStatus::Pending,
-                ':visit'=>$vRs->idVisit->getStoredVal(),
-                ':idr'=>$vRs->idResource->getStoredVal()));
-
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            if (count($rows) > 0) {
-                // not available
+            If (self::checkRoomAvailability($dbh, $spanStartDT, $spanEndDt, $vRs) === false ) {
                 return ['error'=>'The Date range is not available'];
             }
 
@@ -1573,7 +1552,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
 
             if (isset($stays[$vRs->Span->getStoredVal()])) {
-                
+
                 $stayMsg = self::moveStaysDates($dbh, $stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta, $visits[$s]);
 
                 if ($stayMsg != '') {
@@ -1684,7 +1663,7 @@ where `Deleted` = 0 and `Status` = 'up'
      * @param int $endDelta
      * @return array|array{error: string}
      */
-    public static function moveReservedVisit(\PDO $dbh, $visitRcrds, $ckinSpan, $endDelta) {
+    public static function moveReservedVisit(\PDO $dbh, array $visitRcrds, $ckinSpan, $resvSpan, $endDelta) {
 
         $uS = Session::getInstance();
         $reply = [];
@@ -1705,7 +1684,7 @@ where `Deleted` = 0 and `Status` = 'up'
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
-       
+
         $spanEndDt = newDateWithTz($visitRcrds[$ckinSpan]['Expected_Departure'], $uS->tz);
         $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
@@ -1714,27 +1693,40 @@ where `Deleted` = 0 and `Status` = 'up'
             return ['error' => "Change Date refused, the visit span end date cannot be before today. "];
         }
 
-            
+        $resvSpanRs = new VisitRS();
+        EditRs::loadRow($visitRcrds[$resvSpan], $resvSpanRs);
+
+        $ckinSpanRs = new VisitRS();
+        EditRs::loadRow($visitRcrds[$ckinSpan], $ckinSpanRs);
+
+
+        // Set the common date
         if ($endDelta < 0) {
             // Move back
             $spanEndDt->sub($endInterval);
 
+            // Reserved Span Check room availability.
+            if (self::checkRoomAvailability($dbh, $spanEndDt, $visitRcrds[$resvSpan]['Expected_Departure'], $resvSpanRs) === false) {
+                return ['error' => 'The Date range is not available'];
+            }
+
         } else {
             // Move ahead
             $spanEndDt->add($endInterval);
+
+            // Checked-in span Check room availability.
+            if (self::checkRoomAvailability($dbh, $visitRcrds[$ckinSpan]['Actual_Arrival'], $spanEndDt, $ckinSpanRs) === false) {
+                return ['error' => 'The Date range is not available'];
+            }
         }
 
-        // Check room availability.
-        //Todo Check room availability for both spans.
-
-        
         // Check for pre-existing reservations
         $resvs = ReservationSvcs::getCurrentReservations(
-            $dbh, 
-            $visitRcrds[0]['idReservation'], 
-            $visitRcrds[0]['idPrimaryGuest'], 
-            0, 
-            new DateTime($visitRcrds[0]['Arrival_Date']), 
+            $dbh,
+            $visitRcrds[0]['idReservation'],
+            $visitRcrds[0]['idPrimaryGuest'],
+            0,
+            new DateTime($visitRcrds[0]['Arrival_Date']),
             $spanEndDt
         );
 
@@ -1742,8 +1734,89 @@ where `Deleted` = 0 and `Status` = 'up'
             return ['error'=>"The Move overlaps another reservation or visit.  "];
         }
 
+        // Update the visit records
+//TODO
+        // Update any invoice line dates
+        Invoice::updateInvoiceLineDates($dbh, $idVisit, $startDelta);
+
+        $lastVisit = array_pop($visits);
+        $resvSpanRs = $lastVisit['rs'];
+
+        // Reservation
+//TODO
+        $reserv = Reservation_1::instantiateFromIdReserv($dbh, $resvSpanRs->idReservation->getStoredVal());
+        if ($reserv->isNew() === FALSE) {
+
+            $reserv->setActualArrival($visitRcrds[$ckinSpan]['Actual_Arrival']->format('Y-m-d H:i:s'));
+
+
+            if (is_null($actualDepart) === FALSE && $actualDepart != '') {
+                $reserv->setActualDeparture($actualDepart);
+            }
+
+            if (is_null($estDepart) === FALSE && $estDepart != '') {
+                $reserv->setExpectedDeparture($estDepart);
+            }
+            $reserv->saveReservation($dbh, $resvSpanRs->idRegistration->getStoredVal(), $uS->username);
+        }
+
+        if (is_null($actualDepart) === FALSE && $actualDepart != '') {
+            $lastDepart = new \DateTime($actualDepart);
+        } else {
+            $lastDepart = new \DateTime($estDepart);
+        }
+
+        $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
+        $firstArrival->setTime(intval($uS->CheckInTime), 0, 0);
+
+        $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uS->username);
+
+        $operatingHours = new OperatingHours($dbh);
+        if ($operatingHours->isHouseClosed($firstArrival)) {
+            $reply .= "  Info: The house is closed on that Start date. ";
+        }
+
 
         return $reply;
+    }
+
+    /**
+     * Summary of checkRoomAvailability
+     * @param \PDO $dbh
+     * @param \DateTimeInterface $spanStartDT
+     * @param \DateTimeInterface $spanEndDT
+     * @param VisitRS $visitRs
+     * @return bool
+     */
+    private static function checkRoomAvailability(\PDO $dbh, $spanStartDT, $spanEndDT, $visitRs) {
+        // Check room availability.
+        $query = "select v.idResource from vregister v where v.Visit_Status <> :vstat and v.idVisit != :visit and v.idResource = :idr and
+    DATE(v.Span_Start) < :endDate
+    AND DATEDIFF(IFNULL(DATE(v.Span_End),
+        CASE
+            WHEN NOW() > DATE(v.Expected_Departure) THEN ADDDATE(NOW(), 1)
+            ELSE DATE(v.Expected_Departure)
+        END),
+        v.Span_Start) != 0 and
+    ifnull(DATE(v.Span_End), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(
+            ':beginDate' => $spanStartDT->format('Y-m-d'),
+            ':endDate' => $spanEndDT->format('Y-m-d'),
+            ':vstat' => VisitStatus::Pending,
+            ':visit' => $visitRs->idVisit->getStoredVal(),
+            ':idr' => $visitRs->idResource->getStoredVal(),
+        ));
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) > 0) {
+            // not available
+            return false;
+        }
+
+        return true;
     }
 
     /**

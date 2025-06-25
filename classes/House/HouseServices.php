@@ -593,7 +593,7 @@ class HouseServices {
             $resVisit->deleteThisVisitSpan($dbh);
 
             // remove Has_Future_Change
-            $stmt = $dbh->prepare("UPDATE visit SET Has_Future_Change = 0 WHERE idVisit = :idVisit;"); 
+            $stmt = $dbh->prepare("UPDATE visit SET Has_Future_Change = 0 WHERE idVisit = :idVisit;");
             $stmt->bindValue(':idVisit', $idVisit, \PDO::PARAM_INT);
             $stmt->execute();
 
@@ -1667,7 +1667,7 @@ class HouseServices {
             if ($resvSpan > 0 && $resvSpan != $targetSpan && $startDelta == 0) {
 
                 // Handle end-date changes for reserved visits. Requires changing the dates of both checked-in and reserved spans.
-                $reply = VisitViewer::moveReservedVisit($dbh, $visitRcrds, $targetSpan, $endDelta);
+                $reply = VisitViewer::moveReservedVisit($dbh, $visitRcrds, $targetSpan, $resvSpan, $endDelta);
 
             } else {
 
