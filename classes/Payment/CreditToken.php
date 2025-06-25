@@ -83,7 +83,10 @@ class CreditToken {
         $gtRs->Status->setNewVal($vr->getStatus());
         $gtRs->StatusMessage->setNewVal($vr->getMessage());
         $gtRs->Tran_Type->setNewVal($vr->getTranType());
-        $gtRs->Token->setNewVal($vr->getToken());
+        
+        if($gtRs->Token->getStoredVal() == ''){
+            $gtRs->Token->setNewVal($vr->getToken());
+        }
 
         $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAuthorizedAmount(), $vr->getTranType());
         $gtRs->Running_Total->setNewVal($runTot);

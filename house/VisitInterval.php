@@ -109,7 +109,7 @@ $tstmt = $dbh->query("Select i.idItem, i.Percentage, i.Description from item i j
 while ($taxItem = $tstmt->fetch(\PDO::FETCH_ASSOC)) {
 
     $eachTaxSQL .= " ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . $taxItem['idItem'] . " and i.Order_Number = v.idVisit),
+        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . $taxItem['idItem'] . " and i.Sold_To_Id != " . $uS->subsidyId . " and i.Order_Number = v.idVisit),
             0) as `paid_".$taxItem['idItem']."`, ";
 
     $eachTaxPaid[$taxItem['idItem']]['desc'] = $taxItem['Description'];

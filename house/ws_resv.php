@@ -2,6 +2,7 @@
 use HHK\Exception\NotFoundException;
 use HHK\Exception\SmsException;
 use HHK\Exception\ValidationException;
+use HHK\Exception\UnexpectedValueException;
 use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\PSG;
 use HHK\House\Reservation\ActiveReservation;
@@ -36,7 +37,7 @@ use HHK\TableLog\NotificationLog;
  * ws_resv.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -52,25 +53,64 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
+$inputData = $_REQUEST;    // page received data, initially from $_REQUEST
+$command = '';     // web service ciommand
+$events = [];       // output data.
 
-$c = "";
 
-// Get our command
-if (isset($_REQUEST["cmd"])) {
-    $c = htmlspecialchars($_REQUEST["cmd"]);
+// check for posted application/json data in a POST request
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (stripos($contentType, 'application/json') !== false   && strtoupper($_SERVER['REQUEST_METHOD']) == 'POST') {
+
+    // Get the posted data
+    $inputJson = file_get_contents('php://input');
+    if ($inputJson === false) {
+        //failure
+        $events = ["error" => "posted data input failure."];
+    }
+
+    // Decode the json posted data
+    $inputEncoded = json_decode($inputJson, true);
+    if ($inputEncoded === null) {
+        //failure
+        $events = ["error" => "posted data input failure."];
+    }
+
+    $inputData = [];
+
+    // convert string representations of arrays into an array
+    try {
+        $inputData = parseKeysToArray($inputEncoded);
+        
+    } catch (UnexpectedValueException $ex) {
+        $events = ["error" => "posted data input failure."];    //failure
+        $json = json_encode($events);
+
+        if ($json !== FALSE) {
+            echo $json;
+        } else {
+            $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
+            echo json_encode($events);
+        }
+    }
 }
 
 
-$events = [];
+// Check the webservice command
+if (isset($inputData['cmd'])) {
+    $command = htmlspecialchars($inputData['cmd']);
+}
+
+
 
 
 try {
 
-    switch ($c) {
+    switch ($command) {
 
     case "getResv":
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $events = $resv->createMarkup($dbh);
 
@@ -79,7 +119,7 @@ try {
 
     case "saveResv":
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $newResv = $resv->save($dbh);
 
@@ -90,7 +130,7 @@ try {
 
     case "getCkin":
 
-        $resv = CheckingIn::reservationFactoy($dbh);
+        $resv = CheckingIn::reservationFactoy($dbh, $inputData);
 
         $events = $resv->createMarkup($dbh);
 
@@ -99,7 +139,7 @@ try {
 
     case 'saveCheckin':
 
-        $resv = CheckingIn::reservationFactoy($dbh);
+        $resv = CheckingIn::reservationFactoy($dbh, $inputData);
 
         $newResv = $resv->save($dbh);
 
@@ -111,7 +151,7 @@ try {
     case 'delResv':
 
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $events = $resv->delete($dbh);
 
@@ -120,16 +160,16 @@ try {
 
     case "addResvGuest":
 
-        $isCheckin = FALSE;
+        $isCheckin = FALSE; 
 
         if (isset($_POST['isCheckin'])) {
             $isCheckin = filter_var($_POST['isCheckin'], FILTER_VALIDATE_BOOLEAN);
         }
 
         if ($isCheckin) {
-            $resv = CheckingIn::reservationFactoy($dbh);
+            $resv = CheckingIn::reservationFactoy($dbh, $inputData);
         } else {
-            $resv = Reservation::reservationFactoy($dbh);
+            $resv = Reservation::reservationFactoy($dbh, $inputData);
         }
 
         $events = $resv->addPerson($dbh);
@@ -148,7 +188,7 @@ try {
             $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $resv = new ActiveReservation(new ReserveData(), null, null);
+        $resv = new ActiveReservation(new ReserveData($inputData), null, null);
 
         $events = $resv->changeRoom($dbh, $idResv, $idResc);
 
@@ -207,11 +247,11 @@ try {
             $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
             $vehStmt->execute([':idv' => $idV]);
             $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
-            
+
             $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], false);
-    
+
             $events = ['success' => $mkup, 'title' => "Edit Vehicles"];
-    
+
             break;
 
         case 'saveVeh':
@@ -230,7 +270,7 @@ try {
             }catch(\Exception $e){
                 $events = ["error" => "Error saving vehicle: " . $e->getMessage()];
             }
-    
+
             break;
 
     case 'getNoteList':
@@ -436,13 +476,13 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			$report->loadReport($dbh);
 			$idGuest = $report->getGuestId();
 			$reportAr = $report->toArray();
-            
+
             //user can edit?
             $reportAr["userCanEdit"] = $report->userCanEdit();
 
             if(isset($_POST['print'])){
 	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");
-	            $guestAr = $stmt->fetch(PDO::FETCH_ASSOC);
+	            $guestAr = $stmt->fetch(\PDO::FETCH_ASSOC);
 	            $reportAr = $reportAr + ["guest"=>$guestAr];
 	            $reportAr['description'] = nl2br($reportAr['description']);
 	            $reportAr['resolution'] = nl2br($reportAr['resolution']);
@@ -612,10 +652,10 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
     case 'getResvMsgsDialog':
 
         $idResv = intval(filter_input(INPUT_GET, 'idResv', FILTER_SANITIZE_NUMBER_INT));
-                
+
         if($idResv > 0){
             $messages = new Messages($dbh);
-    
+
             $events = $messages->getResvGuestsData($idResv);
         }else{
             throw new NotFoundException("Reservation ID not found");
@@ -634,11 +674,11 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
     case 'getGuestMsgsDialog':
         $idName = intval(filter_input(INPUT_GET, 'idName', FILTER_SANITIZE_NUMBER_INT));
-    
+
         $messages = new Messages($dbh);
 
         $events = $messages->getGuestData($idName);
-    
+
         break;
 
     case 'loadMsgs':
@@ -699,11 +739,11 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         case 'sendResvMsg':
             $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT));
             $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    
+
             $messages = new Messages($dbh, true);
 
             $events = $messages->sendResvMessage($idResv, $msgText);
-    
+
             break;
 
     case 'sendCampaign':
@@ -732,7 +772,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         }else{
             $events = $contacts->fetchContacts();
         }
-        
+
         break;
 
     case 'syncContacts':
@@ -745,7 +785,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         break;
 
     default:
-        $events = ["error" => "Bad Command: \"" . $c . "\""];
+        $events = ["error" => "Bad Command: \"" . $command . "\""];
 }
 
 } catch (NotFoundException | ValidationException | SmsException $e){
@@ -772,7 +812,7 @@ if (is_array($events)) {
     $json = json_encode($events);
 
     if ($json !== FALSE) {
-        echo ($json);
+        echo $json;
     } else {
         $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);

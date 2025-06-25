@@ -92,7 +92,7 @@ if (isset($uS->cofrid)) {
 }
 
 
-$resvObj = new ReserveData('Checking In');
+$resvObj = new ReserveData([], 'Checking In');
 $resvObj->setSaveButtonLabel('Check-in');
 
 

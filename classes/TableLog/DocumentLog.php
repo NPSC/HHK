@@ -5,7 +5,7 @@ namespace HHK\TableLog;
 use HHK\Tables\DocumentLogRS;
 
 /**
- * VisitLog.php
+ * DocumentLog.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2025 <nonprofitsoftwarecorp.org>

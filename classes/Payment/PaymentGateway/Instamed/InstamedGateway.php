@@ -11,7 +11,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\{AbstractCreditPayments, ReturnReply, SaleReply, VoidReply};
 use HHK\Payment\PaymentGateway\Instamed\Connect\{HeaderResponse, ImCurlRequest, VerifyCurlResponse, VerifyCurlVoidResponse, VerifyCurlReturnResponse, VerifyCurlCofResponse, WebhookResponse};
-use HHK\SysConst\{MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode, TransMethod, TransType, WebHookStatus};
+use HHK\SysConst\{MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode, TransMethod, TransType, WebHookStatus, InvoiceStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentInvoiceRS, PaymentRS, Payment_AuthRS};
 use HHK\Tables\PaymentGW\{SsoTokenRS, Guest_TokenRS, InstamedGatewayRS};
@@ -215,14 +215,19 @@ class InstamedGateway extends AbstractPaymentGateway {
         } else {
             // Initialiaze hosted payment
             try {
-
-                $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl, $pmp->getManualKeyEntry(), $pmp->getCardHolderName());
+                //put card on file first
+                $fwrder = $this->initCardOnFile($dbh, "", $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getManualKeyEntry(), $pmp->getCardHolderName(), $postbackUrl);
+                
+                //save info to process token payment in next step
+                $uS->imHostedPaymentInfo = ["invoice"=>$invoice, "paymentManagerPayment"=>$pmp, "postbackUrl"=>$postbackUrl]; 
 
                 $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $payResult->setForwardHostedPayment($fwrder);
                 $payResult->setDisplayMessage('Forward to Payment Page. ');
 
             } catch (PaymentException $hpx) {
+
+                unset($uS->imHostedPaymentInfo);
 
                 $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
                 $payResult->setStatus(PaymentResult::ERROR);
@@ -805,6 +810,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
     protected function completeCof(\PDO $dbh, $ssoToken, $cardHolderName) {
 
         $cidInfo = $this->getInfoFromCardId($dbh, $ssoToken);
+        $uS = Session::getInstance();
 
         if (count($cidInfo) < 1) {
 
@@ -843,7 +849,22 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $vr = new ImCofResponse($response, $cidInfo['idName'], $cidInfo['idGroup']);
 
         // save token
-        CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
+        $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
+
+        //if there's an invoice waiting to be paid, set token and do creditSale
+        if ($idToken > 0 && isset($uS->imHostedPaymentInfo["invoice"]) && $uS->imHostedPaymentInfo["invoice"] instanceof Invoice && $uS->imHostedPaymentInfo["invoice"]->getStatus() == InvoiceStatus::Unpaid) {
+            $invoice = $uS->imHostedPaymentInfo["invoice"];
+            $pmp = $uS->imHostedPaymentInfo["paymentManagerPayment"];
+            $pmp->setIdToken($idToken);
+            $postbackUrl = $uS->imHostedPaymentInfo["postbackUrl"];
+
+            unset($uS->imHostedPaymentInfo);
+
+            return $this->creditSale($dbh, $pmp, $invoice, $postbackUrl);
+        }else{
+            //clean up if something went wrong
+            unset($uS->imHostedPaymentInfo);
+        }
 
         return new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
     }

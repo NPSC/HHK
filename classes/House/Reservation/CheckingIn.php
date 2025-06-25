@@ -59,9 +59,9 @@ class CheckingIn extends ActiveReservation {
      * @throws \HHK\Exception\RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
      */
-    public static function reservationFactoy(\PDO $dbh) {
+    public static function reservationFactoy(\PDO $dbh, $inputData) {
 
-        $rData = new ReserveData('Check-in');
+        $rData = new ReserveData($inputData, 'Check-in');
 
         if ($rData->getIdResv() > 0) {
             $rData->setSaveButtonLabel('Check-in');
@@ -577,7 +577,7 @@ FROM reservation r
 
         $uS = Session::getInstance();
 
-        $pmp = PaymentChooser::readPostedPayment($dbh);
+        $pmp = PaymentChooser::readPostedPayment($dbh, $this->reserveData->getRawPost());
 
         // Check for key deposit
         if ($uS->KeyDeposit && is_null($pmp) === FALSE) {

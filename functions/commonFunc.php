@@ -1,6 +1,7 @@
 <?php
 
 use HHK\Exception\RuntimeException;
+use HHK\Exception\UnexpectedValueException;
 use HHK\sec\Session;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{WebRole};
@@ -802,4 +803,58 @@ function getRandomString($length=40){
 		$randstring .= substr($chars, rand(0,$maxvalue), 1);
 	}
 	return $randstring;
+}
+
+/**
+ * Summary of parseStringToArray
+ * @param string $input
+ * @param mixed $parameter
+ * @throws \HHK\Exception\RuntimeException
+ * @return array
+ */
+function parseKeysToArray(array $inputArray): array
+{
+    $result = [];
+
+    foreach ($inputArray as $key => $parameter) {
+    
+        // short circuit for actuall arrays.
+        if (is_array($parameter)) {
+            $result[$key] = $parameter;
+
+        } else {
+
+            preg_match_all('/([a-zA-Z0-9_]+)(?:\[([a-zA-Z0-9_]+)\](?:\[([a-zA-Z0-9_]+)\])?)?/', $key, $matches, PREG_SET_ORDER);
+
+            foreach ($matches as $match) {
+                if (count($match) === 2) { // Simple parameter, no array
+                    $result[$match[1]] = $parameter;
+
+                } elseif (count($match) === 3) { // Single level array
+                    $key1 = $match[1];
+                    $key2 = $match[2];
+                    if (!isset($result[$key1])) {
+                        $result[$key1] = [];
+                    }
+                    $result[$key1][$key2] = $parameter; 
+                } elseif (count($match) === 4) { // Double level array
+                    $key1 = $match[1];
+                    $key2 = $match[2];
+                    $key3 = $match[3];
+
+                    if (!isset($result[$key1])) {
+                        $result[$key1] = [];
+                    }
+                    if (!isset($result[$key1][$key2])) {
+                        $result[$key1][$key2] = [];
+                    }
+
+                    $result[$key1][$key2][$key3] = $parameter; 
+                } else {
+                    throw new UnexpectedValueException("Input parameter '$key' is malformed."); 
+                }
+            }
+        }
+    }
+    return $result;
 }

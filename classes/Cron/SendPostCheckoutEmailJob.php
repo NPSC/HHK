@@ -122,7 +122,8 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
                         n.Name_Prefix,
                         ne.Email,
                         v.idVisit,
-                        v.idPrimaryGuest
+                        v.idPrimaryGuest,
+                        v.Actual_Departure
                     FROM
                         stays s
                             JOIN

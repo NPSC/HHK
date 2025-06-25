@@ -878,7 +878,8 @@ class CustomRegisterForm {
 
         } else if ($idReservation > 0) {
 
-            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation
+            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg join reservation r on rg.idReservation = r.idReservation JOIN registration reg ON r.idRegistration = reg.idRegistration
+        JOIN name_guest ng on reg.idPsg = ng.idPsg and rg.idGuest = ng.idName
 				where rg.idReservation = $idReservation order by rg.Primary_Guest desc");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

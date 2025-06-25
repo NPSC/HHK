@@ -1,12 +1,13 @@
 <?php
 
-use HHK\AlertControl\AlertMessage;
 use HHK\House\Distance\DistanceFactory;
 use HHK\House\Distance\GoogleDistance;
 use HHK\sec\{
     SecurityComponent,
     Session,
-    WebInit
+    WebInit,
+    Labels,
+    SAML
 };
 use HHK\SysConst\{
     WebRole,
@@ -25,8 +26,6 @@ use HHK\HTMLControls\{
     HTMLTable
 };
 use HHK\Exception\UploadException;
-use HHK\sec\Labels;
-use HHK\sec\SAML;
 use HHK\CrmExport\AbstractExportManager;
 
 /**
@@ -37,12 +36,12 @@ use HHK\CrmExport\AbstractExportManager;
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-require ("AdminIncludes.php");
-require (FUNCTIONS . 'mySqlFunc.php');
+require "AdminIncludes.php";
+require FUNCTIONS . 'mySqlFunc.php';
 
 try {
     $wInit = new webInit();
-} catch (Exception $exw) {
+} catch (\Exception $exw) {
     die($exw->getMessage());
 }
 
@@ -108,6 +107,7 @@ if (filter_has_var(INPUT_POST, "btnExtCnf") && $CmsManager !== NULL) {
     }
 }
 
+// Patch tab, button: Update COnfig
 if (filter_has_var(INPUT_POST, 'btnUpdate')) {
 
     $tabIndex = 1;
@@ -118,7 +118,7 @@ if (filter_has_var(INPUT_POST, 'btnUpdate')) {
 
         $update->doUpdate($dbh);
         $errorMsg .= $update->getErrorMsg();
-        $resultAccumulator = $update->getResultAccumulator();
+        $resultAccumulator .= $update->getResultAccumulator();
     } else {
         $errorMsg .= 'This user does not enjoy site update priviledges.';
     }
@@ -141,7 +141,7 @@ if (isset($_FILES['zipfile'])) {
     }
 }
 
-// Patch Tab
+// Patch Tab, button: Re-Create Tables (if not exists), Views and SP's
 if (filter_has_var(INPUT_POST, 'btnSaveSQL')) {
 
     $tabIndex = 1;
@@ -216,7 +216,7 @@ $logSelRows = [
 
 try {
     $payments = SiteConfig::createPaymentCredentialsMarkup($dbh, $ccResultMessage);
-} catch (Exception $pex) {
+} catch (\Exception $pex) {
     $payments = 'Error: ' . $pex->getMessage();
 }
 
@@ -224,7 +224,7 @@ if (filter_has_var(INPUT_POST, 'saveHolidays')) {
     $tabIndex = 5;
     try{
         echo json_encode(["success"=>SiteConfig::saveHolidays($dbh, $_POST, $uS->username)]);
-    }catch(Exception $e){
+    }catch(\Exception $e){
         echo json_encode(["error"=>$e->getMessage()]);
     }
     exit;
@@ -296,7 +296,7 @@ if(SecurityComponent::is_TheAdmin()){
 }
 try {
     $stmt = $dbh->query("Select MAX(TimeStamp) from syslog where Log_Type = 'Zip';");
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 } catch (PDOException $pe) {
     $rows = array();
 }
@@ -313,12 +313,12 @@ if(filter_has_var(INPUT_POST, 'saveIdP') && filter_has_var(INPUT_POST, 'idpConfi
         $idpId = array_key_first($_POST['idpConfig']);
         $saml = new SAML($dbh, $idpId);
         $saml = $saml->save($_POST, $_FILES);
-        $events = array("success" => 'Auth provider saved successfully', 'idpMkup' => $saml->getEditMarkup(true), "idpName" => $saml->getIdpName());
+        $events = ["success" => 'Auth provider saved successfully', 'idpMkup' => $saml->getEditMarkup(true), "idpName" => $saml->getIdpName()];
     } catch (\Exception $e) {
-        $events = array("error" => "<strong>Error saving Identity Provider:</strong>" . $e->getMessage());
+        $events = ["error" => "<strong>Error saving Identity Provider:</strong>" . $e->getMessage()];
     }
 
-    echo (json_encode($events));
+    echo json_encode($events);
     exit();
 }
 
@@ -333,12 +333,13 @@ foreach ($logSelRows as $r) {
     $li .= HTMLContainer::generateMarkup('li',
                     HTMLContainer::generateMarkup('a', $r[1], array('href' => '#tc' . $r[0])), array('id' => 'li' . $r[0]));
 
-    $content = HTMLContainer::generateMarkup('h3', $r[1], array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', "<table id='tableli$r[0]' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array());
+    $content = HTMLContainer::generateMarkup('h3', $r[1], ['style' => 'background-color:#D3D3D3; padding:10px;'])
+            . HTMLContainer::generateMarkup('div', "<table id='tableli$r[0]' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", []);
 
     $tabContent .= HTMLContainer::generateMarkup('div',
                     $content
-                    , array('id' => 'tc' . $r[0]));
+                    ,
+        ['id' => 'tc' . $r[0]]);
 }
 
 $ul = HTMLContainer::generateMarkup('ul', $li, array());

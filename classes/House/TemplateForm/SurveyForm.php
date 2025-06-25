@@ -30,7 +30,7 @@ class SurveyForm extends AbstractTemplateForm {
             'LastName' => $nameRow['Name_Last'],
             'NameSuffix' => $nameRow['Name_Suffix'],
             'NamePrefix' => $nameRow['Name_Prefix'],
-            'ActualDeparture' => ($nameRow['Actual_Departure'] ? date('M j, Y', strtotime($nameRow['Actual_Departure'])) : ""),
+            'ActualDeparture' => (isset($nameRow['Actual_Departure']) && $nameRow['Actual_Departure'] ? date('M j, Y', strtotime($nameRow['Actual_Departure'])) : ""),
             'logoUrl' => $uS->resourceURL .'conf/' . $uS->statementLogoFile,
         );
 

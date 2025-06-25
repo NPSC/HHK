@@ -7,6 +7,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\VolMemberType;
+use RuntimeException;
 
 /*
  * The MIT License
@@ -395,9 +396,14 @@ $ckdate";
 
         } else if ($this->selectedCalendar == self::DATES) {
             // selected dates.
-            $startDT = new \DateTime($this->selectedStart);
-            $endDT = new \DateTime($this->selectedEnd);
-
+            try{
+                $startDT = new \DateTime($this->selectedStart);
+                $endDT = new \DateTime($this->selectedEnd);
+            } catch (\Exception $e){
+                //default to this month.
+                $startDT = new \DateTime(date('Y-m-01'));
+                $endDT = new \DateTime(date('Y-m-t'));
+            }
 
             if ($startDT <= $endDT) {
                 $this->reportEnd = $endDT->format('Y-m-d');
@@ -408,6 +414,9 @@ $ckdate";
                 $this->reportEnd = $startDT->format('Y-m-d');
                 $this->queryEnd = $startDT->format('Y-m-d');
             }
+
+            $this->selectedStart = $startDT->format("M d, Y");
+            $this->selectedEnd = $endDT->format("M d, Y");
 
         } else if ($this->selectedCalendar == self::MONTHS){
             // Months

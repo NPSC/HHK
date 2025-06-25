@@ -76,7 +76,7 @@ class Family {
             // PSG is defined
             $ngRs = new Name_GuestRS();
             $ngRs->idPsg->setStoredVal($rData->getIdPsg());
-            $rows = EditRS::select($dbh, $ngRs, array($ngRs->idPsg));
+            $rows = EditRS::select($dbh, $ngRs, [$ngRs->idPsg]);
             $target = FALSE;
 
             foreach ($rows as $r) {
@@ -362,7 +362,7 @@ class Family {
             $mem = $rData->getPsgMember($prefix)->toArray();
             $adr = $this->getAddresses(array($role));
 
-            $addPerson = array('id'=>$rData->getId(), 'ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'mem'=>$mem, 'addrs'=>$adr[$prefix]);
+            $addPerson = ['id' => $rData->getId(), 'ntr' => $nameTr, 'atr' => $addressTr, 'tblId' => FAMILY::FAM_TABLE_ID, 'mem' => $mem, 'addrs' => $adr[$prefix]];
         }
 
         return $addPerson;
@@ -373,7 +373,7 @@ class Family {
 
         $rowClass = 'odd';
         $mk1 = '';
-        $trs = array();
+        $trs = [];
         $familyName = '';
         $patientUserData = [];
         $guestUserData = [];
@@ -413,7 +413,8 @@ class Family {
 
             $trs[0] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
-                , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
+                ,
+                ['id' => $role->getIdName() . 'n', 'class' => $rowClass]);
 
             if ($this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr)) {
 
@@ -432,9 +433,9 @@ class Family {
                     $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
-                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap"));
+                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, ["class" => "hhk-flex hhk-flex-wrap"]);
 
-                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), ['id' => $role->getIdName() . 'a', 'class' => $rowClass . ' hhk-addrRow']);
             }
         }
 
@@ -566,7 +567,7 @@ class Family {
      * @param string $userName
      * @return boolean
      */
-    public function save(\PDO $dbh, $post, ReserveData &$rData, $userName) {
+    public function save(\PDO $dbh, ReserveData &$rData, $userName) {
 
         // Verify selected patient
         if (is_null($patMem = $rData->findPatientMember())) {
@@ -575,6 +576,7 @@ class Family {
         }
 
         $psg = NULL;
+        $post = $rData->getRawPost();
 
         // Verify patient - psg link
         if ($rData->getIdPsg() < 1) {

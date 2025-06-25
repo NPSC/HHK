@@ -40,11 +40,11 @@ abstract class AbstractOAuth{
 
         } catch (BadResponseException $exception) {
             $errorResponse = $exception->getResponse();
-            $errorJson = json_decode($errorResponse->getBody()->getContents());
+            $errorJson = json_decode($errorResponse->getBody());
             if(isset($errorJson->error_description)){
                 throw new RuntimeException("Request Token Error: " . $errorJson->error_description);
             }else{
-                throw new RuntimeException('Request Token Error: ' . $errorResponse->getBody()->getContents());
+                throw new RuntimeException('Request Token Error: ' . $errorResponse->getBody());
             }
         }
     }

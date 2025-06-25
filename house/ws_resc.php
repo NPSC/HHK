@@ -32,14 +32,14 @@ use HHK\Update\SiteConfig;
  * ws_resc.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 /**
  *  includes and requires
  */
-require ("homeIncludes.php");
+require "homeIncludes.php";
 
 
 $wInit = new WebInit(WebPageCode::Service);
@@ -84,9 +84,9 @@ try {
             $guestPhoto = $_FILES['guestPhoto'];
 
             if (is_null($guestId) || $guestId === FALSE) {
-                throw new Exception('GuestId missing');
+                throw new \Exception('GuestId missing');
             } else if (is_null($guestPhoto) || $guestPhoto === FALSE) {
-                throw new Exception('guest Photo missing');
+                throw new \Exception('guest Photo missing');
             }
 
             $photo = new Photo();
@@ -100,7 +100,7 @@ try {
             $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
 
             if ($guestId < 1) {
-                throw new Exception("GuestId missing");
+                throw new \Exception("GuestId missing");
             } else {
                 // Delete it.
                 $delete = "CALL delete_guest_photo($guestId)";
@@ -132,11 +132,11 @@ try {
                 $mimeType = filter_input(INPUT_POST, 'mimetype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $doc = $_FILES['file'];
 
-                if (is_null($guestId) || $guestId === FALSE) {
-                throw new Exception('GuestId missing');
-            } else if (is_null($doc) || $doc === FALSE) {
-                throw new Exception('Document is missing');
-            }
+                if ($guestId === null || $guestId === FALSE) {
+                    throw new \Exception('GuestId missing');
+                } else if ($doc === null || $doc === FALSE) {
+                    throw new \Exception('Document is missing');
+                }
 
                 $docContents = file_get_contents($doc['tmp_name']);
 
@@ -183,7 +183,7 @@ try {
             $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $docGuestId = intval(filter_input(INPUT_POST, 'docGuestId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if (is_null($docId) || $docId === FALSE) {
+            if ($docId === null || $docId === FALSE) {
                 throw new Exception('DocId missing');
             }
 
@@ -200,7 +200,7 @@ try {
 
                 $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if (is_null($docId) || $docId === FALSE || $docId < 1) {
+            if ($docId === null || $docId === FALSE || $docId < 1) {
             throw new Exception('DocId missing');
             }
 
@@ -218,7 +218,7 @@ try {
 
             $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if (is_null($docId) || $docId === FALSE || $docId < 1) {
+            if ($docId === null || $docId === FALSE || $docId < 1) {
                 throw new Exception('DocId missing');
             }
 
@@ -246,16 +246,16 @@ try {
 
             if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {
                 $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $startDT = new DateTime($startDate);
+                $startDT = new \DateTime($startDate);
             } else {
-                $startDT = new DateTime();
+                $startDT = new \DateTime();
             }
 
             if (isset($_REQUEST["end"]) && $_REQUEST["end"] != '') {
                 $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $endDT = new DateTime($endDate);
+                $endDT = new \DateTime($endDate);
             } else {
-                $endDT = new DateTime();
+                $endDT = new \DateTime();
             }
 
             $strt = $startDT->format('Y-m-d');
@@ -310,7 +310,7 @@ try {
                 $markup = HTMLContainer::generateMarkup('div', ActivityReport::unpaidInvoiceLog($dbh), ['style' => 'margin-left:5px;']);
             }
 
-            $events = (isset($_REQUEST['direct'])) ? HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;']) : ['success' => HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;'])];
+            $events = isset($_REQUEST['direct']) ? HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;']) : ['success' => HTMLContainer::generateMarkup('div', $markup, ['style' => 'position:relative;top:12px;']) . HTMLContainer::generateMarkup('div', '', ['style' => 'clear:both;'])];
 
             break;
 
@@ -376,7 +376,7 @@ try {
         case 'getStatEvent':
 
             if(SecurityComponent::is_Authorized("guestadmin") || SecurityComponent::is_Authorized("guestoperations")){
-            
+
                 $id = 0;
                 if (isset($_REQUEST["id"])) {
                     $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -564,7 +564,7 @@ try {
             }
 
             $room = new Room($dbh, $id);
-            
+
             if ($room->setCleanStatus($stat) === FALSE) {
                 $events['msg'] = 'Room Cleaning State change FAILED.';
                 $events['status'] = "error";
@@ -586,13 +586,13 @@ try {
                 $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-	//start Date
+	        //start Date
             $startDate = '';
             if (isset($_REQUEST['stdte'])) {
                 $startDate = filter_var($_REQUEST['stdte'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-		//end Date
+		    //end Date
             $endDate = '';
             if (isset($_REQUEST['enddte'])) {
                 $endDate = filter_var($_REQUEST['enddte'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -838,12 +838,12 @@ function getCssVars(Session $uS){
     header('Content-Type: text/css');
     $vars = "";
 
-    $vars .= ($uS->printScale ? "
+    $vars .= $uS->printScale ? "
     @media print{
         body{
-            font-size: " . $uS->printScale/100 . "rem;
+            font-size: " . $uS->printScale / 100 . "rem;
         }
-    }" : '');
+    }" : '';
 
     return $vars;
 }
@@ -859,7 +859,7 @@ function getNameDetails(\PDO $dbh, $post){
         $stmt = $dbh->prepare($query);
         $stmt->execute();
 
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resultTbl = new HTMLTable();
         $resultTbl->addHeaderTr(HTMLTable::makeTh('ID').HTMLTable::makeTh('First Name').HTMLTable::makeTh('Last Name').HTMLTable::makeTh('Address 1').HTMLTable::makeTh('Address 2').HTMLTable::makeTh('City').HTMLTable::makeTh('State').HTMLTable::makeTh('Zip'));
@@ -873,7 +873,7 @@ function getNameDetails(\PDO $dbh, $post){
                 }
             }
             $resultTbl->addBodyTr($tr);
-            
+
         }
         //$resultTbl->addfooterTr(HTMLTable::makeTd(implode(', ', $post['idNames']), ['colspan'=>'8']));
         $resultMkup = HTMLContainer::generateMarkup('div', $resultTbl->generateMarkup([], (isset($post['title']) ? HTMLContainer::generateMarkup("h4", $post['title'], ['class'=>"my-2"]) : '')), ['class'=>'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog', 'style'=>'width: fit-content; max-width: 100%; font-size: 0.9em; padding: 5px;', 'id'=>'nameDetails']);

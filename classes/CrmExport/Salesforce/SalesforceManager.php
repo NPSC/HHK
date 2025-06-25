@@ -789,7 +789,7 @@ class SalesforceManager extends AbstractExportManager {
 
             $subResponse = AbstractCompositeSubresponse::factory($c, $idPsg, $isSuccessful);
 
-            $guest = $this->findGuest($guests, $idPsg, $subResponse->getidName());
+            $guest = $this->findGuest($guests, $idPsg, $subResponse->getIdName());
 
 
             $f = (count($guest) > 0) ? [

@@ -1,4 +1,4 @@
-/**
+/** 
  * resvManager.js
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
@@ -2785,7 +2785,7 @@ function resvManager(initData, options) {
             guestSearchTerm = sdata.guestSearchTerm;
         }
 
-        var parms = {
+        const parms = {
             id: sdata.id,
             rid: sdata.rid,
             idPsg: sdata.idPsg,
