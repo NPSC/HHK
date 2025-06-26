@@ -1,10 +1,11 @@
 <?php
-namespace HHK\API\Controllers;
+namespace HHK\API\Controllers\Calendar;
 
 use DateInterval;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
+use DI\Container;
 use HHK\sec\SysConfig;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\VisitStatus;
@@ -14,16 +15,17 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * Controller for accessing calendar events
  */
-class CalendarController
+class ViewCalendarController
 {
 
-    private $dbh;
+    private Container $container;
 
-   public function __construct(\PDO $dbh)
-   {
-       $this->dbh = $dbh;
-   }
-    public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    public function __construct(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $startDate = filter_input(INPUT_GET, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -46,8 +48,9 @@ class CalendarController
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
+        $dbh = $this->container->get("dbh");
         $returnData = [];
-        $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
+        $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($dbh, "sys_config", "siteName"));
         $returnData["generatedAt"] = (new DateTime())->format(DateTime::RFC3339);
         $returnData["startDate"] = $startDate->format("Y-m-d");
         $returnData["endDate"] = $endDate->format("Y-m-d");
@@ -55,7 +58,7 @@ class CalendarController
         $query = "select * from vapi_register_resv where ReservationStatusId in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
             . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $startDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
 
-        $stmt = $this->dbh->query($query);
+        $stmt = $dbh->query($query);
         $resvRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         foreach ($resvRows as &$row) {
             $row["PrimaryGuest"] = [
@@ -74,7 +77,7 @@ class CalendarController
 
         $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$startDate->format('Y-m-d') . "');";
-        $stmtv = $this->dbh->query($query);
+        $stmtv = $dbh->query($query);
         $visitRows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
                 
         foreach ($visitRows as &$row) {

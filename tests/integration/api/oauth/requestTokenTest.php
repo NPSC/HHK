@@ -1,5 +1,5 @@
 <?php
-namespace Tests\Api\Oauth;
+namespace Tests\Integration\Oauth;
 
 use GuzzleHttp\Client;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +12,7 @@ class RequestTokenTest extends TestCase
     protected function setUp(): void
     {
         $this->client = new Client([
-            'base_uri' => '/api/',
+            'base_uri' => '/api',
             'http_errors' => false
         ]);
     }

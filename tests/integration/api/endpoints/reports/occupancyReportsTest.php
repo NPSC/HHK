@@ -1,5 +1,5 @@
 <?php
-namespace Tests\Api\Endpoints\Reports;
+namespace Tests\Integration\Endpoints\Reports;
 
 use DateInterval;
 use DateTime;

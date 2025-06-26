@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+use DI\Container;
+use HHK\API\Controllers\Calendar\ViewCalendarController;
+use HHK\API\Controllers\Oauth\RequestTokenController;
+use HHK\API\Controllers\Reports\OccupancyAllTimeController;
+use HHK\API\Controllers\Reports\OccupancyTodayController;
+use HHK\API\Controllers\Widgets\VacancyWidgetController;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\API\OAuth\OAuthServer;
@@ -35,28 +41,21 @@ $oAuthServer = new OAuthServer($dbh);
 $debugMode = ($uS->mode == "dev");
     
 //create Slim App instance
+$container = new Container();
+$container->set("dbh", $dbh);
+$container->set("oAuthServer", $oAuthServer);
+AppFactory::setContainer($container);
 $app = AppFactory::create();
 $app->setBasePath('/api'); // Set the base path for the API
 
 //add middleware
 $app->addRoutingMiddleware();
 $app->addErrorMiddleware($debugMode, false, false);
-
-//CORS
 $app->add(new CorsMiddleware($app));
 
 // set up token endpoint
 // Endpoint: /api/oauth2/token
-$app->post('/oauth2/token', function (Request $request, Response $response) use ($oAuthServer) {
-    $response->withHeader("Access-Control-Allow-Headers", "Content-Type, authorization, Accept");
-
-    try{
-        return $oAuthServer->getAuthServer()->respondToAccessTokenRequest($request, $response);
-    }catch (OAuthServerException $e) {
-        return $e->generateHttpResponse($response);
-    }
-})->add(new LogMiddleware($dbh));
-
+$app->post('/oauth2/token', RequestTokenController::class)->add(new LogMiddleware($dbh));
 
 // actual protected API routes
 $app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer) {
@@ -66,9 +65,7 @@ $app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer
             
         //vacancy widget 
         // Endpoint: /api/v1/widget/vacancy
-        $group->get('/vacancy', function (Request $request, Response $response, array $args) use ($dbh) {
-            return (new WidgetController($dbh))->vacancy($request, $response, $args);
-        });
+        $group->get('/vacancy', VacancyWidgetController::class);
 
     })->add(new LogMiddleware($dbh))->add(new AllowedOriginMiddleware($dbh));
 
@@ -79,22 +76,17 @@ $app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer
 
             // Occupancy Today
             // Endpoint: /api/v1/reports/occupancy/today
-            $group->get('/occupancy/today', function (Request $request, Response $response, array $args) use ($dbh) {
-                return (new ReportController($dbh))->occupancyToday($request, $response, $args);
-            });
+            $group->get('/occupancy/today', OccupancyTodayController::class);
 
             // All time occupancy
             // Endpoint: /api/v1/reports/occupancy/alltime
-            $group->get('/occupancy/alltime', function (Request $request, Response $response, array $args) use ($dbh) {
-                return (new ReportController($dbh))->occupancyAllTime($request, $response, $args);
-            });
+            $group->get('/occupancy/alltime', OccupancyAllTimeController::class);
+
         })->add(new AccessTokenHasScopeMiddleware("aggregatereports:read"));
 
         // Calendar
         // Endpoint: /api/v1/calendar
-        $group->get('/calendar', function(Request $request, Response $response, array $args) use ($dbh){
-            return (new CalendarController($dbh))->index($request, $response, $args);
-        })->add(new AccessTokenHasScopeMiddleware("calendar:read"));
+        $group->get('/calendar', ViewCalendarController::class)->add(new AccessTokenHasScopeMiddleware("calendar:read"));
 
     })->add(new LogMiddleware($dbh))->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()));
 });

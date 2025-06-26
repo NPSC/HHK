@@ -1,5 +1,5 @@
 <?php
-namespace Tests\Api\Endpoints\Calendar;
+namespace Tests\Integration\Api\Endpoints\Calendar;
 
 use DateInterval;
 use DateTime;
