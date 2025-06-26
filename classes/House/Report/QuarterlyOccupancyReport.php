@@ -39,6 +39,11 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
     }
 
     public function makeSummaryMkup(): string {
+
+        if($this->filter->getReportStart() == $this->filter->getQueryEnd()){
+            return HTMLContainer::generateMarkup("div", "<strong>Error:</strong> report start and end dates cannot be the same", ["class"=>"ui-state-highlight ui-corner-all p-2"]);
+        }
+
         $summaryData = $this->getMainSummaryData($this->filter->getReportStart(), $this->filter->getQueryEnd());
         $ageDist = $this->getAgeDistribution($this->filter->getReportStart(), $this->filter->getQueryEnd());
 
@@ -316,7 +321,7 @@ group by `Category` order by `count` desc;';
             $total = $this->sumTotal($data);
             foreach($data as $key=>$value){
                 $value[1] = (float) $value[1];
-                $value[0] = $value[0] . " - " . number_format($value[1]/$total*100, 1) . "%";
+                $value[0] = $value[0] . " - " . number_format(($total > 0 ? $value[1]/$total*100 : 0), 1) . "%";
                 $data[$key] = $value;
             }
         }
