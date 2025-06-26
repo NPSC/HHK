@@ -4,6 +4,7 @@ namespace HHK\API\Controllers;
 use DateInterval;
 use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use HHK\sec\SysConfig;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\VisitStatus;
@@ -27,16 +28,16 @@ class CalendarController
         $startDate = filter_input(INPUT_GET, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        try{
-            if($startDate && $endDate){
-                $startDate = new DateTime($startDate);
-                $endDate = new DateTime($endDate);
-            }else{
-                $startDate = new DateTimeImmutable("today");
-                $endDate = $startDate->add(new DateInterval("P1W"));
-            }
-        }catch(\Exception $e){
-            $response->getBody()->write(json_encode(["error"=>"Bad Request", "error_description"=>"Invalid date: " . $e->getMessage()]));
+        if($startDate && $endDate){
+            $startDate = DateTime::createFromFormat("Y-m-d", $startDate);
+            $endDate = DateTime::createFromFormat("Y-m-d", $endDate);
+        }else{
+            $startDate = new DateTimeImmutable("today");
+            $endDate = $startDate->add(new DateInterval("P1W"));
+        }
+
+        if(!$startDate instanceof DateTimeInterface && !$endDate instanceof DateTimeInterface){
+            $response->getBody()->write(json_encode(["error"=>"Bad Request", "error_description"=>"Invalid date: Dates must be formatted yyyy-mm-dd"]));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
@@ -45,54 +46,54 @@ class CalendarController
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
-                $returnData = [];
-                $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
-                $returnData["generatedAt"] = (new DateTime())->format(DateTime::RFC3339);
-                $returnData["startDate"] = $startDate->format("Y-m-d");
-                $returnData["endDate"] = $endDate->format("Y-m-d");
+        $returnData = [];
+        $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($this->dbh, "sys_config", "siteName"));
+        $returnData["generatedAt"] = (new DateTime())->format(DateTime::RFC3339);
+        $returnData["startDate"] = $startDate->format("Y-m-d");
+        $returnData["endDate"] = $endDate->format("Y-m-d");
                 
-                $query = "select * from vapi_register_resv where ReservationStatusId in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-                . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $startDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
+        $query = "select * from vapi_register_resv where ReservationStatusId in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
+            . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $startDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
 
-                $stmt = $this->dbh->query($query);
-                $resvRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-                foreach ($resvRows as &$row) {
-                    $row["PrimaryGuest"] = [
-                        "id"=>$row["PrimaryGuestId"],
-                        "firstName"=>$row["PrimaryGuestFirst"],
-                        "lastName"=>$row["PrimaryGuestLast"],
-                        "fullName"=>$row["PrimaryGuestFullName"],
-                        "email"=>$row["PrimaryGuestEmail"]
-                    ];
-                    $row["ExpectedArrival"] = (new DateTime($row["ExpectedArrival"]))->format(DateTime::RFC3339);
-                    $row["ExpectedDeparture"] = (new DateTime($row["ExpectedDeparture"]))->format(DateTime::RFC3339);
-                    unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
-                }
+        $stmt = $this->dbh->query($query);
+        $resvRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        foreach ($resvRows as &$row) {
+            $row["PrimaryGuest"] = [
+                "id"=>$row["PrimaryGuestId"],
+                "firstName"=>$row["PrimaryGuestFirst"],
+                "lastName"=>$row["PrimaryGuestLast"],
+                "fullName"=>$row["PrimaryGuestFullName"],
+                "email"=>$row["PrimaryGuestEmail"]
+            ];
+            $row["ExpectedArrival"] = (new DateTime($row["ExpectedArrival"]))->format(DateTime::RFC3339);
+            $row["ExpectedDeparture"] = (new DateTime($row["ExpectedDeparture"]))->format(DateTime::RFC3339);
+            unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
+        }
 
-                $returnData["reservations"] = $resvRows;
+        $returnData["reservations"] = $resvRows;
 
-                $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
+        $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$startDate->format('Y-m-d') . "');";
-                $stmtv = $this->dbh->query($query);
-                $visitRows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
+        $stmtv = $this->dbh->query($query);
+        $visitRows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
                 
-                foreach ($visitRows as &$row) {
-                    $row["PrimaryGuest"] = [
-                        "id"=>$row["PrimaryGuestId"],
-                        "firstName"=>$row["PrimaryGuestFirst"],
-                        "lastName"=>$row["PrimaryGuestLast"],
-                        "fullName"=>$row["PrimaryGuestFullName"],
-                        "email"=>$row["PrimaryGuestEmail"]
-                    ];
-                    $row["SpanStart"] = $row["SpanStart"] ? (new DateTime($row["SpanStart"]))->format(DateTime::RFC3339):null;
-                    $row["SpanEnd"] = $row["SpanEnd"] ? (new DateTime($row["SpanEnd"]))->format(DateTime::RFC3339):null;
-                    $row["ExpectedDeparture"] = $row["ExpectedDeparture"] ? (new DateTime($row["ExpectedDeparture"]))->format(DateTime::RFC3339):null;
-                    unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
-                }
+        foreach ($visitRows as &$row) {
+            $row["PrimaryGuest"] = [
+                "id"=>$row["PrimaryGuestId"],
+                "firstName"=>$row["PrimaryGuestFirst"],
+                "lastName"=>$row["PrimaryGuestLast"],
+                "fullName"=>$row["PrimaryGuestFullName"],
+                "email"=>$row["PrimaryGuestEmail"]
+            ];
+            $row["SpanStart"] = $row["SpanStart"] ? (new DateTime($row["SpanStart"]))->format(DateTime::RFC3339):null;
+            $row["SpanEnd"] = $row["SpanEnd"] ? (new DateTime($row["SpanEnd"]))->format(DateTime::RFC3339):null;
+            $row["ExpectedDeparture"] = $row["ExpectedDeparture"] ? (new DateTime($row["ExpectedDeparture"]))->format(DateTime::RFC3339):null;
+            unset($row["PrimaryGuestId"], $row["PrimaryGuestFirst"], $row["PrimaryGuestLast"], $row["PrimaryGuestFullName"], $row["PrimaryGuestEmail"]);
+        }
 
-                $returnData["visits"] = $visitRows;
+        $returnData["visits"] = $visitRows;
 
-                $response->getBody()->write(json_encode($returnData));
-                return $response->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write(json_encode($returnData));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 }
