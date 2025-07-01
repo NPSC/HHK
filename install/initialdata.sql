@@ -751,6 +751,7 @@ Thank you
 ('UseRebook', 'false', 'b', 'hf', '', 'Automatically rebook cancelled reservation', '', 1),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
 ('useChecklists', 'false', 'b', 'hf', '', 'Enable Checklist feature', '', 1),
+('useAPI', 'false', 'b', 'hf', '', 'Enable API Access', '', 1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',1),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),

@@ -114,12 +114,48 @@ class Client {
         return ["client"=>$this->getClient(), "accessTokens"=>[]];
     }
 
-    public function updateClient(){
+    public function updateClient(string|null $name = null, bool|null $revoked = null){
+        if(SecurityComponent::is_Admin()){
+            $stmt = $this->dbh->prepare("selct * from `oauth_clients` where client_id = :clientId");
+            $stmt->execute([":clientId"=>$this->clientId]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
+            if($row){
+                $clientRS = new OauthClientRS();
+                EditRS::loadRow($row, $clientRS);
+                
+                if($name){
+                    $clientRS->name->setNewVal($name);
+                }
+
+                if(!is_null($revoked)){
+                    $clientRS->revoked->setNewVal("1");
+                }
+
+                EditRS::update($this->dbh, $clientRS, [$clientRS->client_id]);
+
+                return ["success"=>"Oauth Client updated successfully", "client"=>$this->getClient(), "accessTokens"=>[]];
+
+            }else{
+                throw new RuntimeException("Cannot update Oauth Client: client Id not found");
+            }
+        }else{
+            throw new RuntimeException("Cannot update Oauth Client: Unauthorized");
+        }
     }
 
     public function deleteClient(){
-
+        if(SecurityComponent::is_Admin()){
+            $clientRS = new OauthClientRS();
+            $clientRS->client_id->setStoredVal($this->clientId);
+            if(EditRS::delete($this->dbh, $clientRS, [$clientRS->client_id])){
+                return ["success"=>"Oauth Client deleted successfully"];
+            }else{
+                throw new RuntimeException("Cannot delete Oauth Client");
+            }
+        }else{
+            throw new RuntimeException("Cannot delete Oauth Client: Unauthorized");
+        }
     }
 
     /**

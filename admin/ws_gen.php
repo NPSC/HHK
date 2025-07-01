@@ -273,6 +273,51 @@ try {
             
             break;
 
+        case "updateOauthClient":
+            
+            if(SecurityComponent::is_TheAdmin()){
+                $clietnId = false;
+                if (isset($_POST['client_id'])) {
+                    $clientId = filter_var($_POST['client_id'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+                $name = "";
+                if (isset($_POST['client_name'])) {
+                    $name = filter_var($_POST['client_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+                $scopes = [];
+                if (isset($_POST['client_scopes'])) {
+                    $scopes = filter_input(INPUT_POST, 'client_scopes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
+                }
+
+                $revoked = null;
+                if (isset($_POST['client_revoked'])) {
+                    $revoked = boolval(filter_input(INPUT_POST, 'client_revoked', FILTER_VALIDATE_BOOL));
+                }
+
+                $client = new Client($dbh, $clientId);
+                $events = $client->updateClient($name, $revoked);
+            }else{
+                throw new RuntimeException("You must be the admin to update a client");
+            }
+            
+            break;
+
+        case "deleteOauthClient":
+            
+            if(SecurityComponent::is_TheAdmin()){
+                $clietnId = false;
+                if (isset($_POST['client_id'])) {
+                    $clientId = filter_var($_POST['client_id'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+
+                $client = new Client($dbh, $clientId);
+                $events = $client->deleteClient();
+            }else{
+                throw new RuntimeException("You must be the admin to delete a client");
+            }
+            
+            break;
+
         case "showCron":
 
             $columns = array(

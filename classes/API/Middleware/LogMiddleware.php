@@ -51,7 +51,7 @@ class LogMiddleware
         return $response;
     }
 
-    private function formatHeaders(array $headers): array
+    public static function formatHeaders(array $headers): array
     {
         $formattedHeaders = [];
         foreach ($headers as $name => $values) {

@@ -8,17 +8,14 @@ use HHK\API\Controllers\Oauth\RequestTokenController;
 use HHK\API\Controllers\Reports\OccupancyAllTimeController;
 use HHK\API\Controllers\Reports\OccupancyTodayController;
 use HHK\API\Controllers\Widgets\VacancyWidgetController;
+use HHK\API\Handlers\ErrorHandler;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\API\OAuth\OAuthServer;
-use HHK\API\Controllers\{CalendarController, ReportController, WidgetController};
 use HHK\API\Middleware\{AccessTokenHasScopeMiddleware, AllowedOriginMiddleware, LogMiddleware, ResourceServerMiddleware, CorsMiddleware};
 use HHK\sec\SysConfig;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Slim\Routing\RouteCollectorProxy;
-use League\OAuth2\Server\Exception\OAuthServerException;
 
 /**
  * index.php
@@ -50,45 +47,50 @@ $app->setBasePath('/api'); // Set the base path for the API
 
 //add middleware
 $app->addRoutingMiddleware();
-$app->addErrorMiddleware($debugMode, false, false);
+$app->addErrorMiddleware($debugMode, true, true)->setDefaultErrorHandler(new ErrorHandler($app->getContainer(), $app->getCallableResolver(), $app->getResponseFactory()));
 $app->add(new CorsMiddleware($app));
 
-// set up token endpoint
-// Endpoint: /api/oauth2/token
-$app->post('/oauth2/token', RequestTokenController::class)->add(new LogMiddleware($dbh));
 
-// actual protected API routes
-$app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer) {
+//is API enabled in site config?
+if(SysConfig::getKeyValue($dbh, "sys_config", "useAPI", false)){
 
-    //public widgets protected by CORS
-    $group->group('/widget', function (RouteCollectorProxy $group) use ($dbh) {
-            
-        //vacancy widget 
-        // Endpoint: /api/v1/widget/vacancy
-        $group->get('/vacancy', VacancyWidgetController::class);
+    // set up token endpoint
+    // Endpoint: /api/oauth2/token
+    $app->post('/oauth2/token', RequestTokenController::class)->add(new LogMiddleware($dbh));
 
-    })->add(new LogMiddleware($dbh))->add(new AllowedOriginMiddleware($dbh));
+    // actual protected API routes
+    $app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer) {
 
-    //OAuth protected routes
-    $group->group("", function (RouteCollectorProxy $group) use ($dbh) {
+        //public widgets protected by CORS
+        $group->group('/widget', function (RouteCollectorProxy $group) use ($dbh) {
+                
+            //vacancy widget 
+            // Endpoint: /api/v1/widget/vacancy
+            $group->get('/vacancy', VacancyWidgetController::class);
 
-        $group->group('/reports', function (RouteCollectorProxy $group) use ($dbh) {
+        })->add(new AllowedOriginMiddleware($dbh))->add(new LogMiddleware($dbh));
 
-            // Occupancy Today
-            // Endpoint: /api/v1/reports/occupancy/today
-            $group->get('/occupancy/today', OccupancyTodayController::class);
+        //OAuth protected routes
+        $group->group("", function (RouteCollectorProxy $group) use ($dbh) {
 
-            // All time occupancy
-            // Endpoint: /api/v1/reports/occupancy/alltime
-            $group->get('/occupancy/alltime', OccupancyAllTimeController::class);
+            $group->group('/reports', function (RouteCollectorProxy $group) use ($dbh) {
 
-        })->add(new AccessTokenHasScopeMiddleware("aggregatereports:read"));
+                // Occupancy Today
+                // Endpoint: /api/v1/reports/occupancy/today
+                $group->get('/occupancy/today', OccupancyTodayController::class);
 
-        // Calendar
-        // Endpoint: /api/v1/calendar
-        $group->get('/calendar', ViewCalendarController::class)->add(new AccessTokenHasScopeMiddleware("calendar:read"));
+                // All time occupancy
+                // Endpoint: /api/v1/reports/occupancy/alltime
+                $group->get('/occupancy/alltime', OccupancyAllTimeController::class);
 
-    })->add(new LogMiddleware($dbh))->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()));
-});
+            })->add(new AccessTokenHasScopeMiddleware("aggregatereports:read"));
+
+            // Calendar
+            // Endpoint: /api/v1/calendar
+            $group->get('/calendar', ViewCalendarController::class)->add(new AccessTokenHasScopeMiddleware("calendar:read"));
+
+        })->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()))->add(new LogMiddleware($dbh));
+    });
+}
 
 $app->run();
