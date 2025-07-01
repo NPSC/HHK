@@ -11,10 +11,10 @@ use HHK\SysConst\GLTableNames;
 /**
  * Duplicates.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 
@@ -22,6 +22,7 @@ require ("AdminIncludes.php");
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 $uS = Session::getInstance();
+$debugMode = ($uS->mode == "dev");
 
 $wInit->sessionLoadGuestLkUps();
 
@@ -76,7 +77,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
     }
 
     } catch (PDOException $pex) {
-        $events = array('error'=> $pex->getMessage() . '---' . $pex->getTraceAsString());
+        $events = array('error'=> $pex->getMessage() . ($debugMode ? '---' . $pex->getTraceAsString(): ""));
     }
 
     echo json_encode($events);
