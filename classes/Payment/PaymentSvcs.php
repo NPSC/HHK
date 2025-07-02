@@ -92,7 +92,7 @@ class PaymentSvcs {
 
           case PayType::Cash:
 
-            $cashResp = new CashResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getPayNotes());
+            $cashResp = new CashResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getPayNotes(), $pmp->getCashTendered());
 
             CashTX::cashSale($dbh, $cashResp, $uS->username, $pmp->getPayDate());
 

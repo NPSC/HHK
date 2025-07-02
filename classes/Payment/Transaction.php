@@ -4,6 +4,7 @@ namespace HHK\Payment;
 
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
+use HHK\Payment\PaymentResponse\CashResponse;
 use HHK\Tables\Payment\TransRS;
 use HHK\Tables\EditRS;
 use HHK\Payment\PaymentResponse\CheckResponse;
@@ -52,6 +53,10 @@ class Transaction {
 
         if ($vr instanceof CheckResponse || $vr instanceof TransferResponse) {
             $transRs->Check_Number->setNewVal($vr->getCheckNumber());
+        }
+
+        if ($vr instanceof CashResponse) {
+            $transRs->Amount_Tendered->setNewVal($vr->getAmountTendered());
         }
 
 

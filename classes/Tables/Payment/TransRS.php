@@ -35,6 +35,7 @@ class TransRS extends AbstractTableRS {
     public $Gateway_Ref;  // varchar(45) NOT NULL DEFAULT '',
     public $Payment_Status;  // varchar(15) NOT NULL DEFAULT '',
     public $Amount;  // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public $Amount_Tendered;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Date_Entered;  // datetime DEFAULT NULL,
     public $Entered_By;  // varchar(45) NOT NULL DEFAULT '',
     public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -60,6 +61,7 @@ class TransRS extends AbstractTableRS {
         $this->Gateway_Ref = new DB_Field("Gateway_Ref", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Payment_Status = new DB_Field("Payment_Status", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Amount = new DB_Field('Amount', 0, new DbDecimalSanitizer(), TRUE, TRUE);
+        $this->Amount_Tendered = new DB_Field('Amount_Tendered', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Date_Entered = new DB_Field("Date_Entered", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         
         $this->Entered_By = new DB_Field("Entered_By", '', new DbStrSanitizer(45), TRUE, True);
