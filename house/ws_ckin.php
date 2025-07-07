@@ -38,6 +38,7 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
+$debugMode = ($uS->mode == "dev");
 
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
@@ -808,9 +809,9 @@ if(isset($events['receipt']) && $uS->merchantReceipt == true){
 }
 
 } catch (\PDOException $ex) {
-    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
+    $events = ["error" => "Database Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 } catch (\Exception $ex) {
-    $events = ["error" => "Web Server Error: " . $ex->getMessage()];
+    $events = ["error" => "Web Server Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 }
 
 

@@ -1,6 +1,7 @@
 <?php
 use HHK\Exception\InvalidArgumentException;
 use HHK\House\GuestRegister;
+use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
 
@@ -27,6 +28,9 @@ try {
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
+
+$uS = Session::getInstance();
+$debugMode = ($uS->mode == "dev");
 
 $c = "";
 
@@ -91,9 +95,9 @@ try {
     }
 
 } catch (PDOException $ex) {
-    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
+    $events = ["error" => "Database Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 } catch (Exception $ex) {
-    $events = ["error" => "Web Server Error: " . $ex->getMessage()];
+    $events = ["error" => "Web Server Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 }
 
 
