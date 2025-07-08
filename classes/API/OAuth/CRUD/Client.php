@@ -1,10 +1,12 @@
 <?php
 namespace HHK\API\OAuth\CRUD;
 
+use ErrorException;
 use HHK\Exception\RuntimeException;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\sec\UserClass;
+use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\OAuth\OauthClientRS;
 
@@ -35,6 +37,8 @@ class Client {
                 throw new RuntimeException("Client not found");
             }
 
+            $client["scopes"] = explode(",", $client["scopes"]);
+
             if($includeSecret){
                 $client["secret"] = decryptMessage($client["secret"]);
             }else{
@@ -61,12 +65,12 @@ class Client {
     }
 
     public function getAccessTokens(string $type = "active"){
-        $tokenSql = "select * from oauth_access_tokens where client_id = :id";
+        $tokenSql = "select t.*, if(t.revoked or c.revoked, 1,0) as `fullyrevoked` from oauth_access_tokens t join `oauth_clients` c on t.client_id = c.client_id where t.client_id = :id";
         $params = [":id"=>$this->clientId];
 
         switch($type){
             case "active":
-                $tokenSql .= " and revoked = 0 and expires_at > now()";
+                $tokenSql .= " and t.revoked = 0 and t.expires_at > now()";
                 break;
             default:
                 return [];
@@ -91,6 +95,7 @@ class Client {
      * @return array{client: mixed, client_id: string, client_secret: string}
      */
     public function generateNewClient(string $name, array $scopes = []){
+        $uS = Session::getInstance();
         $clientId = $this->generateClientId();
         $clientSecret = $this->generateRandomString();
 
@@ -108,15 +113,20 @@ class Client {
                 $stmt->execute(["client_id"=>$clientId, "scope"=>$scope]);
             }
         }
+
+        $logText = HouseLog::getInsertText($client);
+        $logText["scopes"] = $scopes;
+        HouseLog::logAPIClient($this->dbh, "insert", $clientId, json_encode($logText), $uS->username);
         
         $this->clientId = $clientId;
         $client = $this->getClient(true);
         return ["client"=>$this->getClient(), "accessTokens"=>[]];
     }
 
-    public function updateClient(string|null $name = null, bool|null $revoked = null){
+    public function updateClient(string|null $name = null, array|null $scopes = null,  bool $revoked = false){
+        $uS = Session::getInstance();
         if(SecurityComponent::is_Admin()){
-            $stmt = $this->dbh->prepare("selct * from `oauth_clients` where client_id = :clientId");
+            $stmt = $this->dbh->prepare("select * from `oauth_clients` where `client_id` = :clientId");
             $stmt->execute([":clientId"=>$this->clientId]);
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -128,33 +138,55 @@ class Client {
                     $clientRS->name->setNewVal($name);
                 }
 
-                if(!is_null($revoked)){
-                    $clientRS->revoked->setNewVal("1");
-                }
+                $clientRS->revoked->setNewVal($revoked);
 
                 EditRS::update($this->dbh, $clientRS, [$clientRS->client_id]);
+                
+                $logText = HouseLog::getUpdateText($clientRS);
+                
+                //scopes
+                if(is_array($scopes)){
+                    $delstmt = $this->dbh->prepare("delete from `oauth_client_scopes` where oauth_client = :clientId");
+                    $delstmt->execute([":clientId"=>$this->clientId]);
+
+                    $insertstmt = $this->dbh->prepare("insert into `oauth_client_scopes` (`oauth_client`, `oauth_scope`) values (:clientId, :clientScope)");
+                    foreach($scopes as $scope){
+                        $insertstmt->execute([":clientId"=>$this->clientId, ":clientScope"=>$scope]);
+                    }
+                    $logText["scopes"] = $scopes;
+                }
+
+                HouseLog::logAPIClient($this->dbh, "update", $clientRS->client_id->getStoredVal(),json_encode($logText), $uS->username);
 
                 return ["success"=>"Oauth Client updated successfully", "client"=>$this->getClient(), "accessTokens"=>[]];
 
             }else{
-                throw new RuntimeException("Cannot update Oauth Client: client Id not found");
+                throw new ErrorException("Cannot update Oauth Client: client Id not found");
             }
         }else{
-            throw new RuntimeException("Cannot update Oauth Client: Unauthorized");
+            throw new ErrorException("Cannot update Oauth Client: Unauthorized");
         }
     }
 
     public function deleteClient(){
+        $uS = Session::getInstance();
         if(SecurityComponent::is_Admin()){
-            $clientRS = new OauthClientRS();
-            $clientRS->client_id->setStoredVal($this->clientId);
-            if(EditRS::delete($this->dbh, $clientRS, [$clientRS->client_id])){
-                return ["success"=>"Oauth Client deleted successfully"];
+            if($this->clientId){
+                $clientRS = new OauthClientRS();
+                $clientRS->client_id->setStoredVal($this->clientId);
+                if(EditRS::delete($this->dbh, $clientRS, [$clientRS->client_id])){
+                    $logText = HouseLog::getDeleteText($clientRS, $this->clientId);
+                    HouseLog::logAPIClient($this->dbh, "delete", $this->clientId, json_encode($logText), $uS->username);
+                    return ["success"=>"Oauth Client deleted successfully"];
+                }else{
+                    throw new ErrorException("Cannot delete Oauth Client");
+                }
             }else{
-                throw new RuntimeException("Cannot delete Oauth Client");
+                throw new ErrorException("Cannot delete Oauth Client, client_id not found");
             }
+            
         }else{
-            throw new RuntimeException("Cannot delete Oauth Client: Unauthorized");
+            throw new ErrorException("Cannot delete Oauth Client: Unauthorized");
         }
     }
 
@@ -178,7 +210,7 @@ class Client {
                 return $clientId;
             }
         }
-        throw new RuntimeException("Could not generate client ID");
+        throw new ErrorException("Could not generate client ID");
     }
 
     protected static function generateRandomString(int $length = 32){

@@ -108,6 +108,16 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                     return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
                 }
             },
+            {
+                "targets": [5],
+                "title": "Status",
+                "searchable": true,
+                "sortable": true,
+                "data": "revoked",
+                render: function (data, type) {
+                    return data ? "<strong style='color:red'>Revoked</strong>":"Active";
+                }
+            },
         ];
 
         if (isAdmin) {
@@ -346,6 +356,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                             $dialog.find("#client-issued-to").text(data.client.issuedTo);
                             $dialog.find("#client-issued-at").text(data.client.Timestamp);
                             $dialog.find("#client-last-used").text(data.client.LastUsed);
+                            $dialog.find("#client-status").html(data.client.revoked ? "<strong style='color:red'>Revoked</strong>":"Active");
 
 
                             //access Tokens
@@ -357,7 +368,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                                     <td>${value.scopes.join(", ")}</td>
                                     <td>${value.Timestamp}</td>
                                     <td>${value.expires_at}</td>
-                                    <td>${value.revoked}</td>
+                                    <td>${(value.fullyrevoked?"<strong style='color:red'>Revoked</strong>":"Active")}</td>
                                 </tr>`);
                                 $contentRow.appendTo($tokenTbl.find("tbody"));
                             });
@@ -419,7 +430,8 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
 
         $("#editClientDialog").dialog({
             autoOpen: false,
-            width: "auto",
+            //width: "auto",
+            minWidth: 530,
             height: 400,
             title: 'Edit Client',
             modal: true,
@@ -433,9 +445,13 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                 }
             },
             open: function(e){
+                let $dialog = $("#editClientDialog");
+                $dialog.addClass("hhk-loading");
+
                 if(window.client_id){
 
                     $.ajax({
+                        method: 'post',
                         url: 'ws_gen.php',
                         data: {
                             'cmd': 'getOauthClient',
@@ -443,30 +459,15 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                         },
                         dataType: 'json',
                         success: function(data) {
-                            let $dialog = $("#editClientDialog");
-                            $dialog.find("#editClientName").text(data.client.name);
+                            
+                            $dialog.find("#editClientName").val(data.client.name);
                             $dialog.find("#editClientScopes").val(data.client.scopes);
-
-                            //access Tokens
-                            let $tokenTbl = $dialog.find("table#accessTokens");
-                            $tokenTbl.find("tbody").empty();
-                            $.each(data.accessTokens, function(index, value) {
-                                let $contentRow = $(`<tr>
-                                    <td>${value.client_id}</td>
-                                    <td>${value.scopes.join(", ")}</td>
-                                    <td>${value.Timestamp}</td>
-                                    <td>${value.expires_at}</td>
-                                    <td>${value.revoked}</td>
-                                </tr>`);
-                                $contentRow.appendTo($tokenTbl.find("tbody"));
-                            });
-
-                            logTable.DataTable().ajax.reload();
-
+                            $dialog.find("#editClientRevoked").prop("checked", data.client.revoked);
                             $dialog.removeClass("hhk-loading");
                         }
                     });
                 }else{
+                    flagAlertMessage("Client ID not defined", "error");
                     $("#clientDetailsDialog").dialog("close");
                 }
             },
@@ -474,75 +475,75 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                 $("#editClientForm")[0].reset();
             }
         });
+
+        function deleteClient(){
+            if(window.client_id){
+                $.ajax({
+                    method: 'post',
+                    url: 'ws_gen.php',
+                    data: {
+                        'cmd': 'deleteOauthClient',
+                        'client_id': window.client_id
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.error){
+                            flagAlertMessage(data.error, 'error');
+                            return;
+                        }                            
+                        if(data.success){
+                            flagAlertMessage(data.success, "success");
+                            $("#editClientDialog").dialog("close");
+                            $('#dataTbl').DataTable().ajax.reload();
+                        }
+                    }
+                });
+            }
+        }
         
         $("#editClientForm").on("submit", function(e){
             e.preventDefault();
+            if(window.client_id){
+                let clientName = $("#editClientDialog").find("input#editClientName").val();
+                let clientScopes = $("#editClientDialog").find("select#editClientScopes").val();
+                let revoked = $("#editClientDialog").find("#editClientRevoked").prop('checked');
 
-            let clientName = $("#editClientDialog").find("input#editClientName").val();
-            let clientScopes = $("#editClientDialog").find("select#editClientScopes").val();
-            let revoked = $("#editClientDialog").find("#editClientRevoked").val();
-
-            if(!clientName || !clientScopes){
-                flagAlertMessage("All fields are required", 'error');
-                return;
-            }
-
-            $.ajax({
-                url: 'ws_gen.php',
-                method: 'POST',
-                data: {
-                    'cmd': 'editOauthClient',
-                    'client_name': clientName,
-                    'client_scopes': clientScopes,
-                    'revoked':revoked
-                },
-                dataType: 'json',
-                success: function(data) {
-                    $("#newClientDialog").dialog("close");
-                    $('#dataTbl').DataTable().ajax.reload();
-                }
-            });
-        });
-
-        $('div#vollisting').on('change', 'input.delCkBox', function() {
-            if ($(this).prop('checked')) {
-                var rep = confirm("Delete this record?");
-                if (!rep) {
-                    $(this).prop('checked', false);
+                if(!clientName || !clientScopes){
+                    flagAlertMessage("All fields are required", 'error');
                     return;
                 }
 
-                var usr = $(this).attr('name');
-                deletewu(usr);
+                $.ajax({
+                    url: 'ws_gen.php',
+                    method: 'POST',
+                    data: {
+                        'cmd': 'updateOauthClient',
+                        'client_id':window.client_id,
+                        'client_name': clientName,
+                        'client_scopes': clientScopes,
+                        'client_revoked':revoked
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.error){
+                            flagAlertMessage(data.error, 'error');
+                            return;
+                        }
+                        
+                        if(data.success){
+                            flagAlertMessage(data.success, "success");
+                            $("#editClientDialog").dialog("close");
+                            $('#dataTbl').DataTable().ajax.reload();
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        flagAlertMessage(error);
+                    }
+                });
             }
         });
-        function deletewu(usr) {
-            $.get("liveNameSearch.php",
-                    {cmd: "delwu", id: usr},
-            function(data) {
-                if (data != null && data != "") {
-                    var names = $.parseJSON(data);
-                    if (names[0])
-                        names = names[0];
 
-                    if (names && names.success) {
-                        // all ok
-                        $('tr.trClass' + usr).css({'display': 'none'});
-                    }
-                    else if (names.error) {
-                        alert("Web Server error: " + names.error);
-                    }
-                    else {
-                        alert("Empty data returned from the web server");
-                    }
-                }
-                else {
-                    alert('Nothing was returned from the web server');
 
-                }
-            }
-            );
-        }
     });
 </script>
     </head>
@@ -559,7 +560,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                 </form>
             </div>
         </div>
-        <div id="clientDetailsDialog" style="font-size: 0.9em;" class="hhk-loading">
+        <div id="clientDetailsDialog" style="font-size: 0.9em; display: none;" class="hhk-loading">
             <table style="width: 100%" id="clientDetailsTable" class="mb-3">
                 <thead>
                     <th>Client ID</th>
@@ -569,6 +570,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                     <th>Issued To</th>
                     <th>Issued At</th>
                     <th>Last Used</th>
+                    <th>Status</th>
                 </thead>
                 <tr>
                     <td id="client-id"></td>
@@ -578,6 +580,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                     <td id="client-issued-to"></td>
                     <td id="client-issued-at"></td>
                     <td id="client-last-used"></td>
+                    <td id="client-status"></td>
                 </tr>
             </table>
             <h3>Active Access Tokens</h3>
@@ -587,7 +590,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                     <th>Scopes</th>
                     <th>Issued At</th>
                     <th>Expires At</th>
-                    <th>Revoked</th>
+                    <th>Status</th>
                 </thead>
                 <tbody>
 
@@ -596,7 +599,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
             <h3>API Access Log</h3>
             <table id="clientAccessLog"></table>
         </div>
-        <div id="newClientDialog" style="font-size: 0.9em;">
+        <div id="newClientDialog" style="font-size: 0.9em; display: none;">
             <form id="newClientForm">
                 <table>
                     <tr>
@@ -611,7 +614,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
             </form>
         </div>
 
-        <div id="editClientDialog" style="font-size: 0.9em;">
+        <div id="editClientDialog" style="font-size: 0.9em; display: none;">
             <form id="editClientForm">
                 <table>
                     <tr>
@@ -623,8 +626,8 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
                         <td><?php echo HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($availableScopes, "", true), ["name"=>"editClientScopes", "multiple"=>"true"]);?></td>
                     </tr>
                     <tr>
-                        <td><label for="editRevoked">Revoke</label></td>
-                        <td><input type="checkbox" id="editRevoked" name="editRevoked" /></td>
+                        <td><label for="editClientRevoked">Revoke</label></td>
+                        <td><input type="checkbox" id="editClientRevoked" name="editClientRevoked" /></td>
                     </tr>
                 </table>
             </form>

@@ -89,7 +89,7 @@ if(SysConfig::getKeyValue($dbh, "sys_config", "useAPI", false)){
             // Endpoint: /api/v1/calendar
             $group->get('/calendar', ViewCalendarController::class)->add(new AccessTokenHasScopeMiddleware("calendar:read"));
 
-        })->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()))->add(new LogMiddleware($dbh));
+        })->add(new LogMiddleware($dbh))->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()));
     });
 }
 

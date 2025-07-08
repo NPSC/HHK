@@ -45,7 +45,7 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
     public function isAccessTokenRevoked(string $tokenId): bool {
         try{
             $dbh = initPDO(true);
-            $stmt = $dbh->prepare("select id from `oauth_access_tokens` WHERE id = :id and revoked = 0;");
+            $stmt = $dbh->prepare("select id from `oauth_access_tokens` t join `oauth_clients` c on t.client_id = c.client_id WHERE t.id = :id and t.revoked = 0 and c.revoked = 0;");
             $stmt->execute(array(
                 ':id' => $tokenId,
             ));

@@ -3168,7 +3168,7 @@ from
 -- -----------------------------------------------------
 
 CREATE OR REPLACE VIEW `v_oauth_clients` AS
-select c.*, ifnull(group_concat(s.Code SEPARATOR ", "), "") as `scopes`, ifnull(u.User_Name, n.Name_Full) as `issuedTo`, l.Timestamp as `LastUsed` from oauth_clients c
+select c.*, ifnull(group_concat(s.Code SEPARATOR ","), "") as `scopes`, ifnull(u.User_Name, n.Name_Full) as `issuedTo`, l.Timestamp as `LastUsed` from oauth_clients c
 left join oauth_client_scopes cs on c.client_id = cs.oauth_client
 left join gen_lookups s on cs.oauth_scope = s.Code and s.Table_Name = "Oauth_Scopes"
 left join name n on c.idName = n.idName

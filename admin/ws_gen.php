@@ -276,26 +276,17 @@ try {
         case "updateOauthClient":
             
             if(SecurityComponent::is_TheAdmin()){
-                $clietnId = false;
-                if (isset($_POST['client_id'])) {
-                    $clientId = filter_var($_POST['client_id'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                }
-                $name = "";
-                if (isset($_POST['client_name'])) {
-                    $name = filter_var($_POST['client_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                }
-                $scopes = [];
-                if (isset($_POST['client_scopes'])) {
-                    $scopes = filter_input(INPUT_POST, 'client_scopes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
-                }
+                $args = [
+                    'client_id'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                    'client_name'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                    'client_scopes'=>['filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_FORCE_ARRAY],
+                    'client_revoked'=>FILTER_VALIDATE_BOOL
+                ];
 
-                $revoked = null;
-                if (isset($_POST['client_revoked'])) {
-                    $revoked = boolval(filter_input(INPUT_POST, 'client_revoked', FILTER_VALIDATE_BOOL));
-                }
+                $input = filter_input_array(INPUT_POST, $args);
 
-                $client = new Client($dbh, $clientId);
-                $events = $client->updateClient($name, $revoked);
+                $client = new Client($dbh, $input["client_id"]);
+                $events = $client->updateClient($input["client_name"], $input['client_scopes'],  $input['client_revoked']);
             }else{
                 throw new RuntimeException("You must be the admin to update a client");
             }
@@ -305,7 +296,7 @@ try {
         case "deleteOauthClient":
             
             if(SecurityComponent::is_TheAdmin()){
-                $clietnId = false;
+                $clientId = false;
                 if (isset($_POST['client_id'])) {
                     $clientId = filter_var($_POST['client_id'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
@@ -586,10 +577,10 @@ try {
     $events = array("error" => "<strong>Error</strong> " . $ex->getMessage());
 } catch (PDOException $ex) {
 
-    $events = array("error" => "Database Error" . $ex->getMessage());
+    $events = array("error" => "Database Error " . $ex->getMessage());
 } catch (RuntimeException $ex) {
 
-    $events = array("error" => "HouseKeeper Error" . $ex->getMessage());
+    $events = array("error" => "HouseKeeper Error " . $ex->getMessage());
 }
 
 
