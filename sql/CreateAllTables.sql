@@ -44,6 +44,23 @@ CREATE TABLE if not exists `activity` (
 
 
 -- -----------------------------------------------------
+-- Table `external_api_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `external_api_log` (
+  `idLog` int(11) NOT NULL AUTO_INCREMENT,
+  `Log_Type` varchar(45) NOT NULL DEFAULT '',
+  `Sub_Type` varchar(45) NOT NULL DEFAULT '',
+  `requestMethod` varchar(10) NOT NULL DEFAULT '',
+  `endpoint` varchar(512) NOT NULL,
+  `responseCode` varchar(3) NOT NULL DEFAULT '',
+  `request` LONGTEXT NOT NULL DEFAULT '',
+  `response` LONGTEXT NOT NULL DEFAULT '',
+  `username` varchar(255) DEFAULT '',
+  `Timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idLog`)
+) ENGINE=InnoDB AUTO_INCREMENT=1;
+
+-- -----------------------------------------------------
 -- Table `attribute`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `attribute` (

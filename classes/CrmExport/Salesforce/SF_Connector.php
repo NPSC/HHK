@@ -1,12 +1,16 @@
 <?php
 namespace HHK\CrmExport\Salesforce;
 
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
 use HHK\Exception\{RuntimeException, UploadException};
 use GuzzleHttp\Exception\BadResponseException;
+use HHK\sec\Session;
+use HHK\TableLog\ExternalAPILog;
+use HHK\TableLog\HouseLog;
 
 
 /**
@@ -18,19 +22,22 @@ class SF_Connector {
 
     /**
      * Summary of oAuth
-     * @var SalesForceOauth
+     * @var SalesForceOauth|null
      */
-    protected $oAuth;
+    protected SalesForceOAuth|null $oAuth;
 
+    protected \PDO $dbh;
     /**
      * Summary of credentials
      * @var Credentials
      */
     protected $credentials;
 
-    public function __construct(Credentials $credentials) {
+    public function __construct(\PDO $dbh, Credentials $credentials) {
 
+        $this->dbh = $dbh;
         $this->credentials = $credentials;
+        $this->oAuth = NULL;
     }
 
     /**
@@ -199,20 +206,27 @@ class SF_Connector {
     }
 
     /**
-     * Summary of checkErrors
+     * Log and handle Salesforce Response errrors
      * @param BadResponseException $exception
      * @throws RuntimeException
-     * @return never
      */
     protected function checkErrors(BadResponseException $exception) {
 
+        $uS = Session::getInstance();
         $errorResponse = $exception->getResponse();
+        $request = $exception->getRequest();
         $errorJson = json_decode($errorResponse->getBody());
+
+        try{
+            ExternalAPILog::log($this->dbh, "SalesForce", "error", $request, $errorResponse, $uS->username);
+        }catch(Exception $e){
+            //do nothing
+        }
 
         if(isset($errorJson->error_description)){
             throw new RuntimeException("Unable to postURL via OAuth: " . $errorJson->error_description);
         }elseif(is_countable($errorJson)){
-            throw new RuntimeException($this->collectErrors($errorJson) . 'Requested URL: ' . $exception->getRequest()->getUri());
+            throw new RuntimeException($this->collectErrors($errorJson));
         }else{
             throw new RuntimeException('to PostURL via OAuth: ' . $errorResponse->getBody());
         }

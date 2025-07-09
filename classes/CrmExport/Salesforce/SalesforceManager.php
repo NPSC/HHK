@@ -88,7 +88,7 @@ class SalesforceManager extends AbstractExportManager {
         $credentials->setUsername($this->userId);
         $credentials->setPassword(decryptMessage($this->getPassword()));
 
-        $this->webService = new SF_Connector($credentials);
+        $this->webService = new SF_Connector($dbh, $credentials);
     }
 
     /**
@@ -545,7 +545,7 @@ class SalesforceManager extends AbstractExportManager {
             if ($idPsg > 0 && $idPsg != $r['idPsg']) {
 
                 // Do we have enough graphs
-                if ($graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) - 100 >= self::MAX_NODES) {
+                if ($graphCounter >= $this->getMaxPSGsPerBatch() ||$graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) >= self::MAX_NODES - 100) {
 
                     $this->transferBatch($dbh, $batchRows, $linkRelatives);
                     $batchRows = [];
@@ -628,7 +628,8 @@ class SalesforceManager extends AbstractExportManager {
 
             // Show request trace?
             if ($this->trace) {
-                $this->traceData .= "<h4>Request</h4><pre>" . json_encode($body, JSON_PRETTY_PRINT) . "</pre>";
+                $sentTime = new \DateTime();
+                $this->traceData .= "<h4>Request</h4><p>Sent at: " . $sentTime->format(DATE_W3C) . "</p><pre>" . json_encode($body, JSON_PRETTY_PRINT) . "</pre>";
             }
 
             // Transfer this package to SF API
@@ -637,7 +638,8 @@ class SalesforceManager extends AbstractExportManager {
 
                 // Trace response
                 if ($this->trace) {
-                    $this->traceData .= "<h4>Response</h4><pre>" .\json_encode($graphsResult, JSON_PRETTY_PRINT) . "</pre>";
+                    $receiveTime = new \DateTime();
+                    $this->traceData .= "<h4>Response</h4><p>Response Received at: " . $receiveTime->format(DATE_W3C) . "</p><pre>" .json_encode($graphsResult, JSON_PRETTY_PRINT) . "</pre>";
                 }
 
                 $this->processGraphsResult($dbh, $graphsResult, $rows);
@@ -646,7 +648,7 @@ class SalesforceManager extends AbstractExportManager {
                 $this->errorResult[] = $ex->getMessage();
 
                 if ($this->trace) {
-                    $this->traceData .= "<h4>Errors</h4><pre>" .\json_encode($this->errorResult, JSON_PRETTY_PRINT) . "</pre>";
+                    $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($this->errorResult, JSON_PRETTY_PRINT) . "</pre>";
                 }
             }
         }
@@ -1184,6 +1186,10 @@ class SalesforceManager extends AbstractExportManager {
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getApiVersion(), array('name' => '_txtapiVersion', 'size' => '10')))
             );
 
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Maximum PSGs per batch', array())
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getMaxPSGsPerBatch(), array('name' => '_txtmaxPSGsPerBatch', 'size' => '10')) . "Salesforce enforced limit: " . self::MAX_PAYLOAD_GRAPHS)
+            );
         return $tbl->generateMarkup();
 
     }
@@ -1250,6 +1256,7 @@ class SalesforceManager extends AbstractExportManager {
             '_txtclientId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtapiVersion' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            '_txtmaxPSGsPerBatch' => FILTER_SANITIZE_NUMBER_INT
 
         ];
 
@@ -1278,7 +1285,7 @@ class SalesforceManager extends AbstractExportManager {
             $pw = $post['_txtclientsecret'];
 
             if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                $crmRs->clientSecret->setnewVal(encryptMessage($pw));
+                $crmRs->clientSecret->setNewVal(encryptMessage($pw));
             }
 
         }
@@ -1301,6 +1308,13 @@ class SalesforceManager extends AbstractExportManager {
         // API Version
         if (isset($post['_txtapiVersion'])) {
             $crmRs->apiVersion->setNewVal($post['_txtapiVersion']);
+        }
+
+        if(isset($post['_txtmaxPSGsPerBatch'])) {
+            $maxPSGs = intval($post['_txtmaxPSGsPerBatch']);
+            $crmRs->retryCount->setNewVal($maxPSGs > 0 && $maxPSGs < self::MAX_PAYLOAD_GRAPHS ? $maxPSGs:self::MAX_PAYLOAD_GRAPHS);
+        }else{
+            $crmRs->retryCount->setNewVal(self::MAX_PAYLOAD_GRAPHS);
         }
 
         $crmRs->Updated_By->setNewVal($username);
