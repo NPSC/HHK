@@ -1188,7 +1188,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $tbl->addBodyTr(
             HTMLTable::makeTh('Maximum PSGs per batch', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getMaxPSGsPerBatch(), array('name' => '_txtmaxPSGsPerBatch', 'size' => '10')) . "Salesforce enforced limit: " . self::MAX_PAYLOAD_GRAPHS)
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getMaxPSGsPerBatch(), array('name' => '_txtmaxPSGsPerBatch', 'size' => '10')) . "<span class='ml-2'>Salesforce enforced limit: " . self::MAX_PAYLOAD_GRAPHS . "</span>")
             );
         return $tbl->generateMarkup();
 
