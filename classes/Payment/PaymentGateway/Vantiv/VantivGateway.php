@@ -10,7 +10,7 @@ use HHK\Payment\PaymentGateway\Vantiv\Helper\{MpVersion, AVSResult, CVVResult};
 use HHK\Payment\PaymentGateway\Vantiv\Request\{CreditReturnTokenRequest, CreditReversalTokenRequest, CreditSaleTokenRequest, CreditVoidReturnTokenRequest, CreditVoidSaleTokenRequest, InitCkOutRequest};
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
-use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult};
+use HHK\Payment\PaymentResult\{CofResult, PaymentResult, RefundResult};
 use HHK\SysConst\{MpFrequencyValues, MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
@@ -284,6 +284,16 @@ class VantivGateway extends AbstractPaymentGateway {
     }
 
     // Returns a Payment
+    /**
+     * Summary of _returnPayment
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
+     * @param mixed $returnAmt
+     * @param mixed $bid
+     * @return array{bid: mixed, warning: mixed|array{bid: mixed, warning: string}|array{bid: mixed}|string[]}
+     */
     protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
@@ -343,6 +353,17 @@ class VantivGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
+    /**
+     * Summary of returnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $rtnToken
+     * @param mixed $payNotes
+     * @param mixed $resvId
+     * @param mixed $payDate
+     * @throws \HHK\Exception\PaymentException
+     * @return RefundResult
+     */
     public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes, $resvId = 0, $payDate = '') {
 
         $uS = Session::getInstance();
@@ -372,7 +393,7 @@ class VantivGateway extends AbstractPaymentGateway {
             $tokenResp->setPaymentNotes($payNotes);
 
             // Analyze the result
-            $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $tokenRS->idGuest_token->getStoredVal());
+            $rtnResult = new RefundResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $tokenRS->idGuest_token->getStoredVal());
 
             switch ($tokenResp->getStatus()) {
 

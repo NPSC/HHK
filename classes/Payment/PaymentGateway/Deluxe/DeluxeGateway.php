@@ -32,6 +32,7 @@ use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\PaymentResult\CofResult;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentResult\ReturnResult;
+use HHK\Payment\PaymentResult\RefundResult;
 use HHK\Payment\Receipt;
 use HHK\Payment\Transaction;
 use HHK\sec\SecurityComponent;
@@ -564,6 +565,16 @@ class DeluxeGateway extends AbstractPaymentGateway
         return $this->_voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
     }
 
+    /**
+     * Summary of _returnPayment
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
+     * @param mixed $returnAmt
+     * @param mixed $bid
+     * @return array{bid: mixed|string[]}
+     */
     protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
@@ -622,7 +633,7 @@ where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order 
 
         if (count($rows) == 0) {
 
-            $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
+            $payResult = new RefundResult($invoice->getIdInvoice(), 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
             $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
             return $payResult;
@@ -685,7 +696,7 @@ order by pa.Timestamp desc");
             $csResp = $this->processReturnAmount($dbh, $payRS, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
             //$csResp = $this->processStandaloneReturn($dbh, $tokenRS, $invoice, $amount, $uS->username, $paymentNotes);
 
-            $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult = new RefundResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
 
             switch ($csResp->getStatus()) {
 
@@ -795,7 +806,7 @@ order by pa.Timestamp desc");
         }
 
         $returnGatewayResponse = $returnRequest->submit($paymentTransId, $tokenRS, $invoice->getInvoiceNumber(), $returnAmt, MpTranType::ReturnAmt);
-        
+
         // Make a return response...
         $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
         $sr->setResult($returnGatewayResponse->getStatus());
@@ -1338,13 +1349,13 @@ order by pa.Timestamp desc");
             }
 
             self::hideToken($request);
-            
+
             self::hideToken($response);
-            
+
         }catch(\Exception $e){
 
         }
-        
+
         parent::logGwTx($dbh, $status, json_encode($request), json_encode($response), $transType);
     }
 
