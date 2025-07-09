@@ -66,6 +66,12 @@ class ImReturnResponse extends AbstractCreditResponse {
         return $this->response->getErrorMessage();
     }
 
+    /**
+     * Summary of receiptMarkup
+     * @param \PDO $dbh
+     * @param mixed $tbl
+     * @return void
+     */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         if ($this->isPartialPayment()) {

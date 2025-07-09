@@ -4,7 +4,7 @@ namespace HHK\Payment\PaymentGateway\Instamed;
 
 use HHK\Payment\{CreditToken, Transaction};
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
-use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult};
+use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult, RefundResult};
 use HHK\Payment\Receipt;
 use HHK\Payment\GatewayResponse\{GatewayResponseInterface, StandInGwResponse};
 use HHK\Payment\Invoice\Invoice;
@@ -217,9 +217,9 @@ class InstamedGateway extends AbstractPaymentGateway {
             try {
                 //put card on file first
                 $fwrder = $this->initCardOnFile($dbh, "", $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getManualKeyEntry(), $pmp->getCardHolderName(), $postbackUrl);
-                
+
                 //save info to process token payment in next step
-                $uS->imHostedPaymentInfo = ["invoice"=>$invoice, "paymentManagerPayment"=>$pmp, "postbackUrl"=>$postbackUrl]; 
+                $uS->imHostedPaymentInfo = ["invoice"=>$invoice, "paymentManagerPayment"=>$pmp, "postbackUrl"=>$postbackUrl];
 
                 $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $payResult->setForwardHostedPayment($fwrder);
@@ -511,7 +511,7 @@ class InstamedGateway extends AbstractPaymentGateway {
      * @param mixed $paymentNotes
      * @param mixed $resvId
      * @param mixed $payDate
-     * @return ReturnResult
+     * @return RefundResult
      */
     Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0, $payDate = '') {
 
@@ -533,16 +533,16 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
         if (count($rows) == 0) {
 
-            $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
+            $payResult = new RefundResult($invoice->getIdInvoice(), 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->setDisplayMessage("** We did not find an appropriate payment for this refund amount: $amount **");
+            $payResult->setDisplayMessage("** We did not find any appropriate payments for this refund amount: $amount **");
             return $payResult;
         }
 
 
         $csResp = $this->processReturnPayment($dbh, NULL, $rows[0]['AcqRefData'], $invoice, $amount, $uS->username, $paymentNotes);
 
-        $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+        $payResult = new RefundResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
 
         switch ($csResp->getStatus()) {
 
@@ -1163,18 +1163,18 @@ where r.idRegistration =" . $idReg);
             HTMLContainer::generateMarkup("span", "Type")
             , ["class"=>"hhk-flex"]);
 
-            
+
         $payTbl->addBodyTr(
                 HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
                 .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
             ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
-        
+
             $payTbl->addBodyTr(
                 HTMLTable::makeTh("Cardholder Name", array('class'=>'tdlabel hhkvrKeyNumber'.$index))
         		.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index)), array('colspan'=>'2', 'style'=>'min-width:140px'))
         		, ['id'=>'trvdCHName'.$index]);
 
-        
+
 
     }
 

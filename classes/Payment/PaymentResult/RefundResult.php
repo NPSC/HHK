@@ -8,7 +8,7 @@ use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\sec\Session;
 
 /**
- * ReturnResult.php
+ * RefundResult.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
@@ -16,7 +16,8 @@ use HHK\sec\Session;
  * @link      https://github.com/NPSC/HHK
  */
 
-class ReturnResult extends PaymentResult {
+class RefundResult extends PaymentResult
+{
 
     /**
      * Summary of feePaymentAccepted
@@ -26,7 +27,8 @@ class ReturnResult extends PaymentResult {
      * @param \HHK\Payment\Invoice\Invoice $invoice
      * @return void
      */
-    public function feePaymentAccepted(\PDO $dbh, Session $uS, AbstractPaymentResponse $rtnResp, Invoice $invoice) {
+    public function feePaymentAccepted(\PDO $dbh, Session $uS, AbstractPaymentResponse $rtnResp, Invoice $invoice)
+    {
 
         // set status
         $this->status = PaymentResult::ACCEPTED;
@@ -38,7 +40,7 @@ class ReturnResult extends PaymentResult {
 
 
         // Make out receipt
-        $this->receiptMarkup = Receipt::createReturnMarkup($dbh, $rtnResp, $uS->siteName, $uS->sId);
+        $this->receiptMarkup = Receipt::createRefundAmtMarkup($dbh, $rtnResp, $uS->siteName, $uS->sId);
 
         // Email receipt
         try {
@@ -53,7 +55,8 @@ class ReturnResult extends PaymentResult {
      * Summary of getReplyMessage
      * @return string
      */
-    public function getReplyMessage() {
+    public function getReplyMessage()
+    {
         return $this->replyMessage . $this->displayMessage;
     }
 
