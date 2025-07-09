@@ -475,7 +475,7 @@ class InstamedGateway extends AbstractPaymentGateway {
 
         $csResp = $this->processReturnPayment($dbh, $payRs, $pAuthRs->AcqRefData->getStoredVal(), $invoice, $returnAmt, $uS->username, '');
 
-        $dataArray = array('bid' => $bid);
+        $dataArray = ['bid' => $bid];
 
         switch ($csResp->getStatus()) {
 
@@ -503,6 +503,16 @@ class InstamedGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
+    /**
+     * Summary of returnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $rtnToken
+     * @param mixed $paymentNotes
+     * @param mixed $resvId
+     * @param mixed $payDate
+     * @return ReturnResult
+     */
     Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0, $payDate = '') {
 
         $uS = Session::getInstance();
@@ -525,7 +535,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
             $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
+            $payResult->setDisplayMessage("** We did not find an appropriate payment for this refund amount: $amount **");
             return $payResult;
         }
 
@@ -542,7 +552,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
                 $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                 $payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
-                $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
+                $payResult->setDisplayMessage('Amount Refunded by Credit Card.  ');
 
                 break;
 
@@ -568,14 +578,15 @@ group by pa.Approved_Amount having `Total` >= $amount;");
     }
 
     /**
-     *
+     * Summary of processReturnPayment
      * @param \PDO $dbh
-     * @param PaymentRS|null $payRs
-     * @param string $paymentTransId
-     * @param Invoice $invoice
-     * @param float $returnAmt
-     * @param string $userName
-     * @return object
+     * @param mixed $payRs
+     * @param mixed $paymentTransId
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $returnAmt
+     * @param mixed $userName
+     * @param mixed $paymentNotes
+     * @return \HHK\Payment\PaymentResponse\AbstractCreditResponse
      */
     protected function processReturnPayment(\PDO $dbh, $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
 

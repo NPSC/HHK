@@ -291,6 +291,21 @@ class PaymentReport {
         $writer->writeSheetRow("Sheet1", $row);
     }
 
+    /**
+     * Summary of doMarkupRow
+     * @param mixed $fltrdFields
+     * @param array $r
+     * @param array $p
+     * @param bool $isLocal
+     * @param mixed $hospital
+     * @param mixed $total
+     * @param HTMLTable $tbl
+     * @param mixed $writer
+     * @param mixed $hdr
+     * @param mixed $reportRows
+     * @param mixed $subsidyId
+     * @return void
+     */
     public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
 
         $uS = Session::getInstance();
@@ -312,7 +327,7 @@ class PaymentReport {
         $timeDT = new \DateTime($p['Payment_Timestamp'], new \DateTimeZone($uS->tz));
 
         $payType = $p['Payment_Method_Title'];
-        $statusAttr = array();
+        $statusAttr = [];
 
         if ($p['idPayment_Method'] == PaymentMethod::Charge) {
 
@@ -394,7 +409,7 @@ class PaymentReport {
 
         } else {
 
-            $payorLast = HTMLContainer::generateMarkup('a', $r['i']['Last'], array('href'=>'GuestEdit.php?id=' . $r['i']['Sold_To_Id'], 'title'=>'Click to go to the Guest Edit page.'));
+            $payorLast = HTMLContainer::generateMarkup('a', $r['i']['Last'], ['href' => 'GuestEdit.php?id=' . $r['i']['Sold_To_Id'], 'title' => 'Click to go to the Guest Edit page.']);
             $payorFirst = $r['i']['First'];
         }
 
@@ -403,7 +418,7 @@ class PaymentReport {
 
         if ($invNumber != '') {
 
-            $iAttr = array('href'=>'ShowInvoice.php?invnum=' . $r['i']['Invoice_Number'], 'style'=>'float:left;', 'target'=>'_blank');
+            $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['i']['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank'];
 
             if ($r['i']['Invoice_Deleted'] > 0) {
                 $iAttr['style'] .= 'color:red;';
@@ -415,25 +430,25 @@ class PaymentReport {
             }
 
             $invNumber = HTMLContainer::generateMarkup('a', $invNumber, $iAttr)
-                .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$p['idPayment'], 'data-stat'=>'view', 'data-iid'=>$r['i']['idInvoice'], 'style'=>'cursor:pointer;', 'title'=>'View Items'));
+                .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $p['idPayment'], 'data-stat' => 'view', 'data-iid' => $r['i']['idInvoice'], 'style' => 'cursor:pointer;', 'title' => 'View Items']);
         }
 
         $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array('style'=>'white-space:nowrap'));
         $statusMkup = HTMLContainer::generateMarkup('span', $payStatus, $statusAttr);
 
-        $g = array(
+        $g = [
             'idHospital' => $hospital,
             'Title' => $r['i']['Room'],
-            'Patient_Last'=>$r['i']['Patient_Last'],
-            'Patient_First'=>$r['i']['Patient_First'],
+            'Patient_Last' => $r['i']['Patient_Last'],
+            'Patient_First' => $r['i']['Patient_First'],
             'Pay_Type' => $payType,
             'Detail' => $payDetail,
-            'Payment_External_Id'=>$p['Payment_External_Id'],
+            'Payment_External_Id' => $p['Payment_External_Id'],
             'By' => $p['Payment_Created_By'],
-            'Invoice_Notes'=>$r['i']['Invoice_Description'],
-            'Payment_Notes'=>$p['Payment_Note'],
-        	'Merchant'=>$payGW
-        );
+            'Invoice_Notes' => $r['i']['Invoice_Description'],
+            'Payment_Notes' => $p['Payment_Note'],
+            'Merchant' => $payGW
+        ];
 
 
         if ($isLocal) {
@@ -469,10 +484,10 @@ class PaymentReport {
             $g['Amount'] = $amt;
             $g['Updated'] = $lastUpdatedStr;
 
-            $flds = array(
+            $flds = [
                 $r['i']['Sold_To_Id'],
                 ($r['i']['Bill_Agent'] == 'a' ? $r['i']['Company'] : '')
-            );
+            ];
 
             foreach ($fltrdFields as $f) {
                 $flds[] = $g[$f[1]];
@@ -486,4 +501,3 @@ class PaymentReport {
     }
 
 }
-?>
