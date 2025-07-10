@@ -195,7 +195,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));
 
-    $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
+    $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
 
     if (isset($_POST['txtInvoiceNumber']) && $_POST['txtInvoiceNumber'] != '') {
 
@@ -204,7 +204,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         }
 
         $where = "and lp.Invoice_Number = '$invoiceNumber' ";
-        $headerTable->addBodyTr(HTMLTable::makeTd('Invoice Number: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($invoiceNumber));
+        $headerTable->addBodyTr(HTMLTable::makeTd('Invoice Number: ', ['class' => 'tdlabel']) . HTMLTable::makeTd($invoiceNumber));
 
 
     } else {
@@ -217,7 +217,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 if ($whHosp == '') {
                     $whHosp .= $a;
                 } else {
-                    $whHosp .= "," . $a;
+                    $whHosp .= ",$a";
                 }
             }
         }
@@ -228,7 +228,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 if ($whAssoc == '') {
                     $whAssoc .= $a;
                 } else {
-                    $whAssoc .= "," . $a;
+                    $whAssoc .= ",$a";
                 }
             }
         }
@@ -240,7 +240,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 				if ($whBillAgent == '') {
 					$whBillAgent .= $a;
 				} else {
-					$whBillAgent .= ",". $a;
+					$whBillAgent .= ",$a";
 				}
 			}
 		}
@@ -263,15 +263,15 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 		$hospList = $filter->getHospitals();
 
         if (count($hospList) > 0) {
-            $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+            $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's: ', ['class' => 'tdlabel']) . HTMLTable::makeTd($hdrHosps));
         }
 
         if (count($filter->getAList()) > 1) {
-            $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class' => 'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
+            $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', ['class' => 'tdlabel']) . HTMLTable::makeTd($hdrAssocs));
         }
 
 		if (count($filter->getBillingAgents()) > 1) {
-			$headerTable->addBodyTr(HTMLTable::makeTd('Billing Agents: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrBillingAgents));
+			$headerTable->addBodyTr(HTMLTable::makeTd('Billing Agents: ', ['class' => 'tdlabel']) . HTMLTable::makeTd($hdrBillingAgents));
 		}
 
 
@@ -284,9 +284,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 			if ($s != '') {
 				// Set up query where part.
 				if ($whStatus == '') {
-					$whStatus = "'" . $s . "'";
+					$whStatus = "'$s'";
 				} else {
-					$whStatus .= ",'".$s . "'";
+					$whStatus .= ",'$s'";
 				}
 
                 if ($s == PaymentStatusCode::Retrn) {

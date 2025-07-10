@@ -32,8 +32,8 @@ class PaymentReport {
 
         $txtStart = '';
         $txtEnd = '';
-        $statusSelections = array();
-        $payTypeSelections = array();
+        $statusSelections = [];
+        $payTypeSelections = [];
 
         if (isset($post['stDate'])) {
             $txtStart = filter_var($post['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -91,16 +91,16 @@ class PaymentReport {
             if ($s != '') {
                 // Set up query where part.
                 if ($whStatus == '') {
-                    $whStatus = "'" . $s . "'";
+                    $whStatus = "'$s'";
                 } else {
-                    $whStatus .= ",'".$s . "'";
+                    $whStatus .= ",'$s'";
                 }
 
             }
         }
 
         if ($whStatus != '') {
-            $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+            $whStatus = " and lp.Payment_Status in ($whStatus) ";
         }
 
 
@@ -118,7 +118,7 @@ class PaymentReport {
         }
 
         if ($whType != '') {
-            $whType = " and lp.idPayment_Method in (" . $whType . ") ";
+            $whType = " and lp.idPayment_Method in ($whType) ";
         }
 
         if ($showDelInv === FALSE) {
@@ -154,25 +154,25 @@ class PaymentReport {
         $writer->setTitle('Payment Report');
 
         // build header
-        $hdr = array(
-            "Id"=>"string",
-            "Third Party"=>"string",
-            "Last"=>"string",
-            "First"=>"string",
-            "Date"=>"MM/DD/YYYY",
-            "Invoice Number"=>"string",
-            "Room"=>"string",
-            "Pay Type"=>"string",
-            "Pay Detail"=>"string",
-            "Status"=>"string",
-            "Original Amount"=>"dollar",
-            "Amount"=>"dollar",
-        	"Updated"=>"MM/DD/YYYY",
-            "Invoice_Notes"=>"string",
-            "Payment_Notes"=>"string"
-        );
+        $hdr = [
+            "Id" => "string",
+            "Third Party" => "string",
+            "Last" => "string",
+            "First" => "string",
+            "Date" => "MM/DD/YYYY",
+            "Invoice Number" => "string",
+            "Room" => "string",
+            "Pay Type" => "string",
+            "Pay Detail" => "string",
+            "Status" => "string",
+            "Original Amount" => "dollar",
+            "Amount" => "dollar",
+            "Updated" => "MM/DD/YYYY",
+            "Invoice_Notes" => "string",
+            "Payment_Notes" => "string",
+        ];
 
-        $colWidths = array('10', '10', '20', '20', '15', '10', '10', '15', '20', '15', '15', '15', 15, '20');
+        $colWidths = ['10', '10', '20', '20', '15', '10', '10', '15', '20', '15', '15', '15', 15, '20'];
 
         $hdrStyle = $writer->getHdrStyle($colWidths);
 
@@ -244,6 +244,7 @@ class PaymentReport {
 
                 if ($p['Is_Refund'] == 1) {
                     $origAmt = 0 - $origAmt;
+                    $payStatus = 'Refund';
                 }
 
                 $amt = $origAmt;
@@ -269,7 +270,7 @@ class PaymentReport {
             $payType = $r['i']['Invoice_Description'];
         }
 
-        $flds = array(
+        $flds = [
             $r['i']['Sold_To_Id'],
             ($r['i']['Bill_Agent'] == 'a' || $r['i']['Sold_To_Id'] == $returnId ? $r['i']['Company'] : ''),
             $r['i']['Last'],
@@ -282,9 +283,9 @@ class PaymentReport {
             $payStatus,
             $origAmt,
             $amt,
-        		$p['Last_Updated'],
-            $p['Payment_Note']
-        );
+            $p['Last_Updated'],
+            $p['Payment_Note'],
+        ];
 
         $row = $writer->convertStrings($hdr, $flds);
 

@@ -308,7 +308,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
     $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
     $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($statusList, ''),
-        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple']);
+        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '7', 'multiple' => 'multiple']);
 
     $payTypes = [];
 
@@ -320,7 +320,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
 
     $payTypeSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($payTypes, ''),
-        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple']);
+        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '5', 'multiple' => 'multiple']);
 
     // Count unpaid invoices
 

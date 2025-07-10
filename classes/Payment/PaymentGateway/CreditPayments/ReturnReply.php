@@ -49,8 +49,10 @@ class ReturnReply extends AbstractCreditPayments {
         } else if ($payRs->idPayment->getStoredVal() > 0) {
 
             // Update existing Payment record
-            if($pr->getAmount() == $payRs->Amount->getStoredVal()){
+            if(round($pr->getAmount(), 2) == round($payRs->Amount->getStoredVal(), 2)){
                 $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
+            } else {
+                throw new PaymentException("The returned amount (" . round($pr->getAmount(), 2) . ") does not match the original payment amount - " . round($payRs->Amount->getStoredVal(), 2));
             }
             $payRs->Updated_By->setNewVal($username);
             $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
