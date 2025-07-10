@@ -789,7 +789,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display:none; clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog mb-3" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
                    <table style="clear:left;float: left;">
                         <tr>
@@ -832,14 +832,16 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
             <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div id="localrecords">
-                    <div style="margin-bottom:.8em; float:left;">
+                    <div style="margin-bottom:.8em;" class="hhk-flex">
                         <?php echo $settingstable . $searchTabel; ?>
                     </div>
-                    <div id="divTable" style="clear:left;">
+                    
+                    <div id="divTable">
                         <?php echo $dataTable; ?>
                     </div>
                 </div>
                 <div id="divMembers" style="margin-top:10px;"></div>
+                <div id="divError"></div>
             </div>
 
             <div id="divPrintButton" style="clear:both; display:none;margin-left:20px;font-size:0.9em; align-items: center;" class="hhk-flex py-3">

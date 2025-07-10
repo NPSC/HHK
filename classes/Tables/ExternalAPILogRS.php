@@ -31,7 +31,7 @@ class ExternalAPILogRS extends AbstractTableRS {
         $this->Sub_Type = new DB_Field("Sub_Type", "", new DbStrSanitizer(45), true, true);
         $this->requestMethod = new DB_Field("requestMethod", "", new DbStrSanitizer(10), true, true);
         $this->endpoint = new DB_Field("endpoint", "", new DbStrSanitizer(512), true, true);
-        $this->responseCode = new DB_Field("username", "", new DbStrSanitizer(3), true, true);
+        $this->responseCode = new DB_Field("responseCode", "", new DbStrSanitizer(3), true, true);
         $this->request = new DB_Field("request", "", new DbBlobSanitizer(), true, true);
         $this->response = new DB_Field("response", "", new DbBlobSanitizer(), true, true);
         $this->username = new DB_Field("username", "", new DbStrSanitizer(255), true, true);

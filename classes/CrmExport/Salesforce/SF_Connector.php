@@ -3,6 +3,8 @@ namespace HHK\CrmExport\Salesforce;
 
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Promise\Promise;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
 use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
@@ -138,18 +140,27 @@ class SF_Connector {
 
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
 
-            $response = $client->request('POST', $endpoint, [
-                RequestOptions::HEADERS => [
+            $headers = [
                     'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                     'Content-Type' => 'application/json',
-                ],
-                RequestOptions::JSON => $params
-            ]);
+            ];
+
+            $request = new Request('POST', $endpoint, $headers, json_encode($params));
+
+            $response = $client->send($request);
 
             $result = json_decode($response->getBody(), true);
 
         } catch (BadResponseException $exception) {
             $this->checkErrors($exception);
+        }
+
+        //log transaction
+        try{
+            $uS = Session::getInstance();
+            ExternalAPILog::log($this->dbh, "SalesForce", "", $request, $response, $uS->username);
+        }catch(Exception $e){
+            //do nothing
         }
 
         return $result;
@@ -173,17 +184,26 @@ class SF_Connector {
 
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
 
-            $response = $client->request('PATCH', $endpoint, [
-                RequestOptions::HEADERS => [
+            $headers = [
                     'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                     'Content-Type' => 'application/json',
-                ],
-                RequestOptions::JSON => $params
-            ]);
+            ];
+
+            $request = new Request('PATCH', $endpoint, $headers, json_encode($params));
+
+            $response = $client->send($request);
 
             $result = json_decode($response->getBody(), true);
         } catch (BadResponseException $exception) {
             $this->checkErrors($exception);
+        }
+
+        //log transaction
+        try{
+            $uS = Session::getInstance();
+            ExternalAPILog::log($this->dbh, "SalesForce", "", $request, $response, $uS->username);
+        }catch(Exception $e){
+            //do nothing
         }
 
         return $result;
@@ -228,7 +248,7 @@ class SF_Connector {
         }elseif(is_countable($errorJson)){
             throw new RuntimeException($this->collectErrors($errorJson));
         }else{
-            throw new RuntimeException('to PostURL via OAuth: ' . $errorResponse->getBody());
+            throw new RuntimeException('Unable to postURL to ' . $request->getUri() . ': Error ' . $errorResponse->getStatusCode() . ": " . $errorResponse->getReasonPhrase());
         }
 
     }

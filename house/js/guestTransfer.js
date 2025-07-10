@@ -51,7 +51,8 @@ function upsert(transferIds, trace) {
         trace: trace,
         ids: transferIds
     };
-
+    
+    $('#divError').empty();
     $('#loadingIcon').show();
 
     var posting = $.post('ws_tran.php', parms);
@@ -70,17 +71,29 @@ function upsert(transferIds, trace) {
             return;
         }
 
-        if (data.error) {
+        if (data.error || data.errors) {
             if (data.gotopage) {
                 window.open(data.gotopage, '_self');
             }
 
-            flagAlertMessage(data.error, true);
-            $('#divMembers').append($('<p style="font-weight: bold; margin-top:15px;margin-left:50px;">' + data.error + '</p>'));
-            $('#TxButton').prop('disabled', false);
-            return;
+            let errorMsg = "";
+            if(data.error){
+                errorMsg += "<p>"+data.error+"</p>";
+            }
 
-        } else if (data.table) {
+            if(data.errors){
+                data.errors.forEach(element => {
+                    errorMsg += "<p>"+element+"</p>"
+                });
+            }
+
+            //flagAlertMessage(data.error, true);
+            $('#divError').html($('<div class="ui-state-highlight ui-corner-all m-3 p-2"><h4>Error</h4><div class="ml-2">' + errorMsg + '</div></div>'));
+            $('#TxButton').prop('disabled', false);
+
+        }
+        
+        if (data.table) {
             $('#TxButton').hide();
             $('#divMembers').html(data.table);
             $('#divMembers').prepend($('<p style="font-weight: bold;">Transfer Results</p>'));

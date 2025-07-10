@@ -24,8 +24,8 @@ class ExternalAPILog extends AbstractTableLog {
         $logRS->requestMethod->setNewVal($request->getMethod());
         $logRS->endpoint->setNewVal($request->getUri());
         $logRS->responseCode->setNewVal($response->getStatusCode());
-        $logRS->request->setNewVal($request->getBody());
-        $logRS->response->setNewVal($response->getBody());
+        $logRS->request->setNewVal($request->getBody()->__tostring());
+        $logRS->response->setNewVal($response->getBody()->__tostring());
         $logRS->username->setNewVal($username);
 
         return self::insertLog($dbh, $logRS);

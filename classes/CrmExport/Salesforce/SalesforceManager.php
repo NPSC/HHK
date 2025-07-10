@@ -7,6 +7,7 @@ use HHK\CrmExport\AbstractExportManager;
 use HHK\CrmExport\Salesforce\Subresponse\AbstractCompositeSubresponse;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\RelLinkType;
+use HHK\TableLog\ExternalAPILog;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
@@ -537,7 +538,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $idPsg = 0;
         $batchRows = [];
-        $graphCounter = 0;
+        $graphCounter = 1;
 
 
         foreach ($rows as $r) {
@@ -545,11 +546,11 @@ class SalesforceManager extends AbstractExportManager {
             if ($idPsg > 0 && $idPsg != $r['idPsg']) {
 
                 // Do we have enough graphs
-                if ($graphCounter >= $this->getMaxPSGsPerBatch() ||$graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) >= self::MAX_NODES - 100) {
+                if ($graphCounter >= $this->getMaxPSGsPerBatch() || $graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) >= self::MAX_NODES - 100) {
 
                     $this->transferBatch($dbh, $batchRows, $linkRelatives);
                     $batchRows = [];
-                    $graphCounter = 0;
+                    $graphCounter = 1;
                 }
 
                 $graphCounter++;
@@ -572,6 +573,10 @@ class SalesforceManager extends AbstractExportManager {
 
         if ($this->trace) {
             $result['trace'] = $this->traceData;
+        }
+        
+        if(count($this->errorResult) > 0){
+            $result["errors"] = $this->errorResult;
         }
 
         return $result;
@@ -648,7 +653,7 @@ class SalesforceManager extends AbstractExportManager {
                 $this->errorResult[] = $ex->getMessage();
 
                 if ($this->trace) {
-                    $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($this->errorResult, JSON_PRETTY_PRINT) . "</pre>";
+                    $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($ex->getMessage(), JSON_PRETTY_PRINT) . "</pre>";
                 }
             }
         }
