@@ -5,15 +5,15 @@ namespace HHK\SysConst;
  * CodeVersion.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 class CodeVersion {
-    const BUILD = '327';
-    const VERSION = '3.25';
-    const PATCH = '1';
-    const GIT_Id = 'dev';
-    const REL_DATE = '';
+    public const string BUILD = '327';
+    public const string VERSION = '3.25';
+    public const string PATCH = '1';
+    public const string GIT_Id = 'dev';
+    public const string REL_DATE = '';
 }

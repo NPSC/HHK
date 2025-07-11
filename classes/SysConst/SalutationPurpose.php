@@ -5,13 +5,12 @@ namespace HHK\SysConst;
  * SalutationPurpose.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 class SalutationPurpose {
-    const Envelope = 'e';
-    const Letter = "l";
+    public const string Envelope = 'e';
+    public const string Letter = "l";
 }
-?>

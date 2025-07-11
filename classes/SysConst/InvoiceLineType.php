@@ -5,18 +5,17 @@ namespace HHK\SysConst;
  * InvoiceLineType.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 class InvoiceLineType {
-    const Recurring = 1;
-    const Tax = 2;
-    const OneTime = 6;
-    const Invoice = 3;
-    const Hold = 4;
-    const Reimburse = 7;
-    const Waive = 5;
+    public const int Recurring = 1;
+    public const int Tax = 2;
+    public const int OneTime = 6;
+    public const int Invoice = 3;
+    public const int Hold = 4;
+    public const int Reimburse = 7;
+    public const int Waive = 5;
 }
-?>

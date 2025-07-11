@@ -11,13 +11,13 @@ namespace HHK\SysConst;
  */
 
 class VisitStatus {
-    public const Active = "a";
-    public const CheckedIn = "a";
-    public const CheckedOut = "co";
-    public const Pending = "p";
-    public const NewSpan = "n";
-    public const ChangeRate = "cp";
-    public const OnLeave = 'l';
-    public const Cancelled = 'c';
-    public const Reserved = 'r';
+    public const string Active = "a";
+    public const string CheckedIn = "a";
+    public const string CheckedOut = "co";
+    public const string Pending = "p";
+    public const string NewSpan = "n";
+    public const string ChangeRate = "cp";
+    public const string OnLeave = 'l';
+    public const string Cancelled = 'c';
+    public const string Reserved = 'r';
 }

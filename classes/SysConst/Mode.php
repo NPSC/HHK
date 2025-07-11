@@ -5,7 +5,7 @@ namespace HHK\SysConst;
  * Mode.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -13,8 +13,8 @@ namespace HHK\SysConst;
 // operating mode of site, live, demo, training and dev
 // in site.cfg file.
 class Mode {
-    const Live = "live";
-    const Demo = "demo";
-    const Training = "train";
-    const Dev = "dev";
+    public const string Live = "live";
+    public const string Demo = "demo";
+    public const string Training = "train";
+    public const string Dev = "dev";
 }

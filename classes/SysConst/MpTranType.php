@@ -5,21 +5,20 @@ namespace HHK\SysConst;
  * MpTranType.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 class MpTranType {
-    const Sale = 'Sale';
-    const PreAuth = 'PreAuth';
-    const ZeroAuth = 'ZeroAuth';
-    const ReturnAmt = 'ReturnAmount';
-    const ReturnSale = 'ReturnSale';
-    const Void = 'VoidSale';
-    const VoidReturn = 'VoidReturn';
-    const Reverse = 'ReverseSale';
-    const CardOnFile = 'COF';
-    const Adjust = 'CreditAdjust';
+    public const string Sale = 'Sale';
+    public const string PreAuth = 'PreAuth';
+    public const string ZeroAuth = 'ZeroAuth';
+    public const string ReturnAmt = 'ReturnAmount';
+    public const string ReturnSale = 'ReturnSale';
+    public const string Void = 'VoidSale';
+    public const string VoidReturn = 'VoidReturn';
+    public const string Reverse = 'ReverseSale';
+    public const string CardOnFile = 'COF';
+    public const string Adjust = 'CreditAdjust';
 }
-?>
