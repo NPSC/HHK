@@ -2,7 +2,7 @@
 namespace HHK\SysConst;
 
 /**
- * WebPageCode.php
+ * RoomAvailable.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
@@ -10,9 +10,8 @@ namespace HHK\SysConst;
  * @link      https://github.com/NPSC/HHK
  */
 
-class WebPageCode {
-    const Page = 'p';
-    const Component = 'c';
-    const Service = 's';
+class RoomAvailable {
+    const Unavailable = 'un';
+    const Available = 'a';
 }
 ?>

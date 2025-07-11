@@ -5,22 +5,22 @@ namespace HHK\SysConst;
  * CalendarStatusColors.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
- * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2024 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 class CalendarStatusColors {
-    public const string CheckedIn = 'ci';
-    public const string CheckingInFuture = 'cifut';
-    public const string CheckingInPast = 'cipast';
-    public const string CheckingInToday = 'citod';
-    public const string CheckingInTomorrow = 'citom';
-    public const string CheckedOut = 'co';
+    const CheckedIn = 'ci';
+    const CheckingInFuture = 'cifut';
+    const CheckingInPast = 'cipast';
+    const CheckingInToday = 'citod';
+    const CheckingInTomorrow = 'citom';
+    const CheckedOut = 'co';
     public const string CheckingOutToday = 'cotod';
-    public const string CheckingOutTomorrow = 'cotom';
-    public const string CheckedInPastExpectedDepart = 'copast';
-    public const string Waitlist = 'w';
-    public const string Unconfirmed = 'uc';
-    public const string ReservedSpan = 'rv';
+    const CheckingOutTomorrow = 'cotom';
+    const CheckedInPastExpectedDepart = 'copast';
+    const Waitlist = 'w';
+    const Unconfirmed = 'uc';
+    const ReservedSpan = 'rv';
 }

@@ -5,21 +5,22 @@ namespace HHK\SysConst;
  * ItemId.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 class ItemId {
-    public const int Lodging = 1;
-    public const int VisitFee = 2;
-    public const int KeyDeposit = 3;
-    public const int DepositRefund = 4;
-    public const int InvoiceDue = 5;
-    public const int Discount = 6;
-    public const int LodgingReversal = 7;
-    public const int LodgingDonate = 8;
-    public const int LodgingMOA = 10;
-    public const int AddnlCharge = 9;
-    public const int Waive = 11;
+    const Lodging = 1;
+    const VisitFee = 2;
+    const KeyDeposit = 3;
+    const DepositRefund = 4;
+    const InvoiceDue = 5;
+    const Discount = 6;
+    const LodgingReversal = 7;
+    const LodgingDonate = 8;
+    const LodgingMOA = 10;
+    const AddnlCharge = 9;
+    const Waive = 11;
 }
+?>
