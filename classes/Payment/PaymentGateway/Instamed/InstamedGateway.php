@@ -580,7 +580,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
     /**
      * Summary of processReturnPayment
      * @param \PDO $dbh
-     * @param mixed $payRs
+     * @param mixed $payRs  // Set to null for refunds (return amount)
      * @param mixed $paymentTransId
      * @param \HHK\Payment\Invoice\Invoice $invoice
      * @param mixed $returnAmt
@@ -619,15 +619,18 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $sr->setResult($curlResponse->getStatus());
 
         if ($sr->getStatus() == AbstractCreditPayments::STATUS_APPROVED) {
-        	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+
+            // This is a refund
+            if ($payRs === null) {
+                $sr->setPaymentStatusCode(PaymentStatusCode::Paid);
+            } else {
+                // This is a return payment
+        	    $sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+            }
+
         } else {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
         }
-//         if ($curlResponse->getResponseMessage() != self::RESPONSE_APPROVED) {
-//         	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
-//         } else {
-//         	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
-//         }
 
         // Record transaction
         try {
