@@ -539,7 +539,7 @@ class SalesforceManager extends AbstractExportManager {
         $idPsg = 0;
         $batchRows = [];
         $graphCounter = 1;
-
+        $batches = [];
 
         foreach ($rows as $r) {
 
@@ -548,7 +548,7 @@ class SalesforceManager extends AbstractExportManager {
                 // Do we have enough graphs
                 if ($graphCounter >= $this->getMaxPSGsPerBatch() || $graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) >= self::MAX_NODES - 100) {
 
-                    $this->transferBatch($dbh, $batchRows, $linkRelatives);
+                    $batches[] = ["batchBody" => $this->prepareBatch($dbh, $batchRows, $linkRelatives), "batchRows"=>$batchRows];
                     $batchRows = [];
                     $graphCounter = 1;
                 }
@@ -565,8 +565,10 @@ class SalesforceManager extends AbstractExportManager {
 
         // Anything left?
         if (count($batchRows) > 0) {
-            $this->transferBatch($dbh, $batchRows, $linkRelatives);
+            $batches[] = ["batchBody"=>$this->prepareBatch($dbh, $batchRows, $linkRelatives), "batchRows"=>$batchRows];
         }
+
+        $this->sendbatches($dbh, $batches);
 
         // Create an HTML table containing the results
         $result['table'] = CreateMarkupFromDB::generateHTML_Table($this->transferResult, 'tblrpt');
@@ -582,7 +584,7 @@ class SalesforceManager extends AbstractExportManager {
         return $result;
     }
 
-    protected function transferBatch(\PDO $dbh, array $rows, $linkRelatives = true) {
+    protected function prepareBatch(\PDO $dbh, array $rows, $linkRelatives = true) {
 
         $psgGuests = [];    // list of guests in PSG
         $psgGraphs = [];  // The collection of psg graphs
@@ -627,27 +629,54 @@ class SalesforceManager extends AbstractExportManager {
         // Anything to transfer?
         if (count($psgGraphs) > 0) {
 
-            $body = [
+            return [
                 "graphs" => $psgGraphs,
             ];
 
-            // Show request trace?
-            if ($this->trace) {
+            
+        }else{
+            return false;
+        }
+
+    }
+
+    protected function sendbatches(\PDO $dbh, array $batches){
+        $batchBodies = [];
+        foreach($batches as $batchId=>$batch){
+            $batchBodies[$batchId] = $batch["batchBody"];
+        }
+
+        // Show request trace?
+            /*if ($this->trace) {
                 $sentTime = new \DateTime();
                 $this->traceData .= "<h4>Request</h4><p>Sent at: " . $sentTime->format(DATE_W3C) . "</p><pre>" . json_encode($body, JSON_PRETTY_PRINT) . "</pre>";
-            }
+            }*/
 
             // Transfer this package to SF API
             try {
-                $graphsResult = $this->webService->postUrl($this->endPoint . "composite/graph", $body);
+                $batchResults = $this->webService->postUrlAsync($this->endPoint . "composite/graph", $batchBodies);
 
                 // Trace response
-                if ($this->trace) {
+                /*if ($this->trace) {
                     $receiveTime = new \DateTime();
                     $this->traceData .= "<h4>Response</h4><p>Response Received at: " . $receiveTime->format(DATE_W3C) . "</p><pre>" .json_encode($graphsResult, JSON_PRETTY_PRINT) . "</pre>";
-                }
+                }*/
 
-                $this->processGraphsResult($dbh, $graphsResult, $rows);
+                    foreach($batchResults['batchResults'] as $batchId=>$batchResult){
+                        if ($this->trace) {
+                            $sentTime = new \DateTime();
+                            $this->traceData .= "<h4>Request</h4><pre>" . json_encode($batchBodies[$batchId], JSON_PRETTY_PRINT) . "</pre>";
+                        }
+                        if(isset($batchResult['success'])){
+                            $this->processGraphsResult($dbh, $batchResult, $batches[$batchId]["batchRows"]);
+                        }else if (isset($batchResult["error"])){
+                            $this->errorResult[] = $batchResult["error"];
+                            if ($this->trace) {
+                                $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($batchResult['error'], JSON_PRETTY_PRINT) . "</pre>";
+                            }
+                        }
+                    }
+                //$this->processGraphsResult($dbh, $graphsResult, $rows);
 
             } catch (\RuntimeException $ex) {
                 $this->errorResult[] = $ex->getMessage();
@@ -656,8 +685,6 @@ class SalesforceManager extends AbstractExportManager {
                     $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($ex->getMessage(), JSON_PRETTY_PRINT) . "</pre>";
                 }
             }
-        }
-
     }
 
     /**

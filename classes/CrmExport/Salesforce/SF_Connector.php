@@ -3,7 +3,8 @@ namespace HHK\CrmExport\Salesforce;
 
 use Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\Promise\Promise;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
 use HHK\OAuth\SalesForceOAuth;
@@ -13,6 +14,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use HHK\sec\Session;
 use HHK\TableLog\ExternalAPILog;
 use HHK\TableLog\HouseLog;
+use Psr\Http\Message\ResponseInterface;
 
 
 /**
@@ -164,6 +166,72 @@ class SF_Connector {
         }
 
         return $result;
+    }
+
+    /**
+     * Send multiple async POST requests to endpoint using formParams as JSON in body
+     *
+     * @param string $endpoint
+     * @param array $jsonBodies An array of request bodies to be sent asyncronously
+     * @return array An array of batchRequests and batchResults
+     */
+    public function postUrlAsync($endpoint, array $jsonBodies, $isUpdate = FALSE) {
+
+       try{
+            /*if(!$this->oAuth instanceof SalesForceOAuth){
+                $this->login();
+            }*/
+
+            //$client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
+            $client = new Client(['base_uri' => "https://hhk.wireland.local/"]);
+
+            $headers = [
+                    //'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
+                    'Content-Type' => 'application/json',
+            ];
+
+            $batchRequests = [];
+            $batchResults = [];
+            $batchErrors = [];
+
+            foreach($jsonBodies as $batchId=>$params){
+                $batchRequests[$batchId] = new Request('POST', $endpoint, $headers, json_encode($params));
+            }
+
+            $pool = new Pool($client, $batchRequests, [
+                'concurrency' => 5,
+                'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){
+                    //log transaction
+                    try{
+                        $uS = Session::getInstance();
+                        ExternalAPILog::log($this->dbh, "SalesForce", "", $batchRequests[$batchId], $response, $uS->username);
+                    }catch(Exception $e){
+                        //do nothing
+                    }
+
+                    $batchResults[$batchId] = ['success'=>json_decode($response->getBody(), true)];
+                },
+                'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults) {
+                    try{
+                        $this->checkErrors($exception);
+                    }catch(Exception $e){
+                        $batchResults[$batchId] = ['error'=>$e->getMessage()];
+                    }
+                }
+            ]);
+
+            // Initiate the transfers and create a promise
+            $promise = $pool->promise();
+
+            // Force the pool of requests to complete.
+            $promise->wait();
+
+
+        } catch (Exception $exception) {
+            
+        }
+
+        return ['batchRequests'=>$batchRequests, 'batchResults'=>$batchResults];
     }
 
     /**
