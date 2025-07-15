@@ -178,15 +178,14 @@ class SF_Connector {
     public function postUrlAsync($endpoint, array $jsonBodies, $isUpdate = FALSE) {
 
        try{
-            /*if(!$this->oAuth instanceof SalesForceOAuth){
+            if(!$this->oAuth instanceof SalesForceOAuth){
                 $this->login();
-            }*/
+            }
 
-            //$client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-            $client = new Client(['base_uri' => "https://hhk.wireland.local/"]);
-
+            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
+            
             $headers = [
-                    //'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
+                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                     'Content-Type' => 'application/json',
             ];
 
@@ -200,7 +199,7 @@ class SF_Connector {
 
             $pool = new Pool($client, $batchRequests, [
                 'concurrency' => 5,
-                'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){
+                'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){ //if the response is success
                     //log transaction
                     try{
                         $uS = Session::getInstance();
@@ -211,7 +210,7 @@ class SF_Connector {
 
                     $batchResults[$batchId] = ['success'=>json_decode($response->getBody(), true)];
                 },
-                'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults) {
+                'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults) { //if the response is not success
                     try{
                         $this->checkErrors($exception);
                     }catch(Exception $e){
@@ -223,7 +222,7 @@ class SF_Connector {
             // Initiate the transfers and create a promise
             $promise = $pool->promise();
 
-            // Force the pool of requests to complete.
+            // Wait for the pool of requests to complete.
             $promise->wait();
 
 
