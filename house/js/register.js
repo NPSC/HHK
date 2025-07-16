@@ -667,7 +667,42 @@ function getDtBtns(title, stripHtml = true, className = ""){
                 }
             }
     	];
-    }
+}
+
+function updateFuture() {
+
+    $.post('ws_resv.php',
+        {
+            cmd: 'updtFuture'
+        },
+        function (data) {
+            if (data) {
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.location.assign(data.gotopage);
+                    }
+                    flagAlertMessage(data.error, 'error');
+
+                } else if (data.success) {
+                    flagAlertMessage(data.success, 'success');
+                }
+
+                if (data.records > 0) {
+                    calendar.refetchResources();
+                    calendar.refetchEvents();
+                    refreshdTables(data);
+                }
+            }
+        }
+    );
+}
 
 var hindx = 0,
     pmtMkup = $('#pmtMkup').val(),
@@ -713,31 +748,31 @@ $(document).ready(function () {
 
     // Current Guests
     let cgCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
-            {data: visitorLabel+' First', title: visitorLabel+' First'},
-            {data: visitorLabel+' Last', title: visitorLabel+' Last'},
-            {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-            {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
-            {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-            {data: 'Room', title: 'Room', className: 'hhk-justify-c'}];
+        { data: 'Action', title: 'Action', sortable: false, searchable: false, className: "noPrint" },
+        { data: visitorLabel + ' First', title: visitorLabel + ' First' },
+        { data: visitorLabel + ' Last', title: visitorLabel + ' Last' },
+        { data: 'Checked In', title: 'Checked In', render: function (data, type) { return dateRender(data, type, dateFormat); } },
+        { data: 'Nights', title: 'Nights', className: 'hhk-justify-c' },
+        { data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) { return dateRender(data, type, dateFormat); } },
+        { data: 'Room', title: 'Room', className: 'hhk-justify-c' }];
 
-        if(showRateCol) {
-           cgCols.push({data: 'Rate', title: 'Rate'});
-        }
-
-        cgCols.push({data: 'Phone', title: 'Phone'});
-
-        if(shoHospitalName) {
-            cgCols.push({data: 'Hospital', title: hospTitle});
-        }
-
-        cgCols.push({data: 'Patient', title: patientLabel});
-
-		if(showCurrentGuestPhotos){
-			cgCols.unshift({data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px"});
+    if (showRateCol) {
+        cgCols.push({ data: 'Rate', title: 'Rate' });
     }
 
-    $("#btnTextCurGuests").button().smsDialog({ "campaign": "checked_in"});
+    cgCols.push({ data: 'Phone', title: 'Phone' });
+
+    if (shoHospitalName) {
+        cgCols.push({ data: 'Hospital', title: hospTitle });
+    }
+
+    cgCols.push({ data: 'Patient', title: patientLabel });
+
+    if (showCurrentGuestPhotos) {
+        cgCols.unshift({ data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px" });
+    }
+
+    $("#btnTextCurGuests").button().smsDialog({ "campaign": "checked_in" });
 
     $("#btnTextConfResvGuests").button().smsDialog({ "campaign": "confirmed_reservation" });
 
@@ -754,119 +789,119 @@ $(document).ready(function () {
         minHeight: 800,
         width: getDialogWidth(1500),
         modal: true,
-        close: function (event, ui){
+        close: function (event, ui) {
             notesDialog.find("#note-newNote").trigger('click');
             notesDialog.find(".regNotesWrapper").empty();
         },
         buttons: {
-            "Close": function(){
+            "Close": function () {
                 notesDialog.dialog("close");
             }
         },
-        position: {my: "center", at: "center"},
+        position: { my: "center", at: "center" },
     });
 
-    $(".btnRegNotes").button().on("click", function(e){
+    $(".btnRegNotes").button().on("click", function (e) {
         e.preventDefault();
         let dialogTitle = $(this).data("title");
         let linkType = $(this).data("linktype");
         notesDialog.dialog("open");
         notesDialog.dialog("option", "title", dialogTitle);
-      	notesDialog.find(".regNotesWrapper").notesViewer({
-		    linkId: 0,
-			linkType: linkType,
-			newNoteLocation:"hidden",
+        notesDialog.find(".regNotesWrapper").notesViewer({
+            linkId: 0,
+            linkType: linkType,
+            newNoteLocation: "hidden",
             defaultLength: 10,
-			alertMessage: function(text, type) {
-			    flagAlertMessage(text, type);
-			}
-		});
+            alertMessage: function (text, type) {
+                flagAlertMessage(text, type);
+            }
+        });
     });
 
 
     // Reservations
     let rvCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
-            {data: 'Guest First', title: visitorLabel+' First'},
-            {data: 'Guest Last', title: visitorLabel+' Last'},
-            {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-            {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
-            {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-            {data: 'Room', title: 'Room', className: 'hhk-justify-c'}];
+        { data: 'Action', title: 'Action', sortable: false, searchable: false, className: "noPrint" },
+        { data: 'Guest First', title: visitorLabel + ' First' },
+        { data: 'Guest Last', title: visitorLabel + ' Last' },
+        { data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) { return dateRender(data, type, dateFormat); } },
+        { data: 'Nights', title: 'Nights', className: 'hhk-justify-c' },
+        { data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) { return dateRender(data, type, dateFormat); } },
+        { data: 'Room', title: 'Room', className: 'hhk-justify-c' }];
 
-            if(showRateCol) {
-               rvCols.push({data: 'Rate', title: 'Rate'});
-            }
+    if (showRateCol) {
+        rvCols.push({ data: 'Rate', title: 'Rate' });
+    }
 
-            rvCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+    rvCols.push({ data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c' });
 
-            if (acceptResvPay) {
-				rvCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
-			}
+    if (acceptResvPay) {
+        rvCols.push({ data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c' });
+    }
 
-            if(shoHospitalName) {
-                rvCols.push({data: 'Hospital', title: hospTitle});
-            }
+    if (shoHospitalName) {
+        rvCols.push({ data: 'Hospital', title: hospTitle });
+    }
 
-            if(showLocs) {
-                rvCols.push({data: 'Location', title: locationTitle});
-            }
-            if(showDiags) {
-                rvCols.push({data: 'Diagnosis', title: diagnosisTitle});
-            }
+    if (showLocs) {
+        rvCols.push({ data: 'Location', title: locationTitle });
+    }
+    if (showDiags) {
+        rvCols.push({ data: 'Diagnosis', title: diagnosisTitle });
+    }
 
-            rvCols.push({data: 'Patient', title: patientLabel});
+    rvCols.push({ data: 'Patient', title: patientLabel });
 
     //Waitlist
     let wlCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false, "className": "noPrint"},
-            {data: 'Guest First', title: visitorLabel+' First'},
-            {data: 'Guest Last', title: visitorLabel+' Last'}];
+        { data: 'Action', title: 'Action', sortable: false, searchable: false, "className": "noPrint" },
+        { data: 'Guest First', title: visitorLabel + ' First' },
+        { data: 'Guest Last', title: visitorLabel + ' Last' }];
 
-            if (showCreatedDate) {
-                wlCols.push({data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm")}});
-				wlCols.push({data: 'Updated_By', title: 'Updated By'});
-            }
+    if (showCreatedDate) {
+        wlCols.push({ data: 'Timestamp', title: 'Created On', render: function (data, type) { return dateRender(data, type, "MMM D, YYYY H:mm") } });
+        wlCols.push({ data: 'Updated_By', title: 'Updated By' });
+    }
 
-            wlCols.push({data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}});
-            wlCols.push({data: 'Nights', title: 'Nights', className: 'hhk-justify-c'});
-            wlCols.push({data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}});
-            wlCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+    wlCols.push({ data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) { return dateRender(data, type, dateFormat); } });
+    wlCols.push({ data: 'Nights', title: 'Nights', className: 'hhk-justify-c' });
+    wlCols.push({ data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) { return dateRender(data, type, dateFormat); } });
+    wlCols.push({ data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c' });
 
-            if (acceptResvPay) {
-				wlCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
-			}
+    if (acceptResvPay) {
+        wlCols.push({ data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c' });
+    }
 
-            if(shoHospitalName) {
-                wlCols.push({data: 'Hospital', title: hospTitle});
-            }
+    if (shoHospitalName) {
+        wlCols.push({ data: 'Hospital', title: hospTitle });
+    }
 
-            if(showLocs) {
-                wlCols.push({data: 'Location', title: locationTitle});
-            }
-            if(showDiags) {
-                wlCols.push({data: 'Diagnosis', title: diagnosisTitle});
-            }
+    if (showLocs) {
+        wlCols.push({ data: 'Location', title: locationTitle });
+    }
+    if (showDiags) {
+        wlCols.push({ data: 'Diagnosis', title: diagnosisTitle });
+    }
 
-            wlCols.push({data: 'Patient', title: patientLabel});
+    wlCols.push({ data: 'Patient', title: patientLabel });
 
-            if (showWlNotes) {
-                wlCols.push({data: 'WL Notes', title: wlTitle});
-            }
+    if (showWlNotes) {
+        wlCols.push({ data: 'WL Notes', title: wlTitle });
+    }
 
     // Dailey Report
     let dailyCols = [
-            {data: 'titleSort', 'visible': false },
-            {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
-            {data: 'Status', title: 'Status', searchable:false},
-            {data: 'Guests', title: visitorLabel+'s'},
-            {data: 'Patient_Name', title: patientLabel}];
+        { data: 'titleSort', 'visible': false },
+        { data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c' },
+        { data: 'Status', title: 'Status', searchable: false },
+        { data: 'Guests', title: visitorLabel + 's' },
+        { data: 'Patient_Name', title: patientLabel }];
 
-            if (showCharges) {
-                dailyCols.push({data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'});
-            }
-            dailyCols.push({data: 'Visit_Notes', title: 'Last Visit Note', sortable: false});
-            dailyCols.push({data: 'Notes', title: 'Room Notes', sortable: false});
+    if (showCharges) {
+        dailyCols.push({ data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r' });
+    }
+    dailyCols.push({ data: 'Visit_Notes', title: 'Last Visit Note', sortable: false });
+    dailyCols.push({ data: 'Notes', title: 'Room Notes', sortable: false });
 
     // Show payment message
     if (pmtMkup !== '' && pmtStatus !== '') {
@@ -884,11 +919,11 @@ $(document).ready(function () {
         numberOfMonths: 2,
         dateFormat: 'M d, yy'
     });
-    $.extend( $.fn.dataTable.defaults, {
+    $.extend($.fn.dataTable.defaults, {
         "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
         "displayLength": 50,
         "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
-        "order": [[ 3, 'asc' ]],
+        "order": [[3, 'asc']],
         "processing": true,
         "deferRender": true
     });
@@ -941,7 +976,7 @@ $(document).ready(function () {
     });
 
     //turn off autofocus
-    $("#statEvents").data("uiDialog")._focusTabbable = function(){};
+    $("#statEvents").data("uiDialog")._focusTabbable = function () { };
 
     $('#keysfees').dialog({
         autoOpen: false,
@@ -1019,8 +1054,8 @@ $(document).ready(function () {
         }
     });
 
-	// Name Search
-    createRoleAutoComplete($('#txtsearch'), 3, {cmd: 'guest'},
+    // Name Search
+    createRoleAutoComplete($('#txtsearch'), 3, { cmd: 'guest' },
         function (item) {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);
@@ -1031,22 +1066,22 @@ $(document).ready(function () {
     let dateIncrementObj = null;
 
     if (calDateIncrement > 0 && calDateIncrement < 5) {
-        dateIncrementObj = {weeks: calDateIncrement};
+        dateIncrementObj = { weeks: calDateIncrement };
     }
 
     $('#selRoomGroupScheme').val(resourceGroupBy);
 
     let winHieght = window.innerHeight;
 
-	//change default view on mobile + tablet
-	if(window.innerWidth < 576){ //mobile
-		defaultView = 'timeline4days';
-		dateIncrementObj = {days: 4};
-	}else if(window.innerWidth <= 768){ //tablet
-		defaultView = 'timeline1weeks';
-	}
+    //change default view on mobile + tablet
+    if (window.innerWidth < 576) { //mobile
+        defaultView = 'timeline4days';
+        dateIncrementObj = { days: 4 };
+    } else if (window.innerWidth <= 768) { //tablet
+        defaultView = 'timeline1weeks';
+    }
 
-	let calendarEl = document.getElementById('calendar');
+    let calendarEl = document.getElementById('calendar');
 
     calendar = new FullCalendar.Calendar(calendarEl, {
 
@@ -1059,79 +1094,79 @@ $(document).ready(function () {
         eventColor: defaultEventColor,
         eventTextColor: defCalEventTextColor,
         eventOrder: "start, id, title",
-		eventResizableFromStart: false,
+        eventResizableFromStart: false,
         initialView: defaultView,
         editable: true,
         resourcesInitiallyExpanded: expandResources,
-		resourceAreaHeaderContent: 'Rooms',
+        resourceAreaHeaderContent: 'Rooms',
 
-		nowIndicator: false,
+        nowIndicator: false,
         resourceAreaWidth: resourceColumnWidth,
         refetchResourcesOnNavigate: true,
         resourceGroupField: resourceGroupBy,
 
         customButtons: {
             refresh: {
-              text: 'Refresh',
-              click: function() {
-                calendar.refetchResources();
-                calendar.refetchEvents();
-              }
+                text: 'Refresh',
+                click: function () {
+                    calendar.refetchResources();
+                    calendar.refetchEvents();
+                }
             },
             prevMonth: {
-              click: function() {
-                calendar.incrementDate({months: -1});
-              }
+                click: function () {
+                    calendar.incrementDate({ months: -1 });
+                }
             },
             nextMonth: {
-              click: function() {
-                calendar.incrementDate({months: 1});
-              }
+                click: function () {
+                    calendar.incrementDate({ months: 1 });
+                }
             }
         },
 
         buttonIcons: {
-			nextMonth: 'chevrons-right',
-			prevMonth: 'chevrons-left'
-		},
+            nextMonth: 'chevrons-right',
+            prevMonth: 'chevrons-left'
+        },
 
         views: {
-        	timeline4days: {
+            timeline4days: {
                 type: 'resourceTimeline',
-                slotDuration: {days: 1},
-                slotLabelFormat: {weekday: 'short', day: 'numeric'},
-                duration: {days: 4 },
+                slotDuration: { days: 1 },
+                slotLabelFormat: { weekday: 'short', day: 'numeric' },
+                duration: { days: 4 },
                 buttonText: '4 Days'
             },
             timeline1weeks: {
                 type: 'resourceTimeline',
-                slotDuration: {days: 1},
-                slotLabelFormat: {weekday: 'short', day: 'numeric'},
-                duration: {weeks: 1 },
+                slotDuration: { days: 1 },
+                slotLabelFormat: { weekday: 'short', day: 'numeric' },
+                duration: { weeks: 1 },
                 buttonText: '1'
             },
             timeline2weeks: {
                 type: 'resourceTimeline',
-                slotLabelFormat: {weekday: 'short', day: 'numeric'},
-                slotDuration: {days: 1},
-                duration: {weeks: 2 },
+                slotLabelFormat: { weekday: 'short', day: 'numeric' },
+                slotDuration: { days: 1 },
+                duration: { weeks: 2 },
                 buttonText: '2'
             },
             timeline3weeks: {
                 type: 'resourceTimeline',
-                slotLabelFormat: {weekday: 'short', day: 'numeric'},
-                slotDuration: {days: 1},
-                duration: {weeks: 3 },
+                slotLabelFormat: { weekday: 'short', day: 'numeric' },
+                slotDuration: { days: 1 },
+                duration: { weeks: 3 },
                 buttonText: '3'
             },
             timeline4weeks: {
                 type: 'resourceTimeline',
                 slotLabelFormat: [
-					{month: 'short', year: 'numeric'},
-					{day: 'numeric'}
-				],
-                slotDuration: {days: 7},
-                duration: {weeks: 26 },
+                    { month: 'short', year: 'numeric' },
+                    { day: 'numeric' }
+                ],
+                slotDuration: { days: 7 },
+                duration: { weeks: 26 },
                 buttonText: '26'
             }
         },
@@ -1144,20 +1179,20 @@ $(document).ready(function () {
 
         slotLabelClassNames: 'hhk-fc-slot-title',
 
-		slotLaneClassNames: function (info) {
-			if (info.isToday) {
-				return 'hhk-fcslot-today';
-			} else {
-				let strDay = info.date.getFullYear() + '-' + (info.date.getMonth() + 1) + '-' + info.date.getDate();
+        slotLaneClassNames: function (info) {
+            if (info.isToday) {
+                return 'hhk-fcslot-today';
+            } else {
+                let strDay = info.date.getFullYear() + '-' + (info.date.getMonth() + 1) + '-' + info.date.getDate();
 
-				if (holidays.includes(strDay)) {
-					return 'hhk-fcslot-holiday';
-				}
-                if(closedDays.includes(info.date.getDay())){
+                if (holidays.includes(strDay)) {
+                    return 'hhk-fcslot-holiday';
+                }
+                if (closedDays.includes(info.date.getDay())) {
                     return 'fc-cell-shaded';
                 }
-			}
-		},
+            }
+        },
 
         loading: function (isLoading) {
 
@@ -1169,30 +1204,30 @@ $(document).ready(function () {
                 $('#spnGotoDate').show();
             }
         },
-		resourceOrder: 'Util_Priority,idResc',
+        resourceOrder: 'Util_Priority,idResc',
         resources: {
-                url: 'ws_calendar.php',
-                extraParams: {
-                    cmd: 'resclist',
-                    gpby: $('#selRoomGroupScheme').val()
-                },
+            url: 'ws_calendar.php',
+            extraParams: {
+                cmd: 'resclist',
+                gpby: $('#selRoomGroupScheme').val()
+            },
         },
 
-        resourceLabelDidMount: function(info) {
+        resourceLabelDidMount: function (info) {
 
             info.el.style.background = info.resource.extendedProps.bgColor;
             info.el.style.color = info.resource.extendedProps.textColor;
 
             if (info.resource.extendedProps.idResc > 0) {
 
-				if(info.resource.extendedProps.hoverText){
-                	info.el.title = info.resource.extendedProps.hoverText;
-                }else{
-                	info.el.title = 'Maximum Occupants: ' + info.resource.extendedProps.maxOcc;
+                if (info.resource.extendedProps.hoverText) {
+                    info.el.title = info.resource.extendedProps.hoverText;
+                } else {
+                    info.el.title = 'Maximum Occupants: ' + info.resource.extendedProps.maxOcc;
                 }
                 info.el.style.cursor = 'pointer'
-				// Bring up OOS dialog
-                info.el.onclick = function(){ getStatusEvent(info.resource.extendedProps.idResc, 'resc', info.resource.title) };
+                // Bring up OOS dialog
+                info.el.onclick = function () { getStatusEvent(info.resource.extendedProps.idResc, 'resc', info.resource.title) };
             }
 
         },
@@ -1207,7 +1242,7 @@ $(document).ready(function () {
 
         events: {
             url: 'ws_calendar.php?cmd=eventlist',
-            failure: function() {
+            failure: function () {
                 $('#pCalError').text('Error getting events!').show();
             }
         },
@@ -1222,7 +1257,7 @@ $(document).ready(function () {
             if (event.extendedProps.idVisit > 0 && info.delta.days !== 0) {
                 if (confirm('Move Visit to a new start date?')) {
                     moveVisit('visitMove', event.extendedProps.idVisit, event.extendedProps.Span, info.delta.days, info.delta.days);
-                	return;
+                    return;
                 }
             }
 
@@ -1244,20 +1279,20 @@ $(document).ready(function () {
                     if (confirm('Move Reservation to a new start date?')) {
                         moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, false);
                     }
-				}
+                }
 
                 // Change rooms?
                 if (resource.extendedProps.idResc !== event.extendedProps.idResc) {
 
-                	let mssg = 'Move Reservation to a new room?';
+                    let mssg = 'Move Reservation to a new room?';
 
-                	if (resource.extendedProps.idResc == 0) {
-                		mssg = 'Move Reservation to the waitlist?'
-                	}
+                    if (resource.extendedProps.idResc == 0) {
+                        mssg = 'Move Reservation to the waitlist?'
+                    }
 
                     if (confirm(mssg)) {
                         if (setRoomTo(event.extendedProps.idReservation, resource.extendedProps.idResc)) {
-                        	return;
+                            return;
                         }
                     }
                 }
@@ -1309,11 +1344,11 @@ $(document).ready(function () {
             // visit
             if (info.event.extendedProps.idVisit && info.event.extendedProps.idVisit > 0) {
                 let buttons = {
-                    "Show Statement": function() {
+                    "Show Statement": function () {
                         window.open('ShowStatement.php?vid=' + info.event.extendedProps.idVisit, '_blank');
                     },
-                    "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?vid=' + info.event.extendedProps.idVisit + '&span=' + info.event.extendedProps.Span , '_blank');
+                    "Show Registration Form": function () {
+                        window.open('ShowRegForm.php?vid=' + info.event.extendedProps.idVisit + '&span=' + info.event.extendedProps.Span, '_blank');
                     },
                     "Save": function () {
                         saveFees(0, info.event.extendedProps.idVisit, info.event.extendedProps.Span, true, 'register.php');
@@ -1332,20 +1367,20 @@ $(document).ready(function () {
             titleEl.appendChild(document.createTextNode(info.event.title));
             titleEl.classList.add("ml-1");
 
-			if (info.event.extendedProps.idReservation !== undefined) {
+            if (info.event.extendedProps.idReservation !== undefined) {
 
-				let chooserEl = document.createElement('Span');
-				chooserEl.classList.add("hhk-schrm", "ui-icon", "ui-icon-arrowthick-2-n-s");
-				chooserEl.style.backgroundColor = '#fff';
-				chooserEl.style.border = '0px solid black';
-				chooserEl.id = info.event.extendedProps.idResc
+                let chooserEl = document.createElement('Span');
+                chooserEl.classList.add("hhk-schrm", "ui-icon", "ui-icon-arrowthick-2-n-s");
+                chooserEl.style.backgroundColor = '#fff';
+                chooserEl.style.border = '0px solid black';
+                chooserEl.id = info.event.extendedProps.idResc
 
-				let arrayOfNodes = [chooserEl, titleEl];
-				return { domNodes: arrayOfNodes }
+                let arrayOfNodes = [chooserEl, titleEl];
+                return { domNodes: arrayOfNodes }
             } else {
                 return { domNodes: [titleEl] };
             }
-		},
+        },
 
         eventDidMount: function (info) {
 
@@ -1361,7 +1396,7 @@ $(document).ready(function () {
                 // Reservations
                 if (info.event.extendedProps.idReservation !== undefined) {
 
-                    info.el.title = info.event.extendedProps.fullName + (info.event.extendedProps.idResc > 0 ? ', ' + resource.title : '') +  ', ' + info.event.extendedProps.resvStatus + (shoHospitalName ? ', ' + info.event.extendedProps.hospName : '');
+                    info.el.title = info.event.extendedProps.fullName + (info.event.extendedProps.idResc > 0 ? ', ' + resource.title : '') + ', ' + info.event.extendedProps.resvStatus + (shoHospitalName ? ', ' + info.event.extendedProps.hospName : '');
 
                     // update border for uncommitted reservations.
                     if (info.event.extendedProps.status === 'uc') {
@@ -1375,35 +1410,35 @@ $(document).ready(function () {
                     //2nd ribbon color
                     if (info.event.extendedProps.backBorderColor != '') {
 
-                    	info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
+                        info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
 
                     }
 
-                // visits
+                    // visits
                 } else if (info.event.extendedProps.idVisit !== undefined) {
 
                     if (info.event.extendedProps.vStatusCode == 'a' || info.event.extendedProps.vStatusCode == 'r') {
-                    	info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + ', ' + info.event.extendedProps.guests + (info.event.extendedProps.guests > 1 ? ' ' + visitorLabel + 's': ' '+ visitorLabel) + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
-					} else {
-                    	info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
+                        info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + ', ' + info.event.extendedProps.guests + (info.event.extendedProps.guests > 1 ? ' ' + visitorLabel + 's' : ' ' + visitorLabel) + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
+                    } else {
+                        info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
                     }
 
                     if (info.event.extendedProps.extended !== undefined && info.event.extendedProps.extended) {
-                    	info.el.classList.remove('fc-event-end'); //trick fc into adding right arrow
+                        info.el.classList.remove('fc-event-end'); //trick fc into adding right arrow
                     }
 
                     //2nd ribbon color
                     if (info.event.extendedProps.backBorderColor != '') {
 
-                    	info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
+                        info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
                     }
 
-                // Out of service
+                    // Out of service
                 } else if (info.event.extendedProps.kind === 'oos') {
                     info.el.title = info.event.extendedProps.reason;
                 }
 
-				info.event.setProp('display', 'auto');
+                info.event.setProp('display', 'auto');
             } else {
                 info.event.setProp('display', 'none');
             }
@@ -1413,15 +1448,15 @@ $(document).ready(function () {
     calendar.render();
 
     //redraw calendar after finishing window resize
-	var resizeTimer;
-	window.onresize = function(){
-	  clearTimeout(resizeTimer);
-	  resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 187), 100);
-	};
+    var resizeTimer;
+    window.onresize = function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 187), 100);
+    };
 
     if ($('.btnHosp').length > 0) {
         $('.btnHosp').click(function (e) {
-        	e.preventDefault();
+            e.preventDefault();
             $(".hhk-alert").hide();
             $('.btnHosp').removeClass("hospActive");
             $(this).addClass("hospActive");
@@ -1468,33 +1503,33 @@ $(document).ready(function () {
         $.post('ws_resc.php', parms,
             function (data) {
                 $('#rptFeeLoading').hide();
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
+                if (data) {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
                     }
-                    flagAlertMessage(data.error, 'error');
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, 'error');
 
-                } else if (data.success) {
+                    } else if (data.success) {
 
-                    $('#rptfeediv').remove();
-                    $('#vfees').append($('<div id="rptfeediv"/>').append($(data.success)));
+                        $('#rptfeediv').remove();
+                        $('#vfees').append($('<div id="rptfeediv"/>').append($(data.success)));
 
-                    // Set up controls for table.
-                    paymentsTable('feesTable', 'rptfeediv', refreshPayments);
+                        // Set up controls for table.
+                        paymentsTable('feesTable', 'rptfeediv', refreshPayments);
 
-                    // Hide refresh button.
-                    $('#btnPayHistRef').hide();
+                        // Hide refresh button.
+                        $('#btnPayHistRef').hide();
 
+                    }
                 }
-            }
-        });
+            });
     });
 
     $('#btnInvGo').click(function () {
@@ -1529,10 +1564,10 @@ $(document).ready(function () {
                         $('#rptInvdiv').remove();
                         $('#vInv').append($('<div id="rptInvdiv"/>').append($(data.success)));
                         $('#rptInvdiv .gmenu').menu({
-           					focus:function(e, ui){
-           						$("#rptInvdiv .gmenu").not(this).menu("collapseAll", null, true);
-           					}
-           				});
+                            focus: function (e, ui) {
+                                $("#rptInvdiv .gmenu").not(this).menu("collapseAll", null, true);
+                            }
+                        });
 
                         // Bring up payment box
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
@@ -1565,8 +1600,8 @@ $(document).ready(function () {
 
                             // Check for email
                             if ($(this).data('stat') === 'vem') {
-                                    window.open('ShowInvoice.php?invnum=' + $(this).data('inb'));
-                                    return;
+                                window.open('ShowInvoice.php?invnum=' + $(this).data('inb'));
+                                return;
                             }
 
                             invoiceAction($(this).data('iid'), $(this).data('stat'), $(this).prop('id'), invContainer, true);
@@ -1575,15 +1610,16 @@ $(document).ready(function () {
 
                         $('#InvTable').dataTable({
                             'columnDefs': [
-                                {'targets': [2,4],
-                                 'type': 'date',
-                                 'render': function ( data, type, row ) {return dateRender(data, type);}
+                                {
+                                    'targets': [2, 4],
+                                    'type': 'date',
+                                    'render': function (data, type, row) { return dateRender(data, type); }
                                 }
-                             ],
+                            ],
                             "dom": '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
                             "displayLength": 50,
                             "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
-                            "order": [[ 1, 'asc' ]]
+                            "order": [[1, 'asc']]
                         });
                     }
                 }
@@ -1596,6 +1632,11 @@ $(document).ready(function () {
 
     $('#btnPrintWL').click(function () {
         window.open($(this).data('page') + '?d=' + $('#regwldate').val(), '_blank');
+    });
+
+    $('#btnUpdtFuture').button().click(function (event) {
+        event.preventDefault();
+        updateFuture();
     });
 
     $('#btnPrtDaily').button().click(function() {

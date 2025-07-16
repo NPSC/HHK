@@ -9,6 +9,7 @@ use HHK\House\Reservation\ActiveReservation;
 use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
+use HHK\House\TrackFutureVisits;
 use HHK\House\Vehicle;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Incident\ListReports;
@@ -781,6 +782,18 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
         $events = $contacts->syncContacts($status);
 
+        break;
+
+    case 'updtFuture':
+
+        $rcrds = TrackFutureVisits::updateFutureVisits($dbh, new DateTime());
+        $events['records'] = $rcrds;
+
+        if ($rcrds > 0) {
+            $events['success'] = 'Future room changes: ' . $rcrds . ' updated.';
+        } else {
+            $events['success'] = 'Future room changes: Nothing to do';
+        }
         break;
 
     default:

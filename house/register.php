@@ -2,14 +2,12 @@
 
 use HHK\Exception\RuntimeException;
 use HHK\History;
-use HHK\House\GuestRegister;
 use HHK\House\OperatingHours;
 use HHK\House\Report\PaymentReport;
 use HHK\House\Report\RoomReport;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\sec\Labels;
@@ -152,8 +150,6 @@ if (isset($_GET['gamess'])) {
 $locations = readGenLookupsPDO($dbh, 'Location');
 $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
-// Check for Visit Span reserve status starting today.
-// TODO
 
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
@@ -163,7 +159,13 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divdaily']);
 
 // Currently Checked In guests
-        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlCurGuests', 'class' => 'ml-5', 'style' => 'font-size:.9em;']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextCurGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']) :"") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Current Guests','data-linktype'=>'curguests', 'style' => 'font-size:.9em;']), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+        $currentCheckedIn =
+        HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>'
+        . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlCurGuests', 'class' => 'ml-5', 'style' => 'font-size:.9em;'])
+        . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextCurGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']) :"")
+        . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Current Guests','data-linktype'=>'curguests', 'style' => 'font-size:.9em;'])
+        . HTMLContainer::generateMarkup('button', 'Update Future Room Changes', ['role' => 'button', 'name'=>'btnUpdtFuture', 'class' => 'ml-5', 'data-title' => 'Update any unused future room changes', 'style' => 'font-size:.9em;'])
+        , ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divcurres']);
 
 // make registration form print button

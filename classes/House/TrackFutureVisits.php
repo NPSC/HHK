@@ -4,7 +4,9 @@ namespace HHK\House;
 
 use DateInterval;
 use HHK\sec\Session;
+use HHK\SysConst\VisitStatus;
 use HHK\Tables\EditRS;
+use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\Visit\VisitRS;
 
 
@@ -23,8 +25,11 @@ class TrackFutureVisits {
     public static function updateFutureVisits(\PDO $dbh, \DateTime $pivotDate) {
 
         $spans = self::findFutureVisitSpans($dbh, $pivotDate);
-        $updatedSpans = 0;
 
+        // Check Validity
+
+
+        $updatedSpans = 0;
         foreach ($spans as $s) {
             $updatedSpans = self::bumpToPivot($dbh, $pivotDate, $s);
         }
@@ -45,18 +50,27 @@ class TrackFutureVisits {
             return false;
         }
 
-        $spanIndex = $span[0]['Span'] + 1;
+
+        // Update checked in stays
+        $stayRs = new StaysRS();
+        $stayRs->idVisit->setStoredVal($span[0]['idVisit']);
+        $stayRs->Visit_Span->setStoredVal($span[0]['Span']);
+        $stayRs->Status->setStoredVal(VisitStatus::Active);
+        $stayRs->Expected_Co_Date->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+
+        EditRS::update($dbh, $stayRs, [$stayRs->idVisit, $stayRs->Visit_Span, $stayRs->Status]);
+
+
+        // Update future span(s)
         $startDate = $pivotDate;
         $rcrdsUpdated = 0;
 
-        // Update future span(s)
         foreach ($span as $s) {
 
             $visitRs = new VisitRS();
             $visitRs->idVisit->setStoredVal($s['idVisit']);
             $visitRs->Span->setStoredVal($s['Span_Future']);
 
-            $visitRs->Span->setNewVal($spanIndex++);
             $visitRs->Span_Start->setNewVal($startDate->format("Y-m-d $uS->CheckInTime:00:00"));
             $startDate->add(new DateInterval('P' . $s['Days'] . 'D'));
             $visitRs->Expected_Departure->setNewVal($startDate->format("Y-m-d $uS->CheckOutTime:00:00"));
@@ -77,7 +91,6 @@ class TrackFutureVisits {
             v.Span,
             v.Span_Start,
             v.Expected_Departure,
-
             vf.Span AS Span_Future,
             vf.Span_Start AS Span_Future_Start,
             vf.Expected_Departure AS Span_Future_Expected_Departure,
