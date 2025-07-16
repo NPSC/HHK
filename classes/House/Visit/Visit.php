@@ -269,6 +269,8 @@ class Visit {
      */
     public function addGuestStay($idGuest, $checkinDate, $stayStartDate, $expectedCO = '', $stayOnLeave = 0) {
 
+        $uS = Session::getInstance();
+
         // If guest already has an active stay ...
         foreach ($this->stays as $sRS) {
 
@@ -310,7 +312,7 @@ class Visit {
         $visitCoDt = new \DateTime($this->getExpectedDeparture());
 
         if ($stayCoDt > $visitCoDt) {
-            $this->visitRS->Expected_Departure->setNewVal($stayCoDt->format('Y-m-d 10:00:00'));
+            $this->visitRS->Expected_Departure->setNewVal($stayCoDt->format("Y-m-d $uS->CheckOutTime:00:00"));
         }
 
 
@@ -321,7 +323,7 @@ class Visit {
         $stayRS->idRoom->setNewVal($rm->getIdRoom());
         $stayRS->Checkin_Date->setNewVal(date("Y-m-d H:i:s", strtotime($checkinDate)));
         $stayRS->Span_Start_Date->setNewVal(date("Y-m-d H:i:s", strtotime($stayStartDate)));
-        $stayRS->Expected_Co_Date->setNewVal($stayCoDt->format('Y-m-d 10:00:00'));
+        $stayRS->Expected_Co_Date->setNewVal($stayCoDt->format("Y-m-d $uS->CheckOutTime:00:00"));
 
         $stayRS->On_Leave->setNewVal($stayOnLeave);
 

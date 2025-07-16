@@ -2,7 +2,9 @@
 
 namespace HHK\House;
 
+use DateInterval;
 use HHK\sec\Session;
+use HHK\Tables\EditRS;
 use HHK\Tables\Visit\VisitRS;
 
 
@@ -18,20 +20,56 @@ use HHK\Tables\Visit\VisitRS;
 
 class TrackFutureVisits {
 
-    protected $balanceDate;
+    public static function updateFutureVisits(\PDO $dbh, \DateTime $pivotDate) {
 
-    public function __construct(\DateTime $balanceDate) {
+        $spans = self::findFutureVisitSpans($dbh, $pivotDate);
+        $updatedSpans = 0;
 
-        $this->balanceDate = $balanceDate;
+        foreach ($spans as $s) {
+            $updatedSpans = self::bumpToPivot($dbh, $pivotDate, $s);
+        }
 
+        return $updatedSpans;
+    }
+    protected static function bumpToPivot(\PDO $dbh, \Datetime $pivotDate, array $span) {
+
+        $uS = Session::getInstance();
+
+        // Update checked-in visit
+        $visitRs = new VisitRS();
+        $visitRs->idVisit -> setStoredVal($span[0]['idVisit']);
+        $visitRs->Span->setStoredVal($span[0]['Span']);
+        $visitRs->Expected_Departure->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+
+        if (EditRS::update($dbh,$visitRs, [$visitRs->idVisit, $visitRs->Span]) < 1) {
+            return false;
+        }
+
+        $spanIndex = $span[0]['Span'] + 1;
+        $startDate = $pivotDate;
+        $rcrdsUpdated = 0;
+
+        // Update future span(s)
+        foreach ($span as $s) {
+
+            $visitRs = new VisitRS();
+            $visitRs->idVisit->setStoredVal($s['idVisit']);
+            $visitRs->Span->setStoredVal($s['Span_Future']);
+
+            $visitRs->Span->setNewVal($spanIndex++);
+            $visitRs->Span_Start->setNewVal($startDate->format("Y-m-d $uS->CheckInTime:00:00"));
+            $startDate->add(new DateInterval('P' . $s['Days'] . 'D'));
+            $visitRs->Expected_Departure->setNewVal($startDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+
+            $rcrdsUpdated += EditRS::update($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+        }
+
+        return $rcrdsUpdated;
     }
 
-    public function resolve(\PDO $dbh) {
+    protected static function findFutureVisitSpans(\PDO $dbh, \DateTime $pivotDate) {
 
-    }
-
-    protected function findFutureVisitSpans(\PDO $dbh, \DateTime $pivotDate) {
-
+        $visits = [];
 
         // Collect all visits with future spans
         $stmt = $dbh->prepare("Select
@@ -39,21 +77,46 @@ class TrackFutureVisits {
             v.Span,
             v.Span_Start,
             v.Expected_Departure,
-            v.`Status`,
-            vf.idVisit AS idFuture,
+
             vf.Span AS Span_Future,
             vf.Span_Start AS Span_Future_Start,
             vf.Expected_Departure AS Span_Future_Expected_Departure,
-            vf.`Status` AS Status_Future
+            DATEDIFF(
+                    DATE(IFNULL(vf.Span_End, datedefaultnow(vf.Expected_Departure))),
+                    DATE(vf.Span_Start)) as Days
         from visit v JOIN visit vf on vf.Status = 'r' and vf.idVisit = v.idVisit
-	    where v.`Status` = 'a' and DATE(v.Expected_Departure) < :balanceDate;");
+	    where v.`Status` = 'a' and DATE(v.Expected_Departure) < :pivotDate
+        ORDER BY vf.idVisit, vf.Span;");
 
         $stmt->execute([
-            ":balanceDate" => $pivotDate->format('Y-m-d'),
+            ":pivotDate" => $pivotDate->format('Y-m-d 00-00-00'),
         ]);
+
+        $idVisit = 0;
+        $spans = [];
 
         While ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
+            if ($idVisit != $r['idVisit']) {
+
+                if ($idVisit != 0) {
+                    $visits[$r['idVisit']] = $spans;
+                }
+
+                $idVisit = $r['idVisit'];
+                $spans = [];
+
+            }
+
+            $spans[] = $r;
+
         }
+
+        // catch last one
+        if ($idVisit != 0) {
+            $visits[$r['idVisit']] = $spans;
+        }
+
+        return $visits;
     }
 }
