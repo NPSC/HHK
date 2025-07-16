@@ -683,12 +683,13 @@ class SalesforceManager extends AbstractExportManager {
                 if ($this->trace) {
                     $completedAt = new \DateTime();
                     $this->traceData .= "<p>Transfer completed at: " . $completedAt->format(DATE_W3C) . "</p>";
-                    $this->traceData .= "<p>Elapsed Time: " . $completedAt->getTimestamp() - $sentAt->getTimestamp() . " seconds";
+                    $this->traceData .= "<p>Elapsed Time: " . $completedAt->getTimestamp() - $sentAt->getTimestamp() . " seconds</p>";
+                    $this->traceData .= "<p>Total requests sent: " . count($batchResults['batchResults']) . "</p>";
                 }
 
                     foreach($batchResults['batchResults'] as $batchId=>$batchResult){
                         if ($this->trace) {
-                            $this->traceData .= "<h4>Request</h4><pre>" . json_encode($batchBodies[$batchId], JSON_PRETTY_PRINT) . "</pre>";
+                            $this->traceData .= "<hr class='my-3'><h4>Request</h4><pre>" . json_encode($batchBodies[$batchId], JSON_PRETTY_PRINT) . "</pre>";
                         }
 
                         if(isset($batchResult['success'])){
