@@ -4,7 +4,6 @@ namespace HHK\CrmExport\Salesforce;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
-use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
 use HHK\OAuth\SalesForceOAuth;
@@ -36,6 +35,12 @@ class SF_Connector {
      * @var Credentials
      */
     protected $credentials;
+    
+    /**
+     * The number of concurrent async requests to send at one time
+     * @const CONCURRENT_REQUESTS
+     */
+    protected const CONCURRENT_REQUESTS = 5;
 
     public function __construct(\PDO $dbh, Credentials $credentials) {
 
@@ -183,22 +188,21 @@ class SF_Connector {
             }
 
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-            
+
             $headers = [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
+                'Content-Type' => 'application/json',
             ];
 
             $batchRequests = [];
             $batchResults = [];
-            $batchErrors = [];
 
             foreach($jsonBodies as $batchId=>$params){
                 $batchRequests[$batchId] = new Request('POST', $endpoint, $headers, json_encode($params));
             }
 
             $pool = new Pool($client, $batchRequests, [
-                'concurrency' => 5,
+                'concurrency' => self::CONCURRENT_REQUESTS,
                 'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){ //if the response is success
                     //log transaction
                     try{
@@ -227,7 +231,7 @@ class SF_Connector {
 
 
         } catch (Exception $exception) {
-            
+            throw new RuntimeException($exception->getMessage());
         }
 
         return ['batchRequests'=>$batchRequests, 'batchResults'=>$batchResults];
