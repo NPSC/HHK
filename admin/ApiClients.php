@@ -450,7 +450,7 @@ $availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
 
                 if(window.client_id){
 
-                    $.ajax({,
+                    $.ajax({
                         url: 'ws_gen.php',
                         data: {
                             'cmd': 'getOauthClient',
