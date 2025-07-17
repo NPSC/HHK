@@ -38,7 +38,8 @@ class ImReturnResponse extends AbstractCreditResponse {
     }
 
     public function getPaymentStatusCode() {
-        return PaymentStatusCode::Retrn;
+        //return PaymentStatusCode::Retrn;
+        return $this->paymentStatusCode;
     }
 
     public function getStatus() {

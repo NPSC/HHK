@@ -11,10 +11,10 @@ namespace HHK\SysConst;
  */
 
 class PaymentStatusCode {
-    public const string Paid = 's';
-    public const string VoidSale = 'v';
-    public const string Retrn = 'r';
-    public const string Reverse = 'rv';
-    public const string VoidReturn = "vr";
-    public const string Declined = 'd';
+    public const Paid = 's';
+    public const VoidSale = 'v';
+    public const Retrn = 'r';
+    public const Reverse = 'rv';
+    public const VoidReturn = "vr";
+    public const Declined = 'd';
 }
