@@ -5,6 +5,7 @@ namespace HHK\House;
 use DateInterval;
 use HHK\sec\Session;
 use HHK\SysConst\VisitStatus;
+use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\Visit\VisitRS;
@@ -22,13 +23,28 @@ use HHK\Tables\Visit\VisitRS;
 
 class TrackFutureVisits {
 
+    /**
+     * Summary of updateFutureVisits
+     * @param \PDO $dbh
+     * @param \DateTime $pivotDate
+     * @return bool|int
+     */
     public static function updateFutureVisits(\PDO $dbh, \DateTime $pivotDate) {
 
         $spans = self::findFutureVisitSpans($dbh, $pivotDate);
 
-        // Check Validity
+        // Anything returned
+        if (count($spans) < 1) {
+            return 0;
+        }
 
+        // The expected end of the visit span must be greater than pivotDate.
+        $expectedEnd = new \DateTime($spans[0]['Expected_Departure']);
+        if ($expectedEnd <= $pivotDate) {
+            return 0;
+        }
 
+        // Update the spans.
         $updatedSpans = 0;
         foreach ($spans as $s) {
             $updatedSpans = self::bumpToPivot($dbh, $pivotDate, $s);
@@ -36,6 +52,15 @@ class TrackFutureVisits {
 
         return $updatedSpans;
     }
+
+
+    /**
+     * Summary of bumpToPivot
+     * @param \PDO $dbh
+     * @param \Datetime $pivotDate
+     * @param array $span
+     * @return bool|int
+     */
     protected static function bumpToPivot(\PDO $dbh, \Datetime $pivotDate, array $span) {
 
         $uS = Session::getInstance();
@@ -47,8 +72,15 @@ class TrackFutureVisits {
         $visitRs->Expected_Departure->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
 
         if (EditRS::update($dbh,$visitRs, [$visitRs->idVisit, $visitRs->Span]) < 1) {
-            return false;
+            return 0;
         }
+
+        // Log it
+        $logText = VisitLog::getUpdateText($visitRs);
+
+        // Update the visit log
+        EditRS::updateStoredVals($visitRs);
+        VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
 
 
         // Update checked in stays
@@ -63,7 +95,7 @@ class TrackFutureVisits {
 
         // Update future span(s)
         $startDate = $pivotDate;
-        $rcrdsUpdated = 0;
+        $rcrdsUpdated = 1;
 
         foreach ($span as $s) {
 
@@ -72,15 +104,31 @@ class TrackFutureVisits {
             $visitRs->Span->setStoredVal($s['Span_Future']);
 
             $visitRs->Span_Start->setNewVal($startDate->format("Y-m-d $uS->CheckInTime:00:00"));
+
+            // startDate auto updates to the new start date.
             $startDate->add(new DateInterval('P' . $s['Days'] . 'D'));
             $visitRs->Expected_Departure->setNewVal($startDate->format("Y-m-d $uS->CheckOutTime:00:00"));
 
             $rcrdsUpdated += EditRS::update($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+
+            // Log it
+            $logText = VisitLog::getUpdateText($visitRs);
+
+            // Update the visit log
+            EditRS::updateStoredVals($visitRs);
+            VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+
         }
 
         return $rcrdsUpdated;
     }
 
+    /**
+     * Summary of findFutureVisitSpans
+     * @param \PDO $dbh
+     * @param \DateTime $pivotDate
+     * @return array<array>
+     */
     protected static function findFutureVisitSpans(\PDO $dbh, \DateTime $pivotDate) {
 
         $visits = [];
