@@ -3,6 +3,8 @@
 namespace HHK\House;
 
 use DateInterval;
+use HHK\House\Reservation\Reservation_1;
+use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\SysConst\VisitStatus;
 use HHK\TableLog\VisitLog;
@@ -137,11 +139,13 @@ class TrackFutureVisits {
         $stmt = $dbh->prepare("Select
             v.idVisit,
             v.Span,
+            v.idReservation,
             v.Span_Start,
             v.Expected_Departure,
             vf.Span AS Span_Future,
             vf.Span_Start AS Span_Future_Start,
             vf.Expected_Departure AS Span_Future_Expected_Departure,
+            rv.idResource
             DATEDIFF(
                     DATE(IFNULL(vf.Span_End, datedefaultnow(vf.Expected_Departure))),
                     DATE(vf.Span_Start)) as Days
@@ -179,5 +183,33 @@ class TrackFutureVisits {
         }
 
         return $visits;
+    }
+
+    protected static function checkRoomAvailability(\PDO $dbh, $idReservation, \DateTime $arrivalDate, \DateTime $departureDate) {
+        $uS = Session::getInstance();
+
+        // Reservation
+        $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
+
+        // Room Available
+        if ($reserv->isNew() === FALSE) {
+
+            $rescOpen = $reserv->isResourceOpen(
+                $dbh,
+                $reserv->getIdResource(),
+                $arrivalDate->format('Y-m-d H:i:s'),
+                $departureDate->format("Y-m-d $uS->CheckOutTime:00:00"),
+                1,
+                ['room', 'rmtroom', 'part'],
+                FALSE,
+                true,
+            );
+
+            if ($rescOpen) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
