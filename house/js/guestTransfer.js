@@ -22,13 +22,6 @@ function updateLocal(id) {
             return;
         }
 
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
         if (incmg.error) {
             if (incmg.gotopage) {
                 window.open(incmg.gotopage, '_self');
@@ -64,12 +57,8 @@ function upsert(transferIds, trace) {
             alert('Error: Bad Reply from HHK Web Server');
             return;
         }
-        try {
-            data = JSON.parse(incmg);
-        } catch (err) {
-            alert('Error: Bad JSON Encoding');
-            return;
-        }
+
+        var data = incmg;
 
         if (data.error || data.errors) {
             if (data.gotopage) {
@@ -114,13 +103,6 @@ function updateRemote(id, accountId, useFlagAlert) {
         $('#btnUpdate').remove();
         if (!incmg) {
             alert('Bad Reply from Server');
-            return;
-        }
-
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
             return;
         }
 
@@ -212,12 +194,6 @@ function transferRemote(transferIds) {
 
         if (!incmg) {
             alert('Error: Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Error: Bad JSON Encoding');
             return;
         }
 
@@ -424,12 +400,6 @@ function transferExcludes(psgs) {
             alert('Bad Reply from HHK Web Server');
             return;
         }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
 
         if (incmg.error) {
             if (incmg.gotopage) {
@@ -493,12 +463,7 @@ function transferVisits(idPsg, rels) {
             alert('Bad Reply from HHK Web Server');
             return;
         }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
+
 
         if (incmg.error) {
             if (incmg.gotopage) {
@@ -654,13 +619,6 @@ function transferPayments($btn, start, end) {
             return;
         }
 
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
         if (incmg.error) {
             if (incmg.gotopage) {
                 window.open(incmg.gotopage, '_self');
@@ -692,12 +650,6 @@ function getRemote(item, source) {
     posting.done(function (incmg) {
         if (!incmg) {
             alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
             return;
         }
 
@@ -757,6 +709,127 @@ function getRemote(item, source) {
             }
         }
     });
+}
+
+function setupLogViewer(){
+    var dtTransferLogCols = [
+        {
+            targets: [0],
+            className: 'dt-control',
+            orderable: false,
+            data: null,
+            defaultContent: ''
+        },
+        {
+            "targets": [1],
+            "title": "Type",
+            "searchable": false,
+            "sortable": true,
+            "data": "Type",
+        },
+        {
+            "targets": [2],
+            "title": "Request Endpoint",
+            "searchable": false,
+            "sortable": false,
+            "data": "endpoint",
+        },
+        {
+            "targets": [3],
+            "title": "Response Code",
+            "searchable": false,
+            "sortable": true,
+            "data": "responseCode",
+        },
+        {
+            "targets": [4],
+            "title": "Request",
+            "searchable": true,
+            "sortable": true,
+            "data": "request",
+            "visible": false,
+        },
+        {
+            "targets": [5],
+            "title": "Response",
+            "searchable": true,
+            "sortable": true,
+            "data": "response",
+            "visible": false,
+        },
+        {
+            "targets": [6],
+            "title": "User",
+            "searchable": true,
+            "sortable": true,
+            "data": "username",
+        },
+        {
+            "targets": [7],
+            "title": "Timestamp",
+            'data': 'Timestamp',
+            render: function (data, type) {
+                return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
+            }
+        }
+    ];
+
+    
+    let logTable = $('#transferLog').dataTable({
+                        "columnDefs": dtTransferLogCols,
+                        "serverSide": true,
+                        "processing": true,
+                        //"deferRender": true,
+                        "language": { "sSearch": "Search Log:" },
+                        "sorting": [[7, 'desc']],
+                        "displayLength": 25,
+                        "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                        'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
+                        'autoWidth':false,
+                        layout: {
+                            topStart: 'info',
+                            bottom: 'paging',
+                            bottomStart: null,
+                            bottomEnd: null
+                        },
+                        ajax: {
+                            url: 'ws_tran.php',
+                            data: function(d){
+                                d.cmd = 'viewLog',
+                                d.service = $("#cmsLogService").val()
+                            }
+                        }
+                    });
+
+
+                    logTable.on('click', 'td.dt-control', function (e) {
+                        let tr = e.target.closest('tr');
+                        let row = logTable.DataTable().row(tr);
+                    
+                        if (row.child.isShown()) {
+                            // This row is already open - close it
+                            row.child.hide();
+                        }
+                        else {
+                            // Open this row
+                            row.child(formatAPIDetails(row.data())).show();
+                        }
+                    });
+
+                    function formatAPIDetails(row){
+        return `
+            <div>` +
+                `<div class="mb-3">
+                    <strong>Request</strong>
+                    <pre style="white-space: pre-wrap;">${row.request}</pre>
+                </div>
+                <div>
+                    <strong>Response</strong>
+                    <pre style="white-space: pre-wrap;">${row.response}</pre>
+                </div>
+            </div>
+        `;
+    }
 }
 
 
@@ -955,6 +1028,28 @@ $(document).ready(function () {
                     }
                 });
     }
+
+
+    var $logDialog = $("#logDialog").dialog({
+        autoOpen: false,
+        modal: false,
+        minWidth: getDialogWidth(1500),
+        title: cmsTitle + ' transfer log',
+        buttons: {
+            "Close": function (){
+                $logDialog.dialog('close');
+            }
+        },
+        open: function (){
+            $('#transferLog').DataTable().ajax.reload();
+        }
+
+    });
+
+    setupLogViewer();
+    $(document).on("click", "#viewLog", function (){
+        $logDialog.dialog('open');
+    });
 
     var opt = {mode: 'popup',
         popClose: true,

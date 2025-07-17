@@ -66,6 +66,8 @@ class SalesforceManager extends AbstractExportManager {
     protected $trace;
     protected $traceData;
 
+    const LOG_SERVICE_NAME = "SalesForce";
+
     /**
      * {@inheritDoc}
      * @see \HHK\CrmExport\AbstractExportManager::__construct()
@@ -78,7 +80,6 @@ class SalesforceManager extends AbstractExportManager {
         $this->queryEndpoint = $this->endPoint . 'query';
         $this->searchEndpoint = $this->endPoint . 'search';
         $this->getContactEndpoint = $this->endPoint . 'sobjects/Contact/';
-
 
         $credentials = new Credentials();
         $credentials->setBaseURI($this->endpointURL);
@@ -1514,6 +1515,10 @@ class SalesforceManager extends AbstractExportManager {
         $result .= $this->saveTypeLists($dbh);
         return $result;
 
+    }
+
+    public function getLogServiceName(){
+        return self::LOG_SERVICE_NAME;
     }
 }
 

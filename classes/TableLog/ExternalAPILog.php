@@ -1,5 +1,7 @@
 <?php
 namespace HHK\TableLog;
+use HHK\DataTableServer\DataTableServer;
+use HHK\DataTableServer\SSP;
 use HHK\Tables\ExternalAPILogRS;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -18,14 +20,17 @@ class ExternalAPILog extends AbstractTableLog {
      */
     public static function log(\PDO $dbh, string $service, string $type, RequestInterface $request, ResponseInterface $response, string $username){
 
+        $requestBody = json_decode($request->getBody(), true);
+        $responseBody = json_decode($response->getBody(), true);
+
         $logRS = new ExternalAPILogRS();
         $logRS->Log_Type->setNewVal($service);
         $logRS->Sub_Type->setNewVal($type);
         $logRS->requestMethod->setNewVal($request->getMethod());
         $logRS->endpoint->setNewVal($request->getUri());
         $logRS->responseCode->setNewVal($response->getStatusCode());
-        $logRS->request->setNewVal($request->getBody()->__tostring());
-        $logRS->response->setNewVal($response->getBody()->__tostring());
+        $logRS->request->setNewVal($requestBody ? json_encode($requestBody, JSON_PRETTY_PRINT) : $request->getBody()->__tostring());
+        $logRS->response->setNewVal($responseBody ? json_encode($responseBody, JSON_PRETTY_PRINT) : $response->getBody()->__tostring());
         $logRS->username->setNewVal($username);
 
         return self::insertLog($dbh, $logRS);
@@ -58,6 +63,25 @@ class ExternalAPILog extends AbstractTableLog {
 
         return self::insertLog($dbh, $logRS);
 
+    }
+
+    public static function getLog(\PDO $dbh, string $type){
+        
+        $columns = array(
+                array( 'db' => 'idLog', 'dt' => 'idLog'),
+                array( 'db' => 'Sub_Type',  'dt' => 'Type' ),
+                array( 'db' => 'requestMethod',    'dt' => 'requestMethod'),
+                array( 'db' => 'endpoint', 'dt'=>'endpoint'),
+                array( 'db' => 'responseCode', 'dt'=> 'responseCode'),
+                array( 'db' => 'request', 'dt'=>'request'),
+                array( 'db' => 'response', 'dt'=>'response'),
+                array( 'db' => 'username', 'dt'=>'username'),
+                array( 'db' => 'Timestamp', 'dt'=>'Timestamp'),
+            );
+
+            $whereClause = '`Log_Type` IN ("' . $type . '")';
+
+            return SSP::complex($_GET, $dbh, 'external_api_log', 'idLog', $columns, null, $whereClause);
     }
 
 }

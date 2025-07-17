@@ -1,4 +1,5 @@
 <?php
+use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\MemStatus;
 use HHK\sec\WebInit;
@@ -823,6 +824,9 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
 				<?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
+                <?php if($CmsManager instanceof SalesforceManager){ ?>
+                    <button type="button" id="viewLog" data-service="SalesForce" class="ui-button ui-corner-all">View Transfer Log</button>
+                <?php } ?>
                             </td>
                         </tr>
                     </table>
@@ -857,13 +861,14 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
-
+        <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="transferLog"></table></div>
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
 	    <input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
         <input id="cmsTitle" type="hidden" value="<?php echo $CmsManager->getServiceTitle(); ?>"/>
+        <input id="cmsLogService" type="hidden" value="<?php echo $CmsManager->getLogServiceName(); ?>"/>
         <input id="username" type="hidden" value="<?php echo $uS->username; ?>" />
 
     </body>

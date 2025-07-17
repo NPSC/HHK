@@ -165,7 +165,7 @@ class SF_Connector {
         //log transaction
         try{
             $uS = Session::getInstance();
-            ExternalAPILog::log($this->dbh, "SalesForce", "", $request, $response, $uS->username);
+            ExternalAPILog::log($this->dbh, SalesforceManager::LOG_SERVICE_NAME, "graph", $request, $response, $uS->username);
         }catch(Exception $e){
             //do nothing
         }
@@ -207,7 +207,7 @@ class SF_Connector {
                     //log transaction
                     try{
                         $uS = Session::getInstance();
-                        ExternalAPILog::log($this->dbh, "SalesForce", "", $batchRequests[$batchId], $response, $uS->username);
+                        ExternalAPILog::log($this->dbh, SalesforceManager::LOG_SERVICE_NAME, "graph", $batchRequests[$batchId], $response, $uS->username);
                     }catch(Exception $e){
                         //do nothing
                     }
