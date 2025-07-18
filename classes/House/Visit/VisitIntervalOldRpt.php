@@ -1287,6 +1287,17 @@ where
             }
 
 
+            //remap TotalEachTax to display totals
+            foreach($totalEachTaxPaid as $k=>$v){
+                $totalEachTaxPaid["paid_" . $k] = $v;
+                unset($totalEachTaxPaid[$k]);
+            }
+
+            foreach($totalEachTaxCharged as $k=>$v){
+                $totalEachTaxCharged["chg_" . $k] = $v;
+                unset($totalEachTaxCharged[$k]);
+            }
+
             // totals footer
             $tr = '';
             foreach ($fltrdFields as $f) {
