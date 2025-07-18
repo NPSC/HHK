@@ -23,7 +23,16 @@ use HHK\Tables\Visit\VisitRS;
  * @link      https://github.com/NPSC/HHK
  */
 
+/**
+ * Summary of TrackFutureVisits - This class is used to track future visits and update them based on the given date.
+ */
 class TrackFutureVisits {
+
+    /**
+     * Summary of lockedVisits
+     * @var array
+     */
+    protected $lockedVisits = [];
 
     /**
      * Summary of updateFutureVisits
@@ -31,98 +40,110 @@ class TrackFutureVisits {
      * @param \DateTime $pivotDate
      * @return bool|int
      */
-    public static function updateFutureVisits(\PDO $dbh, \DateTime $pivotDate) {
+    public function updateFutureVisits(\PDO $dbh, \DateTime $pivotDate) {
 
-        $spans = self::findFutureVisitSpans($dbh, $pivotDate);
+        $visits = self::findFutureVisitSpans($dbh, $pivotDate);
 
-        // Anything returned
-        if (count($spans) < 1) {
+        // Anything returned?
+        if (count($visits) < 1) {
             return 0;
         }
 
-        // The expected end of the visit span must be greater than pivotDate.
-        $expectedEnd = new \DateTime($spans[0]['Expected_Departure']);
-        if ($expectedEnd <= $pivotDate) {
-            return 0;
+        foreach ($visits as $spans) {
+
+            // The expected end of the visit span must be greater than pivotDate.
+            $expectedEnd = new \DateTime($spans[0]['Expected_Departure']);
+            if ($pivotDate <= $expectedEnd) {
+                continue; // Skip this visit if the expected end is not greater than the pivot date.
+            }
+
+            // Check that the room is available for the visit.
+            if (self::checkRoomAvailability($dbh, $spans[0]['idReservation'], new \DateTime($spans[0]['Expected_Departure']), $pivotDate) === false) {
+
+                // room is unavailable!
+                $this->lockedVisits[] = $spans[0]['idVisit'];
+
+                continue; // Skip this visit since the room is not available.
+            }
+
+            // Update the spans.
+            self::bumpToPivot($dbh, $pivotDate, $spans);
+
         }
 
-        // Update the spans.
-        $updatedSpans = 0;
-        foreach ($spans as $s) {
-            $updatedSpans = self::bumpToPivot($dbh, $pivotDate, $s);
-        }
-
-        return $updatedSpans;
+        return 0;
     }
 
 
     /**
-     * Summary of bumpToPivot
+     * Summary of bumpToPivot - Bump the givenactive visit to the pivot date.  Eat up the future visit span until it's gone, then delete the future span.
      * @param \PDO $dbh
      * @param \Datetime $pivotDate
      * @param array $span
-     * @return bool|int
+     * @return void
      */
     protected static function bumpToPivot(\PDO $dbh, \Datetime $pivotDate, array $span) {
 
         $uS = Session::getInstance();
 
-        // Update checked-in visit
-        $visitRs = new VisitRS();
-        $visitRs->idVisit -> setStoredVal($span[0]['idVisit']);
-        $visitRs->Span->setStoredVal($span[0]['Span']);
-        $visitRs->Expected_Departure->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+        if (isset($span[0])) {
 
-        if (EditRS::update($dbh,$visitRs, [$visitRs->idVisit, $visitRs->Span]) < 1) {
-            return 0;
-        }
-
-        // Log it
-        $logText = VisitLog::getUpdateText($visitRs);
-
-        // Update the visit log
-        EditRS::updateStoredVals($visitRs);
-        VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
-
-
-        // Update checked in stays
-        $stayRs = new StaysRS();
-        $stayRs->idVisit->setStoredVal($span[0]['idVisit']);
-        $stayRs->Visit_Span->setStoredVal($span[0]['Span']);
-        $stayRs->Status->setStoredVal(VisitStatus::Active);
-        $stayRs->Expected_Co_Date->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
-
-        EditRS::update($dbh, $stayRs, [$stayRs->idVisit, $stayRs->Visit_Span, $stayRs->Status]);
-
-
-        // Update future span(s)
-        $startDate = $pivotDate;
-        $rcrdsUpdated = 1;
-
-        foreach ($span as $s) {
-
+            // Update checked-in visit
             $visitRs = new VisitRS();
-            $visitRs->idVisit->setStoredVal($s['idVisit']);
-            $visitRs->Span->setStoredVal($s['Span_Future']);
+            $visitRs->idVisit -> setStoredVal($span[0]['idVisit']);
+            $visitRs->Span->setStoredVal($span[0]['Span']);
+            $visitRs->Expected_Departure->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
 
-            $visitRs->Span_Start->setNewVal($startDate->format("Y-m-d $uS->CheckInTime:00:00"));
-
-            // startDate auto updates to the new start date.
-            $startDate->add(new DateInterval('P' . $s['Days'] . 'D'));
-            $visitRs->Expected_Departure->setNewVal($startDate->format("Y-m-d $uS->CheckOutTime:00:00"));
-
-            $rcrdsUpdated += EditRS::update($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
-
-            // Log it
-            $logText = VisitLog::getUpdateText($visitRs);
+            if (EditRS::update($dbh,$visitRs, [$visitRs->idVisit, $visitRs->Span]) < 1) {
+                return;  // No update made, so return.
+            }
 
             // Update the visit log
+            $logText = VisitLog::getUpdateText($visitRs);
             EditRS::updateStoredVals($visitRs);
             VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
 
-        }
 
-        return $rcrdsUpdated;
+            // Update checked in stays
+            $stayRs = new StaysRS();
+            $stayRs->idVisit->setStoredVal($span[0]['idVisit']);
+            $stayRs->Visit_Span->setStoredVal($span[0]['Span']);
+            $stayRs->Status->setStoredVal(VisitStatus::Active);
+            $stayRs->Expected_Co_Date->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+
+            EditRS::update($dbh, $stayRs, [$stayRs->idVisit, $stayRs->Visit_Span, $stayRs->Status]);
+
+
+            // Set up the future span.
+            $visitRs = new VisitRS();
+            $visitRs->idVisit->setStoredVal($span[0]['idVisit']);
+            $visitRs->Span->setStoredVal($span[0]['Span_Future']);
+
+            $futureDeparture = new \DateTime($span[0]['Span_Future_Expected_Departure']);
+
+            if ($futureDeparture <= $pivotDate) {
+
+                // Delete the future span.
+                EditRS::delete($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+
+                // Log it
+                $logText = VisitLog::getDeleteText($visitRs, $visitRs->idVisit->getStoredVal());
+                VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
+
+            } else {
+
+                // Start the future span at the pivot date.
+                $visitRs->Span_Start->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+                EditRS::update($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+
+                // Log it
+                $logText = VisitLog::getUpdateText($visitRs);
+                EditRS::updateStoredVals($visitRs);
+                VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+            }
+        }
+        
+        return;
     }
 
     /**
@@ -135,7 +156,7 @@ class TrackFutureVisits {
 
         $visits = [];
 
-        // Collect all visits with future spans
+        // Collect all visits with with the next future span only.
         $stmt = $dbh->prepare("Select
             v.idVisit,
             v.Span,
@@ -146,20 +167,20 @@ class TrackFutureVisits {
             vf.Span_Start AS Span_Future_Start,
             vf.Expected_Departure AS Span_Future_Expected_Departure,
             rv.idResource
-            DATEDIFF(
-                    DATE(IFNULL(vf.Span_End, datedefaultnow(vf.Expected_Departure))),
-                    DATE(vf.Span_Start)) as Days
-        from visit v JOIN visit vf on vf.Status = 'r' and vf.idVisit = v.idVisit
-	    where v.`Status` = 'a' and DATE(v.Expected_Departure) < :pivotDate
+        from visit v JOIN visit vf on vf.idVisit = v.idVisit and vf.Status = '" . VisitStatus::Reserved . "' and DATE(vf.Span_Start) < :pivotDate1
+            join reservation rv on rv.idReservation = v.idReservation
+	    where v.`Status` = '" . VisitStatus::Active . "' and DATE(v.Expected_Departure) < :pivotDate2
         ORDER BY vf.idVisit, vf.Span;");
 
         $stmt->execute([
-            ":pivotDate" => $pivotDate->format('Y-m-d 00-00-00'),
+            ":pivotDate1" => $pivotDate->format('Y-m-d 00-00-00'),
+            ":pivotDate2" => $pivotDate->format('Y-m-d 00-00-00'),
         ]);
 
         $idVisit = 0;
         $spans = [];
 
+        // Pack the visits into an array of spans.
         While ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($idVisit != $r['idVisit']) {
@@ -179,12 +200,20 @@ class TrackFutureVisits {
 
         // catch last one
         if ($idVisit != 0) {
-            $visits[$r['idVisit']] = $spans;
+            $visits[$idVisit] = $spans;
         }
 
         return $visits;
     }
 
+    /**
+     * Summary of checkRoomAvailability
+     * @param \PDO $dbh
+     * @param mixed $idReservation
+     * @param \DateTime $arrivalDate
+     * @param \DateTime $departureDate
+     * @return bool
+     */
     protected static function checkRoomAvailability(\PDO $dbh, $idReservation, \DateTime $arrivalDate, \DateTime $departureDate) {
         $uS = Session::getInstance();
 
@@ -201,7 +230,7 @@ class TrackFutureVisits {
                 $departureDate->format("Y-m-d $uS->CheckOutTime:00:00"),
                 1,
                 ['room', 'rmtroom', 'part'],
-                FALSE,
+                true,
                 true,
             );
 
@@ -211,5 +240,13 @@ class TrackFutureVisits {
         }
 
         return false;
+    }
+
+    /**
+     * Summary of getCrowdedVisits
+     * @return array{Expected_Departure: string, Span: mixed, Span_Future: mixed, Span_Start: string, idResource: mixed, idVisit: mixed[]}
+     */
+    public function getLockedVisits() {
+        return $this->lockedVisits;
     }
 }

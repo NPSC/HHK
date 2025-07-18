@@ -786,14 +786,16 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
     case 'updtFuture':
 
-        $rcrds = TrackFutureVisits::updateFutureVisits($dbh, new DateTime());
-        $events['records'] = $rcrds;
+        $tfv = new TrackFutureVisits();
+        $tfv->updateFutureVisits($dbh, new DateTime());
 
-        if ($rcrds > 0) {
-            $events['success'] = 'Future room changes: ' . $rcrds . ' updated.';
+
+        if (count($tfv->getLockedVisits()) > 0) {
+            $events['success'] = "These visits cannot move due to unavailability of the room: " . implode(", ", $tfv->getLockedVisits());
         } else {
-            $events['success'] = 'Future room changes: Nothing to do';
+            $events['success'] = 'Future room changes executed successfully.';
         }
+
         break;
 
     default:
