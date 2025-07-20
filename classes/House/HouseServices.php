@@ -903,7 +903,8 @@ class HouseServices {
         $idVisit = intval($idV, 10);
         $span = intval($idSpan, 10);
         $hasReservedSpan = FALSE;
-        $r = null;
+        $showChangeNow = false;
+        $mySpan = null;
 
         // Check if the visit and span are valid.
         if ($idVisit < 1 || $span < 0) {
@@ -911,31 +912,45 @@ class HouseServices {
         }
 
         // Look at all the spans for this visit.
-        $query = "select * from visit where idVisit = $idVisit;";
+        $query = "select Span, Span_Start, Expected_Departure, Status, idReservation, Pledged_Rate from visit where idVisit = $idVisit ORDER BY Span;";
         $stmt1 = $dbh->query($query);
         while ($rw = $stmt1->fetch(\PDO::FETCH_ASSOC)) {
 
-            if ($rw['Status'] == VisitStatus::Reserved) {
-                $hasReservedSpan = TRUE;
+            // Selected visit span?
+            if ($span == $rw['Span']) {
+                $mySpan = $rw;
             }
 
-            if ($span == $rw['Span']) {
-                $r = $rw;
+            // Reserve span present?
+            if ($rw['Status'] == VisitStatus::Reserved) {
+
+                $hasReservedSpan = TRUE;
+
+                // Is this the future room change date?
+                if (isset($mySpan['Expected_Departure'])) {
+
+                    $expDep = new \DateTime($mySpan['Expected_Departure'])->format('Y-m-d');
+                    $spanStart = new \DateTime($rw['Span_Start'])->format('Y-m-d');
+
+                    if ($expDep == $spanStart) {
+                        $showChangeNow = true;
+                    }
+                }
             }
         }
 
         // span found?
-        if ($r === null) {
-            return ["error" => "<span>No Data for the indicated visit Id span ($idVisit, $idSpan).</span>"];
+        if ($mySpan === null) {
+            return ["error" => "<span>No Data for the indicated visit Id, span: ($idVisit, $idSpan).</span>"];
         }
 
 
         // Change rooms control
-        if ($r['Status'] == VisitStatus::CheckedIn) {
+        if ($mySpan['Status'] == VisitStatus::CheckedIn) {
 
-            $vspanStartDT = new \DateTime($r['Span_Start']);
+            $vspanStartDT = new \DateTime($mySpan['Span_Start']);
 
-            $expDepDT = new \DateTime($r['Expected_Departure']);
+            $expDepDT = new \DateTime($mySpan['Expected_Departure']);
 
             $now = new \DateTime();
             $now->setTime(0, 0, 0);
@@ -944,7 +959,7 @@ class HouseServices {
                 $expDepDT = $now->add(new \DateInterval('P1D'));
             }
 
-            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation']);
+            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $mySpan['idReservation']);
 
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT->setTime($uS->CheckOutTime, 0));
             $curResc = $roomChooser->getSelectedResource();
@@ -955,7 +970,7 @@ class HouseServices {
             $dataArray['curResc'] = [
                 'idResc' => $curResc->getIdResource(),
                 'maxOcc' => $curResc->getMaxOccupants(),
-                'rate' => $r['Pledged_Rate'],
+                'rate' => $mySpan['Pledged_Rate'],
                 'defaultRateCat' => $curResc->getDefaultRoomCategory(),
                 'title' => $curResc->getTitle(),
                 'key' => $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),

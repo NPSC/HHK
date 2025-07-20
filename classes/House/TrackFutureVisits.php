@@ -58,7 +58,7 @@ class TrackFutureVisits {
             }
 
             // Check that the room is available for the visit.
-            if (self::checkRoomAvailability($dbh, $spans[0]['idReservation'], new \DateTime($spans[0]['Expected_Departure']), $pivotDate) === false) {
+            if (self::checkRoomAvailability($dbh, $spans[0]['idReservation'], new \DateTime($spans[0]['Expected_Departure']), $pivotDate, $spans[0]['idResource']) === false) {
 
                 // room is unavailable!
                 $this->lockedVisits[] = $spans[0]['idVisit'];
@@ -117,9 +117,9 @@ class TrackFutureVisits {
             // Set up the future span.
             $visitRs = new VisitRS();
             $visitRs->idVisit->setStoredVal($span[0]['idVisit']);
-            $visitRs->Span->setStoredVal($span[0]['Span_Future']);
+            $visitRs->Span->setStoredVal($span[0]['Future_Span']);
 
-            $futureDeparture = new \DateTime($span[0]['Span_Future_Expected_Departure']);
+            $futureDeparture = new \DateTime($span[0]['Future_Expected_Departure']);
 
             if ($futureDeparture <= $pivotDate) {
 
@@ -142,7 +142,7 @@ class TrackFutureVisits {
                 VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
             }
         }
-        
+
         return;
     }
 
@@ -163,12 +163,10 @@ class TrackFutureVisits {
             v.idReservation,
             v.Span_Start,
             v.Expected_Departure,
-            vf.Span AS Span_Future,
-            vf.Span_Start AS Span_Future_Start,
-            vf.Expected_Departure AS Span_Future_Expected_Departure,
-            rv.idResource
+            v.idResource,
+            vf.Span AS Future_Span,
+            vf.Expected_Departure AS Future_Expected_Departure
         from visit v JOIN visit vf on vf.idVisit = v.idVisit and vf.Status = '" . VisitStatus::Reserved . "' and DATE(vf.Span_Start) < :pivotDate1
-            join reservation rv on rv.idReservation = v.idReservation
 	    where v.`Status` = '" . VisitStatus::Active . "' and DATE(v.Expected_Departure) < :pivotDate2
         ORDER BY vf.idVisit, vf.Span;");
 
@@ -214,7 +212,7 @@ class TrackFutureVisits {
      * @param \DateTime $departureDate
      * @return bool
      */
-    protected static function checkRoomAvailability(\PDO $dbh, $idReservation, \DateTime $arrivalDate, \DateTime $departureDate) {
+    protected static function checkRoomAvailability(\PDO $dbh, $idReservation, \DateTime $arrivalDate, \DateTime $departureDate, $idResource) {
         $uS = Session::getInstance();
 
         // Reservation
@@ -225,7 +223,7 @@ class TrackFutureVisits {
 
             $rescOpen = $reserv->isResourceOpen(
                 $dbh,
-                $reserv->getIdResource(),
+                $idResource,
                 $arrivalDate->format('Y-m-d H:i:s'),
                 $departureDate->format("Y-m-d $uS->CheckOutTime:00:00"),
                 1,
