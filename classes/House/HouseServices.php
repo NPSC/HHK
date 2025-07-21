@@ -929,10 +929,10 @@ class HouseServices {
                 // Is this the future room change date?
                 if (isset($mySpan['Expected_Departure'])) {
 
-                    $expDep = new \DateTime($mySpan['Expected_Departure'])->format('Y-m-d');
-                    $spanStart = new \DateTime($rw['Span_Start'])->format('Y-m-d');
+                    $expDep = new \DateTime($mySpan['Expected_Departure']);
+                    $spanStart = new \DateTime($rw['Span_Start']);
 
-                    if ($expDep == $spanStart) {
+                    if ($expDep->format('Y-m-d') == $spanStart->format('Y-m-d')) {
                         $showChangeNow = true;
                     }
                 }
