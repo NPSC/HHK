@@ -1,5 +1,6 @@
 <?php
 use HHK\CrmExport\Salesforce\SalesforceManager;
+use HHK\sec\SecurityComponent;
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\MemStatus;
 use HHK\sec\WebInit;
@@ -824,7 +825,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
 				<?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
-                <?php if($CmsManager instanceof SalesforceManager){ ?>
+                <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
                     <button type="button" id="viewLog" data-service="SalesForce" class="ui-button ui-corner-all">View Transfer Log</button>
                 <?php } ?>
                             </td>
@@ -861,7 +862,9 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
+        <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
         <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="transferLog"></table></div>
+        <?php } ?>
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
