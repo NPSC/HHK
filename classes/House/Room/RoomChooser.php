@@ -214,7 +214,7 @@ class RoomChooser {
 
         // Add radio buttons for room change options
         $table->addBodyTr(
-            HTMLTable::makeTd('As of:', ['class' => 'tdlabel', 'rowspan' => ($hasReservedSpan ? '1' : '2')])
+            HTMLTable::makeTd('As of:', ['class' => 'tdlabel', 'rowspan' => '2'])
             . HTMLTable::makeTd(
                 HTMLInput::generateMarkup('rpl', ['name' => 'rbReplaceRoom', 'id' => 'rbReplaceRoomrpl', 'type' => 'radio', 'checked' => 'checked'])
                 .HTMLContainer::generateMarkup('label', 'Start of Visit Span: '. $this->checkinDT->format('M d, Y'), [
@@ -224,15 +224,14 @@ class RoomChooser {
                 )
         ));
 
-        if ($hasReservedSpan === false) {
-            $table->addBodyTr(
-                HTMLTable::makeTd(
-                    HTMLInput::generateMarkup('new', ['name' => 'rbReplaceRoom', 'id' => 'rbReplaceRoomnew', 'type' => 'radio'])
-                    . HTMLContainer::generateMarkup('label', 'Date', ['style' => 'margin-left:.3em; margin-right:.3em;', 'for' => 'rbReplaceRoomnew'])
-                    . HTMLInput::generateMarkup('', ['name' => 'resvChangeDate', 'class' => 'hhk-feeskeys'])
-                ),
-            );
-        }
+        $table->addBodyTr(
+            HTMLTable::makeTd(
+                HTMLInput::generateMarkup('new', ['name' => 'rbReplaceRoom', 'id' => 'rbReplaceRoomnew', 'type' => 'radio'])
+                . HTMLContainer::generateMarkup('label', 'Date', ['style' => 'margin-left:.3em; margin-right:.3em;', 'for' => 'rbReplaceRoomnew'])
+                . HTMLInput::generateMarkup('', ['name' => 'resvChangeDate', 'class' => 'hhk-feeskeys'])
+            ),
+        );
+
         $table->addBodyTr(
             HTMLTable::makeTd('To:', ['class' => 'tdlabel'])
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'resvFutureDate', 'class' => 'hhk-feeskeys']))

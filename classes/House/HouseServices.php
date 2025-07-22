@@ -360,7 +360,7 @@ class HouseServices {
                 // Change any expected checkout dates
                 if (isset($post['stayExpCkOut'])) {
 
-                    $replyArray = $visit->changeExpectedCheckoutDates($dbh, $post['stayExpCkOut'], $uS->MaxExpected, $uS->username);
+                    $replyArray = $visit->changeExpectedCheckoutDates($dbh, $post['stayExpCkOut'], $uS->MaxExpected);
 
                     if (isset($replyArray['isChanged']) && $replyArray['isChanged']) {
                         $returnCkdIn = TRUE;
@@ -1645,7 +1645,7 @@ class HouseServices {
         $guestDates[$idGuest] = $newDate;
         $uS = Session::getInstance();
 
-        $result = $visit->changeExpectedCheckoutDates($dbh, $guestDates, $uS->MaxExpected, $uS->username);
+        $result = $visit->changeExpectedCheckoutDates($dbh, $guestDates, $uS->MaxExpected);
 
         return ['success' => $result['message'], 'isChanged' => $result['isChanged']];
     }

@@ -1734,13 +1734,7 @@ where `Deleted` = 0 and `Status` = 'up'
             return ['error'=>"The Move overlaps another reservation or visit.  "];
         }
 
-        // Update the visit records
-//TODO
-        // Update any invoice line dates
-        Invoice::updateInvoiceLineDates($dbh, $idVisit, $startDelta);
 
-        $lastVisit = array_pop($visits);
-        $resvSpanRs = $lastVisit['rs'];
 
         // Reservation
 //TODO
@@ -1748,7 +1742,8 @@ where `Deleted` = 0 and `Status` = 'up'
         if ($reserv->isNew() === FALSE) {
 
             $reserv->setActualArrival($visitRcrds[$ckinSpan]['Actual_Arrival']->format('Y-m-d H:i:s'));
-
+            $actualDepart = $visitRcrds[$ckinSpan]['Actual_Departure']->format('Y-m-d H:i:s');
+            $estDepart = $visitRcrds[$ckinSpan]['Expected_Departure']->format('Y-m-d H:i:s');
 
             if (is_null($actualDepart) === FALSE && $actualDepart != '') {
                 $reserv->setActualDeparture($actualDepart);
@@ -1767,9 +1762,9 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
-        $firstArrival->setTime(intval($uS->CheckInTime), 0, 0);
+        $firstArrival = $visitRcrds[$ckinSpan]['Actual_Arrival']->format('Y-m-d H:i:s');
 
-        $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uS->username);
+        $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $resvSpanRs->idResource->getStoredVal(), $uS->username);
 
         $operatingHours = new OperatingHours($dbh);
         if ($operatingHours->isHouseClosed($firstArrival)) {
@@ -1777,7 +1772,7 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
 
-        return $reply;
+        return ['error'=>$reply];
     }
 
     /**

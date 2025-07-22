@@ -4,6 +4,7 @@ namespace HHK\House\Visit;
 
 use DateTimeInterface;
 use HHK\Exception\RuntimeException;
+use HHK\House\TrackFutureVisits;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
@@ -1694,16 +1695,16 @@ class Visit {
      * @param string $uname
      * @return array
      */
-    public function changeExpectedCheckoutDates(\PDO $dbh, array $guestDates, $maxExpected, $uname) {
+    public function changeExpectedCheckoutDates(\PDO $dbh, array $guestDates, $maxExpected) {
 
         if ($this->getVisitStatus() != VisitStatus::CheckedIn) {
-            return array('message' => '');
+            return ['message' => ''];
         }
 
         $uS = Session::getInstance();
         $isChanged = FALSE;
         $rtnMsg = '';
-        $staysToUpdate = array();
+        $staysToUpdate = [];
 
         $todayDT = new \DateTime();
         $todayDT->setTime(0, 0, 0);
@@ -1715,6 +1716,7 @@ class Visit {
 
         $visitArrivalDT = new \DateTime($this->getArrivalDate());
 
+        // Filter out and update any stay inappropriate dates.
         foreach ($this->stays as $stayRS) {
 
             $guestId = $stayRS->idName->getStoredVal();
@@ -1745,7 +1747,7 @@ class Visit {
                 $coDT = setTimeZone(NULL, $coDate);
                 $coDT->setTime(0, 0, 0);
             } catch (\Exception $ex) {
-                $rtnMsg .= "Something wrong with the Expected Checkout Date: " . $coDate;
+                $rtnMsg .= "Something wrong with the Expected Checkout Date: $coDate";
                 continue;
             }
 
@@ -1788,7 +1790,7 @@ class Visit {
                 continue;
             }
 
-            // Too rar out?
+            // Too far out?
             if ($todayDT->diff($coDT)->days > $maxExpected) {
 
                 $rtnMsg .= "Expected Checkout date cannot be beyond " . $maxExpected . " days from today.  The max days setting can be changed.";
@@ -1809,7 +1811,7 @@ class Visit {
 
             $stayRS->Expected_Co_Date->setNewVal($coDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
             $stayRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-            $stayRS->Updated_By->setNewVal($uname);
+            $stayRS->Updated_By->setNewVal($uS->username);
 
             $staysToUpdate[] = $stayRS;
 
@@ -1833,11 +1835,15 @@ class Visit {
             // Update visit exepected departure
             $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
             $this->visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-            $this->visitRS->Updated_By->setNewVal($uname);
+            $this->visitRS->Updated_By->setNewVal($uS->username);
 
-            $uctr = $this->updateVisitRecord($dbh, $uname);
+            $uctr = $this->updateVisitRecord($dbh, $uS->username);
 
             if ($uctr > 0) {
+
+                // Update any future visit spans
+                $tfv = new TrackFutureVisits();
+                $tfv->updateFutureVisits($dbh, $lastDepartureDT, $this->getIdVisit());
 
                 $rtnMsg .= 'Visit expected departure date changed to: ' . $lastDepartureDT->format('M j, Y') . '.  ';
                 $isChanged = TRUE;
@@ -1845,14 +1851,14 @@ class Visit {
                 // Update reservation expected departure
                 $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
                 $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
-                $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
+                $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
                 // Move other reservations to alternative rooms
-                $rtnMsg .= ReservationSvcs::moveResvAway($dbh, new \DateTime($this->getArrivalDate()), $lastDepartureDT, $this->getidResource(), $uname);
+                $rtnMsg .= ReservationSvcs::moveResvAway($dbh, new \DateTime($this->getArrivalDate()), $lastDepartureDT, $this->getidResource(), $uS->username);
             }
         }
 
-        return array('message'=>$rtnMsg, 'isChanged' => $isChanged);
+        return ['message' => $rtnMsg, 'isChanged' => $isChanged];
     }
 
     /**

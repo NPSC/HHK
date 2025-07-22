@@ -40,9 +40,9 @@ class TrackFutureVisits {
      * @param \DateTime $pivotDate
      * @return bool|int
      */
-    public function updateFutureVisits(\PDO $dbh, \DateTime $pivotDate) {
+    public function updateFutureVisits(\PDO $dbh, \DateTime $pivotDate, $selectedIdVisit = 0) {
 
-        $visits = self::findFutureVisitSpans($dbh, $pivotDate);
+        $visits = self::findFutureVisitSpans($dbh, $pivotDate, $selectedIdVisit);
 
         // Anything returned?
         if (count($visits) < 1) {
@@ -152,9 +152,20 @@ class TrackFutureVisits {
      * @param \DateTime $pivotDate
      * @return array<array>
      */
-    protected static function findFutureVisitSpans(\PDO $dbh, \DateTime $pivotDate) {
+    protected static function findFutureVisitSpans(\PDO $dbh, \DateTime $pivotDate, $selectedIdVisit = 0) {
 
         $visits = [];
+
+        $parms = [
+            ":pivotDate1" => $pivotDate->format('Y-m-d 00-00-00'),
+            ":pivotDate2" => $pivotDate->format('Y-m-d 00-00-00'),
+        ];
+
+        $whereClause = "";
+        if ($selectedIdVisit > 0) {
+            $whereClause = " AND v.idVisit = :idVisit ";
+            $parms[":idVisit"] = $selectedIdVisit;
+        }
 
         // Collect all visits with with the next future span only.
         $stmt = $dbh->prepare("Select
@@ -167,13 +178,10 @@ class TrackFutureVisits {
             vf.Span AS Future_Span,
             vf.Expected_Departure AS Future_Expected_Departure
         from visit v JOIN visit vf on vf.idVisit = v.idVisit and vf.Status = '" . VisitStatus::Reserved . "' and DATE(vf.Span_Start) < :pivotDate1
-	    where v.`Status` = '" . VisitStatus::Active . "' and DATE(v.Expected_Departure) < :pivotDate2
+	    where v.`Status` = '" . VisitStatus::Active . "' and DATE(v.Expected_Departure) < :pivotDate2 $whereClause
         ORDER BY vf.idVisit, vf.Span;");
 
-        $stmt->execute([
-            ":pivotDate1" => $pivotDate->format('Y-m-d 00-00-00'),
-            ":pivotDate2" => $pivotDate->format('Y-m-d 00-00-00'),
-        ]);
+        $stmt->execute($parms);
 
         $idVisit = 0;
         $spans = [];
