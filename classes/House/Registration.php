@@ -163,11 +163,12 @@ from
     invoice_line il
         join
     invoice i ON il.Invoice_Id = i.idInvoice
+    left join invoice ci on i.Delegated_Invoice_Id = ci.idInvoice
 where
     il.Item_Id = ". ItemId::LodgingMOA . "
         and i.Deleted = 0
         and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid . "' " . $where;
+        and (i.Status = '" . InvoiceStatus::Paid . "' or ci.Status = '" . InvoiceStatus::Paid . "') " . $where;
         $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
