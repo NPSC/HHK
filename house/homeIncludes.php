@@ -23,7 +23,7 @@ define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel=
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
-define('SMS_DIALOG_JS', "js/smsDialog-min.js" . JSV);
+define('SMS_DIALOG_JS', "js/smsDialog.js" . JSV);
 define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
 define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
