@@ -7,6 +7,7 @@ use HHK\CrmExport\AbstractExportManager;
 use HHK\CrmExport\Salesforce\Subresponse\AbstractCompositeSubresponse;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\RelLinkType;
+use HHK\TableLog\ExternalAPILog;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
@@ -65,6 +66,8 @@ class SalesforceManager extends AbstractExportManager {
     protected $trace;
     protected $traceData;
 
+    const LOG_SERVICE_NAME = "SalesForce";
+
     /**
      * {@inheritDoc}
      * @see \HHK\CrmExport\AbstractExportManager::__construct()
@@ -78,7 +81,6 @@ class SalesforceManager extends AbstractExportManager {
         $this->searchEndpoint = $this->endPoint . 'search';
         $this->getContactEndpoint = $this->endPoint . 'sobjects/Contact/';
 
-
         $credentials = new Credentials();
         $credentials->setBaseURI($this->endpointURL);
         $credentials->setTokenURI(self::oAuthEndpoint);
@@ -88,7 +90,7 @@ class SalesforceManager extends AbstractExportManager {
         $credentials->setUsername($this->userId);
         $credentials->setPassword(decryptMessage($this->getPassword()));
 
-        $this->webService = new SF_Connector($credentials);
+        $this->webService = new SF_Connector($dbh, $credentials);
     }
 
     /**
@@ -537,19 +539,24 @@ class SalesforceManager extends AbstractExportManager {
 
         $idPsg = 0;
         $batchRows = [];
-        $graphCounter = 0;
-
+        $graphCounter = 1;
+        $batches = [];
 
         foreach ($rows as $r) {
 
             if ($idPsg > 0 && $idPsg != $r['idPsg']) {
 
                 // Do we have enough graphs
-                if ($graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) - 100 >= self::MAX_NODES) {
+                if ($graphCounter >= $this->getMaxPSGsPerBatch() || $graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) >= self::MAX_NODES - 100) {
 
-                    $this->transferBatch($dbh, $batchRows, $linkRelatives);
+                    try{
+                        $batches[] = ["batchBody" => $this->prepareBatch($dbh, $batchRows, $linkRelatives), "batchRows"=>$batchRows];
+                    }catch(\Exception){
+                        
+                    }
+                    
                     $batchRows = [];
-                    $graphCounter = 0;
+                    $graphCounter = 1;
                 }
 
                 $graphCounter++;
@@ -564,8 +571,14 @@ class SalesforceManager extends AbstractExportManager {
 
         // Anything left?
         if (count($batchRows) > 0) {
-            $this->transferBatch($dbh, $batchRows, $linkRelatives);
+            try{
+                $batches[] = ["batchBody"=>$this->prepareBatch($dbh, $batchRows, $linkRelatives), "batchRows"=>$batchRows];
+            }catch(\Exception){
+
+            }
         }
+
+        $this->sendbatches($dbh, $batches);
 
         // Create an HTML table containing the results
         $result['table'] = CreateMarkupFromDB::generateHTML_Table($this->transferResult, 'tblrpt');
@@ -573,11 +586,22 @@ class SalesforceManager extends AbstractExportManager {
         if ($this->trace) {
             $result['trace'] = $this->traceData;
         }
+        
+        if(count($this->errorResult) > 0){
+            $result["errors"] = $this->errorResult;
+        }
 
         return $result;
     }
 
-    protected function transferBatch(\PDO $dbh, array $rows, $linkRelatives = true) {
+    /**
+     * Prepare a single batch and return an array formatted for an SF request
+     * @param \PDO $dbh
+     * @param array $rows
+     * @param mixed $linkRelatives
+     * @return array{graphs: array|bool}
+     */
+    protected function prepareBatch(\PDO $dbh, array $rows, $linkRelatives = true) {
 
         $psgGuests = [];    // list of guests in PSG
         $psgGraphs = [];  // The collection of psg graphs
@@ -622,35 +646,73 @@ class SalesforceManager extends AbstractExportManager {
         // Anything to transfer?
         if (count($psgGraphs) > 0) {
 
-            $body = [
+            return [
                 "graphs" => $psgGraphs,
             ];
 
-            // Show request trace?
+            
+        }else{
+            throw new RuntimeException("Empty batch");
+        }
+
+    }
+
+    /**
+     * Prepare and send an array of batches to SF
+     * @param \PDO $dbh
+     * @param array $batches
+     * @return void
+     */
+    protected function sendbatches(\PDO $dbh, array $batches){
+        $batchBodies = [];
+        foreach($batches as $batchId=>$batch){
+            if($batch["batchBody"]){
+                $batchBodies[$batchId] = $batch["batchBody"];
+            }
+        }
+
+        // Show request trace?
             if ($this->trace) {
-                $this->traceData .= "<h4>Request</h4><pre>" . json_encode($body, JSON_PRETTY_PRINT) . "</pre>";
+                $sentAt = new \DateTime();
+                $this->traceData .= "<p>Transfer initiated at: " . $sentAt->format(DATE_W3C) . "</p>";
             }
 
             // Transfer this package to SF API
             try {
-                $graphsResult = $this->webService->postUrl($this->endPoint . "composite/graph", $body);
+                $batchResults = $this->webService->postUrlAsync($this->endPoint . "composite/graph", $batchBodies);
 
-                // Trace response
                 if ($this->trace) {
-                    $this->traceData .= "<h4>Response</h4><pre>" .\json_encode($graphsResult, JSON_PRETTY_PRINT) . "</pre>";
+                    $completedAt = new \DateTime();
+                    $this->traceData .= "<p>Transfer completed at: " . $completedAt->format(DATE_W3C) . "</p>";
+                    $this->traceData .= "<p>Elapsed Time: " . $completedAt->getTimestamp() - $sentAt->getTimestamp() . " seconds</p>";
+                    $this->traceData .= "<p>Total requests sent: " . count($batchResults['batchResults']) . "</p>";
                 }
 
-                $this->processGraphsResult($dbh, $graphsResult, $rows);
+                    foreach($batchResults['batchResults'] as $batchId=>$batchResult){
+                        if ($this->trace) {
+                            $this->traceData .= "<hr class='my-3'><h4>Request</h4><pre>" . json_encode($batchBodies[$batchId], JSON_PRETTY_PRINT) . "</pre>";
+                        }
+
+                        if(isset($batchResult['success'])){
+                            if ($this->trace) {
+                                $this->traceData .= "<h4>Response</h4><pre>" . json_encode($batchResult['success'], JSON_PRETTY_PRINT) . "</pre>";
+                            }
+                            $this->processGraphsResult($dbh, $batchResult['success'], $batches[$batchId]["batchRows"]);
+                        }else if (isset($batchResult["error"])){
+                            $this->errorResult[] = $batchResult["error"];
+                            if ($this->trace) {
+                                $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($batchResult['error'], JSON_PRETTY_PRINT) . "</pre>";
+                            }
+                        }
+                    }
 
             } catch (\RuntimeException $ex) {
                 $this->errorResult[] = $ex->getMessage();
 
                 if ($this->trace) {
-                    $this->traceData .= "<h4>Errors</h4><pre>" .\json_encode($this->errorResult, JSON_PRETTY_PRINT) . "</pre>";
+                    $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($ex->getMessage(), JSON_PRETTY_PRINT) . "</pre>";
                 }
             }
-        }
-
     }
 
     /**
@@ -1184,6 +1246,10 @@ class SalesforceManager extends AbstractExportManager {
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getApiVersion(), array('name' => '_txtapiVersion', 'size' => '10')))
             );
 
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Maximum PSGs per batch', array())
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getMaxPSGsPerBatch(), array('name' => '_txtmaxPSGsPerBatch', 'size' => '10')) . "<span class='ml-2'>Salesforce enforced limit: " . self::MAX_PAYLOAD_GRAPHS . "</span>")
+            );
         return $tbl->generateMarkup();
 
     }
@@ -1250,6 +1316,7 @@ class SalesforceManager extends AbstractExportManager {
             '_txtclientId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtapiVersion' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            '_txtmaxPSGsPerBatch' => FILTER_SANITIZE_NUMBER_INT
 
         ];
 
@@ -1278,7 +1345,7 @@ class SalesforceManager extends AbstractExportManager {
             $pw = $post['_txtclientsecret'];
 
             if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                $crmRs->clientSecret->setnewVal(encryptMessage($pw));
+                $crmRs->clientSecret->setNewVal(encryptMessage($pw));
             }
 
         }
@@ -1301,6 +1368,13 @@ class SalesforceManager extends AbstractExportManager {
         // API Version
         if (isset($post['_txtapiVersion'])) {
             $crmRs->apiVersion->setNewVal($post['_txtapiVersion']);
+        }
+
+        if(isset($post['_txtmaxPSGsPerBatch'])) {
+            $maxPSGs = intval($post['_txtmaxPSGsPerBatch']);
+            $crmRs->retryCount->setNewVal($maxPSGs > 0 && $maxPSGs < self::MAX_PAYLOAD_GRAPHS ? $maxPSGs:self::MAX_PAYLOAD_GRAPHS);
+        }else{
+            $crmRs->retryCount->setNewVal(self::MAX_PAYLOAD_GRAPHS);
         }
 
         $crmRs->Updated_By->setNewVal($username);
@@ -1441,6 +1515,10 @@ class SalesforceManager extends AbstractExportManager {
         $result .= $this->saveTypeLists($dbh);
         return $result;
 
+    }
+
+    public function getLogServiceName(){
+        return self::LOG_SERVICE_NAME;
     }
 }
 

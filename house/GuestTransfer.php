@@ -1,4 +1,6 @@
 <?php
+use HHK\CrmExport\Salesforce\SalesforceManager;
+use HHK\sec\SecurityComponent;
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\MemStatus;
 use HHK\sec\WebInit;
@@ -789,7 +791,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display:none; clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog mb-3" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
                    <table style="clear:left;float: left;">
                         <tr>
@@ -823,6 +825,9 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
 				<?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
+                <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
+                    <button type="button" id="viewLog" data-service="SalesForce" class="ui-button ui-corner-all">View Transfer Log</button>
+                <?php } ?>
                             </td>
                         </tr>
                     </table>
@@ -832,14 +837,16 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
             <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div id="localrecords">
-                    <div style="margin-bottom:.8em; float:left;">
+                    <div style="margin-bottom:.8em;" class="hhk-flex">
                         <?php echo $settingstable . $searchTabel; ?>
                     </div>
-                    <div id="divTable" style="clear:left;">
+                    
+                    <div id="divTable">
                         <?php echo $dataTable; ?>
                     </div>
                 </div>
                 <div id="divMembers" style="margin-top:10px;"></div>
+                <div id="divError"></div>
             </div>
 
             <div id="divPrintButton" style="clear:both; display:none;margin-left:20px;font-size:0.9em; align-items: center;" class="hhk-flex py-3">
@@ -855,13 +862,16 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
-
+        <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
+        <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="transferLog"></table></div>
+        <?php } ?>
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
 	    <input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
         <input id="cmsTitle" type="hidden" value="<?php echo $CmsManager->getServiceTitle(); ?>"/>
+        <input id="cmsLogService" type="hidden" value="<?php echo $CmsManager->getLogServiceName(); ?>"/>
         <input id="username" type="hidden" value="<?php echo $uS->username; ?>" />
 
     </body>

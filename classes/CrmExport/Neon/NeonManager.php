@@ -31,6 +31,8 @@ class NeonManager extends AbstractExportManager {
 
     const SearchViewName = 'vguest_search_neon';
 
+    const LOG_SERVICE_NAME = "neon";
+
     protected $neonWebService;
 
     public function searchMembers ($searchCriteria) {
@@ -2190,5 +2192,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     }
 
+    public function getLogServiceName(){
+        return self::LOG_SERVICE_NAME;
+    }
 }
 
