@@ -1296,14 +1296,6 @@ if ($uS->UseIncidentReports) {
                 $("div#printArea").printArea();
             });
         }
-        $('.ckdate').datepicker({
-            yearRange: '<?php echo $uS->StartYear; ?>:+01',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
 
         <?php echo $filter->getTimePeriodScript(); ?>;
 

@@ -582,14 +582,9 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
         var delCofClass = '<?php echo $delCofListClass; ?>';
 
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
-        $('.ckdate').datepicker({
-            yearRange: '<?php echo $uS->StartYear; ?>:+01',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
+        
+        <?php echo $filter->getTimePeriodScript(); ?>
+
         $('#mainTabs').tabs({
         	beforeActivate: function (event, ui) {
                 if (ui.newTab.prop('id') === 'licof') {
@@ -630,21 +625,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
         });
         $('#mainTabs').tabs("option", "active", tabReturn);
 
-        $('#selCalendar').change(function () {
-            if ($(this).val() && $(this).val() != '19') {
-                $('#selIntMonth').hide();
-            } else {
-                $('#selIntMonth').show();
-            }
-            if ($(this).val() && $(this).val() != '18') {
-                $('.dates').hide();
-                $('#selIntYear').show();
-            } else {
-                $('.dates').show();
-                $('#selIntYear').hide();
-            }
-        });
-        $('#selCalendar').change();
         // disappear the pop-up room chooser.
         $(document).mousedown(function (event) {
             var target = $(event.target);

@@ -1103,14 +1103,6 @@ $(document).ready(function () {
         })
     });
 
-    $('.ckdate').datepicker({
-        yearRange: '-07:+01',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        numberOfMonths: 1,
-        dateFormat: 'M d, yy'
-    });
 
     $('#btnRelat').click(function () {
         getRelate($('#txtRelat').val());

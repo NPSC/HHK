@@ -1,5 +1,6 @@
 <?php
 use HHK\CrmExport\Salesforce\SalesforceManager;
+use HHK\House\Report\ReportFilter;
 use HHK\sec\SecurityComponent;
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\MemStatus;
@@ -752,9 +753,9 @@ if ($noRecordsMsg != '') {
 
 
 // Setups for the page.
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), ['name' => 'selIntMonth[]', 'size' => '5', 'multiple' => 'multiple']);
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year.' ', '2010', $uS->fy_diff_Months, FALSE), ['name' => 'selIntYear', 'size' => '5', 'style'=>'min-width:4em;']);
-$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), ['name' => 'selCalendar', 'size' => count($calOpts)]);
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 
 ?>
 <!DOCTYPE html>
@@ -785,6 +786,11 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
+        <script stype="text/javascript">
+            $(document).ready(function(){
+                <?php echo $filter->getTimePeriodScript(); ?>
+            });
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -793,34 +799,15 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog mb-3" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
-                   <table style="clear:left;float: left;">
-                        <tr>
-                            <th colspan="3">Time Period</th>
-                        </tr>
-                        <tr>
-                            <th>Interval</th>
-                            <th style="min-width:100px; ">Month</th>
-                            <th>Year</th>
-                        </tr>
-                        <tr>
-                            <td><?php echo $calSelector; ?></td>
-                            <td><?php echo $monthSelector; ?></td>
-                            <td><?php echo $yearSelector; ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <span class="dates" style="margin-right:.3em;">Start:</span>
-                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
-                                <span class="dates" style="margin-right:.3em;">End:</span>
-                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
-                        </tr>
-                    </table>
-                    <table style="float:left;margin-left:10px;">
-                        <tr>
-                            <th><?php echo $CmsManager->getServiceTitle(); ?> Last Name Search</th>
-                            <td><input id="txtRSearch" type="text" /></td>
-                        </tr>
-                    </table>
+                    <div class="hhk-flex">
+                        <?php echo $timePeriodMarkup; ?>
+                        <table class="ml-3">
+                            <tr>
+                                <th><?php echo $CmsManager->getServiceTitle(); ?> Last Name Search</th>
+                                <td><input id="txtRSearch" type="text" /></td>
+                            </tr>
+                        </table>
+                    </div>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>

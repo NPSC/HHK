@@ -148,30 +148,7 @@ $(document).ready(function() {
     var makeTable = '<?php echo $mkTable; ?>';
     $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
-    $('.ckdate').datepicker({
-        yearRange: '<?php echo $uS->StartYear; ?>:+01',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        numberOfMonths: 1,
-        dateFormat: 'M d, yy'
-    });
-
-    $('#selCalendar').change(function () {
-        $('#selIntYear').show();
-        if ($(this).val() && $(this).val() != '19') {
-            $('#selIntMonth').hide();
-        } else {
-            $('#selIntMonth').show();
-        }
-        if ($(this).val() && $(this).val() != '18') {
-            $('.dates').hide();
-        } else {
-            $('.dates').show();
-            $('#selIntYear').hide();
-        }
-    });
-    $('#selCalendar').change();
+    <?php echo $filter->getTimePeriodScript(); ?>
 
     $('#btnByGuest, #btnByRoom').button();
 
@@ -179,17 +156,6 @@ $(document).ready(function() {
 
         $('div#printArea').css('display', 'block');
 
-//        $('#tblrpt').dataTable({
-//        'columnDefs': [
-//            {'targets': columnDefs,
-//             'type': 'date',
-//             'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-//            }
-//         ],
-//            "displayLength": 50,
-//            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-//            "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
-//        });
         $('#printButton').button().click(function() {
             $("div#printArea").printArea();
         });

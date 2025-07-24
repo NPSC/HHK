@@ -929,29 +929,8 @@ $(document).ready(function() {
 
     $("form[name=glform] .ui-checkboxradio-icon").removeClass('ui-state-hover');
 
-    $('.ckdate').datepicker({
-        yearRange: '<?php echo $uS->StartYear; ?>:+01',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        numberOfMonths: 1,
-        dateFormat: 'M d, yy'
-    });
-    $('#selCalendar').change(function () {
-        if ($(this).val() && $(this).val() != '19') {
-            $('#selIntMonth').hide();
-        } else {
-            $('#selIntMonth').show();
-        }
-        if ($(this).val() && $(this).val() != '18') {
-            $('.dates').hide();
-            $('#selIntYear').show();
-        } else {
-            $('.dates').show();
-            $('#selIntYear').hide();
-        }
-    });
-    $('#selCalendar').change();
+    <?php echo $filter->getTimePeriodScript(); ?>
+    
     $("#setBillDate").dialog({
         autoOpen: false,
         resizable: true,
