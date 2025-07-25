@@ -308,7 +308,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
     $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
     $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($statusList, ''),
-        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple']);
+        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '7', 'multiple' => 'multiple']);
 
     $payTypes = [];
 
@@ -320,7 +320,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
 
     $payTypeSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($payTypes, ''),
-        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple']);
+        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '5', 'multiple' => 'multiple']);
 
     // Count unpaid invoices
 
@@ -436,7 +436,7 @@ if($uS->useOnlineReferral){
             <form autocomplete="off">
                 <h2 class="hhk-flex" id="page-title-row">
                 	<span class="mb-3 mb-md-0"><?php echo $wInit->pageHeading;?></span>
-                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $uS->PreviousNights) . RoomReport::getGlobalStaysCounter($dbh) . RoomReport::getGlobalRoomOccupancy($dbh); ?>
+                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $uS->PreviousNights) . RoomReport::getGlobalStaysCounter($dbh) . RoomReport::getCurrentRoomOccupancyMkup($dbh); ?>
                 	<span id="name-search" class="d-none d-md-inline">Name Search:
                     	<input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
                 	</span>

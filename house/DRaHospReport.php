@@ -418,37 +418,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'disp
             $('#btnExcel').show();
         }
 
-        $('.ckdate').datepicker({
-            yearRange: '<?php echo $uS->StartYear; ?>:+01',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
-
-        $('#selCalendar').change(function () {
-
-            if ($(this).val() && $(this).val() != '19') {
-                $('#selIntMonth').hide();
-            } else {
-                $('#selIntMonth').show();
-            }
-
-            if ($(this).val() && $(this).val() == '22') {
-                $('#selIntYear').hide();
-            } else {
-                $('#selIntYear').show();
-            }
-
-            if ($(this).val() && $(this).val() != '18') {
-                $('.dates').hide();
-            } else {
-                $('.dates').show();
-                $('#selIntYear').hide();
-            }
-        });
-        $('#selCalendar').change();
+        <?php echo $filter->getTimePeriodScript(); ?>
     });
  </script>
     </head>

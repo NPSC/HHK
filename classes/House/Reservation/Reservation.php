@@ -1265,8 +1265,7 @@ WHERE
             'selVisitFee' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
         ];
 
-        $post = filter_input_array(INPUT_POST, $args);
-
+        $post = filter_var_array($this->reserveData->getRawPost(), $args);
 
         // Get the rate category
         if (isset($post['selRateCategory']) && (SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN) || $uS->RateChangeAuth === FALSE)) {

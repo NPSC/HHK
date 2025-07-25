@@ -785,9 +785,9 @@ if (isset($_POST['btnTaxSave'])) {
         if (isset($_POST['txttItem'][$i['idItem']])) {
 
             $desc = filter_var($_POST['txttItem'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $glCode = filter_var($_POST['txttGlCode'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $percentage = filter_var($_POST['txttPercentage'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $maxDays = filter_var($_POST['txttMaxDays'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $glCode = $uS->useGLCodes ? filter_var($_POST['txttGlCode'][$i['idItem']], FILTER_SANITIZE_FULL_SPECIAL_CHARS):"";
+            $percentage = filter_var($_POST['txttPercentage'][$i['idItem']], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            $maxDays = filter_var($_POST['txttMaxDays'][$i['idItem']], FILTER_SANITIZE_NUMBER_INT);
             $last = $i['Last_Order_Id'];
             $first = $i['First_Order_Id'];
 
@@ -824,7 +824,12 @@ if (isset($_POST['btnTaxSave'])) {
                 }
             } else {
 
-                $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode'" . " where `idItem` = " . $i['idItem']);
+                $stmt = $dbh->prepare("update `item` set `Description` = :description, `Gl_Code` = :glCode where `idItem` = :idItem");
+                $stmt->execute([
+                    ":description"=>$desc,
+                    ":glCode"=>$glCode ? $glCode:"",
+                    ":idItem"=>$i["idItem"]
+                ]);
             }
         }
     }
@@ -833,11 +838,18 @@ if (isset($_POST['btnTaxSave'])) {
     if (isset($_POST['txttItem'][0]) && $_POST['txttItem'][0] != '') {
 
         $desc = filter_var($_POST['txttItem'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $glCode = filter_var($_POST['txttGlCode'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $maxDays = filter_var($_POST['txttMaxDays'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $glCode = $uS->useGLCodes ? filter_var($_POST['txttGlCode'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS): "";
+        $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        $maxDays = filter_var($_POST['txttMaxDays'][0], FILTER_SANITIZE_NUMBER_INT);
 
-        $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) Values ('$desc', '$glCode', '$percentage', '$maxDays', $nextVisitId)");
+        $stmt = $dbh->prepare("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) Values (:description, :glCode, :percentage, :maxDays, :nextVisitId)");
+        $stmt->execute([
+            ":description"=>$desc,
+            ":glCode"=>$glCode ? $glCode:"",
+            ":percentage"=>$percentage,
+            ":maxDays"=>$maxDays,
+            ":nextVisitId"=>$nextVisitId
+        ]);
 
         if ($dbh->lastInsertId() > 0) {
             $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '" . ItemType::Tax . "')");
@@ -1695,7 +1707,7 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
     $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
     $ptTbl = new HTMLTable();
-    $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('GL Code'));
+    $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code'):""));
 
     foreach ($payTypes as $r) {
 
@@ -1714,7 +1726,7 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
         $ptTbl->addBodyTr(
             HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), ['style' => 'text-align:center;'])
             . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], ['name' => 'ptdesc[' . $r[0] . ']', 'size' => '16']))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($payMethods[$r[2]], ['name' => 'ptGlCode[' . $r[2] . ']', 'size' => '19']))
+            . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup($payMethods[$r[2]], ['name' => 'ptGlCode[' . $r[2] . ']', 'size' => '19'])):"")
         );
     }
 
@@ -2051,7 +2063,7 @@ $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
 $itbl = new HTMLTable();
 
-$ths = HTMLTable::makeTh('Description') . HTMLTable::makeTh('GL Code');
+$ths = HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code'):"");
 $colCounter = [];
 
 // Make tax columns
@@ -2079,21 +2091,21 @@ foreach ($items as $d) {
     $trs = '';
 
     if ($d['idItem'] == ItemId::AddnlCharge) {
-        $trs .= HTMLTable::makeTd('(Additional Charges)') . HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'],
+        $trs .= HTMLTable::makeTd('(Additional Charges)') . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'],
             [
                 'name' => 'txtGlCode[' . $d['idItem'] . ']'
             ]
-        ));
+        )):"");
     } else {
         $trs .= HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'],
             [
                 'name' => 'txtItem[' . $d['idItem'] . ']'
             ]
-        )) . HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'],
+        )) . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'],
                         [
                             'name' => 'txtGlCode[' . $d['idItem'] . ']'
                         ]
-                    ));
+                    )):"");
     }
 
     foreach ($colCounter as $c) {
@@ -2154,12 +2166,12 @@ foreach ($titems as $d) {
             'name' => 'txttItem[' . $d['idItem'] . ']',
             'size' => '18'
         ]
-    )) . HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'],
+    )) . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'],
                     [
                         'name' => 'txttGlCode[' . $d['idItem'] . ']',
                         'size' => '18'
                     ]
-                )) . HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3),
+                )):"") . HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3),
                     [
                         'name' => 'txttPercentage[' . $d['idItem'] . ']',
                         'size' => '8'
@@ -2179,12 +2191,12 @@ $tiTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('',
         'placeholder' => 'New Tax',
         'size' => '18'
     ]
-)) . HTMLTable::makeTd(HTMLInput::generateMarkup('',
+)) . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup('',
                 [
                     'name' => 'txttGlCode[0]',
                     'size' => '18'
                 ]
-            )) . HTMLTable::makeTd(HTMLInput::generateMarkup('',
+            )):"") . HTMLTable::makeTd(HTMLInput::generateMarkup('',
                 [
                     'name' => 'txttPercentage[0]',
                     'size' => '8'
@@ -2201,7 +2213,7 @@ $tiTbl->addHeaderTr(HTMLTable::makeTh($hotTaxes . ' Taxes' . (count($titems) > $
         'colspan' => '6'
     ]
 ));
-$tiTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('GL Code') . HTMLTable::makeTh('Percentage') . HTMLTable::makeTh('Max Days') . HTMLTable::makeTh('First Visit') . HTMLTable::makeTh('Last Visit'));
+$tiTbl->addHeaderTr(HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code'):"") . HTMLTable::makeTh('Percentage') . HTMLTable::makeTh('Max Days') . HTMLTable::makeTh('First Visit') . HTMLTable::makeTh('Last Visit'));
 
 $taxTable = $tiTbl->generateMarkup(
     [

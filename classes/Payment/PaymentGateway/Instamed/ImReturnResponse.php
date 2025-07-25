@@ -38,7 +38,8 @@ class ImReturnResponse extends AbstractCreditResponse {
     }
 
     public function getPaymentStatusCode() {
-        return PaymentStatusCode::Retrn;
+        //return PaymentStatusCode::Retrn;
+        return $this->paymentStatusCode;
     }
 
     public function getStatus() {
@@ -66,6 +67,12 @@ class ImReturnResponse extends AbstractCreditResponse {
         return $this->response->getErrorMessage();
     }
 
+    /**
+     * Summary of receiptMarkup
+     * @param \PDO $dbh
+     * @param mixed $tbl
+     * @return void
+     */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         if ($this->isPartialPayment()) {

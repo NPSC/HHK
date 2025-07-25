@@ -286,9 +286,9 @@ class ReportFilter {
         if (isset($this->calendarOptions[self::DATES])) {
             $tbl->addBodyTr(HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('span', 'Start:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
-                . HTMLInput::generateMarkup($this->selectedStart, array('name'=>"stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
+                . HTMLInput::generateMarkup($this->reportStart, array('type'=>'date', 'name'=>"stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 . HTMLContainer::generateMarkup('span', 'End:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
-                . HTMLInput::generateMarkup($this->selectedEnd, array('name'=>"enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
+                . HTMLInput::generateMarkup($this->reportEnd, array('type'=>'date', 'name'=>"enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 , array('colspan'=>'3')
                 ), array('class'=>'dates'));
         }
@@ -311,7 +311,7 @@ changeMonth: true,
 changeYear: true,
 autoSize: true,
 numberOfMonths: 1,
-dateFormat: 'M d, yy'
+dateFormat: 'yy-mm-dd'
 });";
         }
 

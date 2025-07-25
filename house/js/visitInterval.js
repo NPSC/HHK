@@ -67,7 +67,7 @@ $(document).ready(function () {
         changeYear: true,
         autoSize: true,
         numberOfMonths: 1,
-        dateFormat: 'M d, yy'
+        dateFormat: 'yy-mm-dd'
     });;
 
 

@@ -42,6 +42,42 @@ CREATE TABLE if not exists `activity` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
+-- -----------------------------------------------------
+-- Table `api_access_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `api_access_log` (
+  `idLog` int(11) NOT NULL AUTO_INCREMENT,
+  `requestPath` varchar(255) NOT NULL,
+  `responseCode` varchar(3) NOT NULL DEFAULT '',
+  `request` JSON NOT NULL DEFAULT '{}',
+  `response` JSON NOT NULL DEFAULT '{}',
+  `oauth_client_id` varchar(45) NOT NULL DEFAULT '',
+  `oauth_user_id` varchar(45) NOT NULL DEFAULT '',
+  `oauth_access_token_id` varchar(100) NOT NULL DEFAULT '',
+  `ip_address` varchar(45) NOT NULL DEFAULT '',
+  `Timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idLog`),
+  INDEX `idx_oauth_client_id` (`oauth_client_id`),
+  INDEX `idx_oauth_access_token_id` (`oauth_access_token_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1;
+
+
+-- -----------------------------------------------------
+-- Table `external_api_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `external_api_log` (
+  `idLog` int(11) NOT NULL AUTO_INCREMENT,
+  `Log_Type` varchar(45) NOT NULL DEFAULT '',
+  `Sub_Type` varchar(45) NOT NULL DEFAULT '',
+  `requestMethod` varchar(10) NOT NULL DEFAULT '',
+  `endpoint` varchar(512) NOT NULL,
+  `responseCode` varchar(3) NOT NULL DEFAULT '',
+  `request` LONGTEXT NOT NULL DEFAULT '',
+  `response` LONGTEXT NOT NULL DEFAULT '',
+  `username` varchar(255) DEFAULT '',
+  `Timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idLog`)
+) ENGINE=InnoDB AUTO_INCREMENT=1;
 
 -- -----------------------------------------------------
 -- Table `attribute`
@@ -2388,6 +2424,58 @@ CREATE TABLE if not exists `w_user_tokens` (
 
 
 -- -----------------------------------------------------
+-- Table `oauth_clients`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `oauth_clients` (
+  `client_id` VARCHAR(32) NOT NULL,
+  `idName` INT NULL,
+  `name` VARCHAR(45) NULL,
+  `secret` VARCHAR(100) NULL,
+  `revoked` TINYINT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`client_id`),
+  INDEX `indx_idName` (`idName` ASC));
+
+-- -----------------------------------------------------
+-- Table `oauth_client_scopes`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `oauth_client_scopes` (
+  `oauth_client` VARCHAR(32) NOT NULL,
+  `oauth_scope` VARCHAR(100) NOT NULL,
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`oauth_client`, `oauth_scope`),
+  CONSTRAINT `fk_oauth_client`
+    FOREIGN KEY (`oauth_client`)
+    REFERENCES `oauth_clients` (`client_id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION);
+
+
+-- -----------------------------------------------------
+-- Table `oauth_access_tokens`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `oauth_access_tokens` (
+  `id` varchar(100) NOT NULL,
+  `idName` INT NULL,
+  `client_id` VARCHAR(32) NOT NULL,
+  `name` VARCHAR(45) NULL,
+  `scopes` TEXT NULL,
+  `revoked` TINYINT NULL,
+  `expires_at` DATETIME NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `indx_idName` (`idName` ASC),
+  CONSTRAINT `fk_client_id`
+    FOREIGN KEY (`client_id`)
+    REFERENCES `oauth_clients` (`client_id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+);
+
+-- -----------------------------------------------------
 -- Table `web_sites`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `web_sites` (
@@ -2507,6 +2595,15 @@ ALTER TABLE `payment_info_check`
 CREATE INDEX IF NOT EXISTS `ix_Payment_Id` ON payment_invoice(Payment_Id);
 CREATE INDEX IF NOT EXISTS `ix_Invoice_Id` ON payment_invoice(Invoice_Id);
 
+
+ALTER TABLE `oauth_access_tokens` 
+    ADD INDEX IF NOT EXISTS `fk_client_id_idx` (`client_id` ASC);
+
+ALTER TABLE `oauth_access_tokens` 
+    ADD CONSTRAINT `fk_client_id`
+      FOREIGN KEY IF NOT EXISTS (`client_id`) REFERENCES `oauth_clients` (`client_id`)
+      ON DELETE CASCADE
+      ON UPDATE NO ACTION;
 
 ALTER TABLE `psg`
     ADD UNIQUE INDEX IF NOT EXISTS `idPatient_UNIQUE` (`idPatient` ASC);

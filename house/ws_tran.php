@@ -2,12 +2,15 @@
 
 use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\Salesforce\SalesforceManager;
+use HHK\CrmExport\Salesforce\SF_Connector;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
 use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
+use HHK\TableLog\ExternalAPILog;
 
 /**
  * ws_tran.php
@@ -30,6 +33,7 @@ if (is_null($transfer = AbstractExportManager::factory($dbh, $uS->ContactManager
 }
 
 $events = [];
+$c = "";
 
 if (filter_has_var(INPUT_GET,"cmd")) {
     $c = filter_input(INPUT_GET, "cmd", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -260,6 +264,23 @@ try {
 
             break;
 
+        case 'viewLog':
+
+            $arguments = [
+                'service' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            ];
+            $filtered = filter_input_array(INPUT_GET, $arguments);
+            
+            $allowedServices = [SalesforceManager::LOG_SERVICE_NAME];
+
+            if(in_array($filtered["service"], $allowedServices)){
+                $events = ExternalAPILog::getLog($dbh, $filtered["service"]);
+            }else{
+                throw new RuntimeException("Invalid service name: " . $filtered["service"]);
+            }
+
+            break;
+
         default:
             $events = ["error" => "Bad Command"];
     }
@@ -274,6 +295,7 @@ try {
 
 
 if (is_array($events)) {
+    header("content-type: application/json");
     echo json_encode($events);
 } else {
     echo $events;

@@ -3,9 +3,6 @@
 namespace HHK\Notification\SMS\SimpleTexting;
 
 use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\ServerException;
 use HHK\Exception\SmsException;
 use HHK\Notification\SMS\AbstractMessages;
 
@@ -73,7 +70,7 @@ Class Messages extends AbstractMessages {
             } else if(is_array($respArr) && isset($respArr['details'])){
                 throw new SmsException("Error getting messages: " . $respArr["details"]);
             }else{
-                throw new SmsException("Error getting messages: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase() . $e->getResponse()->getBody());
+                throw new SmsException("Error getting messages: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
     }

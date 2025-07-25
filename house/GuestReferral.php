@@ -1,6 +1,5 @@
 <?php
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Exception\RuntimeException;

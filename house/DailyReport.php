@@ -1,7 +1,6 @@
 <?php
 use HHK\sec\WebInit;
 use HHK\sec\Session;
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\Labels;
 

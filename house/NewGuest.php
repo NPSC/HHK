@@ -256,30 +256,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var makeTable = '<?php echo $mkTable; ?>';
-        $('.ckdate').datepicker({
-            yearRange: '<?php echo $uS->StartYear; ?>:+01',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
-        $('#selCalendar').change(function () {
-            $('#selIntYear').show();
-            if ($(this).val() && $(this).val() != '19') {
-                $('#selIntMonth').hide();
-            } else {
-                $('#selIntMonth').show();
-            }
-            if ($(this).val() && $(this).val() != '18') {
-                $('.dates').hide();
-            } else {
-                $('.dates').show();
-                $('#selIntYear').hide();
-            }
-        });
-
-        $('#selCalendar').change();
+        <?php echo $filter->getTimePeriodScript(); ?>
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
         $('#cbColClearAll').click(function () {
