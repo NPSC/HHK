@@ -341,6 +341,8 @@ function showChangeRoom(gname, id, idVisit, span) {
 
             let sDate = new Date(data.visitSpan.start)
             let expEndDT = new Date(data.visitSpan.end);
+            let showChangeNow = data.visitSpan.showChangeNow;
+            let resvIdResource = data.visitSpan.reservedIdResource;
             const now = new Date();
 
             let $diagbox = $('#chgRoomDialog');
@@ -386,7 +388,6 @@ function showChangeRoom(gname, id, idVisit, span) {
                 } else if ($(this).val() == 'rpl') {
                     $('#trFutureDate').hide();
                     $changeEndDate.datepicker('setDate', null);
-                    $changeDate.datepicker('setDate', null);
                     getVisitRoomList(idVisit, span, sDate, $selResource);
 				}
 			});
@@ -405,6 +406,7 @@ function showChangeRoom(gname, id, idVisit, span) {
                     //$changeEndDate.datepicker('option', 'setDate', null);
                     $('#trFutureDate').hide();
                 }
+
                 getVisitRoomList(idVisit, span, $changeDate.datepicker("getDate"), $selResource);
 
 			});
@@ -436,6 +438,18 @@ function showChangeRoom(gname, id, idVisit, span) {
 					$diagbox.find('#trUseDefaultRate').hide();
 				}
             });
+
+            if (showChangeNow && resvIdResource > 0) {
+                // lock the room to the future room
+                $selResource.val(resvIdResource).prop('disabled', true);
+
+                // Lock the radiobutton to New Room.
+                $('input[id="rbReplaceRoomnew"]').prop('checked', true);
+                $replaceRoom.prop('disabled', true);
+
+                // lock the datepicker
+                $changeDate.prop('disabled', true);
+            }
 
             $selResource.change();
 

@@ -202,12 +202,10 @@ class RoomChooser {
     /**
      * Summary of createChangeRoomsMarkup
      * @param \PDO $dbh
-     * @param int $idGuest
      * @param bool $isAuthorized
-     * @param bool $hasReservedSpan
      * @return string
      */
-    public function createChangeRoomsMarkup(\PDO $dbh, $idGuest, $isAuthorized, $hasReservedSpan) {
+    public function createChangeRoomsMarkup(\PDO $dbh, $isAuthorized) {
 
         $table = new HTMLTable();
         $table->addHeaderTr(HTMLTable::makeTh('Change Rooms from: ' . $this->selectedResource->getTitle(), ['colspan' => '2']));
@@ -222,7 +220,8 @@ class RoomChooser {
                     'for' => 'rbReplaceRoomrpl',
                     'title' => 'The visit span is the date of the last room change, rate change, or start of visit.',]
                 )
-        ));
+            )
+        );
 
         $table->addBodyTr(
             HTMLTable::makeTd(
@@ -235,8 +234,7 @@ class RoomChooser {
         $table->addBodyTr(
             HTMLTable::makeTd('To:', ['class' => 'tdlabel'])
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'resvFutureDate', 'class' => 'hhk-feeskeys']))
-            ,
-            ['id' => 'trFutureDate', 'style' => 'display:none']
+            , ['id' => 'trFutureDate', 'style' => 'display:none']
         );
 
         $table->addBodyTr(
@@ -266,14 +264,15 @@ class RoomChooser {
         $rescs = $this->findResources($dbh, $isAuthorized, FALSE);
 
         // Include blank option
-        $rmBigEnough[] = array(0 => '0', 1 => '');
+        $rmBigEnough[] = [0 => '0', 1 => ''];
 
         foreach ($rescs as $r) {
-            $rmBigEnough[] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
+            $rmBigEnough[] = [$r->getIdResource(), $r->getTitle(), $r->optGroup];
         }
 
         return HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($rmBigEnough, '0', FALSE), array('id' => 'selResource', 'name' => 'selResource', 'class' => 'hhk-chgroom'));
+                HTMLSelector::doOptionsMkup($rmBigEnough, '0', FALSE),
+            ['id' => 'selResource', 'name' => 'selResource', 'class' => 'hhk-chgroom']);
 
     }
 
@@ -293,7 +292,7 @@ class RoomChooser {
         $uS = Session::getInstance();
 
         $resources = $this->resv->getAvailableResources();
-        $resArray = array();
+        $resArray = [];
 
         foreach ($resources as $rc) {
 
@@ -303,7 +302,7 @@ class RoomChooser {
                 $assignedRate = $rc->getRate($uS->guestLookups['Static_Room_Rate']);
             }
 
-            $resArray[$rc->getIdResource()] = array(
+            $resArray[$rc->getIdResource()] = [
                 "maxOcc" => $rc->getMaxOccupants(),
                 "rate" => $assignedRate,
                 'defaultRateCat' => $rc->getDefaultRoomCategory(),
@@ -311,11 +310,11 @@ class RoomChooser {
                 'key' => $rc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),
                 'status' => 'a',
                 'merchant' => $rc->getMerchant(),
-            );
+            ];
         }
 
         // Blank
-        $resArray['0'] = array(
+        $resArray['0'] = [
             "maxOcc" => 0,
             "rate" => ($this->resv->getFixedRoomRate() ? $this->resv->getFixedRoomRate() : 0),
             'defaultRateCat' => '',
@@ -323,7 +322,7 @@ class RoomChooser {
             'key' => 0,
             'status' => '',
             'merchant' => '',
-        );
+        ];
 
         return $resArray;
     }

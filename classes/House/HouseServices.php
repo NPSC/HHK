@@ -904,6 +904,7 @@ class HouseServices {
         $span = intval($idSpan, 10);
         $hasReservedSpan = FALSE;
         $showChangeNow = false;
+        $resvIdResc = 0;
         $mySpan = null;
 
         // Check if the visit and span are valid.
@@ -912,7 +913,7 @@ class HouseServices {
         }
 
         // Look at all the spans for this visit.
-        $query = "select Span, Span_Start, Expected_Departure, Status, idReservation, Pledged_Rate from visit where idVisit = $idVisit ORDER BY Span;";
+        $query = "select Span, Span_Start, Expected_Departure, Status, idReservation, idResource, Pledged_Rate from visit where idVisit = $idVisit ORDER BY Span;";
         $stmt1 = $dbh->query($query);
         while ($rw = $stmt1->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -927,13 +928,15 @@ class HouseServices {
                 $hasReservedSpan = TRUE;
 
                 // Is this the future room change date?
+                // $mySpan may  not be set yet.
                 if (isset($mySpan['Expected_Departure'])) {
 
                     $expDep = new \DateTime($mySpan['Expected_Departure']);
-                    $spanStart = new \DateTime($rw['Span_Start']);
+                    $resvSpanStart = new \DateTime($rw['Span_Start']);
 
-                    if ($expDep->format('Y-m-d') == $spanStart->format('Y-m-d')) {
+                    if ($expDep->format('Y-m-d') == $resvSpanStart->format('Y-m-d')) {
                         $showChangeNow = true;
+                        $resvIdResc = $rw['idResource'];
                     }
                 }
             }
@@ -964,7 +967,7 @@ class HouseServices {
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT->setTime($uS->CheckOutTime, 0));
             $curResc = $roomChooser->getSelectedResource();
 
-            $dataArray['success'] = $roomChooser->createChangeRoomsMarkup($dbh, $idGuest, $isAdmin, $hasReservedSpan);
+            $dataArray['success'] = $roomChooser->createChangeRoomsMarkup($dbh, $isAdmin);
 
             $dataArray['rooms'] = $roomChooser->makeRoomsArray();
             $dataArray['curResc'] = [
@@ -985,7 +988,9 @@ class HouseServices {
                 'span' => $span,
                 'isAuthorized' => $isAdmin,
                 'idGuest' => $idGuest,
-                'hasReservedSpan' => $hasReservedSpan
+                'hasReservedSpan' => $hasReservedSpan,
+                'showChangeNow' => $showChangeNow,
+                'reservedIdResource' => $resvIdResc,
             ];
 
         } else {

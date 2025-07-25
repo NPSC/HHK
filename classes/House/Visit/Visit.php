@@ -469,7 +469,15 @@ class Visit {
                 }
 
             } else {
-                return "Error - Change Rooms failed: The new room is busy or missing necessary attributes.  ";
+
+                // check for changing to reserved future room
+                if ($this->moveToReservedSpan($dbh, $this->getSpan())) {
+                    $reserv->setIdResource($resc->getIdResource());
+                    $reserv->saveReservation($dbh, $this->getIdRegistration(), $uS->username);
+
+                } else {
+                    return "Error - Change Rooms failed: The new room is busy or missing necessary attributes.  ";
+                }
             }
         }
 
@@ -623,6 +631,44 @@ class Visit {
         }
 
         return $rtnMessage;
+    }
+
+    protected function moveToReservedSpan(\PDO $dbh, $span) {
+        $delCount = 0;
+
+        // Look at all the spans for this visit.
+        $query = "select Span, Span_Start, Expected_Departure, Status, idReservation, idResource, Pledged_Rate from visit where idVisit = " . $this->getIdVisit() . " ORDER BY Span;";
+        $stmt1 = $dbh->query($query);
+        while ($rw = $stmt1->fetch(\PDO::FETCH_ASSOC)) {
+
+            // Selected visit span?
+            if ($span == $rw['Span']) {
+                $mySpan = $rw;
+            }
+
+            // Reserve span present?
+            if ($rw['Status'] == VisitStatus::Reserved) {
+
+                // Is this the future room change date?
+                // $mySpan may  not be set yet.
+                if (isset($mySpan['Expected_Departure'])) {
+
+                    $expDep = new \DateTime($mySpan['Expected_Departure']);
+                    $resvSpanStart = new \DateTime($rw['Span_Start']);
+
+                    if ($expDep->format('Y-m-d') == $resvSpanStart->format('Y-m-d')) {
+                        // Delete reserved span.
+                        $delCount = $dbh->exec("Delete from visit where idVisit = " . $this->getIdVisit() . " AND Span = " . $rw['Span']);
+                    }
+                }
+            }
+        }
+
+        if ($delCount > 0) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
