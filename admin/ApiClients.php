@@ -5,10 +5,10 @@ use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
 use HHK\sec\Labels;
 
 /**
- * VolListing.php
+ * APIClients.php
  *
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2025 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
