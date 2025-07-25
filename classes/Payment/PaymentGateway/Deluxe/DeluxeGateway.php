@@ -622,7 +622,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 
 
         //find payment >= amount that hasn't been used for a refund yet. Payments used for return amount already can't be used again.
-        $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) WHEN rp.Is_Refund = 1 THEN 0 ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment
+        $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) WHEN rp.Is_Refund = 1 THEN 0 ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment, p.Timestamp
 from payment p join payment_auth pa on p.idPayment = pa.idPayment left join payment rp on p.idPayment = rp.parent_idPayment
 left join payment_invoice pi on p.idPayment = pi.Payment_Id
 left join invoice i on pi.Invoice_Id = i.idInvoice
