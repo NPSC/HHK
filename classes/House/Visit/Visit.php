@@ -458,7 +458,7 @@ class Visit {
                     count($this->stays),
                     ['room', 'rmtroom', 'part'],
                     FALSE,
-                    SecurityComponent::is_Authorized("guestadmin")
+                    true
                 );
 
             if ($rescOpen) {

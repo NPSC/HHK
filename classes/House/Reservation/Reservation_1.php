@@ -576,7 +576,7 @@ class Reservation_1 {
         if($idPsg > 0 && $this->getIdReservation() > 0) {
             $dbh->exec("update `link_note` set linkType = '" . Note::PsgLink . "', idLink = " . $idPsg . " where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
         }
-        
+
 
         // Delete
         $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
@@ -943,6 +943,8 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
      */
     protected function findRescsInUse(\PDO $dbh, $expectedArrival, $expectedDeparture, $omitSelf = FALSE) {
 
+        $uS = Session::getInstance();
+
         // Deal with non-cleaning days
         $this->setNonCleaningDays($dbh);
         $this->startHolidays = new US_Holidays($dbh, date('Y', strtotime($expectedArrival)));
@@ -950,8 +952,6 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         $arr = $this->adjustArrivalDate($expectedArrival);
         $dep = $this->adjustDepartureDate($expectedDeparture);
-
-        $uS = Session::getInstance();
 
         $omitTxt = '';
         $omitVisit = '';
@@ -969,7 +969,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
             $query = "select r.idResource "
                 . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
     union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
-    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
+    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit and (case when v.Status not in ('" . VisitStatus::Active . "', '" . VisitStatus::Reserved . "') then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
     ifnull(AddDate(DATE(v.Span_End), -1), case when DATE(now()) >= DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) >= DATE('$arr')";
 
         } else {
@@ -977,7 +977,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
             $query = "select r.idResource "
                 . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
     union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
-    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit  and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
+    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit  and (case when v.Status not in ('" . VisitStatus::Active . "', '" . VisitStatus::Reserved . "') then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
     ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE('$arr')";
         }
 
@@ -2043,7 +2043,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
         if($this->getIdReservation() > 0){
             $stmt = $dbh->query("select ld.idDocument from link_doc ld join document d on ld.idDocument = d.idDocument where ld.idReservation = " . $this->getIdReservation() . " and d.Type = 'json' and d.Category = 'form'");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
+
             foreach($rows as $row){
                 $doc = new FormDocument();
                 if($doc->loadDocument($dbh, $row['idDocument'])){

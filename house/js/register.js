@@ -343,6 +343,7 @@ function showChangeRoom(gname, id, idVisit, span) {
             let expEndDT = new Date(data.visitSpan.end);
             let showChangeNow = data.visitSpan.showChangeNow;
             let resvIdResource = data.visitSpan.reservedIdResource;
+            let resvTitle = data.visitSpan.reservedTitle;
             const now = new Date();
 
             let $diagbox = $('#chgRoomDialog');
@@ -429,7 +430,8 @@ function showChangeRoom(gname, id, idVisit, span) {
             	}
 
             	// Room default rate message.
-            	if ((data.curResc.defaultRateCat == '' && rooms[selResource].defaultRateCat != '')
+                if (rooms[selResource] &&
+                    (data.curResc.defaultRateCat == '' && rooms[selResource].defaultRateCat != '')
             		|| (data.curResc.defaultRateCat != ''  && rooms[selResource].defaultRateCat != '' && data.curResc.defaultRateCat != rooms[selResource].defaultRateCat)) {
 
 					$diagbox.find('#trUseDefaultRate').show();
@@ -441,6 +443,8 @@ function showChangeRoom(gname, id, idVisit, span) {
 
             if (showChangeNow && resvIdResource > 0) {
                 // lock the room to the future room
+                // Add reserved idResource to the selector control
+                $selResource.append($('<option>', { value: resvIdResource, text: resvTitle}));
                 $selResource.val(resvIdResource).prop('disabled', true);
 
                 // Lock the radiobutton to New Room.
@@ -499,7 +503,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 	            // Open visit edit window?
 	            if (data.openvisitviewer) {
-					editVisit('', 0, idVisit, data.openvisitviewer);
+					editVisit('', 0, 0, idVisit, data.openvisitviewer);
 				}
 
 	            if (data.msg && data.msg != '') {

@@ -905,6 +905,7 @@ class HouseServices {
         $hasReservedSpan = FALSE;
         $showChangeNow = false;
         $resvIdResc = 0;
+        $resvTitle = 'Reserved Room';
         $mySpan = null;
 
         // Check if the visit and span are valid.
@@ -913,7 +914,22 @@ class HouseServices {
         }
 
         // Look at all the spans for this visit.
-        $query = "select Span, Span_Start, Expected_Departure, Status, idReservation, idResource, Pledged_Rate from visit where idVisit = $idVisit ORDER BY Span;";
+//        $query = "select Span, Span_Start, Expected_Departure, Status, idReservation, idResource, Pledged_Rate from visit where idVisit = $idVisit ORDER BY Span;";
+        $query = "SELECT
+    v.Span,
+    v.Span_Start,
+    v.Expected_Departure,
+    v.`Status`,
+    v.idReservation,
+    v.idResource,
+    v.Pledged_Rate,
+    ifnull(r.Title, 'R') as `Resource_Title`
+FROM
+    visit v join `resource` r on v.idResource = r.idResource
+WHERE
+    idVisit = $idVisit
+ORDER BY Span;";
+
         $stmt1 = $dbh->query($query);
         while ($rw = $stmt1->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -937,6 +953,7 @@ class HouseServices {
                     if ($expDep->format('Y-m-d') == $resvSpanStart->format('Y-m-d')) {
                         $showChangeNow = true;
                         $resvIdResc = $rw['idResource'];
+                        $resvTitle = $rw['Resource_Title'];
                     }
                 }
             }
@@ -954,11 +971,12 @@ class HouseServices {
             $vspanStartDT = new \DateTime($mySpan['Span_Start']);
 
             $expDepDT = new \DateTime($mySpan['Expected_Departure']);
+            $expDepDT->setTime(0, 0, 0);
 
             $now = new \DateTime();
             $now->setTime(0, 0, 0);
 
-            if ($expDepDT < $now) {
+            if ($expDepDT <= $now) {
                 $expDepDT = $now->add(new \DateInterval('P1D'));
             }
 
@@ -991,6 +1009,7 @@ class HouseServices {
                 'hasReservedSpan' => $hasReservedSpan,
                 'showChangeNow' => $showChangeNow,
                 'reservedIdResource' => $resvIdResc,
+                'reservedTitle' => $resvTitle,
             ];
 
         } else {

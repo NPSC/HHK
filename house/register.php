@@ -564,7 +564,7 @@ $showWlNotes = ($uS->UseWLnotes) ? TRUE : FALSE;
         <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
         <div id="vehDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
 
-        <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
+        <input  type="hidden" id="isGuestAdmin" value='<?php echo SecurityComponent::is_Authorized($uS->username); ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="pmtStatus" value='<?php echo $paymentStatus; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
