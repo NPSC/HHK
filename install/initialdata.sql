@@ -244,6 +244,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('labels_category', 'mf', 'MomentFormats', '', '', 40),
 ('labels_category', 'ck', 'Checkin', '', '', 50),
 ('labels_category', 'pc', 'PaymentChooser', '', '', 60),
+('labels_category', 'rc', 'Receipt', '', '', 65),
 ('labels_category', 'mt', 'MemberType', '', '', 70),
 ('labels_category', 'g', 'GuestEdit', '', '', 80),
 ('labels_category', 'r', 'ResourceBuilder', '', '', 90),
@@ -825,6 +826,9 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('RoomCharges',	'Room Charges',	's', 'pc', '', ''),
 ('Credit',	'Credit',	's', 'pc', '', ''),
 ('ExtraPayment', 'Extra Payment', 's', 'pc', '', ''),
+
+('cashTendered', 'Cash Tendered', 's', 'rc', '', ''),
+('changeGiven', 'Change', 's', 'rc', '', ''),
 
 
 ('patient','Patient','s','mt','','Default: Patient'),

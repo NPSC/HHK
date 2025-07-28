@@ -52,14 +52,16 @@ class CashResponse extends AbstractPaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         if ($this->getAmount() != 0) {
+            //include amount tendered for sale receipts
+            if ($this->getAmountTendered() >= $this->getAmount() && $this->refund === false) {
+                $change = $this->getAmountTendered() - $this->getAmount();
+                $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('Reciept', 'cashTendered', 'Cash Tendered') . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmountTendered()), 2)));
+                $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('Receipt', 'changeGiven', 'Change') . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($change), 2)));
+            }
+
             $tbl->addBodyTr(HTMLTable::makeTd("Cash Paid:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
         }
 
-        if ($this->getAmountTendered() >= $this->getAmount()) {
-            $change = $this->getAmountTendered() - $this->getAmount();
-            $tbl->addBodyTr(HTMLTable::makeTd("Cash Tendered:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmountTendered()), 2)));
-            $tbl->addBodyTr(HTMLTable::makeTd("Change:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($change), 2)));
-        }
     }
 
 }

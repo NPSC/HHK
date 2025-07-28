@@ -270,6 +270,7 @@ class Receipt {
         $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
+        $payResp->setRefund(true);
         $payResp->receiptMarkup($dbh, $tbl);
 
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>'receiptContent']), array('class'=>"mb-3"));

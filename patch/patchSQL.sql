@@ -15,3 +15,8 @@ CALL new_webpage("ApiClients.php", 2, "API Users", 0, "a", "35", "", "p", "", ""
 -- add Amount_Tendered for cash receipts
 ALTER TABLE `trans`
 ADD COLUMN IF NOT EXISTS `Amount_Tendered` decimal(10,2) not null default '0.00' AFTER `Amount`;
+
+-- add labels
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('labels_category', 'rc', 'Receipt', '65');
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('cashTendered', 'Cash Tendered', 's', 'rc', 'Default: Cash Tendered');
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('changeGiven', 'Change', 's', 'rc', 'Default: Change');
