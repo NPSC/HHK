@@ -14,6 +14,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS};
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\Exception\PaymentException;
+use HHK\Tables\Payment\TransRS;
 
 
 /**
@@ -878,7 +879,9 @@ class PaymentSvcs {
         switch ($payRs->idPayment_Method->getStoredVal()) {
 
             case PaymentMethod::Cash:
-                $payResp = new CashResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber());
+                $transRS = Transaction::getTransactionRS($dbh, $payRs->idTrans->getStoredVal());
+
+                $payResp = new CashResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Notes, $transRS->Amount_Tendered->getStoredVal());
                 $payResp->paymentRs = $payRs;
                 break;
 

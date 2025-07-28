@@ -78,5 +78,25 @@ class Transaction {
 
     }
 
+    /**
+     * Load Transaction result set based on $idTrans
+     * @param \PDO $dbh
+     * @param int $idTrans
+     * @return TransRS
+     */
+    public static function getTransactionRS(\PDO $dbh, int $idTrans){
+        $transRS = new TransRS();
+        $transRS->idTrans->setStoredVal($idTrans);
+        $transs = EditRS::select($dbh, $transRS, array($transRS->idTrans));
+
+        if (count($transs) != 1) {
+             return $transRS;
+        }
+
+        EditRS::loadRow($transs[0], $transRS);
+
+        return $transRS;
+    }
+
 }
 ?>
