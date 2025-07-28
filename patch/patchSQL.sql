@@ -10,3 +10,8 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 ('useAPI', 'false', 'b', 'hf', '', 'Enable API Access', '', 1);
 
 CALL new_webpage("ApiClients.php", 2, "API Users", 0, "a", "35", "", "p", "", "", CURRENT_TIMESTAMP(), "mm");
+
+
+-- add Amount_Tendered for cash receipts
+ALTER TABLE `trans`
+ADD COLUMN IF NOT EXISTS `Amount_Tendered` decimal(10,2) not null default '0.00' AFTER `Amount`;

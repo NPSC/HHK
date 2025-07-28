@@ -2139,6 +2139,7 @@ CREATE TABLE if not exists `trans` (
   `Gateway_Ref` varchar(45) NOT NULL DEFAULT '',
   `Payment_Status` varchar(15) NOT NULL DEFAULT '',
   `Amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `Amount_Tendered` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Date_Entered` datetime DEFAULT NULL,
   `Entered_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
