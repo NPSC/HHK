@@ -510,8 +510,10 @@ class ActiveReservation extends Reservation {
 
             $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php?rid=' . $resv->getIdReservation(), $resv->getIdGuest());
 
+            $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+
             // Relate Invoice to Reservation
-            if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
+            if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0 && $resv->isActive($reservStatuses)) {
                 $dbh->exec("insert ignore into `reservation_invoice` Values(".$resv->getIdReservation()."," .$this->payResult->getIdInvoice() . ")");
             }
 

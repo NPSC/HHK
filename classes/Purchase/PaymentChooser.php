@@ -551,7 +551,7 @@ class PaymentChooser {
 
         $excessPays = readGenLookupsPDO($dbh, 'ExcessPays');
 
-        unset($excessPays[ExcessPay::Hold]);
+        //unset($excessPays[ExcessPay::Hold]);
         unset($excessPays[ExcessPay::Ignore]);
 
         if($uS->UseRebook){

@@ -1,6 +1,5 @@
 <?php
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\House\ResourceView;
 use HHK\SysConst\RoomState;

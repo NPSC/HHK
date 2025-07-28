@@ -1,7 +1,6 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\House\Report\RoomReport;
