@@ -17,7 +17,7 @@ class CalendarStatusColors {
     const CheckingInToday = 'citod';
     const CheckingInTomorrow = 'citom';
     const CheckedOut = 'co';
-    public const string CheckingOutToday = 'cotod';
+    public const CheckingOutToday = 'cotod';
     const CheckingOutTomorrow = 'cotom';
     const CheckedInPastExpectedDepart = 'copast';
     const Waitlist = 'w';

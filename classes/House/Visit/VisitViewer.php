@@ -1706,7 +1706,7 @@ where `Deleted` = 0 and `Status` = 'up'
             $spanEndDt->sub($endInterval);
 
             // Reserved Span Check room availability.
-            if (self::checkRoomAvailability($dbh, $spanEndDt, $visitRcrds[$resvSpan]['Expected_Departure'], $resvSpanRs) === false) {
+            if (self::checkRoomAvailability($dbh, $spanEndDt, new DateTime($visitRcrds[$resvSpan]['Expected_Departure']), $resvSpanRs) === false) {
                 return ['error' => 'The Date range is not available'];
             }
 
@@ -1715,7 +1715,7 @@ where `Deleted` = 0 and `Status` = 'up'
             $spanEndDt->add($endInterval);
 
             // Checked-in span Check room availability.
-            if (self::checkRoomAvailability($dbh, $visitRcrds[$ckinSpan]['Actual_Arrival'], $spanEndDt, $ckinSpanRs) === false) {
+            if (self::checkRoomAvailability($dbh, new DateTime($visitRcrds[$ckinSpan]['Actual_Arrival']), $spanEndDt, $ckinSpanRs) === false) {
                 return ['error' => 'The Date range is not available'];
             }
         }
@@ -1756,9 +1756,9 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         if (is_null($actualDepart) === FALSE && $actualDepart != '') {
-            $lastDepart = new \DateTime($actualDepart);
+            $lastDepart = new DateTime($actualDepart);
         } else {
-            $lastDepart = new \DateTime($estDepart);
+            $lastDepart = new DateTime($estDepart);
         }
 
         $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
