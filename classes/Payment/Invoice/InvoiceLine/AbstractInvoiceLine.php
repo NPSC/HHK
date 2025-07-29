@@ -6,6 +6,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Payment\InvoiceLineRS;
 use HHK\Purchase\Item;
 use HHK\SysConst\{InvoiceLineType};
+use HHK\SysConst\ItemId;
 
 /**
  * AbstractInvoiceLine.php
@@ -170,12 +171,24 @@ abstract class AbstractInvoiceLine {
      * @return void
      */
     public function createNewLine(Item $item, $quantity, $str1 = '', $str2 = '') {
-
+        $description = "";
+        switch($item->getIdItem()){
+            case ItemId::AddnlCharge:
+            case ItemId::Discount:
+                $description = $str1;
+                break;
+            case ItemId::LodgingMOA:
+                $description = $item->getDescription() . " " . $str1;
+                break;
+            default:
+                $description = $item->getDescription();
+        }
+        
         $this->var = $str1;
         $this->setItemId($item->getIdItem());
         $this->setPrice($item->getUnitPrice());
         $this->setQuantity($quantity);
-        $this->setDescription($item->getIdItem() == \HHK\SysConst\ItemId::AddnlCharge || $item->getIdItem() == \HHK\SysConst\ItemId::Discount ? $str1 : $item->getDescription());
+        $this->setDescription($description);
 
     }
 

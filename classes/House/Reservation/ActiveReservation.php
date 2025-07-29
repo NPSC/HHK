@@ -520,7 +520,7 @@ class ActiveReservation extends Reservation {
 
             // Relate Invoice to Reservation
             if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
-                if(isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::Hold){
+                if(isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::Hold){ //if putting overpayment towards general MOA, only link prepayment MOA payout to reservation
                     $dbh->exec("insert ignore into `reservation_invoice_line` select '".$resv->getIdReservation()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "' and il.Type_Id = '" . InvoiceLineType::Reimburse . "'");
                 }else{
                     $dbh->exec("insert ignore into `reservation_invoice_line` select '".$resv->getIdReservation()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "'");
