@@ -10,3 +10,13 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 ('useAPI', 'false', 'b', 'hf', '', 'Enable API Access', '', 1);
 
 CALL new_webpage("ApiClients.php", 2, "API Users", 0, "a", "35", "", "p", "", "", CURRENT_TIMESTAMP(), "mm");
+
+
+INSERT IGNORE INTO reservation_invoice_line (Reservation_Id, Invoice_Line_Id)
+SELECT
+  ri.Reservation_Id,
+  il.idInvoice_Line
+FROM
+  reservation_invoice ri
+JOIN
+  invoice_line il ON ri.Invoice_id = il.Invoice_Id and il.Item_Id = 10;

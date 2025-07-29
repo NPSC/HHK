@@ -2533,11 +2533,11 @@ CREATE or Replace VIEW `vreservation_events` AS
 			        AND invoice_line.Item_Id = 10
 			        AND invoice_line.Deleted = 0
 	            join
-	    	reservation_invoice ON invoice.idInvoice = reservation_invoice.Invoice_Id
+	    	reservation_invoice_line ON invoice_line.idInvoice_Line = reservation_invoice_line.Invoice_Line_Id
 		    where
 		        invoice.Deleted = 0
 		        AND invoice.Order_Number = 0
-		        AND reservation_invoice.Reservation_Id = r.idReservation
+		        AND reservation_invoice_line.Reservation_Id = r.idReservation
 		        AND invoice.`Status` = 'p'), 0)
 		ELSE 0 END as `PrePaymt`,
 		ifnull(na.Set_Incomplete, 0) as `Incomplete_Address`
@@ -2807,7 +2807,7 @@ CREATE or replace VIEW `vresv_patient` AS
 			        join
 			    invoice i ON il.Invoice_Id = i.idInvoice  and i.Deleted = 0 and i.Status = 'p'
 					join
-				reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
+				reservation_invoice_line ri ON il.idInvoice_Line = ri.Invoice_Line_Id
 			where
 			    il.Item_Id = 10
 					AND i.Order_Number = 0

@@ -240,9 +240,7 @@ where
             join
         invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = " . ItemId::LodgingMOA . " AND il.Deleted = 0
             join
-    	reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
-            join
-        reservation r ON r.idReservation = ri.Reservation_Id
+    	reservation_invoice_line ri ON il.idInvoice_line = ri.Invoice_Line_Id
     where
         i.Deleted = 0
         AND i.Order_Number = 0
