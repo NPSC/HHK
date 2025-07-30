@@ -83,7 +83,14 @@ if(isset($_POST["undo"])){
 if(isset($_POST["startImport"]) && isset($_POST["limit"])){
     $limit = intval(filter_var($_POST["limit"], FILTER_SANITIZE_NUMBER_INT), 10);
     $import = new Import($dbh);
-    $return = $import->startImport($limit);
+	try{
+		$return = $import->startImport($limit);
+	}catch(PDOException $e){
+		$return = ["error"=>$e->getMessage() . "; File: ".$e->getFile() . " line " . $e->getLine(), "trace"=>$e->getTrace()];
+	}catch(\Exception $e){
+		$return = ["error"=>$e->getMessage()];
+	}
+    
     if(is_array($return)){
         echo json_encode($return);
         exit;
@@ -210,7 +217,11 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
     							$("#startImport").show();
     						}
     					}else if(data.error){
+						    $("#progressBar .progressValue").css("width", "0%");
+    						$("#progressBar .progressValueText").text("0%");
+    						$("#startImport").show();
     						console.log(data.error);
+							flagAlertMessage(data.error, "error");
     					}
     				}
 				});

@@ -86,11 +86,11 @@ class Import {
         
 
 
-        $batchquery = "UPDATE `". Upload::TBL_NAME."` set status = 'processing', workerId = '$workerId' where status = 'pending' order by `patientID` LIMIT $limit;";
+        $batchquery = "UPDATE `". Upload::TBL_NAME."` set status = 'processing', workerId = '$workerId' where status = 'pending' order by `MembershipId` LIMIT $limit;";
         $this->dbh->exec($batchquery);
         
         //$query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and status = 'pending' group by i.importId order by i.`patientID` LIMIT $limit;";
-        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and i.status = 'processing' and i.workerId = '$workerId' group by i.importId order by i.`patientID`";
+        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and i.status = 'processing' and i.workerId = '$workerId' group by i.importId order by i.`MembershipId`";
         $stmt = $this->dbh->query($query);
 
         $numRead = $stmt->rowCount();
@@ -102,32 +102,53 @@ class Import {
         $this->importedGuests = 0;
         $idGuest = 0;
 
-        $patId = '';
+        $memId = '';
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             //TODO: Customize for each import
 
+            if($memId == $r["MembershipId"]){ //skip duplicates
+                $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = '1', status = 'done' where `importId` = " . $r['importId']);
+                continue;
+            }
+
             //$guests = [];
             try{
                 $this->dbh->beginTransaction();
 
-               //loop through guests
-                $patient = [
-                    "FirstName" => $r['patientFirstName'],
-                    "Middle" => $r['patientMiddleName'],
-                    "LastName" => $r['patientLastName'],
-                    "Email" =>"",
-                    "Phone" =>"",
-                    "Address" => "",
+               //map gender
+               $gender = "";
+               switch(strtolower($r["Gender"])){
+                    case "m":
+                        $gender = "male";
+                        break;
+                    case "f":
+                        $gender = "female";
+                        break;
+                    default:
+                        $gender = "";
+               }
+
+               //set up guest
+                $guest = [
+                    "FirstName" => $r['FirstName'],
+                    "Middle" => "",
+                    "LastName" => $r['LastName'],
+                    "Email" =>$r["EmailAddress"],
+                    "Phone" =>$r["Phone"],
+                    "Address" => $r["Address"],
                     "Address2" => "",
-                    "City" => "",
+                    "City" => $r["City"],
                     "County" => "",
-                    "State" => "",
-                    "ZipCode"=>"",
+                    "State" => $r["State"],
+                    "ZipCode"=>$r["ZipCode"],
                     "Hospital"=>"",
+                    "Gender"=>$r["Gender"],
                     "importId" => $r["importId"],
                 ];
+
+                $this->addGuest($guest);
 
                 //if($r["patientID"] == $r["guestID"] || strtolower($r["relationship"]) == "patient"){
                     //include extra info
@@ -135,22 +156,22 @@ class Import {
                     //"BirthDate" => "",
                     //"Gender" => $r["PatientGender"],
                     //"mediaSource" => $r["PatientMarketingOptIn"],
-                    $patient["Address"] = $r["address1"];
-                    $patient["Address2"] = $r["address2"];
-                    $patient["City"] = $r["city"];
-                    $patient["County"] = "";
-                    $patient["State"] = $r["state"];
-                    $patient["ZipCode"] = $r["zipCode"];
-                    $patient["Phone"] = $r["homeNumber"];
-                    $patient["Mobile"] = $r["cellNumber"];
-                    $patient["Email"] = $r["eMail"];
+                    //$patient["Address"] = $r["address1"];
+                    //$patient["Address2"] = $r["address2"];
+                    //$patient["City"] = $r["city"];
+                    //$patient["County"] = "";
+                    //$patient["State"] = $r["state"];
+                    //$patient["ZipCode"] = $r["zipCode"];
+                    //$patient["Phone"] = $r["homeNumber"];
+                    //$patient["Mobile"] = $r["cellNumber"];
+                    //$patient["Email"] = $r["eMail"];
                     //"Diagnosis"=>"",
                     //"PrimaryGuest" => $r["PatientPrimaryGuest"],
                     //"Banned" => $r["PatientBanned"],
                     //"Hospital" =>$r["Hospital"],
                     
                 //}
-
+/*
                 $patArray = $this->addPatient($patient, false);
 
                 if(!($r["patientID"] == $r["guestID"] || strtolower($r["relationship"]) == "patient")){
@@ -185,7 +206,7 @@ class Import {
                 if($noteText !== ""){
                     LinkNote::save($this->dbh, $noteText, $patArray['psg']->getIdPsg(), Note::PsgLink, "", $uS->username, $uS->ConcatVisitNotes);
                 }
-
+*/
                 /*
                 if($patient == false){
                     $guest = [
@@ -414,8 +435,8 @@ class Import {
             }
 
             // phone
-            $homePhone = $this->formatPhone($r['Phone']);
-            $cellPhone = $this->formatPhone($r['Mobile']);
+            $homePhone = isset($r['Phone']) ? $this->formatPhone($r['Phone']) : "";
+            $cellPhone = isset($r['Mobile']) ? $this->formatPhone($r['Mobile']) : "";
             //$workPhone = $this->formatPhone($r['Work']);
 
             $post = array(
