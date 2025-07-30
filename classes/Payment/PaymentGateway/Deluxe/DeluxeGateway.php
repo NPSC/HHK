@@ -626,8 +626,7 @@ class DeluxeGateway extends AbstractPaymentGateway
 from payment p join payment_auth pa on p.idPayment = pa.idPayment left join payment rp on p.idPayment = rp.parent_idPayment
 left join payment_invoice pi on p.idPayment = pi.Payment_Id
 left join invoice i on pi.Invoice_Id = i.idInvoice
-left join reservation_invoice ri on i.idInvoice = ri.Invoice_id and ri.Reservation_Id = $resvId
-where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by ri.Reservation_Id IS NULL asc, idPayment desc;");
+where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by idPayment desc;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

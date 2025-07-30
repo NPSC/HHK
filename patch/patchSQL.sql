@@ -12,6 +12,7 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 CALL new_webpage("ApiClients.php", 2, "API Users", 0, "a", "35", "", "p", "", "", CURRENT_TIMESTAMP(), "mm");
 
 
+
 -- add Amount_Tendered for cash receipts
 ALTER TABLE `trans`
 ADD COLUMN IF NOT EXISTS `Amount_Tendered` decimal(10,2) not null default '0.00' AFTER `Amount`;
@@ -20,3 +21,15 @@ ADD COLUMN IF NOT EXISTS `Amount_Tendered` decimal(10,2) not null default '0.00'
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('labels_category', 'rc', 'Receipt', '65');
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('cashTendered', 'Cash Tendered', 's', 'rc', 'Default: Cash Tendered');
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('changeGiven', 'Change', 's', 'rc', 'Default: Change');
+
+
+-- move prepayment relationship from invoice to invoice_line
+INSERT IGNORE INTO reservation_invoice_line (Reservation_Id, Invoice_Line_Id)
+SELECT
+  ri.Reservation_Id,
+  il.idInvoice_Line
+FROM
+  reservation_invoice ri
+JOIN
+  invoice_line il ON ri.Invoice_id = il.Invoice_Id and il.Item_Id = 10;
+

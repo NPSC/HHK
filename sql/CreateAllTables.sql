@@ -1789,6 +1789,16 @@ CREATE TABLE if not exists `reservation_invoice` (
 
 
 -- -----------------------------------------------------
+-- Table `reservation_invoice_line`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `reservation_invoice_line` (
+  `Reservation_Id` INT NOT NULL,
+  `Invoice_Line_id` INT NOT NULL,
+  PRIMARY KEY (`Reservation_Id`, `Invoice_line_id`)
+) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `reservation_log`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `reservation_log` (

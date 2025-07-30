@@ -97,11 +97,11 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 			        AND invoice_line.Item_Id = " . ItemId::LodgingMOA . "
 			        AND invoice_line.Deleted = 0
 	            join
-	    	reservation_invoice ON invoice.idInvoice = reservation_invoice.Invoice_Id
+	    	reservation_invoice_line ON invoice_line.idInvoice_Line = reservation_invoice_line.Invoice_Line_Id
 		    where
 		        invoice.Deleted = 0
 		        AND invoice.Order_Number = 0
-                AND reservation_invoice.Reservation_Id = r.idReservation
+                AND reservation_invoice_line.Reservation_Id = r.idReservation
 		        AND invoice.`Status` = '" .InvoiceStatus::Paid . "'), 0)
             ELSE 0 END  as `PrePaymt`, ";
 

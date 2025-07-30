@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Payment\PaymentManager;
 
+use HHK\sec\Labels;
 use HHK\SysConst\ExcessPay;
 use HHK\SysConst\ReservationStatus;
 use HHK\Exception\PaymentException;
@@ -51,7 +52,7 @@ class ResvPaymentManager extends PaymentManager
 
             // Make Reservation only invoice
             $invLine = new HoldInvoiceLine(TRUE);
-            $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $this->pmp->getRatePayment()), 1, 'Pre-Payment');
+            $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $this->pmp->getRatePayment()), 1, Labels::getString("GuestEdit", "reservationTitle", "Reservation") . ' Pre-Payment');
 
             $this->getInvoice($dbh, $idPayor, $resv->getIdRegistration(), 0, 0, $uS->username, '', $notes, $this->pmp->getPayDate());
             $this->invoice->addLine($dbh, $invLine, $uS->username);
@@ -70,7 +71,7 @@ class ResvPaymentManager extends PaymentManager
                 $this->moaRefundAmt = abs($this->pmp->getOverPayment());
                 $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
                 $invLine->appendDescription($notes);
-                $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, (0 - $this->moaRefundAmt)), 1, 'Payout');
+                $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, (0 - $this->moaRefundAmt)), 1, Labels::getString("GuestEdit", "reservationTitle", "Reservation") . ' Pre-Payment Payout');
 
                 $this->getInvoice($dbh, $idPayor, $resv->getIdRegistration(), 0, 0, $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);

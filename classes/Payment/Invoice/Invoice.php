@@ -151,12 +151,14 @@ WHERE
     i.idInvoice, i.`Invoice_Number`, i.`Balance`, i.`Amount`
 FROM
     `invoice` i
+		LEFT JOIN
+	`invoice_line` il on i.idInvoice = il.Invoice_Id
         LEFT JOIN
-    `reservation_invoice` ri on i.idInvoice = ri.Invoice_Id
+    `reservation_invoice_line` ri on il.idInvoice_Line = ri.Invoice_Line_Id
 
 WHERE
     ri.Reservation_Id = $idReservation AND i.Status = '" . InvoiceStatus::Unpaid . "'
-        AND i.Deleted = 0" );
+        AND i.Deleted = 0 group by i.idInvoice" );
 
 	    return $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 	}
