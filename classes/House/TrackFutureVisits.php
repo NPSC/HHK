@@ -32,7 +32,7 @@ class TrackFutureVisits {
      * Summary of lockedVisits
      * @var array
      */
-    protected $lockedVisits = [];
+    protected $blockedVisits = [];
 
     /**
      * Summary of updateFutureVisits
@@ -61,13 +61,13 @@ class TrackFutureVisits {
             if (self::checkRoomAvailability($dbh, $spans[0]['idReservation'], new \DateTime($spans[0]['Expected_Departure']), $pivotDate, $spans[0]['idResource']) === false) {
 
                 // room is unavailable!
-                $this->lockedVisits[] = $spans[0]['idVisit'];
+                $this->blockedVisits[] = $spans[0]['idVisit'];
 
                 continue; // Skip this visit since the room is not available.
             }
 
             // Update the spans.
-            self::bumpToPivot($dbh, $pivotDate, $spans);
+            self::bumpToPivot($dbh, $pivotDate, $spans[0]);
 
         }
 
@@ -86,12 +86,12 @@ class TrackFutureVisits {
 
         $uS = Session::getInstance();
 
-        if (isset($span[0])) {
+        if (isset($span)) {
 
             // Update checked-in visit
             $visitRs = new VisitRS();
-            $visitRs->idVisit -> setStoredVal($span[0]['idVisit']);
-            $visitRs->Span->setStoredVal($span[0]['Span']);
+            $visitRs->idVisit -> setStoredVal($span['idVisit']);
+            $visitRs->Span->setStoredVal($span['Span']);
             $visitRs->Expected_Departure->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
 
             if (EditRS::update($dbh,$visitRs, [$visitRs->idVisit, $visitRs->Span]) < 1) {
@@ -106,8 +106,8 @@ class TrackFutureVisits {
 
             // Update checked in stays
             $stayRs = new StaysRS();
-            $stayRs->idVisit->setStoredVal($span[0]['idVisit']);
-            $stayRs->Visit_Span->setStoredVal($span[0]['Span']);
+            $stayRs->idVisit->setStoredVal($span['idVisit']);
+            $stayRs->Visit_Span->setStoredVal($span['Span']);
             $stayRs->Status->setStoredVal(VisitStatus::Active);
             $stayRs->Expected_Co_Date->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
 
@@ -116,10 +116,10 @@ class TrackFutureVisits {
 
             // Set up the future span.
             $visitRs = new VisitRS();
-            $visitRs->idVisit->setStoredVal($span[0]['idVisit']);
-            $visitRs->Span->setStoredVal($span[0]['Future_Span']);
+            $visitRs->idVisit->setStoredVal($span['idVisit']);
+            $visitRs->Span->setStoredVal($span['Future_Span']);
 
-            $futureDeparture = new \DateTime($span[0]['Future_Expected_Departure']);
+            $futureDeparture = new \DateTime($span['Future_Expected_Departure']);
 
             if ($futureDeparture <= $pivotDate) {
 
@@ -161,6 +161,7 @@ class TrackFutureVisits {
             ":pivotDate2" => $pivotDate->format('Y-m-d 00-00-00'),
         ];
 
+        // If a visit is selected, add it to the where clause.
         $whereClause = "";
         if ($selectedIdVisit > 0) {
             $whereClause = " AND v.idVisit = :idVisit ";
@@ -176,7 +177,8 @@ class TrackFutureVisits {
             v.Expected_Departure,
             v.idResource,
             vf.Span AS Future_Span,
-            vf.Expected_Departure AS Future_Expected_Departure
+            vf.Expected_Departure AS Future_Expected_Departure,
+            vf.idResource as Future_idResource
         from visit v JOIN visit vf on vf.idVisit = v.idVisit and vf.Status = '" . VisitStatus::Reserved . "' and DATE(vf.Span_Start) < :pivotDate1
 	    where v.`Status` = '" . VisitStatus::Active . "' and DATE(v.Expected_Departure) < :pivotDate2 $whereClause
         ORDER BY vf.idVisit, vf.Span;");
@@ -252,7 +254,7 @@ class TrackFutureVisits {
      * Summary of getCrowdedVisits
      * @return array{Expected_Departure: string, Span: mixed, Span_Future: mixed, Span_Start: string, idResource: mixed, idVisit: mixed[]}
      */
-    public function getLockedVisits() {
-        return $this->lockedVisits;
+    public function getBlockedVisits() {
+        return $this->blockedVisits;
     }
 }

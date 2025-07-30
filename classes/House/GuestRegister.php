@@ -339,7 +339,7 @@ where ru.idResource_use is null
             $visitExtended = FALSE;
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
-                $titleText .= ' (-> ' . $this->findSpanResourceTitle($spans, $r['idVisit'], $r['Span'] + 1) . ')';
+                $titleText .= ' (to ' . $this->findSpanResourceTitle($spans, $r['idVisit'], $r['Span'] + 1) . ')';
             }
 
             if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
@@ -347,7 +347,7 @@ where ru.idResource_use is null
             }
 
             if ($r['Has_Future_Change'] > 0) {
-                $titleText .= " (-> " . $this->findStatusResourceTitle($spans, $r['idVisit'], VisitStatus::Reserved) . ')';
+                $titleText .= " (to " . $this->findResourceTitle($spans, $r['Has_Future_Change']) . ')';
             }
 
             if ($extended) {
@@ -368,7 +368,7 @@ where ru.idResource_use is null
             // Future visit span?
             if ($r['Visit_Status'] == VisitStatus::Reserved) {
                $s['borderColor'] = '#4aaa34';
-                $titleText .= ' (<- ' . $this->findStatusResourceTitle($spans, $r['idVisit'], VisitStatus::CheckedIn) . ')';
+                $titleText .= ' (from ' . $this->findStatusResourceTitle($spans, $r['idVisit'], VisitStatus::CheckedIn) . ')';
             }
 
             //
@@ -822,14 +822,14 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
      * Summary of findResourceTitle
      * @param array $spans
      * @param int $idVisit
-     * @param string $status
+     * @param int $idResource
      * @return string
      */
-    protected function findStatusResourceTitle($spans, $idVisit, $status) {
+    protected function findResourceTitle($spans, $idResource) {
 
         $title = '';
         foreach ($spans as $p) {
-            if ($p['idVisit'] == $idVisit && $p['Visit_Status'] == $status) {
+            if ($p['idResource'] == $idResource ) {
                 $title = htmlspecialchars_decode($p['Resource_Title'], ENT_QUOTES);
             }
         }

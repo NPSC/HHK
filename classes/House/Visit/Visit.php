@@ -846,7 +846,7 @@ class Visit {
 
             $newSpanStatus = $visitStatus;
             $newSpanEnd = '';
-            $this->visitRS->Has_Future_Change->setNewVal(1);
+            $this->visitRS->Has_Future_Change->setNewVal($resc->getIdResource());
             $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->CheckOutTime:00:00"));
 
             // Update the checked in stays
