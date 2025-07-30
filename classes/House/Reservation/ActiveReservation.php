@@ -509,8 +509,6 @@ class ActiveReservation extends Reservation {
         if (is_null($pmp) === FALSE && ($pmp->getTotalPayment() != 0 || $pmp->getOverPayment() != 0)) {
 
             $post = $this->reserveData->getRawPost();
-            $reservStatuses = readLookups($dbh, "reservStatus", "Code");
-            $resvIsActive = $resv->isActive($reservStatuses);
 
             $resvPaymentManager = new ResvPaymentManager($pmp);
 
