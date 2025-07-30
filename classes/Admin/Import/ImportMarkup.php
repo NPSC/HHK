@@ -84,10 +84,11 @@ class ImportMarkup {
         return $mkup;
     }
 
-    private function getPeopleInfo(){
+    private function getPeopleInfo(string $uniqueId = "", string $memberType = ""){
         try {
             //$query = "select 'Guests' as `Member Type`, count(distinct(concat(GuestLast,GuestFirst))) as `numRecords` from " . Upload::TBL_NAME . " i UNION select 'Patients' as `Member Type`, count(distinct(PatientId)) as `numRecords` from " . Upload::TBL_NAME . " i;";
-            $query = "select 'Patients' as `Member Type`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i;";
+            $query = "select 'People' as `Member Type`, count(distinct $uniqueId) as `numRecords` from " . Upload::TBL_NAME . " i ";
+            
             $stmt = $this->dbh->query($query);
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\PDOException $e){
@@ -98,7 +99,7 @@ class ImportMarkup {
     private function getPeopleMkup(){
         $mkup = HTMLContainer::generateMarkup("div",
             HTMLContainer::generateMarkup("h3", "People") .
-            CreateMarkupFromDB::generateHTML_Table($this->getPeopleInfo(), "people")
+            CreateMarkupFromDB::generateHTML_Table($this->getPeopleInfo("MembershipId"), "people")
             , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
 
         return $mkup;
