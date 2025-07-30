@@ -491,6 +491,28 @@ function resvManager(initData, options) {
             return '';
         }
 
+        function verifyDocAgent(prefix) {
+
+            const inputs = $(`input.hhk-${prefix}`);
+
+
+            // Clear error class
+            inputs.removeClass('ui-state-error');
+
+            if (inputs.is((i,e)=>$(e).val().trim() !== "")) { //if at least one agent field is filled
+
+                const emptyNameFields = inputs.filter((i,e)=>$(e).val().trim() === "" && $(e).hasClass("name"));
+
+                if(emptyNameFields.length > 0){ //if any of the name fields are empty
+                    emptyNameFields.addClass("ui-state-error");
+                    $("#divhospDetail").show("blind");
+                    return 'Some or all of the indicated Hospital Information is missing.  ';
+                };
+            }
+
+            return '';
+        }
+
         function addrCopyDown(sourcePrefix) {
 
             for (var prefix in addrs.list()) {
@@ -1479,6 +1501,20 @@ function resvManager(initData, options) {
                     }
                 }
             }
+
+            var pMessage = verifyDocAgent("agentInfo");
+            if(pMessage !== ''){
+                flagAlertMessage(pMessage, 'alert', $pWarning);
+                return false;
+            }
+
+            var pMessage = verifyDocAgent("docInfo");
+
+            if(pMessage !== ''){
+                flagAlertMessage(pMessage, 'alert', $pWarning);
+                return false;
+            }
+            
 
             setupComplete = false;
             return true;
