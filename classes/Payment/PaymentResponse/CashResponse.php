@@ -3,6 +3,7 @@
 namespace HHK\Payment\PaymentResponse;
 
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
+use HHK\sec\Labels;
 use HHK\SysConst\{PaymentMethod, PayType};
 use HHK\HTMLControls\HTMLTable;
 
