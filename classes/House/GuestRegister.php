@@ -223,7 +223,7 @@ where ru.idResource_use is null
         $p1d = new \DateInterval('P1D');
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
-        $spans=[];
+        $lastIdResource = 0;
 
 
         if ($startTime == "" || $endTime == "") {
@@ -250,7 +250,7 @@ where ru.idResource_use is null
 
         $this->getRoomOosEvents($dbh, $beginDate, $endDate, $timezone, $events);
         $this->getRetiredRoomEvents($dbh, $beginDate, $endDate, $timezone, $events);
-
+        $rescTitles = $this->loadResourceTitles($dbh);
 
         // Visit Spans
         $query = "select vr.*, s.On_Leave, count(*) as `Guest_Count`
@@ -260,14 +260,10 @@ where ru.idResource_use is null
         where vr.Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(vr.Span_Start) <= DATE('" . $endDate->format('Y-m-d') . "') and
             ifnull(DATE(vr.Span_End), case when DATE(now()) > DATE(vr.Expected_Departure) then DATE(now()) else DATE(vr.Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "')
-        group by vr.id;";
+        group by vr.id order by vr.id;";
         $stmtv = $dbh->query($query);
 
         while ($r = $stmtv->fetch(\PDO::FETCH_ASSOC)) {
-            $spans[] = $r;
-        }
-
-        foreach ($spans as $r) {
 
             if ($r["idResource"] == 0) {
                 continue;
@@ -338,16 +334,12 @@ where ru.idResource_use is null
             $titleText = htmlspecialchars_decode($this->getEventTitle($r), ENT_QUOTES);
             $visitExtended = FALSE;
 
-            if ($r['Visit_Status'] == VisitStatus::NewSpan) {
-                $titleText .= ' (to ' . $this->findSpanResourceTitle($spans, $r['idVisit'], $r['Span'] + 1) . ')';
-            }
-
             if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
                 $titleText .= ' ($)';
             }
 
-            if ($r['Has_Future_Change'] > 0) {
-                $titleText .= " (to " . $this->findResourceTitle($spans, $r['Has_Future_Change']) . ')';
+            if ($r['Next_IdResource'] > 0 && $r['Next_IdResource'] != $r['idResource']) {
+                $titleText .= " (to " . $rescTitles[$r['Next_IdResource']] . ')';
             }
 
             if ($extended) {
@@ -366,10 +358,12 @@ where ru.idResource_use is null
             $this->setRibbonColors($r, $s);
 
             // Future visit span?
-            if ($r['Visit_Status'] == VisitStatus::Reserved) {
+            if ($r['Visit_Status'] == VisitStatus::Reserved && $lastIdResource > 0) {
                $s['borderColor'] = '#4aaa34';
-                $titleText .= ' (from ' . $this->findStatusResourceTitle($spans, $r['idVisit'], VisitStatus::CheckedIn) . ')';
+                $titleText .= ' (from ' . $rescTitles[$lastIdResource] . ')';
             }
+
+            $lastIdResource = $r['idResource'];
 
             //
             $s['id'] = 'v' . $r['id'];
@@ -818,36 +812,6 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         }
     }
 
-    /**
-     * Summary of findResourceTitle
-     * @param array $spans
-     * @param int $idVisit
-     * @param int $idResource
-     * @return string
-     */
-    protected function findResourceTitle($spans, $idResource) {
-
-        $title = '';
-        foreach ($spans as $p) {
-            if ($p['idResource'] == $idResource ) {
-                $title = htmlspecialchars_decode($p['Resource_Title'], ENT_QUOTES);
-            }
-        }
-
-        return $title;
-    }
-
-    protected function findSpanResourceTitle($spans, $idVisit, $span) {
-
-        $title = '';
-        foreach ($spans as $p) {
-            if ($p['idVisit'] == $idVisit && $p['Span'] == $span) {
-                $title = htmlspecialchars_decode($p['Resource_Title'], ENT_QUOTES);
-            }
-        }
-
-        return $title;
-    }
 
     protected function getRetiredRoomEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events) {
 
@@ -1142,6 +1106,18 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         }else{
             return false;
         }
+    }
+
+    protected function loadResourceTitles(\PDO $dbh){
+
+        $resourceTitles = [];
+        $stmt = $dbh->query("SELECT idResource, Title FROM resource;");
+
+        while($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $resourceTitles[$r['idResource']] = $r['Title'];
+        }
+    
+        return $resourceTitles;
     }
 
 }

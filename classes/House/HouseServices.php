@@ -592,8 +592,8 @@ class HouseServices {
 
             $resVisit->deleteThisVisitSpan($dbh);
 
-            // remove Has_Future_Change
-            $stmt = $dbh->prepare("UPDATE visit SET Has_Future_Change = 0 WHERE idVisit = :idVisit;");
+            // remove Next_IdResource from previous visit
+            $stmt = $dbh->prepare("UPDATE visit SET Next_IdResource = 0 WHERE idVisit = :idVisit;");
             $stmt->bindValue(':idVisit', $idVisit, \PDO::PARAM_INT);
             $stmt->execute();
 

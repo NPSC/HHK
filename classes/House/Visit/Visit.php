@@ -846,7 +846,7 @@ class Visit {
 
             $newSpanStatus = $visitStatus;
             $newSpanEnd = '';
-            $this->visitRS->Has_Future_Change->setNewVal($resc->getIdResource());
+            $this->visitRS->Next_IdResource->setNewVal($resc->getIdResource());
             $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->CheckOutTime:00:00"));
 
             // Update the checked in stays
@@ -858,7 +858,7 @@ class Visit {
             $this->visitRS->Status->setNewVal($visitStatus);          // set the current visit status to the one passed in.
 
             $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
-            $this->visitRS->Has_Future_Change->setNewVal(0);
+            $this->visitRS->Next_IdResource->setNewVal(0);
             $this->visitRS->Span_End->setNewVal($chgDT->format('Y-m-d H:i:s'));
         }
 
@@ -888,7 +888,7 @@ class Visit {
         $this->visitRS->Expected_Rate->setNewVal($rateAdjust);
         $this->visitRS->idRateAdjust->setNewVal($idRateAdjust);
         $this->visitRS->Rate_Glide_Credit->setNewVal($rateGlideDays);
-        $this->visitRS->Has_Future_Change->setNewVal(0);
+        $this->visitRS->Next_IdResource->setNewVal(0);
         $this->visitRS->Timestamp->setNewVal(date('Y-m-d H:i:s'));
 
         if ($chgDayDT > $today) {
@@ -1265,7 +1265,7 @@ class Visit {
         $this->visitRS->Actual_Departure->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Span_End->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Status->setNewVal(VisitStatus::CheckedOut);
-        $this->visitRS->Has_Future_Change->setNewVal(0);
+        $this->visitRS->Next_IdResource->setNewVal(0);
 
         $this->updateVisitRecord($dbh, $username);
 
@@ -2824,21 +2824,6 @@ class Visit {
         return $this->visitRS->Status->getStoredVal();
     }
 
-    /**
-     * Summary of getHas_Future_Change
-     * @return mixed
-     */
-    public function getHas_Future_Change() {
-        return $this->visitRS->Has_Future_Change->getStoredVal();
-    }
-
-    /**
-     * Summary of setHas_Future_Change
-     * @return void
-     */
-    public function setHas_Future_Change() {
-        $this->visitRS->Has_Future_Change->setNewVal(1);
-    }
-
+ 
 }
 

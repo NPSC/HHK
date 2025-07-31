@@ -140,7 +140,7 @@ class VisitViewer {
                     $days = $vSpanListing['Expected_Nights'];
                 }
 
-                if ($vSpanListing['Has_Future_Change'] > 0) {
+                if ($vSpanListing['Next_IdResource'] > 0) {
                     // Future room change
                     $depHeader = "Expected Room Change";
                 }
@@ -404,7 +404,7 @@ class VisitViewer {
 
             $visitBoxLabel .= HTMLContainer::generateMarkup('span', $spnMkup, ['style' => 'margin:0.1em;', 'title' => 'Undo Room Change']);
 
-        } else if ($vSpanListing['Status'] == VisitStatus::CheckedIn && $vSpanListing['Has_Future_Change'] > 0) {
+        } else if ($vSpanListing['Status'] == VisitStatus::CheckedIn && $vSpanListing['Next_IdResource'] > 0) {
 
             // Make undo Future Room Change button
             $spnMkup = HTMLContainer::generateMarkup('label', '- Delete Future Room Change', ['for' => 'delFutRmChg'])
@@ -503,7 +503,7 @@ class VisitViewer {
         // Add them to the stays table.
         if ($visitStatus == VisitStatus::CheckedIn) {
 
-            if ($staysDtable[0]['Has_Future_Change'] > 0) {
+            if ($staysDtable[0]['Next_IdResource'] > 0) {
                 // Future room change
                 $ckOutTitle = "Exp'd Room Change";
             } else {

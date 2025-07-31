@@ -2172,7 +2172,7 @@ CREATE TABLE if not exists `visit` (
   `Rate_Category` varchar(5) NOT NULL DEFAULT '',
   `idRateAdjust` VARCHAR(5) NULL DEFAULT '0',
   `Rate_Glide_Credit` int(11) not null default '0',
-  `Has_Future_Change` int(1) NOT NULL DEFAULT '0',
+  `Next_IdResource` int(11) NOT NULL DEFAULT '0',
   `OverRideMaxOcc` int(1) NOT NULL DEFAULT '0',
   `Notes` text,
   `Status` varchar(5) NOT NULL DEFAULT '',

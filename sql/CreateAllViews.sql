@@ -496,10 +496,7 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
               ELSE CONCAT(`m`.`Name_Last`, ', ', IFNULL(g.Description, ''))
               END) as `Guest Last`,
 		(case when (`m`.`Preferred_Phone` = 'no') then 'No Phone' else  IFNULL(`np`.`Phone_Num`, '') END) AS `Phone`,
-        (CASE
-            WHEN (`v`.`Has_Future_Change` = 1) THEN 'Y'
-            ELSE ''
-        END) AS `Has_Future_Change`,
+        IFNULL(`v`.`Next_IdResource`, 0) AS `Next_IdResource`,
         IFNULL(`r`.`Phone`,'') AS `Room Phone`,
         IFNULL(`s`.`Status`, '') AS `Stay_Status`,
         IFNULL(`s`.`On_Leave`, 0) AS `On_Leave`,
@@ -2393,7 +2390,7 @@ CREATE or replace VIEW `vregister` AS
         `v`.`idResource` AS `idResource`,
         `v`.`idReservation` AS `idReservation`,
         `v`.`Status` AS `Visit_Status`,
-        `v`.`Has_Future_Change` AS `Has_Future_Change`,
+        `v`.`Next_IdResource` AS `Next_IdResource`,
         `v`.`Span_Start` AS `Span_Start`,
         `v`.`Expected_Departure` AS `Expected_Departure`,
         `v`.`Span_End` AS `Span_End`,
@@ -2908,7 +2905,7 @@ CREATE or replace VIEW `vspan_listing` AS
         (to_days(`v`.`Expected_Departure`) - to_days(`v`.`Span_Start`)) AS `Expected_Span_Nights`,
         `v`.`Return_Date`,
         `v`.`Notice_to_Checkout`,
-        `v`.`Has_Future_Change`,
+        `v`.`Next_IdResource`,
         `v`.`OverRideMaxOcc`,
         '' as `Visit_Notes`,
         `v`.`Notes` AS `Notes`,
@@ -2956,7 +2953,7 @@ select
     v.Status as `Visit_Status`,
     v.idRegistration as `idRegistration`,
     v.DepositPayType as DepositPayType,
-    v.Has_Future_Change as Has_Future_Change,
+    v.Next_IdResource as Next_IdResource,
     g.Description as `Status_Title`,
     s.Checkin_Date,
     s.Checkout_Date,
