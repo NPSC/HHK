@@ -318,7 +318,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('OOS_Codes', 'cd', 'Access Blocked','','h',0),
 
 ('Oauth_Scopes', 'calendar:read', 'Read reservations and visit events from the calendar', '', '', 0),
-('Oauth_Scopes', 'aggregatereports:read', 'Read aggregate reports' '', '', 0),
+('Oauth_Scopes', 'aggregatereports:read', 'Read aggregate reports', '', '', 0),
 
 ('Page_Type','c','Component','','',0),
 ('Page_Type','p','Web Page','','',0),
