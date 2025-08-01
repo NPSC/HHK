@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentResult;
 
+use HHK\Admin\VolCats;
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
 use HHK\Notification\Mail\HHKMailer;
@@ -11,6 +12,7 @@ use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\PaymentInvoiceRS;
 use HHK\sec\Session;
+use HHK\Volunteer\VolCal;
 
 /**
  * PaymentResult.php
@@ -142,21 +144,27 @@ class PaymentResult {
         }
 
 
-        $query = "SELECT IFNULL(ne.Email, '') as 'Email', n.Name_Full FROM
+        $query = "SELECT IFNULL(ne.Email, '') as 'Email', if(n.Name_Full = '', n.Company, n.Name_Full) as `Name_Full`, r.Email_Receipt, nv.Vol_Code  FROM
     `registration` r,
     `name` n
         LEFT JOIN
     `name_email` ne ON n.idName = ne.idName
         AND n.Preferred_Email = ne.Purpose
-WHERE r.Email_Receipt = 1 and
-    r.idregistration = :idreg AND n.idName = :id";
+        LEFT JOIN
+    `name_volunteer2` nv on n.idName = nv.idName
+WHERE 
+    r.idregistration = :idreg AND n.idName = :id group by n.idName";
+
+        if(!$uS->autoEmailReceipts){
+            $query .= " and r.Email_Receipt = 1";
+        }
 
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':idreg'=>$this->idRegistration, ':id'=>$this->idName));
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        if (count($rows) > 0 && $rows[0]['Email'] != '') {
+        if (count($rows) > 0 && $rows[0]['Email'] != '' && (($rows[0]["Vol_Code"] == "ba" && $uS->autoEmailBillingAgentReceipt) || ($rows[0]["Vol_Code"] !== "ba" && ($uS->autoEmailReceipts || $rows[0]["Email_Receipt"] == "1")))) {
             $toAddr = $rows[0]['Email'];
             $guestName = ' to ' . $rows[0]['Name_Full'];
             $guestHasEmail = TRUE;

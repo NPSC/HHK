@@ -33,3 +33,8 @@ FROM
 JOIN
   invoice_line il ON ri.Invoice_id = il.Invoice_Id and il.Item_Id = 10;
 
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("autoEmailReceipts", "false", "b", "f", "Automatically email receipts when taking guest payments", 1); 
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("autoEmailBillingAgentReceipt", "false", "b", "f", "Automatically email receipts when taking 3rd party (billing agent) payments", 1);
+
+

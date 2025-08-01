@@ -641,6 +641,13 @@ where
             }
         }
 
+        $emRowAttrs = [];
+
+        //hide email checkbox if autoEmailReceipts is enabled
+        if($uS->autoEmailReceipts){
+            $emRowAttrs["class"] = "d-none";
+        }
+
         $emAttrs = array(
             'type' => 'checkbox',
             'class' => 'hhk-regvalue',
@@ -656,7 +663,7 @@ where
         $tbl->addBodyTr(
             HTMLTable::makeTh(HTMLContainer::generateMarkup('label', 'Email Receipt', array('for'=>'cbEml')), array('style'=>'text-align:right;'))
             . HTMLTable::makeTd(HTMLInput::generateMarkup('', $emAttrs))
-            );
+            , $emRowAttrs);
 
         if($uS->RoomPriceModel != ItemPriceCode::None){
 
