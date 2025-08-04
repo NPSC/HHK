@@ -566,6 +566,11 @@ class VantivGateway extends AbstractPaymentGateway {
 
             $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
 
+            if(count($cidInfo) === 0){
+                //nothing to process
+                return null;
+            }
+
             try {
                 self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'HostedCoPostBack');
             } catch (\Exception $ex) {
@@ -616,14 +621,16 @@ class VantivGateway extends AbstractPaymentGateway {
 
                     } else {
 
-                        $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], 0);
+                        $idReg = isset($cidInfo['idGroup']) ? $cidInfo['idGroup'] : 0;
+                        $payResult = new PaymentResult($idInv, $idReg, 0);
                         $payResult->setStatus(PaymentResult::ERROR);
                         $payResult->setDisplayMessage('Invoice Not Found!  ');
                     }
                 }
             } catch (PaymentException $hex) {
 
-                $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], 0);
+                $idReg = isset($cidInfo['idGroup']) ? $cidInfo['idGroup'] : 0;
+                $payResult = new PaymentResult($idInv, $idReg, 0);
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($hex->getMessage());
             }
