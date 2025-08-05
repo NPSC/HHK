@@ -2,7 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Vantiv;
 
-use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\SysConst\{MpStatusValues, PayType, PaymentMethod, PaymentStatusCode};
@@ -96,7 +96,7 @@ class CheckOutResponse extends AbstractCreditResponse {
             $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
+        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', '', array('style'=>'height:35px; width:250px; max-width:100%; border: solid 1px gray;'))));
 
     }
 

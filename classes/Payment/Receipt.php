@@ -97,8 +97,8 @@ class Receipt {
         // Assemble the statement
         $rec = "";
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)));
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
         $info = self::getVisitInfo($dbh, $invoice);
 
@@ -171,8 +171,8 @@ class Receipt {
 
         $rec = "";
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)));
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . ' ' . $type . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . ' ' . $type . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
@@ -228,8 +228,8 @@ class Receipt {
 
         $rec = "";
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)));
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2', 'class'=>'pt-3')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
@@ -287,8 +287,8 @@ class Receipt {
 
         $rec = "";
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)));
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Refund Receipt", array('colspan'=>'2', 'class'=>'pt-3')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Refund Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
@@ -344,8 +344,8 @@ class Receipt {
         // Assemble the statement
         $rec = "";
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)));
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
 //        $info = self::getVisitInfo($dbh, $invoice);
 //

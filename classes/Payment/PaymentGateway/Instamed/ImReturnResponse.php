@@ -2,7 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Instamed;
 
-use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
@@ -115,7 +115,7 @@ class ImReturnResponse extends AbstractCreditResponse {
         }
 
         if ($this->getStatus() != AbstractCreditPayments::STATUS_DECLINED && $this->response->SignatureRequired() == 1) {
-            $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:310px; border: solid 1px gray;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', '', array('style'=>'height:35px; width:310px; max-width:100%; border: solid 1px gray;'))));
         }
 
     }
