@@ -2,6 +2,9 @@
 
 namespace HHK\Payment;
 
+use HHK\Note\LinkNote;
+use HHK\Note\Note;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\GatewayResponse\StandInGwResponse;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -15,6 +18,9 @@ use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS};
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\Exception\PaymentException;
 use HHK\Tables\Payment\TransRS;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+use RuntimeException;
 
 
 /**
@@ -476,6 +482,11 @@ class PaymentSvcs {
                 throw new PaymentException('Unknown pay type.  ');
         }
 
+        if(isset($dataArray['receipt'], $invoice) && $invoice instanceof Invoice){
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
         return $dataArray;
     }
 
@@ -652,6 +663,11 @@ class PaymentSvcs {
 
             default:
                 throw new PaymentException('The pay type is ineligible.  ');
+        }
+
+        if(isset($dataArray['receipt'], $invoice) && $invoice instanceof Invoice){
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
         }
 
         return $dataArray;
@@ -850,7 +866,6 @@ class PaymentSvcs {
      * Summary of generateReceipt
      * @param \PDO $dbh
      * @param int $idPayment
-     * @return array<string>
      */
     public static function generateReceipt(\PDO $dbh, $idPayment) {
 
@@ -989,7 +1004,81 @@ class PaymentSvcs {
 
         }
 
+        if(isset($dataArray['receipt'])){
+            $dataArray["invoice"] = $invoice;
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+        }
+
         return $dataArray;
+    }
+
+    public static function sendReceiptEmail(\PDO $dbh, string $receiptMkup, Invoice $invoice, string $emailAddress){
+        $uS = Session::getInstance();
+        $fromAddr = $uS->FromAddress;
+        
+        $emBody = nl2br( $uS->ReceiptEmailBody);
+
+        $toAddrSan = filter_var($emailAddress, FILTER_SANITIZE_EMAIL);
+
+        if ($toAddrSan === FALSE || $toAddrSan == '') {
+            // Config data not set.
+
+            return ["error"=>"Send Email failed: Email address invalid"];
+        }
+
+
+        try{
+            $mail = new HHKMailer($dbh);
+
+            $mail->From = $fromAddr;
+            $mail->addReplyTo($uS->ReplyTo);
+            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
+
+            $mail->addAddress($toAddrSan);     // Add a recipient
+
+            $bccEntry = $uS->BccAddress;
+            $bccs = explode(',', $bccEntry);
+
+            foreach ($bccs as $b) {
+
+                $bcc = filter_var($b, FILTER_SANITIZE_EMAIL);
+
+                if ($bcc !== FALSE && $bcc != '') {
+                    $mail->addBCC($bcc);
+                }
+            }
+
+            $mail->isHTML(true);
+
+            $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Payment Receipt';
+            $mail->msgHTML($emBody);
+            $mail->addStringAttachment(Receipt::makePDF($receiptMkup), "receipt.pdf", PHPMailer::ENCODING_BASE64, "application/pdf");
+
+            $mail->send();
+
+            $invoiceNumber = $invoice->getInvoiceNumber();
+            $idPSG = $invoice->getIdGroup();
+            LinkNote::save($dbh, "Receipt" . ($invoiceNumber != '' ? " for invoice <a href='ShowInvoice.php?invnum=" . $invoiceNumber . "' target='_blank'>" . $invoiceNumber . "</a>" : '') . " emailed to " . $toAddrSan, $idPSG, Note::PsgLink, '', $uS->username, $uS->ConcatVisitNotes);
+
+            return ["success"=>"Email sent to " . $toAddrSan];
+                    
+
+        }catch(PHPMailerException $e){
+            return ["error"=>"Send Email failed: " . $mail->ErrorInfo];
+        }catch(\Exception $e){
+            return ["error"=>"Send Email Failed: " . $e->getMessage()];
+        }
+    }
+
+    public static function downloadReceipt(\PDO $dbh, $idPayment){
+        $receiptMkup = PaymentSvcs::generateReceipt($dbh, $idPayment);
+        
+        if(isset($receiptMkup["receipt"])){
+            $receiptMkup = $receiptMkup["receipt"];
+            Receipt::makePDF($receiptMkup, true);
+        }else{
+            throw new RuntimeException("Reciept not found");
+        }
     }
 
 }

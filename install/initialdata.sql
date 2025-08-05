@@ -676,6 +676,11 @@ Your statement from (house name) is attached.
 
 Thank you
 (house name)','t','f','','Default email body for Statements','',1),
+('ReceiptEmailBody','Hello,
+Your receipt from (house name) is attached.
+
+Thank you
+(house name)','t','f','','Default email body for Receipts','',1),
 ("autoEmailReceipts", "false", "b", "f", "", "Automatically email receipts when taking guest payments", "", 1),
 ("autoEmailBillingAgentReceipt", "false", "b", "f", "", "Automatically email receipts when taking 3rd party (billing agent) payments", "", 1),
 ('PaymentGateway','','lu','fg','','Credit Payment Gateway','Pay_Gateway_Name',0),

@@ -152,7 +152,7 @@ $(document).ready(function () {
         });
     }
     if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
     }
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);

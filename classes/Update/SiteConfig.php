@@ -586,7 +586,7 @@ class SiteConfig {
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
 
-            if(in_array($itemName, ["PaymentDisclaimer", "InvoiceEmailBody", "StatementEmailBody"])){
+            if(in_array($itemName, ["PaymentDisclaimer", "InvoiceEmailBody", "StatementEmailBody", "ReceiptEmailBody"])){
                 $val = base64_decode($val);
             }
 

@@ -42,6 +42,8 @@ $bkgrdColor = '';
 $labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $payFailPage = $wInit->page->getFilename();
 $idGuest = 0;
 $idReserv = 0;
@@ -56,6 +58,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -71,7 +75,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -303,6 +307,9 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
+        <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+        <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
+        <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 

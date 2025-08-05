@@ -45,6 +45,8 @@ $uS = Session::getInstance();
 $labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $payFailPage = $wInit->page->getFilename();
 $idGuest = -1;
 $idReserv = 0;
@@ -57,6 +59,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -73,7 +77,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), "cmd"=>"loadResv"]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -356,6 +360,8 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
         <input type="hidden" value='<?php echo $receiptMarkup; ?>' id="receiptMarkup"/>
+        <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
+        <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
         <input type="hidden" value='<?php echo $isRepeatHost; ?>' id="isRepeatReservHost"/>
         <script type="text/javascript" src="<?php echo RESERVE_JS; ?>"></script>
     </body>

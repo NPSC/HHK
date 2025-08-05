@@ -45,6 +45,8 @@ $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 $paymentMarkup = '';
 $paymentStatus = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $statusSelector = '';
 $payTypeSelector = '';
 $resourceGroupBy = 'Type';
@@ -67,6 +69,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -85,7 +89,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -577,6 +581,8 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="pmtStatus" value='<?php echo $paymentStatus; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+        <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
+        <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
         <input  type="hidden" id="guestLabel" value='<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' />

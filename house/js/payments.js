@@ -225,7 +225,9 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
                             $('#keysfees').dialog("close");
                         }
 
-                        showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                        const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                        const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                        showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt', 550, idPayment, billToEmail);
                     }
 
                 }
@@ -325,8 +327,10 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 				refresh();
 			}
 
-            if (data.receipt) {
-                showReceipt('#pmtRcpt', data.receipt, 'Receipt');
+            if (data.receipt && data.idPayment) {
+                const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                showReceipt('#pmtRcpt', data.receipt, 'Receipt', 550, idPayment, billToEmail);
             }
         }
     });
@@ -1359,12 +1363,17 @@ function verifyAmtTendrd() {
  * @param {string} markup
  * @param {string} title
  * @param {int} width
+ * @param paymentId
+ * @param billToEmail
  * @returns {undefined}
  */
-function showReceipt(dialogId, markup, title, width) {
+function showReceipt(dialogId, markup, title, width, paymentId = false, billToEmail = '') {
 
     var pRecpt = $(dialogId);
-    var btn = $("<div id='print_button' style='margin-left:1em;'>Print</div>");
+    const printBtn = $("<div class='ml-3'><i class='bi bi-printer-fill mr-3'></i>Print</div>");
+    const emailBtn = $("<div class='ml-3'><i class='bi bi-send-fill mr-3'></i>Email</div>");
+    const downloadBtn = $("<a href='ws_ckin.php?cmd=downloadReceipt&paymentId="+ paymentId +"' class='ml-3'><i class='bi bi-cloud-arrow-down-fill mr-3'></i>Download</a>");
+
     var opt = {
         mode: "popup",
         popClose: false,
@@ -1375,24 +1384,59 @@ function showReceipt(dialogId, markup, title, width) {
         popTitle: title
     };
 
-    if (width === undefined || !width) {
-        if ($(markup).data('merchcopy') == '1') {
-            width = 900;
-        } else {
-            width = 550;
-        }
+    if ($(markup).data('merchcopy') == '1') {
+        width = 900;
+    } else {
+        width = 550;
     }
 
     pRecpt.children().remove();
-    pRecpt.append($(markup).addClass('ReceiptArea').css('max-width', (width + 'px')));
+    pRecpt.append($(markup).addClass('ReceiptPrintArea').css('max-width', (width + 'px')));
 
-    btn.button();
-    btn.click(function () {
-        $(".ReceiptArea").printArea(opt);
+    printBtn.button().click(function () {
+        $(".ReceiptPrintArea").printArea(opt);
         pRecpt.dialog('close');
     });
 
-    pRecpt.prepend(btn);
+    emailBtn.button().click(function () {
+        fetch("ws_ckin.php", {
+            method: "POST",
+            headers: {
+                "accept":"application/json"
+            },
+            body: new URLSearchParams({ cmd: "emailReceipt", paymentId: paymentId, emailAddress:billToEmail }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.status);
+            }
+            return response.json(); // Parse the JSON response
+        })
+        .then(responseData => {
+            if(responseData.success){
+                flagAlertMessage(responseData.success, "success");
+            }else if(responseData.error){
+                flagAlertMessage(responseData.error, "error");
+            }
+        })
+        .catch(error => {
+            flagAlertMessage(error, "error");
+        });
+    });
+
+    downloadBtn.button();
+
+    const $actionRow = $("<div class='my-2'>").append(printBtn);
+
+    if(paymentId !== false){
+        if(billToEmail !== ''){
+            $actionRow.append(emailBtn);
+        }
+
+        $actionRow.append(downloadBtn);
+    }
+
+    pRecpt.prepend($actionRow);
     pRecpt.dialog("option", "title", title);
     pRecpt.dialog('option', 'buttons', {});
     pRecpt.dialog('option', 'width', width);
@@ -1435,7 +1479,8 @@ function reprintReceipt(pid, idDialg) {
 
 
                     // launch receipt dialog box
-                    showReceipt(idDialg, data.receipt, 'Receipt Copy');
+                    const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                    showReceipt(idDialg, data.receipt, 'Receipt Copy', 550, pid, billToEmail);
                 }
             });
 
@@ -1591,7 +1636,9 @@ console.log("redirect called");
                                         }
                             
                                         if (data.receipt && data.receipt !== '') {
-                                            showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                                            const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                                            const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                                            showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt', 550, idPayment, billToEmail);
                                         }
 
                                         $deluxeDialog.dialog("close");

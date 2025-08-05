@@ -1,11 +1,12 @@
 <?php
 
 use HHK\House\Report\BillingAgentReport;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentSvcs;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
-use HHK\House\Report\ReservationReport;
 use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
 
@@ -37,6 +38,47 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $paymentMarkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
+
+// Hosted payment return
+try {
+
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+
+        $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
+
+        //make receipt copy
+        if($receiptMarkup != '' && $uS->merchantReceipt == true) {
+            $receiptMarkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Customer Copy', ['style' => 'text-align:center;']), ['style' => 'margin-right: 15px; width: 100%;'])
+                .HTMLContainer::generateMarkup('div', $receiptMarkup.HTMLContainer::generateMarkup('div', 'Merchant Copy', ['style' => 'text-align: center']), ['style' => 'margin-left: 15px; width: 100%;'])
+                ,
+                ['style' => 'display: flex; min-width: 100%;', 'data-merchCopy' => '1']);
+        }
+
+        // Display a status message.
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+
+        if(WebInit::isAJAX()){
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
+            exit;
+        }
+    }
+
+} catch (RuntimeException $ex) {
+    if(WebInit::isAJAX()){
+        echo json_encode(["error"=>$ex->getMessage()]);
+        exit;
+    } else {
+        $paymentMarkup = $ex->getMessage();
+    }
+}
+
 
 $dataTableWrapper = '';
 
@@ -63,6 +105,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
@@ -71,8 +114,9 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
 
+        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
@@ -99,7 +143,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
             var columnDefs = $.parseJSON('<?php echo json_encode($report->colSelector->getColumnDefs()); ?>');
             var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
-            var rctMkup, pmtMkup;
+            var rctMkup, pmtMkup, receiptBilledToEmail, receiptPaymentId;
             $(document).ready(function() {
 
                 var drawCallback = function (settings) {
@@ -130,8 +174,10 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
                 <?php echo $report->filter->getTimePeriodScript(); ?>;
                 <?php echo $report->generateReportScript(); ?>
                 
-		        pmtMkup = $('#pmtMkup').val(),
-                rctMkup = $('#rctMkup').val();
+		        pmtMkup = '<?php echo $paymentMarkup; ?>'
+                rctMkup = '<?php echo $receiptMarkup; ?>'
+                receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>'
+                receiptPaymentId = '<?php echo $receiptPaymentId; ?>'
 
                 $('#keysfees').dialog({
                     autoOpen: false,
@@ -156,7 +202,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
                 });
 
                 if (rctMkup !== '') {
-                    showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+                    showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
                 }
                 if (pmtMkup !== '') {
                     $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
@@ -187,8 +233,6 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
             <?php echo $report->generateFilterMarkup() . $dataTableWrapper; ?>
         </div>
 
-        <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
-        <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <div id="keysfees" style="font-size: .9em; display: none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display: none;"></div>
         <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>

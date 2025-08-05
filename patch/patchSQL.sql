@@ -38,3 +38,5 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("autoEmailBillingAgentReceipt", "false", "b", "f", "Automatically email receipts when taking 3rd party (billing agent) payments", 1);
 
 
+-- add default receipt email body
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('ReceiptEmailBody', 'Hello,\nYour receipt from (house name) is attached.\n\nThank you\n(house name)', 't', 'f', 'Default email body for Receipts', '1');

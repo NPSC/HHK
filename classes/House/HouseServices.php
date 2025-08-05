@@ -505,6 +505,17 @@ class HouseServices {
                 if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
                     $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
                 }
+
+                //add paymentId
+                if (is_null($payResult->getIdPayment()) === FALSE && $payResult->getIdPayment() != 0) {
+                    $dataArray['idPayment'] = $payResult->getIdPayment();
+                }
+
+                //add billToEmail
+                $billToEmail = $payResult->getInvoiceBillToEmail($dbh);
+                if ($billToEmail !== '') {
+                    $dataArray['billToEmail'] = $billToEmail;
+                }
             }
         }
 
@@ -615,6 +626,17 @@ class HouseServices {
             // New Invoice
             if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
                 $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
+            }
+
+            //add paymentId
+            if (is_null($payResult->getIdPayment()) === FALSE && $payResult->getIdPayment() != 0) {
+                $dataArray['idPayment'] = $payResult->getIdPayment();
+            }
+
+            //add billToEmail
+            $billToEmail = $payResult->getInvoiceBillToEmail($dbh);
+            if ($billToEmail !== '') {
+                $dataArray['billToEmail'] = $billToEmail;
             }
         }
 
@@ -752,6 +774,17 @@ class HouseServices {
                     if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
                         $dataArray['reply'] = $codes[$addnlCharge][1] . ': item recorded. ';
+                        
+                        //add paymentId
+                        if (is_null($payResult->getIdPayment()) === FALSE && $payResult->getIdPayment() != 0) {
+                            $dataArray['idPayment'] = $payResult->getIdPayment();
+                        }
+
+                        //add billToEmail
+                        $billToEmail = $payResult->getInvoiceBillToEmail($dbh);
+                        if ($billToEmail !== '') {
+                            $dataArray['billToEmail'] = $billToEmail;
+                        }
                     }
 
                 } else {

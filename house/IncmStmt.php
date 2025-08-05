@@ -125,6 +125,8 @@ if (isset($_POST['cmd'])) {
 
 $receiptMarkup = '';
 $paymentMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 
 // Hosted payment return
 try {
@@ -132,6 +134,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+		$receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -148,7 +152,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -518,13 +522,18 @@ function displayVids(vids) {
 
 var pmtMkup,
 	rctMkup,
+	receiptPaymentId,
+	receiptBilledToEmail,
 	dateFormat,
 	fixedRate;
 
     $(document).ready(function() {
 
         pmtMkup = $('#pmtMkup').val();
-        rctMkup = $('#rctMkup').val();
+		rctMkup = '<?php echo $receiptMarkup; ?>';
+        receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
+        receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
+
         dateFormat = $('#dateFormat').val();
         fixedRate = $('#fixedRate').val();
 
@@ -635,7 +644,6 @@ var pmtMkup,
         <form name="xform" id="xform" method="post"></form>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
 		<input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
-		<input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
 		<?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>

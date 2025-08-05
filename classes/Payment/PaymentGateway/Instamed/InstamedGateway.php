@@ -451,6 +451,8 @@ class InstamedGateway extends AbstractPaymentGateway {
 
                 $csResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
                 $dataArray['success'] = 'Payment is void.  ';
 
                 break;
@@ -486,6 +488,8 @@ class InstamedGateway extends AbstractPaymentGateway {
 
                 $csResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
 
                 break;
 

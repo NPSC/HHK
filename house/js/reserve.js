@@ -144,7 +144,7 @@ $(document).ready(function() {
     }
 
     if (receiptMarkup !== '') {
-        showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt');
+        showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
     }
 
 
@@ -223,7 +223,9 @@ $(document).ready(function() {
                         }
 
                         if (data.receiptMarkup && data.receiptMarkup != '') {
-                            showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+                            const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                            const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                            showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt', 550, idPayment, billToEmail);
                         }
 
                         if (data.deleted) {
@@ -322,7 +324,9 @@ $(document).ready(function() {
                         pageManager.loadResv(responseData);
 
                         if (responseData.receiptMarkup && responseData.receiptMarkup != '') {
-                            showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt');
+                            const idPayment = (typeof responseData.idPayment == 'number' ? responseData.idPayment:false);
+                            const billToEmail = (typeof responseData.billToEmail == 'string' ? responseData.billToEmail:"");
+                            showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt', 550, idPayment, billToEmail);
                         }
 
                         if (responseData.resv !== undefined) {

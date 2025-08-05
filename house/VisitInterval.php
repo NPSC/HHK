@@ -50,6 +50,8 @@ $uS = Session::getInstance();
 $labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Visit Report Detail', array('style' => 'margin-top: .5em;'))
@@ -61,6 +63,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if ($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -79,7 +83,7 @@ try {
         }
 
         if (WebInit::isAJAX()) {
-            echo json_encode(["receipt" => $receiptMarkup, ($payResult->wasError() ? "error" : "success") => $payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -500,6 +504,8 @@ if ($uS->CoTod) {
     </div>
     <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate" />
     <input type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+    <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
+    <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
     <input type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
     <input type="hidden" id="startYear" value='<?php echo $uS->StartYear; ?>' />
     <input type="hidden" id="dateFormat" value='<?php echo $dateFormat; ?>' />

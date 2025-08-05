@@ -46,6 +46,8 @@ $idPayment = 0;
 $paymentMarkup = '';
 $regDialogmkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $invoiceNumber = '';
 $menuMarkup = '';
 $regButtonStyle = 'display:none;';
@@ -61,6 +63,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
         $idRegistration = $payResult->getIdRegistration();
         $idPayment = $payResult->getIdPayment();
         $invoiceNumber = $payResult->getInvoiceNumber();
@@ -304,6 +308,8 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
             $(document).ready(function(){
                 let idReg = '<?php echo $idRegistration; ?>';
                 let rctMkup = '<?php echo $receiptMarkup; ?>';
+                var receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
+                var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
                 let regMarkup = '<?php echo $regDialogmkup; ?>';
                 let payId = '<?php echo $idPayment; ?>';
                 let invoiceNumber = '<?php echo $invoiceNumber; ?>';

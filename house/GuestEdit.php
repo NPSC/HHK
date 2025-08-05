@@ -76,6 +76,8 @@ $memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
 $receiptMarkup = '';
 $paymentMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 
 
 // Hosted payment return
@@ -84,6 +86,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -100,7 +104,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -1022,6 +1026,8 @@ $uS->guestId = $id;
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
             var rctMkup = '<?php echo $receiptMarkup; ?>';
+            var receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
+            var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
             var pmtMkup = '<?php echo $paymentMarkup; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';

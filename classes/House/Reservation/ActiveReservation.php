@@ -394,6 +394,8 @@ class ActiveReservation extends Reservation {
             } else {
 
                 $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+                $dataArray["billToEmail"] = $this->payResult->getInvoiceBillToEmail($dbh);
+                $dataArray["idPayment"] = $this->payResult->getIdPayment();
 
             }
         }
@@ -485,6 +487,8 @@ class ActiveReservation extends Reservation {
                 } else {
 
                     $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+                    $dataArray["billToEmail"] = $this->payResult->getInvoiceBillToEmail($dbh);
+                    $dataArray["idPayment"] = $this->payResult->getIdPayment();
                 }
             }
 

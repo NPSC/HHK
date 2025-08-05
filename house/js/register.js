@@ -1590,7 +1590,7 @@ $(document).ready(function () {
     });
 
     if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, reciptBilledToEmail);
     }
 
     $('#mainTabs').tabs({

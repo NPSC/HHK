@@ -43,11 +43,9 @@ class RefundResult extends PaymentResult
         $this->receiptMarkup = Receipt::createRefundAmtMarkup($dbh, $rtnResp, $uS->siteName, $uS->sId);
 
         // Email receipt
-        try {
-            $this->displayMessage .= $this->emailReceipt($dbh);
-        } catch (\Exception $ex) {
-            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
-        }
+        $emailResults = $this->emailReceipt($dbh);
+        $this->displayMessage .= isset($emailResults['success']) ? "  ". $emailResults['success'] : "";
+        $this->errorMessage .= isset($emailResults['error']) ? "  " . $emailResults['error'] : "";
     }
 
 

@@ -769,6 +769,43 @@ try {
 
         break;
 
+    case 'emailReceipt':
+        
+        $idPayment = 0;
+        if (isset($_POST['paymentId'])) {
+            $idPayment = intval(filter_var($_POST['paymentId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $emailAddress = "";
+        if (isset($_POST['emailAddress'])) {
+            $emailAddress = filter_var($_POST['emailAddress'], FILTER_SANITIZE_EMAIL);
+        }
+
+        $receiptAr = PaymentSvcs::generateReceipt($dbh, $idPayment);
+
+        if(isset($receiptAr["receipt"], $receiptAr["invoice"]) && $receiptAr["invoice"] instanceof Invoice){
+            $events = PaymentSvcs::sendReceiptEmail($dbh, $receiptAr["receipt"], $receiptAr["invoice"], $emailAddress);
+        }
+
+        
+
+        break;
+
+    case 'downloadReceipt':
+        // reprint a receipt
+        $idPayment = 0;
+        if (isset($_GET['paymentId'])) {
+            $idPayment = intval(filter_var($_GET['paymentId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        try{
+            PaymentSvcs::downloadReceipt($dbh, $idPayment);
+        }catch(\Exception $e){
+            $events = ["error"=>$e->getMessage()];
+        }
+
+        break;
+
     case "chgPmtAmt":
         // respond to changes in payment record amount on Recent Payments tab and Guest Edit payments tab.
 
@@ -818,6 +855,7 @@ if(isset($events['receipt']) && $uS->merchantReceipt == true){
 
 if (is_array($events)) {
 
+    setHeaders($events);
     $json = json_encode($events);
 
     if ($json !== FALSE) {
@@ -829,6 +867,12 @@ if (is_array($events)) {
 
 } else {
     echo $events;
+}
+
+function setHeaders($events){
+    if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false && is_array($events)) {
+        header("Content-Type: application/json"); //set content type to json if page expects json and return value is an array
+    }
 }
 
 exit();

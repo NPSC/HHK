@@ -117,7 +117,7 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
     });
 
     if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
     }
     if (regMarkup) {
         showRegDialog(regMarkup, idReg);
