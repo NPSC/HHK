@@ -5,6 +5,7 @@ namespace HHK\House;
 
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
+use HHK\House\Reservation\ReservationSvcs;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
@@ -330,19 +331,17 @@ class HouseServices {
         }
 
 
-        // Undo checkout
+        // Undo checkout?
         if (isset($post['undoCkout']) && $visit->getVisitStatus() == VisitStatus::CheckedOut) {
 
             // Get the new expected co date.
             if (isset($post['txtUndoDate'])) {
-
                 $newExpectedDT = new \DateTime(filter_var($post['txtUndoDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-
             } else {
-
                 $newExpectedDT = new \DateTime($visit->getActualDeparture());
             }
 
+            // Undo the checkout.
             $reply .= self::undoCheckout($dbh, $visit, $newExpectedDT, $uS->username);
             $returnCkdIn = TRUE;
 
@@ -501,6 +500,7 @@ class HouseServices {
             // Make guest payment
             $payResult = self::processPayments($dbh, $paymentManger, $visit, $postbackPage, $visit->getPrimaryGuestId());
 
+            // Handle the payment result
             if (is_null($payResult) === FALSE) {
 
                 if($payResult->wasError()){
@@ -527,26 +527,28 @@ class HouseServices {
             }
         }
 
-        // Undo Room Change
+        // Undo Room Change?
         if (isset($post['undoRmChg']) && $visit->getVisitStatus() == VisitStatus::NewSpan) {
 
             $reply .= self::undoRoomChange($dbh, $visit, $uS->username);
             $returnCkdIn = TRUE;
         }
 
-        // Delete future room change
+        // Delete future room change?
         if (isset($post['delFutRmChg']) && $visit->getVisitStatus() == VisitStatus::CheckedIn) {
 
-            $reply .= self::deleteFutureVisit($dbh, $visit->getIdVisit());
+            $reply .= self::deleteNextFutureVisit($dbh, $visit);
             $returnCkdIn = TRUE;
         }
 
 
-        // divert to credit payment site.
+        // divert to credit payment site?
         if (count($creditCheckOut) > 0) {
             if(isset($creditCheckOut['hpfToken'])){ // if deluxe, don't forward
                 $dataArray['deluxehpf'] = $creditCheckOut;
             }else{
+
+                // return early to credit payment site, other than Deluxe
                 return $creditCheckOut;
             }
         }
@@ -556,6 +558,7 @@ class HouseServices {
             $dataArray['curres'] = 'y';
         }
 
+        // Return reservations and waitlist?
         if ($returnReserv) {
             $dataArray['reservs'] = 'y';
             $dataArray['waitlist'] = 'y';
@@ -573,34 +576,54 @@ class HouseServices {
     }
 
     /**
-     * Summary of deleteFutureVisit
+     * Summary of deleteNextFutureVisit - delete a future visit and update the Next_IdResource.
      * @param \PDO $dbh
-     * @param mixed $idVisit
+     * @param Visit $Visit
      * @return string
      */
-    public static function deleteFutureVisit(\PDO $dbh, $idVisit) {
-        // Look for the reserved future visit
+    public static function deleteNextFutureVisit(\PDO $dbh, Visit $visit) {
+        
         $msg = '';
-        $vstmt = $dbh->query("Select * from visit where Status = '" . VisitStatus::Reserved . "' and idVisit = $idVisit;");
+        $uS = Session::getInstance();
+        $idVisit = $visit->getIdVisit();
+        $span = $visit->getSpan();
+
+        // Look for any reserved future visit
+        $vstmt = $dbh->query("Select * from visit where Status = '" . VisitStatus::Reserved . "' and idVisit = $idVisit and Span > $span Order by Span;");
         $ro = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($ro) > 0) {
-            // Delete the reserved visit
+            // Load the first reserved visit
             $vrs = new VisitRS();
             EditRS::loadRow($ro[0], $vrs);
             $resVisit = new Visit($dbh, 0, $vrs->idVisit->getStoredVal(), $vrs->Span->getStoredVal());
 
+            // Delete the visit span
             $resVisit->deleteThisVisitSpan($dbh);
 
-            // remove Next_IdResource from previous visit
-            $stmt = $dbh->prepare("UPDATE visit SET Next_IdResource = 0 WHERE idVisit = :idVisit;");
-            $stmt->bindValue(':idVisit', $idVisit, \PDO::PARAM_INT);
+
+            $nextIdResource = 0;
+            $newExpectedDT = new \DateTime($visit->getExpectedDeparture());
+
+            // Any more reserved visits?
+            if (isset($ro[1])) {
+                $nextIdResource = intval($ro[1]['idResource'], 10);
+                $newExpectedDT = new \DateTime($ro[1]['Span_Start']);
+                $newExpectedDT->setTime($uS->CheckOutTime, 0, 0);
+            }
+
+            // Update Next_IdResource from given visit.  Use the next reserved visit's next resource if it exists.
+            $stmt = $dbh->prepare("UPDATE visit SET Next_IdResource = :nextIdResource, Expected_Departure = :expDep WHERE idVisit = :idvisit; AND Span = :span;");
+            $stmt->bindValue(':idvisit', $idVisit, \PDO::PARAM_INT);
+            $stmt->bindValue(':span', $span, \PDO::PARAM_INT);
+            $stmt->bindValue(':expDep', $newExpectedDT->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $stmt->bindValue(':nextIdResource', $nextIdResource, \PDO::PARAM_INT);
             $stmt->execute();
 
-            $msg .= 'The Future Visit was deleted.  ';
+            $msg .= ReservationSvcs::moveResvAway($dbh, new \DateTime($visit->getSpanStart()), $newExpectedDT, $visit->getidResource(), $uS->username);
 
-        } else {
-            $msg .= 'The Future Visit to Delete was not found.  ';
+            $msg .= 'The Next Future Visit Span was deleted.  ';
+
         }
 
         return $msg;
