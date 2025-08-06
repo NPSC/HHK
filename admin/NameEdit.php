@@ -415,6 +415,7 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo UPPLOAD_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />

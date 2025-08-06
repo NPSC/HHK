@@ -23,10 +23,6 @@ function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 	}
 
 	try {
-/*		new Noty({
-			type : type,
-			text : mess
-		}).show();*/
 
 		if(type == 'error'){
 			toastr.error(mess, title);

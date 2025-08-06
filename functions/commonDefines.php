@@ -59,19 +59,19 @@ define('INCIDENT_CSS', '<link href="css/incidentReports.css' . JSV . '" rel="sty
 define('UPPLOAD_CSS', '<link rel="stylesheet" href="../js/uppload/uppload.css' . JSV . '"><link rel="stylesheet" href="../js/uppload/light.css' . JSV . '">');
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js' . JSV);
-define('JQ_JS', 'js/jquery-min.js' . JSV);
+define('JQ_JS', '../js/jquery-min.js' . JSV);
 define('JQ_DT_JS', '../js/datatables.min.js' . JSV);
 define('NOTY_JS', '../js/toastr.min.js' . JSV);
 define('NOTY_SETTINGS_JS', '../js/toastrSettings.js' . JSV);  //These are local
 define('JQ_DT_SETTINGS', '../js/datatablesSettings.js' . JSV);
 define('DIRRTY_JS', '../js/jquery.dirrty.js' . JSV);
 define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
-define('BOOTSTRAP_JS', '../js/bootstrap5.1.3.min.js' . JSV);
+define('BOOTSTRAP_JS', '../js/bootstrap.min.js' . JSV);
 define('HTMLENTITIES_JS', '../js/he.js'. JSV);
 
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js' . JSV);
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js' . JSV);
-define('ADDR_PREFS_JS', '../js/addrPrefs-min.js' . JSV);
+define('ADDR_PREFS_JS', '../js/addrPrefs.js' . JSV);
 define('STATE_COUNTRY_JS', '../js/stateCountry.js' . JSV);
 define('PAG_JS', '../js/pag.js' . JSV);
 define('LOGIN_JS', '../js/login.js' . JSV);

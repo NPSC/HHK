@@ -74,15 +74,19 @@ class Addresses {
         $table->addBodyTr(HTMLTable::makeTh("Preferred Email"));
 
         $emData = $email->get_Data();
+        $emTdAttrs = [];
 
         if ($emData['Preferred_Email'] == EmailPurpose::NoEmail) {
             $emMkup = 'No Email';
+        } else if ($emData["Email"] !=="" && filter_var($emData["Email"], FILTER_VALIDATE_EMAIL) === false){
+            $emTdAttrs["class"] = "ui-state-error";
+            $emMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", $emData["Email"]) . HTMLContainer::generateMarkup('i', '', ["class"=>"bi bi-exclamation-triangle-fill"]), ['class'=>'hhk-flex justify-content-between', "title"=>"Email address is invalid"]);
         } else {
             $emMkup = $emData["Email"];
         }
 
         $table->addBodyTr(
-            HTMLTable::makeTd($emMkup)
+            HTMLTable::makeTd($emMkup, $emTdAttrs)
         );
 
         return $table->generateMarkup();

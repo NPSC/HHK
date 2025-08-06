@@ -159,4 +159,6 @@ function verifyAddrs(container) {
             $(this).removeClass('ui-state-error');
         }
     });
+
+    $container.find('input.ckzip, input.hhk-phoneInput, input.hhk-emailInput').trigger('change');
 }
