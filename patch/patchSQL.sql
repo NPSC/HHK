@@ -33,3 +33,7 @@ FROM
 JOIN
   invoice_line il ON ri.Invoice_id = il.Invoice_Id and il.Item_Id = 10;
 
+
+-- add waitlist calendar label
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
+('waitlistCalendarGroup','Waitlist','s','rg','','Default: Waitlist');
