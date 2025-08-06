@@ -518,8 +518,6 @@ class ActiveReservation extends Reservation {
 
             $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php?rid=' . $resv->getIdReservation(), $resv->getIdGuest());
 
-            $excpay = $post["selexcpay"];
-
             // Relate Invoice to Reservation
             if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
                 if(isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::Hold){ //if putting overpayment towards general MOA, only link prepayment MOA payout to reservation

@@ -2206,6 +2206,7 @@ function resvManager(initData, options) {
                     if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
                         // Cancel
                         isCheckedOut = true;
+                        $('#feesPayment').val("").trigger("change"); //don't allow new payments when cancelling reservation
                         $('#cbHeld').prop('checked', true).trigger('change');
                     } else {
                         isCheckedOut = false;
@@ -2856,7 +2857,7 @@ function resvManager(initData, options) {
     }
 
     function deleteReserve() {
-
+        $('#feesPayment').val("").trigger("change"); // don't allow new payments on delete
         if (prePaymtAmt > 0 && $('#selexcpay').val() == '') {
 
             if (isCheckedOut) {
