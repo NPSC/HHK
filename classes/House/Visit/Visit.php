@@ -79,6 +79,8 @@ class Visit {
      */
     protected $errorMessage = '';
 
+    protected $nextIdResource = 0;
+
     /**
      * Summary of __construct
      * @param \PDO $dbh
@@ -407,6 +409,7 @@ class Visit {
         $houseKeepingEmail = $uS->HouseKeepingEmail;
         $rateGlideDays = 0;
         $rtnMessage = '';
+        $this->nextIdResource = 0;
 
         $now = new \DateTimeImmutable();
         $today = $now->setTime(0, 0, 0);
@@ -429,13 +432,13 @@ class Visit {
 
         // Change date cannot be earlier than span start date.
         $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
-        $spanStartDT->setTime(0,0,0);
+        $spanStartDT->setTime(0,0);
         if ($chgDayDT < $spanStartDT) {
             return "Error - Change Rooms failed: The Change Date is prior to Visit Span start date.  ";
         }
 
         $expDepDT = new \DateTime($this->getExpectedDeparture());
-        $expDepDT->setTime(0, 0, 0);
+        $expDepDT->setTime(0, 0);
 
         if ($expDepDT <= $today) {
             $expDepDT = $today->add(new \DateInterval('P1D'));
@@ -448,7 +451,7 @@ class Visit {
         // Reservation
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
 
-        // Room Available
+        // Room Available?
         if ($reserv->isNew() === FALSE) {
 
             $rescOpen = $reserv->isResourceOpen(
@@ -471,7 +474,7 @@ class Visit {
             } else {
 
                 // check for changing to reserved future room
-                if ($this->moveToReservedSpan($dbh, $this->getSpan())) {
+                if ($this->clearReservedSpan($dbh, $this->getSpan(), $resc->getIdResource())) {
                     $reserv->setIdResource($resc->getIdResource());
                     $reserv->saveReservation($dbh, $this->getIdRegistration(), $uS->username);
 
@@ -502,6 +505,7 @@ class Visit {
             // Just replace the room
             $this->setIdResource($resc->getIdResource());
             $this->resource = $resc;
+            $this->setNextIdResource($this->nextIdResource);
 
             if ($newRateCategory != '' && $newRateCategory != $this->getRateCategory()) {
                 $this->setRateCategory($newRateCategory);
@@ -633,12 +637,20 @@ class Visit {
         return $rtnMessage;
     }
 
-    protected function moveToReservedSpan(\PDO $dbh, $span) {
-        $delCount = 0;
+    /**
+     * Summary of clearReservedSpan
+     * @param \PDO $dbh
+     * @param mixed $span
+     * @param mixed $idResource
+     * @return bool
+     */
+    protected function clearReservedSpan(\PDO $dbh, $span, $idResource) {
+        $this->nextIdResource = 0;
 
         // Look at all the spans for this visit.
-        $query = "select Span, Span_Start, Expected_Departure, Status, idReservation, idResource, Pledged_Rate from visit where idVisit = " . $this->getIdVisit() . " ORDER BY Span;";
+        $query = "select Span, Span_Start, Expected_Departure, Status, idResource, Next_IdResource from visit where idVisit = " . $this->getIdVisit() . " ORDER BY Span;";
         $stmt1 = $dbh->query($query);
+
         while ($rw = $stmt1->fetch(\PDO::FETCH_ASSOC)) {
 
             // Selected visit span?
@@ -654,9 +666,16 @@ class Visit {
                 if (isset($mySpan['Expected_Departure'])) {
 
                     $expDep = new \DateTime($mySpan['Expected_Departure']);
+                    $expDep->setTime(0, 0);
                     $resvSpanStart = new \DateTime($rw['Span_Start']);
+                    $resvSpanStart->setTIme(0, 0);
 
-                    if ($expDep->format('Y-m-d') == $resvSpanStart->format('Y-m-d')) {
+                    // Delete reserved span only if it has the same resource as the move-to resource.
+                    if (($expDep == $resvSpanStart || $rw['idResource'] == $mySpan['Next_IdResource']) && $rw['idResource'] == $idResource) {
+
+                        // capture next room change, if any
+                        $this->nextIdResource = $rw['Next_IdResource'];
+
                         // Delete reserved span.
                         $delCount = $dbh->exec("Delete from visit where idVisit = " . $this->getIdVisit() . " AND Span = " . $rw['Span']);
                     }
@@ -1738,13 +1757,12 @@ class Visit {
      * @param \PDO $dbh
      * @param array $guestDates String dates indexed by idGuest
      * @param int $maxExpected The administrative limit on the number of days forward
-     * @param string $uname
      * @return array
      */
-    public function changeExpectedCheckoutDates(\PDO $dbh, array $guestDates, $maxExpected) {
+    public function changeExpectedCheckoutDates(\PDO $dbh, array $guestDates) {
 
         if ($this->getVisitStatus() != VisitStatus::CheckedIn) {
-            return ['message' => ''];
+            return ['message' => '', 'isChanged' => false];
         }
 
         $uS = Session::getInstance();
@@ -1837,9 +1855,9 @@ class Visit {
             }
 
             // Too far out?
-            if ($todayDT->diff($coDT)->days > $maxExpected) {
+            if ($todayDT->diff($coDT)->days > $uS->MaxExpected) {
 
-                $rtnMsg .= "Expected Checkout date cannot be beyond " . $maxExpected . " days from today.  The max days setting can be changed.";
+                $rtnMsg .= "Expected Checkout date cannot be beyond " . $uS->MaxExpected . " days from today.  The max days setting can be changed.";
                 // Check last date
                 if ($ecoDT > $lastDepartureDT) {
                     $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
@@ -2782,6 +2800,11 @@ class Visit {
         $this->visitRS->idReservation->setNewVal($id);
     }
 
+
+    public function setNextIdResource($id) {
+        $this->visitRS->Next_IdResource->setNewVal($id);
+    }
+
     /**
      * Summary of setIdHospital_stay
      * @param mixed $id
@@ -2824,6 +2847,6 @@ class Visit {
         return $this->visitRS->Status->getStoredVal();
     }
 
- 
+
 }
 

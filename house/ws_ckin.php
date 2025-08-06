@@ -458,7 +458,7 @@ try {
         break;
 
     case "visitMove":
-
+        // Calendar controls
         $sdelta = 0;
         if (isset($_POST['sdelta'])) {
             $sdelta = intval(filter_var($_POST['sdelta'], FILTER_SANITIZE_NUMBER_INT), 10);

@@ -6,6 +6,5 @@ ALTER TABLE `visit`
 
 -- to catch any old references to Has_Future_Change.
 ALTER TABLE `visit`
-	CHANGE COLUMN if exists `Has_Future_Visit` `Next_IdResource` INT(11) NOT NULL DEFAULT '0' AFTER `Rate_Glide_Credit`;
+	CHANGE COLUMN if exists `Has_Future_Change` `Next_IdResource` INT(11) NOT NULL DEFAULT '0' AFTER `Rate_Glide_Credit`;
 
-	

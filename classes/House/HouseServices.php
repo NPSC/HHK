@@ -359,7 +359,7 @@ class HouseServices {
                 // Change any expected checkout dates
                 if (isset($post['stayExpCkOut'])) {
 
-                    $replyArray = $visit->changeExpectedCheckoutDates($dbh, $post['stayExpCkOut'], $uS->MaxExpected);
+                    $replyArray = $visit->changeExpectedCheckoutDates($dbh, $post['stayExpCkOut']);
 
                     if (isset($replyArray['isChanged']) && $replyArray['isChanged']) {
                         $returnCkdIn = TRUE;
@@ -582,7 +582,7 @@ class HouseServices {
      * @return string
      */
     public static function deleteNextFutureVisit(\PDO $dbh, Visit $visit) {
-        
+
         $msg = '';
         $uS = Session::getInstance();
         $idVisit = $visit->getIdVisit();
@@ -616,11 +616,8 @@ class HouseServices {
             $stmt = $dbh->prepare("UPDATE visit SET Next_IdResource = :nextIdResource, Expected_Departure = :expDep WHERE idVisit = :idvisit; AND Span = :span;");
             $stmt->bindValue(':idvisit', $idVisit, \PDO::PARAM_INT);
             $stmt->bindValue(':span', $span, \PDO::PARAM_INT);
-            $stmt->bindValue(':expDep', $newExpectedDT->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $stmt->bindValue(':nextIdResource', $nextIdResource, \PDO::PARAM_INT);
             $stmt->execute();
-
-            $msg .= ReservationSvcs::moveResvAway($dbh, new \DateTime($visit->getSpanStart()), $newExpectedDT, $visit->getidResource(), $uS->username);
 
             $msg .= 'The Next Future Visit Span was deleted.  ';
 
@@ -1111,7 +1108,7 @@ ORDER BY Span;";
 
 
     /**
-     * Summary of changeVisitRooms
+     * Summary of changeVisitRooms, called by visitViewer change rooms control
      * @param \PDO $dbh
      * @param int $idVisit
      * @param int $span
@@ -1692,12 +1689,12 @@ ORDER BY Span;";
         $guestDates[$idGuest] = $newDate;
         $uS = Session::getInstance();
 
-        $result = $visit->changeExpectedCheckoutDates($dbh, $guestDates, $uS->MaxExpected);
+        $result = $visit->changeExpectedCheckoutDates($dbh, $guestDates);
 
         return ['success' => $result['message'], 'isChanged' => $result['isChanged']];
     }
 
-    /** Move a visit temporally by so many days
+    /** Move a visit temporally by so many days.  Called from fullCalendar
      *
      * @param \PDO $dbh
      * @param int $idVisit

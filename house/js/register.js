@@ -307,7 +307,7 @@ function saveStatusEvent(idResc, type) {
     });
 }
 
-// Change Visit's' Room
+// Show dialog to Change Visit's' Room
 function showChangeRoom(gname, id, idVisit, span) {
 	// Get the change rooms dialog box
 
@@ -480,6 +480,7 @@ function showChangeRoom(gname, id, idVisit, span) {
         }
     });
 
+    // From show change rooms dialog, process user input
     function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate, changeEndDate) {
 
         let parms = { cmd: 'doChangeRooms', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate, changeEndDate: changeEndDate };
@@ -570,6 +571,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 }
 
+// calendar call
 function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
     $.post('ws_ckin.php',
             {
