@@ -133,7 +133,7 @@ class ReservationSvcs
                     'tabTitle' => $d['Description'],
                     'docId' => $d['idDocument']
                 );
-                
+
                 if(isset($cronJobs[$d['idDocument']])){
                     $docs[$d['Code']]["cronJobs"] = $cronJobs[$d['idDocument']];
                 }else{
@@ -185,8 +185,8 @@ class ReservationSvcs
                         default:
                             $intervalStr = "";
                     }
-                    
-                    $cronAlert .= ($intervalStr != '' ? "This email is sent automatically " . $intervalStr . $job["Params"]["solicitBuffer"] . " days before</strong> (" . $jobTime->format("M j, Y") . ") the expected arrival date " . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? "of <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : ""):""); 
+
+                    $cronAlert .= ($intervalStr != '' ? "This email is sent automatically " . $intervalStr . $job["Params"]["solicitBuffer"] . " days before</strong> (" . $jobTime->format("M j, Y") . ") the expected arrival date " . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? "of <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : ""):"");
                 }
                 $cronAlert = HTMLContainer::generateMarkup("div", '<i class="mr-3 bi bi-info-circle-fill"></i>' . $cronAlert, ['class' => 'mb-4 p-2 ui-corner-all ui-state-highlight']);
             }
@@ -222,7 +222,7 @@ class ReservationSvcs
                     $mail = new HHKMailer($dbh);
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
-                    
+
                     $tos = explode(',', $emailAddr);
                     foreach ($tos as $k=>$to) {
                         $mail->addAddress(filter_var($to, FILTER_SANITIZE_EMAIL)); // Add a recipient
@@ -263,7 +263,7 @@ class ReservationSvcs
                     }catch(\Exception $e){
 
                     }
-                    
+
                     $noteText .= ' sent to ' . implode(", ", $mail->getToString()) .  " with subject: " . $docs[$docCode]["subjectLine"];
                     if($ccEmailAddr != '' && count($ccs) > 0){
                         $noteText .= '; CC\'d to ' . implode(", ", $mail->getCCString());
@@ -695,7 +695,7 @@ class ReservationSvcs
         return $reply;
     }
 
-    public static function moveReserv(\PDO $dbh, $idReservation, $startDelta, $endDelta)
+    public static function moveReservDates(\PDO $dbh, $idReservation, $startDelta, $endDelta)
     {
         $uS = Session::getInstance();
         $dataArray = array();

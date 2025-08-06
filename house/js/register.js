@@ -27,7 +27,7 @@ function isNumber(n) {
  * @param {int} idResc
  * @returns {Boolean}
  */
-function setRoomTo(idResv, idResc) {
+function moveResvRoom(idResv, idResc) {
 
     $.post('ws_resv.php', {cmd: 'moveResvRoom', rid: idResv, idResc: idResc}, function(data) {
         try {
@@ -308,14 +308,14 @@ function saveStatusEvent(idResc, type) {
 }
 
 // Show dialog to Change Visit's' Room
-function showChangeRoom(gname, id, idVisit, span) {
+function showChangeVisitRoom(gname, id, idVisit, span) {
 	// Get the change rooms dialog box
 
     this.rooms = {};
 
     $.post('ws_ckin.php',
         {
-            cmd: 'showChangeRooms',
+            cmd: 'showChangeVisitRoom',
             idVisit: idVisit,
             span: span,
             idGuest: id
@@ -461,7 +461,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 		    let buttons = {
 		        "Change Rooms": function() {
 		        	if($('#selResource').val() > 0){
-                        changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker("getDate").toUTCString(), $changeEndDate.datepicker("getDate").toUTCString());
+                        changeVisitRoom(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker("getDate").toUTCString(), $changeEndDate.datepicker("getDate").toUTCString());
 		            	$(this).dialog("close");
 		            }else{
 		            	$('#rmDepMessage').text('Choose a room').show();
@@ -480,10 +480,10 @@ function showChangeRoom(gname, id, idVisit, span) {
         }
     });
 
-    // From show change rooms dialog, process user input
-    function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate, changeEndDate) {
+    // From show change rooms dialog, process user input, clean up
+    function changeVisitRoom(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate, changeEndDate) {
 
-        let parms = { cmd: 'doChangeRooms', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate, changeEndDate: changeEndDate };
+        let parms = { cmd: 'doChangeVisitRoom', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate, changeEndDate: changeEndDate };
 
 		$.post('ws_ckin.php', parms,
 			function (data) {
@@ -528,7 +528,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 	    d = new Date();
 
 
-	    let parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate.toDateString(), selRescId:$rescSelector.val()};
+	    let parms = {cmd:'visitRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate.toDateString(), selRescId:$rescSelector.val()};
 
 	    $.post('ws_ckin.php', parms,
 	        function (data) {
@@ -572,7 +572,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 }
 
 // calendar call
-function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
+function moveDates(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
     $.post('ws_ckin.php',
             {
                 cmd: mode,
@@ -608,10 +608,10 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
     });
 }
 
-function getRoomList(idResv, eid, targetEl) {
+function getResvRoomList(idResv, eid, targetEl) {
     if (idResv) {
         // place "loading" icon
-        $.post('ws_ckin.php', {cmd: 'rmlist', rid: idResv, x:eid}, function(data) {
+        $.post('ws_ckin.php', {cmd: 'resvRoomlist', rid: idResv, x:eid}, function(data) {
             try {
                 data = $.parseJSON(data);
             } catch (err) {
@@ -641,7 +641,7 @@ function getRoomList(idResv, eid, targetEl) {
                     }
 
                     if (confirm('Change room to ' + $('#selRoom option:selected').text() + '?')) {
-                        setRoomTo(data.rid, $('#selRoom').val());
+                        moveResvRoom(data.rid, $('#selRoom').val());
                     }
                     contr.remove();
                 });
@@ -971,7 +971,7 @@ $(document).ready(function () {
     $('#vstays').on('click', '.stchgrooms', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
-        showChangeRoom($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
+        showChangeVisitRoom($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.stcleaning', function (event) {
         event.preventDefault();
@@ -1276,7 +1276,7 @@ $(document).ready(function () {
             // visit
             if (event.extendedProps.idVisit > 0 && info.delta.days !== 0) {
                 if (confirm('Move Visit to a new start date?')) {
-                    moveVisit('visitMove', event.extendedProps.idVisit, event.extendedProps.Span, info.delta.days, info.delta.days);
+                    moveDates('visitMoveDates', event.extendedProps.idVisit, event.extendedProps.Span, info.delta.days, info.delta.days);
                     return;
                 }
             }
@@ -1291,13 +1291,13 @@ $(document).ready(function () {
                 if (info.delta.days !== 0 && resource.extendedProps.idResc === event.extendedProps.idResc) {
 
                     if (confirm('Move Reservation to a new start date?')) {
-                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days);
+                        moveDates('reservMoveDates', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days);
                         return;
                     }
                 } else if (info.delta.days !== 0) {
 
                     if (confirm('Move Reservation to a new start date?')) {
-                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, false);
+                        moveDates('reservMoveDates', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, false);
                     }
                 }
 
@@ -1311,7 +1311,7 @@ $(document).ready(function () {
                     }
 
                     if (confirm(mssg)) {
-                        if (setRoomTo(event.extendedProps.idReservation, resource.extendedProps.idResc)) {
+                        if (moveResvRoom(event.extendedProps.idReservation, resource.extendedProps.idResc)) {
                             return;
                         }
                     }
@@ -1354,7 +1354,7 @@ $(document).ready(function () {
             // reservations
             if (info.event.extendedProps.idReservation && info.event.extendedProps.idReservation > 0) {
                 if (info.jsEvent.target.classList.contains('hhk-schrm')) {
-                    getRoomList(info.event.extendedProps.idReservation, info.jsEvent.target.id, info.jsEvent.target);
+                    getResvRoomList(info.event.extendedProps.idReservation, info.jsEvent.target.id, info.jsEvent.target);
                     return;
                 } else {
                     window.location.assign(resvPageName + '?rid=' + info.event.extendedProps.idReservation);

@@ -66,7 +66,7 @@ try {
 
     switch ($c) {
 
-        case 'rmlist':
+        case 'resvRoomlist':
 
             $idResv = 0;
             if (isset($_POST['rid'])) {
@@ -89,7 +89,7 @@ try {
 
             break;
 
-        case 'chgRoomList':
+        case 'visitRoomList':
 
             $changeDate = '';
             if (isset($_POST['chgDate'])) {
@@ -106,22 +106,22 @@ try {
                 $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $events = HouseServices::changeRoomList($dbh, $idVisit, $span, $changeDate, $rescId);
+            $events = HouseServices::visitRoomList($dbh, $idVisit, $span, $changeDate, $rescId);
 
             break;
 
-        case 'showChangeRooms':
+        case 'showChangeVisitRoom':
 
             $span = 0;
             if (isset($_POST['span'])) {
                 $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $events = HouseServices::showVisitChangeRooms($dbh, $idGuest, $idVisit, $span, $guestAdmin);
+            $events = HouseServices::showChangeVisitRoom($dbh, $idGuest, $idVisit, $span, $guestAdmin);
 
             break;
 
-        case 'doChangeRooms':
+        case 'doChangeVisitRoom':
 
             $span = 0;
             if (isset($_POST['span'])) {
@@ -153,7 +153,7 @@ try {
                 $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $events = HouseServices::changeVisitRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $changeStartDate, $changeEndDate, $useDefaultRate);
+            $events = HouseServices::changeVisitRoom($dbh, $idVisit, $span, $idRoom, $replaceRoom, $changeStartDate, $changeEndDate, $useDefaultRate);
 
             break;
 
@@ -442,7 +442,7 @@ try {
 
         break;
 
-    case "reservMove":
+    case "reservMoveDates":
 
         $sdelta = 0;
         if (isset($_POST['sdelta'])) {
@@ -454,10 +454,10 @@ try {
         }
 
 
-        $events = ReservationSvcs::moveReserv($dbh, $idVisit, $sdelta, $edelta);
+        $events = ReservationSvcs::moveReservDates($dbh, $idVisit, $sdelta, $edelta);
         break;
 
-    case "visitMove":
+    case "visitMoveDates":
         // Calendar controls
         $sdelta = 0;
         if (isset($_POST['sdelta'])) {
@@ -473,7 +473,7 @@ try {
             $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = HouseServices::setupMoveVisit($dbh, $idVisit, $span, $sdelta, $edelta);
+        $events = HouseServices::setupMoveVisitDates($dbh, $idVisit, $span, $sdelta, $edelta);
         break;
 
     case "visitFees":

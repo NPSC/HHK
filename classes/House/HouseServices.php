@@ -915,7 +915,7 @@ class HouseServices {
      * @param boolean $isAdmin
      * @return array
      */
-    public static function showVisitChangeRooms(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin) {
+    public static function showChangeVisitRoom(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin) {
 
         $uS = Session::getInstance();
         $dataArray = [];
@@ -1049,9 +1049,9 @@ ORDER BY Span;";
      * @param mixed $rescId
      * @return array
      */
-    public static function changeRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId) {
+    public static function visitRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId) {
 
-        $dataArray = array();
+        $dataArray = [];
         $vid = intval($idVisit, 10);
         $spanId = intval($span, 10);
 
@@ -1119,7 +1119,7 @@ ORDER BY Span;";
      * @param bool $useDefaultRate
      * @return array<float|int|string>
      */
-    public static function changeVisitRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $changeDate, $changeEndDate, $useDefaultRate) {
+    public static function changeVisitRoom(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $changeDate, $changeEndDate, $useDefaultRate) {
 
         $uS = Session::getInstance();
         $dataArray = [];
@@ -1701,7 +1701,7 @@ ORDER BY Span;";
      * @param int $dayDelta
      * @return array
      */
-    public static function setupMoveVisit(\PDO $dbh, $idVisit, $targetSpan, $startDelta, $endDelta) {
+    public static function setupMoveVisitDates(\PDO $dbh, $idVisit, $targetSpan, $startDelta, $endDelta) {
 
         $uS = Session::getInstance();
         $dataArray = [];
@@ -1731,7 +1731,7 @@ ORDER BY Span;";
             } else {
 
                 // Move the spans.
-                $reply = VisitViewer::moveVisit($dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta);
+                $reply = VisitViewer::moveVisitDates($dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta);
             }
 
             // Hndle errors

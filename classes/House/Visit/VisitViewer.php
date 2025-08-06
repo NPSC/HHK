@@ -1382,7 +1382,7 @@ where `Deleted` = 0 and `Status` = 'up'
      * @param int $endDelta
      * @return array
      */
-    public static function moveVisit(\PDO $dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta) {
+    public static function moveVisitDates(\PDO $dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta) {
 
         $uS = Session::getInstance();
 
@@ -1581,9 +1581,8 @@ where `Deleted` = 0 and `Status` = 'up'
 
             if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRS->Status->getStoredVal() == VisitStatus::Reserved) {
 
-                $visitRS->Expected_Departure->setNewVal($v['end']->format('Y-m-d H:i:s'));
-                $estDepart = $v['end']->format('Y-m-d H:i:s');
-                $actualDepart = NULL;
+                $visitRS->Expected_Departure->setNewVal($v['end']->format("Y-m-d $uS->CheckOutTime:i:s"));
+                $estDepart = $v['end']->format("Y-m-d $uS->CheckOutTime:i:s");
 
             } else {
 
@@ -1621,24 +1620,23 @@ where `Deleted` = 0 and `Status` = 'up'
             $reserv->setActualArrival($firstArrival->format('Y-m-d H:i:s'));
             $reserv->setExpectedArrival($firstArrival->format('Y-m-d H:i:s'));
 
-            if (is_null($actualDepart) === FALSE && $actualDepart != '') {
+            if ($actualDepart !== null && $actualDepart != '') {
                 $reserv->setActualDeparture($actualDepart);
             }
 
-            if (is_null($estDepart) === FALSE && $estDepart != '') {
+            if ($estDepart !== null && $estDepart != '') {
                 $reserv->setExpectedDeparture($estDepart);
             }
             $reserv->saveReservation($dbh, $lastVisitRs->idRegistration->getStoredVal(), $uS->username);
         }
 
-        if (is_null($actualDepart) === FALSE && $actualDepart != '') {
+        if ($actualDepart !== null && $actualDepart != '') {
             $lastDepart = new \DateTime($actualDepart);
         } else {
             $lastDepart = new \DateTime($estDepart);
         }
 
         $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
-        $firstArrival->setTime(intval($uS->CheckInTime), 0, 0);
 
         $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uS->username);
 
@@ -1650,7 +1648,7 @@ where `Deleted` = 0 and `Status` = 'up'
         if ($startDelta == 0) {
             $reply = ['success'=>'Visit checkout date changed. ' . $reply];
         } else {
-            $reply = ['success'=>'Visit Moved. ' . $reply];
+            $reply = ['success'=>'Visit Dates Moved. ' . $reply];
         }
         return $reply;
     }
