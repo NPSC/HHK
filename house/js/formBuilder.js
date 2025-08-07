@@ -146,6 +146,16 @@
 					"hhkField": (options.labels.patient || 'Patient') + " First Name",
     				"width": "col-md-3"
   				},
+				{
+					"type": "text",
+					"required": true,
+    				"label": (options.labels.patient || 'Patient') + " Middle Name",
+    				"placeholder": "Middle Name",
+    				"className": "form-control",
+						"name": "patient.middleName",
+					"hhkField": (options.labels.patient || 'Patient') + " Middle Name",
+    				"width": "col-md-3"
+  				},
   				{
   					"type": "text",
   					"required": true,
@@ -167,16 +177,6 @@
     				"dataSource":"nameSuffix",
     				"multiple": false,
     				"values": []
-  				},
-  				{
-  					"type": "text",
-  					"required": false,
-    				"label": (options.labels.patient || 'Patient') + " Middle Name",
-    				"placeholder": "Middle Name",
-    				"className": "form-control",
-						"name": "patient.middleName",
-						"hhkField": (options.labels.patient || 'Patient') + " Middle Name",
-    				"width": "col-md-3"
   				},
   				{
   					"type": "text",
@@ -491,6 +491,16 @@
     				"className": "form-control",
 					"name": "guests.g0.firstName",
 					"hhkField": (options.labels.guest || 'Guest') + " First Name",
+    				"width": "col-md-3",
+    				"group": "guest"
+  				},
+				{
+					"type": "text",
+    				"label": "Middle Name",
+    				"placeholder": "Middle Name",
+    				"className": "form-control",
+					"name": "guests.g0.middleName",
+					"hhkField": (options.labels.guest || 'Guest') + " Middle Name",
     				"width": "col-md-3",
     				"group": "guest"
   				},

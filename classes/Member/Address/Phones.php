@@ -9,6 +9,9 @@ use HHK\sec\Session;
 use HHK\SysConst\PhonePurpose;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NamePhoneRS;
+use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 
 /**
  * Phones.php
@@ -410,6 +413,25 @@ class Phones extends AbstractContactPoint {
         $a->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $a->Updated_By->setNewVal($uname);
 
+    }
+
+    public static function validateAndFormatPhoneNumber(string $input, string $defaultRegion = "US"){
+        $phoneUtil = PhoneNumberUtil::getInstance();
+
+        try {
+            $number = $phoneUtil->parse($input, $defaultRegion);
+            if (!$phoneUtil->isValidNumber($number)) {
+                return ['isValid' => false, 'formatted' => null];
+            }
+
+            $region = $phoneUtil->getRegionCodeForNumber($number);
+            $format = ($region === 'US') ? PhoneNumberFormat::NATIONAL : PhoneNumberFormat::INTERNATIONAL;
+            $formatted = $phoneUtil->format($number, $format);
+
+            return ['isValid' => true, 'formatted' => $formatted];
+        } catch (NumberParseException $e) {
+            return ['isValid' => false, 'formatted' => null];
+        }
     }
 
 }

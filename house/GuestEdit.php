@@ -765,6 +765,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="js/statement.js"></script>
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {

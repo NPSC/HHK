@@ -71,7 +71,7 @@ define('HTMLENTITIES_JS', '../js/he.js'. JSV);
 
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js' . JSV);
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js' . JSV);
-define('ADDR_PREFS_JS', '../js/addrPrefs.js' . JSV);
+define('ADDR_PREFS_JS', '../js/addrPrefs-min.js' . JSV);
 define('STATE_COUNTRY_JS', '../js/stateCountry.js' . JSV);
 define('PAG_JS', '../js/pag.js' . JSV);
 define('LOGIN_JS', '../js/login.js' . JSV);
@@ -83,3 +83,4 @@ define('NOTES_VIEWER_JS', '../js/notesViewer.js' . JSV);
 define('SELECT2_JS', '../js/select2.min.js' . JSV);
 define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js' . JSV);
 define('BUFFER_JS', '../js/buffer.min.js' . JSV);
+define('LIBPHONENUMBER_JS', '../js/libphonenumber.min.js' . JSV);
