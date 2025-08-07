@@ -61,14 +61,13 @@ class Addresses {
             $phoneMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x" . $phData["Phone_Extension"])) . HTMLContainer::generateMarkup('i', '', ["class"=>"bi bi-exclamation-triangle-fill ml-2"]), ['class'=>'hhk-flex justify-content-between', "title"=>"Phone number is invalid"]);
         }else {
             $phoneMkup = $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x" . $phData["Phone_Extension"]);
-        }
 
-        //sms dialog
-        $cellPhone = $phone->get_recordSet(PhonePurpose::Cell);
-        if($uS->smsProvider && $cellPhone instanceof NamePhoneRS && $cellPhone->Phone_Search->getStoredVal() != "" &&  $cellPhone->SMS_status->getStoredVal() == "opt_in"){
-            $phoneMkup .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>"ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest", "data-idname" => $cellPhone->idName->getStoredVal()]);
-        }
+            //sms dialog
+            if($uS->smsProvider && $phData["Preferred_Phone"] == PhonePurpose::Cell && $phData["Unformatted_Phone"] != "" && $phData["SMS_opt_in"] == "opt_in" && $validPhone["isValid"] == true){
+                $phoneMkup .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>"ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest", "data-idname" => $phone->getIdName()]);
+            }
 
+        }
 
         $table->addBodyTr(
             HTMLTable::makeTd($phoneMkup, $phTdAttrs)

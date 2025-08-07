@@ -112,13 +112,14 @@ class Phones extends AbstractContactPoint {
             $data["Phone_Num"] = $this->rSs[$code]->Phone_Num->getStoredVal();
             $data["Phone_Extension"] = $this->rSs[$code]->Phone_Extension->getStoredVal();
             $data["Unformatted_Phone"] = $this->rSs[$code]->Phone_Search->getStoredVal();
+            $data["SMS_opt_in"] = $this->rSs[$code]->SMS_status->getStoredVal();
 
         } else {
 
             $data["Phone_Num"] = "";
             $data["Phone_Extension"] = "";
             $data["Unformatted_Phone"] = "";
-
+            $data["SMS_opt_in"] = "";
         }
 
         return $data;
@@ -432,6 +433,10 @@ class Phones extends AbstractContactPoint {
         } catch (NumberParseException $e) {
             return ['isValid' => false, 'formatted' => null];
         }
+    }
+
+    public function getIdName(){
+        return $this->name->get_idName();
     }
 
 }
