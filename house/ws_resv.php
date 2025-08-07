@@ -790,8 +790,8 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $tfv->updateFutureVisits($dbh, new DateTime());
 
 
-        if (count($tfv->getLockedVisits()) > 0) {
-            $events['success'] = "These visits cannot move due to unavailability of the room: " . implode(", ", $tfv->getLockedVisits());
+        if (count($tfv->getBlockedVisits()) > 0) {
+            $events['success'] = "These visits cannot move due to unavailability of the room: " . implode(", ", $tfv->getBlockedVisits());
         } else {
             $events['success'] = 'Future room changes executed successfully.';
         }

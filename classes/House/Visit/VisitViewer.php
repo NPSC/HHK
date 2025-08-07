@@ -3,6 +3,7 @@
 namespace HHK\House\Visit;
 
 use DateTime;
+use DateTimeImmutable;
 use HHK\House\OperatingHours;
 use HHK\Purchase\PriceModel\PriceGuestDay;
 use HHK\sec\Labels;
@@ -127,9 +128,9 @@ class VisitViewer {
 
                 if ($action == 'ref') {
                     // deal with changed checkout date
-                    $deptDT = new \DateTime($coDate);
+                    $deptDT = new DateTime($coDate);
                     $deptDT->setTime(0, 0, 0);
-                    $arrivalDT = new \DateTime($vSpanListing['Arrival_Date']);
+                    $arrivalDT = new DateTime($vSpanListing['Arrival_Date']);
                     $arrivalDT->setTime(0, 0, 0);
                     $days = $deptDT->diff($arrivalDT, TRUE)->days;
                     $departureText = $deptDT->format('M, j, Y');
@@ -176,9 +177,9 @@ class VisitViewer {
 
                 if ($action == 'ref') {
                     // deal with changed checkout date
-                    $deptDT = new \DateTime($coDate);
+                    $deptDT = new DateTime($coDate);
                     $deptDT->setTime(0, 0, 0);
-                    $arrivalDT = new \DateTime($vSpanListing['Arrival_Date']);
+                    $arrivalDT = new DateTime($vSpanListing['Arrival_Date']);
                     $arrivalDT->setTime(0, 0, 0);
                     $days = $deptDT->diff($arrivalDT, TRUE)->days;
                     $departureText = $deptDT->format('M, j, Y');
@@ -316,7 +317,7 @@ class VisitViewer {
 
             if (isset($olRows[0][0]) && $olRows[0][0] > 0) {
                 // On leave
-                $leaveStartDT = new \DateTimeImmutable($olRows[0][1]);
+                $leaveStartDT = new DateTimeImmutable($olRows[0][1]);
                 $leaveEndDT = $leaveStartDT->add(new \DateInterval('P'. $olRows[0][0] . 'D'));
 
                 $etbl->addBodyTr(HTMLTable::makeTh(
@@ -674,7 +675,7 @@ class VisitViewer {
             $hdrPgRb = HTMLTable::makeTh('Pri', ['title' => Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')]);
         }
 
-        $stDayDT = new \DateTime($r['Span_Start_Date']);
+        $stDayDT = new DateTime($r['Span_Start_Date']);
         $stDayDT->setTime(0, 0, 0);
 
         // Action button depends on status
@@ -683,9 +684,9 @@ class VisitViewer {
             if ($r['Status'] == VisitStatus::CheckedIn) {
 
                 if ($action == 'ref' && isset($coDates[$r['idName']])) {
-                    $edDay = new \DateTime($coDates[$r['idName']]);
+                    $edDay = new DateTime($coDates[$r['idName']]);
                 } else {
-                    $edDay = new \DateTime(date('Y-m-d'));
+                    $edDay = new DateTime(date('Y-m-d'));
                 }
 
                 $edDay->setTime(0, 0, 0);
@@ -721,7 +722,7 @@ class VisitViewer {
 
             } else {
 
-                $edDay = new \DateTime(is_null($r['Span_End_Date']) ? '' : $r['Span_End_Date']);
+                $edDay = new DateTime(is_null($r['Span_End_Date']) ? '' : $r['Span_End_Date']);
                 $edDay->setTime(0, 0, 0);
 
                 $days = $edDay->diff($stDayDT, TRUE)->days;
@@ -737,7 +738,7 @@ class VisitViewer {
 
         } else {
 
-            $edDay = new \DateTime(is_null($r['Span_End_Date']) ? '' : $r['Span_End_Date']);
+            $edDay = new DateTime(is_null($r['Span_End_Date']) ? '' : $r['Span_End_Date']);
             $edDay->setTime(0, 0, 0);
 
             $days = $edDay->diff($stDayDT, TRUE)->days;
@@ -1226,12 +1227,12 @@ where `Deleted` = 0 and `Status` = 'up'
 
         $reply = '';
 
-        $today = new \DateTimeImmutable();
+        $today = new DateTimeImmutable();
         $today->setTime(0,0,0);
         $stayCoversSpan = FALSE;
         $stayFound = FALSE;
-        $earliestStart = new \DateTime('2900-01-01');
-        $latestEnd = new \DateTime('1984-01-01');
+        $earliestStart = new DateTime('2900-01-01');
+        $latestEnd = new DateTime('1984-01-01');
 
 
         // recordset
@@ -1258,15 +1259,15 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         // Span dates
-        $spanStartDT = new \DateTime($visitRS->Span_Start->getStoredVal());
+        $spanStartDT = new DateTime($visitRS->Span_Start->getStoredVal());
         $spanStartTime = $spanStartDT->format('H:i:s');
         $spanStartDT->setTime(0,0,0);
 
         if ($visitRS->Span_End->getStoredVal() != '') {
-            $spanEndDT = new \DateTime($visitRS->Span_End->getStoredVal());
+            $spanEndDT = new DateTime($visitRS->Span_End->getStoredVal());
             $spanEndTime = $spanEndDT->format('H:i:s');
         } else {
-            $spanEndDT = new \DateTime($visitRS->Expected_Departure->getStoredVal());
+            $spanEndDT = new DateTime($visitRS->Expected_Departure->getStoredVal());
             $spanEndTime = $spanEndDT->format('H:i:s');
             if ($spanEndDT < $today) {
                 $spanEndDT = $today;
@@ -1285,13 +1286,13 @@ where `Deleted` = 0 and `Status` = 'up'
 
             } else {
 
-                $stayStartDT = new \DateTime($st['Span_Start_Date']);
+                $stayStartDT = new DateTime($st['Span_Start_Date']);
                 $stayStartDT->setTime(0, 0, 0);
 
                 if ($st['Span_End_Date'] != '') {
-                    $stayEndDT = new \DateTime($st['Span_End_Date']);
+                    $stayEndDT = new DateTime($st['Span_End_Date']);
                 } else {
-                    $stayEndDT = new \DateTime($st['Expected_Co_Date']);
+                    $stayEndDT = new DateTime($st['Expected_Co_Date']);
                     if ($stayEndDT < $today) {
                         $stayEndDT = $today;
                     }
@@ -1459,11 +1460,11 @@ where `Deleted` = 0 and `Status` = 'up'
 
         $visits = [];
 
-        $tonight = new \DateTime();
+        $tonight = new DateTime();
         $tonight->add(new \DateInterval('P1D'));
         $tonight->setTime(0,0,0);
 
-        $today = new \DateTime();
+        $today = new DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
         reset($spans);
@@ -1496,7 +1497,7 @@ where `Deleted` = 0 and `Status` = 'up'
                 $spanEndDt->sub($endInterval);
 
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && $spanEndDt < $tonight) {
-                    $spanEndDt = new \DateTime();
+                    $spanEndDt = new DateTime();
                     $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
                 }
 
@@ -1631,9 +1632,9 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         if ($actualDepart !== null && $actualDepart != '') {
-            $lastDepart = new \DateTime($actualDepart);
+            $lastDepart = new DateTime($actualDepart);
         } else {
-            $lastDepart = new \DateTime($estDepart);
+            $lastDepart = new DateTime($estDepart);
         }
 
         $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
@@ -1661,24 +1662,24 @@ where `Deleted` = 0 and `Status` = 'up'
      * @param int $endDelta
      * @return array|array{error: string}
      */
-    public static function moveReservedVisit(\PDO $dbh, array $visitRcrds, $ckinSpan, $resvSpan, $endDelta) {
+    public static function moveReservedVisitDates(\PDO $dbh, array $visitRcrds, $ckinSpan, $resvSpan, $endDelta) {
 
         $uS = Session::getInstance();
         $reply = [];
 
         if ($endDelta == 0) {
-            return [];
+            return $reply;
         }
 
         if (abs($endDelta) > $uS->MaxExpected) {
             return ['error' => "Change Date refused, change too large according to system parameter MaxExpected: End Delta = $endDelta"];
         }
 
-        $tonight = new DateTime();
+        $tonight = new DateTimeImmutable();
         $tonight->add(new \DateInterval('P1D'));
         $tonight->setTime(0,0,0);
 
-        $today = new DateTime();
+        $today = new DateTimeImmutable();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
@@ -1688,7 +1689,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
         if ($spanEndDt < $tonight) {
             // error
-            return ['error' => "Change Date refused, the visit span end date cannot be before today. "];
+            return ['error' => "Change Date error: the date cannot be before today. "];
         }
 
         $resvSpanRs = new VisitRS();
@@ -1827,40 +1828,40 @@ where `Deleted` = 0 and `Status` = 'up'
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
-        $tonight = new \DateTime();
+        $tonight = new DateTime();
         $tonight->add(new \DateInterval('P1D'));
         $tonight->setTime(0,0,0);
 
-        $today = new \DateTime();
+        $today = new DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
         /**
-         * @var \DateTimeImmutable $spanStartDT
+         * @var DateTimeImmutable $spanStartDT
          */
-        $spanStartDT = \DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
+        $spanStartDT = DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
 
         /**
-         * @var \DateTimeImmutable $spanEndDT
+         * @var DateTimeImmutable $spanEndDT
          */
-        $spanEndDT = \DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
+        $spanEndDT = DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
 
 
         foreach ($stays as $stayRS) {
 
-            $checkInDT = new \DateTimeImmutable($stayRS->Checkin_Date->getStoredVal());
-            $stayStartDT = new \DateTimeImmutable($stayRS->Span_Start_Date->getStoredVal());
+            $checkInDT = new DateTimeImmutable($stayRS->Checkin_Date->getStoredVal());
+            $stayStartDT = new DateTimeImmutable($stayRS->Span_Start_Date->getStoredVal());
 
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-                $stayEndDt = new \DateTimeImmutable($stayRS->Expected_Co_Date->getStoredVal());
+                $stayEndDt = new DateTimeImmutable($stayRS->Expected_Co_Date->getStoredVal());
 
                 if ($stayEndDt < $tonight) {
-                    $stayEnd = new \DateTimeImmutable();
+                    $stayEnd = new DateTimeImmutable();
                     $stayEndDt = $stayEnd->setTime(intval($uS->CheckOutTime), 0, 0);
 
                 }
             } else {
-                $stayEndDt = new \DateTimeImmutable($stayRS->Span_End_Date->getStoredVal());
+                $stayEndDt = new DateTimeImmutable($stayRS->Span_End_Date->getStoredVal());
             }
 
 
@@ -1916,7 +1917,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
                     } else {
 
-                        $oldSpanEndDT = new \DateTime($visits['rs']->Span_End->getStoredVal());
+                        $oldSpanEndDT = new DateTime($visits['rs']->Span_End->getStoredVal());
                         $oldSpanEndDT->setTime(10,0,0);
 
                         // If ends on old span end date and the span is checked out, expand the stay.
@@ -1947,7 +1948,7 @@ where `Deleted` = 0 and `Status` = 'up'
                 } else if ($startDelta < 0) {
                     // Expand
 
-                    $oldSpanStartDT = new \DateTime($visits['rs']->Span_Start->getStoredVal());
+                    $oldSpanStartDT = new DateTime($visits['rs']->Span_Start->getStoredVal());
                     $oldSpanStartDT->setTIme(10,0,0);
 
                     // If ends on old span end date, expand the stay.
@@ -1958,14 +1959,14 @@ where `Deleted` = 0 and `Status` = 'up'
             }
 
             // Validity check
-            $endDATE = new \DateTime($stayEndDt->format('Y-m-d 00:00:00'));
-            $startDATE = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
+            $endDATE = new DateTime($stayEndDt->format('Y-m-d 00:00:00'));
+            $startDATE = new DateTime($stayStartDT->format('Y-m-d 00:00:00'));
             if ($endDATE < $startDATE) {
                 return "The stay End date comes before the Start date.  ";
             }
 
 
-            $tday = new \DateTime($today->format('Y-m-d 00:00:00'));
+            $tday = new DateTime($today->format('Y-m-d 00:00:00'));
             if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedIn && $endDATE > $tday) {
                 return "At least one guest, Id = " . $stayRS->idName->getStoredVal() . ", will have checked out into the future.  ";
             }

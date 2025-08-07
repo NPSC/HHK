@@ -1770,7 +1770,7 @@ class Visit {
         $rtnMsg = '';
         $staysToUpdate = [];
 
-        $todayDT = new \DateTime();
+        $todayDT = new \DateTimeImmutable();
         $todayDT->setTime(0, 0, 0);
 
 
@@ -1901,25 +1901,40 @@ class Visit {
             $this->visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
             $this->visitRS->Updated_By->setNewVal($uS->username);
 
-            $uctr = $this->updateVisitRecord($dbh, $uS->username);
+            $this->updateVisitRecord($dbh, $uS->username);
 
-            if ($uctr > 0) {
+            // Check for future (reserved) spans.
+            if ($this->nextIdResource->getStoredVal() > 0) {
 
+                // get end date
+// TODO
                 // Update any future visit spans
-                $tfv = new TrackFutureVisits();
-                $tfv->updateFutureVisits($dbh, $lastDepartureDT, $this->getIdVisit());
+                $uctr = $dbh->query("UPDATE visit v JOIN visit vf ON vf.idVisit = v.idVisit AND vf.Status = 'r'
+                SET vf.Span_Start = v.Expected_Departure
+                WHERE
+                    v.`Status` = 'a' AND v.idVisit = 97
+                        AND v.Next_IdResource > 0
+                        AND v.Next_IdResource = vf.idResource;");
 
+                if ($uctr > 0) {
+                    $rtnMsg .= 'Future room change date is: ' . $lastDepartureDT->format('M j, Y') . '.  ';
+                    $rtnMsg .= ReservationSvcs::moveResvAway($dbh, $coDT, $lastDepartureDT, $this->nextIdResource->getStoredVal(), $uS->username);
+                }
+
+            } else {
                 $rtnMsg .= 'Visit expected departure date changed to: ' . $lastDepartureDT->format('M j, Y') . '.  ';
-                $isChanged = TRUE;
-
-                // Update reservation expected departure
-                $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
-                $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
-                $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
-
-                // Move other reservations to alternative rooms
-                $rtnMsg .= ReservationSvcs::moveResvAway($dbh, new \DateTime($this->getArrivalDate()), $lastDepartureDT, $this->getidResource(), $uS->username);
             }
+
+            $isChanged = TRUE;
+
+            // Update reservation expected departure
+            $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
+            $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
+            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+
+            // Move other reservations to alternative rooms
+            $rtnMsg .= ReservationSvcs::moveResvAway($dbh, new \DateTime($this->getArrivalDate()), $lastDepartureDT, $this->getidResource(), $uS->username);
+
         }
 
         return ['message' => $rtnMsg, 'isChanged' => $isChanged];

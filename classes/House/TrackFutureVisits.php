@@ -86,61 +86,58 @@ class TrackFutureVisits {
 
         $uS = Session::getInstance();
 
-        if (isset($span)) {
+        // Update checked-in visit
+        $visitRs = new VisitRS();
+        $visitRs->idVisit -> setStoredVal($span['idVisit']);
+        $visitRs->Span->setStoredVal($span['Span']);
+        $visitRs->Expected_Departure->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
 
-            // Update checked-in visit
-            $visitRs = new VisitRS();
-            $visitRs->idVisit -> setStoredVal($span['idVisit']);
-            $visitRs->Span->setStoredVal($span['Span']);
-            $visitRs->Expected_Departure->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+        if (EditRS::update($dbh,$visitRs, [$visitRs->idVisit, $visitRs->Span]) < 1) {
+            return;  // No update made, so return.
+        }
 
-            if (EditRS::update($dbh,$visitRs, [$visitRs->idVisit, $visitRs->Span]) < 1) {
-                return;  // No update made, so return.
-            }
+        // Update the visit log
+        $logText = VisitLog::getUpdateText($visitRs);
+        EditRS::updateStoredVals($visitRs);
+        VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
 
-            // Update the visit log
+
+        // Update checked in stays
+        $stayRs = new StaysRS();
+        $stayRs->idVisit->setStoredVal($span['idVisit']);
+        $stayRs->Visit_Span->setStoredVal($span['Span']);
+        $stayRs->Status->setStoredVal(VisitStatus::Active);
+        $stayRs->Expected_Co_Date->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+
+        EditRS::update($dbh, $stayRs, [$stayRs->idVisit, $stayRs->Visit_Span, $stayRs->Status]);
+
+
+        // Set up the future span.
+        $visitRs = new VisitRS();
+        $visitRs->idVisit->setStoredVal($span['idVisit']);
+        $visitRs->Span->setStoredVal($span['Future_Span']);
+
+        $futureDeparture = new \DateTime($span['Future_Expected_Departure']);
+
+        if ($futureDeparture <= $pivotDate) {
+
+            // Delete the future span.
+            EditRS::delete($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+
+            // Log it
+            $logText = VisitLog::getDeleteText($visitRs, $visitRs->idVisit->getStoredVal());
+            VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
+
+        } else {
+
+            // Start the future span at the pivot date.
+            $visitRs->Span_Start->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
+            EditRS::update($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+
+            // Log it
             $logText = VisitLog::getUpdateText($visitRs);
             EditRS::updateStoredVals($visitRs);
             VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
-
-
-            // Update checked in stays
-            $stayRs = new StaysRS();
-            $stayRs->idVisit->setStoredVal($span['idVisit']);
-            $stayRs->Visit_Span->setStoredVal($span['Span']);
-            $stayRs->Status->setStoredVal(VisitStatus::Active);
-            $stayRs->Expected_Co_Date->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
-
-            EditRS::update($dbh, $stayRs, [$stayRs->idVisit, $stayRs->Visit_Span, $stayRs->Status]);
-
-
-            // Set up the future span.
-            $visitRs = new VisitRS();
-            $visitRs->idVisit->setStoredVal($span['idVisit']);
-            $visitRs->Span->setStoredVal($span['Future_Span']);
-
-            $futureDeparture = new \DateTime($span['Future_Expected_Departure']);
-
-            if ($futureDeparture <= $pivotDate) {
-
-                // Delete the future span.
-                EditRS::delete($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
-
-                // Log it
-                $logText = VisitLog::getDeleteText($visitRs, $visitRs->idVisit->getStoredVal());
-                VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
-
-            } else {
-
-                // Start the future span at the pivot date.
-                $visitRs->Span_Start->setNewVal($pivotDate->format("Y-m-d $uS->CheckOutTime:00:00"));
-                EditRS::update($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
-
-                // Log it
-                $logText = VisitLog::getUpdateText($visitRs);
-                EditRS::updateStoredVals($visitRs);
-                VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
-            }
         }
 
         return;

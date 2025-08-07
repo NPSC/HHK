@@ -1672,7 +1672,7 @@ ORDER BY Span;";
     }
 
     /**
-     * Summary of changeExpectedDepartureDate
+     * Summary of changeExpectedDepartureDate - Change a stay departure date, then check if it affects the visit span.
      * @param \PDO $dbh
      * @param mixed $idGuest
      * @param mixed $idVisit
@@ -1714,19 +1714,20 @@ ORDER BY Span;";
         // Have data?
         if (count($visitRcrds) > 0) {
 
-            // Find any visits with future spans.
+            // Find first future span .
             $resvSpan = 0;  // Reserved span must be 1 or greater.
             foreach ($visitRcrds as $r) {
                 if ($r['Status'] == VisitStatus::Reserved) {
                     $resvSpan = $r['Span'];
+                    break;
                 }
             }
 
-            // pick out the only case that requres special care - drag end date of checked in spant with a following reserved span.
+            // pick out the only case that requres special care - drag end date of checked in span with a following reserved span.
             if ($resvSpan > 0 && $resvSpan != $targetSpan && $startDelta == 0) {
 
                 // Handle end-date changes for reserved visits. Requires changing the dates of both checked-in and reserved spans.
-                $reply = VisitViewer::moveReservedVisit($dbh, $visitRcrds, $targetSpan, $resvSpan, $endDelta);
+                $reply = VisitViewer::moveReservedVisitDates($dbh, $visitRcrds, $targetSpan, $resvSpan, $endDelta);
 
             } else {
 
