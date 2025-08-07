@@ -415,6 +415,7 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo UPPLOAD_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
@@ -429,6 +430,7 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>

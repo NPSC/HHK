@@ -113,7 +113,7 @@ function verifyAddrs(container) {
         }
     });
 
-    $container.on('change', 'input.hhk-phoneInput', function() {
+/*     $container.on('change', 'input.hhk-phoneInput', function() {
         // inspect each phone number text box for correctness
         var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
         var regexp = /^(?:(?:[\+]?([\d]{1,3}(?:[ ]+|[\-.])))?[(]?([2-9][\d]{2})[\-\/)]?(?:[ ]+)?)?([2-9][0-9]{2})[\-.\/)]?(?:[ ]+)?([\d]{4})(?:(?:[ ]+|[xX]|(i:ext[\.]?)){1,2}([\d]{1,5}))?$/;
@@ -149,6 +149,22 @@ function verifyAddrs(container) {
                 }
             }
         }
+    }); */
+
+    $container.on('change', 'input.hhk-phoneInput', function() {
+        if($(this).val() !== ""){
+            let input = $(this).val();
+            input = cleanPhoneNumber(input);
+            const {isValid, formatted} = validatePhoneNumber(input);
+            if(isValid){
+                $(this).removeClass("ui-state-error");
+                $(this).val(formatted);
+            }else{
+                $(this).addClass("ui-state-error");
+            }
+        }else{
+            $(this).removeClass("ui-state-error");
+        }
     });
 
     $container.on('change', 'input.ckzip', function() {
@@ -159,4 +175,33 @@ function verifyAddrs(container) {
             $(this).removeClass('ui-state-error');
         }
     });
+
+    $container.find('input.ckzip, input.hhk-phoneInput, input.hhk-emailInput').trigger('change');
+}
+
+
+// Use google's libphonenumber to validate and format international phone numbers
+function validatePhoneNumber(phone, defaultRegion = 'US') {
+    try {
+        const phoneUtil = libphonenumber.PhoneNumberUtil.getInstance();
+        const PNF = libphonenumber.PhoneNumberFormat;
+
+        const number = phoneUtil.parseAndKeepRawInput(phone, defaultRegion);
+        const regionCode = phoneUtil.getRegionCodeForNumber(number);
+
+        const isValid = phoneUtil.isValidNumber(number);
+
+        const formatType = regionCode === defaultRegion ? PNF.NATIONAL : PNF.INTERNATIONAL;
+        const formatted = phoneUtil.format(number, formatType);
+        return { isValid, formatted };
+      } catch (e) {
+        return { isValid: false, formatted: null };
+      }
+}
+
+function cleanPhoneNumber(input) {
+  const cleaned = input.replace(/[^\d+]/g, '');
+  return cleaned.startsWith('+')
+    ? '+' + cleaned.slice(1).replace(/\+/g, '')
+    : cleaned.replace(/\+/g, '');
 }

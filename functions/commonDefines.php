@@ -59,14 +59,14 @@ define('INCIDENT_CSS', '<link href="css/incidentReports.css' . JSV . '" rel="sty
 define('UPPLOAD_CSS', '<link rel="stylesheet" href="../js/uppload/uppload.css' . JSV . '"><link rel="stylesheet" href="../js/uppload/light.css' . JSV . '">');
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js' . JSV);
-define('JQ_JS', 'js/jquery-min.js' . JSV);
+define('JQ_JS', '../js/jquery-min.js' . JSV);
 define('JQ_DT_JS', '../js/datatables.min.js' . JSV);
 define('NOTY_JS', '../js/toastr.min.js' . JSV);
 define('NOTY_SETTINGS_JS', '../js/toastrSettings.js' . JSV);  //These are local
 define('JQ_DT_SETTINGS', '../js/datatablesSettings.js' . JSV);
 define('DIRRTY_JS', '../js/jquery.dirrty.js' . JSV);
 define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
-define('BOOTSTRAP_JS', '../js/bootstrap5.1.3.min.js' . JSV);
+define('BOOTSTRAP_JS', '../js/bootstrap.min.js' . JSV);
 define('HTMLENTITIES_JS', '../js/he.js'. JSV);
 
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js' . JSV);
@@ -83,3 +83,4 @@ define('NOTES_VIEWER_JS', '../js/notesViewer.js' . JSV);
 define('SELECT2_JS', '../js/select2.min.js' . JSV);
 define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js' . JSV);
 define('BUFFER_JS', '../js/buffer.min.js' . JSV);
+define('LIBPHONENUMBER_JS', '../js/libphonenumber.min.js' . JSV);

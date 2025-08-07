@@ -380,6 +380,7 @@ if($uS->useOnlineReferral){
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>

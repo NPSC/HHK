@@ -2,6 +2,7 @@
 
 namespace HHK\House;
 
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\CalendarStatusColors;
 use HHK\SysConst\ResourceStatus;
@@ -194,15 +195,15 @@ where ru.idResource_use is null
         $rescs[] = array(
                 'id' => "id-" . self::WAITLIST_RESC_ID,
                 'idResc' => self::WAITLIST_RESC_ID,
-        		'title' => ($genTableName != '' ? ' ' : 'Waitlist'),
+        		'title' => ($genTableName != '' ? ' ' : Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist')),
                 'bgColor' => '#555',
                 //'textColor' => '#fff',
                 'maxOcc' => 0,
-                'Type' => 'Waitlist',
-                'Floor' => 'Waitlist',
+                'Type' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
+                'Floor' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
                 'roomStatus' => '',
-                'Category' => 'Waitlist',
-                'Report_Category' => 'Waitlist',
+                'Category' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
+                'Report_Category' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
             );
 
         return $rescs;

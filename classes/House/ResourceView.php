@@ -1033,6 +1033,7 @@ from
     if(count(s.idName) > 0, count(s.idName), '') as `numGuests`,
     ifnull(v.Arrival_Date, '') as `Arrival`,
     ifnull(v.Expected_Departure, '') as `Expected_Departure`,
+    ifnull(res.Expected_Arrival, '') as `Next_Expected_Arrival`,
     r.Last_Cleaned,
     r.Last_Deep_Clean,
     ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), '') as `noteDate`,
@@ -1045,6 +1046,9 @@ from
     resource re on rr.idResource = re.idResource
         left join
     visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
+        left join
+        (select reservation.*, ROW_NUMBER() OVER (PARTITION BY idResource ORDER BY Expected_Arrival) AS rn FROM reservation where date(Expected_Arrival) >= date(NOW()) and `Status` in ('" . ReservationStatus::Committed ."', '" . ReservationStatus::UnCommitted . "'))
+        res ON rr.idResource = res.idResource && res.rn = 1
         left join
     name n ON v.idPrimaryGuest = n.idName
         left join
@@ -1175,6 +1179,7 @@ ORDER BY $orderBy;");
             $fixedRows['numGuests'] = $r['numGuests'];
             $fixedRows['Checked_In'] = $arrival;
             $fixedRows['Expected_Checkout'] = $expDeparture;
+            $fixedRows['Next_Expected_Arrival'] = $r['Next_Expected_Arrival'];
             $fixedRows['Last_Cleaned'] = $lastCleaned;
             $fixedRows['Last_Deep_Clean'] = $lastDeepClean;
             $fixedRows['Notes'] = $notes;

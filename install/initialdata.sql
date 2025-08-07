@@ -787,6 +787,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('reservationTab','Confirmed Reservations','s','rg','','Default: Confirmed Reservations'),
 ('unconfirmedTab','UnConfirmed Reservations','s','rg','','Default: UnConfirmed Reservations'),
 ('waitlistTab','Wait Listed','s','rg','','Default: Wait Listed'),
+('waitlistCalendarGroup','Waitlist','s','rg','','Default: Waitlist'),
 ('recentPayTab','Recent Payments','s','rg','','Default: Recent Payments'),
 ('rateTitle','Room Rate','s','rg','','Default: Room Rate'),
 ('onlineReferralTab', 'Referrals', 's', 'rg','','Default: Referrals'),

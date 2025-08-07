@@ -106,6 +106,7 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
     (DATEDIFF(ifnull(r.Actual_Departure, r.Expected_Departure), ifnull(r.Actual_Arrival, r.Expected_Arrival))+1) as `Days`,
     ifnull(n.Name_Last, '') as Name_Last,
     ifnull(n.Name_First, '') as Name_First,
+    ifnull(n.Name_Middle, '') as Name_Middle,
     ifnull(n.BirthDate, '') as BirthDate,
     re.Title as `Room`,
     re.`Type`,
@@ -171,6 +172,7 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
         $uS = Session::getInstance();
 
         $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
+        $cFields[] = array("Middle", 'Name_Middle', '', '', 'string', '20');
         $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
         $cFields[] = array("Birth Date", 'BirthDate', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 

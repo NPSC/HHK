@@ -96,6 +96,16 @@ $(document).ready(function () {
             'sortable': true
         },
         {
+            'data': 'Next_Expected_Arrival',
+            'title': 'Next Expected Arrival',
+            'type': 'date',
+            render: function (data, type, row) {
+                return dateRender(data, type, dateFormat);
+            },
+            'searchable': true,
+            'sortable': true
+        },
+        {
             'data': 'Last_Cleaned',
             'title': 'Last Cleaned',
             'type': 'date',

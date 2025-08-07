@@ -40,3 +40,8 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 -- add default receipt email body
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('ReceiptEmailBody', 'Hello,\nYour receipt from (house name) is attached.\n\nThank you\n(house name)', 't', 'f', 'Default email body for Receipts', '1');
+
+
+-- add waitlist calendar label
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES
+('waitlistCalendarGroup','Waitlist','s','rg','','Default: Waitlist');
