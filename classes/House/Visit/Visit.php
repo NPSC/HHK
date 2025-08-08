@@ -1932,9 +1932,9 @@ class Visit {
                 } else {
 
                     // The future span started before the end of the active span.
-                    $trackFuture = new UpdateFutureVisits();
-                    $trackFuture->updateFutureVisits($dbh, $lastDepartureDT, $this->getIdVisit());
-                    $rtnMsg .= 'Future room change date is: ' . $lastDepartureDT->format('M j, Y') . '.  ';
+                    //$trackFuture = new UpdateFutureVisits();
+                    //$trackFuture->updateFutureVisits($dbh, $lastDepartureDT, $this->getIdVisit());
+                    //$rtnMsg .= 'Future room change date is: ' . $lastDepartureDT->format('M j, Y') . '.  ';
                 }
 
             } else {
