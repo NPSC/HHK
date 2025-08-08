@@ -580,8 +580,8 @@ function moveDates(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
                 span: visitSpan,
                 sdelta: startDelta,
                 edelta: endDelta
-},
-    function(data) {
+            },
+        function(data) {
         if (data) {
             try {
                 data = $.parseJSON(data);
