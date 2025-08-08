@@ -2,13 +2,11 @@
 
 namespace HHK\House\Visit;
 
-use DateTimeInterface;
+use \DateTimeInterface;
 use HHK\Exception\RuntimeException;
-use HHK\House\TrackFutureVisits;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
-use HHK\sec\SecurityComponent;
 use HHK\SysConst\{RoomRateCategories, VisitStatus};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
@@ -1934,8 +1932,8 @@ class Visit {
                 } else {
 
                     // The future span started before the end of the active span.
-                    $trackFuture = new TrackFutureVisits();
-                    $trackFuture->updateFutureVisits($dbh, $visitExpDepDT, $this->getIdVisit());
+                    $trackFuture = new UpdateFutureVisits();
+                    $trackFuture->updateFutureVisits($dbh, $lastDepartureDT, $this->getIdVisit());
                     $rtnMsg .= 'Future room change date is: ' . $lastDepartureDT->format('M j, Y') . '.  ';
                 }
 

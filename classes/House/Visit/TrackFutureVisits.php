@@ -2,9 +2,8 @@
 
 namespace HHK\House;
 
-use DateInterval;
+use \DateInterval;
 use HHK\House\Reservation\Reservation_1;
-use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\SysConst\VisitStatus;
 use HHK\TableLog\VisitLog;
@@ -147,6 +146,7 @@ class TrackFutureVisits {
      * Summary of findFutureVisitSpans
      * @param \PDO $dbh
      * @param \DateTime $pivotDate
+     * @param int $selectedIdVisit
      * @return array<array>
      */
     protected static function findFutureVisitSpans(\PDO $dbh, \DateTime $pivotDate, $selectedIdVisit = 0) {

@@ -9,7 +9,7 @@ use HHK\House\Reservation\ActiveReservation;
 use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
-use HHK\House\TrackFutureVisits;
+use HHK\House\Visit\TrackFutureVisits;
 use HHK\House\Vehicle;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Incident\ListReports;
