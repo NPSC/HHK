@@ -5,7 +5,9 @@ namespace HHK\House\Visit;
 use \DateInterval;
 use DateTimeImmutable;
 use HHK\House\Reservation\Reservation_1;
+use HHK\House\Reservation\ReservationSvcs;
 use HHK\sec\Session;
+use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\VisitStatus;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
@@ -74,21 +76,25 @@ class TrackFutureVisits {
 
         $activeSpan = $spans[0]['Span'];
         $idVisit = $spans[0]['idVisit'];
+        $activeIdResource = $spans[0]['idResource'];
+        $activeNextIdResource = $spans[0]['Next_IdResource'];
 
         $today = new \DateTime();
         $today->setTime(0, 0);
         $expectedDepartureDT = new \DateTime($spans[0]['Expected_Departure']);
         $expectedDepartureDT->setTime(0, 0);
 
-
+        //
         // If the active span ends in the past, then we need to update it.
         if ($expectedDepartureDT < $today) {
+
+            $expectedDepartureDT = $today;
 
             // Update checked-in visit
             $visitRs = new VisitRS();
             $visitRs->idVisit -> setStoredVal($idVisit);
             $visitRs->Span->setStoredVal($activeSpan);
-            $visitRs->Expected_Departure->setNewVal($today->format("Y-m-d $uS->CheckOutTime:00:00"));
+            $visitRs->Expected_Departure->setNewVal($expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00"));
 
             $upCtr = EditRS::update($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
 
@@ -97,49 +103,89 @@ class TrackFutureVisits {
                 $logText = VisitLog::getUpdateText($visitRs);
                 EditRS::updateStoredVals($visitRs);
                 VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+
+                // Move any reservations away.
+                ReservationSvcs::moveResvAway($dbh, new \DateTime($visitRs->Span_Start->getStoredVal()), $expectedDepartureDT, $visitRs->idResource->getStoredVal(), $uS->username);
             }
 
-            $expectedDepartureDT = $today;
         }
 
-        
-        $lastSpanIndex = 0;
+        // eat up any not needed future spans.
+        $s = $this->eatUpFutureSpans(
+            $dbh, 
+            $spans, 
+            $idVisit, 
+            $activeNextIdResource, 
+            $expectedDepartureDT);
 
+        // Set next future Span_Start
+        if (isset($spans[$s])) {
+
+            if($activeNextIdResource == $spans[$s]['Next_IdResource']) {
+                // Set my span start to the new expected departure
+                $dbh->exec("Update visit set Span_Start = '" . $expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00") . "'where idVisit = $idVisit and Span = " . $spans[$s]['Span']);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Summary of eatUpFutureSpans
+     * @param \PDO $dbh
+     * @param array $spans
+     * @param int $idVisit
+     * @param int $activeNextIdResource
+     * @param \DateTime $expectedDepartureDT
+     * @return int
+     */
+    protected function eatUpFutureSpans(\PDO $dbh, $spans, $idVisit, &$activeNextIdResource, &$expectedDepartureDT) {
+
+        $uS = Session::getInstance();
+        $nextSpan = 0;
+
+        // eat up any not needed future spans.
         for ($s = 1; $s < count($spans); $s++) {
 
             $myExpDepartureDT = new \DateTime($spans[$s]['Expected_Departure']);
             $myExpDepartureDT->setTime(0, 0);
             $myNextIdResource = $spans[$s]['Next_IdResource'];
 
-            if ($myExpDepartureDT <= $expectedDepartureDT) {
+            if ($myExpDepartureDT <= $expectedDepartureDT || $spans[0]['idResource'] == $spans[$s]['idResource']) {
+
                 // Delete this future span
-                $dbh->exec("Delete from visit where idVisit = " . $spans[$s]['idVisit'] . " and Span = " . $spans[$s]['Span']);
+                $dbh->exec("Delete from visit where idVisit = $idVisit and Span = " . $spans[$s]['Span']);
 
-                // if the next idresoure is the same as my idresouce, then what?
+                // Log delete
+                $logText['visit'] = $idVisit;
+                VisitLog::logVisit($dbh, $idVisit, $spans[$s]['Span'], $spans[$s]['idResource'], $spans[$s]['idRegistration'], $logText, "delete", $uS->username);
 
-                // TODO
-                // update the last span with the new nextIdResource
-                $dbh->exec("Update visit set Next_IdResource = " . $myNextIdResource . " where idVisit = " . $spans[$lastSpanIndex]['idVisit'] . " and Span = " . $spans[$lastSpanIndex]['Span']);
+                // get the new nextIdResource
+                $activeNextIdResource = $myNextIdResource;
 
-                // Move reservations away
+                // And expected departure
+                if ($myExpDepartureDT > $expectedDepartureDT){
+                    $expectedDepartureDT = $myExpDepartureDT;
+                }
 
-                continue;
+                $nextSpan = $s + 1;
             }
-            
-            // Set my span start to the new expected departure
-            $dbh->exec("Update visit set Span_Start = '" . $expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00") . "'where idVisit = " . $spans[$s]['idVisit'] . " and Span = " . $spans[$s]['Span']);
+        }
+        
+        // update active span
+        $upCtr = $dbh->exec("Update visit set Next_IdResource = $activeNextIdResource, Expected_Departure = '" . $expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00") . "' where idVisit = $idVisit and Span = " . $spans[0]['Span']);
 
-            // move reservations away.
+        // Log Update
+        if ($upCtr > 0) {
+            // Update the visit log
+            $logText['visit'] = $idVisit;
+            VisitLog::logVisit($dbh, $idVisit, $spans[0]['Span'], $spans[0]['idResource'], $spans[0]['idRegistration'], $logText, "update", $uS->username);
 
-            $lastSpanIndex = $s;
-
-            $expectedDepartureDT = $myExpDepartureDT;
-
+            // Move any reservations away.
+            ReservationSvcs::moveResvAway($dbh, new \DateTime($spans[0]['Span_Start']), $expectedDepartureDT, $spans[0]['idResource'], $uS->username);
         }
 
-
-
-        return;
+        return $nextSpan;
     }
 
 

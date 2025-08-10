@@ -1865,7 +1865,6 @@ class Visit {
             }
 
 
-
             // Okay to update
             if ($coDT > $lastDepartureDT) {
                 $lastDepartureDT = new \DateTime($coDT->format('Y-m-d 00:00:00'));
@@ -1904,38 +1903,8 @@ class Visit {
             // Check for future (reserved) spans.
             if ($this->getNextIdResource() > 0) {
 
-                // Get the future span start date.
-                $stm = $dbh->query("Select vf.Span_Start from visit v JOIN visit vf ON vf.idVisit = v.idVisit AND vf.Status = 'r'
-                where v.`Status` = 'a' AND v.idVisit = " . $this->getIdVisit() . " AND v.Next_IdResource > 0 AND v.Next_IdResource = vf.idResource;");
-                $rows = $stm->fetchAll(\PDO::FETCH_ASSOC);
-
-                $futureStart = new \Datetime($rows[0]['Span_Start']);
-                $futureStart->setTime(0,0);
-
-                if ($visitExpDepDT < $futureStart) {
-
-                    // The future span starts after the active span.
-                    $uctr = $dbh->exec("UPDATE visit v JOIN visit vf ON vf.idVisit = v.idVisit AND vf.Status = 'r'
-                        SET vf.Span_Start = v.Expected_Departure
-                        WHERE v.`Status` = 'a' AND v.idVisit = " . $this->getIdvisit() .
-                        " AND v.Next_IdResource > 0 AND v.Next_IdResource = vf.idResource;");
-
-                    if ($uctr > 0) {  // TODO update the visit log somehow
-                        //$logText = VisitLog::getUpdateText($visitRS);
-                        // Update the visit log
-                        //EditRS::updateStoredVals($visitRS);
-                        //VisitLog::logVisit($dbh, $visitRS->idVisit->getStoredVal(), $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
-
-                        $rtnMsg .= 'Future room change date is: ' . $lastDepartureDT->format('M j, Y') . '.  ';
-                        $rtnMsg .= ReservationSvcs::moveResvAway($dbh, $coDT, $lastDepartureDT, $this->getNextIdResource(), $uS->username);
-                    }
-                } else {
-
-                    // The future span started before the end of the active span.
-                    //$trackFuture = new UpdateFutureVisits();
-                    //$trackFuture->updateFutureVisits($dbh, $lastDepartureDT, $this->getIdVisit());
-                    //$rtnMsg .= 'Future room change date is: ' . $lastDepartureDT->format('M j, Y') . '.  ';
-                }
+                $trackFuture = new TrackFutureVisits();
+                $trackFuture->updateFutureVisits($dbh);
 
             } else {
                 $rtnMsg .= 'Visit expected departure date changed to: ' . $lastDepartureDT->format('M j, Y') . '.  ';
