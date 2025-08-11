@@ -1374,7 +1374,7 @@ where `Deleted` = 0 and `Status` = 'up'
     }
 
     /**
-     * Move a visit temporally by delta days
+     * Move an entire visit temporally by delta days
      *
      * @param \PDO $dbh
      * @param array $visitRcrds
@@ -1740,9 +1740,9 @@ where `Deleted` = 0 and `Status` = 'up'
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $resvSpanRs->idReservation->getStoredVal());
         if ($reserv->isNew() === FALSE) {
 
-            $reserv->setActualArrival($visitRcrds[$ckinSpan]['Actual_Arrival']->format('Y-m-d H:i:s'));
-            $actualDepart = $visitRcrds[$ckinSpan]['Actual_Departure']->format('Y-m-d H:i:s');
-            $estDepart = $visitRcrds[$ckinSpan]['Expected_Departure']->format('Y-m-d H:i:s');
+            $reserv->setActualArrival($visitRcrds[$ckinSpan]['Actual_Arrival']);
+            $actualDepart = $visitRcrds[$ckinSpan]['Actual_Departure'];
+            $estDepart = $visitRcrds[$ckinSpan]['Expected_Departure'];
 
             if (is_null($actualDepart) === FALSE && $actualDepart != '') {
                 $reserv->setActualDeparture($actualDepart);
@@ -1761,7 +1761,7 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
-        $firstArrival = $visitRcrds[$ckinSpan]['Actual_Arrival']->format('Y-m-d H:i:s');
+        $firstArrival = $visitRcrds[$ckinSpan]['Actual_Arrival'];
 
         $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $resvSpanRs->idResource->getStoredVal(), $uS->username);
 

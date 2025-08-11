@@ -76,7 +76,6 @@ class TrackFutureVisits {
 
         $activeSpan = $spans[0]['Span'];
         $idVisit = $spans[0]['idVisit'];
-        $activeIdResource = $spans[0]['idResource'];
         $activeNextIdResource = $spans[0]['Next_IdResource'];
 
         $today = new \DateTime();
@@ -94,15 +93,17 @@ class TrackFutureVisits {
             $visitRs = new VisitRS();
             $visitRs->idVisit -> setStoredVal($idVisit);
             $visitRs->Span->setStoredVal($activeSpan);
-            $visitRs->Expected_Departure->setNewVal($expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00"));
+            $rows = EditRS::select($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+            EditRS::loadRow($rows[0], $visitRs);
 
-            $upCtr = EditRS::update($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+            // Set new expected dept.
+            $visitRs->Expected_Departure->setNewVal($expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00"));
+            $upCtr = Visit::updateVisitRecordStatic($dbh, $visitRs, $uS->username);
 
             if ($upCtr > 0) {
-                // Update the visit log
-                $logText = VisitLog::getUpdateText($visitRs);
-                EditRS::updateStoredVals($visitRs);
-                VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+
+                // Update any stays
+                Visit::setStaysExpectedEnd($dbh, $stays, $expectedDepartureDT);
 
                 // Move any reservations away.
                 ReservationSvcs::moveResvAway($dbh, new \DateTime($visitRs->Span_Start->getStoredVal()), $expectedDepartureDT, $visitRs->idResource->getStoredVal(), $uS->username);
@@ -121,7 +122,7 @@ class TrackFutureVisits {
         // Set next future Span_Start
         if (isset($spans[$s])) {
 
-            if($activeNextIdResource == $spans[$s]['Next_IdResource']) {
+            if($activeNextIdResource == $spans[$s]['idResource']) {
                 // Set my span start to the new expected departure
                 $dbh->exec("Update visit set Span_Start = '" . $expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00") . "'where idVisit = $idVisit and Span = " . $spans[$s]['Span']);
             }
@@ -142,7 +143,7 @@ class TrackFutureVisits {
     protected function eatUpFutureSpans(\PDO $dbh, $spans, $idVisit, &$activeNextIdResource, &$expectedDepartureDT) {
 
         $uS = Session::getInstance();
-        $nextSpan = 0;
+        $nextSpan = 1;
 
         // eat up any not needed future spans.
         for ($s = 1; $s < count($spans); $s++) {
@@ -173,16 +174,28 @@ class TrackFutureVisits {
         }
         
         // update active span
-        $upCtr = $dbh->exec("Update visit set Next_IdResource = $activeNextIdResource, Expected_Departure = '" . $expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00") . "' where idVisit = $idVisit and Span = " . $spans[0]['Span']);
+        if ($nextSpan > 1) {
+            // Update checked-in visit again
+            $visitRs = new VisitRS();
+            $visitRs->idVisit -> setStoredVal($idVisit);
+            $visitRs->Span->setStoredVal($spans[0]['Span']);
+            $rows = EditRS::select($dbh, $visitRs, [$visitRs->idVisit, $visitRs->Span]);
+            EditRS::loadRow($rows[0], $visitRs);
 
-        // Log Update
-        if ($upCtr > 0) {
-            // Update the visit log
-            $logText['visit'] = $idVisit;
-            VisitLog::logVisit($dbh, $idVisit, $spans[0]['Span'], $spans[0]['idResource'], $spans[0]['idRegistration'], $logText, "update", $uS->username);
+            // Set new expected dept.
+            $visitRs->Expected_Departure->setNewVal($expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00"));
+            $visitRs->Next_IdResource->setNewVal($activeNextIdResource);
 
-            // Move any reservations away.
-            ReservationSvcs::moveResvAway($dbh, new \DateTime($spans[0]['Span_Start']), $expectedDepartureDT, $spans[0]['idResource'], $uS->username);
+            $upCtr = Visit::updateVisitRecordStatic($dbh, $visitRs, $uS->username);
+
+            if ($upCtr > 0) {
+
+                // Update any stays
+                Visit::setStaysExpectedEnd($dbh, $stays, $expectedDepartureDT);
+
+                // Move any reservations away.
+                ReservationSvcs::moveResvAway($dbh, new \DateTime($visitRs->Span_Start->getStoredVal()), $expectedDepartureDT, $visitRs->idResource->getStoredVal(), $uS->username);
+            }
         }
 
         return $nextSpan;

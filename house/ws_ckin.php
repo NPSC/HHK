@@ -458,7 +458,7 @@ try {
         break;
 
     case "visitMoveDates":
-        // Calendar controls
+        // Calendar move visit
         $sdelta = 0;
         if (isset($_POST['sdelta'])) {
             $sdelta = intval(filter_var($_POST['sdelta'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -475,6 +475,20 @@ try {
 
         $events = HouseServices::setupMoveVisitDates($dbh, $idVisit, $span, $sdelta, $edelta);
         break;
+
+    case 'changeVisitDate':
+        // calendar drag end point.
+        $edelta = 0;
+        if (isset($_POST['edelta'])) {
+            $edelta = intval(filter_var($_POST['edelta'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $span = 0;
+        if (isset($_POST['span'])) {
+            $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = HouseServices::changeExpectedDepartureDate($dbh, $idGuest, $idVisit, $nd);        break;
 
     case "visitFees":
         $s = 'n';

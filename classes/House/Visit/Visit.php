@@ -867,7 +867,7 @@ class Visit {
             $this->visitRS->Expected_Departure->setNewVal($chgDT->format("Y-m-d $uS->CheckOutTime:00:00"));
 
             // Update the checked in stays
-            $this->setStaysExpectedEnd($dbh, $this->stays, $chgDT);
+            $this->setStaysExpectedEnd($dbh, $this->stays, $chgDT, $this->getIdRegistration());
 
         } else {
             // End current span
@@ -1050,7 +1050,7 @@ class Visit {
      * @param \DateTime $expEndDate
      * @return void
      */
-    protected function setStaysExpectedEnd(\PDO $dbh, array &$stays, \DateTime $expEndDate) {
+    public static function setStaysExpectedEnd(\PDO $dbh, array &$stays, \DateTime $expEndDate, $idRegistration = 0) {
 
         $uS = Session::getInstance();
         foreach ($stays as $stayRS) {
@@ -1062,7 +1062,7 @@ class Visit {
 
                 EditRS::update($dbh, $stayRS, [$stayRS->idStays]);
                 $logText = VisitLog::getUpdateText($stayRS);
-                VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+                VisitLog::logStay($dbh, $stayRS->idVisit->getStoredVal(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $idRegistration, $logText, "update", $uS->username);
             }
         }
     }
