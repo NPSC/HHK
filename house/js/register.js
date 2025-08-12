@@ -608,42 +608,6 @@ function moveDates(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
     });
 }
 
-function changeVisitDate(idVisit, span, endDelta){
-    $.post('ws_ckin.php',
-            {
-                cmd: 'changeVisitDate',
-                idVisit: idVisit,
-                span: span,
-                edelta: endDelta
-            },
-        function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, 'error');
-
-            } else if (data.success) {
-                flagAlertMessage(data.success, 'success');
-            }
-            if (updateCal === undefined || updateCal === true) {
-                calendar.refetchResources();
-                calendar.refetchEvents();
-                refreshdTables(data);
-            }
-        }
-    });
-
-}
-
 function getResvRoomList(idResv, eid, targetEl) {
     if (idResv) {
         // place "loading" icon
@@ -1366,7 +1330,7 @@ $(document).ready(function () {
             if (info.event.extendedProps.idVisit > 0) {
                 if (confirm('Change end date?')) {
                     //changeVisitDate(info.event.extendedProps.idVisit, info.event.extendedProps.Span, info.endDelta.days);
-                    moveDates('visitMoveDates', info.event.extendedProps.idVisit, info.event.extendedProps.span, 0, info.endDelta.days);
+                    moveDates('visitMoveDates', info.event.extendedProps.idVisit, info.event.extendedProps.Span, 0, info.endDelta.days);
                     return;
                 }
             }

@@ -1391,7 +1391,7 @@ where `Deleted` = 0 and `Status` = 'up'
             return [];
         }
 
-        if (abs($endDelta) > ($uS->MaxExpected) || abs($startDelta) > ($uS->MaxExpected)) {
+        if (abs($endDelta) > $uS->MaxExpected || abs($startDelta) > $uS->MaxExpected) {
             return ['error'=>'Move refused, change too large according to system parameter MaxExpected: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta];
         }
 
@@ -1402,8 +1402,6 @@ where `Deleted` = 0 and `Status` = 'up'
         $stays = [];
         $firstArrival = NULL;
         $lastSpanId = 0;
-        $activeSpan = -1;
-        $futureSpan = -1;
 
         foreach ($visitRcrds as $r) {
 
@@ -1415,16 +1413,19 @@ where `Deleted` = 0 and `Status` = 'up'
                 $lastSpanId = $r['Span'];
             }
 
-            // Mark any active or future spans.
+            // Don't need any future spans.
             if ($r['Status'] == VisitStatus::Active){
-                $activeSpan = $r['Span'];
-            } else if ($r['Status'] == VisitStatus::Reserved){
-                $futureSpan = $r['Span'];
+                break;
             }
         }
 
         // Pre-filter list of visit spans
         foreach ($visitRcrds as $r) {
+
+            // Don't need any future spans.
+            if ($r['Status'] == VisitStatus::Reserved) {
+                break;
+            }
 
             $vRs = new VisitRs();
             EditRS::loadRow($r, $vRs);
@@ -1462,7 +1463,7 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         // Check the case that user moved the end of a ribbon inbetween spans.
-        if (isset($spans[$targetSpan]) === FALSE && $targetSpan != $activeSpan && $futureSpan < 0) {
+        if (isset($spans[$targetSpan]) === FALSE) {
             return ['error'=>'Use only the begining span or the very last span to resize this visit.'];
         }
 
@@ -1483,7 +1484,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
             $spanStartDT = newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
 
-            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn || $vRs->Status->getStoredVal() == VisitStatus::Reserved) {
+            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
                 $spanEndDt = newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
                 $spanEndDt->setTime(intval($uS->CheckOutTime),0);
@@ -1529,7 +1530,7 @@ where `Deleted` = 0 and `Status` = 'up'
                 }
 
                 // Checked-Out spans cannot move their end date beyond todays date.
-                if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn && $vRs->Status->getStoredVal() != VisitStatus::Reserved) {
+                if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
                     if ($spanEndDt >= $tonight) {
                         return ['error'=>'Checked-Out visits cannot move their end date beyond todays date  Use Undo Checkout instead. '];
                     }
@@ -1589,7 +1590,7 @@ where `Deleted` = 0 and `Status` = 'up'
             $visitRS->Span_Start->setNewVal($v['start']->format('Y-m-d H:i:s'));
             $visitRS->Arrival_Date->setNewVal($firstArrival->format('Y-m-d H:i:s'));
 
-            if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRS->Status->getStoredVal() == VisitStatus::Reserved) {
+            if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
                 $visitRS->Expected_Departure->setNewVal($v['end']->format("Y-m-d $uS->CheckOutTime:00:00"));
                 $estDepart = $v['end']->format("Y-m-d $uS->CheckOutTime:00:00");

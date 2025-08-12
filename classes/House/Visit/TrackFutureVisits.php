@@ -108,17 +108,20 @@ class TrackFutureVisits {
                 // Move any reservations away.
                 ReservationSvcs::moveResvAway($dbh, new \DateTime($visitRs->Span_Start->getStoredVal()), $expectedDepartureDT, $visitRs->idResource->getStoredVal(), $uS->username);
             }
-
         }
 
         // eat up any not needed future spans.
-        $this->eatUpFutureSpans(
+        $nextValidSpan = $this->eatUpFutureSpans(
             $dbh,
             $spans,
             $idVisit,
             $activeNextIdResource,
             $expectedDepartureDT);
 
+        // Update the start date of any next span
+        if (isset($spans[$nextValidSpan])) {
+            $dbh->exec("update visit set Span_Start = '" . $expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00") . "' WHERE idVisit= $idVisit AND Span=" . $spans[$nextValidSpan]['Span']);
+        }
         return;
     }
 
@@ -134,7 +137,8 @@ class TrackFutureVisits {
     protected function eatUpFutureSpans(\PDO $dbh, $spans, $idVisit, &$activeNextIdResource, &$expectedDepartureDT) {
 
         $uS = Session::getInstance();
-        $dateChanged = false;
+        $nextValidSpan = 1;
+        $spanDeleted = false;
 
         // eat up any not needed future spans.
         for ($s = 1; $s < count($spans); $s++) {
@@ -158,14 +162,18 @@ class TrackFutureVisits {
                 // And expected departure
                 if ($myExpDepartureDT > $expectedDepartureDT){
                     $expectedDepartureDT = $myExpDepartureDT;
-                    $dateChanged = true;
                 }
 
+                $spanDeleted = true;
+
+            } else {
+                $nextValidSpan = $s;
+                break;
             }
         }
 
         // update active span
-        if ($dateChanged) {
+        if ($spanDeleted) {
             // Update checked-in visit again
             $visitRs = new VisitRS();
             $visitRs->idVisit -> setStoredVal($idVisit);
@@ -189,7 +197,7 @@ class TrackFutureVisits {
             }
         }
 
-        return $dateChanged;
+        return $nextValidSpan;
     }
 
 
