@@ -1671,6 +1671,8 @@ ORDER BY Span;";
         return $dataArray;
     }
 
+
+
     /**
      * Summary of changeExpectedDepartureDate - Change a stay departure date, then check if it affects the visit span.
      * @param \PDO $dbh
@@ -1693,6 +1695,8 @@ ORDER BY Span;";
 
         return ['success' => $result['message'], 'isChanged' => $result['isChanged']];
     }
+
+
 
     /** Move a visit temporally by so many days.  Called from fullCalendar
      *
@@ -1724,16 +1728,16 @@ ORDER BY Span;";
             }
 
             // pick out the only case that requres special care - drag end date of checked in span with a following reserved span.
-            if ($resvSpan > 0 && $resvSpan != $targetSpan && $startDelta == 0) {
+            // if ($resvSpan > 0 && $resvSpan != $targetSpan && $startDelta == 0) {
 
-                // Handle end-date changes for reserved visits. Requires changing the dates of both checked-in and reserved spans.
-                $reply = VisitViewer::moveReservedVisitDates($dbh, $visitRcrds, $targetSpan, $resvSpan, $endDelta);
+            //     // Handle end-date changes for reserved visits. Requires changing the dates of both checked-in and reserved spans.
+            //     $reply = VisitViewer::moveReservedVisitDates($dbh, $visitRcrds, $targetSpan, $resvSpan, $endDelta);
 
-            } else {
+            // } else {
 
                 // Move the spans.
                 $reply = VisitViewer::moveVisitDates($dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta);
-            }
+            // }
 
             // Hndle errors
             if ($reply === FALSE) {

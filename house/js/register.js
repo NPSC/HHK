@@ -1365,7 +1365,8 @@ $(document).ready(function () {
             }
             if (info.event.extendedProps.idVisit > 0) {
                 if (confirm('Change end date?')) {
-                    changeVisitDate(info.event.extendedProps.idVisit, info.event.extendedProps.Span, info.endDelta.days);
+                    //changeVisitDate(info.event.extendedProps.idVisit, info.event.extendedProps.Span, info.endDelta.days);
+                    moveDates('visitMoveDates', info.event.extendedProps.idVisit, info.event.extendedProps.span, 0, info.endDelta.days);
                     return;
                 }
             }

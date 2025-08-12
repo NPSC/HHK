@@ -488,7 +488,8 @@ try {
             $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = HouseServices::changeExpectedDepartureDate($dbh, $idGuest, $idVisit, $nd);        break;
+        $events = HouseServices::changeExpectedDepartureDate($dbh, $idGuest, $idVisit, $nd);
+        break;
 
     case "visitFees":
         $s = 'n';

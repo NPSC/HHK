@@ -1401,8 +1401,10 @@ where `Deleted` = 0 and `Status` = 'up'
         $spans = [];
         $stays = [];
         $firstArrival = NULL;
-
         $lastSpanId = 0;
+        $activeSpan = -1;
+        $futureSpan = -1;
+
         foreach ($visitRcrds as $r) {
 
             //Convenience variable
@@ -1411,6 +1413,13 @@ where `Deleted` = 0 and `Status` = 'up'
             // find the last span id
             if ($r['Span'] > $lastSpanId) {
                 $lastSpanId = $r['Span'];
+            }
+
+            // Mark any active or future spans.
+            if ($r['Status'] == VisitStatus::Active){
+                $activeSpan = $r['Span'];
+            } else if ($r['Status'] == VisitStatus::Reserved){
+                $futureSpan = $r['Span'];
             }
         }
 
@@ -1453,7 +1462,7 @@ where `Deleted` = 0 and `Status` = 'up'
         }
 
         // Check the case that user moved the end of a ribbon inbetween spans.
-        if (isset($spans[$targetSpan]) === FALSE) {
+        if (isset($spans[$targetSpan]) === FALSE && $targetSpan != $activeSpan && $futureSpan < 0) {
             return ['error'=>'Use only the begining span or the very last span to resize this visit.'];
         }
 
@@ -1465,7 +1474,7 @@ where `Deleted` = 0 and `Status` = 'up'
         $tonight->setTime(0,0,0);
 
         $today = new DateTime();
-        $today->setTime(intval($uS->CheckOutTime), 0, 0);
+        $today->setTime(intval($uS->CheckOutTime), 0);
 
         reset($spans);
 
@@ -1477,11 +1486,11 @@ where `Deleted` = 0 and `Status` = 'up'
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn || $vRs->Status->getStoredVal() == VisitStatus::Reserved) {
 
                 $spanEndDt = newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
-                $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
+                $spanEndDt->setTime(intval($uS->CheckOutTime),0);
 
                 if ($spanEndDt < $tonight) {
                     $spanEndDt = newDateWithTz('', $uS->tz);
-                    $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
+                    $spanEndDt->setTime(intval($uS->CheckOutTime), 0);
                 }
 
             } else {
@@ -1498,7 +1507,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && $spanEndDt < $tonight) {
                     $spanEndDt = new DateTime();
-                    $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
+                    $spanEndDt->setTime(intval($uS->CheckOutTime), 0);
                 }
 
                 $spanStartDT->sub($startInterval);
@@ -1582,8 +1591,8 @@ where `Deleted` = 0 and `Status` = 'up'
 
             if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRS->Status->getStoredVal() == VisitStatus::Reserved) {
 
-                $visitRS->Expected_Departure->setNewVal($v['end']->format("Y-m-d $uS->CheckOutTime:i:s"));
-                $estDepart = $v['end']->format("Y-m-d $uS->CheckOutTime:i:s");
+                $visitRS->Expected_Departure->setNewVal($v['end']->format("Y-m-d $uS->CheckOutTime:00:00"));
+                $estDepart = $v['end']->format("Y-m-d $uS->CheckOutTime:00:00");
 
             } else {
 
@@ -1606,6 +1615,9 @@ where `Deleted` = 0 and `Status` = 'up'
             }
         }
 
+        // update any future (reserved) spans
+        $tracker = new TrackFutureVisits();
+        $tracker->updateFutureVisits($dbh);
 
         // Update any invoice line dates
 		Invoice::updateInvoiceLineDates($dbh, $idVisit, $startDelta);
@@ -1655,7 +1667,7 @@ where `Deleted` = 0 and `Status` = 'up'
     }
 
     /**
-     * Summary of moveReservedVisit.  change end date of checked in span with a following reserved span.
+     * Summary of moveReservedVisitDates.  change end date of checked in span with a following reserved span.
      * @param \PDO $dbh
      * @param array $visitRcrds
      * @param int $targetSpan   // The checked-in span.

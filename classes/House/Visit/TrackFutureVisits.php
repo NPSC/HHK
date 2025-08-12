@@ -225,7 +225,7 @@ class TrackFutureVisits {
 
                 // Save the previous visit spans, if not just starting.
                 if ($idVisit != 0) {
-                    $visits[$r['idVisit']] = $spans;
+                    $visits[$idVisit] = $spans;
                 }
 
                 // Reset for new visit.
@@ -245,39 +245,4 @@ class TrackFutureVisits {
         return $visits;
     }
 
-    /**
-     * Summary of checkRoomAvailability
-     * @param \PDO $dbh
-     * @param mixed $idReservation
-     * @param \DateTime $arrivalDate
-     * @param \DateTime $departureDate
-     * @return bool
-     */
-    protected static function checkRoomAvailability(\PDO $dbh, $idReservation, \DateTime $arrivalDate, \DateTime $departureDate, $idResource) {
-        $uS = Session::getInstance();
-
-        // Reservation
-        $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-
-        // Room Available
-        if ($reserv->isNew() === FALSE) {
-
-            $rescOpen = $reserv->isResourceOpen(
-                $dbh,
-                $idResource,
-                $arrivalDate->format('Y-m-d H:i:s'),
-                $departureDate->format("Y-m-d $uS->CheckOutTime:00:00"),
-                1,
-                ['room', 'rmtroom', 'part'],
-                true,
-                true,
-            );
-
-            if ($rescOpen) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
