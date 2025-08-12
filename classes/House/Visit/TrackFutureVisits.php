@@ -112,21 +112,12 @@ class TrackFutureVisits {
         }
 
         // eat up any not needed future spans.
-        $s = $this->eatUpFutureSpans(
-            $dbh, 
-            $spans, 
-            $idVisit, 
-            $activeNextIdResource, 
+        $this->eatUpFutureSpans(
+            $dbh,
+            $spans,
+            $idVisit,
+            $activeNextIdResource,
             $expectedDepartureDT);
-
-        // Set next future Span_Start
-        if (isset($spans[$s])) {
-
-            if($activeNextIdResource == $spans[$s]['idResource']) {
-                // Set my span start to the new expected departure
-                $dbh->exec("Update visit set Span_Start = '" . $expectedDepartureDT->format("Y-m-d $uS->CheckOutTime:00:00") . "'where idVisit = $idVisit and Span = " . $spans[$s]['Span']);
-            }
-        }
 
         return;
     }
@@ -143,7 +134,7 @@ class TrackFutureVisits {
     protected function eatUpFutureSpans(\PDO $dbh, $spans, $idVisit, &$activeNextIdResource, &$expectedDepartureDT) {
 
         $uS = Session::getInstance();
-        $nextSpan = 1;
+        $dateChanged = false;
 
         // eat up any not needed future spans.
         for ($s = 1; $s < count($spans); $s++) {
@@ -167,14 +158,14 @@ class TrackFutureVisits {
                 // And expected departure
                 if ($myExpDepartureDT > $expectedDepartureDT){
                     $expectedDepartureDT = $myExpDepartureDT;
+                    $dateChanged = true;
                 }
 
-                $nextSpan = $s + 1;
             }
         }
-        
+
         // update active span
-        if ($nextSpan > 1) {
+        if ($dateChanged) {
             // Update checked-in visit again
             $visitRs = new VisitRS();
             $visitRs->idVisit -> setStoredVal($idVisit);
@@ -198,7 +189,7 @@ class TrackFutureVisits {
             }
         }
 
-        return $nextSpan;
+        return $dateChanged;
     }
 
 

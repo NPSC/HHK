@@ -1895,9 +1895,6 @@ class Visit {
 
             // Update visit exepected departure
             $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
-            $this->visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-            $this->visitRS->Updated_By->setNewVal($uS->username);
-
             $this->updateVisitRecord($dbh, $uS->username);
 
             // Check for future (reserved) spans.
