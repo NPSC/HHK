@@ -598,29 +598,25 @@ class HouseServices {
             EditRS::loadRow($ro[0], $vrs);
             $resVisit = new Visit($dbh, 0, $vrs->idVisit->getStoredVal(), $vrs->Span->getStoredVal());
 
+            // Gather pertinent data
+            $visit->setExpectedDeparture($resVisit->getExpectedDeparture());
+            $visit->setNextIdResource(0);
+
             // Delete the visit span
             $resVisit->deleteThisVisitSpan($dbh);
 
 
-            $nextIdResource = 0;
-            $newExpectedDT = new \DateTime($visit->getExpectedDeparture());
-
             // Any more reserved visits?
             if (isset($ro[1])) {
-                $nextIdResource = intval($ro[1]['idResource'], 10);
-                $newExpectedDT = new \DateTime($ro[1]['Span_Start']);
-                $newExpectedDT->setTime($uS->CheckOutTime, 0, 0);
+                $visit->setNextIdResource($ro[1]['idResource']);
+                $visit->setExpectedDeparture($ro[1]['Span_Start']);
             }
 
             // Update Next_IdResource from given visit.  Use the next reserved visit's next resource if it exists.
-            $stmt = $dbh->prepare("UPDATE visit SET Next_IdResource = :nextIdResource, Expected_Departure = :expDep WHERE idVisit = :idvisit; AND Span = :span;");
-            $stmt->bindValue(':idvisit', $idVisit, \PDO::PARAM_INT);
-            $stmt->bindValue(':span', $span, \PDO::PARAM_INT);
-            $stmt->bindValue(':nextIdResource', $nextIdResource, \PDO::PARAM_INT);
-            $stmt->execute();
+
+            $visit->updateVisitRecord($dbh, $uS->username);
 
             $msg .= 'The Next Future Visit Span was deleted.  ';
-
         }
 
         return $msg;
@@ -1696,46 +1692,6 @@ ORDER BY Span;";
         return ['success' => $result['message'], 'isChanged' => $result['isChanged']];
     }
 
-
-
-    /** Move a visit temporally by so many days.  Called from fullCalendar
-     *
-     * @param \PDO $dbh
-     * @param int $idVisit
-     * @param int $dayDelta
-     * @return array
-     */
-    public static function setupMoveVisitDates(\PDO $dbh, $idVisit, $targetSpan, $startDelta, $endDelta) {
-
-        $uS = Session::getInstance();
-        $dataArray = [];
-
-        // get visit recordsets, order by span
-        $visitRS = new VisitRs();
-        $visitRS->idVisit->setStoredVal($idVisit);
-        $visitRcrds = EditRS::select($dbh, $visitRS, [$visitRS->idVisit], 'and', [$visitRS->Span]);
-
-        // Have data?
-        if (count($visitRcrds) > 0) {
-
-            $reply = VisitViewer::moveVisitDates($dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta);
-
-            // Hndle errors
-            if ($reply === FALSE) {
-                $dataArray['warning'] = 'Warning:  Visit not moved. ';
-            } else {
-                // Return checked in guests markup?
-                $dataArray['curres'] = 'y';
-                $dataArray = array_merge($dataArray, $reply);
-            }
-
-
-        } else {
-            $dataArray['warning'] = 'Visit not found. ';
-        }
-
-        return $dataArray;
-    }
 
     /**
      * Summary of visitChangeLogMarkup

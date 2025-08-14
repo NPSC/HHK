@@ -1,4 +1,5 @@
 <?php
+use HHK\House\Visit\VisitViewer;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\SecurityComponent;
@@ -473,7 +474,9 @@ try {
             $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = HouseServices::setupMoveVisitDates($dbh, $idVisit, $span, $sdelta, $edelta);
+        //
+        $events = VisitViewer::moveVisitDates($dbh, $idVisit, $span, $sdelta, $edelta);
+
         break;
 
     case 'changeVisitDate':

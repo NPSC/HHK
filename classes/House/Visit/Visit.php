@@ -1901,7 +1901,7 @@ class Visit {
             if ($this->getNextIdResource() > 0) {
 
                 $trackFuture = new TrackFutureVisits();
-                $trackFuture->updateFutureVisits($dbh);
+                $trackFuture->updateFutureVisits($dbh, $this->getIdVisit());
 
             } else {
                 $rtnMsg .= 'Visit expected departure date changed to: ' . $lastDepartureDT->format('M j, Y') . '.  ';
@@ -2567,6 +2567,15 @@ class Visit {
      */
     public function getExpectedDeparture() {
         return $this->visitRS->Expected_Departure->getStoredVal();
+    }
+
+    public function setExpectedDeparture($v) {
+
+        if (is_a($v, 'DateTimeInterface')) {
+            $v = $v->format('Y-m-d H:i:s');
+        }
+
+        $this->visitRS->Expected_Departure->setNewVal($v);
     }
 
     /**

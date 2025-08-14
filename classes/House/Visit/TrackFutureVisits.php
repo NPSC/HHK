@@ -37,7 +37,7 @@ class TrackFutureVisits {
      */
     public function updateFutureVisits(\PDO $dbh, $selectedIdVisit = 0) {
 
-        $visits = self::findFutureVisitSpans($dbh);
+        $visits = self::findFutureVisitSpans($dbh, $selectedIdVisit);
 
         // Anything returned?
         if (count($visits) < 1) {
@@ -206,9 +206,17 @@ class TrackFutureVisits {
      * @param \PDO $dbh
      * @return array<array>
      */
-    protected function findFutureVisitSpans(\PDO $dbh) {
+    protected function findFutureVisitSpans(\PDO $dbh, $selectedIdVisit = 0) {
 
         $visits = [];
+
+        if ($selectedIdVisit > 0) {
+            // Collect all visits with with the next future span only.
+            $stmt = $dbh->query("Select * FROM visit WHERE ((`Status` = 'a' AND Next_IdResource > 0) OR Status = 'r') && idVisit = $selectedIdVisit ORDER BY idVisit, Span;");
+        } else {
+            // Collect all visits with with the next future span only.
+            $stmt = $dbh->query("Select * FROM visit WHERE (`Status` = 'a' AND Next_IdResource > 0) OR Status = 'r' ORDER BY idVisit, Span;");
+        }
 
         // Collect all visits with with the next future span only.
         $stmt = $dbh->query("Select * FROM visit WHERE (`Status` = 'a' AND Next_IdResource > 0) OR Status = 'r' ORDER BY idVisit, Span;");

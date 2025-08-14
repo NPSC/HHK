@@ -1374,7 +1374,7 @@ where `Deleted` = 0 and `Status` = 'up'
     }
 
     /**
-     * Move an entire visit temporally by delta days
+     * Stretch, shrink or Move a visit by delta days
      *
      * @param \PDO $dbh
      * @param array $visitRcrds
@@ -1383,7 +1383,7 @@ where `Deleted` = 0 and `Status` = 'up'
      * @param int $endDelta
      * @return array
      */
-    public static function moveVisitDates(\PDO $dbh, $visitRcrds, $targetSpan, $startDelta, $endDelta) {
+    public static function moveVisitDates(\PDO $dbh, $idVisit, $targetSpan, $startDelta, $endDelta) {
 
         $uS = Session::getInstance();
 
@@ -1395,14 +1395,25 @@ where `Deleted` = 0 and `Status` = 'up'
             return ['error'=>'Move refused, change too large according to system parameter MaxExpected: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta];
         }
 
+        // get visit recordsets, order by span
+        $visitRS = new VisitRs();
+        $visitRS->idVisit->setStoredVal($idVisit);
+        $visitRcrds = EditRS::select($dbh, $visitRS, [$visitRS->idVisit], 'and', [$visitRS->Span]);
+
+        if (count($visitRcrds) == 0) {
+            return ['warning'=>'Visit not found. '];
+        }
+
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
         $spans = [];
         $stays = [];
         $firstArrival = NULL;
-        $lastSpanId = 0;
+        $lastSpanId = -1;
+        $activeSpan = -1;
 
+        // Set last span Id
         foreach ($visitRcrds as $r) {
 
             //Convenience variable
@@ -1413,19 +1424,18 @@ where `Deleted` = 0 and `Status` = 'up'
                 $lastSpanId = $r['Span'];
             }
 
-            // Don't need any future spans.
             if ($r['Status'] == VisitStatus::Active){
+                $activeSpan = $r['Span'];
+            }
+
+            // Special case: active span is the lastspan, ignore future spans.
+            if ($r['Status'] == VisitStatus::Active && $activeSpan == $targetSpan) {
                 break;
             }
         }
 
-        // Pre-filter list of visit spans
+        // Pre-filter list of visit spans, only keep the spans that might change
         foreach ($visitRcrds as $r) {
-
-            // Don't need any future spans.
-            if ($r['Status'] == VisitStatus::Reserved) {
-                break;
-            }
 
             $vRs = new VisitRs();
             EditRS::loadRow($r, $vRs);
@@ -1451,7 +1461,7 @@ where `Deleted` = 0 and `Status` = 'up'
             $stayRS = new StaysRS();
             $stayRS->idVisit->setStoredVal($vRs->idVisit->getStoredVal());
             $stayRS->Visit_Span->setStoredVal($vRs->Span->getStoredVal());
-            $rows = EditRS::select($dbh, $stayRS, array($stayRS->idVisit, $stayRS->Visit_Span));
+            $rows = EditRS::select($dbh, $stayRS, [$stayRS->idVisit, $stayRS->Visit_Span]);
 
             foreach ($rows as $st) {
 
@@ -1459,6 +1469,11 @@ where `Deleted` = 0 and `Status` = 'up'
                 EditRS::loadRow($st, $stayRS);
                 $stays[$vRs->Span->getStoredVal()][] = $stayRS;
 
+            }
+
+            // Special case: active span is the lastspan, ignore future spans.
+            if ($r['Status'] == VisitStatus::Active && $activeSpan == $targetSpan) {
+                break;
             }
         }
 
@@ -1476,15 +1491,19 @@ where `Deleted` = 0 and `Status` = 'up'
 
         $today = new DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0);
+        $spanEndDt = null;
+        $spanStartDT = null;
 
         reset($spans);
 
         // change visit span dates
         foreach ($spans as $s => $vRs) {
 
+            // Set span start and span end dates from the record
             $spanStartDT = newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
 
-            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
+            // active spans must not end before today.
+            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn || $vRs->Status->getStoredVal() == VisitStatus::Reserved) {
 
                 $spanEndDt = newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
                 $spanEndDt->setTime(intval($uS->CheckOutTime),0);
@@ -1506,6 +1525,7 @@ where `Deleted` = 0 and `Status` = 'up'
                 // Move back
                 $spanEndDt->sub($endInterval);
 
+                // active spans must not end before today.
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && $spanEndDt < $tonight) {
                     $spanEndDt = new DateTime();
                     $spanEndDt->setTime(intval($uS->CheckOutTime), 0);
@@ -1513,7 +1533,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
                 $spanStartDT->sub($startInterval);
 
-                // Only change first arrival if this is the first span
+                // Set first arrival if this is the first span
                 if ($s == 0) {
                     $firstArrival->sub($startInterval);
                 }
@@ -1530,7 +1550,7 @@ where `Deleted` = 0 and `Status` = 'up'
                 }
 
                 // Checked-Out spans cannot move their end date beyond todays date.
-                if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
+                if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn && $vRs->Status->getStoredVal() != VisitStatus::Reserved) {
                     if ($spanEndDt >= $tonight) {
                         return ['error'=>'Checked-Out visits cannot move their end date beyond todays date  Use Undo Checkout instead. '];
                     }
@@ -1545,9 +1565,10 @@ where `Deleted` = 0 and `Status` = 'up'
             }
 
             // Visit Still Good?
-            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && ($spanEndDt < $spanStartDT || $spanEndDt < $today)) {
-                return ['error'=>"The visit span End date cannot come before the Start date, or before today.  "];
-            } else if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn && $spanEndDt <= $spanStartDT) {
+            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && $spanEndDt < $today) {
+                return ['error'=>"The visit span End date cannot come before today.  "];
+            }
+            if ($spanEndDt <= $spanStartDT) {
                 return ['error'=>"The visit span End date cannot come before or on the Start date.  "];
             }
 
@@ -1590,7 +1611,7 @@ where `Deleted` = 0 and `Status` = 'up'
             $visitRS->Span_Start->setNewVal($v['start']->format('Y-m-d H:i:s'));
             $visitRS->Arrival_Date->setNewVal($firstArrival->format('Y-m-d H:i:s'));
 
-            if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+            if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRS->Status->getStoredVal() == VisitStatus::Reserved) {
 
                 $visitRS->Expected_Departure->setNewVal($v['end']->format("Y-m-d $uS->CheckOutTime:00:00"));
                 $estDepart = $v['end']->format("Y-m-d $uS->CheckOutTime:00:00");
@@ -1602,14 +1623,7 @@ where `Deleted` = 0 and `Status` = 'up'
                 $actualDepart = $v['end']->format('Y-m-d H:i:s');
             }
 
-            $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-            $visitRS->Updated_By->setNewVal($uS->username);
-
-            $cnt = EditRS::update($dbh, $visitRS, [$visitRS->idVisit, $visitRS->Span]);
-            if ($cnt > 0) {
-                $logText = VisitLog::getUpdateText($visitRS);
-                VisitLog::logVisit($dbh, $idVisit, $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
-            }
+            Visit::updateVisitRecordStatic($dbh, $visitRS, $uS->username);
 
             if (isset($stays[$visitRS->Span->getStoredVal()])) {
                 self::saveStaysDates($dbh, $stays[$visitRS->Span->getStoredVal()], $visitRS->idRegistration->getStoredVal(), $uS->username);
@@ -1618,7 +1632,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
         // update any future (reserved) spans
         $tracker = new TrackFutureVisits();
-        $tracker->updateFutureVisits($dbh);
+        $tracker->updateFutureVisits($dbh, $idVisit);
 
         // Update any invoice line dates
 		Invoice::updateInvoiceLineDates($dbh, $idVisit, $startDelta);
@@ -1666,6 +1680,7 @@ where `Deleted` = 0 and `Status` = 'up'
         }
         return $reply;
     }
+
 
     /**
      * Summary of moveReservedVisitDates.  change end date of checked in span with a following reserved span.

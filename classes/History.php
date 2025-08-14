@@ -461,7 +461,7 @@ class History {
 
         $uS = Session::getInstance();
 
-        $hospList = array();
+        $hospList = [];
         if (isset($uS->guestLookups[GLTableNames::Hospital])) {
             $hospList = $uS->guestLookups[GLTableNames::Hospital];
         }
@@ -504,11 +504,12 @@ class History {
 
         unset($cleanCodes);
 
-        $curGuestDemogIcon = ($uS->CurGuestDemogIcon != "" ? $uS->CurGuestDemogIcon : "ADA");
+        $curGuestDemogIcon = $uS->CurGuestDemogIcon != "" ? $uS->CurGuestDemogIcon : "ADA";
 
         $query = "select v.*,
                 IFNULL(`di`.`Description`, '') AS `demogTitle`,
-                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` from vcurrent_residents v" .
+                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon`
+                from vcurrent_residents v" .
                 ($curGuestDemogIcon != "Gender" && $curGuestDemogIcon != "" ?
                     " LEFT JOIN `name_demog` nd on v.Id = nd.idName
                       LEFT JOIN `gen_lookups` di on nd.".$curGuestDemogIcon . " = di.Code and di.Table_Name = '" . $curGuestDemogIcon . "'" : "") .
@@ -516,9 +517,10 @@ class History {
                     " LEFT JOIN `gen_lookups` di on v.Gender = di.Code and di.Table_Name = 'Gender'" : ""
                 ) .
                 " order by `Room`;";
-        $stmt = $dbh->query($query);
 
-        $returnRows = array();
+        $returnRows = [];
+        $today = new \DateTime();
+        $today->setTime(0, 0);
 
         // Show adjust button?
         $hdArry = readGenLookupsPDO($dbh, "House_Discount");
@@ -537,23 +539,25 @@ class History {
             , array('class'=>'ui-widget hhk-ui-icons ml-2'));
 
 
+        $stmt = $dbh->query($query);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            $fixedRows = array();
+            $fixedRows = [];
 
             // Action
             if ($includeAction && !$static && isset($r['Action'])) {
                 $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                             HTMLContainer::generateMarkup('ul',
-                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Edit Visit', array('class'=>'stvisit', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn'=>$r['Span'])))
-                            . ($uS->smsProvider ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Text Guests', array("class"=>"btnShowVisitMsgs", 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']))) : "")
-                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Check Out', array('class'=>'stckout', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn'=>$r['Span'])))
-                          . HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Dirty][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>RoomState::Dirty)) : HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Clean][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>  RoomState::Clean))))
-                          . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Change Rooms', array('class'=>'stchgrooms', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn'=>$r['Span'])))
-                          . (SecurityComponent::is_Authorized('guestadmin') === FALSE || count($hdArry) == 0 ? '' : HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Apply Discount', array('class'=>'applyDisc', 'data-vid'=>$r['idVisit']))))
-                    )), array('class' => 'gmenu'));
+                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Edit Visit', ['class' => 'stvisit', 'data-name' => $r['Guest'], 'data-id' => $r['Id'], 'data-vid' => $r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn' => $r['Span']]))
+                            . ($uS->smsProvider ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Text Guests', ["class" => "btnShowVisitMsgs", 'data-vid' => $r['idVisit'], 'data-span' => $r['Span']])) : "")
+                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Check Out', ['class' => 'stckout', 'data-name' => $r['Guest'], 'data-id' => $r['Id'], 'data-vid' => $r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn' => $r['Span']]))
+                          . HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Dirty][1], ['class' => 'stcleaning', 'data-idroom' => $r['RoomId'], 'data-clean' => RoomState::Dirty]) : HTMLContainer::generateMarkup('div', 'Set Room ' . $roomStatuses[RoomState::Clean][1], ['class' => 'stcleaning', 'data-idroom' => $r['RoomId'], 'data-clean' => RoomState::Clean])))
+                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Change Rooms', ['class' => 'stchgrooms', 'data-name' => $r['Guest'], 'data-id' => $r['Id'], 'data-vid' => $r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn' => $r['Span']]))
+                          . (SecurityComponent::is_Authorized('guestadmin') === FALSE || count($hdArry) == 0 ? '' : HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Apply Discount', ['class' => 'applyDisc', 'data-vid' => $r['idVisit']])))
+                    )),
+                    ['class' => 'gmenu']);
             }
 
             if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos && $includeAction && !$static){
@@ -561,17 +565,7 @@ class History {
             }
 
             // Guest first name
-            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>"ml-3 " . $r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
-
-            /*
-            if (isset($r['ADA']) && $r['ADA'] == 'im') {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $immobilityIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
-            } else if (isset($r['ADA']) && $r['ADA'] == 'b') {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $blindIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
-            } else {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
-            }*/
-
+            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>"ml-3 " . $r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), ["class" => "hhk-flex", "style" => "justify-content: space-between"]) : $r['Guest First']);
 
             // Guest last name
             if ($page != '') {
@@ -590,16 +584,16 @@ class History {
 
                     if ($now > $stDay) {
                         // Past Due
-                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class'=>'ui-state-error','title'=>'On Leave - past due!'));
+                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], ['href' => "$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class' => 'ui-state-error', 'title' => 'On Leave - past due!']);
 
                     } else {
                         // on leave
-                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
+                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], ['href' => "$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class' => 'ui-state-highlight', 'title' => 'On Leave until ' . $stDay->format('M j')]);
                     }
                 } else {
 
                     // Build the page anchor
-                    $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
+                    $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], ['href' => "$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']]);
 
                 }
 
@@ -691,7 +685,7 @@ class History {
             $fixedRows[$patientColName] = $r['Patient'];
 
             if ($page != '' && !$static) {
-                $fixedRows[$patientColName] = HTMLContainer::generateMarkup('a', $r['Patient'], array('href'=>"$page?id=" . $r["PatientId"] . '&psg=' . $r['idPsg']));
+                $fixedRows[$patientColName] = HTMLContainer::generateMarkup('a', $r['Patient'], ['href' => "$page?id=" . $r["PatientId"] . '&psg=' . $r['idPsg']]);
             }
 
             $returnRows[] = $fixedRows;
