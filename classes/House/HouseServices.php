@@ -930,7 +930,6 @@ class HouseServices {
         }
 
         // Look at all the spans for this visit.
-//        $query = "select Span, Span_Start, Expected_Departure, Status, idReservation, idResource, Pledged_Rate from visit where idVisit = $idVisit ORDER BY Span;";
         $query = "SELECT
     v.Span,
     v.Span_Start,
@@ -960,8 +959,7 @@ ORDER BY Span;";
                 $hasReservedSpan = TRUE;
 
                 // Is this the future room change date?
-                // $mySpan may  not be set yet.
-                if (isset($mySpan['Expected_Departure'])) {
+                if (isset($mySpan['Expected_Departure'])) {  // $mySpan may  not be set yet.
 
                     $expDep = new \DateTime($mySpan['Expected_Departure']);
                     $resvSpanStart = new \DateTime($rw['Span_Start']);
@@ -992,7 +990,8 @@ ORDER BY Span;";
             $now = new \DateTime();
             $now->setTime(0, 0, 0);
 
-            if ($expDepDT <= $now) {
+            // only update the expected departure if a reserved span isn't next
+            if ($expDepDT <= $now && $hasReservedSpan == false) {
                 $expDepDT = $now->add(new \DateInterval('P1D'));
             }
 
@@ -1001,6 +1000,7 @@ ORDER BY Span;";
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT->setTime($uS->CheckOutTime, 0));
             $curResc = $roomChooser->getSelectedResource();
 
+            // Make the room chooser
             $dataArray['success'] = $roomChooser->createChangeRoomsMarkup($dbh, $isAdmin);
 
             $dataArray['rooms'] = $roomChooser->makeRoomsArray();
@@ -1104,7 +1104,7 @@ ORDER BY Span;";
 
 
     /**
-     * Summary of changeVisitRooms, called by visitViewer change rooms control
+     * Summary of changeVisitRooms, called by visit dialog change rooms control
      * @param \PDO $dbh
      * @param int $idVisit
      * @param int $span
@@ -1150,7 +1150,7 @@ ORDER BY Span;";
                         $chRoomDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
 
                         $chDT = new \DateTime($changeEndDate);
-                        $chgEndDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $uS->CheckOutTime . ':00:00');
+                        $chgEndDT = new \DateTime($chDT->format('Y-m-d') . ' 00:00:00');
 
                     } else {
                         // No change date, use today
@@ -1173,7 +1173,7 @@ ORDER BY Span;";
 
                 if ($chRoomDT < $arriveDT || $chRoomDT > $chgEndDT) {
 
-                    $reply .= "The change room date must be within the visit timeframe, between " . $arriveDT->format('M j, Y') . ' and ' . $now->format('M j, Y');
+                    $reply .= "The change room date must be within the visit timeframe, between " . $arriveDT->format('M j, Y') . ' and ' . $chgEndDT->format('M j, Y');
 
                 } else {
 

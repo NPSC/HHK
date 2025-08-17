@@ -344,6 +344,7 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
             let showChangeNow = data.visitSpan.showChangeNow;
             let resvIdResource = data.visitSpan.reservedIdResource;
             let resvTitle = data.visitSpan.reservedTitle;
+            let hasReservedSpan = data.visitSpan.hasReservedSpan;
             const now = new Date();
 
             let $diagbox = $('#chgRoomDialog');
@@ -382,6 +383,10 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
             $changeDate.datepicker('setDate', now);
             $changeEndDate.datepicker('setDate', expEndDT);
 
+            if (data.visitSpan.hasReservedSpan){
+                $changeDate.datepicker('setDate', expEndDT);
+            }
+
             // room changer radiobutton
             $replaceRoom.change(function () {
 				if($(this).val() == 'new' && $changeDate.val() !== '') {
@@ -398,17 +403,18 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
 
                 $('input[id="rbReplaceRoomnew"]').prop('checked', true);
 
-                if ($changeDate.datepicker("getDate") > now) {
-                    $('#trFutureDate').show('fade');
-                    $changeEndDate.datepicker('option', 'minDate', $changeDate.datepicker("getDate"));
+                if (data.visitSpan.hasReservedSpan = false) {
 
+                    if ($changeDate.datepicker("getDate") > now) {
+                        $('#trFutureDate').show('fade');
+                        $changeEndDate.datepicker('option', 'minDate', $changeDate.datepicker("getDate"));
 
-                } else {
-                    //$changeEndDate.datepicker('option', 'setDate', null);
-                    $('#trFutureDate').hide();
+                    } else {
+                        $('#trFutureDate').hide();
+                    }
+
+                    getVisitRoomList(idVisit, span, $changeDate.datepicker("getDate"), $selResource);
                 }
-
-                getVisitRoomList(idVisit, span, $changeDate.datepicker("getDate"), $selResource);
 
 			});
 
@@ -451,8 +457,10 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
                 $('input[id="rbReplaceRoomnew"]').prop('checked', true);
                 $replaceRoom.prop('disabled', true);
 
-                // lock the datepicker
-                $changeDate.prop('disabled', true);
+                // set max and min dates accordingly
+                $changeDate.datepicker('option', 'minDate', expEndDT);
+                $changeDate.datepicker('option', 'maxDate', now);
+                //$changeDate.prop('disabled', true);
             }
 
             $selResource.change();

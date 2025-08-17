@@ -80,12 +80,16 @@ class TrackFutureVisits {
 
         $today = new \DateTime();
         $today->setTime(0, 0);
+
+        // Right now, this is the active span expected departure
         $expectedDepartureDT = new \DateTime($spans[0]['Expected_Departure']);
         $expectedDepartureDT->setTime(0, 0);
 
-        //
         // If the active span ends in the past, then we need to update it.
         if ($expectedDepartureDT < $today) {
+
+            // For now, don't deal with it.  (after all my work! Whaaa.)
+            return;
 
             $expectedDepartureDT = $today;
 
@@ -217,9 +221,6 @@ class TrackFutureVisits {
             // Collect all visits with with the next future span only.
             $stmt = $dbh->query("Select * FROM visit WHERE (`Status` = 'a' AND Next_IdResource > 0) OR Status = 'r' ORDER BY idVisit, Span;");
         }
-
-        // Collect all visits with with the next future span only.
-        $stmt = $dbh->query("Select * FROM visit WHERE (`Status` = 'a' AND Next_IdResource > 0) OR Status = 'r' ORDER BY idVisit, Span;");
 
         $idVisit = 0;
         $spans = [];
