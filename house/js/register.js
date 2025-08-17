@@ -393,7 +393,7 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
                     $changeDate.change();
                 } else if ($(this).val() == 'rpl') {
                     $('#trFutureDate').hide();
-                    $changeEndDate.datepicker('setDate', null);
+                    //$changeEndDate.datepicker('setDate', null);
                     getVisitRoomList(idVisit, span, sDate, $selResource);
 				}
 			});

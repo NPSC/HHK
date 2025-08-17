@@ -78,6 +78,7 @@ class Visit {
     protected $errorMessage = '';
 
     protected $nextIdResource = 0;
+    protected $nextExpectedDepartureDT = null;
 
     /**
      * Summary of __construct
@@ -475,7 +476,7 @@ class Visit {
                 if ($this->clearReservedSpan($dbh, $this->getSpan(), $resc->getIdResource())) {
                     $reserv->setIdResource($resc->getIdResource());
                     $reserv->saveReservation($dbh, $this->getIdRegistration(), $uS->username);
-
+                    $chgEndDT = $this->nextExpectedDepartureDT;  // Use the end date from the this future visit.
                 } else {
                     return "Error - Change Rooms failed: The new room is busy or missing necessary attributes.  ";
                 }
@@ -586,7 +587,7 @@ class Visit {
                 $this->visitRS->Expected_Rate->getStoredVal(),
                 $this->visitRS->idRateAdjust->getStoredVal(),
                 $chgDT,
-                $chgEndDT,
+                $chgEndDT->setTime($uS->CheckOutTime, 0),
                 intval($this->visitRS->Span->getStoredVal(), 10) + 1,
                 0,
                 $rateGlideDays);
@@ -644,6 +645,7 @@ class Visit {
      */
     protected function clearReservedSpan(\PDO $dbh, $span, $idResource) {
         $this->nextIdResource = 0;
+        $this->nextExpectedDepartureDT = null;
 
         // Look at all the spans for this visit.
         $query = "select Span, Span_Start, Expected_Departure, Status, idResource, Next_IdResource from visit where idVisit = " . $this->getIdVisit() . " ORDER BY Span;";
@@ -673,6 +675,7 @@ class Visit {
 
                         // capture next room change, if any
                         $this->nextIdResource = $rw['Next_IdResource'];
+                        $this->nextExpectedDepartureDT = new \DateTime($rw['Expected_Departure']);
 
                         // Delete reserved span.
                         $delCount = $dbh->exec("Delete from visit where idVisit = " . $this->getIdVisit() . " AND Span = " . $rw['Span']);
@@ -908,10 +911,8 @@ class Visit {
         $this->visitRS->Next_IdResource->setNewVal(0);
         $this->visitRS->Timestamp->setNewVal(date('Y-m-d H:i:s'));
 
-        if ($chgDayDT > $today) {
-            // Future change, set the expected departure date to the end date.
-            $this->visitRS->Expected_Departure->setNewVal($chgEndDT->format("Y-m-d $uS->CheckOutTime:00:00"));
-        }
+        $this->visitRS->Expected_Departure->setNewVal($chgEndDT->format("Y-m-d $uS->CheckOutTime:00:00"));
+
 
         // Save the new visit span.
         $idVisit = EditRS::insert($dbh, $this->visitRS);
@@ -927,7 +928,7 @@ class Visit {
 
         // Don't need to replace the stays if the change date is in the future.
         if ($chgDayDT <= $today) {
-            $this->replaceStays($dbh, $visitStatus, $uS->username, $stayOnLeave);
+            $this->replaceStays($dbh, $visitStatus, $chgEndDT, $uS->username, $stayOnLeave);
         }
 
     }
@@ -941,8 +942,8 @@ class Visit {
      * @throws \HHK\Exception\RuntimeException
      * @return void
      */
-    protected function replaceStays(\PDO $dbh, $oldVisitStatus, $uname, $stayOnLeave = 0) {
-
+    protected function replaceStays(\PDO $dbh, $oldVisitStatus, $newExpectedCheckoutDT, $uname, $stayOnLeave = 0) {
+        $uS = Session::getInstance();
         $oldStays = $this->stays;  // contains all the stays.
         $this->stays = [];
 
@@ -1032,7 +1033,7 @@ class Visit {
                 $newStayRS->Checkin_Date->setNewVal($stayRS->Checkin_Date->getStoredVal());
                 $newStayRS->Span_End_Date->setNewVal($oldCkOutDate);
                 $newStayRS->Span_Start_Date->setNewVal($this->visitRS->Span_Start->getStoredVal());
-                $newStayRS->Expected_Co_Date->setNewVal($stayRS->Expected_Co_Date->getStoredVal());
+                $newStayRS->Expected_Co_Date->setNewVal($newExpectedCheckoutDT->format("Y-m-d $uS->CheckOutTime:00:00"));
                 $newStayRS->On_Leave->setNewVal($stayOnLeave);
                 $newStayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
 

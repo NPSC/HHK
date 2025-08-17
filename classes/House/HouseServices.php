@@ -1135,35 +1135,36 @@ ORDER BY Span;";
 
                 $resc = AbstractResource::getResourceObj($dbh, $newRescId);
 
-                $now = new \DateTime();
+                $now = new \DateTIme();
+                $today = new \DateTime();
+                $today->setTime(0, 0);
+
 
                 if ($replaceRoom == 'rpl') {
                     // Replace room in existing span
                     $chRoomDT = new \DateTime($visit->getSpanStart());
-                    $chgEndDT = $now;
+                    $chgEndDT = $today;
 
                 } else {
                     // Change room - new span
                     if ($changeDate != '') {
 
                         $chDT = new \DateTime($changeDate);
-                        $chRoomDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
+                        $chRoomDT = new \DateTime($chDT->format('Y-m-d 00:00:00'));
 
                         $chDT = new \DateTime($changeEndDate);
-                        $chgEndDT = new \DateTime($chDT->format('Y-m-d') . ' 00:00:00');
+                        $chgEndDT = new \DateTime($chDT->format('Y-m-d 00:00:00'));
 
                     } else {
                         // No change date, use today
                         $chRoomDT = $now;
-                        $chgEndDT = $now;
+                        $chgEndDT = $today;
                     }
                 }
 
 
                 $departDT = new \DateTime($visit->getExpectedDeparture());
                 $departDT->setTime($uS->CheckOutTime, 0, 0);
-                $today = new \DateTime();
-                $today->setTime($uS->CheckOutTime, 0, 0);
 
                 if ($departDT < $today) {
                     $departDT = $today;
