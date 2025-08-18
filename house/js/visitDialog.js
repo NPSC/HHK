@@ -66,6 +66,17 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                         $(this).dialog("close");
                     },
                     "Save": function() {
+
+                        //verify doc and agent
+                        let validationMsg = "";
+
+                        const agentValid = verifyDocAgent("agentInfo");
+                        const docValid = verifyDocAgent("docInfo");
+                        if(agentValid === false || docValid === false){
+                            flagAlertMessage("Some or all of the indicated Hospital Information is missing", 'error');
+                            return false;
+                        }
+
                         $('.ckhsdate').datepicker("hide");
                     	saveHospitalStay(idHs, idVisit);
                     	$(this).dialog("close");

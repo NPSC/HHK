@@ -491,27 +491,7 @@ function resvManager(initData, options) {
             return '';
         }
 
-        function verifyDocAgent(prefix) {
-
-            const inputs = $(`input.hhk-${prefix}`);
-
-
-            // Clear error class
-            inputs.removeClass('ui-state-error');
-
-            if (inputs.is((i,e)=>$(e).val().trim() !== "")) { //if at least one agent field is filled
-
-                const emptyNameFields = inputs.filter((i,e)=>$(e).val().trim() === "" && $(e).hasClass("name"));
-
-                if(emptyNameFields.length > 0){ //if any of the name fields are empty
-                    emptyNameFields.addClass("ui-state-error");
-                    $("#divhospDetail").show("blind");
-                    return 'Some or all of the indicated Hospital Information is missing.  ';
-                };
-            }
-
-            return '';
-        }
+        
 
         function addrCopyDown(sourcePrefix) {
 
@@ -1502,16 +1482,10 @@ function resvManager(initData, options) {
                 }
             }
 
-            var pMessage = verifyDocAgent("agentInfo");
-            if(pMessage !== ''){
-                flagAlertMessage(pMessage, 'alert', $pWarning);
-                return false;
-            }
-
-            var pMessage = verifyDocAgent("docInfo");
-
-            if(pMessage !== ''){
-                flagAlertMessage(pMessage, 'alert', $pWarning);
+            const agentValid = verifyDocAgent("agentInfo");
+            const docValid = verifyDocAgent("docInfo");
+            if(agentValid === false || docValid === false){
+                flagAlertMessage("Some or all of the indicated Hospital Information is missing", 'info', $pWarning);
                 return false;
             }
             
@@ -3101,3 +3075,25 @@ function resvManager(initData, options) {
 
     }
 }
+
+function verifyDocAgent(prefix) {
+
+            const inputs = $(`input.hhk-${prefix}`);
+
+
+            // Clear error class
+            inputs.removeClass('ui-state-error');
+
+            if (inputs.is((i,e)=>$(e).val().trim() !== "")) { //if at least one agent field is filled
+
+                const emptyNameFields = inputs.filter((i,e)=>$(e).val().trim() === "" && $(e).hasClass("name"));
+
+                if(emptyNameFields.length > 0){ //if any of the name fields are empty
+                    emptyNameFields.addClass("ui-state-error");
+                    $("#divhospDetail").show("blind");
+                    return false;
+                };
+            }
+
+            return true;
+        }
