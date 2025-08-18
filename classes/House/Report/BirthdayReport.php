@@ -128,7 +128,7 @@ from
 		left join
     resource re ON re.idResource = r.idResource
         left join
-    name n ON ifnull(s.idName, r.idGuest) = n.idName
+    name n ON ifnull(s.idName, rg.idGuest) = n.idName
         left join
     name_address na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
         left join
