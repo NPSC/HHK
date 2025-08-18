@@ -56,7 +56,7 @@ class Addresses {
         
         if ($phData['Preferred_Phone'] == PhonePurpose::NoPhone) {
             $phoneMkup = 'No Phone';
-        } else if($phData !== "" && $validPhone["isValid"] === false) { //if phone is invalid, add a triangle
+        } else if($phData["Phone_Num"] !== "" && $validPhone["isValid"] === false) { //if phone is invalid, add a triangle
             $phTdAttrs["class"] = "ui-state-error";
             $phoneMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x" . $phData["Phone_Extension"])) . HTMLContainer::generateMarkup('i', '', ["class"=>"bi bi-exclamation-triangle-fill ml-2"]), ['class'=>'hhk-flex justify-content-between', "title"=>"Phone number is invalid"]);
         }else {
