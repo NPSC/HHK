@@ -922,6 +922,7 @@ class HouseServices {
         $showChangeNow = false;
         $resvIdResc = 0;
         $resvTitle = 'Reserved Room';
+        $resvSpanExpectedEnd = null;
         $mySpan = null;
 
         // Check if the visit and span are valid.
@@ -968,6 +969,7 @@ ORDER BY Span;";
                         $showChangeNow = true;
                         $resvIdResc = $rw['idResource'];
                         $resvTitle = $rw['Resource_Title'];
+                        $resvSpanExpectedEnd = $rw['Expected_Departure'];
                     }
                 }
             }
@@ -1026,6 +1028,7 @@ ORDER BY Span;";
                 'showChangeNow' => $showChangeNow,
                 'reservedIdResource' => $resvIdResc,
                 'reservedTitle' => $resvTitle,
+                'reservedSpanExpEnd' => $resvSpanExpectedEnd,
             ];
 
         } else {

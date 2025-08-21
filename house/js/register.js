@@ -341,6 +341,7 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
 
             let sDate = new Date(data.visitSpan.start)
             let expEndDT = new Date(data.visitSpan.end);
+            let resvExpEndDT = new Date(data.visitSpanreservedSpanExpEnd);
             let showChangeNow = data.visitSpan.showChangeNow;
             let resvIdResource = data.visitSpan.reservedIdResource;
             let resvTitle = data.visitSpan.reservedTitle;
@@ -403,7 +404,7 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
 
                 $('input[id="rbReplaceRoomnew"]').prop('checked', true);
 
-                if (data.visitSpan.hasReservedSpan = false) {
+                if (data.visitSpan.hasReservedSpan == false) {
 
                     if ($changeDate.datepicker("getDate") > now) {
                         $('#trFutureDate').show('fade');
@@ -460,6 +461,7 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
                 // set max and min dates accordingly
                 $changeDate.datepicker('option', 'minDate', expEndDT);
                 $changeDate.datepicker('option', 'maxDate', now);
+                $changeEndDate.datepicker('setDate', resvExpEndDT);
                 //$changeDate.prop('disabled', true);
             }
 
@@ -481,7 +483,7 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
 		    };
 
             $diagbox.dialog('option', 'title', 'Change Rooms for ' + gname);
-            $diagbox.dialog('option', 'width', '400px');
+            $diagbox.dialog('option', 'width', '600px');
             $diagbox.dialog('option', 'buttons', buttons);
             $diagbox.dialog('open');
 
