@@ -375,10 +375,7 @@ function resvManager(initData, options) {
             var phoneFilled = false;
             $('.hhk-phoneInput[id^="' + prefix + 'txtPhone"]').each(function () {
 
-                if ($.trim($(this).val()) !== '' && testreg.test($(this).val()) === false) {
-
-                    // error
-                    $(this).addClass('ui-state-error');
+                if ($(this).hasClass('ui-state-error')) {
 
                     //Open address row
                     if ($('#' + prefix + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-s')) {
@@ -390,12 +387,12 @@ function resvManager(initData, options) {
 
                     msg = true;
 
-                } else {
-                    $(this).removeClass('ui-state-error');
                 }
 
                 if ($.trim($(this).val()) !== '' && !$(this).hasClass("ui-state-error") && phoneFilled == false) {
                     phoneFilled = true;
+                }else{
+                    phoneFilled = false;
                 }
 
             });
@@ -403,7 +400,7 @@ function resvManager(initData, options) {
             var isNoPhone = ($('.prefPhone[id^="' + prefix + 'phno"]:checked').length === 0 ? false:true);
 
             if (isCheckin == true && insistCkinPhone == true && phoneFilled == false && isNoPhone == false && $('#' + prefix + 'cbStay').prop('checked') === true) {
-                return "At least one phone number or 'No Phone' is required for check in."
+                return "At least one valid phone number or 'No Phone' is required for check in."
             }
 
             // Validate Email
@@ -2177,10 +2174,10 @@ function resvManager(initData, options) {
                     if ($pWarning.text() == prePayErrorMsg) {
                         $pWarning.hide();
                     }
-                    if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
+                    if (prePaymtAmt >= 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
                         // Cancel
                         isCheckedOut = true;
-                        $('#feesPayment').val("").trigger("change"); //don't allow new payments when cancelling reservation
+                        $('#feesPayment').val(""); //don't allow new payments when cancelling reservation
                         $('#cbHeld').prop('checked', true).trigger('change');
                     } else {
                         isCheckedOut = false;
@@ -2188,6 +2185,8 @@ function resvManager(initData, options) {
                         $('#txtOverPayAmt').val('');
                         $('#cbHeld').prop('checked', false).trigger('change');
                     }
+
+                    amtPaid();
                 });
                 $('#selResvStatus').change();
             }

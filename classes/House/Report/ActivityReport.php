@@ -776,7 +776,7 @@ where `lp`.`idPayment` > 0
                 if ($showExternlId) {
                     $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
                 }
-                $trow .= HTMLTable::makeTd($p['Payment_Note']);
+                $trow .= HTMLTable::makeTd($p['Payment_Note'], ['style'=>'white-space: normal;']);
 
                 $tbl->addBodyTr($trow);
 
@@ -848,7 +848,7 @@ where `lp`.`idPayment` > 0
 
         $refresh = HTMLInput::generateMarkup("Refresh", ['type' => 'button', 'id' => 'btnPayHistRef', 'style' => 'float:right; margin-right:0.8em;margin-top:1em;']);
 
-        return HTMLContainer::generateMarkup('div', "$header$summary$refresh$listing", ['style' => 'min-width:900px;']);
+        return HTMLContainer::generateMarkup('div', "$header$summary$refresh$listing", ['style' => 'min-width:100%;']);
     }
 
     /**

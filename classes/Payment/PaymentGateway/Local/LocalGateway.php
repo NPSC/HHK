@@ -478,9 +478,11 @@ class LocalGateway extends AbstractPaymentGateway {
 				'class' => 'hhk-feeskeys' . $index
 		) ) ) . HTMLTable::makeTd ( HTMLInput::generateMarkup ( '', array (
 				'name' => 'txtChargeAcct' . $index,
-				'placeholder' => 'Acct.',
+				'placeholder' => 'last 4',
 				'size' => '6',
 				'title' => 'Only the last 4 digits.',
+				'oninput' => "this.value = this.value.replace(/[^0-9]/g, '');",
+				'maxlength'=>"4",
 				'class' => 'hhk-feeskeys' . $index
 		) ) ) );
 		$tbl->addBodyTr ( HTMLTable::makeTd ( HTMLInput::generateMarkup ( '', array (

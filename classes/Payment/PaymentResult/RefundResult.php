@@ -36,6 +36,7 @@ class RefundResult extends PaymentResult
         // zero total invoices do not have payment records.
         if ($rtnResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             $this->createPaymentInvoiceRcrd($dbh, $rtnResp->getIdPayment(), $this->idInvoice, $rtnResp->getAmount());
+            $this->idPayment = $rtnResp->getIdPayment();
         }
 
 

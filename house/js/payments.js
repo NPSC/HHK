@@ -276,9 +276,9 @@ function setTaxExempt(taxExempt) {
  * @param {object} refresh
  * @returns {undefined}
  */
-function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
+function sendVoidReturn(btn, vorr, idPayment, amt, refresh) {
 
-    var prms = {pid: idPayment, bid: btnid};
+    var prms = {pid: idPayment, bid: btn.attr("id")};
 
 	if (vorr && vorr === 'v') {
 		prms.cmd = 'void';
@@ -298,6 +298,8 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 	}
 
 	$.post('ws_ckin.php', prms, function(data) {
+        btn.removeClass("hhk-loading-btn");
+
 		let revMessage = '';
 		if (data) {
 			try {
@@ -311,7 +313,6 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 					window.location.assign(data.gotopage);
 				}
 				flagAlertMessage(data.error, 'error');
-				return;
 			}
 			if (data.reversal && data.reversal !== '') {
 				revMessage = data.reversal;
@@ -957,6 +958,8 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
             $('.hhk-tfnum').hide();
             chg.hide();
             $chrgExpand.hide();
+            console.log($chrgExpand);
+            console.log($(this).val());
             $('#tdCashMsg').hide();
             $('.paySelectNotes').show();
 
@@ -979,7 +982,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
             } else {
                 $('.hhk-cashTndrd').show('fade');
             }
-        });
+        }).trigger('change');
 
     }
 
@@ -1677,7 +1680,7 @@ function setupCOF($chgExpand, idx) {
     if ($chgExpand.length > 0) {
 
         $(document).find('input[name=rbUseCard' + idx + ']').on('change', function () {
-            if ($(this).val() == 0 || ($(this).prop('checked') === true && $(this).prop('type') === 'checkbox')) {
+            if (($(this).val() == 0 && $(this).prop('checked') === true) || ($(this).prop('checked') === true && $(this).prop('type') === 'checkbox')) {
                 $chgExpand.show("fade");
             } else {
                 $chgExpand.hide("fade");
@@ -1828,7 +1831,7 @@ function paymentsTable(tableID, containerID, refreshPayments) {
                 }
             }
         ],
-        'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
+        'dom': '<"top"if><"hhk-overflow-x"rt><"bottom"lp><"clear">',
         'displayLength': 50,
         'order': [[8, 'asc']],
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]],
@@ -1853,7 +1856,7 @@ function paymentsTable(tableID, containerID, refreshPayments) {
 		var amt = parseFloat(btn.data("amt"));
 		if (btn.val() !== "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
 			btn.val('Saving...');
-			sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'), null, refreshPayments);
+			sendVoidReturn(btn, 'rv', btn.data('pid'), null, refreshPayments);
 		}
 	});
 
@@ -1861,8 +1864,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
     $('#' + containerID).on('click', '.hhk-voidRefundPmt', function () {
         var btn = $(this);
         if (btn.val() !== 'Saving...' && confirm('Void this Return?')) {
-            btn.val('Saving...');
-            sendVoidReturn(btn.attr('id'), 'vr', btn.data('pid'), null, refreshPayments);
+            btn.val('Saving...').addClass('hhk-loading-btn');
+            sendVoidReturn(btn, 'vr', btn.data('pid'), null, refreshPayments);
         }
     });
 
@@ -1871,8 +1874,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         var btn = $(this);
         var amt = parseFloat(btn.data("amt"));
         if (btn.val() !== "Saving..." && confirm("Return this payment for $" + amt.toFixed(2).toString() + "?")) {
-            btn.val("Saving...");
-            sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt, refreshPayments);
+            btn.val("Saving...").addClass('hhk-loading-btn');
+            sendVoidReturn(btn, "r", btn.data("pid"), amt, refreshPayments);
         }
     });
 
@@ -1881,8 +1884,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         var btn = $(this);
         var amt = parseFloat(btn.data("amt"));
         if (btn.val() !== "Saving..." && confirm("Undo this Return/Refund for $" + amt.toFixed(2).toString() + "?")) {
-            btn.val("Saving...");
-            sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"), null, refreshPayments);
+            btn.val("Saving...").addClass('hhk-loading-btn');
+            sendVoidReturn(btn, "ur", btn.data("pid"), null, refreshPayments);
         }
     });
 
@@ -1891,8 +1894,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         var btn = $(this);
 
         if (btn.val() !== 'Deleting...' && confirm('Delete this House payment?')) {
-            btn.val('Deleting...');
-            sendVoidReturn(btn.attr('id'), 'd', btn.data('ilid'), btn.data('iid'), null, refreshPayments);
+            btn.val('Deleting...').addClass('hhk-loading-btn');
+            sendVoidReturn(btn, 'd', btn.data('ilid'), btn.data('iid'), null, refreshPayments);
         }
     });
 

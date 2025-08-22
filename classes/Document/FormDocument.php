@@ -3,6 +3,7 @@
 namespace HHK\Document;
 
 use HHK\DataTableServer\SSP;
+use HHK\Member\Address\Phones;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -277,8 +278,8 @@ class FormDocument {
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid Email address.'];
                     }
                 }elseif($field->type == "text" && $field->subtype == "tel" && $field->userData[0] != ''){ //if phone field and not empty
-                    if(!filter_var($field->userData[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS) || !preg_match('/^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/', $field->userData[0])){
-                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be formatted as: (###) ###-####'];
+                    if(!filter_var($field->userData[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS) || !Phones::validateandFormatPhoneNumber($field->userData[0])["isValid"] == true){
+                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid phone number'];
                     }
                 }elseif(($field->type == "text" || $field->type == "textarea") && $field->userData[0] != ''){
                     $sanitized = filter_var($field->userData[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);

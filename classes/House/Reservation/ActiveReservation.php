@@ -489,6 +489,8 @@ class ActiveReservation extends Reservation {
                     $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
                     $dataArray["billToEmail"] = $this->payResult->getInvoiceBillToEmail($dbh);
                     $dataArray["idPayment"] = $this->payResult->getIdPayment();
+                    $dataArray["paySuccess"] = $this->payResult->getDisplayMessage();
+                    $dataArray["payError"] = $this->payResult->getErrorMessage();
                 }
             }
 

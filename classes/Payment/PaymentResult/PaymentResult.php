@@ -132,36 +132,56 @@ class PaymentResult {
      */
     public function emailReceipt(\PDO $dbh) {
 
-        $uS = Session::getInstance();
-        $toAddr = '';
+        $autoEmailAr = $this->isAutoEmailEligible($dbh, $this->idRegistration, $this->idName);
 
-        $query = "SELECT IFNULL(ne.Email, '') as 'Email', if(n.Name_Full = '', n.Company, n.Name_Full) as `Name_Full`, r.Email_Receipt, nv.Vol_Code  FROM
-    `registration` r,
-    `name` n
-        LEFT JOIN
-    `name_email` ne ON n.idName = ne.idName
-        AND n.Preferred_Email = ne.Purpose
-        LEFT JOIN
-    `name_volunteer2` nv on n.idName = nv.idName
-WHERE 
-    r.idregistration = :idreg AND n.idName = :id group by n.idName";
-
-        if(!$uS->autoEmailReceipts){
-            $query .= " and r.Email_Receipt = 1";
-        }
-
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':idreg'=>$this->idRegistration, ':id'=>$this->idName));
-
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($rows) > 0 && $rows[0]['Email'] != '' && (($rows[0]["Vol_Code"] == "ba" && $uS->autoEmailBillingAgentReceipt) || ($rows[0]["Vol_Code"] !== "ba" && ($uS->autoEmailReceipts || $rows[0]["Email_Receipt"] == "1")))) {
-            $toAddr = $rows[0]['Email'];
+        if ($autoEmailAr['autoEmail'] == true) {
+            $toAddr = $autoEmailAr['email'];
             $invoice = new Invoice($dbh);
             $invoice->loadInvoice($dbh, 0, $this->idPayment);
             return PaymentSvcs::sendReceiptEmail($dbh, $this->receiptMarkup, $invoice, $toAddr);
         }
         return [];
+    }
+
+    /**
+     * Determine if an automated receipt email should be sent
+     * 
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @param mixed $idName
+     * @return array{autoEmail: bool, email: string|array{autoEmail: bool, email: null}}
+     */
+    public static function isAutoEmailEligible(\PDO $dbh, $idRegistration, $idName){
+        $uS = Session::getInstance();
+
+        $query = "SELECT IFNULL(ne.Email, '') as 'Email', if(n.Name_Full = '', n.Company, n.Name_Full) as `Name_Full`, r.Email_Receipt, nv.Vol_Code  FROM
+    `name` n
+		left join
+	`name_guest` ng on n.idName = ng.idName
+		left join registration r on ng.idPsg = r.idPsg
+        LEFT JOIN
+    `name_email` ne ON n.idName = ne.idName
+        AND n.Preferred_Email = ne.Purpose
+        LEFT JOIN
+    `name_volunteer2` nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'
+WHERE 
+    (r.idregistration = :idreg or r.idRegistration is null) AND n.idName = :id group by n.idName";
+
+        if(!$uS->autoEmailReceipts){
+            $query .= " and r.Email_Receipt in (1, null)";
+        }
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(':idreg'=>$idRegistration, ':id'=>$idName));
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) > 0 && $rows[0]['Email'] != '' && (($rows[0]["Vol_Code"] == "ba" && $uS->autoEmailBillingAgentReceipt) || ($rows[0]["Vol_Code"] !== "ba" && ($uS->autoEmailReceipts || $rows[0]["Email_Receipt"] == "1")))) {
+            return ['autoEmail'=>true, 'email'=>$rows[0]['Email']];
+        }else{
+            return ['autoEmail'=>false, 'email'=>null];
+        }
+
     }
 
     public function wasError() {

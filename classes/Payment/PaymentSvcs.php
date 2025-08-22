@@ -295,7 +295,26 @@ class PaymentSvcs {
         // Load gateway
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
 
-        return $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
+        $dataArray = $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
+
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
 
     }
 
@@ -346,7 +365,28 @@ class PaymentSvcs {
         // Load gateway
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
 
-        return $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+        $dataArray = $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
+        return $dataArray;
 
     }
 
@@ -422,6 +462,7 @@ class PaymentSvcs {
                 $dataArray['success'] = 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
+                
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
 
                 break;
@@ -482,7 +523,21 @@ class PaymentSvcs {
                 throw new PaymentException('Unknown pay type.  ');
         }
 
-        if(isset($dataArray['receipt'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
             $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
             $dataArray["idPayment"] = $idPayment;
         }
@@ -539,8 +594,28 @@ class PaymentSvcs {
 
         // Payment Gateway
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
-        return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs, $bid));
+        $dataArray =  array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs, $bid));
 
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
+        return $dataArray;
     }
 
     /**
@@ -665,7 +740,21 @@ class PaymentSvcs {
                 throw new PaymentException('The pay type is ineligible.  ');
         }
 
-        if(isset($dataArray['receipt'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
             $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
             $dataArray["idPayment"] = $idPayment;
         }
@@ -779,6 +868,25 @@ class PaymentSvcs {
 
             default:
                 throw new PaymentException('This pay type is ineligible for Undo Refund Amount.  ');
+        }
+
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
         }
 
         return $dataArray;

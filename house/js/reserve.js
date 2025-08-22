@@ -329,6 +329,14 @@ $(document).ready(function() {
                             showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt', 550, idPayment, billToEmail);
                         }
 
+                        //payment msgs
+                        if(responseData.paySuccess && responseData.paySuccess != ''){
+                            flagAlertMessage(responseData.paySuccess, 'success');
+                        }
+                        if(responseData.payError && responseData.payError != ''){
+                            flagAlertMessage(responseData.payError, 'error');
+                        }
+
                         if (responseData.resv !== undefined) {
                             if (responseData.warning === undefined) {
                                 flagAlertMessage(responseData.resvTitle + ' Saved. ' + (responseData.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + responseData.resv.rdiv.rStatTitle), 'success');
