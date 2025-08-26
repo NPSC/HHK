@@ -116,11 +116,8 @@ $(document).ready(function() {
                                 }
 
                                 if($(field).hasClass("bfh-states")){
-                                    var hhkprefix = $(field).attr('id').replace("adrstate", "");
-                                    $(field).data("country", hhkprefix+"adrcountry");
                                     $(field).bfhstates($(field).data()).val($(field).attr('user-data'));
                                 }else if($(field).hasClass("bfh-countries")){
-                                    $(field).data("country", "US");
                                     $(field).bfhcountries($(field).data()).val($(field).attr('user-data'));
                                 }
                                 
