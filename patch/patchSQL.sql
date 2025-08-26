@@ -35,7 +35,8 @@ JOIN
 
 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("autoEmailReceipts", "false", "b", "f", "Automatically email receipts when taking guest payments", 1); 
-INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("autoEmailBillingAgentReceipt", "false", "b", "f", "Automatically email receipts when taking 3rd party (billing agent) payments", 1);
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ("autoEmail3rdPartyReceipts", "false", "b", "f", "Automatically email receipts when taking 3rd party (billing agent) payments", 1);
+DELETE FROM `sys_config` WHERE (`Key` = 'autoEmailBillingAgentRece');
 
 
 -- add default receipt email body

@@ -174,9 +174,27 @@ WHERE
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':idreg'=>$idRegistration, ':id'=>$idName));
 
+        $billagentreceipt = $uS->autoEmailBillingAgentReceipt;
+        $billingagentrece = $uS->autoEmailBillingAgentRece;
+        $thirdpartyreceipts = $uS->autoEmail3rdPartyReceipts;
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        if (count($rows) > 0 && $rows[0]['Email'] != '' && (($rows[0]["Vol_Code"] == "ba" && $uS->autoEmailBillingAgentReceipt) || ($rows[0]["Vol_Code"] !== "ba" && ($uS->autoEmailReceipts || $rows[0]["Email_Receipt"] == "1")))) {
+        if (count($rows) > 0 && $rows[0]['Email'] != '' && 
+        (
+            (
+                $rows[0]["Vol_Code"] == "ba" 
+                && $uS->autoEmail3rdPartyReceipts
+            )
+            || 
+            (
+                $rows[0]["Vol_Code"] !== "ba" 
+                && (
+                    $uS->autoEmailReceipts 
+                    || $rows[0]["Email_Receipt"] == "1"
+                    )
+            )
+        )
+        ) {
             return ['autoEmail'=>true, 'email'=>$rows[0]['Email']];
         }else{
             return ['autoEmail'=>false, 'email'=>null];

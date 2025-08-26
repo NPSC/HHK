@@ -650,6 +650,7 @@ class HouseServices {
         }
 
         $dataArray['success'] = $reply;
+        $dataArray['error'] = $payResult->getErrorMessage();
 
         return $dataArray;
     }

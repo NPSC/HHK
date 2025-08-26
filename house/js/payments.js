@@ -278,6 +278,12 @@ function setTaxExempt(taxExempt) {
  */
 function sendVoidReturn(btn, vorr, idPayment, amt, refresh) {
 
+    if(btn.prop("disabled") == true){
+        return;
+    }
+    
+    btn.addClass("hhk-loading-btn").prop("disabled", true);
+
     var prms = {pid: idPayment, bid: btn.attr("id")};
 
 	if (vorr && vorr === 'v') {
@@ -1402,6 +1408,10 @@ function showReceipt(dialogId, markup, title, width, paymentId = false, billToEm
     });
 
     emailBtn.button().click(function () {
+        if(emailBtn.prop("disabled") == true){
+            return;
+        }
+        emailBtn.prop("disabled", true).find("i").removeClass("bi bi-send-fill").addClass("spinner-border spinner-border-sm");
         fetch("ws_ckin.php", {
             method: "POST",
             headers: {
@@ -1410,6 +1420,7 @@ function showReceipt(dialogId, markup, title, width, paymentId = false, billToEm
             body: new URLSearchParams({ cmd: "emailReceipt", paymentId: paymentId, emailAddress:billToEmail }),
         })
         .then(response => {
+            emailBtn.prop("disabled", false).find("i").addClass("bi bi-send-fill").removeClass("spinner-border spinner-border-sm");
             if (!response.ok) {
                 throw new Error(response.status);
             }

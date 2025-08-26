@@ -120,7 +120,7 @@ function invLoadPc(nme, id, iid) {
 
                 $('#keysfees').dialog('option', 'buttons', buttons);
                 $('#keysfees').dialog('option', 'title', 'Pay Invoice');
-                $('#keysfees').dialog('option', 'width', 800);
+                $('#keysfees').dialog('option', 'width', 900);
                 $('#keysfees').dialog('open');
             }
         }

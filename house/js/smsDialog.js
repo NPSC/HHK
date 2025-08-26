@@ -106,7 +106,7 @@
         $dialog.on("click", "#msgsTabContent .sendMsg", function () {
             
             var sendMsgBtn = $(this);
-            sendMsgBtn.attr('disabled', true).html('&nbsp;').addClass("loading");
+            sendMsgBtn.attr('disabled', true).find("i").removeClass("bi bi-send-fill").addClass("spinner-border spinner-border-sm");
             
             var idName = $(this).data('idname');
             var msgMkup = $(this).parent('.newMsg').find("textarea").attr("disabled", true);
@@ -147,7 +147,7 @@
         $dialog.on("click", "#allGuestsTabContent .sendMsg", function () {
             
             var sendMsgBtn = $(this);
-            sendMsgBtn.attr('disabled', true).html('&nbsp;').addClass("loading");
+            sendMsgBtn.attr('disabled', true).find("i").removeClass("bi bi-send-fill").addClass("spinner-border spinner-border-sm");
             
             var msgMkup = $(this).parent('.newMsg').find("textarea").attr("disabled", true);
             var msgText = msgMkup.val();
@@ -205,7 +205,7 @@
             }
 
             if (msgText.length > 0) {
-                sendMsgBtn.attr('disabled', true).html('&nbsp;').addClass("loading");
+                sendMsgBtn.attr('disabled', true).find("i").removeClass("bi bi-send-fill").addClass("spinner-border spinner-border-sm");
                 msgMkup.attr("disabled", true);
 
                 $.ajax({

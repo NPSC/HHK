@@ -199,7 +199,7 @@ if ($uS->InsuranceChooser) {
 
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', '', array(), 'date');
-$cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style' => 'text-align:center;'));
+$cFields[] = array("Room", 'Title', 'checked', '', 's', '', array());
 
 if ($uS->VisitFee) {
     $cFields[] = array($labels->getString('statement', 'cleaningFeeLabel', "Clean Fee"), 'visitFee', 'checked', '', 's', '', array('style' => 'text-align:right;'));

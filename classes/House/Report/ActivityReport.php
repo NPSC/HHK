@@ -667,7 +667,7 @@ where `lp`.`idPayment` > 0
             // Invoice number
             if ($invNumber != '') {
 
-                $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank'];
+                $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'target' => '_blank'];
 
                 if ($r['Invoice_Deleted'] > 0) {
                     $iAttr['style'] = 'color:red;';
@@ -683,7 +683,7 @@ where `lp`.`idPayment` > 0
                         . HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'style' => 'cursor:pointer;', 'title' => 'View Items']);
             }
 
-            $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, ["style" => 'white-space:nowrap']);
+            $invoiceMkup = HTMLContainer::generateMarkup('div', $invNumber, ["class" => 'd-flex justify-content-between align-items-center']);
 
             // Set up actions
             foreach ($i['p'] as $p) {

@@ -419,7 +419,7 @@ class PaymentReport {
 
         if ($invNumber != '') {
 
-            $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['i']['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank'];
+            $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['i']['Invoice_Number'], 'target' => '_blank'];
 
             if ($r['i']['Invoice_Deleted'] > 0) {
                 $iAttr['style'] .= 'color:red;';
@@ -434,7 +434,7 @@ class PaymentReport {
                 .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $p['idPayment'], 'data-stat' => 'view', 'data-iid' => $r['i']['idInvoice'], 'style' => 'cursor:pointer;', 'title' => 'View Items']);
         }
 
-        $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array('style'=>'white-space:nowrap'));
+        $invoiceMkup = HTMLContainer::generateMarkup('div', $invNumber, array('class'=>'d-flex justify-content-between align-items-center'));
         $statusMkup = HTMLContainer::generateMarkup('span', $payStatus, $statusAttr);
 
         $g = [

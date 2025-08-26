@@ -581,7 +581,7 @@ where
             if ($visit['vfa'] > 0 && $visit['vfa'] == $visit['vfpd']) {
 
                 $r['visitFee'] = number_format($visit['vfa'], 2);
-                $visitFeePaid = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-circle-check', 'style' => 'float:left;', 'title' => 'Fees paid'));
+                $visitFeePaid = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-circle-check', 'title' => 'Fees paid'));
 
             } else if ($visit['vfa'] > 0 && $uS->VisitFeeDelayDays < $visit['nit']) {
 
@@ -598,7 +598,7 @@ where
         if ($visit['addch'] > 0 && $visit['addch'] <= $visit['addpd']) {
 
             $r['adjch'] = number_format($visit['addch'], 2);
-            $addPaidIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-circle-check', 'style' => 'float:left;', 'title' => 'Charges paid'));
+            $addPaidIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-circle-check', 'title' => 'Charges paid'));
 
         } else if ($visit['addch'] > 0) {
 
@@ -610,8 +610,8 @@ where
         }
 
 
-        $changeRoomIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info', 'style' => 'float:left;', 'title' => 'Changed Rooms'));
-        $changeRateIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info', 'style' => 'float:left;', 'title' => 'Room Rate Changed'));
+        $changeRoomIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info mr-2', 'title' => 'Changed Rooms'));
+        $changeRateIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info mr-2', 'title' => 'Room Rate Changed'));
         $insInfoIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-comment insAction', 'style' => 'cursor:pointer;', 'data-idName' => $r['idPatient'], 'id' => 'insAction' . $r['idPatient'], 'title' => 'View Insurance'));
 
         if ($local) {
@@ -635,11 +635,11 @@ where
             //$r['Status'] = HTMLContainer::generateMarkup('span', $uS->guestLookups['Visit_Status'][$r['Status']][1], array('class'=>'hhk-getVDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']));
 
             if ($visitFeePaid != '') {
-                $r['visitFee'] = $visitFeePaid . $r['visitFee'];
+                $r['visitFee'] = "<div class='d-flex justify-content-between align-items-center'>" . $visitFeePaid . $r['visitFee'] . "</div>";
             }
 
             if ($addPaidIcon != '') {
-                $r['adjch'] = $addPaidIcon . $r['adjch'];
+                $r['adjch'] = "<div class='d-flex justify-content-between align-items-center'>" . $addPaidIcon . $r['adjch'] ."</div>";
             }
 
             if ($visit['rtc'] > 1) {
