@@ -1050,8 +1050,10 @@ where
             if ($days > 0) {
 
                 $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $piDays);
-                $visit['chg'] += $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
-                $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
+                
+                $spanCharges = $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
+                $visit['chg'] += $spanCharges;
+                $visit['taxcgd'] += round($spanCharges * $lodgeTax, 2);
 
                 // Zero the individual taxes
                 foreach ($this->eachTaxPaid as $k => $v) {
