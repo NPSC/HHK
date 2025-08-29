@@ -699,7 +699,7 @@ $ckdate";
     public function billingAgentMarkup() {
 
         $agents = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->billingAgents, $this->selectedBillingAgents, TRUE),
-        array('name'=>'selBillingAgents[]', 'size'=>(count($this->billingAgents)>12 ? '12' : count($this->billingAgents)), 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
+        array('name'=>'selBillingAgents[]', 'size'=>(count($this->billingAgents)>12 ? '12' : count($this->billingAgents))+1, 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
 
         $tbl = new HTMLTable();
 

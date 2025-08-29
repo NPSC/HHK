@@ -897,7 +897,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 AND n.Member_Status in ('a','d') AND n.Record_Member = 1 "
             . $filterGP
-            . " AND np.Phone_Search LIKE '" . $this->Name_First . "' "
+            . " AND np.Phone_Search LIKE '%" . $this->Name_First . "' "
             . " group by n.idName order by np.Phone_Search";
 
         $stmt = $dbh->query($query);

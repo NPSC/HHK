@@ -391,8 +391,10 @@ class Phones extends AbstractContactPoint {
         if (isset($p[$idPrefix.'txtPhone'][$typeCode])) {
             $ph = trim(filter_var($p[$idPrefix.'txtPhone'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
+        
+        $formattedPhoneAr = $this->validateAndFormatPhoneNumber($ph);
 
-        $a->Phone_Num->setNewVal($ph);
+        $a->Phone_Num->setNewVal($formattedPhoneAr['isValid'] ? $formattedPhoneAr['formatted']:$ph);
 
         if (isset($p[$idPrefix.'txtExtn'][$typeCode])) {
             $extn = trim(filter_var($p[$idPrefix.'txtExtn'][$typeCode], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
@@ -408,30 +410,36 @@ class Phones extends AbstractContactPoint {
 
 
         // phone search - use only the numberals for efficient phone number search
-        $ary = array('+', '-');
-        $a->Phone_Search->setNewVal(str_replace($ary, '', filter_var($ph, FILTER_SANITIZE_NUMBER_INT)));
+        $a->Phone_Search->setNewVal($formattedPhoneAr['E164']);
         $a->Status->setNewVal('a');
         $a->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $a->Updated_By->setNewVal($uname);
 
     }
 
-    public static function validateAndFormatPhoneNumber(string $input, string $defaultRegion = "US"){
+    /**
+     * Validate, sanitize and format any phone number
+     * @param string $input
+     * @param string $defaultRegion
+     * @return array{formatted: string, isValid: bool, E164: string}
+     */
+    public static function validateAndFormatPhoneNumber(string $input, string $defaultRegion = "US"): array{
         $phoneUtil = PhoneNumberUtil::getInstance();
 
         try {
             $number = $phoneUtil->parse($input, $defaultRegion);
             if (!$phoneUtil->isValidNumber($number)) {
-                return ['isValid' => false, 'formatted' => null];
+                return ['isValid' => false, 'formatted' => "", 'E164'=>""];
             }
 
             $region = $phoneUtil->getRegionCodeForNumber($number);
             $format = ($region === 'US') ? PhoneNumberFormat::NATIONAL : PhoneNumberFormat::INTERNATIONAL;
             $formatted = $phoneUtil->format($number, $format);
+            $e164 = $phoneUtil->format($number, PhoneNumberFormat::E164);
 
-            return ['isValid' => true, 'formatted' => $formatted];
+            return ['isValid' => true, 'formatted' => $formatted, 'E164'=>$e164];
         } catch (NumberParseException $e) {
-            return ['isValid' => false, 'formatted' => null];
+            return ['isValid' => false, 'formatted' => "", 'E164'=>""];
         }
     }
 

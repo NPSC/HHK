@@ -981,7 +981,8 @@ where
                     'gpin' => 0, // Guest pre-interval nights
                     'preCh' => 0,
                     'rmc' => 0, // Room change counter
-                    'rtc' => 0  // Rate Category counter
+                    'rtc' => 0,  // Rate Category counter
+                    'totVisitNights'=>0 //total visit nights for all spans
                 ];
 
                 foreach ($this->eachTaxPaid as $k => $v) {
@@ -1018,6 +1019,7 @@ where
             $days = $r['Actual_Month_Nights'];
             $visit['nit'] += $days;
             $totalCatNites[$r[$rescGroup[0]]] += $days;
+            $visit['totVisitNights'] += $r['Visit_Age'];
 
             $gdays = $actualGuestNights[$r['idVisit']][$r['Span']] ?? 0;    // Total of primary and additional guests for this span
 
@@ -1053,18 +1055,19 @@ where
                 
                 $spanCharges = $priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio;
                 $visit['chg'] += $spanCharges;
-                $visit['taxcgd'] += round($spanCharges * $lodgeTax, 2);
 
-                // Zero the individual taxes
-                foreach ($this->eachTaxPaid as $k => $v) {
+                // Zero the individual + total taxes
+                /*foreach ($this->eachTaxPaid as $k => $v) {
                     $visit["chg_$k"] = 0;
-                }
+                }*/
 
                 // Get the (current) taxing items for this visit
-                $taxedItems = $vat->getCurrentTaxingItems($r['idVisit'], $r['Visit_Age'], ItemId::Lodging);
+                $taxedItems = $vat->getCurrentTaxingItems($r['idVisit'], $visit["totVisitNights"], ItemId::Lodging);
 
                 foreach ($taxedItems as $ti) {
-                    $visit["chg_" . $ti->getIdTaxingItem()] = round($visit['chg'] * $ti->getPercentTax() / 100, 2);
+                    $thisTaxChg = round($spanCharges * $ti->getPercentTax() / 100, 2);
+                    $visit["chg_" . $ti->getIdTaxingItem()] += $thisTaxChg;
+                    $visit['taxcgd'] += $thisTaxChg;
                 }
 
 

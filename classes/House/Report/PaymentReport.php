@@ -419,7 +419,7 @@ class PaymentReport {
 
         if ($invNumber != '') {
 
-            $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['i']['Invoice_Number'], 'target' => '_blank'];
+            $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['i']['Invoice_Number'], 'target' => '_blank', 'style'=>''];
 
             if ($r['i']['Invoice_Deleted'] > 0) {
                 $iAttr['style'] .= 'color:red;';
