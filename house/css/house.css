@@ -1290,3 +1290,9 @@ input:checked + .hhk-slider:before {
 @keyframes spinner-border {
   to { transform: rotate(360deg); }
 }
+
+@media screen {
+	#repSummary>img {
+        display: none;
+    }
+};
