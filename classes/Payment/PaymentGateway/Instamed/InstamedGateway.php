@@ -268,6 +268,7 @@ class InstamedGateway extends AbstractPaymentGateway {
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_COMPLETE),
             'requestToken' => 'true',
+            'incontext' => 'true',
             'RelayState' => $this->saleUrl,
         );
 
@@ -342,6 +343,7 @@ class InstamedGateway extends AbstractPaymentGateway {
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_COMPLETE),
             'requestToken' => 'true',
+            'incontext' => 'true',
             'RelayState' => $this->cofUrl,
         );
 

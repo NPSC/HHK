@@ -1,4 +1,5 @@
 <?php
+use HHK\Exception\UnexpectedValueException;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\SecurityComponent;
@@ -847,6 +848,8 @@ if(isset($events['receipt']) && $uS->merchantReceipt == true){
 
 } catch (\PDOException $ex) {
     $events = ["error" => "Database Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
+} catch(UnexpectedValueException $ex){
+    $events = ["error" => $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 } catch (\Exception $ex) {
     $events = ["error" => "Web Server Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 }

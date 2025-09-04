@@ -964,8 +964,6 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
             $('.hhk-tfnum').hide();
             chg.hide();
             $chrgExpand.hide();
-            console.log($chrgExpand);
-            console.log($(this).val());
             $('#tdCashMsg').hide();
             $('.paySelectNotes').show();
 
@@ -1503,7 +1501,7 @@ function reprintReceipt(pid, idDialg) {
 function paymentRedirect(data, $xferForm, initialParams) {
     "use strict";
     if (data) {
-console.log("redirect called");
+
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
 
@@ -1529,9 +1527,10 @@ console.log("redirect called");
 
         } else if (data.inctx) {
 
-            $('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
+            //$('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
+            $("#contentDiv").addClass("hhk-loading").css('min-height', '400px');
             InstaMed.launch(data.inctx);
-            $('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
+            //$('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
 
             // openiframe(data.inctx, 600, 400, "Add New Card On File");
 

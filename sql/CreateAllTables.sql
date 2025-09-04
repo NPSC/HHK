@@ -2665,6 +2665,13 @@ ALTER TABLE `stays`
 ALTER TABLE `stays`
     ADD INDEX IF NOT EXISTS `index_idName` (`idName` ASC);
 
+ALTER TABLE `stays` 
+ADD CONSTRAINT `fk_visit`
+  FOREIGN KEY if not exists (`idVisit` , `Visit_Span`)
+  REFERENCES `visit` (`idVisit` , `Span`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
 ALTER TABLE `vehicle`
     ADD INDEX IF NOT EXISTS `INDEX_LICENSE` (`License_Number` ASC);
 ALTER TABLE `vehicle`
