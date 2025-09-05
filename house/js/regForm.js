@@ -1,5 +1,5 @@
 // page setup
-function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, primaryGuestId, idPsg){
+function setupRegForm(idReg, rctMkup, receiptBilledToEmail, regMarkup, payId, invoiceNumber, vid, rid, primaryGuestId, idPsg){
     
     var opt = {mode: 'popup',
         popClose: true,
@@ -117,7 +117,7 @@ function setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid,
     });
 
     if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
+        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, payId, receiptBilledToEmail);
     }
     if (regMarkup) {
         showRegDialog(regMarkup, idReg);
