@@ -4,6 +4,8 @@ var dateFormat;
 var paymentMarkup;
 var pageManager;
 var receiptMarkup;
+var receiptBilledToEmail;
+var receiptPaymentId;
 
 $(document).ready(function() {
     "use strict";
@@ -17,6 +19,8 @@ $(document).ready(function() {
     dateFormat = $('#dateFormat').val();
     paymentMarkup = $('#paymentMarkup').val();
     receiptMarkup = $('#receiptMarkup').val();
+    receiptPaymentId = $("#receiptPaymentId").val();
+    receiptBilledToEmail = $("#receiptBilledToEmail").val();
 
 // Dialog Boxes
     $("#resDialog").dialog({
