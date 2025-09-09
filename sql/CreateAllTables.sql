@@ -368,23 +368,7 @@ CREATE TABLE if not exists `document_log` (
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
--- -----------------------------------------------------
--- Table `staff_note`
--- -----------------------------------------------------
-CREATE TABLE if not exists `staff_note` (
-  `Link_Id` INT NOT NULL,
-  `Note_Id` INT NOT NULL,
-  PRIMARY KEY (`Note_Id`)
-) ENGINE = InnoDB;
 
--- -----------------------------------------------------
--- Table `doc_note`
--- -----------------------------------------------------
-CREATE TABLE if not exists `doc_note` (
-  `Doc_Id` INT NOT NULL,
-  `Note_Id` INT NOT NULL,
-  PRIMARY KEY (`Doc_Id`, `Note_Id`)
-) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `link_doc`
@@ -1354,37 +1338,6 @@ CREATE TABLE if not exists `notification_log` (
   `Timestamp` timestamp(5) NOT NULL DEFAULT CURRENT_TIMESTAMP(5),
   PRIMARY KEY (`idLog`)
 ) ENGINE=InnoDB;
-
-
--- -----------------------------------------------------
--- Table `reservation_note`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `reservation_note` (
-  `Reservation_Id` INT NOT NULL,
-  `Note_Id` INT NOT NULL,
-  PRIMARY KEY (`Reservation_Id`, `Note_Id`)
-) ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `psg_note`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `psg_note` (
-  `Psg_Id` INT NOT NULL,
-  `Note_Id` INT NOT NULL,
-  PRIMARY KEY (`Psg_Id`, `Note_Id`)
-) ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `member_note`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `member_note` (
-  `idName` INT NOT NULL,
-  `Note_Id` INT NOT NULL,
-  PRIMARY KEY (`idName`, `Note_Id`)
-) ENGINE = InnoDB;
-
 
 
 -- -----------------------------------------------------
