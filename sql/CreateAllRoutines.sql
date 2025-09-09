@@ -419,7 +419,6 @@ BEGIN
 	delete id from id_securitygroup id join tids n on id.idName = n.idName;
 	delete m from mcalendar m join tids n on m.idName = n.idName;
 	delete ml from mail_listing ml join tids n on ml.id = n.idName;
-	delete mn from member_note mn join tids n on mn.idName = n.idName;
 	delete mh from member_history mh join tids n on mh.idName = n.idName;
 	-- delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
 	delete gt from guest_token gt join tids n on gt.idGuest = n.idName;
@@ -431,7 +430,6 @@ BEGIN
 	-- remove reservation_guest for any deleted reservations.
 	delete rg from reservation_guest rg where rg.idReservation in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
     -- remove notes
-	delete rn from reservation_note rn where rn.Reservation_Id in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
 	delete nt from note nt where nt.idNote in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
     delete r from reservation r join tids n on r.idGuest = n.idName;
 
@@ -1204,11 +1202,12 @@ BEGIN
 	WHERE
 		idRegistration = badReg;
 
-		UPDATE psg_note
+		UPDATE link_note
 	SET
-		Psg_Id = keepIdPsg
+		idLink = keepIdPsg
 	WHERE
-		Psg_Id = dupIdPsg;
+		linkType = "psg" and
+		idLink = dupIdPsg;
 
 	DELETE FROM registration
 	WHERE

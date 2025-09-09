@@ -6,8 +6,6 @@ use HHK\House\PSG;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
-use HHK\sec\SecurityComponent;
-use HHK\sec\Session;
 use HHK\SysConst\MemStatus;
 use HHK\SysConst\RelLinkType;
 use HHK\SysConst\VolMemberType;
@@ -220,12 +218,7 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
 
 
             $markup = CreateMarkupFromDB::generateHTML_Table($data, 'pickId');
-            //if(SecurityComponent::is_TheAdmin() || $post['mType'] != VolMemberType::Patient.VolMemberType::Guest ){
-                $markup .= HTMLInput::generateMarkup('Combine Id\'s', array('id'=>'btnCombId', 'type'=>'button', 'style'=>'margin: 10px 0 5px 0;'));
-            //}else{
-            //    $uS = Session::getInstance();
-            //    $markup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", "Merging Patients and Guests is not currently available, please contact NPSC at " . $uS->Error_Report_Email . " if you would like to merge Patients and Guests", array("class"=>'ui-widget ui-widget-content ui-corner-all mt-3 p-2 d-inline-block', "style"=>"max-width: 400px;")));
-            //}
+            $markup .= HTMLInput::generateMarkup('Combine Id\'s', array('id'=>'btnCombId', 'type'=>'button', 'style'=>'margin: 10px 0 5px 0;'));
 
             $markup .= HTMLContainer::generateMarkup('div', '', array('id'=>'spnAlert', 'style'=>'color:red; margin-left:10px;'));
 
