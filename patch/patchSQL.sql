@@ -8,3 +8,6 @@ ALTER TABLE `visit`
 ALTER TABLE `visit`
 	CHANGE COLUMN if exists `Has_Future_Change` `Next_IdResource` INT(11) NOT NULL DEFAULT '0' AFTER `Rate_Glide_Credit`;
 
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES
+('Calendar_Status_Colors', 'rv', 'Future Room Change', 'u',110);

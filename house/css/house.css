@@ -1267,3 +1267,44 @@ input:checked + .hhk-slider:before {
 .ReceiptArea {
 	justify-self: center;
 }
+
+
+/* calendar events */
+
+.hhk-event-future-span {
+	background-image: 
+    repeating-linear-gradient(
+      -45deg, 
+      transparent, 
+      transparent 1rem,
+      rgba(0, 0, 0, 0.1) 1rem,
+      rgba(0, 0, 0, 0.1) 2rem
+    );
+}
+
+.hhk-event-future-span.hhk-event-light {
+	background-image: 
+    repeating-linear-gradient(
+      -45deg, 
+      transparent, 
+      transparent 1rem,
+      rgba(255, 255, 255, 0.15) 1rem,
+      rgba(255, 255, 255, 0.15) 2rem
+    );
+}
+
+.hhk-event-confirmed-resv {
+    border: 3px solid black;
+	padding: 1px 0;
+}
+
+.hhk-event-unconfirmed-resv {
+	border: 3px dashed black;
+	padding: 1px 0;
+}
+
+.fc-timeline-event .hhk-event-room-icon {
+	background: white;
+    color: black;
+    font-weight: bold;
+}

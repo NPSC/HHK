@@ -41,6 +41,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Calendar_Status_Colors', 'copast', 'Checked in past Expected Departure', '','u',80),
 ('Calendar_Status_Colors', 'w', 'Waitlist', '','u',90),
 ('Calendar_Status_Colors', 'uc', 'Unconfirmed', '','u',100),
+('Calendar_Status_Colors', 'rv', 'Future Room Change', '','u',110),
 
 ("RibbonText", "pgl", "Primary Guest Last Name",'', '', 10),
 ("RibbonText", "pgf", "Primary Guest Full Name",'', '', 20),

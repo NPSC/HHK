@@ -339,7 +339,7 @@ where ru.idResource_use is null
             }
 
             if ($r['Next_IdResource'] > 0 && $r['Next_IdResource'] != $r['idResource'] && isset($rescTitles[$r['Next_IdResource']])) {
-                $titleText .= " (to " . $rescTitles[$r['Next_IdResource']] . ')';
+                $s['nextRescTitle'] = $rescTitles[$r['Next_IdResource']];
             }
 
             if ($extended) {
@@ -359,8 +359,7 @@ where ru.idResource_use is null
 
             // Future visit span?
             if ($r['Visit_Status'] == VisitStatus::Reserved && $lastIdResource > 0) {
-               $s['borderColor'] = '#4aaa34';
-                $titleText .= ' (frm ' . $rescTitles[$lastIdResource] . ')';
+                $s['lastRescTitle'] = $rescTitles[$lastIdResource];
             }
 
             $lastIdResource = $r['idResource'];

@@ -462,7 +462,7 @@ function showChangeVisitRoom(gname, id, idVisit, span) {
                 $changeDate.datepicker('option', 'minDate', expEndDT);
                 $changeDate.datepicker('option', 'maxDate', now);
                 $changeEndDate.datepicker('setDate', resvExpEndDT);
-                //$changeDate.prop('disabled', true);
+                $changeDate.prop('disabled', true);
             }
 
             $selResource.change();
@@ -1398,6 +1398,24 @@ $(document).ready(function () {
             titleEl.appendChild(document.createTextNode(info.event.title));
             titleEl.classList.add("ml-1");
 
+            /* prepend icon to indicate previous room */
+            if(info.event.extendedProps.idVisit !== undefined && info.event.extendedProps.vStatusCode == 'r' && info.event.extendedProps.lastRescTitle){
+                const roomFromIcon = document.createElement('span');
+                roomFromIcon.classList.add("mr-1", "ui-corner-all", "hhk-event-room-icon");
+                roomFromIcon.title = "Moved from " + info.event.extendedProps.lastRescTitle;
+                roomFromIcon.innerHTML = `<i class="bi bi-arrow-left mx-2"></i><span class="mr-2">`+ info.event.extendedProps.lastRescTitle + `</span>`;
+                titleEl.insertBefore(roomFromIcon, titleEl.firstChild);
+            }
+
+            /* append icon to indicate next room */
+            if(info.event.extendedProps.idVisit !== undefined && info.event.extendedProps.nextRescTitle){
+                const roomToIcon = document.createElement('span');
+                roomToIcon.classList.add("mx-1", "ui-corner-all", "hhk-event-room-icon");
+                roomToIcon.title = "Moving to " + info.event.extendedProps.nextRescTitle;
+                roomToIcon.innerHTML = `<span class="mx-2">`+ info.event.extendedProps.nextRescTitle + `</span><i class="bi bi-arrow-right mr-2"></i>`;
+                titleEl.appendChild(roomToIcon);
+            }
+
             if (info.event.extendedProps.idReservation !== undefined) {
 
                 let chooserEl = document.createElement('Span');
@@ -1431,11 +1449,9 @@ $(document).ready(function () {
 
                     // update border for uncommitted reservations.
                     if (info.event.extendedProps.status === 'uc') {
-                        info.el.style.border = "3px dashed black";
-                        info.el.style.padding = '1px 0';
+                        info.el.classList.add("hhk-event-unconfirmed-resv");
                     } else {
-                        info.el.style.border = "3px solid black";
-                        info.el.style.padding = '1px 0';
+                        info.el.classList.add("hhk-event-confirmed-resv")
                     }
 
                     //2nd ribbon color
@@ -1452,6 +1468,10 @@ $(document).ready(function () {
                         info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + ', ' + info.event.extendedProps.guests + (info.event.extendedProps.guests > 1 ? ' ' + visitorLabel + 's' : ' ' + visitorLabel) + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
                     } else {
                         info.el.title = info.event.extendedProps.fullName + ', Room: ' + resource.title + ', Status: ' + info.event.extendedProps.visitStatus + (shoHospitalName ? ', ' + hospTitle + ': ' + info.event.extendedProps.hospName : '');
+                    }
+
+                    if(info.event.extendedProps.vStatusCode == 'r'){
+                        info.el.classList.add("hhk-event-future-span");
                     }
 
                     if (info.event.extendedProps.extended !== undefined && info.event.extendedProps.extended) {

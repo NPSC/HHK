@@ -2,6 +2,7 @@
 
 namespace HHK\House\Room;
 
+use DateTime;
 use HHK\Purchase\{FinAssistance, VisitCharges};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Constraint\{ConstraintsReservation, ConstraintsVisit};
@@ -205,7 +206,8 @@ class RoomChooser {
      * @param bool $isAuthorized
      * @return string
      */
-    public function createChangeRoomsMarkup(\PDO $dbh, $isAuthorized) {
+    public function createChangeRoomsMarkup(\PDO $dbh, $isAuthorized, array $futureSpans = []) {
+        $today = new DateTime("today");
 
         $table = new HTMLTable();
         $table->addHeaderTr(HTMLTable::makeTh('Change Rooms from: ' . $this->selectedResource->getTitle(), ['colspan' => '2']));
@@ -256,6 +258,36 @@ class RoomChooser {
             HTMLTable::makeTd('', ['colspan' => '2', 'id' => 'rmChgMsg', 'style' => 'color:red;display:none']));
 
         return $table->generateMarkup(['id' => 'moveTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:350px;']);
+    }
+
+    public function createFutureSpanEditMkup(\PDO $dbh, array $futureSpans = []){
+        $table = new HTMLTable();
+        $table->addHeaderTr(HTMLTable::makeTh('Scheduled Room Changes', ['colspan' => '4']));
+        $table->addHeaderTr(
+            HTMLTable::makeTh('Start')
+            .HTMLTable::makeTh("End")
+            .HTMLTable::makeTh("New Room")
+            .HTMLTable::makeTh("Actions")
+        );
+
+        //future room changes
+        foreach($futureSpans as $futureSpan){
+            $spanStartDT = new DateTime($futureSpan["Span_Start"]);
+            $spanEndDT = new DateTime($futureSpan["Expected_Departure"]);
+            $table->addBodyTr(
+                HTMLTable::makeTd($spanStartDT->format("M d, Y"))
+                .HTMLTable::makeTd($spanEndDT->format("M d, Y"))
+                .HTMLTable::makeTd($futureSpan["Resource_Title"])
+                .HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup("button", 
+                        HTMLContainer::generateMarkup("i", '', ["class"=>"bi bi-check-circle-fill"]) . " Confirm Move", ['class'=>'ui-button ui-corner-all'])
+                    .HTMLContainer::generateMarkup("button", 
+                        HTMLContainer::generateMarkup("i", '', ["class"=>"bi bi-trash3-fill"]) . " Delete", ['class'=>'ui-button ui-corner-all'])
+                )
+            );
+        }
+
+        return $table->generateMarkup(['id' => 'futureRoomTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:600px;']);
     }
 
     public function createChangeRoomsSelector(\PDO $dbh, $isAuthorized) {

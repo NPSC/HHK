@@ -712,8 +712,8 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
         // Is reserve span background color
         if (data.visitStatus == 'r') {
-            title += ';  Future Room Change';
-            $diagbox.css('background-color', '#dbf9d4');
+            title += ' - Future Room Change';
+            $diagbox.css('background-color', '#fff');
         }
 
         setupPayments($('#selRateCategory').val(), idVisit, visitSpan, $('#pmtRcpt'), '#keysfees');

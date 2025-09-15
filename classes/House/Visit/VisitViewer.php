@@ -799,7 +799,7 @@ class VisitViewer {
 
 
         // Action button column
-        $tr .=  ($includeActionHdr === TRUE ? HTMLTable::makeTd($actionButton) : "");
+        $tr .=  ($includeActionHdr === TRUE && !$isFutureSpan ? HTMLTable::makeTd($actionButton) : "");
 
         // Remove button - only if more than one guest is staying
         if ($action == ''

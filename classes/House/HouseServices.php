@@ -924,6 +924,7 @@ class HouseServices {
         $resvTitle = 'Reserved Room';
         $resvSpanExpectedEnd = null;
         $mySpan = null;
+        $reservedSpans = [];
 
         // Check if the visit and span are valid.
         if ($idVisit < 1 || $span < 0) {
@@ -956,6 +957,7 @@ ORDER BY Span;";
 
             // Reserve span present?
             if ($rw['Status'] == VisitStatus::Reserved) {
+                $reservedSpans[] = $rw;
 
                 $hasReservedSpan = TRUE;
 
@@ -1003,7 +1005,7 @@ ORDER BY Span;";
             $curResc = $roomChooser->getSelectedResource();
 
             // Make the room chooser
-            $dataArray['success'] = $roomChooser->createChangeRoomsMarkup($dbh, $isAdmin);
+            $dataArray['success'] = $roomChooser->createFutureSpanEditMkup($dbh, $reservedSpans) . $roomChooser->createChangeRoomsMarkup($dbh, $isAdmin, $reservedSpans);
 
             $dataArray['rooms'] = $roomChooser->makeRoomsArray();
             $dataArray['curResc'] = [
@@ -1030,6 +1032,8 @@ ORDER BY Span;";
                 'reservedTitle' => $resvTitle,
                 'reservedSpanExpEnd' => $resvSpanExpectedEnd,
             ];
+
+            $dataArray["reservedSpans"] = $reservedSpans;
 
         } else {
             $dataArray['error'] = "The Change Rooms command is only available for checked-in visits.";
