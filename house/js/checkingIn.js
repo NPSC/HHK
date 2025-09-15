@@ -159,6 +159,8 @@ $(document).ready(function() {
             formData.append('idPsg', pageManager.getIdPsg());
             formData.append('prePayment', pageManager.getPrePaymtAmt());
             formData.append('rid', pageManager.getIdResv());
+            formData.append('vid', pageManager.getIdVisit());
+            formData.append('span', pageManager.getSpan());
 
             //diagnosis
             let txtDiagnosis = $('#txtDiagnosis').val();
