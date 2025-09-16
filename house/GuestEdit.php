@@ -367,7 +367,7 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
             }
 
             if ($uS->TrackAuto && $registration->getNoVehicle() == 0) {
-                Vehicle::saveVehicle($dbh, $registration->getIdRegistration());
+                Vehicle::saveVehicle($dbh, $_POST, $registration->getIdRegistration());
             }
 
 

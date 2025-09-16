@@ -266,7 +266,7 @@ try {
             $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
 
             try {
-                $events = ["success"=> Vehicle::saveVehicle($dbh, $row["idRegistration"], $row["idReservation"])];
+                $events = ["success"=> Vehicle::saveVehicle($dbh, $_POST, $row["idRegistration"], $row["idReservation"])];
             }catch(\Exception $e){
                 $events = ["error" => "Error saving vehicle: " . $e->getMessage()];
             }

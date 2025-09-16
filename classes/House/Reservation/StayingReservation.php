@@ -88,7 +88,7 @@ class StayingReservation extends CheckingIn {
 
             // Save any vehicles
             if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
-                Vehicle::saveVehicle($dbh, $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
+                Vehicle::saveVehicle($dbh, $this->reserveData->getRawPost(), $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
             }
         }
 
