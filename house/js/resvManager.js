@@ -391,6 +391,7 @@ function resvManager(initData, options) {
 
                 if ($.trim($(this).val()) !== '' && !$(this).hasClass("ui-state-error") && phoneFilled == false) {
                     phoneFilled = true;
+                    return false; //Found a valid phone, break out of loop
                 }else{
                     phoneFilled = false;
                 }
@@ -410,6 +411,7 @@ function resvManager(initData, options) {
 
                 if ($.trim($(this).val()) !== '' && !$(this).hasClass("ui-state-error") && emailFilled == false) {
                     emailFilled = true;
+                    return false; //valid email found, break out of loop
                 }
 
             });
