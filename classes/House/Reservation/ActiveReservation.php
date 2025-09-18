@@ -104,7 +104,7 @@ class ActiveReservation extends Reservation {
 
         if ($uS->UseRepeatResv) {
             $repeatResv = new RepeatReservations();
-            $repeatResv->saveRepeats($dbh, $this->reservRs);
+            $repeatResv->saveRepeats($dbh, $this->reserveData->getRawPost(), $this->reservRs);
             $this->repeatResvErrors = $repeatResv->getErrorArray();
         }
 
@@ -208,7 +208,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Save Checklists
-        Checklist::saveChecklist($dbh, $reg->getIdPsg(), ChecklistType::PSG);
+        Checklist::saveChecklist($dbh, $this->reserveData->getRawPost(), $reg->getIdPsg(), ChecklistType::PSG);
 
         // Find any staying people.
         $stayingMembers = $this->getStayingMembers();

@@ -208,14 +208,23 @@ ORDER BY g.`Order`;";
     /**
      * Save Checklist items
      * @param \PDO $dbh
+     * @param array $post
      * @param int $entityId
      * @param string $checklistType
      * @return int number of affected items
      */
-    public static function saveChecklist(\PDO $dbh, int $entityId, string $checklistType) {
+    public static function saveChecklist(\PDO $dbh, array $post, int $entityId, string $checklistType) {
 
-        $checklistDates = filter_input(INPUT_POST, "checklistDate", FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
-        $cbChecklistItems = filter_input(INPUT_POST, "cbChecklistItem", FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
+        $args = [
+            'checklistDate' => ['filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_FORCE_ARRAY],
+            'cbChecklistItem'  => ['filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_FORCE_ARRAY]
+        ];
+
+        $sanitized = filter_var_array($post, $args);
+        $checklistDates = $sanitized['checklistDate'];
+        $cbChecklistItems = $sanitized["cbChecklistItem"];
+        //$checklistDates = (isset($post["checklistDate"]) ? filter_var($post["checklistDate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY) : []);
+        //$cbChecklistItems = (isset($post["cbChecklistItem"]) ? filter_var($post["cbChecklistItem"], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY) : []);
 
         $affectedRows = 0;
 

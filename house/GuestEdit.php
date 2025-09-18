@@ -362,7 +362,7 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
             $msg .= $registration->saveRegistrationRs($dbh, $psg->getIdPsg(), $uname);
 
             //save checklists
-            if(Checklist::saveChecklist($dbh, $psg->getIdPsg(), ChecklistType::PSG) > 0){
+            if(Checklist::saveChecklist($dbh, $_POST, $psg->getIdPsg(), ChecklistType::PSG) > 0){
                 $msg .= " Checklist items updated.";
             }
 

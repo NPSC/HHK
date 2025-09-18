@@ -179,10 +179,11 @@ class RepeatReservations {
     /**
      * Summary of saveRepeats
      * @param \PDO $dbh
+     * @param array $post
      * @param ReservationRS $reserveRS Hosting reservation
      * @return void
      */
-    public function saveRepeats(\PDO $dbh, $reserveRS) {
+    public function saveRepeats(\PDO $dbh, array $post, $reserveRS) {
 
         $uS = Session::getInstance();
         $this->errorArray = [];
@@ -194,7 +195,7 @@ class RepeatReservations {
             'mrnumresv'  => FILTER_SANITIZE_NUMBER_INT
         ];
 
-        $inputs = filter_input_array(INPUT_POST, $args);
+        $inputs = filter_var_array($post, $args);
 
         // Verify inputs
         if (isset($inputs['mrnumresv']) && isset($inputs['mrInterval'])) {
