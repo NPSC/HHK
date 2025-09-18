@@ -63,7 +63,7 @@ class Addresses {
             $phoneMkup = $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x" . $phData["Phone_Extension"]);
 
             //sms dialog
-            if($uS->smsProvider && $phData["Preferred_Phone"] == PhonePurpose::Cell && $phData["Unformatted_Phone"] != "" && $phData["SMS_opt_in"] == "opt_in" && $validPhone["isValid"] == true){
+            if($uS->smsProvider && $phData["Preferred_Phone"] == PhonePurpose::Cell && $phData["Unformatted_Phone"] != "" && $phData["SMS_opt_in"] == "opt_in" && $validPhone["isValid"] == true && $validPhone["smsSupported"]){
                 $phoneMkup .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>"ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest", "data-idname" => $phone->getIdName()]);
             }
 

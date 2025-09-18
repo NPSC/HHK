@@ -55,7 +55,9 @@ WHERE
             ':status' => VisitStatus::Active
         ]);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->disableUnsupportedNumbers($contacts);
+        return $contacts;
     }
 
     public function getResvGuestsData(int $idResv){
@@ -77,7 +79,9 @@ WHERE
             ':idResv' => $idResv
         ]);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->disableUnsupportedNumbers($contacts);
+        return $contacts;
     }
 
     public function getGuestData(int $idName){
@@ -97,7 +101,9 @@ WHERE
             ':idName' => $idName
         ]);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->disableUnsupportedNumbers($contacts);
+        return $contacts;
     }
 
     /**
@@ -174,14 +180,20 @@ WHERE
                 if ($guest["isMobile"]) {
                     try {
 
-                        //upsert contact before send
-                        $contact = new Contact($this->dbh, false);
-                        $contact->upsert($guest["Phone_Search"], $guest["Name_First"], $guest["Name_Last"]);
+                        $phoneAr = Phones::validateAndFormatPhoneNumber($guest["Phone_Search"]);
+                        if($phoneAr['smsSupported']){
 
-                        //send message
-                        $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
-                        $results["success"][$guest["idName"]] = $message->sendMessage();
-                        NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Message sent Successfully", ["msgText" => $msgTxt]);
+                            //upsert contact before send
+                            $contact = new Contact($this->dbh, false);
+                            $contact->upsert($phoneAr['smsFormat'], $guest["Name_First"], $guest["Name_Last"]);
+
+                            //send message
+                            $message = new Message($this->dbh, $phoneAr['smsFormat'], $msgTxt, $subject);
+                            $results["success"][$guest["idName"]] = $message->sendMessage();
+                            NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Message sent Successfully", ["msgText" => $msgTxt]);
+                        }else{
+                            throw new SmsException("SMS is not supported for this phone number: " . $phoneAr['formatted']);
+                        }
                     } catch (SmsException $e) {
                         $results["errors"][] = "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage();
                         NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage(), ["msgText" => $msgTxt]);
@@ -210,12 +222,16 @@ WHERE
         $phones = new Phones($this->dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
         $cell = $phones->get_Data(PhonePurpose::Cell);
 
-        if(strlen($cell["Unformatted_Phone"]) >= 10){
-            $msgs = $this->fetchMessages($cell["Unformatted_Phone"]);
+        $phoneAr = Phones::validateAndFormatPhoneNumber($cell["Unformatted_Phone"]);
+
+        if($phoneAr['smsSupported'] == false){
+            throw new SmsException("SMS is not supported for this phone number: " . $phoneAr['formatted']);
+        }else if(strlen($phoneAr["smsFormat"]) >= 10){
+            $msgs = $this->fetchMessages($phoneAr["smsFormat"]);
 
             try {
                 $contact = new Contact($this->dbh);
-                $contact = $contact->fetchContact($cell["Unformatted_Phone"]);
+                $contact = $contact->fetchContact($phoneAr["smsFormat"]);
             }catch(\Exception $e){
                 $contact = [];
             }
@@ -238,6 +254,15 @@ WHERE
             ];
         }else{
             throw new SmsException("Mobile number not found for idName " . $idName);
+        }
+    }
+
+    private function disableUnsupportedNumbers(array &$contacts){
+        foreach($contacts as $k=>$contact){
+            $phoneAr = Phones::validateAndFormatPhoneNumber($contact["Phone_Num"]);
+            if($phoneAr['smsSupported'] == false){
+                $contacts[$k]["isMobile"] = 0;
+            }
         }
     }
 

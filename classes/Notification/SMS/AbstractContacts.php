@@ -2,6 +2,7 @@
 
 namespace HHK\Notification\SMS;
 
+use HHK\Member\Address\Phones;
 use HHK\SysConst\MemStatus;
 use HHK\SysConst\PhonePurpose;
 use HHK\SysConst\ReservationStatus;
@@ -42,7 +43,10 @@ abstract class AbstractContacts
 
         $stmt->execute($params);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->stripUnsupportedNumbers($contacts);
+
+        return $contacts;
     }
 
     /**
@@ -66,7 +70,10 @@ abstract class AbstractContacts
 
         $stmt->execute($params);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);        
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->stripUnsupportedNumbers($contacts);
+
+        return $contacts;
     }
 
     /**
@@ -90,7 +97,10 @@ abstract class AbstractContacts
 
         $stmt->execute($params);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);        
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->stripUnsupportedNumbers($contacts);
+
+        return $contacts;
     }
 
     /**
@@ -108,7 +118,19 @@ abstract class AbstractContacts
             ":memStatus" => MemStatus::Active
         ]);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->stripUnsupportedNumbers($contacts);
+
+        return $contacts;
+    }
+
+    private function stripUnsupportedNumbers(array &$contacts){
+        foreach($contacts as $k=>$contact){
+            $phoneAr = Phones::validateAndFormatPhoneNumber($contact["Phone_Num"]);
+            if($phoneAr['smsSupported'] == false){
+                unset($contacts[$k]);
+            }
+        }
     }
     
 }

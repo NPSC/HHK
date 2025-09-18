@@ -704,7 +704,11 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
             $cell = $phones->get_Data(PhonePurpose::Cell);
 
-            if (strlen($cell["Unformatted_Phone"]) <= 10) {
+            $phoneAr = Phones::validateAndFormatPhoneNumber($cell["Unformatted_Phone"]);
+
+            if($phoneAr['smsSupported'] == false){
+                throw new SmsException("SMS is not supported for this phone number: " . $phoneAr['formatted']);
+            }else if (strlen($cell["Unformatted_Phone"]) <= 10) {
                 //upsert contact before send
                 $contact = new Contact($dbh, true);
                 $contact->upsert($cell["Unformatted_Phone"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());

@@ -421,25 +421,31 @@ class Phones extends AbstractContactPoint {
      * Validate, sanitize and format any phone number
      * @param string $input
      * @param string $defaultRegion
-     * @return array{formatted: string, isValid: bool, E164: string}
+     * @return array{formatted: string, isValid: bool, E164: string, countryCode: string, smsSupported: bool, smsFormat: string}
      */
-    public static function validateAndFormatPhoneNumber(string $input, string $defaultRegion = "US"): array{
+    public static function validateAndFormatPhoneNumber(string|null $input, string $defaultRegion = "US"): array{
+        $input = (is_null($input)?"":$input);
         $phoneUtil = PhoneNumberUtil::getInstance();
+        $uS = Session::getInstance();
 
         try {
             $number = $phoneUtil->parse($input, $defaultRegion);
             if (!$phoneUtil->isValidNumber($number)) {
-                return ['isValid' => false, 'formatted' => "", 'E164'=>""];
+                return ['isValid' => false, 'formatted' => "", 'E164'=>"", "countryCode"=>"", 'smsSupported'=> false, 'smsFormat'=>''];
             }
 
             $region = $phoneUtil->getRegionCodeForNumber($number);
             $format = ($region === 'US') ? PhoneNumberFormat::NATIONAL : PhoneNumberFormat::INTERNATIONAL;
             $formatted = $phoneUtil->format($number, $format);
             $e164 = $phoneUtil->format($number, PhoneNumberFormat::E164);
+            $countryCode = $number->getCountryCode();
 
-            return ['isValid' => true, 'formatted' => $formatted, 'E164'=>$e164];
+            $smsFormat = ($countryCode == "1" && $uS->smsProvider == "SimpleTexting" ? preg_replace('/^\+' . $number->getCountryCode() . '/', '', $e164) : $e164);
+            $smsSupported = !($countryCode != "1" && $uS->smsProvider == "SimpleTexting");
+
+            return ['isValid' => true, 'formatted' => $formatted, 'E164'=>$e164, 'countryCode'=>$countryCode, 'smsSupported'=>$smsSupported, 'smsFormat' => $smsFormat];
         } catch (NumberParseException $e) {
-            return ['isValid' => false, 'formatted' => "", 'E164'=>""];
+            return ['isValid' => false, 'formatted' => "", 'E164'=>"", 'countryCode'=>'', 'smsSupported'=>false, 'smsFormat'=>''];
         }
     }
 
