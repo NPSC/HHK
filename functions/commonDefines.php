@@ -68,6 +68,7 @@ define('DIRRTY_JS', '../js/jquery.dirrty.js' . JSV);
 define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
 define('BOOTSTRAP_JS', '../js/bootstrap.min.js' . JSV);
 define('HTMLENTITIES_JS', '../js/he.js'. JSV);
+define('DOMPURIFY_JS', '../js/purify.min.js'. JSV);
 
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js' . JSV);
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js' . JSV);

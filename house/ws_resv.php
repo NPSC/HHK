@@ -332,7 +332,7 @@ try {
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-	       $data = base64_decode(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+	       $data = base64_decode($_POST['data']);
            $data = filter_var($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS); //sanitize decoded data
         }
 
@@ -347,10 +347,10 @@ try {
         if ($noteId > 0 && $data != '') {
 
             $note = new Note($noteId);
-            $updateCount = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
+            $updateAr = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
         }
 
-        $events = ['update' => $updateCount, 'idNote' => $noteId];
+        $events = ['update' => $updateAr['counter'], 'idNote' => $noteId, 'noteText'=>$updateAr['noteRS']->Note_Text->getStoredVal()];
 
         break;
 
