@@ -260,7 +260,7 @@ try {
 
             $regForms = $uS->regFormObjs;
 
-            if(isset($uS->regFormObjs[$uuid]) && !$uS->regFormObjs[$uuid] === null){
+            if(isset($uS->regFormObjs[$uuid]) && is_array($uS->regFormObjs[$uuid])){
                 //find this form
                 foreach($uS->regFormObjs[$uuid] as $doc){
                     if($doc["tabIndex"] === $formCode){
