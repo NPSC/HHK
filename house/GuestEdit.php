@@ -629,7 +629,7 @@ if ($psg->getIdPsg() > 0) {
 
         $getResvArray = ['href' => "Reserve.php?rid=" . $reserv->getIdReservation()];
 
-        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), $getResvArray))
+        $rtbl->addBodyTr(HTMLTable::makeTd($reserv->getIdVisit($dbh) == 0 ? HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), $getResvArray) : $reserv->getIdReservation())
             . HTMLTable::makeTd($reserv->getStatusTitle($dbh, $reserv->getStatus()))
             . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
             . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))

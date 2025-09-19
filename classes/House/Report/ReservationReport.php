@@ -164,7 +164,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     $checklistFields
     r.`Timestamp` as `Created_Date`,
     $prePayQuery
-    r.Last_Updated
+    r.Last_Updated,
+    if(v.idVisit > 0, 1,0) as `hasVisit`
 from
     reservation r
         left join
@@ -206,6 +207,7 @@ from
         and g2.`Code` = hs.`Location`
     LEFT JOIN hospital h on hs.idHospital = h.idHospital and h.Type = 'h'
     LEFT JOIN hospital a on hs.idAssociation = a.idHospital and a.Type = 'a'
+    LEFT JOIN visit v on r.idReservation = v.idReservation
     $checklistJoin
     , sys_config s
 where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.idRegistration";
@@ -399,7 +401,7 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
 
         foreach($this->resultSet as &$r) {
             $r['Insurance'] = ($r['Insurance'] != '' ? HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment insAction', 'style'=>'cursor:pointer;', 'data-idName'=>$r['idPatient'], 'id'=>'insAction' . $r['idPatient'], 'title'=>'View Insurance')) . $r["Insurance"] : $r["Insurance"]);
-            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
+            $r['Status_Title'] = $r["hasVisit"] ? $r['Status_Title'] : HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
             $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
             if($uS->AcceptResvPaymt){ $r['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0)); }
         }
