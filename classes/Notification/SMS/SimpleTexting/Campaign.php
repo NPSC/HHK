@@ -110,7 +110,7 @@ class Campaign {
                     $contacts = new Contacts($this->dbh);
                     $syncStatus = $contacts->syncContacts($status, [$this->settings->getSmsListName(), $campaignListId]);
 
-                    if(strtolower($syncStatus["status"]) == "done"){
+                    if(is_array($syncStatus) && strtolower($syncStatus["status"]) == "done"){
                         $this->sendCampaign($campaignListId, $campaignListName);
                         $msg = "Message sent successfully";
                         if(count($syncStatus["warnings"]) > 0){
@@ -118,7 +118,7 @@ class Campaign {
                         }
                         return ["success" => $msg];
                     }else{
-                        return ["info" => "It's taking longer than expected to send the message, would you like to continue to wait?", "batchId"=>$contacts->getBatchId(), "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName];
+                        return ["info" => "It's taking longer than expected to sync contacts, would you like to continue to wait?", "batchId"=>$contacts->getBatchId(), "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName];
                     }
                 }else{
                     throw new SmsException("Error sending campaign message: Could not create contact list");
@@ -136,7 +136,7 @@ class Campaign {
         
         $syncStatus = $contacts->syncContacts(null, [$this->settings->getSmsListName(), $campaignListId]);
 
-        if(strtolower($syncStatus["status"]) == "done"){
+        if(is_array($syncStatus) && strtolower($syncStatus["status"]) == "done"){
             $this->sendCampaign($campaignListId, $campaignListName);
 
             $msg = "Message sent successfully";
@@ -145,7 +145,7 @@ class Campaign {
             }
             return ["success" => $msg];
         }else{
-            return ["info" => "It's taking longer than expected to send the message, would you like to continue to wait?", "batchId"=>$batchId, "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName, "lastBatchStatus"=>$syncStatus];
+            return ["info" => "It's taking longer than expected to sync contacts, would you like to continue to wait?", "batchId"=>$batchId, "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName, "lastBatchStatus"=>$syncStatus];
         }
     }
 

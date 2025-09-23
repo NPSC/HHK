@@ -708,16 +708,16 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
             if($phoneAr['smsSupported'] == false){
                 throw new SmsException("SMS is not supported for this phone number: " . $phoneAr['formatted']);
-            }else if (strlen($cell["Unformatted_Phone"]) <= 10) {
+            }else if (strlen($phoneAr["smsFormat"]) > 0) {
                 //upsert contact before send
                 $contact = new Contact($dbh, true);
-                $contact->upsert($cell["Unformatted_Phone"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
+                $contact->upsert($phoneAr["smsFormat"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
                 try {
-                    $msg = new Message($dbh, $cell["Unformatted_Phone"], $msgText);
+                    $msg = new Message($dbh, $phoneAr["smsFormat"], $msgText);
                     $events = $msg->sendMessage();
-                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $phoneAr["smsFormat"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
                 }catch(SmsException $e){
-                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $phoneAr["smsFormat"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
                     throw $e;
                 }
             }else{
