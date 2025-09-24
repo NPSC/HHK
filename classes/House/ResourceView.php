@@ -1093,13 +1093,13 @@ ORDER BY $orderBy;");
                 // active room
 
                 if ($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver) {
-                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text'], array('style'=>'background-color:yellow;'));
-                    $statColor = "yellow";
+                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
+                    $statColor = "#fff67d";
                     $isDirty = TRUE;
 
                 } else if ($r['Status'] == RoomState::Clean || $r['Status'] == RoomState::Ready) {
-                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text'], array('style'=>'background-color:#bbf7b2;'));
-                    $statColor = "#bbf7b2";
+                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
+                    $statColor = "#99ff99";
 
                 } else {
                     $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
@@ -1110,13 +1110,13 @@ ORDER BY $orderBy;");
                 // Inactive room
 
                 if ($r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Dirty) {
-                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
-                    $statColor = "yellow";
+                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+                    $statColor = "#fff67d";
                     $isDirty = TRUE;
 
                 } else if ($r['Status'] == RoomState::Ready) {
-                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:#3fff0f;'));
-                    $statColor = "#3fff0f";
+                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+                    $statColor = "#99ff99";
 
                 } else {
                     $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);

@@ -165,9 +165,9 @@ where ru.idResource_use is null
             switch($uS->Room_Colors) {
                 case 'housekeeping': //use housekeeping status colors
                     if ($r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Dirty) {
-                        $r['bgColor'] = 'yellow';
+                        $r['bgColor'] = '#fff67d';
                     } else if ($r['Status'] == RoomState::Ready) {
-                        $r['bgColor'] = '#3fff0f';
+                        $r['bgColor'] = '#99ff99';
                     }else{
                         $r['bgColor'] = '';
                     }
