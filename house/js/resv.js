@@ -39,6 +39,8 @@ function getDoc(item) {
     }
     $('.hhk-docInfo').show();
 }
+
+
 function gotIncomeDiag(idResv, idReg, data) {
     if (data.error) {
         if (data.gotopage) {
@@ -351,6 +353,12 @@ function getRegistrationDialog(idReg) {
     );
 }
 
+/**
+ * Displays a registration dialog with the provided markup and handles saving the registration data.
+ *
+ * @param {string} markup - The HTML markup to be inserted into the dialog.
+ * @param {number} idReg - The registration ID associated with the dialog.
+ */
 function showRegDialog(markup, idReg) {
     "use strict";
     $('#regDialog').empty();
@@ -407,3 +415,53 @@ function showRegDialog(markup, idReg) {
         }
     });
 }
+
+/**
+ * Sends a JSON object to a specified URL using the Fetch API and processes the response.
+ *
+ * @param {Object} dataObject - The JSON object to be sent in the request body.
+ * @param {string} url - The URL to which the request is sent.
+ * @param {Function} processResults - A callback function to process the response text.
+ * @param {Object} [options={}] - Optional fetch options to override the default settings.
+ * @param {string} [options.method='POST'] - The HTTP method to use (e.g., 'GET', 'POST', 'PUT', 'DELETE').
+ * @param {Headers} [options.headers] - Additional headers to include in the request.
+ * @param {string} [options.body] - The request body to send (overrides the default JSON stringified body).
+ *
+ * @throws {Error} Throws an error if the response is not ok or if there is an issue during fetch or FormData conversion.
+ */
+function jsonFetch(dataObject, url, processResults, options = {}) {
+
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+
+    // Default fetch options if not provided
+    const defaultOptions = {
+        method: 'POST', // Or 'GET', 'PUT', 'DELETE', etc. as needed
+        headers: myHeaders,
+        body: JSON.stringify(dataObject), // Convert JSON object to string
+    };
+
+    // Merge default options with user-provided options (if any)
+    const fetchOptions = { ...defaultOptions, ...options }; // Spread operator for merging
+
+    fetch(url, fetchOptions)
+        .then((response) => {
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}}`);
+            }
+
+            return response.text();
+        })
+        .then((text) => {
+
+            processResults(text);
+
+        })
+        .catch((error) => {
+            console.error("Error during fetch or FormData conversion:", error);
+            throw error; // Re-throw the error to be handled by the caller if needed
+        });
+
+}
+

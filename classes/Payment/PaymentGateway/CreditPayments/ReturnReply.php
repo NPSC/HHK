@@ -6,6 +6,7 @@ use HHK\Payment\CreditToken;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\SysConst\PaymentStatusCode;
 use HHK\Tables\EditRS;
+use HHK\Tables\Payment\PaymentRS;
 use HHK\sec\Session;
 use HHK\Exception\PaymentException;
 
@@ -23,11 +24,11 @@ class ReturnReply extends AbstractCreditPayments {
     /**
      * Summary of caseApproved
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentResponse\AbstractCreditResponse $pr
+     * @param AbstractCreditResponse $pr
      * @param mixed $username
-     * @param \HHK\Tables\Payment\PaymentRS|null $payRs
+     * @param PaymentRS|null $payRs
      * @param mixed $attempts
-     * @throws \HHK\Exception\PaymentException
+     * @throws PaymentException
      * @return AbstractCreditResponse
      */
     protected static function caseApproved(\PDO $dbh, AbstractCreditResponse $pr, $username, $payRs = NULL, $attempts = 1){
@@ -38,7 +39,7 @@ class ReturnReply extends AbstractCreditPayments {
         // Store any tokens
         $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $pr->response, $pr->getIdToken()));
 
-        if (is_null($payRs)) {
+        if ($payRs === null) {
 
             // New Return payment
             $pr->setRefund(TRUE);
@@ -48,8 +49,10 @@ class ReturnReply extends AbstractCreditPayments {
         } else if ($payRs->idPayment->getStoredVal() > 0) {
 
             // Update existing Payment record
-            if($pr->getAmount() == $payRs->Amount->getStoredVal()){
+            if(round($pr->getAmount(), 2) == round($payRs->Amount->getStoredVal(), 2)){
                 $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
+            } else {
+                throw new PaymentException("The returned amount (" . round($pr->getAmount(), 2) . ") does not match the original payment amount - " . round($payRs->Amount->getStoredVal(), 2));
             }
             $payRs->Updated_By->setNewVal($username);
             $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
@@ -115,4 +118,3 @@ class ReturnReply extends AbstractCreditPayments {
     }
 
 }
-?>

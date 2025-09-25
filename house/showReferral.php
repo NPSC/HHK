@@ -118,6 +118,7 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>

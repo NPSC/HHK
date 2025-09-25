@@ -2,6 +2,7 @@
 use HHK\Exception\NotFoundException;
 use HHK\Exception\SmsException;
 use HHK\Exception\ValidationException;
+use HHK\Exception\UnexpectedValueException;
 use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\PSG;
 use HHK\House\Reservation\ActiveReservation;
@@ -9,7 +10,6 @@ use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\Reservation;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Vehicle;
-use HHK\House\Visit\Visit;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Incident\ListReports;
 use HHK\Incident\IncidentReport;
@@ -23,7 +23,6 @@ use HHK\Notification\SMS\SimpleTexting\Contact;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\Notification\SMS\SimpleTexting\Message;
 use HHK\Notification\SMS\SimpleTexting\Messages;
-use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\GLTableNames;
@@ -52,25 +51,66 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
+$debugMode = ($uS->mode == "dev");
 
-$c = "";
+$inputData = $_REQUEST;    // page received data, initially from $_REQUEST
+$command = '';     // web service ciommand
+$events = [];       // output data.
 
-// Get our command
-if (isset($_REQUEST["cmd"])) {
-    $c = htmlspecialchars($_REQUEST["cmd"]);
+
+// check for posted application/json data in a POST request
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (stripos($contentType, 'application/json') !== false   && strtoupper($_SERVER['REQUEST_METHOD']) == 'POST') {
+
+    // Get the posted data
+    $inputJson = file_get_contents('php://input');
+    if ($inputJson === false) {
+        //failure
+        $events = ["error" => "posted data input failure."];
+    }
+
+    // Decode the json posted data
+    $inputEncoded = json_decode($inputJson, true);
+    if ($inputEncoded === null) {
+        //failure
+        $events = ["error" => "posted data input failure."];
+    }
+
+    $inputData = [];
+
+    // convert string representations of arrays into an array
+    try {
+        $inputData = parseKeysToArray($inputEncoded);
+        
+    } catch (UnexpectedValueException $ex) {
+        $events = ["error" => "posted data input failure."];    //failure
+        $json = json_encode($events);
+
+        if ($json !== FALSE) {
+            echo $json;
+        } else {
+            $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
+            echo json_encode($events);
+        }
+    }
 }
 
 
-$events = [];
+// Check the webservice command
+if (isset($inputData['cmd'])) {
+    $command = htmlspecialchars($inputData['cmd']);
+}
+
+
 
 
 try {
 
-    switch ($c) {
+    switch ($command) {
 
     case "getResv":
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $events = $resv->createMarkup($dbh);
 
@@ -79,7 +119,7 @@ try {
 
     case "saveResv":
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $newResv = $resv->save($dbh);
 
@@ -90,7 +130,7 @@ try {
 
     case "getCkin":
 
-        $resv = CheckingIn::reservationFactoy($dbh);
+        $resv = CheckingIn::reservationFactoy($dbh, $inputData);
 
         $events = $resv->createMarkup($dbh);
 
@@ -99,7 +139,7 @@ try {
 
     case 'saveCheckin':
 
-        $resv = CheckingIn::reservationFactoy($dbh);
+        $resv = CheckingIn::reservationFactoy($dbh, $inputData);
 
         $newResv = $resv->save($dbh);
 
@@ -111,7 +151,7 @@ try {
     case 'delResv':
 
 
-        $resv = Reservation::reservationFactoy($dbh);
+        $resv = Reservation::reservationFactoy($dbh, $inputData);
 
         $events = $resv->delete($dbh);
 
@@ -120,16 +160,16 @@ try {
 
     case "addResvGuest":
 
-        $isCheckin = FALSE;
+        $isCheckin = FALSE; 
 
         if (isset($_POST['isCheckin'])) {
             $isCheckin = filter_var($_POST['isCheckin'], FILTER_VALIDATE_BOOLEAN);
         }
 
         if ($isCheckin) {
-            $resv = CheckingIn::reservationFactoy($dbh);
+            $resv = CheckingIn::reservationFactoy($dbh, $inputData);
         } else {
-            $resv = Reservation::reservationFactoy($dbh);
+            $resv = Reservation::reservationFactoy($dbh, $inputData);
         }
 
         $events = $resv->addPerson($dbh);
@@ -148,7 +188,7 @@ try {
             $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $resv = new ActiveReservation(new ReserveData(), null, null);
+        $resv = new ActiveReservation(new ReserveData($inputData), null, null);
 
         $events = $resv->changeRoom($dbh, $idResv, $idResc);
 
@@ -226,7 +266,7 @@ try {
             $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
 
             try {
-                $events = ["success"=> Vehicle::saveVehicle($dbh, $row["idRegistration"], $row["idReservation"])];
+                $events = ["success"=> Vehicle::saveVehicle($dbh, $_POST, $row["idRegistration"], $row["idReservation"])];
             }catch(\Exception $e){
                 $events = ["error" => "Error saving vehicle: " . $e->getMessage()];
             }
@@ -292,7 +332,7 @@ try {
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-	       $data = base64_decode(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+	       $data = base64_decode($_POST['data']);
            $data = filter_var($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS); //sanitize decoded data
         }
 
@@ -307,10 +347,10 @@ try {
         if ($noteId > 0 && $data != '') {
 
             $note = new Note($noteId);
-            $updateCount = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
+            $updateAr = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
         }
 
-        $events = ['update' => $updateCount, 'idNote' => $noteId];
+        $events = ['update' => $updateAr['counter'], 'idNote' => $noteId, 'noteText'=>$updateAr['noteRS']->Note_Text->getStoredVal()];
 
         break;
 
@@ -664,16 +704,20 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
             $cell = $phones->get_Data(PhonePurpose::Cell);
 
-            if (strlen($cell["Unformatted_Phone"]) <= 10) {
+            $phoneAr = Phones::validateAndFormatPhoneNumber($cell["Unformatted_Phone"]);
+
+            if($phoneAr['smsSupported'] == false){
+                throw new SmsException("SMS is not supported for this phone number: " . $phoneAr['formatted']);
+            }else if (strlen($phoneAr["smsFormat"]) > 0) {
                 //upsert contact before send
                 $contact = new Contact($dbh, true);
-                $contact->upsert($cell["Unformatted_Phone"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
+                $contact->upsert($phoneAr["smsFormat"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
                 try {
-                    $msg = new Message($dbh, $cell["Unformatted_Phone"], $msgText);
+                    $msg = new Message($dbh, $phoneAr["smsFormat"], $msgText);
                     $events = $msg->sendMessage();
-                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $phoneAr["smsFormat"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
                 }catch(SmsException $e){
-                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $phoneAr["smsFormat"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
                     throw $e;
                 }
             }else{
@@ -708,6 +752,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
     case 'sendCampaign':
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $filterVal = filter_input(INPUT_POST, 'filterVal', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $batchId = filter_input(INPUT_POST, 'batchId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $campaignListId = filter_input(INPUT_POST, 'campaignListId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -715,7 +760,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
         $campaign = new Campaign($dbh, $msgText, $msgText);
             if ($status) {
-                $events = $campaign->prepareAndSendCampaign($status);
+                $events = $campaign->prepareAndSendCampaign($status, $filterVal);
             }else if($batchId && $campaignListId && $campaignListName){
                 $events = $campaign->checkBatchAndSendCampaign($batchId, $campaignListId, $campaignListName);
             }
@@ -745,15 +790,15 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         break;
 
     default:
-        $events = ["error" => "Bad Command: \"" . $c . "\""];
+        $events = ["error" => "Bad Command: \"" . $command . "\""];
 }
 
 } catch (NotFoundException | ValidationException | SmsException $e){
     $events = ["error" => $e->getMessage()];
 } catch (PDOException $ex) {
-    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
+    $events = ["error" => "Database Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 } catch (Exception $ex) {
-    $events = ["error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
+    $events = ["error" => "Web Server Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 }
 
 
@@ -772,7 +817,7 @@ if (is_array($events)) {
     $json = json_encode($events);
 
     if ($json !== FALSE) {
-        echo ($json);
+        echo $json;
     } else {
         $events = ["error" => "PHP json encoding error: " . json_last_error_msg()];
         echo json_encode($events);

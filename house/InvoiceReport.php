@@ -187,6 +187,8 @@ $baSelections = array();
 $baSelector = '';
 $paymentMarkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $tabReturn = 0;
 
 $year = date('Y');
@@ -207,6 +209,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -223,7 +227,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -885,6 +889,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
@@ -919,6 +924,8 @@ $(document).ready(function() {
     var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
     var pmtMkup = '<?php echo $paymentMarkup; ?>';
     var rctMkup = '<?php echo $receiptMarkup; ?>';
+    var receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
+    var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
     var tabReturn = '<?php echo $tabReturn; ?>';
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
@@ -929,29 +936,8 @@ $(document).ready(function() {
 
     $("form[name=glform] .ui-checkboxradio-icon").removeClass('ui-state-hover');
 
-    $('.ckdate').datepicker({
-        yearRange: '<?php echo $uS->StartYear; ?>:+01',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        numberOfMonths: 1,
-        dateFormat: 'M d, yy'
-    });
-    $('#selCalendar').change(function () {
-        if ($(this).val() && $(this).val() != '19') {
-            $('#selIntMonth').hide();
-        } else {
-            $('#selIntMonth').show();
-        }
-        if ($(this).val() && $(this).val() != '18') {
-            $('.dates').hide();
-            $('#selIntYear').show();
-        } else {
-            $('.dates').show();
-            $('#selIntYear').hide();
-        }
-    });
-    $('#selCalendar').change();
+    <?php echo $filter->getTimePeriodScript(); ?>
+    
     $("#setBillDate").dialog({
         autoOpen: false,
         resizable: true,
@@ -1096,7 +1082,7 @@ $(document).ready(function() {
     }
 
     if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
     }
 
     if (makeTable === '1') {

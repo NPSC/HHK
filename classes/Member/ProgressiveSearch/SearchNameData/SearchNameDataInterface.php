@@ -99,6 +99,11 @@ interface SearchNameDataInterface
     public function getPhone();
 
     /**
+     * @return mixed
+     */
+    public function getFormattedPhone();
+
+    /**
      * @return string
      */
     public function getSMS_Status();

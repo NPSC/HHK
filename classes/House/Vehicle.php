@@ -164,7 +164,7 @@ WHERE
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup($stateOpt, array('name'=>'selVehLicense[' .$idPrefix.']', 'id'=>$idPrefix.'selVehLicense', 'class'=>'hhk-vehicle')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($carRS->License_Number->getStoredVal(), array('name'=>'txtVehLic['.$idPrefix.']', 'id'=>$idPrefix.'txtVehLic', 'class'=>'hhk-vehicle', 'size'=>'8')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($carRS->Note->getStoredVal(), array('name'=>'txtVehNote[' . $idPrefix.']', 'id'=>$idPrefix.'txtVehColor', 'class'=>'hhk-vehicle')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'cbVehDel[' .$idPrefix.']', 'type'=>'checkbox', 'class'=>'hhk-vehicle ')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'cbVehDel[]', "value"=>$idPrefix, 'type'=>'checkbox', 'class'=>'hhk-vehicle ')), array('style'=>'text-align:center;'))
                 );
         }
 
@@ -291,7 +291,7 @@ WHERE
      * @param int $idReg
      * @return string
      */
-    public static function saveVehicle(\PDO $dbh, $idReg, int $idResv = 0) {
+    public static function saveVehicle(\PDO $dbh, array $post, $idReg, int $idResv = 0) {
         $rtnMsg = "";
 
         $args = [
@@ -303,17 +303,17 @@ WHERE
             'txtVehNote' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
             'selVehGuest' => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
             'cbVehResv' => ['filter' => FILTER_VALIDATE_BOOL, 'flags' => FILTER_FORCE_ARRAY],
+            'cbVehDel' => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
             'cbNoVehicle' => ['filter' => FILTER_VALIDATE_BOOLEAN],
         ];
 
-        $post = filter_input_array(INPUT_POST, $args);
+        $post = filter_var_array($post, $args);
 
         // Find any deletes
-        if (isset($_POST['cbVehDel']) && is_array($_POST['cbVehDel'])) {
+        if(is_array($post['cbVehDel'])){
+            foreach ($post['cbVehDel'] as $k => $v) {
 
-            foreach ($_POST['cbVehDel'] as $k => $v) {
-
-                $idVehicle = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
+                $idVehicle = intval($v, 10);
 
                 if ($idVehicle > 0) {
                     $carRs = new VehicleRs();
@@ -343,7 +343,7 @@ WHERE
         foreach ($post['txtVehMake'] as $k => $v) {
 
             // ignore deleted vehicles
-            if (isset($_POST['cbVehDel'][$k]) && filter_has_var(INPUT_POST, $_POST['cbVehDel'][$k])) {
+            if (is_array($post['cbVehDel']) && in_array($k, $post['cbVehDel'])) {
                 continue;
             }
 
@@ -408,7 +408,7 @@ WHERE
 
             }
 
-            if($idResv > 0){
+            if($idResv > 0 && $carRS->idVehicle->getStoredVal() > 0){
                 if(isset($post['cbNoVehicle'])){
                     unset($post['cbVehResv']);
                 }

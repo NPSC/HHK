@@ -1,5 +1,7 @@
 <?php
 
+use HHK\Exception\RuntimeException;
+use HHK\House\Visit\Visit;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\Payment\PaymentSvcs;
@@ -44,6 +46,8 @@ $idPayment = 0;
 $paymentMarkup = '';
 $regDialogmkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $invoiceNumber = '';
 $menuMarkup = '';
 $regButtonStyle = 'display:none;';
@@ -59,6 +63,7 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
         $idRegistration = $payResult->getIdRegistration();
         $idPayment = $payResult->getIdPayment();
         $invoiceNumber = $payResult->getInvoiceNumber();
@@ -162,74 +167,86 @@ if($idDoc > 0){
 
 if($idVisit || $idResv){
 
-    // Generate Registration Form
-    $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
-    $signedDocsArray = ReservationSvcs::getSignedCkinDocs($dbh, (isset($reservArray['idPsg']) ? $reservArray['idPsg']: 0), (isset($reservArray['idReservation']) ? $reservArray['idReservation'] : $idResv), $idVisit);
+    try{
 
-    $li = '';
-    $tabContent = '';
-    $uuid = uniqid();
-    $uS->regFormObjs = [$uuid=>$reservArray['docs']]; //save docs to session for signing
-
-    foreach ($reservArray['docs'] as $r) {
-
-        $li .= HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
-
-        $tabContent .= HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex'], 'data-uuid'=>$uuid)) : '')
-            .HTMLContainer::generateMarkup('div', $r['doc'], array('class'=>'PrintArea'))
-            .HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'],  'data-uuid'=>$uuid)): ''),
-            array('id'=>$r['tabIndex']));
-
-        $sty = $r['style'];
-
-        //is Topaz sigWeb required?
-        if(!empty($r['signType']) && $r['signType'] == 'topaz'){
-            $isTopazRequired = true;
+        if($idResv > 0){
+            $stmt = $dbh->prepare("Select idReservation from reservation where idReservation = :idResv");
+            $stmt->execute([":idResv" => $idResv]);
+            if($stmt->rowCount() == 0){
+                throw new RuntimeException("Reservation " . $idResv . " not found");
+            }
         }
-    }
+        // Generate Registration Form
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
+        $signedDocsArray = ReservationSvcs::getSignedCkinDocs($dbh, (isset($reservArray['idPsg']) ? $reservArray['idPsg']: 0), (isset($reservArray['idReservation']) ? $reservArray['idReservation'] : $idResv), $idVisit);
 
-    $tabControl = "";
-    if(count($reservArray['docs']) > 0){
-        $ul = HTMLContainer::generateMarkup('ul', $li, array());
-        $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
-    }else if(isset($reservArray['error'])){
-        $tabControl = HTMLContainer::generateMarkup("div", $reservArray['error'], array("class"=>"ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"));
-    }
+        $li = '';
+        $tabContent = '';
+        $uuid = uniqid();
+        $uS->regFormObjs = [$uuid=>$reservArray['docs']]; //save docs to session for signing
 
-    $signedLi = '';
-    $signedTabContent = '';
+        foreach ($reservArray['docs'] as $r) {
 
-    $signedDocCount = count($signedDocsArray);
-    if($signedDocCount > 0){
-        $showSignedTab = true;
-        
-        $blankFormTitle = "Blank Registration Form";
-        
-        foreach ($signedDocsArray as $r) {
+            $li .= HTMLContainer::generateMarkup('li',
+                    HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
 
-            $signedDate = new \DateTime($r['timestamp']);
+            $tabContent .= HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
+                . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex'], 'data-uuid'=>$uuid)) : '')
+                .HTMLContainer::generateMarkup('div', $r['doc'], array('class'=>'PrintArea'))
+                .HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
+                . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'],  'data-uuid'=>$uuid)): ''),
+                array('id'=>$r['tabIndex']));
 
-            $signedLi .= HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('a', "Signed on " . $signedDate->format("M j, Y") , array('href'=>'#'.$r['Doc_Id'])));
+            $sty = $r['style'];
 
-
-            $signedTabContent .= HTMLContainer::generateMarkup('div',
-                HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form'))
-                .(str_starts_with($r['Mime_Type'], "base64:") ? base64_decode($r['Doc']) : $r['Doc'])
-                .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')),
-                array('id'=>$r['Doc_Id']));
-            $docSignatures = json_decode($r["Signatures"], true);
-            if($docSignatures){
-                $signatures[$r["Doc_Id"]] = $docSignatures;
+            //is Topaz sigWeb required?
+            if(!empty($r['signType']) && $r['signType'] == 'topaz'){
+                $isTopazRequired = true;
             }
         }
 
-        $signedUl = HTMLContainer::generateMarkup('ul', $signedLi, array());
-        $signedTabControl = HTMLContainer::generateMarkup('div', $signedUl . $signedTabContent, array('id'=>'signedRegTabDiv'));
+        $tabControl = "";
+        if(count($reservArray['docs']) > 0){
+            $ul = HTMLContainer::generateMarkup('ul', $li, array());
+            $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+        }else if(isset($reservArray['error'])){
+            $tabControl = HTMLContainer::generateMarkup("div", $reservArray['error'], array("class"=>"ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"));
+        }
+
+        $signedLi = '';
+        $signedTabContent = '';
+
+        $signedDocCount = count($signedDocsArray);
+        if($signedDocCount > 0){
+            $showSignedTab = true;
+            
+            $blankFormTitle = "Blank Registration Form";
+            
+            foreach ($signedDocsArray as $r) {
+
+                $signedDate = new \DateTime($r['timestamp']);
+
+                $signedLi .= HTMLContainer::generateMarkup('li',
+                    HTMLContainer::generateMarkup('a', "Signed on " . $signedDate->format("M j, Y") , array('href'=>'#'.$r['Doc_Id'])));
+
+
+                $signedTabContent .= HTMLContainer::generateMarkup('div',
+                    HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form'))
+                    .(str_starts_with($r['Mime_Type'], "base64:") ? base64_decode($r['Doc']) : $r['Doc'])
+                    .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')),
+                    array('id'=>$r['Doc_Id']));
+                $docSignatures = json_decode($r["Signatures"], true);
+                if($docSignatures){
+                    $signatures[$r["Doc_Id"]] = $docSignatures;
+                }
+            }
+
+            $signedUl = HTMLContainer::generateMarkup('ul', $signedLi, array());
+            $signedTabControl = HTMLContainer::generateMarkup('div', $signedUl . $signedTabContent, array('id'=>'signedRegTabDiv'));
+        }
+    }catch(\Exception $e){
+        $tabControl = HTMLContainer::generateMarkup("div", $e->getMessage(), array("class"=>"ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"));
     }
 
 }else if($idDoc > 0){
@@ -290,6 +307,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
             $(document).ready(function(){
                 let idReg = '<?php echo $idRegistration; ?>';
                 let rctMkup = '<?php echo $receiptMarkup; ?>';
+                let receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
                 let regMarkup = '<?php echo $regDialogmkup; ?>';
                 let payId = '<?php echo $idPayment; ?>';
                 let invoiceNumber = '<?php echo $invoiceNumber; ?>';
@@ -299,7 +317,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 let idPsg = '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>';
                 let signatures = <?php echo json_encode($signatures); ?>;
 
-                setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
+                setupRegForm(idReg, rctMkup, receiptBilledToEmail, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
                 setupEsign();
                 loadSignatures(signatures);
             });

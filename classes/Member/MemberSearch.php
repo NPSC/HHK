@@ -897,7 +897,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 AND n.Member_Status in ('a','d') AND n.Record_Member = 1 "
             . $filterGP
-            . " AND np.Phone_Search LIKE '" . $this->Name_First . "' "
+            . " AND np.Phone_Search LIKE '%" . $this->Name_First . "' "
             . " group by n.idName order by np.Phone_Search";
 
         $stmt = $dbh->query($query);
@@ -1021,7 +1021,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
             . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
             . " left join stays s on n.idName = s.idName and s.Status = 'a'"
-            . " left join resource r on s.idRoom = r.idResource"
+            . " left join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span"
+            . " left join resource r on v.idResource = r.idResource"
             . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
             . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "

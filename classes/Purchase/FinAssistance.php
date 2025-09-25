@@ -184,7 +184,6 @@ class FinAssistance {
                 $this->finAppRs->Approved_Id->setNewVal($uname);
                 $this->finAppRs->FA_Status_Date->setNewVal($faStatDate);
                 $this->finAppRs->FA_Status->setNewVal($newStatus);
-                $this->finAppRs->FA_Reason->setNewVal($reason);
 
                 $statTitle = "New Status: " . $uS->guestLookups['FinAppStatus'][$newStatus][1];
 
@@ -196,6 +195,8 @@ class FinAssistance {
                     $statTitle .= '; ';
                 }
             }
+
+            $this->finAppRs->FA_Reason->setNewVal($reason);
 
             // Notes
             if ($notes != '' || $catTitle != '' || $statTitle != '') {

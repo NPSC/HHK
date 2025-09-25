@@ -34,6 +34,7 @@ abstract class AbstractExportManager {
     protected $errorMessage;
     protected $accountId;
     protected $apiVersion;
+    protected $maxPSGsPerBatch;
 
     protected $memberReplies;
     protected $replies;
@@ -102,6 +103,7 @@ abstract class AbstractExportManager {
         $this->updatedBy = $cmsRs->Updated_By->getStoredVal();
         $this->lastUpdated = $cmsRs->Last_Updated->getStoredVal();
         $this->apiVersion = $cmsRs->apiVersion->getStoredVal();
+        $this->maxPSGsPerBatch = $cmsRs->retryCount->getStoredVal();
 
     }
 
@@ -354,6 +356,10 @@ abstract class AbstractExportManager {
 
     public function getApiVersion() {
         return $this->apiVersion;
+    }
+
+    public function getMaxPSGsPerBatch(){
+        return $this->maxPSGsPerBatch;
     }
 
     public function getLastUpdated() {

@@ -643,6 +643,8 @@ var hindx = 0,
     pmtMkup = $('#pmtMkup').val(),
     pmtStatus = $('#pmtStatus').val(),
     rctMkup = $('#rctMkup').val(),
+    receiptBilledToEmail = $('#receiptBilledToEmail').val(),
+    receiptPaymentId = $('#receiptPaymentId').val(),
     defaultTab = $('#defaultTab').val(),
     resourceGroupBy = $('#resourceGroupBy').val(),
     resourceColumnWidth = $('#resourceColumnWidth').val(),
@@ -1590,7 +1592,7 @@ $(document).ready(function () {
     });
 
     if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
     }
 
     $('#mainTabs').tabs({

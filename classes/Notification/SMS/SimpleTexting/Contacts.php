@@ -5,6 +5,7 @@ namespace HHK\Notification\SMS\SimpleTexting;
 use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\SmsException;
 use HHK\Notification\SMS\AbstractContacts;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\TableLog\NotificationLog;
 
@@ -40,7 +41,7 @@ Class Contacts extends AbstractContacts{
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                 throw new SmsException("Error getting contacts: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
-                throw new SmsException("Error getting contacts: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                throw new SmsException("Error getting contacts: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
     }
@@ -57,7 +58,9 @@ Class Contacts extends AbstractContacts{
         return $filtered;
     }
 
-    public function syncContacts(string|null $status, array $listIds = []){
+    public function syncContacts(string|null $status, array $listIds = [], $filterVal = ""){
+        $uS = Session::getInstance();
+        $filterField = $uS->CalResourceGroupBy;
 
         $listIds = (count($listIds) == 0 ? [$this->settings->getSmsListName()] : $listIds);
         $phones = [];
@@ -66,13 +69,13 @@ Class Contacts extends AbstractContacts{
 
             switch ($status){
                 case "checked_in":
-                    $phones = $this->getCheckedInGuestPhones();
+                    $phones = $this->getCheckedInGuestPhones($filterField, $filterVal);
                     break;
                 case "confirmed_reservation":
-                    $phones = $this->getConfirmedReservationGuestPhones();
+                    $phones = $this->getConfirmedReservationGuestPhones($filterField, $filterVal);
                     break;
                 case "unconfirmed_reservation":
-                    $phones = $this->getUnConfirmedReservationGuestPhones();
+                    $phones = $this->getUnConfirmedReservationGuestPhones($filterField, $filterVal);
                     break;
                 case "waitlist":
                     $phones = $this->getWaitlistReservationGuestPhones();
@@ -81,6 +84,10 @@ Class Contacts extends AbstractContacts{
                     return false;
             }
     
+            if(count($phones) == 0){
+                throw new SmsException("No " . Labels::getString("MemberType", "visitor", "Guest") . "s have opted in to receive text messages");
+            }
+
             $contacts = ["listsReplacement"=> false, "updates" => []];
             foreach($phones as $phone){
                 $contact = [
@@ -118,7 +125,7 @@ Class Contacts extends AbstractContacts{
                 if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                     throw new SmsException("Error syncing contacts: " . $respArr["status"] . ": " . $respArr["message"]);
                 } else {
-                    throw new SmsException("Error syncing contacts: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                    throw new SmsException("Error syncing contacts: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
                 }
             }
         }
@@ -174,7 +181,7 @@ Class Contacts extends AbstractContacts{
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                 throw new SmsException("Error syncing contacts: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
-                throw new SmsException("Error syncing contacts: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                throw new SmsException("Error syncing contacts: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
     }
@@ -191,7 +198,7 @@ Class Contacts extends AbstractContacts{
             if (is_array($respArr) && isset($respArr["status"]) && isset($respArr["message"])) {
                 throw new SmsException("Error deleting contact list: " . $respArr["status"] . ": " . $respArr["message"]);
             } else {
-                throw new SmsException("Error deleting contact list: Error " . $response->getStatusCode() . ": " . $response->getReasonPhrase());
+                throw new SmsException("Error deleting contact list: Error " . $e->getResponse()->getStatusCode() . ": " . $e->getResponse()->getReasonPhrase());
             }
         }
     }

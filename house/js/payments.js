@@ -225,7 +225,9 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
                             $('#keysfees').dialog("close");
                         }
 
-                        showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                        const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                        const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                        showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt', 550, idPayment, billToEmail);
                     }
 
                 }
@@ -274,9 +276,15 @@ function setTaxExempt(taxExempt) {
  * @param {object} refresh
  * @returns {undefined}
  */
-function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
+function sendVoidReturn(btn, vorr, idPayment, amt, refresh) {
 
-    var prms = {pid: idPayment, bid: btnid};
+    if(btn.prop("disabled") == true){
+        return;
+    }
+    
+    btn.addClass("hhk-loading-btn").prop("disabled", true);
+
+    var prms = {pid: idPayment, bid: btn.attr("id")};
 
 	if (vorr && vorr === 'v') {
 		prms.cmd = 'void';
@@ -296,6 +304,8 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 	}
 
 	$.post('ws_ckin.php', prms, function(data) {
+        btn.removeClass("hhk-loading-btn");
+
 		let revMessage = '';
 		if (data) {
 			try {
@@ -309,7 +319,6 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 					window.location.assign(data.gotopage);
 				}
 				flagAlertMessage(data.error, 'error');
-				return;
 			}
 			if (data.reversal && data.reversal !== '') {
 				revMessage = data.reversal;
@@ -325,8 +334,10 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 				refresh();
 			}
 
-            if (data.receipt) {
-                showReceipt('#pmtRcpt', data.receipt, 'Receipt');
+            if (data.receipt && data.idPayment) {
+                const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                showReceipt('#pmtRcpt', data.receipt, 'Receipt', 550, idPayment, billToEmail);
             }
         }
     });
@@ -975,7 +986,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
             } else {
                 $('.hhk-cashTndrd').show('fade');
             }
-        });
+        }).trigger('change');
 
     }
 
@@ -1359,12 +1370,17 @@ function verifyAmtTendrd() {
  * @param {string} markup
  * @param {string} title
  * @param {int} width
+ * @param paymentId
+ * @param billToEmail
  * @returns {undefined}
  */
-function showReceipt(dialogId, markup, title, width) {
+function showReceipt(dialogId, markup, title, width, paymentId = false, billToEmail = '') {
 
     var pRecpt = $(dialogId);
-    var btn = $("<div id='print_button' style='margin-left:1em;'>Print</div>");
+    const printBtn = $("<div class='ml-3'><i class='bi bi-printer-fill mr-3'></i>Print</div>");
+    const emailBtn = $("<div class='ml-3'><i class='bi bi-send-fill mr-3'></i>Email</div>");
+    const downloadBtn = $("<a href='ws_ckin.php?cmd=downloadReceipt&paymentId="+ paymentId +"' class='ml-3'><i class='bi bi-cloud-arrow-down-fill mr-3'></i>Download</a>");
+
     var opt = {
         mode: "popup",
         popClose: false,
@@ -1375,24 +1391,64 @@ function showReceipt(dialogId, markup, title, width) {
         popTitle: title
     };
 
-    if (width === undefined || !width) {
-        if ($(markup).data('merchcopy') == '1') {
-            width = 900;
-        } else {
-            width = 550;
-        }
+    if ($(markup).data('merchcopy') == '1') {
+        width = 900;
+    } else {
+        width = 550;
     }
 
     pRecpt.children().remove();
-    pRecpt.append($(markup).addClass('ReceiptArea').css('max-width', (width + 'px')));
+    pRecpt.append($(markup).addClass('ReceiptPrintArea').css('max-width', (width + 'px')));
 
-    btn.button();
-    btn.click(function () {
-        $(".ReceiptArea").printArea(opt);
+    printBtn.button().click(function () {
+        $(".ReceiptPrintArea").printArea(opt);
         pRecpt.dialog('close');
     });
 
-    pRecpt.prepend(btn);
+    emailBtn.button().click(function () {
+        if(emailBtn.prop("disabled") == true){
+            return;
+        }
+        emailBtn.prop("disabled", true).find("i").removeClass("bi bi-send-fill").addClass("spinner-border spinner-border-sm");
+        fetch("ws_ckin.php", {
+            method: "POST",
+            headers: {
+                "accept":"application/json"
+            },
+            body: new URLSearchParams({ cmd: "emailReceipt", paymentId: paymentId, emailAddress:billToEmail }),
+        })
+        .then(response => {
+            emailBtn.prop("disabled", false).find("i").addClass("bi bi-send-fill").removeClass("spinner-border spinner-border-sm");
+            if (!response.ok) {
+                throw new Error(response.status);
+            }
+            return response.json(); // Parse the JSON response
+        })
+        .then(responseData => {
+            if(responseData.success){
+                flagAlertMessage(responseData.success, "success");
+            }else if(responseData.error){
+                flagAlertMessage(responseData.error, "error");
+            }
+        })
+        .catch(error => {
+            flagAlertMessage(error, "error");
+        });
+    });
+
+    downloadBtn.button();
+
+    const $actionRow = $("<div class='my-2'>").append(printBtn);
+
+    if(paymentId !== false){
+        if(billToEmail !== ''){
+            $actionRow.append(emailBtn);
+        }
+
+        $actionRow.append(downloadBtn);
+    }
+
+    pRecpt.prepend($actionRow);
     pRecpt.dialog("option", "title", title);
     pRecpt.dialog('option', 'buttons', {});
     pRecpt.dialog('option', 'width', width);
@@ -1435,7 +1491,8 @@ function reprintReceipt(pid, idDialg) {
 
 
                     // launch receipt dialog box
-                    showReceipt(idDialg, data.receipt, 'Receipt Copy');
+                    const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                    showReceipt(idDialg, data.receipt, 'Receipt Copy', 550, pid, billToEmail);
                 }
             });
 
@@ -1444,7 +1501,7 @@ function reprintReceipt(pid, idDialg) {
 function paymentRedirect(data, $xferForm, initialParams) {
     "use strict";
     if (data) {
-console.log("redirect called");
+
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
 
@@ -1470,9 +1527,10 @@ console.log("redirect called");
 
         } else if (data.inctx) {
 
-            $('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
+            //$('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
+            $("#contentDiv").addClass("hhk-loading").css('min-height', '400px');
             InstaMed.launch(data.inctx);
-            $('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
+            //$('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
 
             // openiframe(data.inctx, 600, 400, "Add New Card On File");
 
@@ -1591,7 +1649,9 @@ console.log("redirect called");
                                         }
                             
                                         if (data.receipt && data.receipt !== '') {
-                                            showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                                            const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                                            const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                                            showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt', 550, idPayment, billToEmail);
                                         }
 
                                         $deluxeDialog.dialog("close");
@@ -1630,7 +1690,7 @@ function setupCOF($chgExpand, idx) {
     if ($chgExpand.length > 0) {
 
         $(document).find('input[name=rbUseCard' + idx + ']').on('change', function () {
-            if ($(this).val() == 0 || ($(this).prop('checked') === true && $(this).prop('type') === 'checkbox')) {
+            if (($(this).val() == 0 && $(this).prop('checked') === true) || ($(this).prop('checked') === true && $(this).prop('type') === 'checkbox')) {
                 $chgExpand.show("fade");
             } else {
                 $chgExpand.hide("fade");
@@ -1781,7 +1841,7 @@ function paymentsTable(tableID, containerID, refreshPayments) {
                 }
             }
         ],
-        'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
+        'dom': '<"top"if><"hhk-overflow-x"rt><"bottom"lp><"clear">',
         'displayLength': 50,
         'order': [[8, 'asc']],
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]],
@@ -1806,7 +1866,7 @@ function paymentsTable(tableID, containerID, refreshPayments) {
 		var amt = parseFloat(btn.data("amt"));
 		if (btn.val() !== "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
 			btn.val('Saving...');
-			sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'), null, refreshPayments);
+			sendVoidReturn(btn, 'rv', btn.data('pid'), null, refreshPayments);
 		}
 	});
 
@@ -1814,8 +1874,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
     $('#' + containerID).on('click', '.hhk-voidRefundPmt', function () {
         var btn = $(this);
         if (btn.val() !== 'Saving...' && confirm('Void this Return?')) {
-            btn.val('Saving...');
-            sendVoidReturn(btn.attr('id'), 'vr', btn.data('pid'), null, refreshPayments);
+            btn.val('Saving...').addClass('hhk-loading-btn');
+            sendVoidReturn(btn, 'vr', btn.data('pid'), null, refreshPayments);
         }
     });
 
@@ -1824,8 +1884,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         var btn = $(this);
         var amt = parseFloat(btn.data("amt"));
         if (btn.val() !== "Saving..." && confirm("Return this payment for $" + amt.toFixed(2).toString() + "?")) {
-            btn.val("Saving...");
-            sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt, refreshPayments);
+            btn.val("Saving...").addClass('hhk-loading-btn');
+            sendVoidReturn(btn, "r", btn.data("pid"), amt, refreshPayments);
         }
     });
 
@@ -1834,8 +1894,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         var btn = $(this);
         var amt = parseFloat(btn.data("amt"));
         if (btn.val() !== "Saving..." && confirm("Undo this Return/Refund for $" + amt.toFixed(2).toString() + "?")) {
-            btn.val("Saving...");
-            sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"), null, refreshPayments);
+            btn.val("Saving...").addClass('hhk-loading-btn');
+            sendVoidReturn(btn, "ur", btn.data("pid"), null, refreshPayments);
         }
     });
 
@@ -1844,8 +1904,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         var btn = $(this);
 
         if (btn.val() !== 'Deleting...' && confirm('Delete this House payment?')) {
-            btn.val('Deleting...');
-            sendVoidReturn(btn.attr('id'), 'd', btn.data('ilid'), btn.data('iid'), null, refreshPayments);
+            btn.val('Deleting...').addClass('hhk-loading-btn');
+            sendVoidReturn(btn, 'd', btn.data('ilid'), btn.data('iid'), null, refreshPayments);
         }
     });
 

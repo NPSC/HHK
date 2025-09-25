@@ -3,6 +3,7 @@
 namespace HHK\Payment\PaymentResponse;
 
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
+use HHK\sec\Labels;
 use HHK\SysConst\{PaymentMethod, PayType};
 use HHK\HTMLControls\HTMLTable;
 
@@ -17,13 +18,17 @@ use HHK\HTMLControls\HTMLTable;
 
 class CashResponse extends AbstractPaymentResponse {
 
-    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '') {
+
+    protected float $amountTendered;
+
+    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '', float $amountTendered = 0) {
 
         $this->paymentType = PayType::Cash;
         $this->idPayor = $idPayor;
         $this->amount = $amount;
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNote;
+        $this->amountTendered = $amountTendered;
 
     }
 
@@ -35,6 +40,10 @@ class CashResponse extends AbstractPaymentResponse {
         return AbstractCreditPayments::STATUS_APPROVED;
     }
 
+    public function getAmountTendered(){
+        return $this->amountTendered;
+    }
+
     /**
      * Summary of receiptMarkup
      * @param \PDO $dbh
@@ -44,8 +53,16 @@ class CashResponse extends AbstractPaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         if ($this->getAmount() != 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd("Cash Tendered:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
+            //include amount tendered for sale receipts
+            if ($this->getAmountTendered() >= $this->getAmount() && $this->refund === false) {
+                $change = $this->getAmountTendered() - $this->getAmount();
+                $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('Reciept', 'cashTendered', 'Cash Tendered') . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmountTendered()), 2)));
+                $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('Receipt', 'changeGiven', 'Change') . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($change), 2)));
+            }
+
+            $tbl->addBodyTr(HTMLTable::makeTd("Cash Paid:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
         }
+
     }
 
 }

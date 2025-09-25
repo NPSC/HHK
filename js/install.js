@@ -47,14 +47,7 @@ function testDb(parms) {
     );
 }
 
-function checkStrength(pwTxt) {
-    var strongRegex = new RegExp(
-			"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?!.*[<>])(?=.{8,50})");
-    var rtn = true;
-    if(strongRegex.test(pwTxt)) {
-        rtn = true;
-    } else {
-        rtn = false;
-    }
-    return rtn;
+function checkStrength(pwCtrl) {
+	const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
+	return strongRegex.test(pwCtrl.val())
 }

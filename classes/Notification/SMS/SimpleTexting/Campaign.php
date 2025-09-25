@@ -74,13 +74,13 @@ class Campaign {
      * @throws \HHK\Exception\SmsException
      * @return array
      */
-    public function prepareAndSendCampaign(string|null $status){
+    public function prepareAndSendCampaign(string|null $status, string $filterVal = ""){
         $client = $this->settings->getClient();
         $uS = Session::getInstance();
 
         $messages = new Messages($this->dbh);
-        $guestData = $messages->getCampaignGuestsData($status);
-        $campaignListName = $this->makeContactListName($guestData);
+        $guestData = $messages->getCampaignGuestsData($status, $filterVal);
+        $campaignListName = $this->makeContactListName($guestData, $filterVal);
 
         if(isset($guestData["contacts"]) && count($guestData["contacts"]) > 0){
             //make contact list
@@ -110,7 +110,7 @@ class Campaign {
                     $contacts = new Contacts($this->dbh);
                     $syncStatus = $contacts->syncContacts($status, [$this->settings->getSmsListName(), $campaignListId]);
 
-                    if(strtolower($syncStatus["status"]) == "done"){
+                    if(is_array($syncStatus) && strtolower($syncStatus["status"]) == "done"){
                         $this->sendCampaign($campaignListId, $campaignListName);
                         $msg = "Message sent successfully";
                         if(count($syncStatus["warnings"]) > 0){
@@ -118,7 +118,7 @@ class Campaign {
                         }
                         return ["success" => $msg];
                     }else{
-                        return ["info" => "It's taking longer than expected to send the message, would you like to continue to wait?", "batchId"=>$contacts->getBatchId(), "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName];
+                        return ["info" => "It's taking longer than expected to sync contacts, would you like to continue to wait?", "batchId"=>$contacts->getBatchId(), "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName];
                     }
                 }else{
                     throw new SmsException("Error sending campaign message: Could not create contact list");
@@ -136,7 +136,7 @@ class Campaign {
         
         $syncStatus = $contacts->syncContacts(null, [$this->settings->getSmsListName(), $campaignListId]);
 
-        if(strtolower($syncStatus["status"]) == "done"){
+        if(is_array($syncStatus) && strtolower($syncStatus["status"]) == "done"){
             $this->sendCampaign($campaignListId, $campaignListName);
 
             $msg = "Message sent successfully";
@@ -145,21 +145,27 @@ class Campaign {
             }
             return ["success" => $msg];
         }else{
-            return ["info" => "It's taking longer than expected to send the message, would you like to continue to wait?", "batchId"=>$batchId, "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName, "lastBatchStatus"=>$syncStatus];
+            return ["info" => "It's taking longer than expected to sync contacts, would you like to continue to wait?", "batchId"=>$batchId, "campaignListId"=>$campaignListId, "campaignListName"=>$campaignListName, "lastBatchStatus"=>$syncStatus];
         }
     }
 
-    protected function makeContactListName(array $guestData){
+    protected function makeContactListName(array $guestData, string $filterVal = ""){
         $now = new \DateTime();
 
-        if(strlen($guestData['title'] . " - " . $now->format("M j, Y h:i:s a")) > 50){
+        if(isset($guestData["filterOptions"][$filterVal])){
+            $listTitle = $guestData["title"] . " - " . $guestData["filterOptions"][$filterVal]["Description"];
+        }else{
+            $listTitle = $guestData["title"];
+        }
+
+        if(strlen($listTitle . " - " . $now->format("M j, Y h:i:s a")) > 50){
 
             $maxTitleLength = 47 - strlen(" - " . $now->format("M j, Y h:i:s a")); //50 max length - 3 characters for "..." - date
 
-            return substr($guestData["title"], 0, $maxTitleLength) . "... - " . $now->format("M j, Y h:i:s a");
+            return substr($listTitle, 0, $maxTitleLength) . "... - " . $now->format("M j, Y h:i:s a");
 
         }else{
-            return $guestData['title'] . " - " . $now->format("M j, Y h:i:s a");
+            return $listTitle . " - " . $now->format("M j, Y h:i:s a");
         }
     }
 

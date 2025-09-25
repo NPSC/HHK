@@ -52,18 +52,19 @@ class StayingReservation extends CheckingIn {
      * @param \PDO $dbh
      * @return ActiveReservation|StayingReservation
      */
-    public function save(\PDO $dbh) {
+    public function save(\PDO $dbh) { 
 
         // Check for new room
-        if (isset($_POST['cbNewRoom'])) {
+        //if (isset($_POST['cbNewRoom'])) {
+        if (isset($this->reserveData->getRawPost()['cbNewRoom'])) {
             // New Room
             $this->reserveData->setIdResv(0);
             $this->reserveData->setIdVisit(0);
             $this->reserveData->setSpan(0);
-            $_POST['rid'] = 0;
-            $_POST['vid'] = 0;
-            $_POST['span'] = 0;
-            $_POST['rbPriGuest'] = 0;
+            // $_POST['rid'] = 0;
+            // $_POST['vid'] = 0;
+            // $_POST['span'] = 0;
+            // $_POST['rbPriGuest'] = 0;
 
             $checkingIn = new ActiveReservation($this->reserveData, new ReservationRS(), new Family($dbh, $this->reserveData, TRUE));
             $checkingIn->save($dbh);
@@ -87,7 +88,7 @@ class StayingReservation extends CheckingIn {
 
             // Save any vehicles
             if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
-                Vehicle::saveVehicle($dbh, $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
+                Vehicle::saveVehicle($dbh, $this->reserveData->getRawPost(), $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
             }
         }
 

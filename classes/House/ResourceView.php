@@ -1033,6 +1033,7 @@ from
     if(count(s.idName) > 0, count(s.idName), '') as `numGuests`,
     ifnull(v.Arrival_Date, '') as `Arrival`,
     ifnull(v.Expected_Departure, '') as `Expected_Departure`,
+    ifnull(res.Expected_Arrival, '') as `Next_Expected_Arrival`,
     r.Last_Cleaned,
     r.Last_Deep_Clean,
     ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), '') as `noteDate`,
@@ -1045,6 +1046,9 @@ from
     resource re on rr.idResource = re.idResource
         left join
     visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
+        left join
+        (select reservation.*, ROW_NUMBER() OVER (PARTITION BY idResource ORDER BY Expected_Arrival) AS rn FROM reservation where date(Expected_Arrival) >= date(NOW()) and `Status` in ('" . ReservationStatus::Committed ."', '" . ReservationStatus::UnCommitted . "'))
+        res ON rr.idResource = res.idResource && res.rn = 1
         left join
     name n ON v.idPrimaryGuest = n.idName
         left join
@@ -1089,13 +1093,13 @@ ORDER BY $orderBy;");
                 // active room
 
                 if ($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver) {
-                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text'], array('style'=>'background-color:yellow;'));
-                    $statColor = "yellow";
+                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
+                    $statColor = "#fff67d";
                     $isDirty = TRUE;
 
                 } else if ($r['Status'] == RoomState::Clean || $r['Status'] == RoomState::Ready) {
-                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text'], array('style'=>'background-color:#bbf7b2;'));
-                    $statColor = "#bbf7b2";
+                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
+                    $statColor = "#99ff99";
 
                 } else {
                     $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
@@ -1106,13 +1110,13 @@ ORDER BY $orderBy;");
                 // Inactive room
 
                 if ($r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Dirty) {
-                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
-                    $statColor = "yellow";
+                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+                    $statColor = "#fff67d";
                     $isDirty = TRUE;
 
                 } else if ($r['Status'] == RoomState::Ready) {
-                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:#3fff0f;'));
-                    $statColor = "#3fff0f";
+                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+                    $statColor = "#99ff99";
 
                 } else {
                     $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
@@ -1175,6 +1179,7 @@ ORDER BY $orderBy;");
             $fixedRows['numGuests'] = $r['numGuests'];
             $fixedRows['Checked_In'] = $arrival;
             $fixedRows['Expected_Checkout'] = $expDeparture;
+            $fixedRows['Next_Expected_Arrival'] = $r['Next_Expected_Arrival'];
             $fixedRows['Last_Cleaned'] = $lastCleaned;
             $fixedRows['Last_Deep_Clean'] = $lastDeepClean;
             $fixedRows['Notes'] = $notes;

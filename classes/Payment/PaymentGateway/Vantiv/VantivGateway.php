@@ -10,7 +10,7 @@ use HHK\Payment\PaymentGateway\Vantiv\Helper\{MpVersion, AVSResult, CVVResult};
 use HHK\Payment\PaymentGateway\Vantiv\Request\{CreditReturnTokenRequest, CreditReversalTokenRequest, CreditSaleTokenRequest, CreditVoidReturnTokenRequest, CreditVoidSaleTokenRequest, InitCkOutRequest};
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
-use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult};
+use HHK\Payment\PaymentResult\{CofResult, PaymentResult, RefundResult};
 use HHK\SysConst\{MpFrequencyValues, MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
@@ -185,6 +185,8 @@ class VantivGateway extends AbstractPaymentGateway {
 
                     $csResp->idVisit = $invoice->getOrderNumber();
                     $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId, 'Void Return')));
+                    $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                    $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
                     $dataArray['success'] = 'Return is Voided.  ';
 
                     break;
@@ -255,6 +257,8 @@ class VantivGateway extends AbstractPaymentGateway {
 
                         $csResp->idVisit = $invoice->getOrderNumber();
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId, 'Reverse Sale')));
+                        $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                        $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
                         $dataArray['success'] = 'Transaction Reversed.  ';
 
                         break;
@@ -284,6 +288,16 @@ class VantivGateway extends AbstractPaymentGateway {
     }
 
     // Returns a Payment
+    /**
+     * Summary of _returnPayment
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
+     * @param mixed $returnAmt
+     * @param mixed $bid
+     * @return array{bid: mixed, warning: mixed|array{bid: mixed, warning: string}|array{bid: mixed}|string[]}
+     */
     protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
@@ -323,6 +337,8 @@ class VantivGateway extends AbstractPaymentGateway {
 
                     $csResp->idVisit = $invoice->getOrderNumber();
                     $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                    $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                    $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
 
                     break;
 
@@ -343,6 +359,17 @@ class VantivGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
+    /**
+     * Summary of returnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $rtnToken
+     * @param mixed $payNotes
+     * @param mixed $resvId
+     * @param mixed $payDate
+     * @throws \HHK\Exception\PaymentException
+     * @return RefundResult
+     */
     public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes, $resvId = 0, $payDate = '') {
 
         $uS = Session::getInstance();
@@ -372,7 +399,7 @@ class VantivGateway extends AbstractPaymentGateway {
             $tokenResp->setPaymentNotes($payNotes);
 
             // Analyze the result
-            $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $tokenRS->idGuest_token->getStoredVal());
+            $rtnResult = new RefundResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $tokenRS->idGuest_token->getStoredVal());
 
             switch ($tokenResp->getStatus()) {
 
@@ -545,6 +572,11 @@ class VantivGateway extends AbstractPaymentGateway {
 
             $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
 
+            if(count($cidInfo) === 0){
+                //nothing to process
+                return null;
+            }
+
             try {
                 self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'HostedCoPostBack');
             } catch (\Exception $ex) {
@@ -595,14 +627,16 @@ class VantivGateway extends AbstractPaymentGateway {
 
                     } else {
 
-                        $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], 0);
+                        $idReg = isset($cidInfo['idGroup']) ? $cidInfo['idGroup'] : 0;
+                        $payResult = new PaymentResult($idInv, $idReg, 0);
                         $payResult->setStatus(PaymentResult::ERROR);
                         $payResult->setDisplayMessage('Invoice Not Found!  ');
                     }
                 }
             } catch (PaymentException $hex) {
 
-                $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], 0);
+                $idReg = isset($cidInfo['idGroup']) ? $cidInfo['idGroup'] : 0;
+                $payResult = new PaymentResult($idInv, $idReg, 0);
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($hex->getMessage());
             }
@@ -651,6 +685,8 @@ class VantivGateway extends AbstractPaymentGateway {
 
                     $csResp->idVisit = $invoice->getOrderNumber();
                     $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                    $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                    $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
                     $dataArray['success'] = 'Payment is void.  ';
 
                     break;
@@ -664,6 +700,8 @@ class VantivGateway extends AbstractPaymentGateway {
 
                         $csResp->idVisit = $invoice->getOrderNumber();
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                        $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                        $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
                         $dataArray['success'] = 'Payment is void.  ';
                     } else {
 

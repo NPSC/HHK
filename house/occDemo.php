@@ -1,6 +1,5 @@
 <?php
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Member\Address\Address;
 use HHK\sec\{Session, WebInit};

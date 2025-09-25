@@ -66,6 +66,17 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                         $(this).dialog("close");
                     },
                     "Save": function() {
+
+                        //verify doc and agent
+                        let validationMsg = "";
+
+                        const agentValid = verifyDocAgent("agentInfo");
+                        const docValid = verifyDocAgent("docInfo");
+                        if(agentValid === false || docValid === false){
+                            flagAlertMessage("Some or all of the indicated Hospital Information is missing", 'error');
+                            return false;
+                        }
+
                         $('.ckhsdate').datepicker("hide");
                     	saveHospitalStay(idHs, idVisit);
                     	$(this).dialog("close");
@@ -935,7 +946,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     $('#keysfees').css('background-color', 'white');
 
     // show working icon
-    $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
+    $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; padding-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
     $.post('ws_ckin.php', parms,
         function(data) {
@@ -956,7 +967,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 $('#keysfees').dialog("close");
 
                 if (data.receipt && data.receipt !== '') {
-                    showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                    const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                    const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                    showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt', 550, idPayment, billToEmail);
                 }
 
                 return;
@@ -989,7 +1002,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
 
             if (data.receipt && data.receipt !== '') {
-                showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+                const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt', 550, idPayment, billToEmail);
             }
 
             if (data.invoiceNumber && data.invoiceNumber !== '') {

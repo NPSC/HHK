@@ -1287,7 +1287,7 @@ if ($uS->UseIncidentReports) {
                 $('#tblrpt').dataTable({
 	                "displayLength": 50,
 	                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-	                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+	                "dom": "<\"top ui-toolbar ui-helper-clearfix\"if><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
 	                "order": [[1, 'asc']]
             	});
                 } catch (error) {}
@@ -1296,14 +1296,6 @@ if ($uS->UseIncidentReports) {
                 $("div#printArea").printArea();
             });
         }
-        $('.ckdate').datepicker({
-            yearRange: '<?php echo $uS->StartYear; ?>:+01',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
 
         <?php echo $filter->getTimePeriodScript(); ?>;
 

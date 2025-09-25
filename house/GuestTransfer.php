@@ -1,4 +1,7 @@
 <?php
+use HHK\CrmExport\Salesforce\SalesforceManager;
+use HHK\House\Report\ReportFilter;
+use HHK\sec\SecurityComponent;
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\MemStatus;
 use HHK\sec\WebInit;
@@ -750,9 +753,9 @@ if ($noRecordsMsg != '') {
 
 
 // Setups for the page.
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), ['name' => 'selIntMonth[]', 'size' => '5', 'multiple' => 'multiple']);
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year.' ', '2010', $uS->fy_diff_Months, FALSE), ['name' => 'selIntYear', 'size' => '5', 'style'=>'min-width:4em;']);
-$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), ['name' => 'selCalendar', 'size' => count($calOpts)]);
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 
 ?>
 <!DOCTYPE html>
@@ -783,46 +786,35 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
+        <script stype="text/javascript">
+            $(document).ready(function(){
+                <?php echo $filter->getTimePeriodScript(); ?>
+            });
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display:none; clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog mb-3" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
-                   <table style="clear:left;float: left;">
-                        <tr>
-                            <th colspan="3">Time Period</th>
-                        </tr>
-                        <tr>
-                            <th>Interval</th>
-                            <th style="min-width:100px; ">Month</th>
-                            <th>Year</th>
-                        </tr>
-                        <tr>
-                            <td><?php echo $calSelector; ?></td>
-                            <td><?php echo $monthSelector; ?></td>
-                            <td><?php echo $yearSelector; ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <span class="dates" style="margin-right:.3em;">Start:</span>
-                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
-                                <span class="dates" style="margin-right:.3em;">End:</span>
-                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
-                        </tr>
-                    </table>
-                    <table style="float:left;margin-left:10px;">
-                        <tr>
-                            <th><?php echo $CmsManager->getServiceTitle(); ?> Last Name Search</th>
-                            <td><input id="txtRSearch" type="text" /></td>
-                        </tr>
-                    </table>
+                    <div class="hhk-flex">
+                        <?php echo $timePeriodMarkup; ?>
+                        <table class="ml-3">
+                            <tr>
+                                <th><?php echo $CmsManager->getServiceTitle(); ?> Last Name Search</th>
+                                <td><input id="txtRSearch" type="text" /></td>
+                            </tr>
+                        </table>
+                    </div>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
 				<?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
+                <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
+                    <button type="button" id="viewLog" data-service="SalesForce" class="ui-button ui-corner-all">View Transfer Log</button>
+                <?php } ?>
                             </td>
                         </tr>
                     </table>
@@ -832,14 +824,16 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
             <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div id="localrecords">
-                    <div style="margin-bottom:.8em; float:left;">
+                    <div style="margin-bottom:.8em;" class="hhk-flex">
                         <?php echo $settingstable . $searchTabel; ?>
                     </div>
-                    <div id="divTable" style="clear:left;">
+                    
+                    <div id="divTable">
                         <?php echo $dataTable; ?>
                     </div>
                 </div>
                 <div id="divMembers" style="margin-top:10px;"></div>
+                <div id="divError"></div>
             </div>
 
             <div id="divPrintButton" style="clear:both; display:none;margin-left:20px;font-size:0.9em; align-items: center;" class="hhk-flex py-3">
@@ -855,13 +849,16 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
-
+        <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
+        <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="transferLog"></table></div>
+        <?php } ?>
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
 	    <input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
         <input id="cmsTitle" type="hidden" value="<?php echo $CmsManager->getServiceTitle(); ?>"/>
+        <input id="cmsLogService" type="hidden" value="<?php echo $CmsManager->getLogServiceName(); ?>"/>
         <input id="username" type="hidden" value="<?php echo $uS->username; ?>" />
 
     </body>

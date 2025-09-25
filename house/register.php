@@ -45,6 +45,8 @@ $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 $paymentMarkup = '';
 $paymentStatus = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $statusSelector = '';
 $payTypeSelector = '';
 $resourceGroupBy = 'Type';
@@ -67,6 +69,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -85,7 +89,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -308,7 +312,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
     $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
     $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($statusList, ''),
-        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple']);
+        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '7', 'multiple' => 'multiple']);
 
     $payTypes = [];
 
@@ -320,7 +324,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
 
     $payTypeSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($payTypes, ''),
-        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple']);
+        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '5', 'multiple' => 'multiple']);
 
     // Count unpaid invoices
 
@@ -376,8 +380,11 @@ if($uS->useOnlineReferral){
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -436,7 +443,7 @@ if($uS->useOnlineReferral){
             <form autocomplete="off">
                 <h2 class="hhk-flex" id="page-title-row">
                 	<span class="mb-3 mb-md-0"><?php echo $wInit->pageHeading;?></span>
-                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $uS->PreviousNights) . RoomReport::getGlobalStaysCounter($dbh) . RoomReport::getGlobalRoomOccupancy($dbh); ?>
+                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $uS->PreviousNights) . RoomReport::getGlobalStaysCounter($dbh) . RoomReport::getCurrentRoomOccupancyMkup($dbh); ?>
                 	<span id="name-search" class="d-none d-md-inline">Name Search:
                     	<input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
                 	</span>
@@ -577,6 +584,8 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="pmtStatus" value='<?php echo $paymentStatus; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+        <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
+        <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
         <input  type="hidden" id="guestLabel" value='<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' />

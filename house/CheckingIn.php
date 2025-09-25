@@ -42,6 +42,8 @@ $bkgrdColor = '';
 $labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $payFailPage = $wInit->page->getFilename();
 $idGuest = 0;
 $idReserv = 0;
@@ -56,6 +58,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -71,7 +75,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -92,7 +96,7 @@ if (isset($uS->cofrid)) {
 }
 
 
-$resvObj = new ReserveData('Checking In');
+$resvObj = new ReserveData([], 'Checking In');
 $resvObj->setSaveButtonLabel('Check-in');
 
 
@@ -214,6 +218,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
@@ -226,6 +231,8 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
@@ -303,6 +310,9 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
+        <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+        <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
+        <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 

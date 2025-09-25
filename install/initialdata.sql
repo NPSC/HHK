@@ -244,6 +244,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('labels_category', 'mf', 'MomentFormats', '', '', 40),
 ('labels_category', 'ck', 'Checkin', '', '', 50),
 ('labels_category', 'pc', 'PaymentChooser', '', '', 60),
+('labels_category', 'rc', 'Receipt', '', '', 65),
 ('labels_category', 'mt', 'MemberType', '', '', 70),
 ('labels_category', 'g', 'GuestEdit', '', '', 80),
 ('labels_category', 'r', 'ResourceBuilder', '', '', 90),
@@ -315,6 +316,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('OOS_Codes', 'ar', 'Appliance Repair','','h',0),
 ('OOS_Codes', 'sr', 'Structural Repair','','h',0),
 ('OOS_Codes', 'cd', 'Access Blocked','','h',0),
+
+('Oauth_Scopes', 'calendar:read', 'Read reservations and visit events from the calendar', '', '', 0),
+('Oauth_Scopes', 'aggregatereports:read', 'Read aggregate reports', '', '', 0),
 
 ('Page_Type','c','Component','','',0),
 ('Page_Type','p','Web Page','','',0),
@@ -646,11 +650,11 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('MaxDonate','100000','i','d','','Maximum amount amount for a single donation','',1),
 
 ('MaxExpected','260','i','h','','Maximum Expected days out for a visit','',1),
-("maxNameSearch", "10", "lu", "h", "", "Max number of search results displayed in autocomplete searches", "searchResultCount",'', 1),
+("maxNameSearch", "10", "lu", "h", "", "Max number of search results displayed in autocomplete searches", "searchResultCount",1),
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size','',1),
 ('merchantReceipt', 'false', 'b', 'f', '', 'Print customer and merchant receipt on single page','',1),
 ("minResvDays", "0", "i", "h", '', "Enforce a minimum length for reservations, 0 = no minimum", '', 1),
-('mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode',1),
+('mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode',0),
 ('NewsletterURL', 'https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa', 'url', 'a','', 'Newsletter iframe URL', '', 0),
 ('NightsCounter','calYear','s','c','','Count nights by year (calYear) or by grand total','',1),
 ('NoReplyAddr','','ea','ha','','No reply email address','',1),
@@ -672,7 +676,15 @@ Your statement from (house name) is attached.
 
 Thank you
 (house name)','t','f','','Default email body for Statements','',1),
+('ReceiptEmailBody','Hello,
+Your receipt from (house name) is attached.
+
+Thank you
+(house name)','t','f','','Default email body for Receipts','',1),
+("autoEmailReceipts", "false", "b", "f", "", "Automatically email receipts when taking guest payments", "", 1),
+("autoEmail3rdPartyReceipts", "false", "b", "f", "", "Automatically email receipts when taking 3rd party (billing agent) payments", "", 1),
 ('PaymentGateway','','lu','fg','','Credit Payment Gateway','Pay_Gateway_Name',0),
+('useGLCodes', 'false', 'b', 'f', '', '', '', '0'),
 ('PayVFeeFirst','true','b','h','','Default check the visit fees payment checkbox','',1),
 ('PreviousNights','0','i','c','','Previous (to HHK) nights to add to nights counter','',1),
 ('printScale', '100', 'i','h','','% Default print scale','',1),
@@ -692,14 +704,13 @@ Thank you
 ('ResvEarlyArrDays','2','i','h','','Number of days before reservation to show check-in button on reservation chooser','',1),
 ('RibbonBottomColor', '', 'lu', 'c', '', 'Ribbon bottom-bar color source', 'RibbonColors', '1'),
 ('RibbonColor','hospital','lu','c','','Ribbon Background color source','RibbonColors',1),
-('RibbonText','pgl','lu','c','','Type of text shown on the calendar ribbon','RibbonText',1)
+('RibbonText','pgl','lu','c','','Type of text shown on the calendar ribbon','RibbonText',1),
 ('Room_Colors', '', 'lu', 'c','', 'Use Room Color or housekeeping status for Rooms column on calendar', 'RoomColors', '1'),
 ('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model',0),
 ('RoomRateDefault','e','s','h','','Use the Resource Builder','',0),
 ('RoomsPerPatient','2','i','h','','Number of simultaneous rooms per patient allowed','',1),
 ('RoomOccCat', 'none', 'lu', 'c', '', 'Only include this Room Category in room occupancy percentage on calendar', 'Room_Category', '1'),
 ('Run_As_Test', 'false', 'b', 'a', '', 'Run As Test flag', '',0),
-('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0'),
 ('searchMRN', 'true', 'b', 'hf', '', 'Allow search by MRN', '',1),
 ('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, default 30, max 45','',1),
 ('ShoStaysCtr','true','b','c','','Show the stays counter on the House Calendar page','',1),
@@ -723,7 +734,7 @@ Thank you
 ('Show_Holidays', 'false', 'b', 'c', '', 'Indicate holidays on the calendar','', '1'),
 ('Show_Closed', 'false', 'b', 'c', '', 'Indicate closed days on the calendar','', '1'),
 ('stmtShowRateTitle', 'false', 'b', 'f', '', "Show the room rate title on Statements", '',  '1'),
-('sId','11','i','a','','House organization Id','',1),
+('sId','11','i','a','','House organization Id','',0),
 ('siteName','Hospitality HouseKeeper','s','a','','House or organization  name','',1),
 ('smsProvider', '', 'lu', 'sms', '', 'Enable SMS integration', 'smsProvider', 1),
 ('smsToken', '', 's', 'sms', '', 'API Token', '', 1),
@@ -752,6 +763,7 @@ Thank you
 ('UseRebook', 'false', 'b', 'hf', '', 'Automatically rebook cancelled reservation', '', 1),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
 ('useChecklists', 'false', 'b', 'hf', '', 'Enable Checklist feature', '', 1),
+('useAPI', 'false', 'b', 'hf', '', 'Enable API Access', '', 1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',1),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
@@ -775,6 +787,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('reservationTab','Confirmed Reservations','s','rg','','Default: Confirmed Reservations'),
 ('unconfirmedTab','UnConfirmed Reservations','s','rg','','Default: UnConfirmed Reservations'),
 ('waitlistTab','Wait Listed','s','rg','','Default: Wait Listed'),
+('waitlistCalendarGroup','Waitlist','s','rg','','Default: Waitlist'),
 ('recentPayTab','Recent Payments','s','rg','','Default: Recent Payments'),
 ('rateTitle','Room Rate','s','rg','','Default: Room Rate'),
 ('onlineReferralTab', 'Referrals', 's', 'rg','','Default: Referrals'),
@@ -821,6 +834,9 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('RoomCharges',	'Room Charges',	's', 'pc', '', ''),
 ('Credit',	'Credit',	's', 'pc', '', ''),
 ('ExtraPayment', 'Extra Payment', 's', 'pc', '', ''),
+
+('cashTendered', 'Cash Tendered', 's', 'rc', '', ''),
+('changeGiven', 'Change', 's', 'rc', '', ''),
 
 
 ('patient','Patient','s','mt','','Default: Patient'),
@@ -1200,7 +1216,7 @@ REPLACE INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`
 (110,'VisitInterval.php',31,'Visit Interval Report','',0,'h','102','c','p'),(111,'GuestView.php',31,'Guests & Vehicles','',0,'h','79','v','p'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','',0,'h','102','l','p'),(114,'ShowInvoice.php',31,'Show Invoice','',0,'h','','','p'),(115,'InvoiceReport.php',31,'Invoice Report','',0,'h','102','n','p'),(116,'ShowHsKpg.php',31,'Housekeeping','',0,'h','','','p'),(117,'PrtRegForm.php',31,'Print Registration Forms','',0,'h','','','p'),(118,'occDemo.php',31,'Guest Demographics','',0,'h','102','g','p'),(119,'ItemReport.php',31,'Item Report','',0,'h','102','s','p'),
 (120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',1,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),
 (130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p'),
-(132,'IncmStmt.php',31,'Income Statement','',0,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p'),(136,'ws_reportFilter.php',31,'','',0,'h','','','s'),(137,'RecentActivity.php',31,'Recent Activity','',0,'h','102','w','p'),(138,'ws_tran.php',31,'','',0,'h','','','s'),(139,'ws_session.php',0,'','',0,'a','','','s');
+(132,'IncmStmt.php',31,'Income Statement','',1,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p'),(136,'ws_reportFilter.php',31,'','',0,'h','','','s'),(137,'RecentActivity.php',31,'Recent Activity','',0,'h','102','w','p'),(138,'ws_tran.php',31,'','',0,'h','','','s'),(139,'ws_session.php',0,'','',0,'a','','','s'),(140,'ApiClients.php',2,'API Users','',0,'a','35','e','p');
 -- ;
 
 UNLOCK TABLES;
@@ -1217,7 +1233,7 @@ REPLACE INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),
 (110,'ga'),(111,'g'),(111,'ga'),(113,'ga'),(114,'g'),(114,'ga'),(115,'ga'),(116,'g'),(116,'ga'),(117,'g'),(117,'ga'),(118,'ga'),(119,'ga'),(120,'mm'),(121,'ga'),
-(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga'), (132,'ga'),(133,'pub'),(134,'pub'),(135,'g'),(135,'ga'),(136,'ga'),(136,'gr'),(136,'g'),(137,'ga'),(137,'gr'),(139, 'g'),(139, 'ga'),(139, 'gr'),(139, 'mm');
+(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga'), (132,'ga'),(133,'pub'),(134,'pub'),(135,'g'),(135,'ga'),(136,'ga'),(136,'gr'),(136,'g'),(137,'ga'),(137,'gr'),(139, 'g'),(139, 'ga'),(139, 'gr'),(139, 'mm'),(140, 'mm');
 -- ;
 UNLOCK TABLES;
 

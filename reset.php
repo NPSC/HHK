@@ -2,7 +2,6 @@
 
 use HHK\sec\Login;
 use HHK\Update\SiteConfig;
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Session;
 use HHK\sec\SecurityComponent;
 use HHK\SysConst\CodeVersion;

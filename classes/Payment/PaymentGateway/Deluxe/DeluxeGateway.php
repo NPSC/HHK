@@ -32,6 +32,7 @@ use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\PaymentResult\CofResult;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentResult\ReturnResult;
+use HHK\Payment\PaymentResult\RefundResult;
 use HHK\Payment\Receipt;
 use HHK\Payment\Transaction;
 use HHK\sec\SecurityComponent;
@@ -344,7 +345,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $responseMessage = "";
         if($vr->getStatus() == AbstractCreditPayments::STATUS_APPROVED){
             // save token
-            $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response, $data["token"]);
+            $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
 
             return ["success" => "New Card saved successfully","COFmkup"=> HouseServices::guestEditCreditTable($dbh, $data['psg'], $data['id'], 'g'), 'idx'=>'g'];
         }else{
@@ -541,7 +542,10 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $csResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                $dataArray["idPayment"] = $paymentId;
                 $dataArray['success'] = 'Payment is void.  ';
+            
 
                 break;
 
@@ -564,6 +568,16 @@ class DeluxeGateway extends AbstractPaymentGateway
         return $this->_voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
     }
 
+    /**
+     * Summary of _returnPayment
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
+     * @param mixed $returnAmt
+     * @param mixed $bid
+     * @return array{bid: mixed|string[]}
+     */
     protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
@@ -581,7 +595,8 @@ class DeluxeGateway extends AbstractPaymentGateway
 
                 $csResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
-
+                $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
                 break;
 
             case AbstractCreditPayments::STATUS_DECLINED:
@@ -611,18 +626,17 @@ class DeluxeGateway extends AbstractPaymentGateway
 
 
         //find payment >= amount that hasn't been used for a refund yet. Payments used for return amount already can't be used again.
-        $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) WHEN rp.Is_Refund = 1 THEN 0 ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment
+        $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) WHEN rp.Is_Refund = 1 THEN 0 ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment, p.Timestamp
 from payment p join payment_auth pa on p.idPayment = pa.idPayment left join payment rp on p.idPayment = rp.parent_idPayment
 left join payment_invoice pi on p.idPayment = pi.Payment_Id
 left join invoice i on pi.Invoice_Id = i.idInvoice
-left join reservation_invoice ri on i.idInvoice = ri.Invoice_id and ri.Reservation_Id = $resvId
-where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by ri.Reservation_Id IS NULL asc, idPayment desc;");
+where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by idPayment desc;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 0) {
 
-            $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
+            $payResult = new RefundResult($invoice->getIdInvoice(), 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
             $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
             return $payResult;
@@ -685,7 +699,7 @@ order by pa.Timestamp desc");
             $csResp = $this->processReturnAmount($dbh, $payRS, $rows[0]["AcqRefData"], $invoice, $amount, $uS->username, $paymentNotes);
             //$csResp = $this->processStandaloneReturn($dbh, $tokenRS, $invoice, $amount, $uS->username, $paymentNotes);
 
-            $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult = new RefundResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
 
             switch ($csResp->getStatus()) {
 
@@ -748,6 +762,7 @@ order by pa.Timestamp desc");
         // Make a return response...
         $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
         $sr->setResult($returnGatewayResponse->getStatus());
+        $sr->setIdToken($tokenRS->idGuest_token->getStoredVal());
 
         if ($sr->getStatus() == AbstractCreditPayments::STATUS_APPROVED) {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
@@ -795,7 +810,7 @@ order by pa.Timestamp desc");
         }
 
         $returnGatewayResponse = $returnRequest->submit($paymentTransId, $tokenRS, $invoice->getInvoiceNumber(), $returnAmt, MpTranType::ReturnAmt);
-        
+
         // Make a return response...
         $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
         $sr->setResult($returnGatewayResponse->getStatus());
@@ -1338,13 +1353,13 @@ order by pa.Timestamp desc");
             }
 
             self::hideToken($request);
-            
+
             self::hideToken($response);
-            
+
         }catch(\Exception $e){
 
         }
-        
+
         parent::logGwTx($dbh, $status, json_encode($request), json_encode($response), $transType);
     }
 

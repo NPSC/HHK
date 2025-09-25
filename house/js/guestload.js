@@ -188,7 +188,7 @@ $(document).ready(function () {
     });
 
     if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup);
+        showReceipt('#pmtRcpt', rctMkup, "Payment Recipt", 550, receiptPaymentId, receiptBilledToEmail);
     }
 
     if (pmtMkup !== '') {

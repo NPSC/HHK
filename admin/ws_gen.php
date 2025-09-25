@@ -1,5 +1,6 @@
 <?php
 
+use HHK\API\OAuth\CRUD\Client;
 use HHK\Cron\SendConfirmationEmailJob;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
@@ -184,6 +185,128 @@ try {
                 );
             $events = SSP::complex ( $_GET, $dbh, "notification_log", "idLog", $columns, null, null );
     
+            break;
+
+        case "showAPIAccessLog":
+            $where = "";
+            if(isset($_REQUEST['clientId'])) {
+                $clientId = filter_var($_REQUEST['clientId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $where = ["condition"=>"`oauth_client_id` = :clientId", "bindings"=>[":clientId"=>$clientId]];
+            }
+
+            $columns = array(
+                array( 'db' => 'requestPath',  'dt' => 'requestPath' ),
+                array( 'db' => 'responseCode',   'dt' => 'responseCode' ),
+                array( 'db' => 'request', 'dt' => 'request'),
+                array( 'db' => 'response', 'dt' => 'response'),
+                array( 'db' => 'ip_address', 'dt' => 'ip_address'),
+                array( 'db' => 'oauth_client_id', 'dt' => 'oauth_client_id'),
+                array( 'db' => 'oauth_user_id', 'dt' => 'oauth_user_id'),
+                array( 'db' => 'oauth_access_token_id', 'dt' => 'oauth_access_token_id'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
+                );
+            $events = SSP::complex ( $_GET, $dbh, "api_access_log", "idLog", $columns, null, $where);
+    
+            break;
+
+        case "showOauthClients":
+
+            $columns = array(
+                array( 'db' => 'client_id',  'dt' => 'client_id' ),
+                array( 'db' => 'name',   'dt' => 'name' ),
+                array( 'db' => 'revoked', 'dt' => 'revoked'),
+                array( 'db' => 'scopes', 'dt' => 'scopes'),
+                array( 'db' => 'issuedTo', 'dt' => 'issuedTo'),
+                array( 'db' => 'LastUsed', 'dt' => 'LastUsed'),
+                array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
+                );
+
+            $events = SSP::complex ( $_GET, $dbh, "v_oauth_clients", "client_id", $columns, null, null );
+    
+            break;
+
+        case "getOauthClient":
+            $clientId = false;
+            if (isset($_REQUEST['clientId'])) {
+                $clientId = filter_var($_REQUEST['clientId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            if ($clientId){
+                $client = new Client($dbh, $clientId);
+                $events = ["client"=>$client->getClient(), "accessTokens"=>$client->getAccessTokens()];
+            }else{
+                throw new RuntimeException("clientId is required");
+            }
+            break;
+
+        case 'getOauthClientSecret':
+            $clientId = false;
+            if (isset($_GET['clientId'])) {
+                $clientId = filter_var($_GET['clientId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            if ($clientId){
+                $client = new Client($dbh, $clientId);
+                $events = ["client_secret"=>$client->getClientSecret()];
+            }else{
+                throw new RuntimeException("clientId is required");
+            }
+            break;
+
+        case "generateOauthClient":
+            
+            if(SecurityComponent::is_TheAdmin()){
+                $name = "";
+                if (isset($_POST['client_name'])) {
+                    $name = filter_var($_POST['client_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+                $scopes = [];
+                if (isset($_POST['client_scopes'])) {
+                    $scopes = filter_input(INPUT_POST, 'client_scopes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
+                }
+
+                $client = new Client($dbh);
+                $events = $client->generateNewClient($name, $scopes);
+            }else{
+                throw new RuntimeException("You must be the admin to generate a new client");
+            }
+            
+            break;
+
+        case "updateOauthClient":
+            
+            if(SecurityComponent::is_TheAdmin()){
+                $args = [
+                    'client_id'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                    'client_name'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                    'client_scopes'=>['filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_FORCE_ARRAY],
+                    'client_revoked'=>FILTER_VALIDATE_BOOL
+                ];
+
+                $input = filter_input_array(INPUT_POST, $args);
+
+                $client = new Client($dbh, $input["client_id"]);
+                $events = $client->updateClient($input["client_name"], $input['client_scopes'],  $input['client_revoked']);
+            }else{
+                throw new RuntimeException("You must be the admin to update a client");
+            }
+            
+            break;
+
+        case "deleteOauthClient":
+            
+            if(SecurityComponent::is_TheAdmin()){
+                $clientId = false;
+                if (isset($_POST['client_id'])) {
+                    $clientId = filter_var($_POST['client_id'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                }
+
+                $client = new Client($dbh, $clientId);
+                $events = $client->deleteClient();
+            }else{
+                throw new RuntimeException("You must be the admin to delete a client");
+            }
+            
             break;
 
         case "showCron":
@@ -454,10 +577,10 @@ try {
     $events = array("error" => "<strong>Error</strong> " . $ex->getMessage());
 } catch (PDOException $ex) {
 
-    $events = array("error" => "Database Error" . $ex->getMessage());
+    $events = array("error" => "Database Error " . $ex->getMessage());
 } catch (RuntimeException $ex) {
 
-    $events = array("error" => "HouseKeeper Error" . $ex->getMessage());
+    $events = array("error" => "HouseKeeper Error " . $ex->getMessage());
 }
 
 

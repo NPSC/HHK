@@ -215,7 +215,7 @@ class Note {
      * @param \PDO $dbh
      * @param string $noteText
      * @param string $updatedBy
-     * @return int the number of records updated.
+     * @return array { counter: int, noteRS: NoteRS}
      */
     public function updateContents(\PDO $dbh, $noteText, $noteCategory, $updatedBy) {
 
@@ -233,7 +233,7 @@ class Note {
             EditRS::updateStoredVals($this->noteRS);
         }
 
-        return $counter;
+        return ['counter'=>$counter, 'noteRS'=>$this->noteRS];
     }
 
     /**

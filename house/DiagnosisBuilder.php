@@ -6,7 +6,6 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\SysConst\WebRole;
-use HHK\Config_Lite\Config_Lite;
 use HHK\Tables\GenLookupsRS;
 use HHK\Tables\EditRS;
 use HHK\TableLog\HouseLog;

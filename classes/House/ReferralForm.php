@@ -823,7 +823,7 @@ class ReferralForm {
 	        .HTMLTable::makeTd($r->get_lastName())
 	        .HTMLTable::makeTd($r->get_nickName())
 	        .HTMLTable::makeTd($r->get_birthDate() == '' ? '' : date('M j, Y', strtotime($r->get_birthDate())))
-	        .HTMLTable::makeTd($role->getPhonesObj()->get_Data(PhonePurpose::Home)['Phone_Num'])
+	        .HTMLTable::makeTd($role->getPhonesObj()->get_Data(PhonePurpose::Cell)['Phone_Num'])
 	        .HTMLTable::makeTd($role->getEmailsObj()->get_Data(EmailPurpose::Home)['Email'])
 	        .HTMLTable::makeTd($this->createAddrString($role->getAddrObj()->get_recordSet(AddressPurpose::Home)))
 	        .HTMLTable::makeTd($role->getNoReturn())
@@ -904,7 +904,7 @@ class ReferralForm {
 	        .HTMLTable::makeTd($this->patSearchFor->getSuffixTitle(), array('id'=>'tbPatSuffix'))
 	        .HTMLTable::makeTd($this->patSearchFor->getNickname(), array('id'=>'tbPatNickname'))
 	        .HTMLTable::makeTd(($this->patSearchFor->getBirthDate() == '' ? '' : date('M d, Y', strtotime($this->patSearchFor->getBirthDate()))), array('id'=>'tbPatBD'))
-	        .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->patSearchFor->getPhone()), array('id'=>'tbPatPhone'))
+	        .HTMLTable::makeTd($this->patSearchFor->getFormattedPhone(), array('id'=>'tbPatPhone'))
 	        .HTMLTable::makeTd($this->patSearchFor->getEmail(), array('id'=>'tbPatEmail'))
 	        .HTMLTable::makeTd($this->patSearchFor->getAddressStreet(), array('id'=>'tbPatStreet'))
 	        .HTMLTable::makeTd($this->patSearchFor->getAddressCity(), array('id'=>'tbPatCity'))
@@ -1034,7 +1034,7 @@ class ReferralForm {
 	       .HTMLTable::makeTd($guestSearchFor->getSuffixTitle())
 	       .HTMLTable::makeTd($guestSearchFor->getNickname())
 	       .HTMLTable::makeTd($rel, array('id'=>'tbGuestRel'.$gindx))
-	       .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $guestSearchFor->getPhone()), array('id'=>'tbGuestPhone'.$gindx))
+	       .HTMLTable::makeTd($guestSearchFor->getFormattedPhone(), array('id'=>'tbGuestPhone'.$gindx))
 	       .HTMLTable::makeTd($guestSearchFor->getEmail(), array('id'=>'tbGuestEmail'.$gindx))
 	       .HTMLTable::makeTd($guestSearchFor->getAddressStreet())
 	       .HTMLTable::makeTd($guestSearchFor->getAddressCity())
@@ -1156,7 +1156,7 @@ class ReferralForm {
 	    $post['rbEmPref'] = ($data->getEmail() == '' ? '' : EmailPurpose::Home);
 	    $post['txtEmail'] = array(EmailPurpose::Home=>$data->getEmail());
 	    $post['rbPhPref'] = ($data->getPhone() == '' ? '' : PhonePurpose::Cell);
-	    $post['txtPhone'] = array(PhonePurpose::Cell=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
+	    $post['txtPhone'] = array(PhonePurpose::Cell=>$data->getPhone());
 		$post['selSMS'] = array(PhonePurpose::Cell => $data->getSMS_Status());
 
 	    $adr1 = array(AddressPurpose::Home => array(

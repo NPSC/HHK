@@ -370,6 +370,7 @@ class SSP {
 
 				if ( isset($whereAll['bindings']) ) {
 					self::add_bindings($whereAllBindings, $whereAll['bindings']);
+					self::add_bindings($bindings, $whereAll["bindings"]);
 				}
 			}
 
@@ -538,8 +539,8 @@ class SSP {
 
 	static function add_bindings(&$a, $vals)
 	{
-		foreach($vals['bindings'] as $key => $value) {
-			$bindings[] = array(
+		foreach($vals as $key => $value) {
+			$a[] = array(
 				'key' => $key,
 				'val' => $value,
 				'type' => PDO::PARAM_STR

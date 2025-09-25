@@ -1,5 +1,4 @@
 <?php
-use HHK\Config_Lite\Config_Lite;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Login;
 use HHK\Exception\RuntimeException;

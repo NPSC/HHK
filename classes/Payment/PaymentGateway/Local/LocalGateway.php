@@ -9,7 +9,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\{ReturnReply, SaleReply, VoidReply};
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
-use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult};
+use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult, RefundResult};
 use HHK\SysConst\{MemBasis, MpTranType, PaymentMethod, PaymentStatusCode, TransMethod, TransType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
@@ -219,12 +219,22 @@ class LocalGateway extends AbstractPaymentGateway {
 		return $dataArray;
 	}
 
+	/**
+	 * Summary of _returnPayment
+	 * @param \PDO $dbh
+	 * @param \HHK\Payment\Invoice\Invoice $invoice
+	 * @param \HHK\Tables\Payment\PaymentRS $payRs
+	 * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
+	 * @param mixed $retAmount
+	 * @param mixed $bid
+	 * @return array{bid: mixed|string[]}
+	 */
 	protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $retAmount, $bid) {
 		$uS = Session::getInstance ();
 
-		$dataArray = array (
-				'bid' => $bid
-		);
+		$dataArray = [
+			'bid' => $bid,
+		];
 
 		// find the token
 		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
@@ -277,7 +287,7 @@ class LocalGateway extends AbstractPaymentGateway {
   * @param \HHK\Payment\Invoice\Invoice $invoice
   * @param mixed $rtnTokenId
   * @param string $paymentNotes
-  * @return ReturnResult
+  * @return RefundResult
   */
 	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnTokenId, $paymentNotes, $resvId = 0, $payDate = '') {
 
@@ -314,7 +324,7 @@ class LocalGateway extends AbstractPaymentGateway {
 
 		$vrr = ReturnReply::processReply ( $dbh, $vr, $uS->username, NULL );
 
-		$rtnResult = new ReturnResult ( $invoice->getIdInvoice (), $invoice->getIdGroup (), $invoice->getSoldToId (), $tokenRS->idGuest_token->getStoredVal () );
+		$rtnResult = new RefundResult ( $invoice->getIdInvoice (), $invoice->getIdGroup (), $invoice->getSoldToId (), $tokenRS->idGuest_token->getStoredVal () );
 
 		// Update invoice
 		$invoice->updateInvoiceBalance ( $dbh, 0 - $vrr->response->getAuthorizedAmount (), $uS->username );
@@ -468,9 +478,11 @@ class LocalGateway extends AbstractPaymentGateway {
 				'class' => 'hhk-feeskeys' . $index
 		) ) ) . HTMLTable::makeTd ( HTMLInput::generateMarkup ( '', array (
 				'name' => 'txtChargeAcct' . $index,
-				'placeholder' => 'Acct.',
+				'placeholder' => 'last 4',
 				'size' => '6',
 				'title' => 'Only the last 4 digits.',
+				'oninput' => "this.value = this.value.replace(/[^0-9]/g, '');",
+				'maxlength'=>"4",
 				'class' => 'hhk-feeskeys' . $index
 		) ) ) );
 		$tbl->addBodyTr ( HTMLTable::makeTd ( HTMLInput::generateMarkup ( '', array (

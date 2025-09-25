@@ -45,6 +45,8 @@ $uS = Session::getInstance();
 $labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $payFailPage = $wInit->page->getFilename();
 $idGuest = -1;
 $idReserv = 0;
@@ -57,6 +59,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -73,7 +77,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), "cmd"=>"loadResv"]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -136,7 +140,7 @@ if (isset($uS->cofrid)) {
 }
 
 
-$resvObj = new ReserveData();
+$resvObj = new ReserveData($_REQUEST);
 
 
 if (isset($_GET['id'])) {
@@ -244,6 +248,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
@@ -256,6 +261,8 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
@@ -295,7 +302,7 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="guestSearch" class="mb-3 hhk-panel row" style="margin-left:10px; margin-right:10px;">
                 <?php echo $mk1; ?>
             </div>
-            <form action="Reserve.php" method="post"  id="form1" autocomplete="off">
+            <form id="form1" autocomplete="off">
                 <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"></div>
                 <div id="famSection" style="font-size: .9em; display:none; max-width: 100%; margin-bottom:.5em;" class="ui-widget hhk-visitdialog mb-3"></div>
                 <?php if ($uS->UseIncidentReports) { ?>
@@ -356,6 +363,8 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
         <input type="hidden" value='<?php echo $receiptMarkup; ?>' id="receiptMarkup"/>
+        <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
+        <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
         <input type="hidden" value='<?php echo $isRepeatHost; ?>' id="isRepeatReservHost"/>
         <script type="text/javascript" src="<?php echo RESERVE_JS; ?>"></script>
     </body>

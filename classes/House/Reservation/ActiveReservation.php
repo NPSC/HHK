@@ -19,6 +19,8 @@ use HHK\House\HouseServices;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\ChecklistType;
 use HHK\SysConst\ExcessPay;
+use HHK\SysConst\InvoiceLineType;
+use HHK\SysConst\ItemId;
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Tables\Reservation\ReservationRS;
@@ -102,7 +104,7 @@ class ActiveReservation extends Reservation {
 
         if ($uS->UseRepeatResv) {
             $repeatResv = new RepeatReservations();
-            $repeatResv->saveRepeats($dbh, $this->reservRs);
+            $repeatResv->saveRepeats($dbh, $this->reserveData->getRawPost(), $this->reservRs);
             $this->repeatResvErrors = $repeatResv->getErrorArray();
         }
 
@@ -140,7 +142,8 @@ class ActiveReservation extends Reservation {
             ]
         ];
 
-        $post = filter_input_array(INPUT_POST, $args);
+        //$post = filter_input_array(INPUT_POST, $args);
+        $post = filter_var_array($this->reserveData->getRawPost(), $args);
 
         // Set goto checkingin page?
         if (isset($post['resvCkinNow'])) {
@@ -201,11 +204,11 @@ class ActiveReservation extends Reservation {
 
         // Save any vehicles
         if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
-            Vehicle::saveVehicle($dbh, $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
+            Vehicle::saveVehicle($dbh, $this->reserveData->getRawPost(), $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
         }
 
         // Save Checklists
-        Checklist::saveChecklist($dbh, $reg->getIdPsg(), ChecklistType::PSG);
+        Checklist::saveChecklist($dbh, $this->reserveData->getRawPost(), $reg->getIdPsg(), ChecklistType::PSG);
 
         // Find any staying people.
         $stayingMembers = $this->getStayingMembers();
@@ -317,7 +320,7 @@ class ActiveReservation extends Reservation {
                 $newIdResv = RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
 
                 if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0 && isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::MoveToResv){
-                    $dbh->exec("UPDATE `reservation_invoice` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
+                    $dbh->exec("UPDATE `reservation_invoice_line` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
                 }
 
                 return $newIdResv;
@@ -391,6 +394,8 @@ class ActiveReservation extends Reservation {
             } else {
 
                 $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+                $dataArray["billToEmail"] = $this->payResult->getInvoiceBillToEmail($dbh);
+                $dataArray["idPayment"] = $this->payResult->getIdPayment();
 
             }
         }
@@ -409,10 +414,10 @@ class ActiveReservation extends Reservation {
     public function changeRoom(\PDO $dbh, $idResv, $idResc) {
 
         $uS = Session::getInstance();
-        $dataArray = array();
+        $dataArray = [];
 
         if ($idResv < 1) {
-            return array('error'=>'Reservation Id is not set.');
+            return ['error' => 'Reservation Id is not set.'];
         }
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
@@ -462,7 +467,7 @@ class ActiveReservation extends Reservation {
             $dataArray = $this->createMarkup($dbh);
 
             if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
-                
+
                 $creditCheckOut = $this->payResult->getForwardHostedPayment();
 
                 // Credit payment?
@@ -482,6 +487,10 @@ class ActiveReservation extends Reservation {
                 } else {
 
                     $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+                    $dataArray["billToEmail"] = $this->payResult->getInvoiceBillToEmail($dbh);
+                    $dataArray["idPayment"] = $this->payResult->getIdPayment();
+                    $dataArray["paySuccess"] = $this->payResult->getDisplayMessage();
+                    $dataArray["payError"] = $this->payResult->getErrorMessage();
                 }
             }
 
@@ -500,10 +509,12 @@ class ActiveReservation extends Reservation {
      */
     public function savePrePayment(\PDO $dbh) {
 
-        $pmp = PaymentChooser::readPostedPayment($dbh);  // Returns PaymentManagerPayment.
+        $pmp = PaymentChooser::readPostedPayment($dbh, $this->reserveData->getRawPost());  // Returns PaymentManagerPayment.
         $resv = new Reservation_1($this->reservRs);
 
         if (is_null($pmp) === FALSE && ($pmp->getTotalPayment() != 0 || $pmp->getOverPayment() != 0)) {
+
+            $post = $this->reserveData->getRawPost();
 
             $resvPaymentManager = new ResvPaymentManager($pmp);
 
@@ -511,7 +522,11 @@ class ActiveReservation extends Reservation {
 
             // Relate Invoice to Reservation
             if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
-                $dbh->exec("insert ignore into `reservation_invoice` Values(".$resv->getIdReservation()."," .$this->payResult->getIdInvoice() . ")");
+                if(isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::Hold){ //if putting overpayment towards general MOA, only link prepayment MOA payout to reservation
+                    $dbh->exec("insert ignore into `reservation_invoice_line` select '".$resv->getIdReservation()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "' and il.Type_Id = '" . InvoiceLineType::Reimburse . "'");
+                }else{
+                    $dbh->exec("insert ignore into `reservation_invoice_line` select '".$resv->getIdReservation()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "'");
+                }
             }
 
         }else{

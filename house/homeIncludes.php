@@ -47,7 +47,7 @@ define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/guestTransfer.js' . JSV);
 // define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
 // Javascript file Embed.js moved to new server.  7/26/2024
-define('INS_EMBED_JS', '<script src="https://cdn.instamed.com/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
+define('INS_EMBED_JS', '<script src="https://cdn.instamed.com/Content/Js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="incontext"></script>');
 define('DELUXE_SANDBOX_EMBED_JS', '<script src="https://hostedform2.deluxe.com/V2/deluxe.js"></script>');
 define('DELUXE_EMBED_JS', '<script src="https://hostedpaymentform.deluxe.com/v2/deluxe.js"></script>');
 define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js' . JSV. '"></script>');
@@ -57,8 +57,8 @@ define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);
 define('HOUSEKEEPING_JS', 'js/housekeeping.js' . JSV);
 
 //define('FULLCALENDAR_CSS', '<link href="css/fullcalendar5.11.0.min.css' . JSV . '"  rel="stylesheet" type="text/css" />');
-define('GRID_CSS', "<link href='css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
-define('BOOTSTRAP_CSS', "<link href='css/bootstrap.min.css" . JSV . "' rel='stylesheet' type='text/css' /><link href='css/bootstrap-print-fix.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('GRID_CSS', "<link href='../css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('BOOTSTRAP_CSS', "<link href='../css/bootstrap.min.css" . JSV . "' rel='stylesheet' type='text/css' /><link href='../css/bootstrap-print-fix.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('CSSVARS', "<link href='ws_resc.php?cmd=getCssVars' rel='stylesheet' type='text/css' />");
-define('BOOTSTRAP_ICONS_CSS', "<link href='css/bootstrap-icons.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('BOOTSTRAP_ICONS_CSS', "<link href='../css/bootstrap-icons.min.css" . JSV . "' rel='stylesheet' type='text/css' />");

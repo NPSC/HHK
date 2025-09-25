@@ -12,6 +12,7 @@ use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\House\Registration;
 use HHK\Member\AbstractMember;
 use HHK\SysConst\PaymentStatusCode;
+use Mpdf\Mpdf;
 
 /**
  * Receipt.php
@@ -94,12 +95,10 @@ class Receipt {
         $uS = Session::getInstance();
 
         // Assemble the statement
-        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
-
-        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
-
+        $rec = "";
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
         $info = self::getVisitInfo($dbh, $invoice);
 
@@ -152,9 +151,9 @@ class Receipt {
             $receiptAttrs['class'] = "ui-state-highlight";
         }
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>"receiptContent"]) . $disclaimer, $receiptAttrs);
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>"receiptContent mb-3"]) . $disclaimer, $receiptAttrs);
 
-        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'padding:10px; justify-self: center;'));
+        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'padding:10px; justify-self: center;', 'class'=>'ReceiptArea'));
     }
 
     /**
@@ -170,12 +169,10 @@ class Receipt {
 
         $uS = Session::getInstance();
 
-        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
-
-        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
-
+        $rec = "";
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . ' ' . $type . " Receipt", array('colspan'=>'2')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . ' ' . $type . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
@@ -213,7 +210,7 @@ class Receipt {
 
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>'receiptContent']), array('class'=>"mb-3"));
 
-        return HTMLContainer::generateMarkup('div', $rec, attributes: array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
+        return HTMLContainer::generateMarkup('div', $rec, attributes: array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;', 'class'=>'ReceiptArea'));
     }
 
     // Return a Payment
@@ -229,13 +226,10 @@ class Receipt {
 
         $uS = Session::getInstance();
 
-        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
-
-        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
-
+        $rec = "";
         $tbl = new HTMLTable();
-
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
@@ -270,11 +264,12 @@ class Receipt {
         $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
+        $payResp->setRefund(true);
         $payResp->receiptMarkup($dbh, $tbl);
 
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>'receiptContent']), array('class'=>"mb-3"));
 
-        return HTMLContainer::generateMarkup('div', $rec, attributes: array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
+        return HTMLContainer::generateMarkup('div', $rec, attributes: array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;', 'class'=>'ReceiptArea'));
     }
 
     // Refund arbitrary Amount
@@ -290,13 +285,10 @@ class Receipt {
 
         $uS = Session::getInstance();
 
-        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
-
-        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
-
+        $rec = "";
         $tbl = new HTMLTable();
-
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Refund Receipt", array('colspan'=>'2')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Refund Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
@@ -335,7 +327,7 @@ class Receipt {
 
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>"receiptContent"]), array('class'=>'mb-3'));
 
-        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
+        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;', 'class'=>'ReceiptArea'));
     }
 
     /**
@@ -350,12 +342,10 @@ class Receipt {
     public static function createDeclinedMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, AbstractPaymentResponse $payResp) {
 
         // Assemble the statement
-        $rec = self::getHouseIconMarkup() . self::getAddressTable($dbh, $siteId);
-
-        $rec = HTMLContainer::generateMarkup("div", $rec, array('class'=>'hhk-flex mb-3 justify-content-center align-items-center'));
-
+        $rec = "";
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2')));
+        $tbl->addBodyTr(HTMLTable::makeTd(self::getHouseIconMarkup(), ['class'=>'tdlabel']) . HTMLTable::makeTd(self::getAddressTable($dbh, $siteId)), ["style"=>"width:50%"]);
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2', 'class'=>'pt-3')), ["style"=>"width:50%"]);
 
 //        $info = self::getVisitInfo($dbh, $invoice);
 //
@@ -401,7 +391,7 @@ class Receipt {
 
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class'=>'receiptContent']), array('class="mb-3', 'style'=>'background-color:pink;'));
 
-        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
+        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;', 'class'=>'ReceiptArea'));
     }
 
     /**
@@ -609,6 +599,18 @@ WHERE
         return $mkup;
     }
 
+    public static function makePDF($receiptMarkup = "", bool $download = false)
+	{
 
+		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
+		$mpdf->showImageErrors = true;
+		$mpdf->WriteHTML('<html><head>' . HOUSE_CSS . GRID_CSS . '</head><body style="font-size: 0.9em"><div class="PrintArea">' . $receiptMarkup . '</div></body></html>');
+
+		if($download == true){
+			$mpdf->OutputHttpDownload("Receipt.pdf");
+		} else {
+			return $mpdf->Output('', 'S');
+		}
+	}
 }
 ?>

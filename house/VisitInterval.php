@@ -20,6 +20,7 @@ use HHK\SysConst\{
     InvoiceStatus,
     ItemType,
 };
+use HHK\SysConst\ItemId;
 use HHK\SysConst\Mode;
 
 
@@ -50,6 +51,8 @@ $uS = Session::getInstance();
 $labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Visit Report Detail', array('style' => 'margin-top: .5em;'))
@@ -61,6 +64,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if ($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -79,7 +84,7 @@ try {
         }
 
         if (WebInit::isAJAX()) {
-            echo json_encode(["receipt" => $receiptMarkup, ($payResult->wasError() ? "error" : "success") => $payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -109,7 +114,7 @@ $tstmt = $dbh->query("Select i.idItem, i.Percentage, i.Description from item i j
 while ($taxItem = $tstmt->fetch(\PDO::FETCH_ASSOC)) {
 
     $eachTaxSQL .= " ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . $taxItem['idItem'] . " and i.Sold_To_Id != " . $uS->subsidyId . " and i.Order_Number = v.idVisit),
+        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . $taxItem['idItem'] . " and i.Sold_To_Id != " . $uS->subsidyId . " and il.Source_Item_Id = " . ItemId::Lodging . " and i.Order_Number = v.idVisit),
             0) as `paid_".$taxItem['idItem']."`, ";
 
     $eachTaxPaid[$taxItem['idItem']]['desc'] = $taxItem['Description'];
@@ -195,7 +200,7 @@ if ($uS->InsuranceChooser) {
 
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', '', array(), 'date');
-$cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style' => 'text-align:center;'));
+$cFields[] = array("Room", 'Title', 'checked', '', 's', '', array());
 
 if ($uS->VisitFee) {
     $cFields[] = array($labels->getString('statement', 'cleaningFeeLabel', "Clean Fee"), 'visitFee', 'checked', '', 's', '', array('style' => 'text-align:right;'));
@@ -426,6 +431,8 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -500,6 +507,8 @@ if ($uS->CoTod) {
     </div>
     <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate" />
     <input type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+    <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
+    <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
     <input type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
     <input type="hidden" id="startYear" value='<?php echo $uS->StartYear; ?>' />
     <input type="hidden" id="dateFormat" value='<?php echo $dateFormat; ?>' />

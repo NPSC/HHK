@@ -110,15 +110,15 @@ class ReserveData {
     protected $intervalRepeatResv = 0;
     protected $numberRepeatResv = 0;
 
-    /**
-     * Summary of __construct
-     * @param string $reservationTitle
-     */
-    function __construct($reservationTitle = '') {
+    protected $rawPost;
+
+    public function __construct($rawPost, $reservationTitle = '') {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
-        $this->psgMembers = array();
+        $this->psgMembers = [];
+        $this->rawPost = $rawPost;
+
 
         $args = [
             'rid' => FILTER_SANITIZE_NUMBER_INT,
@@ -145,8 +145,7 @@ class ReserveData {
             'mrnumresv' => FILTER_SANITIZE_NUMBER_INT,
         ];
 
-        $inputs = filter_input_array(INPUT_POST, $args);
-
+        $inputs = filter_var_array($rawPost, $args);
 
         if (isset($inputs['rid'])) {
             $this->setIdResv(intval($inputs['rid'], 10));
@@ -678,17 +677,17 @@ class ReserveData {
         $this->insistCkinDemog = $id;
         return $this;
     }
-    
+
     public function setInsistCkinPhone($id) {
         $this->insistCkinPhone = $id;
         return $this;
     }
-    
+
     public function setInsistCkinEmail($id) {
         $this->insistCkinEmail = $id;
         return $this;
     }
-    
+
     public function setInsistCkinAddress($id) {
         $this->insistCkinAddress = $id;
         return $this;
@@ -834,6 +833,10 @@ class ReserveData {
 
     public function getMsgs() {
         return $this->msgs;
+    }
+
+    public function getRawPost() {
+        return $this->rawPost;
     }
 
 }

@@ -163,11 +163,12 @@ from
     invoice_line il
         join
     invoice i ON il.Invoice_Id = i.idInvoice
+    left join invoice ci on i.Delegated_Invoice_Id = ci.idInvoice
 where
     il.Item_Id = ". ItemId::LodgingMOA . "
         and i.Deleted = 0
         and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid . "' " . $where;
+        and (i.Status = '" . InvoiceStatus::Paid . "' or ci.Status = '" . InvoiceStatus::Paid . "') " . $where;
         $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -239,7 +240,7 @@ where
             join
         invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = " . ItemId::LodgingMOA . " AND il.Deleted = 0
             join
-    	reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
+    	reservation_invoice_line ri ON il.idInvoice_line = ri.Invoice_Line_Id
     where
         i.Deleted = 0
         AND i.Order_Number = 0
@@ -640,6 +641,13 @@ where
             }
         }
 
+        $emRowAttrs = [];
+
+        //hide email checkbox if autoEmailReceipts is enabled
+        if($uS->autoEmailReceipts){
+            $emRowAttrs["class"] = "d-none";
+        }
+
         $emAttrs = array(
             'type' => 'checkbox',
             'class' => 'hhk-regvalue',
@@ -655,7 +663,7 @@ where
         $tbl->addBodyTr(
             HTMLTable::makeTh(HTMLContainer::generateMarkup('label', 'Email Receipt', array('for'=>'cbEml')), array('style'=>'text-align:right;'))
             . HTMLTable::makeTd(HTMLInput::generateMarkup('', $emAttrs))
-            );
+            , $emRowAttrs);
 
         if($uS->RoomPriceModel != ItemPriceCode::None){
 

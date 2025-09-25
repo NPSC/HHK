@@ -4,6 +4,7 @@ namespace HHK\Payment;
 
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
+use HHK\Payment\PaymentResponse\CashResponse;
 use HHK\Tables\Payment\TransRS;
 use HHK\Tables\EditRS;
 use HHK\Payment\PaymentResponse\CheckResponse;
@@ -54,6 +55,10 @@ class Transaction {
             $transRs->Check_Number->setNewVal($vr->getCheckNumber());
         }
 
+        if ($vr instanceof CashResponse) {
+            $transRs->Amount_Tendered->setNewVal($vr->getAmountTendered());
+        }
+
 
         if ($vr instanceof AbstractCreditResponse) {
             $transRs->Card_Number->setNewVal($vr->cardNum);
@@ -71,6 +76,26 @@ class Transaction {
 
         return $transRs;
 
+    }
+
+    /**
+     * Load Transaction result set based on $idTrans
+     * @param \PDO $dbh
+     * @param int $idTrans
+     * @return TransRS
+     */
+    public static function getTransactionRS(\PDO $dbh, int $idTrans){
+        $transRS = new TransRS();
+        $transRS->idTrans->setStoredVal($idTrans);
+        $transs = EditRS::select($dbh, $transRS, array($transRS->idTrans));
+
+        if (count($transs) != 1) {
+             return $transRS;
+        }
+
+        EditRS::loadRow($transs[0], $transRS);
+
+        return $transRS;
     }
 
 }

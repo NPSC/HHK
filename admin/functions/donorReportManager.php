@@ -194,8 +194,11 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     }
 
     // Do we include companies, non-profits and members?
-    $cbBasisDonor->setReturnValues($_POST[$cbBasisDonor->get_htmlNameBase()]);
-
+    if(isset($_POST[$cbBasisDonor->get_htmlNameBase()])){
+        $cbBasisDonor->setReturnValues($_POST[$cbBasisDonor->get_htmlNameBase()]);
+    }else{
+        $cbBasisDonor->setReturnValues([]);
+    }
 
     if ($slFlag) {
         $sumaryRows["Basis"] = $cbBasisDonor->setCsvLabel();
@@ -361,7 +364,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     	        $sumaryRows['Report Type'] = "First Donations Report";
     	    }
 
-    		$query = "from vindividual_donations vd $ljClause where 1=1 $wclause $selClause $totalClause group by vd.id having min(vd.Effective_Date) >= '" . $sDate . "' and min(vd.Effective_Date) <= '" . $eDate . "' $oClause ";
+    		$query = "from vindividual_donations vd $ljClause where 1=1 $wclause $selClause group by vd.id " . ($totalClause != "" ? $totalClause . "and " : "having") . " min(vd.Effective_Date) >= '" . $sDate . "' and min(vd.Effective_Date) <= '" . $eDate . "' $oClause ";
 
     		$stmt = $dbh->query("select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree`, min(vd.Effective_Date)" . $query);
     		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

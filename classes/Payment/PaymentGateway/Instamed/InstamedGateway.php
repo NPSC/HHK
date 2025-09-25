@@ -4,7 +4,7 @@ namespace HHK\Payment\PaymentGateway\Instamed;
 
 use HHK\Payment\{CreditToken, Transaction};
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
-use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult};
+use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult, RefundResult};
 use HHK\Payment\Receipt;
 use HHK\Payment\GatewayResponse\{GatewayResponseInterface, StandInGwResponse};
 use HHK\Payment\Invoice\Invoice;
@@ -131,6 +131,8 @@ class InstamedGateway extends AbstractPaymentGateway {
             	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
             }
 
+            $sr->setIdToken($tokenRS->idGuest_token->getStoredVal());
+
             // Record transaction
             try {
             	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Sale, TransMethod::Token);
@@ -217,9 +219,9 @@ class InstamedGateway extends AbstractPaymentGateway {
             try {
                 //put card on file first
                 $fwrder = $this->initCardOnFile($dbh, "", $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getManualKeyEntry(), $pmp->getCardHolderName(), $postbackUrl);
-                
+
                 //save info to process token payment in next step
-                $uS->imHostedPaymentInfo = ["invoice"=>$invoice, "paymentManagerPayment"=>$pmp, "postbackUrl"=>$postbackUrl]; 
+                $uS->imHostedPaymentInfo = ["invoice"=>$invoice, "paymentManagerPayment"=>$pmp, "postbackUrl"=>$postbackUrl];
 
                 $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $payResult->setForwardHostedPayment($fwrder);
@@ -268,6 +270,7 @@ class InstamedGateway extends AbstractPaymentGateway {
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_COMPLETE),
             'requestToken' => 'true',
+            'incontext' => 'true',
             'RelayState' => $this->saleUrl,
         );
 
@@ -342,6 +345,7 @@ class InstamedGateway extends AbstractPaymentGateway {
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_COMPLETE),
             'requestToken' => 'true',
+            'incontext' => 'true',
             'RelayState' => $this->cofUrl,
         );
 
@@ -424,6 +428,8 @@ class InstamedGateway extends AbstractPaymentGateway {
 
         $sr->setResult($curlResponse->getStatus());
 
+        $sr->setIdToken($payRs->idToken->getStoredVal());
+
         if ($curlResponse->getResponseMessage() != 'VOIDED') {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
         } else {
@@ -451,6 +457,8 @@ class InstamedGateway extends AbstractPaymentGateway {
 
                 $csResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
                 $dataArray['success'] = 'Payment is void.  ';
 
                 break;
@@ -475,7 +483,7 @@ class InstamedGateway extends AbstractPaymentGateway {
 
         $csResp = $this->processReturnPayment($dbh, $payRs, $pAuthRs->AcqRefData->getStoredVal(), $invoice, $returnAmt, $uS->username, '');
 
-        $dataArray = array('bid' => $bid);
+        $dataArray = ['bid' => $bid];
 
         switch ($csResp->getStatus()) {
 
@@ -486,6 +494,8 @@ class InstamedGateway extends AbstractPaymentGateway {
 
                 $csResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
+                $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+                $dataArray["idPayment"] = $payRs->idPayment->getStoredVal();
 
                 break;
 
@@ -503,6 +513,16 @@ class InstamedGateway extends AbstractPaymentGateway {
         return $dataArray;
     }
 
+    /**
+     * Summary of returnAmount
+     * @param \PDO $dbh
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $rtnToken
+     * @param mixed $paymentNotes
+     * @param mixed $resvId
+     * @param mixed $payDate
+     * @return RefundResult
+     */
     Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes, $resvId = 0, $payDate = '') {
 
         $uS = Session::getInstance();
@@ -523,16 +543,16 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
         if (count($rows) == 0) {
 
-            $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
+            $payResult = new RefundResult($invoice->getIdInvoice(), 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
+            $payResult->setDisplayMessage("** We did not find any appropriate payments for this refund amount: $amount **");
             return $payResult;
         }
 
 
         $csResp = $this->processReturnPayment($dbh, NULL, $rows[0]['AcqRefData'], $invoice, $amount, $uS->username, $paymentNotes);
 
-        $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+        $payResult = new RefundResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
 
         switch ($csResp->getStatus()) {
 
@@ -542,7 +562,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
                 $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                 $payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
-                $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
+                $payResult->setDisplayMessage('Amount Refunded by Credit Card.  ');
 
                 break;
 
@@ -568,14 +588,15 @@ group by pa.Approved_Amount having `Total` >= $amount;");
     }
 
     /**
-     *
+     * Summary of processReturnPayment
      * @param \PDO $dbh
-     * @param PaymentRS|null $payRs
-     * @param string $paymentTransId
-     * @param Invoice $invoice
-     * @param float $returnAmt
-     * @param string $userName
-     * @return object
+     * @param mixed $payRs  // Set to null for refunds (return amount)
+     * @param mixed $paymentTransId
+     * @param \HHK\Payment\Invoice\Invoice $invoice
+     * @param mixed $returnAmt
+     * @param mixed $userName
+     * @param mixed $paymentNotes
+     * @return \HHK\Payment\PaymentResponse\AbstractCreditResponse
      */
     protected function processReturnPayment(\PDO $dbh, $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
 
@@ -608,15 +629,18 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $sr->setResult($curlResponse->getStatus());
 
         if ($sr->getStatus() == AbstractCreditPayments::STATUS_APPROVED) {
-        	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+
+            // This is a refund
+            if ($payRs === null) {
+                $sr->setPaymentStatusCode(PaymentStatusCode::Paid);
+            } else {
+                // This is a return payment
+        	    $sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+            }
+
         } else {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
         }
-//         if ($curlResponse->getResponseMessage() != self::RESPONSE_APPROVED) {
-//         	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
-//         } else {
-//         	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
-//         }
 
         // Record transaction
         try {
@@ -1152,18 +1176,18 @@ where r.idRegistration =" . $idReg);
             HTMLContainer::generateMarkup("span", "Type")
             , ["class"=>"hhk-flex"]);
 
-            
+
         $payTbl->addBodyTr(
                 HTMLTable::makeTh('Capture Method:', ['style'=>'text-align:right;'])
                 .HTMLTable::makeTd($keyCb, ['colspan'=>'2'])
             ,['class'=>'tblCreditExpand'.$index.' tblCredit'.$index, "style"=>'display: none;']);
-        
+
             $payTbl->addBodyTr(
                 HTMLTable::makeTh("Cardholder Name", array('class'=>'tdlabel hhkvrKeyNumber'.$index))
         		.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index)), array('colspan'=>'2', 'style'=>'min-width:140px'))
         		, ['id'=>'trvdCHName'.$index]);
 
-        
+
 
     }
 

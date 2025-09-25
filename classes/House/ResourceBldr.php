@@ -506,7 +506,7 @@ Order by `t`.`List_Order`;");
                     case 'Staff_Note_Category':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                           return $dbh->exec("update note n join staff_note sn on n.idNote = sn.Note_Id set n.Category = '$newId' where n.Category = '$oldId';");
+                           return $dbh->exec("update note n join link_note sn on n.idNote = sn.idNote and sn.linkType = 'staff' set n.Category = '$newId' where n.Category = '$oldId';");
                         };
 
                         $verify = "select n.Category from note n left join gen_lookups g on n.Category = g.Code where g.Table_Name = 'Staff_Note_Category' and g.Code is null;";

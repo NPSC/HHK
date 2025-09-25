@@ -4,6 +4,8 @@ var dateFormat;
 var paymentMarkup;
 var pageManager;
 var receiptMarkup;
+var receiptBilledToEmail;
+var receiptPaymentId;
 
 $(document).ready(function() {
     "use strict";
@@ -11,13 +13,14 @@ $(document).ready(function() {
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON($('#resv').val());
     var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
-    var pageManager = t.pageManager;
     let isRepeatReservHost = $('#isRepeatReservHost').val();
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
     dateFormat = $('#dateFormat').val();
     paymentMarkup = $('#paymentMarkup').val();
     receiptMarkup = $('#receiptMarkup').val();
+    receiptPaymentId = $("#receiptPaymentId").val();
+    receiptBilledToEmail = $("#receiptBilledToEmail").val();
 
 // Dialog Boxes
     $("#resDialog").dialog({
@@ -145,7 +148,7 @@ $(document).ready(function() {
     }
 
     if (receiptMarkup !== '') {
-        showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt');
+        showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
     }
 
 
@@ -175,56 +178,84 @@ $(document).ready(function() {
         if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
 
             if (pageManager.deleteReserve() === false) {
-				$(this).val('Final Delete');
-				$('#btnDone').hide();
-				$('#btnCheckinNow').hide();
-				$('#btnShowReg').hide();
-				return;
-			}
+                $(this).val('Final Delete');
+                $('#btnDone').hide();
+                $('#btnCheckinNow').hide();
+                $('#btnShowReg').hide();
+                return;
+            }
 
             $(this).val('Deleting >>>>');
 
-			 $.post(
-				'ws_resv.php',
-                $('#form1').serialize() + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
-                 function(datas) {
-                    let data;
-                    try {
-                        data = $.parseJSON(datas);
-                    } catch (err) {
-                        flagAlertMessage(err.message, 'error');
-                        $(idForm).remove();
-                    }
+            const jsonObject = {};
+            const formData = new FormData($('#form1')[0]);
 
-                    if (data.error) {
-                        flagAlertMessage(data.error, 'error');
-                        $('#btnDelete').val('Delete').show();
-                    }
+            formData.append('cmd', 'delResv');
+            formData.append('idPsg', pageManager.getIdPsg());
+            formData.append('prePayment', pageManager.getPrePaymtAmt());
+            formData.append('rid', pageManager.getIdResv());
 
-				    if (data.warning) {
-				        flagAlertMessage(data.warning, 'warning');
-				    }
+            //diagnosis
+            let txtDiagnosis = $('#txtDiagnosis').val();
+            if (typeof txtDiagnosis === "string") {
+                txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+            }
+            formData.append('txtDiagnosis', txtDiagnosis);
 
-                    if (data.receiptMarkup && data.receiptMarkup != '') {
-						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
-					}
+            // convert to base json object
+            for (const pair of formData.entries()) {
+                jsonObject[pair[0]] = pair[1];
+            }
 
-					if (data.deleted) {
-						$('#form1').remove();
-						$('#contentDiv').append('<p>' + data.deleted + '</p>');
+            // Add people to the json object
+            jsonObject.mem = pageManager.people.list();
 
-						$('#spnStatus').text('Deleted');
-                    }
-                     
-                    if (data.xfer || data.inctx || data.deluxehpf) {
-				        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
-				        //return;
-				    }
+            try {
 
-                }
-        	);
+                jsonFetch(jsonObject, 'ws_resv.php',
+                    (text) => {
+
+                        const data = JSON.parse(text);
+
+                        if (data.error) {
+                            flagAlertMessage(data.error, 'error');
+                            $('#btnDelete').val('Delete').show();
+                        }
+
+                        if (data.warning) {
+                            flagAlertMessage(data.warning, 'warning');
+                        }
+
+                        if (data.receiptMarkup && data.receiptMarkup != '') {
+                            const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                            const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                            showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt', 550, idPayment, billToEmail);
+                        }
+
+                        if (data.deleted) {
+                            $('#form1').remove();
+                            $('#contentDiv').append('<p>' + data.deleted + '</p>');
+
+                            $('#spnStatus').text('Deleted');
+                        }
+
+                        if (data.xfer || data.inctx || data.deluxehpf) {
+                            paymentRedirect(data, $('#xform'), { resvId: pageManager.getIdResv() });
+
+                        }
+
+                    });
+
+            } catch (error) {
+                console.error("Error handling form submission:", error);
+
+                flagAlertMessage("An error occurred during form submission.", "error");
+
+            }
+
         }
     });
+
 
     $('#btnShowReg').click(function () {
         window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
@@ -247,13 +278,14 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
 
-            var formData = new FormData($('#form1')[0]);
+            const formData = new FormData($('#form1')[0]);
+            let jsonObject = {};
 
             formData.append('cmd', 'saveResv');
             formData.append('idPsg', pageManager.getIdPsg());
             formData.append('prePayment', pageManager.getPrePaymtAmt());
             formData.append('rid', pageManager.getIdResv());
-            
+
             //diagnosis
             let txtDiagnosis = $('#txtDiagnosis').val();
             if (typeof txtDiagnosis === "string") {
@@ -261,66 +293,77 @@ $(document).ready(function() {
             }
             formData.append('txtDiagnosis', txtDiagnosis);
 
-            let peopleStr = $.param({ mem: pageManager.people.list() });
-            let people = new URLSearchParams(peopleStr);
-
-            for (const [key, value] of people.entries()) {
-                formData.append(key, value);
+            // convert to base json object
+            for (const pair of formData.entries()) {
+                jsonObject[pair[0]] = pair[1];
             }
 
-            $.ajax({
-                type: 'post',
-                url: 'ws_resv.php',
-                data: formData,
-                processData: false,
-                contentType: false,
-                dataType: 'json',
-                success: function (data, textStatus) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
+            // Add people to the json object
+            jsonObject.mem = pageManager.people.list();
 
-                    if (data.error) {
-                        flagAlertMessage(data.error, 'error');
-                        $('#btnDone').val('Save').show();
-                    }
+            try {
+                // Handle the response from the server
+                jsonFetch(jsonObject, 'ws_resv.php',  // returns text object
+                    (text) => {
+                        const responseData = JSON.parse(text);
 
-                    if (data.xfer || data.inctx || data.deluxehpf) {
-                        paymentRedirect (data, $('#xform'), {resvId: pageManager.getIdResv()});
-                        //return;
-                    }
-
-                    if (data.redirTo) {
-                       location.replace(data.redirTo);
-                    }
-
-                    pageManager.loadResv(data);
-
-                    if (data.receiptMarkup && data.receiptMarkup != '') {
-						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
-					}
-
-                    if (data.resv !== undefined) {
-                        if (data.warning === undefined) {
-                            flagAlertMessage(data.resvTitle + ' Saved. ' + (data.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + data.resv.rdiv.rStatTitle), 'success');
+                        if (responseData.gotopage) {
+                            window.open(responseData.gotopage, '_self');
                         }
-                    } else {
-                        flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved. ', 'success');
-                    }
 
-                    if(data.info){
-                        flagAlertMessage(data.info, 'info');
-                    }
-                },
-                error: function (data, textStatus) {
-                    flagAlertMessage(textStatus, "error");
-                    $('#btnDone').val("Save");
-                }
+                        if (responseData.error) {
+                            flagAlertMessage(responseData.error, 'error');
+                            $('#btnDone').val('Save').show();
+                        }
 
-            });
+                        if (responseData.xfer || responseData.inctx || responseData.deluxehpf) {
+                            paymentRedirect(responseData, $('#xform'), { resvId: pageManager.getIdResv() });
 
+                        }
+
+                        if (responseData.redirTo) {
+                            location.replace(responseData.redirTo);
+                        }
+
+                        pageManager.loadResv(responseData);
+
+                        if (responseData.receiptMarkup && responseData.receiptMarkup != '') {
+                            const idPayment = (typeof responseData.idPayment == 'number' ? responseData.idPayment:false);
+                            const billToEmail = (typeof responseData.billToEmail == 'string' ? responseData.billToEmail:"");
+                            showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt', 550, idPayment, billToEmail);
+                        }
+
+                        //payment msgs
+                        if(responseData.paySuccess && responseData.paySuccess != ''){
+                            flagAlertMessage(responseData.paySuccess, 'success');
+                        }
+                        if(responseData.payError && responseData.payError != ''){
+                            flagAlertMessage(responseData.payError, 'error');
+                        }
+
+                        if (responseData.resv !== undefined) {
+                            if (responseData.warning === undefined) {
+                                flagAlertMessage(responseData.resvTitle + ' Saved. ' + (responseData.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + responseData.resv.rdiv.rStatTitle), 'success');
+                            }
+                        } else {
+                            flagAlertMessage((responseData.resvTitle === undefined ? '' : responseData.resvTitle) + ' Saved. ', 'success');
+                        }
+
+                        if (responseData.info) {
+                            flagAlertMessage(responseData.info, 'info');
+                        }
+
+                    });
+            } catch (error) {
+                console.error("Error handling form submission:", error);
+
+                flagAlertMessage("An error occurred during form submission.", "error");
+                $('#btnDone').val("Save");
+            }
         }
+
     });
+
 
     function getGuest(item) {
 
