@@ -131,6 +131,8 @@ class InstamedGateway extends AbstractPaymentGateway {
             	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
             }
 
+            $sr->setIdToken($tokenRS->idGuest_token->getStoredVal());
+
             // Record transaction
             try {
             	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Sale, TransMethod::Token);
@@ -425,6 +427,8 @@ class InstamedGateway extends AbstractPaymentGateway {
         $sr = new ImPaymentResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), '', date('Y-m-d'), FALSE);
 
         $sr->setResult($curlResponse->getStatus());
+
+        $sr->setIdToken($payRs->idToken->getStoredVal());
 
         if ($curlResponse->getResponseMessage() != 'VOIDED') {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);

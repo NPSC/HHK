@@ -345,7 +345,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $responseMessage = "";
         if($vr->getStatus() == AbstractCreditPayments::STATUS_APPROVED){
             // save token
-            $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response, $data["token"]);
+            $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
 
             return ["success" => "New Card saved successfully","COFmkup"=> HouseServices::guestEditCreditTable($dbh, $data['psg'], $data['id'], 'g'), 'idx'=>'g'];
         }else{
@@ -762,6 +762,7 @@ order by pa.Timestamp desc");
         // Make a return response...
         $sr = new RefundCreditResponse($returnGatewayResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $returnAmt);
         $sr->setResult($returnGatewayResponse->getStatus());
+        $sr->setIdToken($tokenRS->idGuest_token->getStoredVal());
 
         if ($sr->getStatus() == AbstractCreditPayments::STATUS_APPROVED) {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
