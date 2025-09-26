@@ -99,7 +99,7 @@ class ImportMarkup {
     private function getPeopleMkup(){
         $mkup = HTMLContainer::generateMarkup("div",
             HTMLContainer::generateMarkup("h3", "People") .
-            CreateMarkupFromDB::generateHTML_Table($this->getPeopleInfo("MembershipId"), "people")
+            CreateMarkupFromDB::generateHTML_Table($this->getPeopleInfo("importId"), "people")
             , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
 
         return $mkup;

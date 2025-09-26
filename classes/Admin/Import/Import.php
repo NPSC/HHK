@@ -2,10 +2,15 @@
 namespace HHK\Admin\Import;
 
 
+use HHK\Member\AbstractMember;
 use HHK\Member\Role\Doctor;
 use HHK\Member\Role\Patient;
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
+use HHK\sec\WebInit;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\MemDesignation;
 use HHK\SysConst\RelLinkType;
 use HHK\sec\Session;
 use HHK\House\PSG;
@@ -19,11 +24,16 @@ use HHK\Tables\EditRS;
 use HHK\SysConst\ReservationStatus;
 use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\GenLookupsRS;
+use HHK\Member\Address\Address;
+use HHK\Member\Address\Phones;
+use HHK\Member\Address\Emails;
+use HHK\Volunteer\VolunteerCategory;
 
 
 class Import {
 
     protected \PDO $dbh;
+    protected array $volLkups;
     protected array $zipLookups;
     protected array $hospitals;
     protected array $rooms;
@@ -48,6 +58,8 @@ class Import {
 
     public function __construct(\PDO $dbh){
         $this->dbh = $dbh;
+        $wInit = new WebInit();
+        $this->volLkups = $wInit->sessionLoadVolLkUps();
         
         //TODO: Customize mappings for each import to facilitate making missing lookups
         $this->genLookupMapping = [
@@ -86,11 +98,11 @@ class Import {
         
 
 
-        $batchquery = "UPDATE `". Upload::TBL_NAME."` set status = 'processing', workerId = '$workerId' where status = 'pending' order by `MembershipId` LIMIT $limit;";
+        $batchquery = "UPDATE `". Upload::TBL_NAME."` set status = 'processing', workerId = '$workerId' where status = 'pending' order by `importId` LIMIT $limit;";
         $this->dbh->exec($batchquery);
         
         //$query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and status = 'pending' group by i.importId order by i.`patientID` LIMIT $limit;";
-        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and i.status = 'processing' and i.workerId = '$workerId' group by i.importId order by i.`MembershipId`";
+        $query = "Select * from `" . Upload::TBL_NAME . "` i where i.imported is null and i.status = 'processing' and i.workerId = '$workerId' group by i.importId order by i.`importId`";
         $stmt = $this->dbh->query($query);
 
         $numRead = $stmt->rowCount();
@@ -108,17 +120,26 @@ class Import {
 
             //TODO: Customize for each import
 
+            /*
             if($memId == $r["MembershipId"]){ //skip duplicates
                 $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = '1', status = 'done' where `importId` = " . $r['importId']);
                 continue;
             }
+            */
 
             //$guests = [];
             try{
                 $this->dbh->beginTransaction();
 
+                //donors
+                if(trim($r["Company"]) != ""){
+                    $donor = $this->addDonor($r, MemBasis::Company);
+                }else{
+                    $donor = $this->addDonor($r, MemBasis::Indivual);
+                }
+
                //map gender
-               $gender = "";
+               /*$gender = "";
                switch(strtolower($r["Gender"])){
                     case "m":
                         $gender = "male";
@@ -149,7 +170,7 @@ class Import {
                 ];
 
                 $this->addGuest($guest);
-
+*/
                 //if($r["patientID"] == $r["guestID"] || strtolower($r["relationship"]) == "patient"){
                     //include extra info
                 
@@ -485,6 +506,174 @@ class Import {
 
     }
 
+    /**
+     * Summary of addDonor
+     * @param array $r
+     * @param mixed $memType
+     * @return bool|\HHK\Member\IndivMember|\HHK\Member\OrgMember|null
+     */
+    private function addDonor(array $r, $memType){
+        // get session instance
+        $uS = Session::getInstance();
+
+        $newFirst = isset($r["FirstName"]) ? trim(addslashes($r['FirstName'])) : "";
+        $newLast = isset($r["LastName"]) ? trim(addslashes($r['LastName'])) : "";
+        $newMiddle = isset($r["MiddleName"]) ? trim(addslashes(string: $r['MiddleName'])) : "";
+        //$newNickname = trim(addslashes($r['GuestNickname']));
+        $company = isset($r["Company"]) ? trim(addslashes(string: $r['Company'])) : "";
+        $notes = isset($r['NOTES']) ? trim(addslashes($r["NOTES"])) : "";
+
+        if ($newLast == '' && $company == '') {
+            return false;
+        }
+
+        //$id = $this->findPerson($newFirst, $newLast, VolMemberType::Donor, true, $r["Phone"]);
+        $id = 0;
+
+        // Instantiate the member object
+        try {
+            $name = AbstractMember::GetDesignatedMember($this->dbh, $id, $memType);
+        } catch (\Exception $ex) {
+            $id = 0;
+            $name = AbstractMember::GetDesignatedMember($this->dbh, $id, $memType);
+        }
+
+
+        // the rest
+        try {
+
+            $address = new Address($this->dbh, $name, $uS->nameLookups[GLTableNames::AddrPurpose]);
+            $phones = new Phones($this->dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+            $emails = new Emails($this->dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
+
+            $rel = $name->loadRealtionships($this->dbh);
+
+            // Volunteers
+            $vols = array();
+            if(isset($this->volLkups["Vol_Category"]["Vol_Type"]) && ($memType != MemBasis::Indivual || $name->getMemberDesignation() != MemDesignation::Individual)){ //orgs only need member type vol_category
+                $purpose = $this->volLkups["Vol_Category"]["Vol_Type"];
+                $volunteer = new VolunteerCategory($purpose[0], $purpose[1], $purpose[2]);
+                $volunteer->set_rankOptions($this->volLkups["Vol_Rank"]);
+                $vols[$purpose[0]] = $volunteer;
+            }else{
+                foreach ($this->volLkups["Vol_Category"] as $purpose) {
+                    $volunteer = new VolunteerCategory($purpose[0], $purpose[1], $purpose[2]);
+                    $volunteer->set_rankOptions($this->volLkups["Vol_Rank"]);
+                    $vols[$purpose[0]] = $volunteer;
+                }
+            }
+
+
+        } catch (\Exception $ex) {
+            exit("Error opening supporting objects: " . $ex->getMessage());
+        }
+
+
+
+
+        try {
+
+            if($id == 0){
+                $gender = $this->findIdGenLookup("Gender", (isset($r['Gender']) ? $r["Gender"] : ""));
+                $ethnicity = $this->findIdGenLookup("Ethnicity", (isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
+                $noReturn =  $this->findIdGenLookup("No_Return", (isset($r["Banned"]) ? $r["Banned"] : ""));
+                $mediaSource = $this->findIdGenLookup("Media_Source", (isset($r["mediaSource"]) ? $r["mediaSource"] : ""));
+
+                $birthDate = "";
+                if(isset($r["BirthDate"]) && trim($r['BirthDate']) != ''){
+                    $birthdateDT = new \DateTime($r['BirthDate']);
+                    $birthDate = $birthdateDT->format("M j, Y");
+                }
+
+                if($memType == MemBasis::Company){
+                    $adrPurpose = "4";
+                }else{
+                    $adrPurpose = "1";
+                }
+
+                // phone
+                $homePhone = isset($r['Phone']) ? $this->formatPhone($r['Phone']) : "";
+                $cellPhone = isset($r['Mobile']) ? $this->formatPhone($r['Mobile']) : "";
+                //$workPhone = $this->formatPhone($r['Work']);
+
+                $post = array(
+                    'txtFirstName' => $newFirst,
+                    'txtLastName'=>  $newLast,
+                    'txtNickname'=> "",//$newNickname,
+                    'txtMiddleName'=> $newMiddle,
+                    'txtCoName'=>$company,
+                    'rbPrefMail'=>$adrPurpose,
+                    'rbEmPref'=>"1",
+                    'txtEmail'=>array('1'=>''),
+                    'rbPhPref'=>($homePhone != '' ? "dh": ($cellPhone != "" ? "mc" : "")),
+                    'txtPhone'=>array('dh'=>$homePhone, 'mc'=>$cellPhone),
+                    'txtBirthDate'=> $birthDate,  //$r['Date_of_Birth'],
+                    'selStatus'=>'a',
+                    'sel_Ethnicity'=>$ethnicity,
+                    'sel_Gender'=>$gender,
+                    'sel_Media_Source'=>$mediaSource,
+                    'selnoReturn'=>$noReturn,
+                    'selMbrType'=>$memType,
+                    'Vol_Type'=>[
+                        'cb'=>['d'=>'on'],
+                        'rank'=>['d'=>'m'],
+                        'tdid'=>['d'=>''],
+                        'tnid'=>['d'=>''],
+                        'ckdate'=>['d'=>''],
+                        'notes'=>['d'=>'']
+                    ]
+                );
+
+                $adr1 = $this->loadAddress($this->dbh, $r, $adrPurpose);
+                $post['adr'] = $adr1;
+
+                if(trim($r['Address']) == ""){
+                    //$post['incomplete'] = true;
+                }
+
+
+                // Name
+                $name->saveChanges($this->dbh, $post);
+                $id = $name->get_idName();
+
+                // Address
+                $address->savePost($this->dbh, $post, $uS->username);
+
+                // Phone number
+                $phones->savePost($this->dbh, $post, $uS->username);
+
+                // Email Address
+                $emails->savePost($this->dbh, $post, $uS->username);
+
+
+                // Volunteers
+                foreach ($vols as $v) {
+                    if(isset($post[$v->getCategoryCode()])){
+                        $v->saveVolCategory($this->dbh, $id, $post[$v->getCategoryCode()], $uS->username);
+                    }
+                }
+
+                if(strlen($notes) > 0){
+                    LinkNote::save($this->dbh, $notes, $id, Note::MemberLink, '', $uS->username);
+                }
+
+                // external id
+                $this->dbh->exec("update `name` set `External_Id` = " . $r['importId'] . " where `idName` = " . $name->get_idName());
+
+                $this->importedGuests++;
+
+                return $name;
+            }
+
+
+        } catch (\Exception $ex) {
+
+        }
+
+
+        
+    }
+
     private function addVisit(array $r, array $guests, $reg, $hospStay, $resvId, $visitStatus = VisitStatus::CheckedOut){
 /*
         //make hospital stay
@@ -645,9 +834,9 @@ class Import {
             }else if($memberType == "patient"){
                 $query .= " and ng.Relationship_Code = 'slf'";
             }
-        }else if($memberType == VolMemberType::Doctor){
+        }else if(in_array($memberType, [VolMemberType::Doctor, VolMemberType::Donor])){
             $query = "SELECT distinct n.idName, n.Name_Last, n.Name_First
-FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::Doctor . "'
+FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . $memberType . "'
 WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         }else{
             $query = "Select n.idName from name n where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
@@ -684,7 +873,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $phone); //format remaining numbers
     }
 
-    private function loadAddress(\PDO $dbh, $r) {
+    private function loadAddress(\PDO $dbh, $r, $purpose = 1) {
 
         $state = ucfirst(trim($r['State']));
         $city = ucwords(trim($r['City']));
@@ -716,7 +905,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         }
 
 
-        $adr1 = array('1' => array(
+        $adr1 = array($purpose => array(
             'address1' => isset($r['Address']) ? ucwords(strtolower(trim($r['Address']))) : '',
             'address2' => isset($r['Address2']) ? ucwords(strtolower(trim($r['Address2']))) : '',
             'city' => $city,
