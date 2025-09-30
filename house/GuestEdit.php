@@ -518,7 +518,7 @@ if ($psg->getIdPsg() > 0) {
             ['class' => 'hhk-panel mb-3 mr-3'])) . $ccMarkup;
 
     if ($uS->TrackAuto) {
-        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), 0, $registration->getNoVehicle());
+        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), 0, 0);
     }
 
     // Look for visits

@@ -6,6 +6,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\VehicleRS;
 use HHK\sec\Labels;
+use HHK\Tables\Reservation\ReservationRS;
 
 /**
  * Vehicle.php
@@ -35,7 +36,7 @@ class Vehicle {
 
         if ($idReg > 0 && $idResv > 0){
             
-            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg" . ($thisResv ? " and rv.idReservation = $idResv": ""));
+            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation, r.No_Vehicle from vehicle v left join name n on v.idName = n.idName left join reservation r on idReservation = $idResv left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg" . ($thisResv ? " and rv.idReservation = $idResv": ""));
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else if ($idReg > 0) {
 
@@ -291,7 +292,7 @@ WHERE
      * @param int $idReg
      * @return string
      */
-    public static function saveVehicle(\PDO $dbh, array $post, $idReg, int $idResv = 0) {
+    public static function saveVehicle(\PDO $dbh, array $post, $idReg, int $idResv = 0, ReservationRS|null &$reservRS = null) {
         $rtnMsg = "";
 
         $args = [
@@ -420,6 +421,18 @@ WHERE
                     $stmt = $dbh->prepare("DELETE FROM `reservation_vehicle` WHERE `idReservation` = :idReservation AND `idVehicle` = :idVehicle;");
                     $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$carRS->idVehicle->getStoredVal()]);
                 }
+            }
+
+        }
+
+        if($idResv > 0){
+            $noVeh = isset($post['cbNoVehicle']) ? 1:0;
+
+            $stmt = $dbh->prepare("UPDATE `reservation` SET `No_Vehicle` = :noVehicle where idReservation = :idReservation;");
+            $stmt->execute([":idReservation"=>$idResv, ":noVehicle"=>$noVeh]);
+            
+            if($reservRS instanceof ReservationRS){
+                $reservRS->No_Vehicle->setStoredVal($noVeh);
             }
 
         }

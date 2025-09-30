@@ -244,11 +244,11 @@ try {
                 $idV = intval(filter_input(INPUT_POST, 'idV', FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
+            $vehStmt = $dbh->prepare("select v.idReservation, v.idRegistration, r.No_Vehicle from visit v join reservation r on v.idReservation = r.idReservation where v.idVisit = :idv limit 1");
             $vehStmt->execute([':idv' => $idV]);
             $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
 
-            $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], false);
+            $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], $row["No_Vehicle"]);
 
             $events = ['success' => $mkup, 'title' => "Edit Vehicles"];
 

@@ -1708,6 +1708,7 @@ CREATE TABLE if not exists `reservation` (
   `Actual_Arrival` datetime DEFAULT NULL,
   `Actual_Departure` datetime DEFAULT NULL,
   `Number_Guests` int(11) NOT NULL DEFAULT '0',
+  `No_Vehicle` TINYINT NOT NULL DEFAULT 0,
   `Add_Room` INT NOT NULL DEFAULT 0,
   `Checkin_Notes` varchar(1000) NOT NULL DEFAULT '',
   `Notes` text,

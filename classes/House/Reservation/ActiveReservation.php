@@ -203,8 +203,8 @@ class ActiveReservation extends Reservation {
         $reg->saveRegistrationRs($dbh, $this->reserveData->getIdPsg(), $uS->username);
 
         // Save any vehicles
-        if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
-            Vehicle::saveVehicle($dbh, $this->reserveData->getRawPost(), $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
+        if ($uS->TrackAuto) {
+            Vehicle::saveVehicle($dbh, $this->reserveData->getRawPost(), $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal(), $this->reservRs);
         }
 
         // Save Checklists

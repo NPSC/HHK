@@ -2,7 +2,7 @@
 namespace HHK\Tables\Reservation;
 
 use HHK\Tables\AbstractTableRS;
-use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbDecimalSanitizer};
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbDecimalSanitizer, DbBitSanitizer};
 
 /**
  * ReservationRS.php
@@ -37,6 +37,7 @@ class ReservationRS extends AbstractTableRS {
     public $Actual_Arrival;   // datetime DEFAULT NULL,
     public $Actual_Departure;   // datetime DEFAULT NULL,
     public $Number_Guests;   // int(11) NOT NULL DEFAULT '0',
+    public $No_Vehicle;      // TINYINT NOT NULL DEFAULT 0,
     public $Add_Room; //`Add_Room` INT NOT NULL DEFAULT 0
     public $Notes;   // text,
     public $Checkin_Notes;
@@ -68,6 +69,7 @@ class ReservationRS extends AbstractTableRS {
         $this->Actual_Arrival = new DB_Field('Actual_Arrival', NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Actual_Departure = new DB_Field('Actual_Departure', NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Number_Guests = new DB_Field('Number_Guests', 1, new DbIntSanitizer(), TRUE, TRUE);
+        $this->No_Vehicle = new DB_Field("No_Vehicle", 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Add_Room = new DB_Field('Add_Room', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Checkin_Notes = new DB_Field('Checkin_Notes', '', new DbStrSanitizer(1000), TRUE, TRUE);
         $this->Notes = new DB_Field('Notes', '', new DbStrSanitizer(2000), TRUE, TRUE);
