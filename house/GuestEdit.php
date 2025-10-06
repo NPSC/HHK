@@ -760,6 +760,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
@@ -1041,3 +1042,4 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo GUESTLOAD_JS; ?>"></script>
     </body>
 </html>
+
