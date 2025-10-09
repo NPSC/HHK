@@ -236,11 +236,13 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
         $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
+        $retiredRescSql = "(re.Retired_At is null or re.Retired_At > date('$start'))";
+
         $query = '
 SELECT
-(select count(*) from resource re where re.Type = "room")*datediff("' . $end . '", "' . $start . '") as "Room-nights available",
+(select count(*) from resource re where re.Type = "room" and ' .$retiredRescSql .')*datediff("' . $end . '", "' . $start . '") as "Room-nights available",
 (select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v where date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '") and not date(v.Span_Start) <=> date(v.Span_End)) as "Room-nights occupied",
-CONCAT(ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v where date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '"))/((select count(*) from resource re where re.Type = "room")*datediff("' . $end . '", "' . $start . '"))*100,1), "%") as "Occupancy Rate",
+CONCAT(ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v where date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '"))/((select count(*) from resource re where re.Type = "room" and ' . $retiredRescSql . ')*datediff("' . $end . '", "' . $start . '"))*100,1), "%") as "Occupancy Rate",
 ifnull((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '")), "0") as "' . $rmtroomTitle . '-nights occupied",
 (select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where date(v.Span_Start) < date(:endDate6) and date(ifnull(v.Span_End, curdate()+interval 1 day)) > date(:startDate6) and not date(v.Span_Start) <=> date(v.Span_End)) as "Unique ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
 (select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate()+interval 1 day)) > date(:startDate14) and date(fv.Span_Start) < date(:endDate14) and not date(fv.Span_Start) <=> date(fv.Span_End))) as "New ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",

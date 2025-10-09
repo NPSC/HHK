@@ -15,16 +15,16 @@ jobs:
       - name: PHP Lint 8.1
         uses: dbfx/github-phplint/8.1@master
         with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""
+          folder-to-exclude: "! -path \"./vendor/*\""
       - name: PHP Lint 8.2
         uses: dbfx/github-phplint/8.2@master
         with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""
+          folder-to-exclude: "! -path \"./vendor/*\""
       - name: PHP Lint 8.3
         uses: dbfx/github-phplint/8.3@master
         with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""
+          folder-to-exclude: "! -path \"./vendor/*\""
       - name: PHP Lint 8.4
         uses: dbfx/github-phplint/8.4@master
         with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""
+          folder-to-exclude: "! -path \"./vendor/*\""

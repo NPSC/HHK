@@ -28,9 +28,9 @@ class TransactionWebhookResponse extends AbstractGatewayResponse implements Gate
 
     protected $invoiceNumber;
 
-    protected $operatorId;
+    protected $operatorId; 
     
-    public function __construct($response, Guest_TokenRS $tokenRS, $tranType = '', $invoiceNumber, $operatorId) {
+    public function __construct($response, Guest_TokenRS $tokenRS, $tranType = '', $invoiceNumber = null, $operatorId = null) {
 
         $this->tokenRS = $tokenRS;
         $this->operatorId = $operatorId;

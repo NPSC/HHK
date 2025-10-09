@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\Report;
 
+use DateTime;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\{VisitStatus,ReservationStatus};
 use HHK\sec\Session;
@@ -47,28 +48,31 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
         $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
+        $todayDT = new DateTime();
+        $retiredRescSql = "(r.Retired_At is null or r.Retired_At > '" . $todayDT->format('Y-m-d') . "')";
+
         $resvStatuses = readLookups($this->dbh, "reservStatus", "Code");
         $resvStatusList = (isset($resvStatuses[ReservationStatus::Committed]['Title']) ? $resvStatuses[ReservationStatus::Committed]['Title'] . ", " : "") . 
                 (isset($resvStatuses[ReservationStatus::UnCommitted]['Title']) ? $resvStatuses[ReservationStatus::UnCommitted]['Title'] . ", " : "") . 
                 (isset($resvStatuses[ReservationStatus::Waitlist]['Title']) ? "and " . $resvStatuses[ReservationStatus::Waitlist]['Title'] : "");
         
         $query = "select
-                    (select count(*) from resource where Type = 'room') as 'Total Rooms',
+                    (select count(*) from resource r where r.Type = 'room' and $retiredRescSql ) as 'Total Rooms',
                     (select count(*) from resource r
                         left join resource_use ru on
 	                       r.idResource = ru.idResource and
                            date(ru.Start_Date) <= date(now()) and
                            date(ru.End_Date) > date(now())
-                        where r.Type = 'rmtroom' and ru.idResource_use is null) as 'Total " . $rmtroomTitle . "s',
+                        where r.Type = 'rmtroom' and ru.idResource_use is null and $retiredRescSql ) as 'Total " . $rmtroomTitle . "s',
                     (select count(*) from resource r
                         left join resource_use ru on
 	                       r.idResource = ru.idResource and
                            date(ru.Start_Date) <= date(now()) and
                            date(ru.End_Date) > date(now())
-                        where ru.idResource_use is not null) as 'Out of Order/unavailable Rooms',
+                        where ru.idResource_use is not null and $retiredRescSql ) as 'Out of Order/unavailable Rooms',
                     (select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-                        where v.idVisit is null) as 'Vacant Rooms',
+                        where v.idVisit is null and $retiredRescSql) as 'Vacant Rooms',
                     (select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
                         where v.idVisit is not null) as 'Occupied Rooms',
@@ -81,10 +85,10 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
 	                       r.idResource = ru.idResource and
                            date(ru.Start_Date) <= date(now()) and
                            date(ru.End_Date) > date(now())
-                        where ru.idResource_use is null and r.Type = 'room')*100,2), '%')) as 'Available Room Occupancy',
+                        where ru.idResource_use is null and r.Type = 'room' and $retiredRescSql)*100,2), '%')) as 'Available Room Occupancy',
                     (concat(ROUND((select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-                        where v.idVisit is not null)/(select count(*) from resource where Type = 'room')*100,2), '%')) as 'Total Room Occupancy'
+                        where v.idVisit is not null)/(select count(*) from resource r where r.Type = 'room' and $retiredRescSql )*100,2), '%')) as 'Total Room Occupancy'
 
                 ";
         $stmt = $this->dbh->prepare($query);
