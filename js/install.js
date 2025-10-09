@@ -47,7 +47,7 @@ function testDb(parms) {
     );
 }
 
-function checkStrength(pwCtrl) {
+function checkStrength(pwStr) {
 	const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
-	return strongRegex.test(pwCtrl.val())
+	return strongRegex.test(pwStr)
 }

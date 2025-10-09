@@ -134,6 +134,7 @@ class ActiveReservation extends Reservation {
             'selResource' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'taNewNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'cbRebook' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'cbVerbalConf'=> FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'newGstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selexcpay' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'cbRS'  =>  [
@@ -242,7 +243,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Verbal Confirmation Flag
-        if (isset($_POST['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
+        if (isset($post['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
             $resv->setVerbalConfirm('v');
             LinkNote::save($dbh, 'Verbal Confirmation is Set.', $resv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
         } else {
