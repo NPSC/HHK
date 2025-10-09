@@ -689,6 +689,7 @@ Thank you
 ('PreviousNights','0','i','c','','Previous (to HHK) nights to add to nights counter','',1),
 ('printScale', '100', 'i','h','','% Default print scale','',1),
 ('PriorPasswords','0','i','pr','','Number of prior passwords user cannot reuse','',1),
+('minPassLength', '8', 'i', 'pr', '', 'Minimum password length - cannot be less than 8', '', 1),
 ('RateChangeAuth','false','b','h','','True = only authorized users can change the defailt room rate','',1),
 ('RateGlideExtend','0','i','hf','','(Deprecated) Number of days for the Room Rate Glide to time out after visit check-out','',0),
 ('receiptLogoFile','../conf/receiptlogo.png','url','f','','Path to the receipt logo file','',1),
