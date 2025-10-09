@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use donatj\UserAgent\UserAgentParser;
 use HHK\SysConst\WebRole;
 use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
 use HHK\Tables\EditRS;
@@ -897,12 +898,12 @@ class UserClass
             $osName = "HHK";
         }else{
             try {
-            	if ($userAgentArray = get_browser(NULL, TRUE)) {
-            		$browserName = $userAgentArray['parent'];
-            		$osName = $userAgentArray['platform'];
-            	}
+                $userAgentParser = new UserAgentParser();
+                $ua = $userAgentParser->parse();
+                $browserName = $ua->browser() ." ". $ua->browserVersion();
+            	$osName = $ua->platform();
             } catch (\Exception $d) {
-            	$browserName = "Missing Browscap?";
+            	$browserName = "";
             }
         }
 
