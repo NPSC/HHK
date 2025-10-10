@@ -2,6 +2,7 @@
 
 namespace HHK\House\Visit;
 
+use HHK\Common;
 use HHK\Exception\RuntimeException;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
@@ -89,7 +90,7 @@ class Visit {
      * @param bool $forceNew
      * @throws \HHK\Exception\RuntimeException
      */
-    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
+    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTimeInterface|null $arrivalDT = null, \DateTimeInterface|null $departureDT = null, AbstractResource|null $resource = null, $userName = '', $span = -1, $forceNew = false) {
 
         $this->visitRSs = $this->loadVisits($dbh, $idReg, $idVisit, $span, $forceNew);
 
@@ -954,8 +955,8 @@ class Visit {
 
         } else {
 
-            $dateDepartedDT = setTimeZone($uS, $dateDeparted);
-            $depDate = setTimeZone($uS, $dateDeparted);
+            $dateDepartedDT = Common::setTimeZone($uS, $dateDeparted);
+            $depDate = Common::setTimeZone($uS, $dateDeparted);
 
         }
 
@@ -1130,7 +1131,7 @@ class Visit {
         $resc = AbstractResource::getResourceObj($dbh, $this->getidResource());
         $rooms = $resc->getRooms();
 
-        $rmCleans = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $rmCleans = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         foreach ($rooms as $r) {
 
@@ -1251,7 +1252,7 @@ class Visit {
             VisitLog::logVisit($dbh, $this->visitRS->idVisit->getStoredVal(), $this->visitRS->Span->getStoredVal(), $this->visitRS->idResource->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
 
             unset($this->visitRSs[$this->getSpan()]);
-            unset($this->stays);
+            $this->stays = array();
             $this->resource = NULL;
 
         } else {
@@ -1618,7 +1619,7 @@ class Visit {
 
             // Creaate new Checkout date
             try {
-                $coDT = setTimeZone(NULL, $coDate);
+                $coDT = Common::setTimeZone(NULL, $coDate);
                 $coDT->setTime(0, 0, 0);
             } catch (\Exception $ex) {
                 $rtnMsg .= "Something wrong with the Expected Checkout Date: " . $coDate;
@@ -2224,7 +2225,7 @@ class Visit {
      */
     public function loadStays(\PDO $dbh, $statusFilter = VisitStatus::CheckedIn) {
 
-        unset($this->stays);
+        $this->stays = array();
         $this->stays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), $statusFilter);
 
     }

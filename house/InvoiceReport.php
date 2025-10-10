@@ -1,5 +1,6 @@
 <?php
 use HHK\ColumnSelectors;
+use HHK\Common;
 use HHK\ExcelHelper;
 use HHK\Exception\RuntimeException;
 use HHK\House\GLCodes\GLCodes;
@@ -248,7 +249,7 @@ $hospList = $filter->getHList();
 $aList = $filter->getAList();
 
 // Invoices
-$invoiceStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
+$invoiceStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
 // Billing agent.
 $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .
@@ -840,7 +841,7 @@ if ($useGlReport) {
 
 	//Month and Year chooser
 	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($filter->getMonths(), $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
-	$glYearSelr = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), 0, FALSE), array('name' => 'selGlYear', 'size'=>'12'));
+	$glYearSelr = HTMLSelector::generateMarkup(ReportFilter::getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), 0, FALSE), array('name' => 'selGlYear', 'size'=>'12'));
 
 }
 

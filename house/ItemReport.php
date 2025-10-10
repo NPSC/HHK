@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLContainer;
@@ -179,7 +180,7 @@ $txtEnd = '';
 $start = '';
 $end = '';
 
-$statusList = readGenLookupsPDO($dbh, 'Invoice_Status');
+$statusList = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
 
 
@@ -217,14 +218,14 @@ $cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Las
 $cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " First", 'Patient_Name_First', '', '', 'string', '20', array());
 $cFields[] = array($paTitles, $paFields, '', '', 'string', '20', array());
 
-$locations = readGenLookupsPDO($dbh, 'Location');
+$locations = Common::readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
     $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', '', '', 'string', '20', array());
 }
 
 // Diagnosis
-$diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-$diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+$diagCats = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 //prepare diag categories for doOptionsMkup
 foreach($diags as $key=>$diag){
     if(!empty($diag['Substitute'])){
@@ -252,7 +253,7 @@ foreach($cFields as $field){
 }
 
 // Items
-$addnlCharges = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$addnlCharges = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
 $stmt = $dbh->query("SELECT idItem, Description, Percentage, Last_Order_Id from item where Deleted = 0");
 $itemList = array();

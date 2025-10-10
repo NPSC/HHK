@@ -286,7 +286,7 @@ switch ($c) {
 
         break;
 
-
+/*
     case "roomrev":
 
         //get
@@ -299,7 +299,7 @@ switch ($c) {
         $events = array('success' => roomRevReport($dbh, $rb, $yr, $fyMonths));
 
         break;
-
+*/
 
     case "listcamp":
 
@@ -309,6 +309,7 @@ switch ($c) {
 
         break;
 
+/*
     case "demog":
 
         $intType = 'Y';
@@ -347,7 +348,7 @@ switch ($c) {
         return GuestDemogReport::demogReport($dbh, $interval, $startDate, $endDate, $sourceZip);
 
         break;
-
+*/
     default:
         $events = array("error" => "Bad Command:  $c");
 }

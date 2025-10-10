@@ -2,6 +2,7 @@
 namespace HHK\Update;
 
 use DateTime;
+use HHK\Common;
 use HHK\Exception\ValidationException;
 use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
@@ -518,9 +519,9 @@ class SiteConfig {
             } else if ($r['Type'] == 'lu' && $r['GenLookup'] != '') {
                 // lookup
 
-                $opts = readGenLookupsPDO($dbh, $r['GenLookup'], 'order');
+                $opts = Common::readGenLookupsPDO($dbh, $r['GenLookup'], 'order');
 
-                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($opts), $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
+                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($opts), $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
 
             } else {
 
@@ -648,7 +649,7 @@ class SiteConfig {
 
         // Payment Gateway name
         $gwName = SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway');
-        $opts = readGenLookupsPDO($dbh, 'Pay_Gateway_Name');
+        $opts = Common::readGenLookupsPDO($dbh, 'Pay_Gateway_Name');
         $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwName, TRUE), array('name' => 'payGtwyName'));
 
         $tbl->addBodyTr(

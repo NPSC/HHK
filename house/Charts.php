@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\House\Report\DailyOccupancyReport;
 use HHK\House\Report\QuarterlyOccupancyReport;
 use HHK\House\Report\RoomReport;
@@ -101,7 +102,7 @@ function todData(\PDO $dbh) {
  */
 function rmNiteData(\PDO $dbh, $year) {
 
-    $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+    $rescStatuses = Common::readGenLookupsPDO($dbh, "Resource_Status");
 
     $y = intval($year, 10);
     if ($y < 1990) {

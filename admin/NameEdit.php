@@ -1,8 +1,10 @@
 <?php
 
+use HHK\Crypto;
 use HHK\Donation\{Campaign, DonateMarkup};
 use HHK\History;
 use HHK\AlertControl\AlertMessage;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\Member\{AbstractMember, WebUser};
 use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, SalutationCodes};
 use HHK\sec\{SecurityComponent, Session, WebInit};
@@ -330,7 +332,7 @@ if ($id != 0 && $donationsFlag) {
 
     $donateMkup = DonateMarkup::createDonateMarkup(
             $CampOpt,
-            removeOptionGroups($uS->nameLookups[GLTableNames::AddrPurpose]),
+            HTMLSelector::removeOptionGroups($uS->nameLookups[GLTableNames::AddrPurpose]),
             $name->get_preferredMailAddr(),
             $uS->nameLookups[GLTableNames::SalutationCodes],
             SalutationCodes::FirstOnly,
@@ -338,7 +340,7 @@ if ($id != 0 && $donationsFlag) {
             $name->getAssocDonorList($rel),
             $name->getDefaultDonor($rel),
             $name->getAssocDonorLabel(),
-            removeOptionGroups($uS->nameLookups[GLTableNames::PayType]),
+            HTMLSelector::removeOptionGroups($uS->nameLookups[GLTableNames::PayType]),
             NULL
             );
 
@@ -384,7 +386,7 @@ $usrDataJSON = json_encode($userData);
 // Squirms
 $plus5 = time() + (1 * 60 * 60);
 
-$squirm = encryptMessage(date("Y/m/d H:i:s", $plus5));
+$squirm = Crypto::encryptMessage(date("Y/m/d H:i:s", $plus5));
 
 $PWresultMessage = "";
 

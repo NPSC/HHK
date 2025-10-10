@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\House\Report\ReportFilter;
 use HHK\sec\SecurityComponent;
@@ -552,7 +553,7 @@ function createKeyMap(\PDO $dbh) {
     $diagKeyTable->addBodyTr(HTMLTable::makeTh("Diagnosis Key", array('colspan'=>'2')));
     $diagKeyTable->addBodyTr(HTMLTable::makeTh("Code").HTMLTable::makeTh('Title'));
 
-    $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
+    $diags = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
 
     foreach ($diags as $d) {
         $diagKeyTable->addBodyTr(HTMLTable::makeTd($d[0]).HTMLTable::makeTd($d[1]));

@@ -2,6 +2,7 @@
 
 namespace HHK\House;
 
+use HHK\Common;
 use HHK\House\Attribute\Attributes;
 use HHK\Purchase\RoomRate;
 use HHK\SysConst\AttributeTypes;
@@ -774,7 +775,7 @@ WHERE
             EditRS::loadRow($rows[0], $roomRs);
         }
 
-        $cleaningCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $cleaningCodes = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         $room = new Room($dbh, 0, $roomRs);
 
@@ -801,17 +802,17 @@ WHERE
         . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id'=>'txtPhone', 'name'=>'txtPhone', 'type'=>'text', 'autocomplete'=>"off", 'class'=>$cls . ' hhk-phoneInput', 'size'=>'10')))
             // Static rate
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($rateCodes), $room->getRateCode(), FALSE), array('id'=>'selRateCode', 'class'=>$cls)))
+                    HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($rateCodes), $room->getRateCode(), FALSE), array('id'=>'selRateCode', 'class'=>$cls)))
             // Default rate category
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $room->getDefaultRateCategory(), TRUE), array('id'=>'selRateCat', 'class'=>$cls)))
+                HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($rateCategories), $room->getDefaultRateCategory(), TRUE), array('id'=>'selRateCat', 'class'=>$cls)))
             // Cleaning days
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($cleaningCodes), $room->getCleaningCycleCode(), FALSE), array('id'=>'selCleanCode', 'class'=>$cls)));
+                    HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($cleaningCodes), $room->getCleaningCycleCode(), FALSE), array('id'=>'selCleanCode', 'class'=>$cls)));
 
         if ($keyDeposit) {
             $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup(removeOptionGroups($keyDepositCodes), $room->getKeyDepositCode(), FALSE), array('id'=>'selKeyCode', 'class'=>$cls)));
+                    HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($keyDepositCodes), $room->getKeyDepositCode(), FALSE), array('id'=>'selKeyCode', 'class'=>$cls)));
         }
 
         if ($uS->PaymentGateway != '') {
@@ -891,7 +892,7 @@ WHERE
 
         $tr = HTMLTable::makeTd($saveBtn) . HTMLTable::makeTd($resc->getIdResource())
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getTitle(), array('id'=>'txtReTitle', 'size'=>'10', 'class'=>$cls)))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($resourceTypes), $resc->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($resourceTypes), $resc->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)))
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $useRooms, TRUE), array('id'=>'selRooms', 'class'=>$cls)))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')))
                 . ($uS->Room_Colors == "room" ?
@@ -927,7 +928,7 @@ WHERE
      */
     public static function dirtyOccupiedRooms(\PDO $dbh) {
 
-        $cleanDays = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $cleanDays = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         $today = new \DateTime();
         $today->setTime(0,0,0);
@@ -996,10 +997,10 @@ from
         $endDT = new \DateTime();
         //$endDT->add(new \DateInterval('P2D'));
 
-        $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
+        $roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
 
         //Resource grouping controls
-        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+        $rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
         $rescGroupBy = '';
         $genJoin = '';

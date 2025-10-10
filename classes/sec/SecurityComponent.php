@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Common;
 use HHK\Exception\AuthException;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\WebPageCode;
@@ -80,7 +81,7 @@ class SecurityComponent {
             $errorMsg = "Unauthorized for page:" . $name . " at this location";
 
             if($isLogin){
-                $dbh = initPDO(true);
+                $dbh = Common::initPDO(true);
                 UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
                 throw new AuthException($errorMsg);
             }
@@ -89,7 +90,7 @@ class SecurityComponent {
             $errorMsg = "Unauthorized for page: " . $name;
 
             if($isLogin){
-                $dbh = initPDO(true);
+                $dbh = Common::initPDO(true);
                 UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
                 throw new AuthException($errorMsg);
             }

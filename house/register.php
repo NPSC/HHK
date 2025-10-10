@@ -1,5 +1,7 @@
 <?php
 
+use HHK\Common;
+use HHK\ExcelHelper;
 use HHK\Exception\RuntimeException;
 use HHK\History;
 use HHK\House\GuestRegister;
@@ -108,25 +110,25 @@ try {
 if (isset($_POST['btnDlCurGuests'])) {
     // Current guests
     $rows = History::getCheckedInGuestMarkup($dbh, '', FALSE);
-    doExcelDownLoad($rows, 'CurrentGuests');
+    ExcelHelper::doExcelDownLoad($rows, 'CurrentGuests');
 }
 if (isset($_POST['btnDlConfRes'])) {
     // Confirmed Reservations
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'ConfirmedResv');
+    ExcelHelper::doExcelDownLoad($rows, 'ConfirmedResv');
 }
 if (isset($_POST['btnDlUcRes'])) {
     // Unconfirmed Reservations
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'UnconfirmedResv');
+    ExcelHelper::doExcelDownLoad($rows, 'UnconfirmedResv');
 }
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'Waitlist');
+    ExcelHelper::doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
     // Dailey report
@@ -155,8 +157,8 @@ if (isset($_GET['gamess'])) {
 
 }
 
-$locations = readGenLookupsPDO($dbh, 'Location');
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+$locations = Common::readGenLookupsPDO($dbh, 'Location');
+$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
 
 
 
@@ -289,7 +291,7 @@ if($uS->Show_Closed){
     $closedDays = $operatingHours->getClosedDays();
 }
 //Resource grouping controls
-$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = $uS->CalResourceGroupBy;
@@ -297,10 +299,10 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = '';
 }
 
-$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), ['id' => 'selRoomGroupScheme']);
+$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), ['id' => 'selRoomGroupScheme']);
 
 $showCharges = TRUE;
-$addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$addnl = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
 // decide to show payments and invoices
 if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->VisitFee == FALSE && $uS->KeyDeposit == FALSE) {
@@ -309,7 +311,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
 } else {
 
     // Prepare controls
-    $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
+    $statusList = Common::readGenLookupsPDO($dbh, 'Payment_Status');
     $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($statusList, ''),
         ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '7', 'multiple' => 'multiple']);
@@ -344,7 +346,7 @@ if ($uS->UseWLnotes) {
 
 $referralStatuses = "";
 if($uS->useOnlineReferral){
-    $referralStatuses = json_encode(readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
+    $referralStatuses = json_encode(Common::readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
 }
 
 
@@ -617,7 +619,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
-        <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
+        <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(Common::readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
         <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
         <input type="hidden" id="closedDays" value='<?php echo json_encode($closedDays); ?>' />
 		<input  type="hidden" id="showCurrentGuestPhotos" value='<?php echo ($uS->showCurrentGuestPhotos && $uS->ShowGuestPhoto); ?>' />

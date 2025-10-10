@@ -2,6 +2,7 @@
 
 namespace HHK\House\Constraint;
 
+use HHK\Common;
 use HHK\CreateMarkupFromDB;
 use HHK\Tables\EditRS;
 use HHK\Tables\Attribute\ConstraintRS;
@@ -47,7 +48,7 @@ class Constraints {
 
         $this->loadConstraints($dbh);
 
-        $this->constraintTypes = readGenLookupsPDO($dbh, 'Constraint_Type');
+        $this->constraintTypes = Common::readGenLookupsPDO($dbh, 'Constraint_Type');
 
     }
 

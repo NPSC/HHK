@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\sec\Login;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
@@ -37,7 +38,7 @@ $pageTitle = $ssn->siteName;
 
 // define db connection obj
 try {
-    $dbh = initPDO(TRUE);
+    $dbh = Common::initPDO(TRUE);
 } catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }

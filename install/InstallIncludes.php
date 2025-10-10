@@ -16,7 +16,7 @@ define('P_ROOT', dirname(__FILE__) . DS );
 
 
 define('REL_BASE_DIR', ".." . DS);
-define('REL_BASE_SITE', "../");
+define('REL_BASE_SITE', ".." . DS);
 define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
 define('ciCFG_FILE', 'site.cfg' );
 define('CLASSES', REL_BASE_DIR . 'classes' . DS);
@@ -36,10 +36,8 @@ date_default_timezone_set('America/Chicago');
  * includes
  */
 
-if (file_exists(REL_BASE_SITE . 'vendor/autoload.php')) {
-    require(REL_BASE_SITE . 'vendor/autoload.php');
+if (file_exists(REL_BASE_SITE . 'vendor'.DS.'autoload.php')) {
+    require(REL_BASE_SITE . 'vendor'.DS.'autoload.php');
 } else {
-    exit("Unable to laod dependancies, be sure to run 'composer install'");
+    exit("Unable to load dependancies, be sure to run 'composer install'");
 }
-
-require (FUNCTIONS . 'commonFunc.php');

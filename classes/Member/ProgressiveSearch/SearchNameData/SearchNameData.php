@@ -406,7 +406,7 @@ class SearchNameData implements SearchNameDataInterface {
     /**
      * @param string $addressStreet
      */
-    public function setAddressStreet($addressStreet, CleanAddress $cleanAddress = NULL, $include = FALSE) {
+    public function setAddressStreet($addressStreet, CleanAddress|null $cleanAddress = NULL, $include = FALSE) {
 
         if (is_null($cleanAddress)) {
             $this->addressStreet1 = trim($addressStreet);
@@ -455,7 +455,7 @@ class SearchNameData implements SearchNameDataInterface {
      *
      * @param array $r
      */
-    public function loadMeFrom(array $r, SearchNameDataInterface $formData = null) {
+    public function loadMeFrom(array $r, SearchNameDataInterface $formData) {
 
         $this->setId($r['idName'])
             ->setNameFirst($this->setIfNew($r["Name_First"], $formData->getNameFirst()))

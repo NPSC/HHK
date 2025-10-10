@@ -387,7 +387,7 @@ class CustomRegisterForm {
         return $mkup;
     }
 
-    protected function referralAgentBlock(AbstractRole $referralAgent = null) {
+    protected function referralAgentBlock(AbstractRole|null $referralAgent = null) {
 
         $mkup = "<h2 class='mb-2'>" .$this->labels->getString('Hospital', 'referralAgent', 'Referral Agent'). "</h2>";
 

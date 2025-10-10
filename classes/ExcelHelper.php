@@ -83,6 +83,48 @@ class ExcelHelper extends \XLSXWriter{
         $this->filename = $filename;
     }
 
+
+    /**
+     * Generate and download Excel file from multidimentional array
+     *
+     * @param array $rows
+     * @param string $fileName
+     * @return void
+     */
+    public static function doExcelDownLoad(array $rows, string $fileName):void
+    {
+        if (count($rows) === 0) {
+            return;
+        }
+
+        $reportRows = 1;
+        $writer = new ExcelHelper($fileName);
+
+        // build header
+        $hdr = array();
+        $colWidths = array();
+
+        $keys = array_keys($rows[0]);
+
+        foreach ($keys as $t) {
+            $hdr[$t] = "string";
+            $colWidths[] = "20";
+        }
+
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
+
+        foreach ($rows as $r) {
+
+            $flds = array_values($r);
+
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
+        }
+        $writer->download();
+    }
+
 }
 
 ?>

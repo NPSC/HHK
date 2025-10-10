@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Vantiv;
 
+use HHK\Crypto;
 use HHK\Payment\{CreditToken, Receipt};
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -808,14 +809,14 @@ class VantivGateway extends AbstractPaymentGateway {
 
         $manualPassword = $gwRs->Manual_Password->getStoredVal();
         if ($manualPassword != '') {
-        	$rows[0]['Manual_Password'] = decryptMessage($manualPassword);
+        	$rows[0]['Manual_Password'] = Crypto::decryptMessage($manualPassword);
         }
 
         $rows[0]['Manual_Mid'] = $gwRs->Manual_MerchantId->getStoredVal();
 
         $password = $gwRs->Password->getStoredVal();
         if ($password != '') {
-        	$rows[0]['Password'] = decryptMessage($password);
+        	$rows[0]['Password'] = Crypto::decryptMessage($password);
         }
 
         $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
@@ -1141,7 +1142,7 @@ class VantivGateway extends AbstractPaymentGateway {
             	$pw = filter_var($post[$indx . '_txtManMerchPW'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             	if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-            		$ccRs->Manual_Password->setNewVal(encryptMessage($pw));
+            		$ccRs->Manual_Password->setNewVal(Crypto::encryptMessage($pw));
             	} else if ($pw == '') {
             		$ccRs->Manual_Password->setNewVal('');
             	}
@@ -1168,7 +1169,7 @@ class VantivGateway extends AbstractPaymentGateway {
                 $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                    $ccRs->Password->setNewVal(encryptMessage($pw));
+                    $ccRs->Password->setNewVal(Crypto::encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->Password->setNewVal('');
                 }

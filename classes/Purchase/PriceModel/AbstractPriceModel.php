@@ -579,8 +579,6 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
 
             if ($r->FA_Category->getStoredVal() == $defaultRoomRate) {
                 $attrs['checked'] = 'checked';
-            } else {
-                unset($attrs['checked']);
             }
 
             $cbRetire = '';

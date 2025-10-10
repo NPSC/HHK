@@ -126,8 +126,6 @@ class PriceNdayBlock extends AbstractPriceModel {
 
             if ($r->FA_Category->getStoredVal() == $defaultRoomRate) {
                 $attrs['checked'] = 'checked';
-            } else {
-                unset($attrs['checked']);
             }
 
             $cbRetire = '';

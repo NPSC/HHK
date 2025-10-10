@@ -70,8 +70,6 @@ class HTMLSelector extends AbstractHTMLControl {
             if (isset($selectors[$r[0]])) {
                 $attrs['selected'] = 'selected';
                 $optionSelected = TRUE;
-            } else {
-                unset($attrs['selected']);
             }
 
             $opt .= HTMLContainer::generateMarkup('option', $r[1], $attrs);
@@ -149,6 +147,20 @@ class HTMLSelector extends AbstractHTMLControl {
 
         return $data;
 
+    }
+
+    public static function removeOptionGroups($gArray)
+    {
+        $clean = array();
+        if (is_array($gArray)) {
+            foreach ($gArray as $s) {
+                $clean[$s[0]] = array(
+                    $s[0],
+                    $s[1]
+                );
+            }
+        }
+        return $clean;
     }
 
 }

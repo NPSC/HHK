@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\Payment\Statement;
 use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
@@ -179,7 +180,7 @@ class PaymentReport {
         $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
         $name_lk = $uS->nameLookups;
-        $name_lk['Pay_Status'] = readGenLookupsPDO($dbh, 'Pay_Status');
+        $name_lk['Pay_Status'] = Common::readGenLookupsPDO($dbh, 'Pay_Status');
         $uS->nameLookups = $name_lk;
 
         // Now the data ...

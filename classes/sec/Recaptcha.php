@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use GuzzleHttp\Client;
 
@@ -33,7 +34,7 @@ class Recaptcha {
     public function __construct(){
         $uS = Session::getInstance();
 
-        $this->apiKey = decryptMessage($uS->recaptchaApiKey);
+        $this->apiKey = Crypto::decryptMessage($uS->recaptchaApiKey);
         $this->projectID = $uS->googleProjectID;
         $this->siteKey = $uS->recaptchaSiteKey;
     }

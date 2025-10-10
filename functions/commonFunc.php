@@ -1,11 +1,12 @@
 <?php
 
+use HHK\Common;
+use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{WebRole};
-use PHPMailer\PHPMailer\PHPMailer;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\SysConst\PaymentMethod;
 use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
@@ -57,7 +58,7 @@ function initPDO(bool $override = FALSE)
         }
 
         $dbuName = (!empty($config['db'][ 'ReadonlyUser']) ? $config['db'][ 'ReadonlyUser'] : '');
-        $dbPw = decryptMessage((!empty($config['db']['ReadonlyPassword']) ? $config['db']['ReadonlyPassword'] : ''));
+        $dbPw = Crypto::decryptMessage((!empty($config['db']['ReadonlyPassword']) ? $config['db']['ReadonlyPassword'] : ''));
     }
 
     try {
@@ -73,7 +74,7 @@ function initPDO(bool $override = FALSE)
         $dbh->exec("SET SESSION wait_timeout = 3600;");
 
         // Syncromize PHP and mySQL timezones
-        syncTimeZone($dbh);
+        Common::syncTimeZone($dbh);
 
     } catch (\PDOException $e) {
 
@@ -242,7 +243,7 @@ function setTimeZone($uS, $strDate)
         $uS = Session::getInstance();
     }
 
-    return newDateWithTz($strDate, $uS->tz);
+    return Common::newDateWithTz($strDate, $uS->tz);
 }
 
 function incCounter(\PDO $dbh, $counterName)
@@ -410,7 +411,7 @@ function encrypt_decrypt($action, $string, $secret_key, $secret_iv)
     }
     return $output;
 }
-
+/*
 function readGenLookups($con, $tbl, $orderBy = "Code")
 {
     if (! is_a($con, 'mysqli')) {
@@ -419,7 +420,7 @@ function readGenLookups($con, $tbl, $orderBy = "Code")
         throw new RuntimeException('Non-PDO access not supported.  ');
     }
 }
-
+*/
 function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code")
 {
     $safeTbl = str_replace("'", '', $tbl);
@@ -479,9 +480,9 @@ function doOptionsMkup($gArray, $sel, $offerBlank = true, $placeholder = "")
 
 function DoLookups($con, $tbl, $sel, $offerBlank = true)
 {
-    $g = readGenLookupsPDO($con, $tbl);
+    $g = Common::readGenLookupsPDO($con, $tbl);
 
-    return doOptionsMkup($g, $sel, $offerBlank);
+    return HTMLSelector::doOptionsMkup($g, $sel, $offerBlank);
 }
 
 function removeOptionGroups($gArray)
@@ -667,7 +668,7 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 
     if (isset($title)) {
 
-        $reserveStatuses = readLookups($dbh, "ReservStatus", "Code", true);
+        $reserveStatuses = Common::readLookups($dbh, "ReservStatus", "Code", true);
 
         foreach ($title as $k => $r) {
 

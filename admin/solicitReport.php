@@ -13,6 +13,7 @@ use HHK\Donation\Campaign;
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
+/*
 require("AdminIncludes.php");
 
 $wInit = new webInit();
@@ -180,3 +181,4 @@ $catSelExcl = "<td style='text-align: center;'>" . $catExclCtrl->createMarkup($c
         </div>
     </body>
 </html>
+*/

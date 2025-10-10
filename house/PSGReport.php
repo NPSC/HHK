@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\House\Distance\ZipDistance;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
@@ -830,12 +831,12 @@ $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
 
-$incidentStatuses = readGenLookupsPDO($dbh, 'Incident_Status', 'Order');
+$incidentStatuses = Common::readGenLookupsPDO($dbh, 'Incident_Status', 'Order');
 
 
 // Diagnosis
-$diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-$diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+$diagCats = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 //prepare diag categories for doOptionsMkup
 foreach($diags as $key=>$diag){
     if(!empty($diag['Substitute'])){
@@ -844,7 +845,7 @@ foreach($diags as $key=>$diag){
     }
 }
 
-$locs = readGenLookupsPDO($dbh, 'Location', 'Description');
+$locs = Common::readGenLookupsPDO($dbh, 'Location', 'Description');
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
@@ -1179,7 +1180,7 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 // Visit status
-$statusList = removeOptionGroups($uS->guestLookups['Visit_Status']);
+$statusList = HTMLSelector::removeOptionGroups($uS->guestLookups['Visit_Status']);
 
 // remove unused visit statuses
 unset($statusList['p']);

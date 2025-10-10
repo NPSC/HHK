@@ -315,7 +315,7 @@ class PaymentSvcs {
             $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
             $dataArray["idPayment"] = $idPayment;
         }
-
+        return $dataArray;
     }
 
     /**

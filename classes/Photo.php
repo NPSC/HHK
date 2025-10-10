@@ -2,6 +2,9 @@
 
 namespace HHK;
 
+use Exception;
+use HHK\HTMLControls\HTMLContainer;
+
 /*
  * The MIT License
  *
@@ -71,9 +74,30 @@ class Photo {
     protected function convertToSquareThumbnail($imageFile) {
 
         if ($this->getImageSizePx() > 0) {
-            $this->image = makeThumbnail($imageFile, $this->getImageSizePx(), $this->getImageSizePx());
+            $this->image = $this->makeThumbnail($imageFile, $this->getImageSizePx(), $this->getImageSizePx());
         }
 
+    }
+
+    /**
+     * Show guest photo HTML
+     *
+     * @param int $idGuest
+     * @param int $widthPx - desired pixel width of image
+     * @return string HTML formatted
+     */
+
+    public static function showGuestPicture ($idGuest, $widthPx) {
+
+        return HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
+            , array("class"=>"ui-button ui-corner-all ui-widget upload-guest-photo", 'style'=>'padding: .3em;')) . HTMLContainer::generateMarkup('div',
+            htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
+            , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
+            , array('style'=>"display:none;", 'id'=>'hhk-guest-photo-actions'))
+            ,array("class"=>"ui-widget ui-widget-content ui-corner-all", "style"=>"width:" . $widthPx . "px; height:" . $widthPx . "px; min-width:" . $widthPx . "px; background-image: url(../house/ws_resc.php?cmd=getguestphoto&guestId=$idGuest);", 'id'=>'hhk-guest-photo'));
     }
 
     public function loadGuestPhoto(\PDO $dbh, $idGuest, $defaultPhotoFilePath = '../images/defaultGuestPhoto.png') {
@@ -145,6 +169,54 @@ class Photo {
             $dbh->exec("UPDATE name_demog SET `Guest_Photo_Id` = " . $this->getImageId() . " WHERE `idName` = $id");
         }
 
+    }
+
+    /**
+     * create thumbnail from uploaded photo
+     *
+     * @param $_FILES['photo'] $photo
+     * @param int $newwidth
+     * @param int $newheight
+     * @return string|bool
+     */
+    private function makeThumbnail($photo, $newwidth, $newheight)
+    {
+        if ($photo['type'] && $photo['tmp_name']) {
+            $mime = $photo['type'];
+            $file = $photo['tmp_name'];
+            $temp = imagecreatetruecolor($newwidth, $newheight); // temp GD image object
+            list ($oldwidth, $oldheight) = getimagesize($file); // get current width & height
+
+            ob_start(); // start object buffer to capture image data
+
+            switch ($mime) {
+                case 'image/jpg':
+                case 'image/jpeg':
+
+                    $image = imagecreatefromjpeg($file); // create GD image from input file
+                    imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); // resize image and save to $temp object
+                    imagejpeg($temp); // output image
+                    break;
+
+                case 'image/png':
+
+                    $image = imagecreatefrompng($file); // create GD image from input file
+                    imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); // resize image and save to $temp object
+                    imagepng($temp); // output image
+                    break;
+
+                default:
+                    throw new Exception("File Type not supported");
+                    //break;
+            }
+
+            $thumbnailData = ob_get_contents(); // send object buffer/image data to variable
+            ob_end_clean(); // close object buffer
+
+            return $thumbnailData;
+        } else {
+            return false;
+        }
     }
 
     public function getImage() {

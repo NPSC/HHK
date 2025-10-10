@@ -11,7 +11,7 @@ use GuzzleHttp\Exception\BadResponseException;
  * @author wireland
  *
  */
-abstract class AbstractOAuth{
+abstract class AbstractOAuth implements OAuthInterface {
 
     protected Credentials $credentials;
     protected $accessToken;
@@ -31,6 +31,12 @@ abstract class AbstractOAuth{
         return $this->validateTokenResponse($tokenResponse);
     }
 
+    /**
+     * Send a GuzzleHttp request to the request an OAuth access token
+     * 
+     * @param array $requestOptions
+     * @throws \HHK\Exception\RuntimeException
+     */
     protected function sendTokenRequest(array $requestOptions){
         $client = new Client(['base_uri' => $this->credentials->getBaseURI()]);
         try {

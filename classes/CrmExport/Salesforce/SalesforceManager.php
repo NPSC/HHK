@@ -2,9 +2,11 @@
 namespace HHK\CrmExport\Salesforce;
 
 
+use HHK\Common;
 use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\CrmExport\Salesforce\Subresponse\AbstractCompositeSubresponse;
+use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\RelLinkType;
 use HHK\TableLog\ExternalAPILog;
@@ -85,10 +87,10 @@ class SalesforceManager extends AbstractExportManager {
         $credentials->setBaseURI($this->endpointURL);
         $credentials->setTokenURI(self::oAuthEndpoint);
         $credentials->setClientId($this->clientId);
-        $credentials->setClientSecret(decryptMessage($this->clientSecret));
+        $credentials->setClientSecret(Crypto::decryptMessage($this->clientSecret));
         $credentials->setSecurityToken($this->securityToken);
         $credentials->setUsername($this->userId);
-        $credentials->setPassword(decryptMessage($this->getPassword()));
+        $credentials->setPassword(Crypto::decryptMessage($this->getPassword()));
 
         $this->webService = new SF_Connector($dbh, $credentials);
     }
@@ -1265,7 +1267,7 @@ class SalesforceManager extends AbstractExportManager {
         $crmItems = $this->getRelationshipPicklist();
         $uS->crmItems = $crmItems;
 
-        $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
+        $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
 
         $stmtList = $dbh->query("Select * from sf_type_map where List_Name = 'relationTypes'");
         $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
@@ -1333,7 +1335,7 @@ class SalesforceManager extends AbstractExportManager {
             $pw = $post['_txtpwd'];
 
             if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                $crmRs->password->setnewVal(encryptMessage($pw));
+                $crmRs->password->setnewVal(Crypto::encryptMessage($pw));
             }
 
 
@@ -1345,7 +1347,7 @@ class SalesforceManager extends AbstractExportManager {
             $pw = $post['_txtclientsecret'];
 
             if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                $crmRs->clientSecret->setNewVal(encryptMessage($pw));
+                $crmRs->clientSecret->setNewVal(Crypto::encryptMessage($pw));
             }
 
         }
@@ -1427,7 +1429,7 @@ class SalesforceManager extends AbstractExportManager {
             $result .= 'CRM List Items are missing. ';
         }
 
-        $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
+        $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
 
         $stmtList = $dbh->query("Select * from sf_type_map where List_Name = 'relationTypes';");
         $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);

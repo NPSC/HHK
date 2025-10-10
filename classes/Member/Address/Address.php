@@ -357,8 +357,6 @@ class Address extends AbstractContactPoint{
             if ($this->get_preferredCode() == $addrIndex) {
                 $inptAttr['checked'] = 'checked';
                 $tabIndex = $tabCounter;
-            } else {
-                unset($inptAttr['checked']);
             }
 
             $tabs .= HTMLContainer::generateMarkup('li',
