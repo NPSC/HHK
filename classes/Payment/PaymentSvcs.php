@@ -242,6 +242,21 @@ class PaymentSvcs {
                 $rtnResult->feePaymentInvoiced($dbh, $invoice);
                 $rtnResult->setDisplayMessage('Return Amount Invoiced.  ');
                 break;
+            
+            case PayType::Transfer:
+
+                $ckResp = new TransferResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getTransferAcct(), $pmp->getPayNotes());
+
+                TransferTX::returnAmount($dbh, $ckResp, $uS->username, $pmp->getPayDate());
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, (0 - $ckResp->getAmount()), $uS->username);
+
+                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $rtnResult->feePaymentAccepted($dbh, $uS, $ckResp, $invoice);
+                $rtnResult->setDisplayMessage('Return by Transfer.  ');
+
+            break;
 
         }
 
@@ -315,6 +330,8 @@ class PaymentSvcs {
             $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
             $dataArray["idPayment"] = $idPayment;
         }
+
+        return $dataArray;
 
     }
 
