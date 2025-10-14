@@ -331,6 +331,8 @@ class PaymentSvcs {
             $dataArray["idPayment"] = $idPayment;
         }
 
+        return $dataArray;
+
     }
 
     /**
