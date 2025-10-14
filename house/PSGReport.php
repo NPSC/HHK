@@ -415,6 +415,7 @@ function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $ho
     ifnull(na.City,'') as `City`,
     ifnull(na.County, '') as `County`,
     ifnull(na.State_Province, '') as `State`,
+    ifnull(na.Postal_Code, '') as `Zip Code`,
     ifnull(na.Country_Code, '') as `Country`,
     ifnull(ng.Relationship_Code,'') as `$patRelTitle`,
     ifnull(n.BirthDate, '') as `Birth Date`,
