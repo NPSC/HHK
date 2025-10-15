@@ -31,6 +31,7 @@ class VoidCreditResponse extends AbstractCreditResponse {
         $this->idRegistration = $idGroup;
         $this->amount = $payRS->Amount->getStoredVal();
         $this->invoiceNumber = $vcr->getInvoiceNumber();
+        $this->idGuestToken = $tkRs->idGuest_token->getStoredVal();
 
         switch($this->getStatus()){
             case AbstractCreditPayments::STATUS_APPROVED:

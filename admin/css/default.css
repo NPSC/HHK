@@ -378,3 +378,16 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 #divaddrTabs button.btnTextGuest {
 	display: none;
 }
+
+
+.hhk-loading, .hhk-loading:hover {
+	background-image: url(../../images/ui-anim_basic_16x16.gif) !important;
+	background-repeat: no-repeat !important;
+	background-position: center !important;
+	min-height: 4em;
+	min-width: 4em;
+}
+
+.hhk-loading * {
+	display: none !important;
+}

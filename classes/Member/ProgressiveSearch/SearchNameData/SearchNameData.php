@@ -2,6 +2,7 @@
 namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
 use HHK\Member\Address\CleanAddress;
+use HHK\Member\Address\Phones;
 
 class SearchNameData implements SearchNameDataInterface {
 
@@ -135,8 +136,8 @@ class SearchNameData implements SearchNameDataInterface {
      * @param string $phone
      */
     public function setPhone($phone) {
-        $ary = array('+', '-');
-        $this->phone = str_replace($ary, '', filter_var($phone, FILTER_SANITIZE_NUMBER_INT));
+        $ary = array('-');
+        $this->phone = str_replace($ary, '', filter_var($phone, FILTER_SANITIZE_SPECIAL_CHARS));
         return $this;
     }
 
@@ -327,6 +328,15 @@ class SearchNameData implements SearchNameDataInterface {
     public function getPhone()
     {
         return $this->phone;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFormattedPhone()
+    {
+        $phoneAr = Phones::validateAndFormatPhoneNumber($this->phone);
+        return $phoneAr['formatted'];
     }
 
     /**

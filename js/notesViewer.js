@@ -218,6 +218,7 @@
                         return;
                     }
 
+
                     if (noteData != "") {
                         
                         //convert noteData to base64
@@ -342,9 +343,11 @@
         //Show Edit mode
         $wrapper.on('click', '.note-edit', function(e){
             e.preventDefault();
+            let noteText = $(this).data("notetext");
+            noteText = DOMPurify.sanitize(noteText, {ALLOWED_TAGS:[]});
             var selectedCategory = $(this).closest('tr').find('.noteCategory span[data-cat]').data('cat');
             $(this).closest('tr').find('.noteCategory').html(categorySelector(settings, selectedCategory));
-            $(this).closest('tr').find('.noteText').html('<div class="hhk-flex"><textarea class="p-2 hhk-autosize ui-widget-content ui-corner-all" style="width: 100%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + $(this).data('notetext') + '</textarea></div>');
+            $(this).closest('tr').find('.noteText').html('<div class="hhk-flex align-items-center"><textarea class="p-2 hhk-autosize ui-widget-content ui-corner-all" style="width: 100%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + noteText + '</textarea><button type="button" class="note-done ui-button ui-corner-all ml-2" style="min-width: fit-content">Save Note</button></div>');
             $(this).closest('td').find('.note-action').show();
             $(this).closest('td').find('.note-delete').hide();
             $(this).hide();
@@ -358,10 +361,13 @@
             var row = $(this).closest("tr");
             var noteCategory = $(this).closest('tr').find('#noteCategory').val();
             var noteText = $(this).closest('tr').find('#editNoteText').val();
-            var noteId = $(this).closest('td').find('.note-edit').data('noteid');
+            var noteId = $(this).closest('tr').find('.note-edit').data('noteid');
 
             if (noteText != "") {
-                
+
+                //encode html entities
+                //noteText = he.encode(noteText);
+
                 //convert noteText to base64
                 let base64note = buffer.Buffer.from(noteText).toString("base64");
 
@@ -378,9 +384,9 @@
                     },
                     success: function( data ){
                         if(data.idNote > 0){
-                            //$table.ajax.reload();
+                            flagAlertMessage("Note updated successfully", 'success');
                             var rowdata = $table.row(row).data();
-                            rowdata["Note"] = noteText;
+                            rowdata["Note"] = data.noteText;
                             rowdata["Category"] = noteCategory;
 							$table.row(row).data(rowdata);
 							row.find('.noteText').removeClass('hhk-flex');

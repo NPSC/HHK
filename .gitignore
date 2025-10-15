@@ -17,3 +17,5 @@ nbproject/project.xml
 .vscode/
 
 .codegpt
+
+.phpunit.cache

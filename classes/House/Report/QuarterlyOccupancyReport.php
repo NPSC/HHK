@@ -39,6 +39,11 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
     }
 
     public function makeSummaryMkup(): string {
+
+        if($this->filter->getReportStart() == $this->filter->getQueryEnd()){
+            return HTMLContainer::generateMarkup("div", "<strong>Error:</strong> report start and end dates cannot be the same", ["class"=>"ui-state-highlight ui-corner-all p-2"]);
+        }
+
         $summaryData = $this->getMainSummaryData($this->filter->getReportStart(), $this->filter->getQueryEnd());
         $ageDist = $this->getAgeDistribution($this->filter->getReportStart(), $this->filter->getQueryEnd());
 
@@ -211,7 +216,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     public function getAgeDistribution(string $start, string $end){
 
-        $query = 'select if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), "' . self::NOT_INDICATED . '") as `Key`, count(distinct n.idName) as "count" from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span join name n on s.idName = n.idName where date(s.Span_Start_Date) < date(:endDate) and date(ifnull(s.Span_End_Date, now())) > date(:startDate) and not DATE(s.Span_End_Date) <=> DATE(s.Span_Start_Date) and not DATE(v.Span_End) <=> DATE(v.Span_Start) group by `key`';
+        $query = 'select if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), if(nd.Is_Minor, "Child", "' . self::NOT_INDICATED . '")) as `Key`, count(distinct n.idName) as "count" from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span join name n on s.idName = n.idName join name_demog nd on n.idName = nd.idName where date(s.Span_Start_Date) < date(:endDate) and date(ifnull(s.Span_End_Date, now())) > date(:startDate) and not DATE(s.Span_End_Date) <=> DATE(s.Span_Start_Date) and not DATE(v.Span_End) <=> DATE(v.Span_Start) group by `key`';
         $stmt = $this->dbh->prepare($query);
         $stmt->execute([":startDate"=>$start, ":endDate"=>$end]);
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -277,10 +282,11 @@ ifnull((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date
 
     public function getGuestAvgPerNight(){
         $query = 'select
-	if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), "' . self::NOT_INDICATED . '") as "child/adult",
+	if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), if(nd.Is_Minor, "Child", "' . self::NOT_INDICATED . '")) as "child/adult",
     round(sum(DATEDIFF(IF(date(ifnull(s.Span_End_Date, now())) > date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getQueryEnd() . '"), date(ifnull(s.Span_End_Date, now()))), IF(date(s.Span_Start_Date) < date("' . $this->filter->getReportStart() . '"), date("' . $this->filter->getReportStart() . '"), date(s.Span_Start_Date))))/datediff(date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getReportStart() . '")),1) as "avg guests per night"
 from stays s
 join name n on s.idName = n.idName
+join name_demog nd on n.idName = nd.idName
 where date(ifnull(s.Span_End_Date, now())) >= date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '")
 group by `child/adult`;';
 
@@ -315,7 +321,7 @@ group by `Category` order by `count` desc;';
             $total = $this->sumTotal($data);
             foreach($data as $key=>$value){
                 $value[1] = (float) $value[1];
-                $value[0] = $value[0] . " - " . number_format($value[1]/$total*100, 1) . "%";
+                $value[0] = $value[0] . " - " . number_format(($total > 0 ? $value[1]/$total*100 : 0), 1) . "%";
                 $data[$key] = $value;
             }
         }

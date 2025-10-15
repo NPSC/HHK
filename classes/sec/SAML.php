@@ -159,7 +159,8 @@ class SAML {
         }else{
             //search for existing name record
             $idName = $this->searchName();
-            $stmt = $this->dbh->query("Select * from w_users where idName = " . $idName . ";");
+            $stmt = $this->dbh->prepare("Select * from w_users where idName = :idName;");
+            $stmt->execute([":idName"=>$idName]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             if(count($rows) == 1 && isset($rows[0]['User_Name'])){
                 $user = UserClass::getUserCredentials($this->dbh, $rows[0]['User_Name']);
@@ -295,6 +296,7 @@ class SAML {
     }
 
     private function searchName(){
+        $idName = 0;
 
         //Search by exact email address, if no results, search by first and last name, else return 0
         $firstName = (isset($this->auth->getAttribute("FirstName")[0]) ? $this->auth->getAttribute("FirstName")[0] : "");
@@ -306,7 +308,7 @@ class SAML {
             $result = $emailSearch->searchLinks($this->dbh, "e", 0, true);
 
             if(count($result) > 0 && $result[0]["id"] > 0){
-                return $result[0]["id"];
+                $idName = $result[0]["id"];
             }
         }
 
@@ -314,10 +316,10 @@ class SAML {
         $result = $nameSearch->searchLinks($this->dbh, "m", 0, true);
 
         if(count($result) == 1 && $result[0]["id"] > 0){
-            return $result[0]["id"];
+            $idName = $result[0]["id"];
         }
 
-        return 0;
+        return intval($idName);
     }
 
     public function getMetadata(){

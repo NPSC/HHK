@@ -1,3 +1,4 @@
+
 -- New visit status 'Reserved'
 INSERT ignore INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Visit_Status', 'r', 'Reserved');
 
@@ -11,3 +12,8 @@ ALTER TABLE `visit`
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES
 ('Calendar_Status_Colors', 'rv', 'Future Room Change', 'u',110);
+
+
+ALTER TABLE `reservation` 
+ADD COLUMN IF NOT EXISTS `No_Vehicle` TINYINT NOT NULL DEFAULT 0 AFTER `Number_Guests`;
+

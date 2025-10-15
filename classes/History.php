@@ -508,8 +508,7 @@ class History {
 
         $query = "select v.*,
                 IFNULL(`di`.`Description`, '') AS `demogTitle`,
-                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon`
-                from vcurrent_residents v" .
+                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` from vcurrent_residents v" .
                 ($curGuestDemogIcon != "Gender" && $curGuestDemogIcon != "" ?
                     " LEFT JOIN `name_demog` nd on v.Id = nd.idName
                       LEFT JOIN `gen_lookups` di on nd.".$curGuestDemogIcon . " = di.Code and di.Table_Name = '" . $curGuestDemogIcon . "'" : "") .

@@ -6,6 +6,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\VehicleRS;
 use HHK\sec\Labels;
+use HHK\Tables\Reservation\ReservationRS;
 
 /**
  * Vehicle.php
@@ -35,7 +36,7 @@ class Vehicle {
 
         if ($idReg > 0 && $idResv > 0){
             
-            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation from vehicle v left join name n on v.idName = n.idName left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg" . ($thisResv ? " and rv.idReservation = $idResv": ""));
+            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation, r.No_Vehicle from vehicle v left join name n on v.idName = n.idName left join reservation r on idReservation = $idResv left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg" . ($thisResv ? " and rv.idReservation = $idResv": ""));
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else if ($idReg > 0) {
 
@@ -164,7 +165,7 @@ WHERE
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup($stateOpt, array('name'=>'selVehLicense[' .$idPrefix.']', 'id'=>$idPrefix.'selVehLicense', 'class'=>'hhk-vehicle')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($carRS->License_Number->getStoredVal(), array('name'=>'txtVehLic['.$idPrefix.']', 'id'=>$idPrefix.'txtVehLic', 'class'=>'hhk-vehicle', 'size'=>'8')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($carRS->Note->getStoredVal(), array('name'=>'txtVehNote[' . $idPrefix.']', 'id'=>$idPrefix.'txtVehColor', 'class'=>'hhk-vehicle')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'cbVehDel[' .$idPrefix.']', 'type'=>'checkbox', 'class'=>'hhk-vehicle ')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'cbVehDel[]', "value"=>$idPrefix, 'type'=>'checkbox', 'class'=>'hhk-vehicle ')), array('style'=>'text-align:center;'))
                 );
         }
 
@@ -291,7 +292,7 @@ WHERE
      * @param int $idReg
      * @return string
      */
-    public static function saveVehicle(\PDO $dbh, $idReg, int $idResv = 0) {
+    public static function saveVehicle(\PDO $dbh, array $post, $idReg, int $idResv = 0, ReservationRS|null &$reservRS = null) {
         $rtnMsg = "";
 
         $args = [
@@ -303,17 +304,17 @@ WHERE
             'txtVehNote' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY],
             'selVehGuest' => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
             'cbVehResv' => ['filter' => FILTER_VALIDATE_BOOL, 'flags' => FILTER_FORCE_ARRAY],
+            'cbVehDel' => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
             'cbNoVehicle' => ['filter' => FILTER_VALIDATE_BOOLEAN],
         ];
 
-        $post = filter_input_array(INPUT_POST, $args);
+        $post = filter_var_array($post, $args);
 
         // Find any deletes
-        if (isset($_POST['cbVehDel']) && is_array($_POST['cbVehDel'])) {
+        if(is_array($post['cbVehDel'])){
+            foreach ($post['cbVehDel'] as $k => $v) {
 
-            foreach ($_POST['cbVehDel'] as $k => $v) {
-
-                $idVehicle = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
+                $idVehicle = intval($v, 10);
 
                 if ($idVehicle > 0) {
                     $carRs = new VehicleRs();
@@ -343,7 +344,7 @@ WHERE
         foreach ($post['txtVehMake'] as $k => $v) {
 
             // ignore deleted vehicles
-            if (isset($_POST['cbVehDel'][$k]) && filter_has_var(INPUT_POST, $_POST['cbVehDel'][$k])) {
+            if (is_array($post['cbVehDel']) && in_array($k, $post['cbVehDel'])) {
                 continue;
             }
 
@@ -408,7 +409,7 @@ WHERE
 
             }
 
-            if($idResv > 0){
+            if($idResv > 0 && $carRS->idVehicle->getStoredVal() > 0){
                 if(isset($post['cbNoVehicle'])){
                     unset($post['cbVehResv']);
                 }
@@ -420,6 +421,18 @@ WHERE
                     $stmt = $dbh->prepare("DELETE FROM `reservation_vehicle` WHERE `idReservation` = :idReservation AND `idVehicle` = :idVehicle;");
                     $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$carRS->idVehicle->getStoredVal()]);
                 }
+            }
+
+        }
+
+        if($idResv > 0){
+            $noVeh = isset($post['cbNoVehicle']) ? 1:0;
+
+            $stmt = $dbh->prepare("UPDATE `reservation` SET `No_Vehicle` = :noVehicle where idReservation = :idReservation;");
+            $stmt->execute([":idReservation"=>$idResv, ":noVehicle"=>$noVeh]);
+            
+            if($reservRS instanceof ReservationRS){
+                $reservRS->No_Vehicle->setStoredVal($noVeh);
             }
 
         }

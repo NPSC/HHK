@@ -442,7 +442,7 @@ class Hospital {
                 HTMLTable::makeTd(($doc->getRoleMember()->get_lastName() == '' ? '' : 'Dr. ') .
                         HTMLInput::generateMarkup(
                             $docFirst,
-                                array('name'=>'d_txtFirstName', 'size'=>'17', 'class'=>'hhk-docInfo hospital-stay name'))
+                                array('name'=>'d_txtFirstName', 'size'=>'17', 'class'=>'hhk-docInfo hospital-stay'))
                     .HTMLInput::generateMarkup($idDoc, array('name'=>'d_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
                     )
                 . HTMLTable::makeTd(

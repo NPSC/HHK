@@ -341,7 +341,7 @@ $(document).ready(function() {
                                     }else{
                                         $('form *[name="' + error.field + '"]').addClass('is-invalid');
                                         $('form *[name="' + error.field + '[]"]').addClass('is-invalid').parents(".checkbox-group").addClass('is-invalid');
-                                        $('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
+                                        $('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').html(error.error);
                                         $('.errmsg .alert-heading').text('Error');
                                         $('.errmsg #errorcontent').text('You have validation errors in your submission, please correct the fields marked in red and try again.');
                                         $('.errmsg').show();

@@ -20,6 +20,7 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManager;
 use HHK\Purchase\{CheckinCharges, PaymentChooser, RateChooser};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};
+use HHK\SysConst\ItemId;
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\ReservationRS;
 use HHK\Exception\NotFoundException;
@@ -619,7 +620,9 @@ FROM reservation r
             $numRows = $dbh->exec("
             UPDATE invoice i
                     JOIN
-                reservation_invoice ri ON ri.Invoice_Id = i.idInvoice
+                invoice_line il on il.Invoice_Id = i.idInvoice
+                    JOIN
+                reservation_invoice_line ri ON ri.Invoice_Line_Id = il.idInvoice_Line
             SET
                 i.Order_Number = ".$visit->getIdVisit()."
             WHERE
@@ -627,7 +630,7 @@ FROM reservation r
 
             // Relate Invoice to Reservation
             if ($numRows > 1 && ! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $this->reserveData->getIdResv() > 0) {
-                $dbh->exec("insert ignore into `reservation_invoice` Values(".$this->reserveData->getIdResv()."," .$this->payResult->getIdInvoice() . ")");
+                $dbh->exec("insert ignore into `reservation_invoice_line` select '".$this->reserveData->getIdResv()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "'");
             }
 
         }

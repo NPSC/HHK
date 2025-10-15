@@ -863,6 +863,76 @@ $(document).on('change', "#numAddrCalc", function(){
         }
     ];
 
+    var dtAPIAccessLogCols = [
+        {
+            targets: [0],
+            className: 'dt-control',
+            orderable: false,
+            data: null,
+            defaultContent: ''
+        },
+        {
+            "targets": [1],
+            "title": "Request Endpoint",
+            "searchable": false,
+            "sortable": false,
+            "data": "requestPath",
+        },
+        {
+            "targets": [2],
+            "title": "Response Code",
+            "searchable": false,
+            "sortable": true,
+            "data": "responseCode",
+        },
+        {
+            "targets": [3],
+            "title": "OAuth Client ID",
+            "searchable": false,
+            "sortable": true,
+            "data": "oauth_client_id",
+        },
+        {
+            "targets": [4],
+            "title": "oauth_access_token_id",
+            "searchable": true,
+            "sortable": true,
+            "data": "oauth_access_token_id",
+            "visible": false,
+        },
+        {
+            "targets": [5],
+            "title": "Request",
+            "searchable": true,
+            "sortable": true,
+            "data": "request",
+            "visible": false,
+        },
+        {
+            "targets": [6],
+            "title": "Response",
+            "searchable": true,
+            "sortable": true,
+            "data": "response",
+            "visible": false,
+        },
+        {
+            "targets": [7],
+            "title": "IP Address",
+            "searchable": true,
+            "sortable": true,
+            "data": "ip_address",
+        },
+        {
+            "targets": [8],
+            "title": "Timestamp",
+            'data': 'Timestamp',
+            render: function (data, type) {
+                return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
+            }
+        }
+    ];
+
     $('#logsTabDiv').tabs({
 
         beforeActivate: function (event, ui) {
@@ -891,6 +961,39 @@ $(document).on('change', "#numAddrCalc", function(){
                             }
                         }
                     });
+                } else if (pid == "liapi") {
+
+                    let table = $('#table' + pid).dataTable({
+                        "columnDefs": dtAPIAccessLogCols,
+                        "serverSide": true,
+                        "processing": true,
+                        //"deferRender": true,
+                        "language": { "sSearch": "Search Log:" },
+                        "sorting": [[8, 'desc']],
+                        "displayLength": 25,
+                        "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
+                        ajax: {
+                            url: 'ws_gen.php',
+                            data: {
+                                'cmd': 'showAPIAccessLog'
+                            }
+                        }
+                    });
+
+                    table.on('click', 'td.dt-control', function (e) {
+                        let tr = e.target.closest('tr');
+                        let row = table.DataTable().row(tr);
+                    
+                        if (row.child.isShown()) {
+                            // This row is already open - close it
+                            row.child.hide();
+                        }
+                        else {
+                            // Open this row
+                            row.child(formatAPIDetails(row.data())).show();
+                        }
+                    });
                 } else {
 
                     $('#table' + pid).dataTable({
@@ -915,6 +1018,26 @@ $(document).on('change', "#numAddrCalc", function(){
             }
         }
     });
+
+    function formatAPIDetails(row){
+        return `
+            <div>` +
+            (row.oauth_access_token_id ?
+                `<div class="mb-3">
+                    <strong>Access Token ID</strong>
+                    <pre style="white-space: pre-wrap;">${row.oauth_access_token_id}</pre>
+                </div>` : '') +
+                `<div class="mb-3">
+                    <strong>Request</strong>
+                    <pre style="white-space: pre-wrap;">${row.request}</pre>
+                </div>
+                <div>
+                    <strong>Response</strong>
+                    <pre style="white-space: pre-wrap;">${row.response}</pre>
+                </div>
+            </div>
+        `;
+    }
 
     $('#logsTabDiv').tabs("option", "active", 1);
 

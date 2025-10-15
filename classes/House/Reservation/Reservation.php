@@ -865,11 +865,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $reg = new Registration($dbh, 0, $regId);
 
-        $noVeh = $reg->getNoVehicle();
-
-        if ($reg->isNew()) {
-            $noVeh = '1';
-        }
+        $noVeh = $this->reservRs->No_Vehicle->getStoredVal();
 
         return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal(), $noVeh, $refVehicle);
 
@@ -1265,8 +1261,7 @@ WHERE
             'selVisitFee' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
         ];
 
-        $post = filter_input_array(INPUT_POST, $args);
-
+        $post = filter_var_array($this->reserveData->getRawPost(), $args);
 
         // Get the rate category
         if (isset($post['selRateCategory']) && (SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN) || $uS->RateChangeAuth === FALSE)) {

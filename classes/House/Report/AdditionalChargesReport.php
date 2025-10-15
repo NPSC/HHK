@@ -73,7 +73,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     }
 
     protected function getAdditionalChargesMarkup(){
-        $additionalChargesSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->additionalCharges, $this->selectedAdditionalCharges), array('name' => 'selAdditionalCharges[]', 'size' => (count($this->additionalCharges) + 3), 'multiple' => 'multiple'));
+        $additionalChargesSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->additionalCharges, $this->selectedAdditionalCharges), array('name' => 'selAdditionalCharges[]', 'size' => (count($this->additionalCharges) + 3), 'multiple' => 'multiple', 'style'=>'width: 100%;'));
         $tbl = new HTMLTable();
         $tr = '';
         

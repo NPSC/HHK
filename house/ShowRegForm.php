@@ -46,6 +46,8 @@ $idPayment = 0;
 $paymentMarkup = '';
 $regDialogmkup = '';
 $receiptMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 $invoiceNumber = '';
 $menuMarkup = '';
 $regButtonStyle = 'display:none;';
@@ -61,6 +63,7 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
         $idRegistration = $payResult->getIdRegistration();
         $idPayment = $payResult->getIdPayment();
         $invoiceNumber = $payResult->getInvoiceNumber();
@@ -304,6 +307,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
             $(document).ready(function(){
                 let idReg = '<?php echo $idRegistration; ?>';
                 let rctMkup = '<?php echo $receiptMarkup; ?>';
+                let receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
                 let regMarkup = '<?php echo $regDialogmkup; ?>';
                 let payId = '<?php echo $idPayment; ?>';
                 let invoiceNumber = '<?php echo $invoiceNumber; ?>';
@@ -313,7 +317,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
                 let idPsg = '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>';
                 let signatures = <?php echo json_encode($signatures); ?>;
 
-                setupRegForm(idReg, rctMkup, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
+                setupRegForm(idReg, rctMkup, receiptBilledToEmail, regMarkup, payId, invoiceNumber, vid, rid, idPrimaryGuest, idPsg);
                 setupEsign();
                 loadSignatures(signatures);
             });

@@ -410,11 +410,16 @@ function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $ho
     ifnull(ng.idName, 0) as `Id`,
     ifnull(n.Name_First,'') as `First`,
     ifnull(n.Name_Last,'') as `Last`,
+    ifnull(na.Address_1,'') as `Street`,
+    ifnull(na.Address_2,'') as `Apt`,
+    ifnull(na.City,'') as `City`,
     ifnull(na.County, '') as `County`,
     ifnull(na.State_Province, '') as `State`,
+    ifnull(na.Postal_Code, '') as `Zip Code`,
     ifnull(na.Country_Code, '') as `Country`,
     ifnull(ng.Relationship_Code,'') as `$patRelTitle`,
     ifnull(n.BirthDate, '') as `Birth Date`,
+    if(n.Member_Status = 'd', 'Deceased', '') as `Status`,
     ifnull(hs.idHospital, '') as `$hospTitle`,
     ifnull(hs.idAssociation, '') as `Association`,
     ifnull(g.Description, hs.Diagnosis) as `$diagTitle`,
@@ -1287,7 +1292,7 @@ if ($uS->UseIncidentReports) {
                 $('#tblrpt').dataTable({
 	                "displayLength": 50,
 	                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-	                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+	                "dom": "<\"top ui-toolbar ui-helper-clearfix\"if><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
 	                "order": [[1, 'asc']]
             	});
                 } catch (error) {}
@@ -1296,14 +1301,6 @@ if ($uS->UseIncidentReports) {
                 $("div#printArea").printArea();
             });
         }
-        $('.ckdate').datepicker({
-            yearRange: '<?php echo $uS->StartYear; ?>:+01',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
 
         <?php echo $filter->getTimePeriodScript(); ?>;
 

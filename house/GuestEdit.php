@@ -76,6 +76,8 @@ $memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
 $receiptMarkup = '';
 $paymentMarkup = '';
+$receiptBilledToEmail = '';
+$receiptPaymentId = 0;
 
 
 // Hosted payment return
@@ -84,6 +86,8 @@ try {
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
+        $receiptBilledToEmail = $payResult->getInvoiceBillToEmail($dbh);
+        $receiptPaymentId = $payResult->getIdPayment();
 
         //make receipt copy
         if($receiptMarkup != '' && $uS->merchantReceipt == true) {
@@ -100,7 +104,7 @@ try {
         }
 
         if(WebInit::isAJAX()){
-            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage()]);
+            echo json_encode(["receipt"=>$receiptMarkup, ($payResult->wasError() ? "error": "success")=>$payResult->getDisplayMessage(), 'idPayment'=>$receiptPaymentId, 'billToEmail'=>$receiptBilledToEmail]);
             exit;
         }
     }
@@ -358,12 +362,12 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
             $msg .= $registration->saveRegistrationRs($dbh, $psg->getIdPsg(), $uname);
 
             //save checklists
-            if(Checklist::saveChecklist($dbh, $psg->getIdPsg(), ChecklistType::PSG) > 0){
+            if(Checklist::saveChecklist($dbh, $_POST, $psg->getIdPsg(), ChecklistType::PSG) > 0){
                 $msg .= " Checklist items updated.";
             }
 
             if ($uS->TrackAuto && $registration->getNoVehicle() == 0) {
-                Vehicle::saveVehicle($dbh, $registration->getIdRegistration());
+                Vehicle::saveVehicle($dbh, $_POST, $registration->getIdRegistration());
             }
 
 
@@ -514,7 +518,7 @@ if ($psg->getIdPsg() > 0) {
             ['class' => 'hhk-panel mb-3 mr-3'])) . $ccMarkup;
 
     if ($uS->TrackAuto) {
-        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), 0, $registration->getNoVehicle());
+        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), 0, 0);
     }
 
     // Look for visits
@@ -625,7 +629,7 @@ if ($psg->getIdPsg() > 0) {
 
         $getResvArray = ['href' => "Reserve.php?rid=" . $reserv->getIdReservation()];
 
-        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), $getResvArray))
+        $rtbl->addBodyTr(HTMLTable::makeTd($reserv->getIdVisit($dbh) == 0 ? HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), $getResvArray) : $reserv->getIdReservation())
             . HTMLTable::makeTd($reserv->getStatusTitle($dbh, $reserv->getStatus()))
             . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
             . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
@@ -756,7 +760,10 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
@@ -765,6 +772,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="js/statement.js"></script>
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
@@ -1022,6 +1030,8 @@ $uS->guestId = $id;
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
             var rctMkup = '<?php echo $receiptMarkup; ?>';
+            var receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
+            var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
             var pmtMkup = '<?php echo $paymentMarkup; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
@@ -1032,3 +1042,4 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo GUESTLOAD_JS; ?>"></script>
     </body>
 </html>
+

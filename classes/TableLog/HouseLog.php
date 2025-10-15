@@ -155,6 +155,30 @@ class HouseLog extends AbstractTableLog {
     }
 
     /**
+     * Log API Client
+     *
+     * @param \PDO $dbh
+     * @param string $type insert, update, etc
+     * @param string $clientId
+     * @param string $logText
+     * @param string $userName
+     * @return number
+     */
+    public static function logAPIClient(\PDO $dbh, string $type, string $clientId, string $logText, string $userName) {
+
+        $logRS = new House_LogRS();
+        $logRS->Log_Type->setNewVal('API Client');
+        $logRS->Sub_Type->setNewVal($type);
+        $logRS->Str1->setNewVal($clientId);
+        $logRS->Log_Text->setNewVal($logText);
+        $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
+
+        return self::insertLog($dbh, $logRS);
+
+    }
+
+    /**
      * Log errors/exceptions
      *
      * @param \PDO $dbh

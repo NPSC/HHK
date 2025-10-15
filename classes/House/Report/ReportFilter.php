@@ -7,6 +7,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\VolMemberType;
+use RuntimeException;
 
 /*
  * The MIT License
@@ -285,9 +286,9 @@ class ReportFilter {
         if (isset($this->calendarOptions[self::DATES])) {
             $tbl->addBodyTr(HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('span', 'Start:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
-                . HTMLInput::generateMarkup($this->selectedStart, array('name'=>"stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
+                . HTMLInput::generateMarkup($this->reportStart, array('type'=>'date', 'name'=>"stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 . HTMLContainer::generateMarkup('span', 'End:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
-                . HTMLInput::generateMarkup($this->selectedEnd, array('name'=>"enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
+                . HTMLInput::generateMarkup($this->reportEnd, array('type'=>'date', 'name'=>"enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 , array('colspan'=>'3')
                 ), array('class'=>'dates'));
         }
@@ -310,7 +311,7 @@ changeMonth: true,
 changeYear: true,
 autoSize: true,
 numberOfMonths: 1,
-dateFormat: 'M d, yy'
+dateFormat: 'yy-mm-dd'
 });";
         }
 
@@ -395,9 +396,14 @@ $ckdate";
 
         } else if ($this->selectedCalendar == self::DATES) {
             // selected dates.
-            $startDT = new \DateTime($this->selectedStart);
-            $endDT = new \DateTime($this->selectedEnd);
-
+            try{
+                $startDT = new \DateTime($this->selectedStart);
+                $endDT = new \DateTime($this->selectedEnd);
+            } catch (\Exception $e){
+                //default to this month.
+                $startDT = new \DateTime(date('Y-m-01'));
+                $endDT = new \DateTime(date('Y-m-t'));
+            }
 
             if ($startDT <= $endDT) {
                 $this->reportEnd = $endDT->format('Y-m-d');
@@ -408,6 +414,9 @@ $ckdate";
                 $this->reportEnd = $startDT->format('Y-m-d');
                 $this->queryEnd = $startDT->format('Y-m-d');
             }
+
+            $this->selectedStart = $startDT->format("M d, Y");
+            $this->selectedEnd = $endDT->format("M d, Y");
 
         } else if ($this->selectedCalendar == self::MONTHS){
             // Months
@@ -690,7 +699,7 @@ $ckdate";
     public function billingAgentMarkup() {
 
         $agents = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->billingAgents, $this->selectedBillingAgents, TRUE),
-        array('name'=>'selBillingAgents[]', 'size'=>(count($this->billingAgents)>12 ? '12' : count($this->billingAgents)), 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
+        array('name'=>'selBillingAgents[]', 'size'=>(count($this->billingAgents)>12 ? '12' : count($this->billingAgents))+1, 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
 
         $tbl = new HTMLTable();
 

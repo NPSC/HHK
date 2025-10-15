@@ -667,7 +667,7 @@ where `lp`.`idPayment` > 0
             // Invoice number
             if ($invNumber != '') {
 
-                $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank'];
+                $iAttr = ['href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'target' => '_blank'];
 
                 if ($r['Invoice_Deleted'] > 0) {
                     $iAttr['style'] = 'color:red;';
@@ -683,7 +683,7 @@ where `lp`.`idPayment` > 0
                         . HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'style' => 'cursor:pointer;', 'title' => 'View Items']);
             }
 
-            $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, ["style" => 'white-space:nowrap']);
+            $invoiceMkup = HTMLContainer::generateMarkup('div', $invNumber, ["class" => 'd-flex justify-content-between align-items-center']);
 
             // Set up actions
             foreach ($i['p'] as $p) {
@@ -776,7 +776,7 @@ where `lp`.`idPayment` > 0
                 if ($showExternlId) {
                     $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
                 }
-                $trow .= HTMLTable::makeTd($p['Payment_Note']);
+                $trow .= HTMLTable::makeTd($p['Payment_Note'], ['style'=>'white-space: normal;']);
 
                 $tbl->addBodyTr($trow);
 
@@ -848,7 +848,7 @@ where `lp`.`idPayment` > 0
 
         $refresh = HTMLInput::generateMarkup("Refresh", ['type' => 'button', 'id' => 'btnPayHistRef', 'style' => 'float:right; margin-right:0.8em;margin-top:1em;']);
 
-        return HTMLContainer::generateMarkup('div', "$header$summary$refresh$listing", ['style' => 'min-width:900px;']);
+        return HTMLContainer::generateMarkup('div', "$header$summary$refresh$listing", ['style' => 'min-width:100%;']);
     }
 
     /**

@@ -6,6 +6,7 @@ namespace HHK\House;
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\House\Reservation\ReservationSvcs;
+use HHK\Exception\UnexpectedValueException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
@@ -51,6 +52,7 @@ use HHK\Tables\Visit\Visit_LogRS;
 use HHK\sec\Labels;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
+use PDOException;
 
 
 
@@ -524,6 +526,17 @@ class HouseServices {
                 if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
                     $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
                 }
+
+                //add paymentId
+                if (is_null($payResult->getIdPayment()) === FALSE && $payResult->getIdPayment() != 0) {
+                    $dataArray['idPayment'] = $payResult->getIdPayment();
+                }
+
+                //add billToEmail
+                $billToEmail = $payResult->getInvoiceBillToEmail($dbh);
+                if ($billToEmail !== '') {
+                    $dataArray['billToEmail'] = $billToEmail;
+                }
             }
         }
 
@@ -691,6 +704,17 @@ class HouseServices {
             if ($payResult->getInvoiceNumber() != '') {
                 $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
             }
+
+            //add paymentId
+            if (is_null($payResult->getIdPayment()) === FALSE && $payResult->getIdPayment() != 0) {
+                $dataArray['idPayment'] = $payResult->getIdPayment();
+            }
+
+            //add billToEmail
+            $billToEmail = $payResult->getInvoiceBillToEmail($dbh);
+            if ($billToEmail !== '') {
+                $dataArray['billToEmail'] = $billToEmail;
+            }
         }
 
         // divert to credit payment site.
@@ -703,6 +727,7 @@ class HouseServices {
         }
 
         $dataArray['success'] = $reply;
+        $dataArray['error'] = $payResult->getErrorMessage();
 
         return $dataArray;
     }
@@ -827,6 +852,17 @@ class HouseServices {
                     if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
                         $dataArray['reply'] = $codes[$addnlCharge][1] . ': item recorded. ';
+                        
+                        //add paymentId
+                        if (is_null($payResult->getIdPayment()) === FALSE && $payResult->getIdPayment() != 0) {
+                            $dataArray['idPayment'] = $payResult->getIdPayment();
+                        }
+
+                        //add billToEmail
+                        $billToEmail = $payResult->getInvoiceBillToEmail($dbh);
+                        if ($billToEmail !== '') {
+                            $dataArray['billToEmail'] = $billToEmail;
+                        }
                     }
 
                 } else {
@@ -1247,14 +1283,14 @@ ORDER BY Span;";
         $vRows = EditRS::select($dbh, $nextVisitRs, array($nextVisitRs->idVisit, $nextVisitRs->Span));
 
         if (count($vRows) != 1) {
-            return 'Next Visit Span not found.  ';
+            throw new UnexpectedValueException('Next Visit Span not found.');
         }
 
         EditRS::loadRow($vRows[0], $nextVisitRs);
 
         // Next visit must be the last.
-        if ($nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedIn && $nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedOut) {
-            return 'Cannot Undo this room change. The next Visit Span must be Checked-in or Checked-out.  ';
+        if ($nextVisitRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
+            throw new UnexpectedValueException('Cannot Undo this room change. The next Visit Span must be Checked-in.');
         }
 
         // Dates
@@ -1286,7 +1322,7 @@ ORDER BY Span;";
 
         // Check room availability
         if ($resv->isResourceOpen($dbh, $visit->getidResource(), $startDt, $expDepDT->format('Y-m-d 01:00:00'), $numOccupants, ['room', 'rmtroom', 'part'], TRUE, TRUE) === FALSE) {
-            return 'The room is unavailable. ';
+            throw new UnexpectedValueException('The room is unavailable. ');
         }
 
         // Get new room cleaning status to copy to original room
@@ -1295,98 +1331,113 @@ ORDER BY Span;";
         $room = array_shift($rooms);
         $roomStatus = $room->getStatus();
 
-        // Undo visit checkout
-        $visit->visitRS->Actual_Departure->setNewVal($nextVisitRs->Actual_Departure->getStoredVal());
-        $visit->visitRS->Span_End->setNewVal($nextVisitRs->Span_End->getStoredVal());
-        $visit->visitRS->Expected_Departure->setNewVal($expDepDT->format('Y-m-d 10:00:00'));
-        $visit->visitRS->Status->setNewVal($nextVisitRs->Status->getStoredVal());
+        try{
+            if(!$dbh->inTransaction()){
+                $dbh->beginTransaction();
+            }
+        
+            // Undo visit checkout
+            $visit->visitRS->Actual_Departure->setNewVal($nextVisitRs->Actual_Departure->getStoredVal());
+            $visit->visitRS->Span_End->setNewVal($nextVisitRs->Span_End->getStoredVal());
+            $visit->visitRS->Expected_Departure->setNewVal($expDepDT->format('Y-m-d 10:00:00'));
+            $visit->visitRS->Status->setNewVal($nextVisitRs->Status->getStoredVal());
 
-        $updateCounter = $visit->updateVisitRecord($dbh, $uname);
+            $updateCounter = $visit->updateVisitRecord($dbh, $uname);
 
-        if ($updateCounter != 1) {
-            throw new RuntimeException('Visit table update failed. Checkout is not undone.');
-        }
+            if ($updateCounter != 1) {
+                throw new RuntimeException('Visit table update failed. Checkout is not undone.');
+            }
 
-        // update Reservation
-        $resv->setIdResource($visit->getidResource());
-        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
+            // update Reservation
+            $resv->setIdResource($visit->getidResource());
+            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
-        // remove the next visit
-        EditRS::delete($dbh, $nextVisitRs, [$nextVisitRs->idVisit, $nextVisitRs->Span]);
-        $logDelText = VisitLog::getDeleteText($nextVisitRs, $nextVisitRs->idVisit->getStoredVal());
-        VisitLog::logVisit($dbh, $nextVisitRs->idVisit->getStoredVal(), $nextVisitRs->Span->getStoredVal(), $nextVisitRs->idResource->getStoredVal(), $nextVisitRs->idRegistration->getStoredVal(), $logDelText, "delete", $uname);
+            // remove the next visit
+            EditRS::delete($dbh, $nextVisitRs, [$nextVisitRs->idVisit, $nextVisitRs->Span]);
+            $logDelText = VisitLog::getDeleteText($nextVisitRs, $nextVisitRs->idVisit->getStoredVal());
+            VisitLog::logVisit($dbh, $nextVisitRs->idVisit->getStoredVal(), $nextVisitRs->Span->getStoredVal(), $nextVisitRs->idResource->getStoredVal(), $nextVisitRs->idRegistration->getStoredVal(), $logDelText, "delete", $uname);
 
 
-        // original stays with status = changeRoom.
-        $visit->loadStays($dbh, VisitStatus::NewSpan);
-        foreach ($visit->stays as $s) {
+            // original stays with status = changeRoom.
+            $visit->loadStays($dbh, VisitStatus::NewSpan);
+            foreach ($visit->stays as $s) {
 
-            // Check status in next stay
+                // Check status in next stay
+                foreach ($nextStays as $ns) {
+
+                    if ($s->idName->getStoredVal() == $ns->idName->getStoredVal()
+                            && date('Y-m-d', strtotime($s->Span_End_Date->getStoredVal())) == date('Y-m-d', strtotime($ns->Span_Start_Date->getStoredVal()))) {
+
+                        $s->Checkout_Date->setNewVal($ns->Checkout_Date->getStoredVal());
+                        $s->Span_End_Date->setNewVal($ns->Span_End_Date->getStoredVal());
+                        $s->Status->setNewVal($ns->Status->getStoredVal());
+                        $s->Expected_Co_Date->setNewVal($ns->Expected_Co_Date->getStoredVal());
+                        $s->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                        $s->Updated_By->setNewVal($uname);
+
+                        $cnt = EditRS::update($dbh, $s, array($s->idStays));
+                        if ($cnt > 0) {
+                            $logText = VisitLog::getUpdateText($s);
+                            EditRS::updateStoredVals($s);
+                            VisitLog::logStay($dbh, $s->idVisit->getStoredVal(), $s->Visit_Span->getStoredVal(), $s->idRoom->getStoredVal(), $s->idStays->getStoredVal(), $s->idName->getStoredVal(), $visit->getIdRegistration(), $logText, "update", $uname);
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+
+            // Next stays that are not in original stays
             foreach ($nextStays as $ns) {
 
-                if ($s->idName->getStoredVal() == $ns->idName->getStoredVal()
-                        && date('Y-m-d', strtotime($s->Span_End_Date->getStoredVal())) == date('Y-m-d', strtotime($ns->Span_Start_Date->getStoredVal()))) {
+                // remove the known stays
+                foreach ($stays as $s) {
 
-                    $s->Checkout_Date->setNewVal($ns->Checkout_Date->getStoredVal());
-                    $s->Span_End_Date->setNewVal($ns->Span_End_Date->getStoredVal());
-                    $s->Status->setNewVal($ns->Status->getStoredVal());
-                    $s->Expected_Co_Date->setNewVal($ns->Expected_Co_Date->getStoredVal());
-                    $s->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-                    $s->Updated_By->setNewVal($uname);
+                    if ($s->idName->getStoredVal() == $ns->idName->getStoredVal()
+                            && date('Y-m-d', strtotime($s->Span_End_Date->getStoredVal())) == date('Y-m-d', strtotime($ns->Span_Start_Date->getStoredVal()))) {
 
-                    $cnt = EditRS::update($dbh, $s, array($s->idStays));
-                    if ($cnt > 0) {
-                        $logText = VisitLog::getUpdateText($s);
-                        EditRS::updateStoredVals($s);
-                        VisitLog::logStay($dbh, $s->idVisit->getStoredVal(), $s->Visit_Span->getStoredVal(), $s->idRoom->getStoredVal(), $s->idStays->getStoredVal(), $s->idName->getStoredVal(), $visit->getIdRegistration(), $logText, "update", $uname);
+                        EditRS::delete($dbh, $ns, [$ns->idStays]);
+                        continue 2;
                     }
-
-                    break;
                 }
-            }
-        }
 
+                // just change the span.
+                $ns->Visit_Span->setNewVal($visit->getSpan());
 
-        // Next stays that are not in original stays
-        foreach ($nextStays as $ns) {
+                $ns->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                $ns->Updated_By->setNewVal($uname);
 
-            // remove the known stays
-            foreach ($stays as $s) {
-
-                if ($s->idName->getStoredVal() == $ns->idName->getStoredVal()
-                        && date('Y-m-d', strtotime($s->Span_End_Date->getStoredVal())) == date('Y-m-d', strtotime($ns->Span_Start_Date->getStoredVal()))) {
-
-                    EditRS::delete($dbh, $ns, [$ns->idStays]);
-                    continue 2;
+                $cnt = EditRS::update($dbh, $ns, array($ns->idStays));
+                if ($cnt > 0) {
+                    $logText = VisitLog::getUpdateText($ns);
+                    EditRS::updateStoredVals($ns);
+                    VisitLog::logStay($dbh, $ns->idVisit->getStoredVal(), $ns->Visit_Span->getStoredVal(), $ns->idRoom->getStoredVal(), $ns->idStays->getStoredVal(), $ns->idName->getStoredVal(), $visit->getIdRegistration(), $logText, "update", $uname);
                 }
+
             }
 
-            // just change the span.
-            $ns->Visit_Span->setNewVal($visit->getSpan());
+            // Update room cleaning status of this room
+            $resc2 = AbstractResource::getResourceObj($dbh, $visit->getidResource());
+            $rooms2 = $resc2->getRooms();
+            $room2 = array_shift($rooms2);
+            $room2->setStatus($roomStatus);
+            $room2->saveRoom($dbh, $uname, TRUE, $roomStatus);
 
-            $ns->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-            $ns->Updated_By->setNewVal($uname);
+            // Update invoices
+            $dbh->exec("Update invoice set Suborder_Number = " . $visit->getSpan() . " where Order_Number = " . $visit->getIdVisit() . " and Suborder_Number != ". $visit->getSpan());
 
-            $cnt = EditRS::update($dbh, $ns, array($ns->idStays));
-            if ($cnt > 0) {
-                $logText = VisitLog::getUpdateText($ns);
-                EditRS::updateStoredVals($ns);
-                VisitLog::logStay($dbh, $ns->idVisit->getStoredVal(), $ns->Visit_Span->getStoredVal(), $ns->idRoom->getStoredVal(), $ns->idStays->getStoredVal(), $ns->idName->getStoredVal(), $visit->getIdRegistration(), $logText, "update", $uname);
+            if($dbh->inTransaction()){
+                $dbh->commit();
             }
 
+            return "Change Rooms is undone.  ";
+        }catch (PDOException $e){
+            if($dbh->inTransaction()){
+                $dbh->rollBack();
+            }
+            throw new UnexpectedValueException("Undo Room Change Failed");
         }
-
-        // Update room cleaning status of this room
-        $resc2 = AbstractResource::getResourceObj($dbh, $visit->getidResource());
-        $rooms2 = $resc2->getRooms();
-        $room2 = array_shift($rooms2);
-        $room2->setStatus($roomStatus);
-        $room2->saveRoom($dbh, $uname, TRUE, $roomStatus);
-
-        // Update invoices
-        $dbh->exec("Update invoice set Suborder_Number = " . $visit->getSpan() . " where Order_Number = " . $visit->getIdVisit() . " and Suborder_Number != ". $visit->getSpan());
-
-        return "Change Rooms is undone.  ";
 
     }
 

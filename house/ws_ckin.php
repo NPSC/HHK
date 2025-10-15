@@ -1,5 +1,6 @@
 <?php
 use HHK\House\Visit\VisitViewer;
+use HHK\Exception\UnexpectedValueException;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\SecurityComponent;
@@ -39,6 +40,7 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
+$debugMode = ($uS->mode == "dev");
 
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
@@ -264,7 +266,7 @@ try {
 
             $regForms = $uS->regFormObjs;
 
-            if(isset($uS->regFormObjs[$uuid]) && !$uS->regFormObjs[$uuid] === null){
+            if(isset($uS->regFormObjs[$uuid]) && is_array($uS->regFormObjs[$uuid])){
                 //find this form
                 foreach($uS->regFormObjs[$uuid] as $doc){
                     if($doc["tabIndex"] === $formCode){
@@ -791,6 +793,43 @@ try {
 
         break;
 
+    case 'emailReceipt':
+        
+        $idPayment = 0;
+        if (isset($_POST['paymentId'])) {
+            $idPayment = intval(filter_var($_POST['paymentId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $emailAddress = "";
+        if (isset($_POST['emailAddress'])) {
+            $emailAddress = filter_var($_POST['emailAddress'], FILTER_SANITIZE_EMAIL);
+        }
+
+        $receiptAr = PaymentSvcs::generateReceipt($dbh, $idPayment);
+
+        if(isset($receiptAr["receipt"], $receiptAr["invoice"]) && $receiptAr["invoice"] instanceof Invoice){
+            $events = PaymentSvcs::sendReceiptEmail($dbh, $receiptAr["receipt"], $receiptAr["invoice"], $emailAddress);
+        }
+
+        
+
+        break;
+
+    case 'downloadReceipt':
+        // reprint a receipt
+        $idPayment = 0;
+        if (isset($_GET['paymentId'])) {
+            $idPayment = intval(filter_var($_GET['paymentId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        try{
+            PaymentSvcs::downloadReceipt($dbh, $idPayment);
+        }catch(\Exception $e){
+            $events = ["error"=>$e->getMessage()];
+        }
+
+        break;
+
     case "chgPmtAmt":
         // respond to changes in payment record amount on Recent Payments tab and Guest Edit payments tab.
 
@@ -831,15 +870,18 @@ if(isset($events['receipt']) && $uS->merchantReceipt == true){
 }
 
 } catch (\PDOException $ex) {
-    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
+    $events = ["error" => "Database Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
+} catch(UnexpectedValueException $ex){
+    $events = ["error" => $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 } catch (\Exception $ex) {
-    $events = ["error" => "Web Server Error: " . $ex->getMessage()];
+    $events = ["error" => "Web Server Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 }
 
 
 
 if (is_array($events)) {
 
+    setHeaders($events);
     $json = json_encode($events);
 
     if ($json !== FALSE) {
@@ -851,6 +893,12 @@ if (is_array($events)) {
 
 } else {
     echo $events;
+}
+
+function setHeaders($events){
+    if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false && is_array($events)) {
+        header("Content-Type: application/json"); //set content type to json if page expects json and return value is an array
+    }
 }
 
 exit();

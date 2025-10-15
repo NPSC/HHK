@@ -55,7 +55,9 @@ WHERE
             ':status' => VisitStatus::Active
         ]);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->disableUnsupportedNumbers($contacts);
+        return $contacts;
     }
 
     public function getResvGuestsData(int $idResv){
@@ -77,7 +79,9 @@ WHERE
             ':idResv' => $idResv
         ]);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->disableUnsupportedNumbers($contacts);
+        return $contacts;
     }
 
     public function getGuestData(int $idName){
@@ -97,7 +101,9 @@ WHERE
             ':idName' => $idName
         ]);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $contacts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->disableUnsupportedNumbers($contacts);
+        return $contacts;
     }
 
     /**
@@ -105,16 +111,26 @@ WHERE
      * @param string $status
      * @return array
      */
-    public function getCampaignGuestsData(string|null $status){
+    public function getCampaignGuestsData(string|null $status, string $filterVal = ""){
         $contacts = new Contacts($this->dbh);
+        $uS = Session::getInstance();
+        $filterField = "";
+        $filterOptions = [];
+
+        //Resource grouping
+        $rescGroups = readGenLookupsPDO($this->dbh, 'Room_Group');
+        if (isset($rescGroups[$uS->CalResourceGroupBy])) {
+            $filterField = $uS->CalResourceGroupBy;
+            $filterOptions = readGenLookupsPDO($this->dbh, $rescGroups[$uS->CalResourceGroupBy]["Substitute"]);
+        }
 
         switch ($status){
             case "checked_in":
-                return ["status"=>$status, "title"=>"Current " . Labels::getString('MemberType', 'visitor', 'Guest') . "s", "contacts"=>$contacts->getCheckedInGuestPhones()];
+                return ["status"=>$status, "title"=>"Current " . Labels::getString('MemberType', 'visitor', 'Guest') . "s", "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts"=>$contacts->getCheckedInGuestPhones($filterField, $filterVal)];
             case "confirmed_reservation":
-                return ["status" => $status, "title" => Labels::getString('register', 'reservationTab', 'Confirmed Reservations'), "contacts" => $contacts->getConfirmedReservationGuestPhones()];
+                return ["status" => $status, "title" => Labels::getString('register', 'reservationTab', 'Confirmed Reservations'), "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts" => $contacts->getConfirmedReservationGuestPhones($filterField, $filterVal)];
             case "unconfirmed_reservation":
-                return ["status" => $status, "title" => Labels::getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'), "contacts" => $contacts->getUnConfirmedReservationGuestPhones()];
+                return ["status" => $status, "title" => Labels::getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'), "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts" => $contacts->getUnConfirmedReservationGuestPhones($filterField, $filterVal)];
             case "waitlist":
                 return ["status" => $status, "title" => Labels::getString('register', 'waitlistTab', 'Wait List'), "contacts" => $contacts->getWaitlistReservationGuestPhones()];
             default:
@@ -164,14 +180,20 @@ WHERE
                 if ($guest["isMobile"]) {
                     try {
 
-                        //upsert contact before send
-                        $contact = new Contact($this->dbh, false);
-                        $contact->upsert($guest["Phone_Search"], $guest["Name_First"], $guest["Name_Last"]);
+                        $phoneAr = Phones::validateAndFormatPhoneNumber($guest["Phone_Search"]);
+                        if($phoneAr['smsSupported']){
 
-                        //send message
-                        $message = new Message($this->dbh, $guest["Phone_Search"], $msgTxt, $subject);
-                        $results["success"][$guest["idName"]] = $message->sendMessage();
-                        NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Message sent Successfully", ["msgText" => $msgTxt]);
+                            //upsert contact before send
+                            $contact = new Contact($this->dbh, false);
+                            $contact->upsert($phoneAr['smsFormat'], $guest["Name_First"], $guest["Name_Last"]);
+
+                            //send message
+                            $message = new Message($this->dbh, $phoneAr['smsFormat'], $msgTxt, $subject);
+                            $results["success"][$guest["idName"]] = $message->sendMessage();
+                            NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Message sent Successfully", ["msgText" => $msgTxt]);
+                        }else{
+                            throw new SmsException("SMS is not supported for this phone number: " . $phoneAr['formatted']);
+                        }
                     } catch (SmsException $e) {
                         $results["errors"][] = "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage();
                         NotificationLog::logSMS($this->dbh, $uS->smsProvider, $uS->username, $guest["Phone_Search"], $uS->smsFrom, "Failed to send to " . $guest["Name_Full"] . ": " . $e->getMessage(), ["msgText" => $msgTxt]);
@@ -200,12 +222,16 @@ WHERE
         $phones = new Phones($this->dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
         $cell = $phones->get_Data(PhonePurpose::Cell);
 
-        if(strlen($cell["Unformatted_Phone"]) >= 10){
-            $msgs = $this->fetchMessages($cell["Unformatted_Phone"]);
+        $phoneAr = Phones::validateAndFormatPhoneNumber($cell["Unformatted_Phone"]);
+
+        if($phoneAr['smsSupported'] == false){
+            throw new SmsException("SMS is not supported for this phone number: " . $phoneAr['formatted']);
+        }else if(strlen($phoneAr["smsFormat"]) >= 10){
+            $msgs = $this->fetchMessages($phoneAr["smsFormat"]);
 
             try {
                 $contact = new Contact($this->dbh);
-                $contact = $contact->fetchContact($cell["Unformatted_Phone"]);
+                $contact = $contact->fetchContact($phoneAr["smsFormat"]);
             }catch(\Exception $e){
                 $contact = [];
             }
@@ -228,6 +254,15 @@ WHERE
             ];
         }else{
             throw new SmsException("Mobile number not found for idName " . $idName);
+        }
+    }
+
+    private function disableUnsupportedNumbers(array &$contacts){
+        foreach($contacts as $k=>$contact){
+            $phoneAr = Phones::validateAndFormatPhoneNumber($contact["Phone_Num"]);
+            if($phoneAr['smsSupported'] == false){
+                $contacts[$k]["isMobile"] = 0;
+            }
         }
     }
 

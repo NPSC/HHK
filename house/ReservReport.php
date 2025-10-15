@@ -1,18 +1,6 @@
 <?php
 
-use HHK\AlertControl\AlertMessage;
-use HHK\Config_Lite\Config_Lite;
-use HHK\sec\{Session, WebInit};
-use HHK\HTMLControls\HTMLContainer;
-use HHK\House\Report\ReportFilter;
-use HHK\ColumnSelectors;
-use HHK\HTMLControls\HTMLTable;
-use HHK\SysConst\RoomRateCategories;
-use HHK\SysConst\GLTableNames;
-use HHK\HTMLControls\HTMLSelector;
-use HHK\ExcelHelper;
-use HHK\sec\Labels;
-use HHK\House\Report\ReportFieldSet;
+use HHK\sec\{Session, WebInit, Labels};
 use HHK\House\Report\ReservationReport;
 
 /**
@@ -90,6 +78,54 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
 
                 <?php echo $reservationReport->filter->getTimePeriodScript(); ?>;
                 <?php echo $reservationReport->generateReportScript(); ?>
+
+                function viewInsurance(idName, eventTarget, detailDiv) {
+                    "use strict";
+                    detailDiv.empty();
+                    $.post('ws_resc.php', { cmd: 'viewInsurance', idName: idName },
+                        function (data) {
+                            if (data) {
+                                try {
+                                    data = $.parseJSON(data);
+                                } catch (err) {
+                                    alert("Parser error - " + err.message);
+                                    return;
+                                }
+                                if (data.error) {
+                                    if (data.gotopage) {
+                                        window.location.assign(data.gotopage);
+                                    }
+                                    flagAlertMessage(data.error, 'error');
+                                    return;
+                                }
+
+                                if (data.markup) {
+                                    var contr = $(data.markup);
+
+                                    $('body').append(contr);
+                                    contr.position({
+                                        my: 'left top',
+                                        at: 'left bottom',
+                                        of: "#" + eventTarget
+                                    });
+                                }
+                            }
+                        });
+                }
+
+                $(document).mousedown(function (event) {
+                    var target = $(event.target);
+                    if ($('div#insDetailDiv').length > 0 && target[0].id !== 'insDetailDiv' && target.parents("#" + 'insDetailDiv').length === 0) {
+                        $('div#insDetailDiv').remove();
+                    }
+                });
+                
+                var detailDiv = $("<div>").attr('id', 'insDetailDiv');
+                $("body").append(detailDiv);
+                $('#tblreservrpt').on('click', '.insAction', function (event) {
+                    viewInsurance($(this).data('idname'), event.target.id, detailDiv);
+                });
+
             });
          </script>
     </head>

@@ -210,7 +210,8 @@ $logSelRows = [
     ['ss','Sys Config Log'],
     ['rr','Rooms Log'],
     ['ll','Lookups Log'],
-    ['nl', 'Notification Log']
+    ['nl', 'Notification Log'],
+    ['api', 'HHK API Access Log']
 ];
 
 try {
@@ -231,7 +232,8 @@ if (filter_has_var(INPUT_POST, 'saveHolidays')) {
 
 try {
     $holidays = SiteConfig::createHolidaysMarkup($dbh, $holResultMessage);
-} catch (\Exception $pex) {
+} catch (Exception $pex) {
+    $holidays = "";
 }
 
 $googleDistanceMkup = "";

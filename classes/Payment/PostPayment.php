@@ -131,9 +131,11 @@ class PostPayment {
                 $stat = 'Undefined: ' . $p['Payment_Status'];
         }
 
+        $voidContent = $voidContent == '' ? '<span></span>': $voidContent; //add empty span if no content
+
         //add receipt icon to action column
-        $voidContent .= HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer; margin-left: auto', 'title' => 'View Payment Receipt'));
-        return HTMLContainer::generateMarkup('div', $voidContent, ['style' => 'display:flex; justify-content:space-between; flex-wrap:nowrap;']);
+        $voidContent .= HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt ml-2 ', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer;', 'title' => 'View Payment Receipt'));
+        return HTMLContainer::generateMarkup('div', $voidContent, ['class' => 'd-flex justify-content-between align-items-center']);
     }
 
 }

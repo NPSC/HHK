@@ -4,6 +4,8 @@ var dateFormat;
 var paymentMarkup;
 var pageManager;
 var receiptMarkup;
+var receiptBilledToEmail;
+var receiptPaymentId;
 
 $(document).ready(function() {
     "use strict";
@@ -17,6 +19,8 @@ $(document).ready(function() {
     dateFormat = $('#dateFormat').val();
     paymentMarkup = $('#paymentMarkup').val();
     receiptMarkup = $('#receiptMarkup').val();
+    receiptPaymentId = $("#receiptPaymentId").val();
+    receiptBilledToEmail = $("#receiptBilledToEmail").val();
 
 // Dialog Boxes
     $("#resDialog").dialog({
@@ -144,7 +148,7 @@ $(document).ready(function() {
     }
 
     if (receiptMarkup !== '') {
-        showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt');
+        showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
     }
 
 
@@ -223,7 +227,9 @@ $(document).ready(function() {
                         }
 
                         if (data.receiptMarkup && data.receiptMarkup != '') {
-                            showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+                            const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);
+                            const billToEmail = (typeof data.billToEmail == 'string' ? data.billToEmail:"");
+                            showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt', 550, idPayment, billToEmail);
                         }
 
                         if (data.deleted) {
@@ -322,7 +328,17 @@ $(document).ready(function() {
                         pageManager.loadResv(responseData);
 
                         if (responseData.receiptMarkup && responseData.receiptMarkup != '') {
-                            showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt');
+                            const idPayment = (typeof responseData.idPayment == 'number' ? responseData.idPayment:false);
+                            const billToEmail = (typeof responseData.billToEmail == 'string' ? responseData.billToEmail:"");
+                            showReceipt('#pmtRcpt', responseData.receiptMarkup, 'Payment Receipt', 550, idPayment, billToEmail);
+                        }
+
+                        //payment msgs
+                        if(responseData.paySuccess && responseData.paySuccess != ''){
+                            flagAlertMessage(responseData.paySuccess, 'success');
+                        }
+                        if(responseData.payError && responseData.payError != ''){
+                            flagAlertMessage(responseData.payError, 'error');
                         }
 
                         if (responseData.resv !== undefined) {

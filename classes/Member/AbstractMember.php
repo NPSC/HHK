@@ -70,7 +70,7 @@ abstract class AbstractMember {
      * @param NameRS $nRS
      * @throws RuntimeException
      */
-    public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS $nRS = null) {
+    public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS|null $nRS = null) {
 
         $uS = Session::getInstance();
 

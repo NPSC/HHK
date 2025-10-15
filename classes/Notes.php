@@ -43,7 +43,7 @@ class Notes {
 
         $output = HTMLContainer::generateMarkup('div', $reverse, array('class'=>'hhk-existgNotes ui-corner-all mb-2'));
 
-        return HTMLContainer::generateMarkup('div', $output  . $notesBtn, array('class'=>'hhk-noteBox'));
+        return HTMLContainer::generateMarkup('div', $output  . $inputTa, array('class'=>'hhk-noteBox'));
 
     }
 

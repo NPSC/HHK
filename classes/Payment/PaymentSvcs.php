@@ -2,6 +2,9 @@
 
 namespace HHK\Payment;
 
+use HHK\Note\LinkNote;
+use HHK\Note\Note;
+use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\GatewayResponse\StandInGwResponse;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -14,6 +17,10 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS};
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\Exception\PaymentException;
+use HHK\Tables\Payment\TransRS;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+use RuntimeException;
 
 
 /**
@@ -92,7 +99,7 @@ class PaymentSvcs {
 
           case PayType::Cash:
 
-            $cashResp = new CashResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getPayNotes());
+            $cashResp = new CashResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getPayNotes(), $pmp->getCashTendered());
 
             CashTX::cashSale($dbh, $cashResp, $uS->username, $pmp->getPayDate());
 
@@ -235,6 +242,21 @@ class PaymentSvcs {
                 $rtnResult->feePaymentInvoiced($dbh, $invoice);
                 $rtnResult->setDisplayMessage('Return Amount Invoiced.  ');
                 break;
+            
+            case PayType::Transfer:
+
+                $ckResp = new TransferResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getTransferAcct(), $pmp->getPayNotes());
+
+                TransferTX::returnAmount($dbh, $ckResp, $uS->username, $pmp->getPayDate());
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, (0 - $ckResp->getAmount()), $uS->username);
+
+                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $rtnResult->feePaymentAccepted($dbh, $uS, $ckResp, $invoice);
+                $rtnResult->setDisplayMessage('Return by Transfer.  ');
+
+            break;
 
         }
 
@@ -288,7 +310,28 @@ class PaymentSvcs {
         // Load gateway
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
 
-        return $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
+        $dataArray = $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
+
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
+        return $dataArray;
 
     }
 
@@ -339,7 +382,28 @@ class PaymentSvcs {
         // Load gateway
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
 
-        return $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+        $dataArray = $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
+
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
+        return $dataArray;
 
     }
 
@@ -415,6 +479,7 @@ class PaymentSvcs {
                 $dataArray['success'] = 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
+                
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
 
                 break;
@@ -475,6 +540,25 @@ class PaymentSvcs {
                 throw new PaymentException('Unknown pay type.  ');
         }
 
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
         return $dataArray;
     }
 
@@ -527,8 +611,28 @@ class PaymentSvcs {
 
         // Payment Gateway
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
-        return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs, $bid));
+        $dataArray =  array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs, $bid));
 
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
+        return $dataArray;
     }
 
     /**
@@ -653,6 +757,25 @@ class PaymentSvcs {
                 throw new PaymentException('The pay type is ineligible.  ');
         }
 
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
         return $dataArray;
     }
 
@@ -764,6 +887,25 @@ class PaymentSvcs {
                 throw new PaymentException('This pay type is ineligible for Undo Refund Amount.  ');
         }
 
+        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+            $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            if ($autoEmailAr['autoEmail'] == true) {
+                $toAddr = $autoEmailAr['email'];
+                $emResult = PaymentSvcs::sendReceiptEmail($dbh, $dataArray['receipt'], $invoice, $toAddr);
+                if(isset($emResult['success'])){
+                    $dataArray['success'] .= " " . $emResult['success'];
+                }
+                
+                if(isset($emResult['error'])){
+                    $dataArray['error'] = $emResult['error'];
+                }
+            }
+
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+            $dataArray["idPayment"] = $idPayment;
+        }
+
         return $dataArray;
     }
 
@@ -849,7 +991,6 @@ class PaymentSvcs {
      * Summary of generateReceipt
      * @param \PDO $dbh
      * @param int $idPayment
-     * @return array<string>
      */
     public static function generateReceipt(\PDO $dbh, $idPayment) {
 
@@ -878,7 +1019,9 @@ class PaymentSvcs {
         switch ($payRs->idPayment_Method->getStoredVal()) {
 
             case PaymentMethod::Cash:
-                $payResp = new CashResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber());
+                $transRS = Transaction::getTransactionRS($dbh, $payRs->idTrans->getStoredVal());
+
+                $payResp = new CashResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Notes, $transRS->Amount_Tendered->getStoredVal());
                 $payResp->paymentRs = $payRs;
                 break;
 
@@ -986,7 +1129,81 @@ class PaymentSvcs {
 
         }
 
+        if(isset($dataArray['receipt'])){
+            $dataArray["invoice"] = $invoice;
+            $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
+        }
+
         return $dataArray;
+    }
+
+    public static function sendReceiptEmail(\PDO $dbh, string $receiptMkup, Invoice $invoice, string $emailAddress){
+        $uS = Session::getInstance();
+        $fromAddr = $uS->FromAddress;
+        
+        $emBody = nl2br( $uS->ReceiptEmailBody);
+
+        $toAddrSan = filter_var($emailAddress, FILTER_SANITIZE_EMAIL);
+
+        if ($toAddrSan === FALSE || $toAddrSan == '') {
+            // Config data not set.
+
+            return ["error"=>"Send Email failed: Email address invalid"];
+        }
+
+
+        try{
+            $mail = new HHKMailer($dbh);
+
+            $mail->From = $fromAddr;
+            $mail->addReplyTo($uS->ReplyTo);
+            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
+
+            $mail->addAddress($toAddrSan);     // Add a recipient
+
+            $bccEntry = $uS->BccAddress;
+            $bccs = explode(',', $bccEntry);
+
+            foreach ($bccs as $b) {
+
+                $bcc = filter_var($b, FILTER_SANITIZE_EMAIL);
+
+                if ($bcc !== FALSE && $bcc != '') {
+                    $mail->addBCC($bcc);
+                }
+            }
+
+            $mail->isHTML(true);
+
+            $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Payment Receipt';
+            $mail->msgHTML($emBody);
+            $mail->addStringAttachment(Receipt::makePDF($receiptMkup), "receipt.pdf", PHPMailer::ENCODING_BASE64, "application/pdf");
+
+            $mail->send();
+
+            $invoiceNumber = $invoice->getInvoiceNumber();
+            $idPSG = $invoice->getIdGroup();
+            LinkNote::save($dbh, "Receipt" . ($invoiceNumber != '' ? " for invoice <a href='ShowInvoice.php?invnum=" . $invoiceNumber . "' target='_blank'>" . $invoiceNumber . "</a>" : '') . " emailed to " . $toAddrSan, $idPSG, Note::PsgLink, '', $uS->username, $uS->ConcatVisitNotes);
+
+            return ["success"=>"Email sent to " . $toAddrSan];
+                    
+
+        }catch(PHPMailerException $e){
+            return ["error"=>"Send Email failed: " . $mail->ErrorInfo];
+        }catch(\Exception $e){
+            return ["error"=>"Send Email Failed: " . $e->getMessage()];
+        }
+    }
+
+    public static function downloadReceipt(\PDO $dbh, $idPayment){
+        $receiptMkup = PaymentSvcs::generateReceipt($dbh, $idPayment);
+        
+        if(isset($receiptMkup["receipt"])){
+            $receiptMkup = $receiptMkup["receipt"];
+            Receipt::makePDF($receiptMkup, true);
+        }else{
+            throw new RuntimeException("Reciept not found");
+        }
     }
 
 }

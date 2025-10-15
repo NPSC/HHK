@@ -97,11 +97,11 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 			        AND invoice_line.Item_Id = " . ItemId::LodgingMOA . "
 			        AND invoice_line.Deleted = 0
 	            join
-	    	reservation_invoice ON invoice.idInvoice = reservation_invoice.Invoice_Id
+	    	reservation_invoice_line ON invoice_line.idInvoice_Line = reservation_invoice_line.Invoice_Line_Id
 		    where
 		        invoice.Deleted = 0
 		        AND invoice.Order_Number = 0
-                AND reservation_invoice.Reservation_Id = r.idReservation
+                AND reservation_invoice_line.Reservation_Id = r.idReservation
 		        AND invoice.`Status` = '" .InvoiceStatus::Paid . "'), 0)
             ELSE 0 END  as `PrePaymt`, ";
 
@@ -124,6 +124,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         $this->query = "select
     r.idReservation,
     rg.idGuest,
+    hs.idPatient,
     concat(ifnull(na.Address_1, ''), '', ifnull(na.Address_2, ''))  as gAddr,
     ifnull(na.City, '') as gCity,
     ifnull(na.County, '') as gCounty,
@@ -158,11 +159,13 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     nr.Name_Full as `Name_Agent`,
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     hs.Diagnosis2,
+    ifnull(group_concat(i.Title order by it.List_Order separator ', '), '') as Insurance,
     ifnull(g2.`Description`, '') as `Location`,
     $checklistFields
     r.`Timestamp` as `Created_Date`,
     $prePayQuery
-    r.Last_Updated
+    r.Last_Updated,
+    if(v.idVisit > 0, 1,0) as `hasVisit`
 from
     reservation r
         left join
@@ -182,6 +185,12 @@ from
         left join
     name nd ON hs.idDoctor = nd.idName
         left join
+	name_insurance ni on hs.idPatient = ni.idName
+		left join
+	insurance i on ni.Insurance_Id = i.idInsurance
+		left join
+	insurance_type it on i.idInsuranceType = it.idInsurance_type
+        left join
     name nr ON hs.idReferralAgent = nr.idName
         left join
     room_rate rr ON r.idRoom_rate = rr.idRoom_rate
@@ -198,6 +207,7 @@ from
         and g2.`Code` = hs.`Location`
     LEFT JOIN hospital h on hs.idHospital = h.idHospital and h.Type = 'h'
     LEFT JOIN hospital a on hs.idAssociation = a.idHospital and a.Type = 'a'
+    LEFT JOIN visit v on r.idReservation = v.idReservation
     $checklistJoin
     , sys_config s
 where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.idRegistration";
@@ -270,6 +280,10 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
 
         if ($uS->Doctor) {
             $cFields[] = array("Doctor", 'Name_Doctor', '', '', 'string', '20');
+        }
+
+        if ($uS->InsuranceChooser) {
+            $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 's', '', array());
         }
 
         if ($uS->ReferralAgent) {
@@ -386,7 +400,8 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         $uS = Session::getInstance();
 
         foreach($this->resultSet as &$r) {
-            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
+            $r['Insurance'] = ($r['Insurance'] != '' ? HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment insAction', 'style'=>'cursor:pointer;', 'data-idName'=>$r['idPatient'], 'id'=>'insAction' . $r['idPatient'], 'title'=>'View Insurance')) . $r["Insurance"] : $r["Insurance"]);
+            $r['Status_Title'] = $r["hasVisit"] ? $r['Status_Title'] : HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
             $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
             if($uS->AcceptResvPaymt){ $r['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0)); }
         }

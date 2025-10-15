@@ -1188,8 +1188,9 @@ where `Deleted` = 0 and `Status` = 'up'
         );
 
         // TODO
-        // Total Due at end of visit -- but not for Gorecki House or PriceGuestDaily
-        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn && !stristr(strtolower($uS->siteName), 'gorecki') && $uS->RoomPriceModel !== ItemPriceCode::PerGuestDaily) {
+        // Total Due at end of visit -- but not for the sites in $hideForSchemas or PriceGuestDaily
+        $hideForSchemas = ["gorecki", "hprehab", "hpsjmc"];
+        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn && !in_array(strtolower($uS->databaseName), $hideForSchemas) && $uS->RoomPriceModel !== ItemPriceCode::PerGuestDaily) {
 
             $feesToCharge = round($curAccount->getRoomFeesToCharge());
 

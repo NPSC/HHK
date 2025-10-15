@@ -1,12 +1,19 @@
 <?php
 namespace HHK\CrmExport\Salesforce;
 
+use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
 use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
 use HHK\Exception\{RuntimeException, UploadException};
 use GuzzleHttp\Exception\BadResponseException;
+use HHK\sec\Session;
+use HHK\TableLog\ExternalAPILog;
+use HHK\TableLog\HouseLog;
+use Psr\Http\Message\ResponseInterface;
 
 
 /**
@@ -18,19 +25,28 @@ class SF_Connector {
 
     /**
      * Summary of oAuth
-     * @var SalesForceOauth
+     * @var SalesForceOauth|null
      */
-    protected $oAuth;
+    protected SalesForceOAuth|null $oAuth;
 
+    protected \PDO $dbh;
     /**
      * Summary of credentials
      * @var Credentials
      */
     protected $credentials;
+    
+    /**
+     * The number of concurrent async requests to send at one time
+     * @const CONCURRENT_REQUESTS
+     */
+    protected const CONCURRENT_REQUESTS = 5;
 
-    public function __construct(Credentials $credentials) {
+    public function __construct(\PDO $dbh, Credentials $credentials) {
 
+        $this->dbh = $dbh;
         $this->credentials = $credentials;
+        $this->oAuth = NULL;
     }
 
     /**
@@ -131,13 +147,14 @@ class SF_Connector {
 
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
 
-            $response = $client->request('POST', $endpoint, [
-                RequestOptions::HEADERS => [
+            $headers = [
                     'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                     'Content-Type' => 'application/json',
-                ],
-                RequestOptions::JSON => $params
-            ]);
+            ];
+
+            $request = new Request('POST', $endpoint, $headers, json_encode($params));
+
+            $response = $client->send($request);
 
             $result = json_decode($response->getBody(), true);
 
@@ -145,7 +162,79 @@ class SF_Connector {
             $this->checkErrors($exception);
         }
 
+        //log transaction
+        try{
+            $uS = Session::getInstance();
+            ExternalAPILog::log($this->dbh, SalesforceManager::LOG_SERVICE_NAME, "graph", $request, $response, $uS->username);
+        }catch(Exception $e){
+            //do nothing
+        }
+
         return $result;
+    }
+
+    /**
+     * Send multiple async POST requests to endpoint using formParams as JSON in body
+     *
+     * @param string $endpoint
+     * @param array $jsonBodies An array of request bodies to be sent asyncronously
+     * @return array An array of batchRequests and batchResults
+     */
+    public function postUrlAsync($endpoint, array $jsonBodies, $isUpdate = FALSE) {
+
+       try{
+            if(!$this->oAuth instanceof SalesForceOAuth){
+                $this->login();
+            }
+
+            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
+
+            $headers = [
+                'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
+                'Content-Type' => 'application/json',
+            ];
+
+            $batchRequests = [];
+            $batchResults = [];
+
+            foreach($jsonBodies as $batchId=>$params){
+                $batchRequests[$batchId] = new Request('POST', $endpoint, $headers, json_encode($params));
+            }
+
+            $pool = new Pool($client, $batchRequests, [
+                'concurrency' => self::CONCURRENT_REQUESTS,
+                'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){ //if the response is success
+                    //log transaction
+                    try{
+                        $uS = Session::getInstance();
+                        ExternalAPILog::log($this->dbh, SalesforceManager::LOG_SERVICE_NAME, "graph", $batchRequests[$batchId], $response, $uS->username);
+                    }catch(Exception $e){
+                        //do nothing
+                    }
+
+                    $batchResults[$batchId] = ['success'=>json_decode($response->getBody(), true)];
+                },
+                'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults) { //if the response is not success
+                    try{
+                        $this->checkErrors($exception);
+                    }catch(Exception $e){
+                        $batchResults[$batchId] = ['error'=>$e->getMessage()];
+                    }
+                }
+            ]);
+
+            // Initiate the transfers and create a promise
+            $promise = $pool->promise();
+
+            // Wait for the pool of requests to complete.
+            $promise->wait();
+
+
+        } catch (Exception $exception) {
+            throw new RuntimeException($exception->getMessage());
+        }
+
+        return ['batchRequests'=>$batchRequests, 'batchResults'=>$batchResults];
     }
 
     /**
@@ -166,17 +255,26 @@ class SF_Connector {
 
             $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
 
-            $response = $client->request('PATCH', $endpoint, [
-                RequestOptions::HEADERS => [
+            $headers = [
                     'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                     'Content-Type' => 'application/json',
-                ],
-                RequestOptions::JSON => $params
-            ]);
+            ];
+
+            $request = new Request('PATCH', $endpoint, $headers, json_encode($params));
+
+            $response = $client->send($request);
 
             $result = json_decode($response->getBody(), true);
         } catch (BadResponseException $exception) {
             $this->checkErrors($exception);
+        }
+
+        //log transaction
+        try{
+            $uS = Session::getInstance();
+            ExternalAPILog::log($this->dbh, "SalesForce", "", $request, $response, $uS->username);
+        }catch(Exception $e){
+            //do nothing
         }
 
         return $result;
@@ -199,22 +297,29 @@ class SF_Connector {
     }
 
     /**
-     * Summary of checkErrors
+     * Log and handle Salesforce Response errrors
      * @param BadResponseException $exception
      * @throws RuntimeException
-     * @return never
      */
     protected function checkErrors(BadResponseException $exception) {
 
+        $uS = Session::getInstance();
         $errorResponse = $exception->getResponse();
+        $request = $exception->getRequest();
         $errorJson = json_decode($errorResponse->getBody());
+
+        try{
+            ExternalAPILog::log($this->dbh, "SalesForce", "error", $request, $errorResponse, $uS->username);
+        }catch(Exception $e){
+            //do nothing
+        }
 
         if(isset($errorJson->error_description)){
             throw new RuntimeException("Unable to postURL via OAuth: " . $errorJson->error_description);
         }elseif(is_countable($errorJson)){
-            throw new RuntimeException($this->collectErrors($errorJson) . 'Requested URL: ' . $exception->getRequest()->getUri());
+            throw new RuntimeException($this->collectErrors($errorJson));
         }else{
-            throw new RuntimeException('to PostURL via OAuth: ' . $errorResponse->getBody());
+            throw new RuntimeException('Unable to postURL to ' . $request->getUri() . ': Error ' . $errorResponse->getStatusCode() . ": " . $errorResponse->getReasonPhrase());
         }
 
     }

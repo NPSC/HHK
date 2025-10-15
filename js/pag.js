@@ -23,10 +23,6 @@ function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 	}
 
 	try {
-/*		new Noty({
-			type : type,
-			text : mess
-		}).show();*/
 
 		if(type == 'error'){
 			toastr.error(mess, title);
@@ -86,16 +82,14 @@ function isIE() {
 }
 
 function checkStrength(pwCtrl) {
-	var strongRegex = new RegExp(
-			"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})"); //(?!.*[<>])
-	var rtn = true;
+	const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
 	if (strongRegex.test(pwCtrl.val())) {
 		pwCtrl.removeClass("ui-state-error");
+		return true;
 	} else {
 		pwCtrl.addClass("ui-state-error");
-		rtn = false;
+		return false;
 	}
-	return rtn;
 }
 
 function openiframe(src, width, height, title, buttons) {

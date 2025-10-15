@@ -2,15 +2,18 @@
 
 namespace HHK\Payment\PaymentResult;
 
+use HHK\Admin\VolCats;
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
 use HHK\Notification\Mail\HHKMailer;
+use HHK\Payment\PaymentSvcs;
 use HHK\Payment\Receipt;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\PaymentInvoiceRS;
 use HHK\sec\Session;
+use HHK\Volunteer\VolCal;
 
 /**
  * PaymentResult.php
@@ -24,6 +27,7 @@ use HHK\sec\Session;
 class PaymentResult {
 
     protected $displayMessage = '';
+    protected $errorMessage = '';
     protected $status = '';
     protected $idName = 0;
     protected $idRegistration = 0;
@@ -66,11 +70,9 @@ class PaymentResult {
         $this->receiptMarkup = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
 
         // Email receipt
-        try {
-            $this->displayMessage .= $this->emailReceipt($dbh);
-        } catch (\Exception $ex) {
-            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
-        }
+        $emailResults = $this->emailReceipt($dbh);
+        $this->displayMessage .= isset($emailResults['success']) ? "  ". $emailResults['success'] : "";
+        $this->errorMessage .= isset($emailResults['error']) ? "  " . $emailResults['error'] : "";
 
     }
 
@@ -88,11 +90,9 @@ class PaymentResult {
         $this->receiptMarkup = Receipt::createDeclinedMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
 
         // Email receipt
-        try {
-            $this->displayMessage .= $this->emailReceipt($dbh);
-        } catch (\Exception $ex) {
-            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
-        }
+        $emailResults = $this->emailReceipt($dbh);
+        $this->displayMessage .= isset($emailResults['success']) ? "  ". $emailResults['success'] : "";
+        $this->errorMessage .= isset($emailResults['error']) ? "  " . $emailResults['error'] : "";
 
     }
 
@@ -125,101 +125,80 @@ class PaymentResult {
         }
     }
 
+    /**
+     * Decide whether to automatically send the receipt via email and send accordingly
+     * @param \PDO $dbh
+     * @return array{error: string}|array{success: string}
+     */
     public function emailReceipt(\PDO $dbh) {
 
-        $uS = Session::getInstance();
-        $toAddr = '';
-        $guestName = '';
-        $guestHasEmail = FALSE;
-        $invoiceNumber = "";
+        $autoEmailAr = $this->isAutoEmailEligible($dbh, $this->idRegistration, $this->idName);
 
-        $fromAddr = $uS->FromAddress;
-
-        if ($fromAddr == '') {
-            // Config data not set.
-
-            return '';
+        if ($autoEmailAr['autoEmail'] == true) {
+            $toAddr = $autoEmailAr['email'];
+            $invoice = new Invoice($dbh);
+            $invoice->loadInvoice($dbh, 0, $this->idPayment);
+            return PaymentSvcs::sendReceiptEmail($dbh, $this->receiptMarkup, $invoice, $toAddr);
         }
+        return [];
+    }
 
+    /**
+     * Determine if an automated receipt email should be sent
+     * 
+     * @param \PDO $dbh
+     * @param mixed $idRegistration
+     * @param mixed $idName
+     * @return array{autoEmail: bool, email: string|array{autoEmail: bool, email: null}}
+     */
+    public static function isAutoEmailEligible(\PDO $dbh, $idRegistration, $idName){
+        $uS = Session::getInstance();
 
-        $query = "SELECT IFNULL(ne.Email, '') as 'Email', n.Name_Full FROM
-    `registration` r,
+        $query = "SELECT IFNULL(ne.Email, '') as 'Email', if(n.Name_Full = '', n.Company, n.Name_Full) as `Name_Full`, r.Email_Receipt, nv.Vol_Code  FROM
     `name` n
+		left join
+	`name_guest` ng on n.idName = ng.idName
+		left join registration r on ng.idPsg = r.idPsg
         LEFT JOIN
     `name_email` ne ON n.idName = ne.idName
         AND n.Preferred_Email = ne.Purpose
-WHERE r.Email_Receipt = 1 and
-    r.idregistration = :idreg AND n.idName = :id";
+        LEFT JOIN
+    `name_volunteer2` nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'
+WHERE 
+    (r.idregistration = :idreg or r.idRegistration is null) AND n.idName = :id group by n.idName";
+
+        if(!$uS->autoEmailReceipts){
+            $query .= " and r.Email_Receipt in (1, null)";
+        }
 
         $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':idreg'=>$this->idRegistration, ':id'=>$this->idName));
+        $stmt->execute(array(':idreg'=>$idRegistration, ':id'=>$idName));
 
+        $billagentreceipt = $uS->autoEmailBillingAgentReceipt;
+        $billingagentrece = $uS->autoEmailBillingAgentRece;
+        $thirdpartyreceipts = $uS->autoEmail3rdPartyReceipts;
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        if (count($rows) > 0 && $rows[0]['Email'] != '') {
-            $toAddr = $rows[0]['Email'];
-            $guestName = ' to ' . $rows[0]['Name_Full'];
-            $guestHasEmail = TRUE;
+        if (count($rows) > 0 && $rows[0]['Email'] != '' && 
+        (
+            (
+                $rows[0]["Vol_Code"] == "ba" 
+                && $uS->autoEmail3rdPartyReceipts
+            )
+            || 
+            (
+                $rows[0]["Vol_Code"] !== "ba" 
+                && (
+                    $uS->autoEmailReceipts 
+                    || $rows[0]["Email_Receipt"] == "1"
+                    )
+            )
+        )
+        ) {
+            return ['autoEmail'=>true, 'email'=>$rows[0]['Email']];
+        }else{
+            return ['autoEmail'=>false, 'email'=>null];
         }
-
-        $toAddrSan = filter_var($toAddr, FILTER_SANITIZE_EMAIL);
-
-        if ($toAddrSan === FALSE || $toAddrSan == '') {
-            // Config data not set.
-
-            return '';
-        }
-
-
-        try{
-            $mail = new HHKMailer($dbh);
-
-            $mail->From = $fromAddr;
-            $mail->addReplyTo($uS->ReplyTo);
-            $mail->FromName = htmlspecialchars_decode($uS->siteName, ENT_QUOTES);
-
-            $mail->addAddress($toAddrSan);     // Add a recipient
-
-            $bccEntry = $uS->BccAddress;
-            $bccs = explode(',', $bccEntry);
-
-            foreach ($bccs as $b) {
-
-                $bcc = filter_var($b, FILTER_SANITIZE_EMAIL);
-
-                if ($bcc !== FALSE && $bcc != '') {
-                    $mail->addBCC($bcc);
-                }
-            }
-
-            $mail->isHTML(true);
-
-            $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Payment Receipt';
-            $mail->msgHTML($this->receiptMarkup);
-
-            $mail->send();
-            if ($guestHasEmail) {
-
-                //get invoice number
-                $stmt = $dbh->prepare("select `Invoice_Number` from invoice where idInvoice = :idInvoice limit 1");
-                $stmt->execute([":idInvoice"=>$this->idInvoice]);
-                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-                if(count($rows) == 1){
-                    $invoiceNumber = $rows[0]["Invoice_Number"];
-                }
-
-
-                LinkNote::save($dbh, "Receipt" . ($invoiceNumber != '' ? " for invoice <a href='ShowInvoice.php?invnum=" . $invoiceNumber . "' target='_blank'>" . $invoiceNumber . "</a>" : '') . " emailed to " . $toAddrSan, $this->idRegistration, Note::PsgLink, '', $uS->username, $uS->ConcatVisitNotes);
-
-                return "Email sent" . $guestName;
-            }
-
-        }catch(\Exception $e){
-            return "Send Email failed:  " . $mail->ErrorInfo;
-        }
-
-        return '';
 
     }
 
@@ -236,6 +215,10 @@ WHERE r.Email_Receipt = 1 and
 
     public function getDisplayMessage() {
         return $this->displayMessage;
+    }
+
+    public function getErrorMessage() {
+        return $this->errorMessage;
     }
 
     public function getInvoiceMarkup() {
@@ -265,6 +248,11 @@ WHERE r.Email_Receipt = 1 and
 
     public function setDisplayMessage($displayMessage) {
         $this->displayMessage = $displayMessage . $this->displayMessage;
+        return $this;
+    }
+
+    public function setErrorMessage($displayMessage) {
+        $this->errorMessage = $displayMessage . $this->errorMessage;
         return $this;
     }
 
@@ -301,6 +289,16 @@ WHERE r.Email_Receipt = 1 and
 
     public function getIdPayment() {
         return $this->idPayment;
+    }
+
+    public function getInvoiceBillToEmail(\PDO $dbh){
+        try{
+            $invoice = new Invoice($dbh);
+            $invoice->loadInvoice($dbh, 0, $this->idPayment);
+            return $invoice->getBillToEmail($dbh);
+        }catch (\Exception $e){
+            return '';
+        }
     }
 
 }

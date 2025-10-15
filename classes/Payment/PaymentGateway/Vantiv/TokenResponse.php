@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Vantiv;
 
+use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\SysConst\MpStatusValues;
@@ -80,7 +81,7 @@ class TokenResponse extends AbstractCreditResponse {
         }
 
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", ['class' => 'tdlabel']) . HTMLTable::makeTd('', ['style' => 'height:35px; width:250px; border: solid 1px gray;']));
+        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", ['class' => 'tdlabel']) . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', '', ['style' => 'height:35px; width:250px; max-width:100%; border: solid 1px gray;'])));
 
     }
 

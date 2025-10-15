@@ -1,4 +1,5 @@
 <?php
+
 use HHK\Exception\NotFoundException;
 use HHK\Exception\SmsException;
 use HHK\Exception\ValidationException;
@@ -24,7 +25,6 @@ use HHK\Notification\SMS\SimpleTexting\Contact;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\Notification\SMS\SimpleTexting\Message;
 use HHK\Notification\SMS\SimpleTexting\Messages;
-
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\GLTableNames;
@@ -52,6 +52,8 @@ $wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
+
+$debugMode = ($uS->mode == "dev");
 
 $inputData = $_REQUEST;    // page received data, initially from $_REQUEST
 $command = '';     // web service ciommand
@@ -244,11 +246,11 @@ try {
                 $idV = intval(filter_input(INPUT_POST, 'idV', FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
+            $vehStmt = $dbh->prepare("select v.idReservation, v.idRegistration, r.No_Vehicle from visit v join reservation r on v.idReservation = r.idReservation where v.idVisit = :idv limit 1");
             $vehStmt->execute([':idv' => $idV]);
             $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
 
-            $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], false);
+            $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], $row["No_Vehicle"]);
 
             $events = ['success' => $mkup, 'title' => "Edit Vehicles"];
 
@@ -266,7 +268,7 @@ try {
             $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
 
             try {
-                $events = ["success"=> Vehicle::saveVehicle($dbh, $row["idRegistration"], $row["idReservation"])];
+                $events = ["success"=> Vehicle::saveVehicle($dbh, $_POST, $row["idRegistration"], $row["idReservation"])];
             }catch(\Exception $e){
                 $events = ["error" => "Error saving vehicle: " . $e->getMessage()];
             }
@@ -332,7 +334,7 @@ try {
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-	       $data = base64_decode(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+	       $data = base64_decode($_POST['data']);
            $data = filter_var($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS); //sanitize decoded data
         }
 
@@ -347,10 +349,10 @@ try {
         if ($noteId > 0 && $data != '') {
 
             $note = new Note($noteId);
-            $updateCount = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
+            $updateAr = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
         }
 
-        $events = ['update' => $updateCount, 'idNote' => $noteId];
+        $events = ['update' => $updateAr['counter'], 'idNote' => $noteId, 'noteText'=>$updateAr['noteRS']->Note_Text->getStoredVal()];
 
         break;
 
@@ -704,16 +706,20 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
             $cell = $phones->get_Data(PhonePurpose::Cell);
 
-            if (strlen($cell["Unformatted_Phone"]) <= 10) {
+            $phoneAr = Phones::validateAndFormatPhoneNumber($cell["Unformatted_Phone"]);
+
+            if($phoneAr['smsSupported'] == false){
+                throw new SmsException("SMS is not supported for this phone number: " . $phoneAr['formatted']);
+            }else if (strlen($phoneAr["smsFormat"]) > 0) {
                 //upsert contact before send
                 $contact = new Contact($dbh, true);
-                $contact->upsert($cell["Unformatted_Phone"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
+                $contact->upsert($phoneAr["smsFormat"], $name->get_nameRS()->Name_First->getStoredVal(), $name->get_nameRS()->Name_Last->getStoredVal());
                 try {
-                    $msg = new Message($dbh, $cell["Unformatted_Phone"], $msgText);
+                    $msg = new Message($dbh, $phoneAr["smsFormat"], $msgText);
                     $events = $msg->sendMessage();
-                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $phoneAr["smsFormat"], $uS->smsFrom, "Message sent successfully", ["msgText" => $msgText]);
                 }catch(SmsException $e){
-                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $cell["Unformatted_Phone"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
+                    NotificationLog::logSMS($dbh, $uS->smsProvider, $uS->username, $phoneAr["smsFormat"], $uS->smsFrom, "Failed to send message: " . $e->getMessage(), ["msgText" => $msgText]);
                     throw $e;
                 }
             }else{
@@ -748,6 +754,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
     case 'sendCampaign':
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $filterVal = filter_input(INPUT_POST, 'filterVal', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $msgText = filter_input(INPUT_POST, 'msgText', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $batchId = filter_input(INPUT_POST, 'batchId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $campaignListId = filter_input(INPUT_POST, 'campaignListId', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -755,7 +762,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
         $campaign = new Campaign($dbh, $msgText, $msgText);
             if ($status) {
-                $events = $campaign->prepareAndSendCampaign($status);
+                $events = $campaign->prepareAndSendCampaign($status, $filterVal);
             }else if($batchId && $campaignListId && $campaignListName){
                 $events = $campaign->checkBatchAndSendCampaign($batchId, $campaignListId, $campaignListName);
             }
@@ -800,9 +807,9 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 } catch (NotFoundException | ValidationException | SmsException $e){
     $events = ["error" => $e->getMessage()];
 } catch (PDOException $ex) {
-    $events = ["error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
+    $events = ["error" => "Database Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 } catch (Exception $ex) {
-    $events = ["error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString()];
+    $events = ["error" => "Web Server Error: " . $ex->getMessage() . ($debugMode ? $ex->getTraceAsString() : "")];
 }
 
 
