@@ -28,3 +28,22 @@ jobs:
         uses: dbfx/github-phplint/8.4@master
         with:
           folder-to-exclude: "! -path \"./vendor/*\""
+
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Composer install
+        run: composer install
+
+      - name: PHPStan
+        run: composer stan

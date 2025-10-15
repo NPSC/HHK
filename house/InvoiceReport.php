@@ -6,6 +6,7 @@ use HHK\Exception\RuntimeException;
 use HHK\House\GLCodes\GLCodes;
 use HHK\House\GLCodes\GLParameters;
 use HHK\House\GLCodes\GLTemplateRecord;
+use HHK\House\Report\InvoiceReport;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
 use HHK\HTMLControls\HTMLContainer;
@@ -608,7 +609,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
             $totalAmount += $r['Amount'];
         }
 
-        doMarkupRow($fltrdFields, $r, $local, $hospital, $statusTxt, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId);
+        InvoiceReport::doMarkupRow($fltrdFields, $r, $local, $hospital, $statusTxt, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId);
 
     }
 

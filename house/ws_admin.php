@@ -39,6 +39,8 @@ $uS = Session::getInstance();
 
 if (isset($_REQUEST["cmd"])) {
     $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+}else {
+    $c = "";
 }
 
 $events = [];

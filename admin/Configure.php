@@ -38,7 +38,6 @@ use HHK\CrmExport\AbstractExportManager;
  * @link      https://github.com/NPSC/HHK
  */
 require "AdminIncludes.php";
-require FUNCTIONS . 'mySqlFunc.php';
 
 try {
     $wInit = new webInit();

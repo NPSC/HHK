@@ -431,14 +431,14 @@ LIMIT 500");
 }
 
 /**
- * Summary of getPeopleReport
+ * Summary of getGTPeopleReport
  * @param PDO $dbh
  * @param mixed $start
  * @param mixed $end
  * @param mixed $excludeTerm
  * @return array|bool
  */
-function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
+function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
 
     $transferIds = [];
@@ -669,7 +669,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     if (filter_has_var(INPUT_POST, 'btnHere')) {
 
         // Get HHK records result table.
-        $results = getPeopleReport($dbh, $start, $end, $CmsManager::EXCLUDE_TERM, FALSE);
+        $results = getGTPeopleReport($dbh, $start, $end, $CmsManager::EXCLUDE_TERM);
 
         if ($results === FALSE) {
 

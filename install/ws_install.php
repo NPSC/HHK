@@ -17,9 +17,7 @@ use HHK\sec\UserClass;
 require_once ("InstallIncludes.php");
 
 //Check request
-if (filter_has_var(INPUT_POST, 'cmd')) {
-    $c = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-}
+$c = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $events = array();
 

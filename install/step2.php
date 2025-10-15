@@ -20,8 +20,6 @@ use HHK\SysConst\CodeVersion;
  */
 require_once ("InstallIncludes.php");
 
-require_once(FUNCTIONS . 'mySqlFunc.php');
-
 try {
     $login = new Login();
     $config = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
