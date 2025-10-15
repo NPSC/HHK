@@ -2,6 +2,7 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\Common;
 use HHK\Document\FormDocument;
 use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
@@ -1201,10 +1202,10 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         if (count($rows) > 0) {
 
-        	$roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
+        	$roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
 
             if ($shoDirtyRooms) {
-                $cleanCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+                $cleanCodes = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
                 foreach ($cleanCodes as $i) {
                     if ($i['Substitute'] == '0') {
@@ -1372,7 +1373,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
             }
         }
 
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code", true);
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code", true);
 
         if(isset($reservStatuses[$status])){
             return $reservStatuses[$status]["Title"];
@@ -1405,7 +1406,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
             }
         }
 
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code", true);
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code", true);
 
         if(isset($reservStatuses[$status])){
             return HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ' . $reservStatuses[$status]["Icon"], 'style'=>'float: left; margin-left:.3em;', 'title'=>$reservStatuses[$status]["Title"]));
@@ -2143,9 +2144,9 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
      * @param \PDO|null $dbh
      * @return int|mixed
      */
-    public function getNumberGuests(\PDO $dbh = null) {
+    public function getNumberGuests(\PDO|null $dbh = null) {
 
-        if (!is_null($dbh) && $this->getStatus() == ReservationStatus::Staying) {
+        if ($dbh instanceof \PDO && $this->getStatus() == ReservationStatus::Staying) {
 
             $stmt = $dbh->query("select count(s.idStays)
 from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span

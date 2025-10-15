@@ -3,6 +3,7 @@
 namespace HHK\House\Reservation;
 
 use HHK\AuditLog\NameLog;
+use HHK\Common;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Family\{Family, FamilyAddGuest};
@@ -120,7 +121,7 @@ FROM reservation r
             ->setResvStatusCode($rows[0]['Status']);
 
         // Get Resv status codes
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code");
 
         if (isset($reservStatuses[$rData->getResvStatusCode()])) {
             $rData->setResvStatusType($reservStatuses[$rData->getResvStatusCode()]['Type']);

@@ -1,5 +1,7 @@
 <?php
 
+use HHK\Admin\Reports\TimeReport;
+use HHK\Common;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\selCtrl;
 
@@ -37,7 +39,7 @@ $catmarkup = "";
 $makeTable = 0;
 
 // Selector Controls for Category section
-$gSel = readGenLookupsPDO($dbh, "Vol_Category");
+$gSel = Common::readGenLookupsPDO($dbh, "Vol_Category");
 $catSelCtrls = array();
 
 foreach ($gSel as $selData) {
@@ -72,11 +74,9 @@ for ($y = $now["year"]; $y > ($now["year"] - 4); $y--) {
 // Postback logic
 if (filter_has_var(INPUT_POST, "btnCat") || filter_has_var(INPUT_POST, "btnCatDL")) {
 
-    require("functions" . DS . "TimeReportMgr.php");
-
     $typeCtrl->setReturnValues($_POST[$typeCtrl->get_htmlNameBase()]);
 
-    $catmarkup = processTime($dbh, $catSelCtrls, $typeCtrl, $fyMonthsAdjust);
+    $catmarkup = TimeReport::processTime($dbh, $catSelCtrls, $typeCtrl, $fyMonthsAdjust);
     $makeTable = 1;
 }
 

@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLContainer;
@@ -27,7 +28,7 @@ $uS = Session::getInstance();
 
 $labels = Labels::getLabels();
 $dbh = $wInit->dbh;
-$demographics = readGenLookupsPDO($dbh, 'Demographics');
+$demographics = Common::readGenLookupsPDO($dbh, 'Demographics');
 
 if(isset($_GET['cmd'])){
     $cmd = filter_var($_GET['cmd'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);

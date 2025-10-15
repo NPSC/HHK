@@ -337,8 +337,8 @@ class InstamedGateway extends AbstractPaymentGateway {
             'patientID' => $patInfo['idName'],
             'patientFirstName' => html_entity_decode($patInfo['Name_First'], ENT_QUOTES),
             'patientLastName' => html_entity_decode($patInfo['Name_Last'], ENT_QUOTES),
-            InstaMedCredentials::U_ID => $uS->uid,
-            InstaMedCredentials::U_NAME => $uS->username,
+            InstamedCredentials::U_ID => $uS->uid,
+            InstamedCredentials::U_NAME => $uS->username,
             'lightWeight' => 'true',
             'creditCardKeyed' => ($manualKey ? 'true' : 'false'),
             'responseActionType' => 'header',
@@ -1098,7 +1098,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $parms[InstamedGateway::INSTAMED_TRANS_VAR] = $transVar;
         $parms[InstamedGateway::INSTAMED_RESULT_VAR] = $resultVar;
 
-        $queryStr = encryptMessage(http_build_query($parms));
+        $queryStr = \HHK\Crypto::encryptMessage(http_build_query($parms));
 
         return $houseUrl . InstamedGateway::TRANSFER_URL . '?' . InstamedGateway::TRANSFER_VAR . '=' . $queryStr;
     }
@@ -1321,7 +1321,7 @@ where r.idRegistration =" . $idReg);
                 $pw = filter_var($post[$indx . '_txtsk'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                    $ccRs->security_Key->setNewVal(encryptMessage($pw));
+                    $ccRs->security_Key->setNewVal(\HHK\Crypto::encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->security_Key->setNewVal('');
                 }
@@ -1331,7 +1331,7 @@ where r.idRegistration =" . $idReg);
                 $pw = filter_var($post[$indx . '_txtpwd'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                    $ccRs->password->setNewVal(encryptMessage($pw));
+                    $ccRs->password->setNewVal(\HHK\Crypto::encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->password->setNewVal('');
                 }

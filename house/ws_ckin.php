@@ -1,5 +1,6 @@
 <?php
 use HHK\House\Visit\VisitViewer;
+use HHK\Common;
 use HHK\Exception\UnexpectedValueException;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
@@ -624,8 +625,8 @@ try {
             $ordNum = intval(filter_var($_POST['ord'], FILTER_SANITIZE_NUMBER_INT), 10);
             $arrDate = '';
 
-            $discounts = readGenLookupsPDO($dbh, 'House_Discount');
-            $addnls = readGenLookupsPDO($dbh, 'Addnl_Charge');
+            $discounts = Common::readGenLookupsPDO($dbh, 'House_Discount');
+            $addnls = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
             foreach ($discounts as $n) {
                 $events['disc'][$n[0]] = $n[2];

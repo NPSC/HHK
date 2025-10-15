@@ -157,6 +157,7 @@ where c.Id = :id;";
 
             return "Employee Added.  ";
         }
+        return '';
 
     }
 

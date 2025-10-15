@@ -1,4 +1,6 @@
 <?php
+use HHK\Common;
+use HHK\House\ResourceBldr;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLContainer;
@@ -32,7 +34,7 @@ function getSelections(\PDO $dbh, $tableName, $type) {
     $uS = Session::getInstance();
 
     // Generate selectors.
-    $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+    $diags = Common::readGenLookupsPDO($dbh, $tableName, 'Order');
 
     $tbl = new HTMLTable();
 
@@ -51,7 +53,7 @@ function getSelections(\PDO $dbh, $tableName, $type) {
     foreach ($diags as $d) {
 
         // Remove this item from the replacement entries.
-        $tDiags = removeOptionGroups($diags);
+        $tDiags = HTMLSelector::removeOptionGroups($diags);
         unset($tDiags[$d[0]]);
 
         $cbDelMU = '';
@@ -177,7 +179,7 @@ if (isset($_POST['table'])) {
 
             if ($rows[0][0] == 0) {
                 // Not there.
-                $newCode = 'g' . incCounter($dbh, 'codes');
+                $newCode = 'g' . Common::incCounter($dbh, 'codes');
 
                 $glRs = new GenLookupsRS();
                 $glRs->Table_Name->setNewVal($tableName);
@@ -206,7 +208,7 @@ if (isset($_POST['table'])) {
         $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $orderNums = filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT);
 
-        replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
+        ResourceBldr::replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
 
     }
 

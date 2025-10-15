@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\Donation\Campaign;
 use HHK\AlertControl\AlertMessage;
 use HHK\SysConst\CampaignType;
@@ -190,7 +191,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, $campCode, TRUE, TRUE);
 
 $campaign = new Campaign($dbh, $campCode);
 
-$statusOpt = doLookups($dbh, "Campaign_Status", $campaign->get_status(), false);
+$statusOpt = Common::doLookups($dbh, "Campaign_Status", $campaign->get_status(), false);
 $stDate = "";
 $enDate = "";
 $lastDate = "";

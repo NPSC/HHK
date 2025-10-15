@@ -1,6 +1,8 @@
 <?php
 namespace HHK\HTMLControls;
 
+use HHK\Common;
+
 /**
  * chkBoxCtrlClass.php
  *
@@ -21,7 +23,7 @@ class chkBoxCtrl {
     protected $class = "";
 
     function __Construct($con, $genLkupTabelName, $title, $htmlNameBase, $defaultVal, $sort = "Code") {
-        $this->genRcrds = readGenLookupsPDO($con, $genLkupTabelName, $sort);
+        $this->genRcrds = Common::readGenLookupsPDO($con, $genLkupTabelName, $sort);
         $this->rows = count($this->genRcrds);
         $this->htmlNameBase = $htmlNameBase;
         $this->title = $title;

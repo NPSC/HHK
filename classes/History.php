@@ -221,7 +221,7 @@ class History {
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
         return $this->createMarkup($status, $page, $includeAction, $reservStatuses, $static);
     }
@@ -494,7 +494,7 @@ class History {
 
         unset($roomRatesRaw);
 
-        $cleanCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $cleanCodes = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
         $noCleaning = '';
         foreach ($cleanCodes as $i) {
             if ($i['Substitute'] == '0') {
@@ -522,8 +522,8 @@ class History {
         $today->setTime(0, 0);
 
         // Show adjust button?
-        $hdArry = readGenLookupsPDO($dbh, "House_Discount");
-        $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
+        $hdArry = Common::readGenLookupsPDO($dbh, "House_Discount");
+        $roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
 
         $immobilityIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
@@ -560,7 +560,7 @@ class History {
             }
 
             if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos && $includeAction && !$static){
-                $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
+                $fixedRows["photo"] = Photo::showGuestPicture($r["Id"], $uS->MemberImageSizePx);
             }
 
             // Guest first name

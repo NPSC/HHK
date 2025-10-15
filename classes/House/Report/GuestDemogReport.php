@@ -2,8 +2,10 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\Member\Address\Address;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -71,7 +73,7 @@ class GuestDemogReport {
 
         $fields = '';
 
-        foreach (readGenLookupsPDO($dbh, 'Demographics', 'Order') as $d) {
+        foreach (Common::readGenLookupsPDO($dbh, 'Demographics', 'Order') as $d) {
 
             if (strtolower($d[2]) == 'y') {
 
@@ -88,18 +90,18 @@ class GuestDemogReport {
 
         //set up room grouping
         $roomGroupingTitle = "";
-        $roomGroupings = readGenLookupsPDO($dbh, 'Room_Group', 'Order');
+        $roomGroupings = Common::readGenLookupsPDO($dbh, 'Room_Group', 'Order');
         switch ($roomGroupBy){
             case "Category":
-                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Category', 'Order');
+                $roomGrouping = Common::readGenLookupsPDO($dbh, 'Room_Category', 'Order');
                 $roomGroupingTitle = (isset($roomGroupings["Category"]["Description"]) ? $roomGroupings["Category"]["Description"]: "Room Category");
                 break;
             case "Report_Category":
-                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Rpt_Cat', 'Order');
+                $roomGrouping = Common::readGenLookupsPDO($dbh, 'Room_Rpt_Cat', 'Order');
                 $roomGroupingTitle = (isset($roomGroupings["Report_Category"]["Description"]) ? $roomGroupings["Report_Category"]["Description"]: "Room Report Category");
                 break;
             case "Type":
-                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Type', 'Order');
+                $roomGrouping = Common::readGenLookupsPDO($dbh, 'Room_Type', 'Order');
                 $roomGroupingTitle = (isset($roomGroupings["Type"]["Description"]) ? $roomGroupings["Type"]["Description"]: "Room Type");
                 break;
             default:
@@ -126,14 +128,14 @@ class GuestDemogReport {
                 }
 
                 //room grouping
-                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(HTMLSelector::removeOptionGroups($roomGrouping));
 
                 // Demographics
                 foreach ($demoCategorys as $k => $d) {
-                    $accum[$thisPeriod][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
+                    $accum[$thisPeriod][$d] = self::makeCounters(HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $k, 'Order')));
                 }
 
-                $accum[$thisPeriod]['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
+                $accum[$thisPeriod]['Distance'] = self::makeCounters(HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
                 $periods[] = $thisPeriod;
 
@@ -152,14 +154,14 @@ class GuestDemogReport {
         }
 
         //room grouping
-        $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
+        $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(HTMLSelector::removeOptionGroups($roomGrouping));
 
         // Totals
         foreach ($demoCategorys as $k => $d) {
-            $accum['Total'][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
+            $accum['Total'][$d] = self::makeCounters(HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $k, 'Order')));
         }
 
-        $accum['Total']['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
+        $accum['Total']['Distance'] = self::makeCounters(HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
         if($uS->county){
             $accum['Total']['County'][''] = ['title'=>"Not Indicated", 'cnt'=>0];

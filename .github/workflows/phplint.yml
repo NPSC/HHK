@@ -1,10 +1,10 @@
-name: PHP Linting
+name: CI
 
 on: push
 
 jobs:
   phplint:
-
+    name: PHP Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +24,62 @@ jobs:
         uses: dbfx/github-phplint/8.3@master
         with:
           folder-to-exclude: "! -path \"./vendor/*\""
-#      - name: PHP Lint 8.4
-#        uses: dbfx/github-phplint/8.4@master
-#        with:
-#          folder-to-exclude: "! -path \"./vendor/*\""
+
+      - name: PHP Lint 8.4
+        uses: dbfx/github-phplint/8.4@master
+        with:
+          folder-to-exclude: "! -path \"./vendor/*\""
+
+  compposer-validate:
+    name: Validate composer.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Composer validate
+        run: composer validate --strict
+
+  check-namespaces:
+    name: Check namespaces
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Composer install
+        uses: ramsey/composer-install@v3
+
+      - name: Check namespaces
+        run: composer dump-autoload --optimize --strict-psr
+
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Composer install
+        run: composer install
+
+      - name: PHPStan
+        run: composer stan

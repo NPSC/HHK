@@ -152,7 +152,6 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             return;
         }
 
-        unset($this->rooms);
         $this->rooms = $this->loadRooms($dbh, $this->getIdResource());
     }
 

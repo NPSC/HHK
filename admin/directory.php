@@ -3,6 +3,7 @@
 use HHK\MailList;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
+use HHK\Admin\Reports\DirectoryReport;
 
 /**
  * directory.php
@@ -13,7 +14,6 @@ use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-require("functions" . DS . "directoryReport.php");
 
 $wInit = new webInit();
 
@@ -67,7 +67,7 @@ if (filter_has_var(INPUT_POST, 'btnPrep')) {
 if (filter_has_var(INPUT_POST, "btnExcel") || filter_has_var(INPUT_POST, "btnHere")) {
 
     // Form returned to generate directory
-    $dirmarkup = dirReport($dbh, $cbBasisDir, $cbRelationDir, $selDirType, $uS->SolicitBuffer);
+    $dirmarkup = DirectoryReport::dirReport($dbh, $cbBasisDir, $cbRelationDir, $selDirType, $uS->SolicitBuffer);
 
     if (filter_has_var(INPUT_POST, "cbEmployee")) {
         $cbEmpChecked = "checked='checked'";

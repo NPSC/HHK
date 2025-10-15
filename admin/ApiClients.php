@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
 use HHK\sec\Labels;
@@ -33,7 +34,7 @@ if($uS->rolecode == '10'){ //if Admin User
     $isAdmin = true;
 }
 
-$availableScopes = readGenLookupsPDO($dbh, "Oauth_Scopes");
+$availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
 
 ?>
 <!DOCTYPE html>

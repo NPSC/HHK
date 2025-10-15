@@ -17,7 +17,7 @@ class SalesForceOAuth extends AbstractOAuth{
         parent::__construct($credentials);
     }
 
-    protected function requestToken(){
+    public function requestToken(){
 
         $requestOptions = [
             RequestOptions::AUTH => [$this->credentials->getClientId(), $this->credentials->getClientSecret()],
@@ -33,7 +33,7 @@ class SalesForceOAuth extends AbstractOAuth{
         return $this->sendTokenRequest($requestOptions);
     }
 
-    protected function validateTokenResponse($data){
+    public function validateTokenResponse($data): bool{
         $hash = hash_hmac(
             'sha256',
             $data->id . $data->issued_at,

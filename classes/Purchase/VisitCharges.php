@@ -2,6 +2,7 @@
 
 namespace HHK\Purchase;
 
+use HHK\Common;
 use HHK\House\Visit\Visit;
 use HHK\Payment\Statement;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
@@ -377,7 +378,7 @@ class VisitCharges {
         $taxitems = $vat->getAllTaxedItems($this->idVisit);
 
         $items = Item::loadItems($dbh);
-        $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
+        $invStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
         // Pre-define the item sums array
         foreach ($items as $i) {

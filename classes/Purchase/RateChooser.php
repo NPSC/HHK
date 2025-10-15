@@ -2,6 +2,7 @@
 
 namespace HHK\Purchase;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable, HTMLSelector};
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Visit\Visit;
@@ -163,7 +164,7 @@ class RateChooser {
                 HTMLContainer::generateMarkup('label', 'Change Room Rate', array('for'=>'rateChgCB', 'style'=>'margin: 2px 1px;'))
                 . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'rateChgCB', 'class'=>'hhk-feeskeys', 'style'=>'margin-left: 1em;', 'title'=>'Change the room rate'))
 
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $rateCat[0], FALSE), array('name'=>'selRateCategory', 'class'=>'hhk-feeskeys'))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($rateCategories), $rateCat[0], FALSE), array('name'=>'selRateCategory', 'class'=>'hhk-feeskeys'))
                 .HTMLContainer::generateMarkup('span', 'Amt: $' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'class'=>'hhk-feeskeys', 'size'=>'8')), $attrFixed)
                 . HTMLContainer::generateMarkup('span', 'Adj:'.$adjSel, $attrAdj), array('class'=>'changeRateTd', 'style'=>'display:none;'))
                 .HTMLTable::makeTh('As Of: ', array('class'=>'changeRateTd', 'style'=>'display:none;'))
@@ -222,7 +223,7 @@ class RateChooser {
 
             if (isset($post['chgRateDate']) && $post['chgRateDate'] != '') {
 
-                $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                $chDT = Common::setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $chRateDT = new \DateTime($chDT->format('Y-m-d'));
                 $chDT->setTime($hr, $min, 0);
 
@@ -443,7 +444,7 @@ class RateChooser {
     public function createResvMarkup(\PDO $dbh, Reservation_1 $resv, $numNights, $visitFeeTitle, $idRegistration) {
 
         // Get Resv status codes
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code", TRUE);
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code", TRUE);
 
         if ($resv->isActive($reservStatuses)) {
 
@@ -564,7 +565,7 @@ class RateChooser {
 
         $codes = array();
 
-        foreach (readGenLookupsPDO($dbh, 'Visit_Fee_Code') as $r) {
+        foreach (Common::readGenLookupsPDO($dbh, 'Visit_Fee_Code') as $r) {
 
             if ($r['Type'] != GLTypeCodes::Archive || $visitFeeCharged == $r['Substitute']) {
                 $codes[$r['Code']] = $r;
@@ -735,7 +736,7 @@ class RateChooser {
             .HTMLTable::makeTh('Estimated Total'));
 
         $rateSel = $this->makeRateSelControl(
-                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
+                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
                 HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, $attrFixedInput), $attrFixed));
 
         $adjSel = $this->makeRateAdjustSel($resv->getIdRateAdjust(), $resv->getRateAdjust());

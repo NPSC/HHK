@@ -2,6 +2,7 @@
 namespace HHK\sec;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\{WebPageCode, Mode};
+use HHK\Common;
 
 /**
  * WebInit.php
@@ -84,7 +85,7 @@ class WebInit {
         // define db connection obj
         try {
 
-            $this->dbh = initPDO(FALSE);
+            $this->dbh = Common::initPDO(FALSE);
 
         } catch (RuntimeException $hex) {
 
@@ -147,7 +148,7 @@ class WebInit {
         } else {
             if ($uS->timeout_idle < time()) {
                 $uS->logged = FALSE;
-                $dbh = initPDO(true);
+                $dbh = Common::initPDO(true);
                 UserClass::insertUserLog($dbh, UserClass::LogoutInactivity, ($uS->username != "" ? $uS->username : "<empty>"));
 
                 $this->page->die_if_not_Logged_In($page_Type, "index.php");
@@ -233,11 +234,11 @@ class WebInit {
         }
 
         // Demographics
-        $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
+        $demos = Common::readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         foreach ($demos as $d) {
 
-            $entries = readGenLookupsPDO($dbh, $d[0], 'Order');
+            $entries = Common::readGenLookupsPDO($dbh, $d[0], 'Order');
 
             foreach ($entries as $e) {
                 $nameLookups[$d[0]][$e['Code']] = array($e['Code'],$e['Description'],$e['Substitute']);
@@ -257,7 +258,7 @@ class WebInit {
 
         $this->loadNameLookups($this->dbh, $uS);
 
-        SysConfig::getCategory($this->dbh, $uS, ["a", "d", "es", "f", "fg", "pr", "v", "ga"], webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, ["a", "d", "es", "f", "fg", "pr", "v", "ga"], WebInit::SYS_CONFIG);
 
         return $uS->nameLookups;
 
@@ -290,7 +291,7 @@ class WebInit {
         // get session instance
         $uS = Session::getInstance();
 
-        SysConfig::getCategory($this->dbh, $uS, ["h", "ha", "hf", "c", "g", "p", "ga"], webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, ["h", "ha", "hf", "c", "g", "p", "ga"], WebInit::SYS_CONFIG);
 
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
@@ -359,7 +360,7 @@ class WebInit {
 
         $uS->volLookups = $nameLookups;
 
-        SysConfig::getCategory($this->dbh, $uS, "v", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "v", WebInit::SYS_CONFIG);
         return $uS->volLookups;
 
     }

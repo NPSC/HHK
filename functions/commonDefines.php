@@ -4,19 +4,19 @@
  * Find my place and determine paths.
  */
 define( 'DS', DIRECTORY_SEPARATOR );
-define('P_ROOT', dirname(__FILE__) . DS );
-define('REL_BASE_DIR', '..' . DS);
-define('REL_BASE_SITE', '../');
+define('P_ROOT', __DIR__ . DS );
+define('REL_BASE_DIR', P_ROOT . '..' . DS);
+define('REL_BASE_SITE', '..'.DS);
 
 
 // Find the vendor directory
-$dirxx = '../vendor';
+$dirxx = '..' . DS . 'vendor';
 if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../' . $dirxx;
+    $dirxx = '..'.DS . $dirxx;
     if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../' . $dirxx;
+        $dirxx = '..'.DS . $dirxx;
         if (file_exists($dirxx) === FALSE) {
-            $dirxx = '../' . $dirxx;
+            $dirxx = '..'.DS . $dirxx;
             if (file_exists($dirxx) === FALSE) {
                 throw new Exception('Cannot find the vendor directory.');
             }
@@ -42,7 +42,6 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
 require(FUNCTIONS . 'errorHandler.php');
 require (THIRD_PARTY . '/autoload.php');
-require (FUNCTIONS . 'commonFunc.php');
 
 define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);
 

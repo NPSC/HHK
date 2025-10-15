@@ -55,7 +55,6 @@ abstract class AbstractContactPoint {
     /**
      * Summary of setPreferredCode
      * @param mixed $code
-     * @return string
      */
     public abstract function setPreferredCode($code);
 

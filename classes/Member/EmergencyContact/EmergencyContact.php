@@ -177,7 +177,7 @@ class EmergencyContact implements EmergencyContactInterface {
 
         // Relationship
         $markup->addBodyTr(HTMLTable::makeTd('Relationship to ' . Labels::getString('MemberType', 'visitor', 'Guest'), array('class'=>'tdlabel')) . HTMLTable::makeTd(
-            HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($relOptions), (isset($emergUserData['relation']) && $emergUserData['relation'] !='' ? $emergUserData['relation'] : $this->getEcRelationship())), array('name'=>$idPrefix."selEmrgRel", 'class'=>'hhk-phoneInput hhk-copy-target', 'data-pref'=>$idPrefix))));
+            HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($relOptions), (isset($emergUserData['relation']) && $emergUserData['relation'] !='' ? $emergUserData['relation'] : $this->getEcRelationship())), array('name'=>$idPrefix."selEmrgRel", 'class'=>'hhk-phoneInput hhk-copy-target', 'data-pref'=>$idPrefix))));
 
         $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbEmrgLater', 'data-prefix'=>$idPrefix, 'class'=>'hhk-EmergCb');
         if ($checkLater) {

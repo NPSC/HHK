@@ -1,4 +1,6 @@
 <?php
+use HHK\Common;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\DataTableServer\SSP;
@@ -51,7 +53,7 @@ if(filter_has_var(INPUT_POST, 'btnHere')){
     }
 }
 
-foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
+foreach (Common::readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
     if (strtolower($d[2]) == 'y') {
 
@@ -71,7 +73,7 @@ foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
         $demos[$d[0]] = array(
             'title' => $d[1],
-            'list' => removeOptionGroups(readGenLookupsPDO($dbh, $d[0], 'Order')),
+            'list' => HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $d[0], 'Order')),
         );
     }
 }
