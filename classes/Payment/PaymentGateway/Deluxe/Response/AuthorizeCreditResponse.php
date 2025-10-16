@@ -49,38 +49,7 @@ class AuthorizeCreditResponse extends AbstractCreditResponse {
 
     public function getStatus() {
 
-        switch ($this->response->getResponseCode()) {
-
-            case '0':
-                $status = AbstractCreditPayments::STATUS_APPROVED;
-                break;
-
-            case '1434'://decline
-                $status = AbstractCreditPayments::STATUS_DECLINED;
-                break;
-
-            case '1446'://expired card
-                $status = AbstractCreditPayments::STATUS_DECLINED;
-                break;
-
-            case '10': //insufficient funds
-                $status = AbstractCreditPayments::STATUS_DECLINED;
-                break;
-
-            case '051':
-                $status = AbstractCreditPayments::STATUS_DECLINED;
-                break;
-
-            case '063':
-                $status = AbstractCreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $status = AbstractCreditPayments::STATUS_ERROR;
-
-        }
-
-        return $status;
+        return $this->response->getStatus() == '0' ? AbstractCreditPayments::STATUS_APPROVED : AbstractCreditPayments::STATUS_DECLINED;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
