@@ -1005,7 +1005,7 @@ ORDER BY Span;";
                     $resvSpanStart = new \DateTime($rw['Span_Start']);
 
                     if ($expDep->format('Y-m-d') == $resvSpanStart->format('Y-m-d')) {
-                        $showChangeNow = true;
+                        //$showChangeNow = true;
                         $resvIdResc = $rw['idResource'];
                         $resvTitle = $rw['Resource_Title'];
                         $resvSpanExpectedEnd = $rw['Expected_Departure'];
@@ -1056,7 +1056,7 @@ ORDER BY Span;";
                 'merchant' => $curResc->getMerchant(),
             ];
 
-            $dataArray['visitSpan'] = [
+            $dataArray['curVisitSpan'] = [
                 'start' => $vspanStartDT->format('c'),
                 'end' => $expDepDT->format('c'),
                 'idVisit' => $idVisit,

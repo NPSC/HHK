@@ -194,7 +194,8 @@ class TrackFutureVisits {
             if ($upCtr > 0) {
 
                 // Update any stays
-                Visit::setStaysExpectedEnd($dbh, $stays, $expectedDepartureDT);
+                $stays = Visit::loadStaysStatic($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal());
+                Visit::setStaysExpectedEnd($dbh,$stays, $expectedDepartureDT);
 
                 // Move any reservations away.
                 ReservationSvcs::moveResvAway($dbh, new \DateTime($visitRs->Span_Start->getStoredVal()), $expectedDepartureDT, $visitRs->idResource->getStoredVal(), $uS->username);

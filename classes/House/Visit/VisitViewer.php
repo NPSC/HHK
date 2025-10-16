@@ -1715,7 +1715,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
-        $spanEndDt = newDateWithTz($visitRcrds[$ckinSpan]['Expected_Departure'], $uS->tz);
+        $spanEndDt = Common::newDateWithTz($visitRcrds[$ckinSpan]['Expected_Departure'], $uS->tz);
         $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
         if ($spanEndDt < $tonight) {
