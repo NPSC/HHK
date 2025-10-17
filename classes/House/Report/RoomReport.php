@@ -5,6 +5,7 @@ namespace HHK\House\Report;
 use DateTime;
 use HHK\Common;
 use HHK\House\OperatingHours;
+use HHK\House\ResourceView;
 use HHK\Notes;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
@@ -461,26 +462,22 @@ ORDER BY rn.idLink, n.`Timestamp` DESC;");
         $fixed = array();
         $idVisit = intval($r['idVisit'], 10);
         $stat = '';
+        $statColor = '';
 
+        
         // Mangle room status
         if ($r['Cleaning_Days'] > 0) {
-            if ($r['Status'] == RoomState::TurnOver) {
-                $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
-            } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Dirty) {
-            	$stat = HTMLContainer::generateMarkup('span', 'Active-'.$roomStatuses[RoomState::Dirty][1], array('style'=>'background-color:#E3FF14;'));
-            } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Clean) {
-                $stat = HTMLContainer::generateMarkup('span', 'Active', array('style'=>'background-color:lightgreen;'));
-            } else if ($r['Status'] == RoomState::Dirty) {
-            	$stat = HTMLContainer::generateMarkup('span', $roomStatuses[RoomState::Dirty][1], array('style'=>'background-color:yellow;'));
+            if ($idVisit > 0) {
+                // active room
+                $stat = 'Active-' . $r['Status_Text'];
+                $statColor = ResourceView::getRoomStatusColor($r['Status'], true);
             } else {
-                $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+                // Inactive room
+                $stat = $r['Status_Text'];
+                $statColor = ResourceView::getRoomStatusColor($r['Status'], false);
             }
         } else {
-            if ($r['idVisit'] > 0) {
-                $stat = HTMLContainer::generateMarkup('span', 'Active', array('style'=>'background-color:lightgreen;'));
-            } else {
-                $stat = HTMLContainer::generateMarkup('span', 'Empty');
-            }
+            $stat = $r['idVisit'] > 0 ? 'Active' : 'Vacant';
         }
 
         // Check OOS
@@ -496,6 +493,7 @@ ORDER BY rn.idLink, n.`Timestamp` DESC;");
         $fixed['titleSort'] = $r['Util_Priority'];
         $fixed['Title'] = $r['Title'];
         $fixed['Status'] = $stat;
+        $fixed['StatusColor'] = $statColor;
         $fixed['Guests'] = $guests;
         $fixed['Patient_Name'] = $r['Patient_Name'];
 

@@ -1092,38 +1092,17 @@ ORDER BY $orderBy;");
             // Mangle room status
             if ($r['idVisit'] > 0) {
                 // active room
-
-                if ($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver) {
-                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
-                    $statColor = "#fff67d";
-                    $isDirty = TRUE;
-
-                } else if ($r['Status'] == RoomState::Clean || $r['Status'] == RoomState::Ready) {
-                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
-                    $statColor = "#99ff99";
-
-                } else {
-                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
-                    $statColor = "transparent";
-                }
+                $stat = 'Active-' . $r['Status_Text'];
+                $statColor = self::getRoomStatusColor($r['Status'], true);
+                $isDirty = in_array($r['Status'], [RoomState::Dirty, RoomState::TurnOver]);
 
             } else {
                 // Inactive room
+                $stat = $r['Status_Text'];
+                $statColor = self::getRoomStatusColor($r['Status'], false);
 
-                if ($r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Dirty) {
-                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
-                    $statColor = "#fff67d";
-                    $isDirty = TRUE;
-
-                } else if ($r['Status'] == RoomState::Ready) {
-                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
-                    $statColor = "#99ff99";
-
-                } else {
-                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
-                    $statColor = "transparent";
-                    $isClean = TRUE;
-                }
+                $isDirty = in_array($r['Status'], [RoomState::TurnOver, RoomState::Dirty]);
+                $isClean = $r["Status"] == RoomState::Clean;
             }
 
             $lastDeepClean = $r['Last_Deep_Clean'] == '' ? '' : date('M d, Y', strtotime($r['Last_Deep_Clean']));
@@ -1149,21 +1128,12 @@ ORDER BY $orderBy;");
                         $lastDeepClean = HTMLInput::generateMarkup($lastDeepClean, array("type"=>"text", "class"=>"ckdate","name"=>$filter . 'deepCleanDate[' . $r['idRoom'] . ']'));
 
                 if ($isDirty) {
-                    //$action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
-                    //.HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Clean][1], array('for'=>$filter.'cbClean' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                     $action = HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Clean][1], ['type' => 'button', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'data-idRoom'=>$r['idRoom'], 'data-setstatus'=>RoomState::Clean, 'class' => 'ui-button ui-corner-all setRoomStat']);
                 } else if ($isClean && $uS->HouseKeepingSteps > 1) {
-                    /*$action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'id'=>$filter.'cbReady' . $r['idRoom']))
-                        .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Ready][1], array('for'=>$filter.'cbReady' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
-                    $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
-                        .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Dirty][1], array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
-                */
+
                     $action = HTMLContainer::generateMarkup("button", 'Set '.$roomStatuses[RoomState::Ready][1], ['type' => 'button', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'data-idRoom'=>$r['idRoom'], 'data-setstatus'=>RoomState::Ready, 'class' => 'ui-button ui-corner-all setRoomStat']);
                     $action .= HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Dirty][1], ['type' => 'button', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'data-idRoom'=>$r['idRoom'], 'data-setstatus'=>RoomState::Dirty, 'class' => 'ui-button ui-corner-all setRoomStat']);
                 } else {
-                    /*$action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
-                        .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Dirty][1], array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
-                    */
                     $action .= HTMLContainer::generateMarkup("button", 'Set ' . $roomStatuses[RoomState::Dirty][1], ['type' => 'button', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'data-idRoom'=>$r['idRoom'], 'data-setstatus'=>RoomState::Dirty, 'class' => 'ui-button ui-corner-all setRoomStat']);
                 }
 
@@ -1348,6 +1318,35 @@ ORDER BY $orderBy;");
         );
 
         return SSP::simple($get, $dbh, "vcleaning_log", 'idRoom', $columns);
+    }
+
+    /**
+     * Returns the proper room status hex color based on housekeeping status and occupied vs vacant
+     * @param string $status
+     * @param bool $isActive
+     * @return string
+     */
+    public static function getRoomStatusColor(string $status, bool $isActive): string {
+        $statColor = "transparent";
+        
+        if ($isActive) {
+            // Occupied room
+
+            if (in_array($status, [RoomState::Dirty, RoomState::TurnOver])) {
+                $statColor = "#fff67d";
+            }
+
+        } else {
+            // vacant room
+
+            if (in_array($status, [RoomState::Dirty, RoomState::TurnOver])) {
+                $statColor = "#fff67d";
+            } else if ($status == RoomState::Ready) {
+                $statColor = "#99ff99";
+            }
+        }
+
+        return $statColor;
     }
 
 }

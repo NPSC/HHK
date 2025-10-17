@@ -830,7 +830,18 @@ $(document).ready(function () {
     let dailyCols = [
             {data: 'titleSort', 'visible': false },
             {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
-            {data: 'Status', title: 'Status', searchable:false},
+            {
+            'data': 'Status',
+            'title': 'Status',
+            'searchable': false,
+            'sortable': true,
+            'createdCell': function(td, cellData, rowData, col){
+                if(rowData.StatusColor){
+                    $(td).css("background-color", rowData.StatusColor);
+                }
+            }
+
+        },
             {data: 'Guests', title: visitorLabel+'s'},
             {data: 'Patient_Name', title: patientLabel}];
 
