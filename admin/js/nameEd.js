@@ -326,12 +326,7 @@ $(document).ready(function () {
                     if (!checkLength($('#txtwUserName'), 'User Name', 6, 35, tipmsg, tipmsg.parent())) {
                         return;
                     }
-//                    if (!checkStrength($('#txtwUserPW'))) {
-//                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.', tipmsg.parent());
-//                        return;
-//                    }
                     parms['wuname'] = $('#txtwUserName').val();
-//                    parms['wupw'] = $('#txtwUserPW').val();
                     parms['grpSec_v'] = 'checked';  // check the volunteer auth code.
                     
                 }

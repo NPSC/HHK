@@ -430,9 +430,37 @@ class UserClass
         $ssn = Session::getInstance();
         $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
 
+        $success = true;
+
+        // check old password
+        if(!$this->_checkLogin($dbh, $ssn->username, $oldPw, false, false)){
+            $this->logMessage = "Your old password is incorrect<br>";
+            $success = false;
+        }
+
         if ($oldPw == $newPw) {
-            $this->logMessage = "The new password must be different from the old one.  ";
-            return FALSE;
+            $this->logMessage .= "The new password must be different from the old one<br>";
+            $success = false;
+        }
+
+        // check if password has already been used
+        if ($this->isPasswordUsed($dbh, $newPw)) {
+            $this->logMessage .= "You cannot use any of the prior " . $priorPasswords . " passwords<br>";
+            $success = false;
+        }
+
+        //check length
+        $minPassLength = ($ssn->minPassLength > 8 ? $ssn->minPassLength : 8);
+        if (strlen($newPw) < $minPassLength){
+            $this->logMessage .= "The new password must be at least " . $minPassLength . " characters<br>";
+            $success = false;
+        }
+
+        //check strength
+        $strongRegex = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)$/';
+        if (!preg_match($strongRegex, $newPw)) {
+            $this->logMessage .= "The new password is weak<br>";
+            $success = false;
         }
 
         if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
@@ -440,16 +468,6 @@ class UserClass
         }else{
             $newPwHash = password_hash($newPw, PASSWORD_ARGON2ID);
         }
-
-
-        // check if password has already been used
-        if ($this->isPasswordUsed($dbh, $newPw)) {
-            $this->logMessage = "You cannot use any of the prior " . $priorPasswords . " passwords";
-            return FALSE;
-        }
-
-        // Are we legit?
-        $success = $this->_checkLogin($dbh, $ssn->username, $oldPw, false, false);
 
         if ($success) {
             $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset where idName = :id and Status='a';";
@@ -473,9 +491,8 @@ class UserClass
 
                 return TRUE;
             }
-        }else{
-            $this->logMessage = "Your old password is incorrect";
         }
+
         return FALSE;
     }
 
@@ -815,6 +832,7 @@ class UserClass
             ';
 
             // password markup
+            $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
             $mkup .= '
                 <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
             		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
@@ -829,7 +847,7 @@ class UserClass
                             </tr><tr>
                                 <td class="tdlabel">New Password Again:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                             </tr><tr>
-                                <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
+                                <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
                             </tr>
                         </table>
                         <div id="pwChangeErrMsg" style="color:red; text-align:center;" class="mt-1"></div>
