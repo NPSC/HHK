@@ -93,7 +93,7 @@ class OrgMember extends AbstractMember {
 
         // Status
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[GLTableNames::MemberStatus]),
+                HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($uS->nameLookups[GLTableNames::MemberStatus]),
                         $this->nameRS->Member_Status, FALSE), array('name'=>$idPrefix.'selStatus')));
 
         // Basis
@@ -104,7 +104,7 @@ class OrgMember extends AbstractMember {
             }
         }
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($basis),
+                HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($basis),
                         $this->nameRS->Member_Type, FALSE), array('name'=>$idPrefix.'selMbrType')),
                 array('id'=>$idPrefix.'basistd'));
 

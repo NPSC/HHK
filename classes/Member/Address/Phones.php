@@ -190,8 +190,6 @@ class Phones extends AbstractContactPoint {
 
         if ($p[0] == $this->get_preferredCode()) {
             $prefAttr['checked'] = 'checked';
-        } else {
-            unset($prefAttr['checked']);
         }
 
         if ($showPrefCheckbox === FALSE) {
@@ -261,8 +259,6 @@ class Phones extends AbstractContactPoint {
 
         if ($roomPhoneCkd) {
             $prefAttr['checked'] = 'checked';
-        } else {
-            unset($prefAttr['checked']);
         }
 
         $tdContents .= HTMLInput::generateMarkup($prefCode, $prefAttr);

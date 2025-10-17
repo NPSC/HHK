@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Instamed;
 
+use HHK\Crypto;
 use HHK\Tables\PaymentGW\InstamedGatewayRS;
 
 /**
@@ -48,7 +49,7 @@ class InstamedCredentials {
         $this->storeId = $gwRs->store_Id->getStoredVal();
         $this->terminalId = $gwRs->terminal_Id->getStoredVal();
         $this->workstationId = $gwRs->WorkStation_Id->getStoredVal();
-        $this->password = decryptMessage($gwRs->password->getStoredVal());
+        $this->password = Crypto::decryptMessage($gwRs->password->getStoredVal());
         
         $parts = explode('@', $this->accountID);
         $this->id = $parts[0];
@@ -57,28 +58,28 @@ class InstamedCredentials {
     public function toSSO() {
         
         return array(
-            InstaMedCredentials::ACCT_ID => $this->accountID,
-            InstaMedCredentials::SEC_KEY => decryptMessage($this->securityKey),
-            InstaMedCredentials::SSO_ALIAS => $this->ssoAlias,
-            InstaMedCredentials::ID => $this->id,
-            InstaMedCredentials::WORKSTATION_ID => $this->workstationId,
+            InstamedCredentials::ACCT_ID => $this->accountID,
+            InstamedCredentials::SEC_KEY => Crypto::decryptMessage($this->securityKey),
+            InstamedCredentials::SSO_ALIAS => $this->ssoAlias,
+            InstamedCredentials::ID => $this->id,
+            InstamedCredentials::WORKSTATION_ID => $this->workstationId,
         );
     }
     
     public function toCurl($useWorkstationId = TRUE) {
         
         return
-        InstaMedCredentials::MERCHANT_ID . '=' . $this->merchantId
-        . '&' . InstaMedCredentials::STORE_ID . '=' . $this->storeId
-        . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId
-        . ($useWorkstationId ? '&' . InstaMedCredentials::WORKSTATION_ID . '=' . $this->workstationId : '');
+        InstamedCredentials::MERCHANT_ID . '=' . $this->merchantId
+        . '&' . InstamedCredentials::STORE_ID . '=' . $this->storeId
+        . '&' . InstamedCredentials::TERMINAL_ID . '=' . $this->terminalId
+        . ($useWorkstationId ? '&' . InstamedCredentials::WORKSTATION_ID . '=' . $this->workstationId : '');
     }
     
     public function toSOAP() {
         
         return array(
-            InstaMedCredentials::ACCT_ID => $this->accountID,
-            'password' => decryptMessage($this->securityKey),
+            InstamedCredentials::ACCT_ID => $this->accountID,
+            'password' => Crypto::decryptMessage($this->securityKey),
             'alias' => $this->ssoAlias,
         );
     }

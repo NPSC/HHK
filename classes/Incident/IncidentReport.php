@@ -141,36 +141,33 @@ class IncidentReport {
     /**
      * Summary of saveNew
      * @param \PDO $dbh
-     * @return bool
      */
     public function saveNew(\PDO $dbh) {
 
-        if ($this->isValid() === FALSE) {
-            return FALSE;
+        if ($this->isValid()) {
+
+            // Insert
+            $reportRS = new IncidentReportRs();
+            $reportRS->Title->setNewVal($this->getTitle());
+            $reportRS->Report_Date->setNewVal($this->getReportDate());
+            $reportRS->Description->setNewVal($this->getDescription());
+            $reportRS->Author->setNewVal($this->getAuthor());
+            $reportRS->Status->setNewVal($this->getStatus());
+            $reportRS->Resolution->setNewVal($this->getResolution());
+            $reportRS->Resolution_Date->setNewVal($this->getResolutionDate());
+            $reportRS->Signature->setNewVal($this->getSignature());
+            $reportRS->Signature_Date->setNewVal($this->getSignatureDate());
+            $reportRS->Guest_Id->setNewVal($this->getGuestId());
+            $reportRS->Psg_Id->setNewVal($this->getPsgId());
+            $reportRS->Last_Updated->setNewVal($this->getLastUpdated());
+            $reportRS->Updated_By->setNewVal($this->getUpdatedBy());
+
+            $this->idReport = EditRS::insert($dbh, $reportRS);
+            $reportRS->idReport->setNewVal($this->idReport);
+            EditRS::updateStoredVals($reportRS);
+
+            $this->reportRS = $reportRS;
         }
-
-        // Insert
-        $reportRS = new IncidentReportRs();
-        $reportRS->Title->setNewVal($this->getTitle());
-        $reportRS->Report_Date->setNewVal($this->getReportDate());
-        $reportRS->Description->setNewVal($this->getDescription());
-        $reportRS->Author->setNewVal($this->getAuthor());
-        $reportRS->Status->setNewVal($this->getStatus());
-        $reportRS->Resolution->setNewVal($this->getResolution());
-        $reportRS->Resolution_Date->setNewVal($this->getResolutionDate());
-        $reportRS->Signature->setNewVal($this->getSignature());
-        $reportRS->Signature_Date->setNewVal($this->getSignatureDate());
-        $reportRS->Guest_Id->setNewVal($this->getGuestId());
-        $reportRS->Psg_Id->setNewVal($this->getPsgId());
-        $reportRS->Last_Updated->setNewVal($this->getLastUpdated());
-        $reportRS->Updated_By->setNewVal($this->getUpdatedBy());
-
-        $this->idReport = EditRS::insert($dbh, $reportRS);
-        $reportRS->idReport->setNewVal($this->idReport);
-        EditRS::updateStoredVals($reportRS);
-
-        $this->reportRS = $reportRS;
-
     }
 
     

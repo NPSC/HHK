@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\ExcelHelper;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
@@ -25,9 +26,9 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
         $this->reportTitle = $uS->siteName . ' Occupancy Report';
         $this->inputSetReportName = "occupancy";
 
-        $this->roomTypes = readGenLookupsPDO($dbh, "Resource_Type");
+        $this->roomTypes = Common::readGenLookupsPDO($dbh, "Resource_Type");
         $this->rmtroomTitle = (isset($this->roomTypes['rmtroom']['Description']) ? $this->roomTypes['rmtroom']['Description']: "Remote Room");
-        $this->diagCats = readGenLookupsPDO($dbh, "Diagnosis_Category");
+        $this->diagCats = Common::readGenLookupsPDO($dbh, "Diagnosis_Category");
 
         $this->dispType = (filter_has_var(INPUT_POST, "btnExcel-" . $this->inputSetReportName) ? "excel":"here");
 
@@ -233,7 +234,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     public function getMainSummaryData(string $start, string $end){
 
-        $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
+        $roomTypes = Common::readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
         $retiredRescSql = "(re.Retired_At is null or re.Retired_At > date('$start'))";

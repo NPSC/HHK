@@ -2,6 +2,7 @@
 
 namespace HHK\House\GLCodes;
 
+use HHK\Common;
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
 use HHK\SysConst\ItemType;
@@ -50,7 +51,7 @@ class GLCodes {
 
 		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $periodEndDate->format('M j, Y'));
 
-		$this->fileId = 'GL_HHK_' . $periodEndDate->format('Ymd') . '_' . getRandomString(3);
+		$this->fileId = 'GL_HHK_' . $periodEndDate->format('Ymd') . '_' . Common::getRandomString(3);
 
 		$this->stopAtInvoice = '';
 
@@ -588,7 +589,7 @@ class GLCodes {
 	    }
 
 
-	    $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+	    $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
 
 	    foreach ($payTypes as $r) {
 	        if ($r[2] != '') {

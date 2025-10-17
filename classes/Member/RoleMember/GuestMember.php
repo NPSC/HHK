@@ -46,7 +46,7 @@ class GuestMember extends AbstractRoleMember {
                     $parray = array($patientRelationship => $parray[$patientRelationship]);
                 } else {
                     unset($parray[RelLinkType::Self]);
-                    $parray = removeOptionGroups($parray);
+                    $parray = HTMLSelector::removeOptionGroups($parray);
                 }
 
                 if ($patientRelationship == '') {

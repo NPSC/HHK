@@ -2,6 +2,7 @@
 
 namespace HHK\Document;
 
+use HHK\Common;
 use HHK\House\Hospital\Hospital;
 use HHK\sec\Session;
 use HHK\sec\Recaptcha;
@@ -310,10 +311,10 @@ class FormTemplate {
     public static function getLookups(\PDO $dbh){
         $lookups = array();
 
-        $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
+        $demos = Common::readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         foreach ($demos as $d) {
-            $lookups[$d[0]] = readGenLookupsPDO($dbh, $d[0], 'Order');
+            $lookups[$d[0]] = Common::readGenLookupsPDO($dbh, $d[0], 'Order');
 
             if($d[0] == 'Gender'){
                 unset($lookups['Gender']['z']);
@@ -322,13 +323,13 @@ class FormTemplate {
             $lookups[$d[0]] = FormTemplate::rekeyLookups($lookups[$d[0]]);
         }
 
-        $lookups['patientRelation'] = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Description');
+        $lookups['patientRelation'] = Common::readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Description');
         unset($lookups['patientRelation']['slf']);
         FormTemplate::rekeyLookups($lookups['patientRelation']);
-        $lookups['namePrefix'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Name_Prefix', 'Description'));
-        $lookups['nameSuffix'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Name_Suffix', 'Description'));
-        $lookups['diagnosis'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Diagnosis', 'Description'));
-        $lookups['location'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Location', 'Description'));
+        $lookups['namePrefix'] = FormTemplate::rekeyLookups(Common::readGenLookupsPDO($dbh, 'Name_Prefix', 'Description'));
+        $lookups['nameSuffix'] = FormTemplate::rekeyLookups(Common::readGenLookupsPDO($dbh, 'Name_Suffix', 'Description'));
+        $lookups['diagnosis'] = FormTemplate::rekeyLookups(Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description'));
+        $lookups['location'] = FormTemplate::rekeyLookups(Common::readGenLookupsPDO($dbh, 'Location', 'Description'));
 
         //backwards compatibility
         $lookups['genders'] = $lookups['Gender'];

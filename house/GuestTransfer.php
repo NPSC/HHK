@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\House\Report\ReportFilter;
 use HHK\sec\SecurityComponent;
@@ -430,14 +431,14 @@ LIMIT 500");
 }
 
 /**
- * Summary of getPeopleReport
+ * Summary of getGTPeopleReport
  * @param PDO $dbh
  * @param mixed $start
  * @param mixed $end
  * @param mixed $excludeTerm
  * @return array|bool
  */
-function getPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
+function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
 
     $transferIds = [];
@@ -552,7 +553,7 @@ function createKeyMap(\PDO $dbh) {
     $diagKeyTable->addBodyTr(HTMLTable::makeTh("Diagnosis Key", array('colspan'=>'2')));
     $diagKeyTable->addBodyTr(HTMLTable::makeTh("Code").HTMLTable::makeTh('Title'));
 
-    $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
+    $diags = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
 
     foreach ($diags as $d) {
         $diagKeyTable->addBodyTr(HTMLTable::makeTd($d[0]).HTMLTable::makeTd($d[1]));
@@ -668,7 +669,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     if (filter_has_var(INPUT_POST, 'btnHere')) {
 
         // Get HHK records result table.
-        $results = getPeopleReport($dbh, $start, $end, $CmsManager::EXCLUDE_TERM, FALSE);
+        $results = getGTPeopleReport($dbh, $start, $end, $CmsManager::EXCLUDE_TERM);
 
         if ($results === FALSE) {
 

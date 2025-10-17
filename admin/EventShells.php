@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable, HTMLSelector};
 use HHK\Tables\EditRS;
@@ -104,7 +105,7 @@ if (isset($_POST['txtTitle'])) {
 // Create markup
 $tbl = new HTMLTable();
 $dayAttrs = array('style'=>'text-align:center');
-$gattrs = readGenLookupsPDO($dbh, 'E_Shell_Status');
+$gattrs = Common::readGenLookupsPDO($dbh, 'E_Shell_Status');
 
 // Get Vol Categories
 $stmtCat = $dbh->query("SELECT `Code`, `Description`, '' FROM `gen_lookups` WHERE `Table_Name` = 'Vol_Category';");

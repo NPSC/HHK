@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\GLTableNames;
 use HHK\sec\Labels;
@@ -265,7 +266,7 @@ class ReportFilter {
         $uS = Session::getInstance();
 
         $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-        $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+        $yearSelector = HTMLSelector::generateMarkup(static::getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
         $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
         $tbl = new HTMLTable();
@@ -444,6 +445,40 @@ $ckdate";
         return $this;
     }
 
+    public static function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRUE)
+    {
+        $markup = "";
+
+        $curYear = intval(date("Y")) + 1;
+
+        // Get month number of start of FY
+        $fyDate = 12 - $fyMonths;
+
+        // Show next year in list if we are already into the new FY
+        if ($fyDate <= intval(date("n"))) {
+            $curYear ++;
+        }
+
+        if ($showAllYears) {
+            if ($slctd == "all" || $slctd == "") {
+                $markup .= "<option value='all' selected='selected'>All Years</option>";
+            } else {
+                $markup .= "<option value='all'>All Years</option>";
+            }
+        }
+
+        // load years
+        for ($i = $startYear; $i <= $curYear; $i ++) {
+            if ($slctd == $i) {
+                $slctMarkup = "selected='selected'";
+            } else {
+                $slctMarkup = "";
+            }
+            $markup .= "<option value='" . $i . "' $slctMarkup>" . $i . "</option>";
+        }
+        return $markup;
+    }
+
     /**
      * Summary of createHospitals
      * @return ReportFilter
@@ -543,7 +578,7 @@ $ckdate";
 
         $uS = Session::getInstance();
 
-        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+        $rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
         if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             $this->selectedResourceGroups = $uS->CalResourceGroupBy;
@@ -551,7 +586,7 @@ $ckdate";
             $this->selectedResourceGroups = reset($rescGroups)[0];
         }
 
-        $this->resourceGroups = removeOptionGroups($rescGroups);
+        $this->resourceGroups = HTMLSelector::removeOptionGroups($rescGroups);
         return $this;
     }
 
@@ -590,8 +625,8 @@ $ckdate";
      * @return ReportFilter
      */
     public function createDiagnoses(\PDO $dbh){
-        $this->diagnoses = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-        $this->diagnosisCategories = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+        $this->diagnoses = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $this->diagnosisCategories = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 
         if (count($this->diagnoses) > 0) {
 
@@ -765,7 +800,7 @@ $ckdate";
      * @return ReportFilter
      */
     public function createPayStatuses(\PDO $dbh){
-        $this->payStatuses = readGenLookupsPDO($dbh, 'Payment_Status');
+        $this->payStatuses = Common::readGenLookupsPDO($dbh, 'Payment_Status');
         return $this;
     }
 

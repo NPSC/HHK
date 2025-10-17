@@ -6,6 +6,7 @@ use HHK\SysConst\WebPageCode;
 use HHK\Tables\EditRS;
 use HHK\Tables\WebSec\{PageRS, Page_SecurityGroupRS, Web_SitesRS};
 use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
+use HHK\Common;
 
 /**
  * Pages.php
@@ -96,7 +97,7 @@ class Pages {
             throw new RuntimeException("Login Page Id not found");
         }
 
-        $pageTypes = readGenLookupsPDO($dbh, 'Page_Type');
+        $pageTypes = Common::readGenLookupsPDO($dbh, 'Page_Type');
         $positionMenus = [];
 
 
@@ -403,7 +404,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
         }
 
-        $pageTypes = readGenLookupsPDO($dbh, 'Page_Type');
+        $pageTypes = Common::readGenLookupsPDO($dbh, 'Page_Type');
 
         // New Page
         $newRow = HTMLTable::makeTd(HTMLInput::generateMarkup('New', array('name'=>'txtIdPage[0]', 'readonly'=>'readonly', 'style'=>'background-color:transparent;text-align:center;', 'size'=>'5')))

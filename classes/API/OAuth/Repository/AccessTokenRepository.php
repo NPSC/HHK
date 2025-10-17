@@ -2,6 +2,7 @@
 namespace HHK\API\OAuth\Repository;
 
 use HHK\API\OAuth\Entity\AccessTokenEntity;
+use HHK\Common;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
@@ -44,7 +45,7 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
      */
     public function isAccessTokenRevoked(string $tokenId): bool {
         try{
-            $dbh = initPDO(true);
+            $dbh = Common::initPDO(true);
             $stmt = $dbh->prepare("select id from `oauth_access_tokens` t join `oauth_clients` c on t.client_id = c.client_id WHERE t.id = :id and t.revoked = 0 and c.revoked = 0;");
             $stmt->execute(array(
                 ':id' => $tokenId,
@@ -67,7 +68,7 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
     public function persistNewAccessToken(AccessTokenEntityInterface $accessTokenEntity): void {
         try{
             //TODO: Save Access Token to db
-            $dbh = initPDO(true);
+            $dbh = Common::initPDO(true);
             $stmt = $dbh->prepare("INSERT INTO `oauth_access_tokens` (`id`, `idName`, `client_id`, `name`, `scopes`, `revoked`, `expires_at`) VALUES (:id, :idName, :client_id, :name, :scopes, :revoked, :expires_at);");
             $stmt->execute(array(
                 ':id' => $accessTokenEntity->getIdentifier(),
@@ -89,7 +90,7 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
     public function revokeAccessToken(string $tokenId): void {
         //TODO: Revoke Access Token
         try{
-            $dbh = initPDO(true);
+            $dbh = Common::initPDO(true);
             $stmt = $dbh->prepare("UPDATE `oauth_access_tokens` SET revoked = 1 WHERE id = :id;");
             $stmt->execute(array(
                 ':id' => $tokenId,

@@ -31,11 +31,13 @@ class Checklist
 {
     const ChecklistRootTablename = 'Checklist';
 
+    public string $checklistType;
+
     public function __construct(\PDO $dbh, $checklistType) {
 
         $this->checklistType = $checklistType;
 
-        readGenLookupsPDO($dbh, self::ChecklistRootTablename, 'Order');
+        Common::readGenLookupsPDO($dbh, self::ChecklistRootTablename, 'Order');
 
     }
 

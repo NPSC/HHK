@@ -2,6 +2,7 @@
 
 namespace HHK\Notification\Mail;
 
+use HHK\Crypto;
 use HHK\sec\Session;
 use HHK\SysConst\NotificationStatus;
 use HHK\TableLog\NotificationLog;
@@ -52,7 +53,7 @@ class HHKMailer extends PHPMailer {
                 $this->Username = $uS->SMTP_Username;
 
                 if ($uS->SMTP_Password != '') {
-                    $this->Password = decryptMessage($uS->SMTP_Password);
+                    $this->Password = Crypto::decryptMessage($uS->SMTP_Password);
                 }
 
                 if ($uS->SMTP_Port != '') {

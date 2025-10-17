@@ -3,6 +3,7 @@
 namespace HHK\House\Reservation;
 
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\House\Report\ActivityReport;
 use HHK\Member\Role\Guest;
@@ -118,7 +119,7 @@ class ReservationSvcs
                     $cronJobs[$params["EmailTemplate"]][$job["idJob"]] = $job;
                 }
             }
-            $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+            $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
             foreach ($docRows as $d) {
 
@@ -826,7 +827,7 @@ class ReservationSvcs
         }
 
         if (isset($post['txtFaStatusDate']) && $post['txtFaStatusDate'] != '') {
-            $faDT = setTimeZone($uS, filter_var($post['txtFaStatusDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $faDT = Common::setTimeZone($uS, filter_var($post['txtFaStatusDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $faStatDate = $faDT->format('Y-m-d');
         }
 

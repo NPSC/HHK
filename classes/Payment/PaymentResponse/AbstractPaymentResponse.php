@@ -115,7 +115,6 @@ abstract class AbstractPaymentResponse {
      * Summary of receiptMarkup
      * @param \PDO $dbh
      * @param mixed $tbl
-     * @return string
      */
     public abstract function receiptMarkup(\PDO $dbh, &$tbl);
 

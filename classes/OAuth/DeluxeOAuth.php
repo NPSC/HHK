@@ -17,7 +17,7 @@ class DeluxeOAuth extends AbstractOAuth{
         parent::__construct($credentials);
     }
 
-    protected function requestToken(){
+    public function requestToken(){
 
         //build the request specific to Deluxe
         $requestOptions = [
@@ -30,7 +30,7 @@ class DeluxeOAuth extends AbstractOAuth{
         return $this->sendTokenRequest($requestOptions);
     }
 
-    protected function validateTokenResponse($data){
+    public function validateTokenResponse($data): bool{
         if(isset($data->access_token) && $data->expires_in > 0){
             $this->accessToken = $data->access_token; // Valid access token
             return true;

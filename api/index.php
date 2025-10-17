@@ -9,6 +9,7 @@ use HHK\API\Controllers\Reports\OccupancyAllTimeController;
 use HHK\API\Controllers\Reports\OccupancyTodayController;
 use HHK\API\Controllers\Widgets\VacancyWidgetController;
 use HHK\API\Handlers\ErrorHandler;
+use HHK\Common;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\API\OAuth\OAuthServer;
@@ -33,7 +34,7 @@ require ("../house/homeIncludes.php");
 $login = new Login();
 $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 $uS = Session::getInstance();
-$dbh = initPDO(TRUE);
+$dbh = Common::initPDO(TRUE);
 $oAuthServer = new OAuthServer($dbh);
 $debugMode = ($uS->mode == "dev");
     

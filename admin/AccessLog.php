@@ -1,14 +1,15 @@
 <?php
 
 use HHK\sec\{WebInit, UserClass};
+use HHK\Common;
 
 /**
  * AccessLog.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 
@@ -19,7 +20,7 @@ $menuMarkup = $wInit->generatePageMenu();
 $usernameList = array();
 $actions = array();
 
-$lookups = readGenLookupsPDO($dbh, "Web_User_Actions");
+$lookups = Common::readGenLookupsPDO($dbh, "Web_User_Actions");
 foreach($lookups as $action){
     $actions[] = ['id'=>$action['Code'], 'title'=>$action['Description']];
 }

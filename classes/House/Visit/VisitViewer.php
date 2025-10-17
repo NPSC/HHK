@@ -2,6 +2,7 @@
 
 namespace HHK\House\Visit;
 
+use HHK\Common;
 use HHK\House\OperatingHours;
 use HHK\Purchase\PriceModel\PriceGuestDay;
 use HHK\sec\Labels;
@@ -800,8 +801,8 @@ class VisitViewer {
         }
 
         $includeAddnlCharge = FALSE;
-        $addnls = readGenLookupsPDO($dbh, 'Addnl_Charge');
-        $discs = readGenLookupsPDO($dbh, 'House_Discount');
+        $addnls = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
+        $discs = Common::readGenLookupsPDO($dbh, 'House_Discount');
         if (count($addnls) > 0 || count($discs) > 0) {
             $includeAddnlCharge = TRUE;
         }
@@ -1026,7 +1027,7 @@ class VisitViewer {
         }
 
         // Partial guest payments
-        $dbh = initPDO(true);
+        $dbh = Common::initPDO(true);
         $stmt = $dbh->prepare("SELECT ifnull(sum(`Amount` - `Balance`), 0)
 FROM `invoice` `i` left join `name_volunteer2` `nv` on `i`.`Sold_To_Id` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' and `nv`.`Vol_Code` = 'ba'
 where `Deleted` = 0 and `Status` = 'up'
@@ -1364,7 +1365,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
             // Save first arrival
             if ($vRs->Span->getStoredVal() == 0) {
-                $firstArrival = newDateWithTz($vRs->Arrival_Date->getStoredVal(), $uS->tz);
+                $firstArrival = Common::newDateWithTz($vRs->Arrival_Date->getStoredVal(), $uS->tz);
             }
 
             // Changing only the end of the visit, need only the last span
@@ -1414,21 +1415,21 @@ where `Deleted` = 0 and `Status` = 'up'
         // change visit span dates
         foreach ($spans as $s => $vRs) {
 
-            $spanStartDT = newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
+            $spanStartDT = Common::newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
 
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-                $spanEndDt = newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
+                $spanEndDt = Common::newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
                 $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
                 if ($spanEndDt < $tonight) {
-                    $spanEndDt = newDateWithTz('', $uS->tz);
+                    $spanEndDt = Common::newDateWithTz('', $uS->tz);
                     $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
                 }
 
             } else {
                 // Checked out
-                $spanEndDt = newDateWithTz($vRs->Span_End->getStoredVal(), $uS->tz);
+                $spanEndDt = Common::newDateWithTz($vRs->Span_End->getStoredVal(), $uS->tz);
             }
 
 
@@ -1810,7 +1811,7 @@ where `Deleted` = 0 and `Status` = 'up'
     public static function changeVisitFee(\PDO $dbh, $visitFeeOption, Visit $visit) {
 
         $uS = Session::getInstance();
-        $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
+        $vFees = Common::readGenLookupsPDO($dbh, 'Visit_Fee_Code');
         $reply = '';
 
         if (isset($vFees[$visitFeeOption])) {

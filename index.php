@@ -28,7 +28,6 @@ if (file_exists('vendor/autoload.php')) {
     exit("Unable to laod dependancies, be sure to run 'composer install'");
 }
 
-require ('functions' . DS . 'commonFunc.php');
 
 try {
     $dbh = Login::initHhkSession(CONF_PATH, ciCFG_FILE);

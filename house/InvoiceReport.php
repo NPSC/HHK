@@ -1,10 +1,12 @@
 <?php
 use HHK\ColumnSelectors;
+use HHK\Common;
 use HHK\ExcelHelper;
 use HHK\Exception\RuntimeException;
 use HHK\House\GLCodes\GLCodes;
 use HHK\House\GLCodes\GLParameters;
 use HHK\House\GLCodes\GLTemplateRecord;
+use HHK\House\Report\InvoiceReport;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
 use HHK\HTMLControls\HTMLContainer;
@@ -248,7 +250,7 @@ $hospList = $filter->getHList();
 $aList = $filter->getAList();
 
 // Invoices
-$invoiceStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
+$invoiceStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
 // Billing agent.
 $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .
@@ -607,7 +609,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
             $totalAmount += $r['Amount'];
         }
 
-        doMarkupRow($fltrdFields, $r, $local, $hospital, $statusTxt, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId);
+        InvoiceReport::doMarkupRow($fltrdFields, $r, $local, $hospital, $statusTxt, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId);
 
     }
 
@@ -840,7 +842,7 @@ if ($useGlReport) {
 
 	//Month and Year chooser
 	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($filter->getMonths(), $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
-	$glYearSelr = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), 0, FALSE), array('name' => 'selGlYear', 'size'=>'12'));
+	$glYearSelr = HTMLSelector::generateMarkup(ReportFilter::getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), 0, FALSE), array('name' => 'selGlYear', 'size'=>'12'));
 
 }
 

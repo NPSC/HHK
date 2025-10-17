@@ -2,6 +2,8 @@
 namespace HHK\House;
 
 use HHK\Checklist;
+use HHK\Common;
+use HHK\House\Reservation\Reservation_1;
 use HHK\sec\{Session};
 use HHK\SysConst\ChecklistType;
 use HHK\Tables\{EditRS, GenLookupsRS};
@@ -12,6 +14,7 @@ use HHK\HTMLControls\{HTMLTable,HTMLInput, HTMLSelector};
 use HHK\House\Insurance\Insurance;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\GLTableNames;
+use HHK\Tables\LookupsRS;
 
 
 /**
@@ -78,7 +81,7 @@ class ResourceBldr
 
                     // Create new entry
                     $newRs = new GenLookupsRS();
-                    $defaultCode = incCounter($dbh, 'codes');
+                    $defaultCode = Common::incCounter($dbh, 'codes');
 
                     $newRs->Table_Name->setNewVal($tblName);
                     $newRs->Code->setNewVal($defaultCode);
@@ -145,7 +148,7 @@ class ResourceBldr
         // Generate selectors.
         if ($tableName == RESERV_STATUS_TABLE_NAME) {
 
-            $lookups = readLookups($dbh, $type, 'Code', true);
+            $lookups = Common::readLookups($dbh, $type, 'Code', true);
 
             // get Cancel Codes
             foreach ($lookups as $lookup) {
@@ -166,15 +169,15 @@ Order by `t`.`List_Order`;");
 
 
         } else if($tableName == DIAGNOSIS_TABLE_NAME){
-            $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
-            $diagCats = readGenLookupsPDO($dbh, "Diagnosis_Category", "Description");
+            $diags = Common::readGenLookupsPDO($dbh, $tableName, 'Order');
+            $diagCats = Common::readGenLookupsPDO($dbh, "Diagnosis_Category", "Description");
             foreach($diags as $key=>$diag){
                     if(!empty($diag['Substitute'])){
                         $diags[$key][2] = $diagCats[$diag['Substitute']][1];
                     }
                 }
         }else {
-            $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+            $diags = Common::readGenLookupsPDO($dbh, $tableName, 'Order');
         }
 
         $tbl = new HTMLTable();
@@ -440,7 +443,7 @@ Order by `t`.`List_Order`;");
 
                 if ($rows[0][0] == 0) {
                     // Not there.
-                    $newCode = 'g' . incCounter($dbh, 'codes');
+                    $newCode = 'g' . Common::incCounter($dbh, 'codes');
 
                     $glRs = new GenLookupsRS();
                     $glRs->Table_Name->setNewVal($tableName);
@@ -461,7 +464,7 @@ Order by `t`.`List_Order`;");
 
             $rep = NULL;
 
-            $demos = readGenLookupsPDO($dbh, 'Demographics');
+            $demos = Common::readGenLookupsPDO($dbh, 'Demographics');
 
             // Define the return functions.
             if (isset($demos[$tableName])) {
@@ -652,9 +655,9 @@ Order by `t`.`List_Order`;");
                     }
                 }
             } else if (isset($postLookups['selmisc'])) {
-                replaceLookups($dbh, $postLookups['selmisc'], $codeArray, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : array()));
+                static::replaceLookups($dbh, $postLookups['selmisc'], $codeArray, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : array()));
             } else {
-                replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? $postLookups['selDiagDel'] : array()));
+                static::replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? $postLookups['selDiagDel'] : array()));
             }
         }
 
@@ -682,4 +685,230 @@ Order by `t`.`List_Order`;");
         exit();
 
     }
+
+
+    public static function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, ?array $del, array $type = array())
+    {
+        if (isset($desc)) {
+
+            foreach ($desc as $k => $r) {
+
+                $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+
+                if ($code == '') {
+                    continue;
+                }
+
+                $glRs = new GenLookupsRS();
+                $glRs->Table_Name->setStoredVal($tblName);
+                $glRs->Code->setStoredVal($code);
+
+                $rates = EditRS::select($dbh, $glRs, array(
+                    $glRs->Table_Name,
+                    $glRs->Code
+                ));
+
+                if (count($rates) == 1) {
+
+                    $uS = Session::getInstance();
+
+                    EditRS::loadRow($rates[0], $glRs);
+
+                    if ($del != NULL && isset($del[$code])) {
+                        // delete
+                        EditRS::delete($dbh, $glRs, array(
+                            $glRs->Table_Name,
+                            $glRs->Code
+                        ));
+                        $logText = HouseLog::getDeleteText($glRs, $tblName . $code);
+                        HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
+                    } else {
+                        // update
+                        if (isset($desc[$code]) && $desc[$code] != '') {
+                            $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                        }
+                        if (isset($subt[$code])) {
+                            $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                        }
+                        if (isset($type[$code])) {
+                            $glRs->Type->setNewVal(filter_var($type[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                        }
+
+                        $ctr = EditRS::update($dbh, $glRs, array(
+                            $glRs->Table_Name,
+                            $glRs->Code
+                        ));
+
+                        if ($ctr > 0) {
+                            $logText = HouseLog::getUpdateText($glRs);
+                            HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Summary of replaceGenLk
+     * @param \PDO $dbh
+     * @param string $tblName
+     * @param mixed $desc
+     * @param mixed $subt
+     * @param mixed $order
+     * @param mixed $del
+     * @param mixed $replace
+     * @param mixed $replaceWith
+     * @return float|int
+     */
+    public static function replaceGenLk(\PDO $dbh, $tblName, $desc, $subt, $attributes, $order, $del, $replace, $replaceWith)
+    {
+        $rowsAffected = 0;
+
+        if (isset($desc)) {
+
+            foreach ($desc as $k => $r) {
+
+                $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+
+                if ($code == '') {
+                    continue;
+                }
+
+                $glRs = new GenLookupsRS();
+                $glRs->Table_Name->setStoredVal($tblName);
+                $glRs->Code->setStoredVal($code);
+
+                $rates = EditRS::select($dbh, $glRs, array(
+                    $glRs->Table_Name,
+                    $glRs->Code
+                ));
+
+                if (count($rates) == 1) {
+                    $uS = Session::getInstance();
+
+                    EditRS::loadRow($rates[0], $glRs);
+
+                    if ($del != NULL && isset($del[$code])) {
+
+                        // delete
+                        if (is_null($replace) === FALSE) {
+
+                            $rowCount = $replace($dbh, $replaceWith[$code], $code, $tblName);
+
+                            if ($rowCount !== FALSE) {
+                                $rowsAffected += $rowCount;
+                            }
+                        }
+
+                        EditRS::delete($dbh, $glRs, array(
+                            $glRs->Table_Name,
+                            $glRs->Code
+                        ));
+                        $logText = HouseLog::getDeleteText($glRs, $tblName . $code);
+                        HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
+                    } else {
+                        // update
+                        if (isset($desc[$code]) && $desc[$code] != '') {
+                            $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                        }
+
+                        if (isset($subt[$code])) {
+
+                            if (is_numeric($subt[$code])) {
+                                $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                            } else {
+                                $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                            }
+                        }
+
+                        if (isset($attributes[$code])) {
+                            $attributes[$code] = json_encode($attributes[$code]);
+                            $glRs->Attributes->setNewVal($attributes[$code]);
+                        }
+
+                        if (isset($order[$code])) {
+
+                            $glRs->Order->setNewVal(intval(filter_var($order[$code], FILTER_SANITIZE_NUMBER_INT), 10));
+                        }
+
+                        $ctr = EditRS::update($dbh, $glRs, array(
+                            $glRs->Table_Name,
+                            $glRs->Code
+                        ));
+
+                        if ($ctr > 0) {
+                            $logText = HouseLog::getUpdateText($glRs);
+                            HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $rowsAffected;
+    }
+
+    public static function replaceLookups(\PDO $dbh, $category, array $title, array $use)
+    {
+        $uS = Session::getInstance();
+        $rowsAffected = 0;
+
+        if (isset($title)) {
+
+            $reserveStatuses = Common::readLookups($dbh, "ReservStatus", "Code", true);
+
+            foreach ($title as $k => $r) {
+
+                $code = trim(filter_var($k, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+
+                if ($code == '') {
+                    continue;
+                }
+
+                $lookRs = new LookupsRS();
+                $lookRs->Category->setStoredVal($category);
+                $lookRs->Code->setStoredVal($code);
+
+                $rates = EditRS::select($dbh, $lookRs, array(
+                    $lookRs->Category,
+                    $lookRs->Code
+                ));
+
+                if (count($rates) == 1) {
+
+                    EditRS::loadRow($rates[0], $lookRs);
+
+                    if (Reservation_1::isRemovedStatus($code, $reserveStatuses)) {
+                        if (isset($use[$code])) {
+                            // activate
+                            $lookRs->Use->setNewVal("y");
+                            $lookRs->Show->setNewVal("y");
+                        } else if ($code != ReservationStatus::Canceled) {  // Make sure at least one code is available
+                            $lookRs->Use->setNewVal("n");
+                            $lookRs->Show->setNewVal("n");
+                        }
+                    }
+
+                    // update
+                    if (isset($title[$code]) && $title[$code] != '') {
+                        $lookRs->Title->setNewVal(filter_var($title[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                    }
+
+                    $ctr = EditRS::update($dbh, $lookRs, array(
+                        $lookRs->Category,
+                        $lookRs->Code
+                    ));
+
+                    if ($ctr > 0) {
+                        $logText = HouseLog::getUpdateText($lookRs);
+                        HouseLog::logGenLookups($dbh, $category, $code, $logText, 'update', $uS->username);
+                    }
+                }
+            }
+        }
+
+        return $rowsAffected;
+    }
+
 }

@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\Exception\NotFoundException;
 use HHK\Exception\SmsException;
 use HHK\Exception\ValidationException;
@@ -80,7 +81,7 @@ if (stripos($contentType, 'application/json') !== false   && strtoupper($_SERVER
 
     // convert string representations of arrays into an array
     try {
-        $inputData = parseKeysToArray($inputEncoded);
+        $inputData = Common::parseKeysToArray($inputEncoded);
         
     } catch (UnexpectedValueException $ex) {
         $events = ["error" => "posted data input failure."];    //failure

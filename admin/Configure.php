@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\House\Distance\DistanceFactory;
 use HHK\House\Distance\GoogleDistance;
 use HHK\sec\{
@@ -37,7 +38,6 @@ use HHK\CrmExport\AbstractExportManager;
  * @link      https://github.com/NPSC/HHK
  */
 require "AdminIncludes.php";
-require FUNCTIONS . 'mySqlFunc.php';
 
 try {
     $wInit = new webInit();
@@ -454,7 +454,7 @@ echo $newsaml->getEditMarkup();
                                     <label for="newJobType"><strong>Add New Job:</strong></label>
                                     <select id="newJobType" class="mr-2">
                                         <option value="" selected disabled>Select Job Type</option>
-    <?php echo HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, "cronJobTypes", "Description"), '', false); ?>
+    <?php echo HTMLSelector::doOptionsMkup(Common::readGenLookupsPDO($dbh, "cronJobTypes", "Description"), '', false); ?>
                                     </select>
                                     <button type="button" id="addJob">Add Job</button>
                                 </div>
