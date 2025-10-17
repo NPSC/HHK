@@ -87,13 +87,15 @@ class GuestRegister {
 	rm.`Category`,
 	rm.`Report_Category`,
     rm.`Floor`,
-    r.`Util_Priority`
+    r.`Util_Priority`,
+    v.idVisit
 from resource r
 	left join
 resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
     left join resource_room rr on r.idResource = rr.idResource
     left join room rm on rr.idRoom = rm.idRoom
     left join gen_lookups stat on stat.Table_Name = 'Room_Status' and stat.Code = rm.Status
+    left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
 	$genJoin
 where ru.idResource_use is null
     and (r.Retired_At is null or r.Retired_At > '" . $beginDT->format('Y-m-d') . "')
@@ -165,14 +167,7 @@ where ru.idResource_use is null
             // Room color
             switch($uS->Room_Colors) {
                 case 'housekeeping': //use housekeeping status colors
-                    if ($r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Dirty) {
-                        $r['bgColor'] = '#fff67d';
-                    } else if ($r['Status'] == RoomState::Ready) {
-                        $r['bgColor'] = '#99ff99';
-                    }else{
-                        $r['bgColor'] = '';
-                    }
-
+                    $r['bgColor'] = ResourceView::getRoomStatusColor($r['Status'], $r["idVisit"] > 0);
                     $r['textColor'] = '';
                     $r['hoverText'] .= "Status: " . $r['Status_Text'] . " | ";
                     break;
