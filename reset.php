@@ -34,7 +34,7 @@ use HHK\SysConst\CodeVersion;
 define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS);
 define('CONF_PATH',  P_ROOT . 'conf' . DS);
-define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
+define('ciCFG_FILE', 'site.cfg');
 
 if (file_exists('vendor/autoload.php')) {
     require('vendor/autoload.php');
@@ -69,7 +69,7 @@ function testdb($ssn) {
 }
 
 // Get the site configuration object
-$config = parse_ini_file(ciCFG_FILE, true);
+$config = parse_ini_file(CONF_PATH.ciCFG_FILE, true);
 
 // get session instance
 $ssn = Session::getInstance();

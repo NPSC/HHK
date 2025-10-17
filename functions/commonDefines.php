@@ -5,7 +5,7 @@
  */
 define( 'DS', DIRECTORY_SEPARATOR );
 define('P_ROOT', __DIR__ . DS );
-define('REL_BASE_DIR', P_ROOT . '..' . DS);
+define('REL_BASE_DIR', dirname(P_ROOT) . DS);
 define('REL_BASE_SITE', '..'.DS);
 
 

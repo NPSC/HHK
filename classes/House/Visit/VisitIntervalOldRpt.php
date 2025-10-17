@@ -358,6 +358,12 @@ ORDER BY s.idVisit , s.Visit_Span");
     ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
     ifnull(n.Name_Last,'') as Name_Last,
     ifnull(n.Name_First,'') as Name_First,
+    concat(ifnull(napg.Address_1, ''), '', ifnull(napg.Address_2, ''))  as pgAddr,
+    ifnull(napg.City, '') as pgCity,
+    ifnull(napg.County, '') as pgCounty,
+    ifnull(napg.State_Province, '') as pgState,
+    ifnull(napg.Country_Code, '') as pgCountry,
+    ifnull(napg.Postal_Code, '') as pgZip,
     concat(ifnull(na.Address_1, ''), '', ifnull(na.Address_2, ''))  as pAddr,
     ifnull(na.City, '') as pCity,
     ifnull(na.County, '') as pCounty,
@@ -450,6 +456,8 @@ from
     gen_lookups gl ON gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
         left join
     name_address na on ifnull(hs.idPatient, 0) = na.idName and np.Preferred_Mail_Address = na.Purpose
+        left join
+    name_address napg on n.idName = napg.idName and n.Preferred_Mail_Address = napg.Purpose
 where
     DATE(v.Span_Start) < DATE('$end')
     and v.idVisit in (select

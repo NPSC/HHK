@@ -135,6 +135,22 @@ $filter->createResourceGroups($dbh);
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, [td parms]
 $cFields[] = ['Visit Id', 'idVisit', 'checked', 'f', 'n', '', ['style' => 'text-align:center;']];
 $cFields[] = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'idPrimaryGuest', 'checked', '', 's', '', []];
+
+// PG address.
+$pgFields = ['pgAddr', 'pgCity'];
+$pgTitles = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Address', $labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' City'];
+
+if ($uS->county) {
+    $pgFields[] = 'pgCounty';
+    $pgTitles[] = $labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' County';
+}
+
+$pgFields = array_merge($pgFields, array('pgState', 'pgCountry', 'pgZip'));
+$pgTitles = array_merge($pgTitles, [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' State', $labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Country', $labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Zip']);
+
+$cFields[] = array($pgTitles, $pgFields, '', '', 's', '', array());
+
+
 $cFields[] = [$labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', []];
 
 // Patient address.
