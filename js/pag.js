@@ -76,6 +76,37 @@ function dateRender(data, type, format) {
 	return data;
 }
 
+function dayRender(data, type, format) {
+	// If display or filter data is requested, format the date
+	if (type === 'display' || type === 'filter' || type === 'print') {
+
+		if (data === undefined || data === null || data === '') {
+			return '';
+		}
+
+		data = data.trim();
+
+		if (data === null || data === '') {
+			return '';
+		}
+
+		if (moment(data, 'MM-DD').isValid()===false) {
+			return data;
+		}
+
+		if (!format || format === '') {
+			format = 'MMM D';
+		}
+
+		return moment(data, 'MM-DD').format(format);
+	}
+
+	// Otherwise the data type requested (`type`) is type detection or
+	// sorting data, for which we want to use the integer, so just return
+	// that, unaltered
+	return data;
+}
+
 function isIE() {
 	var ua = window.navigator.userAgent;
 	return /MSIE|Trident/.test(ua);

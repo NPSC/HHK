@@ -53,6 +53,11 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
             $stayStatus[] = "'co'";
         }
 
+        $whPatient = "";
+        if(isset($this->request["cbOnlyPatients"])){
+            $whPatient = "and ng.Relationship_Code = 'slf' ";
+        }
+
         $whResvStatus = '';
         $whStayStatus = implode(",", $stayStatus);
         if (count($resvStatus) > 0) {
@@ -108,9 +113,11 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
     ifnull(n.Name_First, '') as Name_First,
     ifnull(n.Name_Middle, '') as Name_Middle,
     ifnull(n.BirthDate, '') as BirthDate,
+    date_format(n.BirthDate, '%m-%d') as BirthDay,
     re.Title as `Room`,
     re.`Type`,
     re.`Status` as `RescStatus`,
+    ifnull(rel.Description, '') as PatientRelation,
     re.`Category`,
     IF(rr.FA_Category='f', r.Fixed_Room_Rate, rr.`Title`) as `FA_Category`,
     rr.`Title` as `Rate`,
@@ -138,6 +145,10 @@ from
         left join
     hospital_stay hs ON r.idHospital_Stay = hs.idHospital_stay
         left join
+    name_guest ng on n.idName = ng.idName and hs.idPsg = ng.idPsg
+        left join
+    gen_lookups rel on ng.Relationship_Code = rel.Code and rel.Table_Name = 'Patient_Rel_Type'
+        left join
     room_rate rr ON r.idRoom_rate = rr.idRoom_rate
         left join resource_room rer on r.idResource = rer.idResource
         left join room rm on rer.idRoom = rm.idRoom
@@ -146,7 +157,7 @@ from
         and g.`Code` = r.`Status`
         left join
     gen_lookups vs on vs.Table_Name = 'Visit_Status' and vs.Code = s.Status
-where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idReservation";
+where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " order by r.idReservation";
     }
 
     public function makeFilterMkup():void{
@@ -156,13 +167,23 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
 
     public function makeFilterOptsMkup():void{
         $birthdayAttrs = array("type"=>"checkbox", "name"=>"cbIncCheckedOut");
+        $justPatientAttrs = array("type"=>"checkbox", "name"=>"cbOnlyPatients");
+
         if(isset($this->request["cbIncCheckedOut"])){
             $birthdayAttrs['checked'] = 'checked';
+        }
+        if(isset($this->request["cbOnlyPatients"])){
+            $justPatientAttrs['checked'] = 'checked';
         }
 
         $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
             HTMLInput::generateMarkup("", $birthdayAttrs) .
             HTMLContainer::generateMarkup("label", "Include Checked Out " . Labels::getString('MemberType', 'visitor', "Guest") . 's', array("for"=>"cbIncCheckedOut"))
+        );
+
+        $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("", $justPatientAttrs) .
+            HTMLContainer::generateMarkup("label", "Only " . Labels::getString('MemberType', 'patient', "Patient") . 's', array("for"=>"cbOnlyPatients"))
         );
 
     }
@@ -174,6 +195,7 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
         $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
         $cFields[] = array("Middle", 'Name_Middle', '', '', 'string', '20');
         $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
+        $cFields[] = array("Birthday", 'BirthDay', 'checked', '', 'MM/DD', '15', array(), 'day');
         $cFields[] = array("Birth Date", 'BirthDate', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
         // Address.
@@ -193,6 +215,7 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
         $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
         $cFields[] = array("Phone", 'Phone_Num', '', '', 'string', '20');
         $cFields[] = array("Email", 'Email', '', '', 'string', '20');
+        $cFields[] = array(Labels::getString('MemberType', 'patient', 'Patient') . " Relationship", 'PatientRelation', '', '', 'string', '20');
         $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
         $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
@@ -209,6 +232,10 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
 
         if(isset($this->request["cbIncCheckedOut"])){
             $mkup .= HTMLContainer::generateMarkup('p', "Includes Checked Out " . Labels::getString('MemberType', 'visitor', 'Guest') . "s");
+        }
+
+        if(isset($this->request["cbOnlyPatients"])){
+            $mkup .= HTMLContainer::generateMarkup('p', "Shows only " . Labels::getString('MemberType', 'patient', 'Patient') . "s");
         }
 
         return $mkup;
