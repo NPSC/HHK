@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Crypto;
 use HHK\sec\Login;
 use HHK\Update\SiteConfig;
 use HHK\sec\Session;
@@ -41,7 +42,6 @@ if (file_exists('vendor/autoload.php')) {
     exit("Unable to laod dependancies, be sure to run 'composer install'");
 }
 
-require ('functions' . DS . 'commonFunc.php');
 
 function testdb($ssn) {
 
@@ -86,7 +86,7 @@ if(isset($config['db'])){
 if (is_array($dbConfig)) {
     $ssn->databaseURL = $dbConfig['URL'];
     $ssn->databaseUName = $dbConfig['User'];
-    $ssn->databasePWord = decryptMessage($dbConfig['Password']);
+    $ssn->databasePWord = Crypto::decryptMessage($dbConfig['Password']);
     $ssn->databaseName = $dbConfig['Schema'];
     $ssn->dbms = $dbConfig['DBMS'];
 } else {

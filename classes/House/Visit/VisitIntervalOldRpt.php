@@ -3,6 +3,7 @@
 namespace HHK\House\Visit;
 
 use HHK\ColumnSelectors;
+use HHK\Common;
 use HHK\ExcelHelper;
 use HHK\House\Report\RoomReport;
 use HHK\House\Resource\ResourceTypes;
@@ -180,7 +181,7 @@ ORDER BY s.idVisit , s.Visit_Span");
         $rooms = array();
 
         $roomReport = new RoomReport();
-        $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+        $rescStatuses = Common::readGenLookupsPDO($dbh, "Resource_Status");
         $roomReport->collectUtilizationData($dbh, $start, $end, $rescStatuses);
         $daysAr = $roomReport->getDays();
 
@@ -712,7 +713,7 @@ where
         // get session instance
         $uS = Session::getInstance();
 
-        $categories = readGenLookupsPDO($dbh, $rescGroup[2], 'Description');
+        $categories = Common::readGenLookupsPDO($dbh, $rescGroup[2], 'Description');
         // add default category
         $categories[] = [0 => '', 1 => '(default)'];
 

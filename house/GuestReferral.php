@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Exception\RuntimeException;
@@ -157,7 +158,7 @@ if ($idDoc > 0) {
     	} else {
     	    // Wrong document status
 
-    	    $lookups = readGenLookupsPDO($dbh, 'Referral_Form_Status');
+    	    $lookups = Common::readGenLookupsPDO($dbh, 'Referral_Form_Status');
 
     	    if ($refForm->getReferralStatus() == ReferralFormStatus::Accepted) {
 

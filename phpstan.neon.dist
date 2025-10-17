@@ -1,0 +1,8 @@
+parameters:
+    level: 0
+    paths:
+        - classes
+        - functions
+        - admin
+        - house
+        - install

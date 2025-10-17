@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Local;
 
+use HHK\Common;
 use HHK\Member\Role\Guest;
 use HHK\Member\AbstractMember;
 use HHK\Payment\{CreditToken, Receipt, Transaction};
@@ -69,7 +70,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$uS = Session::getInstance ();
 
 		// Lookup the charge card types
-		$chgTypes = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
+		$chgTypes = Common::readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 		if (isset ( $chgTypes [$pmp->getChargeCard ()] )) {
 			$pmp->setChargeCard ( $chgTypes [$pmp->getChargeCard ()] [1] );
 		}
@@ -463,7 +464,7 @@ class LocalGateway extends AbstractPaymentGateway {
 	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
 		// Charge card list
-		$ccs = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
+		$ccs = Common::readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 
 		foreach ( $ccs as $v ) {
 		    $v[0] = $v[1];
@@ -473,7 +474,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$tbl = new HTMLTable();
 		$tbl->addBodyTr ( HTMLTable::makeTd ( 'New Card: ', array (
 				'class' => 'tdlabel'
-		) ) . HTMLTable::makeTd ( HTMLSelector::generateMarkup ( HTMLSelector::doOptionsMkup ( removeOptionGroups ( $cardNames ), '', TRUE ), array (
+		) ) . HTMLTable::makeTd ( HTMLSelector::generateMarkup ( HTMLSelector::doOptionsMkup ( HTMLSelector::removeOptionGroups ( $cardNames ), '', TRUE ), array (
 				'name' => 'selChargeType' . $index,
 				'class' => 'hhk-feeskeys' . $index
 		) ) ) . HTMLTable::makeTd ( HTMLInput::generateMarkup ( '', array (

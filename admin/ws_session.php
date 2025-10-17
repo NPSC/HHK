@@ -16,8 +16,6 @@ use HHK\sec\WebInit;
 
 require ("AdminIncludes.php");
 
-require (FUNCTIONS . 'mySqlFunc.php');
-
 $uS = Session::getInstance();
 
 $cmd = 'get';

@@ -1,5 +1,6 @@
 <?php
 use HHK\Checklist;
+use HHK\Common;
 use HHK\CreateMarkupFromDB;
 use HHK\Exception\RuntimeException;
 use HHK\History;
@@ -22,6 +23,7 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
+use HHK\Photo;
 use HHK\Purchase\FinAssistance;
 use HHK\Purchase\RoomRate;
 use HHK\sec\Labels;
@@ -401,7 +403,7 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
                 }
 
                 if (filter_has_var(INPUT_POST, 'txtFaStatusDate')) {
-                    $faDT = setTimeZone($uS, filter_input(INPUT_POST, 'txtFaStatusDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                    $faDT = Common::setTimeZone($uS, filter_input(INPUT_POST, 'txtFaStatusDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                     $faStatDate = $faDT->format('Y-m-d');
                 }
 
@@ -615,7 +617,7 @@ if ($psg->getIdPsg() > 0) {
         EditRS::loadRow($r, $reservRs);
 
         $reserv = new Reservation_1($reservRs);
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
         $rtbl = new HTMLTable();
         $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate') . ($uS->AcceptResvPaymt ? HTMLTable::makeTh('Pre-Paymt') : ''));
 
@@ -667,7 +669,7 @@ if ($psg->getIdPsg() > 0) {
 
 $guestPhotoMarkup = "";
 if($uS->ShowGuestPhoto){
-	$guestPhotoMarkup = showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
+	$guestPhotoMarkup = Photo::showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
 }
 
 $guestName = "<span style='font-size:2em;'>$niceName</span>";// . $patient->getRoleMember()->get_fullName();
@@ -711,8 +713,8 @@ $recHistory = History::getGuestHistoryMarkup($dbh);
 $currentCheckedIn = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, 'GuestEdit.php', FALSE, TRUE, $labels->getString('MemberType', 'patient', 'Patient'), $labels->getString('hospital', 'hospital', 'Hospital')), 'curres');
 
 $showCharges = TRUE;
-$addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
-$discs = readGenLookupsPDO($dbh, 'House_Discount');
+$addnl = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
+$discs = Common::readGenLookupsPDO($dbh, 'House_Discount');
 
 // decide to show payments and invoices
 if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($discs) == 0 && $uS->VisitFee === false && $uS->KeyDeposit === false) {

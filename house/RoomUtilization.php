@@ -1,6 +1,7 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Common;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\House\Report\RoomReport;
@@ -49,7 +50,7 @@ $txtEnd = '';
 $output = '';
 
 // Room Groupings
-$roomGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$roomGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 
 // Callback
@@ -111,7 +112,7 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 $roomGrouping = HTMLSelector::generateMarkup(
-        HTMLSelector::doOptionsMkup(removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));
+        HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));
 
 ?>
 <!DOCTYPE html>

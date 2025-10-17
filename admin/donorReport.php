@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Admin\Reports\DonorReport;
 use HHK\sec\WebInit;
 use HHK\HTMLControls\{selCtrl, chkBoxCtrl};
 use HHK\SysConst\{SalutationCodes};
@@ -53,8 +54,6 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 if (filter_has_var(INPUT_POST, "btnDonors") || filter_has_var(INPUT_POST, "btnDonDL")) {
 #--------------------------------------------------------------
 
-    require_once("functions" . DS . "donorReportManager.php");
-
     //$selectedTab = "2";
     $makeTable = 2;
 
@@ -86,7 +85,7 @@ if (filter_has_var(INPUT_POST, "btnDonors") || filter_has_var(INPUT_POST, "btnDo
 
 
     // Do the report
-    $voldCat = prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), FALSE);
+    $voldCat = DonorReport::prepDonorRpt($dbh, $cbBasisDonor, $donSelMemberType, $overrideSalutations, filter_var($_POST[$letterSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), filter_var($_POST[$envSalSelector->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS), FALSE);
 
     if ($voldCat->get_andOr() == "or") {
         $anddChecked = "";

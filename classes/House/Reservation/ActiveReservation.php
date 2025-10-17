@@ -3,6 +3,7 @@
 namespace HHK\House\Reservation;
 
 use HHK\Checklist;
+use HHK\Common;
 use HHK\House\Family\Family;
 use HHK\House\Registration;
 use HHK\House\Vehicle;
@@ -163,7 +164,7 @@ class ActiveReservation extends Reservation {
         // Determine Reservation Status
         $reservStatus = ReservationStatus::Waitlist;
 
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
         if (isset($post['selResvStatus']) && $post['selResvStatus'] != '') {
 
@@ -422,7 +423,7 @@ class ActiveReservation extends Reservation {
         }
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
         if ($resv->isActive($reservStatuses)) {
 

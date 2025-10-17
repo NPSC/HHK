@@ -3,6 +3,7 @@
 namespace HHK\House\Hospital;
 
 
+use HHK\Common;
 use HHK\Member\Role\{Agent, Doctor};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\sec\Labels;
@@ -87,13 +88,13 @@ class Hospital {
         $table->addBodyTr(
                 (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup(removeOptionGroups($aList), ($hstay->getAssociationId() == 0 ? $assocNoneId : $hstay->getAssociationId()), FALSE),
+                                HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($aList), ($hstay->getAssociationId() == 0 ? $assocNoneId : $hstay->getAssociationId()), FALSE),
                                 array('name'=>'selAssoc', 'class'=>'ignrSave hospital-stay')
                                 )
                         ) : '')
                 .HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup(removeOptionGroups($hList), ($hstay->getHospitalId() == 0 && count($hList) == 1 ? $hList[0][0] : $hstay->getHospitalId()), $offerBlank),
+                                HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($hList), ($hstay->getHospitalId() == 0 && count($hList) == 1 ? $hList[0][0] : $hstay->getHospitalId()), $offerBlank),
                         		array('name'=>'selHospital', 'class'=>'ignrSave hospital-stay' )
                                 )
                         )
@@ -456,8 +457,8 @@ class Hospital {
         }
 
         // Diagnosis
-        $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-        $diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+        $diags = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $diagCats = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 
         if (count($diags) > 0) {
 
@@ -531,7 +532,7 @@ class Hospital {
         }
 
         // Location
-        $locs = readGenLookupsPDO($dbh, 'Location', 'Description');
+        $locs = Common::readGenLookupsPDO($dbh, 'Location', 'Description');
 
         if (count($locs) > 0) {
 

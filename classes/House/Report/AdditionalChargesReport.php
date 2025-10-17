@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\ExcelHelper;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
@@ -45,8 +46,8 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         $this->description = "This report shows all additional charges charged to patients and their demographics who stayed in the time period";
         $this->inputSetReportName = "additionalCharges";
 
-        $this->demogs = readGenLookupsPDO($dbh, 'Demographics');
-        $this->additionalCharges = array_merge($this->formatGenLookup(readGenLookupsPDO($dbh, 'Addnl_Charge'), "Additional Charges"), $this->formatGenLookup(readGenLookupsPDO($dbh, 'House_Discount'), "Discounts"));
+        $this->demogs = Common::readGenLookupsPDO($dbh, 'Demographics');
+        $this->additionalCharges = array_merge($this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'Addnl_Charge'), "Additional Charges"), $this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'House_Discount'), "Discounts"));
 
         if (filter_has_var(INPUT_POST, 'selAdditionalCharges')) {
             $this->selectedAdditionalCharges = filter_input(INPUT_POST, 'selAdditionalCharges', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);

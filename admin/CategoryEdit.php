@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\{WebInit};
 use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
@@ -10,10 +11,10 @@ use HHK\Exception\RuntimeException;
 /**
  * CategoryEdit.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 
@@ -28,7 +29,7 @@ if ($tableName != '') {
     $volArray = $wInit->reloadSessionVolLkUps();
 
     if (isset($volArray['Vol_Category'][$tableName])) {
-        $rows = readGenLookupsPDO($dbh, $tableName);
+        $rows = Common::readGenLookupsPDO($dbh, $tableName);
     }
 
     echo json_encode($rows);
@@ -174,7 +175,7 @@ if (filter_has_var(INPUT_POST, "btnvType")) {
     $resMessage = $volAlert->createMarkup();
 }
 
-$vCatOptions = DoLookups($dbh, "Vol_Category", '', false);
+$vCatOptions = Common::doLookups($dbh, "Vol_Category", '', false);
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -2,7 +2,7 @@
 
 namespace HHK\Notification\SMS;
 
-use GuzzleHttp\Exception\ClientException;
+use HHK\Common;
 use HHK\Exception\SmsException;
 use HHK\Member\Address\Phones;
 use HHK\Member\IndivMember;
@@ -17,7 +17,7 @@ use HHK\SysConst\VisitStatus;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\TableLog\NotificationLog;
 
-abstract class AbstractMessages
+abstract class AbstractMessages implements MessagesInterface
 {
 
     protected \PDO $dbh;
@@ -118,10 +118,10 @@ WHERE
         $filterOptions = [];
 
         //Resource grouping
-        $rescGroups = readGenLookupsPDO($this->dbh, 'Room_Group');
+        $rescGroups = Common::readGenLookupsPDO($this->dbh, 'Room_Group');
         if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             $filterField = $uS->CalResourceGroupBy;
-            $filterOptions = readGenLookupsPDO($this->dbh, $rescGroups[$uS->CalResourceGroupBy]["Substitute"]);
+            $filterOptions = Common::readGenLookupsPDO($this->dbh, $rescGroups[$uS->CalResourceGroupBy]["Substitute"]);
         }
 
         switch ($status){

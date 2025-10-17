@@ -2,6 +2,7 @@
 namespace HHK\sec;
 
 use donatj\UserAgent\UserAgentParser;
+use HHK\Crypto;
 use HHK\SysConst\WebRole;
 use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
 use HHK\Tables\EditRS;
@@ -207,7 +208,7 @@ class UserClass
 
             $remoteIp = self::getRemoteIp();
 
-            if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)) == $remoteIp . 'eric') {
+            if (Crypto::decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)) == $remoteIp . 'eric') {
                 $housePc = TRUE;
             }
         }

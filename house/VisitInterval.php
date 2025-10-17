@@ -1,6 +1,7 @@
 <?php
 
 use HHK\ColumnSelectors;
+use HHK\Common;
 use HHK\House\Visit\VisitIntervalOldRpt;
 use HHK\Exception\RuntimeException;
 use HHK\House\Report\ReportFieldSet;
@@ -103,7 +104,7 @@ $dataTable = '';
 $statsTable = '';
 $errorMessage = '';
 $cFields = [];
-$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 $useTaxes = FALSE;
 $eachTaxPaid = [];
 $eachTaxSQL = '';
@@ -180,12 +181,12 @@ if ($uS->Doctor) {
     $cFields[] = array("Doctor", 'Doctor', '', '', 's', '', array());
 }
 
-$locations = readGenLookupsPDO($dbh, 'Location');
+$locations = Common::readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
     $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
 }
 
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
 if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
@@ -206,7 +207,7 @@ if ($uS->VisitFee) {
     $cFields[] = array($labels->getString('statement', 'cleaningFeeLabel', "Clean Fee"), 'visitFee', 'checked', '', 's', '', array('style' => 'text-align:right;'));
 }
 
-$adjusts = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$adjusts = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 if (count($adjusts) > 0) {
     $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
 

@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
@@ -48,9 +49,9 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
 
         $this->reportTitle = $uS->siteName . ' Visit Report';
         $this->inputSetReportName = "visit";
-        $this->locations = readGenLookupsPDO($dbh, 'Location');
-        $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
-        $this->adjusts = readGenLookupsPDO($dbh, 'Addnl_Charge');
+        $this->locations = Common::readGenLookupsPDO($dbh, 'Location');
+        $this->diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
+        $this->adjusts = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
         $this->useTaxes = FALSE;
 
         $tstmt = $dbh->query("Select count(idItem) from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax . " where i.Deleted = 0");
@@ -496,6 +497,27 @@ where
         $nites = array();
         $rates = [];
         $chargesAr = [];
+
+        $totalLodgingCharge = 0;
+        $totalAddnlCharged = 0;
+        $totalTaxCharged = 0;
+        $totalAddnlTax = 0;
+        $totalTaxPaid = 0;
+        $totalTaxPending = 0;
+        $totalVisitFee = 0;
+        $totalCharged = 0;
+        $totalAmtPending = 0;
+        $totalNights = 0;
+        $totalGuestNights = 0;
+        $totalDays = 0;
+        $totalPaid = 0;
+        $totalHousePaid = 0;
+        $totalGuestPaid = 0;
+        $totalthrdPaid = 0;
+        $totalDonationPaid = 0;
+        $totalUnpaid = 0;
+        $totalSubsidy = 0;
+
 
         foreach($this->resultSet as &$r){
 

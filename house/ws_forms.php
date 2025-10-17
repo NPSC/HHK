@@ -185,13 +185,16 @@ try {
                     $fields = json_decode($jsonStr);
                     if(!is_array($fields)){
                         try{
-                            $body = "New bug report received from " . getSiteName() . "\r\n\r\n";
+                            $body = "New bug report received from " . $uS->siteName . "\r\n\r\n";
                             $body .= "Request Type: AJAX\r\n\r\n";
                             $body .= "Details: \r\n\r\n";
                             $body .= "Message: fields variable is null\r\n\r\n";
                             $body .= "doc: " .$_POST['formRenderData'];
             
-                            sendMail($body);
+                            $subject = "New bug report received from " . $uS->siteName;
+                            $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>\r\n";
+                            mail($uS->errorReportEmail, $subject, $body, $headers);
+                            
                         }catch(\Exception $e){}
 
                         $events = ['status'=>'error', 'errors'=>['server'=>'Unable to read form, check your submission for special characters and try again.']];

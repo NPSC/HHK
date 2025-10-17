@@ -1,6 +1,8 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Common;
+
 
 /**
  * Labels.php
@@ -51,7 +53,7 @@ class Labels {
         $uS = Session::getInstance();
         
         if(isset($uS->labels) === FALSE || count($uS->labels) < 1){
-        	$dbh = initPDO(TRUE);
+        	$dbh = Common::initPDO(TRUE);
         	$uS->labels = Labels::initLabels($dbh);
         }
 

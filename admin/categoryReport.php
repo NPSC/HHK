@@ -1,5 +1,7 @@
 <?php
 
+use HHK\Admin\Reports\CategoryReport;
+use HHK\Common;
 use HHK\sec\{SecurityComponent, WebInit};
 use HHK\HTMLControls\selCtrl;
 use HHK\sec\Session;
@@ -45,7 +47,7 @@ $catSelTitleMarkup = "";
 $catagoryHeadertable = "";
 
 // Selector Controls for Category section
-$gSel = readGenLookupsPDO($dbh, "Vol_Category");
+$gSel = Common::readGenLookupsPDO($dbh, "Vol_Category");
 $catSelCtrls = array();
 
 foreach ($gSel as $selData) {
@@ -67,9 +69,7 @@ if (filter_has_var(INPUT_POST, "btnCat") || filter_has_var(INPUT_POST, "btnCatDL
 
     ini_set('memory_limit', "128M");
 
-    require("functions" . DS . "CategoryReportMgr.php");
-
-    $volCat = processCategory($dbh, $catSelCtrls, $catSelRoles, $catSelDormancy, $catVolStatus, $uS->SolicitBuffer);
+    $volCat = CategoryReport::processCategory($dbh, $catSelCtrls, $catSelRoles, $catSelDormancy, $catVolStatus, $uS->SolicitBuffer);
 
     if ($volCat->get_andOr() == "and") {
         $andChecked = "checked='checked'";

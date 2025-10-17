@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\sec\Login;
 use HHK\Exception\RuntimeException;
 use HHK\sec\Session;
@@ -30,7 +31,7 @@ try {
 
 // define db connection obj
 try {
-    $dbh = initPDO(TRUE);
+    $dbh = Common::initPDO(TRUE);
 } catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
@@ -50,7 +51,7 @@ if (isset($_POST['btnNext'])) {
     header('location:../index.php');
 }
 
-$rPrices = readGenLookupsPDO($dbh, 'Price_Model');
+$rPrices = Common::readGenLookupsPDO($dbh, 'Price_Model');
 
 
 if (isset($_POST['btnRoom']) && count($rPrices) > 0) {

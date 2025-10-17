@@ -2,6 +2,7 @@
 
 namespace HHK\House;
 
+use HHK\Common;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\CalendarStatusColors;
@@ -51,7 +52,7 @@ class GuestRegister {
         }
 
         //Resource grouping controls
-        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+        $rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 
         $genJoin = '';
@@ -103,7 +104,7 @@ where ru.idResource_use is null
 
         $roomGroups = array();
 
-        $groups = readGenLookupsPDO($dbh, $genTableName, 'Order');
+        $groups = Common::readGenLookupsPDO($dbh, $genTableName, 'Order');
 
         // Count the room grouping types
         foreach ($rawRescs as $r) {
@@ -887,7 +888,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         $this->robbonBottomColors = [];
 
         // Ribbon backgrounds
-        $demogs = readGenLookupsPDO($dbh, $uS->RibbonColor);
+        $demogs = Common::readGenLookupsPDO($dbh, $uS->RibbonColor);
 
         if (strtolower($uS->RibbonColor) == 'hospital') {
 
@@ -929,7 +930,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
 
         // Ribbon bottom-bars
-        $demogs = readGenLookupsPDO($dbh, $uS->RibbonBottomColor);
+        $demogs = Common::readGenLookupsPDO($dbh, $uS->RibbonBottomColor);
 
         if (strtolower($uS->RibbonBottomColor) == 'hospital') {
 

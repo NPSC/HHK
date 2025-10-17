@@ -1,5 +1,6 @@
 <?php
 namespace HHK\sec;
+use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\TableLog\HouseLog;
 
@@ -211,7 +212,7 @@ class SysConfig {
                 $val = filter_var($value, FILTER_VALIDATE_BOOLEAN);
                 break;
             case 'ob':
-                $val = decryptMessage($value);
+                $val = Crypto::decryptMessage($value);
                 break;
             default:
                 $val = $value;
@@ -241,7 +242,7 @@ class SysConfig {
                 }
                 break;
             case 'ob':
-                $val = encryptMessage($value);
+                $val = Crypto::encryptMessage($value);
                 break;
             default:
                 $val = $value;

@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Payment\PaymentGateway\Deluxe;
 
+use HHK\Crypto;
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\House\HouseServices;
@@ -155,7 +156,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $oAuthSecret = $gwRs->Password->getStoredVal();
         unset($rows[0]['Password']);
         if ($oAuthSecret != '') {
-        	$rows[0]['oAuthSecret'] = decryptMessage($oAuthSecret);
+        	$rows[0]['oAuthSecret'] = Crypto::decryptMessage($oAuthSecret);
         }
 
         $merchantId = $gwRs->Merchant_Id->getStoredVal();
@@ -167,7 +168,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $hpfAccessToken = $gwRs->Credit_Url->getStoredVal();
         unset($rows[0]['Credit_Url']);
         if ($hpfAccessToken != '') {
-        	$rows[0]['hpfAccessToken'] = decryptMessage($hpfAccessToken);
+        	$rows[0]['hpfAccessToken'] = Crypto::decryptMessage($hpfAccessToken);
         }
 
         return $rows[0];
@@ -1103,7 +1104,7 @@ order by pa.Timestamp desc");
                 $accessToken = filter_var($post[$indx . '_txtaccesstoken'], FILTER_UNSAFE_RAW);
 
                 if ($accessToken != '' && $accessToken != self::PW_PLACEHOLDER) {
-                    $ccRs->Credit_Url->setNewVal(encryptMessage($accessToken));
+                    $ccRs->Credit_Url->setNewVal(Crypto::encryptMessage($accessToken));
                 } else if ($accessToken == '') {
                     $ccRs->Credit_Url->setNewVal('');
                 }
@@ -1120,7 +1121,7 @@ order by pa.Timestamp desc");
                 $pw = filter_var($post[$indx . '_txtsecret'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                    $ccRs->Password->setNewVal(encryptMessage($pw));
+                    $ccRs->Password->setNewVal(Crypto::encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->Password->setNewVal('');
                 }

@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Member\MemberSearch;
@@ -38,6 +39,8 @@ $uS = Session::getInstance();
 
 if (isset($_REQUEST["cmd"])) {
     $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+}else {
+    $c = "";
 }
 
 $events = [];
@@ -472,7 +475,7 @@ function getTwoFA(\PDO $dbh, $username){
 function reportError(string $message, array $info){
     $uS = Session::getInstance();
 
-    $body = "New bug report received from " . getSiteName() . "\r\n\r\n";
+    $body = "New bug report received from " . $uS->siteName . "\r\n\r\n";
     $body .= "Request Type: AJAX\r\n\r\n";
     $body .= "Details: \r\n\r\n";
     $body .= "Message: " . $message . "\r\n\r\n";
@@ -481,5 +484,9 @@ function reportError(string $message, array $info){
         $body .= $k . ": " . $v . "\r\n\r\n";
     }
 
-    sendMail($body);
+    $subject = "New bug report received from " . $uS->siteName;
+    $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>\r\n";
+
+    mail($uS->errorReportEmail, $subject, $body, $headers);
+
 }

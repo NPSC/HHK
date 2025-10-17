@@ -3,6 +3,7 @@
 namespace HHK\House\Report;
 
 use HHK\Checklist;
+use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
@@ -43,12 +44,12 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 
         $this->reportTitle = $uS->siteName . ' ' . Labels::getString('guestEdit', 'reservationTitle', 'Reservation') . ' Report';
         $this->inputSetReportName = "reserv";
-        $this->locations = readGenLookupsPDO($dbh, 'Location');
-        $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
-        $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
+        $this->locations = Common::readGenLookupsPDO($dbh, 'Location');
+        $this->diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
+        $this->resvStatuses = HTMLSelector::removeOptionGroups(Common::readLookups($dbh, "ReservStatus", "Code", FALSE));
 
-        $this->checklistItems = readGenLookupsPDO($dbh, ChecklistType::PSG);
-        $this->checklistTypes = readGenLookupsPDO($dbh, Checklist::ChecklistRootTablename);
+        $this->checklistItems = Common::readGenLookupsPDO($dbh, ChecklistType::PSG);
+        $this->checklistTypes = Common::readGenLookupsPDO($dbh, Checklist::ChecklistRootTablename);
 
         if (filter_has_var(INPUT_POST, 'selResvStatus')) {
             $this->selectedResvStatuses = filter_input(INPUT_POST, 'selResvStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);

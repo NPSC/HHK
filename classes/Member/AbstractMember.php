@@ -995,7 +995,7 @@ abstract class AbstractMember {
 
     /**
      * Summary of getMemberDesignation
-     * @return void
+     * @return string
      */
     public abstract function getMemberDesignation();
 

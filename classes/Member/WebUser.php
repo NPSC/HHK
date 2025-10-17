@@ -9,6 +9,7 @@ use HHK\sec\{SecurityComponent, Session, UserClass};
 use HHK\SysConst\WebRole;
 use HHK\Tables\EditRS;
 use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
+use HHK\Common;
 
 /**
  * WebUser.php
@@ -79,9 +80,9 @@ class WebUser {
             EditRS::loadRow($rws[0], $wAuthRS);
         }
 
-        $wVerifyAddr = readGenLookupsPDO($dbh, 'Verify_User_Address');
-        $wStatusMkup = readGenLookupsPDO($dbh, 'Web_User_Status');
-        $roleMkup = readGenLookupsPDO($dbh, 'Role_Codes');
+        $wVerifyAddr = Common::readGenLookupsPDO($dbh, 'Verify_User_Address');
+        $wStatusMkup = Common::readGenLookupsPDO($dbh, 'Web_User_Status');
+        $roleMkup = Common::readGenLookupsPDO($dbh, 'Role_Codes');
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh("Web Access", array('colspan'=>'2')));

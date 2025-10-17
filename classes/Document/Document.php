@@ -152,41 +152,39 @@ class Document {
     /**
      *
      * @param \PDO $dbh
-     * @return boolean
      */
     public function saveNew(\PDO $dbh) {
 
-        if ($this->isValid() === FALSE) {
-            return FALSE;
-        }
+        if ($this->isValid()) {
 
-        // Insert
-        $documentRS = new DocumentRS();
-        $documentRS->Title->setNewVal($this->getTitle());
-        $documentRS->Mime_Type->setNewVal($this->getMimeType());
-        $documentRS->Doc->setNewVal($this->getDoc());
-        $documentRS->UserData->setNewVal($this->getUserData());
-        $documentRS->Abstract->setNewVal($this->getAbstract());
-        $documentRS->Style->setNewVal($this->getStyle());
-        $documentRS->Type->setNewVal($this->getType());
-        $documentRS->Category->setNewVal($this->getCategory());
-        $documentRS->Status->setNewVal($this->getStatus());
-        $documentRS->Created_By->setNewVal($this->getCreatedBy());
-        $documentRS->Last_Updated->setNewVal($this->getLastUpdated());
-        $documentRS->Updated_By->setNewVal($this->getUpdatedBy());
+            // Insert
+            $documentRS = new DocumentRS();
+            $documentRS->Title->setNewVal($this->getTitle());
+            $documentRS->Mime_Type->setNewVal($this->getMimeType());
+            $documentRS->Doc->setNewVal($this->getDoc());
+            $documentRS->UserData->setNewVal($this->getUserData());
+            $documentRS->Abstract->setNewVal($this->getAbstract());
+            $documentRS->Style->setNewVal($this->getStyle());
+            $documentRS->Type->setNewVal($this->getType());
+            $documentRS->Category->setNewVal($this->getCategory());
+            $documentRS->Status->setNewVal($this->getStatus());
+            $documentRS->Created_By->setNewVal($this->getCreatedBy());
+            $documentRS->Last_Updated->setNewVal($this->getLastUpdated());
+            $documentRS->Updated_By->setNewVal($this->getUpdatedBy());
 
-        $this->idDocument = EditRS::insert($dbh, $documentRS);
-        if($this->idDocument > 0){
-            $logText = DocumentLog::getInsertText($documentRS);
-            DocumentLog::logDocument($dbh, $this->idDocument, 0, 0, 0, $logText, "insert", $this->getCreatedBy());
-        }
-        $documentRS->idDocument->setNewVal($this->idDocument);
-        EditRS::updateStoredVals($documentRS);
+            $this->idDocument = EditRS::insert($dbh, $documentRS);
+            if($this->idDocument > 0){
+                $logText = DocumentLog::getInsertText($documentRS);
+                DocumentLog::logDocument($dbh, $this->idDocument, 0, 0, 0, $logText, "insert", $this->getCreatedBy());
+            }
+            $documentRS->idDocument->setNewVal($this->idDocument);
+            EditRS::updateStoredVals($documentRS);
 
-        $this->documentRS = $documentRS;
+            $this->documentRS = $documentRS;
 
-        if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
-            $this->savePDFTitle($dbh);
+            if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
+                $this->savePDFTitle($dbh);
+            }
         }
     }
 

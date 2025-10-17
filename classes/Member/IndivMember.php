@@ -3,8 +3,10 @@
 namespace HHK\Member;
 
 use HHK\Checklist;
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Member\Relation\{Children, Company, Parents, Partner};
+use HHK\Photo;
 use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, MemStatus, RelLinkType};
 use HHK\SysConst\ChecklistType;
 use HHK\Tables\EditRS;
@@ -103,7 +105,7 @@ class IndivMember extends AbstractMember {
 
         $memPhotoMarkup = "";
         if($uS->ShowGuestPhoto){
-            $memPhotoMarkup = HTMLContainer::generateMarkup("div", showGuestPicture($this->get_idName(), $uS->MemberImageSizePx), array("class"=>"mr-2"));
+            $memPhotoMarkup = HTMLContainer::generateMarkup("div", Photo::showGuestPicture($this->get_idName(), $uS->MemberImageSizePx), array("class"=>"mr-2"));
         }
 
         $table = new HTMLTable();
@@ -150,7 +152,7 @@ class IndivMember extends AbstractMember {
 
         // Status
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[GLTableNames::MemberStatus]),
+                HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($uS->nameLookups[GLTableNames::MemberStatus]),
                         $this->nameRS->Member_Status->getstoredVal(), FALSE), array('name'=>$idPrefix.'selStatus')));
 
         // Basis
@@ -164,7 +166,7 @@ class IndivMember extends AbstractMember {
                 'td',
                 HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup(
-                                removeOptionGroups($basis),
+                                HTMLSelector::removeOptionGroups($basis),
                                 $this->nameRS->Member_Type->getstoredVal(), FALSE), array('name'=>$idPrefix.'selMbrType')
                         )
                 );
@@ -262,7 +264,7 @@ class IndivMember extends AbstractMember {
         $uS = Session::getInstance();
         $idPrefix = $this->idPrefix;
 
-        $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
+        $demos = Common::readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         $table = new HTMLTable();
 
@@ -275,7 +277,7 @@ class IndivMember extends AbstractMember {
                     HTMLTable::makeTd($d[1], array('class'=>'tdlabel'))
                     . HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[$d[0]]),
+                                HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($uS->nameLookups[$d[0]]),
                                     (isset($demographicsUserData[$d[0]]) && $demographicsUserData[$d[0]] != '' ? $demographicsUserData[$d[0]] : $this->getDemographicsEntry($d[0]))),
                         		array('name'=>$idPrefix.'sel_' . $d[0], 'class'=>$idPrefix.'hhk-demog-input', 'style'=>"min-width: max-content")
                                 )
@@ -290,7 +292,7 @@ class IndivMember extends AbstractMember {
         }
 
         // No Return
-        $nreasons = readGenLookupsPDO($dbh, 'NoReturnReason', 'order');
+        $nreasons = Common::readGenLookupsPDO($dbh, 'NoReturnReason', 'order');
         $table->addBodyTr(
             HTMLTable::makeTd('No Return', array('class'=>'tdlabel', 'title'=>'Flag for No Return'))
             . HTMLTable::makeTd(
@@ -865,7 +867,7 @@ ORDER BY `List_Order`");
         }
 
 
-        $demos = readGenLookupsPDO($dbh, 'Demographics');
+        $demos = Common::readGenLookupsPDO($dbh, 'Demographics');
 
         foreach ($demos as $d) {
 

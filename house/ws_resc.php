@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\Document\Document;
 use HHK\Document\FormDocument;
 use HHK\Document\FormTemplate;
@@ -361,7 +362,7 @@ try {
                     $roomRates = $uS->guestLookups['Static_Room_Rate'];
                 }
 
-                $reportCategories = readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
+                $reportCategories = Common::readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
 
 
                 $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GLTableNames::RoomType], $uS->guestLookups[GLTableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GLTableNames::KeyDepositCode], $uS->KeyDeposit);
@@ -390,7 +391,7 @@ try {
                     $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
-                $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+                $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], Common::readGenLookupsPDO($dbh, 'OOS_Codes'));
             }else{
                 $events = ["error"=>"Unauthorized"];
             }
@@ -805,7 +806,7 @@ try {
             $events = getCssVars($uS);
             break;
         case "generateRandomString":
-            $events = getRandomString();
+            $events = Common::getRandomString();
             break;
         case "getNameDetails":
             $post = filter_input_array(INPUT_POST, ['idNames'=>['filter', FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_FORCE_ARRAY], 'title'=>['filter', FILTER_SANITIZE_FULL_SPECIAL_CHARS]]);
