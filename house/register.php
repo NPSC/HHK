@@ -405,7 +405,6 @@ if($uS->useOnlineReferral){
                 }
             }
         ?>
-        check out on holiday but can't check in same day
 
         <style>
             .hhk-justify-r {
