@@ -2180,6 +2180,7 @@ create or replace view `vname_list` as
         IFNULL(`na`.`Meters_From_House`, '') AS `Meters_From_House`,
         IFNULL(`na`.`Bad_Address`, '') AS `Bad_Address`,
         IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
+        IFNULL(`n`.`Gender`, '') AS `Gender`,
         IFNULL(`n`.`Date_Deceased`, '') AS `Date_Deceased`,
         `n`.`Member_Status` AS `Member_Status`,
         IFNULL(`n`.`External_Id`, '') AS `External_Id`

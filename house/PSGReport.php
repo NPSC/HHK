@@ -47,7 +47,7 @@ $labels = Labels::getLabels();
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiagnosis, $showLocation) {
+function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiagnosis, $showLocation, $showDemog) {
 
     $uS = Session::getInstance();
 
@@ -62,6 +62,26 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $guestLast = $labels->getString('MemberType', 'visitor', 'Guest') . ' Last';
 
     $totalDistance = 0;
+
+    $demogSql = '';
+    $demogJoins = '';
+    if ($showDemog){
+        foreach (Common::readGenLookupsPDO($dbh, 'Demographics', 'Order') as $d) {
+
+            if (strtolower($d[2]) == 'y') {
+
+                if ($d[0] == 'Gender') {
+                    $demogSql .= "ifnull(`gender`.description,'') as `" . $d[1] . "`,";
+                    $demogJoins .= "left join `gen_lookups` `gender` on `gender`.Table_Name = 'Gender' and `gender`.`Code` = vn.`Gender`";
+                } else {
+                    $demogSql .= "ifnull(`d".$d["Code"]. "`.`Description`, '') as `" . $d[1] . "`,";
+                    $demogJoins .= "left join `gen_lookups` `d".$d["Code"]. "` on `d".$d["Code"]. "`.Table_Name = '" . $d["Code"] ."' and `d".$d["Code"]. "`.`Code` = nd.`".$d["Code"]. "` ";
+                }
+
+                $demoCategories[$d[0]] = $d[1];
+            }
+        }
+    }
 
     if($showUnique){
         $spanDates = " ifnull(max(s.Span_End_Date), '') as `Last Departure`, ";
@@ -84,7 +104,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     if ($showAddr && $showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, " . ($showUnique ? "" : "v.idReservation as `Resv ID`, ")
-            . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', ifnull(vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, "
+            . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', ifnull(vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, "  . $demogSql
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
                 . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, vn.Phone, vn.Email, "
                     . ($showUnique ? "" : $queryStatus  . "r.title as `Room`,")
@@ -97,7 +117,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     } else if ($showAddr && !$showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code,
-            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, `nd`.`No_Return`, "
+            vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, $demogSql g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, vn.Meters_From_House as `Distance (miles)`, vn.Bad_Address, `nd`.`No_Return`, "
             . ($showUnique ? "" : $queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . $hospAssocSql
@@ -106,7 +126,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else if (!$showAddr && $showFullName) {
 
-        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `$guestFirst`, vn.Middle, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `$guestFirst`, vn.Middle, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, $demogSql g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . ($showUnique ? "" :$queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
@@ -114,7 +134,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else {
 
-        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, if(vn.Member_Status = 'd', if(vn.Date_Deceased != '', vn.Date_Deceased, 'Deceased'), '') as `Deceased Date`, $demogSql g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . ($showUnique ? "" : $queryStatus . "r.title as `Room`, ") . $spanDates
                 . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
                 . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
@@ -141,6 +161,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     hospital a ON hs.idAssociation = h.idHospital and h.Type = 'a'
 		LEFT JOIN
 	name_demog nd on s.idName = nd.idName
+    $demogJoins
         LEFT JOIN
     name np on hs.idPatient = np.idName
         LEFT JOIN
@@ -420,7 +441,7 @@ function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $ho
     ifnull(na.Country_Code, '') as `Country`,
     ifnull(ng.Relationship_Code,'') as `$patRelTitle`,
     ifnull(n.BirthDate, '') as `Birth Date`,
-    if(n.Member_Status = 'd', 'Deceased', '') as `Status`,
+    if(n.Member_Status = 'd', ifnull(n.Date_Deceased, 'Deceased'), '') as `Deceased Date`,
     ifnull(hs.idHospital, '') as `$hospTitle`,
     ifnull(hs.idAssociation, '') as `Association`,
     ifnull(g.Description, hs.Diagnosis) as `$diagTitle`,
@@ -815,6 +836,7 @@ $showAddressSelection = '';
 $showFullNameSelection = '';
 $showNoReturnSelection = '';
 $showUniqueSelection = '';
+$showDemogSelection = '';
 $mkTable = '';
 $dataTable = '';
 $settingstable = '';
@@ -1045,6 +1067,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $showDiag = TRUE;
         $showLocation = FALSE;
         $showUnique = FALSE;
+        $showDemog = FALSE;
 
         if (count($diags) == 0) {
             $showDiag = FALSE;
@@ -1071,6 +1094,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         if (isset($_POST['cbUnique'])) {
             $showUnique = TRUE;
             $showUniqueSelection = 'checked="checked"';
+        }
+
+        if (isset($_POST['cbDemog'])) {
+            $showDemog = TRUE;
+            $showDemogSelection = 'checked="checked"';
         }
 
 
@@ -1113,7 +1141,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 
             case 'p':
-                $rptArry = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
+                $rptArry = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation, $showDemog);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just '.$patTitle, array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
@@ -1136,7 +1164,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 break;
 
             case 'g':
-                $rptArry = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
+                $rptArry = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation, $showDemog);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $patTitle.' & '.$labels->getString('MemberType', 'guest', 'Guest').'s', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
@@ -1436,6 +1464,7 @@ if ($uS->UseIncidentReports) {
                             <td class="checkboxesShow"><input type="checkbox" name="cbFullName" class="psgsel" id="cbFullName" <?php echo $showFullNameSelection; ?>/><label for="cbFullName" class="psgsel"> Show Full Name</label></td>
                             <td class="checkboxesShow" id="cbNoRtntd"><input type="checkbox" name="cbNoReturn" class="psgsel" id="cbNoReturn" <?php echo $showNoReturnSelection; ?>/><label for="cbNoReturn" class="psgsel"> Show No Return Only</label></td>
                             <td class="checkboxesShow"><input type="checkbox" name="cbUnique" class="psgsel" id="cbUnique" <?php echo $showUniqueSelection; ?>/><label for="cbUnique" class="psgsel"> Show Unique People</label></td>
+                            <td class="checkboxesShow"><input type="checkbox" name="cbDemog" class="psgsel" id="cbDemog" <?php echo $showDemogSelection; ?>/><label for="cbDemog" class="psgsel"> Show Demographics</label></td>
                             <td style="text-align: right;"><input type="submit" name="btnHere" id="btnHere" value="Run Here"/>
                                 <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>
