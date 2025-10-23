@@ -43,7 +43,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 		return;
 	}
 
-	$txtCtrl.text(mess).show();
+	$txtCtrl.html(mess).show();
 }
 function dateRender(data, type, format) {
 	// If display or filter data is requested, format the date

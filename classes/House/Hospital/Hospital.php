@@ -79,10 +79,10 @@ class Hospital {
         $mrn = $labels->getString('hospital', 'MRN', '');
 
         $table->addHeaderTr(
-                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh($labels->getString('hospital', 'association', 'Association')) : '')
-                .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
-        		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
-                .($mrn == '' ? '' : HTMLTable::makeTh($mrn))
+                (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $labels->getString('hospital', 'association', 'Association'), ['for'=>'selAssoc'])) : '')
+                .HTMLTable::makeTh(HTMLContainer::generateMarkup("label", $labels->getString('hospital', 'hospital', 'Hospital'), ['for'=>"selHospital"]).HTMLContainer::generateMarkup('span', "*", ['class'=>'hhk-text-red ml-1']))
+        		.HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $labels->getString('hospital', 'roomNumber', 'Room'), ['for'=>'psgRoom']))
+                .($mrn == '' ? '' : HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $mrn, ['for'=>'psgMrn'])))
             );
 
         $table->addBodyTr(
@@ -95,7 +95,7 @@ class Hospital {
                 .HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($hList), ($hstay->getHospitalId() == 0 && count($hList) == 1 ? $hList[0][0] : $hstay->getHospitalId()), $offerBlank),
-                        		array('name'=>'selHospital', 'class'=>'ignrSave hospital-stay' )
+                        		array('name'=>'selHospital', 'class'=>'ignrSave hospital-stay', 'required'=>'required' )
                                 )
                         )
         		. HTMLTable::makeTd(
@@ -176,6 +176,8 @@ class Hospital {
         $referralAgentMarkup = '';
         $doctorMarkup = '';
         $labels = Labels::getLabels();
+
+        $requiredLabel = HTMLContainer::generateMarkup('span', "*", ['class'=>'hhk-text-red ml-1']);
 
 
         if ($uS->ReferralAgent) {
@@ -473,7 +475,7 @@ class Hospital {
             if ($uS->UseDiagSearch){
                 $diagtbl->addBodyTr(
                     HTMLTable::makeTh(
-                        HTMLContainer::generateMarkup("span", $labels->getString('hospital', 'diagnosis', 'Diagnosis'))
+                        HTMLContainer::generateMarkup("label", $labels->getString('hospital', 'diagnosis', 'Diagnosis'), ['for'=>'selDiagnosis']). ($uS->InsistResvDiag ? $requiredLabel:'')
                       . HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-search", "style"=>"margin-left:1.3em; margin-right:0.3em;"))
                       . HTMLInput::generateMarkup("", array('id'=>'diagSearch', 'type'=>'search'))
                         . HTMLInput::generateMarkup($diagId, array("type"=>"hidden", "name"=>"selDiagnosis", 'class'=>'hospital-stay')), array("colspan"=>"2"))
@@ -501,12 +503,12 @@ class Hospital {
                 }
 
                 $diagtbl->addBodyTr(
-                    HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis'))
+                    HTMLTable::makeTh(HTMLContainer::generateMarkup("label", $labels->getString('hospital', 'diagnosis', 'Diagnosis'), ['for'=>'selDiagnosis']). ($uS->InsistResvDiag ? $requiredLabel:''))
                 );
                 $diagtbl->addBodyTr(HTMLTable::makeTd(
                     HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
-                        array('name'=>'selDiagnosis', 'class'=>'hospital-stay', 'style'=>'width: 100%'))
+                        array('name'=>'selDiagnosis', 'class'=>'hospital-stay', 'style'=>'width: 100%', ...($uS->InsistResvDiag ? ['required'=>'required']:[])))
                 ));
             }
 
@@ -538,13 +540,13 @@ class Hospital {
 
             $diagtbl = new HTMLTable();
             $diagtbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('hospital', 'location', 'Location'))
+                HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $labels->getString('hospital', 'location', 'Location'), ['for'=>'selLocation']).($uS->InsistResvUnit ? $requiredLabel:''))
             );
 
             $diagtbl->addBodyTr(HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(
                     HTMLSelector::doOptionsMkup($locs, (isset($referralHospitalData['location']) && $referralHospitalData['location'] != '' ? $referralHospitalData['location'] : $hstay->getLocationCode()), TRUE),
-                		array('name'=>'selLocation', 'class'=>'hospital-stay'))
+                		array('name'=>'selLocation', 'class'=>'hospital-stay',...($uS->InsistResvUnit ? ['required'=>'required']:[])))
                 )
             );
 
