@@ -1995,6 +1995,10 @@ function resvManager(initData, options) {
                 if($invalidInputs.length > 0){
                     //show error
                     $invalidInputs.addClass('ui-state-error');
+                    let relatedEls = $invalidInputs.data("related");
+                    if(relatedEls){
+                        $hospSection.find(relatedEls).addClass("ui-state-error");
+                    }
 
                     let msg = 'Please fill in the following required fields:';
                     $invalidInputs.each((i, el)=>{

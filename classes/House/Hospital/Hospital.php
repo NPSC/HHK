@@ -478,7 +478,7 @@ class Hospital {
                         HTMLContainer::generateMarkup("label", $labels->getString('hospital', 'diagnosis', 'Diagnosis'), ['for'=>'selDiagnosis']). ($uS->InsistResvDiag ? $requiredLabel:'')
                       . HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-search", "style"=>"margin-left:1.3em; margin-right:0.3em;"))
                       . HTMLInput::generateMarkup("", array('id'=>'diagSearch', 'type'=>'search'))
-                        . HTMLInput::generateMarkup($diagId, array("type"=>"hidden", "name"=>"selDiagnosis", 'class'=>'hospital-stay')), array("colspan"=>"2"))
+                        . HTMLInput::generateMarkup($diagId, array("type"=>"text", "name"=>"selDiagnosis", 'data-related'=>'#diagSearch', 'class'=>'d-none hospital-stay', ...($uS->InsistResvDiag ? ['required'=>'required']:[]))), array("colspan"=>"2"))
                 );
 
                 $selectedClass = "";
