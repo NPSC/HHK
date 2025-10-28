@@ -456,7 +456,6 @@ BEGIN
     delete ec from emergency_contact ec join tids n on ec.idName = n.idName;
 
 	delete na from name_address na join tids n on na.idName = n.idName;
-	delete na from name_crypto na join tids n on na.idName = n.idName;
 	delete na from name_demog na join tids n on na.idName = n.idName;
 	delete na from name_email na join tids n on na.idName = n.idName;
 	delete na from name_phone na join tids n on na.idName = n.idName;

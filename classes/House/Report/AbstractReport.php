@@ -40,6 +40,7 @@ abstract class AbstractReport {
     protected string $query = "";
     public string $filterMkup = "";
     public string $filterOptsMkup = "";
+    public array $filterOpts = [];
     protected $request;
     protected string $reportTitle = "";
     protected string $description = "";
@@ -482,11 +483,22 @@ abstract class AbstractReport {
         return $this->defaultFields;
     }
 
-    public function makeFilterOptsMkup(){
+    public function makeFilterOptsMkup(): string{
+        foreach($this->filterOpts as $key=>$opt) {
+            $attrs = array("type"=>$opt["type"], "id"=>$key, "name"=>$key);
+            if(isset($this->request[$key])){
+                $attrs['checked'] = 'checked';
+            }
 
+            $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
+                HTMLInput::generateMarkup("", $attrs) .
+                HTMLContainer::generateMarkup("label", $opt['title'], array("for"=>$key))
+            );
+        }
+        return $this->filterOptsMkup;
     }
 
-    public function getInputSetReportName(){
+    public function getInputSetReportName(): string{
         return $this->inputSetReportName;
     }
 
