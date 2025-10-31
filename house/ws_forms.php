@@ -1,30 +1,8 @@
 <?php
 
-use HHK\sec\WebInit;
-use HHK\SysConst\WebPageCode;
-use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\sec\ScriptAuthClass;
-use HHK\Photo;
-use HHK\Update\SiteConfig;
-use HHK\Document\ListDocuments;
-use HHK\Document\Document;
-use HHK\House\Vehicle;
-use HHK\HTMLControls\HTMLContainer;
-use HHK\House\Report\ActivityReport;
-use HHK\SysConst\GLTableNames;
-use HHK\House\ResourceView;
-use HHK\House\Constraint\Constraints;
-use HHK\History;
-use HHK\House\Report\RoomReport;
-use HHK\SysConst\ReservationStatus;
-use HHK\House\Room\Room;
-use HHK\SysConst\RoomState;
-use HHK\Payment\Invoice\Invoice;
-use HHK\HTMLControls\HTMLTable;
-use HHK\Payment\Receipt;
-use HHK\Exception\PaymentException;
 use HHK\Exception\CsrfException;
 use HHK\Document\FormTemplate;
 use HHK\Document\FormDocument;
@@ -48,12 +26,6 @@ try {
 
     $login = new Login();
     $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
-
-	//$csrfToken = '';
-	//if(isset($_REQUEST['csrfToken'])){
-		//$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-	//}
-	//$login->verifyCSRF($csrfToken);
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
