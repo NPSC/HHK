@@ -24,7 +24,8 @@ use HHK\sec\Labels;
  * @author Will
  */
 
-class BirthdayReport extends AbstractReport implements ReportInterface {
+class BirthdayReport extends AbstractReport implements ReportInterface
+{
 
     public array $locations;
     public array $diags;
@@ -32,29 +33,42 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
     public array $selectedResvStatuses;
 
 
-    public function __construct(\PDO $dbh, array $request = []){
+    public function __construct(\PDO $dbh, array $request = [])
+    {
         $uS = Session::getInstance();
 
         $this->reportTitle = $uS->siteName . ' Birthday Report';
         $this->description = "This report shows all guests who are staying or scheduled to stay AND have a birthday during the selected time period";
         $this->inputSetReportName = "birthday";
 
+        $this->filterOpts = [
+            "cbIncCheckedOut" => [
+                "title" => "Include Checked Out " . Labels::getString('MemberType', 'visitor', "Guest") . 's',
+                "type" => "checkbox"
+            ],
+            "cbOnlyPatients" => [
+                "title" => "Only " . Labels::getString('MemberType', 'patient', "Patient") . 's',
+                'type' => 'checkbox'
+            ]
+        ];
+
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
-    public function makeQuery(): void{
+    public function makeQuery(): void
+    {
 
         // Reservation status
         $resvStatus = ["'a'", "'s'", "'w'", "'uc'"];
         $stayStatus = ["'1'", "'a'", "'cp'", "'n'"];
 
-        if(isset($this->request["cbIncCheckedOut"])){
+        if (isset($this->request["cbIncCheckedOut"])) {
             $resvStatus[] = "'co'";
             $stayStatus[] = "'co'";
         }
 
         $whPatient = "";
-        if(isset($this->request["cbOnlyPatients"])){
+        if (isset($this->request["cbOnlyPatients"])) {
             $whPatient = "and ng.Relationship_Code = 'slf' ";
         }
 
@@ -63,7 +77,7 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
         if (count($resvStatus) > 0) {
             $whResvStatus = "and r.Status in (" . implode(",", $resvStatus) . ") ";
         }
-        if (count($stayStatus) > 0){
+        if (count($stayStatus) > 0) {
             $whStayStatus = "and (s.Status in (" . implode(",", $stayStatus) . ") or s.Status IS NULL) ";
         }
 
@@ -160,35 +174,14 @@ from
 where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " order by r.idReservation";
     }
 
-    public function makeFilterMkup():void{
+    public function makeFilterMkup(): void
+    {
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    public function makeFilterOptsMkup():void{
-        $birthdayAttrs = array("type"=>"checkbox", "name"=>"cbIncCheckedOut");
-        $justPatientAttrs = array("type"=>"checkbox", "name"=>"cbOnlyPatients");
-
-        if(isset($this->request["cbIncCheckedOut"])){
-            $birthdayAttrs['checked'] = 'checked';
-        }
-        if(isset($this->request["cbOnlyPatients"])){
-            $justPatientAttrs['checked'] = 'checked';
-        }
-
-        $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
-            HTMLInput::generateMarkup("", $birthdayAttrs) .
-            HTMLContainer::generateMarkup("label", "Include Checked Out " . Labels::getString('MemberType', 'visitor', "Guest") . 's', array("for"=>"cbIncCheckedOut"))
-        );
-
-        $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
-            HTMLInput::generateMarkup("", $justPatientAttrs) .
-            HTMLContainer::generateMarkup("label", "Only " . Labels::getString('MemberType', 'patient', "Patient") . 's', array("for"=>"cbOnlyPatients"))
-        );
-
-    }
-
-    public function makeCFields():array{
+    public function makeCFields(): array
+    {
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
 
@@ -224,17 +217,18 @@ where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " o
         return $cFields;
     }
 
-    public function makeSummaryMkup():string {
+    public function makeSummaryMkup(): string
+    {
 
         $mkup = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 
         $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
 
-        if(isset($this->request["cbIncCheckedOut"])){
+        if (isset($this->request["cbIncCheckedOut"])) {
             $mkup .= HTMLContainer::generateMarkup('p', "Includes Checked Out " . Labels::getString('MemberType', 'visitor', 'Guest') . "s");
         }
 
-        if(isset($this->request["cbOnlyPatients"])){
+        if (isset($this->request["cbOnlyPatients"])) {
             $mkup .= HTMLContainer::generateMarkup('p', "Shows only " . Labels::getString('MemberType', 'patient', 'Patient') . "s");
         }
 
@@ -242,13 +236,14 @@ where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " o
 
     }
 
-    public function generateMarkup(string $outputType = ""){
+    public function generateMarkup(string $outputType = "")
+    {
         $this->getResultSet();
         $uS = Session::getInstance();
 
-        foreach($this->resultSet as $k=>$r) {
+        foreach ($this->resultSet as $k => $r) {
             //$this->resultSet[$k]['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
-            $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+            $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href' => $uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
         }
 
         return parent::generateMarkup($outputType);
