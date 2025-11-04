@@ -9,7 +9,6 @@ use HHK\SysConst\CalendarStatusColors;
 use HHK\SysConst\ResourceStatus;
 use HHK\US_Holidays;
 use HHK\House\Reservation\Reservation_1;
-use HHK\SysConst\RoomState;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\CalEventKind;
@@ -24,14 +23,16 @@ use HHK\SysConst\CalEventKind;
  * @link      https://github.com/NPSC/HHK
  */
 
-class GuestRegister {
+class GuestRegister
+{
 
     protected $noAssocId;
     protected $ribbonColors;
     protected $robbonBottomColors;
     const WAITLIST_RESC_ID = '9999';
 
-    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $rescGroupBy) {
+    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $rescGroupBy)
+    {
 
         $uS = Session::getInstance();
         $rescs = array();
@@ -62,14 +63,14 @@ class GuestRegister {
 
         foreach ($rescGroups as $g) {
 
-        	if ($rescGroupBy === $g[0]) {
+            if ($rescGroupBy === $g[0]) {
 
-        		$genJoin = " left join `gen_lookups` g on g.`Table_Name` = '" . $g[2] . "' and g.`Code` = rm." . $g[0] . " ";
-        		$orderBy = "g.`Order`, " . $orderBy;
-        		$genTableName = $g[2];
+                $genJoin = " left join `gen_lookups` g on g.`Table_Name` = '" . $g[2] . "' and g.`Code` = rm." . $g[0] . " ";
+                $orderBy = "g.`Order`, " . $orderBy;
+                $genTableName = $g[2];
 
-        		break;
-        	}
+                break;
+            }
         }
 
 
@@ -111,53 +112,53 @@ where ru.idResource_use is null
         // Count the room grouping types
         foreach ($rawRescs as $r) {
 
-        	$notFound = TRUE;
+            $notFound = TRUE;
 
-        	foreach ($groups as $g) {
+            foreach ($groups as $g) {
 
-        		if ($g[0] == $r[$rescGroupBy]) {
+                if ($g[0] == $r[$rescGroupBy]) {
 
-        			$notFound = FALSE;
+                    $notFound = FALSE;
 
-        			if (isset($roomGroups[$g[0]])) {
-        				$roomGroups[$g[0]]['cnt']++;
-        			} else {
-        				$roomGroups[$g[0]]['cnt'] = 1;
-        				$roomGroups[$g[0]]['title'] = $g[1];
-        			}
+                    if (isset($roomGroups[$g[0]])) {
+                        $roomGroups[$g[0]]['cnt']++;
+                    } else {
+                        $roomGroups[$g[0]]['cnt'] = 1;
+                        $roomGroups[$g[0]]['title'] = $g[1];
+                    }
 
-        			break;
-        		}
-        	}
+                    break;
+                }
+            }
 
-       		if ($notFound && $r[$rescGroupBy] == '') {
+            if ($notFound && $r[$rescGroupBy] == '') {
 
-	       		if (isset($roomGroups[''])) {
-	       			$roomGroups['']['cnt']++;
-	       		} else {
-	       			$roomGroups['']['cnt'] = 1;
-	       			$roomGroups['']['title'] = 'not set';
-	       		}
-	       	}
+                if (isset($roomGroups[''])) {
+                    $roomGroups['']['cnt']++;
+                } else {
+                    $roomGroups['']['cnt'] = 1;
+                    $roomGroups['']['title'] = 'not set';
+                }
+            }
 
-	       	if ($notFound && $r[$rescGroupBy] != '') {
+            if ($notFound && $r[$rescGroupBy] != '') {
 
-	        	if (isset($roomGroups[$r[$rescGroupBy]])) {
-	        		$roomGroups[$r[$rescGroupBy]]['cnt']++;
-	        	} else {
-	        		$roomGroups[$r[$rescGroupBy]]['cnt'] = 1;
-	        		$roomGroups[$r[$rescGroupBy]]['title'] = 'missing index: ' . $r[$rescGroupBy];
-	        	}
-	        }
+                if (isset($roomGroups[$r[$rescGroupBy]])) {
+                    $roomGroups[$r[$rescGroupBy]]['cnt']++;
+                } else {
+                    $roomGroups[$r[$rescGroupBy]]['cnt'] = 1;
+                    $roomGroups[$r[$rescGroupBy]]['title'] = 'missing index: ' . $r[$rescGroupBy];
+                }
+            }
 
-	    }
+        }
 
         // Set the grouping totals in the group titles
         foreach ($rawRescs as $r) {
 
-        	if (isset($r[$rescGroupBy]) && count($roomGroups) > 0 && isset($roomGroups[$r[$rescGroupBy]])) {
-        		$r[$rescGroupBy] = htmlspecialchars_decode($roomGroups[$r[$rescGroupBy]]['title'], ENT_QUOTES) . ' (' . $roomGroups[$r[$rescGroupBy]]['cnt'] . ')';
-        	}
+            if (isset($r[$rescGroupBy]) && count($roomGroups) > 0 && isset($roomGroups[$r[$rescGroupBy]])) {
+                $r[$rescGroupBy] = htmlspecialchars_decode($roomGroups[$r[$rescGroupBy]]['title'], ENT_QUOTES) . ' (' . $roomGroups[$r[$rescGroupBy]]['cnt'] . ')';
+            }
 
             // Fix room title
             $r['title'] = htmlspecialchars_decode($r['title'], ENT_QUOTES);
@@ -165,7 +166,7 @@ where ru.idResource_use is null
             $r['hoverText'] = '';
 
             // Room color
-            switch($uS->Room_Colors) {
+            switch ($uS->Room_Colors) {
                 case 'housekeeping': //use housekeeping status colors
                     $r['bgColor'] = ResourceView::getRoomStatusColor($r['Status'], $r["idVisit"] > 0);
                     $r['textColor'] = '';
@@ -174,7 +175,7 @@ where ru.idResource_use is null
                 case 'room': //use Resource Builder room colors
                     break;
                 default: //None
-                    $r['bgColor'] =  '';
+                    $r['bgColor'] = '';
                     $r['textColor'] = '';
             }
 
@@ -189,18 +190,18 @@ where ru.idResource_use is null
 
         // Add waitlist
         $rescs[] = array(
-                'id' => "id-" . self::WAITLIST_RESC_ID,
-                'idResc' => self::WAITLIST_RESC_ID,
-        		'title' => ($genTableName != '' ? ' ' : Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist')),
-                'bgColor' => '#555',
-                //'textColor' => '#fff',
-                'maxOcc' => 0,
-                'Type' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
-                'Floor' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
-                'roomStatus' => '',
-                'Category' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
-                'Report_Category' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
-            );
+            'id' => "id-" . self::WAITLIST_RESC_ID,
+            'idResc' => self::WAITLIST_RESC_ID,
+            'title' => ($genTableName != '' ? ' ' : Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist')),
+            'bgColor' => '#555',
+            //'textColor' => '#fff',
+            'maxOcc' => 0,
+            'Type' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
+            'Floor' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
+            'roomStatus' => '',
+            'Category' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
+            'Report_Category' => Labels::getString('register', 'waitlistCalendarGroup', 'Waitl ist'),
+        );
 
         return $rescs;
 
@@ -213,7 +214,8 @@ where ru.idResource_use is null
      * @param string $endTime
      * @return array
      */
-    public function getRegister(\PDO $dbh, $startTime, $endTime, $timezone) {
+    public function getRegister(\PDO $dbh, $startTime, $endTime, $timezone)
+    {
 
         $uS = Session::getInstance();
         $events = array();
@@ -252,7 +254,7 @@ where ru.idResource_use is null
         $query = "select vr.*, s.On_Leave, count(*) as `Guest_Count` from vregister vr left join stays s on `vr`.`idVisit` = `s`.`idVisit`
         AND `vr`.`Span` = `s`.`Visit_Span`
         AND `vr`.`Visit_Status` = `s`.`Status` where vr.Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
-            DATE(vr.Span_Start) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.Span_End), case when DATE(now()) > DATE(vr.Expected_Departure) then DATE(now()) else DATE(vr.Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "') group by vr.id;";
+            DATE(vr.Span_Start) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.Span_End), case when DATE(now()) > DATE(vr.Expected_Departure) then DATE(now()) else DATE(vr.Expected_Departure) end) >= DATE('" . $beginDate->format('Y-m-d') . "') group by vr.id;";
         $stmtv = $dbh->query($query);
 
         while ($r = $stmtv->fetch(\PDO::FETCH_ASSOC)) {
@@ -365,7 +367,7 @@ where ru.idResource_use is null
             $s['guests'] = $r['Guest_Count'];
             $s['extended'] = $visitExtended;
             $s['allDay'] = 1;
-            $s['fullName'] = htmlspecialchars_decode((!is_null($r['Name_Full']) ? $r['Name_Full']: ''), ENT_QUOTES);
+            $s['fullName'] = htmlspecialchars_decode((!is_null($r['Name_Full']) ? $r['Name_Full'] : ''), ENT_QUOTES);
             $s['visitStatus'] = $statusText;
             $s['vStatusCode'] = $r['Visit_Status'];
             $s['resourceEditable'] = 0;
@@ -377,9 +379,9 @@ where ru.idResource_use is null
 
 
 
-    // Reservations
+        // Reservations
         $query = "select * from vregister_resv where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-                . " and DATE(Expected_Arrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Expected_Arrival asc, idReservation asc";
+            . " and DATE(Expected_Arrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Expected_Arrival asc, idReservation asc";
 
         $stmt = $dbh->query($query);
 
@@ -388,7 +390,7 @@ where ru.idResource_use is null
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($r['Status'] == ReservationStatus::Waitlist) {
-                $r["idResource"] = SELF::WAITLIST_RESC_ID;
+                $r["idResource"] = self::WAITLIST_RESC_ID;
 
             }
 
@@ -605,7 +607,7 @@ where ru.idResource_use is null
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] =  htmlspecialchars_decode($this->getEventTitle($r), ENT_QUOTES);
+            $s['title'] = htmlspecialchars_decode($this->getEventTitle($r), ENT_QUOTES);
             $s['hospName'] = htmlspecialchars_decode($hospitals[$r['idHospital']]['Title'], ENT_QUOTES);
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
@@ -624,18 +626,21 @@ where ru.idResource_use is null
         return $events;
     }
 
-    protected function getEventTitle(array $r): string {
+    protected function getEventTitle(array $r): string
+    {
         $uS = Session::getInstance();
 
-        switch ($uS->RibbonText){
+        switch ($uS->RibbonText) {
             case "pgl": //Primary Guest Last Name
                 return $r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
             case "pgf": //Primary Guest Full Name
                 return $r['Name_Full'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
             case "pl": //Patient Last Name
-                return $r['Patient Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');;
+                return $r['Patient Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
+                ;
             case "pf": //Patient Full Name
-                return $r['Patient Full Name'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');;
+                return $r['Patient Full Name'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
+                ;
             default:
                 return $r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note'] : '');
         }
@@ -643,138 +648,142 @@ where ru.idResource_use is null
 
 
     // Parses a string into a DateTime object, optionally forced into the given timezone.
-    public static function parseDateTime($string, $timezone=null) {
-      $date = new \DateTime(
-        $string,
-        $timezone ? $timezone : new \DateTimeZone('UTC')
-          // Used only when the string is ambiguous.
-          // Ignored if string has a timezone offset in it.
-      );
-      if ($timezone) {
-        // If our timezone was ignored above, force it.
-        $date->setTimezone($timezone);
-      }
-      return $date;
+    public static function parseDateTime($string, $timezone = null)
+    {
+        $date = new \DateTime(
+            $string,
+            $timezone ? $timezone : new \DateTimeZone('UTC')
+            // Used only when the string is ambiguous.
+            // Ignored if string has a timezone offset in it.
+        );
+        if ($timezone) {
+            // If our timezone was ignored above, force it.
+            $date->setTimezone($timezone);
+        }
+        return $date;
     }
 
 
     // Takes the year/month/date values of the given DateTime and converts them to a new DateTime,
     // but in UTC.
-    public static function stripTime($datetime) {
-      return new \DateTime($datetime->format('Y-m-d'));
+    public static function stripTime($datetime)
+    {
+        return new \DateTime($datetime->format('Y-m-d'));
     }
 
 
-//     protected function addBackgroundEvent($r, $hospitals, $hospitalColors) {
+    //     protected function addBackgroundEvent($r, $hospitals, $hospitalColors) {
 
-//         $uS = Session::getInstance();
+    //         $uS = Session::getInstance();
 //         $backgroundBorderColor = '';
 
-//         $hospitalColors = $uS->RibbonBottomColor || strtolower($uS->GuestNameColor) == 'hospital';
+    //         $hospitalColors = $uS->RibbonBottomColor || strtolower($uS->GuestNameColor) == 'hospital';
 
-//             // Use Association colors?
+    //             // Use Association colors?
 //         if ($hospitalColors) {
 
-//             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
+    //             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
 
-//             	if (isset($hospitals[$r['idAssociation']])) {
+    //             	if (isset($hospitals[$r['idAssociation']])) {
 //             	    $backgroundBorderColor = $hospitals[$r['idAssociation']]['Background_Color'];
 //             	}
 
-//             } else if (isset($hospitals[$r['idHospital']])) {
+    //             } else if (isset($hospitals[$r['idHospital']])) {
 //                 $backgroundBorderColor = $hospitals[$r['idHospital']]['Background_Color'];
 //             }
 
-//         }
+    //         }
 
-//         return $backgroundBorderColor;
+    //         return $backgroundBorderColor;
 //     }
 
-    protected function addVisitBlackouts(&$events, $myHolidays, $dtendDate, $timezone, $idResc, $nonClean) {
+    protected function addVisitBlackouts(&$events, $myHolidays, $dtendDate, $timezone, $idResc, $nonClean)
+    {
 
         $p1d = new \DateInterval('P1D');
 
         while ($myHolidays->is_holiday($dtendDate->format('U'))) {
-                    $c = array(
-                        'id' => 'H' . $idResc,
-                        'kind' => CalEventKind::BO,
-                        'editable' => FALSE,
-                        'resourceId' => "id-" . $idResc,
-                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'title' => 'H',
-                        'allDay' => 1,
-                        'backgroundColor' => 'black',
-                        'textColor' => 'white',
-                        'borderColor' => 'Yellow',
+            $c = array(
+                'id' => 'H' . $idResc,
+                'kind' => CalEventKind::BO,
+                'editable' => FALSE,
+                'resourceId' => "id-" . $idResc,
+                'start' => $dtendDate->format('Y-m-d\TH:i:00'),
+                'end' => $dtendDate->format('Y-m-d\TH:i:00'),
+                'title' => 'H',
+                'allDay' => 1,
+                'backgroundColor' => 'black',
+                'textColor' => 'white',
+                'borderColor' => 'Yellow',
 
-                    );
+            );
 
-                    $event = new Event($c, $timezone);
-                    $events[] = $event->toArray();
+            $event = new Event($c, $timezone);
+            $events[] = $event->toArray();
 
-                    $dtendDate->add($p1d);
-                    $dtendDate->setTime(10, 0, 0);
-                }
+            $dtendDate->add($p1d);
+            $dtendDate->setTime(10, 0, 0);
+        }
 
-                // end date fall on non-cleaning weekday?
-                $dateInfo = getDate($dtendDate->format('U'));
-                $limit = 5;
+        // end date fall on non-cleaning weekday?
+        $dateInfo = getDate($dtendDate->format('U'));
+        $limit = 5;
 
-                while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
-                    // Add a Cleaning Black-Out Event
+        while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
+            // Add a Cleaning Black-Out Event
 
-                    $c = array(
-                        'id' => 'BO' . $idResc,
-                        'kind' => CalEventKind::BO,
-                        'editable' => FALSE,
-                        'resourceId' => "id-" . $idResc,
-                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'title' => 'BO',
-                        'allDay' => 1,
-                        'backgroundColor' => 'black',
-                        'textColor' => 'white',
-                        'borderColor' => 'white',
+            $c = array(
+                'id' => 'BO' . $idResc,
+                'kind' => CalEventKind::BO,
+                'editable' => FALSE,
+                'resourceId' => "id-" . $idResc,
+                'start' => $dtendDate->format('Y-m-d\TH:i:00'),
+                'end' => $dtendDate->format('Y-m-d\TH:i:00'),
+                'title' => 'BO',
+                'allDay' => 1,
+                'backgroundColor' => 'black',
+                'textColor' => 'white',
+                'borderColor' => 'white',
 
-                    );
+            );
 
-                    $event = new Event($c, $timezone);
-                    $events[] = $event->toArray();
-
-
-                    $dtendDate->add($p1d);
-                    $dtendDate->setTime(10, 0, 0);
-                    $dateInfo = getDate($dtendDate->format('U'));
-                }
+            $event = new Event($c, $timezone);
+            $events[] = $event->toArray();
 
 
-                // Check for holidays again?
-                while ($myHolidays->is_holiday($dtendDate->format('U'))) {
-                    $c = array(
-                        'id' => 'H' . $idResc,
-                        'kind' => CalEventKind::BO,
-                        'editable' => FALSE,
-                        'resourceId' => 'id-' . $idResc,
-                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'title' => 'H',
-                        'allDay' => 1,
-                        'backgroundColor' => 'black',
-                        'textColor' => 'white',
-                        'borderColor' => 'Yellow',
+            $dtendDate->add($p1d);
+            $dtendDate->setTime(10, 0, 0);
+            $dateInfo = getDate($dtendDate->format('U'));
+        }
 
-                    );
-                    $event = new Event($c, $timezone);
-                    $events[] = $event->toArray();
 
-                    $dtendDate->add($p1d);
-                    $dtendDate->setTime(10, 0, 0);
-                }
+        // Check for holidays again?
+        while ($myHolidays->is_holiday($dtendDate->format('U'))) {
+            $c = array(
+                'id' => 'H' . $idResc,
+                'kind' => CalEventKind::BO,
+                'editable' => FALSE,
+                'resourceId' => 'id-' . $idResc,
+                'start' => $dtendDate->format('Y-m-d\TH:i:00'),
+                'end' => $dtendDate->format('Y-m-d\TH:i:00'),
+                'title' => 'H',
+                'allDay' => 1,
+                'backgroundColor' => 'black',
+                'textColor' => 'white',
+                'borderColor' => 'Yellow',
+
+            );
+            $event = new Event($c, $timezone);
+            $events[] = $event->toArray();
+
+            $dtendDate->add($p1d);
+            $dtendDate->setTime(10, 0, 0);
+        }
 
     }
 
-    protected function getRoomOosEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events) {
+    protected function getRoomOosEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events)
+    {
 
         $idCounter = 10;
 
@@ -816,9 +825,9 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 'kind' => CalEventKind::OOS,
                 'resourceId' => "id-" . $r["idResource"],
                 'idResc' => $r["idResource"],
-                'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes']: ''),
-            		'start' => $stDateDT->format('Y-m-d\TH:i:00'),
-            		'end' => $enDateDT->format('Y-m-d\TH:i:00'),
+                'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes'] : ''),
+                'start' => $stDateDT->format('Y-m-d\TH:i:00'),
+                'end' => $enDateDT->format('Y-m-d\TH:i:00'),
                 'title' => $r['StatusTitle'],
                 'allDay' => 1,
                 'backgroundColor' => 'gray',
@@ -832,7 +841,8 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         }
     }
 
-    protected function getRetiredRoomEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events) {
+    protected function getRetiredRoomEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events)
+    {
 
         $idCounter = 10;
 
@@ -848,9 +858,9 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
             $RetiredDT = new \Datetime($r['Retired_At']);
 
-            if($RetiredDT >= $beginDate && $RetiredDT <= $endDate){
+            if ($RetiredDT >= $beginDate && $RetiredDT <= $endDate) {
 
-            }else{
+            } else {
                 continue;
             }
 
@@ -861,8 +871,8 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 'resourceId' => "id-" . $r["idResource"],
                 'idResc' => $r["idResource"],
                 'reason' => '',
-            		'start' => $RetiredDT->format('Y-m-d\TH:i:00'),
-            		'end' => $endDate->format('Y-m-d\TH:i:00'),
+                'start' => $RetiredDT->format('Y-m-d\TH:i:00'),
+                'end' => $endDate->format('Y-m-d\TH:i:00'),
                 'title' => "Retired",
                 'allDay' => 1,
                 'backgroundColor' => 'gray',
@@ -876,7 +886,8 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
     }
 
-    protected function getRibbonColors(\PDO $dbh, $hospitals) {
+    protected function getRibbonColors(\PDO $dbh, $hospitals)
+    {
 
         $uS = Session::getInstance();
         $this->ribbonColors = array();
@@ -887,7 +898,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
         if (strtolower($uS->RibbonColor) == 'hospital') {
 
-            foreach($hospitals as $h) {
+            foreach ($hospitals as $h) {
 
                 $this->ribbonColors[$h['idHospital']] = array(
                     't' => trim(strtolower($h['Text_Color'])),
@@ -900,12 +911,12 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         } else if ($uS->RibbonColor != '') {
 
             foreach ($demogs as $d) {
-                if ($d["Attributes"] && $attributes = json_decode($d["Attributes"], true)){
+                if ($d["Attributes"] && $attributes = json_decode($d["Attributes"], true)) {
                     $this->ribbonColors[$d[0]] = array(
                         't' => isset($attributes["fontColor"]) ? trim(strtolower($attributes["fontColor"])) : "#ffffff",
                         'b' => isset($attributes["backgroundColor"]) ? trim(strtolower($attributes["backgroundColor"])) : 'transparent'
                     );
-                }else if ($d[2] != '') {
+                } else if ($d[2] != '') {
 
                     // Split colors out of CDL
                     $splits = explode(',', $d[2]);
@@ -914,10 +925,10 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                         't' => trim(strtolower($splits[0])),
                         'b' => isset($splits[1]) ? trim(strtolower($splits[1])) : 'transparent'
                     );
-                }else{
+                } else {
                     $this->ribbonColors[$d[0]] = array(
                         't' => "#ffffff",
-                        'b' => ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor: "#3788d8")
+                        'b' => ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : "#3788d8")
                     );
                 }
             }
@@ -929,7 +940,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
         if (strtolower($uS->RibbonBottomColor) == 'hospital') {
 
-            foreach($hospitals as $h) {
+            foreach ($hospitals as $h) {
 
                 $this->robbonBottomColors[$h['idHospital']] = trim(strtolower($h['Background_Color']));
 
@@ -947,7 +958,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
                     $this->robbonBottomColors[$d[0]] = isset($splits[1]) ? trim(strtolower($splits[1])) : '';
 
-                }else{
+                } else {
                     $this->robbonBottomColors[$d[0]] = ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : '');
                 }
             }
@@ -955,9 +966,10 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
     }
 
-    protected function getHospitals(\PDO $dbh) {
+    protected function getHospitals(\PDO $dbh)
+    {
 
-        $hospitals = array(0 => array('Title'=>'', 'idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
+        $hospitals = array(0 => array('Title' => '', 'idHospital' => 0, 'Background_Color' => 'blue', 'Text_Color' => 'white'));
         $this->noAssocId = 0;
 
         $hstmt = $dbh->query("Select IF(status='r', concat(Title, ' (Retired)'), Title) as Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital;"); // where `Status` = 'a'
@@ -975,16 +987,17 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         return $hospitals;
     }
 
-    protected function setRibbonColors($r, &$s) {
+    protected function setRibbonColors($r, &$s)
+    {
 
         $uS = Session::getInstance();        //$s['backBorderColor'] = $this->addBackgroundEvent($r, $hospitals);
 
-        $today = (new \DateTime())->setTime(0,0,0);
+        $today = (new \DateTime())->setTime(0, 0, 0);
 
         // Set ribbon color
         if ($uS->RibbonColor != '') {
 
-            if (isset($r[$uS->RibbonColor]) && isset($this->ribbonColors[$r[$uS->RibbonColor]])){
+            if (isset($r[$uS->RibbonColor]) && isset($this->ribbonColors[$r[$uS->RibbonColor]])) {
 
                 // Use Demographics colors
                 $s['backgroundColor'] = $this->ribbonColors[$r[$uS->RibbonColor]]['b'];
@@ -1001,10 +1014,10 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                     $s['backgroundColor'] = $this->ribbonColors[$r['idHospital']]['b'];
                     $s['textColor'] = $this->ribbonColors[$r['idHospital']]['t'];
                 }
-            } else if ($uS->RibbonColor == "Calendar_Status_Colors"){
+            } else if ($uS->RibbonColor == "Calendar_Status_Colors") {
 
-                $expectedArrival = (isset($r["Expected_Arrival"]) ? (new \DateTime($r["Expected_Arrival"]))->setTime(0,0,0) : "");
-                $expectedDeparture = (isset($r["Expected_Departure"]) ? (new \DateTime($r["Expected_Departure"]))->setTime(0,0,0) : "");
+                $expectedArrival = (isset($r["Expected_Arrival"]) ? (new \DateTime($r["Expected_Arrival"]))->setTime(0, 0, 0) : "");
+                $expectedDeparture = (isset($r["Expected_Departure"]) ? (new \DateTime($r["Expected_Departure"]))->setTime(0, 0, 0) : "");
 
                 if ($expectedArrival instanceof \DateTimeInterface) {
                     $arrivalDiff = $today->diff($expectedArrival);
@@ -1016,34 +1029,34 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                     $departureDiffDays = (integer) $departureDiff->format("%R%a");
                 }
 
-                if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0){ //checking out today
+                if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0) { //checking out today
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutToday]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutToday]['t'];
-                } else if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0){ //checked in past expected departure
+                } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0) { //checked in past expected departure
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedInPastExpectedDepart]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedInPastExpectedDepart]['t'];
-                }else if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1){ //checking out tomorrow
+                } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1) { //checking out tomorrow
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutTomorrow]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingOutTomorrow]['t'];
-                } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] == VisitStatus::CheckedIn){ //checked in
+                } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == VisitStatus::CheckedIn) { //checked in
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckedIn]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckedIn]['t'];
-                } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 0){ //arriving today
+                } else if (isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 0) { //arriving today
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInToday]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInToday]['t'];
-                } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 1){ //arriving tomorrow
+                } else if (isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 1) { //arriving tomorrow
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInTomorrow]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInTomorrow]['t'];
-                } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays > 1){ //arriving in future
+                } else if (isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays > 1) { //arriving in future
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInFuture]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInFuture]['t'];
-                }else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays < 0){ //arriving in past (but not checked in)
+                } else if (isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays < 0) { //arriving in past (but not checked in)
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInPast]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::CheckingInPast]['t'];
-                } else if(isset($r["Status"]) && $r["Status"] == 'w'){ //waitlist
+                } else if (isset($r["Status"]) && $r["Status"] == 'w') { //waitlist
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::Waitlist]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::Waitlist]['t'];
-                }else if(isset($r["Status"]) && $r["Status"] == 'uc'){
+                } else if (isset($r["Status"]) && $r["Status"] == 'uc') {
                     $s['backgroundColor'] = $this->ribbonColors[CalendarStatusColors::Unconfirmed]['b'];
                     $s['textColor'] = $this->ribbonColors[CalendarStatusColors::Unconfirmed]['t'];
                 } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan])) { //checked out
@@ -1056,7 +1069,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         // Set ribbon-bar color
         if ($uS->RibbonBottomColor != '') {
 
-            if (isset($r[$uS->RibbonBottomColor]) && isset($this->robbonBottomColors[$r[$uS->RibbonBottomColor]])){
+            if (isset($r[$uS->RibbonBottomColor]) && isset($this->robbonBottomColors[$r[$uS->RibbonBottomColor]])) {
 
                 // Use Demographics colors
                 $s['backBorderColor'] = $this->robbonBottomColors[$r[$uS->RibbonBottomColor]];
@@ -1070,40 +1083,40 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 } else {
                     $s['backBorderColor'] = $this->robbonBottomColors[$r['idHospital']];
                 }
-            } else if ($uS->RibbonBottomColor == "Calendar_Status_Colors"){
+            } else if ($uS->RibbonBottomColor == "Calendar_Status_Colors") {
 
-                $expectedArrival = (isset($r["Expected_Arrival"]) ? (new \DateTime($r["Expected_Arrival"]))->setTime(0,0,0) : "");
-                $expectedDeparture = (isset($r["Expected_Departure"]) ? (new \DateTime($r["Expected_Departure"]))->setTime(0,0,0) : "");
+                $expectedArrival = (isset($r["Expected_Arrival"]) ? (new \DateTime($r["Expected_Arrival"]))->setTime(0, 0, 0) : "");
+                $expectedDeparture = (isset($r["Expected_Departure"]) ? (new \DateTime($r["Expected_Departure"]))->setTime(0, 0, 0) : "");
 
-                if($expectedArrival instanceof \DateTimeInterface){
+                if ($expectedArrival instanceof \DateTimeInterface) {
                     $arrivalDiff = $today->diff($expectedArrival);
-                    $arrivalDiffDays = (integer)$arrivalDiff->format( "%R%a" );
+                    $arrivalDiffDays = (integer) $arrivalDiff->format("%R%a");
                 }
 
-                if($expectedDeparture instanceof \DateTimeInterface){
+                if ($expectedDeparture instanceof \DateTimeInterface) {
                     $departureDiff = $today->diff($expectedDeparture);
-                    $departureDiffDays = (integer)$departureDiff->format( "%R%a" );
+                    $departureDiffDays = (integer) $departureDiff->format("%R%a");
                 }
 
                 if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0) { //checking out today
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingOutToday];
-                }else if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0){ //checked in past expected departure
+                } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays < 0) { //checked in past expected departure
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckedInPastExpectedDepart];
-                }else if(isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1){ //checking out tomorrow
+                } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 1) { //checking out tomorrow
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingOutTomorrow];
-                } else if(isset($r["Visit_Status"]) && $r["Visit_Status"] == VisitStatus::CheckedIn){ //checked in
+                } else if (isset($r["Visit_Status"]) && $r["Visit_Status"] == VisitStatus::CheckedIn) { //checked in
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckedIn];
-                } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 0){ //arriving today
+                } else if (isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 0) { //arriving today
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingInToday];
-                } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 1){ //arriving tomorrow
+                } else if (isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays == 1) { //arriving tomorrow
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingInTomorrow];
-                } else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays > 1){ //arriving in future
+                } else if (isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays > 1) { //arriving in future
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingInFuture];
-                }else if(isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays < 0){ //arriving in past (but not checked in)
+                } else if (isset($r["Status"]) && $r["Status"] == 'a' && $expectedArrival instanceof \DateTimeInterface && $arrivalDiffDays < 0) { //arriving in past (but not checked in)
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckingInPast];
-                } else if(isset($r["Status"]) && $r["Status"] == 'w'){ //waitlist
+                } else if (isset($r["Status"]) && $r["Status"] == 'w') { //waitlist
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::Waitlist];
-                }else if(isset($r["Status"]) && $r["Status"] == 'uc'){
+                } else if (isset($r["Status"]) && $r["Status"] == 'uc') {
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::Unconfirmed];
                 } else if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan])) { //checked out
                     $s['backBorderColor'] = $this->robbonBottomColors[CalendarStatusColors::CheckedOut];
@@ -1113,11 +1126,12 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
     }
 
-    protected function isHexColor(string $color){
+    protected function isHexColor(string $color)
+    {
 
-        if(preg_match('/^#[a-f0-9]{6}$/i', $color)){
+        if (preg_match('/^#[a-f0-9]{6}$/i', $color)) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -1125,101 +1139,103 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 }
 
 
-class Event {
+class Event
+{
 
-  // Tests whether the given ISO8601 string has a time-of-day or not
-  const ALL_DAY_REGEX = '/^\d{4}-\d\d-\d\d$/'; // matches strings like "2013-12-29"
+    // Tests whether the given ISO8601 string has a time-of-day or not
+    const ALL_DAY_REGEX = '/^\d{4}-\d\d-\d\d$/'; // matches strings like "2013-12-29"
 
-  public $title;
-  public $allDay; // a boolean
-  public $start; // a DateTime
-  public $end; // a DateTime, or null
-  public $properties = array(); // an array of other misc properties
-
-
-  // Constructs an Event object from the given array of key=>values.
-  // You can optionally force the timezone of the parsed dates.
-  public function __construct($array, $timezone=null) {
-
-      $this->title = '';;
-      if (isset($array['title'])) {
-           $this->title = $array['title'];
-      }
-
-    if (isset($array['allDay'])) {
-      // allDay has been explicitly specified
-      $this->allDay = (bool)$array['allDay'];
-    }
-    else {
-      // Guess allDay based off of ISO8601 date strings
-      $this->allDay = preg_match(self::ALL_DAY_REGEX, $array['start']) &&
-        (!isset($array['end']) || preg_match(self::ALL_DAY_REGEX, $array['end']));
-    }
-
-    if (is_string($timezone)) {
-        $timezone = new \DateTimeZone($timezone);
-    }
-
-    if ($this->allDay) {
-      // If dates are allDay, we want to parse them in UTC to avoid DST issues.
-      $timezone = null;
-    }
-
-    // Parse dates
-    $this->start = GuestRegister::parseDateTime($array['start'], $timezone);
-    $this->end = isset($array['end']) ? GuestRegister::parseDateTime($array['end'], $timezone) : null;
-
-    // Record misc properties
-    foreach ($array as $name => $value) {
-      if (!in_array($name, array('title', 'allDay', 'start', 'end'))) {
-        $this->properties[$name] = $value;
-      }
-    }
-  }
+    public $title;
+    public $allDay; // a boolean
+    public $start; // a DateTime
+    public $end; // a DateTime, or null
+    public $properties = array(); // an array of other misc properties
 
 
-  // Returns whether the date range of our event intersects with the given all-day range.
-  // $rangeStart and $rangeEnd are assumed to be dates in UTC with 00:00:00 time.
-  public function isWithinDayRange($rangeStart, $rangeEnd) {
+    // Constructs an Event object from the given array of key=>values.
+    // You can optionally force the timezone of the parsed dates.
+    public function __construct($array, $timezone = null)
+    {
 
-    // Normalize our event's dates for comparison with the all-day range.
-    $eventStart = GuestRegister::stripTime($this->start);
+        $this->title = '';
+        ;
+        if (isset($array['title'])) {
+            $this->title = $array['title'];
+        }
 
-    if (isset($this->end)) {
-      $eventEnd = GuestRegister::stripTime($this->end); // normalize
-    }
-    else {
-      $eventEnd = $eventStart; // consider this a zero-duration event
+        if (isset($array['allDay'])) {
+            // allDay has been explicitly specified
+            $this->allDay = (bool) $array['allDay'];
+        } else {
+            // Guess allDay based off of ISO8601 date strings
+            $this->allDay = preg_match(self::ALL_DAY_REGEX, $array['start']) &&
+                (!isset($array['end']) || preg_match(self::ALL_DAY_REGEX, $array['end']));
+        }
+
+        if (is_string($timezone)) {
+            $timezone = new \DateTimeZone($timezone);
+        }
+
+        if ($this->allDay) {
+            // If dates are allDay, we want to parse them in UTC to avoid DST issues.
+            $timezone = null;
+        }
+
+        // Parse dates
+        $this->start = GuestRegister::parseDateTime($array['start'], $timezone);
+        $this->end = isset($array['end']) ? GuestRegister::parseDateTime($array['end'], $timezone) : null;
+
+        // Record misc properties
+        foreach ($array as $name => $value) {
+            if (!in_array($name, array('title', 'allDay', 'start', 'end'))) {
+                $this->properties[$name] = $value;
+            }
+        }
     }
 
-    // Check if the two whole-day ranges intersect.
-    return $eventStart < $rangeEnd && $eventEnd >= $rangeStart;
-  }
 
+    // Returns whether the date range of our event intersects with the given all-day range.
+    // $rangeStart and $rangeEnd are assumed to be dates in UTC with 00:00:00 time.
+    public function isWithinDayRange($rangeStart, $rangeEnd)
+    {
 
-  // Converts this Event object back to a plain data array, to be used for generating JSON
-  public function toArray() {
+        // Normalize our event's dates for comparison with the all-day range.
+        $eventStart = GuestRegister::stripTime($this->start);
 
-    // Start with the misc properties (don't worry, PHP won't affect the original array)
-    $array = $this->properties;
+        if (isset($this->end)) {
+            $eventEnd = GuestRegister::stripTime($this->end); // normalize
+        } else {
+            $eventEnd = $eventStart; // consider this a zero-duration event
+        }
 
-    $array['title'] = $this->title;
-
-    // Figure out the date format. This essentially encodes allDay into the date string.
-    if ($this->allDay) {
-      $format = 'Y-m-d'; // output like "2013-12-29"
-    }
-    else {
-      $format = 'c'; // full ISO8601 output, like "2013-12-29T09:00:00+08:00"
+        // Check if the two whole-day ranges intersect.
+        return $eventStart < $rangeEnd && $eventEnd >= $rangeStart;
     }
 
-    // Serialize dates into strings
-    $array['start'] = $this->start->format($format);
-    if (isset($this->end)) {
-      $array['end'] = $this->end->format($format);
-    }
 
-    return $array;
-  }
+    // Converts this Event object back to a plain data array, to be used for generating JSON
+    public function toArray()
+    {
+
+        // Start with the misc properties (don't worry, PHP won't affect the original array)
+        $array = $this->properties;
+
+        $array['title'] = $this->title;
+
+        // Figure out the date format. This essentially encodes allDay into the date string.
+        if ($this->allDay) {
+            $format = 'Y-m-d'; // output like "2013-12-29"
+        } else {
+            $format = 'c'; // full ISO8601 output, like "2013-12-29T09:00:00+08:00"
+        }
+
+        // Serialize dates into strings
+        $array['start'] = $this->start->format($format);
+        if (isset($this->end)) {
+            $array['end'] = $this->end->format($format);
+        }
+
+        return $array;
+    }
 
 }
