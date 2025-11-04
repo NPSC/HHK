@@ -662,9 +662,14 @@ class Reservation_1 {
 
         $arDate = new \DateTime($stringDate);
 
-        // Initially check holidays
-        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->sub(new \DateInterval('P1D'));
+        $uS = Session::getInstance();
+        if ($uS->UseCleaningBOdays) {
+
+            // Initially check holidays
+            while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+                $arDate->sub(new \DateInterval('P1D'));
+            }
+
         }
 
         $dateInfo = getDate($arDate->format('U'));
@@ -679,9 +684,13 @@ class Reservation_1 {
 
         }
 
-        // Finally check holidays again
-        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->sub(new \DateInterval('P1D'));
+        if ($uS->UseCleaningBOdays) {
+
+            // Finally check holidays again
+            while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+                $arDate->sub(new \DateInterval('P1D'));
+            }
+
         }
 
         return $arDate->format('Y-m-d H:i:s');
@@ -708,11 +717,14 @@ class Reservation_1 {
 
         $arDate = new \DateTime($stringDate);
 
-        // add all consecutive holidays
-        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->add(new \DateInterval('P1D'));
-        }
+        $uS = Session::getInstance();
+        if ($uS->UseCleaningBOdays) {
 
+            // add all consecutive holidays
+            while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+                $arDate->add(new \DateInterval('P1D'));
+            }
+        }
 
         $dateInfo = getDate($arDate->format('U'));
         $limit = 5;
@@ -724,9 +736,13 @@ class Reservation_1 {
             $dateInfo = getDate($arDate->format('U'));
         }
 
-        // Finally, check for holidays again.
-        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->add(new \DateInterval('P1D'));
+        if ($uS->UseCleaningBOdays) {
+
+            // Finally, check for holidays again.
+            while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+                $arDate->add(new \DateInterval('P1D'));
+            }
+            
         }
 
         return $arDate->format('Y-m-d H:i:s');

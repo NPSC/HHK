@@ -257,12 +257,6 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    
-
-    public function makeFilterOptsMkup():void{
-
-    }
-
     public function makeCFields():array{
         $labels = Labels::getLabels();
         $uS = Session::getInstance();

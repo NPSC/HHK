@@ -340,7 +340,8 @@ function resvManager(initData, options) {
         function verifyAddress(prefix) {
 
             var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
-            var msg = false;
+            var msgs = [];
+            var addrValid = true;
 
             // Incomplete not checked or complete address required?
             if ($('#' + prefix + 'incomplete').length > 0 && ($('#' + prefix + 'incomplete').prop('checked') === false || (isCheckin == true && insistCkinAddress == true && $('#' + prefix + 'cbStay').prop('checked') === true))) {
@@ -352,7 +353,8 @@ function resvManager(initData, options) {
 
                         // Missing
                         $(this).addClass('ui-state-error');
-                        msg = true;
+                        msgs.push('Some or all of the indicated addresses are missing.');
+                        addrValid = false
 
                     } else {
                         $(this).removeClass('ui-state-error');
@@ -360,14 +362,11 @@ function resvManager(initData, options) {
                 });
 
                 // Did we catch any?
-                if (msg) {
+                if (addrValid == false) {
                     // Yes,open address row.
                     if ($('#' + prefix + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-s')) {
                         $('#' + prefix + 'toggleAddr').click();
                     }
-
-                    return 'Some or all of the indicated addresses are missing.  ';
-
                 }
             }
 
@@ -385,7 +384,7 @@ function resvManager(initData, options) {
                     // open phone tab
                     $('#' + prefix + 'phEmlTabs').tabs("option", "active", 1);
 
-                    msg = true;
+                    msgs.push("Phone is invalid");
 
                 }
 
@@ -401,7 +400,7 @@ function resvManager(initData, options) {
             var isNoPhone = ($('.prefPhone[id^="' + prefix + 'phno"]:checked').length === 0 ? false:true);
 
             if (isCheckin == true && insistCkinPhone == true && phoneFilled == false && isNoPhone == false && $('#' + prefix + 'cbStay').prop('checked') === true) {
-                return "At least one valid phone number or 'No Phone' is required for check in."
+                msgs.push("At least one valid phone number or 'No Phone' is required for check in.");
             }
 
             // Validate Email
@@ -417,10 +416,10 @@ function resvManager(initData, options) {
             });
 
             if (isCheckin == true && insistCkinEmail == true && emailFilled == false && isNoEmail == false && $('#' + prefix + 'cbStay').prop('checked') === true) {
-                return "At least one email address or 'No Email' is required for check in."
+                msgs.push("At least one email address or 'No Email' is required for check in.");
             }
 
-            return '';
+            return msgs;
 
         }
 
@@ -1221,13 +1220,15 @@ function resvManager(initData, options) {
 
         function verify() {
 
-            var numFamily = 0,
+            let numFamily = 0,
                     numPat = 0,
                     numGuests = 0,
                     numPriGuests = 0,
                     nameErr = false,
                     ecIgnoreCount = 0,
-                    pRelFlag = false;
+                    pRelFlag = false,
+                    isValid = true
+                    msgs = [];
 
             // Flag blank Relationships
             $('.patientRelch').removeClass('ui-state-error');
@@ -1243,8 +1244,8 @@ function resvManager(initData, options) {
             });
 
             if (pRelFlag) {
-                flagAlertMessage('Set the highlighted Relationship(s).', 'alert', $pWarning);
-                return false;
+                msgs.push('Set the highlighted Relationship(s).');
+                isValid = false;
             }
 
             findPrimaryGuest();
@@ -1278,27 +1279,27 @@ function resvManager(initData, options) {
             // Only one patient allowed.
             if (numPat < 1) {
 
-                flagAlertMessage('Choose a ' + patLabel + '.', 'alert', $pWarning);
+                msgs.push('Choose a ' + patLabel + '.');
 
                 $('.patientRelch').addClass('ui-state-error');
-                return false;
+                isValid = false;
 
             } else if (numPat > 1) {
 
-                flagAlertMessage('Only 1 ' + patLabel + ' is allowed.', 'alert', $pWarning);
+                msgs.push('Only 1 ' + patLabel + ' is allowed.');
 
                 for (var i in people.list()) {
                     if (people.list()[i].role === 'p') {
                         $('#' + i + 'selPatRel').addClass('ui-state-error');
                     }
                 }
-                return false;
+                isValid = false;
             }
 
             // Someone checking in?
             if (numGuests < 1) {
-                flagAlertMessage('There is no one actually staying.  Pick someone to stay.', 'alert', $pWarning);
-                return false;
+                msgs.push('There is no one actually staying.  Pick someone to stay.');
+                isValid = false;
             }
 
             // Primary guests
@@ -1311,10 +1312,9 @@ function resvManager(initData, options) {
                 }
 
             } else if (numPriGuests === 0) {
-                $pWarning.text('Set one ' + visitorLabel + ' as ' + primaryGuestLabel + '.').show();
-                flagAlertMessage('Set one ' + visitorLabel + ' as ' + primaryGuestLabel + '.', 'alert', $pWarning);
+                msgs.push('Set one ' + visitorLabel + ' as ' + primaryGuestLabel + '.');
                 $("input.hhk-rbPri").parent().addClass('ui-state-error');
-                return false;
+                isValid = false;
             }
 
 
@@ -1340,8 +1340,8 @@ function resvManager(initData, options) {
 
             if (nameErr === true) {
                 openSection(true);
-                flagAlertMessage("Enter a first and last name for the people highlighted.", 'alert', $pWarning);
-                return false;
+                msgs.push("Enter a first and last name for the people highlighted.");
+                isValid = false;
             }
 
             // Optional Emergency Contact.
@@ -1349,9 +1349,9 @@ function resvManager(initData, options) {
                 // Count the skipped.
                 $wrapper.find('.hhk-EmergCb').each(function () {
 
-                    var msg = verifyEmergencyContacts($(this).data('prefix'));
+                    var ECmsg = verifyEmergencyContacts($(this).data('prefix'));
 
-                    if ($(this).prop('checked') === true || msg === '') {
+                    if ($(this).prop('checked') === true || ECmsg === '') {
                         ecIgnoreCount++;
                     }
                 });
@@ -1366,9 +1366,9 @@ function resvManager(initData, options) {
                     // Check patient birthdate
                     if (patBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage(patLabel + ' is missing the Birth Date.', 'alert', $pWarning);
+                        msgs.push(patLabel + ' is missing the Birth Date.');
                         openSection(true);
-                        return false;
+                        isValid = false;
                     } else {
                         $('#' + p + 'txtBirthDate').removeClass('ui-state-error');
                     }
@@ -1376,11 +1376,9 @@ function resvManager(initData, options) {
                     // Check patient address
                     if (patAddrRequired || patAsGuest) {
 
-                        var pMessage = verifyAddress(p);
+                        let addrMsgs = verifyAddress(p);
+                        if (addrMsgs.length > 0) {
 
-                        if (pMessage !== '') {
-
-                            flagAlertMessage(pMessage, 'alert', $pWarning);
                             openSection(true);
 
                             // Open address row
@@ -1388,7 +1386,8 @@ function resvManager(initData, options) {
                                 $('#' + p + 'toggleAddr').click();
                             }
 
-                            return false;
+                            msgs.push(...addrMsgs);
+                            isValid = false;
                         }
                     }
 
@@ -1398,9 +1397,9 @@ function resvManager(initData, options) {
                     // Check guest birthdate
                     if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage(visitorLabel + ' is missing the Birth Date.', 'alert', $pWarning);
+                        msgs.push(visitorLabel + ' is missing the Birth Date.');
                         openSection(true);
-                        return false;
+                        isValid = false;
                     } else {
                         $('#' + p + 'txtBirthDate').removeClass('ui-state-error');
                     }
@@ -1408,11 +1407,10 @@ function resvManager(initData, options) {
                     // Check Guest address
                     if (gstAddrRequired) {
 
-                        var pMessage = verifyAddress(p);
+                        let addrMsgs = verifyAddress(p);
 
-                        if (pMessage !== '') {
+                        if (addrMsgs.length > 0) {
 
-                            flagAlertMessage(pMessage, 'alert', $pWarning);
                             openSection(true);
 
                             // Open address row
@@ -1420,7 +1418,8 @@ function resvManager(initData, options) {
                                 $('#' + p + 'toggleAddr').click();
                             }
 
-                            return false;
+                            msgs.push(...addrMsgs);
+                            isValid = false;
                         }
                     }
 
@@ -1434,9 +1433,9 @@ function resvManager(initData, options) {
 
                     if (bDate > today) {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage('This birth date cannot be in the future.', 'alert', $pWarning);
+                        msgs.push('This birth date cannot be in the future.');
                         openSection(true);
-                        return false;
+                        isValid = false;
                     } else {
                         $('#' + p + 'txtBirthDate').removeClass('ui-state-error');
                     }
@@ -1449,7 +1448,7 @@ function resvManager(initData, options) {
 
                     if (pMessage !== '') {
 
-                        flagAlertMessage(pMessage, 'alert', $pWarning);
+                        msgs.push(pMessage);
                         openSection(true);
 
                         // Open address row
@@ -1457,7 +1456,7 @@ function resvManager(initData, options) {
                             $('#' + p + 'toggleAddr').click();
                         }
 
-                        return false;
+                        isValid = false;
                     }
                 }
 
@@ -1468,7 +1467,7 @@ function resvManager(initData, options) {
 
                     if (pMessage !== '') {
 
-                        flagAlertMessage(pMessage, 'alert', $pWarning);
+                        msgs.push(pMessage);
                         openSection(true);
 
                         // Open address row
@@ -1476,7 +1475,7 @@ function resvManager(initData, options) {
                             $('#' + p + 'toggleAddr').click();
                         }
 
-                        return false;
+                        isValid = false;
                     }
                 }
             }
@@ -1484,13 +1483,17 @@ function resvManager(initData, options) {
             const agentValid = verifyDocAgent("agentInfo");
             const docValid = verifyDocAgent("docInfo");
             if(agentValid === false || docValid === false){
-                flagAlertMessage("Some or all of the indicated Hospital Information is missing", 'info', $pWarning);
-                return false;
+                msgs.push("Some or all of the indicated Hospital Information is missing.");
+                isValid = false;
             }
             
+            if(isValid == false){
+                msgs = [...new Set(msgs)];
+                flagAlertMessage(msgs.join("<br>"), 'warning', $pWarning);
+            }
 
             setupComplete = false;
-            return true;
+            return isValid;
         }
     }
 
@@ -1608,6 +1611,8 @@ function resvManager(initData, options) {
 
         t.verify = function () {
 
+            let isValid = true;
+            let msg = "";
             var $arrDate = $('#gstDate'),
                     $deptDate = $('#gstCoDate');
 
@@ -1618,8 +1623,8 @@ function resvManager(initData, options) {
             if ($arrDate.val() === '') {
 
                 $arrDate.addClass('ui-state-error');
-                flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert', $pWarning);
-                return false;
+                msg += "This " + resvTitle + " is missing the check-in date.<br>";
+                isValid = false;
 
             } else {
 
@@ -1627,8 +1632,8 @@ function resvManager(initData, options) {
 
                 if (isNaN(t.ciDate.getTime())) {
                     $arrDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert', $pWarning);
-                    return false;
+                    msg += "This " + resvTitle + " is missing the check-in date.<br>";
+                    isValid = false;
                 }
 
                 if (isCheckin !== undefined && isCheckin === true) {
@@ -1637,8 +1642,8 @@ function resvManager(initData, options) {
 
                     if (start > now) {
                         $arrDate.addClass('ui-state-error');
-                        flagAlertMessage("Set the Check in date to today or earlier.", 'alert', $pWarning);
-                        return false;
+                        msg += "Set the Check in date to today or earlier.<br>";
+                        isValid = false;
                     }
                 }
             }
@@ -1647,8 +1652,8 @@ function resvManager(initData, options) {
             if ($deptDate.val() === '') {
 
                 $deptDate.addClass('ui-state-error');
-                flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", 'alert', $pWarning);
-                return false;
+                msg += "This " + resvTitle + " is missing the expected departure date.<br>";
+                isValid = false;
 
             } else {
 
@@ -1656,18 +1661,18 @@ function resvManager(initData, options) {
 
                 if (isNaN(t.coDate.getTime())) {
                     $deptDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + " is missing the expected departure date", 'alert', $pWarning);
-                    return false;
+                    msg += "This " + resvTitle + " is missing the expected departure date.<br>";
+                    isValid = false;
                 }
 
                 if (t.ciDate > t.coDate) {
                     $arrDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", 'alert', $pWarning);
-                    return false;
+                    msg += "This " + resvTitle + "'s check-in date is after the expected departure date.<br>";
+                    isValid = false;
                 }
             }
-
-            return true;
+            flagAlertMessage(msg, "warning", $pWarning);
+            return isValid;
         };
     }
 
@@ -1982,20 +1987,28 @@ function resvManager(initData, options) {
 
         t.verify = function () {
 
-            $hospSection.find('.ui-state-error').each(function () {
-                $(this).removeClass('ui-state-error');
-            });
+            $hospSection.find('.ui-state-error').removeClass('ui-state-error');
 
-            if ($('#selHospital').length > 0 && t.setupComplete === true) {
+            if(t.setupComplete === true){
+                const $invalidInputs = $hospSection.find("select:required, input:required").filter((i, el)=>el.value == ""); //get required but empty inputs
 
-                if ($('#selHospital').val() == "") {
+                if($invalidInputs.length > 0){
+                    //show error
+                    $invalidInputs.addClass('ui-state-error');
+                    let relatedEls = $invalidInputs.data("related");
+                    if(relatedEls){
+                        $hospSection.find(relatedEls).addClass("ui-state-error");
+                    }
 
-                    $('#selHospital').addClass('ui-state-error');
+                    let msg = 'Please fill in the following required fields:';
+                    $invalidInputs.each((i, el)=>{
+                        msg += (i==0 ? ' ' : ', ') + $hospSection.find('label[for='+el.id+']').text();
+                    });
 
-                    flagAlertMessage("Select a hospital.", 'alert', $pWarning);
 
                     $('#divhospDetail').show('blind');
                     $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
+                    flagAlertMessage(msg, 'warning', $pWarning);
                     return false;
                 }
             }

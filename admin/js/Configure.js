@@ -319,13 +319,21 @@ $(document).on('change', "#numAddrCalc", function(){
                 data = JSON.parse(data);
                 var mkup = '';
                 $.each(data, function (key, value) {
-                    if (value.length > 0) {
+                    if (value.length > 0 || (typeof value === 'object' && value !== null)) {
                         if (key == "fieldSet" && cronLookups.inputSets[value] !== undefined) {
                             value = cronLookups.inputSets[value].Title;
                         } else if (key == "EmailTemplate" && cronLookups.docs[value] !== undefined) {
                             value = cronLookups.docs[value].Title;
                         } else if (key == "ResvStatus" && cronLookups.resvStatus[value] !== undefined) {
                             value = cronLookups.resvStatus[value][1];
+                        }else if (key == 'filterOpts' && cronLookups.filterOpts[data.report].data !== undefined){
+                            let filterOptValue = '';
+                            $.each(value,(k,v)=>{
+                                if(cronLookups.filterOpts[data.report].data[k] !== undefined && v == "on"){
+                                    filterOptValue += cronLookups.filterOpts[data.report].data[k].title + "<br>";
+                                }
+                            });
+                            value = filterOptValue;
                         }
                     }
                     mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) + "</strong>: </span><span>" + value + "</span></div>";
@@ -635,14 +643,19 @@ $(document).on('change', "#numAddrCalc", function(){
                         if (data.fieldSetOptMkup) {
                             $row.find('.editParam[data-name=fieldSet]').html(data.fieldSetOptMkup);
                         }
+
+                        let report = $row.find('.editParam[data-name=report]').val();
+                        if(cronLookups.filterOpts[report]){
+                            $row.find('.editParam[data-name=filterOpts]').html(cronLookups.filterOpts[report].mkup);
+                        }else{
+                            $row.find('.editParam[data-name=filterOpts]').empty();
+                        }
                     },
                     error: function (xhr, textStatus, errorThrown) {
                         flagAlertMessage("Cron error: " + errorThrown, true);
                     }
                 });
             });
-            $row.find('.editParam[data-name=report]').trigger('change');
-
         });
         //End Show Edit mode
 
@@ -677,8 +690,20 @@ $(document).on('change', "#numAddrCalc", function(){
 
             //get params
             row.find(".jobParams .editParam").each(function () {
-                data.params[$(this).data('name')] = $(this).val();
+                let editParamName = $(this).data('name');
+                data.params[editParamName] = $(this).val();
             });
+
+            //filter opts
+            let filterOpts = {};
+            row.find(".jobParams .editParam[data-name=filterOpts] input").each(function () {
+                const filterOpt = $(this).attr('id');
+                filterOpts[filterOpt] = $(this).val();
+            });
+
+            if(!$.isEmptyObject(filterOpts)){
+                data.params["filterOpts"] = filterOpts;
+            }
 
             if (jobId != "") {
                 $.ajax({

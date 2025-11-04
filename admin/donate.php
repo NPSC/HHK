@@ -399,9 +399,7 @@ function genDonationMarkup(PDO $dbh, $id)
 
     $tbl = new HTMLTable();
     // Table header row
-    $tbl->addHeaderTr(HTMLTable::makeTh('', array(
-        'style' => 'width:25px;'
-    )) . HTMLTable::makeTh('Source', array(
+    $tbl->addHeaderTr(HTMLTable::makeTh('Source', array(
         'style' => 'width:70px;'
     )) . HTMLTable::makeTh('Campaign') . HTMLTable::makeTh('Amount') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('X'));
 
@@ -497,9 +495,7 @@ function genDonationMarkup(PDO $dbh, $id)
             'class' => 'ui-button ui-corner-all ui-widget ui-button-icon-only hhk-edit-donation'
         ));
 
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $editIcon, array(
-            'class' => 'donlisting'
-        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $src, array(
+        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $src, array(
             'class' => 'donlisting',
             'title' => $srcTitle
         ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $row2['Campaign_Code'], array(
@@ -518,7 +514,7 @@ function genDonationMarkup(PDO $dbh, $id)
         if ($row2['Note'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd('Note:', array(
                 'class' => 'tdlabel',
-                'colspan' => '2',
+                'colspan' => '1',
                 'style' => 'font-size:small;'
             )) . HTMLTable::makeTd($row2['Note'], array(
                 'colspan' => '4',

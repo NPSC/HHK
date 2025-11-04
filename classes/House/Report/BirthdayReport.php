@@ -39,6 +39,13 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
         $this->description = "This report shows all guests who are staying or scheduled to stay AND have a birthday during the selected time period";
         $this->inputSetReportName = "birthday";
 
+        $this->filterOpts = [
+            "cbIncCheckedOut"=>[
+                "title"=>"Include Checked Out " . Labels::getString('MemberType', 'visitor', "Guest") . 's',
+                "type"=>"checkbox"
+            ]
+        ];
+
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
@@ -189,7 +196,6 @@ where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " o
     }
 
     public function makeCFields():array{
-        $labels = Labels::getLabels();
         $uS = Session::getInstance();
 
         $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');

@@ -4,6 +4,7 @@ namespace HHK\Donation;
 
 use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
 use HHK\AlertControl\AlertMessage;
+use HHK\HTMLControls\HTMLContainer;
 
 /**
  * Donate.php
@@ -38,10 +39,10 @@ class DonateMarkup {
 
                 HTMLTable::makeTd(HTMLSelector::generateMarkup($campaignOptions, array('id'=>'dselCamp', 'class'=>'hhk-ajx-dondata')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'ddate', 'class'=>'ckdate hhk-ajx-dondata')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'cLimits', 'size'=>'10')))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'cLimits')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($payTypes, '', FALSE), array('id'=>'dselPaytype', 'class'=>'hhk-ajx-dondata')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'damount', 'class'=>'hhk-ajx-dondata', 'size'=>'10')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'damount', 'class'=>'hhk-ajx-dondata', 'style'=>'width: 116px', "type"=>"number", "min"=>"0", "step"=>"0.01", "inputmode"=>"decimal")))
                 );
 
         $tbl = new HTMLTable();
