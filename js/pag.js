@@ -112,17 +112,6 @@ function isIE() {
 	return /MSIE|Trident/.test(ua);
 }
 
-function checkStrength(pwCtrl) {
-	const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
-	if (strongRegex.test(pwCtrl.val())) {
-		pwCtrl.removeClass("ui-state-error");
-		return true;
-	} else {
-		pwCtrl.addClass("ui-state-error");
-		return false;
-	}
-}
-
 function openiframe(src, width, height, title, buttons) {
 	var $dialog = $('<div id="iframeDialog" style="overflow:hidden"><div class="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div><iframe id="hhk-iframe" src="'
 			+ src
@@ -291,13 +280,6 @@ $(document).ready(
 							return;
 						}
 
-						if (checkStrength(pw1) === false) {
-							pw1.addClass("ui-state-error");
-							msg.html('Password must have at least 8 characters including at least <br>one uppercase, one lower case letter, one number and one symbol.');
-							pw1.focus();
-							return;
-						}
-
 						pw1.removeClass("ui-state-error");
 
 						var oldpwval = oldpw.val();
@@ -334,7 +316,7 @@ $(document).ready(
 									$("#dchgPw").dialog('close');
 
 								} else if (data.warning) {
-									$('#pwChangeErrMsg').text(
+									$('#pwChangeErrMsg').html(
 											data.warning);
 								}
 							}

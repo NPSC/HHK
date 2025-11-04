@@ -2541,6 +2541,16 @@ Thank you
 		'',
 		1
 	),
+  (
+    'minPassLength', 
+    '8', 
+    'i', 
+    'pr',
+    '',
+    'Minimum password length - cannot be less than 8',
+    '',
+    1
+  ),
 	(
 		'printScale',
 		'100',
