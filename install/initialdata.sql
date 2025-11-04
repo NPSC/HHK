@@ -2078,6 +2078,26 @@ VALUES
 		'',
 		1
 	),
+  (
+    'InsistResvDiag',
+    'false',
+    'b',
+    'h',
+    '',
+    'Insist the user fills the diagnosis field on reservation',
+    '',
+    1
+  ),
+  (
+    'InsistResvUnit',
+    'false', 
+    'b', 
+    'h',
+    '',
+    'Insist the user fills the location/unit field on reservation',
+    '',
+    1
+  ),
 	(
 		'InitResvStatus',
 		'a',
