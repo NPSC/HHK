@@ -10,10 +10,11 @@ namespace HHK\SysConst;
  * @link      https://github.com/NPSC/HHK
  */
 
-class CodeVersion {
-    const BUILD = '337';
-    const VERSION = '3.26';
-    const PATCH = '1';
+class CodeVersion
+{
+    const BUILD = '338';
+    const VERSION = '3.27';
+    const PATCH = '0';
     const GIT_Id = 'dev';
     const REL_DATE = '';
 }
