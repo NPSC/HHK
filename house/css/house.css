@@ -34,6 +34,19 @@ body {
 	padding-bottom: 0px !important;
 }
 
+span.hhk-text-red {
+	color: #cd0a0a;
+}
+
+div.hhk-pWarningMsg {
+	font-size: 1.4em;
+	border: 1px solid #ddce99;
+	margin-bottom:0.5rem;
+	padding: 0.5rem; 
+	color:red;
+	background-color: yellow;
+}
+
 
 @media only screen and (max-width: 1024px){
 	.fc .fc-event {
@@ -1295,4 +1308,4 @@ input:checked + .hhk-slider:before {
 	#repSummary>img {
         display: none;
     }
-};
+}

@@ -211,12 +211,6 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    
-
-    public function makeFilterOptsMkup():void{
-
-    }
-
     public function makeCFields():array{
         $labels = Labels::getLabels();
         $uS = Session::getInstance();

@@ -1639,6 +1639,63 @@ CREATE OR REPLACE VIEW `vguest_view` AS
     GROUP BY `s`.`idStays`;
 
 
+-- -----------------------------------------------------
+-- View `vguest_resv_view`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_resv_view` AS
+    SELECT
+		 `n`.`idName`,
+        IFNULL(CASE
+                    WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
+                    ELSE CONCAT(`n`.`Name_Last`, ' ', `g`.`Description`)
+                END,
+                '') AS `Guest Last Name`,
+        IFNULL(`n`.`Name_First`, '') AS `Guest First Name`,
+        IFNULL(`pn`.`Name_Last`,'') AS `Patient Last Name`,
+        IFNULL(`pn`.`Name_First`, '') AS `Patient First Name`,
+        IFNULL(`rm`.`Title`, '') AS `Room`,
+        CASE
+            WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone'
+            ELSE IFNULL(`np`.`Phone_Num`, '')
+        END AS `Phone`,
+        `r`.`Expected_Arrival` AS `Arrival`,
+        `r`.`Expected_Departure` AS `Expected Departure`,
+        0 AS `On_Leave`,
+        0 AS `Nights`,
+        `hosp`.`Title` AS `Hospital`,
+        `diag`.`Description` AS `Diagnosis`,
+        `loc`.`Description` AS `Location`,
+        CONCAT(IFNULL(`ec`.`Name_First`, ''),
+                ' ',
+                IFNULL(`ec`.`Name_Last`, '')) AS `EC Name`,
+        IFNULL(`ec`.`Phone_Home`, '') AS `EC Phone Home`,
+        IFNULL(`ec`.`Phone_Alternate`, '') AS `EC Phone Alternate`,
+        group_concat(concat(`v`.`Color`, ' ', `v`.`Make`, ' ', `v`.`Model`) SEPARATOR '<br class="my-1">') AS `Vehicle`,
+        group_concat(`v`.`State_Reg` SEPARATOR '<br class="my-1">') AS `State Reg.`,
+        group_concat(`v`.`License_Number` SEPARATOR '<br class="my-1">') AS `License Plate`,
+        group_concat(`v`.`Note` SEPARATOR '<br class="my-1">') AS `Note`
+    FROM
+        ((((((((((((`reservation` `r`
+        LEFT JOIN `reservation_guest` `rg` on (`rg`.`idReservation` = `r`.`idReservation`))
+        LEFT JOIN `name` `n` ON (`n`.`idName` = `rg`.`idGuest`))
+        LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
+        LEFT JOIN `hospital_stay` `hs` ON (`r`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `name` `pn` ON (`hs`.`idPatient` = `pn`.`idName`))
+        LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))
+        LEFT JOIN `gen_lookups` `diag` ON (`diag`.`Table_Name` = 'Diagnosis'
+            AND `diag`.`Code` = `hs`.`Diagnosis`))
+        LEFT JOIN `gen_lookups` `loc` ON (`loc`.`Table_Name` = 'Location'
+            AND `loc`.`Code` = `hs`.`Location`))
+        LEFT JOIN `reservation_vehicle` `rv` on (`rv`.`idReservation` = `r`.`idReservation`))
+        LEFT JOIN `vehicle` `v` ON (`rv`.`idVehicle` = `v`.`idVehicle`)
+        LEFT JOIN `emergency_contact` `ec` ON (`n`.`idName` = `ec`.`idName`))
+        LEFT JOIN `resource` `rm` ON (`r`.`idResource` = `rm`.`idResource`))
+        LEFT JOIN `gen_lookups` `g` ON (`g`.`Table_Name` = 'Name_Suffix'
+            AND `g`.`Code` = `n`.`Name_Suffix`))
+    WHERE
+        `r`.`Status` = 'a' and date(`r`.`Expected_Arrival`) <= date(CURRENT_TIMESTAMP) and date(`r`.`Expected_Departure`) > date(CURRENT_TIMESTAMP)
+    GROUP BY `rg`.`idReservation`, `rg`.`idGuest`;
 
 -- -----------------------------------------------------
 -- View `vhospitalstay_log`
@@ -2180,6 +2237,7 @@ create or replace view `vname_list` as
         IFNULL(`na`.`Meters_From_House`, '') AS `Meters_From_House`,
         IFNULL(`na`.`Bad_Address`, '') AS `Bad_Address`,
         IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
+        IFNULL(`n`.`Gender`, '') AS `Gender`,
         IFNULL(`n`.`Date_Deceased`, '') AS `Date_Deceased`,
         `n`.`Member_Status` AS `Member_Status`,
         IFNULL(`n`.`External_Id`, '') AS `External_Id`

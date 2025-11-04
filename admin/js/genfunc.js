@@ -180,13 +180,13 @@ function getCampaign(code) {
                 } else if (data.camp) {
 
                     if (data.camp.mindonation == 0 && data.camp.maxdonation == 0) {
-                        amtLimit.val("Any amount.");
+                        amtLimit.text("Any amount.");
                     } else if (data.camp.mindonation > 0 && data.camp.maxdonation == 0) {
-                        amtLimit.val("At least $" + data.camp.mindonation);
+                        amtLimit.text("At least $" + data.camp.mindonation);
                     } else if (data.camp.mindonation == 0 && data.camp.maxdonation > 0) {
-                        amtLimit.val("At most $" + data.camp.maxdonation);
+                        amtLimit.text("At most $" + data.camp.maxdonation);
                     } else {
-                        amtLimit.val("$" + data.camp.mindonation + " to $" + data.camp.maxdonation);
+                        amtLimit.text("$" + data.camp.mindonation + " to $" + data.camp.maxdonation);
                     }
                     // Deal with scholarships
                     if (data.camp.type == 'sch' && $('#dselStudent option').length > 0) {

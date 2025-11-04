@@ -1,5 +1,6 @@
 <?php
 
+use HHK\House\Report\ReportInterface;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\SysConst\WebPageCode;
@@ -67,19 +68,25 @@ try {
                 $selection = filter_var(urldecode($_REQUEST["selection"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
+            $filterOpts = [];
+            if (isset($_REQUEST["filterOpts"])) {
+                $filterOpts = $_REQUEST["filterOpts"];
+            }
+
             if(isset(EmailReportJob::AVAILABLE_REPORTS[$report])){
                 $class = '\HHK\House\\Report\\' . $report;
-                $reportObj = new $class($dbh);
+                $reportObj = new $class($dbh, $filterOpts);
 
-                if($reportObj instanceof AbstractReport){
+                if($reportObj instanceof ReportInterface) {
                     $report = $reportObj->getInputSetReportName();
+                    $reportObj->makeFilterOptsMkup();
                 }
 
             }else{
                 throw new ErrorException($report . " is not a valid report option");
             }
             $fieldSets = ReportFieldSet::listFieldSets($dbh, $report, true);
-            $events = ["status"=>"success", "report"=>$report, "fieldSetOptMkup"=>HTMLSelector::doOptionsMkup($fieldSets, $selection, TRUE)];
+            $events = ["status"=>"success", "report"=>$report, "fieldSetOptMkup"=>HTMLSelector::doOptionsMkup($fieldSets, $selection, TRUE), 'filterOptMkup'=>$reportObj->filterOptsMkup];
 
             break;
 

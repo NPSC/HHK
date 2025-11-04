@@ -43,7 +43,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 		return;
 	}
 
-	$txtCtrl.text(mess).show();
+	$txtCtrl.html(mess).show();
 }
 function dateRender(data, type, format) {
 	// If display or filter data is requested, format the date
@@ -68,6 +68,37 @@ function dateRender(data, type, format) {
 		}
 
 		return moment(data, 'YYYY-MM-DD HH:mm:ss.SSSS Z').format(format);
+	}
+
+	// Otherwise the data type requested (`type`) is type detection or
+	// sorting data, for which we want to use the integer, so just return
+	// that, unaltered
+	return data;
+}
+
+function dayRender(data, type, format) {
+	// If display or filter data is requested, format the date
+	if (type === 'display' || type === 'filter' || type === 'print') {
+
+		if (data === undefined || data === null || data === '') {
+			return '';
+		}
+
+		data = data.trim();
+
+		if (data === null || data === '') {
+			return '';
+		}
+
+		if (moment(data, 'MM-DD').isValid()===false) {
+			return data;
+		}
+
+		if (!format || format === '') {
+			format = 'MMM D';
+		}
+
+		return moment(data, 'MM-DD').format(format);
 	}
 
 	// Otherwise the data type requested (`type`) is type detection or

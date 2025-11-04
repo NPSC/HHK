@@ -26,9 +26,13 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
         $summaryData = $this->getMainSummaryData();
 
         $summaryTbl = new HTMLTable();
-        $summaryTbl->addBodyTr($summaryTbl->makeTd("Prepared at", array("class"=>"tdlabel")) . $summaryTbl->makeTd((new \DateTime())->format("M j, Y h:i a")));
+        $summaryTbl->addBodyTr($summaryTbl->makeTd("Prepared at", array("class"=>"tdlabel")) . $summaryTbl->makeTd((new DateTime())->format("M j, Y h:i a")));
 
         foreach($summaryData[0] as $key=>$val){
+            if(in_array($key, ["Available Room Occupancy", "Total Room Occupancy"])){
+                $val .= "%";
+            }
+            
             $summaryTbl->addBodyTr($summaryTbl->makeTd($key . (isset($summaryData[1][$key]) ? '<span class="hhk-tooltip ui-icon ui-icon-help" title="' . $summaryData[1][$key] . '"></span>' : ''), array("class"=>"tdlabel")) . $summaryTbl->makeTd($val));
         }
 
@@ -86,10 +90,10 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
 	                       r.idResource = ru.idResource and
                            date(ru.Start_Date) <= date(now()) and
                            date(ru.End_Date) > date(now())
-                        where ru.idResource_use is null and r.Type = 'room' and $retiredRescSql)*100,2), '%')) as 'Available Room Occupancy',
+                        where ru.idResource_use is null and r.Type = 'room' and $retiredRescSql)*100,2))) as 'Available Room Occupancy',
                     (concat(ROUND((select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-                        where v.idVisit is not null)/(select count(*) from resource r where r.Type = 'room' and $retiredRescSql )*100,2), '%')) as 'Total Room Occupancy'
+                        where v.idVisit is not null)/(select count(*) from resource r where r.Type = 'room' and $retiredRescSql )*100,2))) as 'Total Room Occupancy'
 
                 ";
         $stmt = $this->dbh->prepare($query);
