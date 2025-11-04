@@ -429,9 +429,15 @@ if($uS->useOnlineReferral){
                 background-color: #dbfcb5;
                 opacity: .6;
             }
+            .fc-timeline-slot-label.hhk-fcslot-holiday {
+                opacity: 1;
+            }
             .hhk-fcslot-closed {
-                background-color: #fcb5b5;
+                background-color: #dadada;
                 opacity: .6;
+            }
+            .fc-timeline-slot-label.hhk-fcslot-closed {
+                opacity: 1;
             }
 
             :root {
