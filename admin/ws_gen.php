@@ -2,6 +2,7 @@
 
 use HHK\API\OAuth\CRUD\Client;
 use HHK\Cron\SendConfirmationEmailJob;
+use HHK\House\Report\AbstractReport;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
@@ -373,7 +374,7 @@ try {
             break;
 
         case "getCronLookups":
-            $events = ["inputSets"=>[], "docs"=>[], "resvStatus"=>""];
+            $events = ["inputSets"=>[], "docs"=>[], "resvStatus"=>"", "filterOpts"=>[]];
 
             //input sets
             $query = "select `idFieldSet`, `Title` from `report_field_sets`";
@@ -398,6 +399,19 @@ try {
             //resv Status
             $events["resvStatus"] = SendConfirmationEmailJob::getResvStatusList($dbh);
 
+            //filterOpts
+            foreach(EmailReportJob::AVAILABLE_REPORTS as $className=>$classTitle){
+                try{
+                    $class = '\HHK\House\\Report\\' . $className;
+                    $reportObj = new $class($dbh);
+
+                    if($reportObj instanceof AbstractReport){
+                        $events['filterOpts'][$className] = ["data"=>$reportObj->filterOpts, "mkup"=>$reportObj->makeFilterOptsMkup()];
+                    }
+                }catch(Exception $e){
+                }
+            }
+
             break;
         
         case "updateCronJob":
@@ -419,7 +433,13 @@ try {
             $params = array();
             if (isset($_REQUEST['params']) && is_array($_REQUEST['params'])) {
                 foreach($_REQUEST['params'] as $key=>$val){
-                    $params[$key] = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    if (is_array($val)){
+                        foreach($val as $k=>$v){
+                            $params[$key][$k] = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                        }
+                    }else{
+                        $params[$key] = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    }
                 }
             }
 

@@ -4,6 +4,7 @@ namespace HHK\Document;
 
 use HHK\Common;
 use HHK\House\Hospital\Hospital;
+use HHK\House\Insurance\Insurance;
 use HHK\sec\Session;
 use HHK\sec\Recaptcha;
 use HHK\sec\Labels;
@@ -356,6 +357,17 @@ class FormTemplate {
             $formattedStates[$state] = ["Code"=>$state, "Description"=>$state];
         }
         $lookups['vehicleStates'] = $formattedStates;
+
+        //insurance
+        // Insurance Companies
+        $stmt = $dbh->query("select * from insurance where `Status` = 'a' order by `idInsuranceType`, `Title`");
+        $ins = array();
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $ins[$r['idInsuranceType']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title'], 'Code'=>$r['idInsurance'], 'Description'=>$r['Title']);
+        }
+        $lookups['insurance1'] = $ins['1'];
+        $lookups['insurance2'] = $ins['2'];
 
         return $lookups;
     }

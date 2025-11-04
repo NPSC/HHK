@@ -21,7 +21,8 @@ use HHK\sec\Labels;
  *
  * @author Eric
  */
-class Family {
+class Family
+{
 
     const FAM_TABLE_ID = 'tblFamily';
 
@@ -37,7 +38,8 @@ class Family {
     protected $showInsurance;
 
 
-    public function __construct(\PDO $dbh, &$rData, $incldEmContact = FALSE) {
+    public function __construct(\PDO $dbh, &$rData, $incldEmContact = FALSE)
+    {
 
         $uS = Session::getInstance();
 
@@ -66,7 +68,8 @@ class Family {
      * @param \PDO $dbh
      * @param ReserveData $rData
      */
-    protected function initMembers(\PDO $dbh, ReserveData &$rData) {
+    protected function initMembers(\PDO $dbh, ReserveData &$rData)
+    {
 
         $uS = Session::getInstance();
 
@@ -206,7 +209,8 @@ class Family {
      * @param ReserveData $rData
      * @param int $resvIdGuest
      */
-    public function setGuestsStaying(\PDO $dbh, ReserveData &$rData, $resvIdGuest) {
+    public function setGuestsStaying(\PDO $dbh, ReserveData &$rData, $resvIdGuest)
+    {
 
         if ($rData->getIdResv() > 0) {
 
@@ -266,7 +270,8 @@ class Family {
 
     }
 
-    protected function getAddresses($roles) {
+    protected function getAddresses($roles)
+    {
 
         $addrs = array();
 
@@ -288,9 +293,10 @@ class Family {
         return $addrs;
     }
 
-    protected function getEmergContacts(\PDO $dbh, $roles) {
+    protected function getEmergContacts(\PDO $dbh, array $roles): array
+    {
 
-        $addrs = array();
+        $emergs = array();
 
         foreach ($roles as $role) {
             $emergObj = $role->getEmergContactObj($dbh);
@@ -310,7 +316,8 @@ class Family {
         return $emergs;
     }
 
-    public function createAddPersonMu(\PDO $dbh, ReserveData $rData) {
+    public function createAddPersonMu(\PDO $dbh, ReserveData $rData)
+    {
 
         $addPerson = array();
 
@@ -325,14 +332,25 @@ class Family {
             }
 
             // Remove icon.
-            $removeIcons = HTMLContainer::generateMarkup('ul'
-                , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
-                    , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$prefix, 'title'=>'Remove guest'))
-                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+            $removeIcons = HTMLContainer::generateMarkup(
+                'ul'
+                ,
+                HTMLContainer::generateMarkup(
+                    'li',
+                    HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-trash'))
+                    ,
+                    array('class' => 'ui-state-default ui-corner-all hhk-removeBtn', 'style' => 'float:right;', 'data-prefix' => $prefix, 'title' => 'Remove guest')
+                )
+                ,
+                array('class' => 'ui-widget ui-helper-clearfix hhk-ui-icons')
+            );
 
-            $nameTr = HTMLContainer::generateMarkup('tr'
-                    , $role->createThinMarkup($rData->getPsgMember($prefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
-                    . HTMLTable::makeTd($removeIcons));
+            $nameTr = HTMLContainer::generateMarkup(
+                'tr'
+                ,
+                $role->createThinMarkup($rData->getPsgMember($prefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
+                . HTMLTable::makeTd($removeIcons)
+            );
 
 
             // Decide if we show the address line.
@@ -343,7 +361,7 @@ class Family {
             }
 
             if ($shoAddr) {
-                
+
                 if ($this->IncldEmContact) {
                     // Emergency Contact
                     $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
@@ -355,8 +373,8 @@ class Family {
                 }
 
                 // Add addresses and demo's
-                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap"));
-                $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
+                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class" => "hhk-flex hhk-flex-wrap"));
+                $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan' => '11')), array('class' => 'hhk-addrRow'));
             }
 
             $mem = $rData->getPsgMember($prefix)->toArray();
@@ -369,7 +387,8 @@ class Family {
 
     }
 
-    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $formUserData = []) {
+    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $formUserData = [])
+    {
 
         $rowClass = 'odd';
         $mk1 = '';
@@ -378,7 +397,7 @@ class Family {
         $patientUserData = [];
         $guestUserData = [];
 
-        if(isset($formUserData['patient'])){
+        if (isset($formUserData['patient'])) {
             $patientUserData = $formUserData['patient'];
         }
 
@@ -387,21 +406,30 @@ class Family {
             $guestUserData = $formUserData['guests'];
         }
 
-        $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
-                    ,  HTMLContainer::generateMarkup('li',
-                       HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-1-s'))
-                        , array('class'=>'ui-state-default ui-corner-all', 'id'=>'adrCopy', 'style'=>'float:right;', 'title'=>'Copy top address down to any blank addresses.'))
-                        .HTMLContainer::generateMarkup('span', 'Addr', array('style'=>'float:right;margin-top:5px;margin-right:.4em;'))
-                    , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+        $AdrCopyDownIcon = HTMLContainer::generateMarkup(
+            'ul'
+            ,
+            HTMLContainer::generateMarkup(
+                'li',
+                HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-arrowthick-1-s'))
+                ,
+                array('class' => 'ui-state-default ui-corner-all', 'id' => 'adrCopy', 'style' => 'float:right;', 'title' => 'Copy top address down to any blank addresses.')
+            )
+            . HTMLContainer::generateMarkup('span', 'Addr', array('style' => 'float:right;margin-top:5px;margin-right:.4em;'))
+            ,
+            array('class' => 'ui-widget ui-helper-clearfix hhk-ui-icons')
+        );
 
 
         // Name Header
-        $th = HTMLContainer::generateMarkup('tr',
-                HTMLTable::makeTh('Staying')
-                . HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuestAbrev', 'PG'), array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')))
-                . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
-                . HTMLTable::makeTh('Phone')
-                . HTMLTable::makeTh($AdrCopyDownIcon));
+        $th = HTMLContainer::generateMarkup(
+            'tr',
+            HTMLTable::makeTh('Staying')
+            . HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuestAbrev', 'PG'), array('title' => Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')))
+            . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
+            . HTMLTable::makeTh('Phone')
+            . HTMLTable::makeTh($AdrCopyDownIcon)
+        );
 
 
         // Put the patient first.
@@ -411,10 +439,12 @@ class Family {
             $role = $this->roleObjs[$this->patientPrefix];
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
-            $trs[0] = HTMLContainer::generateMarkup('tr',
-                    $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
+            $trs[0] = HTMLContainer::generateMarkup(
+                'tr',
+                $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
                 ,
-                ['id' => $role->getIdName() . 'n', 'class' => $rowClass]);
+                ['id' => $role->getIdName() . 'n', 'class' => $rowClass]
+            );
 
             if ($this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr)) {
 
@@ -435,7 +465,7 @@ class Family {
 
                 $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, ["class" => "hhk-flex hhk-flex-wrap"]);
 
-                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), ['id' => $role->getIdName() . 'a', 'class' => $rowClass . ' hhk-addrRow']);
+                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan' => '11')), ['id' => $role->getIdName() . 'a', 'class' => $rowClass . ' hhk-addrRow']);
             }
         }
 
@@ -463,16 +493,27 @@ class Family {
             }
 
             // Remove guest button.
-            $removeIcons = HTMLContainer::generateMarkup('ul'
-                , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
-                    , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Remove guest'))
-                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+            $removeIcons = HTMLContainer::generateMarkup(
+                'ul'
+                ,
+                HTMLContainer::generateMarkup(
+                    'li',
+                    HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-trash'))
+                    ,
+                    array('class' => 'ui-state-default ui-corner-all hhk-removeBtn', 'style' => 'float:right;', 'data-prefix' => $idPrefix, 'title' => 'Remove guest')
+                )
+                ,
+                array('class' => 'ui-widget ui-helper-clearfix hhk-ui-icons')
+            );
 
             // Guest Name row.
-            $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
-                    $role->createThinMarkup($rData->getPsgMember($idPrefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
-                    . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
-                    , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
+            $trs[$trsCounter++] = HTMLContainer::generateMarkup(
+                'tr',
+                $role->createThinMarkup($rData->getPsgMember($idPrefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
+                . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
+                ,
+                array('id' => $role->getIdName() . 'n', 'class' => $rowClass)
+            );
 
 
             // Add addresses and demo's
@@ -487,8 +528,8 @@ class Family {
 
                 if ($this->showDemographics) {
                     $guestDemos = [];
-                    foreach($guestUserData as $userData){ //find matching guest
-                        if($role->getIdName() == (isset($userData['idName']) ? $userData['idName'] : 0)){
+                    foreach ($guestUserData as $userData) { //find matching guest
+                        if ($role->getIdName() == (isset($userData['idName']) ? $userData['idName'] : 0)) {
                             $guestDemos = (isset($userData['demographics']) ? $userData['demographics'] : []);
                         }
                     }
@@ -497,64 +538,94 @@ class Family {
                     $demoMu .= $this->getDemographicsMarkup($dbh, $role, $guestDemos);
                 }
 
-                $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
+                $trs[$trsCounter++] = HTMLContainer::generateMarkup(
+                    'tr',
                     HTMLTable::makeTd('')
-                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap")), array('colspan'=>'11'))
-                    , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class" => "hhk-flex hhk-flex-wrap")), array('colspan' => '11'))
+                    ,
+                    array('id' => $role->getIdName() . 'a', 'class' => $rowClass . ' hhk-addrRow')
+                );
             }
         }
 
         // Guest search
-        $mk1 .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', 'Add people - Last Name search: ')
-                .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
+        $mk1 .= HTMLContainer::generateMarkup(
+            'div',
+            HTMLContainer::generateMarkup('span', 'Add people - Last Name search: ')
+            . HTMLInput::generateMarkup('', array('type' => 'search', 'id' => 'txtPersonSearch', 'style' => 'margin-right:2em;', 'title' => 'Enter the first three characters of the person\'s last name'))
 
-        		, array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
+            ,
+            array('id' => 'divPersonSearch', 'style' => 'margin-top:10px;')
+        );
 
 
         // Header
-        $hdr = HTMLContainer::generateMarkup('div',
+        $hdr = HTMLContainer::generateMarkup(
+            'div',
             HTMLContainer::generateMarkup('span', $familyName . ' Family')
-            , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
+            ,
+            array('style' => 'float:left;', 'class' => 'hhk-checkinHdr')
+        );
 
-        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'emergContacts'=>$this->getEmergContacts($dbh, $this->roleObjs), 'tblId'=>Family::FAM_TABLE_ID);
-
-    }
-
-    protected function getDemographicsMarkup(\PDO $dbh, $role, $demographicsUserData = []) {
-
-        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-            HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
-            . $role->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE, $demographicsUserData), array('class'=>'hhk-panel')),
-            array('style'=>'float:left; margin-right:3px;'));
+        return array('hdr' => $hdr, 'tblHead' => $th, 'tblBody' => $trs, 'adtnl' => $mk1, 'mem' => $rData->getMembersArray(), 'addrs' => $this->getAddresses($this->roleObjs), 'emergContacts' => $this->getEmergContacts($dbh, $this->roleObjs), 'tblId' => Family::FAM_TABLE_ID);
 
     }
 
-    protected function getInsuranceMarkup(\PDO $dbh, $role) {
+    protected function getDemographicsMarkup(\PDO $dbh, $role, $demographicsUserData = [])
+    {
 
-        return HTMLContainer::generateMarkup('div',
-                $role->getRoleMember()->createInsurancePanel($dbh, $role->getRoleMember()->getIdPrefix())
-                , array('style'=>'float:left; margin-top:5px; background-color:white;'));
+        return HTMLContainer::generateMarkup(
+            'div',
+            HTMLContainer::generateMarkup(
+                'fieldset',
+                HTMLContainer::generateMarkup('legend', 'Demographics', array('style' => 'font-weight:bold;'))
+                . $role->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE, $demographicsUserData),
+                array('class' => 'hhk-panel')
+            ),
+            array('style' => 'float:left; margin-right:3px;')
+        );
 
     }
 
-    protected function getEmergencyConntactMu(\PDO $dbh, $role, $emergUserData = []) {
+    protected function getInsuranceMarkup(\PDO $dbh, $role)
+    {
+
+        return HTMLContainer::generateMarkup(
+            'div',
+            $role->getRoleMember()->createInsurancePanel($dbh, $role->getRoleMember()->getIdPrefix())
+            ,
+            array('style' => 'float:left; margin-top:5px; background-color:white;')
+        );
+
+    }
+
+    protected function getEmergencyConntactMu(\PDO $dbh, $role, $emergUserData = [])
+    {
 
         $uS = Session::getInstance();
 
         // Add search icon
-        $ecSearch = HTMLContainer::generateMarkup("li", HTMLContainer::generateMarkup('span', '', array("class"=>"ui-icon ui-icon-search")), array('data-prefix'=>$role->getRoleMember()->getIdPrefix(), 'class'=>'hhk-emSearch ui-state-default ui-corner-all', 'title'=>'Search'));
+        $ecSearch = HTMLContainer::generateMarkup("li", HTMLContainer::generateMarkup('span', '', array("class" => "ui-icon ui-icon-search")), array('data-prefix' => $role->getRoleMember()->getIdPrefix(), 'class' => 'hhk-emSearch ui-state-default ui-corner-all', 'title' => 'Search'));
 
-        $copy = HTMLContainer::generateMarkup('li',
-                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-copy hhk-emergPickerPanel'))
-                        , array('class'=>'ui-state-default ui-corner-all hhk-emergCopy hhk-emergPickerPanel', 'data-prefix'=>$role->getRoleMember()->getIdPrefix(), 'title'=>'Click to copy.'));
+        $copy = HTMLContainer::generateMarkup(
+            'li',
+            HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-copy hhk-emergPickerPanel'))
+            ,
+            array('class' => 'ui-state-default ui-corner-all hhk-emergCopy hhk-emergPickerPanel', 'data-prefix' => $role->getRoleMember()->getIdPrefix(), 'title' => 'Click to copy.')
+        );
 
         $ec = $role->getEmergContactObj($dbh);
 
-        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . HTMLContainer::generateMarkup("ul", $copy . $ecSearch, array("class"=>"ui-widget ui-helper-clearfix hhk-ui-icons ml-2")), array('class'=>"hhk-flex align-items-center", 'style'=>'font-weight:bold;'))
-                . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact(), $emergUserData), array('class'=>'hhk-panel')),
-                array('class'=>'mr-1', 'style'=>'font-size: 0.9em;'));
+        return HTMLContainer::generateMarkup(
+            'div',
+            HTMLContainer::generateMarkup(
+                'fieldset',
+                HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . HTMLContainer::generateMarkup("ul", $copy . $ecSearch, array("class" => "ui-widget ui-helper-clearfix hhk-ui-icons ml-2")), array('class' => "hhk-flex align-items-center", 'style' => 'font-weight:bold;'))
+                . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact(), $emergUserData),
+                array('class' => 'hhk-panel')
+            ),
+            array('class' => 'mr-1', 'style' => 'font-size: 0.9em;')
+        );
 
     }
 
@@ -567,7 +638,8 @@ class Family {
      * @param string $userName
      * @return boolean
      */
-    public function save(\PDO $dbh, ReserveData &$rData, $userName) {
+    public function save(\PDO $dbh, ReserveData &$rData, $userName)
+    {
 
         // Verify selected patient
         if (is_null($patMem = $rData->findPatientMember())) {
@@ -651,7 +723,7 @@ class Family {
                 $rData->setIdHospital_Stay($this->hospStay->getIdHospital_Stay());
 
             }
-        } catch(\PDOException $pex) {
+        } catch (\PDOException $pex) {
 
             if ($pex->getCode() == 23000) {
                 // Integrity constraint.  The new patient is alresdy a patient elsewhere
@@ -664,11 +736,13 @@ class Family {
 
     }
 
-    public function getPatientId() {
+    public function getPatientId()
+    {
         return $this->patientId;
     }
 
-    public function getHospStay() {
+    public function getHospStay()
+    {
         return $this->hospStay;
     }
 

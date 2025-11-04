@@ -4,14 +4,12 @@ use HHK\Common;
 use HHK\ExcelHelper;
 use HHK\Exception\RuntimeException;
 use HHK\History;
-use HHK\House\GuestRegister;
 use HHK\House\OperatingHours;
 use HHK\House\Report\PaymentReport;
 use HHK\House\Report\RoomReport;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\sec\Labels;
@@ -434,6 +432,10 @@ if($uS->useOnlineReferral){
             .hhk-fcslot-closed {
                 background-color: #fcb5b5;
                 opacity: .6;
+            }
+
+            :root {
+                --fc-neutral-bg-color: hsla(0, 0%, 82%, .5); /* sets room group header background */
             }
 
         </style>
