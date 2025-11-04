@@ -221,19 +221,6 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    /* public function makeFilterOptsMkup():void{
-        $showAllAttrs = array("type"=>"checkbox", "id"=>"cbShowAll", "name"=>"cbShowAll");
-        if(isset($this->request["cbShowAll"])){
-            $showAllAttrs['checked'] = 'checked';
-        }
-
-        $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
-            HTMLInput::generateMarkup("", $showAllAttrs) .
-            HTMLContainer::generateMarkup("label", "Show all " . Labels::getString('MemberType', 'visitor', 'Guest') . 's', array("for"=>"cbShowAll"))
-        );
-
-    } */
-
     protected function getResvStatusMkup(){
 
         $resvStatusSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->resvStatuses, $this->selectedResvStatuses), array('name' => 'selResvStatus[]', 'size'=>(count($this->resvStatuses) < 13 ? count($this->resvStatuses) + 1 : '13'), 'multiple'=>'multiple'));

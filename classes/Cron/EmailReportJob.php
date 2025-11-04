@@ -50,6 +50,11 @@ class EmailReportJob extends AbstractJob implements JobInterface{
             "type"=>"select",
             "values"=>[],
             "required"=>false
+        ],
+        "filterOpts"=>[
+            "label"=>"Filter Options",
+            "type"=>"filterOpts",
+            "required"=>false
         ]
     ];
 
@@ -63,6 +68,12 @@ class EmailReportJob extends AbstractJob implements JobInterface{
             $fields = $this->getFields($this->params['fieldSet']);
             if(is_array($fields)){
                 $request['selFld'] = $fields;
+            }
+        }
+
+        if(isset($this->params['filterOpts']) && is_array($this->params['filterOpts'])){
+            foreach($this->params['filterOpts'] as $k=>$v){
+                $request[$k] = "on";
             }
         }
 
@@ -96,4 +107,3 @@ class EmailReportJob extends AbstractJob implements JobInterface{
         return (isset($fieldSetResponse["fieldSet"]["Fields"]) ? $fieldSetResponse["fieldSet"]["Fields"]: false);
     }
 }
-?>

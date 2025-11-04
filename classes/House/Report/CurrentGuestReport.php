@@ -3,6 +3,7 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 
@@ -39,6 +40,13 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         $this->reportTitle = $uS->siteName . " Resident ".Labels::getString('MemberType', 'visitor', 'Guest'). "s for " . date('D M j, Y');
         $this->inputSetReportName = "GuestView";
 
+        $this->filterOpts = [
+            "cbIncludeResv"=>[
+                "title"=>"Include " . Labels::getString('MemberType', 'visitor', 'Guest') . 's expected to arrive',
+                "type"=>"checkbox"
+            ]
+        ];
+
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
@@ -50,6 +58,8 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
     {
         $this->filterMkup .= $this->getColSelectorMkup();
     }
+
+
 
     /**
      * Summary of makeSummaryMkup
@@ -119,6 +129,9 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
     public function makeQuery(): void
     {
         $this->query = "select * from vguest_view";
+        
+        //include guests expected to arrive
+        $this->query .= isset($this->request["cbIncludeResv"]) ? " union  select * from vguest_resv_view":"";
     }
 
     /**
