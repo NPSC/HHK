@@ -830,7 +830,18 @@ $(document).ready(function () {
     let dailyCols = [
             {data: 'titleSort', 'visible': false },
             {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
-            {data: 'Status', title: 'Status', searchable:false},
+            {
+            'data': 'Status',
+            'title': 'Status',
+            'searchable': false,
+            'sortable': true,
+            'createdCell': function(td, cellData, rowData, col){
+                if(rowData.StatusColor){
+                    $(td).css("background-color", rowData.StatusColor);
+                }
+            }
+
+        },
             {data: 'Guests', title: visitorLabel+'s'},
             {data: 'Patient_Name', title: patientLabel}];
 
@@ -1115,8 +1126,19 @@ $(document).ready(function () {
             right: 'timeline1weeks,timeline2weeks,timeline3weeks,timeline4weeks refresh,today prevMonth,prev,next,nextMonth'
         },
 
-        slotLabelClassNames: 'hhk-fc-slot-title',
+        slotLabelClassNames: function (info) {
+            let strDay = info.date.getFullYear() + '-' + (info.date.getMonth() + 1) + '-' + info.date.getDate();
+            
+			if (holidays.includes(strDay)) {
+				return 'hhk-fcslot-holiday';
+			}
+            if(closedDays.includes(info.date.getDay())){
+                return 'hhk-fcslot-closed';
+            }
+            
+            return 'hhk-fc-slot-title';
 
+        },
 		slotLaneClassNames: function (info) {
 			if (info.isToday) {
 				return 'hhk-fcslot-today';
@@ -1127,7 +1149,7 @@ $(document).ready(function () {
 					return 'hhk-fcslot-holiday';
 				}
                 if(closedDays.includes(info.date.getDay())){
-                    return 'fc-cell-shaded';
+                    return 'hhk-fcslot-closed';
                 }
 			}
 		},

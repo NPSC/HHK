@@ -3,7 +3,6 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 
@@ -182,7 +181,6 @@ where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " o
 
     public function makeCFields(): array
     {
-        $labels = Labels::getLabels();
         $uS = Session::getInstance();
 
         $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');

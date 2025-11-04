@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Cron;
 
+use HHK\House\Report\ReportFieldSet;
+use HHK\House\Report\ReportInterface;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
@@ -89,25 +92,46 @@ abstract class AbstractJob implements JobInterface {
 
         foreach($this->paramTemplate as $name=>$attrs){
             $val = (isset($this->params[$name]) ? $this->params[$name] : "");
-            $required = (isset($attrs['required']) && $attrs['required'] ? "required" : "");
+            $required = (isset($attrs['required']) && $attrs['required'] ? ["required"=>"required"] : []);
+            $multiple = (isset($attrs['multiple']) && $attrs['multiple'] ? ["multiple"=>"multiple"] : []);
 
             //set default value
             if($this->idJob == -1 && $val == "" && isset($attrs['defaultVal'])){
                 $val = $attrs['defaultVal'];
             }
 
+            $reportObj = null;
+            if(isset($this->params['report']) && $this->params['report'] != "" && isset(EmailReportJob::AVAILABLE_REPORTS[$this->params['report']])){
+                $class = '\HHK\House\\Report\\' . $this->params['report'];
+                $reportObj = new $class($this->dbh, $this->params["filterOpts"]);
+            }
+
             switch($attrs['type']){
                 case "string":
-                    $input = HTMLInput::generateMarkup("", array("type"=>"text","value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
+                    $input = HTMLInput::generateMarkup("", array("type"=>"text","value"=>$val, "class"=>"editParam", "data-name"=>$name, ...$required));
                     break;
                 case "number":
-                    $input = HTMLInput::generateMarkup("", array("type"=>"number","value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
+                    $input = HTMLInput::generateMarkup("", array("type"=>"number","value"=>$val, "class"=>"editParam", "data-name"=>$name, ...$required));
                     break;
                 case "email":
-                    $input = HTMLInput::generateMarkup("", array("type"=>"email", "value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
+                    $input = HTMLInput::generateMarkup("", array("type"=>"email", "value"=>$val, "class"=>"editParam", "data-name"=>$name, ...$required));
                     break;
                 case "select":
-                    $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrs['values'], $val), array("style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, "data-curval"=>$val, "required"=>$required));
+                    if($name == "fieldSet" && $reportObj instanceof ReportInterface){
+                        $report = $reportObj->getInputSetReportName();
+                        $fieldSets = ReportFieldSet::listFieldSets($this->dbh, $report, true);
+                        $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($fieldSets, $val), array("style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, "data-curval"=>$val, ... $required));
+                    }else{
+                        $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrs['values'], $val), array("style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, "data-curval"=>$val, ... $required));
+                    }
+                    break;
+                case "filterOpts":
+                    if($reportObj instanceof ReportInterface){
+                        $input = HTMLContainer::generateMarkup("div", $reportObj->makeFilterOptsMkup(), ["style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, ... $required]);
+                    }else{
+                        $input = HTMLContainer::generateMarkup("div", "", ["style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, ... $required]);
+                    }
+                    
                     break;
                 default:
                     $input = "";
