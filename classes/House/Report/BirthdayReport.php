@@ -3,7 +3,6 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 
@@ -24,7 +23,8 @@ use HHK\sec\Labels;
  * @author Will
  */
 
-class BirthdayReport extends AbstractReport implements ReportInterface {
+class BirthdayReport extends AbstractReport implements ReportInterface
+{
 
     public array $locations;
     public array $diags;
@@ -32,7 +32,8 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
     public array $selectedResvStatuses;
 
 
-    public function __construct(\PDO $dbh, array $request = []){
+    public function __construct(\PDO $dbh, array $request = [])
+    {
         $uS = Session::getInstance();
 
         $this->reportTitle = $uS->siteName . ' Birthday Report';
@@ -40,24 +41,34 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
         $this->inputSetReportName = "birthday";
 
         $this->filterOpts = [
-            "cbIncCheckedOut"=>[
-                "title"=>"Include Checked Out " . Labels::getString('MemberType', 'visitor', "Guest") . 's',
-                "type"=>"checkbox"
+            "cbIncCheckedOut" => [
+                "title" => "Include Checked Out " . Labels::getString('MemberType', 'visitor', "Guest") . 's',
+                "type" => "checkbox"
+            ],
+            "cbOnlyPatients" => [
+                "title" => "Only " . Labels::getString('MemberType', 'patient', "Patient") . 's',
+                'type' => 'checkbox'
             ]
         ];
 
         parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
-    public function makeQuery(): void{
+    public function makeQuery(): void
+    {
 
         // Reservation status
         $resvStatus = ["'a'", "'s'", "'w'", "'uc'"];
         $stayStatus = ["'1'", "'a'", "'cp'", "'n'"];
 
-        if(isset($this->request["cbIncCheckedOut"])){
+        if (isset($this->request["cbIncCheckedOut"])) {
             $resvStatus[] = "'co'";
             $stayStatus[] = "'co'";
+        }
+
+        $whPatient = "";
+        if (isset($this->request["cbOnlyPatients"])) {
+            $whPatient = "and ng.Relationship_Code = 'slf' ";
         }
 
         $whResvStatus = '';
@@ -65,7 +76,7 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
         if (count($resvStatus) > 0) {
             $whResvStatus = "and r.Status in (" . implode(",", $resvStatus) . ") ";
         }
-        if (count($stayStatus) > 0){
+        if (count($stayStatus) > 0) {
             $whStayStatus = "and (s.Status in (" . implode(",", $stayStatus) . ") or s.Status IS NULL) ";
         }
 
@@ -115,9 +126,11 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
     ifnull(n.Name_First, '') as Name_First,
     ifnull(n.Name_Middle, '') as Name_Middle,
     ifnull(n.BirthDate, '') as BirthDate,
+    date_format(n.BirthDate, '%m-%d') as BirthDay,
     re.Title as `Room`,
     re.`Type`,
     re.`Status` as `RescStatus`,
+    ifnull(rel.Description, '') as PatientRelation,
     re.`Category`,
     IF(rr.FA_Category='f', r.Fixed_Room_Rate, rr.`Title`) as `FA_Category`,
     rr.`Title` as `Rate`,
@@ -145,6 +158,10 @@ from
         left join
     hospital_stay hs ON r.idHospital_Stay = hs.idHospital_stay
         left join
+    name_guest ng on n.idName = ng.idName and hs.idPsg = ng.idPsg
+        left join
+    gen_lookups rel on ng.Relationship_Code = rel.Code and rel.Table_Name = 'Patient_Rel_Type'
+        left join
     room_rate rr ON r.idRoom_rate = rr.idRoom_rate
         left join resource_room rer on r.idResource = rer.idResource
         left join room rm on rer.idRoom = rm.idRoom
@@ -153,20 +170,23 @@ from
         and g.`Code` = r.`Status`
         left join
     gen_lookups vs on vs.Table_Name = 'Visit_Status' and vs.Code = s.Status
-where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idReservation";
+where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " order by r.idReservation";
     }
 
-    public function makeFilterMkup():void{
+    public function makeFilterMkup(): void
+    {
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    public function makeCFields():array{
+    public function makeCFields(): array
+    {
         $uS = Session::getInstance();
 
         $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
         $cFields[] = array("Middle", 'Name_Middle', '', '', 'string', '20');
         $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
+        $cFields[] = array("Birthday", 'BirthDay', 'checked', '', 'MM/DD', '15', array(), 'day');
         $cFields[] = array("Birth Date", 'BirthDate', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
         // Address.
@@ -186,6 +206,7 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
         $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
         $cFields[] = array("Phone", 'Phone_Num', '', '', 'string', '20');
         $cFields[] = array("Email", 'Email', '', '', 'string', '20');
+        $cFields[] = array(Labels::getString('MemberType', 'patient', 'Patient') . " Relationship", 'PatientRelation', '', '', 'string', '20');
         $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
         $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
@@ -194,27 +215,33 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
         return $cFields;
     }
 
-    public function makeSummaryMkup():string {
+    public function makeSummaryMkup(): string
+    {
 
         $mkup = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 
         $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
 
-        if(isset($this->request["cbIncCheckedOut"])){
+        if (isset($this->request["cbIncCheckedOut"])) {
             $mkup .= HTMLContainer::generateMarkup('p', "Includes Checked Out " . Labels::getString('MemberType', 'visitor', 'Guest') . "s");
+        }
+
+        if (isset($this->request["cbOnlyPatients"])) {
+            $mkup .= HTMLContainer::generateMarkup('p', "Shows only " . Labels::getString('MemberType', 'patient', 'Patient') . "s");
         }
 
         return $mkup;
 
     }
 
-    public function generateMarkup(string $outputType = ""){
+    public function generateMarkup(string $outputType = "")
+    {
         $this->getResultSet();
         $uS = Session::getInstance();
 
-        foreach($this->resultSet as $k=>$r) {
+        foreach ($this->resultSet as $k => $r) {
             //$this->resultSet[$k]['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
-            $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+            $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href' => $uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
         }
 
         return parent::generateMarkup($outputType);
