@@ -229,7 +229,7 @@ class Hospital
                         $guestSubmittedAgent = HTMLContainer::generateMarkup(
                             'span',
                             'Different Agent submitted: ' . $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
-                            . ', ' . $referralHospitalData['referralAgent']['phone'] . (isset($referralHospitalData['referralAgent']['extension']) && $referralHospitalData['referralAgent']['extension'] != '' ? 'x' . $referralHospitalData['referralAgent']['extension'] : '') . ', ' . $referralHospitalData['referralAgent']['email'],
+                            . (isset($referralHospitalData['referralAgent']['phone']) ? ', ' . $referralHospitalData['referralAgent']['phone'] : '') . (isset($referralHospitalData['referralAgent']['extension']) && $referralHospitalData['referralAgent']['extension'] != '' ? 'x' . $referralHospitalData['referralAgent']['extension'] : '') . (isset($referralHospitalData['referralAgent']['email']) ? ', ' . $referralHospitalData['referralAgent']['email'] : ''),
                             ['class' => 'ui-state-highlight']
                         );
 
