@@ -99,7 +99,18 @@ class BirthdayReport extends AbstractReport implements ReportInterface
         $whDates = $arrivalCase . " <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
 
         //birthday in timeframe
-        $whDates .= "and 1 = (FLOOR(DATEDIFF('" . $this->filter->getReportEnd() . "', n.BirthDate) / 365.25)) - (FLOOR(DATEDIFF('" . $this->filter->getReportStart() . "', n.BirthDate) / 365.25)) ";
+        //$whDates .= "and 1 = (FLOOR(DATEDIFF('" . $this->filter->getReportEnd() . "', n.BirthDate) / 365.25)) - (FLOOR(DATEDIFF('" . $this->filter->getReportStart() . "', n.BirthDate) / 365.25)) ";
+        $whDates .= "and (
+    CASE
+        WHEN MAKEDATE(YEAR('" . $this->filter->getReportStart() . "'),1) + INTERVAL BirthDayOfYear-1 DAY
+                BETWEEN '" . $this->filter->getReportStart() . "' AND '" . $this->filter->getReportEnd() . "'
+        THEN 1
+        WHEN MAKEDATE(YEAR('" . $this->filter->getReportEnd() . "'),1) + INTERVAL BirthDayOfYear-1 DAY
+                BETWEEN '" . $this->filter->getReportStart() . "' AND '" . $this->filter->getReportEnd() . "'
+        THEN 1
+        ELSE 0
+    END
+) = 1 ";
 
         $groupBy = " Group By r.idReservation, ifnull(s.idStays, n.idName)";
 
