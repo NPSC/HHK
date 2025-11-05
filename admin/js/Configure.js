@@ -698,7 +698,16 @@ $(document).on('change', "#numAddrCalc", function(){
             let filterOpts = {};
             row.find(".jobParams .editParam[data-name=filterOpts] input").each(function () {
                 const filterOpt = $(this).attr('id');
-                filterOpts[filterOpt] = $(this).val();
+
+                if($(this).attr("type") == "checkbox"){
+                    if($(this).is(':checked')){
+                        filterOpts[filterOpt] = "on";
+                    }
+                }else{
+                    filterOpts[filterOpt] = $(this).val();
+                }
+
+                
             });
 
             if(!$.isEmptyObject(filterOpts)){
