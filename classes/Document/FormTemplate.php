@@ -23,7 +23,8 @@ use HHK\Tables\EditRS;
  *
  * @author Will
  */
-class FormTemplate {
+class FormTemplate
+{
 
 
     const TemplateCat = "tmpt";
@@ -40,85 +41,89 @@ class FormTemplate {
     /**
      * Summary of __construct
      */
-    public function __construct() {
+    public function __construct()
+    {
 
     }
 
-    public function loadTemplate(\PDO $dbh, $id){
+    public function loadTemplate(\PDO $dbh, $id)
+    {
         $this->doc = new Document($id);
         $this->doc->loadDocument($dbh);
-        if($this->doc->getType() ==  self::JsonType && $this->doc->getCategory() == self::TemplateCat){
+        if ($this->doc->getType() == self::JsonType && $this->doc->getCategory() == self::TemplateCat) {
             return true;
-        }else{
+        } else {
             $this->doc = new Document();
             return false;
         }
     }
 
-    public static function listTemplates(\PDO $dbh){
+    public static function listTemplates(\PDO $dbh)
+    {
         $query = 'SELECT idDocument, Title, Status from `document` where `Type` = "' . self::JsonType . '" AND `Category` = "' . self::TemplateCat . '" order by `Status`';
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return $rows;
     }
 
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $username)
+    {
 
         $validationErrors = array();
 
         //validate CSS
         $cssValidation = $this->validateCSS($style);
-        if($cssValidation['valid'] == "false"){
+        if ($cssValidation['valid'] == "false") {
             $validationErrors['css'] = $cssValidation;
         }
 
         //validate font import
         $fontImportStr = '';
-        if(is_array($fontImport)){
+        if (is_array($fontImport)) {
             $fontImportStr = "https://fonts.googleapis.com/css2?";
-            foreach($fontImport as $font){
+            foreach ($fontImport as $font) {
                 $fontImportStr .= "family=" . $font . "&";
             }
             $fontImportStr .= "display=swap";
         }
 
-        if(!$title){
+        if (!$title) {
             $validationErrors['title'] = "The title field is required.";
         }
 
-        if(strlen($title) > 0 && $this->isDuplicateTitle($dbh, $title, 0)){
+        if (strlen($title) > 0 && $this->isDuplicateTitle($dbh, $title, 0)) {
             $validationErrors['title'] = 'Form title "' . $title . '" already exists.';
         }
-        if(!$successTitle){
+        if (!$successTitle) {
             $validationErrors['successTitle'] = "The success title field is required.";
         }
-        if($notifySubject == ''){
+        if ($notifySubject == '') {
             $validationErrors['notifySubject'] = "The Email Subject field is required";
         }
 
-        if($notifyMeSubject == '' && $notifyMe == true){
+        if ($notifyMeSubject == '' && $notifyMe == true) {
             $validationErrors['notifyMeSubject'] = "The Confirmation Notification Subject field is required";
         }
 
-        if($notifyMeContent == '' && $notifyMe == true){
+        if ($notifyMeContent == '' && $notifyMe == true) {
             $validationErrors['notifyMeContent'] = "The Confirmation Notification Content field is required";
         }
 
-        if($initialGuests > self::MAX_GUESTS){
+        if ($initialGuests > self::MAX_GUESTS) {
             $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than " . self::MAX_GUESTS;
         }
 
-        if($maxGuests > self::MAX_GUESTS){
+        if ($maxGuests > self::MAX_GUESTS) {
             $validationErrors['maxGuests'] = "Max Guests field cannot be greater than " . self::MAX_GUESTS;
         }
 
-        if($initialGuests > $maxGuests){
+        if ($initialGuests > $maxGuests) {
             $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
         }
 
-        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
+        $abstractJson = json_encode(['successTitle' => $successTitle, 'successContent' => $successContent, 'enableRecaptcha' => $enableRecaptcha, 'enableReservation' => $enableReservation, 'notifySubject' => $notifySubject, 'initialGuests' => $initialGuests, 'maxGuests' => $maxGuests, 'fontImport' => $fontImportStr]);
 
-        if(count($validationErrors) == 0){
+        if (count($validationErrors) == 0) {
 
             $this->doc = new Document();
             $this->doc->setTitle($title);
@@ -133,18 +138,19 @@ class FormTemplate {
 
             $this->doc->saveNew($dbh);
 
-            if($this->doc->getIdDocument() > 0){
-                return array('status'=>'success', 'msg'=>"Form saved successfully", 'doc'=>array('idDocument'=>$this->doc->getIdDocument(), 'title'=>$this->doc->getTitle()));
-            }else{
-                return array('status'=>'error', 'msg'=>'Unable to create new form', 'errors'=>array("Server error - Unable to create form"));
+            if ($this->doc->getIdDocument() > 0) {
+                return array('status' => 'success', 'msg' => "Form saved successfully", 'doc' => array('idDocument' => $this->doc->getIdDocument(), 'title' => $this->doc->getTitle()));
+            } else {
+                return array('status' => 'error', 'msg' => 'Unable to create new form', 'errors' => array("Server error - Unable to create form"));
             }
 
-        }else{
-            return array('status'=>'error', 'msg'=>'Unable to create new form', 'errors'=>$validationErrors);
+        } else {
+            return array('status' => 'error', 'msg' => 'Unable to create new form', 'errors' => $validationErrors);
         }
     }
 
-    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $notifySubject, $notifyMe, $notifyMeSubject, $notifyMeContent, $initialGuests, $maxGuests, $username)
+    {
 
         $validationErrors = array();
 
@@ -152,96 +158,99 @@ class FormTemplate {
         $cssValidation = $this->validateCSS($style);
         if (isset($cssValidation['error'])) {
             $validationErrors['cssserver'] = $cssValidation['error'];
-        }else if(isset($cssValidation['valid']) && $cssValidation['valid'] == "false"){
+        } else if (isset($cssValidation['valid']) && $cssValidation['valid'] == "false") {
             $validationErrors['css'] = $cssValidation;
         }
 
         //validate font import
         $fontImportStr = '';
-        if(is_array($fontImport)){
+        if (is_array($fontImport)) {
             $fontImportStr = "https://fonts.googleapis.com/css2?";
-            foreach($fontImport as $font){
+            foreach ($fontImport as $font) {
                 $fontImportStr .= "family=" . $font . "&";
             }
             $fontImportStr .= "display=swap";
         }
 
-        if(!$title){
+        if (!$title) {
             $validationErrors['title'] = "The title field is required.";
         }
-        if(strlen($title) > 0 && $this->doc->getIdDocument() > 0 && $this->isDuplicateTitle($dbh, $title, $this->doc->getIdDocument())){
+        if (strlen($title) > 0 && $this->doc->getIdDocument() > 0 && $this->isDuplicateTitle($dbh, $title, $this->doc->getIdDocument())) {
             $validationErrors['title'] = 'Form title "' . $title . '" already exists.';
         }
-        if(!$successTitle){
+        if (!$successTitle) {
             $validationErrors['successTitle'] = "The success title field is required.";
         }
-        if($notifySubject == ''){
+        if ($notifySubject == '') {
             $validationErrors['notifySubject'] = "The Email Subject field is required";
         }
 
-        if($notifyMeSubject == '' && $notifyMe == true){
+        if ($notifyMeSubject == '' && $notifyMe == true) {
             $validationErrors['notifyMeSubject'] = "The Confirmation Notification Subject field is required";
         }
 
-        if($notifyMeContent == '' && $notifyMe == true){
+        if ($notifyMeContent == '' && $notifyMe == true) {
             $validationErrors['notifyMeContent'] = "The Confirmation Notification Content field is required";
         }
 
-        if($initialGuests > 20){
+        if ($initialGuests > 20) {
             $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20 people.";
         }
 
-        if($maxGuests > 20){
+        if ($maxGuests > 20) {
             $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20 people.";
         }
 
-        if($initialGuests > $maxGuests){
+        if ($initialGuests > $maxGuests) {
             $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests.";
         }
 
-        if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'notifySubject'=>$notifySubject, 'notifyMe'=>$notifyMe, 'notifyMeSubject'=>$notifyMeSubject, 'notifyMeContent'=>$notifyMeContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
-            
+        if ($this->doc->getIdDocument() > 0 && count($validationErrors) == 0) {
+            $abstractJson = json_encode(['successTitle' => $successTitle, 'successContent' => $successContent, 'enableRecaptcha' => $enableRecaptcha, 'enableReservation' => $enableReservation, 'notifySubject' => $notifySubject, 'notifyMe' => $notifyMe, 'notifyMeSubject' => $notifyMeSubject, 'notifyMeContent' => $notifyMeContent, 'initialGuests' => $initialGuests, 'maxGuests' => $maxGuests, 'fontImport' => $fontImportStr]);
+
             $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, "base64:text/json", $username);
-            if($count == 1){
-                return array('status'=>'success', 'msg'=>"Form updated successfully");
-            }else{
-                return array('status'=>'error', 'msg'=>'No changes detected, no updates made');
+            if ($count == 1) {
+                return array('status' => 'success', 'msg' => "Form updated successfully");
+            } else {
+                return array('status' => 'error', 'msg' => 'No changes detected, no updates made');
             }
-        }else{
-            return array('status'=>'error', 'msg'=>'The following errors have been found', 'errors'=>$validationErrors);
+        } else {
+            return array('status' => 'error', 'msg' => 'The following errors have been found', 'errors' => $validationErrors);
         }
     }
 
-    public function delete(\PDO $dbh){
+    public function delete(\PDO $dbh)
+    {
         $uS = Session::getInstance();
-        if($this->doc->getIdDocument() > 0 && $this->doc->deleteDocument($dbh, $uS->username, true)){
-            return array('status'=>'success', 'msg'=>"Form deleted successfully");
-        }else{
-            return array('status'=>'error', 'msg'=>'Unable to delete form');
+        if ($this->doc->getIdDocument() > 0 && $this->doc->deleteDocument($dbh, $uS->username, true)) {
+            return array('status' => 'success', 'msg' => "Form deleted successfully");
+        } else {
+            return array('status' => 'error', 'msg' => 'Unable to delete form');
         }
     }
 
-    public function isDuplicateTitle(\PDO $dbh, $title, $idDocument){
+    public function isDuplicateTitle(\PDO $dbh, $title, $idDocument)
+    {
         $templates = $this->listTemplates($dbh);
         $foundID = array_search($title, array_column($templates, 'Title'));
         return ($foundID !== false && $templates[$foundID]['idDocument'] != $idDocument);
     }
 
-    public function validateCSS($styles){
+    public function validateCSS($styles)
+    {
         //short circuit validator
-        return ["valid"=>"true"];
+        return ["valid" => "true"];
 
         $uS = Session::getInstance();
-        try{
+        try {
             ini_set('default_socket_timeout', 10);
             $encodedStyle = urlencode($styles);
             $url = $uS->CssValidationService . $encodedStyle;
             //$resp = file_get_contents($url);
             $resp = false;
-            if($resp === FALSE){
-                return array('error'=>"Could not validate CSS: CSS Validator service could not be reached.");
-            }else{
+            if ($resp === FALSE) {
+                return array('error' => "Could not validate CSS: CSS Validator service could not be reached.");
+            } else {
                 $resp = preg_replace("/(<\/?)(\w+):([^>]*>)/", "$1$2$3", $resp);
                 $respObj = new \SimpleXMLElement($resp);
                 $isValid = $respObj->xpath('//envBody')[0]->mcssvalidationresponse->mvalidity;
@@ -250,66 +259,71 @@ class FormTemplate {
                 ini_restore('default_socket_timeout');
 
                 //collect errors
-                if($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->merrors->merrorcount > 0){
-                    foreach($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->merrors->merrorlist->merror as $error){
-                        $errors[] = ['line'=>$error->mline, 'message'=>$error->mmessage];
+                if ($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->merrors->merrorcount > 0) {
+                    foreach ($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->merrors->merrorlist->merror as $error) {
+                        $errors[] = ['line' => $error->mline, 'message' => $error->mmessage];
                     }
                 }
 
                 //collect warnings
-                if($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->mwarnings->mwarningcount > 0){
-                    foreach($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->mwarnings->mwarninglist->mwarning as $warning){
-                        $warnings[] = ['line'=>$warning->mline, 'message'=>$warning->mmessage];
+                if ($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->mwarnings->mwarningcount > 0) {
+                    foreach ($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->mwarnings->mwarninglist->mwarning as $warning) {
+                        $warnings[] = ['line' => $warning->mline, 'message' => $warning->mmessage];
                     }
                 }
 
-                return array('valid'=>$isValid, 'errors'=>$errors, 'warnings'=>$warnings);
+                return array('valid' => $isValid, 'errors' => $errors, 'warnings' => $warnings);
             }
-        }catch (\Exception $e){
-            return array('error'=>"Could not validate CSS: " .  $e->getMessage());
+        } catch (\Exception $e) {
+            return array('error' => "Could not validate CSS: " . $e->getMessage());
         }
     }
 
-    public function getTemplate(){
+    public function getTemplate()
+    {
         //if(str_starts_with($this->doc->getMimeType(), "base64:")){
         //    return base64_decode($this->doc->getDoc());
         //}else{
-            return $this->doc->getDoc();
+        return $this->doc->getDoc();
         //}
     }
 
-    public function getStyle() {
+    public function getStyle()
+    {
         return $this->doc->getStyle();
     }
 
-    public function getTitle() {
+    public function getTitle()
+    {
         return $this->doc->getTitle();
     }
 
-    public function getSettings(){
+    public function getSettings()
+    {
         $uS = Session::getInstance();
         $abstract = json_decode($this->doc->getAbstract());
         $recaptcha = new Recaptcha();
 
         return [
-            'formStyle'=>$this->getStyle(),
-            'successTitle'=>(isset($abstract->successTitle) ? $abstract->successTitle : ""),
-            'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
-            'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
-            'recaptchaSiteKey'=>$recaptcha->getSiteKey(),
-            'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
-            'notifySubject'=>htmlspecialchars_decode((isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted")),
-            'notifyMe'=>(isset($abstract->notifyMe) && $abstract->notifyMe === true ? true:false),
-            'notifyMeSubject'=>htmlspecialchars_decode((isset($abstract->notifyMeSubject) && $abstract->notifyMeSubject != "" ? $abstract->notifyMeSubject : "")),
-            'notifyMeContent'=>htmlspecialchars_decode((isset($abstract->notifyMeContent) && $abstract->notifyMeContent != "" ? $abstract->notifyMeContent : "")),
-            'recaptchaScript'=>$recaptcha->getScriptTag(),
-            'maxGuests'=>(isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
-            'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1),
-            'fontImport'=>(isset($abstract->fontImport) && strlen($abstract->fontImport) > 0 ? "@import url('" . $abstract->fontImport . "');" : '')
+            'formStyle' => $this->getStyle(),
+            'successTitle' => (isset($abstract->successTitle) ? $abstract->successTitle : ""),
+            'successContent' => htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
+            'enableRecaptcha' => (isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
+            'recaptchaSiteKey' => $recaptcha->getSiteKey(),
+            'enableReservation' => (isset($abstract->enableReservation) ? $abstract->enableReservation : true),
+            'notifySubject' => htmlspecialchars_decode((isset($abstract->notifySubject) && $abstract->notifySubject != "" ? $abstract->notifySubject : "New " . Labels::getString("register", "onlineReferralTitle", "Referral") . " submitted")),
+            'notifyMe' => (isset($abstract->notifyMe) && $abstract->notifyMe === true ? true : false),
+            'notifyMeSubject' => htmlspecialchars_decode((isset($abstract->notifyMeSubject) && $abstract->notifyMeSubject != "" ? $abstract->notifyMeSubject : "")),
+            'notifyMeContent' => htmlspecialchars_decode((isset($abstract->notifyMeContent) && $abstract->notifyMeContent != "" ? $abstract->notifyMeContent : "")),
+            'recaptchaScript' => $recaptcha->getScriptTag(),
+            'maxGuests' => (isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
+            'initialGuests' => (isset($abstract->initialGuests) ? $abstract->initialGuests : 1),
+            'fontImport' => (isset($abstract->fontImport) && strlen($abstract->fontImport) > 0 ? "@import url('" . $abstract->fontImport . "');" : '')
         ];
     }
 
-    public static function getLookups(\PDO $dbh){
+    public static function getLookups(\PDO $dbh)
+    {
         $lookups = array();
 
         $demos = Common::readGenLookupsPDO($dbh, 'Demographics', 'Order');
@@ -317,7 +331,7 @@ class FormTemplate {
         foreach ($demos as $d) {
             $lookups[$d[0]] = Common::readGenLookupsPDO($dbh, $d[0], 'Order');
 
-            if($d[0] == 'Gender'){
+            if ($d[0] == 'Gender') {
                 unset($lookups['Gender']['z']);
             }
 
@@ -343,18 +357,86 @@ class FormTemplate {
 
         $hospitals = Hospital::loadHospitals($dbh);
         $hospitalAr = array();
-        foreach($hospitals as $hospital){
-            if($hospital['Status'] == 'a' && $hospital['Type'] == 'h'){
-                $hospitalAr[] = ['Code'=>$hospital['idHospital'], 'Description'=>$hospital['Title']];
+        foreach ($hospitals as $hospital) {
+            if ($hospital['Status'] == 'a' && $hospital['Type'] == 'h') {
+                $hospitalAr[] = ['Code' => $hospital['idHospital'], 'Description' => $hospital['Title']];
             }
         }
         $lookups['hospitals'] = $hospitalAr;
-        $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
-            'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
-            'OK', 'ON', 'OR', 'PA', 'PE', 'PR', 'PQ', 'RI', 'SC', 'SD', 'SK', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY');
+        $stateList = array(
+            '',
+            'AB',
+            'AE',
+            'AL',
+            'AK',
+            'AR',
+            'AZ',
+            'BC',
+            'CA',
+            'CO',
+            'CT',
+            'CZ',
+            'DC',
+            'DE',
+            'FL',
+            'GA',
+            'GU',
+            'HI',
+            'IA',
+            'ID',
+            'IL',
+            'IN',
+            'KS',
+            'KY',
+            'LA',
+            'LB',
+            'MA',
+            'MB',
+            'MD',
+            'ME',
+            'MI',
+            'MN',
+            'MO',
+            'MS',
+            'MT',
+            'NB',
+            'NC',
+            'ND',
+            'NE',
+            'NF',
+            'NH',
+            'NJ',
+            'NM',
+            'NS',
+            'NT',
+            'NV',
+            'NY',
+            'OH',
+            'OK',
+            'ON',
+            'OR',
+            'PA',
+            'PE',
+            'PR',
+            'PQ',
+            'RI',
+            'SC',
+            'SD',
+            'SK',
+            'TN',
+            'TX',
+            'UT',
+            'VA',
+            'VI',
+            'VT',
+            'WA',
+            'WI',
+            'WV',
+            'WY'
+        );
         $formattedStates = array();
-        foreach($stateList as $state){
-            $formattedStates[$state] = ["Code"=>$state, "Description"=>$state];
+        foreach ($stateList as $state) {
+            $formattedStates[$state] = ["Code" => $state, "Description" => $state];
         }
         $lookups['vehicleStates'] = $formattedStates;
 
@@ -364,10 +446,12 @@ class FormTemplate {
         $ins = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $ins[$r['idInsuranceType']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title'], 'Code'=>$r['idInsurance'], 'Description'=>$r['Title']);
+            $ins[$r['idInsuranceType']][$r['idInsurance']] = array(0 => $r['idInsurance'], 1 => $r['Title'], 'Code' => $r['idInsurance'], 'Description' => $r['Title']);
         }
-        $lookups['insurance1'] = $ins['1'];
-        $lookups['insurance2'] = $ins['2'];
+
+        foreach ($ins as $i => $r) {
+            $lookups['insurance' . $i] = $r;
+        }
 
         return $lookups;
     }
@@ -378,9 +462,10 @@ class FormTemplate {
      * @param array $lookups
      * @return array[]
      */
-    private static function rekeyLookups(array $lookups){
+    private static function rekeyLookups(array $lookups)
+    {
         $newArray = array();
-        foreach($lookups as $lookup){
+        foreach ($lookups as $lookup) {
             $newArray[] = $lookup;
         }
         return $newArray;

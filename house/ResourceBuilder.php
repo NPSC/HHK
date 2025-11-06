@@ -2382,7 +2382,7 @@ foreach ($demogs as $key => $demog) {
     }
 }
 
-$insuranceTypeNames = $insuranceType->InsuranceTypes;
+$insuranceTypes = $insuranceType->InsuranceTypes;
 
 $formBuilderLabels = [
     "hospital" => $labels->getString('hospital', 'hospital', 'Hospital'),
@@ -2396,8 +2396,6 @@ $formBuilderLabels = [
     "mrn" => $labels->getString('hospital', 'MRN', 'MRN'),
     "nickname" => $labels->getString('MemberType', 'nickname', 'Nickname'),
     "namePrefix" => $labels->getString('MemberType', 'namePrefix', 'Prefix'),
-    'insurance1' => isset($insuranceTypeNames[0]['Title']) ? $insuranceTypeNames[0]['Title'] : "Primary",
-    'insurance2' => isset($insuranceTypeNames[1]['Title']) ? $insuranceTypeNames[1]['Title'] : "Secondary"
 ];
 $formBuilderOptions = [
     "county" => $uS->county,
@@ -2712,6 +2710,7 @@ $formBuilderOptions = [
         <input type="hidden" id='frmDemog' value='<?php echo json_encode($demogs); ?>' />
         <input type="hidden" id="labels" value='<?php echo json_encode($formBuilderLabels); ?>' />
         <input type="hidden" id="frmOptions" value='<?php echo json_encode($formBuilderOptions); ?>' />
+        <input type="hidden" id="insTypes" value='<?php echo json_encode($insuranceTypes); ?>' />
     </div>
 
     <!-- div id="contentDiv"-->

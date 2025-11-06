@@ -241,7 +241,8 @@ $(document).ready(function () {
 	$('#formBuilder').hhkFormBuilder({
 		labels: $.parseJSON($("#labels").val()),
 		fieldOptions:$.parseJSON($("#frmOptions").val()),
-		demogs: $.parseJSON($('#frmDemog').val())
+		demogs: $.parseJSON($('#frmDemog').val()),
+        insTypes: $.parseJSON($("#insTypes").val()),
 	});
 
     var tabIndex = parseInt($('#tabIndex').val());
