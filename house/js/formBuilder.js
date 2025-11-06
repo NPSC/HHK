@@ -1180,8 +1180,7 @@ House Staff`,
 		var settings = $.extend(true, {}, defaults, options);
 
 		var $wrapper = $(this);
-console.log(options.insuranceInputSets);
-console.log(options.insTypes);
+
 		createMarkup($wrapper, settings);
 
 		$wrapper.find("button").button();
@@ -1701,10 +1700,7 @@ console.log(options.insTypes);
 		embedInfoDialog.on('change', 'input#changeHeight', function (e) {
 			let val = $(this).val();
 			let embedCode = embedInfoDialog.find("#embedCodeSnippet").text();
-			console.log(val);
-			console.log(embedCode);
 			embedCode = embedCode.replace(/(height=")([0-9]*)(")/gm, '$1' + val + '$3');
-			console.log(embedCode);
 			embedInfoDialog.find("#embedCodeSnippet").text(embedCode);
 		});
 
