@@ -2527,8 +2527,6 @@ ADD INDEX IF NOT EXISTS `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);
 
 ALTER TABLE `w_idp_secgroups` ADD UNIQUE INDEX IF NOT EXISTS `unq_idp_secgroup` (`idIdp` ASC, `idSecGroup` ASC);
 
-;
-
 -- -------Functions-------
 --
 -- function `dateDefaultNow`
@@ -2536,12 +2534,11 @@ ALTER TABLE `w_idp_secgroups` ADD UNIQUE INDEX IF NOT EXISTS `unq_idp_secgroup` 
 CREATE
 OR REPLACE FUNCTION `datedefaultnow` (dt DateTime) RETURNS DATETIME DETERMINISTIC NO SQL RETURN case
     when dt is null then now ()
-    when DATE (dt) < DATE (now ()) then now ()
+    when DATE(dt) < DATE (now ()) then now()
     else dt
 end;
 
 --
 -- function `fiscal_year`
 --
-CREATE
-OR REPLACE FUNCTION `fiscal_year` (dt DateTime, adjust int) RETURNS Datetime NO SQL DETERMINISTIC RETURN DATE_ADD (dt, INTERVAL adjust MONTH);
+CREATE OR REPLACE FUNCTION `fiscal_year`(dt DateTime, adjust int) RETURNS Datetime NO SQL DETERMINISTIC RETURN DATE_ADD(dt, INTERVAL adjust MONTH);
