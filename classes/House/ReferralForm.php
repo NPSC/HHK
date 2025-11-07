@@ -1169,12 +1169,11 @@ class ReferralForm
 
 	protected function setInsurance(&$post)
 	{
-		if (isset($this->formUserData['insurance1'], $this->formUserData['insurance1']['insuranceId'])) {
-			$post['Insurance']['1'] = $this->formUserData['insurance1'];
-		}
-
-		if (isset($this->formUserData['insurance2'], $this->formUserData['insurance2']['insuranceId'])) {
-			$post['Insurance']['2'] = $this->formUserData['insurance2'];
+		if (isset($this->formUserData['insurance']) && is_array($this->formUserData['insurance'])) {
+			foreach ($this->formUserData['insurance'] as $key => $insurance) {
+				$idInsuranceType = preg_replace("/[^0-9]/", "", $key);
+				$post['Insurance'][$idInsuranceType] = $insurance;
+			}
 		}
 	}
 

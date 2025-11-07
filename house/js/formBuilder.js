@@ -14,6 +14,7 @@
 
 		setUpDemogFields(options);
 		setUpDataSources(options);
+		setUpInsuranceFields(options);
 
 		var defaults = {
 			serviceURL: 'ws_resc.php',
@@ -311,108 +312,7 @@
 						},
 					]
 				},
-				{
-					label: (options.labels.insurance1 || 'Primary') + ' Insurance',
-					name: 'insurance1',
-					showHeader: true,
-					fields: [
-						{
-							"type": "select",
-							"label": "Insurance Company",
-							"placeholder": "Insurance Company",
-							"className": "form-control",
-							"name": "insurance1.insuranceId",
-							"hhkField": "Insurance",
-							"width": "col-md-3",
-							"dataSource": "insurance1",
-							"multiple": false,
-							"values": [
-								{
-									"label": "Insurance Company",
-									"value": "",
-									"selected": true
-								}
-							]
-						},
-						{
-							"type": "text",
-							"label": "Other Insurance Not Listed",
-							"placeholder": "Other Insurance Not Listed",
-							"className": "form-control",
-							"name": "insurance1.other",
-							"width": "col-md-3"
-						},
-						{
-							"type": "text",
-							"label": "Group Number",
-							"placeholder": "Group Number",
-							"className": "form-control",
-							"name": "insurance1.groupNum",
-							"hhkField": "Group Number",
-							"width": "col-md-3"
-						},
-						{
-							"type": "text",
-							"label": "Member Number",
-							"placeholder": "Member Number",
-							"className": "form-control",
-							"name": "insurance1.memNum",
-							"hhkField": "Member Number",
-							"width": "col-md-2"
-						}
-					],
-				},
-				{
-					label: (options.labels.insurance2 || 'Secondary') + ' Insurance',
-					name: 'insurance2',
-					showHeader: true,
-					fields: [
-						{
-							"type": "select",
-							"label": "Insurance Company",
-							"placeholder": "Insurance Company",
-							"className": "form-control",
-							"name": "insurance2.insuranceId",
-							"hhkField": "Insurance",
-							"width": "col-md-3",
-							"dataSource": "insurance2",
-							"multiple": false,
-							"values": [
-								{
-									"label": "Insurance Company",
-									"value": "",
-									"selected": true
-								}
-							]
-						},
-						{
-							"type": "text",
-							"label": "Other Insurance Not Listed",
-							"placeholder": "Other Insurance Not Listed",
-							"className": "form-control",
-							"name": "insurance2.other",
-							"width": "col-md-3"
-						},
-						{
-							"type": "text",
-							"label": "Group Number",
-							"placeholder": "Group Number",
-							"className": "form-control",
-							"name": "insurance2.groupNum",
-							"hhkField": "Group Number",
-							"width": "col-md-3"
-						},
-						{
-							"type": "text",
-							"label": "Member Number",
-							"placeholder": "Member Number",
-							"className": "form-control",
-							"name": "insurance2.memNum",
-							"hhkField": "Member Number",
-							"width": "col-md-2"
-						}
-					],
-				},
+				... options.insuranceInputSets,
 				{
 					label: (options.labels.patient || 'Patient') + ' Address',
 					name: 'pat-address',
@@ -1345,6 +1245,69 @@ House Staff`,
 		return this;
 	}
 
+	function setUpInsuranceFields(options) {
+
+		let insuranceInputSets = [];
+
+		$.each(options.insTypes, function (index, insType) {
+
+			insuranceInputSets.push({
+					label: insType.Title + ' Insurance',
+					name: 'insurance'+insType.idInsurance_type,
+					showHeader: true,
+					fields: [
+						{
+							"type": "select",
+							"label": "Insurance Company",
+							"placeholder": "Insurance Company",
+							"className": "form-control",
+							"name": "insurance.i" + insType.idInsurance_type + ".insuranceId",
+							"hhkField": "Insurance",
+							"width": "col-md-3",
+							"dataSource": "insurance"+insType.idInsurance_type,
+							"multiple": false,
+							"values": [
+								{
+									"label": "Insurance Company",
+									"value": "",
+									"selected": true
+								}
+							]
+						},
+						{
+							"type": "text",
+							"label": "Other Insurance Not Listed",
+							"placeholder": "Other Insurance Not Listed",
+							"className": "form-control",
+							"name": "insurance.i" + insType.idInsurance_type + ".other",
+							"width": "col-md-3"
+						},
+						{
+							"type": "text",
+							"label": "Group Number",
+							"placeholder": "Group Number",
+							"className": "form-control",
+							"name": "insurance.i" + insType.idInsurance_type + ".groupNum",
+							"hhkField": "Group Number",
+							"width": "col-md-3"
+						},
+						{
+							"type": "text",
+							"label": "Member Number",
+							"placeholder": "Member Number",
+							"className": "form-control",
+							"name": "insurance.i" + insType.idInsurance_type + ".memNum",
+							"hhkField": "Member Number",
+							"width": "col-md-2"
+						}
+					],
+				});
+		});
+
+		options.insuranceInputSets = insuranceInputSets;
+
+	}
+
 	function setUpDemogFields(options) {
 		var patientDemogFields = [];
 		var guestDemogFields = [];
@@ -1389,10 +1352,12 @@ House Staff`,
 			'vehicleStates': 'Vehicle States',
 			'hospitals': 'Hospital',
 			'diagnosis': 'Diagnosis',
-			'location': 'Unit',
-			'insurance1': (options.labels.insurance1 || 'Primary') + ' Insurance',
-			'insurance2': (options.labels.insurance2 || 'Secondary') + ' Insurance'
+			'location': 'Unit'
 		}
+
+		$.each(options.insTypes, function(index, insType){
+			dataSources['insurance'+insType.idInsurance_type] = insType.Title + ' Insurance';
+		});
 
 		$.each(options.demogs, function (index, demog) {
 			dataSources[index] = demog.Description;
@@ -1735,10 +1700,7 @@ House Staff`,
 		embedInfoDialog.on('change', 'input#changeHeight', function (e) {
 			let val = $(this).val();
 			let embedCode = embedInfoDialog.find("#embedCodeSnippet").text();
-			console.log(val);
-			console.log(embedCode);
 			embedCode = embedCode.replace(/(height=")([0-9]*)(")/gm, '$1' + val + '$3');
-			console.log(embedCode);
 			embedInfoDialog.find("#embedCodeSnippet").text(embedCode);
 		});
 
