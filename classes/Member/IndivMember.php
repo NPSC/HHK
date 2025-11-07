@@ -656,8 +656,8 @@ ORDER BY `List_Order`");
         $sumTbl->addHeaderTr(
             $sumTbl->makeTh("Type")
             . $sumTbl->makeTh("Name")
-            . $sumTbl->makeTh("Group Number")
-            . $sumTbl->makeTh("Member Number")
+            . $sumTbl->makeTh(Labels::getString('Insurance', 'groupNumber', 'Group Number'))
+            . $sumTbl->makeTh(Labels::getString('Insurance', 'memberNumber', 'Member Number'))
         );
 
         foreach ($insTypes as $i) {

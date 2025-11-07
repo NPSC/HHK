@@ -1284,20 +1284,20 @@ House Staff`,
 						},
 						{
 							"type": "text",
-							"label": "Group Number",
-							"placeholder": "Group Number",
+							"label": (options.labels.groupNum || "Group Number"),
+							"placeholder": (options.labels.groupNum || "Group Number"),
 							"className": "form-control",
 							"name": "insurance.i" + insType.idInsurance_type + ".groupNum",
-							"hhkField": "Group Number",
+							"hhkField": (options.labels.groupNum || "Group Number"),
 							"width": "col-md-3"
 						},
 						{
 							"type": "text",
-							"label": "Member Number",
-							"placeholder": "Member Number",
+							"label": (options.labels.memNum || "Member Number"),
+							"placeholder": (options.labels.memNum || "Member Number"),
 							"className": "form-control",
 							"name": "insurance.i" + insType.idInsurance_type + ".memNum",
-							"hhkField": "Member Number",
+							"hhkField": (options.labels.memNum || "Member Number"),
 							"width": "col-md-2"
 						}
 					],

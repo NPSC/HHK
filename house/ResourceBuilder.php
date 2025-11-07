@@ -2396,6 +2396,8 @@ $formBuilderLabels = [
     "mrn" => $labels->getString('hospital', 'MRN', 'MRN'),
     "nickname" => $labels->getString('MemberType', 'nickname', 'Nickname'),
     "namePrefix" => $labels->getString('MemberType', 'namePrefix', 'Prefix'),
+    'memNum' => $labels->getString('Insurance', 'memberNumber','Member Number'),
+    'groupNum' => $labels->getString('Insurance', 'groupNumber','Group Number')
 ];
 $formBuilderOptions = [
     "county" => $uS->county,

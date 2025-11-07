@@ -2533,8 +2533,8 @@ ALTER TABLE `w_idp_secgroups` ADD UNIQUE INDEX IF NOT EXISTS `unq_idp_secgroup` 
 --
 CREATE
 OR REPLACE FUNCTION `datedefaultnow` (dt DateTime) RETURNS DATETIME DETERMINISTIC NO SQL RETURN case
-    when dt is null then now ()
-    when DATE(dt) < DATE (now ()) then now()
+    when dt is null then now()
+    when DATE(dt) < DATE (now()) then now()
     else dt
 end;
 
