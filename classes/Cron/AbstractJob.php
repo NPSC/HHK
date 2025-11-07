@@ -23,11 +23,12 @@ use HHK\HTMLControls\HTMLSelector;
  * @author Will Ireland
  */
 
-abstract class AbstractJob implements JobInterface {
+abstract class AbstractJob implements JobInterface
+{
 
     const SUCCESS = 's';
     const FAIL = 'f';
-    const AllowedIntervals = array("hourly", "daily","weekly", "monthly");
+    const AllowedIntervals = array("hourly", "daily", "weekly", "monthly");
 
     /**
      * Put any log message here
@@ -66,7 +67,8 @@ abstract class AbstractJob implements JobInterface {
      * @param array $params
      * @param bool $dryRun
      */
-    public function __construct(\PDO $dbh, int $idJob, array $params = [], bool $dryRun = false){
+    public function __construct(\PDO $dbh, int $idJob, array $params = [], bool $dryRun = false)
+    {
         $this->dbh = $dbh;
         $this->idJob = $idJob;
         $this->params = $params;
@@ -77,61 +79,63 @@ abstract class AbstractJob implements JobInterface {
     /**
      * Executes code defined in tasks() and logs results
      */
-    public function run():void{
-        try{
+    public function run(): void
+    {
+        try {
             $this->tasks();
             $this->log(true);
-        }catch(\Throwable $e){
+        } catch (\Throwable $e) {
             $this->logMsg = "Job Failed: " . $e->getMessage();
             $this->log(false);
         }
     }
 
-    public function getParamEditMkup():string{
+    public function getParamEditMkup(): string
+    {
         $tbl = new HTMLTable();
 
-        foreach($this->paramTemplate as $name=>$attrs){
+        foreach ($this->paramTemplate as $name => $attrs) {
             $val = (isset($this->params[$name]) ? $this->params[$name] : "");
-            $required = (isset($attrs['required']) && $attrs['required'] ? ["required"=>"required"] : []);
-            $multiple = (isset($attrs['multiple']) && $attrs['multiple'] ? ["multiple"=>"multiple"] : []);
+            $required = (isset($attrs['required']) && $attrs['required'] ? ["required" => "required"] : []);
+            $multiple = (isset($attrs['multiple']) && $attrs['multiple'] ? ["multiple" => "multiple"] : []);
 
             //set default value
-            if($this->idJob == -1 && $val == "" && isset($attrs['defaultVal'])){
+            if ($this->idJob == -1 && $val == "" && isset($attrs['defaultVal'])) {
                 $val = $attrs['defaultVal'];
             }
 
             $reportObj = null;
-            if(isset($this->params['report']) && $this->params['report'] != "" && isset(EmailReportJob::AVAILABLE_REPORTS[$this->params['report']])){
+            if (isset($this->params['report']) && $this->params['report'] != "" && isset(EmailReportJob::AVAILABLE_REPORTS[$this->params['report']])) {
                 $class = '\HHK\House\\Report\\' . $this->params['report'];
-                $reportObj = new $class($this->dbh, $this->params["filterOpts"]);
+                $reportObj = new $class($this->dbh, (is_array($this->params["filterOpts"]) ? $this->params["filterOpts"] : []));
             }
 
-            switch($attrs['type']){
+            switch ($attrs['type']) {
                 case "string":
-                    $input = HTMLInput::generateMarkup("", array("type"=>"text","value"=>$val, "class"=>"editParam", "data-name"=>$name, ...$required));
+                    $input = HTMLInput::generateMarkup("", array("type" => "text", "value" => $val, "class" => "editParam", "data-name" => $name, ...$required));
                     break;
                 case "number":
-                    $input = HTMLInput::generateMarkup("", array("type"=>"number","value"=>$val, "class"=>"editParam", "data-name"=>$name, ...$required));
+                    $input = HTMLInput::generateMarkup("", array("type" => "number", "value" => $val, "class" => "editParam", "data-name" => $name, ...$required));
                     break;
                 case "email":
-                    $input = HTMLInput::generateMarkup("", array("type"=>"email", "value"=>$val, "class"=>"editParam", "data-name"=>$name, ...$required));
+                    $input = HTMLInput::generateMarkup("", array("type" => "email", "value" => $val, "class" => "editParam", "data-name" => $name, ...$required));
                     break;
                 case "select":
-                    if($name == "fieldSet" && $reportObj instanceof ReportInterface){
+                    if ($name == "fieldSet" && $reportObj instanceof ReportInterface) {
                         $report = $reportObj->getInputSetReportName();
                         $fieldSets = ReportFieldSet::listFieldSets($this->dbh, $report, true);
-                        $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($fieldSets, $val), array("style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, "data-curval"=>$val, ... $required));
-                    }else{
-                        $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrs['values'], $val), array("style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, "data-curval"=>$val, ... $required));
+                        $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($fieldSets, $val), array("style" => "width: 100%", "class" => "editParam", "data-name" => $name, "data-curval" => $val, ...$required));
+                    } else {
+                        $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrs['values'], $val), array("style" => "width: 100%", "class" => "editParam", "data-name" => $name, "data-curval" => $val, ...$required));
                     }
                     break;
                 case "filterOpts":
-                    if($reportObj instanceof ReportInterface){
-                        $input = HTMLContainer::generateMarkup("div", $reportObj->makeFilterOptsMkup(), ["style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, ... $required]);
-                    }else{
-                        $input = HTMLContainer::generateMarkup("div", "", ["style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, ... $required]);
+                    if ($reportObj instanceof ReportInterface) {
+                        $input = HTMLContainer::generateMarkup("div", $reportObj->makeFilterOptsMkup(), ["style" => "width: 100%", "class" => "editParam", "data-name" => $name, ...$required]);
+                    } else {
+                        $input = HTMLContainer::generateMarkup("div", "", ["style" => "width: 100%", "class" => "editParam", "data-name" => $name, ...$required]);
                     }
-                    
+
                     break;
                 default:
                     $input = "";
@@ -147,35 +151,39 @@ abstract class AbstractJob implements JobInterface {
      *
      * @param bool $success
      */
-    protected function log(bool $success = false){
-        $this->status = ($success ? AbstractJob::SUCCESS:AbstractJob::FAIL);
+    protected function log(bool $success = false)
+    {
+        $this->status = ($success ? AbstractJob::SUCCESS : AbstractJob::FAIL);
         $stmt = $this->dbh->prepare('INSERT INTO `cron_log` (`idJob`, `Log_Text`, `Status`) VALUES (:idJob, :LogText, :Status)');
         $stmt->execute([
-                ':idJob'=>$this->idJob,
-                ':LogText'=>($this->dryRun ? "<strong>Dry Run: </strong>" : '') . substr($this->logMsg, 0,229), // 229 character max length (255 including dry run text)
-                ':Status'=>($success ? AbstractJob::SUCCESS:AbstractJob::FAIL)
-            ]);
+            ':idJob' => $this->idJob,
+            ':LogText' => ($this->dryRun ? "<strong>Dry Run: </strong>" : '') . substr($this->logMsg, 0, 229), // 229 character max length (255 including dry run text)
+            ':Status' => ($success ? AbstractJob::SUCCESS : AbstractJob::FAIL)
+        ]);
 
         //Set last successful run time
-        if($success == AbstractJob::SUCCESS && $this->dryRun == FALSE){
+        if ($success == AbstractJob::SUCCESS && $this->dryRun == FALSE) {
             $now = new \DateTime();
             $stmt = $this->dbh->prepare('UPDATE `cronjobs` SET `LastRun` = :lastRun where `idJob` = :idJob');
             $stmt->execute([
-                ':idJob'=>$this->idJob,
-                ':lastRun'=>$now->format("Y-m-d H:i:s")
+                ':idJob' => $this->idJob,
+                ':lastRun' => $now->format("Y-m-d H:i:s")
             ]);
         }
     }
 
-    public function getStatus() {
+    public function getStatus()
+    {
         return $this->status;
     }
 
-    public function getLogMsg() {
+    public function getLogMsg()
+    {
         return $this->logMsg;
     }
 
-    public function getParamTemplate() {
+    public function getParamTemplate()
+    {
         return $this->paramTemplate;
     }
 }
