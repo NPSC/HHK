@@ -81,8 +81,8 @@ where
 if (filter_has_var(INPUT_POST, "btnRunHere") || filter_has_var(INPUT_POST, "btnDlExcel")) {
     
     // set the return values into the controls
-    $cbMemStatus->setReturnValues($_POST[$cbMemStatus->get_htmlNameBase()]);
-    $cbRptType->setReturnValues($_POST[$cbRptType->get_htmlNameBase()]);
+    $cbMemStatus->setReturnValues(isset($_POST[$cbMemStatus->get_htmlNameBase()]) ? $_POST[$cbMemStatus->get_htmlNameBase()] : []);
+    $cbRptType->setReturnValues(isset($_POST[$cbRptType->get_htmlNameBase()]) ? $_POST[$cbRptType->get_htmlNameBase()] : []);
 
     $isExcel = false;
     if (filter_has_var(INPUT_POST, "btnDlExcel")) {
@@ -125,8 +125,8 @@ if (filter_has_var(INPUT_POST, "btnRunHere") || filter_has_var(INPUT_POST, "btnD
 
 function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $isExcel, $prefOnly, $includeBad) {
 
-    $cbMemStatus->setReturnValues($_POST[$cbMemStatus->get_htmlNameBase()]);
-    $cbRptType->setReturnValues($_POST[$cbRptType->get_htmlNameBase()]);
+    $cbMemStatus->setReturnValues(isset($_POST[$cbMemStatus->get_htmlNameBase()]) ? $_POST[$cbMemStatus->get_htmlNameBase()] : []);
+    $cbRptType->setReturnValues(isset($_POST[$cbRptType->get_htmlNameBase()]) ? $_POST[$cbRptType->get_htmlNameBase()] : []);
 
     $uS = Session::getInstance();
     $uname = $uS->username;
