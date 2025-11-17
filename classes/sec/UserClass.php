@@ -459,7 +459,7 @@ class UserClass
         //check strength
         $strongRegex = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{'.$minPassLength.',}$/';
         if (!preg_match($strongRegex, $newPw)) {
-            $this->logMessage .= "The new password is weak.<br>";
+            $this->logMessage .= "The new password does not meet the password complexity requirements.<br>";
             $success = false;
         }
 
