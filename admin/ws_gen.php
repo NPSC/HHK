@@ -644,8 +644,10 @@ function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
     if (SecurityComponent::is_Admin()) {
 
         $u = new UserClass();
+        $uS = Session::getInstance();
 
-        $newPw = $u->generateStrongPassword();
+        $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
+        $newPw = $u->generateStrongPassword($minPassLength);
 
         if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true) === TRUE) {
             $event = array('success' => 'Password updated.', 'tempPW'=>$newPw);

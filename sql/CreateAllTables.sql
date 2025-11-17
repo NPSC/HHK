@@ -651,7 +651,7 @@ CREATE TABLE
         `Order` INT (3) NOT NULL DEFAULT 0,
         `Opens_Type` VARCHAR(15) NOT NULL DEFAULT '',
         `Status` VARCHAR(1) NOT NULL DEFAULT 'a',
-        `Timestamp` TIMESTAMP NOT NULL DEFAULT NOW,
+        `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
         PRIMARY KEY (`idInsurance`)
     ) ENGINE = InnoDB AUTO_INCREMENT = 10;
 
@@ -930,16 +930,16 @@ CREATE TABLE
         `Title` VARCHAR(75) NOT NULL DEFAULT '',
         `Company` VARCHAR(80) NOT NULL DEFAULT '',
         `Company_CareOf` VARCHAR(4) NOT NULL DEFAULT '',
-        `Record_Member` BIT (1) NOT NULL DEFAULT '0',
-        `Record_Company` BIT (1) NOT NULL DEFAULT '0',
+        `Record_Member` BIT(1) NOT NULL DEFAULT 0,
+        `Record_Company` BIT(1) NOT NULL DEFAULT 0,
         `Previous_Member_Type` VARCHAR(15) NOT NULL DEFAULT '',
         `Prev_MT_Change_Date` DATETIME DEFAULT NULL,
         `Last_Updated` DATETIME DEFAULT NULL,
         `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
-        `Exclude_Directory` BIT (1) NOT NULL DEFAULT 0,
-        `Exclude_Mail` BIT (1) NOT NULL DEFAULT 0,
-        `Exclude_Email` BIT (1) NOT NULL DEFAULT 0,
-        `Exclude_Phone` BIT (1) NOT NULL DEFAULT 0,
+        `Exclude_Directory` BIT(1) NOT NULL DEFAULT 0,
+        `Exclude_Mail` BIT(1) NOT NULL DEFAULT 0,
+        `Exclude_Email` BIT(1) NOT NULL DEFAULT 0,
+        `Exclude_Phone` BIT(1) NOT NULL DEFAULT 0,
         `Date_Added` DATETIME DEFAULT NULL,
         `Gender` VARCHAR(5) NOT NULL DEFAULT '',
         `BirthDate` DATETIME DEFAULT NULL,
@@ -1218,7 +1218,7 @@ CREATE TABLE
         `HHK_Type_Code` VARCHAR(45) NOT NULL DEFAULT '',
         `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
         `Last_Updated` DATETIME NULL,
-        `Timestamp` TIMESTAMP NOT NULL DEFAULT NOW,
+        `Timestamp` TIMESTAMP NOT NULL DEFAULT NOW(),
         PRIMARY KEY (`idNeon_type_map`)
     ) ENGINE = MyISAM;
 

@@ -892,7 +892,7 @@ END -- ;
 
 drop procedure IF EXISTS `sync_referral_resv_status`; -- ;
 
-CREATE PROCEDURE `sync_referral_resv_status` ()
+CREATE PROCEDURE `sync_referral_resv_status`()
 BEGIN
 
 	UPDATE `document` `d`
@@ -1238,7 +1238,7 @@ END -- ;
 
 DROP procedure IF EXISTS `delImediateResv`; -- ;
 
-CREATE PROCEDURE `delImediateResv` ()
+CREATE PROCEDURE `delImediateResv`()
 BEGIN
 	delete from reservation_guest
 		where idReservation in (Select r.idReservation from reservation r where r.`Status` = 'im' and DATE(r.Expected_Arrival) < DATE(now()));

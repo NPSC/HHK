@@ -4416,14 +4416,14 @@ REPLACE INTO `w_auth` (
 	`Status`
 )
 VALUES
-	(-1, '10', 'p', 0, 'admin', now (), 'admin', 'a'),
+	(-1, '10', 'p', 0, 'admin', now(), 'admin', 'a'),
 	(
 		10,
 		'10',
 		'p',
 		0,
 		'admin',
-		now (),
+		now(),
 		'npscuser',
 		'a'
 	);
@@ -4464,7 +4464,7 @@ VALUES
 		'',
 		'',
 		NULL,
-		now ()
+		now()
 	),
 	(
 		10,
@@ -4482,7 +4482,7 @@ VALUES
 		'',
 		'',
 		NULL,
-		now ()
+		now()
 	);
 
 -- ;
@@ -5358,7 +5358,7 @@ VALUES
 		'mm',
 		'ui-icon ui-icon-gear',
 		'',
-		now (),
+		now(),
 		'admin',
 		'NameSch.php',
 		'index.php',
@@ -5372,7 +5372,7 @@ VALUES
 		'g,ga',
 		'ui-icon ui-icon-person',
 		'',
-		now (),
+		now(),
 		'admin',
 		'register.php',
 		'index.php',
@@ -5386,7 +5386,7 @@ VALUES
 		'pub',
 		'',
 		'',
-		now (),
+		now(),
 		'admin',
 		'',
 		'',
