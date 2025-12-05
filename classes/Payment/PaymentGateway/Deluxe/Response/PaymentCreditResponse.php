@@ -50,7 +50,7 @@ class PaymentCreditResponse extends AbstractCreditResponse {
 
     public function getStatus() {
 
-        return $this->response->getResponseCode() == '0' ? AbstractCreditPayments::STATUS_APPROVED : AbstractCreditPayments::STATUS_DECLINED;
+        return $this->response->getResponseCode() == '0' && $this->amount > 0 ? AbstractCreditPayments::STATUS_APPROVED : AbstractCreditPayments::STATUS_DECLINED;
         
     }
 
