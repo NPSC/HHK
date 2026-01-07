@@ -1045,7 +1045,7 @@ function AccessLog(\PDO $dbh, $get) {
         array( 'db' => 'OS', 'dt' => 'OS' )
     );
 
-    return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
+    return SSP::complex($get, $dbh, "w_user_log", 'Username', $columns);
 }
 
 function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interval, $day, $weekday, $hour, $minute, $status){
