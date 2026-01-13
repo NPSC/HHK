@@ -487,6 +487,6 @@ function reportError(string $message, array $info){
     $subject = "New bug report received from " . $uS->siteName;
     $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>\r\n";
 
-    mail($uS->errorReportEmail, $subject, $body, $headers);
+    mail('support@nonprofitsoftwarecorp.org', $subject, $body, $headers);
 
 }

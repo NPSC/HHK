@@ -1312,7 +1312,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $rags = [
             '_txtuserId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            '_txtpwd' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            '_txtpwd' => FILTER_UNSAFE_RAW,
             '_txtclientsecret' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtEPurl' => FILTER_SANITIZE_URL,
             '_txtclientId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
