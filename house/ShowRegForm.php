@@ -228,12 +228,12 @@ if($idVisit || $idResv){
                 $signedDate = new \DateTime($r['timestamp']);
 
                 $signedLi .= HTMLContainer::generateMarkup('li',
-                    HTMLContainer::generateMarkup('a', "Signed on " . $signedDate->format("M j, Y") , array('href'=>'#'.$r['Doc_Id'])));
+                    HTMLContainer::generateMarkup('a', "Signed on " . $signedDate->format("M j, Y") , array('href'=>'#'.$r['Doc_Id'], 'title'=>$signedDate->format("M j, Y g:i a"))));
 
 
                 $signedTabContent .= HTMLContainer::generateMarkup('div',
                     HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form'))
-                    .(str_starts_with($r['Mime_Type'], "base64:") ? base64_decode($r['Doc']) : $r['Doc'])
+                    .(str_starts_with($r['Mime_Type'], "base64:") ? base64_decode($r['Doc']) : $r['Doc']) . HTMLContainer::generateMarkup('p', "Signed: " . $signedDate->format("M j, Y g:i a"), ['class'=>'mt-4 signTimestamp', 'style'=>'text-align:end;'])
                     .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')),
                     array('id'=>$r['Doc_Id']));
                 $docSignatures = json_decode($r["Signatures"], true);
