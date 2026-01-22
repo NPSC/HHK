@@ -15,7 +15,7 @@ abstract class AbstractDistance{
      * @param array $originAddr
      * @param array $destinationAddr
      * @param string $returnType - "miles"|"meters"
-     * @return number distance
+     * @return float distance
      */
     public function getDistance(\PDO $dbh, array|null $originAddr, array|null $destinationAddr, string $returnType){
 
