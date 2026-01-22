@@ -182,9 +182,8 @@ abstract class AbstractJob implements JobInterface
         return $this->logMsg;
     }
 
-    public function getParamTemplate()
+    public function getParamTemplate():array
     {
         return $this->paramTemplate;
     }
 }
-?>

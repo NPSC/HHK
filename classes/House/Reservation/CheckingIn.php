@@ -118,7 +118,8 @@ FROM reservation r
             ->setSpanStatus($rows[0]['SpanStatus'])
             ->setSpanStartDT($rows[0]['SpanStart'])
             ->setSpanEndDT($rows[0]['SpanEnd'])
-            ->setResvStatusCode($rows[0]['Status']);
+            ->setResvStatusCode($rows[0]['Status'])
+            ->setIdHospital_Stay($rows[0]['idHospital_Stay']);
 
         // Get Resv status codes
         $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code");
