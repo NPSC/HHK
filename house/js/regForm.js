@@ -151,6 +151,11 @@ function loadSignatures(signatures){
 
     try{
         for( docId in signatures){
+            //move signTimestamp
+            var docEl = $('#vsignedReg #' + docId);
+            var signTimestamp = docEl.find('.signTimestamp');
+            docEl.find('.PrintArea').append(signTimestamp);
+
             //get regforminputs
             var regFormInputs = (docId == "vreg" ? $('#vreg .regFormInput') : $('#vsignedReg #' + docId + ' .regFormInput'));
             regFormInputs.attr("disabled", true);
