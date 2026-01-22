@@ -158,6 +158,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     ifnull(a.Title, '') as 'Assoc',
     nd.Name_Full as `Name_Doctor`,
     nr.Name_Full as `Name_Agent`,
+    npat.Name_First as `Name_First_Patient`,
+    npat.Name_Last as `Name_Last_Patient`,
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     hs.Diagnosis2,
     ifnull(group_concat(i.Title order by it.List_Order separator ', '), '') as Insurance,
@@ -193,6 +195,8 @@ from
 	insurance_type it on i.idInsuranceType = it.idInsurance_type
         left join
     name nr ON hs.idReferralAgent = nr.idName
+        left join
+    name npat ON hs.idPatient = npat.idName
         left join
     room_rate rr ON r.idRoom_rate = rr.idRoom_rate
         left join resource_room rer on r.idResource = rer.idResource
@@ -277,6 +281,9 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         if ($uS->ReferralAgent) {
             $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
         }
+
+        $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " First", 'Name_First_Patient', '', '', 'string', '20');
+        $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Last", 'Name_Last_Patient', '', '', 'string', '20');
 
         $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " First", 'Name_First', 'checked', '', 'string', '20');
         $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " Last", 'Name_Last', 'checked', '', 'string', '20');
@@ -391,6 +398,7 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
             $r['Insurance'] = ($r['Insurance'] != '' ? HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment insAction', 'style'=>'cursor:pointer;', 'data-idName'=>$r['idPatient'], 'id'=>'insAction' . $r['idPatient'], 'title'=>'View Insurance')) . $r["Insurance"] : $r["Insurance"]);
             $r['Status_Title'] = $r["hasVisit"] ? $r['Status_Title'] : HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
             $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+            $r['Name_Last_Patient'] = HTMLContainer::generateMarkup('a', $r['Name_Last_Patient'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']));
             if($uS->AcceptResvPaymt){ $r['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0)); }
         }
 

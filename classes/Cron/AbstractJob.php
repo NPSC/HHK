@@ -107,7 +107,7 @@ abstract class AbstractJob implements JobInterface
             $reportObj = null;
             if (isset($this->params['report']) && $this->params['report'] != "" && isset(EmailReportJob::AVAILABLE_REPORTS[$this->params['report']])) {
                 $class = '\HHK\House\\Report\\' . $this->params['report'];
-                $reportObj = new $class($this->dbh, (is_array($this->params["filterOpts"]) ? $this->params["filterOpts"] : []));
+                $reportObj = new $class($this->dbh, $this->params["filterOpts"] ?? []);
             }
 
             switch ($attrs['type']) {
@@ -182,9 +182,8 @@ abstract class AbstractJob implements JobInterface
         return $this->logMsg;
     }
 
-    public function getParamTemplate()
+    public function getParamTemplate():array
     {
         return $this->paramTemplate;
     }
 }
-?>
