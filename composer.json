@@ -17,8 +17,13 @@
 			"HHK\\" : "classes/"
 		}
 	},
+	"config" : {
+		"platform" : {
+			"php": "8.2"
+		}
+	},
 	"require" : {
-        "php" : "^8.1",
+        "php" : "^8.2",
         "ext-xml": "*",
 		"ext-json": "*",
 		"ext-gd": "*",
