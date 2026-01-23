@@ -8,23 +8,22 @@ define('P_ROOT', __DIR__ . DS );
 define('REL_BASE_DIR', dirname(P_ROOT) . DS);
 define('REL_BASE_SITE', '..'.DS);
 
-
 // Find the vendor directory
-$dirxx = '..' . DS . 'vendor';
-if (file_exists($dirxx) === FALSE) {
+$dirxx = 'vendor';
+if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
     $dirxx = '..'.DS . $dirxx;
-    if (file_exists($dirxx) === FALSE) {
+    if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
         $dirxx = '..'.DS . $dirxx;
-        if (file_exists($dirxx) === FALSE) {
+        if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
             $dirxx = '..'.DS . $dirxx;
-            if (file_exists($dirxx) === FALSE) {
+            if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
                 throw new Exception('Cannot find the vendor directory.');
             }
         }
     }
 }
 
-define('THIRD_PARTY', $dirxx . DS);
+define('THIRD_PARTY', REL_BASE_DIR . $dirxx . DS);
 
 // Configuration filename and paths
 define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
@@ -41,7 +40,7 @@ define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
 require(FUNCTIONS . 'errorHandler.php');
-require (THIRD_PARTY . '/autoload.php');
+require (THIRD_PARTY . 'autoload.php');
 
 define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);
 
