@@ -106,6 +106,7 @@ class Document {
                 $this->setUserData($documentRS->UserData->getStoredVal());
                 $this->setStyle($documentRS->Style->getStoredVal());
                 $this->setCreatedBy($documentRS->Created_By->getStoredVal());
+                $this->createdOn = $documentRS->Timestamp->getStoredVal();
                 $this->setUpdatedBy($documentRS->Updated_By->getstoredVal());
                 $this->setLastUpdated($documentRS->Last_Updated->getStoredVal());
 
@@ -529,6 +530,10 @@ class Document {
 
     public function getCreatedBy() {
         return $this->createdBy;
+    }
+
+    public function getCreatedOn(){
+        return $this->createdOn;
     }
 
     public function getUpdatedBy() {

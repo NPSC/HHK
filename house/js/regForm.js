@@ -152,7 +152,7 @@ function loadSignatures(signatures){
     try{
         for( docId in signatures){
             //move signTimestamp
-            var docEl = $('#vsignedReg #' + docId);
+            var docEl = (docId == "vreg" ? $('#vreg') : $('#vsignedReg #' + docId));
             var signTimestamp = docEl.find('.signTimestamp');
             docEl.find('.PrintArea').append(signTimestamp);
 
