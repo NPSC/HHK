@@ -161,6 +161,7 @@ if($idDoc > 0){
                 $signatures['vreg'] = $docSignatures;
             }
         }
+        $signedDate = new DateTime($doc->getCreatedOn());
     }
 
 }
@@ -253,7 +254,7 @@ if($idVisit || $idResv){
     $tabControl = HTMLContainer::generateMarkup('div',
         HTMLInput::generateMarkup(
             'Print', ['type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>'', 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form']) .
-        $regContents
+        $regContents . HTMLContainer::generateMarkup('p', "Signed: " . $signedDate->format("M j, Y g:i a"), ['class'=>'mt-4 signTimestamp', 'style'=>'text-align:end;'])
     );
 }
 //"<span class='ui-icon ui-icon-extlink' style='float: right; margin-left: .3em;'></span>"
