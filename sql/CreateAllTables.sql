@@ -2520,7 +2520,7 @@ ALTER TABLE `document` ADD INDEX IF NOT EXISTS `Indx_Status` (`Status` ASC);
 
 ALTER TABLE `document` ADD INDEX IF NOT EXISTS `indx_Type` (`Category` ASC, `Type` ASC);
 
-CREATE or replace INDEX `idx_document_status_type_category_id`
+CREATE INDEX IF NOT EXISTS `idx_document_status_type_category_id`
 ON `document` (`Status`, `Type`, `Category`, `idDocument`);
 
 ALTER TABLE `name_log` ADD INDEX IF NOT EXISTS `INDEX_IDNAME` (`idName` ASC);
