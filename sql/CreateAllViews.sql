@@ -2373,30 +2373,53 @@ CREATE OR REPLACE VIEW `vpsg_notes` AS
 -- View `vpsg_notes_concat`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
+    -- PSG-linked notes
     SELECT
-        n.idNote AS `Note_Id`,
-        n.idNote AS `Action`,
+        n.idNote AS Note_Id,
+        n.idNote AS Action,
         n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
-        if(ln.linkType = "psg", ln.idLink, reg.idPsg) as `PSG_Id`,
-        concat(pn.Name_First, ' ', pn.Name_Last) AS `Patient`,
+        ln.idLink AS PSG_Id,
+        CONCAT(pn.Name_First, ' ', pn.Name_Last) AS Patient,
         n.`Timestamp`
-    FROM
-        note n
-            JOIN
-        link_note ln ON n.idNote = ln.idNote and ln.linkType in ("psg", "reservation")
-            LEFT JOIN
-		reservation r ON ln.idLink = r.idReservation and ln.linkType = "reservation"
-			LEFT JOIN
-		registration reg on r.idRegistration = reg.idRegistration
-            LEFT JOIN 
-        psg ON (`ln`.`linkType` = 'psg' AND `ln`.`idLink` = `psg`.`idPsg`) OR `reg`.`idPsg` = `psg`.`idPsg`
-            LEFT JOIN 
-        `name` `pn` ON `psg`.`idPatient` = `pn`.`idName`
-    WHERE
-        ln.idLink > 0 && n.`Status` = 'a';
+    FROM psg
+    JOIN link_note ln
+        ON ln.linkType = 'psg'
+    AND ln.idLink = psg.idPsg
+    JOIN note n
+        ON n.idNote = ln.idNote
+    LEFT JOIN name pn
+        ON pn.idName = psg.idPatient
+    WHERE n.`Status` = 'a'
+
+    UNION ALL
+
+    -- Reservation-linked notes
+    SELECT
+        n.idNote AS Note_Id,
+        n.idNote AS Action,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        reg.idPsg AS PSG_Id,
+        CONCAT(pn.Name_First, ' ', pn.Name_Last) AS Patient,
+        n.`Timestamp`
+    FROM psg
+    JOIN registration reg
+        ON reg.idPsg = psg.idPsg
+    JOIN reservation r
+        ON r.idRegistration = reg.idRegistration
+    JOIN link_note ln
+        ON ln.linkType = 'reservation'
+    AND ln.idLink = r.idReservation
+    JOIN note n
+        ON n.idNote = ln.idNote
+    LEFT JOIN name pn
+        ON pn.idName = psg.idPatient
+    WHERE n.`Status` = 'a';
 
 -- -----------------------------------------------------
 -- View `vpsg_guest`
