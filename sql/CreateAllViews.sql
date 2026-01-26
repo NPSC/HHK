@@ -1070,46 +1070,28 @@ from
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_history_records` AS
     SELECT
-        `m`.`Id` AS `Id`,
-        (CASE
-            WHEN (`m`.`MemberRecord` = 1) THEN `m`.`Fullname`
-            ELSE `m`.`Company`
-        END) AS `Fullname`,
-        `m`.`Preferred_Phone` AS `Preferred_Phone`,
-        `m`.`Preferred_Email` AS `Preferred_Email`,
-        (CASE
-            WHEN (`m`.`Bad_Address` = 'true') THEN '*(Bad Address)*'
-            ELSE `m`.`Address_1`
-        END) AS `Address_1`,
-        (CASE
-            WHEN (`m`.`Bad_Address` = 'true') THEN ''
-            ELSE `m`.`Address_2`
-        END) AS `Address_2`,
-        (CASE
-            WHEN (`m`.`Bad_Address` = 'true') THEN ''
-            ELSE `m`.`City`
-        END) AS `City`,
-        (CASE
-            WHEN (`m`.`Bad_Address` = 'true') THEN ''
-            ELSE `m`.`StateProvince`
-        END) AS `StateProvince`,
-        (CASE
-            WHEN (`m`.`Bad_Address` = 'true') THEN ''
-            ELSE `m`.`Country_Code`
-        END) AS `Country_Code`,
-        (CASE
-            WHEN (`m`.`Bad_Address` = 'true') THEN ''
-            ELSE `m`.`PostalCode`
-        END) AS `PostalCode`,
-        (CASE
-            WHEN (`m`.`MemberRecord` = 1) THEN `m`.`Company`
-            ELSE ''
-        END) AS `Company`
-    FROM
-        (`member_history` `g`
-        JOIN `vmember_listing` `m` ON ((`g`.`idName` = `m`.`Id`)))
-    ORDER BY `g`.`Guest_Access_Date` DESC
-    LIMIT 12;
+    m.Id,
+    CASE
+        WHEN m.MemberRecord = 1 THEN m.Fullname
+        ELSE m.Company
+    END AS Fullname,
+    m.Preferred_Phone,
+    m.Preferred_Email,
+    CASE WHEN m.Bad_Address = 'true' THEN '*(Bad Address)*' ELSE m.Address_1 END AS Address_1,
+    CASE WHEN m.Bad_Address = 'true' THEN '' ELSE m.Address_2 END AS Address_2,
+    CASE WHEN m.Bad_Address = 'true' THEN '' ELSE m.City END AS City,
+    CASE WHEN m.Bad_Address = 'true' THEN '' ELSE m.StateProvince END AS StateProvince,
+    CASE WHEN m.Bad_Address = 'true' THEN '' ELSE m.Country_Code END AS Country_Code,
+    CASE WHEN m.Bad_Address = 'true' THEN '' ELSE m.PostalCode END AS PostalCode,
+    CASE WHEN m.MemberRecord = 1 THEN m.Company ELSE '' END AS Company
+FROM (
+    SELECT idName
+    FROM member_history
+    ORDER BY Guest_Access_Date DESC
+    LIMIT 12
+) g
+JOIN vmember_listing m
+  ON m.Id = g.idName;
 
 
 

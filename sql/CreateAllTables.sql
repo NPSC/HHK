@@ -2490,6 +2490,8 @@ ALTER TABLE `stays` ADD INDEX IF NOT EXISTS `index_Span_Start` (`Span_Start_Date
 
 ALTER TABLE `stays` ADD INDEX IF NOT EXISTS `index_Span_End` (`Span_End_Date` ASC);
 
+ALTER TABLE `stays` ADD INDEX IF NOT EXISTS `index_stay_status` (`Status` ASC);
+
 ALTER TABLE `stays` ADD INDEX IF NOT EXISTS `index_idName` (`idName` ASC);
 
 ALTER TABLE `stays` ADD CONSTRAINT `fk_visit` FOREIGN KEY IF NOT EXISTS (`idVisit`, `Visit_Span`) REFERENCES `visit` (`idVisit`, `Span`) ON DELETE CASCADE ON UPDATE CASCADE;
