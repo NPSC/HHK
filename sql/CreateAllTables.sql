@@ -2532,6 +2532,12 @@ ADD INDEX IF NOT EXISTS `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);
 
 ALTER TABLE `w_idp_secgroups` ADD UNIQUE INDEX IF NOT EXISTS `unq_idp_secgroup` (`idIdp` ASC, `idSecGroup` ASC);
 
+CREATE INDEX IF NOT EXISTS `idx_name_vol_category_code_id`
+ON `name_volunteer2` (`Vol_Category`, `Vol_Code`, `idName`); -- optimize queries where filtering billing agents, etc
+
+ALTER TABLE `w_user_log`
+ADD INDEX IF NOT EXISTS `idx_access_date` (`Access_Date`); -- optimize manager access log query
+
 -- -------Functions-------
 --
 -- function `dateDefaultNow`
