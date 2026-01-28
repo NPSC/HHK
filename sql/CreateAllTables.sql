@@ -915,6 +915,17 @@ CREATE TABLE
         `Name_Middle` VARCHAR(45) NOT NULL DEFAULT '',
         `Name_Nickname` VARCHAR(45) NOT NULL DEFAULT '',
         `Name_Full` VARCHAR(170) NOT NULL DEFAULT '',
+        `Name_Search` TEXT
+        GENERATED ALWAYS AS (
+        LOWER(
+            CONCAT_WS(' ',
+            Name_First,
+            Name_Last,
+            Name_Nickname,
+            Company
+            )
+        )
+        ) STORED,
         `Name_Previous` VARCHAR(45) NOT NULL DEFAULT '',
         `Web_Site` VARCHAR(145) NOT NULL DEFAULT '',
         `Member_Since` DATETIME DEFAULT NULL,
@@ -958,7 +969,8 @@ CREATE TABLE
         `Birth_Month` INT (11) NOT NULL DEFAULT '0',
         `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (`idName`),
-        INDEX (BirthDayOfYear)
+        INDEX (`BirthDayOfYear`)
+        FULLTEXT INDEX `ft_name_search` (`Name_Search`);
     ) ENGINE = InnoDB AUTO_INCREMENT = 10;
 
 -- -----------------------------------------------------

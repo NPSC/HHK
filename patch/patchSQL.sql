@@ -102,3 +102,19 @@ ADD COLUMN IF NOT EXISTS BirthDayOfYear INT AS (
     END
 ) STORED AFTER BirthDate,
 ADD INDEX IF NOT EXISTS (BirthDayOfYear);
+
+ALTER TABLE `name`
+ADD COLUMN IF NOT EXISTS `Name_Search` TEXT
+GENERATED ALWAYS AS (
+  LOWER(
+    CONCAT_WS(' ',
+      `Name_First`,
+      `Name_Last`,
+      `Name_Nickname`,
+      `Company`
+    )
+  )
+) STORED;
+
+ALTER TABLE `name`
+ADD FULLTEXT INDEX IF NOT EXISTS ft_name_search (Name_Search);
