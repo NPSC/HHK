@@ -969,8 +969,8 @@ CREATE TABLE
         `Birth_Month` INT (11) NOT NULL DEFAULT '0',
         `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (`idName`),
-        INDEX (`BirthDayOfYear`)
-        FULLTEXT INDEX `ft_name_search` (`Name_Search`);
+        INDEX (`BirthDayOfYear`),
+        FULLTEXT INDEX `ft_name_search` (`Name_Search`)
     ) ENGINE = InnoDB AUTO_INCREMENT = 10;
 
 -- -----------------------------------------------------
@@ -2549,6 +2549,13 @@ ON `name_volunteer2` (`Vol_Category`, `Vol_Code`, `idName`); -- optimize queries
 
 ALTER TABLE `w_user_log`
 ADD INDEX IF NOT EXISTS `idx_access_date` (`Access_Date`); -- optimize manager access log query
+
+ALTER TABLE `reservation_log`
+ADD INDEX IF NOT EXISTS `idx_rlog_idName` (`idName`);
+
+ALTER TABLE `visit_log`
+ADD INDEX IF NOT EXISTS `idx_vlog_idName` (`idName`),
+ADD INDEX IF NOT EXISTS `idx_vlog_idPsg` (`idPsg`);
 
 -- -------Functions-------
 --
