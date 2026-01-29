@@ -154,7 +154,7 @@ class MemberSearch {
     and n.idName>0 and n.Member_Status='a' AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode)
     order by n.Name_Last, n.Name_First;";
 
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute([':vcat' => $prts[0], ':vcode' => $prts[1], ':search'=>$this->buildFulltextQuery($this->letters)]);
 
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -209,7 +209,7 @@ left join name_phone nc on n.idName = nc.idName and nc.Phone_Code = '" . PhonePu
 left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Name_Last, n.Name_First;";
 
-            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+            $stmt = $dbh->prepare($query2);
             $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -274,7 +274,7 @@ FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category 
  join name_demog nd on n.idName = nd.idName
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Company, n.Name_Last, n.Name_First;";
 
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
             }
 
@@ -329,7 +329,7 @@ FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category 
 left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Name_Last, n.Name_First;";
 
-            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+            $stmt = $dbh->prepare($query2);
             $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -383,7 +383,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Na
             left join name_guest ng on n.idName = ng.idName
             where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and idPsg = :idPsg AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Name_Last, n.Name_First;";
 
-            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+            $stmt = $dbh->prepare($query2);
             $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters), ':idPsg'=>$psg]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -433,7 +433,7 @@ FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category 
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
 . "AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) "
 ." order by n.Name_Last, n.Name_First;";
-            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+            $stmt = $dbh->prepare($query2);
             $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -537,7 +537,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, case when n.Record_Company = 1 then 't' else '' end, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
                 FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE n.idName>0 and n.idName <> :id and n.Member_Status<>'u' and n.Member_Status<>'TBD' AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -569,7 +569,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 from name_email e join name n on e.idName = n.idName
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 where n.idName>0 and n.Member_Status<>'u' and Member_Status<>'TBD' and  LOWER(e.Email) like :ltr order by n.Member_Status, e.Email";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':ltr' => $this->Name_First));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -591,7 +591,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
             WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -615,7 +615,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->$this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -640,7 +640,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
                 (Select Group_Code from relationship where idname = :id)
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -660,7 +660,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
 
             case RelLinkType::Company:
                 $query2 = "select idName as Id, Company from name where Record_Company=1 and Member_Status ='a' and idName>0 and idName <> :id and LOWER(Company) like :ltr order by Member_Status, Company;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':ltr' => $this->Name_First));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -685,7 +685,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName>0 and n.idName <> :id and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -706,7 +706,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
             WHERE n.Company_Id = 0 and n.Member_Status in ('a','in') and n.Record_Member = 1 and n.idName <> :id and MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -731,7 +731,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
                 (Select Group_Code from relationship where idname = :id)
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
