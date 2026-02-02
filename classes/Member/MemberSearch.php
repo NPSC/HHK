@@ -375,16 +375,20 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Na
         } else if ($basis == 'psg') {
 
             $andVc = " and nv.Vol_Code = '" . VolMemberType::Guest . "' ";
+            $queryParams = [':idPsg'=>$psg];
 
+            if(strlen(trim($this->letters)) > 0){
+                $queryParams[':search'] = $this->buildFulltextQuery($this->letters);
+            }
 
             $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(np.Phone_Num, '') as `Phone`
             FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' $andVc
             left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
             left join name_guest ng on n.idName = ng.idName
-            where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and idPsg = :idPsg AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Name_Last, n.Name_First;";
+            where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and idPsg = :idPsg " . (strlen(trim($this->letters)) > 0 ? "AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode)" :"") . " order by n.Name_Last, n.Name_First;";
 
             $stmt = $dbh->prepare($query2);
-            $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters), ':idPsg'=>$psg]);
+            $stmt->execute($queryParams);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {

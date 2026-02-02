@@ -2398,6 +2398,8 @@ ALTER TABLE `fin_application` ADD INDEX IF NOT EXISTS `Index_idRegistration` (`i
 
 ALTER TABLE `guest_token` ADD INDEX IF NOT EXISTS `Index_idRegistration` (`idRegistration` ASC);
 
+ALTER TABLE `guest_token` ADD INDEX IF NOT EXISTS `Index_idGuest` (`idGuest` ASC);
+
 ALTER TABLE `hospital_stay` ADD INDEX IF NOT EXISTS `Index_idPatient` (`idPatient` ASC);
 
 ALTER TABLE `hospital_stay` ADD INDEX IF NOT EXISTS `Index_idPsg` (`idPsg` ASC);
