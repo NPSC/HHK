@@ -480,15 +480,15 @@ try {
                     break;
 
                 case 'reservs':
-                    $events['reservs'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, TRUE);
+                    $events = $history->getReservedGuestsDataTable($dbh, ReservationStatus::Committed, TRUE);
                     break;
 
                 case 'unreserv':
-                    $events['unreserv'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, TRUE);
+                    $events = $history->getReservedGuestsDataTable($dbh, ReservationStatus::UnCommitted, TRUE);
                     break;
 
                 case 'waitlist':
-                    $events['waitlist'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, TRUE);
+                    $events = $history->getReservedGuestsDataTable($dbh, ReservationStatus::Waitlist, TRUE);
                     break;
             }
 
