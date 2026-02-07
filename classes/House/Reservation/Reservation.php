@@ -1196,7 +1196,7 @@ WHERE
                 . "join reservation r on r.idReservation = rg.idReservation "
                 . "join registration reg on reg.idRegistration = r.idRegistration "
                 . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $idResv
-                . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(r.Expected_Departure) > DATE('".$arrivalDT->format('Y-m-d') . "')");
+                . " and r.Expected_Arrival < '".$departDT->format('Y-m-d') . "' and r.Expected_Departure > '".$arrivalDT->format('Y-m-d') . " 23:59:59'");
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 

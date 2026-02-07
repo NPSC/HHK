@@ -1,7 +1,6 @@
 <?php
 
-use HHK\sec\{Session, Login, ScriptAuthClass, UserClass};
-use HHK\Update\UpdateSite;
+use HHK\sec\{Session, Login};
 use HHK\sec\WebInit;
 
 /**

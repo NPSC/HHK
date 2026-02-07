@@ -2416,6 +2416,8 @@ ALTER TABLE `invoice` ADD INDEX IF NOT EXISTS `Index_SoldToId` (`Sold_To_Id` ASC
 
 ALTER TABLE `invoice` ADD INDEX IF NOT EXISTS `Index_Delagated` (`Delegated_Invoice_Id` ASC);
 
+ALTER TABLE `invoice` ADD INDEX IF NOT EXISTS `idx_inv_status` (`Status` ASC, `Deleted` ASC);
+
 ALTER TABLE `invoice_line` ADD INDEX IF NOT EXISTS `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);
 
 ALTER TABLE `labels` ADD UNIQUE INDEX IF NOT EXISTS `Unique_Key_Categeory` (`Key` ASC, `Category` ASC);
