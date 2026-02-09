@@ -68,7 +68,7 @@ class RoomReport {
             $query = "SELECT SUM(DATEDIFF(
 IFNULL(s.Span_End_Date, NOW()),
 DATE(s.Span_Start_Date))) AS `Nights`
-FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())";
+FROM stays s WHERE s.`On_Leave` = 0  and s.Span_Start_Date < DATE_ADD(CURDATE(), INTERVAL 1 DAY)";
 
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll();
@@ -91,7 +91,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
 
         $whClause = '';
         if ($year != '') {
-            $whClause = " and DATE(Span_Start_Date) <= fiscal_year(DATE('$year-12-31'), '-$fiscalYearMonths') and Date(Span_End_Date) >= fiscal_year(DATE('$year-01-01'), '-$fiscalYearMonths')";
+            $whClause = " and Span_Start_Date < DATE_ADD(fiscal_year('$year-12-31', '-$fiscalYearMonths'), INTERVAL 1 DAY) and Span_End_Date >= fiscal_year('$year-01-01', '-$fiscalYearMonths')";
         }
 
         $query = "select count(*) from stays where `On_Leave` = 0 and `Status` = 'co' and DATEDIFF(Span_End_Date, Span_Start_Date) > 0" . $whClause;
@@ -257,23 +257,23 @@ where ru.idResource is null" . $whereGroupSql . ";";
             FROM
             resource r
             WHERE
-            (r.Retired_At is null or date(r.Retired_At) >= date(now())) -- don't include retired rooms
+            (r.Retired_At is null or r.Retired_At >= CURDATE()) -- don't include retired rooms
             AND r.idResource NOT IN (
             -- get visits currently checked in as of today and planning to stay tonight
             SELECT v.idResource
                 FROM visit v
                 WHERE
                     v.Status not in ('" . VisitStatus::CheckedOut . "')
-                    AND date(v.Arrival_Date) <= date(now())
-                    AND date(v.Expected_Departure) > date(now())
+                    AND v.Arrival_Date < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                    AND v.Expected_Departure >= DATE_ADD(CURDATE(), INTERVAL 1 DAY)
             )
             AND r.idResource NOT IN (
             -- find all OOS rooms
             SELECT ru.idResource
                 FROM resource_use ru
                 WHERE
-                    date(ru.Start_Date) <= date(NOW())
-                    AND date(ru.End_Date)   >  date(NOW())
+                    ru.Start_Date < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                    AND ru.End_Date >= DATE_ADD(CURDATE(), INTERVAL 1 DAY)
 
             )
             AND r.idResource NOT IN (
@@ -282,8 +282,8 @@ where ru.idResource is null" . $whereGroupSql . ";";
                 FROM reservation res
                 WHERE
                     res.Status in ('a')
-                    AND date(res.Expected_Arrival)   <= date(NOW())
-                    AND date(res.Expected_Departure) >  date(NOW())
+                    AND res.Expected_Arrival < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                    AND res.Expected_Departure >= DATE_ADD(CURDATE(), INTERVAL 1 DAY)
 
             );"
         );
@@ -326,8 +326,8 @@ FROM
     gen_lookups g2 ON g2.Table_Name = 'OOS_Codes'
         AND g2.Code = ru.OOS_Code
 WHERE
-    DATE(ru.Start_Date) <= DATE(NOW())
-        AND IFNULL(DATE(ru.End_Date), DATE(NOW())) > DATE(NOW());";
+    ru.Start_Date < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+        AND IFNULL(ru.End_Date, NOW()) >= DATE_ADD(CURDATE(), INTERVAL 1 DAY);";
 
         $stmtrs = $dbh->query($query1);
 
@@ -604,7 +604,7 @@ FROM
 WHERE
     DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) > 0 $whHosp
         AND s.`On_Leave` = 0
-and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(s.Span_End_Date),  DATE(now()) ) >= '" . $stDT->format('Y-m-d') ."'"
+and s.Span_Start_Date < '" . $endDT->format('Y-m-d') . "' and ifnull(s.Span_End_Date,  now() ) >= '" . $stDT->format('Y-m-d') ."'"
                 . " order by r.Title;";
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll();
@@ -916,9 +916,9 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         // Get all the rooms
         $stResc = $dbh->query("select r.idResource, r.Title "
                 . " from resource r left join
-resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= '" . $stDT->format('Y-m-d') . "' and DATE(ru.End_Date) >= '" . $endDT->format('Y-m-d') . "'"
+resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and ru.Start_Date < DATE_ADD('" . $stDT->format('Y-m-d') . "', INTERVAL 1 DAY) and ru.End_Date >= '" . $endDT->format('Y-m-d') . "'"
                 . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
-                . " and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')"
+                . " and (r.Retired_At is null or r.Retired_At >= DATE_ADD('" . $stDT->format('Y-m-d') . "', INTERVAL 1 DAY))"
                 . " order by r.Title;");
 
         $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);
@@ -1012,7 +1012,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
     DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Nights`
 from visit v left join resource r on v.idResource = r.idResource
 where v.Status != '" . VisitStatus::Pending . "' and DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) > 0
-and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull(v.Span_End,  datedefaultnow(v.Expected_Departure) )) >= DATE('" . $stDT->format('Y-m-d') ."') order by r.Title;";
+and v.Span_Start < '" . $endDT->format('Y-m-d') . "' and ifnull(v.Span_End,  datedefaultnow(v.Expected_Departure) ) >= '" . $stDT->format('Y-m-d') ."' order by r.Title;";
 
         $stmt = $dbh->query($query);
 
@@ -1091,7 +1091,7 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
 
         // Collect retired rooms
         $rstmt = $dbh->query("Select idResource, `Retired_At`"
-                . " from resource where date(`Retired_At`) < '" . $endDT->format('Y-m-d') . "' and date(`Retired_At`) >= '" . $stDT->format('Y-m-d') ."' order by idResource");
+                . " from resource where `Retired_At` < '" . $endDT->format('Y-m-d') . "' and `Retired_At` >= '" . $stDT->format('Y-m-d') ."' order by idResource");
 
         while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 

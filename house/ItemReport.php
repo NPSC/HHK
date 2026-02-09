@@ -225,7 +225,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         }
     }
 
-    $whDates = " and DATE(i.Invoice_Date) < DATE('".$filter->getQueryEnd()."') and DATE(i.Invoice_Date) >= DATE('".$filter->getReportStart()."') ";
+    $whDates = " and i.Invoice_Date < '".$filter->getQueryEnd()."' and i.Invoice_Date >= '".$filter->getReportStart()."' ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));

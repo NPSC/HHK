@@ -98,20 +98,20 @@ class VisitIntervalOldRpt {
 
 FROM stays s JOIN name n ON s.idName = n.idName
 
-WHERE  IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
-        AND DATE(s.Span_Start_Date) < DATE('$end')
+WHERE  IFNULL(n.BirthDate, '1901-01-01') < DATE_SUB(s.Checkin_Date, INTERVAL $ageYears YEAR)
+        AND s.Span_Start_Date < '$end'
         AND s.idVisit IN (SELECT
             idVisit
         FROM
             visit
         WHERE
             `Status` NOT IN ('p' , 'c')
-                AND DATE(Arrival_Date) < DATE('$end')
-                AND DATE(IFNULL(Span_End,
+                AND Arrival_Date < '$end'
+                AND IFNULL(Span_End,
                         CASE
                             WHEN NOW() > Expected_Departure THEN NOW()
                             ELSE Expected_Departure
-                        END)) >= DATE('$start'))
+                        END) >= '$start')
 GROUP BY s.idVisit , s.Visit_Span
 ORDER BY s.idVisit , s.Visit_Span");
 
@@ -173,7 +173,7 @@ ORDER BY s.idVisit , s.Visit_Span");
         from resource r
         left join resource_room rr on r.idResource = rr.idResource
         left join room rm on rr.idRoom = rm.idRoom
-        where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "') and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')
+        where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "') and (r.Retired_At is null or r.Retired_At >= DATE_ADD('" . $stDT->format('Y-m-d') . "', INTERVAL 1 DAY))
         order by r.idResource;";
 
         $rstmt = $dbh->query($qu);
@@ -459,19 +459,19 @@ from
         left join
     name_address napg on n.idName = napg.idName and n.Preferred_Mail_Address = napg.Purpose
 where
-    DATE(v.Span_Start) < DATE('$end')
+    v.Span_Start < '$end'
     and v.idVisit in (select
         idVisit
         from
             visit
         where
             `Status` not in ('p', 'c')
-                and DATE(Arrival_Date) < DATE('$end')
-                and DATE(ifnull(Span_End,
+                and Arrival_Date < '$end'
+                and ifnull(Span_End,
                     case
                         when now() > Expected_Departure then now()
                         else Expected_Departure
-                end)) >= DATE('$start')) ";
+                end) >= '$start')) ";
 
     }
 

@@ -529,7 +529,7 @@ if ($psg->getIdPsg() > 0) {
     if ($registration->getIdRegistration() > 0) {
 
         $query = "select * from vspan_listing where "
-                . "(Actual_Span_Nights > 0 or `Status` = '". VisitStatus::CheckedIn . "' or DATE(Arrival_Date) = DATE(now()))"
+                . "(Actual_Span_Nights > 0 or `Status` = '". VisitStatus::CheckedIn . "' or (Arrival_Date >= CURDATE() and Arrival_Date < DATE_ADD(CURDATE(), INTERVAL 1 DAY)))"
                 . " and idRegistration = " . $registration->getIdRegistration() . " order by Span_Start DESC;";
         $stmt = $dbh->query($query);
         $visitRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);

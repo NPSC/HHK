@@ -94,7 +94,7 @@ order by v.`Span`;");
             SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date),
             DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
         FROM stays s JOIN name n ON s.idName = n.idName
-        WHERE IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR)) AND s.idVisit = $idVisit
+        WHERE IFNULL(n.BirthDate, '1901-01-01') < DATE_SUB(s.Checkin_Date, INTERVAL $ageYears YEAR) AND s.idVisit = $idVisit
         GROUP BY s.Visit_Span");
 
 
@@ -142,7 +142,7 @@ order by v.`Span`;");
     SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
 FROM stays s JOIN name n ON s.idName = n.idName
     JOIN visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-WHERE v.idRegistration = $idRegistration AND IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
+WHERE v.idRegistration = $idRegistration AND IFNULL(n.BirthDate, '1901-01-01') < DATE_SUB(s.Checkin_Date, INTERVAL $ageYears YEAR)
 GROUP BY s.idVisit, s.Visit_Span");
 
 

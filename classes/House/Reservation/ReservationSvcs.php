@@ -60,19 +60,19 @@ class ReservationSvcs
 
         if ($idPsg > 0 && $id > 0) {
             // look for both
-            $stmt = $dbh->query("select * from vfind_guests " . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests " . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and " . "Arrival_Date < '" . $endDT->format('Y-m-d') . "' and Departure_Date >= DATE_ADD('" . $startDT->format('Y-m-d') . "', INTERVAL 1 DAY)");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } else if ($idPsg > 0) {
 
-            $stmt = $dbh->query("select * from vfind_guests where idPsg = $idPsg and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests where idPsg = $idPsg and idReservation != $idResv and " . "Arrival_Date < '" . $endDT->format('Y-m-d') . "' and Departure_Date >= DATE_ADD('" . $startDT->format('Y-m-d') . "', INTERVAL 1 DAY)");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } else if ($id > 0) {
 
             // EKC 9/15/2023; changed all three to vfind_guests from vresv_guests.
             //$stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
-            $stmt = $dbh->query("select * from vfind_guests where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vfind_guests where idGuest= $id and idReservation != $idResv and " . "Arrival_Date < '" . $endDT->format('Y-m-d') . "' and Departure_Date >= DATE_ADD('" . $startDT->format('Y-m-d') . "', INTERVAL 1 DAY)");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }

@@ -396,19 +396,19 @@ from
         left join
     name_address na on ifnull(hs.idPatient, 0) = na.idName and np.Preferred_Mail_Address = na.Purpose
 where
-    DATE(v.Span_Start) < DATE('" . $this->filter->getReportEnd() . "')
+    v.Span_Start < '" . $this->filter->getReportEnd() . "'
     and v.idVisit in (select
         idVisit
         from
             visit
         where
             `Status` not in ('p', 'c')
-                and DATE(Arrival_Date) < DATE('" . $this->filter->getReportEnd() . "')
-                and DATE(ifnull(Span_End,
+                and Arrival_Date < '" . $this->filter->getReportEnd() . "')
+                and ifnull(Span_End,
                     case
                         when now() > Expected_Departure then now()
                         else Expected_Departure
-                end)) >= DATE('" . $this->filter->getReportStart() . "')) "
+                end) >= '" . $this->filter->getReportStart() . "')) "
             . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
 
         $this->query = $query;
@@ -873,13 +873,13 @@ where
 
     FROM stays s JOIN name n ON s.idName = n.idName
 
-    WHERE  IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
-        AND DATE(s.Span_Start_Date) < DATE('$end')
-        and DATE(ifnull(s.Span_End_Date,
+    WHERE  IFNULL(n.BirthDate, '1901-01-01') < DATE_SUB(s.Checkin_Date, INTERVAL $ageYears YEAR)
+        AND s.Span_Start_Date < '$end'
+        and ifnull(s.Span_End_Date,
         case
         when now() > s.Expected_Co_Date then now()
         else s.Expected_Co_Date
-        end)) >= DATE('$start')
+        end) >= '$start'
     GROUP BY s.idVisit, s.Visit_Span");
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {

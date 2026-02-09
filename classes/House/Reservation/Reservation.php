@@ -1112,9 +1112,9 @@ FROM
         JOIN
     registration r ON v.idRegistration = r.idRegistration
 WHERE
-    DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
-    and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
-    and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
+    DATEDIFF(s.Span_Start_Date, ifnull(s.Span_End_Date, '2500-01-01')) != 0
+    and ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)) >= DATE_ADD('" . $arrivalDT->format('Y-m-d') . "', INTERVAL 1 DAY)
+    and s.Span_Start_Date < '" . $departureDT->format('Y-m-d') . "'
     and s.idName in (" . substr($whStays, 1) . ") "
                     . " order by s.idVisit, s.Visit_Span");
 

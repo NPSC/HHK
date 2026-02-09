@@ -491,12 +491,12 @@ class NeonManager extends AbstractExportManager {
         try {
             if ($startStr != '') {
                 $startDT = new \DateTimeImmutable($startStr);
-                $whereClause = " and DATE(`date`) >= DATE('" . $startDT->format('Y-m-d') . "') ";
+                $whereClause = " and `date` >= '" . $startDT->format('Y-m-d') . "' ";
             }
 
             if ($endStr != '') {
                 $endDT = new \DateTimeImmutable($endStr);
-                $whereClause .= " and DATE(`date`) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+                $whereClause .= " and `date` < DATE_ADD('" . $endDT->format('Y-m-d') . "', INTERVAL 1 DAY) ";
             }
         } catch(\Exception $e) {
             return [['Donation Result' => 'Start or End date is malformed.  ' . $e->getMessage()]];
@@ -754,7 +754,7 @@ WHERE
     AND n.External_Id != '" . self::EXCLUDE_TERM . "'
     AND n.Member_Status = '" . MemStatus::Active ."'
     AND s.Span_End_Date is not NULL
-    AND datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) > 0
+    AND datediff(`s`.`Span_End_Date`, `s`.`Span_Start_Date`) > 0
     AND hs.idPsg = $idPsg
 ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
@@ -2199,4 +2199,3 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return self::LOG_SERVICE_NAME;
     }
 }
-

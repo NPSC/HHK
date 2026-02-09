@@ -60,7 +60,7 @@ function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, ReportFi
 from hospital_stay hs left join `name` n  ON hs.$Id = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
 where rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
- . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."')  $whClause
+ . " and ifnull(rv.Actual_Departure, rv.Expected_Departure) >= '".$filter->getReportStart()."' and ifnull(rv.Actual_Arrival, rv.Expected_Arrival) < '".$filter->getQueryEnd()."'  $whClause
 group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
         $stmt = $dbh->query($query);
@@ -218,7 +218,7 @@ from hospital_stay hs left join `name` n on hs.idPatient = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
 left join hospital h on h.idHospital = hs.idHospital
 where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
- . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."') $whClause";
+ . " and ifnull(rv.Actual_Departure, rv.Expected_Departure) >= '".$filter->getReportStart()."' and ifnull(rv.Actual_Arrival, rv.Expected_Arrival) < '".$filter->getQueryEnd()."' $whClause";
 
     $stmt = $dbh->query($query);
 

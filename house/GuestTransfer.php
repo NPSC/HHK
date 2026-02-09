@@ -135,7 +135,7 @@ where
 function getPaymentReport(\PDO $dbh, $start, $end) {
 
     $uS = Session::getInstance();
-    $whereClause = " DATE(`Payment Date`) >= DATE('$start') and DATE(`Payment Date`) <= DATE('$end') ";
+    $whereClause = " `Payment Date` >= '$start' and `Payment Date` < DATE_ADD('$end', INTERVAL 1 DAY) ";
 
     if (isset($uS->sId) && $uS->sId > 0) {
         $whereClause .= " and `HHK Id` != " . $uS->sId;
@@ -230,8 +230,8 @@ WHERE
     AND s.`Recorded` = 0
     AND n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
     AND n.Member_Status = '" . MemStatus::Active ."'
-    AND DATE(s.Span_End_Date) < DATE('$end')
-    AND datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) > 0
+    AND s.Span_End_Date < '$end'
+    AND datediff(`s`.`Span_End_Date`, `s`.`Span_Start_Date`) > 0
 ORDER BY hs.idPsg
 LIMIT 500");
 
@@ -445,7 +445,7 @@ function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
     $rows = [];
 
     $query = "SELECT * FROM `vguest_transfer`
-    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE('$start') and DATE(`Arrival`) < DATE('$end')
+    WHERE ifnull(`Departure`, now()) >= '$start' and `Arrival` < '$end'
     GROUP BY `HHK ID` ORDER BY `PSG Id`";
 
     $stmt = $dbh->query($query);

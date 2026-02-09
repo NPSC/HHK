@@ -59,7 +59,7 @@ function todData(\PDO $dbh) {
             COUNT(HOUR(v.Arrival_Date)) as `Number`
         FROM
             visit v
-        WHERE DATE(v.Arrival_Date) > DATE('$since') and v.Actual_Departure is not null
+        WHERE v.Arrival_Date >= DATE_ADD('$since', INTERVAL 1 DAY) and v.Actual_Departure is not null
         GROUP BY HOUR(v.Arrival_Date)
         ORDER BY HOUR(v.Arrival_Date)");
 
@@ -73,7 +73,7 @@ function todData(\PDO $dbh) {
             COUNT(HOUR(v.Actual_Departure)) as `Number`
         FROM
             visit v
-        WHERE DATE(v.Actual_Departure) > DATE('$since') and v.Actual_Departure is not null
+        WHERE v.Actual_Departure >= DATE_ADD('$since', INTERVAL 1 DAY) and v.Actual_Departure is not null
         GROUP BY HOUR(v.Actual_Departure)
         ORDER BY HOUR(v.Actual_Departure)");
 
@@ -162,7 +162,7 @@ function vlData(\PDO $dbh)
             count(v.idVisit)
         FROM
             visit v
-        WHERE DATE(v.Arrival_Date) > DATE('$since') and v.Actual_Departure is not null
+        WHERE v.Arrival_Date >= DATE_ADD('$since', INTERVAL 1 DAY) and v.Actual_Departure is not null
         group by Visit_Age;"
     );
 

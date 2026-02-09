@@ -518,7 +518,7 @@ class GlStmt {
 
 		$qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, rm.Rate_Code, IFNULL(rate.Reduced_Rate_1, 0.0) as 'Flat_Rate', ifnull(g.Substitute, '0') as `Static_Rate`, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
         from resource r left join
-resource_use ru on r.idResource = ru.idResource and DATE(ru.Start_Date) < DATE('" . $enDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $stDT->format('Y-m-d') . "')
+resource_use ru on r.idResource = ru.idResource and ru.Start_Date < '" . $enDT->format('Y-m-d') . "' and ru.End_Date >= DATE_ADD('" . $stDT->format('Y-m-d') . "', INTERVAL 1 DAY)
 left join resource_room rr on r.idResource = rr.idResource
 left join room rm on rr.idRoom = rm.idRoom
 left join room_rate rate on rate.FA_Category = 'e' and rate.Status = 'a'
@@ -696,4 +696,3 @@ order by r.idResource;";
 	}
 
 }
-

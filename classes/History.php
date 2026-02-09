@@ -208,7 +208,7 @@ class History {
                 $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $endDT->add(new \DateInterval('P' . $days . 'D'));
 
-                $whDate = " and DATE(Expected_Arrival) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Expected_Arrival) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+                $whDate = " and Expected_Arrival >= '" . $startDT->format('Y-m-d') . "' and Expected_Arrival < DATE_ADD('" . $endDT->format('Y-m-d') . "', INTERVAL 1 DAY) ";
 
             } catch (\Exception $ex) {
                 $whDate = '';
@@ -246,7 +246,7 @@ class History {
                 $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $endDT->add(new \DateInterval('P' . $days . 'D'));
 
-                $whDate = " and DATE(Expected_Arrival) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Expected_Arrival) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+                $whDate = " and Expected_Arrival >= '" . $startDT->format('Y-m-d') . "' and Expected_Arrival < DATE_ADD('" . $endDT->format('Y-m-d') . "', INTERVAL 1 DAY) ";
 
             } catch (\Exception $ex) {
                 $whDate = '';

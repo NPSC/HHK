@@ -84,7 +84,7 @@ class PaymentReport {
         }
 
 
-        $whDates = " and DATE(lp.Payment_Date) <= DATE('$end') and DATE(lp.Payment_Date) >= DATE('$start') ";
+        $whDates = " and lp.Payment_Date <= '$end' and lp.Payment_Date >= '$start' ";
 
 
         $whStatus = '';

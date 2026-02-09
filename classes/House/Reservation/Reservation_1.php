@@ -897,7 +897,7 @@ class Reservation_1 {
         // Get the list of available resources
         $stmtr = $dbh->query("select rc.*, sum(r.Max_Occupants) as `Max_Occupants`
 from resource rc join resource_room rr on rc.idResource = rr.idResource left join `room` r on r.idRoom = rr.idRoom
-where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $expectedDepartureDT->format("Y-m-d") . "') group by rc.idResource having `Max_Occupants` >= $numOccupants order by rc.Util_Priority;");
+where $typeList and (rc.`Retired_At` is null or rc.`Retired_At` >= DATE_ADD('" . $expectedDepartureDT->format("Y-m-d") . "', INTERVAL 1 DAY)) group by rc.idResource having `Max_Occupants` >= $numOccupants order by rc.Util_Priority;");
 
         $rescRows = array();
 
@@ -940,8 +940,8 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         //
         $query = "select r.idReservation from reservation r "
-                . "where r.idResource = $idResource and r.Status in ($statuses) and DATE(ifnull(r.Actual_Arrival, r.Expected_Arrival)) <= DATE('$dep') "
-                . "and DATE(ifnull(r.Actual_Departure, r.Expected_Departure)) > DATE('$arr')";
+                . "where r.idResource = $idResource and r.Status in ($statuses) and ifnull(r.Actual_Arrival, r.Expected_Arrival) < DATE_ADD('$dep', INTERVAL 1 DAY) "
+                . "and ifnull(r.Actual_Departure, r.Expected_Departure) >= DATE_ADD('$arr', INTERVAL 1 DAY)";
         $stmt = $dbh->query($query);
 
 
@@ -984,18 +984,18 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
         if (!$uS->IncludeLastDay) {
 
             $query = "select r.idResource "
-                . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
-    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
-    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
-    ifnull(AddDate(DATE(v.Span_End), -1), case when DATE(now()) >= DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) >= DATE('$arr')";
+                . "from reservation r where r.Status in ($stat) $omitTxt and r.Expected_Arrival < '$dep' and r.Expected_Departure >= DATE_ADD('$arr', INTERVAL 1 DAY)
+    union select ru.idResource from resource_use ru where ru.Start_Date < '$dep' and ifnull(ru.End_Date, now()) >= DATE_ADD('$arr', INTERVAL 1 DAY)
+    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit and (case when v.Status != 'a' then DATEDIFF(v.Span_End, v.Span_Start) <> 0 else 1=1 end) and v.Arrival_Date < '$dep' and
+    ifnull(DATE_SUB(v.Span_End, INTERVAL 1 DAY), case when now() >= v.Expected_Departure then DATE_ADD(CURDATE(), INTERVAL 1 DAY) else v.Expected_Departure end) >= '$arr'";
 
         } else {
 
             $query = "select r.idResource "
-                . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
-    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
-    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit  and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
-    ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE('$arr')";
+                . "from reservation r where r.Status in ($stat) $omitTxt and r.Expected_Arrival < '$dep' and r.Expected_Departure >= DATE_ADD('$arr', INTERVAL 1 DAY)
+    union select ru.idResource from resource_use ru where ru.Start_Date < '$dep' and ifnull(ru.End_Date, now()) >= DATE_ADD('$arr', INTERVAL 1 DAY)
+    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit  and (case when v.Status != 'a' then DATEDIFF(v.Span_End, v.Span_Start) <> 0 else 1=1 end) and v.Arrival_Date < '$dep' and
+    ifnull(v.Span_End, case when now() > v.Expected_Departure then DATE_ADD(CURDATE(), INTERVAL 1 DAY) else v.Expected_Departure end) >= DATE_ADD('$arr', INTERVAL 1 DAY)";
         }
 
         $stmt = $dbh->query($query);
@@ -1167,12 +1167,12 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         if (is_null($idResc) === FALSE) {
 
-            $stmt = $dbh->prepare("select * from vresv_patient where ifnull(DATE(Actual_Arrival), DATE(`Expected_Arrival`)) <= DATE(:dte) and Status = '$reservStatus'  and idResource = :idr order by `Expected_Arrival`");
+            $stmt = $dbh->prepare("select * from vresv_patient where ifnull(Actual_Arrival, `Expected_Arrival`) < DATE_ADD(:dte, INTERVAL 1 DAY) and Status = '$reservStatus'  and idResource = :idr order by `Expected_Arrival`");
             $stmt->execute(array(':idr'=>$idResc, ':dte'=>$dateAhead->format('Y-m-d')));
 
         } else {
 
-            $stmt = $dbh->prepare("select * from vresv_patient where ifnull(DATE(Actual_Arrival), DATE(`Expected_Arrival`)) <= DATE(:dte) and Status = '$reservStatus' order by `Expected_Arrival`");
+            $stmt = $dbh->prepare("select * from vresv_patient where ifnull(Actual_Arrival, `Expected_Arrival`) < DATE_ADD(:dte, INTERVAL 1 DAY) and Status = '$reservStatus' order by `Expected_Arrival`");
             $stmt->execute(array(':dte'=>$dateAhead->format('Y-m-d')));
         }
 

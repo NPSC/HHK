@@ -261,11 +261,11 @@ FROM
 WHERE
     n.Member_Status != 'TBD'
         AND n.Record_Member = 1
-        AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
+        AND ((s.Span_Start_Date IS NULL) <> (s.Span_End_Date IS NULL) OR (s.Span_Start_Date IS NOT NULL AND s.Span_End_Date IS NOT NULL AND DATEDIFF(s.Span_Start_Date, s.Span_End_Date) <> 0))
         $whereStr
 GROUP BY s.idName
-HAVING DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')
-    AND DATE(`First Stay`) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
+HAVING `First Stay` >= '" . $this->getStartDT()->format('Y-m-d') . "'
+    AND `First Stay` < '" . $this->getEndDT()->format('Y-m-d') . "'
 ORDER BY `First Stay`";
 
     }
@@ -295,9 +295,9 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
-                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
-                AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
-                AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
+                AND ((s.Span_Start_Date IS NULL) <> (s.Span_End_Date IS NULL) OR (s.Span_Start_Date IS NOT NULL AND s.Span_End_Date IS NOT NULL AND DATEDIFF(s.Span_Start_Date, s.Span_End_Date) <> 0))
+                AND s.Span_Start_Date < '" . $this->getEndDT()->format('Y-m-d') . "'
+                AND s.Span_Start_Date >= '" . $this->getStartDT()->format('Y-m-d') . "')";
 
             	if (count($this->newGuestIds) > 0) {
             	    $query .= "AND s.idName not in (" . implode(',', $this->newGuestIds) . ")";
@@ -334,9 +334,9 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
-                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
-                AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
-                AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
+                AND ((s.Span_Start_Date IS NULL) <> (s.Span_End_Date IS NULL) OR (s.Span_Start_Date IS NOT NULL AND s.Span_End_Date IS NOT NULL AND DATEDIFF(s.Span_Start_Date, s.Span_End_Date) <> 0))
+                AND s.Span_Start_Date < '" . $this->getEndDT()->format('Y-m-d') . "'
+                AND s.Span_Start_Date >= '" . $this->getStartDT()->format('Y-m-d') . "')";
 
             	if (count($this->newPSGIds) > 0) {
             	    $query .= "AND IFNULL(hs.idPsg, 0) not in (" . implode(',', $this->newPSGIds) . ")";
@@ -374,9 +374,9 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
-                AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
+                AND ((s.Span_Start_Date IS NULL) <> (s.Span_End_Date IS NULL) OR (s.Span_Start_Date IS NOT NULL AND s.Span_End_Date IS NOT NULL AND DATEDIFF(s.Span_Start_Date, s.Span_End_Date) <> 0))
             GROUP BY hs.idPsg
-                HAVING  DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "') AND DATE(`First Stay`) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
+                HAVING  `First Stay` >= '" . $this->getStartDT()->format('Y-m-d') . "' AND `First Stay` < '" . $this->getEndDT()->format('Y-m-d') . "'
             ORDER BY `First Stay`;";
 
 
@@ -466,4 +466,3 @@ ORDER BY `First Stay`";
 
 
 }
-

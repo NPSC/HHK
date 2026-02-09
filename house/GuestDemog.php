@@ -49,7 +49,7 @@ if(filter_has_var(INPUT_POST, 'btnHere')){
     if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
         $start = $filter->getReportStart();
         $end = $filter->getQueryEnd();
-        $whStayed = "and idName in (select idName from stays where Span_Start_Date < DATE('$end') and DATE(ifnull(Span_End_Date, now())) >= DATE('$start'))";
+        $whStayed = "and idName in (select idName from stays where Span_Start_Date < '$end' and ifnull(Span_End_Date, now()) >= '$start')";
     }
 }
 

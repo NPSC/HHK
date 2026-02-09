@@ -1676,7 +1676,7 @@ CREATE OR REPLACE VIEW `vguest_resv_view` AS
         LEFT JOIN `gen_lookups` `g` ON (`g`.`Table_Name` = 'Name_Suffix'
             AND `g`.`Code` = `n`.`Name_Suffix`))
     WHERE
-        `r`.`Status` = 'a' and date(`r`.`Expected_Arrival`) <= date(CURRENT_TIMESTAMP) and date(`r`.`Expected_Departure`) > date(CURRENT_TIMESTAMP)
+        `r`.`Status` = 'a' and `r`.`Expected_Arrival` < DATE_ADD(CURDATE(), INTERVAL 1 DAY) and `r`.`Expected_Departure` >= DATE_ADD(CURDATE(), INTERVAL 1 DAY)
     GROUP BY `rg`.`idReservation`, `rg`.`idGuest`;
 
 -- -----------------------------------------------------
@@ -2043,7 +2043,7 @@ CREATE OR REPLACE VIEW `vlist_first_visit` AS
 select v.* from visit v
 join registration reg on v.idRegistration = reg.idRegistration
 
-where v.Status in ("a", "co") and v.Arrival_Date = (select min(vv.Arrival_Date) from visit vv join registration reg2 on vv.idRegistration = reg2.idRegistration where reg.idPsg = reg2.idPsg and not date(vv.Arrival_Date) <=> date(vv.Actual_Departure));
+where v.Status in ("a", "co") and v.Arrival_Date = (select min(vv.Arrival_Date) from visit vv join registration reg2 on vv.idRegistration = reg2.idRegistration where reg.idPsg = reg2.idPsg and ((vv.Arrival_Date IS NULL) <> (vv.Actual_Departure IS NULL) OR (vv.Arrival_Date IS NOT NULL AND vv.Actual_Departure IS NOT NULL AND DATEDIFF(vv.Arrival_Date, vv.Actual_Departure) <> 0)));
 
 
 -- -----------------------------------------------------

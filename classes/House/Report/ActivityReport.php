@@ -31,7 +31,7 @@ class ActivityReport {
         if ($idPsg > 0) {
             $stmt = $dbh->query("select * from vstays_log sl where sl.idName in (select idName from name_guest where idPsg = $idPsg);");
         } else {
-            $query = "select * from vstays_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
+            $query = "select * from vstays_log where (Timestamp >= :start and Timestamp < DATE_ADD(:end, INTERVAL 1 DAY));";
 
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
@@ -164,7 +164,7 @@ class ActivityReport {
 
         } else {
 
-            $query = "select * from vreservation_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
+            $query = "select * from vreservation_log where (Timestamp >= :start and Timestamp < DATE_ADD(:end, INTERVAL 1 DAY));";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
         }
@@ -264,7 +264,7 @@ class ActivityReport {
 
         } else if ($startDate != '' && $endDate != '') {
 
-            $query = "select * from vhospitalstay_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end) order by idPsg, Timestamp;";
+            $query = "select * from vhospitalstay_log where (Timestamp >= :start and Timestamp < DATE_ADD(:end, INTERVAL 1 DAY)) order by idPsg, Timestamp;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
 
@@ -496,11 +496,11 @@ class ActivityReport {
 
         // Dates
         if ($startDT != NULL) {
-            $whDates .= " and (CASE WHEN lp.Payment_Last_Updated = '' THEN DATE(lp.Payment_Date) ELSE DATE(lp.Payment_Last_Updated) END) >= DATE('" . $startDT->format('Y-m-d') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Last_Updated = '' THEN lp.Payment_Date ELSE lp.Payment_Last_Updated END) >= '" . $startDT->format('Y-m-d') . "' ";
         }
 
         if ($endDT != NULL) {
-            $whDates .= " and (CASE WHEN lp.Payment_Last_Updated = '' THEN DATE(lp.Payment_Date) ELSE DATE(lp.Payment_Last_Updated) END) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Last_Updated = '' THEN lp.Payment_Date ELSE lp.Payment_Last_Updated END) < DATE_ADD('" . $endDT->format('Y-m-d') . "', INTERVAL 1 DAY) ";
         }
 
         // Set up status totals array

@@ -381,9 +381,9 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
         $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
 
         if ($useVisitDates) {
-            $whDates = " and DATE(v.Arrival_Date) < DATE('".$filter->getQueryEnd()."') and ifnull(DATE(v.Actual_Departure), DATE(v.Expected_Departure)) >= DATE('".$filter->getReportStart()."') ";
+            $whDates = " and v.Arrival_Date < '".$filter->getQueryEnd()."' and ifnull(v.Actual_Departure, v.Expected_Departure) >= '".$filter->getReportStart()."' ";
         } else {
-            $whDates = " and DATE(`i`.`Invoice_Date`) < DATE('".$filter->getQueryEnd()."') and DATE(`i`.`Invoice_Date`) >= DATE('".$filter->getReportStart()."') ";
+            $whDates = " and `i`.`Invoice_Date` < '".$filter->getQueryEnd()."' and `i`.`Invoice_Date` >= '".$filter->getReportStart()."' ";
         }
 
 

@@ -139,7 +139,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
                     WHERE
                         n.Member_Status != 'd'
                             AND v.`Status` = 'a'
-                            and DateDiff(DATE(NOW()), DATE(v.Arrival_Date)) = :delayDays
+                            and DATEDIFF(CURDATE(), v.Arrival_Date) = :delayDays
                     GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
                     break;
 
@@ -169,8 +169,8 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
                     WHERE
                         n.Member_Status != 'd'
                             AND v.`Status` = 'co'
-                            AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date) and
-                            DateDiff(DATE(NOW()), DATE(v.Actual_Departure)) = :delayDays
+                            AND DATEDIFF(s.Checkout_Date, s.Checkin_Date) > 0 and
+                            DATEDIFF(CURDATE(), v.Actual_Departure) = :delayDays
                     GROUP BY v.idPrimaryGuest;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
                     break;
@@ -201,7 +201,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
                     WHERE
                         n.Member_Status != 'd'
                             AND v.`Status` in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::ChangeRate . "', '" . VisitStatus::NewSpan . "', '" . VisitStatus::OnLeave . "') AND
-                            DateDiff(DATE(NOW()), DATE(v.Expected_Departure)) = :delayDays
+                            DATEDIFF(CURDATE(), v.Expected_Departure) = :delayDays
                     GROUP BY v.idPrimaryGuest;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
                     break;

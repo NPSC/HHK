@@ -47,7 +47,7 @@ class OperatingHours {
         if($date >= $startDate){ //if date falls within current hours
             return ($this->currentHours[$dow]["Closed"] == 1);
         }else{ //find active hours of $date
-            $stmt = $this->dbh->prepare("select * from operating_schedules where Day = :dow and DATE(Start_Date) <= DATE(:sdate) and DATE(End_Date) >= DATE(:edate) order by idDay desc limit 1");
+            $stmt = $this->dbh->prepare("select * from operating_schedules where Day = :dow and Start_Date < DATE_ADD(:sdate, INTERVAL 1 DAY) and End_Date >= :edate order by idDay desc limit 1");
             $stmt->execute([
                 ":dow"=>$dow,
                 ":sdate"=> $date->format('Y-m-d'),
@@ -93,7 +93,7 @@ class OperatingHours {
         if($date >= $startDate){ //if date falls within current hours
             return ($this->currentHours[$dow]["Non_Cleaning"] == 1);
         }else{ //find active hours of $date
-            $stmt = $this->dbh->prepare("select * from operating_schedules where Day = :dow and DATE(Start_Date) <= DATE(:sdate) and DATE(End_Date) >= DATE(:edate) order by idDay desc limit 1");
+            $stmt = $this->dbh->prepare("select * from operating_schedules where Day = :dow and Start_Date < DATE_ADD(:sdate, INTERVAL 1 DAY) and End_Date >= :edate order by idDay desc limit 1");
             $stmt->execute([
                 ":dow"=>$dow,
                 ":sdate"=> $date->format('Y-m-d'),

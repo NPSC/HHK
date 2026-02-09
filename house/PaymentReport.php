@@ -190,7 +190,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $filter->loadSelectedPayTypes();
     $filter->loadSelectedPaymentGateways();
 
-    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('" . $filter->getQueryEnd() . "') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $filter->getReportStart() . "') ";
+    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN lp.Payment_Last_Updated ELSE lp.Payment_Date END) < '" . $filter->getQueryEnd() . "' and (CASE WHEN lp.Payment_Status = 'r' THEN lp.Payment_Last_Updated ELSE lp.Payment_Date END) >= '" . $filter->getReportStart() . "' ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));

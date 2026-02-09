@@ -107,7 +107,7 @@ if (filter_has_var(INPUT_POST, 'btnGo')) {
     }
 
 
-    $stmt = $dbh->prepare("select * from `gateway_transaction` where DATE(`Timestamp`) = DATE(:sdate) $whereClause");
+    $stmt = $dbh->prepare("select * from `gateway_transaction` where `Timestamp` >= :sdate and `Timestamp` < DATE_ADD(:sdate, INTERVAL 1 DAY) $whereClause");
     $stmt->execute($selectParams);
 
     $records = $stmt->rowCount();

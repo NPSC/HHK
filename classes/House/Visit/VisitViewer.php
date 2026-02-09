@@ -1487,14 +1487,14 @@ where `Deleted` = 0 and `Status` = 'up'
 
             // Check room availability.
             $query = "select v.idResource from vregister v where v.Visit_Status <> :vstat and v.idVisit != :visit and v.idResource = :idr and
-        DATE(v.Span_Start) < :endDate
-        AND DATEDIFF(IFNULL(DATE(v.Span_End),
+        v.Span_Start < :endDate
+        AND DATEDIFF(IFNULL(v.Span_End,
             CASE
-                WHEN NOW() > DATE(v.Expected_Departure) THEN ADDDATE(NOW(), 1)
-                ELSE DATE(v.Expected_Departure)
+                WHEN NOW() > v.Expected_Departure THEN ADDDATE(NOW(), 1)
+                ELSE v.Expected_Departure
             END),
             v.Span_Start) != 0 and
-        ifnull(DATE(v.Span_End), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
+        ifnull(v.Span_End, case when now() > v.Expected_Departure then AddDate(now(), 1) else v.Expected_Departure end) >= DATE_ADD(:beginDate, INTERVAL 1 DAY)";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':beginDate'=>$spanStartDT->format('Y-m-d'),

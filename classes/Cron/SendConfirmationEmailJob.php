@@ -149,8 +149,8 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
             WHERE
                 n.Member_Status != 'd'
                     AND r.`Status` = :resvStatus
-                    AND DATE(r.Expected_Arrival) < DATE(r.Expected_Departure) and
-                    DateDiff(DATE(r.Expected_Arrival), DATE(NOW())) = :delayDays
+                    AND DATEDIFF(r.Expected_Departure, r.Expected_Arrival) > 0 and
+                    DATEDIFF(r.Expected_Arrival, CURDATE()) = :delayDays
             GROUP BY r.idReservation;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
         $stmt->execute($paramList);

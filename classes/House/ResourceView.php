@@ -390,11 +390,11 @@ FROM
     reservation r
 WHERE
 case WHEN r.`Status` = '" . ReservationStatus::Staying . "' THEN
-		DATE(r.Actual_Arrival) < DATE(:rsend)
-                AND DATE(datedefaultnow(r.Expected_Departure)) > DATE(:dtstart)
+		r.Actual_Arrival < :rsend
+                AND datedefaultnow(r.Expected_Departure) >= DATE_ADD(:dtstart, INTERVAL 1 DAY)
 	WHEN r.`Status` = '" . ReservationStatus::Checkedout . "' THEN
-        DATE(r.Actual_Arrival) < DATE(:dtend)
-        AND DATE(r.Actual_Departure) > DATE(:start)
+        r.Actual_Arrival < :dtend
+        AND r.Actual_Departure >= DATE_ADD(:start, INTERVAL 1 DAY)
         AND DATEDIFF(r.Actual_Departure, r.Actual_Arrival) > 0
 	ELSE 1=2
 END
@@ -404,15 +404,15 @@ SELECT
 FROM resource resc
 WHERE
     resc.Retired_At is not null
-    AND DATE(resc.Retired_At) <= DATE(:retend)
+    AND resc.Retired_At < DATE_ADD(:retend, INTERVAL 1 DAY)
 UNION
 SELECT
     ru.idResource
 FROM resource_use ru
 WHERE
     ru.idResource_use != :idRu
-    AND DATE(ru.Start_Date) < DATE(:ruend)
-    AND ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)";
+    AND ru.Start_Date < :ruend
+    AND ifnull(ru.End_Date, now()) >= DATE_ADD(:rustart, INTERVAL 1 DAY)";
 
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
@@ -1086,7 +1086,7 @@ from
         left join
     visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
         left join
-        (select reservation.*, ROW_NUMBER() OVER (PARTITION BY idResource ORDER BY Expected_Arrival) AS rn FROM reservation where date(Expected_Arrival) >= date(NOW()) and `Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "'))
+        (select reservation.*, ROW_NUMBER() OVER (PARTITION BY idResource ORDER BY Expected_Arrival) AS rn FROM reservation where Expected_Arrival >= CURDATE() and `Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "'))
         res ON rr.idResource = res.idResource && res.rn = 1
         left join
     name n ON v.idPrimaryGuest = n.idName
@@ -1097,12 +1097,12 @@ from
         left join
     gen_lookups g3 on g3.Table_Name = 'Room_Cleaning_Days' and g3.`Code` = r.Cleaning_Cycle_Code
         left join
-    resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
+    resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and ru.Start_Date < DATE_ADD('" . $endDT->format('Y-m-d') . "', INTERVAL 1 DAY) and ru.End_Date >= DATE_ADD('" . $beginDT->format('Y-m-d') . "', INTERVAL 1 DAY)
         left join
     note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
     $genJoin
 where g3.Substitute > 0 and ru.idResource_use is null
-    and (re.Retired_At is null or re.Retired_At > date(now()))
+    and (re.Retired_At is null or re.Retired_At >= DATE_ADD(CURDATE(), INTERVAL 1 DAY))
 group by rr.idResource
 ORDER BY $orderBy;");
 
@@ -1227,7 +1227,7 @@ ORDER BY $orderBy;");
 			from vresv_patient rp
 			left join `name` pg on rp.idGuest = pg.idName
 			where rp.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "') "
-            . "and DATE(`Expected_Arrival`) <= DATE('$endCiDate') order by `Expected_Arrival`;
+            . "and `Expected_Arrival` < DATE_ADD('$endCiDate', INTERVAL 1 DAY) order by `Expected_Arrival`;
         ");
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -1273,7 +1273,7 @@ ORDER BY $orderBy;");
         gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
             left join
         note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
-    where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) between Date('$startCoDate') and Date('$endCoDate');");
+    where ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) >= '$startCoDate' and ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) < DATE_ADD('$endCoDate', INTERVAL 1 DAY);");
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1320,7 +1320,7 @@ ORDER BY $orderBy;");
             name n ON resv.idGuest = n.idName
                 left join
             lookups l on l.Category = 'ReservStatus' and l.Code = resv.`Status`
-        where DATE(resv.Expected_Departure) between Date('$startCoDate') and Date('$endCoDate');");
+        where resv.Expected_Departure >= '$startCoDate' and resv.Expected_Departure < DATE_ADD('$endCoDate', INTERVAL 1 DAY);");
 
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {

@@ -429,12 +429,12 @@ where
 		(select idVisit from visit
         	where
             	`Status` <> 'p'
-				and DATE(Arrival_Date) < DATE('$end')
-				and DATE(ifnull(Span_End,
+				and Arrival_Date < '$end'
+				and ifnull(Span_End,
 					case
 					when now() > Expected_Departure then now()
 					else Expected_Departure
-                	end)) >= DATE('$start')
+                	end) >= '$start'
 		) " .
 		$extraVisitsSQL .
 		" order by v.idVisit, v.Span";

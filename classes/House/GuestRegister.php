@@ -92,7 +92,7 @@ class GuestRegister
     v.idVisit
 from resource r
 	left join
-resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
+resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and ru.Start_Date < DATE_ADD('" . $beginDT->format('Y-m-d') . "', INTERVAL 1 DAY) and ru.End_Date >= '" . $endDT->format('Y-m-d') . "'
     left join resource_room rr on r.idResource = rr.idResource
     left join room rm on rr.idRoom = rm.idRoom
     left join gen_lookups stat on stat.Table_Name = 'Room_Status' and stat.Code = rm.Status
@@ -255,7 +255,7 @@ where ru.idResource_use is null
         /*$query = "select vr.*, s.On_Leave, count(*) as `Guest_Count` from vregister vr left join stays s on `vr`.`idVisit` = `s`.`idVisit`
         AND `vr`.`Span` = `s`.`Visit_Span`
         AND `vr`.`Visit_Status` = `s`.`Status` where vr.Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
-            DATE(vr.Span_Start) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.Span_End), case when DATE(now()) > DATE(vr.Expected_Departure) then DATE(now()) else DATE(vr.Expected_Departure) end) >= DATE('" . $beginDate->format('Y-m-d') . "') group by vr.id;";
+            vr.Span_Start < DATE_ADD('" . $endDate->format('Y-m-d') . "', INTERVAL 1 DAY) and ifnull(vr.Span_End, case when now() > vr.Expected_Departure then now() else vr.Expected_Departure end) >= '" . $beginDate->format('Y-m-d') . "' group by vr.id;";
         */
         $query = "select
   vr.*,
@@ -827,7 +827,7 @@ FROM
         AND g.Code = ru.Status        LEFT JOIN
     gen_lookups gr ON gr.Table_Name = 'OOS_Codes'
         AND gr.Code = ru.OOS_Code
-where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(ru.End_Date), DATE(now())) >= DATE('" . $beginDate->format('Y-m-d') . "');";
+where ru.Start_Date < DATE_ADD('" . $endDate->format('Y-m-d') . "', INTERVAL 1 DAY) and ifnull(ru.End_Date, now()) >= '" . $beginDate->format('Y-m-d') . "';";
 
         $stmtrs = $dbh->query($query1);
 

@@ -56,7 +56,7 @@ class ViewCalendarController
         $returnData["endDate"] = $endDate->format("Y-m-d");
                 
         $query = "select * from vapi_register_resv where ReservationStatusId in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-            . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $startDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
+            . " and ExpectedArrival < DATE_ADD('" . $endDate->format('Y-m-d') . "', INTERVAL 1 DAY) and ExpectedDeparture >= DATE_ADD('" . $startDate->format('Y-m-d') . "', INTERVAL 1 DAY) order by ExpectedArrival asc, ReservationId asc";
 
         $stmt = $dbh->query($query);
         $resvRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -76,7 +76,7 @@ class ViewCalendarController
         $returnData["reservations"] = $resvRows;
 
         $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
-            DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$startDate->format('Y-m-d') . "');";
+            vr.SpanStart < DATE_ADD('" . $endDate->format('Y-m-d') . "', INTERVAL 1 DAY) and ifnull(vr.SpanEnd, case when now() > vr.ExpectedDeparture then now() else vr.ExpectedDeparture end) >= '" .$startDate->format('Y-m-d') . "';";
         $stmtv = $dbh->query($query);
         $visitRows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
                 

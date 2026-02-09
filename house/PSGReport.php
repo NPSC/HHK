@@ -180,7 +180,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     room_rate rr on v.idRoom_rate = rr.idRoom_rate
     	JOIN
     room r on s.idRoom = r.idRoom
-where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
+where  ifnull(s.Span_End_Date, now()) >= '$start' and s.Span_Start_Date < '$end' and DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0 $whClause";
 
     if ($showUnique) {
         $query .= " GROUP BY hs.idPsg, s.idName";
@@ -463,7 +463,7 @@ from
         left join
     gen_lookups g1 on g1.`Table_Name` = 'Location' and g1.`Code` = hs.Location
 
-where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) >= DATE('$start') and DATE(v.Span_Start) < DATE('$end')
+where n.Member_Status != 'TBD' and ifnull(v.Span_End, now()) >= '$start' and v.Span_Start < '$end'
  $whFields
 order by ng.idPsg, `ispat`, `Id`";
 

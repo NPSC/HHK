@@ -214,14 +214,14 @@ class GuestDemogReport {
         room r on rr.idRoom = r.idRoom
     WHERE
         n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc $whDiags $whPatient
-        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0";
+        AND s.Span_Start_Date < '" . $endDT->format('Y-m-d') . "' and DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0";
 
         if ($whichGuests == 'new') {
             $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";
         } else if($whichGuests == 'allStarted'){
-            $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "') and s.Status in ('" . VisitStatus::Active . "','" . VisitStatus::CheckedOut . "')";
+            $query .= " AND s.Span_Start_Date >= '" . $stDT->format('Y-m-01') . "' and s.Status in ('" . VisitStatus::Active . "','" . VisitStatus::CheckedOut . "')";
         } else if($whichGuests == 'allStayed'){
-            $query .= " AND DATE(ifnull(s.Span_End_Date, now())) > DATE('" . $stDT->format('Y-m-01') . "')";
+            $query .= " AND ifnull(s.Span_End_Date, now()) >= DATE_ADD('" . $stDT->format('Y-m-01') . "', INTERVAL 1 DAY)";
         }
         $query .= " ORDER BY s.idName";
 

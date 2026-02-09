@@ -73,8 +73,8 @@ BEGIN
 			`payment` `p`
 			JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
 		where
-            ((DATE(`p`.`Payment_Date`) >= DATE(pmtStart) && DATE(`p`.`Payment_Date`) < DATE(pmtEnd))
-			OR (DATE(`p`.`Last_Updated`) >= DATE(pmtStart) && DATE(`p`.`Last_Updated`) < DATE(pmtEnd)));
+            ((`p`.`Payment_Date`) >= pmtStart && (`p`.`Payment_Date`) < pmtEnd)
+			OR ((`p`.`Last_Updated`) >= pmtStart && (`p`.`Last_Updated`) < pmtEnd);
 
 	insert into idind
 		select idInvoice from invoice where Delegated_Invoice_Id in (select idinvoice from idinp);
@@ -155,7 +155,7 @@ BEGIN
 	    )
 	    as numNites
 	from visit
-	Where `Status` <> 'c' and  DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
+	Where `Status` <> 'c' and  Span_Start < endDate and ifnull(Span_End, NOW()) >= startDate;
 
 END -- ;
 
@@ -186,7 +186,7 @@ BEGIN
 	    )
 	    as numNites
 	from visit
-	Where `Status` <> 'c' and DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
+	Where `Status` <> 'c' and Span_Start < endDate and ifnull(Span_End, NOW()) >= startDate;
 
 END -- ;
 
@@ -299,7 +299,7 @@ BEGIN
         )
         as numNites
 	from stays
-	Where `On_Leave` = 0 and DATE(Span_Start_Date) < DATE(endDate) and DATE(IFNULL(Span_End_Date, NOW())) >= DATE(startDate);
+	Where `On_Leave` = 0 and Span_Start_Date < endDate and IFNULL(Span_End_Date, NOW()) >= startDate;
 
 END -- ;
 
@@ -1241,8 +1241,8 @@ DROP procedure IF EXISTS `delImediateResv`; -- ;
 CREATE PROCEDURE `delImediateResv`()
 BEGIN
 	delete from reservation_guest
-		where idReservation in (Select r.idReservation from reservation r where r.`Status` = 'im' and DATE(r.Expected_Arrival) < DATE(now()));
-	delete from reservation where `Status` = 'im' and DATE(Expected_Arrival) < DATE(now());
+		where idReservation in (Select r.idReservation from reservation r where r.`Status` = 'im' and r.Expected_Arrival < CURDATE());
+	delete from reservation where `Status` = 'im' and Expected_Arrival < CURDATE();
 END -- ;
 
 
