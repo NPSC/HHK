@@ -290,7 +290,7 @@ ifnull((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date
 from stays s
 join name n on s.idName = n.idName
 join name_demog nd on n.idName = nd.idName
-where ifnull(s.Span_End_Date, now()) >= '" . $this->filter->getReportStart() . "' and s.Span_Start_Date < '" . $this->filter->getQueryEnd() . "'
+where ifnull(s.Span_End_Date, now()) >= "' . $this->filter->getReportStart() . '" and s.Span_Start_Date < "' . $this->filter->getQueryEnd() . '"
 group by `child/adult`;';
 
         $stmt = $this->dbh->prepare($query);
