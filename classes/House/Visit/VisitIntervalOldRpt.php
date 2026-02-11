@@ -459,19 +459,13 @@ from
         left join
     name_address napg on n.idName = napg.idName and n.Preferred_Mail_Address = napg.Purpose
 where
-    DATE(v.Span_Start) < DATE('$end')
-    and v.idVisit in (select
-        idVisit
-        from
-            visit
-        where
-            `Status` not in ('p', 'c')
-                and DATE(Arrival_Date) < DATE('$end')
-                and DATE(ifnull(Span_End,
-                    case
-                        when now() > Expected_Departure then now()
-                        else Expected_Departure
-                end)) >= DATE('$start')) ";
+    v.`Status` not in ('p', 'c')
+    AND v.Arrival_Date < '$end'
+  AND COALESCE(v.Span_End,
+          CASE WHEN NOW() > v.Expected_Departure
+               THEN NOW() ELSE v.Expected_Departure END
+      ) >= '$start'
+  AND v.Span_Start < '$end' ";
 
     }
 

@@ -283,21 +283,21 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Na
 
             foreach ($rows as $r) {
 
-                $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                $firstName = preg_replace_callback("/&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/",
                         function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                            return mb_convert_encoding($m[0], "UTF-8", "HTML-ENTITIES");
                         },
                         $r["Name_First"]
                 );
-                $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                $lastName = preg_replace_callback("/&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/",
                         function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                            return mb_convert_encoding($m[0], "UTF-8", "HTML-ENTITIES");
                         },
                         $r["Name_Last"]
                 );
-                $company = preg_replace_callback("/(&#[0-9]+;)/",
+                $company = preg_replace_callback("/&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/",
                         function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                            return mb_convert_encoding($m[0], "UTF-8", "HTML-ENTITIES");
                         },
                         $r["Company"]
                 );
