@@ -283,28 +283,19 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Na
 
             foreach ($rows as $r) {
 
-                $firstName = preg_replace_callback("/&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/",
+                $val = ($r["Name_Last"] != '' ? $r["Name_Last"] . ", " . $r["Name_First"] . " - " . $r["Company"] : $r["Company"]);
+                
+                $val = preg_replace_callback("/&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/",
                         function($m) {
                             return mb_convert_encoding($m[0], "UTF-8", "HTML-ENTITIES");
                         },
-                        $r["Name_First"]
+                        $val
                 );
-                $lastName = preg_replace_callback("/&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/",
-                        function($m) {
-                            return mb_convert_encoding($m[0], "UTF-8", "HTML-ENTITIES");
-                        },
-                        $r["Name_Last"]
-                );
-                $company = preg_replace_callback("/&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/",
-                        function($m) {
-                            return mb_convert_encoding($m[0], "UTF-8", "HTML-ENTITIES");
-                        },
-                        $r["Company"]
-                );
+                
                 $events[] = array(
                     'id' => $r["idName"],
                     'taxExempt' => $r["tax_exempt"],
-                    'value' => ($lastName != '' ? $lastName . ", " . $firstName . " - " . $company : $company) . ($r["tax_exempt"] ? " - Tax Exempt" : '')
+                    'value' => $val . ($r["tax_exempt"] ? " - Tax Exempt" : '')
                 );
             }
 
