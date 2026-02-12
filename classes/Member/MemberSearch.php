@@ -272,10 +272,10 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Na
                 $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
  join name_demog nd on n.idName = nd.idName
-where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Company, n.Name_Last, n.Name_First;";
+where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND (MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) or n.`Name_Search` LIKE :searchLike) order by n.Company, n.Name_Last, n.Name_First;";
 
                 $stmt = $dbh->prepare($query2);
-                $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
+                $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters), ':searchLike'=>'%'.$this->letters.'%']);
             }
 
 
