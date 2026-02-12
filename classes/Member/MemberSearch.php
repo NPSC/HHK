@@ -507,20 +507,14 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray['id'] = $row2[0];
 
                     if ($row2[4] == '') {
-                        $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                            }, $row2[1] . ", " . $row2[2]);
+                        $namArray['value'] = html_entity_decode( $row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     } else {
-                        $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[3]);
+                        $namArray['value'] = html_entity_decode( $row2[3], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     }
 
                     $namArray['stat'] = $row2[6];
                     $namArray['scode'] = $row2[5];
-                    $namArray['company'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[3]);
+                    $namArray['company'] = html_entity_decode($row2[3], ENT_QUOTES | ENT_HTML5, "UTF-8");
 
                     $events[] = $namArray;
                 }
@@ -543,13 +537,9 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray['id'] = $row2[0];
 
                     if ($row2[4] == '') {
-                        $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[1] . ", " . $row2[2]);
+                        $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     } else {
-                        $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[3]);
+                        $namArray['value'] = html_entity_decode($row2[3], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     }
 
                     $namArray['stat'] = $row2[6];
@@ -594,9 +584,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -618,9 +606,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -643,9 +629,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
 
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
@@ -663,12 +647,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/",
-                            function($m) {
-                                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                            },
-                            $row2[1]
-                    );
+                    $namArray['value'] = html_entity_decode($row2[1], ENT_QUOTES | ENT_HTML5, "UTF-8");
 
                     $events[] = $namArray;
                 }
@@ -688,9 +667,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -709,9 +686,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -734,9 +709,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -799,24 +772,9 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
-            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
-                function($m) {
-                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                },
-                $row2["Name_First"]
-                );
-            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
-                function($m) {
-                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                },
-                $row2["Name_Last"]
-                );
-            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
-                function($m) {
-                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                },
-                $row2["Name_Nickname"]
-                );
+            $firstName = html_entity_decode($row2["Name_First"], ENT_QUOTES | ENT_HTML5, "UTF-8");
+            $lastName = html_entity_decode($row2["Name_Last"], ENT_QUOTES | ENT_HTML5, "UTF-8");
+            $nickName = html_entity_decode($row2["Name_Nickname"], ENT_QUOTES | ENT_HTML5, "UTF-8");
 
             $strBirthDate = '';
             if ($row2['BirthDate'] != '') {
@@ -1342,6 +1300,4 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
     public function getCompany() {
         return $this->Company;
     }
-
-
 }
