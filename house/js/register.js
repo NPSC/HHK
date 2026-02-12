@@ -1723,9 +1723,10 @@ $(document).ready(function () {
 
 
     $('#reservs').DataTable({
+        "processing": true,
+        "serverSide": true,
        ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=reservs',
-           dataSrc: 'reservs'
+           url: 'ws_resc.php?cmd=getHist&tbl=reservs'
        },
        drawCallback: function (settings) {
            $('#spnNumConfirmed').text(this.api().rows().data().length);
@@ -1747,9 +1748,10 @@ $(document).ready(function () {
 
     if ($('#unreserv').length > 0) {
         $('#unreserv').DataTable({
+            "processing": true,
+            "serverSide": true,
            ajax: {
-               url: 'ws_resc.php?cmd=getHist&tbl=unreserv',
-               dataSrc: 'unreserv'
+               url: 'ws_resc.php?cmd=getHist&tbl=unreserv'
            },
            drawCallback: function (settings) {
                 $('#spnNumUnconfirmed').text(this.api().rows().data().length);
@@ -1771,9 +1773,10 @@ $(document).ready(function () {
     }
 
     $('#waitlist').DataTable({
+        "processing": true,
+        "serverSide": true,
        ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
-           dataSrc: 'waitlist'
+           url: 'ws_resc.php?cmd=getHist&tbl=waitlist'
        },
        order: [[ (showCreatedDate ? 5 : 3), 'asc' ]],
        drawCallback: function () {

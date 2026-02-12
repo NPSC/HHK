@@ -1196,7 +1196,7 @@ WHERE
                 . "join reservation r on r.idReservation = rg.idReservation "
                 . "join registration reg on reg.idRegistration = r.idRegistration "
                 . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $idResv
-                . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(r.Expected_Departure) > DATE('".$arrivalDT->format('Y-m-d') . "')");
+                . " and r.Expected_Arrival < '".$departDT->format('Y-m-d') . "' and r.Expected_Departure > '".$arrivalDT->format('Y-m-d') . " 23:59:59'");
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1470,12 +1470,10 @@ WHERE
     	}
 
     	$stmt = $dbh->query("select vi.idVisit, vi.Span, vi.Span_Start, vi.Span_End, vi.`Status`, g.Description as `Status_Title`, vi.idPrimaryGuest, r.Title as `Room`
-	from visit vi left join resource r on vi.idResource = r.idResource
-    left join gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = vi.`Status`
- where vi.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and vi.Span_Start =
-	(SELECT  MAX(v.Span_Start)
-		FROM visit v LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
-	WHERE vi.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and rg.idPsg = " . $this->reserveData->getIdPsg() .")");
+	from visit v left join resource r on v.idResource = r.idResource
+    left join gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
+    LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
+ where v.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and rg.idPsg = " . $this->reserveData->getIdPsg() ." order by Span_Start DESC limit 1;");
 
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$mkup = '';

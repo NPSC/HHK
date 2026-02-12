@@ -234,6 +234,7 @@ where ru.idResource_use is null
 
         $beginDate = self::parseDateTime($startTime, new \DateTimeZone($timezone));
         $endDate = self::parseDateTime($endTime, new \DateTimeZone($timezone));
+        $queryEndDate = self::parseDateTime($endTime, new \DateTimeZone($timezone))->add($p1d);
 
         // get list of hospital colors
         $hospitals = $this->getHospitals($dbh);
@@ -251,10 +252,40 @@ where ru.idResource_use is null
 
 
         // Visits
-        $query = "select vr.*, s.On_Leave, count(*) as `Guest_Count` from vregister vr left join stays s on `vr`.`idVisit` = `s`.`idVisit`
+        /*$query = "select vr.*, s.On_Leave, count(*) as `Guest_Count` from vregister vr left join stays s on `vr`.`idVisit` = `s`.`idVisit`
         AND `vr`.`Span` = `s`.`Visit_Span`
         AND `vr`.`Visit_Status` = `s`.`Status` where vr.Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(vr.Span_Start) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.Span_End), case when DATE(now()) > DATE(vr.Expected_Departure) then DATE(now()) else DATE(vr.Expected_Departure) end) >= DATE('" . $beginDate->format('Y-m-d') . "') group by vr.id;";
+        */
+        $query = "select
+  vr.*,
+  s.On_Leave,
+  count(s.idName) as `Guest_Count`
+from
+  vregister vr
+  left join stays s on `vr`.`idVisit` = `s`.`idVisit`
+  AND `vr`.`Span` = `s`.`Visit_Span`
+  AND `vr`.`Visit_Status` = `s`.`Status`
+where
+   vr.Visit_Status not in('p', 'c')
+   and vr.Span_Start < '" . $queryEndDate->format('Y-m-d') ."'
+   and (
+       vr.Span_End >= '" . $beginDate->format("Y-m-d") . "'
+
+    OR (
+           vr.Span_End IS NULL
+       AND vr.Expected_Departure >= '" . $beginDate->format("Y-m-d") . "'
+       )
+
+    OR (
+           vr.Span_End IS NULL
+       AND vr.Expected_Departure < CURDATE()
+       AND CURDATE() >= '" . $beginDate->format("Y-m-d") . "'
+       )
+)
+ group by
+  vr.id
+;";    
         $stmtv = $dbh->query($query);
 
         while ($r = $stmtv->fetch(\PDO::FETCH_ASSOC)) {
@@ -381,7 +412,7 @@ where ru.idResource_use is null
 
         // Reservations
         $query = "select * from vregister_resv where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-            . " and DATE(Expected_Arrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Expected_Arrival asc, idReservation asc";
+            . " and Expected_Arrival < '" . $queryEndDate->format('Y-m-d') . "' and Expected_Departure > '" . $beginDate->format('Y-m-d') . "' order by Expected_Arrival asc, idReservation asc";
 
         $stmt = $dbh->query($query);
 

@@ -2416,6 +2416,8 @@ ALTER TABLE `invoice` ADD INDEX IF NOT EXISTS `Index_SoldToId` (`Sold_To_Id` ASC
 
 ALTER TABLE `invoice` ADD INDEX IF NOT EXISTS `Index_Delagated` (`Delegated_Invoice_Id` ASC);
 
+ALTER TABLE `invoice` ADD INDEX IF NOT EXISTS `idx_inv_status` (`Status` ASC, `Deleted` ASC);
+
 ALTER TABLE `invoice_line` ADD INDEX IF NOT EXISTS `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);
 
 ALTER TABLE `labels` ADD UNIQUE INDEX IF NOT EXISTS `Unique_Key_Categeory` (`Key` ASC, `Category` ASC);
@@ -2478,15 +2480,18 @@ ALTER TABLE `reservation` ADD INDEX IF NOT EXISTS `Index_idregistration` (`idReg
 
 ALTER TABLE `reservation` ADD INDEX IF NOT EXISTS `Index_idGuest` (`idGuest` ASC);
 
-ALTER TABLE `reservation` ADD INDEX IF NOT EXISTS `Index_Expected_Arrival` (`Expected_Arrival` ASC);
+ALTER TABLE `reservation` DROP INDEX IF EXISTS `Index_Expected_Arrival`;
 
-ALTER TABLE `reservation` ADD INDEX IF NOT EXISTS `Index_Expected_Departure` (`Expected_Departure` ASC);
+ALTER TABLE `reservation` DROP INDEX IF EXISTS `Index_Expected_Departure`;
 
 ALTER TABLE `reservation` ADD INDEX IF NOT EXISTS `Index_idHosptial_Stay` (`idHospital_Stay` ASC);
 
 ALTER TABLE `reservation` ADD INDEX IF NOT EXISTS `Index_idReferral_Doc` (`idReferralDoc` ASC);
 
-ALTER TABLE `reservation` ADD INDEX IF NOT EXISTS `Index_Status` (`Status` ASC);
+ALTER TABLE `reservation` DROP INDEX IF EXISTS `Index_Status`;
+
+ALTER TABLE `reservation` ADD INDEX IF NOT EXISTS `idx_resv_status_dates`(`Expected_Departure` ASC, `Expected_Arrival` ASC, `Status` ASC);
+
 
 ALTER TABLE `reservation_multiple` ADD INDEX IF NOT EXISTS `host_id_index` (`Host_Id` ASC);
 
