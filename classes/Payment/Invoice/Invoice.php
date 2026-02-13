@@ -772,7 +772,7 @@ where
 		) );
 
 		//invoice table
-		$rec .= HTMLContainer::generateMarkup ( 'div', $tbl->generateMarkup(), array (
+		$rec .= HTMLContainer::generateMarkup ( 'div', $tbl->generateMarkup(['width'=>'100%']), array (
 				'class' => 'hhk-tdbox invoiceItemTbl'
 		) );
 
@@ -802,7 +802,7 @@ where
 	{
 		$stmtMarkup = $this->createPDFMarkup($dbh);
 
-		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
+		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf", 'shrink-tables-to-fit'=>0]);
 		$mpdf->showImageErrors = true;
 		$mpdf->WriteHTML(
 			'<html><head>' . HOUSE_CSS . INVOICE_CSS . '</head><body><div class="PrintArea">' . $stmtMarkup . '</div></body></html>'

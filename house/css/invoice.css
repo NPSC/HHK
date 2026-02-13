@@ -24,11 +24,12 @@
 }
 
 .invoiceItemTbl .invLineDesc {
-    width: 100%;
+    min-width: 100%;
 }
 
 .invoiceItemTbl .invLineRoom, .invoiceItemTbl .invLineAmt {
     white-space: nowrap;
+    width: min-content;
 }
 
 .invoiceItemTbl.hhk-tdbox tbody td, .invoiceItemTbl.hhk-tdbox th {

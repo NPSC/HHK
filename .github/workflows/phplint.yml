@@ -78,3 +78,21 @@ jobs:
 
       - name: PHPStan
         run: composer stan
+  phpstan84:
+    name: PHPStan 8.4
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Composer install
+        run: composer install
+
+      - name: PHPStan
+        run: composer stan
