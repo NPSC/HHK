@@ -881,7 +881,7 @@ where
 		return $mkup;
 	}
 
-	public function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = "", $emBody = "", $invNum = null){
+	public function makeEmailTbl($emFrom = "", $emSubject = "", $emAddrs = [], $emBody = "", $invNum = null){
         $emtableMarkup = "";
         $emTbl = new HTMLTable();
 

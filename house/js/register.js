@@ -1698,8 +1698,8 @@ $(document).ready(function () {
            dataSrc: 'curres'
        },
        drawCallback: function (settings) {
-           let ncur = this.api().rows().data().length;
-           $('#spnNumCurrent').text(this.api().rows().data().length);
+           let ncur = this.api().table().page.info().recordsTotal;
+           $('#spnNumCurrent').text(this.api().table().page.info().recordsTotal);
            $('#spnCurrentS').text('s');
            if (ncur == 1) {
                $('#spnCurrentS').text('');
@@ -1729,7 +1729,7 @@ $(document).ready(function () {
            url: 'ws_resc.php?cmd=getHist&tbl=reservs'
        },
        drawCallback: function (settings) {
-           $('#spnNumConfirmed').text(this.api().rows().data().length);
+           $('#spnNumConfirmed').text(this.api().table().page.info().recordsTotal);
            $('#reservs .gmenu').menu({
            		focus:function(e, ui){
            			$("#reservs .gmenu").not(this).menu("collapseAll", null, true);
@@ -1754,7 +1754,7 @@ $(document).ready(function () {
                url: 'ws_resc.php?cmd=getHist&tbl=unreserv'
            },
            drawCallback: function (settings) {
-                $('#spnNumUnconfirmed').text(this.api().rows().data().length);
+                $('#spnNumUnconfirmed').text(this.api().table().page.info().recordsTotal);
                 $('#unreserv .gmenu').menu({
            			focus:function(e, ui){
            				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
@@ -1780,7 +1780,7 @@ $(document).ready(function () {
        },
        order: [[ (showCreatedDate ? 5 : 3), 'asc' ]],
        drawCallback: function () {
-            $('#spnNumWaitlist').text(this.api().rows().data().length);
+            $('#spnNumWaitlist').text(this.api().table().page.info().recordsTotal);
             $('#waitlist .gmenu').menu({
            		focus:function(e, ui){
            			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);

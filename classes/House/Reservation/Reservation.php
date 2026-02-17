@@ -1469,7 +1469,7 @@ WHERE
     		return '';
     	}
 
-    	$stmt = $dbh->query("select vi.idVisit, vi.Span, vi.Span_Start, vi.Span_End, vi.`Status`, g.Description as `Status_Title`, vi.idPrimaryGuest, r.Title as `Room`
+    	$stmt = $dbh->query("select v.idVisit, v.Span, v.Span_Start, v.Span_End, v.`Status`, g.Description as `Status_Title`, v.idPrimaryGuest, r.Title as `Room`
 	from visit v left join resource r on v.idResource = r.idResource
     left join gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
     LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
