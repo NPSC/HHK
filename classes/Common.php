@@ -3,21 +3,15 @@
 namespace HHK;
 
 use DateTime;
+use DebugBar\DataCollector\PDO\PDOCollector;
+use DebugBar\DataCollector\PDO\TraceablePDO;
+use HHK\Debug\DebugBarSupport;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{WebRole};
-use PHPMailer\PHPMailer\PHPMailer;
-use HHK\HTMLControls\{HTMLContainer, HTMLTable};
-use HHK\SysConst\PaymentMethod;
-use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
-use HHK\TableLog\HouseLog;
-use HHK\ExcelHelper;
 use HHK\sec\{SecurityComponent, SysConfig};
-use HHK\House\Reservation\Reservation_1;
-use HHK\SysConst\ReservationStatus;
 use PDO;
 
 
@@ -78,6 +72,19 @@ class Common {
             ];
 
             $dbh = new PDO($dsn, $dbuName, $dbPw, $options);
+
+            $bar = DebugBarSupport::bar();
+            
+            if($bar){
+                try{
+                    $dbh = new TraceablePDO($dbh);
+                    $pdoCollector = new PDOCollector();
+                    $pdoCollector->addConnection($dbh, 'main');
+                    $bar->addCollector($pdoCollector);
+                }catch(\Exception $e){
+
+                }
+            }
 
             $dbh->exec("SET SESSION wait_timeout = 3600;");
 

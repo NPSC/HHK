@@ -9,14 +9,13 @@ use HHK\Tables\VolCalendar\ShellEventsRS;
 /**
  * EventShells.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 require("AdminIncludes.php");
-//require(DB_TABLES . 'volCalendarRS.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;

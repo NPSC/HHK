@@ -17,10 +17,6 @@ use HHK\Exception\RuntimeException;
  */
 
 require ("AdminIncludes.php");
-// require (DB_TABLES . 'WebSecRS.php');
-
-// require(SEC . 'Pages.php');
-// require(REL_BASE_DIR . "classes" . DS . "selCtrl.php");
 
 $wInit = new webInit();
 

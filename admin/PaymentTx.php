@@ -15,10 +15,6 @@ use HHK\Tables\PaymentGW\Gateway_TransactionRS;
  */
 require ("AdminIncludes.php");
 
-/* require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'PaymentGwRS.php'); */
-
-
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;

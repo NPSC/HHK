@@ -29,18 +29,10 @@ define('THIRD_PARTY', REL_BASE_DIR . $dirxx . DS);
 define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
 define('ciCFG_FILE', 'site.cfg' );
 
-// Common Directory Names
-define('ADMIN_DIR', REL_BASE_DIR . 'admin' . DS);
-define('CLASSES', REL_BASE_DIR . 'classes' . DS);
-define('DB_TABLES', CLASSES . 'tables' . DS);
-define('MEMBER', CLASSES . 'member' . DS);
-define('HOUSE', CLASSES . 'house' . DS);
-define('SEC', CLASSES . 'sec' . DS);
-define('PMT', CLASSES . 'Payment' . DS);
-define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
-require(FUNCTIONS . 'errorHandler.php');
+require(REL_BASE_DIR . 'functions' . DS . 'errorHandler.php');
 require (THIRD_PARTY . 'autoload.php');
+HHK\Debug\DebugBarSupport::bootstrap();
 
 define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);
 

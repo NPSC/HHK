@@ -133,9 +133,6 @@ switch ($c) {
             $fid = filter_var(urldecode($_GET["fid"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        //require_once (CLASSES . 'PDOdata.php');
-        //require_once (DB_TABLES . 'WebSecRS.php');
-
         $fbRs = new FbxRS();
         $fbRs->fb_id->setStoredVal($fid);
         $cnt = EditRS::delete($dbh, $fbRs, array($fbRs->fb_id));

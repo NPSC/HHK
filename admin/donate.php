@@ -22,18 +22,6 @@ use HHK\Donation\Campaign;
 
 require ("AdminIncludes.php");
 
-/*
- * require (DB_TABLES . 'nameRS.php');
- * require (DB_TABLES . 'ActivityRS.php');
- * require (DB_TABLES . 'DonateRS.php');
- *
- * require (CLASSES . 'Campaign.php');
- */
-// require (MEMBER . 'Member.php');
-// require (MEMBER . 'IndivMember.php');
-// require (MEMBER . 'OrgMember.php');
-// require (MEMBER . 'Addresses.php');
-
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 

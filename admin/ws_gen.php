@@ -709,8 +709,6 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 function changeLog(PDO $dbh, $id, $get) {
 
-    //require(CLASSES . 'DataTableServer.php');
-
     $view = 'vaudit_log';
 
     if (isset($get['vw'])) {
