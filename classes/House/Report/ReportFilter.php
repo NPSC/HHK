@@ -408,7 +408,7 @@ $ckdate";
 
             if ($startDT <= $endDT) {
                 $this->reportEnd = $endDT->format('Y-m-d');
-                $this->queryEnd = $endDT->format('Y-m-d');
+                $this->queryEnd = $endDT->add(new \DateInterval('P1D'))->format('Y-m-d');
                 $this->reportStart = $startDT->format('Y-m-d');
             } else {
                 $this->reportStart = $endDT->format('Y-m-d');
