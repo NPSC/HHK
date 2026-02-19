@@ -952,6 +952,10 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
+        if($uS->username == $uname && isset($uS->user)){
+            return $uS->user;
+        }
+
         $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
@@ -962,7 +966,8 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 1) {
-            return $rows[0];
+            $uS->user = $rows[0];
+            return $uS->user;
         }
 
         return NULL;

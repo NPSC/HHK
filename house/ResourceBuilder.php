@@ -964,7 +964,7 @@ if (isset($_POST['ldfm'])) {
             'div',
             $help . ($r['Doc'] ? HTMLContainer::generateMarkup(
                 'fieldset',
-                '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'],
+                '<legend style="font-weight: bold;">Current Form</legend>' . str_replace('${ImgPath}', $uS->resourceURL . 'conf/img/', $r['Doc']),
                 [
                     'id' => 'form' . $r['idDocument'],
                     'class' => 'p-3 mb-3 user-agent-spacing'
