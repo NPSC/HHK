@@ -29,11 +29,14 @@ final class DebugBarSupport {
         self::$debugBar = new StandardDebugBar();
         self::$renderer = self::$debugBar->getJavascriptRenderer();
         self::$renderer->setBaseUrl(self::resourceBaseUrl());
+        self::$renderer->setAjaxHandlerEnableTab(true);
+        self::$renderer->setAjaxHandlerAutoShow(false);
 
         self::$debugBar['messages']->info('PHP Debugbar enabled');
         self::$initialized = true;
 
         ob_start([self::class, 'injectIntoHtml']);
+        register_shutdown_function([self::class, 'finalize']);
     }
 
     public static function bar(): ?StandardDebugBar {
@@ -116,6 +119,15 @@ final class DebugBarSupport {
         return $buffer;
     }
 
+    public static function finalize(): void {
+
+        if (self::$debugBar === null || headers_sent() || self::isAjaxRequest() === false) {
+            return;
+        }
+
+        self::$debugBar->sendDataInHeaders();
+    }
+
     private static function isHtmlResponse(): bool {
 
         $headers = headers_list();
@@ -130,5 +142,36 @@ final class DebugBarSupport {
 
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         return stripos($accept, 'text/html') !== false;
+    }
+
+    private static function isAjaxRequest(): bool {
+
+        $requestedWith = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
+        if (strcasecmp($requestedWith, 'XMLHttpRequest') === 0) {
+            return true;
+        }
+
+        $scriptName = basename($_SERVER['SCRIPT_NAME'] ?? '');
+        if (str_starts_with($scriptName, 'ws_')) {
+            return true;
+        }
+
+        $accept = strtolower($_SERVER['HTTP_ACCEPT'] ?? '');
+        if (str_contains($accept, 'application/json')) {
+            return true;
+        }
+
+        foreach (headers_list() as $header) {
+            if (stripos($header, 'Content-Type:') !== 0) {
+                continue;
+            }
+
+            $contentType = strtolower($header);
+            if (str_contains($contentType, 'application/json') || str_contains($contentType, 'text/javascript')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
