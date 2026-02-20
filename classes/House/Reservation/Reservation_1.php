@@ -286,13 +286,16 @@ class Reservation_1 {
      * @param int $endDelta
      * @param string $uname
      * @param bool $forceNewResource
+     * @param int|null $idRescPosted
      * @return bool
      */
-    public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE) {
+    public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE, $idRescPosted = null) {
 
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
+        $oldStartTxt = (new \DateTime($this->getExpectedArrival()))->format('M j, Y');
+        $oldEndTxt = (new \DateTime($this->getExpectedDeparture()))->format('M j, Y');
         $newStartDT = new \DateTime($this->getExpectedArrival());
         $newEndDt = new \DateTime($this->getExpectedDeparture());
 
@@ -347,17 +350,55 @@ class Reservation_1 {
             $closedMsg = " - Info: The house is closed on the new arrival date";
         }
 
+        $requestedRescId = null;
+        if ($idRescPosted !== null && $idRescPosted !== '') {
+            $requestedRescId = intval($idRescPosted, 10);
+        }
+
         if ($this->getStatus() == ReservationStatus::Waitlist) {
 
             // move the reservation
             $this->setExpectedArrival($newStartDT->format('Y-m-d'));
             $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
 
+            $roomChanged = '';
+            if ($requestedRescId !== null) {
+                if ($requestedRescId == 0 || $requestedRescId == 9999) {
+                    $this->setIdResource(0);
+                } else {
+                    $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+                    if (isset($rescs[$requestedRescId]) === FALSE) {
+                        $this->resultMessage = 'Chosen Room is unavailable.  ';
+                        return FALSE;
+                    }
+
+                    $this->setIdResource($requestedRescId);
+                    $this->setStatus(ReservationStatus::Committed);
+                    $roomChanged = 'to room ' . $rescs[$requestedRescId]->getTitle() . '.  ';
+                }
+            }
+
             $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
-            $this->resultMessage = 'Reservation moved.' . $closedMsg;
+
+            if ($roomChanged !== '') {
+                $this->resultMessage = 'Reservation changed ' . $roomChanged . $closedMsg;
+            } else {
+                $this->resultMessage = 'Reservation moved.' . $closedMsg;
+            }
             return TRUE;
 
         } else {
+
+            if ($requestedRescId !== null && ($requestedRescId == 0 || $requestedRescId == 9999)) {
+                $this->setExpectedArrival($newStartDT->format('Y-m-d'));
+                $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
+                $this->setIdResource(0);
+                $this->setStatus(ReservationStatus::Waitlist);
+
+                $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
+                $this->resultMessage = 'Reservation waitlisted' . $closedMsg;
+                return TRUE;
+            }
 
             // Check for vacant rooms
             $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
@@ -368,31 +409,51 @@ class Reservation_1 {
                 $this->setExpectedArrival($newStartDT->format('Y-m-d'));
                 $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
 
-                // If my original resource is unavailable, use another
+                // Keep the current room unless a specific room was requested.
                 $roomChanged = '';
-                if (isset($rescs[$this->getIdResource()]) === FALSE || $forceNewResource) {
-
-                    $keys = array_keys($rescs);
-                    $this->setIdResource($keys[0]);
-
-                    $resc = $rescs[$keys[0]];
-                    $roomChanged = 'to room ' . $resc->getTitle() . '.  ';
-
-                    if ($this->getStatus() == ReservationStatus::Waitlist) {
-                        $this->setStatus(ReservationStatus::Committed);
-                        $roomChanged .= 'New status is ' . $this->getStatusTitle($dbh, ReservationStatus::Committed);
+                if ($requestedRescId !== null) {
+                    if (isset($rescs[$requestedRescId]) === FALSE) {
+                        $this->resultMessage = 'Chosen Room is unavailable.  ';
+                        return FALSE;
                     }
 
+                    if ($requestedRescId != $this->getIdResource()) {
+                        $this->setIdResource($requestedRescId);
+                        $resc = $rescs[$requestedRescId];
+                        $roomChanged = 'to room ' . $resc->getTitle() . '.  ';
+                    }
+
+                } else if (isset($rescs[$this->getIdResource()]) === FALSE) {
+                    if ($forceNewResource) {
+                        // Used by admin/system workflows to free room assignments.
+                        $this->setIdResource('0');
+                        $this->setStatus(ReservationStatus::Waitlist);
+                        $roomChanged = 'to waitlist.  ';
+                    } else {
+                        $this->resultMessage = 'The date range is not available.  ';
+                        return FALSE;
+                    }
                 }
 
                 $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
 
-                $this->resultMessage = 'Reservation changed ' . $roomChanged . $closedMsg;
+                $newStartTxt = $newStartDT->format('M j, Y');
+                $newEndTxt = $newEndDt->format('M j, Y');
+                $dateChangedMsg = '';
+                if ($oldStartTxt !== $newStartTxt || $oldEndTxt !== $newEndTxt) {
+                    $dateChangedMsg = 'from ' . $oldStartTxt . ' - ' . $oldEndTxt . ' to ' . $newStartTxt . ' - ' . $newEndTxt . '  ';
+                }
+
+                $this->resultMessage = 'Reservation changed ' . $dateChangedMsg . $roomChanged . $closedMsg;
                 return TRUE;
 
             } else {
 
-                if ($forceNewResource) {
+                if ($requestedRescId !== null) {
+                    $this->resultMessage = 'Chosen Room is unavailable.  ';
+                    return FALSE;
+
+                } else if ($forceNewResource) {
 
                     // move the reservation
                     $this->setExpectedArrival($newStartDT->format('Y-m-d'));

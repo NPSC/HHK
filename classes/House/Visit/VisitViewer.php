@@ -1528,6 +1528,23 @@ where `Deleted` = 0 and `Status` = 'up'
             return ['error'=>"The Move overlaps another reservation or visit.  "];
         }
 
+        // Do not auto-bump conflicting reservations.  Fail if target room/dates overlap another reservation.
+        $currentResvId = intval($visitRcrds[0]['idReservation'], 10);
+        foreach ($visits as $v) {
+            $overlappingResvs = Reservation_1::findReservations(
+                $dbh,
+                $v['start']->format('Y-m-d H:i:s'),
+                $v['end']->format('Y-m-d H:i:s'),
+                $v['rs']->idResource->getStoredVal()
+            );
+
+            foreach ($overlappingResvs as $r) {
+                if (intval($r[0], 10) !== $currentResvId) {
+                    return ['error' => 'The date range is not available due to a conflicting reservation.'];
+                }
+            }
+        }
+
         $actualDepart = NULL;
         $estDepart = NULL;
 
@@ -1599,7 +1616,7 @@ where `Deleted` = 0 and `Status` = 'up'
         $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
         $firstArrival->setTime(intval($uS->CheckInTime), 0, 0);
 
-        $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uname);
+        $reply = '';
 
         $operatingHours = new OperatingHours($dbh);
         if($operatingHours->isHouseClosed($firstArrival)){

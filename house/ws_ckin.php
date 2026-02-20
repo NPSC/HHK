@@ -451,8 +451,12 @@ try {
             $edelta = intval(filter_var($_POST['edelta'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
+        $idResc = null;
+        if (isset($_POST['idResc'])) {
+            $idResc = intval(filter_var($_POST['idResc'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
 
-        $events = ReservationSvcs::moveReserv($dbh, $idVisit, $sdelta, $edelta);
+        $events = ReservationSvcs::moveReserv($dbh, $idVisit, $sdelta, $edelta, $idResc);
         break;
 
     case "visitMove":

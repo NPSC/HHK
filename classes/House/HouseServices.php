@@ -346,6 +346,10 @@ class HouseServices {
 
                     $replyArray = $visit->changeExpectedCheckoutDates($dbh, $post['stayExpCkOut'], $uS->MaxExpected, $uS->username);
 
+                    if (isset($replyArray['error']) && $replyArray['error'] != '') {
+                        return ['error' => $replyArray['error']];
+                    }
+
                     if (isset($replyArray['isChanged']) && $replyArray['isChanged']) {
                         $returnCkdIn = TRUE;
                         $returnReserv = TRUE;
