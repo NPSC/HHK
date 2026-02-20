@@ -22,19 +22,6 @@ if (isset($_GET['cmd'])) {
     $cmd = filter_input(INPUT_GET, 'cmd');
 }
 
-// Initialize
-try {
-
-    $login = new Login();
-    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
-
-} catch (Exception $ex) {
-
-    $uS->destroy(true);
-    echo (json_encode(array('error'=>"Server Error: " . $ex->getMessage())));
-    exit();
-}
-
 switch ($cmd){
     case "get":
         $expiresIn = false;
