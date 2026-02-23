@@ -120,7 +120,7 @@ GENERATED ALWAYS AS (
 ) STORED;
 
 ALTER TABLE `name`
-DROP INDEX IF EXISTS `ft_name_search`
+DROP INDEX IF EXISTS `ft_name_search`;
 
 ALTER TABLE `name`
 ADD FULLTEXT INDEX IF NOT EXISTS `ft_name_search` (`Name_Search`);
