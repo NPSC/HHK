@@ -696,7 +696,7 @@ class ReservationSvcs
         return $reply;
     }
 
-    public static function moveReserv(\PDO $dbh, $idReservation, $startDelta, $endDelta)
+    public static function moveReserv(\PDO $dbh, $idReservation, $startDelta, $endDelta, $idResc = null)
     {
         $uS = Session::getInstance();
         $dataArray = array();
@@ -713,7 +713,7 @@ class ReservationSvcs
             );
         }
 
-        if ($startDelta == 0 && $endDelta == 0) {
+        if ($startDelta == 0 && $endDelta == 0 && is_null($idResc)) {
             return array(
                 "error" => "Reservation not moved."
             );
@@ -727,7 +727,7 @@ class ReservationSvcs
 
         // save the reservation info
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-        $worked = $reserv->move($dbh, $startDelta, $endDelta, $uS->username);
+        $worked = $reserv->move($dbh, $startDelta, $endDelta, $uS->username, FALSE, $idResc);
         $reply = $reserv->getResultMessage();
 
         if ($worked) {

@@ -1590,6 +1590,12 @@ function resvManager(initData, options) {
                             $('#gstDate').removeClass('ui-state-error');
                             $('#gstCoDate').removeClass('ui-state-error');
 
+                            // Refresh room availability immediately on date pick
+                            // so #hhkroomMsg reflects conflicts right away.
+                            if ($('#selResource').length > 0) {
+                                updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
+                            }
+
                             if ($.isFunction(doOnDatesChange)) {
                                 doOnDatesChange(dates);
                             }

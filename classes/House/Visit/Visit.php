@@ -7,7 +7,7 @@ use HHK\Exception\RuntimeException;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
-use HHK\SysConst\{RoomRateCategories, VisitStatus};
+use HHK\SysConst\{RoomRateCategories, ReservationStatus, VisitStatus};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\House\ResourceRS;
@@ -48,7 +48,7 @@ class Visit {
     public $visitRS;
     /**
      * Summary of visitRSs
-     * @var array[VisitRS]
+     * @var array<VisitRS>
      */
     protected $visitRSs = array();
     /**
@@ -1694,6 +1694,55 @@ class Visit {
             $isChanged = TRUE;
         }
 
+        // Check for room conflicts before applying updates.
+        $visitExpDepDT = new \DateTime($this->getExpectedDeparture());
+        $visitExpDepDT->setTime(0, 0, 0);
+
+        if ($this->getidResource() > 0 && $visitExpDepDT != $lastDepartureDT && $lastDepartureDT > $visitArrivalDT) {
+
+            $rStat = "'" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "'";
+            $vStat = "'" . VisitStatus::Pending . "','" . VisitStatus::Cancelled . "'";
+
+            $stmt = $dbh->prepare("
+                select 1
+                from reservation r
+                where r.idResource = :idrResv
+                  and r.idReservation != :idResvExcl
+                  and r.Status in ($rStat)
+                  and DATE(r.Expected_Arrival) < DATE(:depResv)
+                  and DATE(r.Expected_Departure) > DATE(:arrResv)
+                union
+                select 1
+                from visit v
+                where v.idResource = :idrVisit
+                  and v.idVisit != :idVisitExcl
+                  and v.Status not in ($vStat)
+                  and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end)
+                  and DATE(v.Arrival_Date) < DATE(:depVisit)
+                  and ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE(:arrVisit)
+                limit 1
+            ");
+
+            $stmt->execute([
+                ':idrResv' => $this->getidResource(),
+                ':idResvExcl' => $this->getReservationId(),
+                ':depResv' => $lastDepartureDT->format('Y-m-d'),
+                ':arrResv' => $visitArrivalDT->format('Y-m-d'),
+                ':idrVisit' => $this->getidResource(),
+                ':idVisitExcl' => $this->getIdVisit(),
+                ':depVisit' => $lastDepartureDT->format('Y-m-d'),
+                ':arrVisit' => $visitArrivalDT->format('Y-m-d')
+            ]);
+
+            if ($stmt->fetchColumn()) {
+                return [
+                    'error' => 'The room has an overlapping reservation or visit.  ',
+                    'message' => '',
+                    'isChanged' => FALSE
+                ];
+            }
+        }
+
         // Update indicated stays.
         if (count($staysToUpdate) > 0) {
             VisitViewer::saveStaysDates($dbh, $staysToUpdate, $this->getIdRegistration(), $uS->username);
@@ -1701,8 +1750,6 @@ class Visit {
         }
 
         // See if the visit expected departure changed.
-        $visitExpDepDT = new \DateTime($this->getExpectedDeparture());
-        $visitExpDepDT->setTime(0, 0, 0);
 
         // Make sure the lastDepart date is greater than the visit arrival.
         if ($visitExpDepDT != $lastDepartureDT && $lastDepartureDT > $visitArrivalDT) {

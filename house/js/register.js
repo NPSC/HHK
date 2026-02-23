@@ -522,15 +522,20 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 }
 
-function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
-    $.post('ws_ckin.php',
-            {
-                cmd: mode,
-                idVisit: idVisit,
-                span: visitSpan,
-                sdelta: startDelta,
-                edelta: endDelta
-},
+function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal, idResc) {
+    const params = {
+        cmd: mode,
+        idVisit: idVisit,
+        span: visitSpan,
+        sdelta: startDelta,
+        edelta: endDelta
+    };
+
+    if (isNumber(idResc)) {
+        params.idResc = idResc;
+    }
+
+    return $.post('ws_ckin.php', params,
     function(data) {
         if (data) {
             try {
@@ -549,7 +554,8 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
             } else if (data.success) {
                 flagAlertMessage(data.success, 'success');
             }
-            if (updateCal === undefined || updateCal === true) {
+
+            if (updateCal !== false) {
                 calendar.refetchResources();
                 calendar.refetchEvents();
                 refreshdTables(data);
@@ -591,7 +597,7 @@ function getRoomList(idResv, eid, targetEl) {
                     }
 
                     if (confirm('Change room to ' + $('#selRoom option:selected').text() + '?')) {
-                        setRoomTo(data.rid, $('#selRoom').val());
+                        moveVisit('reservMove', data.rid, 0, 0, 0, true, $('#selRoom').val());
                     }
                     contr.remove();
                 });
@@ -1212,12 +1218,14 @@ $(document).ready(function () {
             $(".hhk-alert").hide();
 
             let event = info.event;
+            let sentMoveRequest = false;
 
             // visit
             if (event.extendedProps.idVisit > 0 && info.delta.days !== 0) {
                 if (confirm('Move Visit to a new start date?')) {
-                    moveVisit('visitMove', event.extendedProps.idVisit, event.extendedProps.Span, info.delta.days, info.delta.days);
-                	return;
+                    moveVisit('visitMove', event.extendedProps.idVisit, event.extendedProps.Span, info.delta.days, info.delta.days, true);
+                    sentMoveRequest = true;
+                	//return;
                 }
             }
 
@@ -1226,42 +1234,57 @@ $(document).ready(function () {
 
                 let resources = event.getResources();
                 let resource = resources[0];
+                let targetRescId = resource.extendedProps.idResc;
+                let movedDates = info.delta.days !== 0;
+                let changedRoom = targetRescId !== event.extendedProps.idResc;
+                let shouldMoveDates = false;
 
-                // move by date?
-                if (info.delta.days !== 0 && resource.extendedProps.idResc === event.extendedProps.idResc) {
-
-                    if (confirm('Move Reservation to a new start date?')) {
-                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days);
-                        return;
+                // move by date and room in a single call
+                if (movedDates && changedRoom) {
+                    let moveMssg = 'Move Reservation to a new start date and room?';
+                    if (targetRescId == 0) {
+                        moveMssg = 'Move Reservation to a new start date and waitlist?';
                     }
-                } else if (info.delta.days !== 0) {
+
+                    if (confirm(moveMssg)) {
+                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, true, targetRescId);
+                        shouldMoveDates = true;
+                        sentMoveRequest = true;
+                    }
+                } else if (movedDates) {
 
                     if (confirm('Move Reservation to a new start date?')) {
-                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, false);
+                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, true);
+                        shouldMoveDates = true;
+                        sentMoveRequest = true;
                     }
 				}
 
                 // Change rooms?
-                if (resource.extendedProps.idResc !== event.extendedProps.idResc) {
+                if (!shouldMoveDates && changedRoom) {
 
-                	let mssg = 'Move Reservation to a new room?';
+                	let mssg = 'Move Reservation to a new room for the same dates?';
 
-                	if (resource.extendedProps.idResc == 0) {
-                		mssg = 'Move Reservation to the waitlist?'
+                	if (targetRescId == 0) {
+                		mssg = 'Move Reservation to the waitlist for the same dates?';
+                	} else if (resource.title) {
+                		mssg = 'Move Reservation to room ' + resource.title + ' for the same dates?';
                 	}
 
                     if (confirm(mssg)) {
-                        if (setRoomTo(event.extendedProps.idReservation, resource.extendedProps.idResc)) {
-                        	return;
-                        }
+                        moveVisit('reservMove', event.extendedProps.idReservation, 0, 0, 0, true, targetRescId);
+                        sentMoveRequest = true;
                     }
                 }
             }
-            info.revert();
+            if (!sentMoveRequest) {
+                info.revert();
+            }
         },
 
         eventResize: function (info) {
             $(".hhk-alert").hide();
+            let sentMoveRequest = false;
 
             if (info.endDelta === undefined) {
                 info.revert();
@@ -1269,17 +1292,21 @@ $(document).ready(function () {
             }
             if (info.event.extendedProps.idVisit > 0) {
                 if (confirm('Move check out date?')) {
-                    moveVisit('visitMove', info.event.extendedProps.idVisit, info.event.extendedProps.Span, 0, info.endDelta.days);
-                    return;
+                    moveVisit('visitMove', info.event.extendedProps.idVisit, info.event.extendedProps.Span, 0, info.endDelta.days, true);
+                    sentMoveRequest = true;
+                    //return;
                 }
             }
             if (info.event.extendedProps.idReservation > 0) {
                 if (confirm('Move expected end date?')) {
-                    moveVisit('reservMove', info.event.extendedProps.idReservation, 0, 0, info.endDelta.days);
-                    return;
+                    moveVisit('reservMove', info.event.extendedProps.idReservation, 0, 0, info.endDelta.days, true);
+                    sentMoveRequest = true;
+                    //return;
                 }
             }
-            info.revert();
+            if (!sentMoveRequest) {
+                info.revert();
+            }
         },
 
         eventClick: function (info) {

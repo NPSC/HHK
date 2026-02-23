@@ -343,17 +343,79 @@ class RoomChooser {
 
                 $errorMessage = 'Room ' . $this->selectedResource->getTitle() . ' is not suitable.';
 
+            } else if ($this->hasOverlappingReservationOrVisit($dbh)) {
+
+                $errorMessage = 'Room ' . $this->selectedResource->getTitle() . ' has an overlapping reservation or visit.';
+
             } else if ($this->selectedResource->getCurrantOccupants($dbh) > 0) {
 
                 $errorMessage = 'Room ' . $this->selectedResource->getTitle() . ' is already in use.';
 
             } else {
 
-                $errorMessage = 'Room ' . $this->selectedResource->getTitle() . ' may be too small.';
+                $errorMessage = 'Room ' . $this->selectedResource->getTitle() . ' is not available.';
             }
         }
 
         return $errorMessage;
+    }
+
+    /**
+     * Check whether this room has overlapping reservation or visit records
+     * for the currently selected date range.
+     */
+    protected function hasOverlappingReservationOrVisit(\PDO $dbh) {
+
+        if (is_null($this->selectedResource) || is_null($this->checkinDT) || is_null($this->checkoutDT)) {
+            return FALSE;
+        }
+
+        $idResc = intval($this->selectedResource->getIdResource(), 10);
+        if ($idResc < 1) {
+            return FALSE;
+        }
+
+        $idResv = intval($this->resv->getIdReservation(), 10);
+        $idVisit = intval($this->resv->getIdVisit($dbh), 10);
+
+        $arr = $this->checkinDT->format('Y-m-d');
+        $dep = $this->checkoutDT->format('Y-m-d');
+
+        $rStat = "'" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "'";
+        $vStat = "'" . VisitStatus::Pending . "','" . VisitStatus::Cancelled . "'";
+
+        $stmt = $dbh->prepare("
+            select 1
+            from reservation r
+            where r.idResource = :idrResv
+              and r.idReservation != :idResvExcl
+              and r.Status in ($rStat)
+              and DATE(r.Expected_Arrival) < DATE(:depResv)
+              and DATE(r.Expected_Departure) > DATE(:arrResv)
+            union
+            select 1
+            from visit v
+            where v.idResource = :idrVisit
+              and v.idVisit != :idVisitExcl
+              and v.Status not in ($vStat)
+              and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end)
+              and DATE(v.Arrival_Date) < DATE(:depVisit)
+              and ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE(:arrVisit)
+            limit 1
+        ");
+
+        $stmt->execute([
+            ':idrResv' => $idResc,
+            ':idResvExcl' => $idResv,
+            ':depResv' => $dep,
+            ':arrResv' => $arr,
+            ':idrVisit' => $idResc,
+            ':idVisitExcl' => $idVisit,
+            ':depVisit' => $dep,
+            ':arrVisit' => $arr
+        ]);
+
+        return (bool)$stmt->fetchColumn();
     }
 
     protected function createChooserMarkup(\PDO $dbh, $constraintsDisabled, $classId = '') {

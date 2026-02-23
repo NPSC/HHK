@@ -1372,7 +1372,6 @@ WHERE
         }
 
         if ($idRescPosted == 0 || $idRescPosted == 9999) {
-
             // Waitlisting the Reservation.
             $resv->setIdResource(0);
             $resv->setStatus(ReservationStatus::Waitlist);
@@ -1389,8 +1388,8 @@ WHERE
 
             //  room is in use
             $this->reserveData->addError('Chosen Room is unavailable.  ');
-            $resv->setIdResource(0);
-            $resv->setStatus(ReservationStatus::Waitlist);
+            //$resv->setIdResource(0);
+            //$resv->setStatus(ReservationStatus::Waitlist);
 
         } else {
 
