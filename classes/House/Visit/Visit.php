@@ -48,7 +48,7 @@ class Visit {
     public $visitRS;
     /**
      * Summary of visitRSs
-     * @var array[VisitRS]
+     * @var array<VisitRS>
      */
     protected $visitRSs = array();
     /**
