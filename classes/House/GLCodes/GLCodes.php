@@ -577,6 +577,37 @@ class GLCodes {
 		return $bytesWritten;
 	}
 
+	public function downloadCSV() {
+		
+
+		$data = '';
+
+		if (count($this->lines) == 0) {
+			$this->recordError("No records to Transfer. ");
+			return FALSE;
+		}
+
+		foreach ($this->lines as $l) {
+			$data .= implode(',', $l['l']) . "\r\n";
+		}
+
+		$this->recordError($this->fileId . '.csv');
+
+		try
+		{
+			header('Content-Type: application/csv');
+        	header('Content-Disposition: attachment; filename="'.$this->fileId.'.csv";');
+			echo $data;
+		}
+		catch (\Exception $e)
+		{
+			$this->recordError($e->getMessage());
+			return FALSE;
+		}
+
+		exit();
+	}
+
 	protected function getPayTypeGlCodes(\PDO $dbh) {
 
 	    // Pay Types

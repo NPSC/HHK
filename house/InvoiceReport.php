@@ -702,15 +702,7 @@ if ($useGlReport) {
 			$glInvoices = $etbl->generateMarkup() . $glInvoices;
 
 		} else if (isset($_POST['btnGlcsv'])) {
-
-			// Comma delemeted file.
-			$glCodes->mapRecords(TRUE);
-
-			foreach ($glCodes->getLines() as $l) {
-
-				$glInvoices .= implode(',', $l['l']) . "\r\n";
-
-			}
+            $glCodes->mapRecords()->downloadCSV();
 
 		} else {
 
