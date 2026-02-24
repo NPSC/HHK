@@ -393,7 +393,7 @@ class Visit {
      * @param bool $isAdmin
      * @param string $newRateCategory
      * @throws \HHK\Exception\RuntimeException
-     * @return string
+     * @return array
      */
     public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '') {
 
@@ -404,27 +404,33 @@ class Visit {
         $rateGlideDays = 0;
 
         $rtnMessage = '';
+        $errorMessage = '';
 
         if ($resc->isNewResource()) {
             throw new RuntimeException('Invalid Resource supplied to visit->changeRooms.');
         }
 
         if ($this->visitRS->idResource->getStoredVal() == $resc->getIdResource()) {
-            return "Error - Change Rooms: the new room cannot be the same as the old room.  ";
+            return ['message' => '', 'error' => 'The new room cannot be the same as the current room.  '];
         }
 
         if (count($this->stays) > $resc->getMaxOccupants()) {
-            return "Error - Change Rooms failed:The New room is too small, or has too many occupants.  ";
+            return ['message' => '', 'error' => 'The selected room is too small for this visit.  '];
         }
 
         // Change date cannot be earlier than span start date.
         $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
         $spanStartDT->setTime(0,0,0);
         if ($chgDT < $spanStartDT) {
-            return "Error - Change Rooms failed: The Change Date is prior to Visit Span start date.  ";
+            return ['message' => '', 'error' => 'The room change date cannot be before the visit span start date.  '];
         }
 
         $expDepDT = new \DateTime($this->getExpectedDeparture());
+
+        if ($chgDT->format("Y-m-d") == $expDepDT->format("Y-m-d")) {
+            return ['message' => '', 'error' => 'Cannot change rooms on the expected checkout date.  '];
+        }
+
         $expDepDT->setTime(10, 0, 0);
         $now = new \DateTime();
         $now->setTime(10, 0, 0);
@@ -446,7 +452,7 @@ class Visit {
                 $reserv->setIdResource($resc->getIdResource());
                 $reserv->saveReservation($dbh, $this->getIdRegistration(), $uname);
             } else {
-                return "Error - Change Rooms failed: The new room is busy or missing necessary attributes.  ";
+                return ['message' => '', 'error' => 'Room ' . $resc->getTitle() . ' is not available for the selected dates.  '];
             }
         }
 
@@ -594,7 +600,7 @@ class Visit {
             }
         }
 
-        return $rtnMessage;
+        return ['message' => $rtnMessage, 'error' => $errorMessage];
     }
 
     /**
@@ -1574,12 +1580,13 @@ class Visit {
     public function changeExpectedCheckoutDates(\PDO $dbh, array $guestDates, $maxExpected, $uname) {
 
         if ($this->getVisitStatus() != VisitStatus::CheckedIn) {
-            return array('message' => '');
+            return array('message' => '', 'error' => '', 'isChanged' => FALSE);
         }
 
         $uS = Session::getInstance();
         $isChanged = FALSE;
         $rtnMsg = '';
+        $errorMsg = '';
         $staysToUpdate = array();
 
         $todayDT = new \DateTime();
@@ -1622,7 +1629,7 @@ class Visit {
                 $coDT = Common::setTimeZone(NULL, $coDate);
                 $coDT->setTime(0, 0, 0);
             } catch (\Exception $ex) {
-                $rtnMsg .= "Something wrong with the Expected Checkout Date: " . $coDate;
+                $errorMsg .= "Invalid Expected Checkout Date '" . $coDate . "': " . $ex->getMessage() . '.  ';
                 continue;
             }
 
@@ -1640,7 +1647,7 @@ class Visit {
             // Only if trying to set a new expected checkout date
             if ($coDT < $todayDT) {
 
-                $rtnMsg .= "Expected Checkout date cannot be earlier than today.  ";
+                $errorMsg .= "Expected Checkout date cannot be earlier than today.  ";
                  // Check last date
                 if ($ecoDT > $lastDepartureDT) {
                     $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
@@ -1656,7 +1663,7 @@ class Visit {
             // Earlier than check in date?
             if ($coDT <= $spnStartDT) {
 
-                $rtnMsg .= "The Expected Checkout date cannot be earlier or the same as the Check-in date.  ";
+                $errorMsg .= "The Expected Checkout date cannot be earlier or the same as the Check-in date.  ";
                 // Check last date
                 if ($ecoDT > $lastDepartureDT) {
                     $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
@@ -1668,7 +1675,7 @@ class Visit {
             // Too rar out?
             if ($todayDT->diff($coDT)->days > $maxExpected) {
 
-                $rtnMsg .= "Expected Checkout date cannot be beyond " . $maxExpected . " days from today.  The max days setting can be changed.";
+                $errorMsg .= "Expected Checkout date cannot be beyond " . $maxExpected . " days from today.  The max days setting can be changed.";
                 // Check last date
                 if ($ecoDT > $lastDepartureDT) {
                     $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
@@ -1736,7 +1743,7 @@ class Visit {
 
             if ($stmt->fetchColumn()) {
                 return [
-                    'error' => 'The room has an overlapping reservation or visit.  ',
+                    'error' => $errorMsg . 'The room has an overlapping reservation or visit.  ',
                     'message' => '',
                     'isChanged' => FALSE
                 ];
@@ -1776,7 +1783,7 @@ class Visit {
             }
         }
 
-        return array('message'=>$rtnMsg, 'isChanged' => $isChanged);
+        return array('message' => $rtnMsg, 'error' => $errorMsg, 'isChanged' => $isChanged);
     }
 
     /**

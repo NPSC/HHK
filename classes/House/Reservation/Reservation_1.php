@@ -337,7 +337,7 @@ class Reservation_1 {
         // Check for pre-existing visits
         $resvs = ReservationSvcs::getCurrentReservations($dbh, $this->getIdReservation(), $this->getIdGuest(), 0, $newStartDT, $newEndDt);
         if (count($resvs) > 0) {
-            $this->resultMessage = "The Move overlaps another reservation or visit.  ";
+            $this->resultMessage = "Cannot move reservation: the selected dates overlap another reservation or waitlist entry for this guest.  ";
             return FALSE;
         }
 
@@ -1001,7 +1001,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         //
         $query = "select r.idReservation from reservation r "
-                . "where r.idResource = $idResource and r.Status in ($statuses) and DATE(ifnull(r.Actual_Arrival, r.Expected_Arrival)) <= DATE('$dep') "
+                . "where r.idResource = $idResource and r.Status in ($statuses) and DATE(ifnull(r.Actual_Arrival, r.Expected_Arrival)) < DATE('$dep') "
                 . "and DATE(ifnull(r.Actual_Departure, r.Expected_Departure)) > DATE('$arr')";
         $stmt = $dbh->query($query);
 

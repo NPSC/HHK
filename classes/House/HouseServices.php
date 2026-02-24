@@ -1081,7 +1081,20 @@ class HouseServices {
                         $newRateCategory = $resc->getDefaultRoomCategory();
                     }
 
-                    $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, SecurityComponent::is_Authorized("guestadmin"), $newRateCategory);
+                    $changeRoomReply = $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, SecurityComponent::is_Authorized("guestadmin"), $newRateCategory);
+
+                    if (is_array($changeRoomReply)) {
+                        if (isset($changeRoomReply['error']) && $changeRoomReply['error'] != '') {
+                            $dataArray['error'] = $changeRoomReply['error'];
+                            return $dataArray;
+                        }
+
+                        $reply .= ($changeRoomReply['message'] ?? '');
+
+                    } else {
+                        // Backward compatibility if string is returned.
+                        $reply .= $changeRoomReply;
+                    }
 
                     $returnCkdIn = TRUE;
                     $returnReserv = TRUE;
