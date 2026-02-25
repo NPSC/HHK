@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Debug\DebugBarSupport;
 use HHK\sec\{Session, Login};
 use HHK\sec\WebInit;
 
@@ -23,6 +24,13 @@ if (isset($_GET['cmd'])) {
 }
 
 switch ($cmd){
+    case "debugbarOpen":
+        if($uS->logged && $uS->username){
+            DebugBarSupport::handleOpenRequest();
+            exit();
+        }
+        $events = array('error'=>"unauthorized");
+        break;
     case "get":
         $expiresIn = false;
         if(isset($uS->timeout_idle)){

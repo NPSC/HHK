@@ -1704,6 +1704,7 @@ class Visit {
         // Check for room conflicts before applying updates.
         $visitExpDepDT = new \DateTime($this->getExpectedDeparture());
         $visitExpDepDT->setTime(0, 0, 0);
+        $spanStartDT = new \DateTime($this->getSpanStart());
 
         if ($this->getidResource() > 0 && $visitExpDepDT != $lastDepartureDT && $lastDepartureDT > $visitArrivalDT) {
 
@@ -1734,11 +1735,11 @@ class Visit {
                 ':idrResv' => $this->getidResource(),
                 ':idResvExcl' => $this->getReservationId(),
                 ':depResv' => $lastDepartureDT->format('Y-m-d'),
-                ':arrResv' => $visitArrivalDT->format('Y-m-d'),
+                ':arrResv' => $spanStartDT->format('Y-m-d'),
                 ':idrVisit' => $this->getidResource(),
                 ':idVisitExcl' => $this->getIdVisit(),
                 ':depVisit' => $lastDepartureDT->format('Y-m-d'),
-                ':arrVisit' => $visitArrivalDT->format('Y-m-d')
+                ':arrVisit' => $spanStartDT->format('Y-m-d')
             ]);
 
             if ($stmt->fetchColumn()) {

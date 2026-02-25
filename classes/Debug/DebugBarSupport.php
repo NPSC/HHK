@@ -2,7 +2,9 @@
 
 namespace HHK\Debug;
 
+use DebugBar\OpenHandler;
 use DebugBar\JavascriptRenderer;
+use DebugBar\Storage\FileStorage;
 use DebugBar\StandardDebugBar;
 use HHK\sec\Session;
 use HHK\SysConst\Mode;
@@ -11,6 +13,8 @@ use HHK\SysConst\Mode;
  * Optional PHP Debugbar integration for browser HTML pages.
  */
 final class DebugBarSupport {
+
+    private const STORAGE_PATH = '/tmp/hhk-debugbar';
 
     private static ?StandardDebugBar $debugBar = null;
     private static ?JavascriptRenderer $renderer = null;
@@ -29,6 +33,7 @@ final class DebugBarSupport {
         self::$debugBar = new StandardDebugBar();
         self::$renderer = self::$debugBar->getJavascriptRenderer();
         self::$renderer->setBaseUrl(self::resourceBaseUrl());
+        self::configureStorageAndAjax();
         self::$renderer->setAjaxHandlerEnableTab(true);
         self::$renderer->setAjaxHandlerAutoShow(false);
 
@@ -53,6 +58,15 @@ final class DebugBarSupport {
     }
 
     private static function shouldEnable(): bool {
+
+        if (self::isOpenHandlerRequest()) {
+            return false;
+        }
+
+        return self::isDebugbarEnabled();
+    }
+
+    private static function isDebugbarEnabled(): bool {
 
         // Keep default off. Enable via query string or environment variable.
         if (isset($_GET['debugbar'])) {
@@ -83,12 +97,14 @@ final class DebugBarSupport {
 
     private static function resourceBaseUrl(): string {
 
+        $uS = Session::getInstance();
+
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/';
         $scriptDir = trim((string) dirname($scriptName), '/');
         $depth = ($scriptDir === '' || $scriptDir === '.') ? 0 : substr_count($scriptDir, '/') + 1;
         $prefix = str_repeat('../', $depth);
 
-        return $prefix . 'vendor/php-debugbar/php-debugbar/resources';
+        return $uS->resourceURL . '/vendor/php-debugbar/php-debugbar/resources';
     }
 
     public static function injectIntoHtml(string $buffer): string {
@@ -119,13 +135,43 @@ final class DebugBarSupport {
         return $buffer;
     }
 
-    public static function finalize(): void {
+    public static function handleOpenRequest(): void {
 
-        if (self::$debugBar === null || headers_sent() || self::isAjaxRequest() === false) {
+        if (class_exists(StandardDebugBar::class) === false || \PHP_SAPI === 'cli') {
+            http_response_code(404);
             return;
         }
 
-        self::$debugBar->sendDataInHeaders();
+        if (self::isDebugbarEnabled() === false) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Unknown command']);
+            return;
+        }
+
+        if (self::$debugBar === null) {
+            self::$debugBar = new StandardDebugBar();
+            self::configureStorageAndAjax();
+        }
+
+        if (self::$debugBar->getStorage() === null) {
+            http_response_code(503);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'DebugBar storage is unavailable']);
+            return;
+        }
+
+        $openHandler = new OpenHandler(self::$debugBar);
+        $openHandler->handle();
+    }
+
+    public static function finalize(): void {
+
+        if (self::$debugBar === null || headers_sent() || self::isAjaxRequest() === false || self::isOpenHandlerRequest()) {
+            return;
+        }
+
+        self::$debugBar->sendDataInHeaders(true);
     }
 
     private static function isHtmlResponse(): bool {
@@ -173,5 +219,38 @@ final class DebugBarSupport {
         }
 
         return false;
+    }
+
+    private static function configureStorageAndAjax(): void {
+
+        if (self::$debugBar === null) {
+            return;
+        }
+
+        if (is_dir(self::STORAGE_PATH) === false) {
+            @mkdir(self::STORAGE_PATH, 0775, true);
+        }
+
+        if (is_dir(self::STORAGE_PATH) && is_writable(self::STORAGE_PATH)) {
+            self::$debugBar->setStorage(new FileStorage(self::STORAGE_PATH));
+        } else {
+            self::$debugBar['messages']->warning('DebugBar storage unavailable; large AJAX payloads may fail');
+        }
+
+        if (self::$renderer !== null) {
+            self::$renderer->setOpenHandlerUrl(self::openHandlerUrl());
+        }
+    }
+
+    private static function openHandlerUrl(): string {
+
+        $uS = Session::getInstance();
+        return rtrim($uS->resourceURL, '/') . '/admin/ws_session.php?cmd=debugbarOpen';
+    }
+
+    private static function isOpenHandlerRequest(): bool {
+
+        $cmd = $_GET['cmd'] ?? $_POST['cmd'] ?? null;
+        return is_string($cmd) && $cmd === 'debugbarOpen';
     }
 }
