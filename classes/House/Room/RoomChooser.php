@@ -220,6 +220,12 @@ class RoomChooser {
             ));
 
         $table->addBodyTr(
+            HTMLTable::makeTd('Through:', array('class' => 'tdlabel'))
+            . HTMLTable::makeTd(
+                HTMLInput::generateMarkup('', array('name' => 'resvExpDepDate', 'id' => 'resvExpDepDate', 'class' => 'hhk-feeskeys'))
+            ));
+
+        $table->addBodyTr(
             HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
             . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
                 . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'margin-left: 0.8em; display:none'))));

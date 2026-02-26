@@ -908,11 +908,11 @@ class HouseServices {
 
             $expDepDT = new \DateTime($r['Expected_Departure']);
 
-            $now = new \DateTime();
-            $now->setTime(0, 0, 0);
+            $tomorrow = new \DateTime("tomorrow");
 
-            if ($expDepDT < $now) {
-                $expDepDT = $now->add(new \DateInterval('P1D'));
+
+            if ($expDepDT < $tomorrow) {
+                $expDepDT = $tomorrow;
             }
 
             $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation']);
@@ -936,6 +936,8 @@ class HouseServices {
 
             $dataArray['start'] = $vspanStartDT->format('c');
             $dataArray['end'] = $expDepDT->format('c');
+            $dataArray['expDep'] = $expDepDT->format('c');
+            $dataArray['curExpDep'] = $r['Expected_Departure'];
 
         } else {
             $dataArray['error'] = "Change rooms command only available for checked-in visits.";
@@ -954,8 +956,9 @@ class HouseServices {
      * @param mixed $rescId
      * @return array
      */
-    public static function changeRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId) {
+    public static function changeRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId, $expectedDeparture = '') {
 
+        $uS = Session::getInstance();
         $dataArray = array();
         $vid = intval($idVisit, 10);
         $spanId = intval($span, 10);
@@ -970,11 +973,16 @@ class HouseServices {
             $now->setTime(10, 0, 0);
 
             // Expected Departure
-            $expDepDT = new \DateTime($vRows[0]['Expected_Departure']);
-            $expDepDT->setTime(10, 0, 0);
+            if ($expectedDeparture != '') {
+                $expDepDT = new \DateTime($expectedDeparture);
+            } else {
+                $expDepDT = new \DateTime($vRows[0]['Expected_Departure']);
+            }
+            $expDepDT->setTime($uS->CheckOutTime, 0, 0);
 
-            if ($expDepDT < $now) {
+            if ($expDepDT <= $now) {
                 $expDepDT = new \DateTime($now->format('Y-m-d H:i:s'));
+                $expDepDT->add(new \DateInterval('P1D'));
             }
 
             // Original Span Start Date
@@ -1012,7 +1020,7 @@ class HouseServices {
     }
 
 
-    public static function changeRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $useDefaultRate, $changeDate) {
+    public static function changeRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $useDefaultRate, $changeDate, $expectedDeparture = '') {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -1026,6 +1034,36 @@ class HouseServices {
 
             // instantiate current visit
             $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, $uS->username, $span);
+
+            if ($expectedDeparture != '') {
+
+                $newExpectedDT = new \DateTime($expectedDeparture);
+                $newExpectedDT->setTime(0, 0, 0);
+
+                $currentExpectedDT = new \DateTime($visit->getExpectedDeparture());
+                $currentExpectedDT->setTime(0, 0, 0);
+
+                if ($newExpectedDT != $currentExpectedDT) {
+
+                    $guestDates = [];
+                    foreach (Visit::loadStaysStatic($dbh, $visit->getIdVisit(), $visit->getSpan(), VisitStatus::CheckedIn) as $stayRS) {
+                        $guestDates[$stayRS->idName->getStoredVal()] = $newExpectedDT->format('Y-m-d');
+                    }
+
+                    $expDepReply = $visit->changeExpectedCheckoutDates($dbh, $guestDates, $uS->MaxExpected, $uS->username);
+
+                    if (isset($expDepReply['error']) && $expDepReply['error'] != '') {
+                        return ['error' => $expDepReply['error']];
+                    }
+
+                    if (isset($expDepReply['isChanged']) && $expDepReply['isChanged']) {
+                        $returnCkdIn = TRUE;
+                        $returnReserv = TRUE;
+                    }
+
+                    $reply .= ($expDepReply['message'] ?? '');
+                }
+            }
 
 
             if ($newRescId != $visit->getidResource()) {

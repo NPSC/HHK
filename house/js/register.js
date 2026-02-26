@@ -339,7 +339,15 @@ function showChangeRoom(gname, id, idVisit, span) {
 
             }
 
-            let sDate = new Date(data.start)
+            let sDate = new Date(data.start);
+            let eDate = data.end ? new Date(data.end) : null;
+            let tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            if (eDate === null || Number.isNaN(eDate.getTime())) {
+                eDate = new Date(tomorrow);
+            }
 
             let $diagbox = $('#chgRoomDialog');
 
@@ -348,6 +356,8 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 			let $selResource = $diagbox.find('#selResource');
             let $changeDate = $('#resvChangeDate');
+            let $expectedDepDate = $('#resvExpDepDate');
+            let $curExpDepDate = $('#spnCurExpDepDate');
             let $replaceRoom = $('input[name=rbReplaceRoom]');
             let $cbUseDefaultRate = $('#cbUseDefaultRate');
 
@@ -364,19 +374,50 @@ function showChangeRoom(gname, id, idVisit, span) {
 
             $changeDate.datepicker('setDate', new Date());
 
+            $expectedDepDate.datepicker({
+                yearRange: '-00:+02',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                numberOfMonths: 1,
+                minDate: tomorrow,
+                dateFormat: 'M d, yy'
+            });
+
+            $expectedDepDate.datepicker('setDate', eDate);
+
+            if (data.curExpDep) {
+            	let curExpDepDate = new Date(data.curExpDep);
+            	if (!Number.isNaN(curExpDepDate.getTime())) {
+            		$curExpDepDate.text($.datepicker.formatDate('M d, yy', curExpDepDate));
+            	}
+            }
+
             // room changer radiobutton
-            $replaceRoom.change(function () {
+			$replaceRoom.change(function () {
 				if($(this).val() == 'new' && $changeDate.val() !== '') {
-					getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource);
+					getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource, $expectedDepDate.datepicker("getDate"));
 				} else if ($(this).val() == 'rpl') {
-					getVisitRoomList(idVisit, span, sDate, $selResource);
+					getVisitRoomList(idVisit, span, sDate, $selResource, $expectedDepDate.datepicker("getDate"));
 				}
 			});
 
             // Date Control
             $changeDate.change(function (){
 				$('input[name=rbReplaceRoomnew]').prop('checked', true);
-				getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource);
+				getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource, $expectedDepDate.datepicker("getDate"));
+			});
+
+            $expectedDepDate.change(function (){
+				let changeDate = $changeDate.datepicker("getDate");
+
+				if ($('input[name="rbReplaceRoom"]:checked').val() === 'rpl') {
+					changeDate = sDate;
+				}
+
+				if (changeDate) {
+					getVisitRoomList(idVisit, span, changeDate, $selResource, $expectedDepDate.datepicker("getDate"));
+				}
 			});
 
             //init room selector data
@@ -413,7 +454,11 @@ function showChangeRoom(gname, id, idVisit, span) {
 		    let buttons = {
 		        "Change Rooms": function() {
 		        	if($('#selResource').val() > 0){
-		            	changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker( "getDate" ).toUTCString());
+		            	let expectedDeparture = '';
+		            	if ($expectedDepDate.datepicker("getDate")) {
+		            		expectedDeparture = $expectedDepDate.datepicker("getDate").toUTCString();
+		            	}
+		            	changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker( "getDate" ).toUTCString(), expectedDeparture);
 		            	$(this).dialog("close");
 		            }else{
 		            	$('#rmDepMessage').text('Choose a room').show();
@@ -432,9 +477,18 @@ function showChangeRoom(gname, id, idVisit, span) {
         }
     });
 
-	function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate) {
+	function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate, expectedDeparture) {
 
-		let parms = {cmd: 'doChangeRooms', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate};
+		let parms = {
+			cmd: 'doChangeRooms',
+			idVisit: idVisit,
+			span: span,
+			idRoom: idRoom,
+			replaceRoom: replaceRoom,
+			useDefault: useDefaultRate,
+			changeDate: changeDate,
+			expectedDeparture: expectedDeparture
+		};
 
 		$.post('ws_ckin.php', parms,
 			function (data) {
@@ -470,7 +524,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 	}
 
-    function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
+    function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector, expectedDeparture) {
 
 	    $rescSelector.prop('disabled', true);
 	    $('#hhk-roomChsrtitle').addClass('hhk-loading');
@@ -479,7 +533,14 @@ function showChangeRoom(gname, id, idVisit, span) {
 	    d = new Date();
 
 
-	    let parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate.toDateString(), selRescId:$rescSelector.val()};
+	    let parms = {
+	    	cmd:'chgRoomList',
+	    	idVisit:idVisit,
+	    	span:visitSpan,
+	    	chgDate:changeDate.toDateString(),
+	    	selRescId:$rescSelector.val(),
+	    	expDep: (expectedDeparture ? expectedDeparture.toDateString() : '')
+	    };
 
 	    $.post('ws_ckin.php', parms,
 	        function (data) {

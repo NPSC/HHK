@@ -104,12 +104,17 @@ try {
                 $rescId = intval(filter_var($_POST['selRescId'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
+            $expectedDeparture = '';
+            if (isset($_POST['expDep'])) {
+                $expectedDeparture = filter_var($_POST['expDep'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
             $span = 0;
             if (isset($_POST['span'])) {
                 $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $events = HouseServices::changeRoomList($dbh, $idVisit, $span, $changeDate, $rescId);
+            $events = HouseServices::changeRoomList($dbh, $idVisit, $span, $changeDate, $rescId, $expectedDeparture);
 
             break;
 
@@ -151,7 +156,12 @@ try {
                 $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $events = HouseServices::changeRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $useDefaultRate, $changeDate);
+            $expectedDeparture = '';
+            if (isset($_POST['expectedDeparture'])) {
+                $expectedDeparture = filter_var($_POST['expectedDeparture'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            $events = HouseServices::changeRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $useDefaultRate, $changeDate, $expectedDeparture);
 
             break;
 
