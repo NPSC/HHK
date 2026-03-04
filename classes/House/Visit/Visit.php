@@ -395,7 +395,7 @@ class Visit {
      * @throws \HHK\Exception\RuntimeException
      * @return array
      */
-    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '') {
+    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '', $targetExpectedDeparture = NULL) {
 
         $uS = Session::getInstance();
 
@@ -425,7 +425,11 @@ class Visit {
             return ['message' => '', 'error' => 'The room change date cannot be before the visit span start date.  '];
         }
 
-        $expDepDT = new \DateTime($this->getExpectedDeparture());
+        if ($targetExpectedDeparture instanceof \DateTimeInterface) {
+            $expDepDT = new \DateTime($targetExpectedDeparture->format('Y-m-d 00:00:00'));
+        } else {
+            $expDepDT = new \DateTime($this->getExpectedDeparture());
+        }
 
         if ($chgDT->format("Y-m-d") == $expDepDT->format("Y-m-d")) {
             return ['message' => '', 'error' => 'Cannot change rooms on the expected checkout date.  '];

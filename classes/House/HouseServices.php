@@ -1034,39 +1034,21 @@ class HouseServices {
 
             // instantiate current visit
             $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, $uS->username, $span);
+            $canChangeExpectedDeparture = TRUE;
+            $targetExpectedDepartureDT = NULL;
 
             if ($expectedDeparture != '') {
-
-                $newExpectedDT = new \DateTime($expectedDeparture);
-                $newExpectedDT->setTime(0, 0, 0);
-
-                $currentExpectedDT = new \DateTime($visit->getExpectedDeparture());
-                $currentExpectedDT->setTime(0, 0, 0);
-
-                if ($newExpectedDT != $currentExpectedDT) {
-
-                    $guestDates = [];
-                    foreach (Visit::loadStaysStatic($dbh, $visit->getIdVisit(), $visit->getSpan(), VisitStatus::CheckedIn) as $stayRS) {
-                        $guestDates[$stayRS->idName->getStoredVal()] = $newExpectedDT->format('Y-m-d');
-                    }
-
-                    $expDepReply = $visit->changeExpectedCheckoutDates($dbh, $guestDates, $uS->MaxExpected, $uS->username);
-
-                    if (isset($expDepReply['error']) && $expDepReply['error'] != '') {
-                        return ['error' => $expDepReply['error']];
-                    }
-
-                    if (isset($expDepReply['isChanged']) && $expDepReply['isChanged']) {
-                        $returnCkdIn = TRUE;
-                        $returnReserv = TRUE;
-                    }
-
-                    $reply .= ($expDepReply['message'] ?? '');
+                try {
+                    $targetExpectedDepartureDT = new \DateTime($expectedDeparture);
+                    $targetExpectedDepartureDT->setTime(0, 0, 0);
+                } catch (\Exception $e) {
+                    return ['error' => 'The expected checkout date is invalid.'];
                 }
             }
 
 
             if ($newRescId != $visit->getidResource()) {
+                $canChangeExpectedDeparture = FALSE;
 
                 $resc = AbstractResource::getResourceObj($dbh, $newRescId);
 
@@ -1119,7 +1101,7 @@ class HouseServices {
                         $newRateCategory = $resc->getDefaultRoomCategory();
                     }
 
-                    $changeRoomReply = $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, SecurityComponent::is_Authorized("guestadmin"), $newRateCategory);
+                    $changeRoomReply = $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, SecurityComponent::is_Authorized("guestadmin"), $newRateCategory, $targetExpectedDepartureDT);
 
                     if (is_array($changeRoomReply)) {
                         if (isset($changeRoomReply['error']) && $changeRoomReply['error'] != '') {
@@ -1136,6 +1118,36 @@ class HouseServices {
 
                     $returnCkdIn = TRUE;
                     $returnReserv = TRUE;
+                    $canChangeExpectedDeparture = TRUE;
+                }
+            }
+
+            if ($canChangeExpectedDeparture && $targetExpectedDepartureDT !== NULL) {
+
+                $newExpectedDT = new \DateTime($targetExpectedDepartureDT->format('Y-m-d 00:00:00'));
+
+                $currentExpectedDT = new \DateTime($visit->getExpectedDeparture());
+                $currentExpectedDT->setTime(0, 0, 0);
+
+                if ($newExpectedDT != $currentExpectedDT) {
+
+                    $guestDates = [];
+                    foreach (Visit::loadStaysStatic($dbh, $visit->getIdVisit(), $visit->getSpan(), VisitStatus::CheckedIn) as $stayRS) {
+                        $guestDates[$stayRS->idName->getStoredVal()] = $newExpectedDT->format('Y-m-d');
+                    }
+
+                    $expDepReply = $visit->changeExpectedCheckoutDates($dbh, $guestDates, $uS->MaxExpected, $uS->username);
+
+                    if (isset($expDepReply['error']) && $expDepReply['error'] != '') {
+                        return ['error' => $expDepReply['error']];
+                    }
+
+                    if (isset($expDepReply['isChanged']) && $expDepReply['isChanged']) {
+                        $returnCkdIn = TRUE;
+                        $returnReserv = TRUE;
+                    }
+
+                    $reply .= ($expDepReply['message'] ?? '');
                 }
             }
         }
