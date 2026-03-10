@@ -12,6 +12,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\House\Resource\ResourceTypes;
 use HHK\Purchase\VisitCharges;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\sec\Labels;
 use HHK\sec\SysConfig;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\ResourceStatus;
@@ -609,6 +610,15 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll();
 
+        $roomQuery = "SELECT r.idRoom, r.Title, r.`$roomGroup[0]`, r.Max_Occupants
+FROM room r
+JOIN resource_room rr on r.idRoom = rr.idRoom
+JOIN resource rs on rr.idResource = rs.idResource
+WHERE (rs.Retired_At is null or date(rs.Retired_At) > '" . $stDT->format('Y-m-d') . "')
+order by rs.Util_Priority;";
+        $stmtRooms = $dbh->query($roomQuery);
+        $roomRows = $stmtRooms->fetchAll();
+
         $days = array();
         $catDays = array();
         $totals = array();
@@ -640,7 +650,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
             $thisDay = $stDT->format('Y-m-d');
             $th .= HTMLTable::makeTh($stDT->format('j'));
 
-            foreach ($rows as $r) {
+            foreach ($roomRows as $r) {
                 $days[$r['idRoom']][$thisDay] = 0;
                 $catDays[$r[$roomGroup[0]]][$thisDay] = 0;
             }
@@ -655,12 +665,20 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         $roomCataegoryTitles = Common::readGenLookupsPDO($dbh, $roomGroup[2]);
         $roomCataegoryTitles[''] = array(0=>'',1=>'Unknown');
 
-        foreach ($rows as $r) {
+        foreach ($roomRows as $r) {
             $totals[$r['idRoom']] = 0;
             $totals[$r[$roomGroup[0]]] = 0;
             $rooms[$r['idRoom']]['Max'] = $r['Max_Occupants'];
             $rooms[$r['idRoom']]['Title'] = $r['Title'];
             $categories[$r[$roomGroup[0]]]['Title'] = $roomCataegoryTitles[$r[$roomGroup[0]]][1];
+        }
+
+        $maxOcc = 0;
+        foreach ($rooms as $room) {
+            if (!isset($room['Max'])) {
+                continue;
+            }
+            $maxOcc = max($maxOcc, (int)$room['Max']);
         }
 
         $rooms['Total']['Title'] = 'Total';
@@ -671,9 +689,11 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
 
 
         // Count
-        foreach ($rows as $r) {
-
+        foreach ($roomRows as $r) {
             $roomsInCategory[$r[$roomGroup[0]]][$r['idRoom']] = 1;
+        }
+
+        foreach ($rows as $r) {
 
             $rmStartDate = new \DateTime($r['Span_Start_Date']);
             $numNights = $r['Nights'];
@@ -703,11 +723,37 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         // Rooms report
         $tbl = new HTMLTable();
 
+        $overallDays = 0;
+        $overallOccupied = 0;
+        $overallCounts = array();
+        for ($i = 1; $i <= $maxOcc; $i++) {
+            $overallCounts[$i] = 0;
+        }
+
+        foreach ($days as $idRm => $rdateArray) {
+            if ($idRm === 'Total') {
+                continue;
+            }
+            foreach ($rdateArray as $numGuests) {
+                $overallDays++;
+                if ($numGuests > 0) {
+                    $overallOccupied++;
+                }
+                if (isset($overallCounts[$numGuests])) {
+                    $overallCounts[$numGuests]++;
+                }
+            }
+        }
+
         foreach ($days as $idRm => $rdateArray) {
 
             $td = HTMLTable::makeTd($rooms[$idRm]['Title']);
 
             $daysOccupied = 0;
+            $occCounts = array();
+            for ($i = 1; $i <= $maxOcc; $i++) {
+                $occCounts[$i] = 0;
+            }
 
             foreach($rdateArray as $numGuests) {
 
@@ -716,14 +762,38 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
                 if ($numGuests > 0 ) {
                     $daysOccupied++;
                 }
+
+                if (isset($occCounts[$numGuests])) {
+                    $occCounts[$numGuests]++;
+                }
             }
 
             $td .= HTMLTable::makeTd($rooms[$idRm]['Title']);
             $td .= HTMLTable::makeTd($totals[$idRm]);
 
             if ($rooms[$idRm]['Title'] != 'Total') {
-                $f = ($daysOccupied / (count($rdateArray)) * 100);
+                $totalDays = count($rdateArray);
+                $f = ($daysOccupied / $totalDays) * 100;
                 $td .= HTMLTable::makeTd(number_format($f, 0) . "%");
+
+                foreach ($occCounts as $count) {
+                    $fOcc = ($count / $totalDays) * 100;
+                    $td .= HTMLTable::makeTd(number_format($fOcc, 0) . "%");
+                }
+            } else {
+                if ($overallDays > 0) {
+                    $f = ($overallOccupied / $overallDays) * 100;
+                    $td .= HTMLTable::makeTd(number_format($f, 0) . "%");
+                    foreach ($overallCounts as $count) {
+                        $fOcc = ($count / $overallDays) * 100;
+                        $td .= HTMLTable::makeTd(number_format($fOcc, 0) . "%");
+                    }
+                } else {
+                    $td .= HTMLTable::makeTd('');
+                    for ($i = 0; $i < $maxOcc; $i++) {
+                        $td .= HTMLTable::makeTd('');
+                    }
+                }
             }
 
             $tbl->addBodyTr($td);
@@ -736,8 +806,14 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
             $thMonth .= HTMLTable::makeTh($m, array('colspan'=>$c));
         }
 
-        $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'3')));
-        $tbl->addHeaderTr(HTMLTable::makeTh('Room (' . (count($days) > 0 ? count($days)-1 : 0) . ')') . $th . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Total') . HTMLTable::makeTh('Occupied'));
+        $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>2)) .HTMLTable::makeTh('Occupancy by ' . Labels::getString('memberType', 'guest', '') . ' count', array('colspan'=>1 + $maxOcc)));
+
+        $occHeaders = '';
+        for ($i = 1; $i <= $maxOcc; $i++) {
+            $occHeaders .= HTMLTable::makeTh($i . 'P');
+        }
+
+        $tbl->addHeaderTr(HTMLTable::makeTh('Room (' . (count($days) > 0 ? count($days)-1 : 0) . ')') . $th . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Total') . HTMLTable::makeTh('Occupied') . $occHeaders);
 
         $mkup = $tbl->generateMarkup(array("class"=>"mt-2 mb-2"));
 

@@ -470,7 +470,7 @@ class UserClass
         }
 
         if ($success) {
-            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset where idName = :id and Status='a';";
+            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset, Status = 'a' where idName = :id;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':uname' => $ssn->username,
