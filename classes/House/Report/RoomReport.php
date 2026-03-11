@@ -13,14 +13,10 @@ use HHK\House\Resource\ResourceTypes;
 use HHK\Purchase\VisitCharges;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\sec\Labels;
-use HHK\sec\SysConfig;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\ResourceStatus;
-use HHK\SysConst\RoomState;
 use HHK\SysConst\VisitStatus;
 use HHK\sec\Session;
-
-
 
 /**
  * RoomReport.php
@@ -776,9 +772,13 @@ order by rs.Util_Priority;";
                 $f = ($daysOccupied / $totalDays) * 100;
                 $td .= HTMLTable::makeTd(number_format($f, 0) . "%");
 
-                foreach ($occCounts as $count) {
-                    $fOcc = ($count / $totalDays) * 100;
-                    $td .= HTMLTable::makeTd(number_format($fOcc, 0) . "%");
+                foreach ($occCounts as $k=>$count) {
+                    if($k <= $rooms[$idRm]["Max"] || $count > 0){
+                        $fOcc = ($count / $totalDays) * 100;
+                        $td .= HTMLTable::makeTd(number_format($fOcc, 0) . "%");
+                    }else{
+                        $td .= HTMLTable::makeTd('-', ['style'=>'text-align:center;']);
+                    }
                 }
             } else {
                 if ($overallDays > 0) {
@@ -798,6 +798,7 @@ order by rs.Util_Priority;";
 
             $tbl->addBodyTr($td);
         }
+
 
         $thMonth = '';
 
