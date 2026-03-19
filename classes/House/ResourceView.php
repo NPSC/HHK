@@ -173,7 +173,7 @@ order by r.Retired_At, r.Title;");
 
 
         $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Report Category`, r.Max_Occupants as `Max`,
-r.Floor, r.Phone, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle`, if(count(rcr.idResource_room) = count(resc.idResource), 'hhk-retired', '') as `isRetired` $depositCol
+r.Floor, r.Phone as `". $labels->getString("ResourceBuilder","RoomPhone","Phone") ."`, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle`, if(count(rcr.idResource_room) = count(resc.idResource), 'hhk-retired', '') as `isRetired` $depositCol
 from room r
 left join gen_lookups g on g.`Table_Name`='Room_Type' and g.`Code` = r.`Type`
 left join gen_lookups g3 on g3.`Table_Name`='Room_Category' and g3.`Code`=r.Category
@@ -220,7 +220,7 @@ order by r.Title;");
             'Report Category' => '',
             'Max' => '',
             'Floor' => '',
-            'Phone' => '',
+            $labels->getString("ResourceBuilder","RoomPhone","Phone") => '',
             'Static Rate' => '',
             'Default Rate' => '',
             'Clean Cycle' => ''

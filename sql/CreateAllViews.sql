@@ -1577,6 +1577,8 @@ CREATE OR REPLACE VIEW `vguest_view` AS
             WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone'
             ELSE IFNULL(`np`.`Phone_Num`, '')
         END AS `Phone`,
+        IFNULL(`na`.`City`,'') AS `City`,
+        IFNULL(`na`.`State_Province`,'') AS `State`,
         `s`.`Checkin_Date` AS `Arrival`,
         CASE
             WHEN `s`.`Expected_Co_Date` < CURRENT_TIMESTAMP() THEN CURRENT_TIMESTAMP()
@@ -1597,10 +1599,12 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         group_concat(`v`.`License_Number` SEPARATOR '<br class="my-1">') AS `License Plate`,
         group_concat(`v`.`Note` SEPARATOR '<br class="my-1">') AS `Note`
     FROM
-        ((((((((((((`stays` `s`
+        (((((((((((((`stays` `s`
         LEFT JOIN `name` `n` ON (`n`.`idName` = `s`.`idName`))
         LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
+        LEFT JOIN `name_address` `na` ON (`n`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`))
         LEFT JOIN `visit` `vs` ON (`s`.`idVisit` = `vs`.`idVisit`
             AND `s`.`Visit_Span` = `vs`.`Span`))
         LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`))

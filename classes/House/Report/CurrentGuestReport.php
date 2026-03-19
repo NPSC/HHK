@@ -92,6 +92,8 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         $cFields[] = array('Guest Last Name', 'Guest Last Name', 'checked', '', 'string', '20');
         $cFields[] = array("Guest First Name", 'Guest First Name', 'checked', '', 'string', '20');
         $cFields[] = array("Phone", 'Phone', 'checked', '', 'string', '15');
+        $cFields[] = array('City', 'City', '', '', 'string', '20');
+        $cFields[] = array("State", 'State', '', '', 'string', '20');
         $cFields[] = array('Patient Last Name', 'Patient Last Name', '', '', 'string', '20');
         $cFields[] = array("Patient First Name", 'Patient First Name', '', '', 'string', '20');
         $cFields[] = array("Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
