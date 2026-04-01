@@ -632,11 +632,15 @@ class Reservation_1 {
 
         // Set referal doc to archived
         $this->updateReferralFormDocStatus($dbh, ReferralFormStatus::Archived);
+        $dbh->exec("delete from `link_doc` where `idReservation` = '" . $this->getIdReservation());
+
+
 
         //move notes to PSG
         $idPsg = $this->getIdPsg($dbh);
         if($idPsg > 0 && $this->getIdReservation() > 0) {
-            $dbh->exec("update `link_note` set linkType = '" . Note::PsgLink . "', idLink = " . $idPsg . " where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
+            $dbh->exec("update ignore `link_note` set linkType = '" . Note::PsgLink . "', idLink = " . $idPsg . " where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
+            $dbh->exec("delete from `link_note` where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
         }
         
 
