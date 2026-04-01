@@ -2009,16 +2009,6 @@ VALUES
 		1
 	),
 	(
-		'Guest_Register_Email',
-		'',
-		'ea',
-		'ha',
-		'',
-		'If present, a guest register is sent here once a day (also must edit the cron job)',
-		'',
-		1
-	),
-	(
 		'Guest_Track_Address',
 		'',
 		'ea',
@@ -2982,6 +2972,16 @@ Thank you
 		1
 	),
 	(
+		'showRoomPhoneRcpt', 
+		'false',
+		'b',
+		'h',
+		'',
+		'Show Room Phone on Receipt',
+		'',
+		1
+	),
+	(
 		'showRegEmptyFields',
 		'true',
 		'b',
@@ -3104,7 +3104,7 @@ Thank you
 	(
 		'SMTP_Password',
 		'',
-		'op',
+		'ob',
 		'es',
 		'',
 		'SMTP user password (Obfuscated)',
@@ -4028,6 +4028,13 @@ VALUES
 		'in',
 		'',
 		'Default: Member Number'
+	),
+	(
+		'RoomPhone',
+		'Phone',
+		's',
+		'r',
+		'Default: Phone'
 	);
 
 -- ;

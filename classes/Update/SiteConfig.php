@@ -35,6 +35,8 @@ use HHK\sec\WebInit;
  */
 class SiteConfig {
 
+    const PW_PLACEHOLDER = '**********';
+
     public static function createHolidaysMarkup(\PDO $dbh, $resultMessage) {
 
         $gArray = array( 1 => array(1, 'Jan'),
@@ -390,7 +392,7 @@ class SiteConfig {
 
             if ($key == 'Password' || $key == 'sitePepper' || $key == 'ReadonlyPassword' || $key == 'BackupPassword') {
 
-                $inpt = '********';
+                $inpt = SiteConfig::PW_PLACEHOLDER;
 
             } else {
 
@@ -523,6 +525,10 @@ class SiteConfig {
 
                 $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($opts), $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
 
+            } else if ($r['Type'] == 'ob') {
+                // password
+
+                $inpt = HTMLInput::generateMarkup(($r['Value'] != '' ? SiteConfig::PW_PLACEHOLDER:''), array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'type'=>'password', 'size'=>40));
             } else {
 
                 // text input

@@ -3,6 +3,7 @@ namespace HHK\sec;
 use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\TableLog\HouseLog;
+use HHK\Update\SiteConfig;
 
 /**
  * SysConfig.php
@@ -159,6 +160,10 @@ class SysConfig {
 
         if (count($rows) == 1) {
 
+            if($rows[0]['Type'] == 'ob' && $value == SiteConfig::PW_PLACEHOLDER){
+                return;
+            }
+
             $value = self::setValueByType($value, $rows[0]['Type']);
 
             $oldVal = $rows[0]['Value'];
@@ -242,7 +247,7 @@ class SysConfig {
                 }
                 break;
             case 'ob':
-                $val = Crypto::encryptMessage($value);
+                $val = trim($value) !== '' ? Crypto::encryptMessage($value):'';
                 break;
             default:
                 $val = $value;

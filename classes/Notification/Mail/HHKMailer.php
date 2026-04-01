@@ -53,7 +53,7 @@ class HHKMailer extends PHPMailer {
                 $this->Username = $uS->SMTP_Username;
 
                 if ($uS->SMTP_Password != '') {
-                    $this->Password = Crypto::decryptMessage($uS->SMTP_Password);
+                    $this->Password = $uS->SMTP_Password;
                 }
 
                 if ($uS->SMTP_Port != '') {
