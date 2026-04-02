@@ -3079,7 +3079,7 @@ Thank you
 		'',
 		'SMTP Authorization required',
 		'',
-		1
+		0
 	),
 	(
 		'SMTP_Debug',
@@ -3089,17 +3089,17 @@ Thank you
 		'',
 		'0 = off; 1; 2; 3;  4 = low level',
 		'',
-		1
+		0
 	),
 	(
 		'SMTP_Host',
-		'',
+		'smtp_relay@gmail.com',
 		's',
 		'es',
 		'',
 		'SMTP Host',
 		'',
-		1
+		0
 	),
 	(
 		'SMTP_Password',
@@ -3120,9 +3120,9 @@ Thank you
 		'',
 		'SMTP Security, normally tls',
 		'',
-		1
+		0
 	),
-	('SMTP_Username', '', 's', 'es', '', '', '', 1),
+	('SMTP_Username', 'no_reply@nonprofitsoftwarecorp.org', 's', 'es', '', '', '', 0),
 	(
 		'SolicitBuffer',
 		'9',
