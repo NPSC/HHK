@@ -293,12 +293,12 @@ class ReferralForm
 				) {
 
 					// Is this a copy of the patient? #860, EKC, 5/23/2023
-					if (
+					/*if (
 						$this->formUserData['guests'][$gindx]['firstName'] == $patient->getRoleMember()->get_firstName()
 						&& $this->formUserData['guests'][$gindx]['lastName'] == $patient->getRoleMember()->get_lastName()
 					) {
 						continue;
-					}
+					}*/
 
 					$searchFor = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
 					$searchFor->setPsgId($this->idPsg);
@@ -504,13 +504,16 @@ class ReferralForm
 
 		$post = $this->memberDataPost($searchNameData);
 
-		$guest = new Guest($dbh, '', $idName);
+		if($idName == $psg->getIdPatient()){ //if is the patient, save additional data from referral
+			$guest = new Patient($dbh, '', $idName);
+			$guest->save($dbh, $post, $username);
+		}else{
+			$guest = new Guest($dbh, '', $idName);
 
-		$guest->save($dbh, $post, $username);
-
-		// PSG
-		$psg->setNewMember($guest->getIdName(), ($searchNameData->getRelationship() == "" ? RelLinkType::Friend : $searchNameData->getRelationship()));
-		$psg->saveMembers($dbh, $username);
+			// PSG
+			$psg->setNewMember($guest->getIdName(), ($searchNameData->getRelationship() == "" ? RelLinkType::Friend : $searchNameData->getRelationship()));
+			$psg->saveMembers($dbh, $username);
+		}
 
 		return $guest;
 	}
@@ -638,12 +641,13 @@ class ReferralForm
 		EditRS::insert($dbh, $rgRs);
 
 		foreach ($guests as $g) {
-
-			$rgRs = new Reservation_GuestRS();
-			$rgRs->idReservation->setNewVal($resv->getIdReservation());
-			$rgRs->idGuest->setNewVal($g);
-			$rgRs->Primary_Guest->setNewVal('');
-			EditRS::insert($dbh, $rgRs);
+			if($g != $psg->getIdPatient()){
+				$rgRs = new Reservation_GuestRS();
+				$rgRs->idReservation->setNewVal($resv->getIdReservation());
+				$rgRs->idGuest->setNewVal($g);
+				$rgRs->Primary_Guest->setNewVal('');
+				EditRS::insert($dbh, $rgRs);
+			}
 		}
 
 		//add reservation notes
@@ -718,12 +722,13 @@ class ReferralForm
 			$stmt->execute([":idReservation" => $resv->getIdReservation()]);
 
 			foreach ($guests as $g) {
-
-				$rgRs = new Reservation_GuestRS();
-				$rgRs->idReservation->setNewVal($resv->getIdReservation());
-				$rgRs->idGuest->setNewVal($g);
-				$rgRs->Primary_Guest->setNewVal('');
-				EditRS::insert($dbh, $rgRs);
+				if($g != $psg->getIdPatient()){
+					$rgRs = new Reservation_GuestRS();
+					$rgRs->idReservation->setNewVal($resv->getIdReservation());
+					$rgRs->idGuest->setNewVal($g);
+					$rgRs->Primary_Guest->setNewVal('');
+					EditRS::insert($dbh, $rgRs);
+				}
 			}
 		}
 

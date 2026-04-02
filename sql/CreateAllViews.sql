@@ -1644,6 +1644,8 @@ CREATE OR REPLACE VIEW `vguest_resv_view` AS
             WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone'
             ELSE IFNULL(`np`.`Phone_Num`, '')
         END AS `Phone`,
+        IFNULL(`na`.`City`,'') AS `City`,
+        IFNULL(`na`.`State_Province`,'') AS `State`,
         `r`.`Expected_Arrival` AS `Arrival`,
         `r`.`Expected_Departure` AS `Expected Departure`,
         0 AS `On_Leave`,
@@ -1661,11 +1663,13 @@ CREATE OR REPLACE VIEW `vguest_resv_view` AS
         group_concat(`v`.`License_Number` SEPARATOR '<br class="my-1">') AS `License Plate`,
         group_concat(`v`.`Note` SEPARATOR '<br class="my-1">') AS `Note`
     FROM
-        ((((((((((((`reservation` `r`
+        (((((((((((((`reservation` `r`
         LEFT JOIN `reservation_guest` `rg` on (`rg`.`idReservation` = `r`.`idReservation`))
         LEFT JOIN `name` `n` ON (`n`.`idName` = `rg`.`idGuest`))
         LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
+        LEFT JOIN `name_address` `na` ON (`n`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`))
         LEFT JOIN `hospital_stay` `hs` ON (`r`.`idHospital_stay` = `hs`.`idHospital_stay`))
         LEFT JOIN `name` `pn` ON (`hs`.`idPatient` = `pn`.`idName`))
         LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))

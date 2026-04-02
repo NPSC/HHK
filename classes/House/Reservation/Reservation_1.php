@@ -632,7 +632,7 @@ class Reservation_1 {
 
         // Set referal doc to archived
         $this->updateReferralFormDocStatus($dbh, ReferralFormStatus::Archived);
-        $dbh->exec("delete from `link_doc` where `idReservation` = '" . $this->getIdReservation());
+        $dbh->exec("delete from `link_doc` where `idReservation` = '" . $this->getIdReservation(). "'");
 
 
 
