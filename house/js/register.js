@@ -741,6 +741,7 @@ var hindx = 0,
     wlTitle = $('#wlTitle').val(),
     showCharges = $('#showCharges').val(),
 	acceptResvPay = $('#acceptResvPay').val(),
+    showCityOnRegister = $('#showCityOnRegister').val(),
 	holidays = $.parseJSON($('#holidays').val()),
     closedDays = $.parseJSON($('#closedDays').val()),
 	showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val(),
@@ -839,6 +840,11 @@ $(document).ready(function () {
 
             rvCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
 
+            if(showCityOnRegister){
+                rvCols.push({data: 'City', title: visitorLabel+' City'});
+				rvCols.push({data: 'Miles_From_House', title: 'Miles away'});
+            }
+
             if (acceptResvPay) {
 				rvCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
 			}
@@ -862,6 +868,7 @@ $(document).ready(function () {
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'}];
 
+            
             if (showCreatedDate) {
                 wlCols.push({data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm")}});
 				wlCols.push({data: 'Updated_By', title: 'Updated By'});
@@ -871,6 +878,11 @@ $(document).ready(function () {
             wlCols.push({data: 'Nights', title: 'Nights', className: 'hhk-justify-c'});
             wlCols.push({data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}});
             wlCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+
+            if(showCityOnRegister){
+                wlCols.push({data: 'City', title: visitorLabel+' City'});
+				wlCols.push({data: 'Miles_From_House', title: 'Miles away'});
+            }
 
             if (acceptResvPay) {
 				wlCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});

@@ -345,7 +345,12 @@ foreach ($logSelRows as $r) {
 $ul = HTMLContainer::generateMarkup('ul', $li, array());
 $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id' => 'logsTabDiv'));
 
-$conf = SiteConfig::createMarkup($dbh, NULL, array('pr'));
+$hiddenCategories = ['pr'];
+if(!SecurityComponent::is_TheAdmin()){
+    $hiddenCategories[] = 'es';
+}
+
+$conf = SiteConfig::createMarkup($dbh, NULL, $hiddenCategories);
 
 $localAuthMkup = SiteConfig::createMarkup($dbh, 'pr');
 
