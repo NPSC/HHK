@@ -1136,10 +1136,10 @@ ORDER BY `List_Order`");
         if (isset($post[$idPrefix . 'selIns' . $primaryInsType]) === FALSE) {
             $post[$idPrefix . 'selIns' . $primaryInsType] = array();
         }
-
+        
         foreach ($insTypes as $i) {
 
-            if (isset($post[$idPrefix . 'Insurance'][$i['idInsurance_type']]) && $this->get_idName() > 0) {
+            if (isset($post[$idPrefix . 'Insurance'][$i['idInsurance_type']]['insuranceId']) && $this->get_idName() > 0) {
 
                 $insId = filter_var($post[$idPrefix . 'Insurance'][$i['idInsurance_type']]['insuranceId'], FILTER_SANITIZE_NUMBER_INT);
                 $groupNum = '';

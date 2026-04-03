@@ -499,7 +499,7 @@ class ReferralForm
 	 * @param string $username
 	 * @return \HHK\Member\Role\Guest
 	 */
-	protected function saveGuest(\PDO $dbh, $idName, PSG $psg, SearchNameData $searchNameData, $username)
+	protected function saveGuest(\PDO $dbh, $idName, PSG $psg, SearchNameData $searchNameData, $username): Guest|Patient
 	{
 
 		$post = $this->memberDataPost($searchNameData);
@@ -509,6 +509,7 @@ class ReferralForm
 			$guest->save($dbh, $post, $username);
 		}else{
 			$guest = new Guest($dbh, '', $idName);
+			$guest->save($dbh, $post, $username);
 
 			// PSG
 			$psg->setNewMember($guest->getIdName(), ($searchNameData->getRelationship() == "" ? RelLinkType::Friend : $searchNameData->getRelationship()));
