@@ -2982,6 +2982,16 @@ Thank you
 		1
 	),
 	(
+		'showCityOnRegister', 
+		'false',
+		'b',
+		'h',
+		'',
+		'Show Room Phone on Receipt',
+		'',
+		1
+	),
+	(
 		'showRegEmptyFields',
 		'true',
 		'b',
@@ -3079,7 +3089,7 @@ Thank you
 		'',
 		'SMTP Authorization required',
 		'',
-		0
+		1
 	),
 	(
 		'SMTP_Debug',
@@ -3089,7 +3099,7 @@ Thank you
 		'',
 		'0 = off; 1; 2; 3;  4 = low level',
 		'',
-		0
+		1
 	),
 	(
 		'SMTP_Host',
@@ -3099,7 +3109,7 @@ Thank you
 		'',
 		'SMTP Host',
 		'',
-		0
+		1
 	),
 	(
 		'SMTP_Password',
@@ -3120,9 +3130,9 @@ Thank you
 		'',
 		'SMTP Security, normally tls',
 		'',
-		0
+		1
 	),
-	('SMTP_Username', 'no_reply@nonprofitsoftwarecorp.org', 's', 'es', '', '', '', 0),
+	('SMTP_Username', 'no_reply@nonprofitsoftwarecorp.org', 's', 'es', '', '', '', 1),
 	(
 		'SolicitBuffer',
 		'9',

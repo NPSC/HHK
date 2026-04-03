@@ -3,6 +3,7 @@
 namespace HHK;
 
 use HHK\DataTableServer\SSP;
+use HHK\House\Distance\DistanceFactory;
 use HHK\Purchase\RoomRate;
 use HHK\SysConst\{WebRole, ReservationStatus, ItemPriceCode, RoomRateCategories, GLTableNames, RoomState};
 use HHK\Tables\EditRS;
@@ -281,6 +282,8 @@ class History {
             }
             return $rowCache[$id];
         };
+        
+        $dist = DistanceFactory::make();
 
         $columns = array(
             array('db' => 'idReservation', 'dt' => 'Action', 'formatter' => function ($d, $row) use ($buildRow) { $r = $buildRow($row); return (isset($r['Action']) ? $r['Action'] : ''); }),
@@ -313,6 +316,9 @@ class History {
             array('db' => 'Room Title', 'dt' => 'Room Title'),
             array('db' => 'Patient Name', 'dt' => 'Patient Name'),
             array('db' => 'Number_Guests', 'dt' => 'Number_Guests'),
+            array('db' => 'City', 'dt' => 'City', 'formatter' => function ($d, $row) use ($buildRow) { $r = $buildRow($row); return implode(', ', array_filter([$r["City"], $r["State_Province"]]));}),
+            array('db' => 'State_Province', 'dt'=> 'State_Province'),
+            array('db' => 'Meters_From_House', 'dt' => 'Miles_From_House', 'formatter' => function ($d, $row) use ($dist) { return $d > 0 ? $dist->meters2miles((float) $d):''; }),
         );
 
         $where = "`Status` = '$status' $whDate";
@@ -541,6 +547,9 @@ class History {
 //                    $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
 //                }
         }
+
+        $fixedRows['City'] = $r['City'];
+        $fixedRows['State_Province'] = $r['State_Province'];
 
         return $fixedRows;
     }

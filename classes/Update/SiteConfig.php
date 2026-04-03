@@ -201,7 +201,7 @@ class SiteConfig {
 
         foreach ($lines as $line) {
 
-            $fields = str_getcsv($line);
+            $fields = str_getcsv($line, separator: ',', enclosure: '"', escape: "");
 
             if (count($fields) > 20) {
 

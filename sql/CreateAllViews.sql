@@ -2580,6 +2580,9 @@ CREATE or Replace VIEW `vreservation_events` AS
         ifnull(`n`.`Name_First`, '') AS `Guest First`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') AS `Guest Last`,
         CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as `Phone`,
+        `na`.`Meters_From_House`,
+        `na`.`City`,
+        `na`.`State_Province`,
         ifnull((case when n2.Name_Suffix = '' then `n2`.`Name_Last_First` else concat(`n2`.`Name_Last_First`, ', ', gs2.Description) end), '') AS `Patient Name`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end
