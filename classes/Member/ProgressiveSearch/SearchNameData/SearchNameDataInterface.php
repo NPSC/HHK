@@ -150,6 +150,10 @@ interface SearchNameDataInterface
     public function getEmrgAltPhone();
     public function getEmrgRelation();
 
+    public function getDemographics():array;
+
+    public function setDemographics(array $v);
+
 
     public function loadMeFrom(array $r, SearchNameDataInterface $formData);
 }

@@ -2,6 +2,7 @@
 
 namespace HHK\House;
 
+use HHK\Common;
 use HHK\Document\FormDocument;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
@@ -150,6 +151,11 @@ class ReferralForm
 			$searchFor->setBirthDate($formUserData['birthdate'], (isset($searchIncludes[self::HTML_Incl_Birthday]) ? TRUE : FALSE));
 		}
 
+		//demographics
+		if (isset($formUserData['demographics']) && is_array($formUserData['demographics'])) {
+			$searchFor->setDemographics($formUserData['demographics']);
+		}
+
 		// gender
 		if (isset($formUserData['demographics']['gender']) && $formUserData['demographics']['gender'] != '') {
 			$searchFor->setGender($formUserData['demographics']['gender']);
@@ -263,6 +269,7 @@ class ReferralForm
 		// Relationship
 		$this->patSearchFor->setRelationship(RelLinkType::Self);
 
+
 		$progSearch = new ProgressiveSearch();
 		$this->patResults = $progSearch->doSearch($dbh, $this->patSearchFor);  // returns an array of SearchResults objects
 
@@ -348,6 +355,11 @@ class ReferralForm
 		if ($idP > 0) {
 
 			$searchNameData = $this->LoadMemberData($dbh, $idP, new SearchNameData(), $searchNameData);
+
+			if (isset($this->formUserData['patient']['demographics']) && is_array($this->formUserData['patient']['demographics'])) {
+				$searchNameData->setDemographics($this->formUserData['patient']['demographics']);
+			}
+
 		}
 
 		if (is_null($searchNameData) === FALSE) {
@@ -392,6 +404,10 @@ class ReferralForm
 					// Update Relationship
 					if (isset($this->formUserData['guests'][$gindx]['relationship']) && $this->formUserData['guests'][$gindx]['relationship'] != '') {
 						$searchNameData->setRelationship($this->formUserData['guests'][$gindx]['relationship']);
+					}
+
+					if (isset($this->formUserData['guests'][$gindx]['demographics']) && is_array($this->formUserData['guests'][$gindx]['demographics'])) {
+						$searchNameData->setDemographics($this->formUserData['guests'][$gindx]['demographics']);
 					}
 
 				}
@@ -463,7 +479,7 @@ class ReferralForm
 	protected function savePatient(\PDO $dbh, $idP, SearchNameData $searchNameData, $username)
 	{
 
-		$post = $this->memberDataPost($searchNameData);
+		$post = $this->memberDataPost($dbh, $searchNameData);
 
 		//insurance
 		$this->setInsurance($post);
@@ -502,7 +518,7 @@ class ReferralForm
 	protected function saveGuest(\PDO $dbh, $idName, PSG $psg, SearchNameData $searchNameData, $username): Guest|Patient
 	{
 
-		$post = $this->memberDataPost($searchNameData);
+		$post = $this->memberDataPost($dbh, $searchNameData);
 
 		if($idName == $psg->getIdPatient()){ //if is the patient, save additional data from referral
 			$guest = new Patient($dbh, '', $idName);
@@ -1189,7 +1205,7 @@ class ReferralForm
 	 * @param SearchNameDataInterface $data
 	 * @return array
 	 */
-	protected function memberDataPost(SearchNameDataInterface $data)
+	protected function memberDataPost(\PDO $dbh, SearchNameDataInterface $data)
 	{
 
 		$post = array(
@@ -1237,7 +1253,25 @@ class ReferralForm
 		$post['rbPrefMail'] = AddressPurpose::Home;
 		$post['adr'] = $adr1;
 
+		$demogs = $this->formatDemogDataPost($dbh, $data->getDemographics());
+		$post = array_merge($post, $demogs);
+
 		return $post;
+	}
+
+	protected function formatDemogDataPost(\PDO $dbh, array $demographicsUserData){
+		$demos = Common::readGenLookupsPDO($dbh, 'Demographics', 'Order');
+		$demogPost = [];
+
+        // Demographics
+        foreach ($demos as $d) {
+
+            if ($d[2] == 'y' && isset($demographicsUserData[$d[0]]) && $demographicsUserData[$d[0]] != '') {
+				$demogPost['sel_' . $d[0]] = $demographicsUserData[$d[0]];
+            }
+        }
+
+		return $demogPost;
 	}
 
 	/**

@@ -319,7 +319,7 @@ class IndivMember extends AbstractMember
                         HTMLSelector::generateMarkup(
                             HTMLSelector::doOptionsMkup(
                                 HTMLSelector::removeOptionGroups($uS->nameLookups[$d[0]]),
-                                (isset($demographicsUserData[$d[0]]) && $demographicsUserData[$d[0]] != '' ? $demographicsUserData[$d[0]] : $this->getDemographicsEntry($d[0]))
+                                $this->getDemographicsEntry($d[0])
                             ),
                             array('name' => $idPrefix . 'sel_' . $d[0], 'class' => $idPrefix . 'hhk-demog-input', 'style' => "min-width: max-content")
                         )

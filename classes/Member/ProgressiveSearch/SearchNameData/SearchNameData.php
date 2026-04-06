@@ -34,6 +34,7 @@ class SearchNameData implements SearchNameDataInterface {
     protected $emrgAltPhone = '';
     protected $emrgRelation = '';
 
+    protected $demographics = [];
 
     /**
      * @param mixed $id
@@ -502,6 +503,15 @@ class SearchNameData implements SearchNameDataInterface {
             $this->setEmrgRelation($this->setIfNew($r["ec_Relationship"], $formData->getEmrgRelation()));
         }
 
+    }
+
+    public function setDemographics(array $v) {
+        $this->demographics = $v;
+        return $this;
+    }
+
+    public function getDemographics(): array {
+        return $this->demographics;
     }
 
     public function setNoReturn($v)
