@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Cron;
 
+use HHK\House\Report\CurrentGuestReport;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportInterface;
 use HHK\HTMLControls\HTMLContainer;
@@ -107,7 +108,7 @@ abstract class AbstractJob implements JobInterface
             $reportObj = null;
             if (isset($this->params['report']) && $this->params['report'] != "" && isset(EmailReportJob::AVAILABLE_REPORTS[$this->params['report']])) {
                 $class = '\HHK\House\\Report\\' . $this->params['report'];
-                $reportObj = new $class($this->dbh, $this->params["filterOpts"] ?? []);
+                $reportObj = new $class($this->dbh, is_array($this->params["filterOpts"]) ? $this->params["filterOpts"] : []);
             }
 
             switch ($attrs['type']) {
