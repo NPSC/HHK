@@ -302,12 +302,37 @@ $(document).ready(function () {
         }
     });
     
+    function filterDefaultPageOptions() {
+        var $sel = $('#txtwDefaultPage');
+        if ($('#selwRole').val() === '10') {
+            $sel.find('option').show().prop('disabled', false);
+            return;
+        }
+        var checkedCodes = [];
+        $('.grpSec:checked').each(function () {
+            checkedCodes.push($(this).attr('id').replace('grpSec_', ''));
+        });
+        $sel.find('option[value!=""]').each(function () {
+            var groups = ($(this).data('groups') || '').split(',');
+            var visible = checkedCodes.length === 0 || checkedCodes.some(function (c) { return groups.indexOf(c) >= 0; });
+            $(this).toggle(visible).prop('disabled', !visible);
+        });
+        if ($sel.find('option:selected').prop('disabled')) {
+            $sel.val('');
+        }
+    }
+
+    $('#vwebUser').on('change', '.grpSec, #selwRole', filterDefaultPageOptions);
+
     $('#vwebUser').dialog({
         autoOpen: false,
         height: 500,
         width: 'auto', // 732
         resizable: true,
         modal: true,
+        open: function () {
+            filterDefaultPageOptions();
+        },
         buttons: {
             "Save": function (event) {
                 var parms = {},

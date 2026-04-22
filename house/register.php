@@ -190,13 +190,6 @@ if ($uS->ShowUncfrmdStatusTab) {
         . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divunreserv']);
 }
 
-
-// make waitlist print button
-//$wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL ml-2 mr-3'))
-//        . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL mt-3 mt-md-0', 'style'=>'font-size:.85em;'))
-//        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap my-3 my-md-0 ml-md-5"));
-
-
 $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'waitlistTab', 'Wait List') . '</span>' .
         HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlWlist', 'style' => 'font-size:.9em;', "class" => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextWaitlistGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Waitlist Reservations','data-linktype'=>'waitlist', 'style' => 'font-size:.9em;'])
         //.$wlButton

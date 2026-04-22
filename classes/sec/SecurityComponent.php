@@ -53,6 +53,7 @@ class SecurityComponent {
 
         $uS = Session::getInstance();
         $pageCode = array();
+        $pageTitle = '';
 
         //parse url before checking authorization
         $parsedName = parse_url($name);
@@ -66,6 +67,7 @@ class SecurityComponent {
 
             if (!is_null($r)) {
                 $pageCode = $r["Codes"];
+                $pageTitle = $r["Title"];
             }
         } else {
             return FALSE;
@@ -78,7 +80,7 @@ class SecurityComponent {
         if($isAuthorized){
             return true;
         }else if ($isIpRestricted){
-            $errorMsg = "Unauthorized for page:" . $name . " at this location";
+            $errorMsg = "Unauthorized for page:" . ($pageTitle != '' ? $pageTitle : $name) . " at this location";
 
             if($isLogin){
                 $dbh = Common::initPDO(true);
@@ -87,7 +89,7 @@ class SecurityComponent {
             }
             return false;
         }else{
-            $errorMsg = "Unauthorized for page: " . $name;
+            $errorMsg = "Unauthorized for page: " . ($pageTitle != '' ? $pageTitle : $name);
 
             if($isLogin){
                 $dbh = Common::initPDO(true);

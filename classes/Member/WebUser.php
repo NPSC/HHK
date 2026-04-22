@@ -94,11 +94,37 @@ class WebUser {
             $webUserName = $wUserRS->User_Name->getStoredVal();
         }
 
-        // Values for defalut page
+        // Values for default page - build select from page table with per-option security group codes
+        $pageStmt = $dbh->query("select p.`File_Name`, p.`Title`, p.`Web_Site`, COALESCE(par.`Title`, '') as `Parent_Title`, GROUP_CONCAT(DISTINCT ps.`Group_Code` ORDER BY ps.`Group_Code` SEPARATOR ',') as `Group_Codes` from page p join page_securitygroup ps on p.`idPage` = ps.`idPage` left join page par on p.`Menu_Parent` = par.`idPage` where p.`Web_Site` in ('a','h') and p.Hide = 0 and p.Type = 'p' and p.Title != '' and p.`Login_Page_Id` > 0 and p.`File_Name` NOT REGEXP '^_' and p.`Menu_Parent` != '' group by p.`idPage` order by p.`Web_Site`, p.`Menu_Parent`, p.`Menu_Position`");
+        $pageRows = $pageStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $storedDefaultPage = $wUserRS->Default_Page->getStoredVal();
+
         if ($maintFlag) {
-            $defaultPage = HTMLInput::generateMarkup($wUserRS->Default_Page->getStoredVal(), array('id'=>'txtwDefaultPage', 'class'=>'ignrSave', 'style'=>'width: 98%'));
+            // Blank option
+            $optionsMkup = HTMLContainer::generateMarkup('option', '', ($storedDefaultPage === '' ? ['value' => '', 'selected' => 'selected'] : ['value' => '']));
+            $siteGroups = [];
+            foreach ($pageRows as $pr) {
+                $label = ($pr['Parent_Title'] !== '' ? $pr['Parent_Title'] . ' > ' : '') . $pr['Title'];
+                $groupName = ($pr['Web_Site'] === 'a' ? 'Admin' : 'House');
+                $attrs = ['value' => $pr['File_Name'], 'data-groups' => $pr['Group_Codes']];
+                if ($pr['File_Name'] === $storedDefaultPage) {
+                    $attrs['selected'] = 'selected';
+                }
+                $siteGroups[$groupName][] = HTMLContainer::generateMarkup('option', $label, $attrs);
+            }
+            foreach ($siteGroups as $groupName => $options) {
+                $optionsMkup .= HTMLContainer::generateMarkup('optgroup', implode('', $options), ['label' => $groupName]);
+            }
+            $defaultPage = HTMLSelector::generateMarkup($optionsMkup, ['id' => 'txtwDefaultPage', 'class' => 'ignrSave']);
         } else {
-            $defaultPage = $wUserRS->Default_Page->getStoredVal();
+            $defaultPage = $storedDefaultPage;
+            foreach ($pageRows as $pr) {
+                if ($pr['File_Name'] === $storedDefaultPage) {
+                    $defaultPage = ($pr['Parent_Title'] !== '' ? $pr['Parent_Title'] . ' > ' : '') . $pr['Title'];
+                    break;
+                }
+            }
         }
 
         $tbl->addBodyTr(
@@ -166,7 +192,7 @@ class WebUser {
 
         $tbl->addBodyTr(HTMLTable::makeTh($webAlert->createMarkup(), array('colspan'=>'2', 'style'=>'display: none;')));
 
-        return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'float:left;max-width:400px;'));
+        return HTMLContainer::generateMarkup('div', $tbl->generateMarkup());
 
     }
 
@@ -220,7 +246,7 @@ class WebUser {
             $m .= "<tr><td><input type='checkbox' class='grpSec ignrsave' $enabled id='grpSec_" . $g["Code"] . "' $checked /></td><td>" . $g["Description"] . "</td><td>$LastUpdate</td></tr>";
         }
 
-        return HTMLContainer::generateMarkup('div', $m . "</table>", array('style'=>'float:left;'));
+        return HTMLContainer::generateMarkup('div', $m . "</table>");
 
     }
 

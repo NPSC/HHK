@@ -290,7 +290,8 @@ class Reservation_1 {
      * @return bool
      */
     public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE, $idRescPosted = null) {
-
+        $uS = Session::getInstance();
+        
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
@@ -373,7 +374,8 @@ class Reservation_1 {
                     }
 
                     $this->setIdResource($requestedRescId);
-                    $this->setStatus(ReservationStatus::Committed);
+                    $this->setStatus($uS->InitResvStatus);
+
                     $roomChanged = 'to room ' . $rescs[$requestedRescId]->getTitle() . '.  ';
                 }
             }

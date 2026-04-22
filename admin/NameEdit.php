@@ -4,6 +4,7 @@ use HHK\Crypto;
 use HHK\Donation\{Campaign, DonateMarkup};
 use HHK\History;
 use HHK\AlertControl\AlertMessage;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\Member\{AbstractMember, WebUser};
 use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, SalutationCodes};
@@ -15,10 +16,10 @@ use HHK\sec\SAML;
 /**
  * NameEdit.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2017 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 require ("AdminIncludes.php");
@@ -366,7 +367,7 @@ if($wUserRS->idIdp->getStoredVal() > 0){
 }else{
     $editSecGroups = $maintFlag;
 }
-$webUserDialogMarkup = WebUser::getSSOMsg($dbh, $id) . WebUser::getSecurityGroupMarkup($dbh, $id, $editSecGroups) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS);
+$webUserDialogMarkup = WebUser::getSSOMsg($dbh, $id) . HTMLContainer::generateMarkup('div', WebUser::getSecurityGroupMarkup($dbh, $id, $editSecGroups) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS), ['class'=>'d-flex']);
 
 
 $memberData["id"] = $id;
