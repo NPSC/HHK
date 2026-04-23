@@ -1101,7 +1101,6 @@ VALUES
 	),
 	('Role_Codes', '10', 'Admin User', '', '', 0),
 	('Role_Codes', '100', 'Web User', '', '', 0),
-	('Role_Codes', '700', 'Guest', '', '', 0),
 	('Room_Category', 'none', '(none)', '', '', 0),
 	('Room_Category', 'dh', 'House', '', '', 0),
 	('Room_Category', 'gada', 'Hospital', '', '', 0),
@@ -6063,7 +6062,7 @@ VALUES
 	),
 	(
 		102,
-		'GuestReport.php',
+		'_GuestReport.php',
 		31,
 		'Reports',
 		'',

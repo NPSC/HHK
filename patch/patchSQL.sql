@@ -20,6 +20,8 @@ VALUES
 ('h','Housekeeping','Housekeeping','','','','\0',''),
 ('ro','Read Only','Read Only','','','','\0','');
 
+update `page` set `File_Name` = "_GuestReport.php" where `File_Name` = "GuestReport.php";
+
 delete from `page_securitygroup` where `Group_Code` = 'gr';
 
 INSERT IGNORE INTO `page_securitygroup` (`idPage`,`Group_Code`) 
@@ -35,3 +37,7 @@ select `idPage`, 'gr' from `page` where `File_Name` in ('ws_admin.php', 'ws_resc
 
 delete from `page_securitygroup` where `idPage` in (select idPage from `page` where `File_Name` = "PrtWaitList.php");
 delete from `page` where `File_Name` = "PrtWaitList.php";
+
+delete g from gen_lookups g 
+  left join w_auth a on g.`Code` = a.`Role_Id`
+where g.`Table_Name` = "Role_Codes" and g.`Code` = '700' and a.`idName` is null;
