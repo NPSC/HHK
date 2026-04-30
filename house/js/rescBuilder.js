@@ -538,8 +538,38 @@ $(document).ready(function () {
         });
     });
 
+    // Delete external pay type
+    $('#rateTable').on('click', '.hhk-delExtPayType', function () {
+        var $btn = $(this),
+            code = $btn.data('code'),
+            desc = $btn.data('desc');
+
+        if (!confirm('Remove pay type "' + desc + '"?\n\nIf it has been used on existing payments it will be hidden, otherwise it will be deleted.')) {
+            return;
+        }
+
+        $btn.prop('disabled', true);
+
+        $.post('ResourceBuilder.php', {cmd: 'delExtPayType', code: code}, function (data) {
+            if (data.error) {
+                flagAlertMessage(data.error, true);
+                $btn.prop('disabled', false);
+                return;
+            }
+            if (data.action === 'deleted') {
+                $btn.closest('tr').remove();
+            } else if (data.action === 'hidden') {
+                $btn.closest('tr').fadeOut(400, function () { $(this).remove(); });
+            }
+            flagAlertMessage(data.success, false);
+        }, 'json').fail(function () {
+            flagAlertMessage('Server error removing pay type.', true);
+            $btn.prop('disabled', false);
+        });
+    });
+
     //sortable demo categories
-    $("#formdemo .sortable tbody")
+    $("#formdemo .sortable tbody, #rateTable .sortable tbody")
         .sortable({
             items: "tr:not(.no-sort)",
             handle: ".sort-handle",

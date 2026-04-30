@@ -8,7 +8,7 @@ use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector};
-use HHK\SysConst\PaymentStatusCode;
+use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
 use HHK\Payment\Statement;
 use HHK\House\Report\PaymentReport;
 use HHK\ExcelHelper;
@@ -319,27 +319,31 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 		$whType = '';
 		$payTypeText = '';
         $payTypes = $filter->getPayTypes();
+        $standardMethodIds = [];
+        $externalTypeCodes = [];
 		foreach ($filter->getSelectedPayTypes() as $s) {
-			if ($s != '') {
-				// Set up query where part.
-				if ($whType == '') {
-					$whType = "'" . $s . "'";
-				} else {
-					$whType .= ",'".$s . "'";
-				}
-
-				if ($payTypeText == '') {
-					$payTypeText .= (isset($payTypes[$s][1]) ? $payTypes[$s][1] : '');
-				} else {
-
-					$payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
-				}
+			if ($s !== '') {
+                $payType = $payTypes[$s] ?? null;
+                if ($payType !== null) {
+                    if ((int)$payType[2] === PaymentMethod::External) {
+                        $externalTypeCodes[] = "'" . $s . "'";
+                    } else {
+                        $standardMethodIds[] = (int)$payType[2];
+                    }
+                    $payTypeText .= ($payTypeText === '' ? '' : ', ') . $payType[1];
+                }
 			}
-
 		}
 
-        if ($whType != '') {
-            $whType = " and lp.idPayment_Method in (" . $whType . ") ";
+        $typeConditions = [];
+        if (!empty($standardMethodIds)) {
+            $typeConditions[] = "lp.idPayment_Method IN (" . implode(',', array_unique($standardMethodIds)) . ")";
+        }
+        if (!empty($externalTypeCodes)) {
+            $typeConditions[] = "(lp.idPayment_Method = " . PaymentMethod::External . " AND tx.Payment_Type IN (" . implode(',', $externalTypeCodes) . "))";
+        }
+        if (!empty($typeConditions)) {
+            $whType = " AND (" . implode(' OR ', $typeConditions) . ") ";
         } else {
             $payTypeText = 'All';
         }
@@ -383,6 +387,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $query = "Select
     lp.*,
+    " . Statement::externalPaymentTitleSelectSql('lp') . ",
     ifnull(n.Name_First, '') as `First`,
     ifnull(n.Name_Last, '') as `Last`,
     ifnull(n.Company, '') as `Company`,
@@ -404,6 +409,7 @@ from
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
         left join
     name np on hs.idPatient = np.idName
+        " . Statement::externalPaymentTitleJoinSql('lp') . "
 where lp.idPayment > 0
   $where ";
 

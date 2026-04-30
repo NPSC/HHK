@@ -6,6 +6,7 @@ use HHK\Exception\RuntimeException;
 use HHK\History;
 use HHK\House\OperatingHours;
 use HHK\House\Report\PaymentReport;
+use HHK\House\Report\ReportFilter;
 use HHK\House\Report\RoomReport;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -13,7 +14,6 @@ use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\sec\Labels;
-use HHK\SysConst\GLTableNames;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\Mode;
 use HHK\SysConst\ReservationStatus;
@@ -302,22 +302,10 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
 } else {
 
     // Prepare controls
-    $statusList = Common::readGenLookupsPDO($dbh, 'Payment_Status');
-    $statusSelector = HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($statusList, ''),
-        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '7', 'multiple' => 'multiple']);
-
-    $payTypes = [];
-
-    foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
-        if ($p[2] != '') {
-            $payTypes[$p[2]] = [$p[2], $p[1]];
-        }
-    }
-
-    $payTypeSelector = HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($payTypes, ''),
-        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '5', 'multiple' => 'multiple']);
+    $feeFilter = new ReportFilter();
+    $feeFilter->createPayStatuses($dbh)->createPayTypes($dbh);
+    $statusSelector = $feeFilter->payStatusMarkup()->generateMarkup(['class' => 'mb-2 mr-2']);
+    $payTypeSelector = $feeFilter->payTypesMarkup()->generateMarkup(['class' => 'mb-2']);
 
     // Count unpaid invoices
 
@@ -522,25 +510,27 @@ if($uS->useOnlineReferral){
                 <?php } ?>
                 <?php if ($isGuestAdmin) { ?>
                 <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
-                    <table>
-                        <tr>
-                            <th>Date Range</th>
-                            <th>Status</th>
-                            <th>Pay Type</th>
-                        </tr><tr>
-                            <td>Starting: <input type="text" id="txtfeestart" name="stDate" class="ckdate" value="" /></td>
-                            <td rowspan="2"><?php echo $statusSelector; ?></td>
-                            <td rowspan="2"><?php echo $payTypeSelector; ?></td>
-                        </tr><tr>
-                            <td>Ending: <input type="text" id="txtfeeend" name="enDate" class="ckdate" value="" /></td>
-
-                        </tr>
-                        <tr>
-                            <td><label for="fcbdinv">Show Deleted Invoices </label><input type='checkbox' id='fcbdinv' name="fcbdinv"/></td>
-                            <td colspan="2" style="text-align:right;"><input type="submit" name="btnFeesDl" value="Excel Download" style="margin-right:20px;"/><input type="button" id="btnFeesGo" value="Run"/></td>
-                        </tr>
-                    </table>
-                    <div id="rptfeediv" class="hhk-visitdialog"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; float:left; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
+                    <div style="max-width: fit-content;" class="ui-widget ui-widget-content ui-corner-all p-2 mb-2">
+                        <div class="hhk-flex hhk-flex-wrap">
+                            <table class="mb-2 mr-2">
+                                <thead><tr><th>Date Range</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Starting: <input type="text" id="txtfeestart" name="stDate" class="ckdate" value="" /></td></tr>
+                                    <tr><td>Ending: <input type="text" id="txtfeeend" name="enDate" class="ckdate" value="" /></td></tr>
+                                </tbody>
+                            </table>
+                            <?php echo $statusSelector; ?>
+                            <?php echo $payTypeSelector; ?>
+                        </div>
+                        <div class="mt-3 hhk-flex justify-content-between align-items-baseline">
+                            <div class="ml-1">
+                                <input type='checkbox' id='fcbdinv' name="fcbdinv"/>
+                                <label for="fcbdinv">Show Deleted Invoices</label>
+                            </div>
+                            <div><input type="submit" name="btnFeesDl" value="Excel Download" class="mr-3"/><input type="button" id="btnFeesGo" value="Run"/></div>
+                        </div>
+                        <div id="rptfeediv" class="hhk-visitdialog"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
+                    </div>
                 </div>
                 <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none;">
                     <input type="button" id="btnInvGo" value="Refresh"/>

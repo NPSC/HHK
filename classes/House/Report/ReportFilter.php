@@ -751,11 +751,12 @@ $ckdate";
      */
     public function createPayTypes(\PDO $dbh){
         $this->payTypes = array();
-        $uS = Session::getInstance();
+        
+        $payTypes = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order');
 
-        foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
-            if ($p[2] != '') {
-                $this->payTypes[$p[2]] = array($p[2], $p[1]);
+        foreach ($payTypes as $p) {
+            if ($p[2] != ''){
+                $this->payTypes[$p[0]] = array($p[0], $p[1]);
             }
         }
         return $this;
@@ -784,12 +785,12 @@ $ckdate";
     public function payTypesMarkup() {
 
         $payTypeSelector = HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($this->payTypes, $this->selectedPayTypes), array('name' => 'selPayType[]', 'size' => '5', 'multiple' => 'multiple'));
+            HTMLSelector::doOptionsMkup($this->payTypes, $this->selectedPayTypes), array('name' => 'selPayType[]', 'size' => '7', 'multiple' => 'multiple'));
 
         $tbl = new HTMLTable();
 
         $tbl->addHeaderTr(HTMLTable::makeTh("Pay Type"));
-        $tbl->addBodyTr(HTMLTable::makeTd($payTypeSelector, array('style'=>'vertical-align: top;')));
+        $tbl->addBodyTr(HTMLTable::makeTd($payTypeSelector));
 
         return $tbl;
     }

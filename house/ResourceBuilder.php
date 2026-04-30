@@ -29,6 +29,7 @@ use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\ItemType;
 use HHK\SysConst\Mode;
 use HHK\SysConst\PayType;
+use HHK\SysConst\PaymentMethod;
 use HHK\SysConst\RateStatus;
 use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\WebRole;
@@ -313,6 +314,80 @@ if (isset($_POST['btnkfSave'])) {
                 $gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
                 $dbh->exec("Update payment_method set Gl_Code = '$gl' where idPayment_method = " . $t[0]);
+            }
+        }
+    }
+
+    // Custom External payment types
+    if (isset($_POST['extPayDesc'])) {
+
+        $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
+
+        foreach ($_POST['extPayDesc'] as $code => $desc) {
+
+            $code = filter_var($code, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $desc = trim(filter_var($desc, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+
+            if ($code == '' || $desc == '' || $code == PayType::External) {
+                continue;
+            }
+
+            if (isset($payTypes[$code]) && $payTypes[$code][2] == PaymentMethod::External) {
+                $glRs = new GenLookupsRS();
+                $glRs->Table_Name->setStoredVal('Pay_Type');
+                $glRs->Code->setStoredVal($code);
+                $rows = EditRS::select($dbh, $glRs, [$glRs->Table_Name, $glRs->Code]);
+
+                if (count($rows) == 1) {
+                    EditRS::loadRow($rows[0], $glRs);
+                    $glRs->Description->setNewVal($desc);
+                    $glRs->Substitute->setNewVal(PaymentMethod::External);
+
+                    if (EditRS::update($dbh, $glRs, [$glRs->Table_Name, $glRs->Code]) > 0) {
+                        HouseLog::logGenLookups($dbh, 'Pay_Type', $code, HouseLog::getUpdateText($glRs), 'update', $uS->username);
+                    }
+                }
+            }
+        }
+    }
+
+    if (isset($_POST['newExtPayDesc'])) {
+
+        $maxOrderRow = $dbh->query("SELECT MAX(`Order`) FROM gen_lookups WHERE `Table_Name` = 'Pay_Type'")->fetch(\PDO::FETCH_NUM);
+        $nextOrder = intval($maxOrderRow[0] ?? 0) + 1;
+
+        foreach ($_POST['newExtPayDesc'] as $desc) {
+
+            $desc = trim(filter_var($desc, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+
+            if ($desc == '') {
+                continue;
+            }
+
+            $code = "pt" . Common::incCounter($dbh, 'codes');
+            $glRs = new GenLookupsRS();
+            $glRs->Table_Name->setNewVal('Pay_Type');
+            $glRs->Code->setNewVal($code);
+            $glRs->Description->setNewVal($desc);
+            $glRs->Substitute->setNewVal(PaymentMethod::External);
+            $glRs->Order->setNewVal($nextOrder++);
+
+            EditRS::insert($dbh, $glRs);
+            HouseLog::logGenLookups($dbh, 'Pay_Type', $code, HouseLog::getInsertText($glRs), 'insert', $uS->username);
+        }
+    }
+
+    // Pay type order
+    if (isset($_POST['ptorder'])) {
+
+        $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
+
+        foreach ($_POST['ptorder'] as $code => $order) {
+            $code = filter_var($code, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $order = intval(filter_var($order, FILTER_SANITIZE_NUMBER_INT), 10);
+
+            if ($code !== '' && isset($payTypes[$code])) {
+                $dbh->exec("UPDATE gen_lookups SET `Order` = $order WHERE `Table_Name` = 'Pay_Type' AND `Code` = '$code'");
             }
         }
     }
@@ -1162,6 +1237,54 @@ if (isset($_POST['docAction']) && $_POST['docAction'] == "docDelete" && isset($_
 
 }
 
+// Delete or hide an external pay type
+if (isset($_POST['cmd']) && $_POST['cmd'] === 'delExtPayType' && isset($_POST['code'])) {
+    try {
+        $code = filter_var($_POST['code'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        // Validate the code is a custom external pay type
+        $glRs = new GenLookupsRS();
+        $glRs->Table_Name->setStoredVal('Pay_Type');
+        $glRs->Code->setStoredVal($code);
+        $rows = EditRS::select($dbh, $glRs, [$glRs->Table_Name, $glRs->Code]);
+
+        if (count($rows) !== 1) {
+            echo json_encode(['error' => 'Pay type not found.']);
+            exit();
+        }
+
+        EditRS::loadRow($rows[0], $glRs);
+
+        if ($glRs->Substitute->getStoredVal() != PaymentMethod::External || $code === PayType::External) {
+            echo json_encode(['error' => 'Only custom external pay types can be deleted.']);
+            exit();
+        }
+
+        // Check for existing transactions using this pay type
+        $stmt = $dbh->prepare("SELECT COUNT(*) FROM `trans` WHERE `Payment_Type` = :code");
+        $stmt->execute([':code' => $code]);
+        $count = intval($stmt->fetchColumn(), 10);
+
+        if ($count > 0) {
+            // Payments exist — archive (hide) the pay type
+            $glRs->Type->setNewVal(GLTypeCodes::Archive);
+            EditRS::update($dbh, $glRs, [$glRs->Table_Name, $glRs->Code]);
+            HouseLog::logGenLookups($dbh, 'Pay_Type', $code, HouseLog::getUpdateText($glRs), 'update', $uS->username);
+
+            echo json_encode(['action' => 'hidden', 'success' => 'Pay type "' . $glRs->Description->getStoredVal() . '" is in use and has been hidden.']);
+        } else {
+            // No payments — delete it
+            EditRS::delete($dbh, $glRs, [$glRs->Table_Name, $glRs->Code]);
+            HouseLog::logGenLookups($dbh, 'Pay_Type', $code, 'Deleted pay type: ' . $glRs->Description->getStoredVal(), 'delete', $uS->username);
+
+            echo json_encode(['action' => 'deleted', 'success' => 'Pay type "' . $glRs->Description->getStoredVal() . '" has been deleted.']);
+        }
+    } catch (\Exception $e) {
+        echo json_encode(['error' => 'Could not remove pay type: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
 // Make sure Content-Type is application/json
 $content_type = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
 if (stripos($content_type, 'application/json') !== false) {
@@ -1793,18 +1916,26 @@ $payTypesTable = '';
 if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
     $payMethods = [];
-    $stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+    $payMethodGlCodes = [];
+    $stmtp = $dbh->query("select idPayment_method, Method_Name, Gl_Code from payment_method");
     while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
         $payMethods[$t[0]] = $t[1];
+        $payMethodGlCodes[$t[0]] = $t[2];
     }
     $payMethods[''] = '';
+    $payMethodGlCodes[''] = '';
 
 
-    $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
+    $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type', 'Order');
+
     $ptTbl = new HTMLTable();
-    $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code') : ""));
+    $ptTbl->addHeaderTr(HTMLTable::makeTh('') . HTMLTable::makeTh('Default') . HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code') : "") . HTMLTable::makeTh(''));
 
     foreach ($payTypes as $r) {
+
+        if ($r['Type'] === GLTypeCodes::Archive) {
+            continue;
+        }
 
         $ptAttrs = [
             'type' => 'radio',
@@ -1816,12 +1947,45 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
             $ptAttrs['checked'] = 'checked';
         }
 
+        $descAttrs = ['name' => 'ptdesc[' . $r[0] . ']', 'size' => '20'];
+        $hardCodedType = $r[0] == 'in' ? 'Invoice' : $payMethods[$r[2]] ?? '';
+        $glCodeMarkup = ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup(($payMethodGlCodes[$r[2]] ?? ''), ['name' => 'ptGlCode[' . $r[2] . ']', 'size' => '19'])) : "");
+        $deleteMarkup = HTMLTable::makeTd('');
+
+        if ($r[2] == PaymentMethod::External && $r[0] != PayType::External) {
+            $descAttrs = ['name' => 'extPayDesc[' . $r[0] . ']', 'size' => '20'];
+            $hardCodedType = $payMethods[PaymentMethod::External] ?? '';
+            $glCodeMarkup = ($uS->useGLCodes ? HTMLTable::makeTd($payMethodGlCodes[PaymentMethod::External] ?? '') : "");
+            $deleteMarkup = HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-trash']), [
+                    'class' => 'hhk-delExtPayType ui-button ui-corner-all ui-widget  px-1 py-0',
+                    'data-code' => $r[0],
+                    'data-desc' => htmlspecialchars($r[1], ENT_QUOTES),
+                    'title' => 'Delete pay type',
+                    'type' => 'button',
+                ]),
+                ['style' => 'text-align:center;']
+            );
+        }
+
         $ptTbl->addBodyTr(
-            HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), ['style' => 'text-align:center;'])
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], ['name' => 'ptdesc[' . $r[0] . ']', 'size' => '16']))
-            . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup($payMethods[$r[2]], ['name' => 'ptGlCode[' . $r[2] . ']', 'size' => '19'])) : "")
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("span", "", ["class" => "ui-icon ui-icon-arrowthick-2-n-s"]) . HTMLInput::generateMarkup($r['Order'], ['type' => 'hidden', 'name' => 'ptorder[' . $r[0] . ']']), ["class" => "sort-handle", "title" => "Drag to sort"])
+            . HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), ['style' => 'text-align:center;'])
+            . HTMLTable::makeTd($hardCodedType)
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], $descAttrs))
+            . $glCodeMarkup
+            . $deleteMarkup
         );
     }
+
+    $ptTbl->addBodyTr(
+        HTMLTable::makeTd('')
+        . HTMLTable::makeTd('', ['style' => 'text-align:center;'])
+        . HTMLTable::makeTd($payMethods[PaymentMethod::External] ?? '')
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'newExtPayDesc[]', 'size' => '20', 'placeholder' => 'New External Pay Type']))
+        . ($uS->useGLCodes ? HTMLTable::makeTd($payMethodGlCodes[PaymentMethod::External] ?? '') : ""),
+        ['class' => 'no-sort']
+    );
 
     $payTypesTable = HTMLContainer::generateMarkup(
         'fieldset',
@@ -1833,7 +1997,8 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
             ]
         ) . $ptTbl->generateMarkup(
                 [
-                    'style' => 'margin:7px;'
+                    'style' => 'margin:7px;',
+                    'class' => 'sortable'
                 ]
             ),
         [

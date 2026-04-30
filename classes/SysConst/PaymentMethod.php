@@ -16,5 +16,6 @@ class PaymentMethod {
     const Check = 3;
     const ChgAsCash = 4;
     const Transfer = 5;
+    const External = 6;
 }
 ?>

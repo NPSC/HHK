@@ -167,6 +167,12 @@ class PaymentManagerPayment {
      * @var string
      */
     protected $rtnTransferAcct = '';
+    protected $externalId = '';
+    protected $rtnExternalId = '';
+    protected $externalPaymentTypeCode = '';
+    protected $externalPaymentTypeTitle = '';
+    protected $rtnExternalPaymentTypeCode = '';
+    protected $rtnExternalPaymentTypeTitle = '';
     /**
      * Summary of chargeCard
      * @var string
@@ -808,6 +814,18 @@ class PaymentManagerPayment {
         return $this->transferAcct;
     }
 
+    public function getExternalId() {
+        return $this->externalId;
+    }
+
+    public function getExternalPaymentTypeCode() {
+        return $this->externalPaymentTypeCode;
+    }
+
+    public function getExternalPaymentTypeTitle() {
+        return $this->externalPaymentTypeTitle;
+    }
+
     /**
      * Summary of setVisitFeePayment
      * @param mixed $visitFeePayment
@@ -985,6 +1003,18 @@ class PaymentManagerPayment {
         return $this->rtnTransferAcct;
     }
 
+    public function getRtnExternalId() {
+        return $this->rtnExternalId;
+    }
+
+    public function getRtnExternalPaymentTypeCode() {
+        return $this->rtnExternalPaymentTypeCode;
+    }
+
+    public function getRtnExternalPaymentTypeTitle() {
+        return $this->rtnExternalPaymentTypeTitle;
+    }
+
     /**
      * Summary of setRtnTransferAcct
      * @param mixed $rtnTransferAcct
@@ -1023,6 +1053,28 @@ class PaymentManagerPayment {
      */
     public function setTransferAcct($transferAcct) {
         $this->transferAcct = trim($transferAcct);
+        return $this;
+    }
+
+    public function setExternalId($externalId) {
+        $this->externalId = trim($externalId);
+        return $this;
+    }
+
+    public function setRtnExternalId($externalId) {
+        $this->rtnExternalId = trim($externalId);
+        return $this;
+    }
+
+    public function setExternalPaymentType($code, $title = '') {
+        $this->externalPaymentTypeCode = trim($code);
+        $this->externalPaymentTypeTitle = trim($title);
+        return $this;
+    }
+
+    public function setRtnExternalPaymentType($code, $title = '') {
+        $this->rtnExternalPaymentTypeCode = trim($code);
+        $this->rtnExternalPaymentTypeTitle = trim($title);
         return $this;
     }
 

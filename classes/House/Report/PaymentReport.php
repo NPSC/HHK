@@ -5,7 +5,7 @@ namespace HHK\House\Report;
 use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\Payment\Statement;
-use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
+use HHK\SysConst\{GLTableNames, PaymentMethod, PaymentStatusCode};
 use HHK\sec\Session;
 use HHK\ExcelHelper;
 
@@ -105,21 +105,33 @@ class PaymentReport {
         }
 
 
-        $whType = '';
+        $uS = Session::getInstance();
+        $payTypeLookup = $uS->nameLookups[GLTableNames::PayType] ?? [];
+        $standardMethodIds = [];
+        $externalTypeCodes = [];
         foreach ($payTypeSelections as $s) {
-            if ($s != '') {
-                // Set up query where part.
-                if ($whType == '') {
-                    $whType = $s ;
-                } else {
-                    $whType .= ",".$s;
+            if ($s !== '') {
+                $entry = $payTypeLookup[$s] ?? null;
+                if ($entry !== null) {
+                    if ((int)$entry[2] === PaymentMethod::External) {
+                        $externalTypeCodes[] = "'" . $s . "'";
+                    } else {
+                        $standardMethodIds[] = (int)$entry[2];
+                    }
                 }
-
             }
         }
 
-        if ($whType != '') {
-            $whType = " and lp.idPayment_Method in ($whType) ";
+        $typeConditions = [];
+        if (!empty($standardMethodIds)) {
+            $typeConditions[] = "lp.idPayment_Method IN (" . implode(',', array_unique($standardMethodIds)) . ")";
+        }
+        if (!empty($externalTypeCodes)) {
+            $typeConditions[] = "(lp.idPayment_Method = " . PaymentMethod::External . " AND tx.Payment_Type IN (" . implode(',', $externalTypeCodes) . "))";
+        }
+        $whType = '';
+        if (!empty($typeConditions)) {
+            $whType = " AND (" . implode(' OR ', $typeConditions) . ") ";
         }
 
         if ($showDelInv === FALSE) {
@@ -129,6 +141,7 @@ class PaymentReport {
 
         $query = "Select
         lp.*,
+        " . Statement::externalPaymentTitleSelectSql('lp') . ",
         ifnull(n.Name_First, '') as `First`,
         ifnull(n.Name_Last, '') as `Last`,
         ifnull(n.Company, '') as `Company`,
@@ -141,6 +154,7 @@ class PaymentReport {
         visit v on lp.Order_Number = v.idVisit and lp.Suborder_Number = v.Span
             left join
         resource r ON v.idResource = r.idResource
+            " . Statement::externalPaymentTitleJoinSql('lp') . "
     where lp.idPayment > 0
       $whDates $whStatus $whType ";
 
@@ -218,7 +232,7 @@ class PaymentReport {
 
             $payType = 'Credit Card';
 
-        } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
+        } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 
             $payDetail = $p['Check_Number'];
         }
@@ -360,7 +374,7 @@ class PaymentReport {
             $payType = 'Credit Card';
 
 
-        } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
+        } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 
             $payDetail = $p['Check_Number'];
         }

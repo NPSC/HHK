@@ -301,7 +301,7 @@ try {
                     $showDelInv = TRUE;
                 }
 
-                $markup = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, $startDT, $endDT, $st, $pt, $id, 'Payments Report', $showDelInv), ['style' => 'margin-left:5px;']);
+                $markup = ActivityReport::feesLog($dbh, $startDT, $endDT, $st, $pt, $id, 'Payments Report', $showDelInv);
             }
 
             if (isset($_REQUEST['inv'])) {

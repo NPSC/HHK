@@ -1542,8 +1542,8 @@ $(document).ready(function () {
         if (edDate === null) {
             edDate = new Date();
         }
-        let statuses = $('#selPayStatus').val() || [];
-        let ptypes = $('#selPayType').val() || [];
+        let statuses = $('#vfees select[name="selPayStatus[]"]').val() || [];
+        let ptypes = $('#vfees select[name="selPayType[]"]').val() || [];
 
         let parms = {
             cmd: 'actrpt',

@@ -949,6 +949,10 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     var chg = $('.tblCredit');
     var $chrgExpand = $('.tblCreditExpand');//$('#trvdCHName');
     var p = new PayCtrls();
+    var isExternalPayType = function ($sel) {
+        var externalPayTypes = ($sel.data('external-pay-types') || '').toString().split(',');
+        return $sel.val() === 'ex' || externalPayTypes.indexOf($sel.val()) > -1;
+    };
 
     if (chg.length === 0) {
         chg = $('.hhk-mcred');
@@ -961,6 +965,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
             $('#tblInvoice').hide();
             getInvoicee('', idVisit, '');
             $('.hhk-transfer').hide();
+            $('.hhk-external').hide();
             $('.hhk-tfnum').hide();
             chg.hide();
             $chrgExpand.hide();
@@ -983,6 +988,9 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
                 $('.paySelectNotes').hide();
             } else if ($(this).val() === 'tf') {
                 $('.hhk-transfer').show('fade');
+            } else if (isExternalPayType($(this))) {
+                $('.hhk-external').find('.hhk-external-type-name').text($(this).find('option:selected').text());
+                $('.hhk-external').show('fade');
             } else {
                 $('.hhk-cashTndrd').show('fade');
             }
@@ -1006,6 +1014,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
         rtnsel.change(function () {
             rtnchg.hide();
             $('.hhk-transferr').hide();
+            $('.hhk-externalr').hide();
             $('.payReturnNotes').show();
             $('.hhk-cknumr').hide();
 
@@ -1015,6 +1024,9 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
                 $('.hhk-cknumr').show('fade');
             } else if ($(this).val() === 'tf') {
                 $('.hhk-transferr').show('fade');
+            } else if (isExternalPayType($(this))) {
+                $('.hhk-externalr').find('.hhk-external-type-name').text($(this).find('option:selected').text());
+                $('.hhk-externalr').show('fade');
             }
         });
         rtnsel.change();

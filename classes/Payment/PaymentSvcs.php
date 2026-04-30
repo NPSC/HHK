@@ -9,7 +9,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\GatewayResponse\StandInGwResponse;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
-use HHK\Payment\PaymentResponse\{CashResponse, CheckResponse, TransferResponse};
+use HHK\Payment\PaymentResponse\{CashResponse, CheckResponse, ExternalResponse, TransferResponse};
 use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult, CofResult};
 use HHK\SysConst\{InvoiceStatus, PayType, PaymentStatusCode, PaymentMethod};
 use HHK\sec\Session;
@@ -142,6 +142,21 @@ class PaymentSvcs {
 
             break;
 
+          case PayType::External:
+
+            $exResp = new ExternalResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getExternalId(), $pmp->getPayNotes(), $pmp->getExternalPaymentTypeCode(), $pmp->getExternalPaymentTypeTitle());
+
+            ExternalTX::sale($dbh, $exResp, $uS->username, $pmp->getPayDate());
+
+            // Update invoice
+            $invoice->updateInvoiceBalance($dbh, $exResp->getAmount(), $uS->username);
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult->feePaymentAccepted($dbh, $uS, $exResp, $invoice);
+            $payResult->setDisplayMessage('Payment by ' . $exResp->getExternalPaymentTypeTitle($dbh) . '.  ');
+
+            break;
+
           case PayType::Invoice:
 
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
@@ -255,6 +270,21 @@ class PaymentSvcs {
                 $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $rtnResult->feePaymentAccepted($dbh, $uS, $ckResp, $invoice);
                 $rtnResult->setDisplayMessage('Return by Transfer.  ');
+
+            break;
+
+            case PayType::External:
+
+                $exResp = new ExternalResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getRtnExternalId(), $pmp->getPayNotes(), $pmp->getRtnExternalPaymentTypeCode(), $pmp->getRtnExternalPaymentTypeTitle());
+
+                ExternalTX::returnAmount($dbh, $exResp, $uS->username, $pmp->getPayDate());
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, (0 - $exResp->getAmount()), $uS->username);
+
+                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $rtnResult->feePaymentAccepted($dbh, $uS, $exResp, $invoice);
+                $rtnResult->setDisplayMessage('Return by ' . $exResp->getExternalPaymentTypeTitle($dbh) . '.  ');
 
             break;
 
@@ -536,6 +566,32 @@ class PaymentSvcs {
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
                 break;
 
+            case PaymentMethod::External:
+
+                // Find the detail record.
+                $pAuthRs = new PaymentInfoCheckRS();
+                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
+
+                if (count($arows) != 1) {
+                    throw new PaymentException('Payment Detail record not found. ');
+                }
+
+                EditRS::loadRow($arows[0], $pAuthRs);
+
+                $cashResp = new ExternalResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Check_Number->getStoredVal(), '', self::getExternalPaymentTypeCode($dbh, $payRs));
+
+                ExternalTX::externalReturn($dbh, $cashResp, $uS->username, $payRs);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
+
+                $dataArray['success'] = 'Payment is Returned.  ';
+
+                $cashResp->idVisit = $invoice->getOrderNumber();
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
+                break;
+
             default:
                 throw new PaymentException('Unknown pay type.  ');
         }
@@ -696,6 +752,22 @@ class PaymentSvcs {
 
                 break;
 
+            case PaymentMethod::External:
+
+                $exResp = new ExternalResponse($payRs->Amount->getStoredVal(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), '', '', self::getExternalPaymentTypeCode($dbh, $payRs));
+
+                ExternalTX::undoExternalReturn($dbh, $exResp, $uS->username, $payRs);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $exResp->getAmount(), $uS->username);
+
+                $exResp->idVisit = $invoice->getOrderNumber();
+
+                $dataArray['success'] = $exResp->getExternalPaymentTypeTitle($dbh) . ' return is undone.  ';
+                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $exResp);
+
+                break;
+
             case PaymentMethod::Transfer:
 
                 $ckResp = new TransferResponse($payRs->Amount->getStoredVal(), $invoice->getSoldToId(), $invoice->getInvoiceNumber());
@@ -826,6 +898,20 @@ class PaymentSvcs {
                 $invoice->deleteInvoice($dbh, $uS->username);
 
                 $dataArray['success'] = 'Transfer refund is undone.  ';
+
+                break;
+
+            case PaymentMethod::External:
+
+                $exResp = new ExternalResponse($paymentAmount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), '', '', self::getExternalPaymentTypeCode($dbh, $idPayment));
+
+                ExternalTX::undoReturnAmount($dbh, $exResp, $idPayment);
+
+                $invoice->updateInvoiceBalance($dbh, $exResp->getAmount(), $uS->username);
+                // delete invoice
+                $invoice->deleteInvoice($dbh, $uS->username);
+
+                $dataArray['success'] = $exResp->getExternalPaymentTypeTitle($dbh) . ' refund is undone.  ';
 
                 break;
 
@@ -1025,6 +1111,21 @@ class PaymentSvcs {
                 $payResp->paymentRs = $payRs;
                 break;
 
+            case PaymentMethod::External:
+
+                $ckRs = new PaymentInfoCheckRS();
+                $ckRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $rows = EditRS::select($dbh, $ckRs, array($ckRs->idPayment));
+
+                if (count($rows) != 1) {
+                    return array('warning'=>'External payment record not found.');
+                }
+
+                EditRS::loadRow($rows[0], $ckRs);
+                $payResp = new ExternalResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $rows[0]['Check_Number'], '', self::getExternalPaymentTypeCode($dbh, $payRs));
+                $payResp->paymentRs = $payRs;
+                break;
+
             case PaymentMethod::Check:
 
                 $ckRs = new PaymentInfoCheckRS();
@@ -1204,6 +1305,29 @@ class PaymentSvcs {
         }else{
             throw new RuntimeException("Reciept not found");
         }
+    }
+
+    protected static function getExternalPaymentTypeCode(\PDO $dbh, $payment) {
+
+        if ($payment instanceof PaymentRS) {
+            $idTrans = $payment->idTrans->getStoredVal();
+        } else {
+            $payRs = new PaymentRS();
+            $payRs->idPayment->setStoredVal($payment);
+            $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
+
+            if (count($pments) != 1) {
+                return PayType::External;
+            }
+
+            EditRS::loadRow($pments[0], $payRs);
+            $idTrans = $payRs->idTrans->getStoredVal();
+        }
+
+        $transRs = Transaction::getTransactionRS($dbh, $idTrans);
+        $code = $transRs->Payment_Type->getStoredVal();
+
+        return $code == '' || is_numeric($code) ? PayType::External : $code;
     }
 
 }

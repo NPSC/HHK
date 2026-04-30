@@ -936,11 +936,11 @@ VALUES
 	('Payment_Status', 'vr', 'Void Return', '', '', 0),
 	('Payment_Status', 'd', 'Declined', '', '', 0),
 	('Payment_Status', 'rv', 'Reversed', '', '', 0),
-	('Pay_Type', 'ca', 'Cash', '1', '', 0),
-	('Pay_Type', 'cc', 'Credit Card', '2', '', 0),
-	('Pay_Type', 'ck', 'Check', '3', '', 0),
-	('Pay_Type', 'in', 'Invoice', '', '', 0),
-	('Pay_Type', 'tf', 'Transfer', '5', '', 0),
+	('Pay_Type', 'ca', 'Cash', '1', '', 1),
+	('Pay_Type', 'cc', 'Credit Card', '2', '', 2),
+	('Pay_Type', 'ck', 'Check', '3', '', 3),
+	('Pay_Type', 'in', 'Invoice', '', '', 4),
+	('Pay_Type', 'tf', 'Transfer', '5', '', 5),
 	('Period_Unit', '1', 'Day', '', '', 0),
 	('Period_Unit', '2', 'Week', '', '', 0),
 	('Period_Unit', '3', 'Month', '', '', 0),
@@ -4358,7 +4358,8 @@ VALUES
 	('2', 'Charge'),
 	('3', 'Check'),
 	('4', 'Charge'),
-	('5', 'Transfer');
+	('5', 'Transfer'),
+	('6', 'External');
 
 -- ;
 replace INTO `invoice_line_type` (`id`, `Description`, `Order_Position`)
@@ -6537,6 +6538,7 @@ VALUES
 	(76, 'gr'),
 	(79, 'g'),
 	(79, 'ga'),
+	(79, 'h'),
 	(81, 'ga'),
 	(82, 'g'),
 	(82, 'ga'),

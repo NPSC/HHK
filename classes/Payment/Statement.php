@@ -192,7 +192,7 @@ class Statement {
 						'idPayment'=>$p['idPayment'],
                         'Payment_Amount'=>$p['Payment_Amount'],
                         'idPayment_Method'=>$p['idPayment_Method'],
-                        'Payment_Method_Title'=>$p['Payment_Method_Title'],
+                        'Payment_Method_Title'=>(isset($p['External_Payment_Method_Title']) && $p['External_Payment_Method_Title'] != '' ? $p['External_Payment_Method_Title'] : $p['Payment_Method_Title']),
                         'Payment_Status'=>$p['Payment_Status'],
                         'Payment_Status_Title'=>$p['Payment_Status_Title'],
                         'Payment_Date'=>$p['Payment_Date'],
@@ -205,7 +205,8 @@ class Statement {
                         'Payment_Created_By'=>$p['Payment_Created_By'],
                         'Check_Number'=>$p['Check_Number'],
                         'Payment_External_Id'=>$p['Payment_External_Id'],
-                        'Payment_Note'=>$p['Payment_Note']
+                        'Payment_Note'=>$p['Payment_Note'],
+                        'Pay_Type_Code'=>$p['Pay_Type_Code'] ?? null
                     ];
 
                     $idPA = 0;
@@ -258,6 +259,16 @@ class Statement {
 
         return $invoices;
 
+    }
+
+    public static function externalPaymentTitleSelectSql($paymentAlias = 'lp') {
+        return "IF(`$paymentAlias`.`idPayment_Method` = " . PaymentMethod::External . " AND IFNULL(`ptx`.`Description`, '') != '', `ptx`.`Description`, `$paymentAlias`.`Payment_Method_Title`) AS `External_Payment_Method_Title`";
+    }
+
+    public static function externalPaymentTitleJoinSql($paymentAlias = 'lp') {
+        return "LEFT JOIN `payment` `pext` ON `$paymentAlias`.`idPayment` = `pext`.`idPayment`
+        LEFT JOIN `trans` `tx` ON `pext`.`idTrans` = `tx`.`idTrans`
+        LEFT JOIN `gen_lookups` `ptx` ON `ptx`.`Table_Name` = 'Pay_Type' AND `ptx`.`Code` = `tx`.`Payment_Type`";
     }
 
     /**
@@ -770,7 +781,7 @@ class Statement {
                     $p['Payment_Method_Title'] = 'Credit Card';
 
 
-                } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
+                } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 
                     $addnl = ($p['Check_Number'] == '' ? ' ' : '#' . $p['Check_Number']);
                 }
@@ -1043,12 +1054,13 @@ class Statement {
         $labels = Labels::getLabels();
 
         // Payments
-        $query = "select lp.*, ifnull(n.Name_First, '') as `First`,
+        $query = "select lp.*, " . self::externalPaymentTitleSelectSql('lp') . ", ifnull(n.Name_First, '') as `First`,
     ifnull(n.Name_Last, '') as `Last`,
     ifnull(n.Company, '') as `Company`
 from vlist_inv_pments lp
     left join
     `name` n ON lp.Sold_To_Id = n.idName
+    " . self::externalPaymentTitleJoinSql('lp') . "
  where lp.idGroup = $idRegistration and lp.Deleted = 0 ORDER BY lp.idInvoice";
         $stmt = $dbh->query($query);
 
@@ -1170,8 +1182,9 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         }
 
         // Payments
-        $stmt = $dbh->query("select lp.*, ifnull(n.Name_First, '') as `First`, ifnull(n.Name_Last, '') as `Last`, ifnull(n.Company, '') as `Company`
+        $stmt = $dbh->query("select lp.*, " . self::externalPaymentTitleSelectSql('lp') . ", ifnull(n.Name_First, '') as `First`, ifnull(n.Name_Last, '') as `Last`, ifnull(n.Company, '') as `Company`
 from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
+ " . self::externalPaymentTitleJoinSql('lp') . "
  where lp.Order_Number = $idVisit and lp.Deleted = 0 ORDER BY lp.idInvoice ");
 
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
@@ -1494,4 +1507,3 @@ WHERE
     }
 
 }
-
