@@ -704,7 +704,7 @@ class PaymentChooser {
                         ['id'=> $i['Invoice_Number']. 'unpaidCb', 'name'=>'unpaidCb['.$i['Invoice_Number'].']', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'])
                     .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', ['style'=>'font-style: italic;']))
                 .HTMLTable::makeTd('$'.
-                    HTMLInput::generateMarkup('', ['id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'size'=>'8', 'class'=>'hhk-feeskeys hhk-payInvAmt','style'=>'text-align:right;']), ['style'=>'text-align:right;']);
+                    HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'class'=>'hhk-feeskeys hhk-payInvAmt ml-1','style'=>'text-align:right;width:80px;', 'disabled'=>true]), ['style'=>'text-align:right;']);
 
             $trs[] = $unpaid;
         }
