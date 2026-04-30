@@ -626,7 +626,13 @@ class PaymentChooser {
 
         $mkup =  $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
 
-        $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
+        $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type', 'Order');
+
+        foreach ($payTypes as $key => $val) {
+            if ($val["Type"] == "arc") { // Remove "archive" types from payment options.
+                unset($payTypes[$key]);
+            }
+        }
 
         unset($payTypes[PayType::Invoice]);
 
@@ -876,7 +882,13 @@ ORDER BY v.idVisit , v.Span;");
                         , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 
-                $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
+                $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type', 'Order');
+
+                foreach ($payTypes as $key => $val) {
+                    if ($val["Type"] == "arc") { // Remove "archive" types from payment options.
+                        unset($payTypes[$key]);
+                    }
+                }
                 unset($payTypes[PayType::Invoice]);
 
 
