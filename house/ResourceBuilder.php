@@ -319,11 +319,11 @@ if (isset($_POST['btnkfSave'])) {
     }
 
     // Custom External payment types
-    if (isset($_POST['extPayDesc'])) {
+    if (isset($_POST['ptdesc'])) {
 
         $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
 
-        foreach ($_POST['extPayDesc'] as $code => $desc) {
+        foreach ($_POST['ptdesc'] as $code => $desc) {
 
             $code = filter_var($code, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $desc = trim(filter_var($desc, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
@@ -332,7 +332,7 @@ if (isset($_POST['btnkfSave'])) {
                 continue;
             }
 
-            if (isset($payTypes[$code]) && $payTypes[$code][2] == PaymentMethod::External) {
+            if (isset($payTypes[$code])) {
                 $glRs = new GenLookupsRS();
                 $glRs->Table_Name->setStoredVal('Pay_Type');
                 $glRs->Code->setStoredVal($code);
@@ -1953,7 +1953,7 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
         $deleteMarkup = HTMLTable::makeTd('');
 
         if ($r[2] == PaymentMethod::External && $r[0] != PayType::External) {
-            $descAttrs = ['name' => 'extPayDesc[' . $r[0] . ']', 'size' => '20'];
+            $descAttrs = ['name' => 'ptdesc[' . $r[0] . ']', 'size' => '20'];
             $hardCodedType = $payMethods[PaymentMethod::External] ?? '';
             $glCodeMarkup = ($uS->useGLCodes ? HTMLTable::makeTd($payMethodGlCodes[PaymentMethod::External] ?? '') : "");
             $deleteMarkup = HTMLTable::makeTd(
