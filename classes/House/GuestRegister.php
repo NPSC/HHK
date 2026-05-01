@@ -859,7 +859,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes'] : ''),
                 'start' => $stDateDT->format('Y-m-d\TH:i:00'),
                 'end' => $enDateDT->format('Y-m-d\TH:i:00'),
-                'title' => $r['StatusTitle'],
+                'title' => $r['StatusTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes'] : ''),
                 'allDay' => 1,
                 'backgroundColor' => 'gray',
                 'textColor' => 'white',
