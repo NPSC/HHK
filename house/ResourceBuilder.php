@@ -341,7 +341,6 @@ if (isset($_POST['btnkfSave'])) {
                 if (count($rows) == 1) {
                     EditRS::loadRow($rows[0], $glRs);
                     $glRs->Description->setNewVal($desc);
-                    $glRs->Substitute->setNewVal(PaymentMethod::External);
 
                     if (EditRS::update($dbh, $glRs, [$glRs->Table_Name, $glRs->Code]) > 0) {
                         HouseLog::logGenLookups($dbh, 'Pay_Type', $code, HouseLog::getUpdateText($glRs), 'update', $uS->username);
