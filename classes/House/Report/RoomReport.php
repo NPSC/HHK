@@ -996,7 +996,7 @@ order by rs.Util_Priority;";
             HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-util-swatch hhk-util-closed']) . ' Closed',
             ['class' => 'hhk-util-item']);
 
-        $css = <<<CSS
+        $css = '
 <style>
 .hhk-util-occupied{background-color:lightgreen}
 .hhk-util-oos{background-color:gray}
@@ -1008,7 +1008,7 @@ order by rs.Util_Priority;";
 .hhk-util-item{margin-right:12px;white-space:nowrap}
 .hhk-util-legend{margin-bottom:8px;font-size:0.85em}
 </style>
-CSS;
+';
 
         return $css
             . HTMLContainer::generateMarkup('div', $legend, ['class' => 'hhk-util-legend'])
@@ -1311,6 +1311,7 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
                         if (isset($this->days[$idResc][$rmDate]) && $this->days[$idResc][$rmDate]['n'] == 0) {
                             $this->days[$idResc][$rmDate]['b']++;
                             $this->totals['cb'][$rmDate]++;
+                            $this->days[$idResc][$rmDate]['c'] = 0; //room not closed if it's a cleaning blackout
                         }
                         $clDate->add($oneDay);
                         $clDate->setTime(10, 0, 0);
@@ -1319,10 +1320,10 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
             }
         }
 
-        //count up closed days (non-cleaning takes priority over closed)
-        foreach($this->days as $idResc=>$dates){
+        //count up closed days
+         foreach($this->days as $idResc=>$dates){
             foreach($dates as $date=>$numbers){
-                if($numbers['c'] > 0 && $numbers['b'] == 0){
+                if($numbers['c'] > 0){
                     $this->totals['c'][$date]++;
                 }
             }
