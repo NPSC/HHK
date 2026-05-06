@@ -39,6 +39,7 @@ abstract class AbstractExportManager {
     protected $memberReplies;
     protected $replies;
     protected $proposedUpdates;
+    protected \PDO $dbh;
 
 
     const CMS_NEON = 'neon';
@@ -46,7 +47,7 @@ abstract class AbstractExportManager {
     const EXCLUDE_TERM = 'excld';
 
 
-    public static function factory(\PDO $dbh, $cmsName) {
+    public static function factory(\PDO $dbh, string $cmsName): NeonManager|SalesforceManager|null {
 
         switch (strtolower($cmsName)) {
 
@@ -65,7 +66,7 @@ abstract class AbstractExportManager {
     }
 
 
-    public function __construct(\PDO $dbh, $cmsName) {
+    public function __construct(\PDO $dbh, string $cmsName) {
 
         $stmt = $dbh->query("SELECT `Description` FROM gen_lookups WHERE Table_Name = 'ExternalCRM' AND Code = '$cmsName';");
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -87,6 +88,8 @@ abstract class AbstractExportManager {
         }
 
         $this->loadCredentials($cmsRs);
+
+        $this->dbh = $dbh;
 
     }
 

@@ -34,15 +34,17 @@ class NeonManager extends AbstractExportManager {
 
     const SearchViewName = 'vguest_search_neon';
 
-    const LOG_SERVICE_NAME = "neon";
+    const LOG_SERVICE_NAME = "neonCRM";
 
-    protected $neonWebService;
+    protected NeonWebService $neonWebService;
+
+    public function __construct(\PDO $dbh, string $cmsName) {
+        parent::__construct($dbh, $cmsName);
+        $this->neonWebService = new NeonWebService($dbh, $this->getUserId(), Crypto::decryptMessage($this->getPassword()));
+    }
 
     public function searchMembers ($searchCriteria) {
         $replys = [];
-
-        // Log in with the web service
-        $this->openTarget();
 
         $msearch = new MemberSearch($searchCriteria['letters']);
         $standardFields = array('Account ID', 'Account Type', 'Deceased', 'Prefix', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Preferred Name', 'Email 1');
@@ -109,9 +111,6 @@ class NeonManager extends AbstractExportManager {
         }
 
         $this->customFields = $this->getMyCustomFields($dbh);
-
-        // Log in with the web service
-        $this->openTarget();
 
         // Load Individual types
         $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
@@ -312,9 +311,6 @@ class NeonManager extends AbstractExportManager {
         // Custom Parameters
         $paramStr .= NeonHelper::fillCustomFields($this->customFields, $r, $unwound);
 
-        // Log in with the web service
-        $this->openTarget();
-
         $request = [
             'method' => 'account/updateIndividualAccount',
             'parameters' => $param,
@@ -438,9 +434,6 @@ class NeonManager extends AbstractExportManager {
      */
     public function retrieveRemoteAccount($accountId) {
 
-        // Log in with the web service
-        $this->openTarget();
-
         $account = $this->neonWebService->getIndividualAccount($accountId);
 
         if ($this->checkError($account)) {
@@ -458,8 +451,6 @@ class NeonManager extends AbstractExportManager {
             'method' => 'account/listCountries',
         ];
 
-        // Log in with the web service
-        $this->openTarget();
         $result = $this->neonWebService->go($request);
 
         if ($this->checkError($result)) {
@@ -509,9 +500,6 @@ class NeonManager extends AbstractExportManager {
         foreach ($items as $i) {
             $mappedItems[$i['Neon_Name']][$i['Neon_Type_Code']] = $i['Neon_Type_Name'];
         }
-
-        // Log in with the web service
-        $this->openTarget();
 
         $stmt = $dbh->query("Select * from vguest_neon_payment where 1=1 $whereClause");
 
@@ -1657,8 +1645,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             $request['parameters'] = ['relationTypeCategory' => 'Individual-Individual'];
         }
 
-        // Log in with the web service
-        $this->openTarget();
         $result = $this->neonWebService->go($request);
 
         if ($this->checkError($result)) {
@@ -1685,8 +1671,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             'method' => 'account/listSources'
         ];
 
-        // Log in with the web service
-        $this->openTarget();
         $result = $this->neonWebService->go($request);
 
         if ($this->checkError($result)) {
@@ -1709,8 +1693,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             'parameters' => array('searchCriteria.component' => 'Account')
         ];
 
-        // Log in with the web service
-        $this->openTarget();
         $result = $this->neonWebService->go($request);
 
         if ($this->checkError($result)) {
@@ -2059,40 +2041,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         }
 
         return $count + $idTypeMap;
-    }
-
-    protected function openTarget() {
-
-        if (function_exists('curl_version') === FALSE) {
-            throw new UploadException('PHP configuration error: cURL functions are missing.');
-        }
-
-        if ($this->getUserId() == '' || $this->getPassword() == '') {
-            throw new UploadException('User Name or Password are missing.');
-        }
-
-        $keys = array('orgId'=>$this->getUserId(), 'apiKey'=>Crypto::decryptMessage($this->getPassword()));
-
-        $this->neonWebService = new Neon();
-        $loginResult = $this->neonWebService->login($keys);
-
-
-        if ( isset( $loginResult['operationResult'] ) && $loginResult['operationResult'] != 'SUCCESS' ) {
-            throw new UploadException('API Login failed');
-        }
-
-        if ($loginResult['userSessionId'] == '') {
-            throw new UploadException('API Session Id is missing');
-        }
-
-        return TRUE;
-    }
-
-    protected function closeTarget() {
-
-        $this->neonWebService->go( array( 'method' => 'common/logout' ) );
-        $this->neonWebService->setSession('');
-
     }
 
     protected function checkError($result) {
