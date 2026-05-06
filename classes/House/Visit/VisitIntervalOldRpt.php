@@ -188,13 +188,14 @@ ORDER BY s.idVisit , s.Visit_Span");
         // transform room report data for visit report
         while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
             if (isset($daysAr[$r['idResource']])) {
-                $totals = array(ResourceStatus::Available => 0, ResourceStatus::OutOfService => 0, ResourceStatus::Delayed => 0, ResourceStatus::Unavailable => 0, ResourceStatus::Closed => 0);
+                $totals = array(ResourceStatus::Available => 0, ResourceStatus::OutOfService => 0, ResourceStatus::Delayed => 0, ResourceStatus::Unavailable => 0, ResourceStatus::Closed => 0, 'nonClean' => 0);
                 foreach ($daysAr[$r['idResource']] as $day) {
-                    $totals[ResourceStatus::Available] += ($day['n'] + $day['o'] + $day['t'] + $day['u'] + $day['c'] == 0 ? 1 : 0);
+                    $totals[ResourceStatus::Available] += ($day['n'] + $day['o'] + $day['t'] + $day['u'] + $day['c'] + $day['b'] == 0 ? 1 : 0);
                     $totals[ResourceStatus::OutOfService] += $day['o'];
                     $totals[ResourceStatus::Delayed] += $day['t'];
                     $totals[ResourceStatus::Unavailable] += $day['u'];
                     $totals[ResourceStatus::Closed] += $day['c'];
+                    $totals['nonClean'] += $day['b'];
                 }
                 $rooms[$r['idResource']][$r[$rescGroup]] = $totals;
             }

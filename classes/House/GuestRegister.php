@@ -728,7 +728,7 @@ where
     //         return $backgroundBorderColor;
 //     }
 
-    protected function addVisitBlackouts(&$events, $myHolidays, $dtendDate, $timezone, $idResc, $nonClean)
+    protected function addVisitBlackouts(&$events, US_Holidays$myHolidays, $dtendDate, $timezone, $idResc, $nonClean)
     {
 
         $p1d = new \DateInterval('P1D');
@@ -741,7 +741,8 @@ where
                 'resourceId' => "id-" . $idResc,
                 'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                 'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                'title' => 'H',
+                'title' => 'Holiday',
+                'description' => $myHolidays->getHolidayNameByTimestamp($dtendDate->format('U')) . ' (Cleaning Blackout)',
                 'allDay' => 1,
                 'backgroundColor' => 'black',
                 'textColor' => 'white',
@@ -770,7 +771,8 @@ where
                 'resourceId' => "id-" . $idResc,
                 'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                 'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                'title' => 'BO',
+                'title' => 'Cleaning',
+                'description' => 'Cleaning Blackout Day',
                 'allDay' => 1,
                 'backgroundColor' => 'black',
                 'textColor' => 'white',
@@ -797,7 +799,8 @@ where
                 'resourceId' => 'id-' . $idResc,
                 'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                 'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                'title' => 'H',
+                'title' => 'Holiday',
+                'description' => $myHolidays->getHolidayNameByTimestamp($dtendDate->format('U')) . ' (Cleaning Blackout)',
                 'allDay' => 1,
                 'backgroundColor' => 'black',
                 'textColor' => 'white',

@@ -201,7 +201,7 @@ class US_Holidays {
         );
     }
 
-    public function get_list()
+    public function get_list(): array
     {
         return $this->list;
     }
@@ -216,6 +216,23 @@ class US_Holidays {
         }
 
         return false;
+    }
+
+    /**
+     * Return the name of the holiday that falls on the timestamp
+     * @param mixed $timestamp
+     * @return string
+     */
+    public function getHolidayNameByTimestamp($timestamp): string
+    {
+        foreach ($this->list as $holiday)
+        {
+           if ($holiday['use'] == '1' && $timestamp >= $holiday["timestamp"] && $timestamp < ($holiday["timestamp"] + self::ONE_DAY)) {
+               return $holiday['name'];
+           }
+        }
+
+        return '';
     }
 
     public function getYear() {

@@ -5,6 +5,7 @@ namespace HHK\House\Report;
 use DateTime;
 use HHK\Common;
 use HHK\House\OperatingHours;
+use HHK\House\Reservation\Reservation_1;
 use HHK\House\ResourceView;
 use HHK\Notes;
 use HHK\HTMLControls\HTMLContainer;
@@ -17,6 +18,7 @@ use HHK\SysConst\ItemId;
 use HHK\SysConst\ResourceStatus;
 use HHK\SysConst\VisitStatus;
 use HHK\sec\Session;
+use HHK\US_Holidays;
 
 /**
  * RoomReport.php
@@ -891,25 +893,33 @@ order by rs.Util_Priority;";
 
             foreach($rdateArray as $day => $numbers) {
 
+                // Non-cleaning takes priority: a day that is both non-cleaning and closed counts only as non-cleaning
+                if ($numbers['c'] > 0 && $numbers['b'] == 0) {
+                    $daysOccupied['c']++;
+                }
+
                 if ($numbers['n'] > 0 ) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:lightgreen;'));
+                    $tds .= HTMLTable::makeTd(' ', ['class' => 'hhk-util-occupied']);
                      $daysOccupied['n']++;
 
                 } else if ($numbers['o'] > 0 ) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:gray;'));
+                    $tds .= HTMLTable::makeTd(' ', ['class' => 'hhk-util-oos']);
                      $daysOccupied['o']++;
 
                 } else if ($numbers['u'] > 0 ) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:black;'));
+                    $tds .= HTMLTable::makeTd(' ', ['class' => 'hhk-util-unavailable']);
                      $daysOccupied['u']++;
 
                 } else if ($numbers['t'] > 0 ) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:brown;'));
+                    $tds .= HTMLTable::makeTd(' ', ['class' => 'hhk-util-delayed']);
                      $daysOccupied['t']++;
 
+                } else if ($numbers['b'] > 0 ) {
+                    $tds .= HTMLTable::makeTd(' ', ['class' => 'hhk-util-cleaning']);
+                     $daysOccupied['b']++;
+
                 } else if ($numbers['c'] > 0) {
-                    $tds .= HTMLTable::makeTd(' ', array('style'=>'background-color:lightgray;'));
-                    $daysOccupied['c']++;
+                    $tds .= HTMLTable::makeTd(' ', ['class' => 'hhk-util-closed']);
                 } else {
                     $tds .= HTMLTable::makeTd(' ');
                 }
@@ -957,10 +967,55 @@ order by rs.Util_Priority;";
         }
 
 
-        return $tbl->generateMarkup();
+        $legend  = HTMLContainer::generateMarkup('span',
+            HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-util-swatch hhk-util-occupied']) . ' Occupied',
+            ['class' => 'hhk-util-item']);
+        if (isset($rescStatuses[ResourceStatus::OutOfService])) {
+            $legend .= HTMLContainer::generateMarkup('span',
+                HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-util-swatch hhk-util-oos']) . ' OOS',
+                ['class' => 'hhk-util-item']);
+        }
+        if (isset($rescStatuses[ResourceStatus::Unavailable])) {
+            $legend .= HTMLContainer::generateMarkup('span',
+                HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-util-swatch hhk-util-unavailable']) . ' Unavailable',
+                ['class' => 'hhk-util-item']);
+        }
+        if (isset($rescStatuses[ResourceStatus::Delayed])) {
+            $legend .= HTMLContainer::generateMarkup('span',
+                HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-util-swatch hhk-util-delayed']) . ' Delayed',
+                ['class' => 'hhk-util-item']);
+        }
+        if (isset($this->summary['cb'])) {
+            $legend .= HTMLContainer::generateMarkup('span',
+                HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-util-swatch hhk-util-cleaning']) . ' Non Cleaning',
+                ['class' => 'hhk-util-item']);
+        }
+        $legend .= HTMLContainer::generateMarkup('span',
+            HTMLContainer::generateMarkup('span', '', ['class' => 'hhk-util-swatch hhk-util-closed']) . ' Closed',
+            ['class' => 'hhk-util-item']);
+
+        $css = '
+<style>
+.hhk-util-occupied{background-color:lightgreen}
+.hhk-util-oos{background-color:gray}
+.hhk-util-unavailable{background-color:black}
+.hhk-util-delayed{background-color:brown}
+.hhk-util-cleaning{background-color:#454545}
+.hhk-util-closed{background-color:lightgray}
+.hhk-util-swatch{display:inline-block;width:14px;height:14px;border:1px solid #999;vertical-align:middle;margin-right:3px}
+.hhk-util-item{margin-right:12px;white-space:nowrap}
+.hhk-util-legend{margin-bottom:8px;font-size:0.85em}
+</style>
+';
+
+        return $css
+            . HTMLContainer::generateMarkup('div', $legend, ['class' => 'hhk-util-legend'])
+            . $tbl->generateMarkup();
     }
 
     public function collectUtilizationData(\PDO $dbh, $startDate, $endDate, array $rescStatuses) {
+
+        $uS = Session::getInstance();
 
         if ($startDate == '') {
             return '';
@@ -976,9 +1031,9 @@ order by rs.Util_Priority;";
         $dateFormat = 'Y-m-d';
         $dateTitle = 'j';
 
-        $stDT = new \DateTime($startDate);
+        $stDT = new DateTime($startDate);
         $stDT->setTime(0,0,0);
-        $endDT = new \DateTime($endDate);
+        $endDT = new DateTime($endDate);
 
 
         if ($stDT === FALSE || $endDT === FALSE) {
@@ -986,7 +1041,7 @@ order by rs.Util_Priority;";
         }
 
         // Counting start date
-        $countgDT = new \DateTime($startDate);
+        $countgDT = new DateTime($startDate);
         $countgDT->setTime(0, 0, 0);
 
 
@@ -1020,6 +1075,9 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         }
         if (isset($rescStatuses[ResourceStatus::Unavailable])) {
             $this->summary['un'] = 'Unavailable';
+        }
+        if ($uS->UseCleaningBOdays) {
+            $this->summary['cb'] = 'Non Cleaning';
         }
         $this->summary['c'] = 'Closed';
 
@@ -1073,10 +1131,11 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         }
 
         $this->th .= HTMLTable::makeTh('Room') .
-        HTMLTable::makeTh('Nights') . 
-        (isset($rescStatuses[ResourceStatus::OutOfService]) ? HTMLTable::makeTh('OOS') :'') . 
-        (isset($rescStatuses[ResourceStatus::Delayed]) ? HTMLTable::makeTh('Delayed') :'') . 
-        (isset($rescStatuses[ResourceStatus::Unavailable]) ? HTMLTable::makeTh('Unavailable') :'') . 
+        HTMLTable::makeTh('Nights') .
+        (isset($rescStatuses[ResourceStatus::OutOfService]) ? HTMLTable::makeTh('OOS') :'') .
+        (isset($rescStatuses[ResourceStatus::Delayed]) ? HTMLTable::makeTh('Delayed') :'') .
+        (isset($rescStatuses[ResourceStatus::Unavailable]) ? HTMLTable::makeTh('Unavailable') :'') .
+        (isset($this->summary['cb']) ? HTMLTable::makeTh('Non Cleaning') :'') .
         HTMLTable::makeTh('Closed');
 
 
@@ -1092,6 +1151,9 @@ where v.Status != '" . VisitStatus::Pending . "' and DATEDIFF(ifnull(v.Span_End,
 and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull(v.Span_End,  datedefaultnow(v.Expected_Departure) )) >= DATE('" . $stDT->format('Y-m-d') ."') order by r.Title;";
 
         $stmt = $dbh->query($query);
+
+        $checkouts = [];
+        $now = new DateTime();
 
         // Count nights of use
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1116,6 +1178,18 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
                 $rmStartDate->add($oneDay);
             }
 
+            // Collect checkout date for cleaning blackout computation
+            if (isset($this->summary['cb'])) {
+                if ($r['Span_End'] != '') {
+                    $checkouts[$r['idResource']][$r['Span_End']] = true;
+                } elseif ($r['Expected_Departure'] != '') {
+                    $dtExpected = new DateTime($r['Expected_Departure']);
+                    $dtExpected->setTime(10, 0, 0);
+                    if ($now <= $dtExpected) {
+                        $checkouts[$r['idResource']][$r['Expected_Departure']] = true;
+                    }
+                }
+            }
         }
 
         // Collect resource use records
@@ -1197,8 +1271,52 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
             }
         }
 
+        // Compute cleaning blackout days from visit checkouts, mirroring addVisitBlackouts()
+        if (isset($this->summary['cb']) && \count($checkouts) > 0) {
+            $nonClean = Reservation_1::loadNonCleaningDays($dbh);
+            $beginHolidays = new US_Holidays($dbh, $stDT->format('Y'));
+            $endHolidays = new US_Holidays($dbh, $endDT->format('Y'));
+
+            foreach ($checkouts as $idResc => $checkoutDates) {
+                foreach ($checkoutDates as $checkoutDate => $dummy) {
+                    $clDate = new DateTime($checkoutDate);
+                    $clDate->setTime(10, 0, 0);
+
+                    $clYear = $clDate->format('Y');
+                    if ($clYear == $beginHolidays->getYear()) {
+                        $myHolidays = $beginHolidays;
+                    } elseif ($clYear == $endHolidays->getYear()) {
+                        $myHolidays = $endHolidays;
+                    } else {
+                        continue;
+                    }
+
+                    // Walk forward from checkout marking any consecutive holiday or non-cleaning weekday
+                    $limit = 10;
+                    while ($limit-- > 0) {
+                        $dateInfo = getDate($clDate->format('U'));
+                        $isHoliday = $myHolidays->is_holiday($clDate->format('U'));
+                        $isNonClean = \array_search($dateInfo['wday'], $nonClean) !== FALSE;
+
+                        if (!$isHoliday && !$isNonClean) {
+                            break;
+                        }
+
+                        $rmDate = $clDate->format($dateFormat);
+                        if (isset($this->days[$idResc][$rmDate]) && $this->days[$idResc][$rmDate]['n'] == 0) {
+                            $this->days[$idResc][$rmDate]['b']++;
+                            $this->totals['cb'][$rmDate]++;
+                            $this->days[$idResc][$rmDate]['c'] = 0; //room not closed if it's a cleaning blackout
+                        }
+                        $clDate->add($oneDay);
+                        $clDate->setTime(10, 0, 0);
+                    }
+                }
+            }
+        }
+
         //count up closed days
-        foreach($this->days as $idResc=>$dates){
+         foreach($this->days as $idResc=>$dates){
             foreach($dates as $date=>$numbers){
                 if($numbers['c'] > 0){
                     $this->totals['c'][$date]++;
