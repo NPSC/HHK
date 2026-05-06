@@ -341,7 +341,6 @@ if (isset($_POST['btnkfSave'])) {
                 if (count($rows) == 1) {
                     EditRS::loadRow($rows[0], $glRs);
                     $glRs->Description->setNewVal($desc);
-                    $glRs->Substitute->setNewVal(PaymentMethod::External);
 
                     if (EditRS::update($dbh, $glRs, [$glRs->Table_Name, $glRs->Code]) > 0) {
                         HouseLog::logGenLookups($dbh, 'Pay_Type', $code, HouseLog::getUpdateText($glRs), 'update', $uS->username);
@@ -1929,7 +1928,7 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
     $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type', 'Order');
 
     $ptTbl = new HTMLTable();
-    $ptTbl->addHeaderTr(HTMLTable::makeTh('') . HTMLTable::makeTh('Default') . HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code') : "") . HTMLTable::makeTh(''));
+    $ptTbl->addHeaderTr(HTMLTable::makeTh('') . HTMLTable::makeTh('Default') . HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code') : "") . HTMLTable::makeTh('X'));
 
     foreach ($payTypes as $r) {
 
@@ -1983,7 +1982,8 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
         . HTMLTable::makeTd('', ['style' => 'text-align:center;'])
         . HTMLTable::makeTd($payMethods[PaymentMethod::External] ?? '')
         . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'newExtPayDesc[]', 'size' => '20', 'placeholder' => 'New External Pay Type']))
-        . ($uS->useGLCodes ? HTMLTable::makeTd($payMethodGlCodes[PaymentMethod::External] ?? '') : ""),
+        . ($uS->useGLCodes ? HTMLTable::makeTd($payMethodGlCodes[PaymentMethod::External] ?? '') : "")
+        . HTMLTable::makeTd(''),
         ['class' => 'no-sort']
     );
 
