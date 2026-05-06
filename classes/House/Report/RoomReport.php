@@ -5,7 +5,6 @@ namespace HHK\House\Report;
 use DateTime;
 use HHK\Common;
 use HHK\House\OperatingHours;
-use HHK\House\Reservation\Reservation_1;
 use HHK\House\ResourceView;
 use HHK\Notes;
 use HHK\HTMLControls\HTMLContainer;
@@ -18,6 +17,7 @@ use HHK\SysConst\ItemId;
 use HHK\SysConst\ResourceStatus;
 use HHK\SysConst\VisitStatus;
 use HHK\sec\Session;
+use HHK\House\Reservation\Reservation_1;
 use HHK\US_Holidays;
 
 /**
@@ -889,6 +889,7 @@ order by rs.Util_Priority;";
             $daysOccupied['o'] = 0;
             $daysOccupied['t'] = 0;
             $daysOccupied['u'] = 0;
+            $daysOccupied['b'] = 0;
             $daysOccupied['c'] = 0;
 
             foreach($rdateArray as $day => $numbers) {
@@ -932,6 +933,7 @@ order by rs.Util_Priority;";
                 if ((isset($rescStatuses[ResourceStatus::OutOfService]) && $k == "o") ||
                     (isset($rescStatuses[ResourceStatus::Delayed]) && $k == "t") ||
                     (isset($rescStatuses[ResourceStatus::Unavailable]) && $k == "u") ||
+                    (isset($this->summary['cb']) && $k == "b") ||
                     $k == "n" || $k == "c")
                 {
                     $tds .= HTMLTable::makeTd($d, array('style'=>'text-align:right;'));
@@ -1015,8 +1017,6 @@ order by rs.Util_Priority;";
 
     public function collectUtilizationData(\PDO $dbh, $startDate, $endDate, array $rescStatuses) {
 
-        $uS = Session::getInstance();
-
         if ($startDate == '') {
             return '';
         }
@@ -1031,9 +1031,9 @@ order by rs.Util_Priority;";
         $dateFormat = 'Y-m-d';
         $dateTitle = 'j';
 
-        $stDT = new DateTime($startDate);
+        $stDT = new \DateTime($startDate);
         $stDT->setTime(0,0,0);
-        $endDT = new DateTime($endDate);
+        $endDT = new \DateTime($endDate);
 
 
         if ($stDT === FALSE || $endDT === FALSE) {
@@ -1041,7 +1041,7 @@ order by rs.Util_Priority;";
         }
 
         // Counting start date
-        $countgDT = new DateTime($startDate);
+        $countgDT = new \DateTime($startDate);
         $countgDT->setTime(0, 0, 0);
 
 
@@ -1065,6 +1065,8 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
 
         }
         unset($stRows);
+
+        $uS = Session::getInstance();
 
         $this->summary = array('nits'=>'Nights');
         if(isset($rescStatuses[ResourceStatus::OutOfService])){
@@ -1111,6 +1113,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
                 $this->days[$idResc][$thisDay]['o'] = 0;
                 $this->days[$idResc][$thisDay]['t'] = 0;
                 $this->days[$idResc][$thisDay]['u'] = 0;
+                $this->days[$idResc][$thisDay]['b'] = 0;
                 
                 if($operatingHours->isHouseClosed($countgDT)){
                     $this->days[$idResc][$thisDay]['c'] = 1;
@@ -1145,6 +1148,8 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
     r.Category,
     r.idSponsor,
     v.Span_Start,
+    v.Span_End,
+    v.Expected_Departure,
     DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Nights`
 from visit v left join resource r on v.idResource = r.idResource
 where v.Status != '" . VisitStatus::Pending . "' and DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) > 0
