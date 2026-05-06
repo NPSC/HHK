@@ -475,16 +475,16 @@
         },
         {
             "name": "giggsey/libphonenumber-for-php",
-            "version": "9.0.28",
+            "version": "9.0.29",
             "source": {
                 "type": "git",
                 "url": "https://github.com/giggsey/libphonenumber-for-php.git",
-                "reference": "6f4f8a29467f3fc24547d145b6ba91b9010daa06"
+                "reference": "ac6ca861830c556ed1c266de3f6fe5f983da09d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/6f4f8a29467f3fc24547d145b6ba91b9010daa06",
-                "reference": "6f4f8a29467f3fc24547d145b6ba91b9010daa06",
+                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/ac6ca861830c556ed1c266de3f6fe5f983da09d5",
+                "reference": "ac6ca861830c556ed1c266de3f6fe5f983da09d5",
                 "shasum": ""
             },
             "require": {
@@ -547,7 +547,7 @@
                 "issues": "https://github.com/giggsey/libphonenumber-for-php/issues",
                 "source": "https://github.com/giggsey/libphonenumber-for-php"
             },
-            "time": "2026-04-13T11:28:12+00:00"
+            "time": "2026-04-24T11:10:46+00:00"
         },
         {
             "name": "giggsey/locale",
@@ -935,16 +935,16 @@
         },
         {
             "name": "laravel/serializable-closure",
-            "version": "v2.0.12",
+            "version": "v2.0.13",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/serializable-closure.git",
-                "reference": "a6abb4e54f6fcd3138120b9ad497f0bd146f9919"
+                "reference": "b566ee0dd251f3c4078bed003a7ce015f5ea6dce"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/a6abb4e54f6fcd3138120b9ad497f0bd146f9919",
-                "reference": "a6abb4e54f6fcd3138120b9ad497f0bd146f9919",
+                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/b566ee0dd251f3c4078bed003a7ce015f5ea6dce",
+                "reference": "b566ee0dd251f3c4078bed003a7ce015f5ea6dce",
                 "shasum": ""
             },
             "require": {
@@ -992,7 +992,7 @@
                 "issues": "https://github.com/laravel/serializable-closure/issues",
                 "source": "https://github.com/laravel/serializable-closure"
             },
-            "time": "2026-04-14T13:33:34+00:00"
+            "time": "2026-04-16T14:03:50+00:00"
         },
         {
             "name": "lcobucci/clock",
@@ -3025,7 +3025,7 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "v1.36.0",
+            "version": "v1.37.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
@@ -3086,7 +3086,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.36.0"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.37.0"
             },
             "funding": [
                 {
@@ -3288,16 +3288,16 @@
         },
         {
             "name": "php-debugbar/php-debugbar",
-            "version": "v3.7.5",
+            "version": "v3.7.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-debugbar/php-debugbar.git",
-                "reference": "dbf77f48fa6e6b57ed57ae67aa047b2535697788"
+                "reference": "1690ee1728827f9deb4b60457fa387cf44672c56"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-debugbar/php-debugbar/zipball/dbf77f48fa6e6b57ed57ae67aa047b2535697788",
-                "reference": "dbf77f48fa6e6b57ed57ae67aa047b2535697788",
+                "url": "https://api.github.com/repos/php-debugbar/php-debugbar/zipball/1690ee1728827f9deb4b60457fa387cf44672c56",
+                "reference": "1690ee1728827f9deb4b60457fa387cf44672c56",
                 "shasum": ""
             },
             "require": {
@@ -3374,7 +3374,7 @@
             ],
             "support": {
                 "issues": "https://github.com/php-debugbar/php-debugbar/issues",
-                "source": "https://github.com/php-debugbar/php-debugbar/tree/v3.7.5"
+                "source": "https://github.com/php-debugbar/php-debugbar/tree/v3.7.6"
             },
             "funding": [
                 {
@@ -3386,15 +3386,15 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-15T11:58:43+00:00"
+            "time": "2026-04-30T07:31:44+00:00"
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.51",
+            "version": "2.1.54",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/dc3b523c45e714c70de2ac5113b958223b55dc59",
-                "reference": "dc3b523c45e714c70de2ac5113b958223b55dc59",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/8be50c3992107dc837b17da4d140fbbdf9a5c5bd",
+                "reference": "8be50c3992107dc837b17da4d140fbbdf9a5c5bd",
                 "shasum": ""
             },
             "require": {
@@ -3439,7 +3439,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-21T18:22:01+00:00"
+            "time": "2026-04-29T13:31:09+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
