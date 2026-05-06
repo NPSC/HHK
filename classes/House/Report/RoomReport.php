@@ -5,6 +5,7 @@ namespace HHK\House\Report;
 use DateTime;
 use HHK\Common;
 use HHK\House\OperatingHours;
+use HHK\House\Reservation\Reservation_1;
 use HHK\House\ResourceView;
 use HHK\Notes;
 use HHK\HTMLControls\HTMLContainer;
@@ -17,6 +18,7 @@ use HHK\SysConst\ItemId;
 use HHK\SysConst\ResourceStatus;
 use HHK\SysConst\VisitStatus;
 use HHK\sec\Session;
+use HHK\US_Holidays;
 
 /**
  * RoomReport.php
@@ -1013,6 +1015,8 @@ order by rs.Util_Priority;";
 
     public function collectUtilizationData(\PDO $dbh, $startDate, $endDate, array $rescStatuses) {
 
+        $uS = Session::getInstance();
+
         if ($startDate == '') {
             return '';
         }
@@ -1027,9 +1031,9 @@ order by rs.Util_Priority;";
         $dateFormat = 'Y-m-d';
         $dateTitle = 'j';
 
-        $stDT = new \DateTime($startDate);
+        $stDT = new DateTime($startDate);
         $stDT->setTime(0,0,0);
-        $endDT = new \DateTime($endDate);
+        $endDT = new DateTime($endDate);
 
 
         if ($stDT === FALSE || $endDT === FALSE) {
@@ -1037,7 +1041,7 @@ order by rs.Util_Priority;";
         }
 
         // Counting start date
-        $countgDT = new \DateTime($startDate);
+        $countgDT = new DateTime($startDate);
         $countgDT->setTime(0, 0, 0);
 
 

@@ -1496,7 +1496,7 @@ $(document).ready(function () {
                 // Out of service
                 } else if (info.event.extendedProps.kind === 'oos') {
                     info.el.title = info.event.extendedProps.reason;
-                }else if (info.event.extendedProps.description && (info.event.extendedProps.kind === 'bo' || info.event.extendedProps.kind === 'h')) {
+                }else if (info.event.extendedProps.description && (info.event.extendedProps.kind === 'bo')) {
                     info.el.title = info.event.extendedProps.description;
                 }
 
