@@ -28,6 +28,8 @@ class NeonManager extends AbstractExportManager {
 
     protected $hhReplies = [];
 
+    protected string $configMessage = '';
+
     protected $pageNumber;
     protected $relationshipMapper;
     protected $hhkToNeonRelationMap;
@@ -35,12 +37,15 @@ class NeonManager extends AbstractExportManager {
     const SearchViewName = 'vguest_search_neon';
 
     const LOG_SERVICE_NAME = "neonCRM";
+    const HHK_CUSTOM_FIELD_GROUP = 'Hospitality Housekeeper';
 
-    protected NeonWebService $neonWebService;
+    protected Neon $neonWebService;
+    protected NeonWebService $neonWebServiceV2;
 
     public function __construct(\PDO $dbh, string $cmsName) {
         parent::__construct($dbh, $cmsName);
-        $this->neonWebService = new NeonWebService($dbh, $this->getUserId(), Crypto::decryptMessage($this->getPassword()));
+        $this->neonWebServiceV2 = new NeonWebService($dbh, $this->getUserId(), Crypto::decryptMessage($this->getPassword()));
+        $this->neonWebService = new Neon();
     }
 
     public function searchMembers ($searchCriteria) {
@@ -49,31 +54,30 @@ class NeonManager extends AbstractExportManager {
         $msearch = new MemberSearch($searchCriteria['letters']);
         $standardFields = array('Account ID', 'Account Type', 'Deceased', 'Prefix', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Preferred Name', 'Email 1');
 
-        $search = array(
-            'method' => 'account/listAccounts',
-            'criteria' => array(
-                //array( 'First Name', 'CONTAIN', str_replace('%', '', $msearch->getName_First())),
-                ['Last Name', 'CONTAIN', str_replace('%', '', $msearch->getName_Last())],
-            ),
-            'columns' => array(
-                'standardFields' => $standardFields,
-                'customFields' => array(),
-            ),
-            'page' => [
+        $search = [
+            'searchFields' => [
+                ['field' => 'Last Name', 'operator' => 'CONTAIN', 'value' => str_replace('%', '', $msearch->getName_Last())]
+            ],
+            'outputFields' => $standardFields,
+            'pagination' => [
                 'currentPage' => $this->pageNumber,
                 'pageSize' => 20,
                 'sortColumn' => 'Last Name',
                 'sortDirection' => 'ASC',
-            ],
-        );
+            ]
+        ];
 
-        $result = $this->neonWebService->search($search);
+        $result = $this->neonWebServiceV2->searchAccounts($search);
+
+        // TODO: Handle errors
+        /*
 
         if ($this->checkError($result)) {
 
             $replys['error'] = $this->errorMessage;
 
-        } else if (isset($result['searchResults'])) {
+        } else */
+        if (isset($result['searchResults'])) {
 
             foreach ($result['searchResults'] as $r) {
 
@@ -111,6 +115,9 @@ class NeonManager extends AbstractExportManager {
         }
 
         $this->customFields = $this->getMyCustomFields($dbh);
+
+        // Log in with the web service
+        $this->openTarget();
 
         // Load Individual types
         $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
@@ -311,6 +318,9 @@ class NeonManager extends AbstractExportManager {
         // Custom Parameters
         $paramStr .= NeonHelper::fillCustomFields($this->customFields, $r, $unwound);
 
+        // Log in with the web service
+        $this->openTarget();
+
         $request = [
             'method' => 'account/updateIndividualAccount',
             'parameters' => $param,
@@ -357,7 +367,8 @@ class NeonManager extends AbstractExportManager {
         } else if ($source === 'remote') {
 
             // Neon accounts
-            $result = $this->retrieveRemoteAccount($id);
+            // $result = $this->retrieveRemoteAccount($id);
+            $result = $this->neonWebServiceV2->getAccount($id);
 
             $parms = array();
             $this->unwindResponse($parms, $result);
@@ -371,7 +382,8 @@ class NeonManager extends AbstractExportManager {
             $this->setAccountId((isset($parms['accountId']) ? $parms['accountId'] : ''));
 
             // Neon Househods
-            $result = $this->searchHouseholds($id);
+            //$result = $this->searchHouseholds($id);
+            $result = $this->neonWebServiceV2->listHouseholds(accountId:$id);
 
             $parms = array();
             $this->unwindResponse($parms, $result);
@@ -434,6 +446,9 @@ class NeonManager extends AbstractExportManager {
      */
     public function retrieveRemoteAccount($accountId) {
 
+        // Log in with the web service
+        $this->openTarget();
+
         $account = $this->neonWebService->getIndividualAccount($accountId);
 
         if ($this->checkError($account)) {
@@ -450,6 +465,9 @@ class NeonManager extends AbstractExportManager {
         $request = [
             'method' => 'account/listCountries',
         ];
+
+        // Log in with the web service
+        $this->openTarget();
 
         $result = $this->neonWebService->go($request);
 
@@ -500,6 +518,9 @@ class NeonManager extends AbstractExportManager {
         foreach ($items as $i) {
             $mappedItems[$i['Neon_Name']][$i['Neon_Type_Code']] = $i['Neon_Type_Name'];
         }
+
+        // Log in with the web service
+        $this->openTarget();
 
         $stmt = $dbh->query("Select * from vguest_neon_payment where 1=1 $whereClause");
 
@@ -1610,28 +1631,29 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     }
 
-    public function listNeonType($method, $listName, $listItem) {
+    public function listNeonType(string $method, string $listName, string $listItem) {
 
         $types = [];
+        $result = null;
 
-        $request = [
-            'method' => $method,
-        ];
-
-        // Cludge for relationship types
-        if ($method == 'account/listRelationTypes') {
-            $request['parameters'] = ['relationTypeCategory' => 'Individual-Individual'];
+        switch ($method) {
+            case 'account/listRelationTypes':
+                $result = $this->neonWebServiceV2->getRelationTypes('INDIVIDUAL_INDIVIDUAL');
+                break;
+            case 'account/listIndividualTypes':
+                $result = $this->neonWebServiceV2->getIndividualTypes();
+                break;
+            default:
+                $types = [];
         }
 
-        $result = $this->neonWebService->go($request);
-
-        if ($this->checkError($result)) {
+/*         if ($this->checkError($result)) {
             throw new RuntimeException('Method: ' . $method . ', List Name: ' . $listName . ', Error Message: ' .$this->errorMessage);
-        }
+        } */
 
-        if (isset($result[$listName][$listItem])) {
+        if (is_array($result)) {
 
-            foreach ($result[$listName][$listItem] as $c) {
+            foreach ($result as $c) {
                 if (isset($c['id'])) {
                     $types[$c['id']] = $c['name'];
                 } else if (isset($c['code'])) {
@@ -1643,25 +1665,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $types;
     }
 
-    public function listSources() {
-
-        $request = [
-            'method' => 'account/listSources'
-        ];
-
-        $result = $this->neonWebService->go($request);
-
-        if ($this->checkError($result)) {
-            throw new RuntimeException($this->errorMessage);
-        }
-
-        if (isset($result['sources']['source'])) {
-            return $result['sources']['source'];
-        }
-
-        return [];
-    }
-
     protected function listCustomFields() {
 
         $customFields = [];
@@ -1670,6 +1673,9 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             'method' => 'common/listCustomFields',
             'parameters' => array('searchCriteria.component' => 'Account')
         ];
+
+        // Log in with the web service
+        $this->openTarget();
 
         $result = $this->neonWebService->go($request);
 
@@ -1692,7 +1698,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
     public function getMyCustomFields(\PDO $dbh) {
 
         if (is_null($this->customFields)) {
-            $cf = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
+            $cf = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields', "Order");
 
             foreach($cf as $k => $v) {
                 $this->customFields[$k] = $v['Description'];
@@ -1717,16 +1723,16 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                 . HTMLTable::makeTd($this->getGatewayId())
                 );
             $tbl->addBodyTr(
-                HTMLTable::makeTh('Username', array())
+                HTMLTable::makeTh('Organization ID', array())
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getUserId(), array('name' => '_txtuserId', 'size' => '90')))
                 );
             $tbl->addBodyTr(
-                HTMLTable::makeTh('Password', array())
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getPassword(), array('name' => '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
+                HTMLTable::makeTh('API Key', array())
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getPassword(), array('type'=>'password', 'name' => '_txtpwd', 'size' => '90')))
                 );
             $tbl->addBodyTr(
-                HTMLTable::makeTh('Endpoint URL', array())
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEndpointUrl(), array('name' => '_txtEPurl', 'size' => '90')))
+                HTMLTable::makeTh('API Version', array())
+                . HTMLTable::makeTd($this->neonWebServiceV2::API_VERSION)
                 );
 
 
@@ -1736,7 +1742,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     public function showConfig(\PDO $dbh) {
 
-        $markup = $this->showGatewayCredentials();
+        $markup = '';
+        $crmTitle = ucfirst($this->serviceName);
 
         $customFields = $this->getMyCustomFields($dbh);
 
@@ -1792,7 +1799,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                 }
 
                 $nTbl = new HTMLTable();
-                $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh($this->serviceName . ' Name') . HTMLTable::makeTh($this->serviceName . ' Id'));
+                $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh("$crmTitle Name") . HTMLTable::makeTh("$crmTitle ID"));
 
                 foreach ($neonItems as $n => $k) {
 
@@ -1808,29 +1815,35 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                         );
                 }
 
-                $markup .= $nTbl->generateMarkup(['style' => 'margin-top:15px;'], $list['List_Name']);
+                $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], $list['List_Name']), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
             }
 
             // Custom fields
-            $results = $this->listCustomFields();
+            $results = $this->neonWebServiceV2->getCustomFields('Account');
             $cfTbl = new HTMLTable();
-            $myCustomFields = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
 
-            $cfTbl->addHeaderTr(HTMLTable::makeTh('Field') . HTMLTable::makeTh($this->serviceName . ' id'));
+            $cfTbl->addHeaderTr(HTMLTable::makeTh('HHK Field') . HTMLTable::makeTh("$crmTitle Name"));
 
-            foreach ($results as $v) {
-                //if ($this->wsConfig->has('custom_fields', $v['fieldName'])) {
-                if (isset($myCustomFields[$v['fieldName']])) {
-                    $cfTbl->addBodyTr(HTMLTable::makeTd($v['fieldName']) . HTMLTable::makeTd($v['fieldId']));
+            foreach ($customFields as $k => $v) {
+                $found = false;
+                foreach ($results as $r) {
+                    if ($r['name'] == $k) {
+                        $cfTbl->addBodyTr(HTMLTable::makeTd($k) . HTMLTable::makeTd($r['displayName']));
+                        $found = true;
+                        break;
+                    }
+                }
+                if (!$found) {
+                    $cfTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . $k, ['title'=>"Field not found in $crmTitle"]) . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['type' => 'checkbox', 'name' => "chkCreateCustomField[{$k}]", 'id' => "chkCreate_{$k}", 'value' => '1']) . HTMLContainer::generateMarkup('label', 'Create', ['for' => "chkCreate_{$k}"])), ['class' =>'ui-state-error']);
                 }
             }
 
-            $markup .= $cfTbl->generateMarkup(array('style'=>'margin-top:15px;'), 'Custom Fields');
+            $markup .= HTMLContainer::generateMarkup('div', $cfTbl->generateMarkup([], 'Custom Fields'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
 
             // Sources
-            $results = $this->listSources();
+            $results = $this->neonWebServiceV2->getSources();
             $sTbl = new HTMLTable();
-            $sTbl->addHeaderTr(HTMLTable::makeTh('Source') . HTMLTable::makeTh($this->serviceName . ' id'));
+            $sTbl->addHeaderTr(HTMLTable::makeTh('Source') . HTMLTable::makeTh("$crmTitle ID"));
 
             foreach ($results as $v) {
 
@@ -1838,13 +1851,13 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
             }
 
-            $markup .= $sTbl->generateMarkup(array('style'=>'margin-top:15px;'), 'Sources');
+            $markup .= HTMLContainer::generateMarkup('div', $sTbl->generateMarkup([], 'Sources'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
 
         } catch (\Exception $pe) {
             $markup .= HTMLContainer::generateMarkup('h4', "Transfer Error: " .$pe->getMessage(), array('style'=>'margin-left:200px;color:red;'));
         }
 
-        return $markup;
+        return $this->showGatewayCredentials() . HTMLContainer::generateMarkup('div', $markup, ['class'=>'hhk-flex mt-3']);
     }
 
     protected function saveCredentials(\PDO $dbh, string $username) {
@@ -1923,15 +1936,32 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         // credentials
         $this->saveCredentials($dbh, $uS->username);
 
+        // Handle checkboxes for creating missing custom fields
+        $createControl = filter_input_array(INPUT_POST, ['chkCreateCustomField' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY]]);
+        if (!empty($createControl['chkCreateCustomField'])) {
+            $messages = [];
+            $groupId = $this->findOrCreateCustomFieldGroup();
+            foreach ($createControl['chkCreateCustomField'] as $fieldName => $v) {
+                $fieldName = filter_var($fieldName, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if ($fieldName !== '' && $v === '1') {
+
+                    $messages[] = $this->createCustomFieldInNeon($dbh, $fieldName, $groupId);
+                }
+            }
+            if (!empty($messages)) {
+                $this->configMessage = implode('<br/>', $messages);
+                return $this->configMessage;
+            }
+        }
 
         // Custom fields
-        $results = $this->listCustomFields();
+        $results = $this->neonWebServiceV2->getCustomFields('Account');
         $custom_fields = [];
         $myCustomFields = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
 
         foreach ($results as $v) {
-            if (isset($myCustomFields[ $v['fieldName']])) {
-                $custom_fields[$v['fieldName']] = $v['fieldId'];
+            if (isset($myCustomFields[ $v['name']])) {
+                $custom_fields[$v['name']] = $v['id'];
             }
         }
 
@@ -2019,6 +2049,92 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         }
 
         return $count + $idTypeMap;
+    }
+
+    public function getConfigMessage(): string {
+        return $this->configMessage;
+    }
+
+    public function createCustomFieldInNeon(\PDO $dbh, string $fieldName, string $groupId): string {
+        $cf = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
+
+        if (!isset($cf[$fieldName])) {
+            return "Field '$fieldName' not found in local configuration.";
+        }
+
+        $dataType    = !empty($cf[$fieldName]['Substitute']) ? $cf[$fieldName]['Substitute'] : 'Text';
+        $displayName = str_replace('_', ' ', $fieldName);
+
+        try {
+            $created = $this->neonWebServiceV2->createCustomField([
+                'name'        => $fieldName,
+                'status'      => 'ACTIVE',
+                'displayName' => $displayName,
+                'groupId'     => $groupId,
+                'displayType' => 'OneLineText',
+                'dataType'    => $dataType,
+                'component'   => 'Account',
+                'accountSettings' => [
+                    'accountType' => 'Any'
+                ]
+            ]);
+
+            if (empty($created['id'])) {
+                return "Failed to create custom field '$fieldName' in NeonCRM.";
+            }
+
+            return "Custom field '$fieldName' created and added to '" . self::HHK_CUSTOM_FIELD_GROUP . "' group.";
+
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            $detail = $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
+            return "NeonCRM API error creating '$fieldName': " . $detail;
+        }
+    }
+
+    protected function findOrCreateCustomFieldGroup(): ?string {
+        $groups = $this->neonWebServiceV2->getCustomFieldGroups('Account');
+
+        if (\is_array($groups)) {
+            foreach ($groups as $group) {
+                if (isset($group['displayName']) && $group['displayName'] === self::HHK_CUSTOM_FIELD_GROUP) {
+                    return (string) $group['id'];
+                }
+            }
+        }
+
+        $result = $this->neonWebServiceV2->createCustomFieldGroup([
+            'displayName' => self::HHK_CUSTOM_FIELD_GROUP,
+            'component'   => 'Account',
+        ]);
+
+        return isset($result['id']) ? (string) $result['id'] : '';
+    }
+
+    protected function openTarget() {
+
+        if (function_exists('curl_version') === FALSE) {
+            throw new UploadException('PHP configuration error: cURL functions are missing.');
+        }
+
+        if ($this->getUserId() == '' || $this->getPassword() == '') {
+            throw new UploadException('User Name or Password are missing.');
+        }
+
+        $keys = array('orgId'=>$this->getUserId(), 'apiKey'=>Crypto::decryptMessage($this->getPassword()));
+
+        $this->neonWebService = new Neon();
+        $loginResult = $this->neonWebService->login($keys);
+
+
+        if ( isset( $loginResult['operationResult'] ) && $loginResult['operationResult'] != 'SUCCESS' ) {
+            throw new UploadException('API Login failed');
+        }
+
+        if ($loginResult['userSessionId'] == '') {
+            throw new UploadException('API Session Id is missing');
+        }
+
+        return TRUE;
     }
 
     protected function checkError($result) {

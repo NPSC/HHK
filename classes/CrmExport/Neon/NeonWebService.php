@@ -14,7 +14,7 @@ use PDO;
  */
 class NeonWebService {
 
-    private const API_VERSION = '2.11';
+    public const API_VERSION = '2.11';
     public const LOG_SERVICE_NAME = 'NeonCRM';
 
     private const BASE_URI = 'https://api.neoncrm.com/v2/';
@@ -38,7 +38,7 @@ class NeonWebService {
             "handler" => GuzzleAPILogger::createStack($this->dbh, self::LOG_SERVICE_NAME),
             "headers"=> [
                 "Accept" => "application/json",
-                "Authorization" => "Basic " . base64_encode($orgId . ":" . $apiKey),
+                "Authorization" => "Basic " . base64_encode("{$orgId}:{$apiKey}"),
                 "NEON-API-VERSION" => self::API_VERSION
             ]
         ]);
@@ -482,6 +482,320 @@ class NeonWebService {
      */
     public function deleteHousehold(string $id): array {
         $response = $this->client->delete("households/{$id}");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    // -------------------------------------------------------------------------
+    // Properties endpoints
+    // -------------------------------------------------------------------------
+
+    /**
+     * Get a list of available activity statuses.
+     */
+    public function getActivityStatuses(): array {
+        $response = $this->client->get('properties/activityStatuses');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get address types.
+     */
+    public function getAddressTypes(): array {
+        $response = $this->client->get('properties/addressTypes');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get company types.
+     */
+    public function getCompanyTypes(): array {
+        $response = $this->client->get('properties/companyTypes');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get countries.
+     */
+    public function getCountries(): array {
+        $response = $this->client->get('properties/countries');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get the current authenticated system user.
+     */
+    public function getCurrentSystemUser(): array {
+        $response = $this->client->get('properties/currentSystemUser');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get all event categories.
+     */
+    public function getEventCategories(): array {
+        $response = $this->client->get('properties/eventCategories');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Create a new event category.
+     *
+     * @param array $category IdNamePair payload (name, status)
+     */
+    public function createEventCategory(array $category): array {
+        $response = $this->client->post('properties/eventCategories', ['json' => $category]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get a specific event category.
+     *
+     * @param string $id Event category ID
+     */
+    public function getEventCategory(string $id): array {
+        $response = $this->client->get("properties/eventCategories/{$id}");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Update an event category.
+     *
+     * @param string $id       Event category ID
+     * @param array  $category IdNamePair payload (name, status)
+     */
+    public function updateEventCategory(string $id, array $category): array {
+        $response = $this->client->put("properties/eventCategories/{$id}", ['json' => $category]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Delete an event category.
+     *
+     * @param string $id Event category ID
+     */
+    public function deleteEventCategory(string $id): array {
+        $response = $this->client->delete("properties/eventCategories/{$id}");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get event topics.
+     */
+    public function getEventTopics(): array {
+        $response = $this->client->get('properties/eventTopics');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get funds.
+     */
+    public function getFunds(): array {
+        $response = $this->client->get('properties/funds');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get genders.
+     */
+    public function getGenders(): array {
+        $response = $this->client->get('properties/genders');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get individual types.
+     */
+    public function getIndividualTypes(): array {
+        $response = $this->client->get('properties/individualTypes');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get the organization profile.
+     */
+    public function getOrganizationProfile(): array {
+        $response = $this->client->get('properties/organizationProfile');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get name prefixes.
+     */
+    public function getPrefixes(): array {
+        $response = $this->client->get('properties/prefixes');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get donation purposes.
+     */
+    public function getPurposes(): array {
+        $response = $this->client->get('properties/purposes');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get relation types.
+     *
+     * @param string|null $relationTypeCategory Optional category filter (e.g. INDIVIDUAL_INDIVIDUAL)
+     */
+    public function getRelationTypes(?string $relationTypeCategory = null): array {
+        $params = $relationTypeCategory !== null ? ['relationTypeCategory' => $relationTypeCategory] : [];
+        $response = $this->client->get('properties/relationTypes', ['query' => $params]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get solicitation methods.
+     */
+    public function getSolicitationMethods(): array {
+        $response = $this->client->get('properties/solicitationMethods');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get donation sources.
+     */
+    public function getSources(): array {
+        $response = $this->client->get('properties/sources');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get states/provinces.
+     */
+    public function getStateProvinces(): array {
+        $response = $this->client->get('properties/stateProvinces');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get system timezones.
+     */
+    public function getSystemTimezones(): array {
+        $response = $this->client->get('properties/systemTimezones');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get all system users.
+     */
+    public function getSystemUsers(): array {
+        $response = $this->client->get('properties/systemUsers');
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    // -------------------------------------------------------------------------
+    // Custom Fields endpoints
+    // -------------------------------------------------------------------------
+
+    /**
+     * Get custom fields for a component category.
+     *
+     * @param string      $category            Required. One of: Account, Donation, Event, Attendee, Individual, Company, Activity, Membership, Product, Prospect, Grant
+     * @param bool|null   $isEventSpecificField Optional filter for event-specific fields
+     * @param bool|null   $attendeeQuestion     Optional filter for attendee question fields
+     */
+    public function getCustomFields(string $category, ?bool $isEventSpecificField = null, ?bool $attendeeQuestion = null): array {
+        $params = array_filter([
+            'category'            => $category,
+            'isEventSpecificField' => $isEventSpecificField,
+            'attendeeQuestion'    => $attendeeQuestion,
+        ], fn($v) => $v !== null);
+        $response = $this->client->get('customFields', ['query' => $params]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Create a custom field.
+     *
+     * @param array $customField CustomFieldData payload (requires displayType, dataType, component)
+     */
+    public function createCustomField(array $customField): array {
+        $response = $this->client->post('customFields', ['json' => $customField]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get a specific custom field.
+     *
+     * @param string $id Custom field ID
+     */
+    public function getCustomField(string $id): array {
+        $response = $this->client->get("customFields/{$id}");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Update a custom field.
+     *
+     * @param string $id          Custom field ID
+     * @param array  $customField CustomFieldData payload
+     */
+    public function updateCustomField(string $id, array $customField): array {
+        $response = $this->client->put("customFields/{$id}", ['json' => $customField]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Delete a custom field.
+     *
+     * @param string $id Custom field ID
+     */
+    public function deleteCustomField(string $id): array {
+        $response = $this->client->delete("customFields/{$id}");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get custom field groups for a component.
+     *
+     * @param string $component Required. One of: Account, Donation, Event, Attendee, Individual, Company, Activity, Membership, Product, Prospect, Grant
+     */
+    public function getCustomFieldGroups(string $component): array {
+        $response = $this->client->get('customFields/groups', ['query' => ['component' => $component]]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Create a custom field group.
+     *
+     * @param array $group CustomFieldGroup payload (requires displayName and component)
+     */
+    public function createCustomFieldGroup(array $group): array {
+        $response = $this->client->post('customFields/groups', ['json' => $group]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Update a custom field group.
+     *
+     * @param int   $groupId Group ID
+     * @param array $group   BaseCustomFieldGroup payload (requires displayName)
+     */
+    public function updateCustomFieldGroup(int $groupId, array $group): array {
+        $response = $this->client->put("customFields/groups/{$groupId}", ['json' => $group]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Delete a custom field group.
+     *
+     * @param int $groupId Group ID
+     */
+    public function deleteCustomFieldGroup(int $groupId): array {
+        $response = $this->client->delete("customFields/groups/{$groupId}");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Add custom fields to a group.
+     *
+     * @param string   $groupId      Target group ID
+     * @param string[] $customFields Array of custom field IDs to add to the group
+     */
+    public function addCustomFieldsToGroup(string $groupId, array $customFields): array {
+        $response = $this->client->post('customFields/addToGroup', ['json' => ['groupId' => $groupId, 'customFields' => $customFields]]);
         return json_decode($response->getBody()->getContents(), true);
     }
 

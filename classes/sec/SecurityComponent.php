@@ -303,7 +303,7 @@ class SecurityComponent {
     }
 
     /**
-     * Summary of is_Admin
+     * Does the user have the Admin role or is the THE Admin user.
      * @return bool
      */
     public static function is_Admin() {

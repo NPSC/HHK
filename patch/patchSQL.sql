@@ -54,3 +54,27 @@ UPDATE gen_lookups
 SET `Order` = 5
 WHERE `Table_Name` = 'Pay_Type'
   AND `Code` = 'in';
+
+UPDATE gen_lookups
+SET `Substitute` = 'Whole_Number',
+`Order` = 1
+WHERE `Table_Name` = 'Cm_Custom_Fields'
+  AND `Code` = 'HHK_ID';
+
+UPDATE gen_lookups
+SET `Substitute` = 'Date',
+`Order` = 4
+WHERE `Table_Name` = 'Cm_Custom_Fields'
+  AND `Code` = 'Deceased_Date';
+
+UPDATE gen_lookups
+SET `Substitute` = 'Text',
+`Order` = 3
+WHERE `Table_Name` = 'Cm_Custom_Fields'
+  AND `Code` = 'Diagnosis';
+
+UPDATE gen_lookups
+SET `Substitute` = 'Text',
+`Order` = 2
+WHERE `Table_Name` = 'Cm_Custom_Fields'
+  AND `Code` = 'Hospital';

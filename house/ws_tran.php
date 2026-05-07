@@ -2,6 +2,7 @@
 
 use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\Neon\NeonManager;
 use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\CrmExport\Salesforce\SF_Connector;
 use HHK\Exception\RuntimeException;
@@ -271,7 +272,7 @@ try {
             ];
             $filtered = filter_input_array(INPUT_GET, $arguments);
             
-            $allowedServices = [SalesforceManager::LOG_SERVICE_NAME];
+            $allowedServices = [SalesforceManager::LOG_SERVICE_NAME, NeonManager::LOG_SERVICE_NAME];
 
             if(in_array($filtered["service"], $allowedServices)){
                 $events = ExternalAPILog::getLog($dbh, $filtered["service"]);

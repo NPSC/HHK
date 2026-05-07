@@ -813,8 +813,8 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
 				<?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
-                <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
-                    <button type="button" id="viewLog" data-service="SalesForce" class="ui-button ui-corner-all">View Transfer Log</button>
+                <?php if(SecurityComponent::is_Admin()){ ?>
+                    <button type="button" id="viewLog" data-service="" class="ui-button ui-corner-all">View Transfer Log</button>
                 <?php } ?>
                             </td>
                         </tr>
@@ -850,7 +850,7 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
-        <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
+        <?php if(SecurityComponent::is_Admin()){ ?>
         <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="transferLog"></table></div>
         <?php } ?>
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
