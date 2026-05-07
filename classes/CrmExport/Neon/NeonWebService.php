@@ -6,7 +6,9 @@ use PDO;
 
 
 /**
- *
+ * Facade for NeonCRM API interactions using GuzzleHttp client.
+ * Provides methods for accounts, contacts, donations, households, and more.
+ * 
  * @author Will Ireland <wireland@nonprofitsoftwarecorp.org>
  *
  */
@@ -321,6 +323,105 @@ class NeonWebService {
      */
     public function deleteAccountWindfall(string $id): array {
         $response = $this->client->delete("accounts/{$id}/windfall");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    // -------------------------------------------------------------------------
+    // Donation endpoints
+    // -------------------------------------------------------------------------
+
+    /**
+     * Search for donations, pledges, and pledge payments.
+     *
+     * @param array $searchRequest SearchRequest payload
+     */
+    public function searchDonations(array $searchRequest): array {
+        $response = $this->client->post('donations/search', ['json' => $searchRequest]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Retrieve available output columns for donation search.
+     *
+     * @param string|null $searchKey Optional search key filter
+     */
+    public function getDonationSearchOutputFields(?string $searchKey = null): array {
+        $params = $searchKey !== null ? ['searchKey' => $searchKey] : [];
+        $response = $this->client->get('donations/search/outputFields', ['query' => $params]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Retrieve available search criteria fields for donations.
+     *
+     * @param string|null $searchKey Optional search key filter
+     */
+    public function getDonationSearchFields(?string $searchKey = null): array {
+        $params = $searchKey !== null ? ['searchKey' => $searchKey] : [];
+        $response = $this->client->get('donations/search/searchFields', ['query' => $params]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Create a new donation.
+     *
+     * @param array $donation Donation payload
+     */
+    public function createDonation(array $donation): array {
+        $response = $this->client->post('donations', ['json' => $donation]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Retrieve a specific donation.
+     *
+     * @param string $id Donation ID
+     */
+    public function getDonation(string $id): array {
+        $response = $this->client->get("donations/{$id}");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Fully update a donation.
+     *
+     * @param string $id       Donation ID
+     * @param array  $donation Donation payload
+     */
+    public function updateDonation(string $id, array $donation): array {
+        $response = $this->client->put("donations/{$id}", ['json' => $donation]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Partially update a donation.
+     *
+     * @param string $id       Donation ID
+     * @param array  $donation Partial donation payload
+     */
+    public function patchDonation(string $id, array $donation): array {
+        $response = $this->client->patch("donations/{$id}", ['json' => $donation]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Delete a donation.
+     *
+     * @param string $id Donation ID
+     */
+    public function deleteDonation(string $id): array {
+        $response = $this->client->delete("donations/{$id}");
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Add a payment to a donation.
+     *
+     * @param string $donationId Donation ID
+     * @param array  $payment    Payment payload
+     */
+    public function addDonationPayment(string $donationId, array $payment): array {
+        $response = $this->client->post("donations/{$donationId}/payments", ['json' => $payment]);
         return json_decode($response->getBody()->getContents(), true);
     }
 

@@ -1184,13 +1184,10 @@ where
 
     /**
      *
-     * @param int $primaryContactId
-     * @param int $relationId
-     * @param string $householdName
-     * @param array $f
+     * @param array $primaryGuest
      * @return string|mixed
      */
-    protected function createHousehold($primaryGuest) {
+    protected function createHousehold(array $primaryGuest) {
 
         $householdId = 0;
         $householdName = $this->unencodeHTML($primaryGuest['Last_Name']);
@@ -1565,25 +1562,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     }
 
-//     protected function loadSearchDB(\PDO $dbh, $sourceIds) {
-
-//         // clean up the ids
-//         foreach ($sourceIds as $s) {
-//             if (intval($s, 10) > 0){
-//                 $idList[] = intval($s, 10);
-//             }
-//         }
-
-//         if (count($idList) > 0) {
-
-//             $parm = " in (" . implode(',', $idList) . ") ";
-//             return $dbh->query("Select * from vguest_search_neon where HHK_ID $parm");
-
-//         }
-
-//         return NULL;
-//     }
-
     public function setExcludeMembers(\PDO $dbh, $psgIds) {
 
         $uS = Session::getInstance();
@@ -1869,7 +1847,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $markup;
     }
 
-    protected function saveCredentials(\PDO $dbh, $username) {
+    protected function saveCredentials(\PDO $dbh, string $username) {
 
         $result = '';
         $crmRs = new CmsGatewayRS();
@@ -2078,14 +2056,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             return FALSE;
         }
 
-    }
-
-    public function getTxMethod() {
-        return $this->neonWebService->txMethod;
-    }
-
-    public function getTxParams() {
-        return $this->neonWebService->txParams;
     }
 
     public function getHhReplies() {
