@@ -1307,7 +1307,8 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
             ELSE ''
         END) AS `deceased`,
         IFNULL(`g2`.`Description`, '') AS `suffix`,
-        IFNULL(`g5`.`Description`, '') AS `gender.name`,
+        IFNULL(`nmg`.`Neon_Type_Code`, '') AS `gender.code`,
+        IFNULL(`nmg`.`Neon_Type_Name`, '') AS `gender.name`,
         IFNULL(`np`.`Phone_Search`, '') AS `phone1`,
         (CASE
             WHEN (`np`.`Phone_Code` = 'mc') THEN 'Mobile'
@@ -1342,8 +1343,8 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         IFNULL(`cc`.`External_Id`, '') AS `country.id`,
         IFNULL(`na`.`Postal_Code`, '') AS `zipCode`,
         IFNULL(`ni`.`Neon_Type_Code`, '') AS `individualType.id`,
-        IFNULL(`g4`.`Description`, '') AS `No_Return`,
-        'HHK' AS `source.name`
+        IFNULL(`g4`.`Description`, '') AS `No_Return`
+       -- 'HHK' AS `source.name`
     FROM
         `name` `n`
         LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
@@ -1361,12 +1362,12 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         LEFT JOIN `gen_lookups` `g4` ON `nd`.`No_Return` = `g4`.`Code`
             AND `g4`.`Table_Name` = 'NoReturnReason'
         LEFT JOIN `gen_lookups` `g5` ON `n`.`Gender` = `g5`.`Code`
-            AND `n`.`Gender` IN ('m' , 'f')
             AND `g5`.`Table_Name` = 'Gender'
         LEFT JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName`
             AND `nv`.`Vol_Category` = 'Vol_Type'
             AND `nv`.`Vol_Code` IN ('p' , 'g')
         LEFT JOIN `neon_type_map` `ni` ON ni.Neon_Name = 'individualType' and `nv`.`Vol_Code` = `ni`.`HHK_Type_Code`
+        LEFT JOIN `neon_type_map` `nmg` on nmg.Neon_Name = 'gender' and `n`.`Gender` = `nmg`.`HHK_Type_Code`
     WHERE
         `n`.`idName` > 0
         AND (`n`.`Record_Member` = 1)

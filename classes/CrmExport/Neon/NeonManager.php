@@ -1,6 +1,7 @@
 <?php
 namespace HHK\CrmExport\Neon;
 
+use GuzzleHttp\Exception\RequestException;
 use HHK\Common;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\Crypto;
@@ -24,20 +25,23 @@ use HHK\CrmExport\RelationshipMapper;
  */
 class NeonManager extends AbstractExportManager {
 
-    protected $customFields;
+    protected ?array $customFields = null;
+    protected array $typeMap = [];
 
-    protected $hhReplies = [];
+    protected array $hhReplies = [];
 
     protected string $configMessage = '';
 
-    protected $pageNumber;
-    protected $relationshipMapper;
-    protected $hhkToNeonRelationMap;
+    protected int $pageNumber;
+    protected RelationshipMapper $relationshipMapper;
+    protected array $hhkToNeonRelationMap;
 
     const SearchViewName = 'vguest_search_neon';
 
     const LOG_SERVICE_NAME = "neonCRM";
     const HHK_CUSTOM_FIELD_GROUP = 'Hospitality Housekeeper';
+    private const ORIGIN = "Hospitality Housekeeper Connector";
+    private const SOURCE = "HHK";
 
     protected Neon $neonWebService;
     protected NeonWebService $neonWebServiceV2;
@@ -120,11 +124,10 @@ class NeonManager extends AbstractExportManager {
         $this->openTarget();
 
         // Load Individual types
-        $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
-        $invTypes = [];
+        $stmtList = $dbh->query("Select * from neon_type_map where List_Name in ('individualTypes', 'genders')");
 
         while ($t = $stmtList->fetch(\PDO::FETCH_ASSOC)) {
-            $invTypes[] = $t;
+            $this->typeMap[$t['List_Name']][$t['HHK_Type_Code']] = $t;
         }
 
         // Load search parameters for each source ID
@@ -149,17 +152,18 @@ class NeonManager extends AbstractExportManager {
             }
 
             // Search target system
-            $result = $this->searchTarget($r);
-
-            if ($this->checkError($result)) {
-                $f['Result'] = $this->errorMessage;
+            try{
+                $result = $this->searchTarget($r);
+            } catch (RequestException $e){
+                $f['Result'] = $this->formatError($e);
                 $replys[$r['HHK_ID']] = $f;
                 continue;
+
             }
 
 
             // Check for NEON not finding the account Id
-            if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 0 && $r['Account Id'] != '') {
+            if ( isset($result['pagination']['totalResults'] ) && $result['pagination']['totalResults'] == 0 && $r['Account Id'] != '') {
 
                 // Account is missing from the Neon side.
                 $f['Result'] = 'Account Deleted at Neon';   // procedure sendVisits() depends upon the exact wording of the quoted text. circa line 638
@@ -170,7 +174,7 @@ class NeonManager extends AbstractExportManager {
 
 
             // Test results
-            if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 1 ) {
+            if ( isset($result['pagination']['totalResults'] ) && $result['pagination']['totalResults'] == 1 ) {
 
                 // We have a similar contact.
 
@@ -186,7 +190,7 @@ class NeonManager extends AbstractExportManager {
 
                     if (isset($result['searchResults'][0]['Individual Type'])) {
 
-                        foreach ($invTypes as $t) {
+                        foreach ($this->typeMap['individualTypes'] as $t) {
 
                             if (stristr($result['searchResults'][0]['Individual Type'], $t['Neon_Type_Name']) !== FALSE) {
                                 $typeFound = TRUE;
@@ -214,14 +218,14 @@ class NeonManager extends AbstractExportManager {
                 $replys[$r['HHK_ID']] = $f;
 
 
-            } else if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] > 1 ) {
+            } else if ( isset($result['pagination']['totalResults'] ) && $result['pagination']['totalResults'] > 1 ) {
 
                 // We have more than one contact...
                 $f['Result'] = 'Multiple Accounts.';
                 $replys[$r['HHK_ID']] = $f;
 
 
-            } else if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 0 ) {
+            } else if ( isset($result['pagination']['totalResults'] ) && $result['pagination']['totalResults'] == 0 ) {
 
                 // Nothing found - create a new account at remote
 
@@ -233,15 +237,15 @@ class NeonManager extends AbstractExportManager {
                 }
 
                 // Create new account
-                $result = $this->createRemoteAccount($row);
-
-                if ($this->checkError($result)) {
-                    $f['Result'] = $this->errorMessage;
+                try{
+                    $result = $this->createRemoteAccount($row);
+                } catch (RequestException $e){
+                    $f['Result'] = $this->formatError($e);
                     $replys[$r['HHK_ID']] = $f;
                     continue;
                 }
 
-                $accountId = filter_var($result['accountId'], FILTER_SANITIZE_SPECIAL_CHARS);
+                $accountId = filter_var($result['id'], FILTER_SANITIZE_SPECIAL_CHARS);
 
                 $this->updateLocalExternalId($dbh, $r['HHK_ID'], $accountId);
 
@@ -292,7 +296,7 @@ class NeonManager extends AbstractExportManager {
         $unwound = array();
         $this->unwindResponse($unwound, $accountData);
 
-        $param['individualAccount.accountId'] = $unwound['accountId'];
+        $param['individualAccount']['accountId'] = $unwound['accountId'];
 
         // Name, phone, email
         NeonHelper::fillPcName($r, $param, $unwound);
@@ -313,10 +317,10 @@ class NeonManager extends AbstractExportManager {
         // Other crap
         NeonHelper::fillOther($r, $param, $unwound);
 
-        $paramStr = NeonHelper::fillIndividualAccount($r);
+        NeonHelper::fillIndividualAccount($r, $param);
 
         // Custom Parameters
-        $paramStr .= NeonHelper::fillCustomFields($this->customFields, $r, $unwound);
+        NeonHelper::fillCustomFields($this->customFields, $r, $param, $unwound);
 
         // Log in with the web service
         $this->openTarget();
@@ -324,7 +328,6 @@ class NeonManager extends AbstractExportManager {
         $request = [
             'method' => 'account/updateIndividualAccount',
             'parameters' => $param,
-            'customParmeters' => $paramStr
         ];
 
         $result = $this->neonWebService->go($request);
@@ -405,9 +408,7 @@ class NeonManager extends AbstractExportManager {
 
     protected function createRemoteAccount(array $r) {
 
-        $param = array(
-            'originDetail' => 'Hospitality HouseKeeper Connector',
-        );
+        $param = [];
 
         NeonHelper::fillPcName($r, $param);
 
@@ -420,21 +421,16 @@ class NeonManager extends AbstractExportManager {
 
         }
 
-        $paramStr = NeonHelper::fillIndividualAccount($r);
+        NeonHelper::fillIndividualAccount($r, $param);
 
         NeonHelper::fillOther($r, $param);
 
         // Custom Parameters
-        $paramStr .= NeonHelper::fillCustomFields([], $r);
+        NeonHelper::fillCustomFields([], $r, $param);
 
+        $param['individualAccount']['origin'] = ['originDetail' => self::ORIGIN];
 
-        $request = [
-            'method' => 'account/createIndividualAccount',
-            'parameters' => $param,
-            'customParmeters' => $paramStr
-        ];
-
-        return $this->neonWebService->go($request);
+        return $this->neonWebServiceV2->createAccount($param);
 
     }
 
@@ -446,14 +442,9 @@ class NeonManager extends AbstractExportManager {
      */
     public function retrieveRemoteAccount($accountId) {
 
-        // Log in with the web service
-        $this->openTarget();
+        //TODO: Handle errors
 
-        $account = $this->neonWebService->getIndividualAccount($accountId);
-
-        if ($this->checkError($account)) {
-            throw new RuntimeException($this->errorMessage);
-        }
+        $account = $this->neonWebServiceV2->getAccount($accountId);
 
         return $account;
     }
@@ -669,7 +660,7 @@ class NeonManager extends AbstractExportManager {
     }
 
     protected function searchTarget(array $searchCriteria) {
-
+/*
         // Set up request
         $search = array(
             'method' => 'account/listAccounts',
@@ -691,9 +682,31 @@ class NeonManager extends AbstractExportManager {
                 $search['criteria'][] = [$k, 'EQUAL', $v];
             }
         }
+*/
+
+        $search = array(
+            'outputFields' => [
+                'Account ID', 'Account Type', 'Individual Type'  // lastModifiedDateTime
+            ],
+            'pagination' => [
+                'currentPage' => 1,
+                'pageSize' => 200,
+                'sortColumn' => 'Account ID',
+                'sortDirection' => 'ASC',
+            ],
+        );
+
+        // Apply search criteria
+        foreach ($searchCriteria as $k => $v) {
+
+            if (isset($this->customFields[$k]) == FALSE && $k != '' && $v != '') {
+                $search['searchFields'][] = ['field' => $k, 'operator' => 'EQUAL', 'value' => $v];
+            }
+        }
 
         // Execute the search.
-        return $this->neonWebService->search($search);
+        //return $this->neonWebService->search($search);
+        return $this->neonWebServiceV2->searchAccounts($search);
 
     }
 
@@ -1636,28 +1649,33 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         $types = [];
         $result = null;
 
-        switch ($method) {
-            case 'account/listRelationTypes':
-                $result = $this->neonWebServiceV2->getRelationTypes('INDIVIDUAL_INDIVIDUAL');
-                break;
-            case 'account/listIndividualTypes':
-                $result = $this->neonWebServiceV2->getIndividualTypes();
-                break;
-            default:
-                $types = [];
+        try {
+            switch ($method) {
+                case 'account/listRelationTypes':
+                    $result = $this->neonWebServiceV2->getRelationTypes('INDIVIDUAL_INDIVIDUAL');
+                    break;
+                case 'account/listIndividualTypes':
+                    $result = $this->neonWebServiceV2->getIndividualTypes();
+                    break;
+                case 'account/listGenders':
+                    $result = $this->neonWebServiceV2->getGenders();
+                    break;
+                default:
+                    $types = [];
+            }
+        } catch (RequestException $e){
+           throw new RuntimeException('Unable to retrieve ' . $listName . ' from Neon: ' . $this->formatError($e)); 
         }
-
-/*         if ($this->checkError($result)) {
-            throw new RuntimeException('Method: ' . $method . ', List Name: ' . $listName . ', Error Message: ' .$this->errorMessage);
-        } */
 
         if (is_array($result)) {
 
             foreach ($result as $c) {
-                if (isset($c['id'])) {
+                if (isset($c['id'], $c['name'])) {
                     $types[$c['id']] = $c['name'];
-                } else if (isset($c['code'])) {
+                } else if (isset($c['code'], $c['name'])) {
                     $types[$c['code']] = $c['name'];
+                } else if (isset($c['code'], $c['description'])) {
+                    $types[$c['code']] = $c['description'];
                 }
             }
         }
@@ -1749,7 +1767,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         try {
 
-            $stmt = $dbh->query("Select * from neon_lists;");
+            $stmt = $dbh->query("select * from neon_lists;");
 
             while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1845,10 +1863,18 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             $sTbl = new HTMLTable();
             $sTbl->addHeaderTr(HTMLTable::makeTh('Source') . HTMLTable::makeTh("$crmTitle ID"));
 
+            $foundHHKSource = false;
             foreach ($results as $v) {
+                if($v['name'] == self::SOURCE) {
+                    $foundHHKSource = true;
+                }
 
                 $sTbl->addBodyTr(HTMLTable::makeTd($v['name']) . HTMLTable::makeTd($v['id']));
 
+            }
+
+            if($foundHHKSource === false) {
+                $sTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . self::SOURCE, ['title'=>"Source not found in $crmTitle"]) . HTMLTable::makeTd('Not Found'), ['class' =>'ui-state-error']);
             }
 
             $markup .= HTMLContainer::generateMarkup('div', $sTbl->generateMarkup([], 'Sources'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
@@ -2172,6 +2198,39 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             return FALSE;
         }
 
+    }
+
+    protected function formatError(RequestException $e): string {
+
+        if (!$e->hasResponse()) {
+            return 'Request Error: ' . $e->getMessage();
+        }
+
+        $response = $e->getResponse();
+        $msg = "HTTP {$response->getStatusCode()} {$response->getReasonPhrase()}<br/>";
+
+        $body = (string) $response->getBody();
+
+        if ($body === '') {
+            return $msg;
+        }
+
+        $decoded = json_decode($body, true);
+
+        if (!\is_array($decoded)) {
+            return $msg;
+        }
+
+        foreach ($decoded as $apiMessage) {
+            $code    = $apiMessage['code']    ?? '';
+            $message = $apiMessage['message'] ?? '';
+
+            if ($code !== '' || $message !== '') {
+                $msg .= $code . ': ' . $message . '<br/>';
+            }
+        }
+
+        return $msg;
     }
 
     public function getHhReplies() {

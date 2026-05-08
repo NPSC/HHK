@@ -4637,7 +4637,9 @@ VALUES
 		'relationTypes',
 		'relationType',
 		'Patient_Rel_Type'
-	);
+	),
+	('account/listGenders', 'genders', 'gender', 'Gender'),
+;
 
 -- ;
 --

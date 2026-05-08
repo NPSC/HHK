@@ -722,27 +722,34 @@ function setupLogViewer(){
         },
         {
             "targets": [1],
+            "title": "Method",
+            "searchable": false,
+            "sortable": true,
+            "data": "requestMethod",
+        },
+        {
+            "targets": [2],
             "title": "Type",
             "searchable": false,
             "sortable": true,
             "data": "Type",
         },
         {
-            "targets": [2],
+            "targets": [3],
             "title": "Request Endpoint",
             "searchable": false,
             "sortable": false,
             "data": "endpoint",
         },
         {
-            "targets": [3],
+            "targets": [4],
             "title": "Response Code",
             "searchable": false,
             "sortable": true,
             "data": "responseCode",
         },
         {
-            "targets": [4],
+            "targets": [5],
             "title": "Request",
             "searchable": true,
             "sortable": true,
@@ -750,7 +757,7 @@ function setupLogViewer(){
             "visible": false,
         },
         {
-            "targets": [5],
+            "targets": [6],
             "title": "Response",
             "searchable": true,
             "sortable": true,
@@ -758,14 +765,14 @@ function setupLogViewer(){
             "visible": false,
         },
         {
-            "targets": [6],
+            "targets": [7],
             "title": "User",
             "searchable": true,
             "sortable": true,
             "data": "username",
         },
         {
-            "targets": [7],
+            "targets": [8],
             "title": "Timestamp",
             'data': 'Timestamp',
             render: function (data, type) {
@@ -781,7 +788,7 @@ function setupLogViewer(){
                         "processing": true,
                         //"deferRender": true,
                         "language": { "sSearch": "Search Log:" },
-                        "sorting": [[7, 'desc']],
+                        "sorting": [[8, 'desc']],
                         "displayLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
                         'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
@@ -797,6 +804,11 @@ function setupLogViewer(){
                             data: function(d){
                                 d.cmd = 'viewLog',
                                 d.service = $("#cmsLogService").val()
+                            }
+                        },
+                        createdRow: function( row, data, dataIndex ) {
+                            if (data.responseCode >= 400) {
+                                $(row).addClass('ui-state-error');
                             }
                         }
                     });

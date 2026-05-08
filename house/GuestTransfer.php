@@ -736,16 +736,16 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 $customFields = $CmsManager->getMyCustomFields($dbh);
 
 if (isset($customFields['Hospital']) && $customFields['Hospital'] !== '') {
-    $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', ['id' => 'btnGetKey', 'type' => 'button', 'style' => 'margin-left:3px; font-size:small;']);
+    $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', ['id' => 'btnGetKey', 'type' => 'button', 'class' => 'mx-2']);
     $dboxMarkup = createKeyMap($dbh);
 }
 
 if (isset($customFields['First_Visit']) && $customFields['First_Visit'] !=='') {
-    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', ['name' => 'btnGetVisits', 'id' => 'btnGetVisits', 'type' => 'submit', 'style' => 'margin-left:20px;']);
+    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', ['name' => 'btnGetVisits', 'id' => 'btnGetVisits', 'type' => 'submit', 'class' => "mx-2"]);
 }
 
 if (isset($customFields['Fund']) && $customFields['Fund'] != '') {
-    $btnPayments = HTMLInput::generateMarkup('Get HHK Payments', ['type' => 'submit', 'name' => "btnGetPayments", 'id' => "btnGetPayments", 'style' => "margin-left:20px;"]);
+    $btnPayments = HTMLInput::generateMarkup('Get HHK Payments', ['type' => 'submit', 'name' => "btnGetPayments", 'id' => "btnGetPayments", 'class' => "mx-2"]);
 }
 
 if ($noRecordsMsg != '') {
@@ -798,9 +798,9 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog mb-3" style="display:none; clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper mb-3" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
-                    <div class="hhk-flex">
+                    <div class="hhk-flex mb-3">
                         <?php echo $timePeriodMarkup; ?>
                         <table class="ml-3">
                             <tr>
@@ -809,16 +809,13 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
                             </tr>
                         </table>
                     </div>
-                    <table style="width:100%; margin-top: 15px;">
-                        <tr>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
-				<?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
-                <?php if(SecurityComponent::is_Admin()){ ?>
-                    <button type="button" id="viewLog" data-service="" class="ui-button ui-corner-all">View Transfer Log</button>
-                <?php } ?>
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="hhk-flex mb-3 justify-content-center">
+                        <input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" class="mx-2">
+				        <?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
+                        <?php if(SecurityComponent::is_Admin()){ ?>
+                            <button type="button" id="viewLog" data-service="" class="ui-button ui-corner-all mx-2">View Transfer Log</button>
+                        <?php } ?>
+                    </div>
                 </form>
                 <div style="margin-top: 15px; margin-left:50px;" id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
