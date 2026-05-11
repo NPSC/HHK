@@ -98,9 +98,9 @@ final class NeonHelper {
         }
 
         // gender.name maps to a nested path
-        if (isset($r['gender.code'])) {
+        if (isset($r['gender.code']) && $r['gender.code'] != '') {
             $param['individualAccount']['primaryContact']['gender']['code'] = $r['gender.code'];
-        } else if (isset($origValues['primaryContact.gender.code'])) {
+        } else if (isset($origValues['primaryContact.gender.code']) && $origValues['primaryContact.gender.code'] != '') {
             $param['individualAccount']['primaryContact']['gender']['code'] = $origValues['primaryContact.gender.code'];
         }
 

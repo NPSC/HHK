@@ -1257,7 +1257,7 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
     SELECT
         `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `Account Id`,
-        IFNULL(`g1`.`Description`, '') AS `Prefix`,
+        IFNULL(`nmp`.`Neon_Type_Name`, '') AS `Prefix`,
         `n`.`Name_First` AS `First Name`,
         `n`.`Name_Middle` AS `Middle Name`,
         `n`.`Name_Last` AS `Last Name`,
@@ -1271,8 +1271,7 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
             AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
         LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
             AND `n`.`Preferred_Email` = `ne`.`Purpose`
-        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
-            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `neon_type_map` `nmp` on nmp.Neon_Name = 'prefix' and `n`.`Name_Prefix` = `nmp`.`HHK_Type_Code`
         LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
             AND `g2`.`Table_Name` = 'Name_Suffix'
     WHERE
@@ -1293,7 +1292,7 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
     SELECT
         `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `accountId`,
-        IFNULL(`g1`.`Description`, '') AS `prefix`,
+        IFNULL(`nmp`.`Neon_Type_Name`, '') AS `Prefix`,
         `n`.`Name_First` AS `firstName`,
         `n`.`Name_Middle` AS `middleName`,
         `n`.`Name_Last` AS `lastName`,
@@ -1355,8 +1354,7 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
         LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`
         LEFT JOIN `country_code` `cc` ON `na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`
-        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
-            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `neon_type_map` `nmp` on nmp.Neon_Name = 'prefix' and `n`.`Name_Prefix` = `nmp`.`HHK_Type_Code`
         LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
             AND `g2`.`Table_Name` = 'Name_Suffix'
         LEFT JOIN `gen_lookups` `g4` ON `nd`.`No_Return` = `g4`.`Code`

@@ -80,3 +80,4 @@ WHERE `Table_Name` = 'Cm_Custom_Fields'
   AND `Code` = 'Hospital';
 
 insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listGenders', 'genders', 'gender', 'Gender');
+insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listPrefixes', 'prefixes', 'prefix', 'Name_Prefix');

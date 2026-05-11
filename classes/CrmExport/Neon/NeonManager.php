@@ -120,9 +120,6 @@ class NeonManager extends AbstractExportManager {
 
         $this->customFields = $this->getMyCustomFields($dbh);
 
-        // Log in with the web service
-        $this->openTarget();
-
         // Load Individual types
         $stmtList = $dbh->query("Select * from neon_type_map where List_Name in ('individualTypes', 'genders')");
 
@@ -141,7 +138,7 @@ class NeonManager extends AbstractExportManager {
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            $f = [];   // output array
+            $f = ['Account ID'=>''];   // output array
 
             // Prefill output array
             foreach ($r as $k => $v) {
@@ -660,29 +657,6 @@ class NeonManager extends AbstractExportManager {
     }
 
     protected function searchTarget(array $searchCriteria) {
-/*
-        // Set up request
-        $search = array(
-            'method' => 'account/listAccounts',
-            'columns' => [
-                'standardFields' => array('Account ID', 'Account Type', 'Individual Type'),  // lastModifiedDateTime
-            ],
-            'page' => [
-                'currentPage' => 1,
-                'pageSize' => 200,
-                'sortColumn' => 'Account ID',
-                'sortDirection' => 'ASC',
-            ],
-        );
-
-        // Apply search criteria
-        foreach ($searchCriteria as $k => $v) {
-
-            if (isset($this->customFields[$k]) == FALSE && $k != '' && $v != '') {
-                $search['criteria'][] = [$k, 'EQUAL', $v];
-            }
-        }
-*/
 
         $search = array(
             'outputFields' => [
@@ -861,7 +835,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
                 if (isset($f['Account ID']) && $f['Account ID'] !== '') {
                     $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
-                } else if (isset($f['Result']) && $f['Result'] == 'Account Deleted at Neon') {
+                } else {
                     // no further processing
                     unset($guestIds[$f['HHK_ID']]);
                 }
@@ -1660,6 +1634,9 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                 case 'account/listGenders':
                     $result = $this->neonWebServiceV2->getGenders();
                     break;
+                case 'account/listPrefixes':
+                    $result = $this->neonWebServiceV2->getPrefixes();
+                    break;
                 default:
                     $types = [];
             }
@@ -1676,6 +1653,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     $types[$c['code']] = $c['name'];
                 } else if (isset($c['code'], $c['description'])) {
                     $types[$c['code']] = $c['description'];
+                } else if ($method == 'account/listPrefixes'){
+                    $types[$c] = $c;
                 }
             }
         }
