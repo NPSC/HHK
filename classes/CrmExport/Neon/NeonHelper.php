@@ -107,38 +107,41 @@ final class NeonHelper {
         foreach ($simpleNonEmptyCodes as $c) {
             // these codes must be missing if not defined
             if (isset($r[$c]) && $r[$c] != '') {
-                $param['individualAccount']['primaryContact'][$c] = $r[$c];
+                if($c == 'dob'){
+                    $param['individualAccount']['primaryContact'][$c] = self::fillDOB($r[$c]);
+                }else{
+                    $param['individualAccount']['primaryContact'][$c] = $r[$c];
+                }
             } else if (isset($origValues['primaryContact.' . $c]) && $origValues['primaryContact.' . $c] != '') {
-                $param['individualAccount']['primaryContact'][$c] = $origValues['primaryContact.' . $c];
+                if($c == 'dob'){
+                    $param['individualAccount']['primaryContact'][$c] = self::fillDOB($origValues['primaryContact.' . $c]);
+                }else{
+                    $param['individualAccount']['primaryContact'][$c] = $origValues['primaryContact.' . $c];
+                }
             }
         }
+    }
 
-        // dob maps to a nested path
-        if (isset($r['dob'])) {
-            $dob = new \DateTime($r['dob']);
-            $param['individualAccount']['primaryContact']['dob'] = [
-                'year' => $dob->format('Y'),
-                'month' => $dob->format('m'),
-                'day' => $dob->format('d'),
-            ];
-        } else if (isset($origValues['primaryContact.dob'])) {
-            $dob = new \DateTime($origValues['primaryContact.dob']);
-            $param['individualAccount']['primaryContact']['dob'] = [
+    public static function fillDOB(string $dob):?array {
+        if ($dob != '') {
+            $dob = new \DateTime($dob);
+            return [
                 'year' => $dob->format('Y'),
                 'month' => $dob->format('m'),
                 'day' => $dob->format('d'),
             ];
         }
+        return null;
     }
 
     public static function fillIndividualAccount(array $r, array &$param): void {
 
         if (isset($r['individualType.id']) && $r['individualType.id'] > 0) {
-            $param['individualAccount']['individualTypes']['individualType'][] = ['id' => $r['individualType.id']];
+            $param['individualAccount']['individualTypes'][] = ['id' => $r['individualType.id']];
         }
 
         if (isset($r['individualType.id2']) && $r['individualType.id2'] > 0) {
-            $param['individualAccount']['individualTypes']['individualType'][] = ['id' => $r['individualType.id2']];
+            $param['individualAccount']['individualTypes'][] = ['id' => $r['individualType.id2']];
         }
     }
 

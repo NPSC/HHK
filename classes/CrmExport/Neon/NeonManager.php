@@ -32,7 +32,7 @@ class NeonManager extends AbstractExportManager {
 
     protected string $configMessage = '';
 
-    protected int $pageNumber;
+    protected int $pageNumber = 0;
     protected RelationshipMapper $relationshipMapper;
     protected array $hhkToNeonRelationMap;
 
@@ -426,7 +426,7 @@ class NeonManager extends AbstractExportManager {
         NeonHelper::fillOther($r, $param);
 
         // Custom Parameters
-        NeonHelper::fillCustomFields([], $r, $param);
+        NeonHelper::fillCustomFields($this->customFields, $r, $param);
 
         $param['individualAccount']['origin'] = ['originDetail' => self::ORIGIN];
 
@@ -689,7 +689,7 @@ class NeonManager extends AbstractExportManager {
                 'Account ID', 'Account Type', 'Individual Type'  // lastModifiedDateTime
             ],
             'pagination' => [
-                'currentPage' => 1,
+                'currentPage' => $this->pageNumber,
                 'pageSize' => 200,
                 'sortColumn' => 'Account ID',
                 'sortDirection' => 'ASC',
