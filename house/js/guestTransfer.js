@@ -830,12 +830,12 @@ function setupLogViewer(){
 
                     function formatAPIDetails(row){
         return `
-            <div>` +
-                `<div class="mb-3">
+            <div class="d-flex">` +
+                (row.request != '' ? `<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">
                     <strong>Request</strong>
                     <pre style="white-space: pre-wrap;">${row.request}</pre>
-                </div>
-                <div>
+                </div>`:``) +
+                `<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">
                     <strong>Response</strong>
                     <pre style="white-space: pre-wrap;">${row.response}</pre>
                 </div>

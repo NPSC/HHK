@@ -1,6 +1,8 @@
 <?php
 namespace HHK\CrmExport\Neon;
 
+use DateTime;
+
 /**
  *
  * @author Eric
@@ -92,49 +94,43 @@ final class NeonHelper {
         foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
                 $param['individualAccount']['primaryContact'][$c] = $r[$c];
-            } else if (isset($origValues['primaryContact.' . $c])) {
-                $param['individualAccount']['primaryContact'][$c] = $origValues['primaryContact.' . $c];
+            } else if (isset($origValues['individualAccount']['primaryContact'][$c])) {
+                $param['individualAccount']['primaryContact'][$c] = $origValues['individualAccount']['primaryContact'][$c];
             }
         }
 
         // gender.name maps to a nested path
         if (isset($r['gender.code']) && $r['gender.code'] != '') {
             $param['individualAccount']['primaryContact']['gender']['code'] = $r['gender.code'];
-        } else if (isset($origValues['primaryContact.gender.code']) && $origValues['primaryContact.gender.code'] != '') {
-            $param['individualAccount']['primaryContact']['gender']['code'] = $origValues['primaryContact.gender.code'];
+        } else if (isset($origValues['individualAccount']['primaryContact']['gender']['code']) && $origValues['individualAccount']['primaryContact']['gender']['code'] != '') {
+            $param['individualAccount']['primaryContact']['gender']['code'] = $origValues['individualAccount']['primaryContact']['gender']['code'];
         }
 
         foreach ($simpleNonEmptyCodes as $c) {
             // these codes must be missing if not defined
             if (isset($r[$c]) && $r[$c] != '') {
                 if($c == 'dob'){
-                    $param['individualAccount']['primaryContact'][$c] = self::fillDOB($r[$c]);
+                    $param['individualAccount']['primaryContact'][$c] = self::formatDate(new DateTime($r[$c]));
                 }else{
                     $param['individualAccount']['primaryContact'][$c] = $r[$c];
                 }
-            } else if (isset($origValues['primaryContact.' . $c]) && $origValues['primaryContact.' . $c] != '') {
-                if($c == 'dob'){
-                    $param['individualAccount']['primaryContact'][$c] = self::fillDOB($origValues['primaryContact.' . $c]);
-                }else{
-                    $param['individualAccount']['primaryContact'][$c] = $origValues['primaryContact.' . $c];
-                }
+            } else if (isset($origValues['individualAccount']['primaryContact'][$c]) && $origValues['individualAccount']['primaryContact'][$c] != '') {
+                $param['individualAccount']['primaryContact'][$c] = $origValues['individualAccount']['primaryContact'][$c];
             }
         }
     }
 
-    public static function fillDOB(string $dob):?array {
-        if ($dob != '') {
-            $dob = new \DateTime($dob);
-            return [
-                'year' => $dob->format('Y'),
-                'month' => $dob->format('m'),
-                'day' => $dob->format('d'),
-            ];
-        }
-        return null;
+    public static function formatDate(DateTime $date):array {
+        return [
+            'year' => $date->format('Y'),
+            'month' => $date->format('m'),
+            'day' => $date->format('d'),
+        ];
     }
 
     public static function fillIndividualAccount(array $r, array &$param): void {
+
+        $param['individualAccount']['individualTypes'] = []; //reset individual types to prevent duplicates
 
         if (isset($r['individualType.id']) && $r['individualType.id'] > 0) {
             $param['individualAccount']['individualTypes'][] = ['id' => $r['individualType.id']];
@@ -185,8 +181,8 @@ final class NeonHelper {
 
         if (isset($r['source.name'])) {
             $param['individualAccount']['source']['name'] = $r['source.name'];
-        } else if (isset($origValues['source.name'])) {
-            $param['individualAccount']['source']['name'] = $origValues['source.name'];
+        } else if (isset($origValues['individualAccount']['source']['name'])) {
+            $param['individualAccount']['source']['name'] = $origValues['individualAccount']['source']['name'];
         }
     }
 
@@ -209,109 +205,55 @@ final class NeonHelper {
 
         $address = [];
 
-        $addrBase = 'primaryContact.addresses.address.';
+        $origAddresses = $origValues['individualAccount']['primaryContact']['addresses'];
 
         foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
                 $address[$c] = $r[$c];
-            } else if (isset($origValues[$addrBase . '0.' . $c])) {
-                $address[$c] = $origValues[$addrBase . '0.' . $c];
+            } else if (isset($origAddresses[0][$c])) {
+                $address[$c] = $origAddresses[0][$c];
             }
         }
 
         // addressType.name
         if (isset($r['addressType.name'])) {
             $address['addressType']['name'] = $r['addressType.name'];
-        } else if (isset($origValues[$addrBase . '0.addressType.name'])) {
-            $address['addressType']['name'] = $origValues[$addrBase . '0.addressType.name'];
+        } else if (isset($origAddresses[0]['addressType']['name'])) {
+            $address['addressType']['name'] = $origAddresses[0]['addressType']['name'];
         }
 
         // state.code
         if (isset($r['state.code'])) {
             $address['state']['code'] = $r['state.code'];
-        } else if (isset($origValues[$addrBase . '0.state.code'])) {
-            $address['state']['code'] = $origValues[$addrBase . '0.state.code'];
+        } else if (isset($origAddresses[0]['state']['code'])) {
+            $address['state']['code'] = $origAddresses[0]['state']['code'];
         }
 
         // country.id
         if (isset($r['country.id'])) {
             $address['country']['id'] = $r['country.id'];
-        } else if (isset($origValues[$addrBase . '0.country.id'])) {
-            $address['country']['id'] = $origValues[$addrBase . '0.country.id'];
+        } else if (isset($origAddresses[0]['country']['id'])) {
+            $address['country']['id'] = $origAddresses[0]['country']['id'];
         }
 
-        $param['individualAccount']['primaryContact']['addresses'][] = $address;
+        $param['individualAccount']['primaryContact']['addresses'][0] = $address;
     }
 
     public static function fillCustomFields(array $customFields, array $r, array &$param, array $origValues = array()): void {
 
+        $customFieldParams = isset($param['individualAccount']['accountCustomFields']) ? $param['individualAccount']['accountCustomFields']: [];
+
         foreach ($customFields as $k => $v) {
-
             if (isset($r[$k]) && $r[$k] != '') {
-                $param['individualAccount']['accountCustomFields'][] = [
-                    'id'       => $v,
-                    'value'    => $r[$k],
-                ];
-            } else {
-                $fieldValue = self::findCustomField($origValues, $v);
-
-                if ($fieldValue !== FALSE) {
-                    $param['individualAccount']['accountCustomFields'][] = [
-                        'id'       => $v,
-                        'value'    => $fieldValue,
-                    ];
-                }
+                static::addOrUpdateCustomField($customFieldParams, $v, $r[$k]);
             }
         }
-
-        // Search Neon custom fields that we don't control and copy them.
-        self::fillOtherCustomFields($customFields, $origValues, $param);
-    }
-
-    protected static function fillOtherCustomFields($customFields, $origValues, array &$param) {
-
-        $condition = TRUE;
-        $index = 0;
-
-        if (isset($origValues['customFieldDataList']['customFieldData'])) {
-
-            // Move Neon fieldId's to key position
-            $fieldCustom = array_flip($customFields);
-
-            $cfValues = $origValues['customFieldDataList']['customFieldData'];
-
-            while ($condition) {
-
-                if (isset($cfValues[$index])) {
-
-                    // Is this not one of my field Ids?
-                    if (isset($cfValues[$index]["fieldId"]) && isset($fieldCustom[$cfValues[$index]["fieldId"]]) === FALSE) {
-                        // Found other custom field
-                        $param['individualAccount']['customFieldDataList']['customFieldData'][] = [
-                            'fieldId'       => $cfValues[$index]["fieldId"],
-                            'fieldOptionId' => $cfValues[$index]["fieldOptionId"],
-                            'fieldValue'    => $cfValues[$index]["fieldValue"],
-                        ];
-                    }
-
-                } else {
-                    // end of custom fields
-                    $condition = FALSE;
-                }
-
-                $index++;
-
-                if ($index > self::MAX_CUSTOM_PROPERTYS) {
-                    $condition = FALSE;
-                }
-            }
-        }
+        $param['individualAccount']['accountCustomFields'] = $customFieldParams;
     }
 
     /**
      *
      * @param array $origValues
-     * @param string $base
      * @param mixed $fieldId
      * @return boolean|mixed
      */
@@ -322,36 +264,33 @@ final class NeonHelper {
         $condition = TRUE;
         $index = 0;
 
-        if (isset($origValues['customFieldDataList']['customFieldData'])) {
+        if (isset($origValues['individualAccount']['accountCustomFields'])) {
 
-            $cfValues = $origValues['customFieldDataList']['customFieldData'];
-
-            while ($condition) {
-
-                if (isset($cfValues[$index])) {
-
-                    // Is this my field Id?
-                    if (isset($cfValues[$index]["fieldId"]) && $cfValues[$index]["fieldId"] == $fieldId) {
-                        // Found the given custom field
-
-                        $fieldValue = $cfValues[$index]["fieldValue"];
-                        $condition = FALSE;
-                    }
-
-                } else {
-                    // end of custom fields
-                    $condition = FALSE;
-                }
-
-                $index++;
-
-                if ($index > self::MAX_CUSTOM_PROPERTYS) {
-                    $condition = FALSE;
+            foreach($origValues['individualAccount']['accountCustomFields'] as $k=>$v){
+                if($v['id'] == $fieldId){
+                    return $v['value'];
                 }
             }
         }
+        return false;
+    }
 
-        return $fieldValue;
+    public static function addOrUpdateCustomField(array &$origList, string $id, string|int|array $value){
+        $found = false;
+        foreach($origList as $k=>$v){
+            if(isset($v['id']) && $v['id'] == $id){
+                $origList[$k]['value'] = $value;
+                $found = true;
+                continue;
+            }
+        }
+        
+        if($found == false){
+            $origList[] = [
+                'id'=>$id,
+                'value'=>$value
+            ];
+        }
     }
 
 }
