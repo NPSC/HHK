@@ -116,7 +116,7 @@ abstract class AbstractExportManager {
         return $replys;
     }
 
-    public function exportPayments(\PDO $dbh, $startDateString, $endDateString) {
+    public function exportPayments(\PDO $dbh, string $startDateString, string $endDateString): array {
         $replys[0] = array('error' => 'Transferring Payments is not implemented');
         return $replys;
     }
@@ -143,12 +143,12 @@ abstract class AbstractExportManager {
      *
      * @param array $psgIds  PSG Id's to exclude.
      */
-    public function setExcludeMembers(\PDO $dbh, array $psgIds) {
+    public function setExcludeMembers(\PDO $dbh, array $psgIds): array {
         $replys[0] = array('error' => 'Excluding Members is not implemented');
         return $replys;
     }
 
-    public function searchMembers ($criteria) {
+    public function searchMembers (array $criteria) {
         $replys[0] = array('error' => 'Transferring Visits is not implemented');
         return $replys;
     }

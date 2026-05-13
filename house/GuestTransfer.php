@@ -1,5 +1,6 @@
 <?php
 use HHK\Common;
+use HHK\CrmExport\Neon\NeonManager;
 use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\House\Report\ReportFilter;
 use HHK\sec\SecurityComponent;
@@ -67,7 +68,7 @@ if (function_exists('curl_version') === FALSE) {
 
 $labels = Labels::getLabels();
 
-function getNonVisitors(\PDO $dbh, $visitIds) {
+function getNonVisitors(\PDO $dbh, array $visitIds): array {
 
     $idList = [];
     $idNames = [];
@@ -227,7 +228,7 @@ FROM
 WHERE
     s.On_Leave = 0
     AND s.`Status` != 'a'
-    AND s.`Recorded` = 0
+  --  AND s.`Recorded` = 0
     AND n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
     AND n.Member_Status = '" . MemStatus::Active ."'
     AND DATE(s.Span_End_Date) < DATE('$end')
@@ -510,15 +511,15 @@ function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
 /**
  * Summary of getNeonTypes
- * @param AbstractExportManager $CmsManager
+ * @param NeonManager $CmsManager
  * @param mixed $list
  * @return array<array>
  */
-function getNeonTypes($CmsManager, $list) {
+function getNeonTypes(NeonManager $CmsManager, $list): array {
 
     $neonList = [];
 
-    $rawList = $CmsManager->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
+    $rawList = $CmsManager->listNeonType($list['Method'], $list['List_Name']);
 
     foreach ($rawList as $k => $v) {
         $neonList[$k] = [0 => $k, 1 => $v];
@@ -720,7 +721,11 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 
     } else if (filter_has_var(INPUT_POST, 'btnGetVisits')) {
 
-        $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $CmsManager);
+        if($CmsManager instanceof NeonManager){
+            $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $CmsManager);
+        }else{
+            $noRecordsMsg = "Transferring Visit data is only available on " . ucfirst(AbstractExportManager::CMS_NEON);
+        }
 
         if ($dataTable === FALSE) {
             $noRecordsMsg = "No visit records found.";

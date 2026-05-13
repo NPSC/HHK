@@ -724,7 +724,7 @@ Order by `t`.`List_Order`;");
                         HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
                     } else {
                         // update
-                        if (isset($desc[$code]) && $desc[$code] != '') {
+                        if (isset($desc[$code])) {
                             $glRs->Description->setNewVal(filter_var($desc[$code], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                         }
                         if (isset($subt[$code])) {

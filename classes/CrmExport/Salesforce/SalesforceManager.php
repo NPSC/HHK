@@ -152,7 +152,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param mixed $searchCriteria
      * @return array
      */
-    public function searchMembers ($searchCriteria) {
+    public function searchMembers (array $searchCriteria): array {
 
         $replys = [];
 

@@ -26,9 +26,6 @@ final class NeonHelper {
         if (isset($r['fund.id']) && $r['fund.id'] != '') {
             $param['donation']['fund']['id'] = $r['fund.id'];
         }
-        if (isset($r['source.name']) && $r['source.name'] != '') {
-            $param['donation']['source']['name'] = $r['source.name'];
-        }
     }
 
     public static function fillPayment(array $r, array &$param): void {
@@ -61,7 +58,7 @@ final class NeonHelper {
 
     }
 
-    public static function fillPcName(array $r, array &$param, array $origValues = array()): void {
+    public static function fillPcName(array $r, array &$param): void {
 
         $simpleCodes = array(
             'contactId',
@@ -94,16 +91,12 @@ final class NeonHelper {
         foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
                 $param['individualAccount']['primaryContact'][$c] = $r[$c];
-            } else if (isset($origValues['individualAccount']['primaryContact'][$c])) {
-                $param['individualAccount']['primaryContact'][$c] = $origValues['individualAccount']['primaryContact'][$c];
             }
         }
 
         // gender.name maps to a nested path
         if (isset($r['gender.code']) && $r['gender.code'] != '') {
             $param['individualAccount']['primaryContact']['gender']['code'] = $r['gender.code'];
-        } else if (isset($origValues['individualAccount']['primaryContact']['gender']['code']) && $origValues['individualAccount']['primaryContact']['gender']['code'] != '') {
-            $param['individualAccount']['primaryContact']['gender']['code'] = $origValues['individualAccount']['primaryContact']['gender']['code'];
         }
 
         foreach ($simpleNonEmptyCodes as $c) {
@@ -114,8 +107,6 @@ final class NeonHelper {
                 }else{
                     $param['individualAccount']['primaryContact'][$c] = $r[$c];
                 }
-            } else if (isset($origValues['individualAccount']['primaryContact'][$c]) && $origValues['individualAccount']['primaryContact'][$c] != '') {
-                $param['individualAccount']['primaryContact'][$c] = $origValues['individualAccount']['primaryContact'][$c];
             }
         }
     }
@@ -141,7 +132,7 @@ final class NeonHelper {
         }
     }
 
-    public static function fillOther(array $r, array &$param, array $origValues = []): void {
+    public static function fillOther(array $r, array &$param): void {
 
         $simpleCodes = array(
             'noSolicitation',
@@ -155,38 +146,28 @@ final class NeonHelper {
         foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
                 $param['individualAccount'][$c] = $r[$c];
-            } else if (isset($origValues[$c])) {
-                $param['individualAccount'][$c] = $origValues[$c];
             }
         }
 
         // login fields
         if (isset($r['login.username'])) {
             $param['individualAccount']['login']['username'] = $r['login.username'];
-        } else if (isset($origValues['login.username'])) {
-            $param['individualAccount']['login']['username'] = $origValues['login.username'];
         }
 
         if (isset($r['login.password'])) {
             $param['individualAccount']['login']['password'] = $r['login.password'];
-        } else if (isset($origValues['login.password'])) {
-            $param['individualAccount']['login']['password'] = $origValues['login.password'];
         }
 
         if (isset($r['login.orgId'])) {
             $param['individualAccount']['login']['orgId'] = $r['login.orgId'];
-        } else if (isset($origValues['login.orgId'])) {
-            $param['individualAccount']['login']['orgId'] = $origValues['login.orgId'];
         }
 
-        if (isset($r['source.name'])) {
-            $param['individualAccount']['source']['name'] = $r['source.name'];
-        } else if (isset($origValues['individualAccount']['source']['name'])) {
-            $param['individualAccount']['source']['name'] = $origValues['individualAccount']['source']['name'];
+        if (isset($r['source.code'], $r['source.name'])) {
+            $param['individualAccount']['source'] = ['id' => $r['source.code'], 'name' => $r['source.name'], 'status'=>"ACTIVE"];
         }
     }
 
-    public static function fillPcAddr(array $r, array &$param, array $origValues = array()): void {
+    public static function fillPcAddr(array $r, array &$param): void {
 
         $simpleCodes = array(
             'addressId',
@@ -205,7 +186,7 @@ final class NeonHelper {
 
         $address = [];
 
-        $origAddresses = $origValues['individualAccount']['primaryContact']['addresses'];
+        $origAddresses = $param['individualAccount']['primaryContact']['addresses'];
 
         foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
@@ -239,7 +220,7 @@ final class NeonHelper {
         $param['individualAccount']['primaryContact']['addresses'][0] = $address;
     }
 
-    public static function fillCustomFields(array $customFields, array $r, array &$param, array $origValues = array()): void {
+    public static function fillCustomFields(array $customFields, array $r, array &$param): void {
 
         $customFieldParams = isset($param['individualAccount']['accountCustomFields']) ? $param['individualAccount']['accountCustomFields']: [];
 

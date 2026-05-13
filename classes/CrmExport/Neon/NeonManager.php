@@ -43,16 +43,14 @@ class NeonManager extends AbstractExportManager {
     private const ORIGIN = "Hospitality Housekeeper Connector";
     private const SOURCE = "HHK";
 
-    protected Neon $neonWebService;
     protected NeonWebService $neonWebServiceV2;
 
     public function __construct(\PDO $dbh, string $cmsName) {
         parent::__construct($dbh, $cmsName);
         $this->neonWebServiceV2 = new NeonWebService($dbh, $this->getUserId(), Crypto::decryptMessage($this->getPassword()));
-        $this->neonWebService = new Neon();
     }
 
-    public function searchMembers ($searchCriteria) {
+    public function searchMembers (array $searchCriteria): array {
         $replys = [];
 
         $msearch = new MemberSearch($searchCriteria['letters']);
@@ -71,16 +69,13 @@ class NeonManager extends AbstractExportManager {
             ]
         ];
 
-        $result = $this->neonWebServiceV2->searchAccounts($search);
+        try{
+            $result = $this->neonWebServiceV2->searchAccounts($search);
+        }catch(RequestException $e){
+            $replys['error'] = $this->formatError($e);
+        }
+        
 
-        // TODO: Handle errors
-        /*
-
-        if ($this->checkError($result)) {
-
-            $replys['error'] = $this->errorMessage;
-
-        } else */
         if (isset($result['searchResults'])) {
 
             foreach ($result['searchResults'] as $r) {
@@ -293,24 +288,24 @@ class NeonManager extends AbstractExportManager {
         $param = $accountData;
 
         // Name, phone, email
-        NeonHelper::fillPcName($r, $param, $accountData);
+        NeonHelper::fillPcName($r, $param);
 
         // Address
         if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
 
             if ($updateAddr) {
                 $r['isPrimaryAddress'] = 'true';
-                NeonHelper::fillPcAddr($r, $param, $accountData);
+                NeonHelper::fillPcAddr($r, $param);
             }
         }
 
         // Other crap
-        NeonHelper::fillOther($r, $param, $accountData);
+        NeonHelper::fillOther($r, $param);
 
         NeonHelper::fillIndividualAccount($r, $param);
 
         // Custom Parameters
-        NeonHelper::fillCustomFields($this->customFields, $r, $param, $accountData);
+        NeonHelper::fillCustomFields($this->customFields, $r, $param);
 
         try{
             $result = $this->neonWebServiceV2->updateAccount($r['accountId'], $param);
@@ -406,7 +401,7 @@ class NeonManager extends AbstractExportManager {
         // Custom Parameters
         NeonHelper::fillCustomFields($this->customFields, $r, $param);
 
-        $param['individualAccount']['origin'] = ['originDetail' => self::ORIGIN];
+        $param['individualAccount']['origin'] = ['originCategory'=>'API','originDetail' => self::ORIGIN];
 
         return $this->neonWebServiceV2->createAccount($param);
 
@@ -424,35 +419,8 @@ class NeonManager extends AbstractExportManager {
         return $account;
     }
 
-    public function getCountryIds() {
-
-        $countries = [];
-
-        $request = [
-            'method' => 'account/listCountries',
-        ];
-
-        // Log in with the web service
-        $this->openTarget();
-
-        $result = $this->neonWebService->go($request);
-
-        if ($this->checkError($result)) {
-            throw new RuntimeException($this->errorMessage);
-
-        }
-
-        if (isset($result['countries']['country'])) {
-
-            foreach ($result['countries']['country'] as $c) {
-                $countries[$c['id']] = $c['name'];
-            }
-        }
-
-        return $countries;
-    }
-
-    public function exportPayments(\PDO $dbh, $startStr, $endStr) {
+    /*
+    public function exportPayments(\PDO $dbh, string $startStr, string $endStr): array {
 
         $replys = [];
         $this->memberReplies = array();
@@ -568,7 +536,7 @@ class NeonManager extends AbstractExportManager {
         return $replys;
     }
 
-    protected function createDonation(\PDO $dbh, $r, &$f) {
+    protected function createDonation(\PDO $dbh, array $r, array &$f) {
 
         $param = array();
 
@@ -633,8 +601,13 @@ class NeonManager extends AbstractExportManager {
 
         return $result;
     }
-
-    protected function searchTarget(array $searchCriteria) {
+*/
+    /**
+     * Search Neon API with given criteria
+     * @param array $searchCriteria
+     * @return array
+     */
+    protected function searchTarget(array $searchCriteria): array {
 
         $search = array(
             'outputFields' => [
@@ -657,7 +630,6 @@ class NeonManager extends AbstractExportManager {
         }
 
         // Execute the search.
-        //return $this->neonWebService->search($search);
         return $this->neonWebServiceV2->searchAccounts($search);
 
     }
@@ -724,7 +696,7 @@ FROM
 WHERE
     s.On_Leave = 0
     AND s.`Status` != 'a'
-    AND s.Recorded = 0
+--    AND s.Recorded = 0
     AND n.External_Id != '" . self::EXCLUDE_TERM . "'
     AND n.Member_Status = '" . MemStatus::Active ."'
     AND s.Span_End_Date is not NULL
@@ -867,7 +839,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         return $visitReplys;
     }
 
-    protected function updateVisitParms(\PDO $dbh, array $r, $psgs) {
+    protected function updateVisitParms(\PDO $dbh, array $r, array $psgs): array {
 
         // Retrieve the Account
         try{
@@ -972,7 +944,14 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         return $f;
     }
 
-    protected function updateStayRecorded(\PDO $dbh, $stayIds) {
+    /**
+     * Set "Recorded" flag in DB for an array of stay IDs
+     * 
+     * @param \PDO $dbh
+     * @param array $stayIds
+     * @return bool|int|null
+     */
+    protected function updateStayRecorded(\PDO $dbh, array $stayIds) {
 
         $idList = [];
 
@@ -993,7 +972,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         return NULL;
     }
 
-    public static function getNonVisitors(\PDO $dbh, $visits, &$guestIds, $rels) {
+    public static function getNonVisitors(\PDO $dbh, array $visits, array &$guestIds, array $rels) {
 
         $idList = [];
         $idNames = [];
@@ -1102,7 +1081,7 @@ where
             } else {
 
                 // Find the household where primary guest is the primary contact.
-                foreach ($households as $hh) {
+                foreach ($households['households'] as $hh) {
 
                     // Get the primary household contact
                     $pcontact = $this->findHhPrimaryContact($hh);
@@ -1137,7 +1116,13 @@ where
 
     }
 
-    public function searchHouseholds(?string $accountId = null, ?string $idHousehold = null) {
+    /**
+     * Search Neon API for household given an account ID or household ID
+     * @param mixed $accountId
+     * @param mixed $idHousehold
+     * @return array{households: array|string[], error:?string}
+     */
+    public function searchHouseholds(?string $accountId = null, ?string $idHousehold = null): array {
 
         try{
             $households = ['households'=>$this->neonWebServiceV2->listHouseholds($idHousehold, $accountId)];
@@ -1148,22 +1133,23 @@ where
         return $households;
     }
 
-    protected function findHhPrimaryContact(array $household) {
-
-        $pContact = [];
+    /**
+     * Search Neon household array for primary contact
+     * @param array $household
+     * @return array $contact
+     */
+    protected function findHhPrimaryContact(array $household): array {
 
         // Check the primary guest is the primary household contact
-        foreach ($household['contacts'] as $hc) {
+        foreach ($household['contacts'] as $contact) {
 
-            if ($hc['isPrimaryHouseHoldContact'] == 'true') {
+            if (isset($contact['isPrimaryHouseHoldContact']) && $contact['isPrimaryHouseHoldContact'] == 'true') {
 
-                $pContact = $hc;
-
-                break;
+                return $contact;
             }
         }
 
-        return $pContact;
+        return [];
     }
 
     /**
@@ -1297,8 +1283,8 @@ where
                             $newContacts[] = $g;
                         } else {
                             $this->setHhReplies([
-                                'Household' => $households['houseHolds']['houseHold'][0]['name'],
-                                'HH Id' => $households['houseHolds']['houseHold'][0]['houseHoldId'],
+                                'Household' => $households['households'][0]['name'],
+                                'HH Id' => $households['households'][0]['id'],
                                 'Account Id' => $g['accountId'],
                                 'Name' => $g['Full_Name'],
                                 'Action' => 'Join',
@@ -1318,8 +1304,8 @@ where
             } else if ($notJoined > 0) {
 
                 $this->setHhReplies([
-                    'Household' => $households['houseHolds']['houseHold'][0]['name'],
-                    'HH Id' => $households['houseHolds']['houseHold'][0]['houseHoldId'],
+                    'Household' => $households['households'][0]['name'],
+                    'HH Id' => $households['households'][0]['id'],
                     'Action' => 'Update',
                     'Account Id' => '-',
                     'Name' => '-',
@@ -1329,7 +1315,7 @@ where
         }
     }
 
-    protected function updateHousehold(array $newGuests, array $household) {
+    protected function updateHousehold(array $newGuests, array $household): void {
 
         $householdId = $household['id'];
 
@@ -1405,7 +1391,7 @@ where
 
     }
 
-    protected function deleteHousehold(array $household, string $accountId) {
+    protected function deleteHousehold(array $household, string $accountId): void {
 
         $householdId = $household['id'];
 
@@ -1507,7 +1493,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     }
 
-    public function setExcludeMembers(\PDO $dbh, $psgIds) {
+    public function setExcludeMembers(\PDO $dbh, $psgIds): array {
 
         $uS = Session::getInstance();
 
@@ -1555,7 +1541,15 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     }
 
-    public function listNeonType(string $method, string $listName, string $listItem) {
+    /**
+     * Retreive Neon types from API
+     * 
+     * @param string $method
+     * @param string $listName
+     * @throws RuntimeException
+     * @return array
+     */
+    public function listNeonType(string $method, string $listName): array {
 
         $types = [];
         $result = null;
@@ -1599,37 +1593,13 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $types;
     }
 
-    protected function listCustomFields() {
-
-        $customFields = [];
-
-        $request = [
-            'method' => 'common/listCustomFields',
-            'parameters' => array('searchCriteria.component' => 'Account')
-        ];
-
-        // Log in with the web service
-        $this->openTarget();
-
-        $result = $this->neonWebService->go($request);
-
-        if ($this->checkError($result)) {
-            throw new RuntimeException($this->errorMessage);
-        }
-
-        if (isset($result['customFields']['customField'])) {
-            $customFields = $result['customFields']['customField'];
-        }
-
-        return $customFields;
-    }
-
     /**
-     * Summary of getMyCustomFields
+     * Read custom fields from database
+     * 
      * @param \PDO $dbh
-     * @return array
+     * @return ?array
      */
-    public function getMyCustomFields(\PDO $dbh) {
+    public function getMyCustomFields(\PDO $dbh): ?array {
 
         if (is_null($this->customFields)) {
             $cf = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields', "Order");
@@ -1642,7 +1612,12 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $this->customFields;
     }
 
-    protected function showGatewayCredentials() {
+    /**
+     * Generate HTML markup for credentials settings
+     * 
+     * @return string
+     */
+    protected function showGatewayCredentials(): string {
 
         $tbl = new HTMLTable();
 
@@ -1698,7 +1673,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     }
                 }
 
-                $neonItems = $this->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
+                $neonItems = $this->listNeonType($list['Method'], $list['List_Name']);
 
                 switch ($list['HHK_Lookup']) {
                     case 'Fund':
@@ -1749,7 +1724,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                         );
                 }
 
-                $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], $list['List_Name']), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
+                $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], ucfirst($list['List_Name'])), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
             }
 
             // Custom fields
@@ -1872,8 +1847,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
     public function saveConfig(\PDO $dbh) {
 
         $uS = Session::getInstance();
-        $count = 0;
-        $idTypeMap = 0;
 
         // credentials
         $this->saveCredentials($dbh, $uS->username);
@@ -1890,16 +1863,16 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     $messages[] = $this->createCustomFieldInNeon($dbh, $fieldName, $groupId);
                 }
             }
-            if (!empty($messages)) {
-                $this->configMessage = implode('<br/>', $messages);
-                return $this->configMessage;
-            }
         }
 
         // Custom fields
         $results = $this->neonWebServiceV2->getCustomFields('Account');
         $custom_fields = [];
         $myCustomFields = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
+
+        foreach ($myCustomFields as $k=>$v) {
+            $custom_fields[$v['Code']] = '';
+        }
 
         foreach ($results as $v) {
             if (isset($myCustomFields[ $v['name']])) {
@@ -1914,9 +1887,11 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         // Properties
         $stmt = $dbh->query("Select * from neon_lists;");
 
-        while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        $lists = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            $neonItems = $this->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
+        foreach($lists as $list) {
+
+            $neonItems = $this->listNeonType($list['Method'], $list['List_Name']);
 
             if ($list['HHK_Lookup'] == 'Fund') {
 
@@ -1967,7 +1942,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                         // delete if previously set
                         foreach ($mappedItems as $i) {
                             if ($i['Neon_Type_Code'] == $n && $i['HHK_Type_Code'] != '') {
-                                $dbh->exec("delete from neon_type_map  where idNeon_type_map = " .$i['idNeon_type_map']);
+                                $stmt = $dbh->prepare("delete from neon_type_map  where idNeon_type_map = :id");
+                                $stmt->execute([':id'=>$i['idNeon_type_map']]);
                                 break;
                             }
                         }
@@ -1978,19 +1954,62 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                         continue;
                     }
 
-                    if (isset($mappedItems[$hhkTypeCode])) {
-                        // Update
-                        $count = $dbh->exec("update neon_type_map set Neon_Type_Code = '$n', Neon_Type_name = '$k' where HHK_Type_Code = '$hhkTypeCode' and List_Name = '" . $list['List_Name'] . "'");
-                    } else {
-                        // Insert
-                        $idTypeMap = $dbh->exec("Insert into neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated) "
-                            . "values ('" . $list['List_Name'] . "', '" . $list['List_Item'] . "', '" . $n . "', '" . $k . "', '" . $hhkTypeCode . "', '" . $uS->username . "', now() );");
-                    }
+                    //upsert
+                    $stmt = $dbh->prepare("INSERT INTO neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated)
+                        VALUES (:name, :item, :n, :k, :typeCode, :user, now())
+                        ON DUPLICATE KEY UPDATE Neon_Name = VALUES(Neon_Name), Neon_Type_Code = VALUES(Neon_Type_Code), Neon_Type_Name = VALUES(Neon_Type_Name), Updated_By = VALUES(Updated_By), Last_Updated = VALUES(Last_Updated)");
+                    $stmt->execute([
+                        ':name' => $list['List_Name'],
+                        ':item' => $list['List_Item'],
+                        ':n' => $n,
+                        ':k' => $k,
+                        ':typeCode' => $hhkTypeCode,
+                        ':user' => $uS->username,
+                    ]);
                 }
             }
         }
 
-        return $count + $idTypeMap;
+        //save HHK Source
+        $this->saveHhkNeonSource($dbh);
+
+        return ["type"=>"success", "text"=>$this->getServiceTitle() . " settings saved."];
+    }
+
+    protected function saveHhkNeonSource(\PDO $dbh){
+        $uS = Session::getInstance();
+
+        try{
+            $sources = $this->neonWebServiceV2->getSources();
+        }catch(RequestException $e){
+            return;
+        }
+
+        $found = false;
+        foreach($sources as $source){
+            
+            if(isset($source['name']) && $source['name'] == self::SOURCE){
+                $found = true;
+                //upsert
+                $stmt = $dbh->prepare("INSERT INTO neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated)
+                    VALUES (:name, :item, :n, :k, :typeCode, :user, now())
+                    ON DUPLICATE KEY UPDATE Neon_Name = VALUES(Neon_Name), Neon_Type_Code = VALUES(Neon_Type_Code), Neon_Type_Name = VALUES(Neon_Type_Name), Updated_By = VALUES(Updated_By), Last_Updated = VALUES(Last_Updated)");
+                $stmt->execute([
+                    ':name' => "sources",
+                    ':item' => "source",
+                    ':n' => $source['id'],
+                    ':k' => $source['name'],
+                    ':typeCode' => self::SOURCE,
+                    ':user' => $uS->username,
+                ]);
+                return;
+            }
+        }
+        
+        if($found == false){
+            $stmt = $dbh->prepare("delete from neon_type_map where List_Name = :name and HHK_Type_Code = :code");
+            $stmt->execute([':name'=>"sources", ':code'=>self::SOURCE]);
+        }
     }
 
     public function getConfigMessage(): string {
@@ -2027,7 +2046,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
             return "Custom field '$fieldName' created and added to '" . self::HHK_CUSTOM_FIELD_GROUP . "' group.";
 
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (RequestException $e) {
             $detail = $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
             return "NeonCRM API error creating '$fieldName': " . $detail;
         }
@@ -2050,70 +2069,6 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         ]);
 
         return isset($result['id']) ? (string) $result['id'] : '';
-    }
-
-    protected function openTarget() {
-
-        if (function_exists('curl_version') === FALSE) {
-            throw new UploadException('PHP configuration error: cURL functions are missing.');
-        }
-
-        if ($this->getUserId() == '' || $this->getPassword() == '') {
-            throw new UploadException('User Name or Password are missing.');
-        }
-
-        $keys = array('orgId'=>$this->getUserId(), 'apiKey'=>Crypto::decryptMessage($this->getPassword()));
-
-        $this->neonWebService = new Neon();
-        $loginResult = $this->neonWebService->login($keys);
-
-
-        if ( isset( $loginResult['operationResult'] ) && $loginResult['operationResult'] != 'SUCCESS' ) {
-            throw new UploadException('API Login failed');
-        }
-
-        if ($loginResult['userSessionId'] == '') {
-            throw new UploadException('API Session Id is missing');
-        }
-
-        return TRUE;
-    }
-
-    protected function checkError($result) {
-
-        $errorMsg = '';
-
-        if (isset($result['operationResult']) && $result['operationResult'] == 'FAIL') {
-
-            $errorMsg .= 'Result: "' . $result['operationResult'] . '", Date: ' . date('M j, Y H:i:s', strtotime($result['responseDateTime'])). "<br/>";
-
-            foreach ($result['errors'] as $key => $errors) {
-
-                $errorMsg .= $key . "<br/>";
-
-                foreach ($errors as $e) {
-                    $errorMsg .= $e['errorCode'] . ': ' . $e['errorMessage'] . "<br/>";
-                }
-
-            }
-
-        } else if (isset($result['operationResult']) && $result['operationResult'] == 'ERROR') {
-            $errorMsg .= 'Result: ' . $result['operationResult'] . ', Error Message: ' . $result['errorMessage'];
-
-        } else if ( isset( $result['operationResult'] ) && $result['operationResult'] != 'SUCCESS' ) {
-
-            $errorMsg .= 'Transaction failed';
-        }
-
-        $this->errorMessage = $errorMsg;
-
-
-        if ($errorMsg != '') {
-            return TRUE;
-        } else {
-            return FALSE;
-        }
-
     }
 
     protected function formatError(RequestException $e): string {

@@ -1342,8 +1342,9 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         IFNULL(`cc`.`External_Id`, '') AS `country.id`,
         IFNULL(`na`.`Postal_Code`, '') AS `zipCode`,
         IFNULL(`ni`.`Neon_Type_Code`, '') AS `individualType.id`,
-        IFNULL(`g4`.`Description`, '') AS `No_Return`
-       -- 'HHK' AS `source.name`
+        IFNULL(`g4`.`Description`, '') AS `No_Return`,
+        IFNULL(`nms`.`Neon_Type_Code`, '') AS `source.code`,
+        IFNULL(`nms`.`Neon_Type_Name`, '') AS `source.name`
     FROM
         `name` `n`
         LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
@@ -1366,6 +1367,7 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
             AND `nv`.`Vol_Code` IN ('p' , 'g')
         LEFT JOIN `neon_type_map` `ni` ON ni.Neon_Name = 'individualType' and `nv`.`Vol_Code` = `ni`.`HHK_Type_Code`
         LEFT JOIN `neon_type_map` `nmg` on nmg.Neon_Name = 'gender' and `n`.`Gender` = `nmg`.`HHK_Type_Code`
+        LEFT JOIN `neon_type_map` `nms` on nms.Neon_Name = 'source' and `nms`.`HHK_Type_Code` = 'HHK'
     WHERE
         `n`.`idName` > 0
         AND (`n`.`Record_Member` = 1)
