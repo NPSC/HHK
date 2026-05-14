@@ -15,6 +15,7 @@ use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\Session;
 use HHK\OAuth\Credentials;
+use PDOStatement;
 
 
 /**
@@ -921,7 +922,7 @@ class SalesforceManager extends AbstractExportManager {
 
         // Load local data if not delivered in the $localData array
         if ($idName > 0) {
-            $stmt = $this->loadSearchDB($dbh, 'vguest_search_sf', $idName);
+            $stmt = $this->loadSearchDB($dbh, 'vguest_search_sf', [$idName]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (isset($rows[0])) {
@@ -982,23 +983,18 @@ class SalesforceManager extends AbstractExportManager {
      * @param mixed $sourceIds
      * @return \PDOStatement|bool|null
      */
-    public static function loadSearchDB(\PDO $dbh, $view, $sourceIds) {
+    public static function loadSearchDB(\PDO $dbh, string $view, array $sourceIds): bool|PDOStatement|null {
 
         if ($view == '') {
             return NULL;
         }
 
         // clean up the ids
-        if (is_array($sourceIds)) {
-
-            foreach ($sourceIds as $s) {
-                if (intval($s, 10) > 0){
-                    $idList[] = intval($s, 10);
-                }
+        $idList = [];
+        foreach ($sourceIds as $s) {
+            if (intval($s, 10) > 0){
+                $idList[] = intval($s, 10);
             }
-
-        } else {
-            $idList[] = intval($sourceIds, 10);
         }
 
         if (count($idList) > 0) {

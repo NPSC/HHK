@@ -8,6 +8,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
 use HHK\AuditLog\NameLog;
 use HHK\sec\Session;
+use PDOStatement;
 
 /**
  *
@@ -277,13 +278,14 @@ abstract class AbstractExportManager {
      * @param mixed $sourceIds
      * @return \PDOStatement|bool|null
      */
-    public static function loadSearchDB(\PDO $dbh, $view, $sourceIds) {
+    public static function loadSearchDB(\PDO $dbh, string $view, array $sourceIds): bool|PDOStatement|null {
 
         if ($view == '') {
             return NULL;
         }
 
         // clean up the ids
+        $idList = [];
         foreach ($sourceIds as $s) {
             if (intval($s, 10) > 0){
                 $idList[] = intval($s, 10);

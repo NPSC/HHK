@@ -154,17 +154,6 @@ class NeonManager extends AbstractExportManager {
             }
 
 
-            // Check for NEON not finding the account Id
-            if ( isset($result['pagination']['totalResults'] ) && $result['pagination']['totalResults'] == 0 && $r['Account Id'] != '') {
-
-                // Account is missing from the Neon side.
-                $f['Result'] = 'Account Deleted at Neon';   // procedure sendVisits() depends upon the exact wording of the quoted text. circa line 638
-                $replys[$r['HHK_ID']] = $f;
-                continue;
-
-            }
-
-
             // Test results
             if ( isset($result['pagination']['totalResults'] ) && $result['pagination']['totalResults'] == 1 ) {
 
@@ -218,6 +207,45 @@ class NeonManager extends AbstractExportManager {
 
 
             } else if ( isset($result['pagination']['totalResults'] ) && $result['pagination']['totalResults'] == 0 ) {
+
+                //search only matching account id and HHK ID
+                // retreive neon account with external id if we have it locally
+                if($r['Account Id'] != ''){
+                    $searchCriteria['Account Id'] = $r['Account Id'];
+                    $searchCriteria['HHK_ID'] = $r['HHK_ID'];
+
+                    // Search target system
+                    try{
+                        $result = $this->searchTarget($searchCriteria);
+                    } catch (RequestException $e){
+                        $f['Result'] = $this->formatError($e);
+                        $replys[$r['HHK_ID']] = $f;
+                        continue;
+
+                    }
+                    if ( isset($result['pagination']['totalResults'] ) && $result['pagination']['totalResults'] == 1 ) {
+                        try{
+                            $memberData = $this->retrieveRemoteAccount($result['searchResults'][0]['Account ID']);
+                            $this->updateRemoteMember($dbh, $memberData, $r['HHK_ID']);
+                            $f['Account ID'] = $result['searchResults'][0]['Account ID'];
+                            $f['Result'] = 'Updated Member on Neon';
+                            $replys[$r['HHK_ID']] = $f;
+                            continue;
+                        } catch (RequestException $e){
+                            $f['Result'] = 'Error updating member on Neon: ' . $this->formatError($e);
+                            $replys[$r['HHK_ID']] = $f;
+                            continue;
+                        } catch (RuntimeException $re){
+                            $f['Result'] = 'Error updating member on Neon: ' . $re->getMessage();
+                            $replys[$r['HHK_ID']] = $f;
+                            continue;
+                        }
+                    }else{
+                        $f['Result'] = 'Account not found at Neon but was previously transferred';   // procedure sendVisits() depends upon the exact wording of the quoted text. circa line 638
+                        $replys[$r['HHK_ID']] = $f;
+                        continue;
+                    }
+                }
 
                 // Nothing found - create a new account at remote
 
@@ -1750,22 +1778,30 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             $markup .= HTMLContainer::generateMarkup('div', $cfTbl->generateMarkup([], 'Custom Fields'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
 
             // Sources
+            $stmt = $dbh->query("Select * from neon_type_map where List_Name = 'sources' and Neon_Type_Name = '" . self::SOURCE . "'");
+            $neonSourceRow = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $mappedSourceId = isset($neonSourceRow['Neon_Type_Code']) ? $neonSourceRow['Neon_Type_Code'] : null;
             $results = $this->neonWebServiceV2->getSources();
             $sTbl = new HTMLTable();
             $sTbl->addHeaderTr(HTMLTable::makeTh('Source') . HTMLTable::makeTh("$crmTitle ID"));
 
-            $foundHHKSource = false;
+            $neonSourceId = false;
             foreach ($results as $v) {
                 if($v['name'] == self::SOURCE) {
-                    $foundHHKSource = true;
+                    $neonSourceId = $v['id'];
+                    continue;
                 }
 
                 $sTbl->addBodyTr(HTMLTable::makeTd($v['name']) . HTMLTable::makeTd($v['id']));
 
             }
 
-            if($foundHHKSource === false) {
+            if($neonSourceId === false) {
                 $sTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . self::SOURCE, ['title'=>"Source not found in $crmTitle"]) . HTMLTable::makeTd('Not Found'), ['class' =>'ui-state-error']);
+            }else if ($mappedSourceId != $neonSourceId) {
+                $sTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . self::SOURCE, ['title'=>"Source not mapped in HHK"]) . HTMLTable::makeTd('Found but not mapped - click Save to automatically map'), ['class' =>'ui-state-error']);
+            }else{
+                $sTbl->addBodyTr(HTMLTable::makeTd(self::SOURCE) . HTMLTable::makeTd($neonSourceId));
             }
 
             $markup .= HTMLContainer::generateMarkup('div', $sTbl->generateMarkup([], 'Sources'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
