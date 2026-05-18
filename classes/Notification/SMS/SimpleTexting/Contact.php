@@ -27,8 +27,8 @@ Class Contact {
      * @return array
      */
     public function upsert(string $contactPhone, string $firstName, string $lastName){
+        $uS = Session::getInstance();
         try{
-            $uS = Session::getInstance();
             $client = $this->settings->getClient();
 
             $requestArray = [

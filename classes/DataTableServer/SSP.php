@@ -431,10 +431,10 @@ class SSP {
 	 *     * pass - user password
 	 * @return 	PDO Database connection handle
 	 */
-	static function sql_connect ( $sql_details ): PDO
+	static function sql_connect ( $sql_details ): ?PDO
 	{
 		try {
-			$db = @new PDO(
+			return @new PDO(
 				"mysql:host={$sql_details['host']};dbname={$sql_details['db']}",
 				$sql_details['user'],
 				$sql_details['pass'],
@@ -447,8 +447,7 @@ class SSP {
 				"The error reported by the server was: ".$e->getMessage()
 			);
 		}
-
-		return $db;
+		return null;
 	}
 
 

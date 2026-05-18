@@ -78,6 +78,8 @@ class EmailReportJob extends AbstractJob implements JobInterface{
         }
 
         if(isset($this->params["report"]) && isset(EmailReportJob::AVAILABLE_REPORTS[$this->params["report"]])){
+            $report = null;
+            
             try{
                 $class = '\HHK\House\\Report\\' . $this->params["report"];
                 $report = new $class($this->dbh, $request);

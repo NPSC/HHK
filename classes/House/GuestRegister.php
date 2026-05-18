@@ -442,6 +442,7 @@ where
 
             // start date fall on a holiday?
             $validHolidays = FALSE;
+            $myHolidays = null;
             // New parameter controls BO days
             if ($uS->UseCleaningBOdays) {
                 $validHolidays = TRUE;
@@ -459,7 +460,7 @@ where
 
 
             // Start date fall on a holiday or is a non work weekday?
-            if ($validHolidays === TRUE && ($myHolidays->is_holiday($stDT->format('U')) || array_search($dateInfo['wday'], $nonClean) !== FALSE)) {
+            if ($validHolidays === TRUE && $myHolidays instanceof US_Holidays && ($myHolidays->is_holiday($stDT->format('U')) || array_search($dateInfo['wday'], $nonClean) !== FALSE)) {
 
                 $stDT->sub($p1d);
 
@@ -539,6 +540,7 @@ where
             }
 
             $edYear = $clDate->format('Y');
+            $myHolidays = null;
 
             if ($edYear == $beginHolidays->getYear()) {
                 $myHolidays = $beginHolidays;
@@ -548,7 +550,7 @@ where
                 $validHolidays = FALSE;
             }
 
-            if ($validHolidays) {
+            if ($validHolidays && $myHolidays instanceof US_Holidays) {
                 // End date fall on a holiday?
                 while ($myHolidays->is_holiday($clDate->format('U'))) {
 
@@ -559,7 +561,8 @@ where
                         'resourceId' => "id-" . $r["idResource"],
                         'start' => $clDate->format('Y-m-d\TH:i:00'),
                         'end' => $clDate->format('Y-m-d\TH:i:00'),
-                        'title' => 'H',
+                        'title' => 'Holiday',
+                        'description' => $myHolidays->getHolidayNameByTimestamp($clDate->format('U')) . ' (Cleaning Blackout)',
                         'allDay' => 1,
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
@@ -587,7 +590,8 @@ where
                         'resourceId' => "id-" . $r["idResource"],
                         'start' => $clDate->format('Y-m-d\TH:i:00'),
                         'end' => $clDate->format('Y-m-d\TH:i:00'),
-                        'title' => 'BO',
+                        'title' => 'Cleaning',
+                        'description' => 'Cleaning Blackout Day',
                         'allDay' => 1,
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
@@ -610,7 +614,8 @@ where
                         'resourceId' => "id-" . $r["idResource"],
                         'start' => $clDate->format('Y-m-d\TH:i:00'),
                         'end' => $clDate->format('Y-m-d\TH:i:00'),
-                        'title' => 'H',
+                        'title' => 'Holiday',
+                        'description' => $myHolidays->getHolidayNameByTimestamp($clDate->format('U')) . ' (Cleaning Blackout)',
                         'allDay' => 1,
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
@@ -859,10 +864,10 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
                 'kind' => CalEventKind::OOS,
                 'resourceId' => "id-" . $r["idResource"],
                 'idResc' => $r["idResource"],
-                'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes'] : ''),
+                'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . html_entity_decode($r['Notes'], ENT_QUOTES) : ''),
                 'start' => $stDateDT->format('Y-m-d\TH:i:00'),
                 'end' => $enDateDT->format('Y-m-d\TH:i:00'),
-                'title' => $r['StatusTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes'] : ''),
+                'title' => $r['StatusTitle'] . ($r['Notes'] != '' ? " - " . html_entity_decode($r['Notes'], ENT_QUOTES) : ''),
                 'allDay' => 1,
                 'backgroundColor' => 'gray',
                 'textColor' => 'white',
