@@ -41,7 +41,7 @@ abstract class AbstractReport {
     public string $filterMkup = "";
     public string $filterOptsMkup = "";
     public array $filterOpts = [];
-    protected $request;
+    protected array $request;
     protected string $reportTitle = "";
     protected string $description = "";
     protected string $inputSetReportName = "";
@@ -51,7 +51,6 @@ abstract class AbstractReport {
     /**
      * @param \PDO $dbh
      * @param string $report - used to build fieldset list (ReportFieldSet::listFieldSets())
-     * @param array $cFields
      * @param array $request
      */
     public function __construct(\PDO $dbh, string $report = "", array $request = []){
@@ -389,7 +388,7 @@ abstract class AbstractReport {
         return HTMLContainer::generateMarkup("div", $emTbl->generateMarkup(), array("id"=>"em" . $this->inputSetReportName . "RptDialog", "class"=>"emRptDialog", "style"=>"display:none;"));
     }
 
-    public function sendEmail(\PDO $dbh, string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
+    public function sendEmail(\PDO $dbh, string $emailAddress = "", string $subject = "", bool $cronDryRun = false): array{
         $uS = Session::getInstance();
 
         $errors = array();
@@ -420,7 +419,7 @@ abstract class AbstractReport {
             return array("error"=>implode("<br>", $errors));
         }
 
-        if(count($errors) == 0 && $body !=''){
+        if(count($errors) == 0 && $body !='' && isset($addresses) &&is_array($addresses)){
 
             try{
                 $mail = new HHKMailer($dbh);
@@ -449,6 +448,7 @@ abstract class AbstractReport {
             }
 
         }
+        return [];
     }
 
     protected function actions(\PDO $dbh, array $request):void{

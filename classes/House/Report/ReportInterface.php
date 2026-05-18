@@ -33,5 +33,7 @@ interface ReportInterface {
 
     public function getInputSetReportName() :string;
 
+    public function sendEmail(\PDO $dbh, string $emailAddress, string $subject, bool $dryRun): array;
+
 }
 ?>

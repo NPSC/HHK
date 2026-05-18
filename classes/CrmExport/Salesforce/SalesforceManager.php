@@ -271,9 +271,8 @@ class SalesforceManager extends AbstractExportManager {
      * @return array
      */
     public function exportMembers(\PDO $dbh, array $sourceIds, array $updateIds = []): array {
-
         $replys = [];
-
+        
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
             return $replys;
