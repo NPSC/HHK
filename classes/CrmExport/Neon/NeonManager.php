@@ -104,7 +104,7 @@ class NeonManager extends AbstractExportManager {
     /**
      *
      */
-    public function exportMembers(\PDO $dbh, array $sourceIds) {
+    public function exportMembers(\PDO $dbh, array $sourceIds): array {
 
         $replys = [];
 
@@ -290,7 +290,7 @@ class NeonManager extends AbstractExportManager {
 
     }
 
-    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $extraSourceCols = [], $updateAddr = TRUE) {
+    public function updateRemoteMember(\PDO $dbh, array $accountData, int $idName, $extraSourceCols = [], bool $updateAddr = TRUE): string {
 
         if ($idName < 1) {
             throw new RuntimeException('HHK Member Id not specified: ' . $idName);
@@ -344,7 +344,7 @@ class NeonManager extends AbstractExportManager {
     }
 
 
-    public function getMember(\PDO $dbh, $parameters) {
+    public function getMember(\PDO $dbh, $parameters): string {
 
         $source = (isset($parameters['src']) ? $parameters['src'] : '');
         $id = (isset($parameters['accountId']) ? $parameters['accountId'] : '');
@@ -440,7 +440,7 @@ class NeonManager extends AbstractExportManager {
      * @param string $accountId Remote account Id
      * @return array The Remote account object.
      */
-    public function retrieveRemoteAccount($accountId) {
+    public function retrieveRemoteAccount($accountId): array {
 
         $account = $this->neonWebServiceV2->getAccount($accountId);
 
@@ -670,7 +670,7 @@ class NeonManager extends AbstractExportManager {
      * @param array $rels
      * @return array
      */
-    public function exportVisits(\PDO $dbh, $idPsg, array $rels) {
+    public function exportVisits(\PDO $dbh, $idPsg, array $rels): array {
 
         $this->memberReplies = [];
         $this->replies = [];
@@ -1445,7 +1445,7 @@ where
     }
 
 
-    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper) {
+    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper): array {
 
         $stmt = $dbh->query("Select
 	n.idName as `hhkId`,
@@ -1485,7 +1485,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         ];
     }
 
-    protected function loadSourceDB(\PDO $dbh, $idName, $view, $extraSourceCols = []) {
+    protected function loadSourceDB(\PDO $dbh, $idName, string $view, $extraSourceCols = []) {
 
          $parm = intval($idName, 10);
 
@@ -1627,7 +1627,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
      * @param \PDO $dbh
      * @return ?array
      */
-    public function getMyCustomFields(\PDO $dbh): ?array {
+    public function getMyCustomFields(\PDO $dbh): array {
 
         if (is_null($this->customFields)) {
             $cf = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields', "Order");
@@ -1677,7 +1677,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     }
 
-    public function showConfig(\PDO $dbh) {
+    public function showConfig(\PDO $dbh): string {
 
         $markup = '';
         $crmTitle = ucfirst($this->serviceName);
@@ -1732,24 +1732,30 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
                 $mappedItems = array();
                 foreach ($items as $i) {
-                    $mappedItems[$i['Neon_Type_Code']] = $i;
+                    $mappedItems[$i['HHK_Type_Code']] = $i;
+                }
+
+                $neonOptions = [];
+                foreach ($neonItems as $nId => $nName) {
+                    $neonOptions[$nId] = ['0' => $nId, '1' => $nName];
                 }
 
                 $nTbl = new HTMLTable();
-                $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh("$crmTitle Name") . HTMLTable::makeTh("$crmTitle ID"));
+                $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh("$crmTitle Mapping"));
 
-                foreach ($neonItems as $n => $k) {
+                foreach ($hhkLookup as $hhkCode => $hhkItem) {
 
-                    $hhkTypeCode = '';
-                    if (isset($mappedItems[$n])) {
-                        $hhkTypeCode = $mappedItems[$n]['HHK_Type_Code'];
+                    $neonTypeCode = '';
+                    if (isset($mappedItems[$hhkCode])) {
+                        $neonTypeCode = $mappedItems[$hhkCode]['Neon_Type_Code'];
                     }
 
+                    $hhkLabel = $hhkItem[1] ?? '';
+
                     $nTbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $hhkTypeCode), ['name' => 'sel' . $list['List_Name'] . '[' . $n . ']']))
-                        . HTMLTable::makeTd($k)
-                        . HTMLTable::makeTd($n, ['style' => 'text-align:center;'])
-                        );
+                        HTMLTable::makeTd($hhkLabel)
+                        . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($neonOptions, $neonTypeCode), ['name' => 'sel' . $list['List_Name'] . '[' . $hhkCode . ']']))
+                    );
                 }
 
                 $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], ucfirst($list['List_Name'])), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
@@ -1880,7 +1886,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         return $result;
     }
 
-    public function saveConfig(\PDO $dbh) {
+    public function saveConfig(\PDO $dbh): array {
 
         $uS = Session::getInstance();
 
@@ -1906,7 +1912,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         $custom_fields = [];
         $myCustomFields = Common::readGenLookupsPDO($dbh, 'Cm_Custom_Fields');
 
-        foreach ($myCustomFields as $k=>$v) {
+        foreach ($myCustomFields as $v) {
             $custom_fields[$v['Code']] = '';
         }
 
@@ -1968,25 +1974,22 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             $controls = filter_input_array(INPUT_POST, ['sel' . $list['List_Name'] => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY]]);
             $listNames = array_pop($controls);
 
-            foreach ($neonItems as $n => $k) {
+            foreach ($hhkLookup as $hhkCode => $hhkItem) {
 
-                if (isset($listNames[$n])) {
+                if (isset($listNames[$hhkCode])) {
 
-                    $hhkTypeCode = $listNames[$n];
+                    $neonTypeCode = $listNames[$hhkCode];
 
-                    if ($hhkTypeCode == '') {
+                    if ($neonTypeCode == '') {
                         // delete if previously set
-                        foreach ($mappedItems as $i) {
-                            if ($i['Neon_Type_Code'] == $n && $i['HHK_Type_Code'] != '') {
-                                $stmt = $dbh->prepare("delete from neon_type_map  where idNeon_type_map = :id");
-                                $stmt->execute([':id'=>$i['idNeon_type_map']]);
-                                break;
-                            }
+                        if (isset($mappedItems[$hhkCode]) && $mappedItems[$hhkCode]['Neon_Type_Code'] != '') {
+                            $stmt = $dbh->prepare("delete from neon_type_map where idNeon_type_map = :id");
+                            $stmt->execute([':id' => $mappedItems[$hhkCode]['idNeon_type_map']]);
                         }
 
                         continue;
 
-                    } else if (isset($hhkLookup[$hhkTypeCode]) === FALSE) {
+                    } else if (!isset($neonItems[$neonTypeCode])) {
                         continue;
                     }
 
@@ -1997,9 +2000,9 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     $stmt->execute([
                         ':name' => $list['List_Name'],
                         ':item' => $list['List_Item'],
-                        ':n' => $n,
-                        ':k' => $k,
-                        ':typeCode' => $hhkTypeCode,
+                        ':n' => $neonTypeCode,
+                        ':k' => $neonItems[$neonTypeCode],
+                        ':typeCode' => $hhkCode,
                         ':user' => $uS->username,
                     ]);
                 }
@@ -2195,7 +2198,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     }
 
-    public function getLogServiceName(){
+    public function getLogServiceName(): string{
         return self::LOG_SERVICE_NAME;
     }
 }

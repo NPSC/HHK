@@ -195,7 +195,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $parameters
      * @return string
      */
-    public function getMember(\PDO $dbh, $parameters) {
+    public function getMember(\PDO $dbh, $parameters): string {
 
         $source = $parameters['src'] ?? '';
         $id = $parameters['accountId'] ?? '';
@@ -259,7 +259,7 @@ class SalesforceManager extends AbstractExportManager {
         return $results;
     }
 
-    public function retrieveRemoteAccount($accountId) {
+    public function retrieveRemoteAccount($accountId):array {
 
         return $this->retrieveURL($this->getContactEndpoint . $accountId);
     }
@@ -270,7 +270,9 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $sourceIds list of member Id's to export
      * @return array
      */
-    public function exportMembers(\PDO $dbh, array $sourceIds, array $updateIds = []) {
+    public function exportMembers(\PDO $dbh, array $sourceIds, array $updateIds = []): array {
+
+        $replys = [];
 
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
@@ -912,7 +914,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param bool $updateIt TRUE = push update to remote, FALSE = just return potential update fields as array.
      * @return string
      */
-    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $localData = [], $updateIt = FALSE) {
+    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $localData = [], $updateIt = FALSE): string {
 
         $msg = 'Already up to date. ';
 
@@ -1119,9 +1121,9 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of getSearchFields
      * @param $dbh
      * @param string $tableName
-     * @return array<string>
+     * @return array
      */
-    public static function getSearchFields($dbh, $tableName) {
+    public static function getSearchFields(?\PDO $dbh, string $tableName): array {
 
         $cols['HHK_idName__c'] = 'HHK_idName__c';
         return $cols;
@@ -1183,7 +1185,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param \PDO $dbh
      * @return string
      */
-    public function showConfig(\PDO $dbh) {
+    public function showConfig(\PDO $dbh): string {
 
         $markup = $this->showGatewayCredentials();
 
@@ -1504,7 +1506,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param \PDO $dbh
      * @return string
      */
-    public function saveConfig(\PDO $dbh) {
+    public function saveConfig(\PDO $dbh): string {
 
         $uS = Session::getInstance();
 
@@ -1515,7 +1517,7 @@ class SalesforceManager extends AbstractExportManager {
 
     }
 
-    public function getLogServiceName(){
+    public function getLogServiceName(): string{
         return self::LOG_SERVICE_NAME;
     }
 }

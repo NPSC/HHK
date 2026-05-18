@@ -1528,6 +1528,7 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
         END AS `Phone`,
         IFNULL(`ne`.`Email`, '') AS `Email`,
         IFNULL(DATE(`n`.`BirthDate`), '') AS `Birthdate`,
+        ifnull(`gg`.`Description`, '') AS `Gender`,
         IFNULL(`gn`.`Description`, '') AS `No Return`,
         IFNULL(`s`.`Span_Start_Date`, '') AS `Arrival`,
         IFNULL(`s`.`Span_End_Date`, '') AS `Departure`,
@@ -1552,6 +1553,8 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
             AND `g2`.`Table_Name` = 'Name_Suffix')
 		LEFT JOIN `gen_lookups` `gn` ON `gn`.`Table_Name` = 'NoReturnReason'
 			AND `gn`.`Code` = `nd`.`No_Return`
+        LEFT JOIN `gen_lookups` `gg` ON `gg`.`Table_Name` = 'gender'
+			AND `gg`.`Code` = `n`.`Gender`
 		LEFT JOIN `gen_lookups` `gr` ON `gr`.`Table_Name` = 'Patient_Rel_Type'
 			AND `gr`.`Code` = `ng`.`Relationship_Code`
     WHERE

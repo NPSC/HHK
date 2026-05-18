@@ -208,7 +208,8 @@ function searchVisits(\PDO $dbh, $start, $end, $maxGuests, AbstractExportManager
     CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
     v.idPrimaryGuest,
     hs.idPsg,
-    hs.idPatient
+    hs.idPatient,
+    s.Recorded
 FROM
     stays s
         LEFT JOIN
@@ -228,7 +229,7 @@ FROM
 WHERE
     s.On_Leave = 0
     AND s.`Status` != 'a'
-  --  AND s.`Recorded` = 0
+    -- AND s.`Recorded` = 0
     AND n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
     AND n.Member_Status = '" . MemStatus::Active ."'
     AND DATE(s.Span_End_Date) < DATE('$end')
@@ -491,6 +492,7 @@ function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
         unset($r['Arrival']);
         unset($r['Departure']);
         unset($r['Bad Addr']);
+        unset($r['Relation']);
 
         $rows[] = $r;
 
@@ -560,10 +562,14 @@ function createKeyMap(\PDO $dbh) {
         $diagKeyTable->addBodyTr(HTMLTable::makeTd($d[0]).HTMLTable::makeTd($d[1]));
     }
 
-    $hdiv = HTMLContainer::generateMarkup('div', $hospitalKeyTable->generateMarkup(), array('style'=>'float:left; margin-left:10px;'));
-    $ddiv = HTMLContainer::generateMarkup('div', $diagKeyTable->generateMarkup(), array('style'=>'float:left;'));
+    $hdiv = HTMLContainer::generateMarkup('div', $hospitalKeyTable->generateMarkup(), array('class'=>'ml-2'));
+    $ddiv = HTMLContainer::generateMarkup('div', $diagKeyTable->generateMarkup());
 
-    return  HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys'));
+    $infoDiv = HTMLContainer::generateMarkup('div', 
+    'Due to HIPAA compliance, Hospitality Housekeeper cannot transfer Diagnosis and Hospital information directly. The following codes will be sent instead.'
+    , array('class'=>'p-2 mb-3 ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight'));
+    
+    return  $infoDiv . HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys', 'class'=>'hhk-flex'));
 }
 
 $mkTable = 'x';
@@ -585,18 +591,6 @@ $btnVisits = '';
 $btnGetKey = '';
 $dboxMarkup = '';
 $btnPayments = '';
-
-
-$monthArray = array(
-    1 => array(1, 'January'), 2 => array(2, 'February'),
-    3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
-
-if ($uS->fy_diff_Months == 0) {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-} else {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
-}
 
 
 // Process report.
@@ -670,7 +664,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     if (filter_has_var(INPUT_POST, 'btnHere')) {
 
         // Get HHK records result table.
-        $results = getGTPeopleReport($dbh, $start, $end, $CmsManager::EXCLUDE_TERM);
+        $results = getGTPeopleReport($dbh, $start, $end, AbstractExportManager::EXCLUDE_TERM);
 
         if ($results === FALSE) {
 
@@ -746,7 +740,7 @@ if (isset($customFields['Hospital']) && $customFields['Hospital'] !== '') {
 }
 
 if (isset($customFields['First_Visit']) && $customFields['First_Visit'] !=='') {
-    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', ['name' => 'btnGetVisits', 'id' => 'btnGetVisits', 'type' => 'submit', 'class' => "mx-2"]);
+    $btnVisits = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('statement', 'psgLabel', 'Patient Support Group') . 's', ['name' => 'btnGetVisits', 'id' => 'btnGetVisits', 'type' => 'submit', 'class' => "mx-2"]);
 }
 
 if (isset($customFields['Fund']) && $customFields['Fund'] != '') {
@@ -757,6 +751,7 @@ if ($noRecordsMsg != '') {
     $noRecordsMsg = HTMLContainer::generateMarkup('p', $noRecordsMsg, ['style' => 'font-size:large']);
 }
 
+$btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('memberType', 'visitor', 'Guest') . 's', ['type' => 'submit', 'name' => 'btnHere', 'id' => 'btnHere', 'class' => "mx-2"]);
 
 // Setups for the page.
 $filter = new ReportFilter();
@@ -815,8 +810,7 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
                         </table>
                     </div>
                     <div class="hhk-flex mb-3 justify-content-center">
-                        <input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" class="mx-2">
-				        <?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
+				        <?php echo $btnGetRecords . $btnPayments . $btnVisits . $btnGetKey; ?>
                         <?php if(SecurityComponent::is_Admin()){ ?>
                             <button type="button" id="viewLog" data-service="" class="ui-button ui-corner-all mx-2">View Transfer Log</button>
                         <?php } ?>

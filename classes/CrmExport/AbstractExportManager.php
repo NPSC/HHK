@@ -15,7 +15,7 @@ use PDOStatement;
  * @author Eric
  *
  */
-abstract class AbstractExportManager {
+abstract class AbstractExportManager implements ExportManagerInterface{
 
     protected $gatewayId;
     protected $userId;
@@ -47,8 +47,10 @@ abstract class AbstractExportManager {
     const CMS_SF = 'sf';
     const EXCLUDE_TERM = 'excld';
 
+    const SearchViewName = '';
 
-    public static function factory(\PDO $dbh, string $cmsName): NeonManager|SalesforceManager|null {
+
+    public static function factory(\PDO $dbh, string $cmsName): ?ExportManagerInterface {
 
         switch (strtolower($cmsName)) {
 
@@ -112,7 +114,7 @@ abstract class AbstractExportManager {
     }
 
 
-    public function exportMembers(\PDO $dbh, array $ids) {
+    public function exportMembers(\PDO $dbh, array $ids): array {
         $replys[0] = array('error' => 'Transferring Members is not implemented');
         return $replys;
     }
@@ -122,12 +124,12 @@ abstract class AbstractExportManager {
         return $replys;
     }
 
-    public function exportVisits(\PDO $dbh, $idPsg, array $rels) {
+    public function exportVisits(\PDO $dbh, $idPsg, array $rels): array {
         $replys[0] = array('error' => 'Transferring Visits is not implemented');
         return $replys;
     }
 
-    public static function getSearchFields($dbh, $tableName) {
+    public static function getSearchFields(?\PDO $dbh, string $tableName): array {
 
         $stmt = $dbh->query("SHOW COLUMNS FROM `$tableName`;");
         $cols = array();
@@ -149,28 +151,26 @@ abstract class AbstractExportManager {
         return $replys;
     }
 
-    public function searchMembers (array $criteria) {
+    public function searchMembers (array $criteria): array {
         $replys[0] = array('error' => 'Transferring Visits is not implemented');
         return $replys;
     }
 
-    public function getMember(\PDO $dbh, $parameters) {
-        $replys[0] = array('error' => 'Getting Members is not implemented');
-        return $replys;
+    public function getMember(\PDO $dbh, $parameters): string {
+        return 'Getting Members is not implemented';
     }
 
-    public function retrieveRemoteAccount($accountId) {
+    public function retrieveRemoteAccount($accountId): array {
         $replys[0] = array('error' => 'Retrieving remote accounts is not implemented');
         return $replys;
     }
 
-    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $extraSourceCols = [], $updateAddr = FALSE) {
-        $replys[0] = array('error' => 'Updating Members is not implemented');
-        return $replys;
+    public function updateRemoteMember(\PDO $dbh, array $accountData, int $idName, array $extraSourceCols = [], bool $updateAddr = FALSE): string {
+        return 'Updating Members is not implemented';
     }
 
-    public abstract function showConfig(\PDO $dbh);
-    public abstract function saveConfig(\PDO $dbh);
+    public abstract function showConfig(\PDO $dbh): mixed;
+    public abstract function saveConfig(\PDO $dbh): mixed;
 
     /**
      * Summary of unwindResponse
@@ -179,7 +179,7 @@ abstract class AbstractExportManager {
      * @param mixed $prefix
      * @return void
      */
-    public function unwindResponse(&$line, $results, $prefix = '') {
+    public function unwindResponse(&$line, $results, $prefix = ''): void {
 
         if (is_array($results)) {
 
@@ -247,7 +247,7 @@ abstract class AbstractExportManager {
      * @param mixed $id
      * @return int
      */
-    public function resetExternalId(\PDO $dbh, $id) {
+    public function resetExternalId(\PDO $dbh, $id): int {
 
         return $this->updateLocalExternalId($dbh, $id, '');
 
@@ -258,7 +258,7 @@ abstract class AbstractExportManager {
      * @param mixed $text
      * @return array|string|null
      */
-    public function unencodeHTML($text) {
+    public function unencodeHTML($text): array|string|null {
 
         $txt = preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
@@ -310,87 +310,91 @@ abstract class AbstractExportManager {
      * @param \HHK\CrmExport\RelationshipMapper $rMapper
      * @return array
      */
-    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper)
+    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper): array
     {
         return array();
     }
 
-    public function getMyCustomFields(\PDO $dbh) {
+    public function getMyCustomFields(\PDO $dbh): array {
         return [];
     }
 
-    public function getAccountId() {
+    public function getAccountId(): mixed {
         return $this->accountId;
     }
 
-    public function setAccountId($v) {
+    public function setAccountId(string|int $v): void {
         $this->accountId = $v;
     }
 
-    public function getServiceTitle() {
+    public function getServiceTitle(): mixed {
         return $this->serviceTitle;
     }
 
-    public function getServiceName() {
+    public function getServiceName(): string {
         return $this->serviceName;
     }
 
-    public function getUserId() {
+    public function getUserId(): mixed {
         return $this->userId;
     }
 
-    public function getPassword() {
+    public function getPassword(): mixed {
         return $this->password;
     }
 
-    public function getClientId() {
+    public function getClientId(): mixed {
         return $this->clientId;
     }
 
-    public function getClientSecret() {
+    public function getClientSecret(): mixed {
         return $this->clientSecret;
     }
 
-    public function getEndpointUrl() {
+    public function getEndpointUrl(): mixed {
         return $this->endpointURL;
     }
 
-    public function getSecurityToken() {
+    public function getSecurityToken(): mixed {
         return $this->securityToken;
     }
 
-    public function getApiVersion() {
+    public function getApiVersion(): mixed {
         return $this->apiVersion;
     }
 
-    public function getMaxPSGsPerBatch(){
+    public function getMaxPSGsPerBatch(): mixed{
         return $this->maxPSGsPerBatch;
     }
 
-    public function getLastUpdated() {
+    public function getLastUpdated(): mixed {
         return $this->lastUpdated;
     }
 
-    public function getUpdatedBy() {
+    public function getUpdatedBy(): mixed {
         return $this->updatedBy;
     }
 
-    public function getGatewayId() {
+    public function getGatewayId(): mixed {
         return $this->gatewayId;
     }
 
-    public function getMemberReplies() {
+    public function getMemberReplies(): array {
         return $this->memberReplies;
     }
 
-    public function getReplies()
+    public function getReplies(): array
     {
         return $this->replies;
     }
 
-    public function getProposedUpdates()
+    public function getProposedUpdates(): mixed
     {
         return $this->proposedUpdates;
+    }
+
+    public function getLogServiceName(): string {
+        return '';
     }
 
 
