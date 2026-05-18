@@ -1096,9 +1096,7 @@ where
             $countHouseholds = 0;
 
             // Find any households?
-            if (isset($households['households'])) {
-                $countHouseholds = count($households['households']);
-            }
+            $countHouseholds = count($households['households']);
 
             // Check for NEON not finding the household Id
             if ($countHouseholds == 0) {
@@ -1146,14 +1144,15 @@ where
 
     /**
      * Search Neon API for household given an account ID or household ID
-     * @param mixed $accountId
-     * @param mixed $idHousehold
-     * @return array{households: array|string[], error:?string}
+     * @param ?string $accountId
+     * @param ?string $idHousehold
+     * @return array{households: array<array<string, mixed>>, error: string|null}
      */
     public function searchHouseholds(?string $accountId = null, ?string $idHousehold = null): array {
 
+        $households = ['households' => [], 'error' => null];
         try{
-            $households = ['households'=>$this->neonWebServiceV2->listHouseholds($idHousehold, $accountId)];
+            $households['households'] = $this->neonWebServiceV2->listHouseholds($idHousehold, $accountId);
         }catch(RequestException $e){
             $households['error'] = $this->formatError($e);
         }
@@ -1279,9 +1278,7 @@ where
 
         $households = $this->searchHouseholds(idHousehold: $householdId);
 
-        if (isset($households['households'])) {
-            $countHouseholds = count($households['households']);
-        }
+        $countHouseholds = count($households['households']);
 
         if ($countHouseholds == 1) {
 
@@ -1625,7 +1622,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
      * Read custom fields from database
      * 
      * @param \PDO $dbh
-     * @return ?array
+     * @return array
      */
     public function getMyCustomFields(\PDO $dbh): array {
 

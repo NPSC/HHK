@@ -150,7 +150,7 @@ class SalesforceManager extends AbstractExportManager {
 
     /**
      * Summary of searchMembers Searches remote with letters from an autocomplete
-     * @param mixed $searchCriteria
+     * @param array $searchCriteria
      * @return array
      */
     public function searchMembers (array $searchCriteria): array {
@@ -412,11 +412,11 @@ class SalesforceManager extends AbstractExportManager {
                         $replys[$r['HHK_idName__c']] = $f;
                         return $replys;
                     }
-                }
 
-                $name = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
-                $title = ($m['HHK_idName__c'] == '' ? '' : $m['HHK_idName__c'] . ', ') . $name . ($m['Email'] == '' ? '' : ', ' . $m['Email']) . $m['HomePhone'];
-                $options[$m['Id']] = [$m['Id'], $title];
+                    $name = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
+                    $title = ($m['HHK_idName__c'] == '' ? '' : $m['HHK_idName__c'] . ', ') . $name . ($m['Email'] == '' ? '' : ', ' . $m['Email']) . $m['HomePhone'];
+                    $options[$m['Id']] = [$m['Id'], $title];
+                }
 
                 $f['Result'] = ' Found ' . $rawResult['totalSize'] . ' similar accounts ';
                 // Create selector
@@ -982,7 +982,7 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of loadSearchDB - load search record for specified person(s)
      * @param \PDO $dbh
      * @param string $view DB view to use
-     * @param mixed $sourceIds
+     * @param array $sourceIds
      * @return \PDOStatement|bool|null
      */
     public static function loadSearchDB(\PDO $dbh, string $view, array $sourceIds): bool|PDOStatement|null {

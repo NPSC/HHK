@@ -274,8 +274,8 @@ abstract class AbstractExportManager implements ExportManagerInterface{
     /**
      * Summary of loadSearchDB
      * @param \PDO $dbh
-     * @param mixed $view
-     * @param mixed $sourceIds
+     * @param string $view
+     * @param array $sourceIds
      * @return \PDOStatement|bool|null
      */
     public static function loadSearchDB(\PDO $dbh, string $view, array $sourceIds): bool|PDOStatement|null {

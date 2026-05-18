@@ -74,6 +74,7 @@ class SF_Connector {
      */
     public function search($query, $endpoint) {
 
+        $result = null;
         try{
             if(!$this->oAuth instanceof SalesForceOAuth){
                 $this->login();
@@ -107,6 +108,7 @@ class SF_Connector {
      */
     public function goUrl($endpoint) {
 
+        $result = null;
         try{
             if(!$this->oAuth instanceof SalesForceOauth){
                 $this->login();
@@ -140,6 +142,7 @@ class SF_Connector {
      */
     public function postUrl($endpoint, array $params, $isUpdate = FALSE) {
 
+        $result = null;
        try{
             if(!$this->oAuth instanceof SalesForceOAuth){
                 $this->login();
@@ -182,7 +185,8 @@ class SF_Connector {
      */
     public function postUrlAsync($endpoint, array $jsonBodies, $isUpdate = FALSE) {
 
-       try{
+        $result = null;
+        try{
             if(!$this->oAuth instanceof SalesForceOAuth){
                 $this->login();
             }
@@ -247,6 +251,7 @@ class SF_Connector {
     public function patchUrl($endpoint, array $params)
     {
 
+        $result = null;
         try {
             if (!$this->oAuth instanceof SalesForceOAuth) {
                 $this->login();

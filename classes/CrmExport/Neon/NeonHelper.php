@@ -10,8 +10,6 @@ use DateTime;
  */
 final class NeonHelper {
 
-    private CONST MAX_CUSTOM_PROPERTYS = 50;
-
     public static function fillDonation(array $r, array &$param): void {
 
         if (isset($r['accountId']) && $r['accountId'] != '') {
