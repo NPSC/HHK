@@ -212,11 +212,24 @@ class PaymentReport {
 
     protected static function doDayMarkupRow($r, $p, &$writer, $hdr, &$reportRows, $subsidyId, $returnId) {
 
+        $uS = Session::getInstance();
+
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
         $payDetail = '';
         $payStatus = $p['Payment_Status_Title'];
+
+        // For External, Payment_Method_Title is already the gen_lookups description (set by processPayments).
+        // For all other types, look up the description from gen_lookups by matching idPayment_Method.
         $payType = $p['Payment_Method_Title'];
+        if ((int)$p['idPayment_Method'] !== PaymentMethod::External) {
+            foreach ($uS->nameLookups[GLTableNames::PayType] ?? [] as $entry) {
+                if ((int)$entry[2] === (int)$p['idPayment_Method']) {
+                    $payType = $entry[1];
+                    break;
+                }
+            }
+        }
 
         if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
 
@@ -229,8 +242,6 @@ class PaymentReport {
                     }
                 }
             }
-
-            $payType = 'Credit Card';
 
         } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 
@@ -342,8 +353,19 @@ class PaymentReport {
         // Use timestamp for time of day.
         $timeDT = new \DateTime($p['Payment_Timestamp'], new \DateTimeZone($uS->tz));
 
-        $payType = $p['Payment_Method_Title'];
         $statusAttr = [];
+
+        // For External, Payment_Method_Title is already the gen_lookups description (set by processPayments).
+        // For all other types, look up the description from gen_lookups by matching idPayment_Method.
+        $payType = $p['Payment_Method_Title'];
+        if ((int)$p['idPayment_Method'] !== PaymentMethod::External) {
+            foreach ($uS->nameLookups[GLTableNames::PayType] ?? [] as $entry) {
+                if ((int)$entry[2] === (int)$p['idPayment_Method']) {
+                    $payType = $entry[1];
+                    break;
+                }
+            }
+        }
 
         if ($p['idPayment_Method'] == PaymentMethod::Charge) {
 
@@ -370,9 +392,6 @@ class PaymentReport {
                     }
                 }
             }
-
-            $payType = 'Credit Card';
-
 
         } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 

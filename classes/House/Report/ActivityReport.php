@@ -558,12 +558,14 @@ class ActivityReport {
         $payTypeLookup = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order') ?? [];
         unset($payTypeLookup['in']); // remove "invoice" type since it is not a real payment type and only used for internal processing of invoices in PostPayment
 
-        // Reverse map: idPayment_Method integer → Pay_Type code (standard/non-external types only)
+        // Reverse map: idPayment_Method integer → Pay_Type code and title (standard/non-external types only)
         $methodToPayTypeCode = [];
+        $methodToTitle = [];
         foreach ($payTypeLookup as $code => $entry) {
             $methodId = (int)$entry[2];
             if ($methodId !== PaymentMethod::External && !isset($methodToPayTypeCode[$methodId])) {
                 $methodToPayTypeCode[$methodId] = $code;
+                $methodToTitle[$methodId] = $entry[1];
             }
         }
 
@@ -728,9 +730,12 @@ where `lp`.`idPayment` > 0
                 $actionContent = PostPayment::actionButton($gateway, $p, $r['Invoice_Status'], $payTypeTotals, $stat, $amt, $attr);
 
 
-                $payTypeTitle = $p['Payment_Method_Title'];
+                // For External, Payment_Method_Title is already the gen_lookups description (set by processPayments).
+                // For all other types, look up the description from gen_lookups by matching idPayment_Method.
+                $payTypeTitle = (int)$p['idPayment_Method'] !== PaymentMethod::External
+                    ? ($methodToTitle[(int)$p['idPayment_Method']] ?? $p['Payment_Method_Title'])
+                    : $p['Payment_Method_Title'];
                 if ($p['idPayment_Method'] == PaymentMethod::Charge) {
-                    $payTypeTitle = 'Credit Card';
                     $attr['readonly'] = 'readonly';
                 }
 

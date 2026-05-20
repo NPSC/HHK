@@ -155,8 +155,8 @@ try {
                     <form autocomplete="off">
                     <span>Search: </span>
                     <span style="margin: 0 10px;">
-                        <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" value="m" />
-                        <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" value="e" />
+                        <input type="radio" name="msearch" checked="checked" id="rbmemName" value="m" class="mr-1"/><label for="rbmemName">Name</label>
+                        <input type="radio" name="msearch" id="rbmemEmail" value="e" class="mx-1"/><label for="rbmemEmail">Email</label>
                     </span><input type="hidden" id="txtBasis" value="m"/>
                     <input type="search" id="txtsearch" size="20" autocomplete="off" title="Enter at least 3 characters to invoke search" />
                     </form>

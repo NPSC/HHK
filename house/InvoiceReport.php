@@ -60,7 +60,7 @@ $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
 
-function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
+function doMarkupRow(array $fltrdFields, array $r, bool $isLocal, $hospital, $statusTxt, HTMLTable &$tbl, ExcelHelper &$writer, $hdr, &$reportRows, $subsidyId) {
 
     $g = array();
 

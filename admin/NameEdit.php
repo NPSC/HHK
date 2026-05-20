@@ -453,15 +453,17 @@ $alertMessage = $alertMsg->createMarkup();
             <div class="hhk-flex my-3">
                 <?php echo $NiceName; ?>
                 <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content p-2 ml-3" style="background:#EFDBC2;">
-                    <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
-                        <span>Search: </span>
-                        <span style="margin: 0 10px;">
-                            <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" />
-                            <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" />
-                        </span>
-                        <input type="text" id='hdnblank' value='' style='display:none;'/>
-                        <input type="search" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
-                    </div>
+                    <form autocomplete="off">
+                        <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
+                            <span>Search: </span>
+                            <span style="margin: 0 10px;">
+                                <input type="radio" name="msearch" checked="checked" id="rbmemName" class="mr-1"/><label for="rbmemName">Name</label>
+                                <input type="radio" name="msearch" id="rbmemEmail" class="mx-1"/><label for="rbmemEmail">Email</label>
+                            </span>
+                            <input type="text" id='hdnblank' value='' style='display:none;'/>
+                            <input type="search" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                        </div>
+                    </form>
                 </div>
             </div>
             <?php echo $resultMessage; ?> <?php echo $alertMessage; ?>

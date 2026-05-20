@@ -153,7 +153,7 @@ class PaymentSvcs {
 
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
             $payResult->feePaymentAccepted($dbh, $uS, $exResp, $invoice);
-            $payResult->setDisplayMessage('Payment by ' . $exResp->getExternalPaymentTypeTitle($dbh) . '.  ');
+            $payResult->setDisplayMessage('Payment by ' . $exResp->getPaymentTypeTitle($dbh) . '.  ');
 
             break;
 
@@ -284,7 +284,7 @@ class PaymentSvcs {
 
                 $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $rtnResult->feePaymentAccepted($dbh, $uS, $exResp, $invoice);
-                $rtnResult->setDisplayMessage('Return by ' . $exResp->getExternalPaymentTypeTitle($dbh) . '.  ');
+                $rtnResult->setDisplayMessage('Return by ' . $exResp->getPaymentTypeTitle($dbh) . '.  ');
 
             break;
 
@@ -763,7 +763,7 @@ class PaymentSvcs {
 
                 $exResp->idVisit = $invoice->getOrderNumber();
 
-                $dataArray['success'] = $exResp->getExternalPaymentTypeTitle($dbh) . ' return is undone.  ';
+                $dataArray['success'] = $exResp->getPaymentTypeTitle($dbh) . ' return is undone.  ';
                 $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $exResp);
 
                 break;
@@ -911,7 +911,7 @@ class PaymentSvcs {
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 
-                $dataArray['success'] = $exResp->getExternalPaymentTypeTitle($dbh) . ' refund is undone.  ';
+                $dataArray['success'] = $exResp->getPaymentTypeTitle($dbh) . ' refund is undone.  ';
 
                 break;
 
