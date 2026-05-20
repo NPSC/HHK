@@ -1,6 +1,7 @@
 <?php
 
 use HHK\Common;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\{WebInit};
 use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
@@ -176,7 +177,8 @@ if (filter_has_var(INPUT_POST, "btnvType")) {
     $resMessage = $volAlert->createMarkup();
 }
 
-$vCatOptions = Common::doLookups($dbh, "Vol_Category", '', false);
+$volCategories = Common::readGenLookupsPDO($dbh, "Vol_Category");
+$vCatOptions = HTMLSelector::doOptionsMkup($volCategories, '', false);
 ?>
 <!DOCTYPE html>
 <html lang="en">

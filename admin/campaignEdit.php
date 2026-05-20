@@ -3,6 +3,7 @@
 use HHK\Common;
 use HHK\Donation\Campaign;
 use HHK\AlertControl\AlertMessage;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\SysConst\CampaignType;
 use HHK\Tables\EditRS;
 use HHK\Tables\Donate\CampaignRS;
@@ -192,7 +193,9 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, $campCode, TRUE, TRUE);
 
 $campaign = new Campaign($dbh, $campCode);
 
-$statusOpt = Common::doLookups($dbh, "Campaign_Status", $campaign->get_status(), false);
+$campaignStatuses = Common::readGenLookupsPDO($dbh, "Campaign_Status");
+$statusOpt = HTMLSelector::doOptionsMkup($campaignStatuses, $campaign->get_status(), false);
+
 $stDate = "";
 $enDate = "";
 $lastDate = "";
