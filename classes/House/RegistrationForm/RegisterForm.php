@@ -46,7 +46,7 @@ use HHK\House\Vehicle;
  */
 class RegisterForm {
 
-    public $labels;
+    public Labels $labels;
 
     protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 

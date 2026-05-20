@@ -33,8 +33,8 @@ class TransferResponse extends CheckResponse {
      */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Transfer:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd('Transfer Acct:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . " Acct:", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
 
     }
 

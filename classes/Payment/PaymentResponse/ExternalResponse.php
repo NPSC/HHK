@@ -18,9 +18,9 @@ use PDO;
 
 class ExternalResponse extends CheckResponse {
 
-    protected $externalPaymentTypeCode;
+    protected string $externalPaymentTypeCode;
 
-    protected $externalPaymentTypeTitle;
+    protected string $externalPaymentTypeTitle;
 
     function __construct($amount, $idPayor, $invoiceNumber, $externalId = '', $payNotes = '', $externalPaymentTypeCode = PayType::External, $externalPaymentTypeTitle = '') {
 
@@ -43,8 +43,7 @@ class ExternalResponse extends CheckResponse {
         return $this->externalPaymentTypeCode;
     }
 
-    public function getExternalPaymentTypeTitle(?PDO $dbh) {
-
+    public function getPaymentTypeTitle(?PDO $dbh) {
         if ($this->externalPaymentTypeTitle != '') {
             return $this->externalPaymentTypeTitle;
         }
@@ -68,8 +67,8 @@ class ExternalResponse extends CheckResponse {
      */
     public function receiptMarkup(PDO $dbh, &$tbl): void {
 
-        $tbl->addBodyTr(HTMLTable::makeTd($this->getExternalPaymentTypeTitle($dbh) . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->getExternalPaymentTypeTitle($dbh) . ' ID:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . ' ID:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
 
     }
 

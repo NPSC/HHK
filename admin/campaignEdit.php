@@ -115,6 +115,7 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
     // if a new code
     if ($campCode == "vNew" || $campCode == '') {
 
+        $rptId = 0;
         $dbh->query("CALL IncrementCounter('codes', @num);");
         foreach ($dbh->query("SELECT @num") as $row) {
             $rptId = $row[0];

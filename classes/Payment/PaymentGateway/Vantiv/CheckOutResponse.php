@@ -6,6 +6,7 @@ use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\SysConst\{MpStatusValues, PayType, PaymentMethod, PaymentStatusCode};
+use PDO;
 
 /**
  * CheckoutResponse.php
@@ -40,6 +41,7 @@ class CheckOutResponse extends AbstractCreditResponse {
         $this->amount = $verifyCkOutResponse->getAuthorizedAmount();
         $this->payNotes = $payNotes;
         $this->setPaymentDate($payDate);
+        $this->paymentType = PayType::Charge;
     }
 
     /**
@@ -75,13 +77,14 @@ class CheckOutResponse extends AbstractCreditResponse {
 
     /**
      * Summary of receiptMarkup
-     * @param \PDO $dbh
+     * @param PDO $dbh
      * @param mixed $tbl
      * @return void
      */
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+    public function receiptMarkup(PDO $dbh, &$tbl) {
+        
+        $payTypeTitle = $this->getPaymentTypeTitle($dbh);
+        $tbl->addBodyTr(HTMLTable::makeTd(($payTypeTitle != "" ? $payTypeTitle : "Credit Card") . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
         $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
 
         if ($this->cardName != '') {

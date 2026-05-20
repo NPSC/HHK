@@ -2,14 +2,16 @@
 namespace HHK\House\Report;
 
 use DateTime;
+use HHK\ExcelHelper;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
+use HHK\sec\Labels;
 use HHK\SysConst\VolMemberType;
 
 class ItemReport
 {
 
-    public static function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId, $returnId, $labels) {
+    public static function doMarkupRow(array $fltrdFields, array $r, bool $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, HTMLTable &$tbl, ExcelHelper &$writer, $hdr, &$reportRows, $subsidyId, $returnId, Labels $labels) {
 
         $amt = $r['Amount'];
 
@@ -111,6 +113,7 @@ class ItemReport
 
             $g['Date'] = $r['Invoice_Date'];
 
+            $flds = [];
             foreach ($fltrdFields as $f) {
                 $flds[] = $g[$f[1]];
             }

@@ -269,9 +269,9 @@ class CustomRegisterForm {
         ]
     ];
 
-    public $settings;
+    public array $settings;
 
-    public $labels;
+    public Labels $labels;
 
     public $pageTitle = '';
 
@@ -484,7 +484,7 @@ class CustomRegisterForm {
      * Summary of SignatureLinesMkup
      * @param array $guests
      * @param mixed $primaryGuestId
-     * @param bool $includeIdName
+     * @param bool $insideAgreement
      * @return string
      */
     public function SignatureLinesMkup(array $guests, $primaryGuestId, bool $insideAgreement = false){

@@ -2,8 +2,10 @@
 
 namespace HHK\Payment\PaymentResponse;
 
+use HHK\Common;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\PaymentRS;
+use PDO;
 
 
 /**
@@ -65,6 +67,12 @@ abstract class AbstractPaymentResponse {
     protected $paymentType;
 
     /**
+     * Summary of paymentTypeTitle
+     * @var string
+     */
+    protected $paymentTypeTitle;
+
+    /**
      * Summary of idPayor
      * @var int
      */
@@ -116,7 +124,7 @@ abstract class AbstractPaymentResponse {
      * @param \PDO $dbh
      * @param mixed $tbl
      */
-    public abstract function receiptMarkup(\PDO $dbh, &$tbl);
+    public abstract function receiptMarkup(PDO $dbh, &$tbl);
 
     // One of the PaymentMethods
     /**
@@ -134,7 +142,7 @@ abstract class AbstractPaymentResponse {
      * @param int $attempts
      * @return void
      */
-    public function recordPayment(\PDO $dbh, $username, $attempts = 1, $parentPaymentId = 0) {
+    public function recordPayment(PDO $dbh, $username, $attempts = 1, $parentPaymentId = 0) {
 
         $payRs = new PaymentRS();
         $payRs->Amount->setNewVal($this->getAmount());
@@ -153,6 +161,24 @@ abstract class AbstractPaymentResponse {
 
         $this->setIdPayment(EditRS::insert($dbh, $payRs));
 
+    }
+
+    public function getPaymentTypeTitle(?PDO $dbh) {
+
+        if ($this->paymentTypeTitle != '') {
+            return $this->paymentTypeTitle;
+        }
+
+        if ($dbh instanceof PDO && $this->paymentType != '') {
+            $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
+
+            if (isset($payTypes[$this->paymentType])) {
+                $this->paymentTypeTitle = $payTypes[$this->paymentType][1];
+                return $payTypes[$this->paymentType][1];
+            }
+        }
+
+        return '';
     }
 
     // One of the PaymentStatusCodes
