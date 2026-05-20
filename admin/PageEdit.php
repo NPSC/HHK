@@ -69,6 +69,8 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
     }
 }
 
+$securityCodes = "";
+
 // create web site table
 $stmt = $dbh->query("Select * from web_sites");
 

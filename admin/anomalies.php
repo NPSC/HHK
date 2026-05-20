@@ -236,9 +236,9 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
     $txtIntro = '';
 
+    $file = "AddrExceptions";
+    $writer = new ExcelHelper($file);
     if ($isExcel) {
-        $file = "AddrExceptions";
-        $writer = new ExcelHelper($file);
         $writer->setAuthor($uname);
         $writer->setTitle("Address Exception Report");
 
@@ -296,6 +296,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
 
         // Fields
+        $flds = [];
         foreach ($rows[$i] as $k => $v) {
 
             if ($k == "Id" && !$isExcel) {
@@ -324,26 +325,6 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
 
     if ($isExcel) {
-
-        //Summary table
-        /* $sHdr = array(
-            "Filter"=>"string",
-            "Parameters"=>"string"
-        );
-        $sColWidths = array(
-            '50',
-            '50'
-        );
-
-        $sHdrStyle = $writer->getHdrStyle($sColWidths);
-
-        $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
-
-        $flds = array();
-        foreach ($sumaryRows as $key=>$val){
-            $flds[] = array($key, $val);
-        }
-        $writer->writeSheet($flds, "Constraints"); */
 
         $writer->download();
 

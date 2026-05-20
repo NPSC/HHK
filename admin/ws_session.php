@@ -18,6 +18,7 @@ require ("AdminIncludes.php");
 
 $uS = Session::getInstance();
 
+$events = [];
 $cmd = 'get';
 if (isset($_GET['cmd'])) {
     $cmd = filter_input(INPUT_GET, 'cmd');

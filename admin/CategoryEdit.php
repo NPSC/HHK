@@ -38,6 +38,7 @@ if ($tableName != '') {
 
 function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$volAlert) {
 
+    $rptId = 0;
     // Is the Code there?
     $gl = new GenLookupsRS();
     $gl->Table_Name->setStoredVal($tbl);
