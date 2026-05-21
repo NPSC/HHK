@@ -1211,7 +1211,7 @@ ORDER BY v.idVisit , v.Span;");
      * @param int $prefTokenId
      * @return string
      */
-    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $labels, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
+    protected static function showPaySelection(\PDO $dbh, $defaultPayType, array $payTypes, Labels $labels, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
         $externalPayTypes = self::getExternalPayTypeCodes($payTypes);
@@ -1243,13 +1243,13 @@ ORDER BY v.idVisit , v.Span;");
 
         // Check number
         $payTbl->addBodyTr(
-             HTMLTable::makeTd('Check Number: ', ['colspan'=>'2', 'class'=>'tdlabel'])
+             HTMLTable::makeTd(($payTypes[PayType::Check]['Description'] ?? 'Check') . ' Number: ', ['colspan'=>'2', 'class'=>'tdlabel'])
                 . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'txtCheckNum', 'size'=>'15', 'class'=>'hhk-feeskeys']))
                 , ['style'=>'display:none;', 'class'=>'hhk-cknum']);
 
         // Transfer account
         $payTbl->addBodyTr(
-                HTMLTable::makeTd('Transfer Acct:', ['colspan'=>'2', 'class'=>'tdlabel'])
+                HTMLTable::makeTd(($payTypes[PayType::Transfer]['Description'] ?? 'Transfer') . ' Acct:', ['colspan'=>'2', 'class'=>'tdlabel'])
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name'=>'txtTransferAcct', 'size'=>'15', 'class'=>'hhk-feeskeys']))
                 , ['style'=>'display:none;', 'class'=>'hhk-transfer']);
 
