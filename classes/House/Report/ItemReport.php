@@ -11,7 +11,7 @@ use HHK\SysConst\VolMemberType;
 class ItemReport
 {
 
-    public static function doMarkupRow(array $fltrdFields, array $r, bool $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, HTMLTable &$tbl, ExcelHelper &$writer, $hdr, &$reportRows, $subsidyId, $returnId, Labels $labels) {
+    public static function doMarkupRow(array $fltrdFields, array $r, bool $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, HTMLTable &$tbl, ?ExcelHelper &$writer, $hdr, &$reportRows, $subsidyId, $returnId, Labels $labels) {
 
         $amt = $r['Amount'];
 
@@ -109,7 +109,7 @@ class ItemReport
 
             $tbl->addBodyTr($tr);
 
-        } else {
+        } else if ($writer instanceof ExcelHelper) {
 
             $g['Date'] = $r['Invoice_Date'];
 
