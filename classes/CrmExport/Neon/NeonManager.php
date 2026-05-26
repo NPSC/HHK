@@ -1681,138 +1681,140 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         $customFields = $this->getMyCustomFields($dbh);
 
-        try {
+        if($this->getUserId() !== '' && Crypto::decryptMessage($this->getPassword()) !== '') {
 
-            $stmt = $dbh->query("select * from neon_lists;");
+            try {
 
-            while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $stmt = $dbh->query("select * from neon_lists;");
 
-                if (isset($list['HHK_Lookup']) === FALSE) {
-                    continue;
-                }
+                while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-                // Remove funds if not being used.
-                if ($list['HHK_Lookup'] == 'Fund' || $list['HHK_Lookup'] == 'Pay_Type' || $list['HHK_Lookup'] == 'Charge_Cards') {
-                    if (isset($customFields['Fund']) === false || $customFields['Fund'] == '') {
+                    if (isset($list['HHK_Lookup']) === FALSE) {
                         continue;
                     }
-                }
 
-                $neonItems = $this->listNeonType($list['Method'], $list['List_Name']);
-
-                switch ($list['HHK_Lookup']) {
-                    case 'Fund':
-                        $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
-                        $hhkLookup = [];
-
-                        while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                            $hhkLookup[$row["Code"]] = $row;
+                    // Remove funds if not being used.
+                    if ($list['HHK_Lookup'] == 'Fund' || $list['HHK_Lookup'] == 'Pay_Type' || $list['HHK_Lookup'] == 'Charge_Cards') {
+                        if (isset($customFields['Fund']) === false || $customFields['Fund'] == '') {
+                            continue;
                         }
-
-                        $hhkLookup['p'] = ['Code' => 'p', 0 => 'p', 'Description' => 'Payment', 1 => 'Payment', 'Substitute' => '', 2 => ''];
-                        break;
-                    case 'Pay_Type':
-                        $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
-                        $hhkLookup = [];
-
-                        while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                            $hhkLookup[$row['Code']] = $row;
-                        }
-                        break;
-                    default:
-                        $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $list['HHK_Lookup']));
-                        break;
-                }
-
-                $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
-                $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
-
-                $mappedItems = array();
-                foreach ($items as $i) {
-                    $mappedItems[$i['HHK_Type_Code']] = $i;
-                }
-
-                $neonOptions = [];
-                foreach ($neonItems as $nId => $nName) {
-                    $neonOptions[$nId] = ['0' => $nId, '1' => $nName];
-                }
-
-                $nTbl = new HTMLTable();
-                $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh("$crmTitle Mapping"));
-
-                foreach ($hhkLookup as $hhkCode => $hhkItem) {
-
-                    $neonTypeCode = '';
-                    if (isset($mappedItems[$hhkCode])) {
-                        $neonTypeCode = $mappedItems[$hhkCode]['Neon_Type_Code'];
                     }
 
-                    $hhkLabel = $hhkItem[1] ?? '';
+                    $neonItems = $this->listNeonType($list['Method'], $list['List_Name']);
 
-                    $nTbl->addBodyTr(
-                        HTMLTable::makeTd($hhkLabel)
-                        . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($neonOptions, $neonTypeCode), ['name' => 'sel' . $list['List_Name'] . '[' . $hhkCode . ']']))
-                    );
+                    switch ($list['HHK_Lookup']) {
+                        case 'Fund':
+                            $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
+                            $hhkLookup = [];
+
+                            while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
+                                $hhkLookup[$row["Code"]] = $row;
+                            }
+
+                            $hhkLookup['p'] = ['Code' => 'p', 0 => 'p', 'Description' => 'Payment', 1 => 'Payment', 'Substitute' => '', 2 => ''];
+                            break;
+                        case 'Pay_Type':
+                            $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
+                            $hhkLookup = [];
+
+                            while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
+                                $hhkLookup[$row['Code']] = $row;
+                            }
+                            break;
+                        default:
+                            $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+                            break;
+                    }
+
+                    $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
+                    $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
+
+                    $mappedItems = array();
+                    foreach ($items as $i) {
+                        $mappedItems[$i['HHK_Type_Code']] = $i;
+                    }
+
+                    $neonOptions = [];
+                    foreach ($neonItems as $nId => $nName) {
+                        $neonOptions[$nId] = ['0' => $nId, '1' => $nName];
+                    }
+
+                    $nTbl = new HTMLTable();
+                    $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh("$crmTitle Mapping"));
+
+                    foreach ($hhkLookup as $hhkCode => $hhkItem) {
+
+                        $neonTypeCode = '';
+                        if (isset($mappedItems[$hhkCode])) {
+                            $neonTypeCode = $mappedItems[$hhkCode]['Neon_Type_Code'];
+                        }
+
+                        $hhkLabel = $hhkItem[1] ?? '';
+
+                        $nTbl->addBodyTr(
+                            HTMLTable::makeTd($hhkLabel)
+                            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($neonOptions, $neonTypeCode), ['name' => 'sel' . $list['List_Name'] . '[' . $hhkCode . ']']))
+                        );
+                    }
+
+                    $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], ucfirst($list['List_Name'])), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
                 }
 
-                $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], ucfirst($list['List_Name'])), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
-            }
+                // Custom fields
+                $results = $this->neonWebServiceV2->getCustomFields('Account');
+                $cfTbl = new HTMLTable();
 
-            // Custom fields
-            $results = $this->neonWebServiceV2->getCustomFields('Account');
-            $cfTbl = new HTMLTable();
+                $cfTbl->addHeaderTr(HTMLTable::makeTh('HHK Field') . HTMLTable::makeTh("$crmTitle Name"));
 
-            $cfTbl->addHeaderTr(HTMLTable::makeTh('HHK Field') . HTMLTable::makeTh("$crmTitle Name"));
-
-            foreach ($customFields as $k => $v) {
-                $found = false;
-                foreach ($results as $r) {
-                    if ($r['name'] == $k) {
-                        $cfTbl->addBodyTr(HTMLTable::makeTd($k) . HTMLTable::makeTd($r['displayName']));
-                        $found = true;
-                        break;
+                foreach ($customFields as $k => $v) {
+                    $found = false;
+                    foreach ($results as $r) {
+                        if ($r['name'] == $k) {
+                            $cfTbl->addBodyTr(HTMLTable::makeTd($k) . HTMLTable::makeTd($r['displayName']));
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found) {
+                        $cfTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . $k, ['title'=>"Field not found in $crmTitle"]) . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['type' => 'checkbox', 'name' => "chkCreateCustomField[{$k}]", 'id' => "chkCreate_{$k}", 'value' => '1']) . HTMLContainer::generateMarkup('label', 'Create', ['for' => "chkCreate_{$k}"])), ['class' =>'ui-state-error']);
                     }
                 }
-                if (!$found) {
-                    $cfTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . $k, ['title'=>"Field not found in $crmTitle"]) . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['type' => 'checkbox', 'name' => "chkCreateCustomField[{$k}]", 'id' => "chkCreate_{$k}", 'value' => '1']) . HTMLContainer::generateMarkup('label', 'Create', ['for' => "chkCreate_{$k}"])), ['class' =>'ui-state-error']);
+
+                $markup .= HTMLContainer::generateMarkup('div', $cfTbl->generateMarkup([], 'Custom Fields'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
+
+                // Sources
+                $stmt = $dbh->query("Select * from neon_type_map where List_Name = 'sources' and Neon_Type_Name = '" . self::SOURCE . "'");
+                $neonSourceRow = $stmt->fetch(\PDO::FETCH_ASSOC);
+                $mappedSourceId = isset($neonSourceRow['Neon_Type_Code']) ? $neonSourceRow['Neon_Type_Code'] : null;
+                $results = $this->neonWebServiceV2->getSources();
+                $sTbl = new HTMLTable();
+                $sTbl->addHeaderTr(HTMLTable::makeTh('Source') . HTMLTable::makeTh("$crmTitle ID"));
+
+                $neonSourceId = false;
+                foreach ($results as $v) {
+                    if($v['name'] == self::SOURCE) {
+                        $neonSourceId = $v['id'];
+                        continue;
+                    }
+
+                    $sTbl->addBodyTr(HTMLTable::makeTd($v['name']) . HTMLTable::makeTd($v['id']));
+
                 }
-            }
 
-            $markup .= HTMLContainer::generateMarkup('div', $cfTbl->generateMarkup([], 'Custom Fields'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
-
-            // Sources
-            $stmt = $dbh->query("Select * from neon_type_map where List_Name = 'sources' and Neon_Type_Name = '" . self::SOURCE . "'");
-            $neonSourceRow = $stmt->fetch(\PDO::FETCH_ASSOC);
-            $mappedSourceId = isset($neonSourceRow['Neon_Type_Code']) ? $neonSourceRow['Neon_Type_Code'] : null;
-            $results = $this->neonWebServiceV2->getSources();
-            $sTbl = new HTMLTable();
-            $sTbl->addHeaderTr(HTMLTable::makeTh('Source') . HTMLTable::makeTh("$crmTitle ID"));
-
-            $neonSourceId = false;
-            foreach ($results as $v) {
-                if($v['name'] == self::SOURCE) {
-                    $neonSourceId = $v['id'];
-                    continue;
+                if($neonSourceId === false) {
+                    $sTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . self::SOURCE, ['title'=>"Source not found in $crmTitle"]) . HTMLTable::makeTd('Not Found'), ['class' =>'ui-state-error']);
+                }else if ($mappedSourceId != $neonSourceId) {
+                    $sTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . self::SOURCE, ['title'=>"Source not mapped in HHK"]) . HTMLTable::makeTd('Found but not mapped - click Save to automatically map'), ['class' =>'ui-state-error']);
+                }else{
+                    $sTbl->addBodyTr(HTMLTable::makeTd(self::SOURCE) . HTMLTable::makeTd($neonSourceId));
                 }
 
-                $sTbl->addBodyTr(HTMLTable::makeTd($v['name']) . HTMLTable::makeTd($v['id']));
+                $markup .= HTMLContainer::generateMarkup('div', $sTbl->generateMarkup([], 'Sources'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
 
+            } catch (\Exception $pe) {
+                $markup .= HTMLContainer::generateMarkup('h4', "Transfer Error: " .$pe->getMessage(), array('style'=>'margin-left:200px;color:red;'));
             }
-
-            if($neonSourceId === false) {
-                $sTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . self::SOURCE, ['title'=>"Source not found in $crmTitle"]) . HTMLTable::makeTd('Not Found'), ['class' =>'ui-state-error']);
-            }else if ($mappedSourceId != $neonSourceId) {
-                $sTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', ['class' =>'ui-icon ui-icon-alert']) . self::SOURCE, ['title'=>"Source not mapped in HHK"]) . HTMLTable::makeTd('Found but not mapped - click Save to automatically map'), ['class' =>'ui-state-error']);
-            }else{
-                $sTbl->addBodyTr(HTMLTable::makeTd(self::SOURCE) . HTMLTable::makeTd($neonSourceId));
-            }
-
-            $markup .= HTMLContainer::generateMarkup('div', $sTbl->generateMarkup([], 'Sources'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
-
-        } catch (\Exception $pe) {
-            $markup .= HTMLContainer::generateMarkup('h4', "Transfer Error: " .$pe->getMessage(), array('style'=>'margin-left:200px;color:red;'));
         }
-
         return $this->showGatewayCredentials() . HTMLContainer::generateMarkup('div', $markup, ['class'=>'hhk-flex mt-3']);
     }
 
@@ -1820,6 +1822,12 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         $result = '';
         $crmRs = new CmsGatewayRS();
+        $crmRs->idcms_gateway->setStoredVal($this->getGatewayId());
+        $rows = EditRS::select($dbh, $crmRs, [$crmRs->idcms_gateway]);
+
+        if(count($rows) == 1){
+            EditRS::loadRow($rows[0], $crmRs);
+        }
 
         $rags = [
             '_txtuserId'   => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
@@ -1838,11 +1846,11 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
             $pw = htmlspecialchars($post['_txtpwd']);
 
-            if ($pw != '' && $this->getPassword() != $pw) {
+            if ($pw !== '' && $this->getPassword() != $pw) {
                 $pw = Crypto::encryptMessage($pw);
             }
 
-            $crmRs->password->setnewVal($pw);
+            $crmRs->password->setNewVal($pw);
         }
 
         // Endpoint URL
@@ -1868,14 +1876,13 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         } else {
             // Update
-
-            $crmRs->Gateway_Name->setStoredVal($this->getServiceName());
-            $rc = EditRS::update($dbh, $crmRs, [$crmRs->Gateway_Name]);
+            $crmRs->idcms_gateway->setStoredVal($this->getGatewayId());
+            $rc = EditRS::update($dbh, $crmRs, [$crmRs->idcms_gateway]);
 
             if ($rc > 0) {
                 // something updated
                 EditRS::updateStoredVals($crmRs);
-                $result = 'New CMS gateway Updated.  ';
+                $result = 'CMS gateway Updated.  ';
             }
         }
 
@@ -1890,6 +1897,10 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         // credentials
         $this->saveCredentials($dbh, $uS->username);
 
+        if($this->getUserId() == '' || Crypto::decryptMessage($this->getPassword()) == '') {
+            return ["type"=>"success", "text"=>$this->getServiceTitle() . " settings saved."];
+        }
+        
         // Handle checkboxes for creating missing custom fields
         $createControl = filter_input_array(INPUT_POST, ['chkCreateCustomField' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY]]);
         if (!empty($createControl['chkCreateCustomField'])) {
