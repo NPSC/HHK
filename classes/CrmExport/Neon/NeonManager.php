@@ -1887,6 +1887,10 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         }
 
         $this->loadCredentials($crmRs);
+
+        //reload the web service with new credentials.
+        $this->neonWebServiceV2 = new NeonWebService($dbh, $this->getUserId(), Crypto::decryptMessage($this->getPassword()));
+
         return $result;
     }
 

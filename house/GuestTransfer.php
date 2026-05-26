@@ -566,7 +566,7 @@ function createKeyMap(\PDO $dbh) {
     $ddiv = HTMLContainer::generateMarkup('div', $diagKeyTable->generateMarkup());
 
     $infoDiv = HTMLContainer::generateMarkup('div', 
-    'Due to HIPAA compliance, Hospitality Housekeeper cannot transfer Diagnosis and Hospital information directly. The following codes will be sent instead.'
+    'Due to HIPAA compliance, Hospitality HouseKeeper cannot transfer Diagnosis and Hospital information directly. The following codes will be sent instead.'
     , array('class'=>'p-2 mb-3 ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight'));
     
     return  $infoDiv . HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys', 'class'=>'hhk-flex'));
