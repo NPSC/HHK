@@ -1,6 +1,7 @@
 <?php
 
 
+use HHK\Common;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Request\Reports\CcReconciliationReport;
 use HHK\Payment\PaymentGateway\Deluxe\Request\Reports\CcTransactionReport;
@@ -318,7 +319,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 		$whType = '';
 		$payTypeText = '';
-        $payTypes = $filter->getPayTypes();
+        $payTypes = $payTypes = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order');
         $standardMethodIds = [];
         $externalTypeCodes = [];
 		foreach ($filter->getSelectedPayTypes() as $s) {
