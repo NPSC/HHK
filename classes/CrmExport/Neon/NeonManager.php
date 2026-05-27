@@ -184,9 +184,9 @@ class NeonManager extends AbstractExportManager {
                         // Update the individual type
                         try{
                             $retrieveResult = $this->retrieveRemoteAccount($result['searchResults'][0]['Account ID']);
-                            $f['Result'] .= $this->updateRemoteMember($dbh, $retrieveResult, $r['HHK_ID']);
+                            $f['Result'] = $this->updateRemoteMember($dbh, $retrieveResult, $r['HHK_ID']);
                         } catch (RuntimeException $hex) {
-                            $f['Result'] .= 'Update Individual Type Error: ' . $hex->getMessage();
+                            $f['Result'] = 'Update Individual Type Error: ' . $hex->getMessage();
                             continue;
                         }
                     }
@@ -319,7 +319,7 @@ class NeonManager extends AbstractExportManager {
         NeonHelper::fillPcName($r, $param);
 
         // Address
-        if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
+        if (!empty($r['addressLine1']) || !empty($r['phone1'])) {
 
             if ($updateAddr) {
                 $r['isPrimaryAddress'] = 'true';
@@ -415,7 +415,7 @@ class NeonManager extends AbstractExportManager {
 
 
         // Address
-        if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
+        if (!empty($r['addressLine1']) || !empty($r['phone1'])) {
 
             $r['isPrimaryAddress'] = 'true';
             NeonHelper::fillPcAddr($r, $param);

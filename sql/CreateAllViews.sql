@@ -1299,7 +1299,7 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         `n`.`Name_Nickname` AS `preferredName`,
         IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'),
                 '') AS `dob`,
-        IFNULL(DATE_FORMAT(`n`.`Date_Deceased`, '%Y-%m-%d'),
+        IFNULL(DATE_FORMAT(`n`.`Date_Deceased`, '%m/%d/%Y'),
                 '') AS `Deceased_Date`,
         (CASE
             WHEN (`n`.`Member_Status` = 'd') THEN 'true'
@@ -1327,18 +1327,7 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         IFNULL(`na`.`Address_2`, '') AS `addressLine2`,
         IFNULL(`na`.`City`, '') AS `city`,
         IFNULL(`na`.`County`, '') AS `county`,
-        (CASE
-            WHEN (`cc`.`External_Id` > 2) THEN `na`.`State_Province`
-            ELSE ''
-        END) AS `province`,
-        (CASE
-            WHEN
-                ((`cc`.`External_Id` = 1)
-                    OR (`cc`.`External_Id` = 2))
-            THEN
-                `na`.`State_Province`
-            ELSE ''
-        END) AS `state.code`,
+        IFNULL(`na`.`State_Province`, '') AS `stateProvince.code`,
         IFNULL(`cc`.`External_Id`, '') AS `country.id`,
         IFNULL(`na`.`Postal_Code`, '') AS `zipCode`,
         IFNULL(`ni`.`Neon_Type_Code`, '') AS `individualType.id`,

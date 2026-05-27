@@ -77,13 +77,7 @@ final class NeonHelper {
         );
 
         $simpleNonEmptyCodes = array(
-            'dob',
-            'phone1',
-            'phone1Type',
-            'phone2',
-            'phone2Type',
-            'phone3',
-            'phone3Type',
+            'dob'
         );
 
         foreach ($simpleCodes as $c) {
@@ -92,6 +86,11 @@ final class NeonHelper {
             }
         }
 
+        // deceased is boolean
+        if (isset($r['deceased'])) {
+            $param['individualAccount']['primaryContact']['deceased'] = filter_var($r['deceased'], FILTER_VALIDATE_BOOLEAN);
+        }
+        
         // gender.name maps to a nested path
         if (isset($r['gender.code']) && $r['gender.code'] != '') {
             $param['individualAccount']['primaryContact']['gender']['code'] = $r['gender.code'];
@@ -175,11 +174,19 @@ final class NeonHelper {
             'addressLine3',
             'addressLine4',
             'city',
-            'province',
+            'county',
+            'stateProvince',
             'zipCode',
             'zipCodeSuffix',
             'startDate',
             'endDate',
+
+            'phone1',
+            'phone1Type',
+            'phone2',
+            'phone2Type',
+            'phone3',
+            'phone3Type'
         );
 
         $address = [];
@@ -202,10 +209,10 @@ final class NeonHelper {
         }
 
         // state.code
-        if (isset($r['state.code'])) {
-            $address['state']['code'] = $r['state.code'];
-        } else if (isset($origAddresses[0]['state']['code'])) {
-            $address['state']['code'] = $origAddresses[0]['state']['code'];
+        if (isset($r['stateProvince.code'])) {
+            $address['stateProvince']['code'] = $r['stateProvince.code'];
+        } else if (isset($origAddresses[0]['stateProvince']['code'])) {
+            $address['stateProvince']['code'] = $origAddresses[0]['stateProvince']['code'];
         }
 
         // country.id
