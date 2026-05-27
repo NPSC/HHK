@@ -184,7 +184,7 @@ final class NeonHelper {
 
         $address = [];
 
-        $origAddresses = $param['individualAccount']['primaryContact']['addresses'];
+        $origAddresses = $param['individualAccount']['primaryContact']['addresses'] ?? [];
 
         foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
