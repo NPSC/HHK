@@ -87,6 +87,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`,`Code`, `Description`,`Substitute
 
 insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listGenders', 'genders', 'gender', 'Gender');
 insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listPrefixes', 'prefixes', 'prefix', 'Name_Prefix');
+insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listRelationTypes', 'relationTypes', 'relationType', 'Patient_Rel_Type');
 
 -- add guest transfer web service
 call `new_webpage`(

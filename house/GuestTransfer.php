@@ -17,6 +17,7 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Labels;
 use HHK\CrmExport\RelationshipMapper;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\ExportManagerInterface;
 
 /**
  * GuestTransfer.php
@@ -329,7 +330,8 @@ LIMIT 500");
     // Get Neon relationship code list
     $nstmt = $dbh->query("Select * from neon_lists where `Method` = 'account/listRelationTypes';");
     $method = $nstmt->fetchAll(PDO::FETCH_ASSOC);
-    $neonRelList = getNeonTypes($CmsManager, $method[0]);
+    
+    $neonRelList = count($method) > 0 ? getNeonTypes($CmsManager, $method[0]) : [];
 
     foreach ($guestIds as $g) {
 
@@ -423,7 +425,8 @@ LIMIT 500");
                 .HTMLTable::makeTd(
                     HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($neonRelList, $g['Guest to PG'], TRUE),
-                        array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idname'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp)))
+                        array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idname'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp))
+                    . (count($neonRelList) == 0 ? HTMLContainer::generateMarkup('span', 'No Neon relationships have been mapped.', array('class'=>'ml-2 ui-corner-all ui-state-highlight')) : ''))
                 , array('class'=>'hhk-'.$idp, 'style'=>$rowStyle));
         }
 
@@ -517,14 +520,19 @@ function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
  * @param mixed $list
  * @return array<array>
  */
-function getNeonTypes(NeonManager $CmsManager, $list): array {
+function getNeonTypes(ExportManagerInterface $CmsManager, array $list): array {
 
     $neonList = [];
 
-    $rawList = $CmsManager->listNeonType($list['Method'], $list['List_Name']);
+    if($CmsManager instanceof NeonManager){
 
-    foreach ($rawList as $k => $v) {
-        $neonList[$k] = [0 => $k, 1 => $v];
+        $rawList = $CmsManager->listNeonType($list['Method'], $list['List_Name']);
+
+        foreach ($rawList as $k => $v) {
+            $neonList[$k] = [0 => $k, 1 => $v];
+        }
+    } else {
+        throw new RuntimeException("Failed to fetch Neon list: " . $list['List_Name'] . ". The configured CRM manager is not Neon.");
     }
 
     return $neonList;
@@ -535,7 +543,7 @@ function getNeonTypes(NeonManager $CmsManager, $list): array {
  * @param PDO $dbh
  * @return string
  */
-function createKeyMap(\PDO $dbh) {
+function createKeyMap(\PDO $dbh): string {
 
     // get session instance
     $uS = Session::getInstance();

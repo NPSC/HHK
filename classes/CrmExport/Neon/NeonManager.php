@@ -1482,7 +1482,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         ];
     }
 
-    protected function loadSourceDB(\PDO $dbh, $idName, string $view, $extraSourceCols = []) {
+    protected function loadSourceDB(\PDO $dbh, string|int $idName, string $view, $extraSourceCols = []) {
 
          $parm = intval($idName, 10);
 
@@ -1518,7 +1518,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
     }
 
-    public function setExcludeMembers(\PDO $dbh, $psgIds): array {
+    public function setExcludeMembers(\PDO $dbh, array $psgIds): array {
 
         $uS = Session::getInstance();
 
