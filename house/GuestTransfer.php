@@ -189,63 +189,63 @@ function searchVisits(\PDO $dbh, $start, $end, $maxGuests, AbstractExportManager
     $rows = array();
     $guestIds = [];
     $visits = [];
-    $visitIds = [];
-    $psgs = [];
 
-
-    $stmt = $dbh->query("SELECT
-    s.idStays,
-    s.idVisit,
-    s.Visit_Span,
-    IFNULL(n.External_Id, '') AS `accountId`,
-    s.idName AS `hhkId`,
+    // Outer query: all members of PSGs where at least one member stayed >= 1 night
+    // overlapping the requested period. Stays are not date-constrained so Start/End
+    // 1st/Last Visit reflect full history.
+    $stmt = $dbh->prepare("SELECT
+    ng.idName AS `hhkId`,
     ng.Relationship_Code,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(n.Name_Full, '') AS `Name`,
     IFNULL(h.Title, '') AS `Hospital`,
     IFNULL(g.Description, '') AS `Diagnosis`,
-    IFNULL(n.Name_Full, '') as `Name`,
+    hs.idPsg,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) AS `Address`,
+    v.idPrimaryGuest,
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
-    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
-    v.idPrimaryGuest,
-    hs.idPsg,
-    hs.idPatient,
-    s.Recorded
+    IFNULL(TO_DAYS(s.Span_End_Date) - TO_DAYS(s.Span_Start_Date), 0) AS `Nite_Counter`
 FROM
-    stays s
-        LEFT JOIN
-    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-        LEFT JOIN
-    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-        LEFT JOIN
-	name_guest ng on s.idName = ng.idName and hs.idPsg = ng.idPsg
-		LEFT JOIN
-    `name` n ON s.idName = n.idName
-        LEFT JOIN
-    hospital h on hs.idHospital = h.idHospital
-        LEFT JOIN
-    gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
-        LEFT JOIN
-    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+    name_guest ng
+        JOIN hospital_stay hs ON ng.idPsg = hs.idPsg
+        JOIN visit v ON v.idHospital_stay = hs.idHospital_stay
+        JOIN name n ON n.idName = ng.idName
+        LEFT JOIN stays s ON s.idName = ng.idName
+            AND s.idVisit = v.idVisit
+            AND s.Visit_Span = v.Span
+            AND s.On_Leave = 0
+            AND s.Status != 'a'
+        LEFT JOIN name_address na ON n.idName = na.idName AND n.Preferred_Mail_Address = na.Purpose
+        LEFT JOIN hospital h ON hs.idHospital = h.idHospital
+        LEFT JOIN gen_lookups g ON g.Table_Name = 'Diagnosis' AND g.Code = hs.Diagnosis
 WHERE
-    s.On_Leave = 0
-    AND s.`Status` != 'a'
-    -- AND s.`Recorded` = 0
-    AND n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
-    AND n.Member_Status = '" . MemStatus::Active ."'
-    AND DATE(s.Span_End_Date) < DATE('$end')
-    AND datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) > 0
+    n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
+    AND n.Member_Status = '" . MemStatus::Active . "'
+    AND ng.idPsg IN (
+        SELECT DISTINCT hs2.idPsg
+        FROM stays s2
+            JOIN visit v2 ON s2.idVisit = v2.idVisit AND s2.Visit_Span = v2.Span
+            JOIN hospital_stay hs2 ON v2.idHospital_stay = hs2.idHospital_stay
+        WHERE s2.On_Leave = 0
+            AND s2.Status != 'a'
+            AND DATE(s2.Span_Start_Date) < DATE(:end)
+            AND DATE(s2.Span_End_Date) > DATE(:start)
+            AND DATEDIFF(DATE(s2.Span_End_Date), DATE(s2.Span_Start_Date)) > 0
+    )
 ORDER BY hs.idPsg
 LIMIT 500");
+
+    $stmt->bindParam(':start', $start);
+    $stmt->bindParam(':end', $end);
+
+    $stmt->execute();
 
     if ($stmt->rowCount() == 0) {
         return FALSE;
     }
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-        $visitIds[$r['idVisit']] = $r['idVisit'];
-        $psgs[$r['idPsg']] = $r['idPsg'];
 
         if (isset($guestIds[ $r['hhkId'] ])) {
 
@@ -254,42 +254,42 @@ LIMIT 500");
                 $startDT = new \DateTime($r['Start_Date']);
                 $endDT = new \DateTime($r['End_Date']);
 
-                if ($guestIds[ $r['hhkId'] ]['Start 1st Visit'] > $startDT ) {
+                if ($guestIds[ $r['hhkId'] ]['Start 1st Visit'] === NULL || $guestIds[ $r['hhkId'] ]['Start 1st Visit'] > $startDT) {
                     $guestIds[ $r['hhkId'] ]['Start 1st Visit'] = $startDT;
                 }
 
-                if ($guestIds[ $r['hhkId'] ]['End Last Visit'] < $endDT ) {
+                if ($guestIds[ $r['hhkId'] ]['End Last Visit'] === NULL || $guestIds[ $r['hhkId'] ]['End Last Visit'] < $endDT) {
                     $guestIds[ $r['hhkId'] ]['End Last Visit'] = $endDT;
                 }
 
                 $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
             }
 
-            if ( $r['hhkId'] == $r['idPrimaryGuest']) {
-                $visits[$r['hhkId']] = array('Relation_Code'=>$r['Relationship_Code'], 'idPsg'=>$r['idPsg'], 'Address'=>$r['Address']);
-                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], array('style'=>'color:#ae00d1;'));
+            if ($r['hhkId'] == $r['idPrimaryGuest'] && !isset($visits[ $r['hhkId'] ])) {
+                $visits[ $r['hhkId'] ] = ['Relation_Code' => $r['Relationship_Code'], 'idPsg' => $r['idPsg'], 'Address' => $r['Address']];
+                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], ['style' => 'color:#ae00d1;']);
             }
 
         } else {
 
-            $guestIds[ $r['hhkId'] ] = array(
+            $guestIds[ $r['hhkId'] ] = [
                 'Account Id' => $r['accountId'],
                 'HHK Id' => $r['hhkId'],
                 'Name' => $r['Name'],
                 'Diagnosis' => $r['Diagnosis'],
                 'Hospital' => $r['Hospital'],
-                'Start 1st Visit' => new \DateTime($r['Start_Date']),
-                'End Last Visit' => new \DateTime($r['End_Date']),
+                'Start 1st Visit' => $r['Start_Date'] !== '' ? new \DateTime($r['Start_Date']) : NULL,
+                'End Last Visit' => $r['End_Date'] !== '' ? new \DateTime($r['End_Date']) : NULL,
                 'Nights' => $r['Nite_Counter'],
                 'Relation_Code' => $r['Relationship_Code'],
                 'Address' => $r['Address'],
                 'PG Id' => $r['idPrimaryGuest'],
-                'idPsg'=> $r['idPsg']
-            );
+                'idPsg' => $r['idPsg'],
+            ];
 
-            if ( $r['hhkId'] == $r['idPrimaryGuest']) {
-                $visits[$r['hhkId']] = array('Relation_Code'=>$r['Relationship_Code'], 'idPsg'=>$r['idPsg'], 'Address'=>$r['Address']);
-                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], array('style'=>'color:#ae00d1;'));
+            if ($r['hhkId'] == $r['idPrimaryGuest']) {
+                $visits[ $r['hhkId'] ] = ['Relation_Code' => $r['Relationship_Code'], 'idPsg' => $r['idPsg'], 'Address' => $r['Address']];
+                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], ['style' => 'color:#ae00d1;']);
             }
 
             if ($maxGuests-- <= 0) {
@@ -298,31 +298,6 @@ LIMIT 500");
         }
 
     }  // End of while
-
-    // Get non-visitors
-    $idNames = getNonVisitors($dbh, $visitIds);
-
-    if (count($idNames) > 0) {
-
-        foreach ($idNames as $r) {
-
-            // add them to the list of guests
-            $guestIds[ $r['hhkId'] ] = array(
-                'Account Id' => $r['accountId'],
-                'HHK Id' => $r['hhkId'],
-                'Name' => $r['Name'],
-                'Diagnosis' => $r['Diagnosis'],
-                'Hospital' => $r['Hospital'],
-                'Start 1st Visit' => NULL,
-                'End Last Visit' => NULL,
-                'Nights' => '',
-                'Relation_Code' => $r['Relationship_Code'],
-                'Address' => $r['Address'],
-                'PG Id' => $r['idPrimaryGuest'],
-                'idPsg'=> $r['idPsg']
-            );
-        }
-    }
 
 
     $rMapper = new RelationshipMapper($dbh);
@@ -387,7 +362,7 @@ LIMIT 500");
 
     // Show table
     $tbl = new HTMLTable();
-    $tbl->addHeaderTr(HTMLTable::makeTh('PSG').HTMLTable::makeTh('HHK Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Address').HTMLTable::makeTh('Diagnosis').HTMLTable::makeTh('Hospital').HTMLTable::makeTh('Start 1st Visit')
+    $tbl->addHeaderTr(HTMLTable::makeTh('PSG').HTMLTable::makeTh('HHK Id').HTMLTable::makeTh('External Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Address').HTMLTable::makeTh('Diagnosis').HTMLTable::makeTh('Hospital').HTMLTable::makeTh('Start 1st Visit')
         .HTMLTable::makeTh('End Last Visit').HTMLTable::makeTh('Nights').HTMLTable::makeTh('PG Id').HTMLTable::makeTh('Guest to Patient').HTMLTable::makeTh('PG to Patient').HTMLTable::makeTh('Guest to PG'));
 
     foreach ($rows as $idp => $r) {
@@ -412,6 +387,7 @@ LIMIT 500");
 
             $tbl->addBodyTr($td
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $g['HHK Id'], array('href'=>'GuestEdit.php?id=' . $g['HHK Id'])))
+                .HTMLTable::makeTd($g['Account Id'])
                 .HTMLTable::makeTd($g['Name'])
                 .HTMLTable::makeTd($g['Address'])
                 .HTMLTable::makeTd($g['Diagnosis'])
