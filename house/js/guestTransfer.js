@@ -296,7 +296,7 @@ function throttleVisits() {
             const props = {'checked': false, 'disabled': true};
             const rels = [];
 
-            $('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+            $('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray').find('td.psgCBs').addClass('hhk-loading').css('background-color', 'lightgray');
 
             $(this).prop(props).end();
 
@@ -314,7 +314,7 @@ function throttleVisits() {
 
     if (donut) {
         stopTransfer = true;
-        $visitButton.val('Start Visit Transfers');
+        $visitButton.val('Start PSG Transfers');
     }
 }
 
@@ -519,6 +519,8 @@ function transferVisits(idPsg, rels) {
         }
 
         if (incmg.visits) {
+
+            $('.hhk-' + idPsg + ' td.psgCBs').removeClass('hhk-loading');
 
             if ($vTbl.length === 0) {
 
@@ -1016,7 +1018,7 @@ $(document).ready(function () {
 
         $visitButton
                 .button()
-                .val('Start Visit Transfers')
+                .val('Start PSG Transfers')
                 .show()
                 .click(function () {
 

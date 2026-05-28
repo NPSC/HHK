@@ -372,12 +372,14 @@ LIMIT 500");
 
             if ($first) {
                 $first = FALSE;
-                $td = HTMLTable::makeTd( HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'style'=>'margin-right:3px;'))
-                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp, 'title'=>'Check to include in the transfer.'))
-                    .'&#32;&#124;&#32;'
-                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-exPsg', 'name'=>'cbExPSG'.$idp, 'data-idpsg'=>$idp, 'style'=>'margin-right:3px;', 'title'=>'Check to permanently exclude from Neon.'))
-                    .HTMLContainer::generateMarkup('label', 'Excld', array('for'=>'cbExPSG'.$idp))
-                    , array('rowspan'=>count($rows[$idp]), 'style'=>'vertical-align:top;'));
+                $td = HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup('div',
+                        HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs mr-1', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp, 'title'=>'Check to include in the transfer.'))
+                        .HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'class'=>'mr-3'))
+                        .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-exPsg mr-1', 'name'=>'cbExPSG'.$idp, 'data-idpsg'=>$idp, 'title'=>'Check to permanently exclude from Neon.'))
+                        .HTMLContainer::generateMarkup('label', 'Excld', array('for'=>'cbExPSG'.$idp))
+                    , ['class'=>'hhk-flex align-items-center'])
+                    , array('rowspan'=>count($rows[$idp]), 'style'=>'vertical-align:top;', 'class'=>'psgCBs'));
 
                 $rowStyle = "border-top: 2px solid #2E99DD;";
             } else {
@@ -556,93 +558,42 @@ function createKeyMap(\PDO $dbh): string {
     return  $infoDiv . HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys', 'class'=>'hhk-flex'));
 }
 
+
+// Setups for the page.
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+$filter->loadSelectedTimePeriod();
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
+
 $mkTable = 'x';
 $dataTable = '';
 $paymentsTable = '';
 $settingstable = '';
-$searchTabel = '';
-$year = date('Y');
-$months = [date('n')];     // logically overloaded.
-$txtStart = '';
-$txtEnd = '';
-$start = '';
-$end = '';
+$searchTable = '';
 $errorMessage = '';
-$calSelection = '19';
 $noRecordsMsg = '';
 $maxGuests = 15;  // maximum guests to process for each post.
 $btnVisits = '';
 $btnGetKey = '';
 $dboxMarkup = '';
 $btnPayments = '';
+$start = '';
+$end = '';
 
 
 // Process report.
 if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetPayments') || filter_has_var(INPUT_POST, 'btnGetVisits')) {
 
-    // gather input
- // Input arguements
-    $rags = [
-        'selCalendar'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_REQUIRE_SCALAR],
-        'selIntMonth'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
-        'selIntYear'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_REQUIRE_SCALAR],
-        'stDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-        'enDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-    ];
+    //get selected time period
+    $start = $filter->getReportStart();
+    $end = $filter->getQueryEnd();
 
-    $inputs = filter_input_array(INPUT_POST, $rags);
+    // Create settings markup
+    $sTbl = new HTMLTable();
+    $sTbl->addBodyTr(HTMLTable::makeTh('Guest Selection Timeframe', ['colspan' => '4']));
+    $sTbl->addBodyTr(HTMLTable::makeTd('From', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+            
 
-    $months = $inputs['selIntMonth'];
-    $year = intval($inputs['selIntYear'], 10);
-    $txtStart = $inputs['stDate'];
-    $txtEnd = $inputs['enDate'];
-    $selCal = intval($inputs['selCalendar'], 10);
-
-    switch ($selCal) {
-        case 20:
-            $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-            $startDT = new DateTime($year . '-01-01');
-            $startDT->sub($adjustPeriod);
-            $start = $startDT->format('Y-m-d');
-
-            $endDT = new DateTime(($year + 1) . '-01-01');
-            $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
-            break;
-        case 21:
-            $startDT = new DateTime($year . '-01-01');
-            $start = $startDT->format('Y-m-d');
-
-            $end = ($year + 1) . '-01-01';
-            break;
-        case 18:
-            if ($txtStart != '') {
-                $startDT = new DateTime($txtStart);
-                $start = $startDT->format('Y-m-d');
-            }
-
-            if ($txtEnd != '') {
-                $endDT = new DateTime($txtEnd);
-                $end = $endDT->format('Y-m-d');
-            }
-            break;
-        case 22:
-            $start = $year . '-01-01';
-
-            $endDT = new DateTime($year . date('m') . date('d'));
-            $endDT->add(new DateInterval('P1D'));
-            $end = $endDT->format('Y-m-d');
-            break;
-        default:
-            $interval = 'P' . count($months) . 'M';
-            $month = $months[0];
-            $start = $year . '-' . $month . '-01';
-
-            $endDate = new DateTime($start);
-            $endDate->add(new DateInterval($interval));
-
-            $end = $endDate->format('Y-m-d');
-            break;
-    }
 
     // Get the possible people to transfer.
     if (filter_has_var(INPUT_POST, 'btnHere')) {
@@ -658,12 +609,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 
             $dataTable = $results['mkup'];
 
-
-            // Create settings markup
-            $sTbl = new HTMLTable();
-            $sTbl->addBodyTr(HTMLTable::makeTh('Guest Selection Timeframe', ['colspan' => '4']));
-            $sTbl->addBodyTr(HTMLTable::makeTd('From', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-            $settingstable = $sTbl->generateMarkup(['style' => 'float:left;']);
+            $settingstable = $sTbl->generateMarkup();
 
             // Create search criteria markup
             $searchCriteria = $CmsManager->getSearchFields($dbh, $CmsManager::SearchViewName);
@@ -676,7 +622,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             $scTbl = new HTMLTable();
             $scTbl->addHeaderTr(HTMLTable::makeTh($CmsManager->getServiceTitle() . ' Search Criteria', ['colspan' => count($searchCriteria)]));
             $scTbl->addBodyTr($tr);
-            $searchTabel = $scTbl->generateMarkup(['style' => 'float:left; margin-left:2em;']);
+            $searchTable = $scTbl->generateMarkup(['class' => 'ml-4']);
 
             // Call different js routines by CMS manager name.
              if ($CmsManager->getServiceName() == AbstractExportManager::CMS_SF) {
@@ -700,6 +646,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     } else if (filter_has_var(INPUT_POST, 'btnGetVisits')) {
 
         if($CmsManager instanceof NeonManager){
+            $settingstable = $sTbl->generateMarkup();
             $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $CmsManager);
         }else{
             $noRecordsMsg = "Transferring Visit data is only available on " . ucfirst(AbstractExportManager::CMS_NEON);
@@ -736,11 +683,6 @@ if ($noRecordsMsg != '') {
 }
 
 $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('memberType', 'visitor', 'Guest') . 's', ['type' => 'submit', 'name' => 'btnHere', 'id' => 'btnHere', 'class' => "mx-2"]);
-
-// Setups for the page.
-$filter = new ReportFilter();
-$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 
 ?>
 <!DOCTYPE html>
@@ -782,7 +724,7 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper mb-3" style="display:none; clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper mb-3" style="display:none;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
                     <div class="hhk-flex mb-3">
                         <?php echo $timePeriodMarkup; ?>
@@ -802,32 +744,32 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
                 </form>
                 <div style="margin-top: 15px; margin-left:50px;" id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
-
-            <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
-                <div id="localrecords">
-                    <div style="margin-bottom:.8em;" class="hhk-flex">
-                        <?php echo $settingstable . $searchTabel; ?>
+            <div id="printArea" autocomplete="off" style="display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog d-inline-block p-2">
+                    <div id="localrecords">
+                        <div class="hhk-flex mb-3">
+                            <?php echo $settingstable . $searchTable; ?>
+                        </div>
+                        
+                        <div id="divTable">
+                            <?php echo $dataTable; ?>
+                        </div>
                     </div>
-                    
-                    <div id="divTable">
-                        <?php echo $dataTable; ?>
-                    </div>
+                    <div id="divMembers" style="margin-top:10px;"></div>
+                    <div id="divError"></div>
                 </div>
-                <div id="divMembers" style="margin-top:10px;"></div>
-                <div id="divError"></div>
+
+                <div id="divPrintButton" style="clear:both; display:none;margin-left:20px;font-size:0.9em; align-items: center;" class="hhk-flex py-3">
+                    <input id="printButton" value="Print" type="button" />
+                    <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
+                    <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
+                    <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
+                    <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none; font-size:1em; padding:5px; margin-left: 2em;">
+                        <p id="loadingText" style="margin-left:20px;">Transfering </p>
+                    </div>
+                    <span style="display: none;" id="cbTraceWrapper" class="ml-3"><input id="cbTrace" type="checkbox" class="mr-1"><label for="cbTrace">Print debug info</label></span>
+                </div>
             </div>
-
-            <div id="divPrintButton" style="clear:both; display:none;margin-left:20px;font-size:0.9em; align-items: center;" class="hhk-flex py-3">
-                <input id="printButton" value="Print" type="button" />
-                <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
-                <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
-                <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
-                <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none; font-size:1em; padding:5px; margin-left: 2em;">
-                    <p id="loadingText" style="margin-left:20px;">Transfering </p>
-                </div>
-                <span style="display: none;" id="cbTraceWrapper" class="ml-3"><input id="cbTrace" type="checkbox" class="mr-1"><label for="cbTrace">Print debug info</label></span>
-        	</div>
-
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
         <?php if(SecurityComponent::is_Admin()){ ?>
