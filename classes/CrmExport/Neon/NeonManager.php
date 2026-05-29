@@ -9,7 +9,7 @@ use HHK\House\ResourceBldr;
 use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\Exception\{RuntimeException, UploadException};
+use HHK\Exception\RuntimeException;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
@@ -691,54 +691,15 @@ class NeonManager extends AbstractExportManager {
 
 
         // Read stays from db
-        $stmt = $dbh->query("SELECT
-    s.idStays,
-    s.idVisit,
-    s.Visit_Span,
-    s.idName AS `hhkId`,
-    IFNULL(v.idPrimaryGuest, 0) as `idPG`,
-    IFNULL(n.External_Id, '') AS `accountId`,
-    IFNULL(n.Name_Last, '') AS `Last_Name`,
-    IFNULL(n.Name_Full, '') AS `Full_Name`,
-    IFNULL(hs.idHospital, 0) AS `idHospital`,
-    IFNULL(hs.Diagnosis, '') AS `Diagnosis_Code`,
-    IFNULL(hs.idPsg, 0) as `idPsg`,
-    IFNULL(hs.idPatient, 0) as `idPatient`,
-    IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
-    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
-    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
-    datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) AS `Nite_Counter`
-FROM
-    stays s
-        LEFT JOIN
-    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-        LEFT JOIN
-    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-        LEFT JOIN
-    `name` n ON s.idName = n.idName
-		LEFT JOIN
-	name_guest ng on s.idName = ng.idName and hs.idPsg = ng.idPsg
-        LEFT JOIN
-    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-WHERE
-    s.On_Leave = 0
-    AND s.`Status` != 'a'
---    AND s.Recorded = 0
-    AND n.External_Id != '" . self::EXCLUDE_TERM . "'
-    AND n.Member_Status = '" . MemStatus::Active ."'
-    AND s.Span_End_Date is not NULL
-    AND datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) > 0
-    AND hs.idPsg = $idPsg
-ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
+        $stayRows = self::fetchPsgMemberStays(dbh: $dbh, idPsg: $idPsg);
 
         // Count up guest stay dates and nights.
-        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        foreach ($stayRows as $r) {
 
             $stayIdsByGuest[$r['hhkId']][] = $r['idStays'];
 
             $visits[$r['idVisit']] = array(
-                'idPG' => $r['idPG'],
+                'idPG' => $r['idPrimaryGuest'],
                 'idPatient' => $r['idPatient'],
                 'idPsg' => $r['idPsg']
             );
@@ -777,21 +738,18 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                     'hhkId' => $r['hhkId'],
                     'accountId' => $r['accountId'],
                     'idPsg' => $r['idPsg'],
-                    'Relation_Code' => $r['Relation_Code'],
+                    'Relation_Code' => $r['Relationship_Code'],
                     'Start_Date' => new \DateTime($r['Start_Date']),
                     'End_Date' => new \DateTime($r['End_Date']),
                     'Nite_Counter' => $r['Nite_Counter'],
                     'Address' => $r['Address'],
                     'Last_Name' => $r['Last_Name'],
-                    'Full_Name' => $r['Full_Name'],
+                    'Full_Name' => $r['Name_Full'],
                     'Neon_Rel_Code' => (isset($rels[$r['hhkId']]) ? $rels[$r['hhkId']] : ''),
                 );
 
             }
         }
-
-        // Adds any non visitors to the list of guests.
-        $this->getNonVisitors($dbh, array_keys($visits), $guestIds, $rels);
 
         // Check for and combine any missing Neon account ids.
         foreach ($guestIds as $id => $r ) {
@@ -967,7 +925,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
 
         // Update Neon with these customdata.
-        $f['Update_Message'] = $this->updateRemoteMember($dbh, $origValues, $r['hhkId'], $codes, FALSE);
+        $f['Update_Message'] = $this->updateRemoteMember($dbh, $origValues, $r['hhkId'], $codes);
 
         return $f;
     }
@@ -1441,6 +1399,102 @@ where
         }
     }
 
+
+    /**
+     * Fetch PSG member stays from the database.
+     *
+     * Date-range mode (start + end): returns all members of PSGs that had at least one
+     * qualifying stay overlapping the period, including members with no stay rows
+     * (Nite_Counter = 0 for non-stayers in a qualifying PSG).
+     *
+     * PSG mode (idPsg): returns only members of that PSG who have completed stays
+     * with at least one night (mirrors the WHERE conditions of exportVisits).
+     *
+     * @param \PDO        $dbh
+     * @param string|null $start  Inclusive start date (date-range mode)
+     * @param string|null $end    Exclusive end date   (date-range mode)
+     * @param int|null    $idPsg  PSG id filter        (PSG mode)
+     * @param int         $limit  Row cap for date-range mode (0 = no limit)
+     * @return array
+     */
+    public static function fetchPsgMemberStays(\PDO $dbh, ?string $start = null, ?string $end = null, ?int $idPsg = null, int $limit = 500): array {
+
+        $sql = "SELECT
+    IFNULL(s.idStays, 0) AS `idStays`,
+    IFNULL(s.idVisit, 0) AS `idVisit`,
+    IFNULL(s.Visit_Span, 0) AS `Visit_Span`,
+    ng.idName AS `hhkId`,
+    IFNULL(ng.Relationship_Code, '') AS `Relationship_Code`,
+    IFNULL(v.idPrimaryGuest, 0) AS `idPrimaryGuest`,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(n.Name_Last, '') AS `Last_Name`,
+    IFNULL(n.Name_Full, '') AS `Name_Full`,
+    IFNULL(h.Title, '') AS `Hospital`,
+    IFNULL(g.Description, '') AS `Diagnosis`,
+    IFNULL(hs.Diagnosis, '') AS `Diagnosis_Code`,
+    IFNULL(hs.idHospital, 0) AS `idHospital`,
+    IFNULL(hs.idPsg, 0) AS `idPsg`,
+    IFNULL(hs.idPatient, 0) AS `idPatient`,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) AS `Address`,
+    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
+    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
+    IFNULL(DATEDIFF(DATE(s.Span_End_Date), DATE(s.Span_Start_Date)), 0) AS `Nite_Counter`
+FROM
+    name_guest ng
+        JOIN hospital_stay hs ON ng.idPsg = hs.idPsg
+        JOIN visit v ON v.idHospital_stay = hs.idHospital_stay
+        JOIN name n ON n.idName = ng.idName
+        LEFT JOIN stays s ON s.idName = ng.idName
+            AND s.idVisit = v.idVisit
+            AND s.Visit_Span = v.Span
+            AND s.On_Leave = 0
+            AND s.Status != 'a'
+        LEFT JOIN name_address na ON n.idName = na.idName AND n.Preferred_Mail_Address = na.Purpose
+        LEFT JOIN hospital h ON hs.idHospital = h.idHospital
+        LEFT JOIN gen_lookups g ON g.Table_Name = 'Diagnosis' AND g.Code = hs.Diagnosis
+WHERE
+    n.External_Id != :excludeTerm
+    AND n.Member_Status = :memberStatus";
+
+        $params = [
+            ':excludeTerm'  => self::EXCLUDE_TERM,
+            ':memberStatus' => MemStatus::Active,
+        ];
+
+        if ($idPsg !== null) {
+            $sql .= "
+    AND ng.idPsg = :idPsg
+    AND s.Span_End_Date IS NOT NULL
+    AND DATEDIFF(DATE(s.Span_End_Date), DATE(s.Span_Start_Date)) > 0
+ORDER BY s.idVisit, s.Visit_Span, ng.idName, s.Span_Start_Date";
+            $params[':idPsg'] = $idPsg;
+
+        } else {
+            $sql .= "
+    AND ng.idPsg IN (
+        SELECT DISTINCT hs2.idPsg
+        FROM stays s2
+            JOIN visit v2 ON s2.idVisit = v2.idVisit AND s2.Visit_Span = v2.Span
+            JOIN hospital_stay hs2 ON v2.idHospital_stay = hs2.idHospital_stay
+        WHERE s2.On_Leave = 0
+            AND s2.Status != 'a'
+            AND DATE(s2.Span_Start_Date) < DATE(:end)
+            AND DATE(s2.Span_End_Date) > DATE(:start)
+            AND DATEDIFF(DATE(s2.Span_End_Date), DATE(s2.Span_Start_Date)) > 0
+    )
+ORDER BY hs.idPsg";
+            $params[':start'] = $start;
+            $params[':end']   = $end;
+
+            if ($limit > 0) {
+                $sql .= "\nLIMIT " . \intval($limit);
+            }
+        }
+
+        $stmt = $dbh->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 
     public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper): array {
 

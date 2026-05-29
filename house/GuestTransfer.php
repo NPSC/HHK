@@ -177,75 +177,26 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 /**
  * Summary of searchVisits
  * @param PDO $dbh
- * @param mixed $start
- * @param mixed $end
- * @param mixed $maxGuests
+ * @param string $start
+ * @param string $end
+ * @param int $maxGuests
  * @param HHK\CrmExport\AbstractExportManager $CmsManager
  * @return bool|string
  */
-function searchVisits(\PDO $dbh, $start, $end, $maxGuests, AbstractExportManager $CmsManager) {
+function searchVisits(\PDO $dbh, string $start, string $end, int $maxGuests, AbstractExportManager $CmsManager) {
 
     $uS = Session::getInstance();
     $rows = array();
     $guestIds = [];
     $visits = [];
 
-    // Outer query: all members of PSGs where at least one member stayed >= 1 night
-    // overlapping the requested period. Stays are not date-constrained so Start/End
-    // 1st/Last Visit reflect full history.
-    $stmt = $dbh->prepare("SELECT
-    ng.idName AS `hhkId`,
-    ng.Relationship_Code,
-    IFNULL(n.External_Id, '') AS `accountId`,
-    IFNULL(n.Name_Full, '') AS `Name`,
-    IFNULL(h.Title, '') AS `Hospital`,
-    IFNULL(g.Description, '') AS `Diagnosis`,
-    hs.idPsg,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) AS `Address`,
-    v.idPrimaryGuest,
-    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
-    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
-    IFNULL(TO_DAYS(s.Span_End_Date) - TO_DAYS(s.Span_Start_Date), 0) AS `Nite_Counter`
-FROM
-    name_guest ng
-        JOIN hospital_stay hs ON ng.idPsg = hs.idPsg
-        JOIN visit v ON v.idHospital_stay = hs.idHospital_stay
-        JOIN name n ON n.idName = ng.idName
-        LEFT JOIN stays s ON s.idName = ng.idName
-            AND s.idVisit = v.idVisit
-            AND s.Visit_Span = v.Span
-            AND s.On_Leave = 0
-            AND s.Status != 'a'
-        LEFT JOIN name_address na ON n.idName = na.idName AND n.Preferred_Mail_Address = na.Purpose
-        LEFT JOIN hospital h ON hs.idHospital = h.idHospital
-        LEFT JOIN gen_lookups g ON g.Table_Name = 'Diagnosis' AND g.Code = hs.Diagnosis
-WHERE
-    n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
-    AND n.Member_Status = '" . MemStatus::Active . "'
-    AND ng.idPsg IN (
-        SELECT DISTINCT hs2.idPsg
-        FROM stays s2
-            JOIN visit v2 ON s2.idVisit = v2.idVisit AND s2.Visit_Span = v2.Span
-            JOIN hospital_stay hs2 ON v2.idHospital_stay = hs2.idHospital_stay
-        WHERE s2.On_Leave = 0
-            AND s2.Status != 'a'
-            AND DATE(s2.Span_Start_Date) < DATE(:end)
-            AND DATE(s2.Span_End_Date) > DATE(:start)
-            AND DATEDIFF(DATE(s2.Span_End_Date), DATE(s2.Span_Start_Date)) > 0
-    )
-ORDER BY hs.idPsg
-LIMIT 500");
+    $stayRows = NeonManager::fetchPsgMemberStays($dbh, $start, $end);
 
-    $stmt->bindParam(':start', $start);
-    $stmt->bindParam(':end', $end);
-
-    $stmt->execute();
-
-    if ($stmt->rowCount() == 0) {
+    if (count($stayRows) === 0) {
         return FALSE;
     }
 
-    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+    foreach ($stayRows as $r) {
 
         if (isset($guestIds[ $r['hhkId'] ])) {
 
@@ -275,7 +226,7 @@ LIMIT 500");
             $guestIds[ $r['hhkId'] ] = [
                 'Account Id' => $r['accountId'],
                 'HHK Id' => $r['hhkId'],
-                'Name' => $r['Name'],
+                'Name' => $r['Name_Full'],
                 'Diagnosis' => $r['Diagnosis'],
                 'Hospital' => $r['Hospital'],
                 'Start 1st Visit' => $r['Start_Date'] !== '' ? new \DateTime($r['Start_Date']) : NULL,
