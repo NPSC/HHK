@@ -893,9 +893,9 @@ class NeonManager extends AbstractExportManager {
         if (isset($r['Nite_Counter']) && isset($this->customFields['Nite_Counter'])) {
 
             $nites = intval($r['Nite_Counter'], 10);
-            $niteCounter = intval(NeonHelper::findCustomField($origValues, $this->customFields['Nite_Counter']), 10);
+            //$niteCounter = intval(NeonHelper::findCustomField($origValues, $this->customFields['Nite_Counter']), 10);
 
-            $codes['Nite_Counter'] = ($niteCounter + $nites);
+            $codes['Nite_Counter'] = $nites;
             $f['Nite_Counter'] = $codes['Nite_Counter'];
 
         } else if (isset($r['Nite_Counter']) === FALSE) {
