@@ -1463,10 +1463,8 @@ WHERE
 
         if ($idPsg !== null) {
             $sql .= "
-    AND ng.idPsg = :idPsg
-    AND s.Span_End_Date IS NOT NULL
-    AND DATEDIFF(DATE(s.Span_End_Date), DATE(s.Span_Start_Date)) > 0
-ORDER BY s.idVisit, s.Visit_Span, ng.idName, s.Span_Start_Date";
+    AND ng.idPsg = :idPsg 
+ ORDER BY s.idVisit, s.Visit_Span, ng.idName, s.Span_Start_Date";
             $params[':idPsg'] = $idPsg;
 
         } else {
