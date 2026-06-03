@@ -4,6 +4,8 @@ namespace HHK\Payment\PaymentResponse;
 
 use HHK\SysConst\PaymentMethod;
 use HHK\HTMLControls\HTMLTable;
+use HHK\SysConst\PayType;
+use Override;
 
 /**
  * TransferResponse.php
@@ -16,6 +18,11 @@ use HHK\HTMLControls\HTMLTable;
 
 class TransferResponse extends CheckResponse {
 
+    public function __construct($amount, $idPayor, $invoiceNumber, $checkNumber = '', $payNotes = '')
+    {
+        parent::__construct($amount, $idPayor, $invoiceNumber, $checkNumber, $payNotes);
+        $this->paymentType = PayType::Transfer;
+    }
 
     /**
      * Summary of getPaymentMethod
