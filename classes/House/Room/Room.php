@@ -26,7 +26,7 @@ class Room {
 
     /**
      *
-     * @var RoomRs
+     * @var RoomRS
      */
     public $roomRS;
 
