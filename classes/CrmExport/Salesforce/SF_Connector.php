@@ -85,7 +85,6 @@ class SF_Connector {
             $response = $client->request('GET', $endpoint, [
                 RequestOptions::HEADERS => [
                     'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'X-PrettyPrint' => 1,
                 ],
                 RequestOptions::QUERY => [
                     'q' => $query
@@ -119,7 +118,6 @@ class SF_Connector {
             $response = $client->request('GET', $endpoint, [
                 RequestOptions::HEADERS => [
                     'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'X-PrettyPrint' => 1,
                 ]
             ]);
 

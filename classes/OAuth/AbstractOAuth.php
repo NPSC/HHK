@@ -1,7 +1,7 @@
 <?php
 namespace HHK\OAuth;
 
-use GuzzleHttp\{Client, RequestOptions};
+use GuzzleHttp\{Client, Psr7\Request, RequestOptions};
 use HHK\Exception\RuntimeException;
 use GuzzleHttp\Exception\BadResponseException;
 
@@ -35,7 +35,7 @@ abstract class AbstractOAuth implements OAuthInterface {
      * Send a GuzzleHttp request to the request an OAuth access token
      * 
      * @param array $requestOptions
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      */
     protected function sendTokenRequest(array $requestOptions){
         $client = new Client(['base_uri' => $this->credentials->getBaseURI()]);
@@ -53,6 +53,7 @@ abstract class AbstractOAuth implements OAuthInterface {
                 throw new RuntimeException('Request Token Error: ' . $errorResponse->getBody());
             }
         }
+
     }
 
     /**

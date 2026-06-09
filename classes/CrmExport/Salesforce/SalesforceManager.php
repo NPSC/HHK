@@ -1214,14 +1214,16 @@ class SalesforceManager extends AbstractExportManager {
             HTMLTable::makeTh('CRM Gateway Id', array())
             . HTMLTable::makeTd($this->getGatewayId())
             );
+        /*
         $tbl->addBodyTr(
             HTMLTable::makeTh('Username', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getUserId(), array('name' => '_txtuserId', 'size' => '90')))
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Password', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getPassword() == '' ? '' : self::PW_PLACEHOLDER), array('name' => '_txtpwd', 'size' => '100')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getPassword() == '' ? '' : self::PW_PLACEHOLDER), array('type' => 'password', 'name' => '_txtpwd', 'size' => '100')))
             );
+            */
         $tbl->addBodyTr(
             HTMLTable::makeTh('Endpoint URL', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEndpointUrl(), array('name' => '_txtEPurl', 'size' => '100')))
@@ -1233,12 +1235,14 @@ class SalesforceManager extends AbstractExportManager {
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Client Secret', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getClientSecret() == '' ? '' : self::PW_PLACEHOLDER), array('name' => '_txtclientsecret', 'size' => '100')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getClientSecret() == '' ? '' : self::PW_PLACEHOLDER), array('type' => 'password', 'name' => '_txtclientsecret', 'size' => '100')))
             );
+            /*
         $tbl->addBodyTr(
             HTMLTable::makeTh('Security Token', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getSecurityToken(), array('name' => '_txtsectoken', 'size' => '100')))
             );
+        */
 
         $tbl->addBodyTr(
             HTMLTable::makeTh('API Version', array())
@@ -1308,12 +1312,12 @@ class SalesforceManager extends AbstractExportManager {
         $crmRs = new CmsGatewayRS();
 
         $rags = [
-            '_txtuserId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            '_txtpwd' => FILTER_UNSAFE_RAW,
+            //'_txtuserId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            //'_txtpwd' => FILTER_UNSAFE_RAW,
             '_txtclientsecret' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtEPurl' => FILTER_SANITIZE_URL,
             '_txtclientId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            '_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            //'_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtapiVersion' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtmaxPSGsPerBatch' => FILTER_SANITIZE_NUMBER_INT
 
@@ -1324,6 +1328,8 @@ class SalesforceManager extends AbstractExportManager {
         // User Id
         if (isset($post['_txtuserId'])) {
             $crmRs->username->setNewVal($post['_txtuserId']);
+        }else{
+            $crmRs->username->setNewVal('');
         }
 
         // Password
@@ -1332,10 +1338,12 @@ class SalesforceManager extends AbstractExportManager {
             $pw = $post['_txtpwd'];
 
             if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                $crmRs->password->setnewVal(Crypto::encryptMessage($pw));
+                $crmRs->password->setNewVal(Crypto::encryptMessage($pw));
             }
 
 
+        }else{
+            $crmRs->password->setNewVal('');
         }
 
         // Client Secret
@@ -1362,6 +1370,8 @@ class SalesforceManager extends AbstractExportManager {
         // Security Token
         if (isset($post['_txtsectoken'])) {
             $crmRs->securityToken->setNewVal($post['_txtsectoken']);
+        } else {
+            $crmRs->securityToken->setNewVal('');
         }
 
         // API Version

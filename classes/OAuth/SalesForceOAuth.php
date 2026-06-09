@@ -22,11 +22,9 @@ class SalesForceOAuth extends AbstractOAuth{
         $requestOptions = [
             RequestOptions::AUTH => [$this->credentials->getClientId(), $this->credentials->getClientSecret()],
             RequestOptions::FORM_PARAMS => [
-                'grant_type' => 'password',
+                'grant_type' => 'client_credentials',
                 'client_id'=> $this->credentials->getClientId(),
-                'client_secret' => $this->credentials->getClientSecret(),
-                'username' => $this->credentials->getUsername(),
-                'password' => $this->credentials->getPassword() . $this->credentials->getSecurityToken(),
+                'client_secret' => $this->credentials->getClientSecret()
             ]
         ];
 
