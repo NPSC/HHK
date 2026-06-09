@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
+use HHK\Integrations\GuzzleAPILogger;
 use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
 use HHK\Exception\{RuntimeException, UploadException};
@@ -27,7 +28,7 @@ class SF_Connector {
      * Summary of oAuth
      * @var SalesForceOauth|null
      */
-    protected SalesForceOAuth|null $oAuth;
+    protected SalesForceOAuth $oAuth;
 
     protected \PDO $dbh;
     /**
@@ -35,6 +36,8 @@ class SF_Connector {
      * @var Credentials
      */
     protected $credentials;
+
+    protected Client $client;
     
     /**
      * The number of concurrent async requests to send at one time
@@ -46,23 +49,16 @@ class SF_Connector {
 
         $this->dbh = $dbh;
         $this->credentials = $credentials;
-        $this->oAuth = NULL;
-    }
-
-    /**
-     * Instantiate OAuth object and authenticate to endpoint
-     *
-     * Access Bearer token via $this->oAuth->getAccessToken();
-     */
-    public function login() {
-
-        $this->oAuth = new SalesForceOAuth($this->credentials);
-
+        $this->oAuth = new SalesForceOAuth($this->dbh, $credentials);
         $this->oAuth->login();
-    }
-
-    public function logout () {
-        $this->oAuth = NULL;
+        $this->client = new Client([
+            'base_uri' => $this->credentials->getBaseURI(),
+            'handler' => GuzzleAPILogger::createStack($this->dbh, SalesForceManager::LOG_SERVICE_NAME),
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
+                'Content-Type' => 'application/json',
+            ]
+        ]);
     }
 
     /**
@@ -76,16 +72,8 @@ class SF_Connector {
 
         $result = null;
         try{
-            if(!$this->oAuth instanceof SalesForceOAuth){
-                $this->login();
-            }
 
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $response = $client->request('GET', $endpoint, [
-                RequestOptions::HEADERS => [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                ],
+            $response = $this->client->request('GET', $endpoint, [
                 RequestOptions::QUERY => [
                     'q' => $query
                 ]
@@ -109,17 +97,8 @@ class SF_Connector {
 
         $result = null;
         try{
-            if(!$this->oAuth instanceof SalesForceOauth){
-                $this->login();
-            }
 
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $response = $client->request('GET', $endpoint, [
-                RequestOptions::HEADERS => [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                ]
-            ]);
+            $response = $this->client->request('GET', $endpoint);
 
             $result = json_decode($response->getBody(), true);
 
@@ -142,33 +121,15 @@ class SF_Connector {
 
         $result = null;
        try{
-            if(!$this->oAuth instanceof SalesForceOAuth){
-                $this->login();
-            }
 
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
+            $request = new Request('POST', $endpoint, [], json_encode($params));
 
-            $headers = [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'Content-Type' => 'application/json',
-            ];
-
-            $request = new Request('POST', $endpoint, $headers, json_encode($params));
-
-            $response = $client->send($request);
+            $response = $this->client->send($request);
 
             $result = json_decode($response->getBody(), true);
 
         } catch (BadResponseException $exception) {
             $this->checkErrors($exception);
-        }
-
-        //log transaction
-        try{
-            $uS = Session::getInstance();
-            ExternalAPILog::log($this->dbh, SalesforceManager::LOG_SERVICE_NAME, "graph", $request, $response, $uS->username);
-        }catch(Exception $e){
-            //do nothing
         }
 
         return $result;
@@ -185,35 +146,17 @@ class SF_Connector {
 
         $result = null;
         try{
-            if(!$this->oAuth instanceof SalesForceOAuth){
-                $this->login();
-            }
-
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $headers = [
-                'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                'Content-Type' => 'application/json',
-            ];
 
             $batchRequests = [];
             $batchResults = [];
 
             foreach($jsonBodies as $batchId=>$params){
-                $batchRequests[$batchId] = new Request('POST', $endpoint, $headers, json_encode($params));
+                $batchRequests[$batchId] = new Request('POST', $endpoint, [], json_encode($params));
             }
 
-            $pool = new Pool($client, $batchRequests, [
+            $pool = new Pool($this->client, $batchRequests, [
                 'concurrency' => self::CONCURRENT_REQUESTS,
                 'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){ //if the response is success
-                    //log transaction
-                    try{
-                        $uS = Session::getInstance();
-                        ExternalAPILog::log($this->dbh, SalesforceManager::LOG_SERVICE_NAME, "graph", $batchRequests[$batchId], $response, $uS->username);
-                    }catch(Exception $e){
-                        //do nothing
-                    }
-
                     $batchResults[$batchId] = ['success'=>json_decode($response->getBody(), true)];
                 },
                 'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults) { //if the response is not success
@@ -251,33 +194,14 @@ class SF_Connector {
 
         $result = null;
         try {
-            if (!$this->oAuth instanceof SalesForceOAuth) {
-                $this->login();
-            }
 
+            $request = new Request('PATCH', $endpoint, [], json_encode($params));
 
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $headers = [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'Content-Type' => 'application/json',
-            ];
-
-            $request = new Request('PATCH', $endpoint, $headers, json_encode($params));
-
-            $response = $client->send($request);
+            $response = $this->client->send($request);
 
             $result = json_decode($response->getBody(), true);
         } catch (BadResponseException $exception) {
             $this->checkErrors($exception);
-        }
-
-        //log transaction
-        try{
-            $uS = Session::getInstance();
-            ExternalAPILog::log($this->dbh, "SalesForce", "", $request, $response, $uS->username);
-        }catch(Exception $e){
-            //do nothing
         }
 
         return $result;

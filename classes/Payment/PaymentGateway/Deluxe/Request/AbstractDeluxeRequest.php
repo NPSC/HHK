@@ -60,7 +60,7 @@ abstract class AbstractDeluxeRequest
         $creds->setClientId($gwayCreds["oAuthClientId"]);
         $creds->setClientSecret($gwayCreds["oAuthSecret"]);
 
-        $oAuth = new DeluxeOAuth($creds);
+        $oAuth = new DeluxeOAuth($this->dbh, $creds);
         $oAuth->login();
         return $oAuth;
     }

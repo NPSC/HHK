@@ -13,8 +13,8 @@ use GuzzleHttp\Exception\BadResponseException;
  */
 class DeluxeOAuth extends AbstractOAuth{
 
-    public function __construct(Credentials $credentials){
-        parent::__construct($credentials);
+    public function __construct(\PDO $dbh, Credentials $credentials){
+        parent::__construct($dbh, $credentials);
     }
 
     public function requestToken(){
@@ -37,5 +37,9 @@ class DeluxeOAuth extends AbstractOAuth{
         }else{
             throw new RuntimeException('OAuth access token is invalid');
         }
+    }
+
+    public function getLogServiceName(): string{
+        return "Deluxe";
     }
 }
