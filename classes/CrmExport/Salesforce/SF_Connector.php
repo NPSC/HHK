@@ -53,7 +53,7 @@ class SF_Connector {
         $this->oAuth->login();
         $this->client = new Client([
             'base_uri' => $this->credentials->getBaseURI(),
-            'handler' => GuzzleAPILogger::createStack($this->dbh, SalesForceManager::LOG_SERVICE_NAME),
+            'handler' => GuzzleAPILogger::createStack($this->dbh, SalesforceManager::LOG_SERVICE_NAME),
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                 'Content-Type' => 'application/json',

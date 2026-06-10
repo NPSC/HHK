@@ -1289,7 +1289,7 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
 -- View `vguest_data_neon`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_data_neon` AS
-    SELECT
+    SELECT DISTINCT
         `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `accountId`,
         IFNULL(`nmp`.`Neon_Type_Name`, '') AS `Prefix`,
