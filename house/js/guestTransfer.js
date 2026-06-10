@@ -296,7 +296,7 @@ function throttleVisits() {
             const props = {'checked': false, 'disabled': true};
             const rels = [];
 
-            $('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+            $('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray').find('td.psgCBs').addClass('hhk-loading').css('background-color', 'lightgray');
 
             $(this).prop(props).end();
 
@@ -314,7 +314,7 @@ function throttleVisits() {
 
     if (donut) {
         stopTransfer = true;
-        $visitButton.val('Start Visit Transfers');
+        $visitButton.val('Start PSG Transfers');
     }
 }
 
@@ -520,6 +520,8 @@ function transferVisits(idPsg, rels) {
 
         if (incmg.visits) {
 
+            $('.hhk-' + idPsg + ' td.psgCBs').removeClass('hhk-loading');
+
             if ($vTbl.length === 0) {
 
                 // Create header row
@@ -722,27 +724,34 @@ function setupLogViewer(){
         },
         {
             "targets": [1],
+            "title": "Method",
+            "searchable": false,
+            "sortable": true,
+            "data": "requestMethod",
+        },
+        {
+            "targets": [2],
             "title": "Type",
             "searchable": false,
             "sortable": true,
             "data": "Type",
         },
         {
-            "targets": [2],
+            "targets": [3],
             "title": "Request Endpoint",
             "searchable": false,
             "sortable": false,
             "data": "endpoint",
         },
         {
-            "targets": [3],
+            "targets": [4],
             "title": "Response Code",
             "searchable": false,
             "sortable": true,
             "data": "responseCode",
         },
         {
-            "targets": [4],
+            "targets": [5],
             "title": "Request",
             "searchable": true,
             "sortable": true,
@@ -750,7 +759,7 @@ function setupLogViewer(){
             "visible": false,
         },
         {
-            "targets": [5],
+            "targets": [6],
             "title": "Response",
             "searchable": true,
             "sortable": true,
@@ -758,14 +767,14 @@ function setupLogViewer(){
             "visible": false,
         },
         {
-            "targets": [6],
+            "targets": [7],
             "title": "User",
             "searchable": true,
             "sortable": true,
             "data": "username",
         },
         {
-            "targets": [7],
+            "targets": [8],
             "title": "Timestamp",
             'data': 'Timestamp',
             render: function (data, type) {
@@ -781,7 +790,7 @@ function setupLogViewer(){
                         "processing": true,
                         //"deferRender": true,
                         "language": { "sSearch": "Search Log:" },
-                        "sorting": [[7, 'desc']],
+                        "sorting": [[8, 'desc']],
                         "displayLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
                         'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
@@ -797,6 +806,11 @@ function setupLogViewer(){
                             data: function(d){
                                 d.cmd = 'viewLog',
                                 d.service = $("#cmsLogService").val()
+                            }
+                        },
+                        createdRow: function( row, data, dataIndex ) {
+                            if (data.responseCode >= 400) {
+                                $(row).addClass('ui-state-error');
                             }
                         }
                     });
@@ -818,12 +832,12 @@ function setupLogViewer(){
 
                     function formatAPIDetails(row){
         return `
-            <div>` +
-                `<div class="mb-3">
+            <div class="d-flex">` +
+                (row.request != '' ? `<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">
                     <strong>Request</strong>
                     <pre style="white-space: pre-wrap;">${row.request}</pre>
-                </div>
-                <div>
+                </div>`:``) +
+                `<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">
                     <strong>Response</strong>
                     <pre style="white-space: pre-wrap;">${row.response}</pre>
                 </div>
@@ -1004,7 +1018,7 @@ $(document).ready(function () {
 
         $visitButton
                 .button()
-                .val('Start Visit Transfers')
+                .val('Start PSG Transfers')
                 .show()
                 .click(function () {
 

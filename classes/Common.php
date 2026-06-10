@@ -33,9 +33,9 @@ class Common {
     *
     * @param bool $override
     * @throws \Exception
-    * @return \PDO|void
+    * @return PDO|TraceablePDO
     */
-    public static function initPDO(bool $override = FALSE)
+    public static function initPDO(bool $override = FALSE): PDO|TraceablePDO
     {
         $ssn = Session::getInstance();
         $roleCode = $ssn->rolecode;
@@ -114,7 +114,7 @@ class Common {
      * @param \PDO $dbh
      * @return void
      */
-    public static function syncTimeZone(PDO $dbh)
+    public static function syncTimeZone(PDO $dbh): void
     {
         $tz = SysConfig::getKeyValue($dbh, 'sys_config', 'tz', 'utc');
         date_default_timezone_set($tz);
@@ -167,10 +167,11 @@ class Common {
         return static::newDateWithTz($strDate, $uS->tz);
     }
 
-    public static function incCounter(PDO $dbh, $counterName)
+    public static function incCounter(PDO $dbh, string $counterName)
     {
         $dbh->query("CALL IncrementCounter('$counterName', @num);");
 
+        $rptId = 0;
         foreach ($dbh->query("SELECT @num") as $row) {
             $rptId = $row[0];
         }
@@ -182,7 +183,7 @@ class Common {
         return $rptId;
     }
 
-    public static function readGenLookupsPDO(PDO $dbh, $tbl, $orderBy = "Code")
+    public static function readGenLookupsPDO(PDO $dbh, string $tbl, string $orderBy = "Code"): array
     {
         $safeTbl = str_replace("'", '', $tbl);
         $query = "SELECT `Code`, `Description`, `Substitute`, `Type`, `Order`, `Attributes` FROM `gen_lookups` WHERE `Table_Name` = '$safeTbl' order by `$orderBy`;";
@@ -190,14 +191,14 @@ class Common {
 
         $genArray = array();
 
-        while ($row = $stmt->fetch(\PDO::FETCH_BOTH)) {
+        while ($row = $stmt->fetch(PDO::FETCH_BOTH)) {
             $genArray[$row["Code"]] = $row;
         }
 
         return $genArray;
     }
 
-    public static function readLookups(PDO $dbh, $category, $orderBy = "Code", $includeUnused = false)
+    public static function readLookups(PDO $dbh, string $category, $orderBy = "Code", bool $includeUnused = false): array
     {
         if ($includeUnused) {
             $where = "";
@@ -209,7 +210,7 @@ class Common {
         $stmt = $dbh->query($query);
         $genArray = array();
 
-        while ($row = $stmt->fetch(\PDO::FETCH_BOTH)) {
+        while ($row = $stmt->fetch(PDO::FETCH_BOTH)) {
             $genArray[$row['Code']] = $row;
         }
 
@@ -238,8 +239,7 @@ class Common {
 
     /**
      * Summary of parseStringToArray
-     * @param string $input
-     * @param mixed $parameter
+     * @param array $inputArray
      * @throws \HHK\Exception\RuntimeException
      * @return array
      */
@@ -288,12 +288,5 @@ class Common {
             }
         }
         return $result;
-    }
-
-    public static function doLookups($con, $tbl, $sel, $offerBlank = true)
-    {
-        $g = static::readGenLookupsPDO($con, $tbl);
-
-        return HTMLSelector::doOptionsMkup($g, $sel, $offerBlank);
     }
 }

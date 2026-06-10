@@ -97,13 +97,13 @@ if (filter_has_var(INPUT_POST, "btnExtCnf") && $CmsManager !== NULL) {
     $tabIndex = 9;
 
     try {
-        $externalErrMsg = $CmsManager->saveConfig($dbh);
-    } catch (UploadException $ex) {
+        $notymsg = $CmsManager->saveConfig($dbh);
+    } catch (Exception $ex) {
         $externalErrMsg = "Save Configuration Error: " . $ex->getMessage();
     }
 
     if ($externalErrMsg != '') {
-        $externalErrMsg = HTMLContainer::generateMarkup('p', $externalErrMsg, array('class'=>'ui-state-error'));
+        $externalErrMsg = HTMLContainer::generateMarkup('p', $externalErrMsg, array('class'=>'ui-corner-all ui-state-error p-2 mb-3'));
     }
 }
 

@@ -9,7 +9,7 @@ class CompositeSubresponse {
 
     /**
      * Summary of response
-     * @var
+     * @var mixed
      */
     protected $response;
 

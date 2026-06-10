@@ -20,4 +20,6 @@ interface OAuthInterface {
      * @throws \RuntimeException
      */
     public function validateTokenResponse(object $data):bool;
+
+    public function getLogServiceName(): string;
 }
