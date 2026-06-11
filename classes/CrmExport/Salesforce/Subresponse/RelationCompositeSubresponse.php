@@ -73,7 +73,7 @@ class RelationCompositeSubresponse extends AbstractCompositeSubresponse {
             EditRS::loadRow($rows[0], $nameRs);
 
             $nameRs->External_Id->setNewVal($externalId);
-            $upd = EditRS::update($dbh, $nameRs, [$nameRs->idName]);
+            $upd = EditRS::update($dbh, $nameRs, [$nameRs->idName, $nameRs->idPsg]);
 
             if ($upd > 0) {
                 NameLog::writeUpdate($dbh, $nameRs, $nameRs->idName->getStoredVal(), $uS->username);
