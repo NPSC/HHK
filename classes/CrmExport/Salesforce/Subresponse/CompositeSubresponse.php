@@ -47,7 +47,7 @@ class CompositeSubresponse {
     public function __construct(array $response, $isSuccessful)
     {
         $this->response = $response;
-        $this->body = $response['body'];
+        $this->body = $response['body'] ?? [];
         $this->httpHeaders = $response['httpHeaders'];
         $this->httpStatusCode = $response['httpStatusCode'];
         $this->referenceId = $response['referenceId'];

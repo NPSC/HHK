@@ -32,6 +32,10 @@ class SalesForceOAuth extends AbstractOAuth{
         return $this->sendTokenRequest($requestOptions);
     }
 
+    protected function getTokenTtl(object $_tokenResponse): int {
+        return 6600; // 110 min — conservative, below Salesforce's 2-hr default session
+    }
+
     public function validateTokenResponse($data): bool{
         $hash = hash_hmac(
             'sha256',

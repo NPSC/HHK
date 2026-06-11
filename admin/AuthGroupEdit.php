@@ -9,10 +9,10 @@ use HHK\Tables\WebSec\{W_groupsRS, W_auth_ipRS};
 /**
  * AuthGroupEdit.php
  *
-  -- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
-  -- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
-  -- @license   MIT
-  -- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 
@@ -113,6 +113,12 @@ $tbl = new HTMLTable();
 $wgroupRS = new W_groupsRS();
 $rows = EditRS::select($dbh, $wgroupRS, array());
 
+// fetch ip list
+$stmt = $dbh->prepare("SELECT IP_addr, title from w_auth_ip");
+$stmt->setFetchMode(\PDO::FETCH_NUM);
+$stmt->execute();
+$ipAuthRows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
 foreach ($rows as $r) {
 
     EditRS::loadRow($r, $wgroupRS);
@@ -138,7 +144,7 @@ foreach ($rows as $r) {
     );
 
     //build ip list
-    $ipListMarkup = HTMLSelector::getLookups($dbh, "SELECT IP_addr, title from w_auth_ip", $selected, FALSE);
+    $ipListMarkup = HTMLSelector::doOptionsMkup($ipAuthRows, $selected, FALSE);
 
     $tbl->addBodyTr(
             HTMLTable::makeTd(HTMLInput::generateMarkup($wgroupRS->Group_Code->getStoredVal(), array('name' => $wgroupRS->Group_Code->getColUnticked() . $cde, 'size' => '4', 'readonly' => 'readonly', 'style' => 'border:none;')))

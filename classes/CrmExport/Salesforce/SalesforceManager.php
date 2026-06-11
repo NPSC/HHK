@@ -116,19 +116,14 @@ class SalesforceManager extends AbstractExportManager {
         $parms = [];
         $relatList = [];
 
-        $this->unwindResponse($parms, $result);
-
-        foreach ($parms as $k => $v) {
-
-            if (str_contains($k, $needle)) {
-
-                $fields = explode('.', $k);
-
-                if (isset($fields[4]) && $fields[4] == 'active') {
-                    // set the list for this relationship
-                    $relatList[$fields[3]] = $v;
-                } else if (isset($fields[4]) && $fields[4] == 'value') {
-                    $relatList[$fields[3]] = $v;
+        if(is_array($result) && isset($result['fields'])) {
+            foreach($result['fields'] as $f) {
+                if (isset($f['name']) && $f['name'] == 'npe4__Type__c' && isset($f['picklistValues'])) {
+                    foreach ($f['picklistValues'] as $pv) {
+                        if (isset($pv['active'], $pv['value'], $pv['label']) && $pv['active'] === true) {
+                            $relatList[$pv['value']] = $pv['label'];
+                        }
+                    }
                 }
             }
         }
@@ -766,20 +761,36 @@ class SalesforceManager extends AbstractExportManager {
                     continue;
                 }
 
-                // Only new relationships.
                 if ($g['Relationship_Id'] == '') {
 
-                    // build the upsert details file
-                    $relationRow['npe4__Contact__c'] = "@{refContact_" . $g['HHK_idName__c'] . $additnl . ".id}";
-                    $relationRow['npe4__RelatedContact__c'] = "@{refContact_$idPatient$additnl.id}";
-                    $relationRow['npe4__Status__c'] = 'Current';    // 'Current', 'Former'
-                    $relationRow['npe4__Type__c'] = $g['SF_Rel_Type'];
-                    //$relationRow['Is_an_Emergency_Contact__c']      // t/f
-                    $relationRow['Legal_Custody__c'] = $g['Legal_Custody'] == 0 ? 'false' : 'true';       // t/f
+                    // New relationship — POST with contact references
+                    $relationRow = [
+                        'npe4__Contact__c' => "@{refContact_" . $g['HHK_idName__c'] . $additnl . ".id}",
+                        'npe4__RelatedContact__c' => "@{refContact_$idPatient$additnl.id}",
+                        'npe4__Status__c' => 'Current',
+                        'npe4__Type__c' => $g['SF_Rel_Type'],
+                        'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
+                    ];
 
                     $subrequests[] = [
                         "method" => "POST",
                         "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
+                        "referenceId" => "refRel_" . $g['HHK_idName__c'] . $additnl,
+                        "body" => $relationRow
+                    ];
+
+                } else {
+
+                    // Existing relationship — PATCH updatable fields only (contact lookups are immutable)
+                    $relationRow = [
+                        'npe4__Status__c' => 'Current',
+                        'npe4__Type__c' => $g['SF_Rel_Type'],
+                        'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
+                    ];
+
+                    $subrequests[] = [
+                        "method" => "PATCH",
+                        "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/' . $g['Relationship_Id'],
                         "referenceId" => "refRel_" . $g['HHK_idName__c'] . $additnl,
                         "body" => $relationRow
                     ];

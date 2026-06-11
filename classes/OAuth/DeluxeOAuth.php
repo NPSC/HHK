@@ -30,6 +30,10 @@ class DeluxeOAuth extends AbstractOAuth{
         return $this->sendTokenRequest($requestOptions);
     }
 
+    protected function getTokenTtl(object $tokenResponse): int {
+        return max(60, (int)$tokenResponse->expires_in - 60);
+    }
+
     public function validateTokenResponse($data): bool{
         if(isset($data->access_token) && $data->expires_in > 0){
             $this->accessToken = $data->access_token; // Valid access token
