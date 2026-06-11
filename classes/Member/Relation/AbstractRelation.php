@@ -152,9 +152,9 @@ abstract class AbstractRelation {
     /**
      * Summary of getPdoStmt
      * @param \PDO $dbh
-     * @return \PDOStatement
+     * @return \PDOStatement|bool
      */
-    protected abstract function getPdoStmt(\PDO $dbh);
+    protected abstract function getPdoStmt(\PDO $dbh): \PDOStatement|bool;
 
     /**
      * Summary of getHtmlId

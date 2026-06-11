@@ -32,7 +32,7 @@ class Children extends AbstractRelation {
      * @param \PDO $dbh
      * @return \PDOStatement|bool
      */
-    protected function getPdoStmt(\PDO $dbh) {
+    protected function getPdoStmt(\PDO $dbh): \PDOStatement|bool {
 
         $query = "Select v.Id, concat(v.Name_First, ' ', v.Name_Last) as `Name`, v.MemberStatus as `MemStatus`, r.*
 from relationship r join vmember_listing v ON r.idName = v.Id

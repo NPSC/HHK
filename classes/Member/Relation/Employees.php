@@ -34,7 +34,7 @@ class Employees extends AbstractRelation {
      * @param \PDO $dbh
      * @return \PDOStatement|bool
      */
-    protected function getPdoStmt(\PDO $dbh) {
+    protected function getPdoStmt(\PDO $dbh): \PDOStatement|bool {
         $query = "Select v.Id as `Id`, concat(v.Name_First, ' ', v.Name_Last) as `Name`, v.MemberStatus as `MemStatus`, v.Company_CareOf
 from vmember_listing v join vmember_listing c on v.Company_Id = c.Id
 where c.Id = :id;";
