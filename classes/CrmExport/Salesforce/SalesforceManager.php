@@ -1272,7 +1272,7 @@ class SalesforceManager extends AbstractExportManager {
                 HTMLTable::makeTd($hhkItem[1])
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(
                     HTMLSelector::doOptionsMkup($sfOptions, $currentSfCode, TRUE),
-                    ['name' => 'selrelationTypes[' . $hhkCode . ']']
+                    ['name' => 'selrelationTypes[' . $hhkCode . ']', 'style' => 'width:100%;']
                 ))
             );
         }
