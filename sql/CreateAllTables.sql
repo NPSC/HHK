@@ -2567,6 +2567,9 @@ ADD INDEX IF NOT EXISTS `idx_vlog_idPsg` (`idPsg`);
 ALTER TABLE `neon_type_map`
     ADD UNIQUE KEY IF NOT EXISTS `uq_list_hhk_code`  (`List_Name`, `HHK_Type_Code`);
 
+ALTER TABLE `sf_type_map`
+    ADD UNIQUE KEY IF NOT EXISTS `uq_list_hhk_code`  (`List_Name`, `HHK_Type_Code`);
+
 -- -------Functions-------
 --
 -- function `dateDefaultNow`
