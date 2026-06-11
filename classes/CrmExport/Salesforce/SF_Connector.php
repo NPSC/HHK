@@ -9,11 +9,10 @@ use GuzzleHttp\RequestOptions;
 use HHK\Integrations\GuzzleAPILogger;
 use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
-use HHK\Exception\{RuntimeException, UploadException};
+use HHK\Exception\RuntimeException;
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\sec\Session;
 use HHK\TableLog\ExternalAPILog;
-use HHK\TableLog\HouseLog;
 use Psr\Http\Message\ResponseInterface;
 
 
@@ -24,26 +23,16 @@ use Psr\Http\Message\ResponseInterface;
  */
 class SF_Connector {
 
-    /**
-     * Summary of oAuth
-     * @var SalesForceOauth|null
-     */
     protected SalesForceOAuth $oAuth;
-
     protected \PDO $dbh;
-    /**
-     * Summary of credentials
-     * @var Credentials
-     */
-    protected $credentials;
-
+    protected Credentials $credentials;
     protected Client $client;
     
     /**
      * The number of concurrent async requests to send at one time
      * @const CONCURRENT_REQUESTS
      */
-    protected const CONCURRENT_REQUESTS = 5;
+    protected const int CONCURRENT_REQUESTS = 5;
 
     public function __construct(\PDO $dbh, Credentials $credentials) {
 
@@ -68,7 +57,7 @@ class SF_Connector {
      * @param string $endpoint
      * @return mixed
      */
-    public function search($query, $endpoint) {
+    public function search(string $query, string $endpoint) {
 
         $result = null;
         try{
@@ -90,10 +79,10 @@ class SF_Connector {
 
     /**
      * Summary of goUrl
-     * @param mixed $endpoint
+     * @param string $endpoint
      * @return mixed
      */
-    public function goUrl($endpoint) {
+    public function goUrl(string $endpoint) {
 
         $result = null;
         try{
@@ -117,7 +106,7 @@ class SF_Connector {
      * @param array $params
      * @return mixed
      */
-    public function postUrl($endpoint, array $params, $isUpdate = FALSE) {
+    public function postUrl(string $endpoint, array $params, bool $isUpdate = FALSE) {
 
         $result = null;
        try{
@@ -142,7 +131,7 @@ class SF_Connector {
      * @param array $jsonBodies An array of request bodies to be sent asyncronously
      * @return array An array of batchRequests and batchResults
      */
-    public function postUrlAsync($endpoint, array $jsonBodies, $isUpdate = FALSE) {
+    public function postUrlAsync(string $endpoint, array $jsonBodies, bool $isUpdate = FALSE) {
 
         $result = null;
         try{
@@ -189,7 +178,7 @@ class SF_Connector {
      * @param array $params
      * @return mixed
      */
-    public function patchUrl($endpoint, array $params)
+    public function patchUrl(string $endpoint, array $params)
     {
 
         $result = null;
@@ -213,7 +202,7 @@ class SF_Connector {
      * @param mixed $errorJson
      * @return string
      */
-    protected function collectErrors($errorJson){
+    protected function collectErrors($errorJson): string {
         $errors = '';
         if(is_array($errorJson)){
             foreach($errorJson as $error){
@@ -228,7 +217,7 @@ class SF_Connector {
      * @param BadResponseException $exception
      * @throws RuntimeException
      */
-    protected function checkErrors(BadResponseException $exception) {
+    protected function checkErrors(BadResponseException $exception): void {
 
         $uS = Session::getInstance();
         $errorResponse = $exception->getResponse();
@@ -250,7 +239,6 @@ class SF_Connector {
         }
 
     }
-
 
 }
 

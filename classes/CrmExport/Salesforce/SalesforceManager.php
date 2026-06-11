@@ -9,7 +9,6 @@ use HHK\CrmExport\Salesforce\Subresponse\AbstractCompositeSubresponse;
 use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\RelLinkType;
-use HHK\TableLog\ExternalAPILog;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
@@ -35,47 +34,36 @@ class SalesforceManager extends AbstractExportManager {
      * website:  https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_graph_limits.htm
      */
 
-    const MAX_PAYLOAD_GRAPHS = 70;
-    const MAX_NODES = 500;
-    const GRAPH_DEPTH = 15;
-    const MAX_DIFF_NODES = 15;
-    const MAX__GRAPH_FAILS = 14;
+    const int MAX_PAYLOAD_GRAPHS = 70;
+    const int MAX_NODES = 500;
+    const int GRAPH_DEPTH = 15;
+    const int MAX_DIFF_NODES = 15;
+    const int MAX__GRAPH_FAILS = 14;
 
 
-    /**
-     * Summary of endPoint
-     * @var string
-     */
-    private $endPoint;
-    /**
-     * Summary of queryEndpoint
-     * @var string
-     */
-    private $queryEndpoint;
-    /**
-     * Summary of searchEndpoint
-     * @var string
-     */
+    private string $endPoint;
 
-     private $searchEndpoint;
+    private string $queryEndpoint;
 
-    private $getContactEndpoint;
+    private string $searchEndpoint;
+
+    private string $getContactEndpoint;
 
     protected $transferResult;
     protected $errorResult;
-    protected $webService;
+    protected SF_connector $webService;
 
     protected $uniqueGuests;
-    protected $trace;
+    protected bool $trace;
     protected $traceData;
 
-    const LOG_SERVICE_NAME = "SalesForce";
+    const string LOG_SERVICE_NAME = "SalesForce";
 
     /**
      * {@inheritDoc}
      * @see \HHK\CrmExport\AbstractExportManager::__construct()
      */
-    public function __construct(\PDO $dbh, $cmsName) {
+    public function __construct(\PDO $dbh, string $cmsName) {
         parent::__construct($dbh, $cmsName);
 
         // build the urls
@@ -195,7 +183,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $parameters
      * @return string
      */
-    public function getMember(\PDO $dbh, $parameters): string {
+    public function getMember(\PDO $dbh, array $parameters): string {
 
         $source = $parameters['src'] ?? '';
         $id = $parameters['accountId'] ?? '';
@@ -252,14 +240,14 @@ class SalesforceManager extends AbstractExportManager {
      * @param string $url
      * @return mixed
      */
-    protected function retrieveURL($url) {
+    protected function retrieveURL(string $url) {
 
         $results = $this->webService->goUrl($url);
 
         return $results;
     }
 
-    public function retrieveRemoteAccount($accountId):array {
+    public function retrieveRemoteAccount(string|int $accountId):array {
 
         return $this->retrieveURL($this->getContactEndpoint . $accountId);
     }
@@ -517,10 +505,11 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of upsertMembers Bulk insert/update of members
      * @param \PDO $dbh
      * @param array $sourceIds
+     * @param mixed $trace
      * @param bool $linkRelatives
      * @return array
      */
-    public function upsertMembers(\PDO $dbh, array $sourceIds, $trace, $linkRelatives = true) {
+    public function upsertMembers(\PDO $dbh, array $sourceIds, $trace, bool $linkRelatives = true): array {
 
         $this->uniqueGuests = [];   // Keep track to not repeat a guest upsert into multiple psgs?
         $this->transferResult = [];
@@ -538,7 +527,7 @@ class SalesforceManager extends AbstractExportManager {
         // GraphId = psgId.
 
         // get the member records. the rows must be ordered by PSG Id
-        $stmt = $dbh->query("Select * from vguest_data_sf where HHK_idName__c in (" . implode(',', $sourceIds) . ") ORDER BY `idPsg`;");
+        $stmt = $dbh->query("SELECT * FROM `vguest_data_sf` WHERE `HHK_idName__c` IN (" . implode(',', $sourceIds) . ") ORDER BY `idPsg`;");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $idPsg = 0;
@@ -602,10 +591,10 @@ class SalesforceManager extends AbstractExportManager {
      * Prepare a single batch and return an array formatted for an SF request
      * @param \PDO $dbh
      * @param array $rows
-     * @param mixed $linkRelatives
+     * @param bool $linkRelatives
      * @return array{graphs: array|bool}
      */
-    protected function prepareBatch(\PDO $dbh, array $rows, $linkRelatives = true) {
+    protected function prepareBatch(\PDO $dbh, array $rows, bool $linkRelatives = true): array {
 
         $psgGuests = [];    // list of guests in PSG
         $psgGraphs = [];  // The collection of psg graphs
@@ -667,7 +656,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $batches
      * @return void
      */
-    protected function sendbatches(\PDO $dbh, array $batches){
+    protected function sendbatches(\PDO $dbh, array $batches): void{
         $batchBodies = [];
         foreach($batches as $batchId=>$batch){
             if($batch["batchBody"]){
@@ -721,11 +710,12 @@ class SalesforceManager extends AbstractExportManager {
 
     /**
      * Summary of createPsgGraph
-     * @param mixed $guests  List of Guests in the PSG
+     * @param array $guests  List of Guests in the PSG
      * @param mixed $graphId  PSG Id
+     * @param bool $linkRelatives  Whether to create relationship links between the guests in the PSG
      * @return array  The formatted Graph object
      */
-    protected function createPsgGraph($guests, $graphId, $linkRelatives) {
+    protected function createPsgGraph(array $guests, $graphId, bool $linkRelatives): array {
 
         $hasPatient = false;
         $idPatient = 0;
@@ -816,7 +806,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param mixed $guestRows
      * @return void
      */
-    protected function processGraphsResult(\PDO $dbh, $graphResult, $guestRows) {
+    protected function processGraphsResult(\PDO $dbh, $graphResult, $guestRows): void {
 
         $result = [];
 
@@ -840,11 +830,11 @@ class SalesforceManager extends AbstractExportManager {
     /**
      * Summary of processCompositeResponse is a collection of compositSubrequestResults
      * @param \PDO $dbh
-     * @param mixed $graph
-     * @param mixed $guests
+     * @param array $graph
+     * @param array $guests
      * @return void
      */
-    protected function processCompositeResponse(\PDO $dbh, $graph, $guests) {
+    protected function processCompositeResponse(\PDO $dbh, array $graph, array $guests): void {
 
         $idPsg = $graph['graphId'];
         $comResp = $graph['graphResponse']['compositeResponse'];
@@ -982,7 +972,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param \PDO $dbh
      * @param string $view DB view to use
      * @param array $sourceIds
-     * @return \PDOStatement|bool|null
+     * @return PDOStatement|bool|null
      */
     public static function loadSearchDB(\PDO $dbh, string $view, array $sourceIds): bool|PDOStatement|null {
 
@@ -1001,7 +991,7 @@ class SalesforceManager extends AbstractExportManager {
         if (count($idList) > 0) {
 
             $parm = " in (" . implode(',', $idList) . ") ";
-            return $dbh->query("Select * from $view where `HHK_idName__c` $parm");
+            return $dbh->query("SELECT * FROM `$view` WHERE `HHK_idName__c` $parm");
 
         }
 
@@ -1016,7 +1006,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $extraSourceCols
      * @return mixed
      */
-    public function loadSourceDB(\PDO $dbh, $idName, $view, $extraSourceCols = []) {
+    public function loadSourceDB(\PDO $dbh, int $idName, string $view, array $extraSourceCols = []) {
 
         $parm = intval($idName, 10);
 
@@ -1026,7 +1016,7 @@ class SalesforceManager extends AbstractExportManager {
 
         if ($parm > 0) {
 
-            $stmt = $dbh->query("Select * from $view where HHK_idName__c = $parm");
+            $stmt = $dbh->query("SELECT * FROM `$view` WHERE `HHK_idName__c` = $parm");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 0) {
@@ -1091,7 +1081,7 @@ class SalesforceManager extends AbstractExportManager {
 
         if ($fields != '' && $where != '') {
 
-            $query = 'Select ' . $fields . ' FROM Contact WHERE ' . $where . ' LIMIT 10';
+            $query = 'SELECT ' . $fields . ' FROM `Contact` WHERE ' . $where . ' LIMIT 10';
 
             $result = $this->webService->search($query, $this->queryEndpoint);
 
@@ -1107,7 +1097,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param string $where
      * @return mixed
      */
-    public function searchQuery($select, $from, $where) {
+    public function searchQuery(string $select, string $from, string $where) {
 
         if ($where != '') {
             $where = " WHERE " . $where;
@@ -1118,7 +1108,7 @@ class SalesforceManager extends AbstractExportManager {
 
     /**
      * Summary of getSearchFields
-     * @param $dbh
+     * @param \PDO|null $dbh
      * @param string $tableName
      * @return array
      */
@@ -1128,7 +1118,7 @@ class SalesforceManager extends AbstractExportManager {
         return $cols;
     }
 
-    protected static function getReturnFields() {
+    protected static function getReturnFields(): array {
 
         return [
             'Id' => 'Id',
@@ -1153,7 +1143,7 @@ class SalesforceManager extends AbstractExportManager {
 
     }
 
-     protected static function getUpdateFields() {
+    protected static function getUpdateFields(): array {
 
         return [
             'Id',
@@ -1201,7 +1191,7 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of showGatewayCredentials
      * @return string
      */
-    protected function showGatewayCredentials() {
+    protected function showGatewayCredentials(): string {
 
         $tbl = new HTMLTable();
 
@@ -1214,16 +1204,6 @@ class SalesforceManager extends AbstractExportManager {
             HTMLTable::makeTh('CRM Gateway Id', array())
             . HTMLTable::makeTd($this->getGatewayId())
             );
-        /*
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Username', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getUserId(), array('name' => '_txtuserId', 'size' => '90')))
-            );
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Password', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getPassword() == '' ? '' : self::PW_PLACEHOLDER), array('type' => 'password', 'name' => '_txtpwd', 'size' => '100')))
-            );
-            */
         $tbl->addBodyTr(
             HTMLTable::makeTh('Endpoint URL', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEndpointUrl(), array('name' => '_txtEPurl', 'size' => '100')))
@@ -1237,12 +1217,6 @@ class SalesforceManager extends AbstractExportManager {
             HTMLTable::makeTh('Client Secret', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getClientSecret() == '' ? '' : self::PW_PLACEHOLDER), array('type' => 'password', 'name' => '_txtclientsecret', 'size' => '100')))
             );
-            /*
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Security Token', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getSecurityToken(), array('name' => '_txtsectoken', 'size' => '100')))
-            );
-        */
 
         $tbl->addBodyTr(
             HTMLTable::makeTh('API Version', array())
@@ -1261,7 +1235,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param \PDO $dbh
      * @return string
      */
-    private function createTypeLists(\PDO $dbh) {
+    private function createTypeLists(\PDO $dbh): string {
 
         $uS = Session::getInstance();
 
@@ -1270,34 +1244,40 @@ class SalesforceManager extends AbstractExportManager {
 
         $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
 
-        $stmtList = $dbh->query("Select * from sf_type_map where List_Name = 'relationTypes'");
+        $stmtList = $dbh->query("SELECT * from `sf_type_map` WHERE `List_Name` = 'relationTypes'");
         $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
 
-        $mappedItems = array();
+        $mappedItems = [];
         foreach ($items as $i) {
-            $mappedItems[$i['SF_Type_Code']] = $i;
+            $mappedItems[$i['HHK_Type_Code']] = $i;
+        }
+
+        // Build SF type options for the dropdown
+        $sfOptions = [];
+        foreach ($crmItems as $sfTypeCode) {
+            $sfOptions[$sfTypeCode] = [$sfTypeCode, $sfTypeCode];
         }
 
         $nTbl = new HTMLTable();
-        $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh($this->serviceName . ' Relationship'));
+        $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh("Salesforce Relationship"));
 
-        foreach ($crmItems as $n => $k) {
+        foreach ($hhkLookup as $hhkCode => $hhkItem) {
 
-            $hhkMappedCode = '';
-            if (isset($mappedItems[$k])) {
-                $hhkMappedCode = $mappedItems[$k]['HHK_Type_Code'];
+            $currentSfCode = '';
+            if (isset($mappedItems[$hhkCode])) {
+                $currentSfCode = $mappedItems[$hhkCode]['SF_Type_Code'];
             }
 
             $nTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $hhkMappedCode), array('name' => 'selrelationTypes[' . $n . ']')))
-                . HTMLTable::makeTd($k)
+                HTMLTable::makeTd($hhkItem[1])
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                    HTMLSelector::doOptionsMkup($sfOptions, $currentSfCode, TRUE),
+                    ['name' => 'selrelationTypes[' . $hhkCode . ']']
+                ))
             );
         }
 
-        $markup = $nTbl->generateMarkup(array('style' => 'margin-top:15px;'), 'relationTypes');
-
-
-        return $markup;
+        return $nTbl->generateMarkup(['style' => 'margin-top:15px;'], 'relationTypes');
     }
 
     /**
@@ -1306,18 +1286,15 @@ class SalesforceManager extends AbstractExportManager {
      * @param string $username
      * @return string
      */
-    protected function saveCredentials(\PDO $dbh, $username) {
+    protected function saveCredentials(\PDO $dbh, string $username): string {
 
         $result = '';
         $crmRs = new CmsGatewayRS();
 
         $rags = [
-            //'_txtuserId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            //'_txtpwd' => FILTER_UNSAFE_RAW,
             '_txtclientsecret' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtEPurl' => FILTER_SANITIZE_URL,
             '_txtclientId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            //'_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtapiVersion' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtmaxPSGsPerBatch' => FILTER_SANITIZE_NUMBER_INT
 
@@ -1426,88 +1403,72 @@ class SalesforceManager extends AbstractExportManager {
      * @param \PDO $dbh
      * @return string
      */
-    protected function saveTypeLists(\PDO $dbh) {
+    protected function saveTypeLists(\PDO $dbh): string {
 
         $uS = Session::getInstance();
         $result = '';
 
-        // The list of CRM types should be in the session
         if (isset($uS->crmItems) === false) {
-            $result .= 'CRM List Items are missing. ';
+            return 'CRM List Items are missing. ';
         }
 
         $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
 
-        $stmtList = $dbh->query("Select * from sf_type_map where List_Name = 'relationTypes';");
+        $stmtList = $dbh->query("SELECT * FROM `sf_type_map` WHERE `List_Name` = 'relationTypes';");
         $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
 
         $mappedItems = [];
         foreach ($items as $i) {
-            $mappedItems[$i['SF_Type_Code']] = $i;
+            $mappedItems[$i['HHK_Type_Code']] = $i;
         }
+
+        $validSfCodes = array_values($uS->crmItems);
 
         $postedNames = filter_input_array(INPUT_POST, ['selrelationTypes' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY]]);
         $matchedNames = $postedNames['selrelationTypes'];
 
-        $updateCount = 0;
-        $insertCount = 0;
+        $upsertCount = 0;
 
-        // Check input for relationship types selector
         if (is_array($matchedNames)) {
 
-            $usedHhkTypes = [];
-            foreach ($matchedNames as $n) {
-                if ($n != '') {
-                    $usedHhkTypes[$n] = $n;
+            foreach ($hhkLookup as $hhkCode => $hhkItem) {
+
+                if (!isset($matchedNames[$hhkCode])) {
+                    continue;
+                }
+
+                $sfTypeCode = $matchedNames[$hhkCode];
+
+                if ($sfTypeCode == '') {
+                    // Delete if previously mapped
+                    if (isset($mappedItems[$hhkCode])) {
+                        $stmt = $dbh->prepare("DELETE FROM `sf_type_map` WHERE `idSf_type_map` = :id;");
+                        $stmt->execute(['id' => $mappedItems[$hhkCode]['idSf_type_map']]);
+                    }
+                    continue;
+                }
+
+                if (!\in_array($sfTypeCode, $validSfCodes, true)) {
+                    continue;
+                }
+
+                // upsert this mapping
+                $stmt = $dbh->prepare("INSERT INTO `sf_type_map` (`List_Name`, `SF_Type_Code`, `SF_Type_Name`, `HHK_Type_Code`) VALUES ('relationTypes', :sfCode, :sfName, :hhkCode) ON DUPLICATE KEY UPDATE `SF_Type_Code` = VALUES(`SF_Type_Code`), `SF_Type_Name` = VALUES(`SF_Type_Name`);");
+                $stmt->execute([
+                    'sfCode'  => $sfTypeCode,
+                    'sfName'  => $sfTypeCode,
+                    'hhkCode' => $hhkCode,
+                ]);
+
+                if ($dbh->lastInsertId() > 0) {
+                    $upsertCount++;
                 }
             }
-
-            foreach ($uS->crmItems as $n => $k) {
-
-                if (isset($matchedNames[$n])) {
-
-                    if ($matchedNames[$n] == '') {
-                        // delete if previously set
-                        foreach ($mappedItems as $i) {
-                            if ($i['SF_Type_Code'] == $k && $i['HHK_Type_Code'] != '') {
-                                $dbh->exec("delete from sf_type_map  where idSf_type_map = " . $i['idSf_type_map']);
-                                break;
-                            }
-                        }
-
-                        continue;
-
-                    } else if (isset($hhkLookup[$matchedNames[$n]]) === FALSE) {
-                        continue;
-                    }
-
-                    if (isset($mappedItems[$k])) {
-                        // Update
-                        $updateCount += $dbh->exec("update sf_type_map set SF_Type_Code = '$k', SF_Type_name = '$k' where HHK_Type_Code = '$matchedNames[$n]' and List_Name = 'relationTypes';");
-
-                    } else {
-
-                        if (isset($usedHhkTypes[$matchedNames[$n]]) === FALSE) {
-                            // Insert
-                            $idTypeMap = $dbh->exec("Insert into sf_type_map (List_Name, SF_Type_Code, SF_Type_Name, HHK_Type_Code) "
-                                . "values ('relationTypes', '" . $k . "', '" . $k . "', '" . $matchedNames[$n] . "' );");
-
-                            if ($idTypeMap > 0) {
-                                $insertCount++;
-                                $usedHhkTypes[$matchedNames[$n]] = $matchedNames[$n];
-                            }
-                        } else {
-                            $result .= 'HHK Relationship type already used: ' . $hhkLookup[$matchedNames[$n]][1] . '.  ';
-                        }
-                    }
-                }
-            }
-
         }
 
         unset($uS->crmItems);
 
-        return $result . ($updateCount > 0 ? "{$updateCount} types updated.  " : '') . ($insertCount > 0 ? "{$insertCount} new types inserted" : '');
+        return $result . ($upsertCount > 0 ? "{$upsertCount} types updated.  " : '');
     }
 
     /**

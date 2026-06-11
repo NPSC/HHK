@@ -344,7 +344,7 @@ class NeonManager extends AbstractExportManager {
     }
 
 
-    public function getMember(\PDO $dbh, $parameters): string {
+    public function getMember(\PDO $dbh, array $parameters): string {
 
         $source = (isset($parameters['src']) ? $parameters['src'] : '');
         $id = (isset($parameters['accountId']) ? $parameters['accountId'] : '');
@@ -440,7 +440,7 @@ class NeonManager extends AbstractExportManager {
      * @param string $accountId Remote account Id
      * @return array The Remote account object.
      */
-    public function retrieveRemoteAccount($accountId): array {
+    public function retrieveRemoteAccount(string|int $accountId): array {
 
         $account = $this->neonWebServiceV2->getAccount($accountId);
 

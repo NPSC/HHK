@@ -23,9 +23,9 @@ interface ExportManagerInterface {
 
     public function searchMembers(array $criteria): array;
 
-    public function getMember(\PDO $dbh, mixed $parameters): string;
+    public function getMember(\PDO $dbh, array $parameters): string;
 
-    public function retrieveRemoteAccount(mixed $accountId): array;
+    public function retrieveRemoteAccount(string|int $accountId): array;
 
     public function updateRemoteMember(\PDO $dbh, array $accountData, int $idName, array $extraSourceCols = [], bool $updateAddr = false): string;
 

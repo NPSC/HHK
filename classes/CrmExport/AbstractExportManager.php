@@ -71,7 +71,7 @@ abstract class AbstractExportManager implements ExportManagerInterface{
 
     public function __construct(\PDO $dbh, string $cmsName) {
 
-        $stmt = $dbh->query("SELECT `Description` FROM gen_lookups WHERE Table_Name = 'ExternalCRM' AND Code = '$cmsName';");
+        $stmt = $dbh->query("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'ExternalCRM' AND `Code` = '$cmsName';");
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (isset($rows[0]) && isset($rows[0][0])) {
@@ -156,11 +156,11 @@ abstract class AbstractExportManager implements ExportManagerInterface{
         return $replys;
     }
 
-    public function getMember(\PDO $dbh, $parameters): string {
+    public function getMember(\PDO $dbh, array $parameters): string {
         return 'Getting Members is not implemented';
     }
 
-    public function retrieveRemoteAccount($accountId): array {
+    public function retrieveRemoteAccount(string|int $accountId): array {
         $replys[0] = array('error' => 'Retrieving remote accounts is not implemented');
         return $replys;
     }
@@ -201,11 +201,7 @@ abstract class AbstractExportManager implements ExportManagerInterface{
             }
         } else {
             if (is_bool($results)) {
-                if ($results) {
-                    $results = 'true';
-                } else {
-                    $results = 'false';
-                }
+                $results = ($results) ? 'true' : 'false';
             }
             $line[] = $results;
         }
@@ -219,7 +215,7 @@ abstract class AbstractExportManager implements ExportManagerInterface{
      * @param mixed $externalId
      * @return int
      */
-    protected function updateLocalExternalId(\PDO $dbh, $idName, $externalId) {
+    protected function updateLocalExternalId(\PDO $dbh, $idName, $externalId): int {
 
         $uS = Session::getInstance();
         $upd = 0;
@@ -276,7 +272,7 @@ abstract class AbstractExportManager implements ExportManagerInterface{
      * @param \PDO $dbh
      * @param string $view
      * @param array $sourceIds
-     * @return \PDOStatement|bool|null
+     * @return PDOStatement|bool|null
      */
     public static function loadSearchDB(\PDO $dbh, string $view, array $sourceIds): bool|PDOStatement|null {
 
