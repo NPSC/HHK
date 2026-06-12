@@ -716,6 +716,7 @@ class SalesforceManager extends AbstractExportManager {
         $idPatient = 0;
         $subrequests = [];
         $graph = [];
+        $contactsInThisGraph = [];  // guests whose Contact subrequest is in this specific graph
 
         $additnl = '_' . $graphId;
 
@@ -728,14 +729,16 @@ class SalesforceManager extends AbstractExportManager {
                 $idPatient = $g['HHK_idName__c'];
             }
 
-            // Don't redefine the guest if already defined in a prevous psg.
+            // Don't redefine the guest if already defined in a previous psg.
             if (isset($this->uniqueGuests[$g['HHK_idName__c']])) {
                 continue;
             }
 
             $this->uniqueGuests[$g['HHK_idName__c']] = 'y';
+            $contactsInThisGraph[$g['HHK_idName__c']] = true;
 
-            // remove extra fields
+            // remove extra fields — reset each iteration so no prior guest's data bleeds in
+            $filteredRow = [];
             foreach ($g as $k => $w) {
                 if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'Legal_Custody' && $k != 'idPsg' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
                     $filteredRow[$k] = $w;
@@ -755,6 +758,15 @@ class SalesforceManager extends AbstractExportManager {
         // If there is a patient, make relationship subrequests
         if ($linkRelatives && $hasPatient && $idPatient > 0) {
 
+            // Resolve the patient's reference once — prefer direct SF ID if their Contact was sent in a prior graph
+            if (isset($contactsInThisGraph[$idPatient])) {
+                $patientRef = "@{refContact_$idPatient$additnl.id}";
+            } elseif (isset($guests[$idPatient]) && $guests[$idPatient]['Id'] != '') {
+                $patientRef = $guests[$idPatient]['Id'];
+            } else {
+                $patientRef = null;  // can't link — patient contact hasn't been synced yet
+            }
+
             foreach ($guests as $g) {
 
                 if ($g['Relationship_Code'] == RelLinkType::Self) {
@@ -763,36 +775,45 @@ class SalesforceManager extends AbstractExportManager {
 
                 if ($g['Relationship_Id'] == '') {
 
-                    // New relationship — POST with contact references
-                    $relationRow = [
-                        'npe4__Contact__c' => "@{refContact_" . $g['HHK_idName__c'] . $additnl . ".id}",
-                        'npe4__RelatedContact__c' => "@{refContact_$idPatient$additnl.id}",
-                        'npe4__Status__c' => 'Current',
-                        'npe4__Type__c' => $g['SF_Rel_Type'],
-                        'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
-                    ];
+                    // Resolve the guest's reference — prefer direct SF ID if their Contact was sent in a prior graph
+                    if (isset($contactsInThisGraph[$g['HHK_idName__c']])) {
+                        $guestRef = "@{refContact_" . $g['HHK_idName__c'] . $additnl . ".id}";
+                    } elseif ($g['Id'] != '') {
+                        $guestRef = $g['Id'];
+                    } else {
+                        continue;  // guest and patient must both be in SF before a relationship can be created
+                    }
 
+                    if ($patientRef === null) {
+                        continue;
+                    }
+
+                    // New relationship — POST with contact references
                     $subrequests[] = [
                         "method" => "POST",
                         "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
                         "referenceId" => "refRel_" . $g['HHK_idName__c'] . $additnl,
-                        "body" => $relationRow
+                        "body" => [
+                            'npe4__Contact__c' => $guestRef,
+                            'npe4__RelatedContact__c' => $patientRef,
+                            'npe4__Status__c' => 'Current',
+                            'npe4__Type__c' => $g['SF_Rel_Type'],
+                            'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
+                        ]
                     ];
 
                 } else {
 
                     // Existing relationship — PATCH updatable fields only (contact lookups are immutable)
-                    $relationRow = [
-                        'npe4__Status__c' => 'Current',
-                        'npe4__Type__c' => $g['SF_Rel_Type'],
-                        'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
-                    ];
-
                     $subrequests[] = [
                         "method" => "PATCH",
                         "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/' . $g['Relationship_Id'],
                         "referenceId" => "refRel_" . $g['HHK_idName__c'] . $additnl,
-                        "body" => $relationRow
+                        "body" => [
+                            'npe4__Status__c' => 'Current',
+                            'npe4__Type__c' => $g['SF_Rel_Type'],
+                            'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
+                        ]
                     ];
                 }
             }

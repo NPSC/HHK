@@ -30,19 +30,17 @@ class ContactCompositeSubresponse extends AbstractCompositeSubresponse
         $result = '';
 
         if ($this->subresponse->getBody_success()) {
-
-            if ($this->subresponse->getHttpStatusCode() == '201') {
-                $result = "New Contact";
-            } else {
-                $result = "Ok";
-            }
-
+            // 201 — new contact created by upsert; save the returned SF id locally
             $this->updateLocal($dbh);
-
-        } else {
-            $result = 'Contact: '. $this->subresponse->getBody_errorCode() . ', ' . $this->subresponse->getBody_message() . ' (' . $this->subresponse->getHttpStatusCode() . ')';
+            return 'New Contact';
         }
-        return $result;
+
+        if ($this->subresponse->getHttpStatusCode() === 204) {
+            // 204 — existing contact updated by upsert; no body returned
+            return 'Contact Updated';
+        }
+
+        return 'Contact: '. $this->subresponse->getBody_errorCode() . ', ' . $this->subresponse->getBody_message() . ' (' . $this->subresponse->getHttpStatusCode() . ')';
     }
 
     /**
