@@ -2265,5 +2265,12 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
     public function getLogServiceName(): string{
         return self::LOG_SERVICE_NAME;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function upsertMembers(\PDO $dbh, array $sourceIds, bool $trace = false, bool $linkRelatives = true): array {
+        return [];
+    }
 }
 

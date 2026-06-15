@@ -172,6 +172,8 @@ abstract class AbstractExportManager implements ExportManagerInterface{
     public abstract function showConfig(\PDO $dbh): mixed;
     public abstract function saveConfig(\PDO $dbh): mixed;
 
+    public abstract function upsertMembers(\PDO $dbh, array $sourceIds, bool $trace = false, bool $linkRelatives = true): array;
+
     /**
      * Summary of unwindResponse
      * @param mixed $line

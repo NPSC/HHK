@@ -11,6 +11,7 @@ use HHK\Exception\RuntimeException;
 use HHK\SysConst\RelLinkType;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
+use HHK\Tables\Name\Name_GuestRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\Session;
 use HHK\OAuth\Credentials;
@@ -504,7 +505,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param bool $linkRelatives
      * @return array
      */
-    public function upsertMembers(\PDO $dbh, array $sourceIds, $trace, bool $linkRelatives = true): array {
+    public function upsertMembers(\PDO $dbh, array $sourceIds, bool $trace = false, bool $linkRelatives = true): array {
 
         $this->uniqueGuests = [];   // Keep track to not repeat a guest upsert into multiple psgs?
         $this->transferResult = [];
@@ -595,7 +596,9 @@ class SalesforceManager extends AbstractExportManager {
         $psgGraphs = [];  // The collection of psg graphs
         $psgId = 0; // multiple records for each psgId
 
-
+        if ($linkRelatives) {
+            $this->verifyRelationshipIds($dbh, $rows);
+        }
 
         // Collect each psg into a guests array and process it as a composit request set to make a graph
         // $rows must be ordered by PSG Id
@@ -720,16 +723,87 @@ class SalesforceManager extends AbstractExportManager {
 
         $additnl = '_' . $graphId;
 
-        // Make Contact subrequests
+        // Pre-scan: detect patient regardless of uniqueGuests status (needed for relationship subrequests).
         foreach ($guests as $g) {
-
-            // Do we have a patient?
             if ($g['Relationship_Code'] == RelLinkType::Self) {
                 $hasPatient = true;
-                $idPatient = $g['HHK_idName__c'];
+                $idPatient  = $g['HHK_idName__c'];
+                break;
+            }
+        }
+
+        // Use the patient as the primary contact. When SF (NPSP) creates a new Contact it
+        // auto-creates a Household Account — we GET that AccountId and use it to link all
+        // other guests in this PSG to the same Account.
+        $primaryGuest       = $guests[$idPatient] ?? array_values($guests)[0];
+        $primaryHhkId       = $primaryGuest['HHK_idName__c'];
+        $primarySfId        = $primaryGuest['Id'];
+        $primaryIsNew       = ($primarySfId == '');
+        $primaryInThisGraph = !isset($this->uniqueGuests[$primaryHhkId]);
+
+        // --- Phase 1: upsert the primary contact ---
+        if ($primaryInThisGraph) {
+            $this->uniqueGuests[$primaryHhkId] = 'y';
+            $contactsInThisGraph[$primaryHhkId] = true;
+
+            $filteredRow = [];
+            foreach ($primaryGuest as $k => $w) {
+                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'Legal_Custody' && $k != 'idPsg' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
+                    $filteredRow[$k] = $w;
+                }
             }
 
-            // Don't redefine the guest if already defined in a previous psg.
+            $subrequests[] = [
+                "method" => "PATCH",
+                "url" => $this->getContactEndpoint . 'HHK_idName__c/' . $primaryHhkId,
+                "referenceId" => "refContact_" . $primaryHhkId . $additnl,
+                "body" => $filteredRow
+            ];
+        }
+
+        // --- Phase 2: GET AccountId from the primary contact ---
+        // A new contact (201) gives us an id to GET from; an existing contact (204, no body)
+        // must be fetched by the locally-stored SF Contact ID.
+        $accountRefId    = "refGetAccount" . $additnl;
+        $canGetAccountId = false;
+
+        if ($primaryInThisGraph && $primaryIsNew) {
+            $subrequests[] = [
+                "method" => "GET",
+                "url" => $this->getContactEndpoint . '@{refContact_' . $primaryHhkId . $additnl . '.id}?fields=AccountId',
+                "referenceId" => $accountRefId
+            ];
+            $canGetAccountId = true;
+        } elseif ($primarySfId != '') {
+            $subrequests[] = [
+                "method" => "GET",
+                "url" => $this->getContactEndpoint . $primarySfId . '?fields=AccountId',
+                "referenceId" => $accountRefId
+            ];
+            $canGetAccountId = true;
+        }
+        // else: primary is brand-new and already processed in a prior graph this batch —
+        // no AccountId available; remaining guests get their own SF-generated accounts.
+
+        // --- Phase 2b: stamp HHK_idPsg__c on the Account ---
+        if ($canGetAccountId) {
+            $subrequests[] = [
+                "method" => "PATCH",
+                "url" => $this->endPoint . 'sobjects/Account/@{' . $accountRefId . '.AccountId}',
+                "referenceId" => "refPatchAccount" . $additnl,
+                "body" => [
+                    "HHK_idPsg__c" => (string)$graphId,
+                ]
+            ];
+        }
+
+        // --- Phase 3: upsert remaining contacts, linked to the primary's Account ---
+        foreach ($guests as $g) {
+
+            if ($g['HHK_idName__c'] == $primaryHhkId) {
+                continue;
+            }
+
             if (isset($this->uniqueGuests[$g['HHK_idName__c']])) {
                 continue;
             }
@@ -745,7 +819,10 @@ class SalesforceManager extends AbstractExportManager {
                 }
             }
 
-            // Subrequest to upsert guest
+            if ($canGetAccountId) {
+                $filteredRow['AccountId'] = '@{' . $accountRefId . '.AccountId}';
+            }
+
             $subrequests[] = [
                 "method" => "PATCH",
                 "url" => $this->getContactEndpoint . 'HHK_idName__c/' . $g['HHK_idName__c'],
@@ -773,9 +850,8 @@ class SalesforceManager extends AbstractExportManager {
                     continue;
                 }
 
-                if ($g['Relationship_Id'] == '') {
 
-                    // Resolve the guest's reference — prefer direct SF ID if their Contact was sent in a prior graph
+                // Resolve the guest's reference — prefer direct SF ID if their Contact was sent in a prior graph
                     if (isset($contactsInThisGraph[$g['HHK_idName__c']])) {
                         $guestRef = "@{refContact_" . $g['HHK_idName__c'] . $additnl . ".id}";
                     } elseif ($g['Id'] != '') {
@@ -783,6 +859,8 @@ class SalesforceManager extends AbstractExportManager {
                     } else {
                         continue;  // guest and patient must both be in SF before a relationship can be created
                     }
+
+                if ($g['Relationship_Id'] == '') {
 
                     if ($patientRef === null) {
                         continue;
@@ -794,8 +872,8 @@ class SalesforceManager extends AbstractExportManager {
                         "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
                         "referenceId" => "refRel_" . $g['HHK_idName__c'] . $additnl,
                         "body" => [
-                            'npe4__Contact__c' => $guestRef,
-                            'npe4__RelatedContact__c' => $patientRef,
+                            'npe4__Contact__c' => $patientRef,
+                            'npe4__RelatedContact__c' => $guestRef,
                             'npe4__Status__c' => 'Current',
                             'npe4__Type__c' => $g['SF_Rel_Type'],
                             'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
@@ -877,6 +955,11 @@ class SalesforceManager extends AbstractExportManager {
 
             $subResponse = AbstractCompositeSubresponse::factory($c, $idPsg, $isSuccessful);
 
+            // factory() returns null for Account subrequests (refAccount_*) — skip them.
+            if ($subResponse === null) {
+                continue;
+            }
+
             $guest = $this->findGuest($guests, $idPsg, $subResponse->getIdName());
 
 
@@ -924,7 +1007,233 @@ class SalesforceManager extends AbstractExportManager {
         return [];
     }
 
+    /**
+     * Query SF for the Contact side of a set of npe4__Relationship__c records.
+     * Returns a map of relationship_id -> ['contactId' => ...].
+     */
+    /**
+     * Checks which stored relationship IDs still exist in SF. Clears stale IDs from
+     * the rows array (by reference) and from the local DB so they are recreated on the
+     * next composite graph run instead of failing with a 404 PATCH.
+     */
+    protected function verifyRelationshipIds(\PDO $dbh, array &$rows): void {
 
+        $relIds = [];
+        foreach ($rows as $r) {
+            if (!empty($r['Relationship_Id'])) {
+                $relIds[] = $r['Relationship_Id'];
+            }
+        }
+
+        if (empty($relIds)) {
+            return;
+        }
+
+        $idList  = implode("','", array_unique($relIds));
+        $query   = "SELECT Id FROM npe4__Relationship__c WHERE Id IN ('$idList') LIMIT 2000";
+        $result  = $this->webService->search($query, $this->queryEndpoint);
+
+        $existingIds = [];
+        if (isset($result['records'])) {
+            foreach ($result['records'] as $rec) {
+                $existingIds[$rec['Id']] = true;
+            }
+        }
+
+        foreach ($rows as &$row) {
+            if (!empty($row['Relationship_Id']) && !isset($existingIds[$row['Relationship_Id']])) {
+                $this->updateLocalRelationshipId($dbh, (int)$row['HHK_idName__c'], (int)$row['idPsg'], '');
+                $row['Relationship_Id'] = '';
+            }
+        }
+        unset($row);
+    }
+
+    protected function fetchRelationshipDirections(array $relIds): array {
+
+        if (empty($relIds)) {
+            return [];
+        }
+
+        $idList = implode("','", $relIds);
+        $query  = "SELECT Id, npe4__Contact__c FROM npe4__Relationship__c WHERE Id IN ('$idList') LIMIT 2000";
+        $result = $this->webService->search($query, $this->queryEndpoint);
+
+        $map = [];
+        if (isset($result['records'])) {
+            foreach ($result['records'] as $r) {
+                $map[$r['Id']] = ['contactId' => $r['npe4__Contact__c'] ?? ''];
+            }
+        }
+        return $map;
+    }
+
+    /**
+     * One-time maintenance method: finds every locally-stored relationship whose
+     * npe4__Contact__c is the guest instead of the patient, deletes it, and
+     * recreates it in the correct direction — atomically, one graph per fix.
+     * Updates the local External_Id on success.
+     */
+    public function fixInverseRelationships(\PDO $dbh): array {
+
+        $transferResult = [];
+        $errorResult    = [];
+
+        // All non-patient rows that have an SF relationship record
+        $stmt      = $dbh->query("SELECT * FROM `vguest_data_sf` WHERE `Relationship_Id` IS NOT NULL AND `Relationship_Id` != '' ORDER BY `idPsg`");
+        $guestRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (empty($guestRows)) {
+            return ['table' => '<p>No relationships found to check.</p>', 'errors' => []];
+        }
+
+        // Pre-query SF for the Contact side of every stored relationship
+        $relIds       = array_values(array_unique(array_column($guestRows, 'Relationship_Id')));
+        $relDirections = $this->fetchRelationshipDirections($relIds);
+
+        // Build a psgId → patient SF Contact ID map from the same view
+        $psgIds     = array_unique(array_column($guestRows, 'idPsg'));
+        $patStmt    = $dbh->query("SELECT `HHK_idName__c`, `Id`, `idPsg`, `Relationship_Code` FROM `vguest_data_sf` WHERE `idPsg` IN (" . implode(',', $psgIds) . ")");
+        $patientSfIds = [];
+        while ($p = $patStmt->fetch(\PDO::FETCH_ASSOC)) {
+            if ($p['Relationship_Code'] == RelLinkType::Self && $p['Id'] !== '') {
+                $patientSfIds[$p['idPsg']] = $p['Id'];
+            }
+        }
+
+        // Build one atomic composite graph per backwards relationship
+        $graphs     = [];
+        $rowByGraph = [];
+
+        foreach ($guestRows as $r) {
+
+            if ($r['Relationship_Code'] == RelLinkType::Self) {
+                continue;
+            }
+
+            if ($r['Id'] === '' || ($r['SF_Rel_Type'] ?? '') === '') {
+                continue;  // guest not in SF or no type mapping
+            }
+
+            $patientSfId = $patientSfIds[$r['idPsg']] ?? null;
+            if ($patientSfId === null) {
+                continue;  // patient not yet in SF
+            }
+
+            $dir = $relDirections[$r['Relationship_Id']] ?? null;
+            if ($dir === null) {
+                continue;  // relationship no longer exists in SF
+            }
+
+            if ($dir['contactId'] === $patientSfId) {
+                $transferResult[] = ['HHK Id' => $r['HHK_idName__c'], 'PSG Id' => $r['idPsg'], 'Old Rel Id' => $r['Relationship_Id'], 'New Rel Id' => '', 'Result' => 'Already correct'];
+                continue;
+            }
+
+            $graphId = $r['HHK_idName__c'] . '_' . $r['idPsg'];
+
+            $graphs[$graphId] = [
+                'graphId'          => $graphId,
+                'compositeRequest' => [
+                    [
+                        'method'      => 'DELETE',
+                        'url'         => $this->endPoint . 'sobjects/npe4__Relationship__c/' . $r['Relationship_Id'],
+                        'referenceId' => 'refDelRel_' . $graphId,
+                    ],
+                    [
+                        'method'      => 'POST',
+                        'url'         => $this->endPoint . 'sobjects/npe4__Relationship__c/',
+                        'referenceId' => 'refRel_' . $graphId,
+                        'body'        => [
+                            'npe4__Contact__c'        => $patientSfId,
+                            'npe4__RelatedContact__c' => $r['Id'],
+                            'npe4__Status__c'         => 'Current',
+                            'npe4__Type__c'           => $r['SF_Rel_Type'],
+                            'Legal_Custody__c'        => $r['Legal_Custody'] == 0 ? 'false' : 'true',
+                        ],
+                    ],
+                ],
+            ];
+            $rowByGraph[$graphId] = $r;
+        }
+
+        if (empty($graphs)) {
+            return ['table' => CreateMarkupFromDB::generateHTML_Table($transferResult, 'tblfix'), 'errors' => []];
+        }
+
+        // Chunk into batches of MAX_PAYLOAD_GRAPHS (SF enforced limit) and send in parallel
+        $batchBodies = [];
+        foreach (array_chunk(array_values($graphs), self::MAX_PAYLOAD_GRAPHS) as $batchId => $batchGraphs) {
+            $batchBodies[$batchId] = ['graphs' => $batchGraphs];
+        }
+
+        try {
+            $batchResults = $this->webService->postUrlAsync($this->endPoint . 'composite/graph', $batchBodies);
+
+            foreach ($batchResults['batchResults'] as $batchResult) {
+                if (!isset($batchResult['success']['graphs'])) {
+                    $errorResult[] = $batchResult['error'] ?? 'Unknown batch error';
+                    continue;
+                }
+
+                foreach ($batchResult['success']['graphs'] as $graphResult) {
+                    $graphId = $graphResult['graphId'];
+                    $row     = $rowByGraph[$graphId] ?? null;
+
+                    if ($graphResult['isSuccessful'] && $row !== null) {
+                        $newRelId = '';
+                        foreach ($graphResult['graphResponse']['compositeResponse'] as $subResp) {
+                            if (str_starts_with($subResp['referenceId'], 'refRel_') && isset($subResp['body']['id'])) {
+                                $newRelId = $subResp['body']['id'];
+                                break;
+                            }
+                        }
+
+                        if ($newRelId !== '') {
+                            $this->updateLocalRelationshipId($dbh, (int)$row['HHK_idName__c'], (int)$row['idPsg'], $newRelId);
+                        }
+
+                        $transferResult[] = ['HHK Id' => $row['HHK_idName__c'], 'PSG Id' => $row['idPsg'], 'Old Rel Id' => $row['Relationship_Id'], 'New Rel Id' => $newRelId, 'Result' => 'Fixed'];
+
+                    } elseif ($row !== null) {
+                        $error = '';
+                        foreach ($graphResult['graphResponse']['compositeResponse'] as $subResp) {
+                            if (isset($subResp['body'][0]['errorCode'])) {
+                                $error = $subResp['body'][0]['errorCode'] . ': ' . ($subResp['body'][0]['message'] ?? '');
+                                break;
+                            }
+                        }
+                        $transferResult[] = ['HHK Id' => $row['HHK_idName__c'], 'PSG Id' => $row['idPsg'], 'Old Rel Id' => $row['Relationship_Id'], 'New Rel Id' => '', 'Result' => 'Error: ' . $error];
+                    }
+                }
+            }
+        } catch (\RuntimeException $ex) {
+            $errorResult[] = $ex->getMessage();
+        }
+
+        $result = ['table' => CreateMarkupFromDB::generateHTML_Table($transferResult, 'tblfix')];
+        if (!empty($errorResult)) {
+            $result['errors'] = $errorResult;
+        }
+        return $result;
+    }
+
+    /**
+     * Update the locally-stored SF relationship ID for a guest/PSG pair.
+     */
+    private function updateLocalRelationshipId(\PDO $dbh, int $idName, int $idPsg, string $newRelId): void {
+
+        $nameRs = new Name_GuestRS();
+        $nameRs->idName->setStoredVal($idName);
+        $nameRs->idPsg->setStoredVal($idPsg);
+        $rows = EditRS::select($dbh, $nameRs, [$nameRs->idName, $nameRs->idPsg]);
+
+        if (!empty($rows)) {
+            EditRS::loadRow($rows[0], $nameRs);
+            $nameRs->External_Id->setNewVal($newRelId);
+            EditRS::update($dbh, $nameRs, [$nameRs->idName, $nameRs->idPsg]);
+        }
+    }
 
     /**
      * Summary of updateRemoteMember
@@ -1200,6 +1509,41 @@ class SalesforceManager extends AbstractExportManager {
 
     }
 
+    public function createCustomFields() {
+
+        $customFields = [
+            'Contact.HHK_idName__c' => [
+                'FullName' => 'Contact.HHK_idName__c',
+                'Metadata' => [
+                    'type' => 'Text',
+                    'label' => 'HHK ID',
+                    'length' => 255,
+                    'unique' => true,
+                    'externalId' => true
+                ]
+            ],
+            'Account.HHK_idPsg__c' => [
+                'FullName' => 'Account.HHK_idPsg__c',
+                'Metadata' => [
+                    'type' => 'Text',
+                    'label' => 'HHK PSG ID',
+                    'length' => 255,
+                    'unique' => true,
+                    'externalId' => true
+                ]
+            ],
+        ];
+
+        foreach ($customFields as $k=>$payload) {
+            try {
+                $result = $this->webService->postUrl($this->endPoint . 'tooling/sobjects/CustomField', $payload);
+            } catch (\RuntimeException $ex) {
+                
+            }
+        }
+
+    } 
+
 
     /**
      * Summary of showConfig
@@ -1216,7 +1560,23 @@ class SalesforceManager extends AbstractExportManager {
 
         }
 
+        $markup .= $this->showMaintenanceSection();
+
         return $markup;
+    }
+
+    protected function showMaintenanceSection(): string {
+
+        $tbl = new HTMLTable();
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Maintenance', ['style' => 'border-top:2px solid black;'])
+            . HTMLTable::makeTd(
+                HTMLInput::generateMarkup('Fix Inverse Relationships', ['type' => 'submit', 'name' => '_fixInverseRelations', 'class' => 'btn btn-warning btn-sm'])
+                . HTMLContainer::generateMarkup('span', ' Corrects existing relationship records where Contact and Related Contact are swapped. Run once after initial sync.', ['class' => 'ml-2']),
+                ['style' => 'border-top:2px solid black;']
+            )
+        );
+        return $tbl->generateMarkup(['style' => 'margin-top:15px;']);
     }
 
     /**
@@ -1511,6 +1871,16 @@ class SalesforceManager extends AbstractExportManager {
     public function saveConfig(\PDO $dbh): string {
 
         $uS = Session::getInstance();
+
+        // One-time maintenance action — skip the normal credential save when this button is clicked
+        if (filter_input(INPUT_POST, '_fixInverseRelations') !== null) {
+            $fixResult = $this->fixInverseRelationships($dbh);
+            $result = $fixResult['table'] ?? '';
+            foreach ($fixResult['errors'] ?? [] as $err) {
+                $result .= HTMLContainer::generateMarkup('p', htmlspecialchars($err), ['class' => 'text-danger']);
+            }
+            return $result;
+        }
 
         // credentials
         $result = $this->saveCredentials($dbh, $uS->username);

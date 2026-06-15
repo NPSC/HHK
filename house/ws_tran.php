@@ -55,7 +55,7 @@ try {
                     'filter' => FILTER_SANITIZE_NUMBER_INT,
                     'flags' => FILTER_FORCE_ARRAY,
                 ],
-                'trace' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'trace' => FILTER_VALIDATE_BOOLEAN,
             ];
             $post = filter_input_array(INPUT_POST, $rags);
 
