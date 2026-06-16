@@ -27,20 +27,20 @@ class ContactCompositeSubresponse extends AbstractCompositeSubresponse
      */
     public function processResult(\PDO $dbh): string
     {
-        $result = '';
+        $statusCode = $this->subresponse->getHttpStatusCode();
 
-        if ($this->subresponse->getBody_success()) {
-            // 201 — new contact created by upsert; save the returned SF id locally
+        if ($statusCode === 201) {
+            // New record — upsert inserted; body contains the new SF id
             $this->updateLocal($dbh);
             return 'New Contact';
         }
 
-        if ($this->subresponse->getHttpStatusCode() === 204) {
-            // 204 — existing contact updated by upsert; no body returned
+        if ($statusCode === 200 || $statusCode === 204) {
+            // Existing record — upsert updated; 200 body has success:true/created:false, 204 has no body
             return 'Contact Updated';
         }
 
-        return 'Contact: '. $this->subresponse->getBody_errorCode() . ', ' . $this->subresponse->getBody_message() . ' (' . $this->subresponse->getHttpStatusCode() . ')';
+        return 'Contact: '. $this->subresponse->getBody_errorCode() . ', ' . $this->subresponse->getBody_message() . ' (' . $statusCode . ')';
     }
 
     /**

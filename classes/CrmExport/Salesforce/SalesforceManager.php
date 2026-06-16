@@ -57,6 +57,7 @@ class SalesforceManager extends AbstractExportManager {
     protected $uniqueGuests;
     protected bool $trace;
     protected $traceData;
+    protected array $picklists;
 
     const string LOG_SERVICE_NAME = "SalesForce";
 
@@ -106,30 +107,56 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
-     * Summary of getRelationshipPicklist
+     * Fetch picklist lookups from salesforce. Stored as $this->picklists[$object][$fieldName][$value] = $label.
+     * @param string $object Salesforce object eg Account, Contact, npe4__Relationship__c
      * @return array
      */
-    public function getRelationshipPicklist() {
+    public function getPicklists(string $object): array {
 
-        $result = $this->retrieveURL($this->endPoint . 'sobjects/npe4__Relationship__c/describe');
+        $result = $this->retrieveURL($this->endPoint . 'sobjects/'.$object.'/describe');
 
-        $needle = 'fields.15.picklistValues.';
-        $parms = [];
-        $relatList = [];
+        $this->picklists[$object] = [];
 
         if(is_array($result) && isset($result['fields'])) {
             foreach($result['fields'] as $f) {
-                if (isset($f['name']) && $f['name'] == 'npe4__Type__c' && isset($f['picklistValues'])) {
+                if (isset($f['name'], $f['picklistValues']) && \count($f['picklistValues']) > 0) {
+                    $fieldValues = [];
                     foreach ($f['picklistValues'] as $pv) {
                         if (isset($pv['active'], $pv['value'], $pv['label']) && $pv['active'] === true) {
-                            $relatList[$pv['value']] = $pv['label'];
+                            $fieldValues[$pv['value']] = $pv['label'];
                         }
+                    }
+                    if (!empty($fieldValues)) {
+                        $this->picklists[$object][$f['name']] = $fieldValues;
                     }
                 }
             }
         }
 
-        return $relatList;
+        return $this->picklists;
+    }
+
+    /**
+     * Defines which SF picklist fields to surface in the config UI.
+     * Each key becomes the List_Name in sf_type_map and the POST field prefix.
+     * Override in a subclass to add more mappings.
+     * @return array{label:string, sfObject:string, sfField:string, hhkLookup:string}[]
+     */
+    protected static function getPicklistFields(): array {
+        return [
+            'relationTypes' => [
+                'label'     => 'Relationship Types',
+                'sfObject'  => 'npe4__Relationship__c',
+                'sfField'   => 'npe4__Type__c',
+                'hhkLookup' => 'Patient_Rel_Type',
+            ],
+            'salutation' => [
+                'label'     => 'Salutation',
+                'sfObject'  => 'Contact',
+                'sfField'   => 'Salutation',
+                'hhkLookup' => 'Name_Prefix',
+            ],
+        ];
     }
 
     /**
@@ -569,8 +596,8 @@ class SalesforceManager extends AbstractExportManager {
 
         $this->sendbatches($dbh, $batches);
 
-        // Create an HTML table containing the results
-        $result['table'] = CreateMarkupFromDB::generateHTML_Table($this->transferResult, 'tblrpt');
+        // Create an HTML table containing the results (re-index since transferResult is keyed by HHK_psg)
+        $result['table'] = CreateMarkupFromDB::generateHTML_Table(array_values($this->transferResult), 'tblrpt');
 
         if ($this->trace) {
             $result['trace'] = $this->traceData;
@@ -981,11 +1008,24 @@ class SalesforceManager extends AbstractExportManager {
                 'Result' => '',
             ];
 
-            $f['Result'] = $subResponse->processResult($dbh);
-            $f['Contact Id'] = $subResponse->getContactId();
+            $resultStr = $subResponse->processResult($dbh);
+            $contactId = $subResponse->getContactId();
 
-            // Collect in one massive result array across batches.
-            $this->transferResult[] = $f;
+            // Group by HHK ID + PSG so contact and relationship subrequests for the same
+            // person collapse into one row instead of producing duplicate lines.
+            $hhkId = count($guest) > 0 ? $guest['HHK_idName__c'] : '';
+            $key   = $hhkId . '_' . $idPsg;
+
+            if (isset($this->transferResult[$key])) {
+                $this->transferResult[$key]['Result'] .= '; ' . $resultStr;
+                if ($this->transferResult[$key]['Contact Id'] === '' && $contactId !== '') {
+                    $this->transferResult[$key]['Contact Id'] = $contactId;
+                }
+            } else {
+                $f['Result']     = $resultStr;
+                $f['Contact Id'] = $contactId;
+                $this->transferResult[$key] = $f;
+            }
         }
     }
 
@@ -1624,52 +1664,61 @@ class SalesforceManager extends AbstractExportManager {
     }
     /**
      * Summary of createTypeLists
+     * Generates one mapping table per entry in getPicklistFields().
      * @param \PDO $dbh
      * @return string
      */
     private function createTypeLists(\PDO $dbh): string {
 
         $uS = Session::getInstance();
+        $markup = '';
+        $sessionPicklists = [];
 
-        $crmItems = $this->getRelationshipPicklist();
-        $uS->crmItems = $crmItems;
+        foreach (static::getPicklistFields() as $listName => $config) {
 
-        $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
-
-        $stmtList = $dbh->query("SELECT * from `sf_type_map` WHERE `List_Name` = 'relationTypes'");
-        $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
-
-        $mappedItems = [];
-        foreach ($items as $i) {
-            $mappedItems[$i['HHK_Type_Code']] = $i;
-        }
-
-        // Build SF type options for the dropdown
-        $sfOptions = [];
-        foreach ($crmItems as $sfTypeCode) {
-            $sfOptions[$sfTypeCode] = [$sfTypeCode, $sfTypeCode];
-        }
-
-        $nTbl = new HTMLTable();
-        $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh("Salesforce Relationship"));
-
-        foreach ($hhkLookup as $hhkCode => $hhkItem) {
-
-            $currentSfCode = '';
-            if (isset($mappedItems[$hhkCode])) {
-                $currentSfCode = $mappedItems[$hhkCode]['SF_Type_Code'];
+            if (!isset($this->picklists[$config['sfObject']])) {
+                $this->getPicklists($config['sfObject']);
             }
 
-            $nTbl->addBodyTr(
-                HTMLTable::makeTd($hhkItem[1])
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($sfOptions, $currentSfCode, TRUE),
-                    ['name' => 'selrelationTypes[' . $hhkCode . ']', 'style' => 'width:100%;']
-                ))
+            $sfFieldValues = $this->picklists[$config['sfObject']][$config['sfField']] ?? [];
+            $sessionPicklists[$listName] = array_keys($sfFieldValues);
+
+            $sfOptions = ['' => ['', '-- None --']];
+            foreach ($sfFieldValues as $sfCode => $sfLabel) {
+                $sfOptions[$sfCode] = [$sfCode, $sfLabel];
+            }
+
+            $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $config['hhkLookup']));
+
+            $stmtList = $dbh->query("SELECT * FROM `sf_type_map` WHERE `List_Name` = '$listName'");
+            $mappedItems = [];
+            foreach ($stmtList->fetchAll(\PDO::FETCH_ASSOC) as $i) {
+                $mappedItems[$i['HHK_Type_Code']] = $i;
+            }
+
+            $nTbl = new HTMLTable();
+            $nTbl->addHeaderTr(
+                HTMLTable::makeTh('HHK ' . $config['label'])
+                . HTMLTable::makeTh('Salesforce ' . $config['label'])
             );
+
+            foreach ($hhkLookup as $hhkCode => $hhkItem) {
+                $currentSfCode = $mappedItems[$hhkCode]['SF_Type_Code'] ?? '';
+                $nTbl->addBodyTr(
+                    HTMLTable::makeTd($hhkItem[1])
+                    . HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                        HTMLSelector::doOptionsMkup($sfOptions, $currentSfCode, TRUE),
+                        ['name' => "sel{$listName}[{$hhkCode}]", 'style' => 'width:100%;']
+                    ))
+                );
+            }
+
+            //$markup .= $nTbl->generateMarkup(['style' => 'margin-top:15px;'], $listName);
+            $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], $listName), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
         }
 
-        return $nTbl->generateMarkup(['style' => 'margin-top:15px;'], 'relationTypes');
+        $uS->crmItems = $sessionPicklists;
+        return HTMLContainer::generateMarkup('div', $markup, ['class'=>'hhk-flex mt-2']);
     }
 
     /**
@@ -1798,30 +1847,30 @@ class SalesforceManager extends AbstractExportManager {
     protected function saveTypeLists(\PDO $dbh): string {
 
         $uS = Session::getInstance();
-        $result = '';
 
         if (isset($uS->crmItems) === false) {
             return 'CRM List Items are missing. ';
         }
 
-        $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Patient_Rel_Type'));
-
-        $stmtList = $dbh->query("SELECT * FROM `sf_type_map` WHERE `List_Name` = 'relationTypes';");
-        $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
-
-        $mappedItems = [];
-        foreach ($items as $i) {
-            $mappedItems[$i['HHK_Type_Code']] = $i;
-        }
-
-        $validSfCodes = array_values($uS->crmItems);
-
-        $postedNames = filter_input_array(INPUT_POST, ['selrelationTypes' => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY]]);
-        $matchedNames = $postedNames['selrelationTypes'];
-
         $upsertCount = 0;
 
-        if (is_array($matchedNames)) {
+        foreach (static::getPicklistFields() as $listName => $config) {
+
+            $validSfCodes = $uS->crmItems[$listName] ?? [];
+            $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $config['hhkLookup']));
+
+            $stmtList = $dbh->query("SELECT * FROM `sf_type_map` WHERE `List_Name` = '$listName';");
+            $mappedItems = [];
+            foreach ($stmtList->fetchAll(\PDO::FETCH_ASSOC) as $i) {
+                $mappedItems[$i['HHK_Type_Code']] = $i;
+            }
+
+            $postedNames = filter_input_array(INPUT_POST, ["sel{$listName}" => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY]]);
+            $matchedNames = $postedNames["sel{$listName}"] ?? [];
+
+            if (!\is_array($matchedNames)) {
+                continue;
+            }
 
             foreach ($hhkLookup as $hhkCode => $hhkItem) {
 
@@ -1832,7 +1881,6 @@ class SalesforceManager extends AbstractExportManager {
                 $sfTypeCode = $matchedNames[$hhkCode];
 
                 if ($sfTypeCode == '') {
-                    // Delete if previously mapped
                     if (isset($mappedItems[$hhkCode])) {
                         $stmt = $dbh->prepare("DELETE FROM `sf_type_map` WHERE `idSf_type_map` = :id;");
                         $stmt->execute(['id' => $mappedItems[$hhkCode]['idSf_type_map']]);
@@ -1844,12 +1892,12 @@ class SalesforceManager extends AbstractExportManager {
                     continue;
                 }
 
-                // upsert this mapping
-                $stmt = $dbh->prepare("INSERT INTO `sf_type_map` (`List_Name`, `SF_Type_Code`, `SF_Type_Name`, `HHK_Type_Code`) VALUES ('relationTypes', :sfCode, :sfName, :hhkCode) ON DUPLICATE KEY UPDATE `SF_Type_Code` = VALUES(`SF_Type_Code`), `SF_Type_Name` = VALUES(`SF_Type_Name`);");
+                $stmt = $dbh->prepare("INSERT INTO `sf_type_map` (`List_Name`, `SF_Type_Code`, `SF_Type_Name`, `HHK_Type_Code`) VALUES (:listName, :sfCode, :sfName, :hhkCode) ON DUPLICATE KEY UPDATE `SF_Type_Code` = VALUES(`SF_Type_Code`), `SF_Type_Name` = VALUES(`SF_Type_Name`);");
                 $stmt->execute([
-                    'sfCode'  => $sfTypeCode,
-                    'sfName'  => $sfTypeCode,
-                    'hhkCode' => $hhkCode,
+                    'listName' => $listName,
+                    'sfCode'   => $sfTypeCode,
+                    'sfName'   => $sfTypeCode,
+                    'hhkCode'  => $hhkCode,
                 ]);
 
                 if ($dbh->lastInsertId() > 0) {
@@ -1860,7 +1908,7 @@ class SalesforceManager extends AbstractExportManager {
 
         unset($uS->crmItems);
 
-        return $result . ($upsertCount > 0 ? "{$upsertCount} types updated.  " : '');
+        return $upsertCount > 0 ? "{$upsertCount} types updated.  " : '';
     }
 
     /**
