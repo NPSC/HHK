@@ -182,10 +182,10 @@ class GuzzleAPILogger {
 
     private static function redactArray(array $data): array {
         foreach ($data as $key => $value) {
-            if (\in_array(strtolower((string) $key), self::SENSITIVE_BODY_KEYS, true)) {
-                $data[$key] = self::REDACTED;
-            } elseif (\is_array($value)) {
+            if (\is_array($value)) {
                 $data[$key] = self::redactArray($value);
+            }elseif (\in_array(strtolower((string) $key), self::SENSITIVE_BODY_KEYS, true)) {
+                $data[$key] = self::REDACTED;
             }
         }
         return $data;
