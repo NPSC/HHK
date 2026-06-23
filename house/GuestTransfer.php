@@ -550,7 +550,11 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     if (filter_has_var(INPUT_POST, 'btnHere')) {
 
         // Get HHK records result table.
-        $results = getGTPeopleReport($dbh, $start, $end, AbstractExportManager::EXCLUDE_TERM);
+        if ($CmsManager->getServiceName() === AbstractExportManager::CMS_SF) {
+            $results = $CmsManager->getTransferReport($dbh, $start, $end);
+        } else {
+            $results = getGTPeopleReport($dbh, $start, $end, AbstractExportManager::EXCLUDE_TERM);
+        }
 
         if ($results === FALSE) {
 

@@ -89,6 +89,42 @@ insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup
 insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listPrefixes', 'prefixes', 'prefix', 'Name_Prefix');
 insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listRelationTypes', 'relationTypes', 'relationType', 'Patient_Rel_Type');
 
+
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
+    ('crm_exportable_fields', 'hhk_id',                   'HHK ID',                'Person',               5),
+    ('crm_exportable_fields', 'prefix',                   'Prefix / Salutation',   'Person',              10),
+    ('crm_exportable_fields', 'first_name',               'First Name',            'Person',              20),
+    ('crm_exportable_fields', 'middle_name',              'Middle Name',           'Person',              30),
+    ('crm_exportable_fields', 'last_name',                'Last Name',             'Person',              40),
+    ('crm_exportable_fields', 'suffix',                   'Suffix',                'Person',              50),
+    ('crm_exportable_fields', 'nickname',                 'Nickname',              'Person',              60),
+    ('crm_exportable_fields', 'gender',                   'Gender',                'Person',              70),
+    ('crm_exportable_fields', 'birthdate',                'Birthdate',             'Person',              80),
+    ('crm_exportable_fields', 'email',                    'Email',                 'Person',              90),
+    ('crm_exportable_fields', 'home_phone',               'Home Phone',            'Person',             100),
+    ('crm_exportable_fields', 'address.home.street',      'Home Street',           'Person',             110),
+    ('crm_exportable_fields', 'address.home.city',        'Home City',             'Person',             120),
+    ('crm_exportable_fields', 'address.home.state',       'Home State',            'Person',             130),
+    ('crm_exportable_fields', 'address.home.postal_code', 'Home Postal Code',      'Person',             140),
+    ('crm_exportable_fields', 'address.home.country',     'Home Country',          'Person',             150),
+    ('crm_exportable_fields', 'is_deceased',              'Deceased',              'Person',             160),
+    ('crm_exportable_fields', 'psg_id',                   'PSG ID',                'PSG',             170),
+    ('crm_exportable_fields', 'relationship_to_patient',  'Relationship to Patient', 'PSG', 180),
+    ('crm_exportable_fields', 'legal_custody',            'Legal Custody',         'PSG', 190);
+
+-- migrate sf_type_map List_Name to crm_object:crm_field format and add unique key
+ALTER TABLE `sf_type_map`
+    MODIFY COLUMN `List_Name`     VARCHAR(100) NOT NULL DEFAULT '',
+    MODIFY COLUMN `SF_Type_Code`  VARCHAR(100) NULL DEFAULT '',
+    MODIFY COLUMN `SF_Type_Name`  VARCHAR(100) NULL DEFAULT '',
+    MODIFY COLUMN `HHK_Type_Code` VARCHAR(100) NULL DEFAULT '';
+
+UPDATE `sf_type_map` SET `List_Name` = 'npe4__Relationship__c:npe4__Type__c' WHERE `List_Name` = 'relationTypes';
+UPDATE `sf_type_map` SET `List_Name` = 'Contact:Salutation'                   WHERE `List_Name` = 'salutation';
+
+ALTER TABLE `sf_type_map` ADD UNIQUE KEY IF NOT EXISTS `uq_sf_type_map` (`List_Name`, `HHK_Type_Code`);
+
 -- add guest transfer web service
 call `new_webpage`(
     'ws_tran.php',

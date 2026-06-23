@@ -19,7 +19,7 @@ interface ExportManagerInterface {
 
     public function exportVisits(\PDO $dbh, mixed $idPsg, array $rels): array;
 
-    public static function getSearchFields(\PDO $dbh, string $tableName): array;
+    public function getSearchFields(\PDO $dbh, string $tableName): array;
 
     public function setExcludeMembers(\PDO $dbh, array $psgIds): array;
 

@@ -862,6 +862,40 @@ $(document).ready(function () {
         $("div#printArea").printArea();
     });
 
+    // PSG group checkbox helpers — safe to call when no PSG markup exists (Neon path)
+    var linkRel = $('#hlinkRel').val() === '1';
+
+    function syncPsgCheckbox(psgId) {
+        var $members = $('input.hhk-tfmem[data-psg="' + psgId + '"]');
+        var total = $members.length;
+        var checked = $members.filter(':checked').length;
+        var $psg = $('input.hhk-txPsg[data-psg="' + psgId + '"]');
+        $psg.prop('checked', checked > 0);
+        $psg.prop('indeterminate', checked > 0 && checked < total);
+    }
+
+    function syncPatientState(psgId) {
+        if (!linkRel) { return; }
+        var $patient = $('input.hhk-tfmem[data-psg="' + psgId + '"][data-patient="1"]');
+        if (!$patient.length) { return; }
+        var othersChecked = $('input.hhk-tfmem[data-psg="' + psgId + '"]').not($patient).filter(':checked').length;
+        if (othersChecked > 0) {
+            $patient.prop({'checked': true, 'disabled': true});
+        } else {
+            $patient.prop('disabled', false);
+        }
+    }
+
+    function syncAllPatientAndPsg() {
+        $('input.hhk-txPsg').each(function () {
+            var psg = $(this).data('psg');
+            if (psg) {
+                syncPatientState(psg);
+                syncPsgCheckbox(psg);
+            }
+        });
+    }
+
     if (makeTable == 0) {
         // Salesforce Transfer
         $('div#printArea').show();
@@ -876,6 +910,24 @@ $(document).ready(function () {
         if (username == 'npscuser') {
             $cbTrace.show();
         }
+
+        $(document).on('change', 'input.hhk-txPsg', function () {
+            var psgId = $(this).data('psg');
+            var isChecked = $(this).prop('checked');
+            $(this).prop('indeterminate', false);
+            $('input.hhk-tfmem[data-psg="' + psgId + '"][data-patient="1"]').prop('disabled', false);
+            $('input.hhk-tfmem[data-psg="' + psgId + '"]').prop('checked', isChecked);
+            syncPatientState(psgId);
+            syncPsgCheckbox(psgId);
+        });
+
+        $(document).on('change', 'input.hhk-tfmem', function () {
+            var psgId = $(this).data('psg');
+            syncPatientState(psgId);
+            syncPsgCheckbox(psgId);
+        });
+
+        syncAllPatientAndPsg();
 
         $upsertButton = $('#TxButton');
 
@@ -1094,27 +1146,34 @@ $(document).ready(function () {
     });
 
     $('#hhkdgpallple').button().click(function () {
-        $('.hhk-tfmem').each(function (index) {
+        $('input.hhk-tfmem[data-patient="1"]').prop('disabled', false);
+        $('.hhk-tfmem').each(function () {
             $(this).prop('checked', true);
-        })
+        });
+        syncAllPatientAndPsg();
     });
 
     $('#hhkdgpnople').button().click(function () {
-        $('.hhk-tfmem').each(function (index) {
+        $('input.hhk-tfmem[data-patient="1"]').prop('disabled', false);
+        $('.hhk-tfmem').each(function () {
             $(this).prop('checked', false);
-        })
+        });
+        syncAllPatientAndPsg();
     });
 
     $('#hhkdgpback').button().click(function () {
-        $('.hhk-tfmem').each(function (index) {
+        $('input.hhk-tfmem[data-patient="1"]').prop('disabled', false);
+        $('.hhk-tfmem').each(function () {
             $(this).prop('checked', $(this).prop('defaultChecked'));
-        })
+        });
+        syncAllPatientAndPsg();
     });
 
     $('#hhkdgpnew').button().click(function () {
-        $('.hhk-tf-update').each(function (index) {
+        $('.hhk-tf-update').each(function () {
             $(this).prop('checked', false);
-        })
+        });
+        syncAllPatientAndPsg();
     });
 
 

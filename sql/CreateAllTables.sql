@@ -1885,17 +1885,35 @@ CREATE TABLE
     ) ENGINE = MyISAM;
 
 -- -----------------------------------------------------
+-- Table `crm_field_map`
+-- -----------------------------------------------------
+CREATE TABLE
+    IF NOT EXISTS `crm_field_map` (
+        `id`              INT NOT NULL AUTO_INCREMENT,
+        `gateway_id`      INT NOT NULL,
+        `crm_object`      VARCHAR(100) NOT NULL,
+        `hhk_field`       VARCHAR(100) NOT NULL,
+        `crm_field`       VARCHAR(100) NOT NULL,
+        `in_search`       TINYINT(1) NOT NULL DEFAULT 0,
+        `in_export`       TINYINT(1) NOT NULL DEFAULT 1,
+        `transform`       VARCHAR(100) NULL DEFAULT NULL,
+        `display_order`   INT NOT NULL DEFAULT 0,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `uq_gateway_object_field` (`gateway_id`, `crm_object`, `hhk_field`)
+    ) ENGINE = InnoDB;
+
 -- Table `sf_type_map`
 -- -----------------------------------------------------
 CREATE TABLE
     IF NOT EXISTS `sf_type_map` (
         `idSf_type_map` INT NOT NULL AUTO_INCREMENT,
-        `List_Name` VARCHAR(45) NOT NULL DEFAULT '',
-        `SF_Type_Code` VARCHAR(45) NULL DEFAULT '',
-        `SF_Type_Name` VARCHAR(45) NULL DEFAULT '',
-        `HHK_Type_Code` VARCHAR(45) NULL DEFAULT '',
+        `List_Name` VARCHAR(100) NOT NULL DEFAULT '',
+        `SF_Type_Code` VARCHAR(100) NULL DEFAULT '',
+        `SF_Type_Name` VARCHAR(100) NULL DEFAULT '',
+        `HHK_Type_Code` VARCHAR(100) NULL DEFAULT '',
         `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (`idSf_type_map`)
+        PRIMARY KEY (`idSf_type_map`),
+        UNIQUE KEY `uq_sf_type_map` (`List_Name`, `HHK_Type_Code`)
     ) ENGINE = InnoDB;
 
 -- -----------------------------------------------------

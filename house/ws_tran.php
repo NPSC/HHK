@@ -62,7 +62,7 @@ try {
             if (isset($post['ids']) && count($post['ids']) > 0) {
 
                 try {
-                    $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace']);
+                    $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace'], $transfer->getLinkRelatives());
 
                 } catch (Exception $ex) {
                     $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];

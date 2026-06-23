@@ -2,9 +2,11 @@
 namespace HHK\CrmExport\Salesforce;
 
 
+use Exception;
 use HHK\Common;
 use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\FieldMapper;
 use HHK\CrmExport\Salesforce\Subresponse\AbstractCompositeSubresponse;
 use HHK\Crypto;
 use HHK\Exception\RuntimeException;
@@ -27,7 +29,7 @@ class SalesforceManager extends AbstractExportManager {
 
 
     const oAuthEndpoint = 'services/oauth2/token';
-    const SearchViewName = 'vguest_search_sf';
+    const SearchViewName = 'vguest_canonical';
     const PW_PLACEHOLDER = '**********';
 
     /**
@@ -40,6 +42,15 @@ class SalesforceManager extends AbstractExportManager {
     const int GRAPH_DEPTH = 15;
     const int MAX_DIFF_NODES = 15;
     const int MAX__GRAPH_FAILS = 14;
+
+    private const REQUIRED_FIELDS = [
+        'Contact' => ['hhk_id'],
+    ];
+
+    private const CONDITIONAL_REQUIRED_FIELDS = [
+        'Account' => ['psg_id'],
+        'npe4__Relationship__c' => ['relationship_to_patient'],
+    ];
 
 
     private string $endPoint;
@@ -58,6 +69,8 @@ class SalesforceManager extends AbstractExportManager {
     protected bool $trace;
     protected $traceData;
     protected array $picklists;
+    protected array $objectFields = [];
+    protected FieldMapper $fieldMapper;
 
     const string LOG_SERVICE_NAME = "SalesForce";
 
@@ -84,6 +97,12 @@ class SalesforceManager extends AbstractExportManager {
         $credentials->setPassword(Crypto::decryptMessage($this->getPassword()));
 
         $this->webService = new SF_Connector($dbh, $credentials);
+        
+        try{
+            $this->fieldMapper = new FieldMapper($dbh, (int) $this->getGatewayId());
+        }catch(Exception $e){
+
+        }
     }
 
     /**
@@ -107,56 +126,122 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
+     * Fetch sObject describe data for one or more objects in a single Composite Batch request.
+     * Already-cached objects are skipped. Populates $this->objectFields and $this->picklists.
+     *
+     * @param string[] $objects SF object API names, e.g. ['Contact', 'Account', 'npe4__Relationship__c']
+     */
+    private function fetchObjectDescribe(array $objects): void {
+        $uS = Session::getInstance();
+        $cached = $uS->sf_describe ?? [];
+
+        // Restore any session-cached describes into instance properties
+        foreach ($objects as $obj) {
+            if (!isset($this->objectFields[$obj]) && isset($cached[$obj])) {
+                $this->objectFields[$obj] = $cached[$obj]['fields'];
+                $this->picklists[$obj]    = $cached[$obj]['picklists'];
+            }
+        }
+
+        $toFetch = array_values(array_filter($objects, fn($obj) => !isset($this->objectFields[$obj])));
+        if (empty($toFetch)) {
+            return;
+        }
+
+        // Pre-initialize so a failed response doesn't trigger another attempt.
+        foreach ($toFetch as $obj) {
+            $this->objectFields[$obj] = [];
+            $this->picklists[$obj]    = [];
+        }
+
+        $batchRequests = array_map(
+            fn($obj) => ['method' => 'GET', 'url' => "{$this->endPoint}sobjects/{$obj}/describe"],
+            $toFetch
+        );
+
+        $result = $this->webService->postUrl(
+            "{$this->endPoint}composite/batch",
+            ['batchRequests' => $batchRequests, 'haltOnError' => false]
+        );
+
+        if (!\is_array($result) || !isset($result['results'])) {
+            return;
+        }
+
+        foreach ($result['results'] as $i => $batchResult) {
+            if (($batchResult['statusCode'] ?? 0) !== 200 || !isset($batchResult['result']['fields'])) {
+                continue;
+            }
+            $this->processDescribeFields($toFetch[$i], $batchResult['result']['fields']);
+        }
+
+        // Persist to session so subsequent page loads don't re-fetch
+        foreach ($toFetch as $obj) {
+            $cached[$obj] = [
+                'fields'    => $this->objectFields[$obj] ?? [],
+                'picklists' => $this->picklists[$obj] ?? [],
+            ];
+        }
+        $uS->sf_describe = $cached;
+    }
+
+    /**
+     * Parse a describe fields array into $this->objectFields and $this->picklists for one object.
+     */
+    private function processDescribeFields(string $object, array $fields): void {
+        foreach ($fields as $f) {
+            if (!isset($f['name']) || !$f['createable'] == true || !$f['updateable'] == true) {
+                continue;
+            }
+
+            $this->objectFields[$object][$f['name']] = $f['label'] ?? $f['name'];
+
+            if (!empty($f['picklistValues'])) {
+                $fieldValues = [];
+                foreach ($f['picklistValues'] as $pv) {
+                    if (($pv['active'] ?? false) && isset($pv['value'], $pv['label'])) {
+                        $fieldValues[$pv['value']] = $pv['label'];
+                    }
+                }
+                if (!empty($fieldValues)) {
+                    $this->picklists[$object][$f['name']] = $fieldValues;
+                }
+            }
+        }
+    }
+
+    /**
      * Fetch picklist lookups from salesforce. Stored as $this->picklists[$object][$fieldName][$value] = $label.
      * @param string $object Salesforce object eg Account, Contact, npe4__Relationship__c
      * @return array
      */
     public function getPicklists(string $object): array {
-
-        $result = $this->retrieveURL($this->endPoint . 'sobjects/'.$object.'/describe');
-
-        $this->picklists[$object] = [];
-
-        if(is_array($result) && isset($result['fields'])) {
-            foreach($result['fields'] as $f) {
-                if (isset($f['name'], $f['picklistValues']) && \count($f['picklistValues']) > 0) {
-                    $fieldValues = [];
-                    foreach ($f['picklistValues'] as $pv) {
-                        if (isset($pv['active'], $pv['value'], $pv['label']) && $pv['active'] === true) {
-                            $fieldValues[$pv['value']] = $pv['label'];
-                        }
-                    }
-                    if (!empty($fieldValues)) {
-                        $this->picklists[$object][$f['name']] = $fieldValues;
-                    }
-                }
-            }
-        }
-
+        $this->fetchObjectDescribe([$object]);
         return $this->picklists;
     }
 
     /**
-     * Defines which SF picklist fields to surface in the config UI.
-     * Each key becomes the List_Name in sf_type_map and the POST field prefix.
-     * Override in a subclass to add more mappings.
-     * @return array{label:string, sfObject:string, sfField:string, hhkLookup:string}[]
+     * All SF field API names => labels for the given object.
+     * Returns [] if not connected or object not found.
      */
-    protected static function getPicklistFields(): array {
-        return [
-            'relationTypes' => [
-                'label'     => 'Relationship Types',
-                'sfObject'  => 'npe4__Relationship__c',
-                'sfField'   => 'npe4__Type__c',
-                'hhkLookup' => 'Patient_Rel_Type',
-            ],
-            'salutation' => [
-                'label'     => 'Salutation',
-                'sfObject'  => 'Contact',
-                'sfField'   => 'Salutation',
-                'hhkLookup' => 'Name_Prefix',
-            ],
-        ];
+    public function getObjectFields(string $object): array {
+        $this->fetchObjectDescribe([$object]);
+        return $this->objectFields[$object];
+    }
+
+    /**
+     * Maps HHK canonical field names to the gen_lookups Table_Name that holds their
+     * enumerated values. Used by the picklist mapping modal to populate the HHK side.
+     * sf_type_map.HHK_Type_Code stores the gen_lookups Code column for these fields.
+     */
+    protected static function getHhkPicklistTable(string $hhkField): string {
+        return match($hhkField) {
+            'prefix'                  => 'Name_Prefix',
+            'suffix'                  => 'Name_Suffix',
+            'gender'                  => 'Gender',
+            'relationship_to_patient' => 'Patient_Rel_Type',
+            default                   => '',
+        };
     }
 
     /**
@@ -217,7 +302,7 @@ class SalesforceManager extends AbstractExportManager {
 
         if ($source === 'hhk') {
 
-            $row = $this->loadSourceDB($dbh, $id, 'vguest_data_sf');
+            $row = $this->loadSourceDB($dbh, $id, 'vguest_canonical');
 
             if (is_null($row)) {
                 $reply = 'Error - HHK Id not found, or member is not a guest or patient. ';
@@ -225,7 +310,7 @@ class SalesforceManager extends AbstractExportManager {
             } else {
                 foreach ($row as $k => $v) {
 
-                    if ($k == 'Id' && $v == SELF::EXCLUDE_TERM) {
+                    if ($k == 'external_id' && $v == SELF::EXCLUDE_TERM) {
                         $resultStr->addBodyTr(HTMLTable::makeTd($k, []) . HTMLTable::makeTd('*Excluded*'));
                     } else {
                         $resultStr->addBodyTr(HTMLTable::makeTd($k, []) . HTMLTable::makeTd($v));
@@ -233,7 +318,7 @@ class SalesforceManager extends AbstractExportManager {
                 }
 
                 $reply = $resultStr->generateMarkup();
-                $this->setAccountId($row['Id']);
+                $this->setAccountId($row['external_id']);
             }
 
         } else if ($source == 'remote') {
@@ -291,7 +376,7 @@ class SalesforceManager extends AbstractExportManager {
 
 
         // Load search parameters for each source ID
-        $stmt = $this->loadSearchDB($dbh, 'vguest_search_sf', $sourceIds);
+        $stmt = $this->loadSearchDB($dbh, 'vguest_canonical', $sourceIds);
 
         if (is_null($stmt)) {
             $replys[0] = ['error' => 'No local records were found.'];
@@ -301,53 +386,40 @@ class SalesforceManager extends AbstractExportManager {
         // Run through the local records.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            $f = array();   // output fields array
-            $searchData = [];
+            $f = [];   // output fields array
 
             // Clean up names fresh from the DB
-            $r['FirstName'] = $this->unencodeHTML($r['FirstName']);
-            $r['Middle_Name__c'] = $this->unencodeHTML($r['Middle_Name__c']);
-            $r['LastName'] = $this->unencodeHTML($r['LastName']);
+            $r['first_name']  = $this->unencodeHTML($r['first_name']);
+            $r['middle_name'] = $this->unencodeHTML($r['middle_name']);
+            $r['last_name']   = $this->unencodeHTML($r['last_name']);
 
-
-            // Prefill output array
+            // Build display row from canonical keys → human labels
             $rf = $this->getReturnFields();
-            foreach ($r as $k => $v) {
-
-                if ($k != '') {
-
-                    $searchData[$k] = $v;
-
-                    // Replace SF column names with better
-                    if (isset($rf[$k])) {
-                        $f[$rf[$k]] = $v;
-                    }
-                }
+            foreach ($rf as $hhkField => $label) {
+                $f[$label] = $r[$hhkField] ?? '';
             }
 
             // Collect address into a single column
             $f['Address'] = $f['Street'] . ', ' . $f['City'] . ', ' . $f['State'] . ', ' . $f['Zip'];
             unset($f['Street'], $f['City'], $f['State'], $f['Zip']);
 
-            // collect name in single column
+            // Collect name into a single column
             $f['Name'] = $f['Name'] . ' ' . ($f['Middle'] == '' ? '' : $f['Middle'] . ' ') . $f['Last Name'] . ' ' . $f['Suffix'] . ($f['Nickname'] == '' ? '' : ', ' . $f['Nickname']);
             unset($f['Middle'], $f['Last Name'], $f['Suffix'], $f['Nickname']);
 
-
-
             // Search target system.  Treat return as user input.
-            $rawResult = $this->searchTarget($searchData);
+            $rawResult = $this->searchTarget($r);
 
             if ($this->checkError($rawResult)) {
                 $f['Result'] = $this->errorMessage;
-                $replys[$r['HHK_idName__c']] = $f;
+                $replys[$r['hhk_id']] = $f;
                 continue;
             }
 
             // Need a totalSize
             if (isset($rawResult['totalSize']) === FALSE) {
                 $f['Result'] = 'API ERROR: totalSize parameter is missing;  ' . $this->errorMessage;
-                $replys[$r['HHK_idName__c']] = $f;
+                $replys[$r['hhk_id']] = $f;
                 continue;
             }
 
@@ -362,29 +434,25 @@ class SalesforceManager extends AbstractExportManager {
                     $this->updateRemoteMember($dbh, $rawResult['records'][0], 0, $r, FALSE);
 
                     if (count($this->getProposedUpdates()) > 0) {
-                        $f['Result'] = HTMLInput::generateMarkup('', array('id'=>'updt_'.$r['HHK_idName__c'], 'class'=>'hhk-txCbox hhk-updatemem', 'data-txid'=>$r['HHK_idName__c'], 'data-txacct'=>$rawResult['records'][0]['Id'], 'type'=>'checkbox'));
-                        $label =  'Updates Proposed: ';
+                        $f['Result'] = HTMLInput::generateMarkup('', ['id' => 'updt_' . $r['hhk_id'], 'class' => 'hhk-txCbox hhk-updatemem', 'data-txid' => $r['hhk_id'], 'data-txacct' => $rawResult['records'][0]['Id'], 'type' => 'checkbox']);
+                        $label = 'Updates Proposed: ';
                         foreach ($this->getProposedUpdates() as $k => $v) {
-                            $label .= $k . '=' . $v . '; ';
+                            $label .= "$k=$v; ";
                         }
-
-                        $f['Result'] .= HTMLContainer::generateMarkup('label', $label, array('for'=>'updt_'.$r['HHK_idName__c'], 'style'=>'margin-left:.3em; background-color:#FBF6CD;'));
-
+                        $f['Result'] .= HTMLContainer::generateMarkup('label', $label, ['for' => 'updt_' . $r['hhk_id'], 'style' => 'margin-left:.3em; background-color:#FBF6CD;']);
                     } else {
                         $f['Result'] = 'Up to date.';
                     }
 
                     // Make sure the external Id is defined locally
-                    $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $rawResult['records'][0]['Id']);
+                    $this->updateLocalExternalId($dbh, $r['hhk_id'], $rawResult['records'][0]['Id']);
                     $f['Id'] = $rawResult['records'][0]['Id'];
-
-
 
                 } else {
                     $f['Result'] = 'The search results Account Id is empty.';
                 }
 
-                $replys[$r['HHK_idName__c']] = $f;
+                $replys[$r['hhk_id']] = $f;
 
 
             } else if ($rawResult['totalSize'] > 1 ) {
@@ -394,85 +462,71 @@ class SalesforceManager extends AbstractExportManager {
                 $title = '';
                 $options = [];
 
-                // Look through the results
+                // Look through the results — $m has SF field names (from remote response)
                 foreach ($rawResult['records'] as $m) {
 
                     // Did we find our HHK ID?
-                    if ($m['HHK_idName__c'] != '' && $m['HHK_idName__c'] == $r['HHK_idName__c']) {
+                    if ($m['HHK_idName__c'] != '' && $m['HHK_idName__c'] == $r['hhk_id']) {
 
                         $this->updateRemoteMember($dbh, $m, 0, $r, FALSE);
 
                         if (count($this->getProposedUpdates()) > 0) {
-
-                            $f['Result'] = HTMLInput::generateMarkup('', array('id'=>'updt_'.$r['HHK_idName__c'], 'class'=>'hhk-txCbox hhk-updatemem', 'data-txid'=>$r['HHK_idName__c'], 'data-txacct'=>$m['Id'], 'type'=>'checkbox'));
-                            $label =  'Updates Proposed: ';
+                            $f['Result'] = HTMLInput::generateMarkup('', ['id' => 'updt_' . $r['hhk_id'], 'class' => 'hhk-txCbox hhk-updatemem', 'data-txid' => $r['hhk_id'], 'data-txacct' => $m['Id'], 'type' => 'checkbox']);
+                            $label = 'Updates Proposed: ';
                             foreach ($this->getProposedUpdates() as $k => $v) {
-                                $label .= $k . '=' . $v . '; ';
+                                $label .= "$k=$v; ";
                             }
-
-                            $f['Result'] .= HTMLContainer::generateMarkup('label', $label, array('for'=>'updt_'.$r['HHK_idName__c'], 'style'=>'margin-left:.3em; background-color:#FBF6CD;'));
-
+                            $f['Result'] .= HTMLContainer::generateMarkup('label', $label, ['for' => 'updt_' . $r['hhk_id'], 'style' => 'margin-left:.3em; background-color:#FBF6CD;']);
                         } else {
                             $f['Result'] = 'Up to date. (MR)';
                         }
 
-                        $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $m['Id']);
+                        $this->updateLocalExternalId($dbh, $r['hhk_id'], $m['Id']);
                         $f['Id'] = $m['Id'];
 
-                        $replys[$r['HHK_idName__c']] = $f;
+                        $replys[$r['hhk_id']] = $f;
                         return $replys;
                     }
 
-                    $name = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
+                    // SF response uses SF field names
+                    $name  = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
                     $title = ($m['HHK_idName__c'] == '' ? '' : $m['HHK_idName__c'] . ', ') . $name . ($m['Email'] == '' ? '' : ', ' . $m['Email']) . $m['HomePhone'];
                     $options[$m['Id']] = [$m['Id'], $title];
                 }
 
                 $f['Result'] = ' Found ' . $rawResult['totalSize'] . ' similar accounts ';
-                // Create selector
-                $f['Result'] .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, '', TRUE), array('name'=>'selmultimem_' . $r['HHK_idName__c'], 'class'=>'multimemsels'));
-
+                $f['Result'] .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, '', TRUE), ['name' => 'selmultimem_' . $r['hhk_id'], 'class' => 'multimemsels']);
                 $f['Result'] .= ' Found ' . $rawResult['totalSize'] . ' similar accounts';
-                $replys[$r['HHK_idName__c']] = $f;
-
+                $replys[$r['hhk_id']] = $f;
 
 
             } else if ($rawResult['totalSize'] == 0 ) {
 
                 // Check for not finding the account Id
-                if ($r['Id'] != '') {
+                if ($r['external_id'] != '') {
                     // Account was deleted from the Salesforce side.
                     $f['Result'] = 'Account Deleted at Saleforce';
-                    $replys[$r['HHK_idName__c']] = $f;
+                    $replys[$r['hhk_id']] = $f;
                     continue;
                 }
-
 
                 // Nothing found - create a new account at remote
 
                 // Get member data record
-                $row = $this->loadSourceDB($dbh, $r['HHK_idName__c'], 'vguest_data_sf');
+                $row = $this->loadSourceDB($dbh, $r['hhk_id'], 'vguest_canonical');
 
                 if (is_null($row)) {
                     continue;
                 }
 
-                $filteredRow = [];
-
                 // Check external Id
-                if (isset($row['Id']) && $row['Id'] == self::EXCLUDE_TERM) {
+                if (isset($row['external_id']) && $row['external_id'] == self::EXCLUDE_TERM) {
                     // Skip excluded members.
                     continue;
-                } else if (isset($row['Id'])) {
-                    // Our local account/contact must be wrong.
-                    $row['Id'] = '';
                 }
 
-                foreach ($row as $k => $w) {
-                    if ($w != '') {
-                        $filteredRow[$k] = $w;
-                    }
-                }
+                // Translate canonical row to SF-named Contact payload
+                $filteredRow = $this->fieldMapper->translateRow($row, 'Contact');
 
                 // Create new account
                 try {
@@ -481,7 +535,7 @@ class SalesforceManager extends AbstractExportManager {
 
                     if ($this->checkError($newAcctResult)) {
                         $f['Result'] = $this->errorMessage;
-                        $replys[$r['HHK_idName__c']] = $f;
+                        $replys[$r['hhk_id']] = $f;
                         continue;
                     }
 
@@ -490,7 +544,7 @@ class SalesforceManager extends AbstractExportManager {
                     if (strstr($ex->getMessage(), 'DUPLICATE_VALUE')) {
                         // mark duplicate and continue
                         $f['Result'] = $ex->getMessage();
-                        $replys[$r['HHK_idName__c']] = $f;
+                        $replys[$r['hhk_id']] = $f;
                         continue;
                     }
 
@@ -498,24 +552,18 @@ class SalesforceManager extends AbstractExportManager {
                     throw new \RuntimeException($ex->getMessage());
                 }
 
-
                 $accountId = filter_var($newAcctResult['id'], FILTER_SANITIZE_SPECIAL_CHARS);
 
-                $this->updateLocalExternalId($dbh, $r['HHK_idName__c'], $accountId);
+                $this->updateLocalExternalId($dbh, $r['hhk_id'], $accountId);
 
-                if ($accountId != '') {
-                    $f['Result'] = 'New Salesforce Account';
-                } else {
-                    $f['Result'] = 'Salesforce Account Missing';
-                }
-                $f['Id'] = $accountId;
-                $replys[$r['HHK_idName__c']] = $f;
+                $f['Result'] = $accountId != '' ? 'New Salesforce Account' : 'Salesforce Account Missing';
+                $f['Id']     = $accountId;
+                $replys[$r['hhk_id']] = $f;
 
             } else {
 
-                $f['Result'] = 'API ERROR: '. $this->errorMessage;
-
-                $replys[$r['HHK_idName__c']] = $f;
+                $f['Result'] = "API ERROR: {$this->errorMessage}";
+                $replys[$r['hhk_id']] = $f;
             }
 
         }
@@ -550,7 +598,7 @@ class SalesforceManager extends AbstractExportManager {
         // GraphId = psgId.
 
         // get the member records. the rows must be ordered by PSG Id
-        $stmt = $dbh->query("SELECT * FROM `vguest_data_sf` WHERE `HHK_idName__c` IN (" . implode(',', $sourceIds) . ") ORDER BY `idPsg`;");
+        $stmt = $dbh->query("SELECT * FROM `vguest_canonical` WHERE `hhk_id` IN (" . implode(',', $sourceIds) . ") ORDER BY `psg_id`;");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $idPsg = 0;
@@ -560,7 +608,7 @@ class SalesforceManager extends AbstractExportManager {
 
         foreach ($rows as $r) {
 
-            if ($idPsg > 0 && $idPsg != $r['idPsg']) {
+            if ($idPsg > 0 && $idPsg != $r['psg_id']) {
 
                 // Do we have enough graphs
                 if ($graphCounter >= $this->getMaxPSGsPerBatch() || $graphCounter >= self::MAX_PAYLOAD_GRAPHS || count($batchRows) >= self::MAX_NODES - 100) {
@@ -568,9 +616,9 @@ class SalesforceManager extends AbstractExportManager {
                     try{
                         $batches[] = ["batchBody" => $this->prepareBatch($dbh, $batchRows, $linkRelatives), "batchRows"=>$batchRows];
                     }catch(\Exception){
-                        
+
                     }
-                    
+
                     $batchRows = [];
                     $graphCounter = 1;
                 }
@@ -579,7 +627,7 @@ class SalesforceManager extends AbstractExportManager {
 
             }
 
-            $idPsg = $r['idPsg'];
+            $idPsg = $r['psg_id'];
 
             $batchRows[] = $r;
 
@@ -623,6 +671,8 @@ class SalesforceManager extends AbstractExportManager {
         $psgGraphs = [];  // The collection of psg graphs
         $psgId = 0; // multiple records for each psgId
 
+        $linkRelatives = $linkRelatives && $this->fieldMapper->hasObject('npe4__Relationship__c');
+
         if ($linkRelatives) {
             $this->verifyRelationshipIds($dbh, $rows);
         }
@@ -632,7 +682,7 @@ class SalesforceManager extends AbstractExportManager {
         foreach ($rows as $r) {
 
             // New PSG Id?
-            if ($psgId > 0 && $r['idPsg'] != $psgId) {
+            if ($psgId > 0 && $r['psg_id'] != $psgId) {
 
                 // Yes, new Id.  Process current psg
                 $graph = $this->createPsgGraph($psgGuests, $psgId, $linkRelatives);
@@ -645,8 +695,8 @@ class SalesforceManager extends AbstractExportManager {
                 $psgGuests = [];
             }
 
-            $psgId = $r['idPsg'];
-            $psgGuests[$r['HHK_idName__c']] = $r;
+            $psgId = $r['psg_id'];
+            $psgGuests[$r['hhk_id']] = $r;
         }
 
         // And last group
@@ -752,9 +802,9 @@ class SalesforceManager extends AbstractExportManager {
 
         // Pre-scan: detect patient regardless of uniqueGuests status (needed for relationship subrequests).
         foreach ($guests as $g) {
-            if ($g['Relationship_Code'] == RelLinkType::Self) {
+            if ($g['relationship_code'] == RelLinkType::Self) {
                 $hasPatient = true;
-                $idPatient  = $g['HHK_idName__c'];
+                $idPatient  = $g['hhk_id'];
                 break;
             }
         }
@@ -763,8 +813,8 @@ class SalesforceManager extends AbstractExportManager {
         // auto-creates a Household Account — we GET that AccountId and use it to link all
         // other guests in this PSG to the same Account.
         $primaryGuest       = $guests[$idPatient] ?? array_values($guests)[0];
-        $primaryHhkId       = $primaryGuest['HHK_idName__c'];
-        $primarySfId        = $primaryGuest['Id'];
+        $primaryHhkId       = $primaryGuest['hhk_id'];
+        $primarySfId        = $primaryGuest['external_id'];
         $primaryIsNew       = ($primarySfId == '');
         $primaryInThisGraph = !isset($this->uniqueGuests[$primaryHhkId]);
 
@@ -773,18 +823,11 @@ class SalesforceManager extends AbstractExportManager {
             $this->uniqueGuests[$primaryHhkId] = 'y';
             $contactsInThisGraph[$primaryHhkId] = true;
 
-            $filteredRow = [];
-            foreach ($primaryGuest as $k => $w) {
-                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'Legal_Custody' && $k != 'idPsg' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
-                    $filteredRow[$k] = $w;
-                }
-            }
-
             $subrequests[] = [
                 "method" => "PATCH",
                 "url" => $this->getContactEndpoint . 'HHK_idName__c/' . $primaryHhkId,
                 "referenceId" => "refContact_" . $primaryHhkId . $additnl,
-                "body" => $filteredRow
+                "body" => $this->fieldMapper->translateRow($primaryGuest, 'Contact'),
             ];
         }
 
@@ -818,43 +861,35 @@ class SalesforceManager extends AbstractExportManager {
                 "method" => "PATCH",
                 "url" => $this->endPoint . 'sobjects/Account/@{' . $accountRefId . '.AccountId}',
                 "referenceId" => "refPatchAccount" . $additnl,
-                "body" => [
-                    "HHK_idPsg__c" => (string)$graphId,
-                ]
+                "body" => $this->fieldMapper->translateRow(['psg_id' => (string)$graphId], 'Account'),
             ];
         }
 
         // --- Phase 3: upsert remaining contacts, linked to the primary's Account ---
         foreach ($guests as $g) {
 
-            if ($g['HHK_idName__c'] == $primaryHhkId) {
+            if ($g['hhk_id'] == $primaryHhkId) {
                 continue;
             }
 
-            if (isset($this->uniqueGuests[$g['HHK_idName__c']])) {
+            if (isset($this->uniqueGuests[$g['hhk_id']])) {
                 continue;
             }
 
-            $this->uniqueGuests[$g['HHK_idName__c']] = 'y';
-            $contactsInThisGraph[$g['HHK_idName__c']] = true;
+            $this->uniqueGuests[$g['hhk_id']] = 'y';
+            $contactsInThisGraph[$g['hhk_id']] = true;
 
-            // remove extra fields — reset each iteration so no prior guest's data bleeds in
-            $filteredRow = [];
-            foreach ($g as $k => $w) {
-                if ($w != '' && $k != 'Relationship_Code' && $k != 'SF_Rel_Type' && $k != 'Legal_Custody' && $k != 'idPsg' && $k != 'Id' && $k != 'Relationship_Id' && $k != 'HHK_idName__c') {
-                    $filteredRow[$k] = $w;
-                }
-            }
+            $contactFields = $this->fieldMapper->translateRow($g, 'Contact');
 
             if ($canGetAccountId) {
-                $filteredRow['AccountId'] = '@{' . $accountRefId . '.AccountId}';
+                $contactFields['AccountId'] = "@{{$accountRefId}.AccountId}";
             }
 
             $subrequests[] = [
                 "method" => "PATCH",
-                "url" => $this->getContactEndpoint . 'HHK_idName__c/' . $g['HHK_idName__c'],
-                "referenceId" => "refContact_" . $g['HHK_idName__c'] . $additnl,
-                "body" => $filteredRow
+                "url" => $this->getContactEndpoint . 'HHK_idName__c/' . $g['hhk_id'],
+                "referenceId" => "refContact_" . $g['hhk_id'] . $additnl,
+                "body" => $contactFields,
             ];
         }
 
@@ -865,29 +900,30 @@ class SalesforceManager extends AbstractExportManager {
             // Resolve the patient's reference once — prefer direct SF ID if their Contact was sent in a prior graph
             if (isset($contactsInThisGraph[$idPatient])) {
                 $patientRef = "@{refContact_$idPatient$additnl.id}";
-            } elseif (isset($guests[$idPatient]) && $guests[$idPatient]['Id'] != '') {
-                $patientRef = $guests[$idPatient]['Id'];
+            } elseif (isset($guests[$idPatient]) && $guests[$idPatient]['external_id'] != '') {
+                $patientRef = $guests[$idPatient]['external_id'];
             } else {
                 $patientRef = null;  // can't link — patient contact hasn't been synced yet
             }
 
             foreach ($guests as $g) {
 
-                if ($g['Relationship_Code'] == RelLinkType::Self) {
+                if ($g['relationship_code'] == RelLinkType::Self) {
                     continue;
                 }
 
-
                 // Resolve the guest's reference — prefer direct SF ID if their Contact was sent in a prior graph
-                    if (isset($contactsInThisGraph[$g['HHK_idName__c']])) {
-                        $guestRef = "@{refContact_" . $g['HHK_idName__c'] . $additnl . ".id}";
-                    } elseif ($g['Id'] != '') {
-                        $guestRef = $g['Id'];
-                    } else {
-                        continue;  // guest and patient must both be in SF before a relationship can be created
-                    }
+                if (isset($contactsInThisGraph[$g['hhk_id']])) {
+                    $guestRef = "@{refContact_" . $g['hhk_id'] . $additnl . ".id}";
+                } elseif ($g['external_id'] != '') {
+                    $guestRef = $g['external_id'];
+                } else {
+                    continue;  // guest and patient must both be in SF before a relationship can be created
+                }
 
-                if ($g['Relationship_Id'] == '') {
+                $relFields = $this->fieldMapper->translateRow($g, 'npe4__Relationship__c');
+
+                if ($g['relationship_id'] == '') {
 
                     if ($patientRef === null) {
                         continue;
@@ -897,14 +933,13 @@ class SalesforceManager extends AbstractExportManager {
                     $subrequests[] = [
                         "method" => "POST",
                         "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/',
-                        "referenceId" => "refRel_" . $g['HHK_idName__c'] . $additnl,
+                        "referenceId" => "refRel_" . $g['hhk_id'] . $additnl,
                         "body" => [
-                            'npe4__Contact__c' => $patientRef,
+                            'npe4__Contact__c'        => $patientRef,
                             'npe4__RelatedContact__c' => $guestRef,
-                            'npe4__Status__c' => 'Current',
-                            'npe4__Type__c' => $g['SF_Rel_Type'],
-                            'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
-                        ]
+                            'npe4__Status__c'         => 'Current',
+                            ...$relFields,
+                        ],
                     ];
 
                 } else {
@@ -912,13 +947,9 @@ class SalesforceManager extends AbstractExportManager {
                     // Existing relationship — PATCH updatable fields only (contact lookups are immutable)
                     $subrequests[] = [
                         "method" => "PATCH",
-                        "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/' . $g['Relationship_Id'],
-                        "referenceId" => "refRel_" . $g['HHK_idName__c'] . $additnl,
-                        "body" => [
-                            'npe4__Status__c' => 'Current',
-                            'npe4__Type__c' => $g['SF_Rel_Type'],
-                            'Legal_Custody__c' => $g['Legal_Custody'] == 0 ? 'false' : 'true',
-                        ]
+                        "url" => $this->endPoint . 'sobjects/npe4__Relationship__c/' . $g['relationship_id'],
+                        "referenceId" => "refRel_" . $g['hhk_id'] . $additnl,
+                        "body" => ['npe4__Status__c' => 'Current', ...$relFields],
                     ];
                 }
             }
@@ -992,11 +1023,11 @@ class SalesforceManager extends AbstractExportManager {
 
             $f = (count($guest) > 0) ? [
                 'Contact Id' => '',
-                'HHK Id' => $guest['HHK_idName__c'],
-                'Name' => ($guest['Salutation'] == '' ? '' : $guest['Salutation'] . ' ') . $guest['FirstName'] . ' ' . ($guest['Middle_Name__c'] == '' ? '' : $guest['Middle_Name__c'] . ' ') . $guest['LastName'] . ' ' . $guest['Suffix__c'] . ($guest['Nickname__c'] == '' ? '' : ', ' . $guest['Nickname__c']),
-                'PSG Id' =>$idPsg,
-                'Contact Type' => $guest['Contact_Type__c'],
-                'Birthdate' => $guest['Birthdate'] != '' ? date('M j, Y', strtotime($guest['Birthdate'])) : '',
+                'HHK Id' => $guest['hhk_id'],
+                'Name' => ($guest['prefix'] == '' ? '' : $guest['prefix'] . ' ') . $guest['first_name'] . ' ' . ($guest['middle_name'] == '' ? '' : $guest['middle_name'] . ' ') . $guest['last_name'] . ' ' . $guest['suffix'] . ($guest['nickname'] == '' ? '' : ', ' . $guest['nickname']),
+                'PSG Id' => $idPsg,
+                'Contact Type' => $guest['contact_type'],
+                'Birthdate' => $guest['birthdate'] != '' ? date('M j, Y', strtotime($guest['birthdate'])) : '',
                 'Result' => '',
             ] : [
                 'Contact Id' => '',
@@ -1013,7 +1044,7 @@ class SalesforceManager extends AbstractExportManager {
 
             // Group by HHK ID + PSG so contact and relationship subrequests for the same
             // person collapse into one row instead of producing duplicate lines.
-            $hhkId = count($guest) > 0 ? $guest['HHK_idName__c'] : '';
+            $hhkId = count($guest) > 0 ? $guest['hhk_id'] : '';
             $key   = $hhkId . '_' . $idPsg;
 
             if (isset($this->transferResult[$key])) {
@@ -1039,7 +1070,7 @@ class SalesforceManager extends AbstractExportManager {
     private function findGuest($guests, $idPsg, $idName) {
 
         foreach ($guests as $g) {
-            if ($g['idPsg'] == $idPsg && $g['HHK_idName__c'] == $idName) {
+            if ($g['psg_id'] == $idPsg && $g['hhk_id'] == $idName) {
                 return $g;
             }
         }
@@ -1060,8 +1091,8 @@ class SalesforceManager extends AbstractExportManager {
 
         $relIds = [];
         foreach ($rows as $r) {
-            if (!empty($r['Relationship_Id'])) {
-                $relIds[] = $r['Relationship_Id'];
+            if (!empty($r['relationship_id'])) {
+                $relIds[] = $r['relationship_id'];
             }
         }
 
@@ -1081,9 +1112,9 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         foreach ($rows as &$row) {
-            if (!empty($row['Relationship_Id']) && !isset($existingIds[$row['Relationship_Id']])) {
-                $this->updateLocalRelationshipId($dbh, (int)$row['HHK_idName__c'], (int)$row['idPsg'], '');
-                $row['Relationship_Id'] = '';
+            if (!empty($row['relationship_id']) && !isset($existingIds[$row['relationship_id']])) {
+                $this->updateLocalRelationshipId($dbh, (int)$row['hhk_id'], (int)$row['psg_id'], '');
+                $row['relationship_id'] = '';
             }
         }
         unset($row);
@@ -1120,7 +1151,7 @@ class SalesforceManager extends AbstractExportManager {
         $errorResult    = [];
 
         // All non-patient rows that have an SF relationship record
-        $stmt      = $dbh->query("SELECT * FROM `vguest_data_sf` WHERE `Relationship_Id` IS NOT NULL AND `Relationship_Id` != '' ORDER BY `idPsg`");
+        $stmt      = $dbh->query("SELECT * FROM `vguest_canonical` WHERE `relationship_id` IS NOT NULL AND `relationship_id` != '' ORDER BY `psg_id`");
         $guestRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (empty($guestRows)) {
@@ -1128,16 +1159,16 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         // Pre-query SF for the Contact side of every stored relationship
-        $relIds       = array_values(array_unique(array_column($guestRows, 'Relationship_Id')));
+        $relIds       = array_values(array_unique(array_column($guestRows, 'relationship_id')));
         $relDirections = $this->fetchRelationshipDirections($relIds);
 
         // Build a psgId → patient SF Contact ID map from the same view
-        $psgIds     = array_unique(array_column($guestRows, 'idPsg'));
-        $patStmt    = $dbh->query("SELECT `HHK_idName__c`, `Id`, `idPsg`, `Relationship_Code` FROM `vguest_data_sf` WHERE `idPsg` IN (" . implode(',', $psgIds) . ")");
+        $psgIds     = array_unique(array_column($guestRows, 'psg_id'));
+        $patStmt    = $dbh->query("SELECT `hhk_id`, `external_id`, `psg_id`, `relationship_code` FROM `vguest_canonical` WHERE `psg_id` IN (" . implode(',', $psgIds) . ")");
         $patientSfIds = [];
         while ($p = $patStmt->fetch(\PDO::FETCH_ASSOC)) {
-            if ($p['Relationship_Code'] == RelLinkType::Self && $p['Id'] !== '') {
-                $patientSfIds[$p['idPsg']] = $p['Id'];
+            if ($p['relationship_code'] == RelLinkType::Self && $p['external_id'] !== '') {
+                $patientSfIds[$p['psg_id']] = $p['external_id'];
             }
         }
 
@@ -1147,49 +1178,50 @@ class SalesforceManager extends AbstractExportManager {
 
         foreach ($guestRows as $r) {
 
-            if ($r['Relationship_Code'] == RelLinkType::Self) {
+            if ($r['relationship_code'] == RelLinkType::Self) {
                 continue;
             }
 
-            if ($r['Id'] === '' || ($r['SF_Rel_Type'] ?? '') === '') {
+            if ($r['external_id'] === '' || ($r['relationship_to_patient'] ?? '') === '') {
                 continue;  // guest not in SF or no type mapping
             }
 
-            $patientSfId = $patientSfIds[$r['idPsg']] ?? null;
+            $patientSfId = $patientSfIds[$r['psg_id']] ?? null;
             if ($patientSfId === null) {
                 continue;  // patient not yet in SF
             }
 
-            $dir = $relDirections[$r['Relationship_Id']] ?? null;
+            $dir = $relDirections[$r['relationship_id']] ?? null;
             if ($dir === null) {
                 continue;  // relationship no longer exists in SF
             }
 
             if ($dir['contactId'] === $patientSfId) {
-                $transferResult[] = ['HHK Id' => $r['HHK_idName__c'], 'PSG Id' => $r['idPsg'], 'Old Rel Id' => $r['Relationship_Id'], 'New Rel Id' => '', 'Result' => 'Already correct'];
+                $transferResult[] = ['HHK Id' => $r['hhk_id'], 'PSG Id' => $r['psg_id'], 'Old Rel Id' => $r['relationship_id'], 'New Rel Id' => '', 'Result' => 'Already correct'];
                 continue;
             }
 
-            $graphId = $r['HHK_idName__c'] . '_' . $r['idPsg'];
+            $graphId = $r['hhk_id'] . '_' . $r['psg_id'];
+
+            $relFields = $this->fieldMapper->translateRow($r, 'npe4__Relationship__c');
 
             $graphs[$graphId] = [
                 'graphId'          => $graphId,
                 'compositeRequest' => [
                     [
                         'method'      => 'DELETE',
-                        'url'         => $this->endPoint . 'sobjects/npe4__Relationship__c/' . $r['Relationship_Id'],
-                        'referenceId' => 'refDelRel_' . $graphId,
+                        'url'         => "{$this->endPoint}sobjects/npe4__Relationship__c/{$r['relationship_id']}",
+                        'referenceId' => "refDelRel_$graphId",
                     ],
                     [
                         'method'      => 'POST',
-                        'url'         => $this->endPoint . 'sobjects/npe4__Relationship__c/',
-                        'referenceId' => 'refRel_' . $graphId,
+                        'url'         => "{$this->endPoint}sobjects/npe4__Relationship__c/",
+                        'referenceId' => "refRel_$graphId",
                         'body'        => [
                             'npe4__Contact__c'        => $patientSfId,
-                            'npe4__RelatedContact__c' => $r['Id'],
+                            'npe4__RelatedContact__c' => $r['external_id'],
                             'npe4__Status__c'         => 'Current',
-                            'npe4__Type__c'           => $r['SF_Rel_Type'],
-                            'Legal_Custody__c'        => $r['Legal_Custody'] == 0 ? 'false' : 'true',
+                            ...$relFields,
                         ],
                     ],
                 ],
@@ -1230,10 +1262,10 @@ class SalesforceManager extends AbstractExportManager {
                         }
 
                         if ($newRelId !== '') {
-                            $this->updateLocalRelationshipId($dbh, (int)$row['HHK_idName__c'], (int)$row['idPsg'], $newRelId);
+                            $this->updateLocalRelationshipId($dbh, (int)$row['hhk_id'], (int)$row['psg_id'], $newRelId);
                         }
 
-                        $transferResult[] = ['HHK Id' => $row['HHK_idName__c'], 'PSG Id' => $row['idPsg'], 'Old Rel Id' => $row['Relationship_Id'], 'New Rel Id' => $newRelId, 'Result' => 'Fixed'];
+                        $transferResult[] = ['HHK Id' => $row['hhk_id'], 'PSG Id' => $row['psg_id'], 'Old Rel Id' => $row['relationship_id'], 'New Rel Id' => $newRelId, 'Result' => 'Fixed'];
 
                     } elseif ($row !== null) {
                         $error = '';
@@ -1243,7 +1275,7 @@ class SalesforceManager extends AbstractExportManager {
                                 break;
                             }
                         }
-                        $transferResult[] = ['HHK Id' => $row['HHK_idName__c'], 'PSG Id' => $row['idPsg'], 'Old Rel Id' => $row['Relationship_Id'], 'New Rel Id' => '', 'Result' => 'Error: ' . $error];
+                        $transferResult[] = ['HHK Id' => $row['hhk_id'], 'PSG Id' => $row['psg_id'], 'Old Rel Id' => $row['relationship_id'], 'New Rel Id' => '', 'Result' => "Error: $error"];
                     }
                 }
             }
@@ -1288,13 +1320,11 @@ class SalesforceManager extends AbstractExportManager {
 
         $msg = 'Already up to date. ';
 
-        $updateFields = $this->getUpdateFields();
-
         $this->proposedUpdates = [];
 
         // Load local data if not delivered in the $localData array
         if ($idName > 0) {
-            $stmt = $this->loadSearchDB($dbh, 'vguest_search_sf', [$idName]);
+            $stmt = $this->loadSearchDB($dbh, 'vguest_canonical', [$idName]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (isset($rows[0])) {
@@ -1302,12 +1332,13 @@ class SalesforceManager extends AbstractExportManager {
             }
         }
 
-        // Collect any updates, if any
-        foreach ($updateFields as $u) {
+        // Collect any fields where local value differs from remote value
+        foreach ($this->fieldMapper->getExportMap('Contact') as $hhkField => $crmField) {
+            $localVal  = $localData[$hhkField] ?? '';
+            $remoteVal = $accountData[$crmField] ?? null;
 
-            if ((isset($localData[$u]) && $localData[$u] !== '' && isset($accountData[$u]) && trim($localData[$u]) !== trim($accountData[$u]))
-                    || (isset($localData[$u]) && $localData[$u] !== '' && isset($accountData[$u]) === FALSE)) {
-                $this->proposedUpdates[$u] = $localData[$u];
+            if ($localVal !== '' && ($remoteVal === null || trim($localVal) !== trim((string) $remoteVal))) {
+                $this->proposedUpdates[$crmField] = $localVal;
             }
         }
 
@@ -1320,9 +1351,9 @@ class SalesforceManager extends AbstractExportManager {
             if ($this->checkError($acctResult)) {
                 $msg = $this->errorMessage;
             } else {
-                $msg = '(' . $localData['HHK_idName__c'] . ') ' . $localData['FirstName'] . ' ' . $localData['LastName'] . ' is Updated: ';
+                $msg = "({$localData['hhk_id']}) {$localData['first_name']} {$localData['last_name']} is Updated: ";
                 foreach ($this->proposedUpdates as $k => $v) {
-                    $msg .= $k . ' was ' . ($accountData[$k] == '' ? '-empty-' : $accountData[$k]) . ', now '. $v . '; ';
+                    $msg .= "$k was " . ($accountData[$k] == '' ? '-empty-' : $accountData[$k]) . ", now $v; ";
                 }
             }
         }
@@ -1372,7 +1403,7 @@ class SalesforceManager extends AbstractExportManager {
         if (count($idList) > 0) {
 
             $parm = " in (" . implode(',', $idList) . ") ";
-            return $dbh->query("SELECT * FROM `$view` WHERE `HHK_idName__c` $parm");
+            return $dbh->query("SELECT * FROM `$view` WHERE `hhk_id` $parm");
 
         }
 
@@ -1397,7 +1428,7 @@ class SalesforceManager extends AbstractExportManager {
 
         if ($parm > 0) {
 
-            $stmt = $dbh->query("SELECT * FROM `$view` WHERE `HHK_idName__c` = $parm");
+            $stmt = $dbh->query("SELECT * FROM `$view` WHERE `hhk_id` = $parm");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 0) {
@@ -1410,10 +1441,10 @@ class SalesforceManager extends AbstractExportManager {
                 }
             }
 
-            $rows[0]['FirstName'] = $this->unencodeHTML($rows[0]['FirstName']);
-            $rows[0]['Middle_Name__c'] = $this->unencodeHTML($rows[0]['Middle_Name__c']);
-            $rows[0]['LastName'] = $this->unencodeHTML($rows[0]['LastName']);
-            $rows[0]['Nickname__c'] = $this->unencodeHTML($rows[0]['Nickname__c']);
+            $rows[0]['first_name']  = $this->unencodeHTML($rows[0]['first_name']);
+            $rows[0]['middle_name'] = $this->unencodeHTML($rows[0]['middle_name']);
+            $rows[0]['last_name']   = $this->unencodeHTML($rows[0]['last_name']);
+            $rows[0]['nickname']    = $this->unencodeHTML($rows[0]['nickname']);
 
             return $rows[0];
         }
@@ -1422,53 +1453,25 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
-     * Summary of searchTarget - Search the remote system for a specified local person.
-     * @param array $r array containing local values for a person
+     * Search the remote SF system for a person using the canonical local row.
+     * SELECT uses all mapped Contact fields; WHERE uses SF Id when known, else HHK Id.
+     * @param array $r canonical vguest_canonical row
      * @return array
      */
-    protected function searchTarget(array $r) {
+    protected function searchTarget(array $r): array {
 
-        $result = [];
-        $fields = '';
-        $where = '';
-        $searchFields = $this->getSearchFields(NULL, '');
-        $returnFields = $this->getReturnFields();
         $type = 'Contact.';
 
-        // Colunm names for $r are also feild names for SF
-        foreach ($r as $k => $v) {
+        // SELECT: mapped Contact fields + identity fields
+        $crmFields = array_unique(['Id', 'HHK_idName__c', ...$this->fieldMapper->getCrmFields('Contact')]);
+        $fields    = implode(',', array_map(fn($f) => "$type$f", $crmFields));
 
-            if ($k != '') {
+        // WHERE: search by SF Id when available, else by HHK Id
+        $where = $r['external_id'] !== ''
+            ? "{$type}Id='{$r['external_id']}'"
+            : "{$type}HHK_idName__c={$r['hhk_id']}";
 
-                if (isset($returnFields[$k])) {
-                    $fields .= ($fields == '' ? $type.$k : ',' . $type.$k);
-                }
-
-                if ($v != '' && isset($searchFields[$k])) {
-                    $where .= ($where == '' ? '('. $type.$k . "='" . $v . "'" : " AND " . $type.$k . "='" . $v . "'");
-                }
-            }
-        }
-
-        // Id field set?
-        if ($r['Id'] !== '') {
-            // Blow away the other search terms.
-            $where = $type."Id='" . $r['Id'] . "'";
-        } else {
-            // Check for existing HHK_Id in remote.
-            $where .= ($where == '' ? $type."HHK_idName__c=" . $r['HHK_idName__c'] : ") OR " . $type."HHK_idName__c=" . $r['HHK_idName__c']);
-        }
-
-
-        if ($fields != '' && $where != '') {
-
-            $query = 'SELECT ' . $fields . ' FROM `Contact` WHERE ' . $where . ' LIMIT 10';
-
-            $result = $this->webService->search($query, $this->queryEndpoint);
-
-        }
-
-        return $result;
+        return $this->webService->search("SELECT $fields FROM Contact WHERE $where LIMIT 10", $this->queryEndpoint);
     }
 
     /**
@@ -1488,101 +1491,300 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     /**
-     * Summary of getSearchFields
-     * @param \PDO|null $dbh
-     * @param string $tableName
-     * @return array
+     * Maps canonical vguest_canonical field names to human-readable display labels
+     * used in the exportMembers result table.
      */
-    public static function getSearchFields(?\PDO $dbh, string $tableName): array {
-
-        $cols['HHK_idName__c'] = 'HHK_idName__c';
-        return $cols;
-    }
-
     protected static function getReturnFields(): array {
-
         return [
-            'Id' => 'Id',
-            'HHK_idName__c' => 'HHK Id',
-            'Salutation' => 'Prefix',
-            'FirstName' => 'Name',
-            'Middle_Name__c' => 'Middle',
-            'LastName' => 'Last Name',
-            'Suffix__c' => 'Suffix',
-            'Nickname__c' => 'Nickname',
-            'Gender__c' => 'Gender',
-            'Birthdate' => 'Birthdate',
-            'MailingStreet' => 'Street',
-            'MailingCity' => 'City',
-            'MailingState' => 'State',
-            'MailingPostalCode' => 'Zip',
-            'HomePhone' => 'Home Phone',
-            'Email' => 'Email',
-            'Contact_Type__c' => 'Type',
-            'Deceased__c' => 'Deceased',
+            'external_id'         => 'Id',
+            'hhk_id'              => 'HHK Id',
+            'prefix'              => 'Prefix',
+            'first_name'          => 'Name',
+            'middle_name'         => 'Middle',
+            'last_name'           => 'Last Name',
+            'suffix'              => 'Suffix',
+            'nickname'            => 'Nickname',
+            'gender'              => 'Gender',
+            'birthdate'           => 'Birthdate',
+            'address.home.street'      => 'Street',
+            'address.home.city'        => 'City',
+            'address.home.state'       => 'State',
+            'address.home.postal_code' => 'Zip',
+            'home_phone'               => 'Home Phone',
+            'email'                    => 'Email',
+            'contact_type'             => 'Type',
+            'is_deceased'              => 'Deceased',
         ];
-
     }
 
-    protected static function getUpdateFields(): array {
+    private const DEFAULT_CUSTOM_FIELDS = [
+        [
+            'object'     => 'Contact',
+            'field_name' => 'HHK_idName',
+            'label'      => 'HHK ID',
+            'type'       => 'Text',
+            'length'     => 255,
+            'unique'     => true,
+            'externalId' => true,
+            'required'   => true,
+        ],
+        [
+            'object'     => 'Account',
+            'field_name' => 'HHK_idPsg',
+            'label'      => 'HHK PSG ID',
+            'type'       => 'Text',
+            'length'     => 255,
+            'unique'     => true,
+            'externalId' => true,
+            'required'   => true,
+        ],
+    ];
 
-        return [
-            'Id',
-            'HHK_idName__c',
-            'Salutation',
-            'FirstName',
-            'Middle_Name__c',
-            'LastName',
-            'Suffix__c',
-            'Nickname__c',
-            'Gender__c',
-            'Birthdate',
-            'MailingStreet',
-            'MailingCity',
-            'MailingState',
-            'MailingPostalCode',
-            'HomePhone',
-            'Email',
-            'Contact_Type__c',
-            'Deceased__c',
-        ];
+    private const CUSTOM_FIELD_TYPES = [
+        'Text'     => 'Text',
+        'Number'   => 'Number',
+        'Checkbox' => 'Checkbox',
+        'Date'     => 'Date',
+        'DateTime' => 'Date/Time',
+        'Email'    => 'Email',
+        'Phone'    => 'Phone',
+        'TextArea' => 'Text Area',
+        'Url'      => 'URL',
+    ];
 
-    }
+    private const CUSTOM_FIELD_OBJECTS = ['Contact', 'Account', 'npe4__Relationship__c'];
 
-    public function createCustomFields() {
-
-        $customFields = [
-            'Contact.HHK_idName__c' => [
-                'FullName' => 'Contact.HHK_idName__c',
-                'Metadata' => [
-                    'type' => 'Text',
-                    'label' => 'HHK ID',
-                    'length' => 255,
-                    'unique' => true,
-                    'externalId' => true
-                ]
-            ],
-            'Account.HHK_idPsg__c' => [
-                'FullName' => 'Account.HHK_idPsg__c',
-                'Metadata' => [
-                    'type' => 'Text',
-                    'label' => 'HHK PSG ID',
-                    'length' => 255,
-                    'unique' => true,
-                    'externalId' => true
-                ]
-            ],
-        ];
-
-        foreach ($customFields as $k=>$payload) {
-            try {
-                $result = $this->webService->postUrl($this->endPoint . 'tooling/sobjects/CustomField', $payload);
-            } catch (\RuntimeException $ex) {
-                
-            }
+    public function createCustomField(string $object, string $fieldName, string $label, string $type, int $length = 255, bool $unique = false, bool $externalId = false): array {
+        if (!str_starts_with($fieldName, 'HHK_')) {
+            return ['error' => 'Custom field names must start with "HHK_".'];
         }
 
-    } 
+        if (!\in_array($object, self::CUSTOM_FIELD_OBJECTS, true)) {
+            return ['error' => 'Invalid Salesforce object: ' . $object];
+        }
+
+        if (!\array_key_exists($type, self::CUSTOM_FIELD_TYPES)) {
+            return ['error' => 'Invalid field type: ' . $type];
+        }
+
+        $entityResult = $this->webService->search(
+            "SELECT DurableId FROM EntityDefinition WHERE QualifiedApiName = '$object'",
+            $this->endPoint . 'tooling/query'
+        );
+
+        if (empty($entityResult['records'][0]['DurableId'])) {
+            return ['error' => "Could not resolve Salesforce object: $object"];
+        }
+
+        $tableEnumOrId = $entityResult['records'][0]['DurableId'];
+
+        $apiName = $fieldName . '__c';
+        $metadata = [
+            'type'  => $type,
+            'label' => $label,
+        ];
+
+        if ($type === 'Text') {
+            $metadata['length'] = min(max($length, 1), 255);
+        }
+        if ($type === 'Number') {
+            $metadata['precision'] = min(max($length, 1), 18);
+            $metadata['scale'] = 0;
+        }
+        if ($unique) {
+            $metadata['unique'] = true;
+        }
+        if ($externalId) {
+            $metadata['externalId'] = true;
+        }
+
+        $payload = [
+            'FullName'       => "{$object}.{$apiName}",
+            'Metadata'       => $metadata,
+            'TableEnumOrId'  => $tableEnumOrId,
+        ];
+
+        try {
+            $result = $this->webService->postUrl($this->endPoint . 'tooling/sobjects/CustomField', $payload);
+            return ['success' => "Field {$object}.{$apiName} created successfully.", 'id' => $result['id'] ?? ''];
+        } catch (\RuntimeException $ex) {
+            $msg = $ex->getMessage();
+            if (stripos($msg, 'DUPLICATE_DEVELOPER_NAME') !== false || stripos($msg, 'already exists') !== false) {
+                return ['warning' => "Field {$object}.{$apiName} already exists."];
+            }
+            return ['error' => "Failed to create {$object}.{$apiName}: " . $msg];
+        }
+    }
+
+    protected function showCustomFieldsSection(): string {
+
+        $objOptionsJson = htmlspecialchars(\json_encode(self::CUSTOM_FIELD_OBJECTS, \JSON_HEX_QUOT | \JSON_HEX_APOS), \ENT_QUOTES);
+        $typeOptionsJson = htmlspecialchars(\json_encode(self::CUSTOM_FIELD_TYPES, \JSON_HEX_QUOT | \JSON_HEX_APOS), \ENT_QUOTES);
+
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(
+            HTMLTable::makeTh('Object')
+            . HTMLTable::makeTh('Field Name')
+            . HTMLTable::makeTh('Label')
+            . HTMLTable::makeTh('Type')
+            . HTMLTable::makeTh('Length')
+            . HTMLTable::makeTh('Unique', ['class' => 'text-center'])
+            . HTMLTable::makeTh('External ID', ['class' => 'text-center'])
+            . HTMLTable::makeTh('', ['class' => 'text-center'])
+        );
+
+        foreach (self::DEFAULT_CUSTOM_FIELDS as $df) {
+            $apiName = $df['field_name'] . '__c';
+            $exists = isset(($this->objectFields[$df['object']] ?? [])[$apiName]);
+
+            if ($exists) {
+                $actionContent = HTMLContainer::generateMarkup('span', 'Exists', ['style' => 'color:#28a745;font-weight:bold;font-size:0.85em;']);
+            } else {
+                $actionContent = HTMLInput::generateMarkup('Create', [
+                    'type' => 'button',
+                    'class' => 'ui-button ui-corner-all ui-widget ui-button-small hhk-cf-create',
+                    'data-object' => $df['object'], 'data-fieldname' => $df['field_name'],
+                    'data-label' => $df['label'], 'data-type' => $df['type'],
+                    'data-length' => (string)$df['length'],
+                    'data-unique' => $df['unique'] ? '1' : '0',
+                    'data-externalid' => $df['externalId'] ? '1' : '0',
+                    'id' => false,
+                ]);
+            }
+
+            $actionContent .= ' ' . HTMLContainer::generateMarkup('span', 'Required', ['style' => 'color:#c00;font-weight:bold;font-size:0.85em;']);
+
+            $tbl->addBodyTr(
+                HTMLTable::makeTd($df['object'])
+                . HTMLTable::makeTd($apiName)
+                . HTMLTable::makeTd($df['label'])
+                . HTMLTable::makeTd(self::CUSTOM_FIELD_TYPES[$df['type']] ?? $df['type'])
+                . HTMLTable::makeTd((string)$df['length'])
+                . HTMLTable::makeTd($df['unique'] ? 'Yes' : 'No', ['class' => 'text-center'])
+                . HTMLTable::makeTd($df['externalId'] ? 'Yes' : 'No', ['class' => 'text-center'])
+                . HTMLTable::makeTd($actionContent, ['class' => 'text-center']),
+                ['data-required' => '1']
+            );
+        }
+
+        $addBtn = HTMLInput::generateMarkup('+ Add Field', [
+            'type'            => 'button',
+            'class'           => 'ui-button ui-corner-all ui-widget hhk-cf-addrow mt-2',
+            'data-objects'    => $objOptionsJson,
+            'data-types'      => $typeOptionsJson,
+            'id'              => 'cf_add_field',
+        ]);
+
+        $resultDiv = HTMLContainer::generateMarkup('div', '', ['id' => 'cfResultMsg', 'class' => 'mt-2']);
+
+        $content = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('h4', 'Custom Fields')
+            . HTMLContainer::generateMarkup('div', $tbl->generateMarkup([], ''), ['id' => 'cf_tbl'])
+            . $addBtn
+            . $resultDiv,
+            ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']
+        );
+
+        $script = <<<'JS'
+<script>
+(function ($) {
+    function escHtml(str) {
+        return $('<div>').text(String(str)).html();
+    }
+
+    function createField(params) {
+        params.cmd = 'sfCreateCustomField';
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+        $btn.prop('disabled', true);
+        $('#cfResultMsg').html('<em>Creating field...</em>');
+        $.post('ws_gen.php', params, function (resp) {
+            $btn.prop('disabled', false);
+            if (!resp) { $('#cfResultMsg').html('<span class="text-danger">No response from server.</span>'); return; }
+            if (resp.error) {
+                $('#cfResultMsg').html('<span class="text-danger">' + escHtml(resp.error) + '</span>');
+            } else if (resp.warning) {
+                $('#cfResultMsg').html('<span style="color:#b58105;">' + escHtml(resp.warning) + '</span>');
+            } else {
+                $('#cfResultMsg').html('<span class="text-success">' + escHtml(resp.success || 'Done.') + '</span>');
+            }
+        }, 'json').fail(function (xhr) {
+            $btn.prop('disabled', false);
+            $('#cfResultMsg').html('<span class="text-danger">Request failed: ' + escHtml(xhr.statusText) + '</span>');
+        });
+    }
+
+    $(document).on('click', '.hhk-cf-create', function () {
+        var btn = $(this);
+        var $row = btn.closest('tr');
+
+        var params;
+        if (btn.data('object')) {
+            params = {
+                object:     btn.data('object'),
+                fieldName:  btn.data('fieldname'),
+                label:      btn.data('label'),
+                type:       btn.data('type'),
+                length:     btn.data('length'),
+                unique:     btn.data('unique'),
+                externalId: btn.data('externalid')
+            };
+        } else {
+            var name = $.trim($row.find('.hhk-cf-name').val());
+            if (!name) { alert('Enter a field name.'); return; }
+            if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(name)) { alert('Field name must start with a letter and contain only letters, numbers, and underscores.'); return; }
+            var obj = $row.find('.hhk-cf-object').val();
+            if (!obj)  { alert('Select a Salesforce object.'); return; }
+            var type = $row.find('.hhk-cf-type').val();
+            if (!type) { alert('Select a field type.'); return; }
+            params = {
+                object:     obj,
+                fieldName:  'HHK_' + name,
+                label:      $.trim($row.find('.hhk-cf-label').val()) || name,
+                type:       type,
+                length:     parseInt($row.find('.hhk-cf-length').val(), 10) || 255,
+                unique:     $row.find('.hhk-cf-unique').is(':checked') ? 1 : 0,
+                externalId: $row.find('.hhk-cf-extid').is(':checked') ? 1 : 0
+            };
+        }
+        createField.call(this, params);
+    });
+
+    $('#cf_add_field').on('click', function () {
+        var objects = $(this).data('objects') || [];
+        var types   = $(this).data('types') || {};
+
+        var objOpts = '<option value="">-- Object --</option>';
+        $.each(objects, function (i, o) { objOpts += '<option value="' + escHtml(o) + '">' + escHtml(o) + '</option>'; });
+
+        var typeOpts = '<option value="">-- Type --</option>';
+        $.each(types, function (code, lbl) { typeOpts += '<option value="' + escHtml(code) + '">' + escHtml(lbl) + '</option>'; });
+
+        var row = '<tr>'
+            + '<td><select class="hhk-cf-object" style="max-width:180px;">' + objOpts + '</select></td>'
+            + '<td>HHK_<input class="hhk-cf-name" size="15" placeholder="FieldName"></td>'
+            + '<td><input class="hhk-cf-label" size="15" placeholder="Display Label"></td>'
+            + '<td><select class="hhk-cf-type" style="max-width:140px;">' + typeOpts + '</select></td>'
+            + '<td><input class="hhk-cf-length" size="5" value="255"></td>'
+            + '<td class="text-center"><input type="checkbox" class="hhk-cf-unique"></td>'
+            + '<td class="text-center"><input type="checkbox" class="hhk-cf-extid"></td>'
+            + '<td class="text-center"><input type="button" value="Create" class="ui-button ui-corner-all ui-widget ui-button-small hhk-cf-create"></td>'
+            + '</tr>';
+
+        $('#cf_tbl tbody').append(row);
+    });
+}(jQuery));
+</script>
+JS;
+
+        return HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('h3', 'Custom Fields', ['style' => 'border-top:2px solid black;', 'class' => 'mt-3 pt-2 mb-2'])
+            . HTMLContainer::generateMarkup('p', 'Create custom fields on Salesforce objects. Field names are prefixed with "HHK_" and suffixed with "__c" automatically.', ['class' => 'mb-2', 'style' => 'font-size:0.9em;color:#555;'])
+            . $content
+            . $script,
+            []
+        );
+    }
 
 
     /**
@@ -1595,11 +1797,11 @@ class SalesforceManager extends AbstractExportManager {
         $markup = $this->showGatewayCredentials();
 
         try {
-            $markup .= $this->createTypeLists($dbh);
-        }catch(\Exception $e){
-
+            $markup .= $this->createFieldMappingSection($dbh);
+        } catch (Exception) {
         }
 
+        $markup .= $this->showCustomFieldsSection();
         $markup .= $this->showMaintenanceSection();
 
         return $markup;
@@ -1659,66 +1861,587 @@ class SalesforceManager extends AbstractExportManager {
             HTMLTable::makeTh('Maximum PSGs per batch', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getMaxPSGsPerBatch(), array('name' => '_txtmaxPSGsPerBatch', 'size' => '10')) . "<span class='ml-2'>Salesforce enforced limit: " . self::MAX_PAYLOAD_GRAPHS . "</span>")
             );
+
+        $linkRelAttrs = ['type' => 'checkbox', 'name' => '_cbLinkRelatives', 'id' => '_cbLinkRelatives'];
+        if ($this->getLinkRelatives()) {
+            $linkRelAttrs['checked'] = 'checked';
+        }
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Link Households & Relationships', array())
+            . HTMLTable::makeTd(
+                HTMLInput::generateMarkup('1', $linkRelAttrs)
+                . HTMLContainer::generateMarkup('label', ' Group contacts into Household Accounts and create Relationship records between guests and patients', ['for' => '_cbLinkRelatives', 'class' => 'ml-1'])
+            )
+        );
+
         return $tbl->generateMarkup();
 
     }
     /**
-     * Summary of createTypeLists
-     * Generates one mapping table per entry in getPicklistFields().
-     * @param \PDO $dbh
-     * @return string
+     * Render the picklist value mapping table for one SF field, loaded into the modal via AJAX.
+     * List_Name in sf_type_map uses "{sfObject}:{sfField}" format.
      */
-    private function createTypeLists(\PDO $dbh): string {
-
-        $uS = Session::getInstance();
-        $markup = '';
-        $sessionPicklists = [];
-
-        foreach (static::getPicklistFields() as $listName => $config) {
-
-            if (!isset($this->picklists[$config['sfObject']])) {
-                $this->getPicklists($config['sfObject']);
+    public function getPicklistMapMarkup(\PDO $dbh, string $sfObject, string $sfField, string $hhkField): string {
+        if (!isset($this->picklists[$sfObject])) {
+            try {
+                $this->fetchObjectDescribe([$sfObject]);
+            } catch (Exception) {
+                return '<p class="text-danger">Could not load Salesforce field values. Verify your connection.</p>';
             }
+        }
 
-            $sfFieldValues = $this->picklists[$config['sfObject']][$config['sfField']] ?? [];
-            $sessionPicklists[$listName] = array_keys($sfFieldValues);
+        $sfValues = $this->picklists[$sfObject][$sfField] ?? [];
+        if (empty($sfValues)) {
+            return '<p>This Salesforce field has no picklist values.</p>';
+        }
 
-            $sfOptions = ['' => ['', '-- None --']];
-            foreach ($sfFieldValues as $sfCode => $sfLabel) {
-                $sfOptions[$sfCode] = [$sfCode, $sfLabel];
-            }
+        $listName = "{$sfObject}:{$sfField}";
 
-            $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $config['hhkLookup']));
+        $stmt = $dbh->prepare("SELECT `HHK_Type_Code`, `SF_Type_Code` FROM `sf_type_map` WHERE `List_Name` = :ln");
+        $stmt->execute(['ln' => $listName]);
+        $existing = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            $existing[$r['HHK_Type_Code']] = $r['SF_Type_Code'];
+        }
 
-            $stmtList = $dbh->query("SELECT * FROM `sf_type_map` WHERE `List_Name` = '$listName'");
-            $mappedItems = [];
-            foreach ($stmtList->fetchAll(\PDO::FETCH_ASSOC) as $i) {
-                $mappedItems[$i['HHK_Type_Code']] = $i;
-            }
+        $sfOptions = [['', '-- None --']];
+        foreach ($sfValues as $sfCode => $sfLabel) {
+            $sfOptions[] = [$sfCode, "{$sfLabel} ({$sfCode})"];
+        }
 
-            $nTbl = new HTMLTable();
-            $nTbl->addHeaderTr(
-                HTMLTable::makeTh('HHK ' . $config['label'])
-                . HTMLTable::makeTh('Salesforce ' . $config['label'])
-            );
+        $hhkLookupTable = static::getHhkPicklistTable($hhkField);
+        $hhkRows = $hhkLookupTable !== ''
+            ? HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $hhkLookupTable))
+            : [];
 
-            foreach ($hhkLookup as $hhkCode => $hhkItem) {
-                $currentSfCode = $mappedItems[$hhkCode]['SF_Type_Code'] ?? '';
-                $nTbl->addBodyTr(
-                    HTMLTable::makeTd($hhkItem[1])
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(HTMLTable::makeTh('HHK Value') . HTMLTable::makeTh('Salesforce Value'));
+
+        if (!empty($hhkRows)) {
+            foreach ($hhkRows as $hhkCode => $hhkItem) {
+                $currentSf = $existing[$hhkCode] ?? '';
+                $tbl->addBodyTr(
+                    HTMLTable::makeTd(htmlspecialchars($hhkItem[1]))
                     . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                        HTMLSelector::doOptionsMkup($sfOptions, $currentSfCode, TRUE),
-                        ['name' => "sel{$listName}[{$hhkCode}]", 'style' => 'width:100%;']
+                        HTMLSelector::doOptionsMkup($sfOptions, $currentSf, false),
+                        ['name' => "pklmap[{$hhkCode}]", 'id' => false, 'style' => 'width:100%;']
                     ))
                 );
             }
-
-            //$markup .= $nTbl->generateMarkup(['style' => 'margin-top:15px;'], $listName);
-            $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], $listName), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
+        } else {
+            $tbl->addBodyTr(HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('em', 'No HHK value list is configured for this field.'),
+                ['colspan' => '2']
+            ));
         }
 
-        $uS->crmItems = $sessionPicklists;
-        return HTMLContainer::generateMarkup('div', $markup, ['class'=>'hhk-flex mt-2']);
+        return $tbl->generateMarkup([], '');
+    }
+
+    /**
+     * Persist picklist value mappings POSTed from the modal (AJAX, returns array for JSON encoding).
+     * Expects POST: sfObject, sfField, pklmap[hhkCode]=sfCode.
+     * @return array{success?:string, error?:string}
+     */
+    public function savePicklistMap(\PDO $dbh): array {
+        $sfObject = filter_input(INPUT_POST, 'sfObject', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
+        $sfField  = filter_input(INPUT_POST, 'sfField',  FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
+        $pklmap   = filter_input(INPUT_POST, 'pklmap',   FILTER_DEFAULT, FILTER_REQUIRE_ARRAY) ?: [];
+
+        if ($sfObject === '' || $sfField === '') {
+            return ['error' => 'Missing sfObject or sfField.'];
+        }
+
+        $listName = "{$sfObject}:{$sfField}";
+
+        if (!isset($this->picklists[$sfObject])) {
+            try {
+                $this->fetchObjectDescribe([$sfObject]);
+            } catch (Exception) {
+                return ['error' => 'Could not load Salesforce picklist values.'];
+            }
+        }
+        $validSfCodes = array_keys($this->picklists[$sfObject][$sfField] ?? []);
+
+        $stmt = $dbh->prepare("SELECT `idSf_type_map`, `HHK_Type_Code` FROM `sf_type_map` WHERE `List_Name` = :ln");
+        $stmt->execute(['ln' => $listName]);
+        $existing = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            $existing[$r['HHK_Type_Code']] = (int) $r['idSf_type_map'];
+        }
+
+        $ins = $dbh->prepare(
+            "INSERT INTO `sf_type_map` (`List_Name`, `SF_Type_Code`, `SF_Type_Name`, `HHK_Type_Code`)
+             VALUES (:ln, :sfCode, :sfName, :hhkCode)
+             ON DUPLICATE KEY UPDATE `SF_Type_Code` = VALUES(`SF_Type_Code`), `SF_Type_Name` = VALUES(`SF_Type_Name`)"
+        );
+        $del = $dbh->prepare("DELETE FROM `sf_type_map` WHERE `idSf_type_map` = :id");
+        $count = 0;
+
+        foreach ($pklmap as $hhkCode => $sfCode) {
+            $hhkCode = strip_tags(trim((string) $hhkCode));
+            $sfCode  = strip_tags(trim((string) $sfCode));
+
+            if ($sfCode === '') {
+                if (isset($existing[$hhkCode])) {
+                    $del->execute(['id' => $existing[$hhkCode]]);
+                    $count++;
+                }
+            } elseif (\in_array($sfCode, $validSfCodes, true)) {
+                $ins->execute([
+                    'ln'      => $listName,
+                    'sfCode'  => $sfCode,
+                    'sfName'  => $this->picklists[$sfObject][$sfField][$sfCode] ?? $sfCode,
+                    'hhkCode' => $hhkCode,
+                ]);
+                $count++;
+            }
+        }
+
+        return ['success' => "{$count} value mapping(s) saved."];
+    }
+
+    /**
+     * Render a hidden+checkbox pair that always submits 0 or 1.
+     */
+    private function makeCheckbox(string $name, bool $checked): string {
+        $cbAttrs = ['type' => 'checkbox', 'name' => $name, 'id' => false];
+        if ($checked) {
+            $cbAttrs['checked'] = 'checked';
+        }
+        return HTMLInput::generateMarkup('0', ['type' => 'hidden', 'name' => $name, 'id' => false])
+            . HTMLInput::generateMarkup('1', $cbAttrs);
+    }
+
+    /**
+     * Build a single tbody <tr> for the field mapping table.
+     *
+     * @param string $obj        SF object name (e.g. 'Contact')
+     * @param string $hhkField   Canonical HHK field name (current value to pre-select)
+     * @param array  $row        crm_field_map DB row
+     * @param int    $idx        Row index for input name arrays
+     * @param array  $sfFields   SF field name => label from describe (empty if not connected)
+     * @param array  $hhkOptions exportable fields: code => [code, label] from gen_lookups
+     */
+    private function makeFieldMapRow(string $obj, string $hhkField, array $row, int $idx, array $sfFields, array $hhkOptions): string {
+        $crmField = $row['crm_field'] ?? '';
+        $inExport = (bool) ($row['in_export'] ?? 1);
+        $inSearch = (bool) ($row['in_search'] ?? 0);
+
+        $isRequired = \in_array($hhkField, self::REQUIRED_FIELDS[$obj] ?? [], true);
+        $isConditional = $this->linkRelatives && \in_array($hhkField, self::CONDITIONAL_REQUIRED_FIELDS[$obj] ?? [], true);
+
+        $hhkOpts = HTMLSelector::doOptionsMkup($hhkOptions, $hhkField, true);
+        $hhkCell = HTMLTable::makeTd(
+            HTMLSelector::generateMarkup($hhkOpts, ['name' => "fldmap_hhk[{$obj}][{$idx}]", 'id' => false, 'style' => 'max-width:200px;'])
+        );
+
+        if (!empty($sfFields)) {
+            $opts = HTMLContainer::generateMarkup('option', '-- SF field --', ['value' => '']);
+            foreach ($sfFields as $sfName => $sfLabel) {
+                $attrs = ['value' => $sfName];
+                if ($sfName === $crmField) {
+                    $attrs['selected'] = 'selected';
+                }
+                $opts .= HTMLContainer::generateMarkup('option', htmlspecialchars("{$sfLabel} ({$sfName})"), $attrs);
+            }
+            $crmInput = HTMLSelector::generateMarkup($opts, ['name' => "fldmap_crm[{$obj}][{$idx}]", 'id' => false, 'style' => 'max-width:280px;']);
+        } else {
+            $crmInput = HTMLInput::generateMarkup($crmField, ['name' => "fldmap_crm[{$obj}][{$idx}]", 'id' => false, 'size' => '30', 'placeholder' => 'SF field API name']);
+        }
+
+        $hasPicklist = !empty(($this->picklists[$obj] ?? [])[$crmField] ?? []);
+        $valuesBtn = $hasPicklist
+            ? HTMLInput::generateMarkup('Edit Mapping', [
+                'type'            => 'button',
+                'class'           => 'ui-button ui-corner-all ui-widget ui-button-small hhk-fldmap-picklist',
+                'data-sfobject'   => $obj,
+                'data-sffield'    => $crmField,
+                'data-hhkfield'   => $hhkField,
+                'id'              => false,
+              ])
+            : '';
+
+        if ($isRequired) {
+            $actionCell = HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('span', 'Required', ['style' => 'color:#c00;font-weight:bold;font-size:0.85em;', 'title' => 'This field is required for the integration to function']),
+                ['class' => 'text-center']
+            );
+        } elseif ($isConditional) {
+            $actionCell = HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('span', 'Required', ['style' => 'color:#b58105;font-weight:bold;font-size:0.85em;', 'title' => 'Required when creating relationships in Salesforce']),
+                ['class' => 'text-center']
+            );
+        } else {
+            $actionCell = HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('ul',
+                    HTMLContainer::generateMarkup('li',
+                        HTMLContainer::generateMarkup('span', '', ['class' => 'bi bi-trash3']),
+                        ['class' => 'hhk-fldmap-remove ui-corner-all ui-state-default p-1', 'title' => 'Remove mapping']
+                    ),
+                    ['class' => 'ui-widget ui-helper-clearfix hhk-ui-icons']
+                ),
+                ['class' => 'text-center']
+            );
+        }
+
+        $sortHandle = HTMLTable::makeTd(
+            HTMLContainer::generateMarkup('span', '', ['class' => 'ui-icon ui-icon-arrowthick-2-n-s']),
+            ['class' => 'sort-handle', 'title' => 'Drag to sort', 'style' => 'cursor:move;']
+        );
+
+        return $sortHandle
+            . $hhkCell
+            . HTMLTable::makeTd($crmInput)
+            . HTMLTable::makeTd($this->makeCheckbox("fldmap_exp[{$obj}][{$idx}]", $inExport), ['class' => 'text-center'])
+            . HTMLTable::makeTd($this->makeCheckbox("fldmap_srch[{$obj}][{$idx}]", $inSearch), ['class' => 'text-center'])
+            . HTMLTable::makeTd($valuesBtn, ['class' => 'text-center'])
+            . $actionCell;
+    }
+
+    /**
+     * Render the field mapping configuration section.
+     * Fetches live SF field lists from the describe endpoint when connected.
+     * HHK field options come from gen_lookups (Table_Name = 'crm_exportable_fields').
+     */
+    private function createFieldMappingSection(\PDO $dbh): string {
+        if ((int) $this->getGatewayId() < 1) {
+            return '';
+        }
+
+        $objects = [
+            'Contact'               => 'Contact',
+            'Account'               => 'Account (Household)',
+            'npe4__Relationship__c' => 'Relationship',
+        ];
+
+        // Load available HHK fields from gen_lookups ordered by Order; Substitute column = optgroup name
+        $hhkOptions = Common::readGenLookupsPDO($dbh, 'crm_exportable_fields', 'Order');
+
+        $stmt = $dbh->prepare("SELECT * FROM `crm_field_map` WHERE `gateway_id` = :gw ORDER BY `display_order`, `crm_object`, `hhk_field`");
+        $stmt->execute(['gw' => (int) $this->getGatewayId()]);
+        $allMappings = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $allMappings[$row['crm_object']][$row['hhk_field']] = $row;
+        }
+
+        // One batch request for all three objects instead of three sequential describe calls.
+        try {
+            $this->fetchObjectDescribe(\array_keys($objects));
+        } catch (Exception) {
+        }
+        $sfFieldsByObject = [];
+        foreach (\array_keys($objects) as $obj) {
+            $sfFieldsByObject[$obj] = $this->objectFields[$obj] ?? [];
+        }
+
+        // Build grouped HHK options for JS: { group: { code: label, ... }, ... }
+        $hhkGrouped = [];
+        foreach ($hhkOptions as $code => $row) {
+            $group = (string) ($row['Substitute'] ?? $row[2] ?? '');
+            $hhkGrouped[$group][$code] = $row['Description'] ?? $row[1];
+        }
+        $hhkFieldsJson = htmlspecialchars(\json_encode($hhkGrouped, \JSON_HEX_QUOT | \JSON_HEX_APOS), \ENT_QUOTES);
+
+        $markup = '';
+
+        foreach ($objects as $obj => $label) {
+            $rows     = $allMappings[$obj] ?? [];
+            $sfFields = $sfFieldsByObject[$obj];
+            $domId    = preg_replace('/[^a-zA-Z0-9]/', '_', $obj);
+            $idx      = 0;
+
+            $tbl = new HTMLTable();
+            $tbl->addHeaderTr(
+                HTMLTable::makeTh('')
+                . HTMLTable::makeTh('HHK Field')
+                . HTMLTable::makeTh('Salesforce Field')
+                . HTMLTable::makeTh('Export', ['class' => 'text-center', 'title' => 'Include this field when pushing records to Salesforce'])
+                . HTMLTable::makeTh('Search', ['class' => 'text-center', 'title' => 'Use this field when searching Salesforce for existing contacts'])
+                . HTMLTable::makeTh('Dropdown', ['class' => 'text-center', 'title' => 'Map HHK dropdown values to Salesforce picklist values'])
+                . HTMLTable::makeTh('')
+            );
+
+            foreach ($rows as $hhkField => $row) {
+                $isRequired = \in_array($hhkField, self::REQUIRED_FIELDS[$obj] ?? [], true)
+                    || ($this->linkRelatives && \in_array($hhkField, self::CONDITIONAL_REQUIRED_FIELDS[$obj] ?? [], true));
+                $trAttrs = $isRequired ? ['data-required' => '1'] : [];
+                $tbl->addBodyTr($this->makeFieldMapRow($obj, $hhkField, $row, $idx, $sfFields, $hhkOptions), $trAttrs);
+                $idx++;
+            }
+
+            $sfFieldsJson = htmlspecialchars(\json_encode($sfFields, \JSON_HEX_QUOT | \JSON_HEX_APOS), \ENT_QUOTES);
+            $addBtn = HTMLInput::generateMarkup('+ Add Mapping', [
+                'type'           => 'button',
+                'class'          => 'ui-button ui-corner-all ui-widget hhk-fldmap-addrow mt-2',
+                'data-obj'       => $obj,
+                'data-domid'     => $domId,
+                'data-sffields'  => $sfFieldsJson,
+                'data-hhkfields' => $hhkFieldsJson,
+                'data-idx'       => $idx,
+                'id'             => "fldmap_add_{$domId}",
+            ]);
+
+            $connected = !empty($sfFields) ? '' : HTMLContainer::generateMarkup('small', ' (Connect to Salesforce to enable field lookup)', ['class' => 'text-muted ml-2']);
+
+            $markup .= HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('h4', "{$label}{$connected}")
+                . HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class' => 'sortable'], ''), ['id' => "fldmap_tbl_{$domId}"])
+                . $addBtn,
+                ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']
+            );
+        }
+
+        $markup .= $this->getFieldMapScript();
+
+        $modal = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('div', '', ['id' => 'sfPicklistModalBody', 'class' => 'hhk-loading']),
+            ['id' => 'sfPicklistModal', 'title' => 'Map Picklist Values', 'style' => 'display:none;']
+        );
+
+        return HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('h3', 'Field Mapping', ['style' => 'border-top:2px solid black;','class'=>'mt-3 pt-2 mb-2'])
+            . HTMLContainer::generateMarkup('div', $markup, ['class' => 'hhk-flex flex-wrap'])
+            . $modal,
+            []
+        );
+    }
+
+    private function getFieldMapScript(): string {
+        return <<<'JS'
+<script>
+(function ($) {
+    function escHtml(str) {
+        return $('<div>').text(String(str)).html();
+    }
+
+    // sfFields: flat { name: label } — no grouping needed for SF fields
+    function buildFlatSelect(name, fields, placeholder) {
+        var opts = '<option value="">' + escHtml(placeholder) + '</option>';
+        $.each(fields, function (code, lbl) {
+            opts += '<option value="' + escHtml(code) + '">' + escHtml(lbl) + '</option>';
+        });
+        return '<select name="' + escHtml(name) + '" style="max-width:280px;">' + opts + '</select>';
+    }
+
+    // hhkGroups: { groupName: { code: label, ... }, ... } — mirrors Substitute optgroups
+    function buildGroupedSelect(name, groups, placeholder) {
+        var opts = '<option value="">' + escHtml(placeholder) + '</option>';
+        $.each(groups, function (groupName, fields) {
+            var inner = '';
+            $.each(fields, function (code, lbl) {
+                inner += '<option value="' + escHtml(code) + '">' + escHtml(lbl) + '</option>';
+            });
+            opts += '<optgroup label="' + escHtml(groupName) + '">' + inner + '</optgroup>';
+        });
+        return '<select name="' + escHtml(name) + '" style="max-width:200px;">' + opts + '</select>';
+    }
+
+    $('table.sortable tbody').sortable({
+        handle: '.sort-handle',
+        axis: 'y',
+        cursor: 'move',
+        update: function () {
+            $(this).find('tr').each(function (i) {
+                $(this).find('input, select').each(function () {
+                    var n = $(this).attr('name');
+                    if (n) { $(this).attr('name', n.replace(/\[\d+\]$/, '[' + i + ']')); }
+                });
+            });
+        }
+    });
+
+    var $sfPicklistDlg = $('#sfPicklistModal').dialog({
+        autoOpen: false,
+        modal: true,
+        width: 560,
+        maxHeight: 520,
+        buttons: {
+            'Save': function () {
+                var dlg  = $(this);
+                var data = {
+                    cmd:      'savePicklistMap',
+                    sfObject: dlg.data('sfObject'),
+                    sfField:  dlg.data('sfField'),
+                    hhkField: dlg.data('hhkField')
+                };
+                $('#sfPicklistModalBody select').each(function () {
+                    data[$(this).attr('name')] = $(this).val();
+                });
+                $.post('ws_gen.php', data, function (resp) {
+                    if (resp && resp.error) {
+                        alert(resp.error);
+                    } else {
+                        dlg.dialog('close');
+                    }
+                }, 'json');
+            },
+            'Cancel': function () { $(this).dialog('close'); }
+        }
+    });
+
+    $(document).off('.hhkfldmap')
+        .on('click.hhkfldmap', '.hhk-fldmap-remove', function () {
+            var $row = $(this).closest('tr');
+            if ($row.data('required')) { return; }
+            $row.remove();
+        })
+        .on('click.hhkfldmap', '.hhk-fldmap-picklist', function () {
+            var btn      = $(this);
+            var sfObject = btn.data('sfobject');
+            var sfField  = btn.data('sffield');
+            var hhkField = btn.data('hhkfield');
+
+            $sfPicklistDlg
+                .data('sfObject', sfObject)
+                .data('sfField',  sfField)
+                .data('hhkField', hhkField)
+                .dialog('option', 'title', 'Map dropdown values: ' + hhkField + ' → ' + sfField);
+
+            $('#sfPicklistModalBody').addClass('hhk-loading').empty();
+            $sfPicklistDlg.dialog('open');
+
+            $.get('ws_gen.php', { cmd: 'sfPicklistMap', sfObject: sfObject, sfField: sfField, hhkField: hhkField },
+                function (html) {
+                    $('#sfPicklistModalBody').removeClass('hhk-loading').html(html);
+                }
+            );
+        })
+        .on('click.hhkfldmap', '.hhk-fldmap-addrow', function () {
+        var btn       = $(this);
+        var obj       = btn.data('obj');
+        var domId     = btn.data('domid');
+        var sfFields  = btn.data('sffields')  || {};
+        var hhkGroups = btn.data('hhkfields') || {};
+        var idx       = parseInt(btn.data('idx'), 10);
+        btn.data('idx', idx + 1);
+
+        var hhkInput = buildGroupedSelect('fldmap_hhk[' + obj + '][' + idx + ']', hhkGroups, '-- HHK field --');
+
+        var hasSfFields = Object.keys(sfFields).length > 0;
+        var crmInput = hasSfFields
+            ? buildFlatSelect('fldmap_crm[' + obj + '][' + idx + ']', sfFields, '-- SF field --')
+            : '<input type="text" name="fldmap_crm[' + obj + '][' + idx + ']" size="30" placeholder="SF field API name">';
+
+        var n = function (suffix) { return 'fldmap_' + suffix + '[' + obj + '][' + idx + ']'; };
+        var chk = function (suffix, checked) {
+            return '<input type="hidden" name="' + n(suffix) + '" value="0">'
+                 + '<input type="checkbox" name="' + n(suffix) + '" value="1"' + (checked ? ' checked' : '') + '>';
+        };
+
+        var row = '<tr>'
+            + '<td class="sort-handle" title="Drag to sort" style="cursor:move;"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span></td>'
+            + '<td>' + hhkInput + '</td>'
+            + '<td>' + crmInput + '</td>'
+            + '<td class="text-center">' + chk('exp', true)  + '</td>'
+            + '<td class="text-center">' + chk('srch', false) + '</td>'
+            + '<td></td>'
+            + '<td class="text-center"><ul class="ui-widget ui-helper-clearfix hhk-ui-icons"><li class="hhk-fldmap-remove ui-corner-all ui-state-default p-1" title="Remove mapping"><span class="bi bi-trash3"></span></li></ul></td>'
+            + '</tr>';
+
+        $('#fldmap_tbl_' + domId + ' tbody').append(row);
+        });
+}(jQuery));
+</script>
+JS;
+    }
+
+    /**
+     * Persist field mapping changes POSTed from createFieldMappingSection.
+     * Does a per-object delete-then-reinsert so removed rows are honoured.
+     */
+    protected function saveFieldMappings(\PDO $dbh): string {
+        $gatewayId = (int) $this->getGatewayId();
+        if ($gatewayId < 1) {
+            return '';
+        }
+
+        $objects = ['Contact', 'Account', 'npe4__Relationship__c'];
+
+        $hhkArrays  = filter_input(INPUT_POST, 'fldmap_hhk',  \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
+        $crmArrays  = filter_input(INPUT_POST, 'fldmap_crm',  \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
+        $expArrays  = filter_input(INPUT_POST, 'fldmap_exp',  \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
+        $srchArrays = filter_input(INPUT_POST, 'fldmap_srch', \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
+
+        // Check submitted data has a non-empty CRM mapping for a given HHK field
+        $hasMappedField = function (string $obj, string $hhkField) use ($hhkArrays, $crmArrays): bool {
+            foreach ($hhkArrays[$obj] ?? [] as $i => $hf) {
+                if (trim(strip_tags((string) $hf)) === $hhkField) {
+                    return trim(strip_tags((string) ($crmArrays[$obj][$i] ?? ''))) !== '';
+                }
+            }
+            return false;
+        };
+
+        // Validate required fields before saving
+        $errors = [];
+        foreach (self::REQUIRED_FIELDS as $reqObj => $reqFields) {
+            foreach ($reqFields as $rf) {
+                if (!$hasMappedField($reqObj, $rf)) {
+                    $errors[] = "{$rf} must be mapped to a Salesforce field for {$reqObj}.";
+                }
+            }
+        }
+        if ($this->linkRelatives) {
+            foreach (self::CONDITIONAL_REQUIRED_FIELDS as $reqObj => $reqFields) {
+                foreach ($reqFields as $rf) {
+                    if (!$hasMappedField($reqObj, $rf)) {
+                        $errors[] = "{$rf} must be mapped to a Salesforce field for {$reqObj} when Link Households & Relationships is enabled.";
+                    }
+                }
+            }
+        }
+        if (!empty($errors)) {
+            return 'Field mappings not saved. ' . \implode(' ', $errors);
+        }
+
+        $del = $dbh->prepare("DELETE FROM `crm_field_map` WHERE `gateway_id` = :gw AND `crm_object` = :obj");
+        $ins = $dbh->prepare(
+            "INSERT INTO `crm_field_map`
+                 (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`, `in_export`, `in_search`, `display_order`)
+             VALUES (:gw, :obj, :hhk, :crm, :exp, :srch, :ord)
+             ON DUPLICATE KEY UPDATE
+                 `crm_field` = VALUES(`crm_field`),
+                 `in_export` = VALUES(`in_export`),
+                 `in_search` = VALUES(`in_search`),
+                 `display_order` = VALUES(`display_order`)"
+        );
+
+        $count = 0;
+
+        foreach ($objects as $obj) {
+            $hhkFields = $hhkArrays[$obj] ?? [];
+            if (empty($hhkFields)) {
+                continue;
+            }
+
+            $del->execute(['gw' => $gatewayId, 'obj' => $obj]);
+
+            foreach ($hhkFields as $i => $hhkField) {
+                $hhkField = trim(strip_tags((string) $hhkField));
+                $crmField = trim(strip_tags((string) ($crmArrays[$obj][$i] ?? '')));
+
+                if ($hhkField === '' || $crmField === '') {
+                    continue;
+                }
+
+                $ins->execute([
+                    'gw'   => $gatewayId,
+                    'obj'  => $obj,
+                    'hhk'  => $hhkField,
+                    'crm'  => $crmField,
+                    'exp'  => (int) ($expArrays[$obj][$i] ?? 1),
+                    'srch' => (int) ($srchArrays[$obj][$i] ?? 0),
+                    'ord'  => ($i + 1) * 10,
+                ]);
+                $count++;
+            }
+        }
+
+        // Reload FieldMapper with updated mappings
+        $this->fieldMapper = new FieldMapper($dbh, $gatewayId);
+
+        return $count > 0 ? "{$count} field mapping(s) saved.  " : '';
     }
 
     /**
@@ -1804,6 +2527,9 @@ class SalesforceManager extends AbstractExportManager {
             $crmRs->retryCount->setNewVal(self::MAX_PAYLOAD_GRAPHS);
         }
 
+        $linkRel = filter_input(INPUT_POST, '_cbLinkRelatives', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $crmRs->userLoginUrl->setNewVal($linkRel ? '1' : '0');
+
         $crmRs->Updated_By->setNewVal($username);
         $crmRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -1816,7 +2542,11 @@ class SalesforceManager extends AbstractExportManager {
 
             if ($idGateway > 0) {
                 EditRS::updateStoredVals($crmRs);
-                $this->gatewayId = $idGateway;
+                // EditRS::insert doesn't write lastInsertId back onto the RS object, so set it
+                // manually before loadCredentials() reads it from $cmsRs->idcms_gateway below.
+                $crmRs->idcms_gateway->setStoredVal($idGateway);
+                FieldMapper::insertDefaults($dbh, $idGateway, $this->getServiceName());
+                $this->fieldMapper = new FieldMapper($dbh, $idGateway);
                 $result = $this->getServiceName().' gateway created.  Id = '.$idGateway;
             }
 
@@ -1833,82 +2563,16 @@ class SalesforceManager extends AbstractExportManager {
             } else {
                 $result = $this->getServiceTitle() . ' No Updates Found.  ';
             }
+
+            // Seed defaults for existing gateways that predate the field mapping system.
+            FieldMapper::insertDefaults($dbh, $this->getGatewayId(), $this->getServiceName());
+            // EditRS::updateStoredVals clears idcms_gateway (never assigned a newVal), so
+            // re-set it here so loadCredentials doesn't reset $this->gatewayId to 0.
+            $crmRs->idcms_gateway->setStoredVal($this->getGatewayId());
         }
 
         $this->loadCredentials($crmRs);
         return $result;
-    }
-
-    /**
-     * Summary of saveTypeLists
-     * @param \PDO $dbh
-     * @return string
-     */
-    protected function saveTypeLists(\PDO $dbh): string {
-
-        $uS = Session::getInstance();
-
-        if (isset($uS->crmItems) === false) {
-            return 'CRM List Items are missing. ';
-        }
-
-        $upsertCount = 0;
-
-        foreach (static::getPicklistFields() as $listName => $config) {
-
-            $validSfCodes = $uS->crmItems[$listName] ?? [];
-            $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $config['hhkLookup']));
-
-            $stmtList = $dbh->query("SELECT * FROM `sf_type_map` WHERE `List_Name` = '$listName';");
-            $mappedItems = [];
-            foreach ($stmtList->fetchAll(\PDO::FETCH_ASSOC) as $i) {
-                $mappedItems[$i['HHK_Type_Code']] = $i;
-            }
-
-            $postedNames = filter_input_array(INPUT_POST, ["sel{$listName}" => ['filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags' => FILTER_FORCE_ARRAY]]);
-            $matchedNames = $postedNames["sel{$listName}"] ?? [];
-
-            if (!\is_array($matchedNames)) {
-                continue;
-            }
-
-            foreach ($hhkLookup as $hhkCode => $hhkItem) {
-
-                if (!isset($matchedNames[$hhkCode])) {
-                    continue;
-                }
-
-                $sfTypeCode = $matchedNames[$hhkCode];
-
-                if ($sfTypeCode == '') {
-                    if (isset($mappedItems[$hhkCode])) {
-                        $stmt = $dbh->prepare("DELETE FROM `sf_type_map` WHERE `idSf_type_map` = :id;");
-                        $stmt->execute(['id' => $mappedItems[$hhkCode]['idSf_type_map']]);
-                    }
-                    continue;
-                }
-
-                if (!\in_array($sfTypeCode, $validSfCodes, true)) {
-                    continue;
-                }
-
-                $stmt = $dbh->prepare("INSERT INTO `sf_type_map` (`List_Name`, `SF_Type_Code`, `SF_Type_Name`, `HHK_Type_Code`) VALUES (:listName, :sfCode, :sfName, :hhkCode) ON DUPLICATE KEY UPDATE `SF_Type_Code` = VALUES(`SF_Type_Code`), `SF_Type_Name` = VALUES(`SF_Type_Name`);");
-                $stmt->execute([
-                    'listName' => $listName,
-                    'sfCode'   => $sfTypeCode,
-                    'sfName'   => $sfTypeCode,
-                    'hhkCode'  => $hhkCode,
-                ]);
-
-                if ($dbh->lastInsertId() > 0) {
-                    $upsertCount++;
-                }
-            }
-        }
-
-        unset($uS->crmItems);
-
-        return $upsertCount > 0 ? "{$upsertCount} types updated.  " : '';
     }
 
     /**
@@ -1932,13 +2596,151 @@ class SalesforceManager extends AbstractExportManager {
 
         // credentials
         $result = $this->saveCredentials($dbh, $uS->username);
-        $result .= $this->saveTypeLists($dbh);
+        FieldMapper::insertDefaults($dbh, $this->getGatewayId(), $this->getServiceName());
+        $result .= $this->saveFieldMappings($dbh);
         return $result;
 
     }
 
+    public function getSearchFields(?\PDO $dbh, string $tableName): array {
+        $stmt = $dbh->prepare("SELECT `crm_field` FROM `crm_field_map` WHERE `in_search` = 1 AND `gateway_id` = :gatewayId");
+        $stmt->execute([':gatewayId' => $this->getGatewayId()]);
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
     public function getLogServiceName(): string{
         return self::LOG_SERVICE_NAME;
+    }
+
+    /**
+     * Build the SF transfer table grouped by PSG.
+     * Each PSG group has a checkbox to select/deselect all members, plus individual member checkboxes.
+     *
+     * @return array{mkup: string, xfer: list<int>}|false
+     */
+    public function getTransferReport(\PDO $dbh, string $start, string $end): array|false {
+
+        $excludeTerm = self::EXCLUDE_TERM;
+        $transferIds = [];
+        $psgGroups = [];
+
+        $linkRelationships = $this->linkRelatives && $this->fieldMapper->hasObject('npe4__Relationship__c');
+
+        $stmt = $dbh->query(
+            "SELECT vt.*, ng.Relationship_Code
+             FROM `vguest_transfer` vt
+             JOIN `name_guest` ng ON vt.`HHK Id` = ng.idName AND vt.`PSG Id` = ng.idPsg
+             WHERE IFNULL(DATE(vt.`Departure`), DATE(NOW())) >= DATE('$start')
+               AND DATE(vt.`Arrival`) < DATE('$end')
+             GROUP BY vt.`HHK ID`
+             ORDER BY vt.`PSG Id`"
+        );
+
+        if ($stmt->rowCount() == 0) {
+            return false;
+        }
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $transferIds[] = $r['HHK Id'];
+            $psgId = $r['PSG Id'];
+
+            if ($r['Address'] == ', ,   ') {
+                $r['Address'] = '';
+            }
+
+            $hhkId = $r['HHK Id'];
+            $isPatient = ($r['Relationship_Code'] ?? '') === RelLinkType::Self;
+
+            switch ($r['External Id']) {
+                case '':
+                    $checked = ($r['Email'] !== '' || ($r['Address'] !== '' && $r['Bad Addr'] === ''));
+                    $attrs = ['name' => "tf_{$hhkId}", 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $hhkId, 'data-psg' => $psgId, 'type' => 'checkbox'];
+                    if ($checked) { $attrs['checked'] = 'checked'; }
+                    if ($isPatient) { $attrs['data-patient'] = '1'; }
+                    $r['External Id'] = HTMLInput::generateMarkup('', $attrs);
+                    break;
+                case $excludeTerm:
+                    $r['External Id'] = 'Excluded';
+                    break;
+                default:
+                    $updateAttrs = ['name' => "tf_{$hhkId}", 'style' => 'margin-right:2px;', 'class' => 'hhk-txCbox hhk-tfmem hhk-tf-update', 'data-txid' => $hhkId, 'data-psg' => $psgId, 'type' => 'checkbox', 'checked' => 'checked'];
+                    if ($isPatient) { $updateAttrs['data-patient'] = '1'; }
+                    $r['External Id'] = HTMLInput::generateMarkup('', $updateAttrs) . $r['External Id'];
+                    break;
+            }
+
+            $r['_link'] = HTMLContainer::generateMarkup('a', (string) $hhkId, ['href' => 'GuestEdit.php?id=' . $hhkId]);
+
+            if ($r['Birthdate'] != '') {
+                $r['Birthdate'] = date('M j, Y', strtotime($r['Birthdate']));
+            }
+
+            $psgGroups[$psgId][] = $r;
+        }
+
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(
+            HTMLTable::makeTh('PSG')
+            . HTMLTable::makeTh('Transfer')
+            . HTMLTable::makeTh('HHK Id')
+            . HTMLTable::makeTh('Name')
+            . HTMLTable::makeTh('Address')
+            . HTMLTable::makeTh('Phone')
+            . HTMLTable::makeTh('Email')
+            . HTMLTable::makeTh('Birthdate')
+            . HTMLTable::makeTh('Gender')
+            . HTMLTable::makeTh('No Return')
+        );
+
+        foreach ($psgGroups as $psgId => $members) {
+            $first = true;
+            foreach ($members as $r) {
+                $cells = '';
+
+                if ($first) {
+                    $first = false;
+                    $psgCb = HTMLInput::generateMarkup('', [
+                        'type' => 'checkbox',
+                        'class' => 'hhk-txPsg mr-1',
+                        'data-psg' => $psgId,
+                        'checked' => 'checked',
+                    ]);
+                    $cells .= HTMLTable::makeTd(
+                        $psgCb . HTMLContainer::generateMarkup('label', (string) $psgId),
+                        ['rowspan' => count($members), 'style' => 'vertical-align:top;']
+                    );
+                    $rowStyle = 'border-top: 2px solid #2E99DD;';
+                } else {
+                    $rowStyle = '';
+                }
+
+                $cells .= HTMLTable::makeTd($r['External Id'])
+                    . HTMLTable::makeTd($r['_link'])
+                    . HTMLTable::makeTd($r['Name'])
+                    . HTMLTable::makeTd($r['Address'])
+                    . HTMLTable::makeTd($r['Phone'] ?? '')
+                    . HTMLTable::makeTd($r['Email'])
+                    . HTMLTable::makeTd($r['Birthdate'])
+                    . HTMLTable::makeTd($r['Gender'] ?? '')
+                    . HTMLTable::makeTd($r['No Return'] ?? '');
+
+                $tbl->addBodyTr($cells, ['class' => 'hhk-psg-' . $psgId, 'style' => $rowStyle]);
+            }
+        }
+
+        $dataTable = $tbl->generateMarkup(['id' => 'tblrpt']);
+
+        $allorNone = HTMLInput::generateMarkup('All', ['type' => 'button', 'id' => 'hhkdgpallple', 'class' => 'hhk-aon', 'style' => 'margin-right:3px;'])
+            . HTMLInput::generateMarkup('None', ['type' => 'button', 'id' => 'hhkdgpnople', 'class' => 'hhk-aon', 'style' => 'margin-right:3px;'])
+            . HTMLInput::generateMarkup('Reset', ['type' => 'button', 'id' => 'hhkdgpback', 'class' => 'hhk-aon', 'style' => 'margin-right:3px;'])
+            . HTMLInput::generateMarkup('New Only', ['type' => 'button', 'id' => 'hhkdgpnew', 'class' => 'hhk-aon', 'style' => 'margin-right:1px;']);
+
+        $label = HTMLContainer::generateMarkup('span', 'Transfer checkboxes: ');
+        $frame = HTMLContainer::generateMarkup('div', $label . $allorNone, ['style' => 'margin-top:1ex; margin-bottom:3px;']);
+        $linkRelFlag = HTMLInput::generateMarkup($linkRelationships ? '1' : '0', ['type' => 'hidden', 'id' => 'hlinkRel']);
+
+        return ['mkup' => $frame . $linkRelFlag . $dataTable, 'xfer' => $transferIds];
     }
 }
 

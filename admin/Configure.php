@@ -371,6 +371,7 @@ $authIdpList = SAML::getIdpList($dbh, false);
 <?php echo JQ_DT_CSS; ?>
 <?php echo NOTY_CSS; ?>
 <?php echo GRID_CSS; ?>
+<?php echo BOOTSTRAP_ICONS_CSS; ?>
 <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>

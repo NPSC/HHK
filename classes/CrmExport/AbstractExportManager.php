@@ -37,6 +37,8 @@ abstract class AbstractExportManager implements ExportManagerInterface{
     protected $apiVersion;
     protected $maxPSGsPerBatch;
 
+    protected bool $linkRelatives = true;
+
     protected $memberReplies;
     protected $replies;
     protected $proposedUpdates;
@@ -110,6 +112,7 @@ abstract class AbstractExportManager implements ExportManagerInterface{
         $this->lastUpdated = $cmsRs->Last_Updated->getStoredVal();
         $this->apiVersion = $cmsRs->apiVersion->getStoredVal();
         $this->maxPSGsPerBatch = $cmsRs->retryCount->getStoredVal();
+        $this->linkRelatives = ($cmsRs->userLoginUrl->getStoredVal() !== '0');
 
     }
 
@@ -129,7 +132,7 @@ abstract class AbstractExportManager implements ExportManagerInterface{
         return $replys;
     }
 
-    public static function getSearchFields(?\PDO $dbh, string $tableName): array {
+    public function getSearchFields(?\PDO $dbh, string $tableName): array {
 
         $stmt = $dbh->query("SHOW COLUMNS FROM `$tableName`;");
         $cols = array();
@@ -363,6 +366,10 @@ abstract class AbstractExportManager implements ExportManagerInterface{
 
     public function getMaxPSGsPerBatch(): mixed{
         return $this->maxPSGsPerBatch;
+    }
+
+    public function getLinkRelatives(): bool {
+        return $this->linkRelatives;
     }
 
     public function getLastUpdated(): mixed {
