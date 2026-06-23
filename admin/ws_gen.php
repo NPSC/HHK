@@ -23,6 +23,7 @@ use HHK\Cron\EmptyJob;
 use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\House\Distance\ZipDistance;
+use HHK\TableLog\ExternalAPILog;
 
 /**
  * ws_gen.php
@@ -584,6 +585,23 @@ try {
             if ($exportManager !== NULL) {
 
                 $events = $exportManager->showConfig($dbh);
+            }
+
+            break;
+
+        case 'viewLog':
+
+            $arguments = [
+                'service' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            ];
+            $filtered = filter_input_array(INPUT_GET, $arguments);
+
+            $allowedServices = ['Deluxe'];
+
+            if (in_array($filtered["service"], $allowedServices)) {
+                $events = ExternalAPILog::getLog($dbh, $filtered["service"]);
+            } else {
+                throw new RuntimeException("Invalid service name: " . $filtered["service"]);
             }
 
             break;
