@@ -611,24 +611,6 @@ try {
 
             break;
 
-        case 'sfCreateCustomField':
-
-            $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
-
-            if ($exportManager !== NULL) {
-                $object     = filter_input(INPUT_POST, 'object',     FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
-                $fieldName  = filter_input(INPUT_POST, 'fieldName',  FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
-                $label      = filter_input(INPUT_POST, 'label',      FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
-                $type       = filter_input(INPUT_POST, 'type',       FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
-                $length     = filter_input(INPUT_POST, 'length',     FILTER_SANITIZE_NUMBER_INT) ?: 255;
-                $unique     = filter_input(INPUT_POST, 'unique',     FILTER_VALIDATE_BOOLEAN) ?: false;
-                $externalId = filter_input(INPUT_POST, 'externalId', FILTER_VALIDATE_BOOLEAN) ?: false;
-
-                $events = $exportManager->createCustomField($object, $fieldName, $label, $type, (int)$length, $unique, $externalId);
-            }
-
-            break;
-
         default:
             $events = array("error" => "Bad Command");
     }

@@ -70,6 +70,7 @@ class SalesforceManager extends AbstractExportManager {
     protected $traceData;
     protected array $picklists;
     protected array $objectFields = [];
+    protected array $hhkFieldDetails = [];
     protected FieldMapper $fieldMapper;
 
     const string LOG_SERVICE_NAME = "SalesForce";
@@ -138,8 +139,9 @@ class SalesforceManager extends AbstractExportManager {
         // Restore any session-cached describes into instance properties
         foreach ($objects as $obj) {
             if (!isset($this->objectFields[$obj]) && isset($cached[$obj])) {
-                $this->objectFields[$obj] = $cached[$obj]['fields'];
-                $this->picklists[$obj]    = $cached[$obj]['picklists'];
+                $this->objectFields[$obj]    = $cached[$obj]['fields'];
+                $this->picklists[$obj]       = $cached[$obj]['picklists'];
+                $this->hhkFieldDetails[$obj] = $cached[$obj]['hhkFieldDetails'] ?? [];
             }
         }
 
@@ -178,8 +180,9 @@ class SalesforceManager extends AbstractExportManager {
         // Persist to session so subsequent page loads don't re-fetch
         foreach ($toFetch as $obj) {
             $cached[$obj] = [
-                'fields'    => $this->objectFields[$obj] ?? [],
-                'picklists' => $this->picklists[$obj] ?? [],
+                'fields'         => $this->objectFields[$obj] ?? [],
+                'picklists'      => $this->picklists[$obj] ?? [],
+                'hhkFieldDetails' => $this->hhkFieldDetails[$obj] ?? [],
             ];
         }
         $uS->sf_describe = $cached;
@@ -195,6 +198,16 @@ class SalesforceManager extends AbstractExportManager {
             }
 
             $this->objectFields[$object][$f['name']] = $f['label'] ?? $f['name'];
+
+            if (str_starts_with($f['name'], 'HHK_') && str_ends_with($f['name'], '__c')) {
+                $this->hhkFieldDetails[$object][$f['name']] = [
+                    'label'      => $f['label'] ?? $f['name'],
+                    'type'       => $f['type'] ?? '',
+                    'length'     => $f['length'] ?? 0,
+                    'unique'     => $f['unique'] ?? false,
+                    'externalId' => $f['externalId'] ?? false,
+                ];
+            }
 
             if (!empty($f['picklistValues'])) {
                 $fieldValues = [];
@@ -1548,78 +1561,20 @@ class SalesforceManager extends AbstractExportManager {
         'DateTime' => 'Date/Time',
         'Email'    => 'Email',
         'Phone'    => 'Phone',
+        'Picklist' => 'Picklist',
         'TextArea' => 'Text Area',
         'Url'      => 'URL',
     ];
 
     private const CUSTOM_FIELD_OBJECTS = ['Contact', 'Account', 'npe4__Relationship__c'];
-
-    public function createCustomField(string $object, string $fieldName, string $label, string $type, int $length = 255, bool $unique = false, bool $externalId = false): array {
-        if (!str_starts_with($fieldName, 'HHK_')) {
-            return ['error' => 'Custom field names must start with "HHK_".'];
-        }
-
-        if (!\in_array($object, self::CUSTOM_FIELD_OBJECTS, true)) {
-            return ['error' => 'Invalid Salesforce object: ' . $object];
-        }
-
-        if (!\array_key_exists($type, self::CUSTOM_FIELD_TYPES)) {
-            return ['error' => 'Invalid field type: ' . $type];
-        }
-
-        $entityResult = $this->webService->search(
-            "SELECT DurableId FROM EntityDefinition WHERE QualifiedApiName = '$object'",
-            $this->endPoint . 'tooling/query'
-        );
-
-        if (empty($entityResult['records'][0]['DurableId'])) {
-            return ['error' => "Could not resolve Salesforce object: $object"];
-        }
-
-        $tableEnumOrId = $entityResult['records'][0]['DurableId'];
-
-        $apiName = $fieldName . '__c';
-        $metadata = [
-            'type'  => $type,
-            'label' => $label,
-        ];
-
-        if ($type === 'Text') {
-            $metadata['length'] = min(max($length, 1), 255);
-        }
-        if ($type === 'Number') {
-            $metadata['precision'] = min(max($length, 1), 18);
-            $metadata['scale'] = 0;
-        }
-        if ($unique) {
-            $metadata['unique'] = true;
-        }
-        if ($externalId) {
-            $metadata['externalId'] = true;
-        }
-
-        $payload = [
-            'FullName'       => "{$object}.{$apiName}",
-            'Metadata'       => $metadata,
-            'TableEnumOrId'  => $tableEnumOrId,
-        ];
-
-        try {
-            $result = $this->webService->postUrl($this->endPoint . 'tooling/sobjects/CustomField', $payload);
-            return ['success' => "Field {$object}.{$apiName} created successfully.", 'id' => $result['id'] ?? ''];
-        } catch (\RuntimeException $ex) {
-            $msg = $ex->getMessage();
-            if (stripos($msg, 'DUPLICATE_DEVELOPER_NAME') !== false || stripos($msg, 'already exists') !== false) {
-                return ['warning' => "Field {$object}.{$apiName} already exists."];
-            }
-            return ['error' => "Failed to create {$object}.{$apiName}: " . $msg];
-        }
-    }
-
     protected function showCustomFieldsSection(): string {
 
-        $objOptionsJson = htmlspecialchars(\json_encode(self::CUSTOM_FIELD_OBJECTS, \JSON_HEX_QUOT | \JSON_HEX_APOS), \ENT_QUOTES);
-        $typeOptionsJson = htmlspecialchars(\json_encode(self::CUSTOM_FIELD_TYPES, \JSON_HEX_QUOT | \JSON_HEX_APOS), \ENT_QUOTES);
+        $sfTypeLabels = [
+            'string' => 'Text', 'double' => 'Number', 'int' => 'Number',
+            'boolean' => 'Checkbox', 'date' => 'Date', 'datetime' => 'Date/Time',
+            'email' => 'Email', 'phone' => 'Phone', 'textarea' => 'Text Area',
+            'url' => 'URL', 'picklist' => 'Picklist',
+        ];
 
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(
@@ -1633,26 +1588,16 @@ class SalesforceManager extends AbstractExportManager {
             . HTMLTable::makeTh('', ['class' => 'text-center'])
         );
 
+        $defaultKeys = [];
         foreach (self::DEFAULT_CUSTOM_FIELDS as $df) {
             $apiName = $df['field_name'] . '__c';
+            $defaultKeys[$df['object'] . '.' . $apiName] = true;
             $exists = isset(($this->objectFields[$df['object']] ?? [])[$apiName]);
 
-            if ($exists) {
-                $actionContent = HTMLContainer::generateMarkup('span', 'Exists', ['style' => 'color:#28a745;font-weight:bold;font-size:0.85em;']);
-            } else {
-                $actionContent = HTMLInput::generateMarkup('Create', [
-                    'type' => 'button',
-                    'class' => 'ui-button ui-corner-all ui-widget ui-button-small hhk-cf-create',
-                    'data-object' => $df['object'], 'data-fieldname' => $df['field_name'],
-                    'data-label' => $df['label'], 'data-type' => $df['type'],
-                    'data-length' => (string)$df['length'],
-                    'data-unique' => $df['unique'] ? '1' : '0',
-                    'data-externalid' => $df['externalId'] ? '1' : '0',
-                    'id' => false,
-                ]);
-            }
-
-            $actionContent .= ' ' . HTMLContainer::generateMarkup('span', 'Required', ['style' => 'color:#c00;font-weight:bold;font-size:0.85em;']);
+            $statusContent = $exists
+                ? HTMLContainer::generateMarkup('span', 'Exists', ['style' => 'color:#28a745;font-weight:bold;font-size:0.85em;'])
+                : HTMLContainer::generateMarkup('span', 'Missing', ['style' => 'color:#dc3545;font-weight:bold;font-size:0.85em;']);
+            $statusContent .= ' ' . HTMLContainer::generateMarkup('span', 'Required', ['style' => 'color:#c00;font-weight:bold;font-size:0.85em;']);
 
             $tbl->addBodyTr(
                 HTMLTable::makeTd($df['object'])
@@ -1662,126 +1607,44 @@ class SalesforceManager extends AbstractExportManager {
                 . HTMLTable::makeTd((string)$df['length'])
                 . HTMLTable::makeTd($df['unique'] ? 'Yes' : 'No', ['class' => 'text-center'])
                 . HTMLTable::makeTd($df['externalId'] ? 'Yes' : 'No', ['class' => 'text-center'])
-                . HTMLTable::makeTd($actionContent, ['class' => 'text-center']),
+                . HTMLTable::makeTd($statusContent, ['class' => 'text-center']),
                 ['data-required' => '1']
             );
         }
 
-        $addBtn = HTMLInput::generateMarkup('+ Add Field', [
-            'type'            => 'button',
-            'class'           => 'ui-button ui-corner-all ui-widget hhk-cf-addrow mt-2',
-            'data-objects'    => $objOptionsJson,
-            'data-types'      => $typeOptionsJson,
-            'id'              => 'cf_add_field',
-        ]);
+        foreach (self::CUSTOM_FIELD_OBJECTS as $obj) {
+            foreach (($this->hhkFieldDetails[$obj] ?? []) as $apiName => $detail) {
+                if (isset($defaultKeys[$obj . '.' . $apiName])) {
+                    continue;
+                }
 
-        $resultDiv = HTMLContainer::generateMarkup('div', '', ['id' => 'cfResultMsg', 'class' => 'mt-2']);
+                $typeLabel = $sfTypeLabels[$detail['type']] ?? ucfirst($detail['type']);
+                $lengthStr = ($detail['length'] > 0 && $detail['type'] !== 'boolean') ? (string)$detail['length'] : '';
+                $statusContent = HTMLContainer::generateMarkup('span', 'Exists', ['style' => 'color:#28a745;font-weight:bold;font-size:0.85em;']);
+
+                $tbl->addBodyTr(
+                    HTMLTable::makeTd($obj)
+                    . HTMLTable::makeTd(htmlspecialchars($apiName))
+                    . HTMLTable::makeTd(htmlspecialchars($detail['label']))
+                    . HTMLTable::makeTd($typeLabel)
+                    . HTMLTable::makeTd($lengthStr)
+                    . HTMLTable::makeTd($detail['unique'] ? 'Yes' : 'No', ['class' => 'text-center'])
+                    . HTMLTable::makeTd($detail['externalId'] ? 'Yes' : 'No', ['class' => 'text-center'])
+                    . HTMLTable::makeTd($statusContent, ['class' => 'text-center'])
+                );
+            }
+        }
 
         $content = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('h4', 'Custom Fields')
-            . HTMLContainer::generateMarkup('div', $tbl->generateMarkup([], ''), ['id' => 'cf_tbl'])
-            . $addBtn
-            . $resultDiv,
+            . $tbl->generateMarkup([], ''),
             ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']
         );
 
-        $script = <<<'JS'
-<script>
-(function ($) {
-    function escHtml(str) {
-        return $('<div>').text(String(str)).html();
-    }
-
-    function createField(params) {
-        params.cmd = 'sfCreateCustomField';
-        var $btn = $(this);
-        var $row = $btn.closest('tr');
-        $btn.prop('disabled', true);
-        $('#cfResultMsg').html('<em>Creating field...</em>');
-        $.post('ws_gen.php', params, function (resp) {
-            $btn.prop('disabled', false);
-            if (!resp) { $('#cfResultMsg').html('<span class="text-danger">No response from server.</span>'); return; }
-            if (resp.error) {
-                $('#cfResultMsg').html('<span class="text-danger">' + escHtml(resp.error) + '</span>');
-            } else if (resp.warning) {
-                $('#cfResultMsg').html('<span style="color:#b58105;">' + escHtml(resp.warning) + '</span>');
-            } else {
-                $('#cfResultMsg').html('<span class="text-success">' + escHtml(resp.success || 'Done.') + '</span>');
-            }
-        }, 'json').fail(function (xhr) {
-            $btn.prop('disabled', false);
-            $('#cfResultMsg').html('<span class="text-danger">Request failed: ' + escHtml(xhr.statusText) + '</span>');
-        });
-    }
-
-    $(document).on('click', '.hhk-cf-create', function () {
-        var btn = $(this);
-        var $row = btn.closest('tr');
-
-        var params;
-        if (btn.data('object')) {
-            params = {
-                object:     btn.data('object'),
-                fieldName:  btn.data('fieldname'),
-                label:      btn.data('label'),
-                type:       btn.data('type'),
-                length:     btn.data('length'),
-                unique:     btn.data('unique'),
-                externalId: btn.data('externalid')
-            };
-        } else {
-            var name = $.trim($row.find('.hhk-cf-name').val());
-            if (!name) { alert('Enter a field name.'); return; }
-            if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(name)) { alert('Field name must start with a letter and contain only letters, numbers, and underscores.'); return; }
-            var obj = $row.find('.hhk-cf-object').val();
-            if (!obj)  { alert('Select a Salesforce object.'); return; }
-            var type = $row.find('.hhk-cf-type').val();
-            if (!type) { alert('Select a field type.'); return; }
-            params = {
-                object:     obj,
-                fieldName:  'HHK_' + name,
-                label:      $.trim($row.find('.hhk-cf-label').val()) || name,
-                type:       type,
-                length:     parseInt($row.find('.hhk-cf-length').val(), 10) || 255,
-                unique:     $row.find('.hhk-cf-unique').is(':checked') ? 1 : 0,
-                externalId: $row.find('.hhk-cf-extid').is(':checked') ? 1 : 0
-            };
-        }
-        createField.call(this, params);
-    });
-
-    $('#cf_add_field').on('click', function () {
-        var objects = $(this).data('objects') || [];
-        var types   = $(this).data('types') || {};
-
-        var objOpts = '<option value="">-- Object --</option>';
-        $.each(objects, function (i, o) { objOpts += '<option value="' + escHtml(o) + '">' + escHtml(o) + '</option>'; });
-
-        var typeOpts = '<option value="">-- Type --</option>';
-        $.each(types, function (code, lbl) { typeOpts += '<option value="' + escHtml(code) + '">' + escHtml(lbl) + '</option>'; });
-
-        var row = '<tr>'
-            + '<td><select class="hhk-cf-object" style="max-width:180px;">' + objOpts + '</select></td>'
-            + '<td>HHK_<input class="hhk-cf-name" size="15" placeholder="FieldName"></td>'
-            + '<td><input class="hhk-cf-label" size="15" placeholder="Display Label"></td>'
-            + '<td><select class="hhk-cf-type" style="max-width:140px;">' + typeOpts + '</select></td>'
-            + '<td><input class="hhk-cf-length" size="5" value="255"></td>'
-            + '<td class="text-center"><input type="checkbox" class="hhk-cf-unique"></td>'
-            + '<td class="text-center"><input type="checkbox" class="hhk-cf-extid"></td>'
-            + '<td class="text-center"><input type="button" value="Create" class="ui-button ui-corner-all ui-widget ui-button-small hhk-cf-create"></td>'
-            + '</tr>';
-
-        $('#cf_tbl tbody').append(row);
-    });
-}(jQuery));
-</script>
-JS;
-
         return HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('h3', 'Custom Fields', ['style' => 'border-top:2px solid black;', 'class' => 'mt-3 pt-2 mb-2'])
-            . HTMLContainer::generateMarkup('p', 'Create custom fields on Salesforce objects. Field names are prefixed with "HHK_" and suffixed with "__c" automatically.', ['class' => 'mb-2', 'style' => 'font-size:0.9em;color:#555;'])
-            . $content
-            . $script,
+            . HTMLContainer::generateMarkup('p', 'HHK custom fields found on Salesforce objects.', ['class' => 'mb-2', 'style' => 'font-size:0.9em;color:#555;'])
+            . $content,
             []
         );
     }
@@ -2618,6 +2481,34 @@ JS;
      *
      * @return array{mkup: string, xfer: list<int>}|false
      */
+    /**
+     * Maps canonical HHK field names to their vguest_transfer column name and header label.
+     * Multiple canonical fields may map to the same column (e.g. name parts → Name).
+     * A column appears if any of its contributing fields are in the export map.
+     *
+     * To add a new field: add it to vguest_transfer, crm_exportable_fields, and this list.
+     */
+    protected function getTransferColumns(): array {
+        return [
+            'prefix'                   => ['col' => 'Name',      'header' => 'Name'],
+            'first_name'               => ['col' => 'Name',      'header' => 'Name'],
+            'middle_name'              => ['col' => 'Name',      'header' => 'Name'],
+            'last_name'                => ['col' => 'Name',      'header' => 'Name'],
+            'suffix'                   => ['col' => 'Name',      'header' => 'Name'],
+            'nickname'                 => ['col' => 'Name',      'header' => 'Name'],
+            'address.home.street'      => ['col' => 'Address',   'header' => 'Address'],
+            'address.home.city'        => ['col' => 'Address',   'header' => 'Address'],
+            'address.home.state'       => ['col' => 'Address',   'header' => 'Address'],
+            'address.home.postal_code' => ['col' => 'Address',   'header' => 'Address'],
+            'address.home.country'     => ['col' => 'Address',   'header' => 'Address'],
+            'home_phone'               => ['col' => 'Phone',     'header' => 'Phone'],
+            'email'                    => ['col' => 'Email',     'header' => 'Email'],
+            'birthdate'                => ['col' => 'Birthdate', 'header' => 'Birthdate'],
+            'gender'                   => ['col' => 'Gender',    'header' => 'Gender'],
+            'is_deceased'              => ['col' => 'No Return', 'header' => 'No Return'],
+        ];
+    }
+
     public function getTransferReport(\PDO $dbh, string $start, string $end): array|false {
 
         $excludeTerm = self::EXCLUDE_TERM;
@@ -2625,6 +2516,15 @@ JS;
         $psgGroups = [];
 
         $linkRelationships = $this->linkRelatives && $this->fieldMapper->hasObject('npe4__Relationship__c');
+
+        $exportedHhkFields = array_keys($this->fieldMapper->getExportMap('Contact'));
+        $allTransferCols = $this->getTransferColumns();
+        $visibleColumns = [];
+        foreach ($allTransferCols as $hhkField => $colDef) {
+            if (\in_array($hhkField, $exportedHhkFields, true) && !isset($visibleColumns[$colDef['col']])) {
+                $visibleColumns[$colDef['col']] = $colDef;
+            }
+        }
 
         $stmt = $dbh->query(
             "SELECT vt.*, ng.Relationship_Code
@@ -2680,18 +2580,13 @@ JS;
         }
 
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(
-            HTMLTable::makeTh('PSG')
+        $headerCells = HTMLTable::makeTh('PSG')
             . HTMLTable::makeTh('Transfer')
-            . HTMLTable::makeTh('HHK Id')
-            . HTMLTable::makeTh('Name')
-            . HTMLTable::makeTh('Address')
-            . HTMLTable::makeTh('Phone')
-            . HTMLTable::makeTh('Email')
-            . HTMLTable::makeTh('Birthdate')
-            . HTMLTable::makeTh('Gender')
-            . HTMLTable::makeTh('No Return')
-        );
+            . HTMLTable::makeTh('HHK Id');
+        foreach ($visibleColumns as $colDef) {
+            $headerCells .= HTMLTable::makeTh($colDef['header']);
+        }
+        $tbl->addHeaderTr($headerCells);
 
         foreach ($psgGroups as $psgId => $members) {
             $first = true;
@@ -2716,14 +2611,11 @@ JS;
                 }
 
                 $cells .= HTMLTable::makeTd($r['External Id'])
-                    . HTMLTable::makeTd($r['_link'])
-                    . HTMLTable::makeTd($r['Name'])
-                    . HTMLTable::makeTd($r['Address'])
-                    . HTMLTable::makeTd($r['Phone'] ?? '')
-                    . HTMLTable::makeTd($r['Email'])
-                    . HTMLTable::makeTd($r['Birthdate'])
-                    . HTMLTable::makeTd($r['Gender'] ?? '')
-                    . HTMLTable::makeTd($r['No Return'] ?? '');
+                    . HTMLTable::makeTd($r['_link']);
+
+                foreach ($visibleColumns as $colDef) {
+                    $cells .= HTMLTable::makeTd($r[$colDef['col']] ?? '');
+                }
 
                 $tbl->addBodyTr($cells, ['class' => 'hhk-psg-' . $psgId, 'style' => $rowStyle]);
             }
