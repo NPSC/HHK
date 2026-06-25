@@ -365,86 +365,6 @@ function searchVisits(\PDO $dbh, string $start, string $end, int $maxGuests, Abs
 }
 
 /**
- * Summary of getGTPeopleReport
- * @param PDO $dbh
- * @param string $start
- * @param string $end
- * @param string $excludeTerm
- * @return array|bool
- */
-function getGTPeopleReport(\PDO $dbh, string $start, string $end, string $excludeTerm): array|bool {
-
-
-    $transferIds = [];
-    $rows = [];
-
-    $query = "SELECT * FROM `vguest_transfer`
-    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE(:start) and DATE(`Arrival`) < DATE(:end)
-    GROUP BY `HHK ID` ORDER BY `PSG Id`";
-
-    $stmt = $dbh->prepare($query);
-    $stmt->execute([":start"=>$start, ":end"=>$end]);
-
-    if ($stmt->rowCount() == 0) {
-        return FALSE;
-    }
-
-
-    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-        $transferIds[] = $r['HHK Id'];
-
-
-        if ($r['Address'] == ', ,   ') {
-        	$r['Address'] = '';
-        }
-
-        // Transfer opt-out
-        switch ($r['External Id']) {
-            case '':
-                if ($r['Email'] !== '' || ($r['Address'] !== '' && $r['Bad Addr'] === '')) {
-                    $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked']);
-                } else {
-                    $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox']);
-                }
-                break;
-            case $excludeTerm:
-                $r['External Id'] = 'Excluded';
-                break;
-            default:
-                // Update remote.
-                $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'style'=>'margin-right:2px;', 'class' => 'hhk-txCbox hhk-tfmem hhk-tf-update', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked']) . $r['External Id'];
-                break;
-        }
-
-        $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], ['href' => 'GuestEdit.php?id=' . $r['HHK Id']]);
-
-        if ($r['Birthdate'] != '') {
-            $r['Birthdate'] = date('M j, Y', strtotime($r['Birthdate']));
-        }
-        unset($r['Arrival']);
-        unset($r['Departure']);
-        unset($r['Bad Addr']);
-        unset($r['Relation']);
-
-        $rows[] = $r;
-
-    }
-
-    $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-    $allorNone = HTMLInput::generateMarkup('All', ['type'=>'button', 'name' => 'hhkdgpallple', 'id'=>'hhkdgpallple', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
-        . HTMLInput::generateMarkup('None', ['type'=>'button', 'name' => 'hhkdgpnople', 'id'=>'hhkdgpnople', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
-        . HTMLInput::generateMarkup('Reset', ['type'=>'button', 'name' => 'hhkdgpback', 'id'=>'hhkdgpback', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
-        . HTMLInput::generateMarkup('New Only', ['type' => 'button', 'name' => 'hhkdgpnew', 'id' => 'hhkdgpnew', 'class' => 'hhk-aon', 'style' => 'margin-right:1px;']);
-
-    $label = HTMLContainer::generateMarkup('span', 'External Id checkboxes: ');
-    $frame = HTMLContainer::generateMarkup('div', $label . $allorNone, ['style'=>'margin-top:1ex; margin-bottom:3px;']);
-
-    return ['mkup' => $frame . $dataTable, 'xfer' => $transferIds];
-
-}
-
-/**
  * Summary of getNeonTypes
  * @param NeonManager $CmsManager
  * @param mixed $list
@@ -551,11 +471,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
     if (filter_has_var(INPUT_POST, 'btnHere')) {
 
         // Get HHK records result table.
-        if ($CmsManager->getServiceName() === AbstractExportManager::CMS_SF) {
-            $results = $CmsManager->getTransferReport($dbh, $start, $end);
-        } else {
-            $results = getGTPeopleReport($dbh, $start, $end, AbstractExportManager::EXCLUDE_TERM);
-        }
+        $results = $CmsManager->getTransferReport($dbh, $start, $end);
 
         if ($results === FALSE) {
 

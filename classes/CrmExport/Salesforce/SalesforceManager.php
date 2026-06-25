@@ -1625,7 +1625,7 @@ class SalesforceManager extends AbstractExportManager {
                 $tbl->addBodyTr(
                     HTMLTable::makeTd($obj)
                     . HTMLTable::makeTd(htmlspecialchars($apiName))
-                    . HTMLTable::makeTd(htmlspecialchars($detail['label']))
+                    . HTMLTable::makeTd(htmlspecialchars(string: $detail['label']))
                     . HTMLTable::makeTd($typeLabel)
                     . HTMLTable::makeTd($lengthStr)
                     . HTMLTable::makeTd($detail['unique'] ? 'Yes' : 'No', ['class' => 'text-center'])
@@ -2596,7 +2596,7 @@ JS;
         ];
     }
 
-    public function getTransferReport(\PDO $dbh, string $start, string $end): array|false {
+    public function getTransferReport(\PDO $dbh, string $start, string $end): array|bool {
 
         $excludeTerm = self::EXCLUDE_TERM;
         $transferIds = [];

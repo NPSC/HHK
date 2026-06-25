@@ -3,6 +3,7 @@ namespace HHK\CrmExport\Neon;
 
 use GuzzleHttp\Exception\RequestException;
 use HHK\Common;
+use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\Crypto;
 use HHK\House\ResourceBldr;
@@ -15,6 +16,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
 use HHK\Member\MemberSearch;
 use HHK\AuditLog\NameLog;
+use HHK\CrmExport\ExportManagerInterface;
 use HHK\SysConst\MemStatus;
 use HHK\CrmExport\RelationshipMapper;
 
@@ -1615,6 +1617,77 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         }
 
         return $idNames;
+
+    }
+
+    public function getTransferReport(\PDO $dbh, string $start, string $end): array|bool {
+
+        $transferIds = [];
+        $rows = [];
+
+        $query = "SELECT * FROM `vguest_transfer`
+        WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE(:start) and DATE(`Arrival`) < DATE(:end)
+        GROUP BY `HHK ID` ORDER BY `PSG Id`";
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([":start"=>$start, ":end"=>$end]);
+
+        if ($stmt->rowCount() == 0) {
+            return FALSE;
+        }
+
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $transferIds[] = $r['HHK Id'];
+
+
+            if ($r['Address'] == ', ,   ') {
+                $r['Address'] = '';
+            }
+
+            // Transfer opt-out
+            switch ($r['External Id']) {
+                case '':
+                    if ($r['Email'] !== '' || ($r['Address'] !== '' && $r['Bad Addr'] === '')) {
+                        $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked']);
+                    } else {
+                        $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'class' => 'hhk-txCbox hhk-tfmem', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox']);
+                    }
+                    break;
+                case self::EXCLUDE_TERM:
+                    $r['External Id'] = 'Excluded';
+                    break;
+                default:
+                    // Update remote.
+                    $r['External Id'] = HTMLInput::generateMarkup('', ['name' => 'tf_' . $r['HHK Id'], 'style'=>'margin-right:2px;', 'class' => 'hhk-txCbox hhk-tfmem hhk-tf-update', 'data-txid' => $r['HHK Id'], 'type' => 'checkbox', 'checked' => 'checked']) . $r['External Id'];
+                    break;
+            }
+
+            $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], ['href' => 'GuestEdit.php?id=' . $r['HHK Id']]);
+
+            if ($r['Birthdate'] != '') {
+                $r['Birthdate'] = date('M j, Y', strtotime($r['Birthdate']));
+            }
+            unset($r['Arrival']);
+            unset($r['Departure']);
+            unset($r['Bad Addr']);
+            unset($r['Relation']);
+
+            $rows[] = $r;
+
+        }
+
+        $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
+        $allorNone = HTMLInput::generateMarkup('All', ['type'=>'button', 'name' => 'hhkdgpallple', 'id'=>'hhkdgpallple', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+            . HTMLInput::generateMarkup('None', ['type'=>'button', 'name' => 'hhkdgpnople', 'id'=>'hhkdgpnople', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+            . HTMLInput::generateMarkup('Reset', ['type'=>'button', 'name' => 'hhkdgpback', 'id'=>'hhkdgpback', 'class' => 'hhk-aon', 'style'=>'margin-right:3px;'])
+            . HTMLInput::generateMarkup('New Only', ['type' => 'button', 'name' => 'hhkdgpnew', 'id' => 'hhkdgpnew', 'class' => 'hhk-aon', 'style' => 'margin-right:1px;']);
+
+        $label = HTMLContainer::generateMarkup('span', 'External Id checkboxes: ');
+        $frame = HTMLContainer::generateMarkup('div', $label . $allorNone, ['style'=>'margin-top:1ex; margin-bottom:3px;']);
+
+        return ['mkup' => $frame . $dataTable, 'xfer' => $transferIds];
 
     }
 

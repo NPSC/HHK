@@ -47,6 +47,8 @@ interface ExportManagerInterface {
 
     public function unencodeHTML(mixed $text): array|string|null;
 
+    public function getTransferReport(\PDO $dbh, string $start, string $end): array|bool;
+    
     public function getAccountId(): mixed;
 
     public function setAccountId(string|int $v): void;
