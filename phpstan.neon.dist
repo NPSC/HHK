@@ -6,7 +6,3 @@ parameters:
         - admin
         - house
         - install
-    bootstrapFiles:
-        - phpstan-dba-bootstrap.php
-includes:
-    - ./vendor/staabm/phpstan-dba/config/dba.neon

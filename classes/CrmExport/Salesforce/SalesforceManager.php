@@ -1657,7 +1657,8 @@ class SalesforceManager extends AbstractExportManager {
      */
     public function showConfig(\PDO $dbh): string {
 
-        $markup = $this->showGatewayCredentials();
+        $markup = $this->showSetupGuide();
+        $markup .= $this->showGatewayCredentials();
 
         try {
             $markup .= $this->createFieldMappingSection($dbh);
@@ -1682,6 +1683,92 @@ class SalesforceManager extends AbstractExportManager {
             )
         );
         return $tbl->generateMarkup(['style' => 'margin-top:15px;']);
+    }
+
+    protected function showSetupGuide(): string {
+
+        $btn = HTMLInput::generateMarkup('Setup Guide', [
+            'type'  => 'button',
+            'id'    => 'btnSfSetupGuide',
+            'class' => 'ui-button ui-corner-all ui-widget',
+        ]);
+
+        $body = <<<'HTML'
+<div id="sfSetupGuideDialog" style="display:none; font-size:0.9em; line-height: 1.2em;" class="user-agent-spacing">
+
+<h4>1. Create an External Client App</h4>
+<ol>
+<li>In Salesforce, go to <strong>Setup &rarr; Apps &rarr; External Client Apps &rarr; External Cleint App Manager &rarr; New Connected App</strong>.</li>
+<li>Fill in a name (e.g. &ldquo;HHK Integration&rdquo;) and contact email.</li>
+<li>Under <strong>API (Enable OAuth Settings)</strong>, check <em>Enable OAuth Settings</em>.</li>
+<li>Set the <strong>Callback URL</strong> to your HHK site URL (e.g. <code>https://yoursite.hospitalityhousekeeper.net</code>). This is not used for HHK but is required by Salesforce.</li>
+<li>Add the following <strong>OAuth Scopes</strong>:
+  <ul>
+    <li><em>Manage user data via APIs (api)</em></li>
+    <li><em>Access the Salesforce API Platform (sfap_api)</em></li>
+  </ul>
+</li>
+<li>Check <strong>Enable Client Credentials Flow</strong>.</li>
+<li>Uncheck <strong>Require Proof Key for Code Exchange (PKCE) extention for Supported Authorization Flows</strong></li>
+<li>Save, then click <strong>Settings &rarr; OAuth Settings &rarr; Consumer Key and Secret</strong> to retrieve the <em>Consumer Key</em> (Client ID) and <em>Consumer Secret</em>.</li>
+</ol>
+
+<h4>2. Configure API Access</h4>
+<ol>
+<li>Go to Apps &rarr; External Client Apps &rarr; External Client App Manager</strong>, find the app you just created, and click <strong>Policies &rarr; Edit &rarr; OAuth Policies</strong>.</li>
+<li>Set <strong>Permitted Users</strong> to <em>All users may self-authorize</em> (or restrict to a profile/permission set).</li>
+<li>Check "Enable Client Credentials Flow" and assign a user to "Run As"
+<li>Set <strong>IP Relaxation</strong> to <em>Relax IP restrictions</em>.</li>
+<li>Set <strong>Refresh Token Policy</strong> to <em>Refresh token is valid until revoked</em>.</li>
+</ol>
+
+<h4>3. Required Custom Fields</h4>
+<p>HHK requires two custom fields on Salesforce objects. These are listed in the <strong>Custom Fields</strong> section below. Both must exist before transfers will work:</p>
+<ul>
+<li><strong>Contact.HHK_idName__c</strong>: Text(255), Unique, External ID. Links a Salesforce Contact to an HHK member.</li>
+<li><strong>Account.HHK_idPsg__c</strong>: Text(255), Unique, External ID. Links a Salesforce Household Account to an HHK Patient Support Group.</li>
+</ul>
+<p>Create these fields in Salesforce under <strong>Setup &rarr; Object Manager &rarr; [Object] &rarr; Fields &amp; Relationships &rarr; New</strong>. Ensure field-level security grants visibility to the API user&rsquo;s profile.</p>
+
+<h4>4. Enter Credentials in HHK</h4>
+<ol>
+<li><strong>Endpoint URL</strong>: Your Salesforce instance URL (e.g. <code>https://yourorg.my.salesforce.com</code>). Do not include a trailing slash.</li>
+<li><strong>Client ID</strong>: The Consumer Key from the External Client App</li>
+<li><strong>Client Secret</strong>: The Consumer Secret from the External Client App.</li>
+<li><strong>Maximum PSGs per batch</strong>: The number of PSGs to transfer in one composite graph request, increasing this value can reduce the number of API calls used when transferring</li>
+</ol>
+
+<h4>5. Field Mapping</h4>
+<p>After saving credentials, the <strong>Field Mapping</strong> section lets you choose which HHK fields are sent to Salesforce and which Salesforce fields they map to. Fields with picklist (dropdown) values can be mapped value-by-value using the mapping button.</p>
+
+<h4>6. NPSP Relationships (Optional)</h4>
+<p>If your org uses the Nonprofit Success Pack (NPSP), enable <strong>Link Households &amp; Relationships</strong> to automatically group contacts into Household Accounts and create <code>npe4__Relationship__c</code> records between guests and patients.</p>
+
+</div>
+HTML;
+
+        $script = <<<'JS'
+<script>
+(function ($) {
+    var $dlg = $('#sfSetupGuideDialog').dialog({
+        autoOpen: false,
+        modal: true,
+        width: 700,
+        maxHeight: 600,
+        title: 'Salesforce Integration Setup Guide',
+        buttons: {
+            'Close': function () { $(this).dialog('close'); }
+        }
+    });
+    $('#btnSfSetupGuide').on('click', function () { $dlg.dialog('open'); });
+}(jQuery));
+</script>
+JS;
+
+        return HTMLContainer::generateMarkup('div',
+            $btn . $body . $script,
+            ['class' => 'mb-3']
+        );
     }
 
     /**

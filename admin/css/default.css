@@ -395,3 +395,8 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 .text-center {
     text-align: center;
 }
+
+.user-agent-spacing * {
+	padding: revert;
+	margin: revert;
+}

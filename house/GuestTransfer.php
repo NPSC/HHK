@@ -367,22 +367,23 @@ function searchVisits(\PDO $dbh, string $start, string $end, int $maxGuests, Abs
 /**
  * Summary of getGTPeopleReport
  * @param PDO $dbh
- * @param mixed $start
- * @param mixed $end
- * @param mixed $excludeTerm
+ * @param string $start
+ * @param string $end
+ * @param string $excludeTerm
  * @return array|bool
  */
-function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
+function getGTPeopleReport(\PDO $dbh, string $start, string $end, string $excludeTerm): array|bool {
 
 
     $transferIds = [];
     $rows = [];
 
     $query = "SELECT * FROM `vguest_transfer`
-    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE('$start') and DATE(`Arrival`) < DATE('$end')
+    WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE(:start) and DATE(`Arrival`) < DATE(:end)
     GROUP BY `HHK ID` ORDER BY `PSG Id`";
 
-    $stmt = $dbh->query($query);
+    $stmt = $dbh->prepare($query);
+    $stmt->execute([":start"=>$start, ":end"=>$end]);
 
     if ($stmt->rowCount() == 0) {
         return FALSE;
