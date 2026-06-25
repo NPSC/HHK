@@ -2,6 +2,7 @@
 
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Tables\EditRS;
 use HHK\Tables\PaymentGW\Gateway_TransactionRS;
 
@@ -24,6 +25,7 @@ $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
 $uS = Session::getInstance();
+$isDeluxe = strtolower($uS->PaymentGateway) === AbstractPaymentGateway::DELUXE;
 
 
 function makeParmtable($parms) {
@@ -201,6 +203,7 @@ $txSelector = HTMLSelector::generateMarkup(
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -209,6 +212,8 @@ $txSelector = HTMLSelector::generateMarkup(
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
 
         <script type="text/javascript">
             $(document).ready(function() {
@@ -245,6 +250,9 @@ $txSelector = HTMLSelector::generateMarkup(
                     </tr>
                 </table>
                 <input type='submit' value='Go' name='btnGo' class="ui-button ui-corner-all"/>
+                <?php if ($isDeluxe) { ?>
+                <button type="button" id="btnShowLog" class="ui-button ui-corner-all ml-2">Show Detailed Log</button>
+                <?php } ?>
                 </form>
             </div>
             <?php if($txData != ""){ ?>
@@ -253,5 +261,154 @@ $txSelector = HTMLSelector::generateMarkup(
             </div>
             <?php } ?>
         </div>
+        <?php if ($isDeluxe) { ?>
+        <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="deluxeLog"></table></div>
+        <script type="text/javascript">
+            $(document).ready(function () {
+
+                var dtLogCols = [
+                    {
+                        targets: [0],
+                        className: 'dt-control',
+                        orderable: false,
+                        data: null,
+                        defaultContent: ''
+                    },
+                    {
+                        "targets": [1],
+                        "title": "Method",
+                        "searchable": false,
+                        "sortable": true,
+                        "data": "requestMethod",
+                    },
+                    {
+                        "targets": [2],
+                        "title": "Type",
+                        "searchable": false,
+                        "sortable": true,
+                        "data": "Type",
+                    },
+                    {
+                        "targets": [3],
+                        "title": "Request Endpoint",
+                        "searchable": false,
+                        "sortable": false,
+                        "data": "endpoint",
+                    },
+                    {
+                        "targets": [4],
+                        "title": "Response Code",
+                        "searchable": false,
+                        "sortable": true,
+                        "data": "responseCode",
+                    },
+                    {
+                        "targets": [5],
+                        "title": "Request",
+                        "searchable": true,
+                        "sortable": true,
+                        "data": "request",
+                        "visible": false,
+                    },
+                    {
+                        "targets": [6],
+                        "title": "Response",
+                        "searchable": true,
+                        "sortable": true,
+                        "data": "response",
+                        "visible": false,
+                    },
+                    {
+                        "targets": [7],
+                        "title": "User",
+                        "searchable": true,
+                        "sortable": true,
+                        "data": "username",
+                    },
+                    {
+                        "targets": [8],
+                        "title": "Timestamp",
+                        'data': 'Timestamp',
+                        render: function (data, type) {
+                            return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
+                        }
+                    }
+                ];
+
+                var logTable = $('#deluxeLog').dataTable({
+                    "columnDefs": dtLogCols,
+                    "serverSide": true,
+                    "processing": true,
+                    "language": { "sSearch": "Search Log:" },
+                    "sorting": [[8, 'desc']],
+                    "displayLength": 25,
+                    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                    'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
+                    'autoWidth': false,
+                    layout: {
+                        topStart: 'info',
+                        bottom: 'paging',
+                        bottomStart: null,
+                        bottomEnd: null
+                    },
+                    ajax: {
+                        url: 'ws_gen.php',
+                        data: function (d) {
+                            d.cmd = 'viewLog';
+                            d.service = 'Deluxe';
+                        }
+                    },
+                    createdRow: function (row, data, dataIndex) {
+                        if (data.responseCode >= 400) {
+                            $(row).addClass('ui-state-error');
+                        }
+                    }
+                });
+
+                logTable.on('click', 'td.dt-control', function (e) {
+                    var tr = e.target.closest('tr');
+                    var row = logTable.DataTable().row(tr);
+
+                    if (row.child.isShown()) {
+                        row.child.hide();
+                    } else {
+                        row.child(formatAPIDetails(row.data())).show();
+                    }
+                });
+
+                function formatAPIDetails(row) {
+                    return '<div class="d-flex">' +
+                        (row.request != '' ? '<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">' +
+                            '<strong>Request</strong>' +
+                            '<pre style="white-space: pre-wrap;">' + row.request + '</pre>' +
+                        '</div>' : '') +
+                        '<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">' +
+                            '<strong>Response</strong>' +
+                            '<pre style="white-space: pre-wrap;">' + row.response + '</pre>' +
+                        '</div>' +
+                    '</div>';
+                }
+
+                var $logDialog = $("#logDialog").dialog({
+                    autoOpen: false,
+                    modal: false,
+                    minWidth: getDialogWidth(1500),
+                    title: 'Deluxe Payment Log',
+                    buttons: {
+                        "Close": function () {
+                            $logDialog.dialog('close');
+                        }
+                    },
+                    open: function () {
+                        $('#deluxeLog').DataTable().ajax.reload();
+                    }
+                });
+
+                $('#btnShowLog').click(function () {
+                    $logDialog.dialog('open');
+                });
+            });
+        </script>
+        <?php } ?>
     </body>
 </html>

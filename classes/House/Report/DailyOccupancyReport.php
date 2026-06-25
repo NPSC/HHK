@@ -68,14 +68,14 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface
             (isset($resvStatuses[ReservationStatus::Waitlist]['Title']) ? "and " . $resvStatuses[ReservationStatus::Waitlist]['Title'] : "");
 
         $query = "select
-                    (select count(*) from resource r where r.Type = 'room' and $retiredRescSql ) as 'Total Rooms',
-                    (select count(*) from resource r
+                    (select count(*) from resource r where r.Type = 'room' and $retiredRescSql ) as 'Total Rooms',".
+/*                    (select count(*) from resource r
                         left join resource_use ru on
 	                       r.idResource = ru.idResource and
                            date(ru.Start_Date) <= date(now()) and
                            date(ru.End_Date) > date(now())
-                        where r.Type = 'rmtroom' and ru.idResource_use is null and $retiredRescSql ) as 'Total " . $rmtroomTitle . "s',
-                    (select count(*) from resource r
+                        where r.Type = 'rmtroom' and ru.idResource_use is null and $retiredRescSql ) as 'Total " . $rmtroomTitle . "s',*/
+                    "(select count(*) from resource r
                         left join resource_use ru on
 	                       r.idResource = ru.idResource and
                            date(ru.Start_Date) <= date(now()) and
@@ -110,7 +110,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface
 
         //add help text
         $helptexts["Total Rooms"] = "Total regular rooms";
-        $helptexts["Total " . $rmtroomTitle . "s"] = "Total " . $rmtroomTitle . "s available";
+        //$helptexts["Total " . $rmtroomTitle . "s"] = "Total " . $rmtroomTitle . "s available";
         $helptexts["Vacant Rooms"] = "Number of vacant available rooms";
         $helptexts["Occupied Rooms"] = "Number of rooms with active visits";
         $helptexts["Anticipated Arrivals"] = "Number of " . $resvStatusList . " reservations with an arrival date of today";

@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Payment\PaymentGateway\Deluxe\Request;
 use GuzzleHttp\Client;
+use HHK\Integrations\GuzzleAPILogger;
 use HHK\OAuth\Credentials;
 use HHK\OAuth\DeluxeOAuth;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
@@ -35,6 +36,7 @@ abstract class AbstractDeluxeRequest
         $this->baseApiUrl = (isset($gway->getCredentials()["Checkout_Url"]) ? $gway->getCredentials()["Checkout_Url"] : "");
         $this->GuzzleClient = new Client([
             'base_uri' => $this->baseApiUrl, 
+            'handler' => GuzzleAPILogger::createStack($this->dbh, "Deluxe"),
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
                 'PartnerToken' => $this->hpfAccessToken,
@@ -46,7 +48,7 @@ abstract class AbstractDeluxeRequest
 
     /**
      * Set up oAuth object, and authenticate
-     * @param \HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway $gway
+     * @param DeluxeGateway $gway
      * @return DeluxeOAuth
      */
     protected function oAuthSetup(DeluxeGateway $gway)

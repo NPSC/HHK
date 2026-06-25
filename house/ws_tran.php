@@ -272,7 +272,7 @@ try {
             ];
             $filtered = filter_input_array(INPUT_GET, $arguments);
             
-            $allowedServices = [SalesforceManager::LOG_SERVICE_NAME, NeonManager::LOG_SERVICE_NAME];
+            $allowedServices = [SalesforceManager::LOG_SERVICE_NAME, NeonManager::LOG_SERVICE_NAME, 'Deluxe'];
 
             if(in_array($filtered["service"], $allowedServices)){
                 $events = ExternalAPILog::getLog($dbh, $filtered["service"]);

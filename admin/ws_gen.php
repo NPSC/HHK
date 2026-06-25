@@ -7,22 +7,17 @@ use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Tables\EditRS;
-use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
-use HHK\AuditLog\NameLog;
 use HHK\DataTableServer\SSP;
 use HHK\Exception\RuntimeException;
-use HHK\House\Report\GuestDemogReport;
 use HHK\Member\WebUser;
 use HHK\Member\Relation\AbstractRelation;
-use HHK\sec\SAML;
-use HHK\Neon\ConfigureNeon;
 use HHK\Cron\JobFactory;
 use HHK\Tables\CronRS;
 use HHK\Cron\AbstractJob;
-use HHK\Cron\EmptyJob;
 use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\House\Distance\ZipDistance;
+use HHK\TableLog\ExternalAPILog;
 
 /**
  * ws_gen.php
@@ -607,6 +602,23 @@ try {
 
             if ($exportManager !== NULL) {
                 $events = $exportManager->savePicklistMap($dbh);
+            }
+            
+            break;
+
+        case 'viewLog':
+
+            $arguments = [
+                'service' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            ];
+            $filtered = filter_input_array(INPUT_GET, $arguments);
+
+            $allowedServices = ['Deluxe'];
+
+            if (in_array($filtered["service"], $allowedServices)) {
+                $events = ExternalAPILog::getLog($dbh, $filtered["service"]);
+            } else {
+                throw new RuntimeException("Invalid service name: " . $filtered["service"]);
             }
 
             break;
