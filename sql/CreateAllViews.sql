@@ -3319,6 +3319,67 @@ select * from operating_schedules where End_Date is null group by Day having max
 -- API Views
 -- -----------------------------------------------------
 
+
+-- -----------------------------------------------------
+-- View `vapi_rooms`
+-- -----------------------------------------------------
+create or replace view `vapi_rooms` AS
+    select
+        r.idRoom,
+        ifnull(v.idVisit, 0) as `idVisit`,
+        ifnull(v.span, 0) as `span`,
+        r.Title as `roomName`,
+        gr.Description as `Group_Title`,
+        re.Util_Priority,
+        r.`Status`,
+        ifnull(g.Description, 'Unknown') as `Status_Text`,
+        r.`Cleaning_Cycle_Code`,
+        ifnull(n.idName, 0) as `idGuest`,
+        ifnull(n.Name_Full, '') as `Full_Name`,
+        ifnull(n.Name_First, '') as `First_Name`,
+        ifnull(n.Name_Last, '') as `Last_Name`,
+        ifnull(ne.Email, '') as `Email`,
+        if(count(s.idName) > 0, count(s.idName), '') as `numGuests`,
+        ifnull(v.Arrival_Date, '') as `Arrival`,
+        ifnull(v.Expected_Departure, '') as `Expected_Departure`,
+        ifnull(res.Expected_Arrival, '') as `Next_Expected_Arrival`,
+        r.Last_Cleaned,
+        r.Last_Deep_Clean,
+        ifnull(nt.flag, 0) as `noteFlagged`,
+        ifnull(nt.`Timestamp`, '') as `noteDate`,
+        ifnull(nt.`Note_Text`, '') as `Notes`
+    from
+        room r
+            left join
+        resource_room rr ON r.idRoom = rr.idRoom
+            left join
+        resource re on rr.idResource = re.idResource
+            left join
+        visit v ON rr.idResource = v.idResource and v.`Status` = 'a'
+            left join
+            (select reservation.*, ROW_NUMBER() OVER (PARTITION BY idResource ORDER BY Expected_Arrival) AS rn FROM reservation where date(Expected_Arrival) >= date(NOW()) and `Status` in ('a', 'uc'))
+            res ON rr.idResource = res.idResource && res.rn = 1
+            left join
+        name n ON v.idPrimaryGuest = n.idName
+            left join
+        name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
+            left join
+        stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and s.Status = 'a'
+            left join
+        gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = r.Status
+            left join
+        gen_lookups g3 on g3.Table_Name = 'Room_Cleaning_Days' and g3.`Code` = r.Cleaning_Cycle_Code
+            left join
+        resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = 'un'  and DATE(ru.Start_Date) <= DATE('2026-06-03') and DATE(ru.End_Date) > DATE('2026-06-03')
+            left join
+        note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
+        left join `gen_lookups` gr on gr.`Table_Name` = 'Room_Type' and gr.`Code` = r.Type 
+    where g3.Substitute > 0 and ru.idResource_use is null
+        and (re.Retired_At is null or re.Retired_At > date(now()))
+    group by rr.idResource
+    ORDER BY gr.`Order`, r.Util_Priority;
+
+
 -- -----------------------------------------------------
 -- View `vapi_register_resv`
 -- -----------------------------------------------------

@@ -126,17 +126,14 @@ UPDATE `sf_type_map` SET `List_Name` = 'Contact:Salutation'                   WH
 ALTER TABLE `sf_type_map` ADD UNIQUE KEY IF NOT EXISTS `uq_sf_type_map` (`List_Name`, `HHK_Type_Code`);
 
 -- add guest transfer web service
-call `new_webpage`(
-    'ws_tran.php',
-    31,
-    '',
-    0,
-    'h',
-    '',
-    '',
-    's',
-    '',
-    '',
-    now(),
-    'ga'
-);
+call `new_webpage`('ws_tran.php',31,'',0,'h','','','s','','',now(),'ga');
+
+-- add Rooms oauth scopes
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`,`Type`,`Order`)
+  VALUES ('Oauth_Scopes','rooms:read','Read rooms','','',0);
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`,`Type`,`Order`)
+  VALUES ('Oauth_Scopes','rooms:write','Write rooms','','',0);
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`,`Type`,`Order`)
+  VALUES ('Oauth_Scopes','lookups:read','Read lookups','','',0);
