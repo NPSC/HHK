@@ -40,6 +40,7 @@ try {
 try {
     $page = new ScriptAuthClass($dbh);
 } catch (Exception $ex) {
+    $uS = Session::getInstance();
     $uS->destroy(true);
     exit('<h2>Page not in database.</h2>');
 }
@@ -111,6 +112,9 @@ try {
 
              $style = "";
              $formData = "";
+             $initialGuests = 1;
+             $maxGuests = 4;
+             
              if(isset($_REQUEST['style'])){
                  $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
              }

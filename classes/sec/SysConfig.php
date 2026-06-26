@@ -28,11 +28,10 @@ class SysConfig {
      * @param Session $uS
      * @param string|array $category
      * @param string $tableName
-     * @param bool $returnArray
      * @throws RuntimeException
-     * @return void || array
+     * @return void
      */
-    public static function getCategory(\PDO $dbh, Session $uS, $category, $tableName)
+    public static function getCategory(\PDO $dbh, Session $uS, string|array $category, string $tableName)
     {
 
         if ($tableName == '' || $category == '') {
@@ -51,21 +50,19 @@ class SysConfig {
         try {
             $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+            foreach ($rows as $r) {
+
+                $val = self::getTypedVal($r['Type'], $r['Value']);
+                $key = $r['Key'];
+                $uS->$key = $val;
+            }
+
         }catch(\PDOException $e){
             if($e->getCode() === "42S02"){ //table doesn't exist
                 throw new RuntimeException("Error: " . $e->errorInfo[2] . ": It looks like HHK isn't installed properly. Try running the installer.");
             }
         }
-
-        foreach ($rows as $r) {
-
-            $val = self::getTypedVal($r['Type'], $r['Value']);
-            $key = $r['Key'];
-            $uS->$key = $val;
-        }
-
-        unset($rows);
-        $stmt = NULL;
 
     }
 
@@ -75,7 +72,7 @@ class SysConfig {
      * @param string $tableName
      * @param string $key
      * @param mixed $default
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return mixed
      */
     public static function getKeyValue(\PDO $dbh, $tableName, $key, $default = null) {
@@ -106,7 +103,7 @@ class SysConfig {
      * @param \PDO $dbh
      * @param string $tableName
      * @param string $key
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return mixed
      */
     public static function getKeyRecord(\PDO $dbh, $tableName, $key) {
@@ -141,7 +138,7 @@ class SysConfig {
      * @param string $key
      * @param mixed $value
      * @param string $category
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value, $category = null) {

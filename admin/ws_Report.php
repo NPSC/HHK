@@ -18,7 +18,7 @@ $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 
-function campaignList(PDO $dbh, $yr) {
+function campaignList(PDO $dbh, string $yr): array {
     // Year where-clause
     $headerYears = "";
 
@@ -66,7 +66,7 @@ function campaignList(PDO $dbh, $yr) {
     return array("success" => "No Campaigns Found");
 }
 
-function campaignReport(PDO $dbh, $rbsel, $yr, $fyMonthsAdjust) {
+function campaignReport(PDO $dbh, string $rbsel, string $yr, string $fyMonthsAdjust): string {
 
     // Year where-clause
     $whClause = "";
@@ -125,18 +125,17 @@ function campaignReport(PDO $dbh, $rbsel, $yr, $fyMonthsAdjust) {
             $percentMU = number_format($r[0], 0) . "%";
         }
 
+        $dateMkup = "";
         if (is_null($r[1])) {
             $campMkup = "Total";
             $class = "class='tdlabel'";
-            $dateMkup = "";
             $percentMU = "";
         } else {
+            $dateMkup = $r[1];
             if ($campMkup == "Sub Total") {
-                //$dateMkup = "";
                 $percentMU = "";
                 $class = "class='tdlabel'";
             } else {
-                $dateMkup = $r[1];
                 $class = "";
             }
         }
@@ -227,17 +226,16 @@ function campaignInKindReport(PDO $dbh, $rbsel, $yr, $fyMonthsAdjust) {
     foreach ($rows as $r) {
 
         $campMkup = $r[2];
+        $dateMkup = "";
 
         if (is_null($r[1])) {
             $campMkup = "Total";
             $class = "class='tdlabel'";
-            $dateMkup = "";
         } else {
+            $dateMkup = $r[1];
             if ($campMkup == "Sub Total") {
-                //$dateMkup = "";
                 $class = "class='tdlabel'";
             } else {
-                $dateMkup = $r[1];
                 $class = "";
             }
         }

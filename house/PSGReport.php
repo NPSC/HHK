@@ -47,7 +47,7 @@ $labels = Labels::getLabels();
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiagnosis, $showLocation, $showDemog) {
+function getPeopleReport(\PDO $dbh, bool $local, bool $showRelationship, string $whClause, string $start, string $end, bool $showAddr, bool $showFullName, bool $showNoReturn, bool $showUnique, bool $showAssoc, Labels $labels, bool $showDiagnosis, bool $showLocation, bool $showDemog) {
 
     $uS = Session::getInstance();
 
@@ -188,13 +188,9 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
 
     $stmt = $dbh->query($query);
 
-    if (!$local) {
-
-        $reportRows = 1;
-        $file = 'PeopleReport';
-        $writer = new ExcelHelper($file);
-        $writer->setTitle("People Report");
-    }
+    $file = 'PeopleReport';
+    $writer = new ExcelHelper($file);
+    $writer->setTitle("People Report");
 
     $rows = array();
     $firstRow = TRUE;
@@ -284,12 +280,10 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
         if ($firstRow) {
 
             $firstRow = FALSE;
-
-            if ($local === FALSE) {
-
-                // build header
-                $hdr = array();
-                $colWidths = array();
+            $hdr = array();
+            $colWidths = array();
+            
+            if ($local === FALSE) {                
 
                 $noReturn = '';
 
@@ -418,7 +412,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
     }
 }
 
-function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $hospCodes, $labels, $showAssoc, $showDiagnosis, $showDiagDetails, $showLocation, $patBirthDate, $patAsGuest = true, $showCounty = FALSE) {
+function getPsgReport(\PDO $dbh, bool $local, string $whFields, string $start, string $end, array $relCodes, array $hospCodes, Labels $labels, bool $showAssoc, bool $showDiagnosis, bool $showDiagDetails, bool $showLocation, bool $patBirthDate, bool $patAsGuest = true, bool $showCounty = FALSE) {
 
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $diagDetailTitle = $labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details');
@@ -467,14 +461,10 @@ where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) >= DATE('$sta
  $whFields
 order by ng.idPsg, `ispat`, `Id`";
 
-	if (!$local) {
 
-	     $reportRows = 1;
-	     $file = $psgLabel . 'Report';
-	     $writer = new ExcelHelper($file);
-	     $writer->setTitle("PSG Report");
-
-	}
+	$file = $psgLabel . 'Report';
+	$writer = new ExcelHelper($file);
+	$writer->setTitle("PSG Report");
 
 	 $psgId = 0;
 	 $rows = array();
@@ -651,7 +641,7 @@ order by ng.idPsg, `ispat`, `Id`";
 
 }
 
-function getNoReturn(\PDO $dbh, $local){
+function getNoReturn(\PDO $dbh, bool $local){
 
 
     $query = "SELECT N.idName AS `Id`, N.Name_First AS `First Name`, N.Name_Last AS `Last Name`, NRT.Description AS `No Return Reason` FROM `name` N
@@ -679,15 +669,15 @@ function getNoReturn(\PDO $dbh, $local){
         $firstRow = true;
         $reportRows = 1;
 
+        // build header
+        $hdr = array();
+        $colWidths = array();
+
         foreach($rows as $key=>$row){
 
             if ($firstRow) {
 
                 $firstRow = FALSE;
-
-                // build header
-                $hdr = array();
-                $colWidths = array();
 
                 // Header row
                 $keys = array_keys($row);
@@ -713,7 +703,7 @@ function getNoReturn(\PDO $dbh, $local){
     }
 }
 
-function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
+function getIncidentsReport(\PDO $dbh, bool $local, array $irSelection) {
 
 	$whStatus = array(
 			0=>'',
@@ -787,15 +777,15 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 
 		$firstRow = true;
 
+        // build header
+		$hdr = array();
+		$colWidths = array();
+
 		foreach($nested as $key=>$row){
 
 			if ($firstRow) {
 
 				$firstRow = FALSE;
-
-				// build header
-				$hdr = array();
-				$colWidths = array();
 
 				// Header row
 				$keys = array_keys($row);

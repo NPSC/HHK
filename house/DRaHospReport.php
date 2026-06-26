@@ -48,7 +48,7 @@ $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
 
-function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, ReportFilter $filter, $labels) {
+function getRecords(\PDO $dbh, bool $local, string $type, string $colNameTitle, string $whClause, ReportFilter $filter, Labels $labels) {
 
     if ($type == VolMemberType::Doctor) {
         $Id = 'idDoctor';
@@ -97,7 +97,6 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
     $numRows = $stmt->rowCount();
     $rowCounter = 1;
     $lastId = '';
-//    $hospitals = $filter->getHospitals();
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -180,10 +179,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
     if ($local) {
 
-        $dataTable = $tbl->generateMarkup(array('id'=>'docs'));
-                //CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-        return $dataTable;
-
+        return $tbl->generateMarkup(array('id'=>'docs'));
 
     } else {
         $uS = Session::getInstance();
@@ -194,7 +190,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 }
 
 
-function blanksOnly(\PDO $dbh, $type, $whClause, ReportFilter $filter, $labels) {
+function blanksOnly(\PDO $dbh, string $type, string $whClause, ReportFilter $filter, Labels $labels) {
 
     $class = '';
     $htmlId = '';
