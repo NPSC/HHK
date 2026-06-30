@@ -18,8 +18,8 @@ class DbBitSanitizer implements DbFieldSanitizerInterface {
      * @param int $val
      * @return int
      */
-    public function sanitize($val) {
-        if ($val == '1' || $val === TRUE || ord((string) $val) == 1) {
+    public function sanitize($val): int {
+        if ($val == '1' || $val === TRUE || (strlen((string) $val) > 0 && ord((string) $val) == 1)) {
             $val = 1;
         } else {
             $val = 0;

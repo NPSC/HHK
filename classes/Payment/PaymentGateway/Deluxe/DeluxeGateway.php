@@ -2,6 +2,7 @@
 namespace HHK\Payment\PaymentGateway\Deluxe;
 
 use HHK\Crypto;
+use HHK\Errors\ErrorHandler;
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\House\HouseServices;
@@ -326,21 +327,26 @@ class DeluxeGateway extends AbstractPaymentGateway
             $billingLastName = isset($cardHolder[1]) ? $cardHolder[1] : "";
         };
 
-        //authorize $1 to make sure card is real
-        $authRequest = new AuthorizeRequest($dbh, $this);
-        $response = $authRequest->submit(1.00, $data["token"], $data["expDate"], $data["cardType"], $data["maskedPan"], $data["nameOnCard"], $billingFirstName, $billingLastName);
+        try{
+            //authorize $1 to make sure card is real
+            $authRequest = new AuthorizeRequest($dbh, $this);
+            $response = $authRequest->submit(1.00, $data["token"], $data["expDate"], $data["cardType"], $data["maskedPan"], $data["nameOnCard"], $billingFirstName, $billingLastName);
 
-        $respBody = $authRequest->getResponseBody();
-        $respBody['InvoiceNumber'] = 0;
-        $respBody['cardHolderName'] = $data["nameOnCard"];
-        $respBody["expDate"] = $data["expDate"];
-        $respBody["cardType"] = $data["cardType"];
-        $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
+            $respBody = $authRequest->getResponseBody();
+            $respBody['InvoiceNumber'] = 0;
+            $respBody['cardHolderName'] = $data["nameOnCard"];
+            $respBody["expDate"] = $data["expDate"];
+            $respBody["cardType"] = $data["cardType"];
+            $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
 
-        if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
-            sleep(1); //prevent possible race condition with auth/void
-            $voidRequest = new VoidRequest($dbh, $this);
-            $voidResponse = $voidRequest->submit($respBody["paymentId"]);
+            if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
+                sleep(2); //prevent possible race condition with auth/void
+                $voidRequest = new VoidRequest($dbh, $this);
+                $voidResponse = $voidRequest->submit($respBody["paymentId"]);
+            }
+        }catch(PaymentException $e){
+            ErrorHandler::reportException( $dbh, $e);
+            return ["error" => $e->getMessage()];
         }
 
         $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
