@@ -338,6 +338,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
 
         if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
+            sleep(1); //prevent possible race condition with auth/void
             $voidRequest = new VoidRequest($dbh, $this);
             $voidResponse = $voidRequest->submit($respBody["paymentId"]);
         }
