@@ -1032,7 +1032,6 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
 
-        //Quick exti?
         if ($uS->PaymentGateway == '' || $uS->ccgw == '') {
             return NULL;
         }
@@ -1060,6 +1059,7 @@ class PaymentSvcs {
             unset($uS->imtoken);
         }
 
+        // Vantiv stores invoice ID in paymentIds; Instamed looks it up from DB
         if (isset($uS->paymentIds[$tokenId])) {
             $idInv = $uS->paymentIds[$tokenId];
         }
