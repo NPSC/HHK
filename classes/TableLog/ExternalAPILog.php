@@ -23,12 +23,18 @@ class ExternalAPILog extends AbstractTableLog {
         $requestBody = json_decode($request->getBody(), true);
         $responseBody = json_decode($response->getBody(), true);
 
+        $headers = [];
+        foreach ($request->getHeaders() as $name => $values) {
+            $headers[$name] = implode(', ', $values);
+        }
+
         $logRS = new ExternalAPILogRS();
         $logRS->Log_Type->setNewVal($service);
         $logRS->Sub_Type->setNewVal($type);
         $logRS->requestMethod->setNewVal($request->getMethod());
         $logRS->endpoint->setNewVal($request->getUri());
         $logRS->responseCode->setNewVal($response->getStatusCode());
+        $logRS->requestHeaders->setNewVal(json_encode($headers, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $logRS->request->setNewVal($requestBody ? json_encode($requestBody, JSON_PRETTY_PRINT) : $request->getBody()->__tostring());
         $logRS->response->setNewVal($responseBody ? json_encode($responseBody, JSON_PRETTY_PRINT) : $response->getBody()->__tostring());
         $logRS->username->setNewVal($username);
@@ -73,6 +79,7 @@ class ExternalAPILog extends AbstractTableLog {
                 array( 'db' => 'requestMethod',    'dt' => 'requestMethod'),
                 array( 'db' => 'endpoint', 'dt'=>'endpoint'),
                 array( 'db' => 'responseCode', 'dt'=> 'responseCode'),
+                array( 'db' => 'requestHeaders', 'dt'=>'requestHeaders'),
                 array( 'db' => 'request', 'dt'=>'request'),
                 array( 'db' => 'response', 'dt'=>'response'),
                 array( 'db' => 'username', 'dt'=>'username'),

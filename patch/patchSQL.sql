@@ -89,6 +89,8 @@ insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup
 insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listPrefixes', 'prefixes', 'prefix', 'Name_Prefix');
 insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listRelationTypes', 'relationTypes', 'relationType', 'Patient_Rel_Type');
 
+ALTER TABLE `external_api_log` ADD COLUMN IF NOT EXISTS `requestHeaders` LONGTEXT NOT NULL DEFAULT '' AFTER `responseCode`;
+
 -- add guest transfer web service
 call `new_webpage`(
     'ws_tran.php',

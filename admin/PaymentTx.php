@@ -380,7 +380,8 @@ $txSelector = HTMLSelector::generateMarkup(
                     return '<div class="d-flex">' +
                         (row.request != '' ? '<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">' +
                             '<strong>Request</strong>' +
-                            '<pre style="white-space: pre-wrap;">' + row.request + '</pre>' +
+                            (row.requestHeaders != '' ? '<details><summary>Headers</summary><pre style="white-space: pre-wrap;">' + row.requestHeaders + '</pre></details>' : '') +
+                            '<details open><summary>Body</summary><pre style="white-space: pre-wrap;">' + row.request + '</pre></details>' +
                         '</div>' : '') +
                         '<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">' +
                             '<strong>Response</strong>' +
