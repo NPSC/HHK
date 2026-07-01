@@ -302,6 +302,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $uS = Session::getInstance();
         $billingFirstName = "";
         $billingLastName = "";
+        $result = [];
 
         //log hosted payment form response
         try {
@@ -340,25 +341,28 @@ class DeluxeGateway extends AbstractPaymentGateway
             $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
 
             if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
+                $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
+                if($vr->getStatus() == AbstractCreditPayments::STATUS_APPROVED){
+                    // save token
+                    $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
+
+                    $result["success"] = "New Card saved successfully";
+                    $result["COFmkup"] = HouseServices::guestEditCreditTable($dbh, $data['psg'], $data['id'], 'g');
+                    $result['idx'] = 'g';
+                }else{
+                    $result["warning"] = $vr->response->getResponseMessage();
+                }
+
                 sleep(2); //prevent possible race condition with auth/void
                 $voidRequest = new VoidRequest($dbh, $this);
                 $voidResponse = $voidRequest->submit($respBody["paymentId"]);
             }
         }catch(PaymentException $e){
             ErrorHandler::reportException( $dbh, $e);
-            return ["error" => $e->getMessage()];
+            $result["warning"] = $e->getMessage();
         }
 
-        $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
-        $responseMessage = "";
-        if($vr->getStatus() == AbstractCreditPayments::STATUS_APPROVED){
-            // save token
-            $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
-
-            return ["success" => "New Card saved successfully","COFmkup"=> HouseServices::guestEditCreditTable($dbh, $data['psg'], $data['id'], 'g'), 'idx'=>'g'];
-        }else{
-            return ["warning" => $vr->response->getResponseMessage()];
-        }
+        return $result;
     }
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
