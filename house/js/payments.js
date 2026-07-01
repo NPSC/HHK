@@ -1657,7 +1657,7 @@ function paymentRedirect(data, $xferForm, initialParams) {
                                         }
                             
                                         if (data.warning && data.warning !== '') {
-                                            flagAlertMessage(data.warning, 'warning');
+                                            flagAlertMessage(data.warning, 'error');
                                         }
                             
                                         if (data.receipt && data.receipt !== '') {
