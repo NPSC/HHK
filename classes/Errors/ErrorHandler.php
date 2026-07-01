@@ -3,6 +3,9 @@ namespace HHK\Errors;
 
 use HHK\Notification\Mail\HHKMailer;
 
+/**
+ * Manually send bug report when catching an exception
+ */
 class ErrorHandler {
 
     public static function reportException(\PDO $dbh, \Throwable $e, string $context = ''): void {
