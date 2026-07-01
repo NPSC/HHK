@@ -581,7 +581,7 @@ where
 		) );
 		$rec .= $this->getGuestAddress ( $dbh, $idGuest );
 
-		$rec .= HTMLContainer::generateMarkup ( 'h4', 'Hospital:  ' . $hospital, array (
+		$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('hospital', 'hospital', 'Hospital') . ':  ' . $hospital, array (
 				'style' => 'margin-bottom:10px;margin-top:10px;'
 		) );
 
@@ -767,7 +767,7 @@ where
 		) );
 		$rec .= $this->getGuestAddress ( $dbh, $idGuest );
 
-		$rec .= HTMLContainer::generateMarkup ( 'h4', 'Hospital:  ' . $hospital, array (
+		$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('hospital', 'hospital', 'Hospital') . ':  ' . $hospital, array (
 				'class' => 'my-3'
 		) );
 
