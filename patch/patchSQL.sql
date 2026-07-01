@@ -106,3 +106,7 @@ call `new_webpage`(
     now(),
     'ga'
 );
+
+-- Add hospital label if missing
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
+VALUES ('hospital','Hospital','s','h','','Default: Hospital');
