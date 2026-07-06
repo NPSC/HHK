@@ -20,18 +20,18 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
  */
 class PSG_RS extends AbstractTableRS {
 
-    public $idPsg;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $Title;   // varchar(45) NOT NULL DEFAULT '',
-    public $Status;   // varchar(5) NOT NULL DEFAULT '',
-    public $idPatient;   // int(11) NOT NULL DEFAULT '0',
-    public $Primany_Language;   // int(11) NOT NULL DEFAULT '0',
-    public $Info_Last_Confirmed;  // DATETIME NULL DEFAULT NULL
-    public $Language_Notes;   // text,
-    public $Notes;   // text,
+    public DB_Field $idPsg;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Title;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Status;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $idPatient;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Primany_Language;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Info_Last_Confirmed;  // DATETIME NULL DEFAULT NULL
+    public DB_Field $Language_Notes;   // text,
+    public DB_Field $Notes;   // text,
 
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "psg") {
 

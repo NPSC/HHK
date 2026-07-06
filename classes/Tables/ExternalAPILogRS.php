@@ -15,16 +15,16 @@ use HHK\Tables\Fields\{DB_Field, DbBlobSanitizer, DbStrSanitizer, DbDateSanitize
 
 class ExternalAPILogRS extends AbstractTableRS {
 
-    public $Log_Type;
-    public $Sub_Type;
-    public $requestMethod;
-    public $endpoint;
-    public $responseCode;
-    public $requestHeaders;
-    public $request;
-    public $response;
-    public $username;
-    public $Timestamp;
+    public DB_Field $Log_Type;
+    public DB_Field $Sub_Type;
+    public DB_Field $requestMethod;
+    public DB_Field $endpoint;
+    public DB_Field $responseCode;
+    public DB_Field $requestHeaders;
+    public DB_Field $request;
+    public DB_Field $response;
+    public DB_Field $username;
+    public DB_Field $Timestamp;
 
     function __construct($TableName = "external_api_log") {
 

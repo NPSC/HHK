@@ -15,27 +15,27 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDateSanitizer, DbStrSanitizer
 
 class W_usersRS extends AbstractTableRS {
 
-    public $idName;  // int(11) NOT NULL,
-    public $User_Name;  // varchar(100) NOT NULL DEFAULT '',
-    public $Enc_PW;  // varchar(100) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-    public $idIdp;  // int(11) NOT NULL DEFAULT 0,
-    public $totpSecret; //varchar(45) NOT NULL DEFAULT '',
-    public $emailSecret; //varchar(45) NOT NULL DEFAULT '',
-    public $backupSecret; //varchar(45) NOT NULL DEFAULT '',
-    public $Certificate;  // varchar(145) NOT NULL DEFAULT '',
-    //public $Cookie;  // char(32) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-    //public $Session;  // char(32) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-    public $Ip;  // varchar(15) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-    public $Verify_Address;  // varchar(4) NOT NULL DEFAULT '',
-    public $Last_Login;  // datetime DEFAULT NULL,
-    public $Default_Page;  // varchar(100) NOT NULL DEFAULT '',
-    public $PW_Change_Date;  // DATETIME NULL
-    public $PW_Updated_By;  // VARCHAR(45) NOT NULL DEFAULT ''
-    public $Chg_PW; // bool
-    public $Status;  // varchar(4) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Updated_By;  // varchar(45) DEFAULT '',
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idName;  // int(11) NOT NULL,
+    public DB_Field $User_Name;  // varchar(100) NOT NULL DEFAULT '',
+    public DB_Field $Enc_PW;  // varchar(100) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+    public DB_Field $idIdp;  // int(11) NOT NULL DEFAULT 0,
+    public DB_Field $totpSecret; //varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $emailSecret; //varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $backupSecret; //varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Certificate;  // varchar(145) NOT NULL DEFAULT '',
+    //public DB_Field $Cookie;  // char(32) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+    //public DB_Field $Session;  // char(32) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+    public DB_Field $Ip;  // varchar(15) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+    public DB_Field $Verify_Address;  // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $Last_Login;  // datetime DEFAULT NULL,
+    public DB_Field $Default_Page;  // varchar(100) NOT NULL DEFAULT '',
+    public DB_Field $PW_Change_Date;  // DATETIME NULL
+    public DB_Field $PW_Updated_By;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $Chg_PW; // bool
+    public DB_Field $Status;  // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;  // varchar(45) DEFAULT '',
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "w_users") {
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer());

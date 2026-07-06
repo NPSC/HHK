@@ -15,15 +15,15 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Name_InsuranceRS extends AbstractTableRS {
 
-    public $idName;   // int(11) NOT NULL,
-    public $Insurance_Id;   // int(11) NOT NULL,
-    public $Group_Num; // varchar(100) NOT NULL DEFAULT ''
-    public $Member_Num; // varchar(100) NOT NULL DEFAULT ''
-    public $Primary;   // INT(1) NOT NULL DEFAULT 0,
-    public $Status;  // varchar(4) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+    public DB_Field $idName;   // int(11) NOT NULL,
+    public DB_Field $Insurance_Id;   // int(11) NOT NULL,
+    public DB_Field $Group_Num; // varchar(100) NOT NULL DEFAULT ''
+    public DB_Field $Member_Num; // varchar(100) NOT NULL DEFAULT ''
+    public DB_Field $Primary;   // INT(1) NOT NULL DEFAULT 0,
+    public DB_Field $Status;  // varchar(4) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
 
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 
     function __construct($TableName = "name_insurance") {

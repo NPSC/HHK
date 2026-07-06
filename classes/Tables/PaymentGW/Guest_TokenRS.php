@@ -20,27 +20,27 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
  */
 class Guest_TokenRS extends AbstractTableRS {
 
-    public $idGuest_token;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $idGuest;   // int(11) NOT NULL DEFAULT '0',
-    public $Running_Total;  // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $idRegistration;   // int(11) NOT NULL DEFAULT '0',
-    public $Token;   // varchar(100) NOT NULL DEFAULT '',
-    public $Merchant;  // VARCHAR(45) NOT NULL DEFAULT ''
-    public $Granted_Date;   // datetime DEFAULT NULL,
-    public $LifetimeDays;   // int(11) NOT NULL DEFAULT '0',
-    public $MaskedAccount;   // varchar(18) NOT NULL DEFAULT '',
-    public $Frequency;   // varchar(15) NOT NULL DEFAULT '',
-    public $Status;   // varchar(10) NOT NULL DEFAULT '',
-    public $Response_Code;   // int(11) NOT NULL DEFAULT '1',
-    public $CardHolderName;   // varchar(132) NOT NULL DEFAULT '',
-    public $CardType;   // varchar(45) NOT NULL DEFAULT '',
-    public $CardUsage;   // varchar(20) NOT NULL DEFAULT '',
-    public $ExpDate;   // varchar(14) NOT NULL DEFAULT '',
-    public $OperatorID;   // varchar(10) NOT NULL DEFAULT '',
-    public $Tran_Type;   // varchar(10) NOT NULL DEFAULT '',
-    public $StatusMessage;   // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idGuest_token;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idGuest;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Running_Total;  // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $idRegistration;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Token;   // varchar(100) NOT NULL DEFAULT '',
+    public DB_Field $Merchant;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $Granted_Date;   // datetime DEFAULT NULL,
+    public DB_Field $LifetimeDays;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $MaskedAccount;   // varchar(18) NOT NULL DEFAULT '',
+    public DB_Field $Frequency;   // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Status;   // varchar(10) NOT NULL DEFAULT '',
+    public DB_Field $Response_Code;   // int(11) NOT NULL DEFAULT '1',
+    public DB_Field $CardHolderName;   // varchar(132) NOT NULL DEFAULT '',
+    public DB_Field $CardType;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $CardUsage;   // varchar(20) NOT NULL DEFAULT '',
+    public DB_Field $ExpDate;   // varchar(14) NOT NULL DEFAULT '',
+    public DB_Field $OperatorID;   // varchar(10) NOT NULL DEFAULT '',
+    public DB_Field $Tran_Type;   // varchar(10) NOT NULL DEFAULT '',
+    public DB_Field $StatusMessage;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "guest_token") {
         $this->idGuest_token = new DB_Field("idGuest_token", 0, new DbIntSanitizer(), TRUE, TRUE);

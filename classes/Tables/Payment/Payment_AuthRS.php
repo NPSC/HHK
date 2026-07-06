@@ -15,38 +15,38 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDecimalSanitizer, DbStrSaniti
 
 class Payment_AuthRS extends AbstractTableRS {
     
-    public $idPayment_auth;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $idPayment;  // int(11) NOT NULL,
-    public $Approved_Amount;   // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $idTrans;   // int(11) NOT NULL DEFAULT '0',
-    public $Processor;   // varchar(45) NOT NULL DEFAULT '',
-    public $Merchant;  // VARCHAR(45) NOT NULL DEFAULT ''
-    public $Approval_Code;   // varchar(20) NOT NULL DEFAULT '',
-    public $Status_Message;  // VARCHAR(45) NOT NULL DEFAULT ''
-    public $AVS;   // varchar(20) NOT NULL DEFAULT '',
-    public $CVV;   // varchar(45) NOT NULL DEFAULT '',
-    public $Signature_Required;  // INT(4) NOT NULL DEFAULT 0 AFTER `ProcessData`;
-    public $PartialPayment;
-    public $Invoice_Number;   // varchar(45) NOT NULL DEFAULT '',
-    public $Acct_Number;  // varchar(25) NOT NULL DEFAULT '',
-    public $Card_Type;  // varchar(10) NOT NULL DEFAULT '',
-    public $Cardholder_Name;  //`Cardholder_Name` VARCHAR(45) NOT NULL DEFAULT ''
-    public $Customer_Id;   // varchar(45) NOT NULL DEFAULT '',
-    public $Response_Message;  // varchar(200) NOT NULL DEFAULT '',
-    public $Response_Code;  // VARCHAR(45) NOT NULL DEFAULT ''
-    public $Reference_Num;   // varchar(45) NOT NULL DEFAULT '',
-    public $AcqRefData;   // varchar(200) NOT NULL DEFAULT '',
-    public $ProcessData;   // varchar(200) NOT NULL DEFAULT '',
-    public $Serialized_Details;   // varchar(1000) NOT NULL DEFAULT '',
-    public $Status_Code;   // varchar(5) NOT NULL DEFAULT '',
-    public $EMVApplicationIdentifier;  // VARCHAR(45) NULL AFTER `EMVAuthoriationMode`,
-    public $EMVTerminalVerificationResults;  // VARCHAR(45) NULL AFTER `EMVApplicationIdentifier`,
-    public $EMVIssuerApplicationData;  // VARCHAR(45) NULL AFTER `EMVTerminalVerificationResults`,
-    public $EMVTransactionStatusInformation;  // VARCHAR(45) NULL AFTER `EMVIssuerApplicationData`,
-    public $EMVApplicationResponseCode;  // VARCHAR(45) NULL AFTER `EMVTransactionStatusInformation`;
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idPayment_auth;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idPayment;  // int(11) NOT NULL,
+    public DB_Field $Approved_Amount;   // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $idTrans;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Processor;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Merchant;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $Approval_Code;   // varchar(20) NOT NULL DEFAULT '',
+    public DB_Field $Status_Message;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $AVS;   // varchar(20) NOT NULL DEFAULT '',
+    public DB_Field $CVV;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Signature_Required;  // INT(4) NOT NULL DEFAULT 0 AFTER `ProcessData`;
+    public DB_Field $PartialPayment;
+    public DB_Field $Invoice_Number;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Acct_Number;  // varchar(25) NOT NULL DEFAULT '',
+    public DB_Field $Card_Type;  // varchar(10) NOT NULL DEFAULT '',
+    public DB_Field $Cardholder_Name;  //`Cardholder_Name` VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $Customer_Id;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Response_Message;  // varchar(200) NOT NULL DEFAULT '',
+    public DB_Field $Response_Code;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $Reference_Num;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $AcqRefData;   // varchar(200) NOT NULL DEFAULT '',
+    public DB_Field $ProcessData;   // varchar(200) NOT NULL DEFAULT '',
+    public DB_Field $Serialized_Details;   // varchar(1000) NOT NULL DEFAULT '',
+    public DB_Field $Status_Code;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $EMVApplicationIdentifier;  // VARCHAR(45) NULL AFTER `EMVAuthoriationMode`,
+    public DB_Field $EMVTerminalVerificationResults;  // VARCHAR(45) NULL AFTER `EMVApplicationIdentifier`,
+    public DB_Field $EMVIssuerApplicationData;  // VARCHAR(45) NULL AFTER `EMVTerminalVerificationResults`,
+    public DB_Field $EMVTransactionStatusInformation;  // VARCHAR(45) NULL AFTER `EMVIssuerApplicationData`,
+    public DB_Field $EMVApplicationResponseCode;  // VARCHAR(45) NULL AFTER `EMVTransactionStatusInformation`;
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = "payment_auth") {
         $this->idPayment_auth = new DB_Field("idPayment_auth", 0, new DbIntSanitizer(), TRUE, TRUE);

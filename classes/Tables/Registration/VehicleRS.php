@@ -20,16 +20,16 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
  */
 class VehicleRS extends AbstractTableRS {
 
-    public $idVehicle;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $idRegistration;   // int(11) NOT NULL,
-    public $idName;  // INT(11) NOT NULL DEFAULT 0 COMMENT ''
-    public $Make;   // varchar(45) NOT NULL DEFAULT '',
-    public $Model;   // varchar(45) NOT NULL DEFAULT '',
-    public $Color;   // varchar(45) NOT NULL DEFAULT '',
-    public $State_Reg;   // varchar(2) NOT NULL DEFAULT '',
-    public $License_Number;   // varchar(15) NOT NULL DEFAULT '',
-    public $No_Vehicle;
-    public $Note;  // VARCHAR(445) NOT NULL DEFAULT '' COMMENT ''
+    public DB_Field $idVehicle;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idRegistration;   // int(11) NOT NULL,
+    public DB_Field $idName;  // INT(11) NOT NULL DEFAULT 0 COMMENT ''
+    public DB_Field $Make;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Model;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Color;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $State_Reg;   // varchar(2) NOT NULL DEFAULT '',
+    public DB_Field $License_Number;   // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $No_Vehicle;
+    public DB_Field $Note;  // VARCHAR(445) NOT NULL DEFAULT '' COMMENT ''
 
     function __construct($TableName = 'vehicle') {
 

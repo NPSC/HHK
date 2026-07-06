@@ -15,41 +15,41 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
 
 class RoomRS extends AbstractTableRS {
 
-    public $idRoom;  // int(11) NOT NULL AUTO_INCREMENT,
-    public $idHouse;   // int(11) NOT NULL DEFAULT '0',
-    public $Item_Id;   // int(11) NOT NULL DEFAULT '0',
-    public $Title;   // varchar(45) NOT NULL DEFAULT '',
-    public $Description;   // text,
-    public $Type;   // varchar(15) NOT NULL DEFAULT '',
-    public $Category;   // varchar(5) NOT NULL DEFAULT '',
-    public $Report_Category;   // varchar(5) NOT NULL DEFAULT '',
-    public $State;   // varchar(15) NOT NULL DEFAULT '',
-    public $Availability;   // varchar(15) Not Null Default '',
-    public $Max_Occupants;  // int(11) NOT NULL DEFAULT '0',
-    public $Min_Occupants;  // int(11) NOT NULL DEFAULT '0',
-    public $Beds_King;  // int(11) NOT NULL DEFAULT '0',
-    public $Beds_Queen;  // int(11) NOT NULL DEFAULT '0',
-    public $Beds_Full;  // int(11) NOT NULL DEFAULT '0',
-    public $Beds_Twin;  // int(11) NOT NULL DEFAULT '0',
-    public $Beds_Utility;  // INT NOT NULL DEFAULT 0
-    public $Phone;  // varchar(15) NOT NULL DEFAULT '',
-    public $Floor;  // varchar(15) NOT NULL DEFAULT '',
-    public $Util_Priority;   // varchar(5) NOT NULL DEFAULT '',
-    public $idLocation;   // int(11) NOT NULL DEFAULT '0',
-    public $Owner_Id;   // int(11) NOT NULL DEFAULT '0',
-    public $Last_Cleaned;  // datetime DEFAULT NULL,
-    public $Last_Deep_Clean;  // datetime DEFAULT NULL,
-    public $Default_Rate_Category;  // VARCHAR(5) NOT NULL DEFAULT ''
-    public $Rate_Code;   // varchar(5) NOT NULL DEFAULT '',     Static Rate lookup code to gen_lookups
-    public $Visit_Fee_Code;   // varchar(5) NOT NULL DEFAULT '',
-    public $Key_Deposit;   // decimal(15,2) NOT NULL DEFAULT '0.00',
-    public $Key_Deposit_Code;   // varchar(5) NOT NULL DEFAULT '',
-    public $Cleaning_Cycle_Code;  // VARCHAR(5) NOT NULL DEFAULT 'a'
-    public $Notes;   // TEXT NULL DEFAULT NULL ,
-    public $Status;   // VARCHAR(5) NOT NULL DEFAULT '' ,
-    public $Updated_By;   // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Last_Updated;   // DATETIME NULL DEFAULT NULL ,
-    public $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
+    public DB_Field $idRoom;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idHouse;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Item_Id;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Title;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Description;   // text,
+    public DB_Field $Type;   // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Category;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Report_Category;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $State;   // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Availability;   // varchar(15) Not Null Default '',
+    public DB_Field $Max_Occupants;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Min_Occupants;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Beds_King;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Beds_Queen;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Beds_Full;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Beds_Twin;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Beds_Utility;  // INT NOT NULL DEFAULT 0
+    public DB_Field $Phone;  // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Floor;  // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Util_Priority;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $idLocation;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Owner_Id;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Last_Cleaned;  // datetime DEFAULT NULL,
+    public DB_Field $Last_Deep_Clean;  // datetime DEFAULT NULL,
+    public DB_Field $Default_Rate_Category;  // VARCHAR(5) NOT NULL DEFAULT ''
+    public DB_Field $Rate_Code;   // varchar(5) NOT NULL DEFAULT '',     Static Rate lookup code to gen_lookups
+    public DB_Field $Visit_Fee_Code;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Key_Deposit;   // decimal(15,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $Key_Deposit_Code;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Cleaning_Cycle_Code;  // VARCHAR(5) NOT NULL DEFAULT 'a'
+    public DB_Field $Notes;   // TEXT NULL DEFAULT NULL ,
+    public DB_Field $Status;   // VARCHAR(5) NOT NULL DEFAULT '' ,
+    public DB_Field $Updated_By;   // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Last_Updated;   // DATETIME NULL DEFAULT NULL ,
+    public DB_Field $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
 
     function __construct($TableName = "room") {
 

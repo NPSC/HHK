@@ -15,9 +15,9 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
 
 class InvoiceLineTypeRS extends AbstractTableRS {
     
-    public $id;  // INTEGER NOT NULL,
-    public $Description;  // VARCHAR(50) NOT NULL,
-    public $Order_Position;  // INTEGER NOT NULL,
+    public DB_Field $id;  // INTEGER NOT NULL,
+    public DB_Field $Description;  // VARCHAR(50) NOT NULL,
+    public DB_Field $Order_Position;  // INTEGER NOT NULL,
     
     function __construct($TableName = 'invoice_line_type') {
         $this->id = new DB_Field('id', 0, new DbIntSanitizer(), TRUE, TRUE);

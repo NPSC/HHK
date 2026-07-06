@@ -15,20 +15,20 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class NamePhoneRS extends AbstractTableRS {
     
-    public $idName;  // int(11) NOT NULL,
-    public $Phone_Num;  // varchar(45) NOT NULL DEFAULT '',
-    public $Phone_Extension;  // varchar(15) NOT NULL DEFAULT '',
-    public $Phone_Code;  // varchar(5) NOT NULL,
-    public $Phone_Search;  // varchar(25) NOT NULL DEFAULT '',
-    public $is_Mobile;  // bit(1) NOT NULL DEFAULT b'0',
-    public $SMS_status;  // varchar(10) NOT NULL DEFAULT '',
-    public $is_Toll_Free;  // bit(1) NOT NULL DEFAULT b'0',
-    public $is_International;  // bit(1) NOT NULL DEFAULT b'0',
-    public $Bad_Number;  // varchar(15) NOT NULL DEFAULT '',
-    public $Status;  // varchar(15) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Updated_By;  // varchar(45) DEFAULT '',
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idName;  // int(11) NOT NULL,
+    public DB_Field $Phone_Num;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Phone_Extension;  // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Phone_Code;  // varchar(5) NOT NULL,
+    public DB_Field $Phone_Search;  // varchar(25) NOT NULL DEFAULT '',
+    public DB_Field $is_Mobile;  // bit(1) NOT NULL DEFAULT b'0',
+    public DB_Field $SMS_status;  // varchar(10) NOT NULL DEFAULT '',
+    public DB_Field $is_Toll_Free;  // bit(1) NOT NULL DEFAULT b'0',
+    public DB_Field $is_International;  // bit(1) NOT NULL DEFAULT b'0',
+    public DB_Field $Bad_Number;  // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Status;  // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;  // varchar(45) DEFAULT '',
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     
     function __construct($TableName = "name_phone") {

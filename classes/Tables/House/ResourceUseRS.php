@@ -15,62 +15,20 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
 
 class ResourceUseRS extends AbstractTableRS {
 
-    /**
-     * @var DB_Field
-     */
-    public $idResource_use;  // int(11) NOT NULL AUTO_INCREMENT,
-    /**
-     * @var DB_Field
-     */
-    public $idResource;  // int(11) NOT NULL DEFAULT '0',
-    /**
-     * @var DB_Field
-     */
-    public $idRoom;  // int(11) NOT NULL DEFAULT '0',
-    /**
-     * @var DB_Field
-     */
-    public $Start_Date;  // datetime DEFAULT NULL,
-    /**
-     * @var DB_Field
-     */
-    public $End_Date;  // datetime DEFAULT NULL,
-    /**
-     * @var DB_Field
-     */
-    public $Status;  // varchar(5) NOT NULL DEFAULT '',
-    /**
-     * @var DB_Field
-     */
-    public $OOS_Code;  // varchar(5) NOT NULL DEFAULT '',
-    /**
-     * @var DB_Field
-     */
-    public $Unavail_Code;  // varchar(5) NOT NULL DEFAULT '',
-    /**
-     * @var DB_Field
-     */
-    public $Room_State;  // varchar(5) NOT NULL DEFAULT '',
-    /**
-     * @var DB_Field
-     */
-    public $Room_Availability;  // varchar(5) NOT NULL DEFAULT '',
-    /**
-     * @var DB_Field
-     */
-    public $Notes;  // varchar(245) NOT NULL DEFAULT '',
-    /**
-     * @var DB_Field
-     */
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    /**
-     * @var DB_Field
-     */
-    public $Last_Updated;    // datetime DEFAULT NULL,
-    /**
-     * @var DB_Field
-     */
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+    public DB_Field $idResource_use;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idResource;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idRoom;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Start_Date;  // datetime DEFAULT NULL,
+    public DB_Field $End_Date;  // datetime DEFAULT NULL,
+    public DB_Field $Status;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $OOS_Code;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Unavail_Code;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Room_State;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Room_Availability;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Notes;  // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;    // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
 
     function __construct($TableName = "resource_use") {
         $this->idResource_use = new DB_Field("idResource_use", 0, new DbIntSanitizer());

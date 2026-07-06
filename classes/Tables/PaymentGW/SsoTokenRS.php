@@ -20,17 +20,17 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
  */
 class SsoTokenRS extends AbstractTableRS {
     
-    public $Token;  // varchar(136) NOT NULL DEFAULT '',
-    public $idPaymentAuth;  // INT NOT NULL DEFAULT 0
-    public $idName;  // int(11) NOT NULL,
-    public $CardHolderName;  // VARCHAR(45) NOT NULL DEFAULT ''
-    public $idGroup;  // int(11) NOT NULL,
-    public $InvoiceNumber;  // varchar(36) NOT NULL DEFAULT '',
-    public $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
-    public $State;  // varchar(5) NOT NULL DEFAULT '',
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $Token;  // varchar(136) NOT NULL DEFAULT '',
+    public DB_Field $idPaymentAuth;  // INT NOT NULL DEFAULT 0
+    public DB_Field $idName;  // int(11) NOT NULL,
+    public DB_Field $CardHolderName;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $idGroup;  // int(11) NOT NULL,
+    public DB_Field $InvoiceNumber;  // varchar(36) NOT NULL DEFAULT '',
+    public DB_Field $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
+    public DB_Field $State;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = 'ssotoken') {
         $this->Token = new DB_Field('Token', '', new DbStrSanitizer(136), TRUE, TRUE);
