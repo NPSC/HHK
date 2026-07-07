@@ -1,7 +1,6 @@
 <?php
 use GO\Scheduler;
 use HHK\Common;
-use HHK\Cron\EmailCheckedoutJob;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\JobFactory;
 use HHK\Cron\JobInterface;

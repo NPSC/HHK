@@ -2,7 +2,7 @@
 
 use HHK\Common;
 use HHK\HTMLControls\HTMLSelector;
-use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
+use HHK\sec\{Session, WebInit, SecurityComponent};
 use HHK\sec\Labels;
 
 /**

@@ -156,7 +156,7 @@ class SF_Connector {
 
             $pool = new Pool($this->client, $batchRequests, [
                 'concurrency' => self::CONCURRENT_REQUESTS,
-                'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){ //if the response is success
+                'fulfilled' =>function (ResponseInterface $response, $batchId) use (&$batchResults){ //if the response is success
                     $batchResults[$batchId] = ['success'=>json_decode($response->getBody(), true)];
                 },
                 'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults) { //if the response is not success

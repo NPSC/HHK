@@ -43,7 +43,7 @@ class LogMiddleware
             }
         }catch (\Exception $e) {
 
-            if(!$response instanceof Response) {
+            if(!isset($response) || !$response instanceof Response) {
                 $response = $handler->handle($request);
             }
         }

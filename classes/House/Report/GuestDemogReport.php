@@ -60,15 +60,12 @@ class GuestDemogReport {
 
         $accum = array();
         $periods = array();
-//        $totalPSGs = array();
-
-//        $firstPeriod = $thisPeriod = $stDT->format($periodFormat);
         $badZipCodes = array();
 
         $now = new \DateTime();
         $now->setTime(0, 0, 0);
 
-        // Set up user selected demographics categoryeis.
+        // Set up user selected demographics categories.
         $demoCategorys = array();
 
         $fields = '';
@@ -169,12 +166,14 @@ class GuestDemogReport {
 
         $th .= HTMLTable::makeTh("Total");
 
+        $query = "SELECT ";
+
         if ($whichGuests == 'new') {
-            $query = "SELECT s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
+            $query = "s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
         } else if ($whichGuests == 'allStarted'){
-            $query = "SELECT s.idName, DATE(s.Span_Start_Date) as `minDate`,";
+            $query = "s.idName, DATE(s.Span_Start_Date) as `minDate`,";
         }else if ($whichGuests == 'allStayed'){
-            $query = "SELECT DISTINCT s.idName,";
+            $query = "DISTINCT s.idName,";
         }
 
         $query .= "na.idName_Address,	

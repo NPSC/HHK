@@ -48,149 +48,151 @@ $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
 
-function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, ReportFilter $filter, $labels) {
+function getRecords(\PDO $dbh, bool $local, string $type, string $colNameTitle, string $whClause, ReportFilter $filter, Labels $labels) {
 
     if ($type == VolMemberType::Doctor) {
-        $Id = 'idDoctor';
+        $id = 'idDoctor';
     } else if ($type == VolMemberType::ReferralAgent) {
-        $Id = 'idReferralAgent';
+        $id = 'idReferralAgent';
     }
 
-    $query = "select hs.$Id as `Id`, concat(n.Name_Last, ', ', n.Name_First) as `FirstLast`, ifnull(hs.idHospital, 'Sub Total') as `Hospital`, count(hs.idHospital_stay) as `Patients`
-from hospital_stay hs left join `name` n  ON hs.$Id = n.idName
-left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
-where rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
- . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."')  $whClause
-group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
+    if(isset($id)) {
 
-        $stmt = $dbh->query($query);
+        $query = "select hs.$id as `Id`, concat(n.Name_Last, ', ', n.Name_First) as `FirstLast`, ifnull(hs.idHospital, 'Sub Total') as `Hospital`, count(hs.idHospital_stay) as `Patients`
+    from hospital_stay hs left join `name` n  ON hs.$id = n.idName
+    left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
+    where rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
+    . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."')  $whClause
+    group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
-    if ($local) {
-
-        $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh($colNameTitle) . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital')) . HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient').'s'));
-
-    } else {
-
-        $fileName = 'DoctorReport';
-        $sheetName = 'Sheet1';
-
-        // build header
-        $hdr = array();
-        $colWidths = array();
-
-        // Header row
-        $colWidths = array(10, 20, 20, 15);
-        $hdr['Id'] = "string";
-        $hdr[$colNameTitle] = "string";
-        $hdr[$labels->getString('hospital', 'hospital', 'Hospital')] = "string";
-        $hdr[$labels->getString('MemberType', 'patient', 'Patient')] = "integer";
-
-        $writer = new ExcelHelper($fileName);
-
-        $hdrStyle = $writer->getHdrStyle($colWidths);
-
-        $writer->writeSheetHeader($sheetName, $hdr, $hdrStyle);
-
-    }
-
-    $numRows = $stmt->rowCount();
-    $rowCounter = 1;
-    $lastId = '';
-//    $hospitals = $filter->getHospitals();
-
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
+            $stmt = $dbh->query($query);
 
         if ($local) {
 
-            $id = '';
-            $doc = '';
-
-            if ($rowCounter < $numRows) {
-
-                if ($r['Id'] > 0 && $lastId != $r['Id']) {
-                    $id = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'../admin/NameEdit.php?id=' . $r['Id']));
-                    $doc = $r['FirstLast'];
-                } else if ($rowCounter == 1) {
-                    $doc = 'unassigned';
-                }
-
-                $lastId = $r['Id'];
-            }
-
-            $hosp = '';
-            $harray = array();
-            if (isset($filter->getHospitals()[$r['Hospital']])) {
-                $hosp = $filter->getHospitals()[$r['Hospital']][1];
-            } else if ($r['Hospital'] == 'Sub Total') {
-                $harray['style'] = 'text-align:right;';
-                if ($rowCounter == $numRows) {
-                    $hosp = 'Total';
-                } else {
-                    $hosp = $r['Hospital'];
-                }
-            }
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd($id)
-                    .HTMLTable::makeTd($doc)
-                    .HTMLTable::makeTd($hosp, $harray)
-                    .HTMLTable::makeTd($r['Patients'], array('style'=>'text-align:center;')));
+            $tbl = new HTMLTable();
+            $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh($colNameTitle) . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital')) . HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient').'s'));
 
         } else {
 
-            $id = '';
-            $doc = '';
+            $fileName = 'DoctorReport';
+            $sheetName = 'Sheet1';
 
-            if ($rowCounter < $numRows) {
+            // build header
+            $hdr = array();
+            $colWidths = array();
 
-                if ($r['Id'] > 0 && $lastId != $r['Id']) {
-                    $id = $r['Id'];
-                    $doc = $r['FirstLast'];
-                } else if ($rowCounter == 1) {
-                    $doc = 'unassigned';
-                }
+            // Header row
+            $colWidths = array(10, 20, 20, 15);
+            $hdr['Id'] = "string";
+            $hdr[$colNameTitle] = "string";
+            $hdr[$labels->getString('hospital', 'hospital', 'Hospital')] = "string";
+            $hdr[$labels->getString('MemberType', 'patient', 'Patient')] = "integer";
 
-                $lastId = $r['Id'];
-            }
+            $writer = new ExcelHelper($fileName);
 
-            $hosp = '';
+            $hdrStyle = $writer->getHdrStyle($colWidths);
 
-            if (isset($filter->getHospitals()[$r['Hospital']])) {
+            $writer->writeSheetHeader($sheetName, $hdr, $hdrStyle);
 
-                $hosp = $filter->getHospitals()[$r['Hospital']][1];
-
-            } else if ($r['Hospital'] == 'Sub Total') {
-
-                if ($rowCounter == $numRows) {
-                    $hosp = 'Total';
-                } else {
-                    $hosp = $r['Hospital'];
-                }
-            }
-
-            $row = array($id, $doc, $hosp, $r['Patients']);
-            $row = $writer->convertStrings($hdr, $row);
-            $writer->writeSheetRow($sheetName, $row);
         }
 
-        $rowCounter++;
+        $numRows = $stmt->rowCount();
+        $rowCounter = 1;
+        $lastId = '';
+    //    $hospitals = $filter->getHospitals();
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+
+            if ($local) {
+
+                $id = '';
+                $doc = '';
+
+                if ($rowCounter < $numRows) {
+
+                    if ($r['Id'] > 0 && $lastId != $r['Id']) {
+                        $id = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'../admin/NameEdit.php?id=' . $r['Id']));
+                        $doc = $r['FirstLast'];
+                    } else if ($rowCounter == 1) {
+                        $doc = 'unassigned';
+                    }
+
+                    $lastId = $r['Id'];
+                }
+
+                $hosp = '';
+                $harray = array();
+                if (isset($filter->getHospitals()[$r['Hospital']])) {
+                    $hosp = $filter->getHospitals()[$r['Hospital']][1];
+                } else if ($r['Hospital'] == 'Sub Total') {
+                    $harray['style'] = 'text-align:right;';
+                    if ($rowCounter == $numRows) {
+                        $hosp = 'Total';
+                    } else {
+                        $hosp = $r['Hospital'];
+                    }
+                }
+
+                $tbl->addBodyTr(
+                        HTMLTable::makeTd($id)
+                        .HTMLTable::makeTd($doc)
+                        .HTMLTable::makeTd($hosp, $harray)
+                        .HTMLTable::makeTd($r['Patients'], array('style'=>'text-align:center;')));
+
+            } else {
+
+                $id = '';
+                $doc = '';
+
+                if ($rowCounter < $numRows) {
+
+                    if ($r['Id'] > 0 && $lastId != $r['Id']) {
+                        $id = $r['Id'];
+                        $doc = $r['FirstLast'];
+                    } else if ($rowCounter == 1) {
+                        $doc = 'unassigned';
+                    }
+
+                    $lastId = $r['Id'];
+                }
+
+                $hosp = '';
+
+                if (isset($filter->getHospitals()[$r['Hospital']])) {
+
+                    $hosp = $filter->getHospitals()[$r['Hospital']][1];
+
+                } else if ($r['Hospital'] == 'Sub Total') {
+
+                    if ($rowCounter == $numRows) {
+                        $hosp = 'Total';
+                    } else {
+                        $hosp = $r['Hospital'];
+                    }
+                }
+
+                $row = array($id, $doc, $hosp, $r['Patients']);
+                $row = $writer->convertStrings($hdr, $row);
+                $writer->writeSheetRow($sheetName, $row);
+            }
+
+            $rowCounter++;
+        }
+
+        if ($local) {
+
+            $dataTable = $tbl->generateMarkup(array('id'=>'docs'));
+                    //CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
+            return $dataTable;
+
+
+        } else {
+            $uS = Session::getInstance();
+            HouseLog::logDownload($dbh, 'Doctor/Hospital Report', "Excel", "Doctor/Hospital Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
+            $writer->download();
+        }
     }
-
-    if ($local) {
-
-        $dataTable = $tbl->generateMarkup(array('id'=>'docs'));
-                //CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-        return $dataTable;
-
-
-    } else {
-        $uS = Session::getInstance();
-        HouseLog::logDownload($dbh, 'Doctor/Hospital Report', "Excel", "Doctor/Hospital Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
-        $writer->download();
-    }
-
 }
 
 

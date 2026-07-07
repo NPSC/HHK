@@ -9,10 +9,10 @@ use HHK\Tables\WebSec\{W_groupsRS, W_auth_ipRS};
 /**
  * AuthGroupEdit.php
  *
-  -- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
-  -- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
-  -- @license   MIT
-  -- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 

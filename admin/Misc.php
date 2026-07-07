@@ -4,10 +4,7 @@ use HHK\SysConst\VisitStatus;
 use HHK\Update\SiteLog;
 use HHK\AlertControl\AlertMessage;
 use HHK\AuditLog\NameLog;
-use HHK\sec\{
-    Session,
-    WebInit
-};
+use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
