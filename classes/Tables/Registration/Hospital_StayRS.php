@@ -15,29 +15,29 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Hospital_StayRS extends AbstractTableRS {
     
-    public $idHospital_stay;   // INT NOT NULL ,
-    public $idPatient;   // INT NOT NULL DEFAULT 0 ,
-    public $idPsg;   // INT NOT NULL DEFAULT 0 ,
-    public $idHospital;   // INT NOT NULL DEFAULT 0 ,
-    public $idAssociation;   // int(11) NOT NULL DEFAULT '0',
-    public $idReferralAgent;   // int(11) NOT NULL DEFAULT '0',
-    public $Status;   // varchar(5) NOT NULL DEFAULT '',
-    public $Diagnosis;   // varchar(245) NOT NULL DEFAULT '',
-    public $Diagnosis2;   // varchar(245) NOT NULL DEFAULT '',
-    public $Location;  //`Location` VARCHAR(5) NOT NULL DEFAULT ''
-    public $idDoctor;  // int(11) NOT NULL DEFAULT '0',
-    public $idPcDoctor;  // int(11) NOT NULL DEFAULT '0',
-    public $Doctor;   // varchar(145) NOT NULL DEFAULT '',
-    public $Room;   // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Private_Ins_Code;  // VARCHAR(5) NOT NULL DEFAULT ''
-    public $MRN;   // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Room_Phone;   // VARCHAR(15) NOT NULL DEFAULT '' ,
-    public $Arrival_Date;   // DATETIME NULL ,
-    public $Expected_Departure;   // DATETIME NULL ,
-    public $Actual_Departure;   // DATETIME NULL ,
-    public $Updated_By;   //
-    public $Last_Updated;   // DATETIME NULL ,
-    public $Timestamp;   // TIMESTAMP NOT NULL DEFAULT now() ,
+    public DB_Field $idHospital_stay;   // INT NOT NULL ,
+    public DB_Field $idPatient;   // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idPsg;   // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idHospital;   // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idAssociation;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idReferralAgent;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Status;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Diagnosis;   // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $Diagnosis2;   // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $Location;  //`Location` VARCHAR(5) NOT NULL DEFAULT ''
+    public DB_Field $idDoctor;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idPcDoctor;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Doctor;   // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Room;   // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $MRN;   // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Private_Ins_Code;  // VARCHAR(5) NOT NULL DEFAULT ''
+    public DB_Field $Room_Phone;   // VARCHAR(15) NOT NULL DEFAULT '' ,
+    public DB_Field $Arrival_Date;   // DATETIME NULL ,
+    public DB_Field $Expected_Departure;   // DATETIME NULL ,
+    public DB_Field $Actual_Departure;   // DATETIME NULL ,
+    public DB_Field $Updated_By;   //
+    public DB_Field $Last_Updated;   // DATETIME NULL ,
+    public DB_Field $Timestamp;   // TIMESTAMP NOT NULL DEFAULT now() ,
     
     function __construct($TableName = "hospital_stay") {
         

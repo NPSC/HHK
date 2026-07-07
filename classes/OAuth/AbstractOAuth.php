@@ -1,9 +1,10 @@
 <?php
 namespace HHK\OAuth;
 
-use GuzzleHttp\{Client, RequestOptions};
+use GuzzleHttp\{Client, Psr7\Request, RequestOptions};
 use HHK\Exception\RuntimeException;
 use GuzzleHttp\Exception\BadResponseException;
+use HHK\Integrations\GuzzleAPILogger;
 
 /**
  * Handles the OAuth login and token request process
@@ -13,11 +14,13 @@ use GuzzleHttp\Exception\BadResponseException;
  */
 abstract class AbstractOAuth implements OAuthInterface {
 
+    protected \PDO $dbh;
     protected Credentials $credentials;
     protected $accessToken;
     protected $instanceURL;
 
-    public function __construct(Credentials $credentials){
+    public function __construct(\PDO $dbh, Credentials $credentials){
+        $this->dbh = $dbh;
         $this->credentials = $credentials;
     }
 
@@ -35,10 +38,10 @@ abstract class AbstractOAuth implements OAuthInterface {
      * Send a GuzzleHttp request to the request an OAuth access token
      * 
      * @param array $requestOptions
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      */
     protected function sendTokenRequest(array $requestOptions){
-        $client = new Client(['base_uri' => $this->credentials->getBaseURI()]);
+        $client = new Client(['base_uri' => $this->credentials->getBaseURI(), 'handler' => GuzzleAPILogger::createStack($this->dbh, $this->getLogServiceName())]);
         try {
             $response = $client->post($this->credentials->getTokenURI(), $requestOptions);
 
@@ -53,6 +56,7 @@ abstract class AbstractOAuth implements OAuthInterface {
                 throw new RuntimeException('Request Token Error: ' . $errorResponse->getBody());
             }
         }
+
     }
 
     /**
@@ -65,5 +69,9 @@ abstract class AbstractOAuth implements OAuthInterface {
     }
     public function getInstanceURL(){
         return $this->instanceURL;
+    }
+
+    public function getLogServiceName(): string{
+        return "";
     }
 }

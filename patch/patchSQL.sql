@@ -105,3 +105,58 @@ INSERT IGNORE INTO `gen_lookups` (
 		'',
 		0
 	);
+UPDATE gen_lookups
+SET `Substitute` = 'Whole_Number',
+`Order` = 1
+WHERE `Table_Name` = 'Cm_Custom_Fields'
+  AND `Code` = 'HHK_ID';
+
+UPDATE gen_lookups
+SET `Substitute` = 'Date',
+`Order` = 4
+WHERE `Table_Name` = 'Cm_Custom_Fields'
+  AND `Code` = 'Deceased_Date';
+
+UPDATE gen_lookups
+SET `Substitute` = 'Text',
+`Order` = 3
+WHERE `Table_Name` = 'Cm_Custom_Fields'
+  AND `Code` = 'Diagnosis';
+
+UPDATE gen_lookups
+SET `Substitute` = 'Text',
+`Order` = 2
+WHERE `Table_Name` = 'Cm_Custom_Fields'
+  AND `Code` = 'Hospital';
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`,`Code`, `Description`,`Substitute`,`Order`) values
+	('Cm_Custom_Fields', 'First_Visit','', 'Date', 5),
+  ('Cm_Custom_Fields', 'Last_Visit','', 'Date', 6),
+	('Cm_Custom_Fields', 'Nite_Counter', '', 'Text', 7),
+  ('Cm_Custom_Fields', 'PSG_Number', '', 'Text', 8);
+
+insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listGenders', 'genders', 'gender', 'Gender');
+insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listPrefixes', 'prefixes', 'prefix', 'Name_Prefix');
+insert ignore into `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) values ('account/listRelationTypes', 'relationTypes', 'relationType', 'Patient_Rel_Type');
+
+ALTER TABLE `external_api_log` ADD COLUMN IF NOT EXISTS `requestHeaders` LONGTEXT NOT NULL DEFAULT '' AFTER `responseCode`;
+
+-- add guest transfer web service
+call `new_webpage`(
+    'ws_tran.php',
+    31,
+    '',
+    0,
+    'h',
+    '',
+    '',
+    's',
+    '',
+    '',
+    now(),
+    'ga'
+);
+
+-- Add hospital label if missing
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
+VALUES ('hospital','Hospital','s','h','','Default: Hospital');

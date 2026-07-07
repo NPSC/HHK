@@ -19,20 +19,20 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
  */
 class CmsGatewayRS extends AbstractTableRS {
 
-    public $idcms_gateway;  // int(11) NOT NULL AUTO_INCREMENT,
-    public $Gateway_Name;  // VARCHAR(45) NOT NULL DEFAULT ''
-    public $username;  // varchar(45) NOT NULL,
-    public $clientId;  // varchar(45) NOT NULL DEFAULT '',
-    public $clientSecret;  // varchar(245) NOT NULL DEFAULT '',
-    public $securityToken;  // varchar(145) NOT NULL DEFAULT '',
-    public $password;  // varchar(145) NOT NULL DEFAULT '',
-    public $endpointUrl;  // varchar(145) NOT NULL DEFAULT '',
-    public $userLoginUrl;
-    public $apiVersion;
-    public $retryCount;  // int(11) NOT NULL AUTO_INCREMENT,
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idcms_gateway;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Gateway_Name;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $username;  // varchar(45) NOT NULL,
+    public DB_Field $clientId;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $clientSecret;  // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $securityToken;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $password;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $endpointUrl;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $userLoginUrl;
+    public DB_Field $apiVersion;
+    public DB_Field $retryCount;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "cc_hosted_gateway") {
         $this->idcms_gateway = new DB_Field("idcc_gateway", 0, new DbIntSanitizer(), TRUE, TRUE);

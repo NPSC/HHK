@@ -16,11 +16,11 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 class Reservation_MultipleRS extends AbstractTableRS
 {
 
-    public $idReservation_multiple; // int(11) NOT NULL DEFAULT '0'
-    public $Host_Id; // INT NOT NULL DEFAULT 0
-    public $Child_Id; // varchar(2) NOT NULL DEFAULT ''
-    public $Status;
-    public $Timestamp; // TIMESTAMP NOT NULL DEFAULT now()
+    public DB_Field $idReservation_multiple; // int(11) NOT NULL DEFAULT '0'
+    public DB_Field $Host_Id; // INT NOT NULL DEFAULT 0
+    public DB_Field $Child_Id; // varchar(2) NOT NULL DEFAULT ''
+    public DB_Field $Status;
+    public DB_Field $Timestamp; // TIMESTAMP NOT NULL DEFAULT now()
 
     function __construct($TableName = "reservation_multiple")
     {

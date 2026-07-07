@@ -21,9 +21,9 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
 class ConstraintEntityRS extends AbstractTableRS {
     
     
-    public $idEntity;  // int(11) NOT NULL,
-    public $idConstraint;
-    public $Type;  // varchar(4) NOT NULL,
+    public DB_Field $idEntity;  // int(11) NOT NULL,
+    public DB_Field $idConstraint;
+    public DB_Field $Type;  // varchar(4) NOT NULL,
     
     
     function __construct($TableName = "constraint_entity") {

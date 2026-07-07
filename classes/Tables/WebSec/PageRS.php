@@ -15,19 +15,19 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class PageRS extends AbstractTableRS {
     
-    public $idPage;  // int(11) NOT NULL AUTO_INCREMENT,
-    public $File_Name;  // varchar(65) NOT NULL,
-    public $Login_Page_Id;  // int(11) NOT NULL DEFAULT '0',
-    public $Title;  // varchar(45) NOT NULL DEFAULT '',
-    public $Product_Code;  // VARCHAR(4) NOT NULL DEFAULT '' AFTER `Title`,
-    public $Hide;  // INT(1) NOT NULL DEFAULT 0 AFTER `Type`;
-    public $Web_Site;  // varchar(5) NOT NULL DEFAULT '',
-    public $Menu_Parent;  // varchar(45) NOT NULL DEFAULT '',
-    public $Menu_Position;  // varchar(45) NOT NULL DEFAULT '',
-    public $Type;  // varchar(5) NOT NULL DEFAULT '',
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime NOT NULL,
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idPage;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $File_Name;  // varchar(65) NOT NULL,
+    public DB_Field $Login_Page_Id;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Title;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Product_Code;  // VARCHAR(4) NOT NULL DEFAULT '' AFTER `Title`,
+    public DB_Field $Hide;  // INT(1) NOT NULL DEFAULT 0 AFTER `Type`;
+    public DB_Field $Web_Site;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Menu_Parent;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Menu_Position;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Type;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime NOT NULL,
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = "page") {
         $this->idPage = new DB_Field("idPage", 0, new DbIntSanitizer());

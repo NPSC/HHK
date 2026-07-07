@@ -15,11 +15,11 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Rate_BreakpointRS extends AbstractTableRS {
 
-    public $idrate_breakpoint;  // INT NOT NULL AUTO_INCREMENT,
-    public $Household_Size;  // INT(4) NOT NULL,
-    public $Rate_Category;  // VARCHAR(4) NOT NULL,
-    public $Breakpoint;  // INT NOT NULL DEFAULT 0,
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT Current_Timestamp,
+    public DB_Field $idrate_breakpoint;  // INT NOT NULL AUTO_INCREMENT,
+    public DB_Field $Household_Size;  // INT(4) NOT NULL,
+    public DB_Field $Rate_Category;  // VARCHAR(4) NOT NULL,
+    public DB_Field $Breakpoint;  // INT NOT NULL DEFAULT 0,
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT Current_Timestamp,
 
     function __construct($TableName = 'rate_breakpoint') {
         $this->idrate_breakpoint = new DB_Field('idrate_breakpoint', 0, new DbIntSanitizer());

@@ -4,7 +4,7 @@ namespace HHK\sec;
 use donatj\UserAgent\UserAgentParser;
 use HHK\Crypto;
 use HHK\SysConst\WebRole;
-use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
+use HHK\Tables\WebSec\W_auth_ipRS;
 use HHK\Tables\EditRS;
 use HHK\sec\MFA\GoogleAuthenticator;
 use HHK\sec\MFA\Email;
@@ -83,7 +83,6 @@ class UserClass
             }
 
             //check PW
-            //TODO Update password logic for php8
             $match = false;
             //new method
             if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify(filter_var($password, FILTER_SANITIZE_ADD_SLASHES) . $ssn->sitePepper, $r['Enc_PW'])){
@@ -353,66 +352,12 @@ class UserClass
             $range .= '/32';
         }
         // $range is in IP/CIDR format eg 127.0.0.1/24
-        list ($range, $netmask) = explode('/', $range, 2);
+        [$range, $netmask] = explode('/', $range, 2);
         $range_decimal = ip2long($range);
         $ip_decimal = ip2long($ip);
         $wildcard_decimal = pow(2, (32 - $netmask)) - 1;
         $netmask_decimal = ~ $wildcard_decimal;
         return (($ip_decimal & $netmask_decimal) == ($range_decimal & $netmask_decimal));
-    }
-
-    /**
-     * Summary of updateSecurityQuestions
-     * @param \PDO $dbh
-     * @param mixed $questions
-     * @return bool
-     */
-    public function updateSecurityQuestions(\PDO $dbh, array $questions)
-    {
-        $ssn = Session::getInstance();
-        $updateCount = 0;
-
-        foreach ($questions as $question) {
-            $answerRS = new W_user_answersRS();
-            // if question already exists, update
-            if ($question['idAnswer']) {
-                $answerRS->idAnswer->setStoredVal($question['idAnswer']);
-                $rows = EditRS::select($dbh, $answerRS, array(
-                    $answerRS->idAnswer
-                ));
-
-                if (count($rows) == 1) {
-                    EditRS::loadRow($rows[0], $answerRS);
-
-                    $answerRS->idQuestion->setNewVal($question['idQuestion']);
-                    if ($question['Answer'] != "") {
-                        $answerRS->Answer->setNewVal($question['Answer']);
-                    }
-
-                    $counter = EditRS::update($dbh, $answerRS, array(
-                        $answerRS->idAnswer
-                    ));
-                    if ($counter > 0) {
-                        $updateCount ++;
-                    }
-                }
-            } else {
-                $answerRS->idUser->setNewVal($ssn->uid);
-                $answerRS->idQuestion->setNewVal($question['idQuestion']);
-                $answerRS->Answer->setNewVal($question['Answer']);
-
-                $idAnswer = EditRS::insert($dbh, $answerRS);
-                if ($idAnswer > 0) {
-                    $updateCount ++;
-                }
-            }
-        }
-
-        if ($updateCount > 0) {
-            $this->insertUserLog($dbh, "Security Questions updated");
-            return TRUE;
-        }
-        return FALSE;
     }
 
     /**

@@ -17,19 +17,19 @@ use HHK\Tables\Fields\DbBitSanitizer;
 
 class W_idpRS extends AbstractTableRS {
 
-    public $idIdp; // int(11) NOT NULL
-    public $Name; // varchar(100) NOT NULL
-    public $LogoPath; // varchar(500),
-    public $SSO_URL; // varchar(500)
-    public $IdP_EntityId;  // varchar(500),
-    public $IdP_SigningCert; // BLOB,
-    public $IdP_SigningCert2; // BLOB,
-    public $IdP_EncryptionCert; // BLOB,
-    public $IdP_EncryptionCert2; // BLOB,
-    public $expectIdPSigning; // BOOL DEFAULT 1,
-    public $expectIdPEncryption; // BOOL DEFAULT 1,
-    public $IdP_ManageRoles; // BOOL DEFAULT 1,
-    public $Status; // varchar(2),
+    public DB_Field $idIdp; // int(11) NOT NULL
+    public DB_Field $Name; // varchar(100) NOT NULL
+    public DB_Field $LogoPath; // varchar(500),
+    public DB_Field $SSO_URL; // varchar(500)
+    public DB_Field $IdP_EntityId;  // varchar(500),
+    public DB_Field $IdP_SigningCert; // BLOB,
+    public DB_Field $IdP_SigningCert2; // BLOB,
+    public DB_Field $IdP_EncryptionCert; // BLOB,
+    public DB_Field $IdP_EncryptionCert2; // BLOB,
+    public DB_Field $expectIdPSigning; // BOOL DEFAULT 1,
+    public DB_Field $expectIdPEncryption; // BOOL DEFAULT 1,
+    public DB_Field $IdP_ManageRoles; // BOOL DEFAULT 1,
+    public DB_Field $Status; // varchar(2),
 
     function __construct($TableName = "w_idp") {
         $this->idIdp = new DB_Field("idIdp", 0, new DbIntSanitizer());

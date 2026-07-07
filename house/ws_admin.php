@@ -354,7 +354,7 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 }
 
 
-function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
+function changePW(PDO $dbh, $oldPw, $newPw, $uname, $id) {
 
     $event = [];
 
@@ -365,18 +365,7 @@ function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
     return $event;
 }
 
-function changeQuestions(\PDO $dbh, array $questions) {
-
-    $event = [];
-
-    $u = new UserClass();
-
-    $event = ($u->updateSecurityQuestions($dbh, $questions) === TRUE) ? ['success' => 'User Security Questions Updated.'] : ['warning' => $u->logMessage];
-
-    return $event;
-}
-
-function generateTwoFA($dbh, $uname, string $method, array $post = []){
+function generateTwoFA(PDO $dbh, string $uname, string $method, array $post = []){
 
     $uS = Session::getInstance();
 
@@ -411,6 +400,9 @@ function generateTwoFA($dbh, $uname, string $method, array $post = []){
             }catch(Exception $e){
                 $event = ['error' => $e->getMessage()];
             }
+            break;
+        default:
+            $event = ['error' => 'Invalid method'];
     }
 
 
@@ -418,7 +410,7 @@ function generateTwoFA($dbh, $uname, string $method, array $post = []){
     return $event;
 }
 
-function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
+function saveTwoFA(PDO $dbh, $secret, $OTP, $method){
     $uS = Session::getInstance();
 
     switch ($method) {

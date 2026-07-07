@@ -56,45 +56,36 @@ class LinkNote {
      * @param mixed $linkId
      * @return array
      */
-    public static function findIdPsg(\PDO $dbh, $linkType, $linkId) {
+    public static function findIdPsg(\PDO $dbh, $linkType, $linkId): array {
 
-        $query = '';
-        $idPsgs = [];
-
-        if ($linkType == Note::ResvLink) {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.idReservation = $linkId";
-        } else if ($linkType == Note::VisitLink) {
-            $query = "select reg.idPsg from registration reg join visit r on reg.idRegistration = r.idRegistration "
-                    . "where r.idVisit = $linkId";
-        } else if ($linkType == Note::PsgLink) {
+        if ($linkType === Note::PsgLink) {
             return [$linkId];
-        }else if ($linkType == "curguests") {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.Status = 's'";
-        }else if ($linkType == "confirmed") {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.Status = 'a'";
-        }else if ($linkType == "unconfirmed") {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.Status = 'uc'";
-        }else if ($linkType == "waitlist") {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.Status = 'w'";
         }
 
-        if ($query != '') {
+        $statusMap = [
+            'curguests'   => 's',
+            'confirmed'   => 'a',
+            'unconfirmed' => 'uc',
+            'waitlist'    => 'w',
+        ];
 
-            $stmt = $dbh->query($query);
-            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+        $query = "SELECT reg.idPsg FROM registration reg JOIN reservation r ON reg.idRegistration = r.idRegistration";
 
-            if(count($rows) > 0){
-                foreach($rows as $k=>$v){
-                    $idPsgs[] = $v[0];
-                }
-            }
+        if ($linkType === Note::ResvLink) {
+            $stmt = $dbh->prepare("$query WHERE r.idReservation = ?");
+            $stmt->execute([$linkId]);
+        } elseif ($linkType === Note::VisitLink) {
+            $stmt = $dbh->prepare("SELECT reg.idPsg FROM registration reg JOIN visit r ON reg.idRegistration = r.idRegistration WHERE r.idVisit = ?");
+            $stmt->execute([$linkId]);
+        } elseif (isset($statusMap[$linkType])) {
+            $stmt = $dbh->prepare("$query WHERE r.Status = ?");
+            $stmt->execute([$statusMap[$linkType]]);
+        } else {
+            return [];
         }
-        return $idPsgs;
+
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN, 0);
+        
     }
 
     /**

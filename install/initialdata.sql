@@ -231,17 +231,14 @@ VALUES
 	-- ('Checklist', 'resv_items_Cklst', 'Resv', '','m',0),
 	('psg_items_Cklst', 'cl1', 'Item 1', '', 'd', 0),
 	-- ('resv_items_Cklst', 'cl2e', 'Item 1', '', 'd',0),
-	('Cm_Custom_Fields', 'HHK_ID', '', '', '', 0),
-	(
-		'Cm_Custom_Fields',
-		'Deceased_Date',
-		'',
-		'',
-		'',
-		0
-	),
-	('Cm_Custom_Fields', 'Diagnosis', '', '', '', 0),
-	('Cm_Custom_Fields', 'Hospital', '', '', '', 0),
+	('Cm_Custom_Fields', 'HHK_ID', '', 'Whole_Number', '', 1),
+	('Cm_Custom_Fields', 'Hospital', '', 'Text', '', 2),
+	('Cm_Custom_Fields', 'Diagnosis', '', 'Text', '', 3),
+	('Cm_Custom_Fields', 'Deceased_Date', '', 'Date', '', 4),
+	('Cm_Custom_Fields', 'First_Visit', '', 'Date', '', 5),
+	('Cm_Custom_Fields', 'Last_Visit','', 'Date', '', 6),
+	('Cm_Custom_Fields', 'Nite_Counter', '', 'Text', '', 7),
+
 	('Constraint_Type', 'hos', 'Hospital', '', '', 0),
 	('Constraint_Type', 'rv', 'Reservation', '', '', 0),
 	('Constraint_Type', 'v', 'Visit', '', '', 0),
@@ -4661,7 +4658,10 @@ VALUES
 		'relationTypes',
 		'relationType',
 		'Patient_Rel_Type'
-	);
+	),
+	('account/listGenders', 'genders', 'gender', 'Gender'),
+	('account/listPrefixes', 'prefixes', 'prefix', 'Name_Prefix'),
+;
 
 -- ;
 --

@@ -15,10 +15,10 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Reservation_GuestRS extends AbstractTableRS {
     
-    public $idReservation;  // int(11) NOT NULL DEFAULT '0',
-    public $idGuest;  // INT NOT NULL DEFAULT 0 ,
-    public $Primary_Guest;  // varchar(2) NOT NULL DEFAULT '',
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+    public DB_Field $idReservation;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idGuest;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $Primary_Guest;  // varchar(2) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
     
     function __construct($TableName = "reservation_guest") {
         

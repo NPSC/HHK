@@ -1257,7 +1257,7 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
     SELECT
         `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `Account Id`,
-        IFNULL(`g1`.`Description`, '') AS `Prefix`,
+        IFNULL(`nmp`.`Neon_Type_Name`, '') AS `Prefix`,
         `n`.`Name_First` AS `First Name`,
         `n`.`Name_Middle` AS `Middle Name`,
         `n`.`Name_Last` AS `Last Name`,
@@ -1271,8 +1271,7 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
             AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
         LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
             AND `n`.`Preferred_Email` = `ne`.`Purpose`
-        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
-            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `neon_type_map` `nmp` on nmp.Neon_Name = 'prefix' and `n`.`Name_Prefix` = `nmp`.`HHK_Type_Code`
         LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
             AND `g2`.`Table_Name` = 'Name_Suffix'
     WHERE
@@ -1290,24 +1289,25 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
 -- View `vguest_data_neon`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_data_neon` AS
-    SELECT
+    SELECT DISTINCT
         `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `accountId`,
-        IFNULL(`g1`.`Description`, '') AS `prefix`,
+        IFNULL(`nmp`.`Neon_Type_Name`, '') AS `Prefix`,
         `n`.`Name_First` AS `firstName`,
         `n`.`Name_Middle` AS `middleName`,
         `n`.`Name_Last` AS `lastName`,
         `n`.`Name_Nickname` AS `preferredName`,
         IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'),
                 '') AS `dob`,
-        IFNULL(DATE_FORMAT(`n`.`Date_Deceased`, '%Y-%m-%d'),
+        IFNULL(DATE_FORMAT(`n`.`Date_Deceased`, '%m/%d/%Y'),
                 '') AS `Deceased_Date`,
         (CASE
             WHEN (`n`.`Member_Status` = 'd') THEN 'true'
             ELSE ''
         END) AS `deceased`,
         IFNULL(`g2`.`Description`, '') AS `suffix`,
-        IFNULL(`g5`.`Description`, '') AS `gender.name`,
+        IFNULL(`nmg`.`Neon_Type_Code`, '') AS `gender.code`,
+        IFNULL(`nmg`.`Neon_Type_Name`, '') AS `gender.name`,
         IFNULL(`np`.`Phone_Search`, '') AS `phone1`,
         (CASE
             WHEN (`np`.`Phone_Code` = 'mc') THEN 'Mobile'
@@ -1327,23 +1327,13 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         IFNULL(`na`.`Address_2`, '') AS `addressLine2`,
         IFNULL(`na`.`City`, '') AS `city`,
         IFNULL(`na`.`County`, '') AS `county`,
-        (CASE
-            WHEN (`cc`.`External_Id` > 2) THEN `na`.`State_Province`
-            ELSE ''
-        END) AS `province`,
-        (CASE
-            WHEN
-                ((`cc`.`External_Id` = 1)
-                    OR (`cc`.`External_Id` = 2))
-            THEN
-                `na`.`State_Province`
-            ELSE ''
-        END) AS `state.code`,
+        IFNULL(`na`.`State_Province`, '') AS `stateProvince.code`,
         IFNULL(`cc`.`External_Id`, '') AS `country.id`,
         IFNULL(`na`.`Postal_Code`, '') AS `zipCode`,
         IFNULL(`ni`.`Neon_Type_Code`, '') AS `individualType.id`,
         IFNULL(`g4`.`Description`, '') AS `No_Return`,
-        'HHK' AS `source.name`
+        IFNULL(`nms`.`Neon_Type_Code`, '') AS `source.code`,
+        IFNULL(`nms`.`Neon_Type_Name`, '') AS `source.name`
     FROM
         `name` `n`
         LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
@@ -1354,19 +1344,19 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
         LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`
         LEFT JOIN `country_code` `cc` ON `na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`
-        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
-            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `neon_type_map` `nmp` on nmp.Neon_Name = 'prefix' and `n`.`Name_Prefix` = `nmp`.`HHK_Type_Code`
         LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
             AND `g2`.`Table_Name` = 'Name_Suffix'
         LEFT JOIN `gen_lookups` `g4` ON `nd`.`No_Return` = `g4`.`Code`
             AND `g4`.`Table_Name` = 'NoReturnReason'
         LEFT JOIN `gen_lookups` `g5` ON `n`.`Gender` = `g5`.`Code`
-            AND `n`.`Gender` IN ('m' , 'f')
             AND `g5`.`Table_Name` = 'Gender'
         LEFT JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName`
             AND `nv`.`Vol_Category` = 'Vol_Type'
             AND `nv`.`Vol_Code` IN ('p' , 'g')
         LEFT JOIN `neon_type_map` `ni` ON ni.Neon_Name = 'individualType' and `nv`.`Vol_Code` = `ni`.`HHK_Type_Code`
+        LEFT JOIN `neon_type_map` `nmg` on nmg.Neon_Name = 'gender' and `n`.`Gender` = `nmg`.`HHK_Type_Code`
+        LEFT JOIN `neon_type_map` `nms` on nms.Neon_Name = 'source' and `nms`.`HHK_Type_Code` = 'HHK'
     WHERE
         `n`.`idName` > 0
         AND (`n`.`Record_Member` = 1)
@@ -1527,6 +1517,7 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
         END AS `Phone`,
         IFNULL(`ne`.`Email`, '') AS `Email`,
         IFNULL(DATE(`n`.`BirthDate`), '') AS `Birthdate`,
+        ifnull(`gg`.`Description`, '') AS `Gender`,
         IFNULL(`gn`.`Description`, '') AS `No Return`,
         IFNULL(`s`.`Span_Start_Date`, '') AS `Arrival`,
         IFNULL(`s`.`Span_End_Date`, '') AS `Departure`,
@@ -1551,6 +1542,8 @@ CREATE OR REPLACE VIEW `vguest_transfer` AS
             AND `g2`.`Table_Name` = 'Name_Suffix')
 		LEFT JOIN `gen_lookups` `gn` ON `gn`.`Table_Name` = 'NoReturnReason'
 			AND `gn`.`Code` = `nd`.`No_Return`
+        LEFT JOIN `gen_lookups` `gg` ON `gg`.`Table_Name` = 'gender'
+			AND `gg`.`Code` = `n`.`Gender`
 		LEFT JOIN `gen_lookups` `gr` ON `gr`.`Table_Name` = 'Patient_Rel_Type'
 			AND `gr`.`Code` = `ng`.`Relationship_Code`
     WHERE

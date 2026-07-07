@@ -15,21 +15,21 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Reservation_LogRS extends AbstractTableRS {
     
-    public $Log_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Sub_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $idName;  // INT NOT NULL DEFAULT 0 ,
-    public $idPsg;  // INT NOT NULL DEFAULT 0 ,
-    public $idRegistration;  // INT NOT NULL DEFAULT 0 ,
-    public $idHospital;  // int(11) NOT NULL DEFAULT '0',
-    public $idAgent;  // int(11) DEFAULT '0',
-    public $idHospital_stay;  // int(11) NOT NULL DEFAULT '0',
-    public $idReservation;  // int(11) NOT NULL DEFAULT '0',
-    public $idSpan;  // int(11) NOT NULL DEFAULT '0',
-    public $idRoom_rate;  // int(11) NOT NULL DEFAULT '0',
-    public $idResource;  // int(11) NOT NULL DEFAULT '0',
-    public $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+    public DB_Field $Log_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Sub_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $idName;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idPsg;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idRegistration;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idHospital;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idAgent;  // int(11) DEFAULT '0',
+    public DB_Field $idHospital_stay;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idReservation;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idSpan;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idRoom_rate;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idResource;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
     
     function __construct($TableName = "reservation_log") {
         

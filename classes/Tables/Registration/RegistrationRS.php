@@ -21,23 +21,23 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class RegistrationRS extends AbstractTableRS {
 
-    public $idRegistration;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $idPsg;   // int(11) NOT NULL,
-    public $Date_Registered;   // datetime DEFAULT NULL,
-    public $Status;   // varchar(5) NOT NULL DEFAULT '',
-    public $Sig_Card;   // int(11) NOT NULL DEFAULT '0',
-    public $Pamphlet;   // int(11) NOT NULL DEFAULT '0',
-    public $Email_Receipt;  // tinyint(4) NOT NULL DEFAULT '0',
-    public $Pref_Token_Id;
-    public $Referral;   // int(11) NOT NULL DEFAULT '0',
-    public $Vehicle;   // int(1) NOT NULL DEFAULT '0',
-    public $Guest_Ident;   // varchar(45) NOT NULL DEFAULT '',
-    public $Key_Deposit_Bal;   // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $Lodging_Balance;  // DECIMAL(10,2) NOT NULL DEFAULT 0.00
-    public $Notes;   // text
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    protected $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idRegistration;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idPsg;   // int(11) NOT NULL,
+    public DB_Field $Date_Registered;   // datetime DEFAULT NULL,
+    public DB_Field $Status;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Sig_Card;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Pamphlet;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Email_Receipt;  // tinyint(4) NOT NULL DEFAULT '0',
+    public DB_Field $Pref_Token_Id;
+    public DB_Field $Referral;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Vehicle;   // int(1) NOT NULL DEFAULT '0',
+    public DB_Field $Guest_Ident;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Key_Deposit_Bal;   // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $Lodging_Balance;  // DECIMAL(10,2) NOT NULL DEFAULT 0.00
+    public DB_Field $Notes;   // text
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    protected DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "registration") {
 

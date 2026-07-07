@@ -15,18 +15,18 @@ use HHK\Tables\Fields\DbBlobSanitizer;
 
 class CronRS extends AbstractTableRS {
 
-    public $idJob;  // INT NOT NULL AUTO_INCREMENT,
-    public $Title;  // VARCHAR(45) NOT NULL,
-    public $Code; //VARCHAR(45) NOT NULL UNIQUE,
-    public $Params;
-    public $Interval;  // VARCHAR(45) NOT NULL DEFAULT '',
-    public $Day;
-    public $Hour; //VARCHAR(2) NOT NULL DEFAULT '';
-    public $Minute; //VARCHAR(2) NOT NULL DEFAULT '';
-    public $Status; // VARCHAR(45) NOT NULL DEFAULT '', -limit to 1 character ('a','d')
-    public $LastRun; // TIMESTAMP NULL DEFAULT NULL,
+    public DB_Field $idJob;  // INT NOT NULL AUTO_INCREMENT,
+    public DB_Field $Title;  // VARCHAR(45) NOT NULL,
+    public DB_Field $Code; //VARCHAR(45) NOT NULL UNIQUE,
+    public DB_Field $Params;
+    public DB_Field $Interval;  // VARCHAR(45) NOT NULL DEFAULT '',
+    public DB_Field $Day;
+    public DB_Field $Hour; //VARCHAR(2) NOT NULL DEFAULT '';
+    public DB_Field $Minute; //VARCHAR(2) NOT NULL DEFAULT '';
+    public DB_Field $Status; // VARCHAR(45) NOT NULL DEFAULT '', -limit to 1 character ('a','d')
+    public DB_Field $LastRun; // TIMESTAMP NULL DEFAULT NULL,
 
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
 
     function __construct($TableName = "cronjobs") {
 

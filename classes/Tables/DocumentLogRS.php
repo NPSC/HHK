@@ -15,15 +15,15 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class DocumentLogRS extends AbstractTableRS {
     
-    public $Log_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Sub_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $idDocument;  // int(11) NOT NULL DEFAULT '0',
-    public $idName;  // INT NOT NULL DEFAULT 0 ,
-    public $idPsg;  // INT NOT NULL DEFAULT 0 ,
-    public $idReservation;  // int(11) NOT NULL DEFAULT '0',
-    public $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+    public DB_Field $Log_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Sub_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $idDocument;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idName;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idPsg;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idReservation;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
     
     function __construct($TableName = "document_log") {
         

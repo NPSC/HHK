@@ -15,20 +15,20 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDecimalSaniti
 
 class Room_RateRS extends AbstractTableRS {
 
-    public $idRoom_rate;    // int(11) NOT NULL AUTO_INCREMENT,
-    public $Title;    // varchar(45) NOT NULL DEFAULT '',
-    public $Description;    // varchar(245) NOT NULL DEFAULT '',
-    public $FA_Category;    // varchar(2) NOT NULL DEFAULT '',
-    public $Rate_Breakpoint_Category;  // varchar(4) NOT NULL DEFAULT '',
-    public $PriceModel;  // VARCHAR(5) NOT NULL DEFAULT ''
-    public $Reduced_Rate_1;    // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $Reduced_Rate_2;    // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $Reduced_Rate_3;    // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $Min_Rate;    // decimal(10,4) NOT NULL DEFAULT '0.0000',
-    public $Status;    // varchar(4) NOT NULL DEFAULT '',
-    public $Updated_By;    // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;    // datetime DEFAULT NULL,
-    public $Timestamp;    // timestamp NULL DEFAULT NULL,
+    public DB_Field $idRoom_rate;    // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Title;    // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Description;    // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $FA_Category;    // varchar(2) NOT NULL DEFAULT '',
+    public DB_Field $Rate_Breakpoint_Category;  // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $PriceModel;  // VARCHAR(5) NOT NULL DEFAULT ''
+    public DB_Field $Reduced_Rate_1;    // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $Reduced_Rate_2;    // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $Reduced_Rate_3;    // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $Min_Rate;    // decimal(10,4) NOT NULL DEFAULT '0.0000',
+    public DB_Field $Status;    // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $Updated_By;    // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;    // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;    // timestamp NULL DEFAULT NULL,
 
     function __construct($TableName = 'room_rate') {
         $this->idRoom_rate = new DB_Field('idRoom_rate', 0, new DbIntSanitizer());

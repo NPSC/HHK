@@ -15,6 +15,7 @@ use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\Session;
 use HHK\OAuth\Credentials;
+use PDOStatement;
 
 
 /**
@@ -149,10 +150,10 @@ class SalesforceManager extends AbstractExportManager {
 
     /**
      * Summary of searchMembers Searches remote with letters from an autocomplete
-     * @param mixed $searchCriteria
+     * @param array $searchCriteria
      * @return array
      */
-    public function searchMembers ($searchCriteria) {
+    public function searchMembers (array $searchCriteria): array {
 
         $replys = [];
 
@@ -194,7 +195,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $parameters
      * @return string
      */
-    public function getMember(\PDO $dbh, $parameters) {
+    public function getMember(\PDO $dbh, $parameters): string {
 
         $source = $parameters['src'] ?? '';
         $id = $parameters['accountId'] ?? '';
@@ -258,7 +259,7 @@ class SalesforceManager extends AbstractExportManager {
         return $results;
     }
 
-    public function retrieveRemoteAccount($accountId) {
+    public function retrieveRemoteAccount($accountId):array {
 
         return $this->retrieveURL($this->getContactEndpoint . $accountId);
     }
@@ -269,7 +270,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param array $sourceIds list of member Id's to export
      * @return array
      */
-    public function exportMembers(\PDO $dbh, array $sourceIds, array $updateIds = []) {
+    public function exportMembers(\PDO $dbh, array $sourceIds, array $updateIds = []): array {
         $replys = [];
         
         if (count($sourceIds) == 0) {
@@ -410,11 +411,11 @@ class SalesforceManager extends AbstractExportManager {
                         $replys[$r['HHK_idName__c']] = $f;
                         return $replys;
                     }
-                }
 
-                $name = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
-                $title = ($m['HHK_idName__c'] == '' ? '' : $m['HHK_idName__c'] . ', ') . $name . ($m['Email'] == '' ? '' : ', ' . $m['Email']) . $m['HomePhone'];
-                $options[$m['Id']] = [$m['Id'], $title];
+                    $name = $m['FirstName'] . ' ' . ($m['Middle_Name__c'] == '' ? '' : $m['Middle_Name__c'] . ' ') . $m['LastName'] . ' ' . $m['Suffix__c'];
+                    $title = ($m['HHK_idName__c'] == '' ? '' : $m['HHK_idName__c'] . ', ') . $name . ($m['Email'] == '' ? '' : ', ' . $m['Email']) . $m['HomePhone'];
+                    $options[$m['Id']] = [$m['Id'], $title];
+                }
 
                 $f['Result'] = ' Found ' . $rawResult['totalSize'] . ' similar accounts ';
                 // Create selector
@@ -912,7 +913,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param bool $updateIt TRUE = push update to remote, FALSE = just return potential update fields as array.
      * @return string
      */
-    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $localData = [], $updateIt = FALSE) {
+    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $localData = [], $updateIt = FALSE): string {
 
         $msg = 'Already up to date. ';
 
@@ -922,7 +923,7 @@ class SalesforceManager extends AbstractExportManager {
 
         // Load local data if not delivered in the $localData array
         if ($idName > 0) {
-            $stmt = $this->loadSearchDB($dbh, 'vguest_search_sf', $idName);
+            $stmt = $this->loadSearchDB($dbh, 'vguest_search_sf', [$idName]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (isset($rows[0])) {
@@ -980,26 +981,21 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of loadSearchDB - load search record for specified person(s)
      * @param \PDO $dbh
      * @param string $view DB view to use
-     * @param mixed $sourceIds
+     * @param array $sourceIds
      * @return \PDOStatement|bool|null
      */
-    public static function loadSearchDB(\PDO $dbh, $view, $sourceIds) {
+    public static function loadSearchDB(\PDO $dbh, string $view, array $sourceIds): bool|PDOStatement|null {
 
         if ($view == '') {
             return NULL;
         }
 
         // clean up the ids
-        if (is_array($sourceIds)) {
-
-            foreach ($sourceIds as $s) {
-                if (intval($s, 10) > 0){
-                    $idList[] = intval($s, 10);
-                }
+        $idList = [];
+        foreach ($sourceIds as $s) {
+            if (intval($s, 10) > 0){
+                $idList[] = intval($s, 10);
             }
-
-        } else {
-            $idList[] = intval($sourceIds, 10);
         }
 
         if (count($idList) > 0) {
@@ -1124,9 +1120,9 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of getSearchFields
      * @param $dbh
      * @param string $tableName
-     * @return array<string>
+     * @return array
      */
-    public static function getSearchFields($dbh, $tableName) {
+    public static function getSearchFields(?\PDO $dbh, string $tableName): array {
 
         $cols['HHK_idName__c'] = 'HHK_idName__c';
         return $cols;
@@ -1188,7 +1184,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param \PDO $dbh
      * @return string
      */
-    public function showConfig(\PDO $dbh) {
+    public function showConfig(\PDO $dbh): string {
 
         $markup = $this->showGatewayCredentials();
 
@@ -1218,14 +1214,16 @@ class SalesforceManager extends AbstractExportManager {
             HTMLTable::makeTh('CRM Gateway Id', array())
             . HTMLTable::makeTd($this->getGatewayId())
             );
+        /*
         $tbl->addBodyTr(
             HTMLTable::makeTh('Username', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getUserId(), array('name' => '_txtuserId', 'size' => '90')))
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Password', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getPassword() == '' ? '' : self::PW_PLACEHOLDER), array('name' => '_txtpwd', 'size' => '100')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getPassword() == '' ? '' : self::PW_PLACEHOLDER), array('type' => 'password', 'name' => '_txtpwd', 'size' => '100')))
             );
+            */
         $tbl->addBodyTr(
             HTMLTable::makeTh('Endpoint URL', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEndpointUrl(), array('name' => '_txtEPurl', 'size' => '100')))
@@ -1237,12 +1235,14 @@ class SalesforceManager extends AbstractExportManager {
             );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Client Secret', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getClientSecret() == '' ? '' : self::PW_PLACEHOLDER), array('name' => '_txtclientsecret', 'size' => '100')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getClientSecret() == '' ? '' : self::PW_PLACEHOLDER), array('type' => 'password', 'name' => '_txtclientsecret', 'size' => '100')))
             );
+            /*
         $tbl->addBodyTr(
             HTMLTable::makeTh('Security Token', array())
             . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getSecurityToken(), array('name' => '_txtsectoken', 'size' => '100')))
             );
+        */
 
         $tbl->addBodyTr(
             HTMLTable::makeTh('API Version', array())
@@ -1312,12 +1312,12 @@ class SalesforceManager extends AbstractExportManager {
         $crmRs = new CmsGatewayRS();
 
         $rags = [
-            '_txtuserId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            '_txtpwd' => FILTER_UNSAFE_RAW,
+            //'_txtuserId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            //'_txtpwd' => FILTER_UNSAFE_RAW,
             '_txtclientsecret' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtEPurl' => FILTER_SANITIZE_URL,
             '_txtclientId' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            '_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            //'_txtsectoken' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtapiVersion' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             '_txtmaxPSGsPerBatch' => FILTER_SANITIZE_NUMBER_INT
 
@@ -1328,6 +1328,8 @@ class SalesforceManager extends AbstractExportManager {
         // User Id
         if (isset($post['_txtuserId'])) {
             $crmRs->username->setNewVal($post['_txtuserId']);
+        }else{
+            $crmRs->username->setNewVal('');
         }
 
         // Password
@@ -1336,10 +1338,12 @@ class SalesforceManager extends AbstractExportManager {
             $pw = $post['_txtpwd'];
 
             if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                $crmRs->password->setnewVal(Crypto::encryptMessage($pw));
+                $crmRs->password->setNewVal(Crypto::encryptMessage($pw));
             }
 
 
+        }else{
+            $crmRs->password->setNewVal('');
         }
 
         // Client Secret
@@ -1366,6 +1370,8 @@ class SalesforceManager extends AbstractExportManager {
         // Security Token
         if (isset($post['_txtsectoken'])) {
             $crmRs->securityToken->setNewVal($post['_txtsectoken']);
+        } else {
+            $crmRs->securityToken->setNewVal('');
         }
 
         // API Version
@@ -1509,7 +1515,7 @@ class SalesforceManager extends AbstractExportManager {
      * @param \PDO $dbh
      * @return string
      */
-    public function saveConfig(\PDO $dbh) {
+    public function saveConfig(\PDO $dbh): string {
 
         $uS = Session::getInstance();
 
@@ -1520,7 +1526,7 @@ class SalesforceManager extends AbstractExportManager {
 
     }
 
-    public function getLogServiceName(){
+    public function getLogServiceName(): string{
         return self::LOG_SERVICE_NAME;
     }
 }

@@ -11,7 +11,7 @@ use HHK\SysConst\VolMemberType;
 class ItemReport
 {
 
-    public static function doMarkupRow(array $fltrdFields, array $r, bool $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, HTMLTable &$tbl, ?ExcelHelper &$writer, $hdr, &$reportRows, $subsidyId, $returnId, Labels $labels) {
+    public static function doMarkupRow(array $fltrdFields, array $r, bool $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, ?HTMLTable &$tbl, ?ExcelHelper &$writer, $hdr, &$reportRows, $subsidyId, $returnId, Labels $labels) {
 
         $amt = $r['Amount'];
 
@@ -95,7 +95,7 @@ class ItemReport
 
         $total += $amt;
 
-        if ($isLocal) {
+        if ($isLocal && $tbl instanceof HTMLTable) {
 
             $g['Amount'] = HTMLContainer::generateMarkup('span', number_format($amt, 2), $attr);
             $g['Invoice_Number'] = $invoiceMkup;

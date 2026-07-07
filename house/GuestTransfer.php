@@ -1,5 +1,6 @@
 <?php
 use HHK\Common;
+use HHK\CrmExport\Neon\NeonManager;
 use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\House\Report\ReportFilter;
 use HHK\sec\SecurityComponent;
@@ -16,6 +17,7 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Labels;
 use HHK\CrmExport\RelationshipMapper;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\ExportManagerInterface;
 
 /**
  * GuestTransfer.php
@@ -67,7 +69,7 @@ if (function_exists('curl_version') === FALSE) {
 
 $labels = Labels::getLabels();
 
-function getNonVisitors(\PDO $dbh, $visitIds) {
+function getNonVisitors(\PDO $dbh, array $visitIds): array {
 
     $idList = [];
     $idNames = [];
@@ -175,74 +177,26 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 /**
  * Summary of searchVisits
  * @param PDO $dbh
- * @param mixed $start
- * @param mixed $end
- * @param mixed $maxGuests
+ * @param string $start
+ * @param string $end
+ * @param int $maxGuests
  * @param HHK\CrmExport\AbstractExportManager $CmsManager
  * @return bool|string
  */
-function searchVisits(\PDO $dbh, $start, $end, $maxGuests, AbstractExportManager $CmsManager) {
+function searchVisits(\PDO $dbh, string $start, string $end, int $maxGuests, AbstractExportManager $CmsManager) {
 
     $uS = Session::getInstance();
     $rows = array();
     $guestIds = [];
     $visits = [];
-    $visitIds = [];
-    $psgs = [];
 
+    $stayRows = NeonManager::fetchPsgMemberStays($dbh, $start, $end);
 
-    $stmt = $dbh->query("SELECT
-    s.idStays,
-    s.idVisit,
-    s.Visit_Span,
-    IFNULL(n.External_Id, '') AS `accountId`,
-    s.idName AS `hhkId`,
-    ng.Relationship_Code,
-    IFNULL(h.Title, '') AS `Hospital`,
-    IFNULL(g.Description, '') AS `Diagnosis`,
-    IFNULL(n.Name_Full, '') as `Name`,
-    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
-    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
-    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
-    v.idPrimaryGuest,
-    hs.idPsg,
-    hs.idPatient
-FROM
-    stays s
-        LEFT JOIN
-    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-        LEFT JOIN
-    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-        LEFT JOIN
-	name_guest ng on s.idName = ng.idName and hs.idPsg = ng.idPsg
-		LEFT JOIN
-    `name` n ON s.idName = n.idName
-        LEFT JOIN
-    hospital h on hs.idHospital = h.idHospital
-        LEFT JOIN
-    gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
-        LEFT JOIN
-    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-WHERE
-    s.On_Leave = 0
-    AND s.`Status` != 'a'
-    AND s.`Recorded` = 0
-    AND n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
-    AND n.Member_Status = '" . MemStatus::Active ."'
-    AND DATE(s.Span_End_Date) < DATE('$end')
-    AND datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) > 0
-ORDER BY hs.idPsg
-LIMIT 500");
-
-    if ($stmt->rowCount() == 0) {
+    if (count($stayRows) === 0) {
         return FALSE;
     }
 
-    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-        $visitIds[$r['idVisit']] = $r['idVisit'];
-        $psgs[$r['idPsg']] = $r['idPsg'];
+    foreach ($stayRows as $r) {
 
         if (isset($guestIds[ $r['hhkId'] ])) {
 
@@ -251,42 +205,42 @@ LIMIT 500");
                 $startDT = new \DateTime($r['Start_Date']);
                 $endDT = new \DateTime($r['End_Date']);
 
-                if ($guestIds[ $r['hhkId'] ]['Start 1st Visit'] > $startDT ) {
+                if ($guestIds[ $r['hhkId'] ]['Start 1st Visit'] === NULL || $guestIds[ $r['hhkId'] ]['Start 1st Visit'] > $startDT) {
                     $guestIds[ $r['hhkId'] ]['Start 1st Visit'] = $startDT;
                 }
 
-                if ($guestIds[ $r['hhkId'] ]['End Last Visit'] < $endDT ) {
+                if ($guestIds[ $r['hhkId'] ]['End Last Visit'] === NULL || $guestIds[ $r['hhkId'] ]['End Last Visit'] < $endDT) {
                     $guestIds[ $r['hhkId'] ]['End Last Visit'] = $endDT;
                 }
 
                 $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
             }
 
-            if ( $r['hhkId'] == $r['idPrimaryGuest']) {
-                $visits[$r['hhkId']] = array('Relation_Code'=>$r['Relationship_Code'], 'idPsg'=>$r['idPsg'], 'Address'=>$r['Address']);
-                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], array('style'=>'color:#ae00d1;'));
+            if ($r['hhkId'] == $r['idPrimaryGuest'] && !isset($visits[ $r['hhkId'] ])) {
+                $visits[ $r['hhkId'] ] = ['Relation_Code' => $r['Relationship_Code'], 'idPsg' => $r['idPsg'], 'Address' => $r['Address']];
+                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], ['style' => 'color:#ae00d1;']);
             }
 
         } else {
 
-            $guestIds[ $r['hhkId'] ] = array(
+            $guestIds[ $r['hhkId'] ] = [
                 'Account Id' => $r['accountId'],
                 'HHK Id' => $r['hhkId'],
-                'Name' => $r['Name'],
+                'Name' => $r['Name_Full'],
                 'Diagnosis' => $r['Diagnosis'],
                 'Hospital' => $r['Hospital'],
-                'Start 1st Visit' => new \DateTime($r['Start_Date']),
-                'End Last Visit' => new \DateTime($r['End_Date']),
+                'Start 1st Visit' => $r['Start_Date'] !== '' ? new \DateTime($r['Start_Date']) : NULL,
+                'End Last Visit' => $r['End_Date'] !== '' ? new \DateTime($r['End_Date']) : NULL,
                 'Nights' => $r['Nite_Counter'],
                 'Relation_Code' => $r['Relationship_Code'],
                 'Address' => $r['Address'],
                 'PG Id' => $r['idPrimaryGuest'],
-                'idPsg'=> $r['idPsg']
-            );
+                'idPsg' => $r['idPsg'],
+            ];
 
-            if ( $r['hhkId'] == $r['idPrimaryGuest']) {
-                $visits[$r['hhkId']] = array('Relation_Code'=>$r['Relationship_Code'], 'idPsg'=>$r['idPsg'], 'Address'=>$r['Address']);
-                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], array('style'=>'color:#ae00d1;'));
+            if ($r['hhkId'] == $r['idPrimaryGuest']) {
+                $visits[ $r['hhkId'] ] = ['Relation_Code' => $r['Relationship_Code'], 'idPsg' => $r['idPsg'], 'Address' => $r['Address']];
+                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], ['style' => 'color:#ae00d1;']);
             }
 
             if ($maxGuests-- <= 0) {
@@ -296,38 +250,14 @@ LIMIT 500");
 
     }  // End of while
 
-    // Get non-visitors
-    $idNames = getNonVisitors($dbh, $visitIds);
-
-    if (count($idNames) > 0) {
-
-        foreach ($idNames as $r) {
-
-            // add them to the list of guests
-            $guestIds[ $r['hhkId'] ] = array(
-                'Account Id' => $r['accountId'],
-                'HHK Id' => $r['hhkId'],
-                'Name' => $r['Name'],
-                'Diagnosis' => $r['Diagnosis'],
-                'Hospital' => $r['Hospital'],
-                'Start 1st Visit' => NULL,
-                'End Last Visit' => NULL,
-                'Nights' => '',
-                'Relation_Code' => $r['Relationship_Code'],
-                'Address' => $r['Address'],
-                'PG Id' => $r['idPrimaryGuest'],
-                'idPsg'=> $r['idPsg']
-            );
-        }
-    }
-
 
     $rMapper = new RelationshipMapper($dbh);
 
     // Get Neon relationship code list
     $nstmt = $dbh->query("Select * from neon_lists where `Method` = 'account/listRelationTypes';");
     $method = $nstmt->fetchAll(PDO::FETCH_ASSOC);
-    $neonRelList = getNeonTypes($CmsManager, $method[0]);
+    
+    $neonRelList = count($method) > 0 ? getNeonTypes($CmsManager, $method[0]) : [];
 
     foreach ($guestIds as $g) {
 
@@ -383,7 +313,7 @@ LIMIT 500");
 
     // Show table
     $tbl = new HTMLTable();
-    $tbl->addHeaderTr(HTMLTable::makeTh('PSG').HTMLTable::makeTh('HHK Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Address').HTMLTable::makeTh('Diagnosis').HTMLTable::makeTh('Hospital').HTMLTable::makeTh('Start 1st Visit')
+    $tbl->addHeaderTr(HTMLTable::makeTh('PSG').HTMLTable::makeTh('HHK Id').HTMLTable::makeTh('External Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Address').HTMLTable::makeTh('Diagnosis').HTMLTable::makeTh('Hospital').HTMLTable::makeTh('Start 1st Visit')
         .HTMLTable::makeTh('End Last Visit').HTMLTable::makeTh('Nights').HTMLTable::makeTh('PG Id').HTMLTable::makeTh('Guest to Patient').HTMLTable::makeTh('PG to Patient').HTMLTable::makeTh('Guest to PG'));
 
     foreach ($rows as $idp => $r) {
@@ -393,12 +323,14 @@ LIMIT 500");
 
             if ($first) {
                 $first = FALSE;
-                $td = HTMLTable::makeTd( HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'style'=>'margin-right:3px;'))
-                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp, 'title'=>'Check to include in the transfer.'))
-                    .'&#32;&#124;&#32;'
-                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-exPsg', 'name'=>'cbExPSG'.$idp, 'data-idpsg'=>$idp, 'style'=>'margin-right:3px;', 'title'=>'Check to permanently exclude from Neon.'))
-                    .HTMLContainer::generateMarkup('label', 'Excld', array('for'=>'cbExPSG'.$idp))
-                    , array('rowspan'=>count($rows[$idp]), 'style'=>'vertical-align:top;'));
+                $td = HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup('div',
+                        HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs mr-1', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp, 'title'=>'Check to include in the transfer.'))
+                        .HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'class'=>'mr-3'))
+                        .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-exPsg mr-1', 'name'=>'cbExPSG'.$idp, 'data-idpsg'=>$idp, 'title'=>'Check to permanently exclude from Neon.'))
+                        .HTMLContainer::generateMarkup('label', 'Excld', array('for'=>'cbExPSG'.$idp))
+                    , ['class'=>'hhk-flex align-items-center'])
+                    , array('rowspan'=>count($rows[$idp]), 'style'=>'vertical-align:top;', 'class'=>'psgCBs'));
 
                 $rowStyle = "border-top: 2px solid #2E99DD;";
             } else {
@@ -408,6 +340,7 @@ LIMIT 500");
 
             $tbl->addBodyTr($td
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $g['HHK Id'], array('href'=>'GuestEdit.php?id=' . $g['HHK Id'])))
+                .HTMLTable::makeTd($g['Account Id'])
                 .HTMLTable::makeTd($g['Name'])
                 .HTMLTable::makeTd($g['Address'])
                 .HTMLTable::makeTd($g['Diagnosis'])
@@ -421,7 +354,8 @@ LIMIT 500");
                 .HTMLTable::makeTd(
                     HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($neonRelList, $g['Guest to PG'], TRUE),
-                        array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idname'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp)))
+                        array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idname'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp))
+                    . (count($neonRelList) == 0 ? HTMLContainer::generateMarkup('span', 'No Neon relationships have been mapped.', array('class'=>'ml-2 ui-corner-all ui-state-highlight')) : ''))
                 , array('class'=>'hhk-'.$idp, 'style'=>$rowStyle));
         }
 
@@ -490,6 +424,7 @@ function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
         unset($r['Arrival']);
         unset($r['Departure']);
         unset($r['Bad Addr']);
+        unset($r['Relation']);
 
         $rows[] = $r;
 
@@ -510,18 +445,23 @@ function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
 /**
  * Summary of getNeonTypes
- * @param AbstractExportManager $CmsManager
- * @param mixed $list
+ * @param ExportManagerInterface $CmsManager
+ * @param array $list
  * @return array<array>
  */
-function getNeonTypes($CmsManager, $list) {
+function getNeonTypes(ExportManagerInterface $CmsManager, array $list): array {
 
     $neonList = [];
 
-    $rawList = $CmsManager->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
+    if($CmsManager instanceof NeonManager){
 
-    foreach ($rawList as $k => $v) {
-        $neonList[$k] = [0 => $k, 1 => $v];
+        $rawList = $CmsManager->listNeonType($list['Method'], $list['List_Name']);
+
+        foreach ($rawList as $k => $v) {
+            $neonList[$k] = [0 => $k, 1 => $v];
+        }
+    } else {
+        throw new RuntimeException("Failed to fetch Neon list: " . $list['List_Name'] . ". The configured CRM manager is not Neon.");
     }
 
     return $neonList;
@@ -532,7 +472,7 @@ function getNeonTypes($CmsManager, $list) {
  * @param PDO $dbh
  * @return string
  */
-function createKeyMap(\PDO $dbh) {
+function createKeyMap(\PDO $dbh): string {
 
     // get session instance
     $uS = Session::getInstance();
@@ -559,117 +499,58 @@ function createKeyMap(\PDO $dbh) {
         $diagKeyTable->addBodyTr(HTMLTable::makeTd($d[0]).HTMLTable::makeTd($d[1]));
     }
 
-    $hdiv = HTMLContainer::generateMarkup('div', $hospitalKeyTable->generateMarkup(), array('style'=>'float:left; margin-left:10px;'));
-    $ddiv = HTMLContainer::generateMarkup('div', $diagKeyTable->generateMarkup(), array('style'=>'float:left;'));
+    $hdiv = HTMLContainer::generateMarkup('div', $hospitalKeyTable->generateMarkup(), array('class'=>'ml-2'));
+    $ddiv = HTMLContainer::generateMarkup('div', $diagKeyTable->generateMarkup());
 
-    return  HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys'));
+    $infoDiv = HTMLContainer::generateMarkup('div', 
+    'Due to HIPAA compliance, Hospitality HouseKeeper cannot transfer Diagnosis and Hospital information directly. The following codes will be sent instead.'
+    , array('class'=>'p-2 mb-3 ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight'));
+    
+    return  $infoDiv . HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys', 'class'=>'hhk-flex'));
 }
+
+
+// Setups for the page.
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+$filter->loadSelectedTimePeriod();
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 
 $mkTable = 'x';
 $dataTable = '';
 $paymentsTable = '';
 $settingstable = '';
-$searchTabel = '';
-$year = date('Y');
-$months = [date('n')];     // logically overloaded.
-$txtStart = '';
-$txtEnd = '';
-$start = '';
-$end = '';
+$searchTable = '';
 $errorMessage = '';
-$calSelection = '19';
 $noRecordsMsg = '';
 $maxGuests = 15;  // maximum guests to process for each post.
 $btnVisits = '';
 $btnGetKey = '';
 $dboxMarkup = '';
 $btnPayments = '';
-
-
-$monthArray = array(
-    1 => array(1, 'January'), 2 => array(2, 'February'),
-    3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
-
-if ($uS->fy_diff_Months == 0) {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-} else {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
-}
+$start = '';
+$end = '';
 
 
 // Process report.
 if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetPayments') || filter_has_var(INPUT_POST, 'btnGetVisits')) {
 
-    // gather input
- // Input arguements
-    $rags = [
-        'selCalendar'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_REQUIRE_SCALAR],
-        'selIntMonth'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_FORCE_ARRAY],
-        'selIntYear'   => ['filter' => FILTER_SANITIZE_NUMBER_INT, 'flags' => FILTER_REQUIRE_SCALAR],
-        'stDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-        'enDate'       => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-    ];
+    //get selected time period
+    $start = $filter->getReportStart();
+    $end = $filter->getQueryEnd();
 
-    $inputs = filter_input_array(INPUT_POST, $rags);
+    // Create settings markup
+    $sTbl = new HTMLTable();
+    $sTbl->addBodyTr(HTMLTable::makeTh('Guest Selection Timeframe', ['colspan' => '4']));
+    $sTbl->addBodyTr(HTMLTable::makeTd('From', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+            
 
-    $months = $inputs['selIntMonth'];
-    $year = intval($inputs['selIntYear'], 10);
-    $txtStart = $inputs['stDate'];
-    $txtEnd = $inputs['enDate'];
-    $selCal = intval($inputs['selCalendar'], 10);
-
-    switch ($selCal) {
-        case 20:
-            $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-            $startDT = new DateTime($year . '-01-01');
-            $startDT->sub($adjustPeriod);
-            $start = $startDT->format('Y-m-d');
-
-            $endDT = new DateTime(($year + 1) . '-01-01');
-            $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
-            break;
-        case 21:
-            $startDT = new DateTime($year . '-01-01');
-            $start = $startDT->format('Y-m-d');
-
-            $end = ($year + 1) . '-01-01';
-            break;
-        case 18:
-            if ($txtStart != '') {
-                $startDT = new DateTime($txtStart);
-                $start = $startDT->format('Y-m-d');
-            }
-
-            if ($txtEnd != '') {
-                $endDT = new DateTime($txtEnd);
-                $end = $endDT->format('Y-m-d');
-            }
-            break;
-        case 22:
-            $start = $year . '-01-01';
-
-            $endDT = new DateTime($year . date('m') . date('d'));
-            $endDT->add(new DateInterval('P1D'));
-            $end = $endDT->format('Y-m-d');
-            break;
-        default:
-            $interval = 'P' . count($months) . 'M';
-            $month = $months[0];
-            $start = $year . '-' . $month . '-01';
-
-            $endDate = new DateTime($start);
-            $endDate->add(new DateInterval($interval));
-
-            $end = $endDate->format('Y-m-d');
-            break;
-    }
 
     // Get the possible people to transfer.
     if (filter_has_var(INPUT_POST, 'btnHere')) {
 
         // Get HHK records result table.
-        $results = getGTPeopleReport($dbh, $start, $end, $CmsManager::EXCLUDE_TERM);
+        $results = getGTPeopleReport($dbh, $start, $end, AbstractExportManager::EXCLUDE_TERM);
 
         if ($results === FALSE) {
 
@@ -679,12 +560,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 
             $dataTable = $results['mkup'];
 
-
-            // Create settings markup
-            $sTbl = new HTMLTable();
-            $sTbl->addBodyTr(HTMLTable::makeTh('Guest Selection Timeframe', ['colspan' => '4']));
-            $sTbl->addBodyTr(HTMLTable::makeTd('From', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', ['class' => 'tdlabel']) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-            $settingstable = $sTbl->generateMarkup(['style' => 'float:left;']);
+            $settingstable = $sTbl->generateMarkup();
 
             // Create search criteria markup
             $searchCriteria = $CmsManager->getSearchFields($dbh, $CmsManager::SearchViewName);
@@ -697,7 +573,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             $scTbl = new HTMLTable();
             $scTbl->addHeaderTr(HTMLTable::makeTh($CmsManager->getServiceTitle() . ' Search Criteria', ['colspan' => count($searchCriteria)]));
             $scTbl->addBodyTr($tr);
-            $searchTabel = $scTbl->generateMarkup(['style' => 'float:left; margin-left:2em;']);
+            $searchTable = $scTbl->generateMarkup(['class' => 'ml-4']);
 
             // Call different js routines by CMS manager name.
              if ($CmsManager->getServiceName() == AbstractExportManager::CMS_SF) {
@@ -720,7 +596,12 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 
     } else if (filter_has_var(INPUT_POST, 'btnGetVisits')) {
 
-        $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $CmsManager);
+        if($CmsManager instanceof NeonManager){
+            $settingstable = $sTbl->generateMarkup();
+            $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $CmsManager);
+        }else{
+            $noRecordsMsg = "Transferring Visit data is only available on " . ucfirst(AbstractExportManager::CMS_NEON);
+        }
 
         if ($dataTable === FALSE) {
             $noRecordsMsg = "No visit records found.";
@@ -736,27 +617,23 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
 $customFields = $CmsManager->getMyCustomFields($dbh);
 
 if (isset($customFields['Hospital']) && $customFields['Hospital'] !== '') {
-    $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', ['id' => 'btnGetKey', 'type' => 'button', 'style' => 'margin-left:3px; font-size:small;']);
+    $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', ['id' => 'btnGetKey', 'type' => 'button', 'class' => 'mx-2']);
     $dboxMarkup = createKeyMap($dbh);
 }
 
 if (isset($customFields['First_Visit']) && $customFields['First_Visit'] !=='') {
-    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', ['name' => 'btnGetVisits', 'id' => 'btnGetVisits', 'type' => 'submit', 'style' => 'margin-left:20px;']);
+    $btnVisits = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('statement', 'psgLabel', 'Patient Support Group') . 's', ['name' => 'btnGetVisits', 'id' => 'btnGetVisits', 'type' => 'submit', 'class' => "mx-2"]);
 }
 
 if (isset($customFields['Fund']) && $customFields['Fund'] != '') {
-    $btnPayments = HTMLInput::generateMarkup('Get HHK Payments', ['type' => 'submit', 'name' => "btnGetPayments", 'id' => "btnGetPayments", 'style' => "margin-left:20px;"]);
+    $btnPayments = HTMLInput::generateMarkup('Get HHK Payments', ['type' => 'submit', 'name' => "btnGetPayments", 'id' => "btnGetPayments", 'class' => "mx-2"]);
 }
 
 if ($noRecordsMsg != '') {
     $noRecordsMsg = HTMLContainer::generateMarkup('p', $noRecordsMsg, ['style' => 'font-size:large']);
 }
 
-
-// Setups for the page.
-$filter = new ReportFilter();
-$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
+$btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('memberType', 'visitor', 'Guest') . 's', ['type' => 'submit', 'name' => 'btnHere', 'id' => 'btnHere', 'class' => "mx-2"]);
 
 ?>
 <!DOCTYPE html>
@@ -798,9 +675,9 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog mb-3" style="display:none; clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper mb-3" style="display:none;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
-                    <div class="hhk-flex">
+                    <div class="hhk-flex mb-3">
                         <?php echo $timePeriodMarkup; ?>
                         <table class="ml-3">
                             <tr>
@@ -809,48 +686,44 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
                             </tr>
                         </table>
                     </div>
-                    <table style="width:100%; margin-top: 15px;">
-                        <tr>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
-				<?php echo $btnPayments . $btnVisits . $btnGetKey; ?>
-                <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
-                    <button type="button" id="viewLog" data-service="SalesForce" class="ui-button ui-corner-all">View Transfer Log</button>
-                <?php } ?>
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="hhk-flex mb-3 justify-content-center">
+				        <?php echo $btnGetRecords . $btnPayments . $btnVisits . $btnGetKey; ?>
+                        <?php if(SecurityComponent::is_Admin()){ ?>
+                            <button type="button" id="viewLog" data-service="" class="ui-button ui-corner-all mx-2">View Transfer Log</button>
+                        <?php } ?>
+                    </div>
                 </form>
                 <div style="margin-top: 15px; margin-left:50px;" id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
-
-            <div id="printArea" autocomplete="off" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
-                <div id="localrecords">
-                    <div style="margin-bottom:.8em;" class="hhk-flex">
-                        <?php echo $settingstable . $searchTabel; ?>
+            <div id="printArea" autocomplete="off" style="display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog d-inline-block p-2">
+                    <div id="localrecords">
+                        <div class="hhk-flex mb-3">
+                            <?php echo $settingstable . $searchTable; ?>
+                        </div>
+                        
+                        <div id="divTable">
+                            <?php echo $dataTable; ?>
+                        </div>
                     </div>
-                    
-                    <div id="divTable">
-                        <?php echo $dataTable; ?>
-                    </div>
+                    <div id="divMembers" style="margin-top:10px;"></div>
+                    <div id="divError"></div>
                 </div>
-                <div id="divMembers" style="margin-top:10px;"></div>
-                <div id="divError"></div>
+
+                <div id="divPrintButton" style="clear:both; display:none;margin-left:20px;font-size:0.9em; align-items: center;" class="hhk-flex py-3">
+                    <input id="printButton" value="Print" type="button" />
+                    <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
+                    <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
+                    <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
+                    <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none; font-size:1em; padding:5px; margin-left: 2em;">
+                        <p id="loadingText" style="margin-left:20px;">Transfering </p>
+                    </div>
+                    <span style="display: none;" id="cbTraceWrapper" class="ml-3"><input id="cbTrace" type="checkbox" class="mr-1"><label for="cbTrace">Print debug info</label></span>
+                </div>
             </div>
-
-            <div id="divPrintButton" style="clear:both; display:none;margin-left:20px;font-size:0.9em; align-items: center;" class="hhk-flex py-3">
-                <input id="printButton" value="Print" type="button" />
-                <input id="TxButton" value="" type="button" style="margin-left:4em;"/>
-                <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
-                <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
-                <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none; font-size:1em; padding:5px; margin-left: 2em;">
-                    <p id="loadingText" style="margin-left:20px;">Transfering </p>
-                </div>
-                <span style="display: none;" id="cbTraceWrapper" class="ml-3"><input id="cbTrace" type="checkbox" class="mr-1"><label for="cbTrace">Print debug info</label></span>
-        	</div>
-
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
-        <?php if($CmsManager instanceof SalesforceManager && SecurityComponent::is_Admin()){ ?>
+        <?php if(SecurityComponent::is_Admin()){ ?>
         <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="transferLog"></table></div>
         <?php } ?>
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>

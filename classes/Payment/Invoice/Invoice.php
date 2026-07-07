@@ -33,11 +33,7 @@ use Mpdf\Mpdf;
  */
 class Invoice {
 
-	/**
-	 * Summary of invRs
-	 * @var
-	 */
-	protected $invRs;
+	protected InvoiceRS $invRs;
 
 	/**
 	 * Summary of invoiceNum
@@ -217,7 +213,7 @@ WHERE
 	 * @param \PDO $dbh
 	 * @param mixed $idInvoice
 	 * @param mixed $idPayment
-	 * @throws \HHK\Exception\RuntimeException
+	 * @throws RuntimeException
 	 * @return void
 	 */
 	public function loadInvoice(\PDO $dbh, $idInvoice = 0, $idPayment = 0) {
@@ -290,9 +286,9 @@ where il.Invoice_Id = " . $this->idInvoice . " order by ilt.Order_Position" );
 	/**
 	 * Summary of addLine
 	 * @param \PDO $dbh
-	 * @param \HHK\Payment\Invoice\InvoiceLine\AbstractInvoiceLine $invLine
+	 * @param AbstractInvoiceLine $invLine
 	 * @param mixed $user
-	 * @throws \HHK\Exception\RuntimeException
+	 * @throws RuntimeException
 	 * @return void
 	 */
 	public function addLine(\PDO $dbh, AbstractInvoiceLine $invLine, $user) {
@@ -410,201 +406,11 @@ where pi.Invoice_Id = " . $this->getIdInvoice () );
 	}
 
 	/**
-	 * Summary of createMarkup
+	 * Create Markup for Invoice
 	 * @param \PDO $dbh
 	 * @return string
 	 */
 	public function createMarkup(\PDO $dbh) {
-		$uS = Session::getInstance ();
-
-		$hospital = '';
-		$roomTitle = '';
-		$idGuest = 0;
-		$idPatient = 0;
-		$idAssoc = 0;
-		$idHosp = 0;
-		$patientName = '';
-
-		// Find Hospital and Room
-		$pstmt = $dbh->query ( "select
-    hs.idHospital, hs.idAssociation, re.Title, v.idPrimaryGuest, hs.idPatient, n.Name_Full
-from
-    visit v
-	left join
-    resource re on v.idResource = re.idResource
-        left join
-    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-        left join
-    name n on n.idName = hs.idPatient
-where
-    v.idVisit = " . $this->getOrderNumber () . " and v.Span = " . $this->getSuborderNumber());
-
-		$rows = $pstmt->fetchAll ( \PDO::FETCH_ASSOC );
-
-		if (count ( $rows ) > 0) {
-			$idAssoc = $rows [0] ['idAssociation'];
-			$idGuest = $rows [0] ['idPrimaryGuest'];
-			$idHosp = $rows [0] ['idHospital'];
-			$idPatient = $rows [0] ['idPatient'];
-			$roomTitle = $rows [0] ['Title'];
-			$patientName = $rows [0] ['Name_Full'];
-		}
-
-		// Hospital
-		if ($idAssoc > 0 && isset ( $uS->guestLookups [GLTableNames::Hospital] [$idAssoc] ) && $uS->guestLookups [GLTableNames::Hospital] [$idAssoc] [1] != '(None)') {
-			$hospital .= $uS->guestLookups [GLTableNames::Hospital] [$idAssoc] [1] . ' / ';
-		}
-		if ($idHosp > 0 && isset ( $uS->guestLookups [GLTableNames::Hospital] [$idHosp] )) {
-			$hospital .= $uS->guestLookups [GLTableNames::Hospital] [$idHosp] [1];
-		}
-
-		// Items
-		$tbl = new HTMLTable ();
-
-		$tbl->addHeaderTr ( HTMLTable::makeTh ( 'Room' ) . HTMLTable::makeTh ( 'Item' ) . HTMLTable::makeTh ( 'Amount' ) );
-
-		foreach ( $this->getLines ( $dbh ) as $line ) {
-			$tbl->addBodyTr ( HTMLTable::makeTd ( $roomTitle ) . HTMLTable::makeTd ( $line->getDescription () ) . HTMLTable::makeTd ( number_format ( $line->getAmount (), 2 ), array (
-					'class' => 'tdlabel'
-			) ) );
-		}
-
-		// totals
-		$tbl->addBodyTr ( HTMLTable::makeTd ( "Total:", array (
-				'class' => 'tdlabel hhk-tdTotals',
-				'colspan' => '2'
-		) ) . HTMLTable::makeTd ( '$' . number_format ( $this->getAmount (), 2 ), array (
-				'class' => 'hhk-tdTotals tdlabel'
-		) ) );
-		$tbl->addBodyTr ( HTMLTable::makeTd ( "Previous Payments:", array (
-				'class' => 'tdlabel',
-				'colspan' => '2'
-		) ) . HTMLTable::makeTd ( number_format ( ($this->getAmount () - $this->getBalance ()), 2 ), array (
-				'class' => 'hhk-tdTotals tdlabel'
-		) ) );
-
-		if ($this->getDelegatedStatus () == InvoiceStatus::Paid) {
-			$tbl->addBodyTr ( HTMLTable::makeTd ( "Balance Due:", array (
-					'class' => 'tdlabel',
-					'colspan' => '2'
-			) ) . HTMLTable::makeTd ( '$0.00', array (
-					'class' => 'hhk-tdTotals tdlabel'
-			) ) );
-		} else {
-			$tbl->addBodyTr ( HTMLTable::makeTd ( "Balance Due:", array (
-					'class' => 'tdlabel',
-					'colspan' => '2'
-			) ) . HTMLTable::makeTd ( '$' . number_format ( $this->getBalance (), 2 ), array (
-					'class' => 'hhk-tdTotals tdlabel'
-			) ) );
-		}
-
-		// House Icon and address
-		$rec = Receipt::getHouseIconMarkup ();
-		$rec .= HTMLContainer::generateMarkup ( 'div', Receipt::getAddressTable ( $dbh, $uS->sId ), array (
-				'style' => 'float:left;margin-bottom:10px;margin-left:20px;'
-		) );
-
-		// Invoice dates
-		$invDate = new \DateTime ( $this->getDate () );
-		$invDateString = $invDate->format ( 'M jS, Y' );
-		$invDate->add ( new \DateInterval ( 'P' . $uS->InvoiceTerm . 'D' ) );
-
-		$invTbl = new HTMLTable ();
-
-		if ($this->isDeleted ()) {
-			$rec .= HTMLContainer::generateMarkup ( 'h2', 'INVOICE - DELETED', array (
-					'style' => 'clear:both;margin-bottom:10px;color:darkred;'
-			) );
-		} else if ($this->getStatus () == InvoiceStatus::Carried) {
-			$rec .= HTMLContainer::generateMarkup ( 'h2', 'INVOICE - (Delegated To Invoice #' . $this->getDelegatedInvoiceNumber () . ')', array (
-					'style' => 'clear:both;margin-bottom:10px;color:blue;'
-			) );
-		} else {
-			$rec .= HTMLContainer::generateMarkup ( 'h2', 'INVOICE', array (
-					'style' => 'clear:both;margin-bottom:10px;'
-			) );
-		}
-
-		$invTbl->addBodyTr ( HTMLTable::makeTd ( 'INVOICE #:', array (
-				'class' => 'tdlabel'
-		) ) . HTMLTable::makeTd ( $this->getInvoiceNumber () ) );
-
-		$invTbl->addBodyTr ( HTMLTable::makeTd ( 'DATE:', array (
-				'class' => 'tdlabel'
-		) ) . HTMLTable::makeTd ( $invDateString ) );
-
-		if ($uS->InvoiceTerm > 0) {
-			$invTbl->addBodyTr ( HTMLTable::makeTd ( 'TERMS NET:', array (
-					'class' => 'tdlabel'
-			) ) . HTMLTable::makeTd ( $uS->InvoiceTerm ) );
-			$invTbl->addBodyTr ( HTMLTable::makeTd ( 'DUE DATE:', array (
-					'class' => 'tdlabel'
-			) ) . HTMLTable::makeTd ( $invDate->format ( 'M jS, Y' ) ) );
-		}
-
-		if ($this->getDelegatedStatus () == InvoiceStatus::Paid) {
-			$invTbl->addBodyTr ( HTMLTable::makeTd ( 'BALANCE DUE:', array (
-					'class' => 'tdlabel'
-			) ) . HTMLTable::makeTd ( '$0.00' ) );
-		} else {
-			$invTbl->addBodyTr ( HTMLTable::makeTd ( 'BALANCE DUE:', array (
-					'class' => 'tdlabel'
-			) ) . HTMLTable::makeTd ( '$' . number_format ( $this->getBalance (), 2 ) ) );
-		}
-
-		$rec .= $invTbl->generateMarkup ( array (
-				'class' => 'hhk-tdbox-noborder',
-				'style' => 'float:left;'
-		) );
-
-		$billTbl = new HTMLTable ();
-		$billTbl->addBodyTr ( HTMLTable::makeTd ( HTMLContainer::generateMarkup('h4', 'Bill To')));
-		$billTbl->addBodyTr ( HTMLTable::makeTd ( $this->getBillToAddress ( $dbh, $this->getSoldToId () )->generateMarkup () ) );
-		$rec .= $billTbl->generateMarkup ( array (
-				'style' => 'float:right; margin-right:40px;'
-		) );
-
-		$rec .= HTMLContainer::generateMarkup ( 'div', '', array (
-				'style' => 'clear:both;'
-		) );
-
-		// Patient and guest
-		if ($idPatient != $idGuest && $patientName != '') {
-			$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('memberType', 'patient', 'Patient')  . ':  ' . $patientName, array (
-					'style' => 'margin-top:10px;'
-			) );
-		}
-
-		$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('memberType', 'primaryGuest', 'Primary Guest'), array (
-				'style' => 'margin-top:10px;'
-		) );
-		$rec .= $this->getGuestAddress ( $dbh, $idGuest );
-
-		$rec .= HTMLContainer::generateMarkup ( 'h4', 'Hospital:  ' . $hospital, array (
-				'style' => 'margin-bottom:10px;margin-top:10px;'
-		) );
-
-		$rec .= HTMLContainer::generateMarkup ( 'div', $tbl->generateMarkup (), array (
-				'class' => 'hhk-tdbox'
-		) );
-
-		if ($this->getInvoiceNotes () != '') {
-			$rec .= HTMLContainer::generateMarkup ( 'p', $this->getInvoiceNotes (), array (
-					'style' => 'margin-top:1em;'
-			) );
-		}
-
-		if ($this->isDeleted ()) {
-			$rec = HTMLContainer::generateMarkup ( 'div', $rec, array (
-					'style' => 'background-color:pink;'
-			) );
-		}
-
-		return $rec;
-	}
-
-	public function createPDFMarkup(\PDO $dbh) {
 		$uS = Session::getInstance ();
 
 		$hospital = '';
@@ -767,7 +573,7 @@ where
 		) );
 		$rec .= $this->getGuestAddress ( $dbh, $idGuest );
 
-		$rec .= HTMLContainer::generateMarkup ( 'h4', 'Hospital:  ' . $hospital, array (
+		$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('hospital', 'hospital', 'Hospital') . ':  ' . $hospital, array (
 				'class' => 'my-3'
 		) );
 
@@ -800,7 +606,7 @@ where
 	 */
 	public function makePDF(\PDO $dbh, bool $download = false)
 	{
-		$stmtMarkup = $this->createPDFMarkup($dbh);
+		$stmtMarkup = $this->createMarkup($dbh);
 
 		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf", 'shrink-tables-to-fit'=>0]);
 		$mpdf->showImageErrors = true;
@@ -1311,11 +1117,11 @@ where
 	/**
 	 * Summary of setEmailDate
 	 * @param \PDO $dbh
-	 * @param mixed $billDT
+	 * @param \DateTimeInterface $emailDT
 	 * @param mixed $user
 	 * @return bool
 	 */
-	public function setEmailDate(\PDO $dbh, \DateTimeInterface $emailDT, $user) {
+	public function setEmailDate(\PDO $dbh, \DateTimeInterface $emailDT, $user): bool {
 		$this->invRs->EmailDate->setNewVal ( $emailDT->format ( 'Y-m-d H:i:s' ) );
 
 		if ($this->idInvoice > 0) {
@@ -1358,7 +1164,7 @@ where
 	 * @param \PDO $dbh
 	 * @param mixed $paymentAmount
 	 * @param mixed $user
-	 * @throws \HHK\Exception\PaymentException
+	 * @throws PaymentException
 	 * @return void
 	 */
 	public function updateInvoiceBalance(\PDO $dbh, $paymentAmount, $user) {
@@ -1412,7 +1218,7 @@ where
 	 * Summary of deleteCarriedInvoice
 	 * @param \PDO $dbh
 	 * @param mixed $user
-	 * @throws \HHK\Exception\PaymentException
+	 * @throws PaymentException
 	 * @return bool
 	 */
 	protected function deleteCarriedInvoice(\PDO $dbh, $user) {
@@ -1467,7 +1273,7 @@ where pi.Invoice_Id in ($whAssoc)";
   * Summary of deleteInvoice
   * @param \PDO $dbh
   * @param mixed $user
-  * @throws \HHK\Exception\PaymentException
+  * @throws PaymentException
   * @return mixed
   */
 	public function deleteInvoice(\PDO $dbh, $user) {
@@ -1616,42 +1422,42 @@ where pi.Invoice_Id in ($whAssoc)";
 	 * @return mixed
 	 */
 	public function getBalance() {
-		return $this->invRs->Balance->getStoredVal ();
+		return $this->invRs->Balance->getStoredVal();
 	}
 	/**
 	 * Summary of getDate
 	 * @return mixed
 	 */
 	public function getDate() {
-		return $this->invRs->Invoice_Date->getStoredVal ();
+		return $this->invRs->Invoice_Date->getStoredVal();
 	}
 	/**
 	 * Summary of getNotes
 	 * @return mixed
 	 */
 	public function getNotes() {
-		return $this->invRs->Notes->getStoredVal ();
+		return $this->invRs->Notes->getStoredVal();
 	}
 	/**
 	 * Summary of getStatus
 	 * @return mixed
 	 */
 	public function getStatus() {
-		return $this->invRs->Status->getStoredVal ();
+		return $this->invRs->Status->getStoredVal();
 	}
 	/**
 	 * Summary of getPayAttemtps
 	 * @return mixed
 	 */
 	public function getPayAttemtps() {
-		return $this->invRs->Payment_Attempts->getStoredVal ();
+		return $this->invRs->Payment_Attempts->getStoredVal();
 	}
 	/**
 	 * Summary of getSoldToId
 	 * @return mixed
 	 */
 	public function getSoldToId() {
-		return $this->invRs->Sold_To_Id->getStoredVal ();
+		return $this->invRs->Sold_To_Id->getStoredVal();
 	}
 	/**
 	 * Summary of setSoldToId
@@ -1659,7 +1465,7 @@ where pi.Invoice_Id in ($whAssoc)";
 	 * @return static
 	 */
 	public function setSoldToId($id) {
-		$this->invRs->Sold_To_Id->setNewVal ( $id );
+		$this->invRs->Sold_To_Id->setNewVal($id);
 		return $this;
 	}
 	/**
@@ -1667,21 +1473,21 @@ where pi.Invoice_Id in ($whAssoc)";
 	 * @return mixed
 	 */
 	public function getIdGroup() {
-		return $this->invRs->idGroup->getStoredVal ();
+		return $this->invRs->idGroup->getStoredVal();
 	}
 	/**
 	 * Summary of getOrderNumber
 	 * @return mixed
 	 */
 	public function getOrderNumber() {
-		return $this->invRs->Order_Number->getStoredVal ();
+		return $this->invRs->Order_Number->getStoredVal();
 	}
 	/**
 	 * Summary of getSuborderNumber
 	 * @return mixed
 	 */
 	public function getSuborderNumber() {
-		return $this->invRs->Suborder_Number->getStoredVal ();
+		return $this->invRs->Suborder_Number->getStoredVal();
 	}
 	/**
 	 * Summary of getDelegatedInvoiceNumber
@@ -1702,21 +1508,21 @@ where pi.Invoice_Id in ($whAssoc)";
 	 * @return mixed
 	 */
 	public function getInvoiceNotes() {
-		return $this->invRs->Notes->getStoredVal ();
+		return $this->invRs->Notes->getStoredVal();
 	}
 	/**
 	 * Summary of getBillDate
 	 * @return mixed
 	 */
 	public function getBillDate() {
-		return $this->invRs->BillDate->getStoredVal ();
+		return $this->invRs->BillDate->getStoredVal();
 	}
 	/**
 	 * Summary of getDescription
 	 * @return mixed
 	 */
 	public function getDescription() {
-		return $this->invRs->Description->getStoredVal ();
+		return $this->invRs->Description->getStoredVal();
 	}
 	/**
 	 * Summary of setDescription
@@ -1724,7 +1530,7 @@ where pi.Invoice_Id in ($whAssoc)";
 	 * @return static
 	 */
 	public function setDescription($desc) {
-		$this->invRs->Description->setNewVal ( $desc );
+		$this->invRs->Description->setNewVal($desc);
 		return $this;
 	}
 	/**
@@ -1749,15 +1555,15 @@ where pi.Invoice_Id in ($whAssoc)";
 	 * Summary of getInvRecordSet
 	 * @return InvoiceRS
 	 */
-	public function getInvRecordSet() {
+	public function getInvRecordSet(): InvoiceRS {
 		return $this->invRs;
 	}
 	/**
 	 * Summary of isDeleted
 	 * @return bool
 	 */
-	public function isDeleted() {
-		if ($this->invRs->Deleted->getStoredVal () == 0) {
+	public function isDeleted(): bool {
+		if ($this->invRs->Deleted->getStoredVal() == 0) {
 			return FALSE;
 		} else {
 			return TRUE;

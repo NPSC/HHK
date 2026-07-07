@@ -72,6 +72,7 @@ CREATE TABLE
         `requestMethod` VARCHAR(10) NOT NULL DEFAULT '',
         `endpoint` VARCHAR(512) NOT NULL,
         `responseCode` VARCHAR(3) NOT NULL DEFAULT '',
+        `requestHeaders` LONGTEXT NOT NULL DEFAULT '',
         `request` LONGTEXT NOT NULL DEFAULT '',
         `response` LONGTEXT NOT NULL DEFAULT '',
         `username` VARCHAR(255) DEFAULT '',
@@ -2563,6 +2564,9 @@ ADD INDEX IF NOT EXISTS `idx_rlog_idName` (`idName`);
 ALTER TABLE `visit_log`
 ADD INDEX IF NOT EXISTS `idx_vlog_idName` (`idName`),
 ADD INDEX IF NOT EXISTS `idx_vlog_idPsg` (`idPsg`);
+
+ALTER TABLE `neon_type_map`
+    ADD UNIQUE KEY IF NOT EXISTS `uq_list_hhk_code`  (`List_Name`, `HHK_Type_Code`);
 
 -- -------Functions-------
 --

@@ -15,36 +15,36 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class ReservationRS extends AbstractTableRS {
 
-    public $idReservation;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $idRegistration;   // int(11) NOT NULL DEFAULT '0',
-    public $idGuest;  // int(11) NOT NULL DEFAULT '0',
-    public $idHospital_Stay;   // int(11) NOT NULL DEFAULT '0',
-    public $idResource;   // int(11) NOT NULL DEFAULT '0',
-    public $idReferralDoc;   // int(11) NOT NULL DEFAULT '0',
-    public $Resource_Suitable;  // VARCHAR(4) NOT NULL DEFAULT '',
-    public $Confirmation;  // varchar(4) NOT NULL DEFALUT '',
-    public $Room_Rate_Category;  // VARCHAR(4)
-    public $Fixed_Room_Rate;  // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $Rate_Adjust;  // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $idRateAdjust; // varchar(5) NOT NULL DEFAULT '0',
-    public $Visit_Fee;  // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $idRoom_rate;  // int(11) NOT NULL DEFAULT '0',
-    public $Title;   // varchar(145) NOT NULL DEFAULT '',
-    public $Type;  // varchar(45) NOT NULL DEFAULT '',
-    public $Expected_Pay_Type;  // varchar(4) NOT NULL DEFALUT '',
-    public $Expected_Arrival;   // datetime DEFAULT NULL,
-    public $Expected_Departure;   // datetime DEFAULT NULL,
-    public $Actual_Arrival;   // datetime DEFAULT NULL,
-    public $Actual_Departure;   // datetime DEFAULT NULL,
-    public $Number_Guests;   // int(11) NOT NULL DEFAULT '0',
-    public $No_Vehicle;      // TINYINT NOT NULL DEFAULT 0,
-    public $Add_Room; //`Add_Room` INT NOT NULL DEFAULT 0
-    public $Notes;   // text,
-    public $Checkin_Notes;
-    public $Status;   // varchar(5) NOT NULL DEFAULT '',
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idReservation;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idRegistration;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idGuest;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idHospital_Stay;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idResource;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idReferralDoc;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Resource_Suitable;  // VARCHAR(4) NOT NULL DEFAULT '',
+    public DB_Field $Confirmation;  // varchar(4) NOT NULL DEFALUT '',
+    public DB_Field $Room_Rate_Category;  // VARCHAR(4)
+    public DB_Field $Fixed_Room_Rate;  // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $Rate_Adjust;  // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $idRateAdjust; // varchar(5) NOT NULL DEFAULT '0',
+    public DB_Field $Visit_Fee;  // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $idRoom_rate;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Title;   // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Type;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Expected_Pay_Type;  // varchar(4) NOT NULL DEFALUT '',
+    public DB_Field $Expected_Arrival;   // datetime DEFAULT NULL,
+    public DB_Field $Expected_Departure;   // datetime DEFAULT NULL,
+    public DB_Field $Actual_Arrival;   // datetime DEFAULT NULL,
+    public DB_Field $Actual_Departure;   // datetime DEFAULT NULL,
+    public DB_Field $Number_Guests;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $No_Vehicle;      // TINYINT NOT NULL DEFAULT 0,
+    public DB_Field $Add_Room; //`Add_Room` INT NOT NULL DEFAULT 0
+    public DB_Field $Notes;   // text,
+    public DB_Field $Checkin_Notes;
+    public DB_Field $Status;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = 'reservation') {
         $this->idReservation = new DB_Field('idReservation', 0, new DbIntSanitizer(), TRUE, TRUE);

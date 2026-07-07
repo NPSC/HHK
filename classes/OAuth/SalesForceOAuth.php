@@ -2,6 +2,7 @@
 namespace HHK\OAuth;
 
 use GuzzleHttp\{Client, RequestOptions};
+use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\Exception\RuntimeException;
 
 
@@ -13,8 +14,8 @@ use HHK\Exception\RuntimeException;
  */
 class SalesForceOAuth extends AbstractOAuth{
 
-    public function __construct(Credentials $credentials){
-        parent::__construct($credentials);
+    public function __construct(\PDO $dbh, Credentials $credentials){
+        parent::__construct($dbh, $credentials);
     }
 
     public function requestToken(){
@@ -22,11 +23,9 @@ class SalesForceOAuth extends AbstractOAuth{
         $requestOptions = [
             RequestOptions::AUTH => [$this->credentials->getClientId(), $this->credentials->getClientSecret()],
             RequestOptions::FORM_PARAMS => [
-                'grant_type' => 'password',
+                'grant_type' => 'client_credentials',
                 'client_id'=> $this->credentials->getClientId(),
-                'client_secret' => $this->credentials->getClientSecret(),
-                'username' => $this->credentials->getUsername(),
-                'password' => $this->credentials->getPassword() . $this->credentials->getSecurityToken(),
+                'client_secret' => $this->credentials->getClientSecret()
             ]
         ];
 
@@ -46,5 +45,9 @@ class SalesForceOAuth extends AbstractOAuth{
         $this->accessToken = $data->access_token; // Valid access token
         $this->instanceURL = $data->instance_url;  //
         return true;
+    }
+
+    public function getLogServiceName(): string{
+        return SalesforceManager::LOG_SERVICE_NAME;
     }
 }
