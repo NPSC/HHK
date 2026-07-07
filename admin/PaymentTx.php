@@ -254,7 +254,7 @@ $txSelector = HTMLSelector::generateMarkup(
                 <input type='submit' value='Go' name='btnGo' class="ui-button ui-corner-all"/>
                 <?php if ($showLog) { ?>
                 <button type="button" id="btnShowLog" class="ui-button ui-corner-all ml-2">Show Detailed Log</button>
-                <?php if ($isTheAdmin) { ?><button type="button" id="btnSearchPayment" class="ui-button ui-corner-all ml-2">Search Payment</button><?php } ?>
+                <?php if ($isTheAdmin && $isDeluxe){ ?><button type="button" id="btnSearchPayment" class="ui-button ui-corner-all ml-2">Search Payment</button><?php } ?>
                 <?php } ?>
                 </form>
             </div>
@@ -411,9 +411,10 @@ $txSelector = HTMLSelector::generateMarkup(
 
                 var $logDialog = $("#logDialog").dialog({
                     autoOpen: false,
-                    modal: false,
+                    modal: true,
                     minWidth: getDialogWidth(1500),
-                    title: 'Deluxe Payment Log',
+                    maxHeight: $(window).height() - 100,
+                    title: 'Payment Log',
                     buttons: {
                         "Close": function () {
                             $logDialog.dialog('close');

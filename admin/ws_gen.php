@@ -25,7 +25,6 @@ use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\House\Distance\ZipDistance;
 use HHK\TableLog\ExternalAPILog;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Request\SearchPaymentRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
