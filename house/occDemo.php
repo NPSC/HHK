@@ -17,7 +17,7 @@ use HHK\sec\Labels;
  */
 require('homeIncludes.php');
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $uS = Session::getInstance();
 

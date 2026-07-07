@@ -19,7 +19,7 @@ use HHK\Exception\RuntimeException;
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 // catch service call

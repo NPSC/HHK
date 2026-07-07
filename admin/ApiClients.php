@@ -16,7 +16,7 @@ use HHK\sec\Labels;
 require ("AdminIncludes.php");
 
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;

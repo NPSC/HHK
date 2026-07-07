@@ -16,7 +16,7 @@ use HHK\Tables\WebSec\{W_groupsRS, W_auth_ipRS};
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 // get session instance

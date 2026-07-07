@@ -18,7 +18,7 @@ use HHK\sec\Labels;
 require ("homeIncludes.php");
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }

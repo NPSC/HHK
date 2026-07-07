@@ -21,7 +21,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 require ("homeIncludes.php");
 
 
-$wInit = new webInit(WebPageCode::Page);
+$wInit = new WebInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
 
 /* @var $dbh PDO */

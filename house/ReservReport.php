@@ -17,7 +17,7 @@ require ("homeIncludes.php");
 // 7/1/2021 - Added "Days" column.  EKC
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }

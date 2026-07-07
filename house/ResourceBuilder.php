@@ -63,7 +63,7 @@ const MAX_FINANCIAL_RATE_CATEGORIES = 16;
 const MAX_FINANCIAL_HOUSEHOLDS = 20;
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }

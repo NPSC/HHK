@@ -13,7 +13,7 @@ use HHK\sec\{SecurityComponent, WebInit, Session};
 require("AdminIncludes.php");
 
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

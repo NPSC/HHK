@@ -1,8 +1,6 @@
 <?php
 
 use HHK\Exception\RuntimeException;
-use HHK\House\Visit\Visit;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\Payment\PaymentSvcs;
 use HHK\SysConst\WebPageCode;
@@ -25,7 +23,7 @@ use HHK\House\RegistrationForm\CustomRegisterForm;
 
 require ("homeIncludes.php");
 
-$wInit = new webInit(WebPageCode::Page);
+$wInit = new WebInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
 
 /* @var $dbh PDO */

@@ -12,7 +12,7 @@ use HHK\sec\WebInit;
  */
 require_once ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

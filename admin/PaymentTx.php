@@ -16,7 +16,7 @@ use HHK\Tables\PaymentGW\Gateway_TransactionRS;
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

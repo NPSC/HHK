@@ -39,7 +39,7 @@ use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 
