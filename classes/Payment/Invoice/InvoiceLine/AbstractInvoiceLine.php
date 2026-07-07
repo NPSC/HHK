@@ -141,7 +141,7 @@ abstract class AbstractInvoiceLine {
             case InvoiceLineType::Invoice:
                 return new InvoiceInvoiceLine();
 
-            case InvoiceLineType::OneTime;
+            case InvoiceLineType::OneTime:
                 return new OneTimeInvoiceLine();
 
             case InvoiceLineType::Hold:

@@ -520,7 +520,7 @@ class GuestDemogReport {
 
     protected static function calcDist($lat_A, $long_A, $lat_B, $long_B) {
 
-        $distance = sin(deg2rad((double)$lat_A)) * sin(deg2rad((double)$lat_B)) + cos(deg2rad((double)$lat_A)) * cos(deg2rad((double)$lat_B)) * cos(deg2rad((double)$long_A - (double)$long_B));
+        $distance = sin(deg2rad((float)$lat_A)) * sin(deg2rad((float)$lat_B)) + cos(deg2rad((float)$lat_A)) * cos(deg2rad((float)$lat_B)) * cos(deg2rad((float)$long_A - (float)$long_B));
         $distance2 = (rad2deg(acos($distance))) * 69.09;
 
         return $distance2;

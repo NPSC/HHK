@@ -3,6 +3,7 @@
 use HHK\API\OAuth\CRUD\Client;
 use HHK\Cron\SendConfirmationEmailJob;
 use HHK\House\Report\AbstractReport;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
@@ -24,7 +25,6 @@ use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\House\Distance\ZipDistance;
 use HHK\TableLog\ExternalAPILog;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Request\SearchPaymentRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
@@ -600,7 +600,7 @@ try {
             ];
             $filtered = filter_input_array(INPUT_GET, $arguments);
 
-            $allowedServices = ['Deluxe'];
+            $allowedServices = [AbstractPaymentGateway::DELUXE, AbstractPaymentGateway::INSTAMED];
 
             if (in_array($filtered["service"], $allowedServices)) {
                 $events = ExternalAPILog::getLog($dbh, $filtered["service"]);
