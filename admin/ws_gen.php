@@ -3,6 +3,7 @@
 use HHK\API\OAuth\CRUD\Client;
 use HHK\Cron\SendConfirmationEmailJob;
 use HHK\House\Report\AbstractReport;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
@@ -596,7 +597,7 @@ try {
             ];
             $filtered = filter_input_array(INPUT_GET, $arguments);
 
-            $allowedServices = ['Deluxe'];
+            $allowedServices = [AbstractPaymentGateway::DELUXE, AbstractPaymentGateway::INSTAMED];
 
             if (in_array($filtered["service"], $allowedServices)) {
                 $events = ExternalAPILog::getLog($dbh, $filtered["service"]);

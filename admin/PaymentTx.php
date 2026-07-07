@@ -26,6 +26,7 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $uS = Session::getInstance();
 $isDeluxe = strtolower($uS->PaymentGateway) === AbstractPaymentGateway::DELUXE;
+$showLog = in_array(strtolower($uS->PaymentGateway), [AbstractPaymentGateway::DELUXE, AbstractPaymentGateway::INSTAMED]);
 
 
 function makeParmtable($parms) {
@@ -250,7 +251,7 @@ $txSelector = HTMLSelector::generateMarkup(
                     </tr>
                 </table>
                 <input type='submit' value='Go' name='btnGo' class="ui-button ui-corner-all"/>
-                <?php if ($isDeluxe) { ?>
+                <?php if ($showLog) { ?>
                 <button type="button" id="btnShowLog" class="ui-button ui-corner-all ml-2">Show Detailed Log</button>
                 <?php } ?>
                 </form>
@@ -261,7 +262,7 @@ $txSelector = HTMLSelector::generateMarkup(
             </div>
             <?php } ?>
         </div>
-        <?php if ($isDeluxe) { ?>
+        <?php if ($showLog) { ?>
         <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="deluxeLog"></table></div>
         <script type="text/javascript">
             $(document).ready(function () {
@@ -355,7 +356,7 @@ $txSelector = HTMLSelector::generateMarkup(
                         url: 'ws_gen.php',
                         data: function (d) {
                             d.cmd = 'viewLog';
-                            d.service = 'Deluxe';
+                            d.service = '<?php echo $uS->PaymentGateway; ?>';
                         }
                     },
                     createdRow: function (row, data, dataIndex) {
