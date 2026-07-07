@@ -40,7 +40,6 @@ try {
 try {
     $page = new ScriptAuthClass($dbh);
 } catch (Exception $ex) {
-    $uS->destroy(true);
     exit('<h2>Page not in database.</h2>');
 }
 
