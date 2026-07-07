@@ -20,18 +20,18 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
  */
 class Card_IdRS extends AbstractTableRS {
 
-    public $idName;   // int(11) NOT NULL,
-    public $idGroup;   // int(11) NOT NULL,
-    public $CardID;   // varchar(36) NOT NULL DEFAULT '',
-    public $Init_Date;   // datetime DEFAULT NULL,
-    public $ReturnCode;   // int(11) NOT NULL DEFAULT '0',
-    public $Frequency;   // varchar(9) NOT NULL DEFAULT '',
-    public $OperatorID;   // varchar(10) NOT NULL DEFAULT '',
-    public $ResponseCode;   // int(11) NOT NULL DEFAULT '0',
-    public $Transaction;   // varchar(14) NOT NULL DEFAULT '',
-    public $InvoiceNumber;   // varchar(36) NOT NULL DEFAULT '',
-    public $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
-    public $Merchant;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $idName;   // int(11) NOT NULL,
+    public DB_Field $idGroup;   // int(11) NOT NULL,
+    public DB_Field $CardID;   // varchar(36) NOT NULL DEFAULT '',
+    public DB_Field $Init_Date;   // datetime DEFAULT NULL,
+    public DB_Field $ReturnCode;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Frequency;   // varchar(9) NOT NULL DEFAULT '',
+    public DB_Field $OperatorID;   // varchar(10) NOT NULL DEFAULT '',
+    public DB_Field $ResponseCode;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Transaction;   // varchar(14) NOT NULL DEFAULT '',
+    public DB_Field $InvoiceNumber;   // varchar(36) NOT NULL DEFAULT '',
+    public DB_Field $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
+    public DB_Field $Merchant;   // varchar(45) NOT NULL DEFAULT '',
 
 
     function __construct($TableName = "card_id") {

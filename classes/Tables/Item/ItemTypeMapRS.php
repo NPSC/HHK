@@ -21,8 +21,8 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer};
  
 class ItemTypeMapRS extends AbstractTableRS {
     
-    public $Item_Id;  // INTEGER,
-    public $Type_Id;  // INTEGER);
+    public DB_Field $Item_Id;  // INTEGER,
+    public DB_Field $Type_Id;  // INTEGER);
     
     function __construct($TableName = 'item_type_map') {
         $this->Item_Id = new DB_Field('Item_Id', 0, new DbIntSanitizer(), TRUE, TRUE);

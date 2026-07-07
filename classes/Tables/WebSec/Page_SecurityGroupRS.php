@@ -15,9 +15,9 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Page_SecurityGroupRS extends AbstractTableRS {
     
-    public $idPage;  // int(11) NOT NULL,
-    public $Group_Code;  // varchar(5) NOT NULL,
-    public $Timestamp;  // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idPage;  // int(11) NOT NULL,
+    public DB_Field $Group_Code;  // varchar(5) NOT NULL,
+    public DB_Field $Timestamp;  // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = "page_securitygroup") {
         $this->idPage = new DB_Field("idPage", 0, new DbIntSanitizer());

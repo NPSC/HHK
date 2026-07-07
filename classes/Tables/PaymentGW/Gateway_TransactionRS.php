@@ -20,17 +20,17 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
  */
 class Gateway_TransactionRS extends AbstractTableRS {
     
-    public $idgateway_transaction;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $GwTransCode;   // varchar(64) NOT NULL DEFAULT '',
-    public $GwResultCode;   // varchar(44) NOT NULL DEFAULT '',
-    public $Amount;   // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $Vendor_Request;   // varchar(2000) NOT NULL DEFAULT '',
-    public $Vendor_Response;   // varchar(5000) NOT NULL DEFAULT '',
-    public $AuthCode;   // varchar(45) NOT NULL DEFAULT '',
-    public $idPayment_Detail;   // int(11) NOT NULL DEFAULT '0',
-    public $Created_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+    public DB_Field $idgateway_transaction;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $GwTransCode;   // varchar(64) NOT NULL DEFAULT '',
+    public DB_Field $GwResultCode;   // varchar(44) NOT NULL DEFAULT '',
+    public DB_Field $Amount;   // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $Vendor_Request;   // varchar(2000) NOT NULL DEFAULT '',
+    public DB_Field $Vendor_Response;   // varchar(5000) NOT NULL DEFAULT '',
+    public DB_Field $AuthCode;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $idPayment_Detail;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Created_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     function __construct($TableName = "gateway_transaction") {
         $this->idgateway_transaction = new DB_Field("idgateway_transaction", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->GwTransCode = new DB_Field("GwTransCode", "", new DbStrSanitizer(64), TRUE, TRUE);

@@ -96,14 +96,6 @@ class IndivMember extends AbstractMember
         return $this->get_fullName();
     }
 
-    /**
-     *
-     * @param \PDO $dbh
-     * @param string $statusClass HTML Class attribute for status control
-     * @param string $basisClass HTML class attribute for basis control
-     * @param string $idPrefix
-     * @return string HTML table markup
-     */
     public function createMarkupTable()
     {
 
@@ -1051,7 +1043,7 @@ ORDER BY `List_Order`");
                     $numRecords = EditRS::delete($dbh, $langRs, array($langRs->Language_Id, $langRs->idName));
 
                     if ($numRecords > 0) {
-                        NameLog::writeDelete($dbh, $langRs, $langRs->idName, $username, $langRs->Language_Id->getStoredVal());
+                        NameLog::writeDelete($dbh, $langRs, $langRs->idName->getStoredVal(), $username, $langRs->Language_Id->getStoredVal());
                     }
                 } else {
                     $myLangs[] = $langRs;
@@ -1163,7 +1155,7 @@ ORDER BY `List_Order`");
                             $numRecords = EditRS::delete($dbh, $insRs, array($insRs->Insurance_Id, $insRs->idName));
 
                             if ($numRecords > 0) {
-                                NameLog::writeDelete($dbh, $insRs, $insRs->idName, $username, $i['Title'] . '-' . $insCos[$insRs->Insurance_Id->getStoredVal()]['Title']);
+                                NameLog::writeDelete($dbh, $insRs, $insRs->idName->getStoredVal(), $username, $i['Title'] . '-' . $insCos[$insRs->Insurance_Id->getStoredVal()]['Title']);
                             }
                         }
 

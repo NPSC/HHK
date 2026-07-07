@@ -121,10 +121,10 @@ class RateChooser {
     /**
      * Summary of createChangeRateMarkup
      * @param \PDO $dbh
-     * @param \HHK\Tables\Visit\VisitRS $vRs
+     * @param VisitRS $vRs
      * @return HTMLTable
      */
-    public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs) {
+    public function createChangeRateMarkup(\PDO $dbh, VisitRS $vRs) {
 
         $attrFixed = array('class'=>'hhk-fxFixed ml-2', 'style'=>'');
         $attrAdj = array('class'=>'hhk-fxAdj ml-2', 'style'=>'');

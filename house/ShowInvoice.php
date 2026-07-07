@@ -59,7 +59,7 @@ try {
     if ($invNum != '') {
 
         $invoice = new Invoice($dbh, $invNum);
-        $stmtMarkup = $invoice->createPDFMarkup($dbh);
+        $stmtMarkup = $invoice->createMarkup($dbh);
 
         $emAddrs[] = $invoice->getBillToEmail($dbh);
 

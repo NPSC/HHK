@@ -15,17 +15,17 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class LocationRS extends AbstractTableRS {
 
-    public $idLocation;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $Title;   // varchar(45) DEFAULT '',
-    public $Description;   // varchar(245) DEFAULT '',
-    public $Status;   // varchar(5) DEFAULT '',
-    public $Address;   // varchar(145) NOT NULL DEFAULT '',
-    public $Merchant;   // varchar(45) NOT NULL DEFAULT '',
-    public $Map;   // varchar(45) NOT NULL DEFAULT '',
-    public $Owner_Id;   // int(11) NOT NULL DEFAULT '0',
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idLocation;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Title;   // varchar(45) DEFAULT '',
+    public DB_Field $Description;   // varchar(245) DEFAULT '',
+    public DB_Field $Status;   // varchar(5) DEFAULT '',
+    public DB_Field $Address;   // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Merchant;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Map;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Owner_Id;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "location") {
 

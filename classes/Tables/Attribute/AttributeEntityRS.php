@@ -15,9 +15,9 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
 class AttributeEntityRS extends AbstractTableRS {
 
 
-    public $idEntity;  // int(11) NOT NULL,
-    public $idAttribute;
-    public $Type;  // varchar(4) NOT NULL,
+    public DB_Field $idEntity;  // int(11) NOT NULL,
+    public DB_Field $idAttribute;
+    public DB_Field $Type;  // varchar(4) NOT NULL,
 
 
     function __construct($TableName = "attribute_entity") {

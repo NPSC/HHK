@@ -445,8 +445,8 @@ function getGTPeopleReport(\PDO $dbh, $start, $end, $excludeTerm) {
 
 /**
  * Summary of getNeonTypes
- * @param NeonManager $CmsManager
- * @param mixed $list
+ * @param ExportManagerInterface $CmsManager
+ * @param array $list
  * @return array<array>
  */
 function getNeonTypes(ExportManagerInterface $CmsManager, array $list): array {

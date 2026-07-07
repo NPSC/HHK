@@ -17,22 +17,22 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
  */
 class IncidentReportRS extends AbstractTableRS {
 
-    public $idReport;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $Title;   // VARCHAR(240) NOT NULL ,
-    public $Category;   // VARCHAR(5) NOT NULL ,
-    public $Report_Date;   // DATETIME NULL ,
-    public $Resolution_Date;   // DATETIME NULL ,
-    public $Description;  // TEXT NOT NULL DEFAULT '',
-    public $Resolution;  // TEXT NOT NULL DEFAULT '',
-    public $Signature;   // BLOB NULL ,
-    public $Signature_Date;  // DATETIME NULL,
-    public $Author;   // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Guest_Id;   // INT NOT NULL DEFAULT '0' ,
-    public $Psg_Id;   // INT NOT NULL DEFAULT '0' ,
-    public $Last_Updated;   // DATETIME NULL ,
-    public $Updated_By;   // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Status;  // VARCHAR(5) NOT NULL DEFAULT ''
-    public $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
+    public DB_Field $idReport;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Title;   // VARCHAR(240) NOT NULL ,
+    public DB_Field $Category;   // VARCHAR(5) NOT NULL ,
+    public DB_Field $Report_Date;   // DATETIME NULL ,
+    public DB_Field $Resolution_Date;   // DATETIME NULL ,
+    public DB_Field $Description;  // TEXT NOT NULL DEFAULT '',
+    public DB_Field $Resolution;  // TEXT NOT NULL DEFAULT '',
+    public DB_Field $Signature;   // BLOB NULL ,
+    public DB_Field $Signature_Date;  // DATETIME NULL,
+    public DB_Field $Author;   // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Guest_Id;   // INT NOT NULL DEFAULT '0' ,
+    public DB_Field $Psg_Id;   // INT NOT NULL DEFAULT '0' ,
+    public DB_Field $Last_Updated;   // DATETIME NULL ,
+    public DB_Field $Updated_By;   // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Status;  // VARCHAR(5) NOT NULL DEFAULT ''
+    public DB_Field $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
     
     function __construct($TableName = "incident_report") {
 

@@ -72,6 +72,7 @@ CREATE TABLE
         `requestMethod` VARCHAR(10) NOT NULL DEFAULT '',
         `endpoint` VARCHAR(512) NOT NULL,
         `responseCode` VARCHAR(3) NOT NULL DEFAULT '',
+        `requestHeaders` LONGTEXT NOT NULL DEFAULT '',
         `request` LONGTEXT NOT NULL DEFAULT '',
         `response` LONGTEXT NOT NULL DEFAULT '',
         `username` VARCHAR(255) DEFAULT '',
