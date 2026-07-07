@@ -1,5 +1,5 @@
 <?php
-namespace HHK\API\Controllers\Calendar;
+namespace HHK\API\Controllers;
 
 use DateInterval;
 use DateTime;
@@ -9,13 +9,13 @@ use DI\Container;
 use HHK\sec\SysConfig;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\VisitStatus;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * Controller for accessing calendar events
  */
-class ViewCalendarController
+class CalendarController
 {
 
     private Container $container;
@@ -25,7 +25,7 @@ class ViewCalendarController
         $this->container = $container;
     }
 
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    public function index(Request $request, Response $response, array $args): Response
     {
         $startDate = filter_input(INPUT_GET, 'startDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $endDate = filter_input(INPUT_GET, 'endDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);

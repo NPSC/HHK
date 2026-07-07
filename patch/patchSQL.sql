@@ -55,6 +55,56 @@ SET `Order` = 5
 WHERE `Table_Name` = 'Pay_Type'
   AND `Code` = 'in';
 
+INSERT IGNORE INTO `gen_lookups` (
+	`Table_Name`,
+	`Code`,
+	`Description`,
+	`Substitute`,
+	`Type`,
+	`Order`
+)
+  VALUES (
+		'Oauth_Scopes',
+		'rooms:read',
+		'Read rooms',
+		'',
+		'',
+		0
+	);
+
+  INSERT IGNORE INTO `gen_lookups` (
+	`Table_Name`,
+	`Code`,
+	`Description`,
+	`Substitute`,
+	`Type`,
+	`Order`
+)
+  VALUES (
+		'Oauth_Scopes',
+		'rooms:write',
+		'Write rooms',
+		'',
+		'',
+		0
+	);
+
+    INSERT IGNORE INTO `gen_lookups` (
+	`Table_Name`,
+	`Code`,
+	`Description`,
+	`Substitute`,
+	`Type`,
+	`Order`
+)
+  VALUES (
+		'Oauth_Scopes',
+		'lookups:read',
+		'Read lookups',
+		'',
+		'',
+		0
+	);
 UPDATE gen_lookups
 SET `Substitute` = 'Whole_Number',
 `Order` = 1

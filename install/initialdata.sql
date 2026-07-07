@@ -838,6 +838,30 @@ VALUES
 	),
 	(
 		'Oauth_Scopes',
+		'rooms:read',
+		'Read rooms',
+		'',
+		'',
+		0
+	),
+	(
+		'Oauth_Scopes',
+		'rooms:write',
+		'Write rooms',
+		'',
+		'',
+		0
+	),
+	(
+		'Oauth_Scopes',
+		'lookups:read',
+		'Read lookups',
+		'',
+		'',
+		0
+	),
+	(
+		'Oauth_Scopes',
 		'aggregatereports:read',
 		'Read aggregate reports',
 		'',
