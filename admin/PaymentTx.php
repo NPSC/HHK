@@ -566,7 +566,7 @@ $txSelector = HTMLSelector::generateMarkup(
 
                         $('#searchPaymentVoidDiv').hide();
                         $('#searchPaymentVoidResult').html('<span class="ui-state-highlight" style="padding:5px; display:inline-block;">' +
-                            'Payment voided successfully. Response code: ' + (data.responseCode || '') +
+                            'Payment voided successfully. ' +
                             (data.message ? ' — ' + $('<span>').text(data.message).html() : '') +
                             '</span>');
                     }, 'json').fail(function () {
